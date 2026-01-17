@@ -1,0 +1,279 @@
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
+import { ElementDetail } from './ElementDetail';
+import { LinkDetail } from './LinkDetail';
+import { InvestigationDetail } from './InvestigationDetail';
+import { FiltersPanel } from './FiltersPanel';
+import { ViewsPanel } from './ViewsPanel';
+import { InsightsPanel } from './InsightsPanel';
+import { X, Info, Filter, Eye, Network, PanelRightClose } from 'lucide-react';
+import { IconButton } from '../common';
+
+const MIN_WIDTH = 280;
+const MAX_WIDTH = 600;
+const DEFAULT_WIDTH = 320;
+
+type TabId = 'detail' | 'insights' | 'filters' | 'views';
+
+interface Tab {
+  id: TabId;
+  label: string;
+  icon: typeof Info;
+  badge?: boolean;
+}
+
+export function SidePanel() {
+  const { selectedElementIds, selectedLinkIds, clearSelection } = useSelectionStore();
+  const { elements, links, currentInvestigation } = useInvestigationStore();
+  const { hasActiveFilters } = useViewStore();
+  const { highlightedElementIds } = useInsightsStore();
+
+  const [activeTab, setActiveTab] = useState<TabId>('detail');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Handle resize
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!panelRef.current) return;
+      const containerRect = panelRef.current.parentElement?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      // Calculate new width from the right edge
+      const newWidth = containerRect.right - e.clientX;
+      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const selectedElements = elements.filter((el) => selectedElementIds.has(el.id));
+  const selectedLinks = links.filter((link) => selectedLinkIds.has(link.id));
+  const totalSelected = selectedElements.length + selectedLinks.length;
+
+  const filtersActive = hasActiveFilters();
+  const insightsActive = highlightedElementIds.size > 0;
+
+  const tabs: Tab[] = [
+    { id: 'detail', label: 'Détail', icon: Info },
+    { id: 'insights', label: 'Insights', icon: Network, badge: insightsActive },
+    { id: 'filters', label: 'Filtres', icon: Filter, badge: filtersActive },
+    { id: 'views', label: 'Vues', icon: Eye },
+  ];
+
+  if (isCollapsed) {
+    return (
+      <aside className="w-12 border-l border-border-default bg-bg-primary flex flex-col">
+        <div className="flex flex-col items-center py-2 gap-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsCollapsed(false);
+                }}
+                className={`relative p-2 rounded transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-accent/10 text-accent'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                }`}
+                title={tab.label}
+              >
+                <Icon size={18} />
+                {tab.badge && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+    );
+  }
+
+  // Render detail content based on selection
+  const renderDetailContent = () => {
+    // Nothing selected - show investigation details
+    if (totalSelected === 0) {
+      if (currentInvestigation) {
+        return (
+          <div className="flex-1 overflow-y-auto">
+            <InvestigationDetail investigation={currentInvestigation} />
+          </div>
+        );
+      }
+      return (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <p className="text-sm text-text-tertiary text-center">
+            Aucune enquête chargée.
+          </p>
+        </div>
+      );
+    }
+
+    // Multiple items selected
+    if (totalSelected > 1) {
+      return (
+        <div className="flex-1 p-4">
+          <p className="text-sm text-text-secondary">
+            {totalSelected} élément{totalSelected > 1 ? 's' : ''} sélectionné{totalSelected > 1 ? 's' : ''}
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-text-tertiary">
+            {selectedElements.length > 0 && (
+              <li>{selectedElements.length} élément{selectedElements.length > 1 ? 's' : ''}</li>
+            )}
+            {selectedLinks.length > 0 && (
+              <li>{selectedLinks.length} lien{selectedLinks.length > 1 ? 's' : ''}</li>
+            )}
+          </ul>
+          <p className="mt-4 text-xs text-text-tertiary">
+            L'édition multiple sera disponible dans une future version.
+          </p>
+        </div>
+      );
+    }
+
+    // Single element selected
+    if (selectedElements.length === 1) {
+      return (
+        <div className="flex-1 overflow-y-auto">
+          <ElementDetail element={selectedElements[0]} />
+        </div>
+      );
+    }
+
+    // Single link selected
+    if (selectedLinks.length === 1) {
+      return (
+        <div className="flex-1 overflow-y-auto">
+          <LinkDetail link={selectedLinks[0]} />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  // Render tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'detail':
+        return renderDetailContent();
+      case 'insights':
+        return (
+          <div className="flex-1 overflow-y-auto">
+            <InsightsPanel />
+          </div>
+        );
+      case 'filters':
+        return (
+          <div className="flex-1 overflow-y-auto">
+            <FiltersPanel />
+          </div>
+        );
+      case 'views':
+        return (
+          <div className="flex-1 overflow-y-auto">
+            <ViewsPanel />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <aside
+      ref={panelRef}
+      className="border-l border-border-default bg-bg-primary flex flex-col overflow-hidden relative"
+      style={{ width: `${width}px` }}
+    >
+      {/* Resize handle */}
+      <div
+        onMouseDown={handleMouseDown}
+        className={`absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-accent/30 transition-colors z-10 ${
+          isResizing ? 'bg-accent/50' : ''
+        }`}
+      />
+
+      {/* Header with tabs */}
+      <header className="border-b border-border-default shrink-0">
+        {/* Tab bar */}
+        <div className="flex items-center h-10 px-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  isActive
+                    ? 'bg-accent/10 text-accent'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                }`}
+              >
+                <Icon size={14} />
+                {tab.label}
+                {tab.badge && (
+                  <span className="w-1.5 h-1.5 bg-accent rounded-full" />
+                )}
+              </button>
+            );
+          })}
+
+          {/* Collapse button */}
+          <div className="ml-auto">
+            <IconButton onClick={() => setIsCollapsed(true)} title="Réduire le panneau">
+              <PanelRightClose size={14} />
+            </IconButton>
+          </div>
+        </div>
+
+        {/* Selection info for detail tab */}
+        {activeTab === 'detail' && (
+          <div className="flex items-center justify-between px-4 py-2 bg-bg-secondary border-t border-border-default">
+            <span className="text-xs text-text-secondary">
+              {totalSelected === 0
+                ? 'Enquête'
+                : selectedElements.length === 1
+                ? 'Élément'
+                : selectedLinks.length === 1
+                ? 'Lien'
+                : `${totalSelected} sélectionnés`}
+            </span>
+            {totalSelected > 0 && (
+              <IconButton onClick={clearSelection} title="Désélectionner">
+                <X size={12} />
+              </IconButton>
+            )}
+          </div>
+        )}
+      </header>
+
+      {/* Tab content */}
+      {renderTabContent()}
+    </aside>
+  );
+}

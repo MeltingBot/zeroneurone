@@ -1,0 +1,127 @@
+import { useState, useCallback, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+
+interface MarkdownEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  minRows?: number;
+  className?: string;
+  /** If true, show preview by default when there's content */
+  previewByDefault?: boolean;
+}
+
+export function MarkdownEditor({
+  value,
+  onChange,
+  placeholder = 'Markdown: **gras**, *italique*, [lien](url)...',
+  minRows = 4,
+  className = '',
+  previewByDefault = true,
+}: MarkdownEditorProps) {
+  // Start in preview mode if there's content and previewByDefault is true
+  const [isEditing, setIsEditing] = useState(!previewByDefault || !value);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus textarea when switching to edit mode
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(e.target.value);
+    },
+    [onChange]
+  );
+
+  // Switch to preview when leaving the field
+  const handleBlur = useCallback(() => {
+    setIsEditing(false);
+  }, []);
+
+  // When clicking on preview, switch to edit mode
+  const handlePreviewClick = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+
+  return (
+    <div className={className}>
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
+          style={{ minHeight: `${minRows * 24}px`, resize: 'vertical' }}
+        />
+      ) : (
+        <div
+          onClick={handlePreviewClick}
+          className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded cursor-text overflow-auto"
+          style={{ minHeight: `${minRows * 24}px` }}
+        >
+          {value ? (
+            <MarkdownPreview content={value} />
+          ) : (
+            <span className="text-text-tertiary">{placeholder}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Read-only markdown preview component */
+export function MarkdownPreview({ content, className = '' }: { content: string; className?: string }) {
+  return (
+    <div className={`markdown-preview ${className}`}>
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => <p className="mb-2 last:mb-0 text-text-primary">{children}</p>,
+          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+          em: ({ children }) => <em className="italic">{children}</em>,
+          h1: ({ children }) => <h1 className="text-base font-semibold mb-2">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-sm font-semibold mb-2">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-sm font-medium mb-1">{children}</h3>,
+          ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-0.5">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-0.5">{children}</ol>,
+          li: ({ children }) => <li>{children}</li>,
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {children}
+            </a>
+          ),
+          code: ({ children }) => (
+            <code className="px-1 py-0.5 bg-bg-tertiary rounded text-xs font-mono">
+              {children}
+            </code>
+          ),
+          pre: ({ children }) => (
+            <pre className="p-2 bg-bg-tertiary rounded overflow-x-auto mb-2 text-xs">
+              {children}
+            </pre>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-border-strong pl-3 italic text-text-secondary mb-2">
+              {children}
+            </blockquote>
+          ),
+          hr: () => <hr className="my-2 border-border-default" />,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
