@@ -1,0 +1,390 @@
+import { memo, useState, useEffect, useRef } from 'react';
+import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+import type { Element } from '../../types';
+import { useUIStore } from '../../stores';
+
+// Redacted text component for anonymous mode
+function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
+  // Create black rectangles roughly matching text length
+  const charCount = Math.max(3, Math.min(text.length, 15));
+  return (
+    <span className={className} style={style}>
+      <span
+        className="inline-block bg-text-primary rounded-sm"
+        style={{ width: `${charCount * 0.5}em`, height: '1em', verticalAlign: 'middle' }}
+      />
+    </span>
+  );
+}
+
+export interface ElementNodeData extends Record<string, unknown> {
+  element: Element;
+  isSelected: boolean;
+  isDimmed: boolean;
+  thumbnail: string | null;
+  onResize?: (width: number, height: number) => void;
+  isEditing?: boolean;
+  onLabelChange?: (newLabel: string) => void;
+  onStopEditing?: () => void;
+}
+
+// Minimum sizes for resizing
+const MIN_WIDTH = 60;
+const MIN_HEIGHT = 40;
+
+function ElementNodeComponent({ data }: NodeProps) {
+  const nodeData = data as ElementNodeData;
+  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing } = nodeData;
+  const [isHovered, setIsHovered] = useState(false);
+  const [editValue, setEditValue] = useState(element.label || '');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fontMode = useUIStore((state) => state.fontMode);
+  const themeMode = useUIStore((state) => state.themeMode);
+  const hideMedia = useUIStore((state) => state.hideMedia);
+  const anonymousMode = useUIStore((state) => state.anonymousMode);
+
+  // Focus input when entering edit mode
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      setEditValue(element.label || '');
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing, element.label]);
+
+  // Handle input key events
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') {
+      onLabelChange?.(editValue);
+      onStopEditing?.();
+    } else if (e.key === 'Escape') {
+      setEditValue(element.label || '');
+      onStopEditing?.();
+    }
+  };
+
+  // Handle input blur
+  const handleInputBlur = () => {
+    onLabelChange?.(editValue);
+    onStopEditing?.();
+  };
+
+  // Use custom dimensions if set, otherwise calculate from base size
+  const sizeMap = {
+    small: 40,
+    medium: 56,
+    large: 72,
+  };
+  const baseSize =
+    typeof element.visual.size === 'number'
+      ? element.visual.size
+      : sizeMap[element.visual.size];
+
+  // Calculate default dimensions
+  // Note: hasThumbnail doesn't depend on hideMedia - we still show thumbnail but blur it
+  const hasThumbnail = Boolean(thumbnail);
+
+  const getDefaultDimensions = () => {
+    if (element.visual.customWidth && element.visual.customHeight) {
+      return {
+        width: element.visual.customWidth,
+        height: element.visual.customHeight,
+      };
+    }
+    if (hasThumbnail) {
+      return {
+        width: Math.max(baseSize * 1.2, 96),
+        height: Math.max(baseSize * 1.2, 96),
+      };
+    }
+
+    // Calculate size based on label
+    const label = element.label || 'Sans nom';
+    const labelLength = label.length;
+
+    // Estimate text width (average 7px per character + padding)
+    const estimatedTextWidth = labelLength * 7 + 24;
+
+    const shape = element.visual.shape;
+
+    if (shape === 'rectangle') {
+      // Rectangle: expand horizontally to fit text
+      const width = Math.max(estimatedTextWidth, baseSize, 80);
+      const height = Math.max(baseSize * 0.6, 36);
+      return { width: Math.min(width, 250), height };
+    }
+
+    if (shape === 'circle' || shape === 'hexagon') {
+      // Circle/Hexagon: need to be big enough to contain text
+      // Diameter should accommodate text width with some margin
+      const size = Math.max(estimatedTextWidth * 0.8, baseSize, 50);
+      return { width: Math.min(size, 150), height: Math.min(size, 150) };
+    }
+
+    if (shape === 'diamond') {
+      // Diamond: rotated 45°, needs more space
+      const size = Math.max(estimatedTextWidth * 0.9, baseSize, 60);
+      return { width: Math.min(size, 150), height: Math.min(size, 150) };
+    }
+
+    // Square or default
+    const size = Math.max(estimatedTextWidth * 0.7, baseSize, 50);
+    return { width: Math.min(size, 150), height: Math.min(size, 150) };
+  };
+
+  const defaultDimensions = getDefaultDimensions();
+
+  // Local state for live resize preview
+  const [dimensions, setDimensions] = useState(defaultDimensions);
+
+  // Sync with element data when it changes (e.g., after save)
+  useEffect(() => {
+    setDimensions(getDefaultDimensions());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [element.visual.customWidth, element.visual.customHeight, element.visual.shape, element.label, baseSize, hasThumbnail]);
+
+  // Shape styles with sketchy borders
+  const shapeStyles: Record<string, string> = {
+    circle: 'sketchy-circle',
+    square: 'sketchy-border',
+    diamond: 'sketchy-border rotate-45',
+    rectangle: 'sketchy-border',
+    hexagon: 'sketchy-border-soft',
+  };
+
+  // Handle visibility: show when hovered or selected
+  const handleOpacity = isHovered || isSelected ? 'opacity-100' : 'opacity-0';
+
+  // Live resize handler - updates visual preview
+  const handleResize = (_event: unknown, params: { width: number; height: number }) => {
+    setDimensions({ width: params.width, height: params.height });
+  };
+
+  // Final resize handler - persists to database
+  const handleResizeEnd = (_event: unknown, params: { width: number; height: number }) => {
+    if (onResize) {
+      onResize(params.width, params.height);
+    }
+  };
+
+  const { width, height } = dimensions;
+
+  return (
+    <div
+      className={`relative transition-opacity ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ width, height }}
+    >
+      {/* Node Resizer - only visible when selected */}
+      <NodeResizer
+        minWidth={MIN_WIDTH}
+        minHeight={MIN_HEIGHT}
+        isVisible={isSelected}
+        lineClassName="!border-accent"
+        handleClassName="!w-3 !h-3 !bg-accent !border-2 !border-white !rounded"
+        onResize={handleResize}
+        onResizeEnd={handleResizeEnd}
+      />
+
+      {/* 4 handles for free-form connections in all directions */}
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="top"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="left"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+
+      {/* Node body */}
+      <div
+        className={`
+          w-full h-full
+          flex flex-col items-center justify-center overflow-hidden
+          border-2 transition-all
+          ${hasThumbnail ? 'sketchy-border-soft' : shapeStyles[element.visual.shape]}
+          ${isSelected ? 'selection-ring' : 'node-shadow hover:node-shadow-hover'}
+        `}
+        style={{
+          backgroundColor: hasThumbnail
+            ? 'var(--color-bg-primary)'
+            : getThemeAwareColor(element.visual.color, themeMode === 'dark'),
+          borderColor: themeMode === 'dark' && !hasThumbnail
+            ? getThemeAwareColor(element.visual.borderColor, true)
+            : element.visual.borderColor,
+        }}
+      >
+        {hasThumbnail ? (
+          <>
+            {/* Thumbnail preview - using contain to show full image, blur if hideMedia */}
+            <div
+              className="flex-1 w-full bg-contain bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url(${thumbnail})`,
+                backgroundColor: 'var(--color-bg-secondary)',
+                filter: hideMedia ? 'blur(12px)' : undefined,
+              }}
+            />
+            {/* Filename label */}
+            <div className="w-full px-1 py-0.5 bg-bg-secondary border-t border-border-default flex-shrink-0">
+              {isEditing ? (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  onBlur={handleInputBlur}
+                  className="w-full text-[10px] text-text-primary text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
+                  style={{ fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined }}
+                />
+              ) : anonymousMode ? (
+                <RedactedText
+                  text={element.label || 'Sans nom'}
+                  className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                />
+              ) : (
+                <span
+                  className={`text-[10px] text-text-primary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: width > 120 ? 'normal' : 'nowrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {element.label || 'Sans nom'}
+                </span>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Diamond shape content needs to be counter-rotated */
+          <div
+            className={`
+              text-center px-2 overflow-hidden w-full
+              ${element.visual.shape === 'diamond' ? '-rotate-45' : ''}
+            `}
+          >
+            {isEditing ? (
+              <input
+                ref={inputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+                onBlur={handleInputBlur}
+                className="w-full text-xs font-medium text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
+                style={{
+                  color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
+                    ? '#111827'
+                    : '#ffffff',
+                  fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
+                }}
+              />
+            ) : anonymousMode ? (
+              <RedactedText
+                text={element.label || 'Sans nom'}
+                className={`text-xs font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              />
+            ) : (
+              <span
+                className={`text-xs font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                style={{
+                  color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
+                    ? '#111827'
+                    : '#ffffff',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: Math.max(1, Math.floor(height / 16)),
+                  WebkitBoxOrient: 'vertical',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {element.label || 'Sans nom'}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Size indicator during resize */}
+      {isSelected && (
+        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-text-tertiary bg-bg-primary px-1 sketchy-border panel-shadow whitespace-nowrap">
+          {Math.round(width)} x {Math.round(height)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper to determine if a color is light
+function isLightColor(color: string): boolean {
+  if (color.startsWith('var(')) return true; // CSS variables assumed light
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return true;
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 128;
+}
+
+// Helper to get color brightness (0-255)
+function getColorBrightness(color: string): number {
+  if (color.startsWith('var(')) return 200; // CSS variables assumed light
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return 200;
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+// Darken a color for dark mode
+function darkenColor(color: string, amount: number = 0.6): string {
+  if (color.startsWith('var(')) return '#3a3532'; // fallback dark color for CSS vars
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return '#3a3532';
+  const r = Math.round(parseInt(hex.substr(0, 2), 16) * amount);
+  const g = Math.round(parseInt(hex.substr(2, 2), 16) * amount);
+  const b = Math.round(parseInt(hex.substr(4, 2), 16) * amount);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+// Get theme-aware background color
+function getThemeAwareColor(color: string, isDarkMode: boolean): string {
+  if (!isDarkMode) return color;
+  // In dark mode, darken very light colors
+  const brightness = getColorBrightness(color);
+  if (brightness > 200) {
+    // Very light color (white, cream, light gray) -> use dark variant
+    return darkenColor(color, 0.25);
+  } else if (brightness > 150) {
+    // Light color -> moderate darkening
+    return darkenColor(color, 0.4);
+  }
+  // Already a medium/dark color, keep it
+  return color;
+}
+
+export const ElementNode = memo(ElementNodeComponent);

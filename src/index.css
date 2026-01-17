@@ -1,0 +1,331 @@
+/* Google Font - Handwritten style - must be before Tailwind */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* ============================================
+   LIGHT THEME (default)
+   ============================================ */
+@theme {
+  /* Canvas - warm cream/paper tones */
+  --color-bg-canvas: #faf8f5;
+  --color-bg-primary: #fffdf9;
+  --color-bg-secondary: #f7f4ef;
+  --color-bg-tertiary: #f0ece4;
+
+  /* Text - warm brown */
+  --color-text-primary: #3d3833;
+  --color-text-secondary: #6b6560;
+  --color-text-tertiary: #9a948d;
+
+  /* Borders - soft warm */
+  --color-border-default: #e8e3db;
+  --color-border-strong: #d4cec4;
+  --color-border-sketchy: #b8b0a4;
+
+  /* Accent - terracotta */
+  --color-accent: #e07a5f;
+  --color-accent-light: #fdf0ed;
+  --color-accent-hover: #c96a52;
+
+  /* Functional colors */
+  --color-success: #4a8c59;
+  --color-warning: #c9952c;
+  --color-error: #c75d5d;
+  --color-highlight: #fef3c7;
+
+  /* Node colors - more saturated for light mode */
+  --color-node-yellow: #fcd34d;
+  --color-node-pink: #f9a8d4;
+  --color-node-blue: #93c5fd;
+  --color-node-green: #86efac;
+  --color-node-orange: #fdba74;
+  --color-node-purple: #c4b5fd;
+  --color-node-red: #fca5a5;
+  --color-node-cyan: #67e8f9;
+  --color-node-lime: #bef264;
+}
+
+/* Light theme colors as CSS custom properties (for inline styles & SVG) */
+:root {
+  /* Base colors */
+  --color-bg-canvas: #faf8f5;
+  --color-bg-primary: #fffdf9;
+  --color-bg-secondary: #f7f4ef;
+  --color-bg-tertiary: #f0ece4;
+  --color-text-primary: #3d3833;
+  --color-text-secondary: #6b6560;
+  --color-text-tertiary: #9a948d;
+  --color-border-default: #e8e3db;
+  --color-border-strong: #d4cec4;
+  --color-border-sketchy: #b8b0a4;
+  --color-accent: #e07a5f;
+  --color-accent-light: #fdf0ed;
+  --color-accent-hover: #c96a52;
+  /* Node colors */
+  --color-node-yellow: #fcd34d;
+  --color-node-pink: #f9a8d4;
+  --color-node-blue: #93c5fd;
+  --color-node-green: #86efac;
+  --color-node-orange: #fdba74;
+  --color-node-purple: #c4b5fd;
+  --color-node-red: #fca5a5;
+  --color-node-cyan: #67e8f9;
+  --color-node-lime: #bef264;
+}
+
+/* ============================================
+   DARK THEME
+   ============================================ */
+html[data-theme="dark"] {
+  /* Canvas - dark warm tones */
+  --color-bg-canvas: #1a1816;
+  --color-bg-primary: #252220;
+  --color-bg-secondary: #2e2a27;
+  --color-bg-tertiary: #3a3532;
+
+  /* Text - warm light */
+  --color-text-primary: #f5f2ef;
+  --color-text-secondary: #b8b0a4;
+  --color-text-tertiary: #8a8279;
+
+  /* Borders - warm dark */
+  --color-border-default: #3d3833;
+  --color-border-strong: #4a4540;
+  --color-border-sketchy: #5a534c;
+
+  /* Accent - terracotta (slightly brighter for dark mode) */
+  --color-accent: #e8907a;
+  --color-accent-light: #3d2a25;
+  --color-accent-hover: #f0a08c;
+
+  /* Functional colors */
+  --color-success: #6fcf7f;
+  --color-warning: #f0c35a;
+  --color-error: #f07070;
+  --color-highlight: #4a3f2a;
+
+  /* Node colors - vibrant for dark mode */
+  --color-node-yellow: #fbbf24;
+  --color-node-pink: #f472b6;
+  --color-node-blue: #60a5fa;
+  --color-node-green: #4ade80;
+  --color-node-orange: #fb923c;
+  --color-node-purple: #a78bfa;
+  --color-node-red: #f87171;
+  --color-node-cyan: #22d3ee;
+  --color-node-lime: #a3e635;
+}
+
+/* Dark mode specific overrides */
+html[data-theme="dark"] .node-shadow {
+  box-shadow:
+    2px 3px 0 0 rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .node-shadow-hover {
+  box-shadow:
+    3px 4px 0 0 rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .panel-shadow {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] .modal-shadow {
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 10px 20px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Font System */
+:root {
+  --font-readable: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-handwritten: "Caveat", cursive;
+  font-family: var(--font-readable);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Handwritten mode - applies ONLY to canvas elements (nodes & edge labels) */
+.canvas-handwritten-text {
+  font-family: var(--font-handwritten);
+  font-size: 1.15em; /* Caveat needs slightly larger size */
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Reset button styles */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   SKETCHY / HAND-DRAWN EFFECT CLASSES
+   ============================================ */
+
+/* Slightly irregular borders - rectangle */
+.sketchy-border {
+  border-radius: 3px 4px 2px 5px / 4px 3px 5px 2px;
+}
+
+/* Slightly irregular borders - more rounded */
+.sketchy-border-soft {
+  border-radius: 6px 8px 5px 9px / 8px 6px 9px 5px;
+}
+
+/* Irregular circle effect */
+.sketchy-circle {
+  border-radius: 48% 52% 49% 51% / 52% 48% 51% 49%;
+}
+
+/* Paper/post-it shadow effect */
+.node-shadow {
+  box-shadow:
+    2px 3px 0 0 rgba(180, 176, 164, 0.25),
+    0 2px 8px rgba(61, 56, 51, 0.06);
+}
+
+/* Softer shadow for hover states */
+.node-shadow-hover {
+  box-shadow:
+    3px 4px 0 0 rgba(180, 176, 164, 0.3),
+    0 4px 12px rgba(61, 56, 51, 0.08);
+}
+
+/* Panel shadow - subtle paper stack effect */
+.panel-shadow {
+  box-shadow:
+    0 1px 3px rgba(61, 56, 51, 0.08),
+    0 1px 2px rgba(61, 56, 51, 0.06);
+}
+
+/* Modal shadow - floating paper */
+.modal-shadow {
+  box-shadow:
+    0 4px 6px rgba(61, 56, 51, 0.1),
+    0 10px 20px rgba(61, 56, 51, 0.15),
+    0 2px 4px rgba(61, 56, 51, 0.05);
+}
+
+/* Input focus glow - warm */
+.input-focus-glow:focus {
+  box-shadow: 0 0 0 3px rgba(224, 122, 95, 0.15);
+}
+
+/* Button hover glow */
+.btn-glow:hover {
+  box-shadow: 0 2px 8px rgba(224, 122, 95, 0.25);
+}
+
+/* Canvas dot pattern - warm gray */
+.canvas-dots {
+  background-image: radial-gradient(circle, #c9c4bc 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Selection ring - warm accent */
+.selection-ring {
+  box-shadow: 0 0 0 2px var(--color-accent), 0 0 0 4px rgba(224, 122, 95, 0.2);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+/* Toast slide-in animation */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Subtle pulse for focus mode indicator */
+@keyframes soft-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Warm card background */
+.bg-warm-card {
+  background: linear-gradient(to bottom right, var(--color-bg-primary), var(--color-bg-secondary));
+}
+
+/* Subtle texture overlay */
+.texture-paper {
+  position: relative;
+}
+
+.texture-paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+}
+
+/* Edge label background for whiteboard feel */
+.edge-label-bg {
+  fill: var(--color-bg-primary);
+  fill-opacity: 0.95;
+}
