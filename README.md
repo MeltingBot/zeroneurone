@@ -1,5 +1,9 @@
 # ZeroNeurone
 
+<p align="center">
+  <img src="media/zeroneurone.jpg" alt="ZeroNeurone" width="400">
+</p>
+
 **Outil d'amplification cognitive pour analystes et enqueteurs**
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
