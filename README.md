@@ -2,7 +2,7 @@
 
 **Outil d'amplification cognitive pour analystes et enqueteurs**
 
-Un tableau blanc infini avec des capacites d'analyse de graphe. Pensez : la simplicite d'Excalidraw + la profondeur analytique d'Anacrim.
+Un tableau blanc infini avec des capacites d'analyse de graphe.
 
 ![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -11,7 +11,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe. Pensez : la simp
 
 ## Philosophie
 
-- **L'humain reste aux commandes** — Pas d'actions automatiques, suggestions uniquement sur demande
+- **L'humain reste aux commandes** — Pas d'actions automatiques, Ni d'intelligence artificielle, suggestions uniquement sur demande
 - **100% local par defaut** — IndexedDB + OPFS, fonctionne hors-ligne, les donnees ne partent jamais sans action explicite
 - **Le visuel EST l'analyse** — Position spatiale, couleurs, formes portent un sens defini par l'utilisateur
 - **Zero ontologie imposee** — Les utilisateurs creent leurs propres concepts, pas de types d'entites forces
@@ -286,4 +286,4 @@ Les contributions sont les bienvenues ! N'hesitez pas a ouvrir une issue ou une 
 
 ## Licence
 
-[MIT](LICENSE) - Yann 2025
+[MIT](LICENSE) - Yann Pilpré 2025
