@@ -1,26 +1,49 @@
-import { useState, useCallback } from 'react';
-import { X, FileText, Download, Printer, FileCode } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { X, FileText, Download, Printer, FileCode, Camera, Loader, Braces } from 'lucide-react';
 import {
   reportService,
   type ReportFormat,
   type ReportOptions,
   DEFAULT_REPORT_OPTIONS,
 } from '../../services/reportService';
-import { useInvestigationStore } from '../../stores';
+import { useInvestigationStore, useViewStore, useUIStore } from '../../stores';
+import type { DisplayMode } from '../../types';
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Screenshot capture options (map/timeline have separate export system)
+interface ScreenshotOptions {
+  canvas: boolean;
+}
+
 export function ReportModal({ isOpen, onClose }: ReportModalProps) {
-  const { currentInvestigation, elements, links } = useInvestigationStore();
+  const { currentInvestigation, elements, links, assets } = useInvestigationStore();
+  const { displayMode, setDisplayMode } = useViewStore();
+  const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore();
 
   const [options, setOptions] = useState<ReportOptions>({
     ...DEFAULT_REPORT_OPTIONS,
     title: currentInvestigation?.name || '',
   });
+  const [screenshotOptions, setScreenshotOptions] = useState<ScreenshotOptions>({
+    canvas: false,
+  });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [captureStatus, setCaptureStatus] = useState<string>('');
+  const [showCaptureOverlay, setShowCaptureOverlay] = useState(false);
+
+  // Store original state to restore after capture
+  const originalStateRef = useRef({ displayMode, themeMode });
+
+  // Update refs when not generating
+  useEffect(() => {
+    if (!isGenerating) {
+      originalStateRef.current = { displayMode, themeMode };
+    }
+  }, [displayMode, themeMode, isGenerating]);
 
   const updateOption = useCallback(<K extends keyof ReportOptions>(
     key: K,
@@ -29,24 +52,119 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
     setOptions((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const updateScreenshotOption = useCallback((key: keyof ScreenshotOptions, value: boolean) => {
+    setScreenshotOptions((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // Wait for capture handler to be registered
+  const waitForHandler = async (mode: DisplayMode, maxWait = 5000): Promise<boolean> => {
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWait) {
+      // Get fresh reference to captureHandlers
+      const handlers = useUIStore.getState().captureHandlers;
+      if (handlers.has(mode)) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    console.error(`Handler for ${mode} not registered after ${maxWait}ms`);
+    return false;
+  };
+
+  // Capture a specific view (switches view if needed, hidden by overlay)
+  const captureViewScreenshot = async (mode: DisplayMode): Promise<string | null> => {
+    console.log(`Starting capture for ${mode}...`);
+
+    // Always switch to ensure the view is properly mounted and visible
+    setDisplayMode(mode);
+
+    // Wait for React to render the new view and Leaflet/React Flow to initialize
+    // This needs to be long enough for lazy-loaded components to mount
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Wait for handler to be available (component needs to mount and register)
+    const handlerReady = await waitForHandler(mode);
+    if (!handlerReady) {
+      console.error(`Handler for ${mode} never became available`);
+      return null;
+    }
+
+    // Extra delay for map tiles, canvas layout, and timeline rendering
+    const extraDelay = mode === 'map' ? 1000 : mode === 'timeline' ? 500 : 300;
+    await new Promise(resolve => setTimeout(resolve, extraDelay));
+
+    // Capture using fresh reference
+    console.log(`Calling captureView for ${mode}...`);
+    const result = await useUIStore.getState().captureView(mode);
+
+    if (!result) {
+      console.error(`Capture for ${mode} returned null`);
+    } else {
+      console.log(`Capture for ${mode} successful`);
+    }
+
+    return result;
+  };
+
   const handleGenerate = useCallback(async (format: ReportFormat, action: 'download' | 'print') => {
     if (!currentInvestigation) return;
 
+    const hasScreenshots = screenshotOptions.canvas;
+    const originalState = { ...originalStateRef.current };
+
     setIsGenerating(true);
+    if (hasScreenshots) {
+      setShowCaptureOverlay(true);
+      // Small delay to ensure overlay is visible before any changes
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
     try {
+      const finalOptions = { ...options };
+
+      // Force light theme for screenshots
+      if (hasScreenshots && themeMode !== 'light') {
+        setCaptureStatus('Passage en mode clair...');
+        setThemeMode('light');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      // Capture canvas screenshot
+      if (screenshotOptions.canvas) {
+        setCaptureStatus('Capture du graphe...');
+        finalOptions.canvasScreenshot = await captureViewScreenshot('canvas');
+      }
+
+      // Restore original view if we switched (use getState for fresh value)
+      const currentMode = useViewStore.getState().displayMode;
+      if (hasScreenshots && currentMode !== originalState.displayMode) {
+        setCaptureStatus('Restauration de la vue...');
+        setDisplayMode(originalState.displayMode);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      // Restore original theme
+      if (hasScreenshots && originalState.themeMode !== 'light') {
+        setCaptureStatus('Restauration du theme...');
+        setThemeMode(originalState.themeMode);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      setCaptureStatus('Generation du rapport...');
+
       const content = reportService.generate(
         format,
         currentInvestigation,
         elements,
         links,
-        options
+        assets,
+        finalOptions
       );
 
       if (action === 'print') {
-        // For print, always generate HTML
         const htmlContent = format === 'html'
           ? content
-          : reportService.generate('html', currentInvestigation, elements, links, options);
+          : reportService.generate('html', currentInvestigation, elements, links, assets, finalOptions);
         reportService.openForPrint(htmlContent);
       } else {
         const timestamp = new Date().toISOString().slice(0, 10);
@@ -55,21 +173,38 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
       }
     } finally {
       setIsGenerating(false);
+      setShowCaptureOverlay(false);
+      setCaptureStatus('');
     }
-  }, [currentInvestigation, elements, links, options]);
+  }, [currentInvestigation, elements, links, assets, options, screenshotOptions, displayMode, setDisplayMode, themeMode, setThemeMode, captureView, captureHandlers]);
 
   if (!isOpen) return null;
 
   return (
     <>
+      {/* Capture overlay - covers everything during screenshot capture */}
+      {showCaptureOverlay && (
+        <div className="fixed inset-0 z-[100] bg-bg-primary flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader size={32} className="animate-spin text-accent" />
+            <p className="text-sm text-text-primary font-medium">
+              {captureStatus || 'Preparation des captures...'}
+            </p>
+            <p className="text-xs text-text-tertiary">
+              Les vues sont ajustees pour afficher tous les elements
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/50"
+        className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-bg-primary rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-bg-primary rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
           <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
@@ -79,6 +214,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           <button
             onClick={onClose}
             className="p-1 text-text-tertiary hover:text-text-primary rounded"
+            disabled={isGenerating}
           >
             <X size={16} />
           </button>
@@ -97,6 +233,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               onChange={(e) => updateOption('title', e.target.value)}
               placeholder={currentInvestigation?.name}
               className="w-full px-3 py-2 text-sm border border-border-default rounded-lg bg-bg-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
+              disabled={isGenerating}
             />
           </div>
 
@@ -112,6 +249,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.includeDescription}
                   onChange={(e) => updateOption('includeDescription', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
                 <span className="text-text-primary">Description de l'enquete</span>
               </label>
@@ -121,6 +259,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.includeSummary}
                   onChange={(e) => updateOption('includeSummary', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
                 <span className="text-text-primary">Resume statistique</span>
               </label>
@@ -130,6 +269,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.includeInsights}
                   onChange={(e) => updateOption('includeInsights', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
                 <span className="text-text-primary">Analyse du graphe (clusters, centralite)</span>
               </label>
@@ -139,8 +279,9 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.includeTimeline}
                   onChange={(e) => updateOption('includeTimeline', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
-                <span className="text-text-primary">Chronologie</span>
+                <span className="text-text-primary">Chronologie des evenements</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -148,6 +289,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.includeElements}
                   onChange={(e) => updateOption('includeElements', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
                 <span className="text-text-primary">Liste des elements ({elements.length})</span>
               </label>
@@ -157,10 +299,62 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.includeLinks}
                   onChange={(e) => updateOption('includeLinks', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
                 <span className="text-text-primary">Liste des liens ({links.length})</span>
               </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={options.includeProperties}
+                  onChange={(e) => updateOption('includeProperties', e.target.checked)}
+                  className="rounded border-border-default"
+                  disabled={isGenerating}
+                />
+                <span className="text-text-primary">Proprietes personnalisees</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={options.includeFiles}
+                  onChange={(e) => updateOption('includeFiles', e.target.checked)}
+                  className="rounded border-border-default"
+                  disabled={isGenerating}
+                />
+                <span className="text-text-primary">Fichiers joints ({assets.length})</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={options.includeFiches}
+                  onChange={(e) => updateOption('includeFiches', e.target.checked)}
+                  className="rounded border-border-default"
+                  disabled={isGenerating}
+                />
+                <span className="text-text-primary">Fiches detaillees</span>
+              </label>
             </div>
+          </div>
+
+          {/* Screenshot options */}
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-text-secondary mb-2 flex items-center gap-1">
+              <Camera size={12} />
+              Capture d'ecran
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={screenshotOptions.canvas}
+                onChange={(e) => updateScreenshotOption('canvas', e.target.checked)}
+                disabled={isGenerating}
+                className="rounded border-border-default"
+              />
+              <span className="text-text-primary">Inclure le graphe</span>
+            </label>
+            <p className="text-xs text-text-tertiary mt-1">
+              Capture en pleine largeur, mode clair
+            </p>
           </div>
 
           {/* Element options */}
@@ -175,6 +369,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   checked={options.groupElementsByTag}
                   onChange={(e) => updateOption('groupElementsByTag', e.target.checked)}
                   className="rounded border-border-default"
+                  disabled={isGenerating}
                 />
                 <span className="text-text-primary">Grouper par tag</span>
               </label>
@@ -184,6 +379,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   value={options.sortElementsBy}
                   onChange={(e) => updateOption('sortElementsBy', e.target.value as ReportOptions['sortElementsBy'])}
                   className="px-2 py-1 text-sm border border-border-default rounded bg-bg-primary"
+                  disabled={isGenerating}
                 >
                   <option value="label">Nom</option>
                   <option value="date">Date</option>
@@ -201,10 +397,14 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               {[
                 options.includeDescription && 'la description',
                 options.includeSummary && 'un resume',
-                options.includeInsights && 'l\'analyse',
+                options.includeInsights && 'l\'analyse du graphe',
                 options.includeTimeline && 'la chronologie',
                 options.includeElements && `${elements.length} elements`,
                 options.includeLinks && `${links.length} liens`,
+                options.includeProperties && 'les proprietes',
+                options.includeFiles && `${assets.length} fichiers`,
+                options.includeFiches && 'les fiches detaillees',
+                screenshotOptions.canvas && 'capture du graphe',
               ].filter(Boolean).join(', ') || 'aucun contenu'}.
             </p>
           </div>
@@ -212,7 +412,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
         {/* Actions */}
         <div className="p-4 border-t border-border-default bg-bg-secondary shrink-0">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <button
               onClick={() => handleGenerate('html', 'download')}
               disabled={isGenerating}
@@ -230,6 +430,15 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               <span className="text-xs font-medium text-text-primary">Markdown</span>
             </button>
             <button
+              onClick={() => handleGenerate('extended-json', 'download')}
+              disabled={isGenerating}
+              className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+              title="Export JSON structure avec donnees enrichies"
+            >
+              <Braces size={20} className="text-text-secondary" />
+              <span className="text-xs font-medium text-text-primary">JSON+</span>
+            </button>
+            <button
               onClick={() => handleGenerate('html', 'print')}
               disabled={isGenerating}
               className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
@@ -239,7 +448,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
             </button>
           </div>
           <p className="text-xs text-text-tertiary text-center mt-2">
-            L'impression genere un PDF via le navigateur
+            JSON+: donnees structurees avec analyse du graphe
           </p>
         </div>
       </div>

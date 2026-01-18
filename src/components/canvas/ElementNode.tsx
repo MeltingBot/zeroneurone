@@ -150,8 +150,11 @@ function ElementNodeComponent({ data }: NodeProps) {
     square: 'sketchy-border',
     diamond: 'sketchy-border rotate-45',
     rectangle: 'sketchy-border',
-    hexagon: 'sketchy-border-soft',
+    hexagon: '', // Hexagon uses clip-path instead
   };
+
+  // Clip-path for hexagon shape
+  const hexagonClipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
 
   // Handle visibility: show when hovered or selected
   const handleOpacity = isHovered || isSelected ? 'opacity-100' : 'opacity-0';
@@ -230,6 +233,7 @@ function ElementNodeComponent({ data }: NodeProps) {
           borderColor: themeMode === 'dark' && !hasThumbnail
             ? getThemeAwareColor(element.visual.borderColor, true)
             : element.visual.borderColor,
+          clipPath: element.visual.shape === 'hexagon' && !hasThumbnail ? hexagonClipPath : undefined,
         }}
       >
         {hasThumbnail ? (
@@ -326,13 +330,6 @@ function ElementNodeComponent({ data }: NodeProps) {
           </div>
         )}
       </div>
-
-      {/* Size indicator during resize */}
-      {isSelected && (
-        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-text-tertiary bg-bg-primary px-1 sketchy-border panel-shadow whitespace-nowrap">
-          {Math.round(width)} x {Math.round(height)}
-        </div>
-      )}
     </div>
   );
 }

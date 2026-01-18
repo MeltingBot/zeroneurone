@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { useInvestigationStore, useSelectionStore, useUIStore } from '../../stores';
-import { Calendar, ArrowUpDown, ZoomIn, ZoomOut } from 'lucide-react';
+import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
+import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
+import html2canvas from 'html2canvas';
 
 interface TimelineItem {
   id: string;
@@ -13,6 +15,7 @@ interface TimelineItem {
   color: string;
   type: 'link' | 'event' | 'property';
   sourceId?: string; // For selection
+  isDimmed?: boolean; // For filter dimming
   // Thumbnail info from source element
   thumbLetter: string;
   thumbColor: string;
@@ -44,6 +47,39 @@ export function TimelineView() {
   const { selectElement, selectLink, selectedElementIds, selectedLinkIds } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
+  const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
+  const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+
+  // Calculate dimmed element IDs based on filters, focus, and insights highlighting
+  const dimmedElementIds = useMemo(() => {
+    // If insights highlighting is active, dim everything except highlighted elements
+    if (insightsHighlightedIds.size > 0) {
+      const dimmed = new Set<string>();
+      elements.forEach((el) => {
+        if (!insightsHighlightedIds.has(el.id)) {
+          dimmed.add(el.id);
+        }
+      });
+      return dimmed;
+    }
+
+    // If in focus mode, dim everything except focus element and neighbors
+    if (focusElementId) {
+      const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
+      const dimmed = new Set<string>();
+      elements.forEach((el) => {
+        if (!visibleIds.has(el.id)) {
+          dimmed.add(el.id);
+        }
+      });
+      return dimmed;
+    }
+
+    // Otherwise use filter-based dimming
+    return getDimmedElementIds(elements, filters, hiddenElementIds);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
 
   // View state
   const [zoom, setZoom] = useState(DEFAULT_ZOOM); // pixels per day
@@ -57,6 +93,8 @@ export function TimelineView() {
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartView, setDragStartView] = useState<Date>(new Date());
   const [newestFirst, setNewestFirst] = useState(false); // false = oldest at top (default)
+  const [showCausality, setShowCausality] = useState(false); // Show potential causal links
+  const [causalityMaxDays, setCausalityMaxDays] = useState(365); // Max days between events for causality
 
   // Build timeline items from links and element events
   const { items, timeBounds } = useMemo(() => {
@@ -73,6 +111,9 @@ export function TimelineView() {
       const toElement = elements.find(el => el.id === link.toId);
       if (!fromElement || !toElement) return;
 
+      // Skip if either element is hidden
+      if (hiddenElementIds.has(fromElement.id) || hiddenElementIds.has(toElement.id)) return;
+
       const startDate = new Date(link.dateRange.start);
       const endDate = link.dateRange.end ? new Date(link.dateRange.end) : now;
 
@@ -87,6 +128,9 @@ export function TimelineView() {
       const toLabel = toElement.label || 'Sans nom';
       const linkLabel = link.label || 'relation';
 
+      // Check if link should be dimmed (either connected element is dimmed)
+      const isLinkDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id);
+
       itemsList.push({
         id: `link-${link.id}`,
         label: `${fromLabel} → ${linkLabel} → ${toLabel}`,
@@ -96,6 +140,7 @@ export function TimelineView() {
         color: link.visual.color || '#6b7280',
         type: 'link',
         sourceId: link.id,
+        isDimmed: isLinkDimmed,
         thumbLetter: fromLabel.charAt(0).toUpperCase(),
         thumbColor: fromElement.visual.color,
         thumbShape: fromElement.visual.shape || 'circle',
@@ -105,7 +150,11 @@ export function TimelineView() {
 
     // 2. Process element events
     elements.forEach((element) => {
+      // Skip hidden elements
+      if (hiddenElementIds.has(element.id)) return;
       if (!element.events || element.events.length === 0) return;
+
+      const isElementDimmed = dimmedElementIds.has(element.id);
 
       element.events.forEach((event, index) => {
         if (!event.date) return;
@@ -136,6 +185,7 @@ export function TimelineView() {
           color: element.visual.color,
           type: 'event',
           sourceId: element.id,
+          isDimmed: isElementDimmed,
           thumbLetter: elementLabel.charAt(0).toUpperCase(),
           thumbColor: element.visual.color,
           thumbShape: element.visual.shape || 'circle',
@@ -146,7 +196,11 @@ export function TimelineView() {
 
     // 3. Process element properties with type "date"
     elements.forEach((element) => {
+      // Skip hidden elements
+      if (hiddenElementIds.has(element.id)) return;
       if (!element.properties || element.properties.length === 0) return;
+
+      const isElementDimmed = dimmedElementIds.has(element.id);
 
       element.properties.forEach((prop, index) => {
         if (prop.type !== 'date' || !prop.value) return;
@@ -169,6 +223,7 @@ export function TimelineView() {
           color: element.visual.color,
           type: 'property',
           sourceId: element.id,
+          isDimmed: isElementDimmed,
           thumbLetter: elementLabel.charAt(0).toUpperCase(),
           thumbColor: element.visual.color,
           thumbShape: element.visual.shape || 'circle',
@@ -196,7 +251,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links]);
+  }, [elements, links, hiddenElementIds, dimmedElementIds]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -225,6 +280,67 @@ export function TimelineView() {
     loadThumbnails();
   }, [items]);
 
+  // Register capture handler for report screenshots
+  useEffect(() => {
+    const captureHandler = async (): Promise<string | null> => {
+      console.log('Timeline capture: starting, items count:', items.length);
+
+      if (!containerRef.current) {
+        console.error('Timeline capture: containerRef not available');
+        return null;
+      }
+
+      if (items.length === 0) {
+        console.warn('Timeline capture: no items to display');
+        return null;
+      }
+
+      // Calculate zoom to fit all items in view
+      const containerWidth = containerRef.current.clientWidth || 800;
+      const timeRangeMs = timeBounds.max.getTime() - timeBounds.min.getTime();
+      const timeRangeDays = timeRangeMs / (24 * 60 * 60 * 1000);
+
+      // Calculate zoom to fit, with some padding
+      const targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, (containerWidth - 100) / timeRangeDays));
+
+      // Update view to show all items
+      setZoom(targetZoom);
+      setViewStart(timeBounds.min);
+
+      // Wait longer for render to complete
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Capture
+      const element = document.querySelector('[data-report-capture="timeline"]') as HTMLElement;
+      if (!element) {
+        console.error('Timeline capture: element not found');
+        return null;
+      }
+
+      console.log('Timeline capture: element found, capturing...');
+
+      try {
+        const canvas = await html2canvas(element, {
+          backgroundColor: '#faf8f5',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 5000,
+          foreignObjectRendering: false,
+        });
+        console.log('Timeline capture: success');
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        console.error('Timeline capture failed:', error);
+        return null;
+      }
+    };
+
+    registerCaptureHandler('timeline', captureHandler);
+    return () => unregisterCaptureHandler('timeline');
+  }, [items, timeBounds, registerCaptureHandler, unregisterCaptureHandler]);
+
   // Each item gets its own row for clarity
   // Sort order: oldest at top by default, or newest at top if newestFirst
   const itemsWithRows = useMemo(() => {
@@ -233,6 +349,58 @@ export function TimelineView() {
   }, [items, newestFirst]);
 
   const totalRows = items.length || 1;
+
+  // Compute potential causal connections between events of linked elements
+  const causalConnections = useMemo(() => {
+    if (!showCausality) return [];
+
+    const connections: Array<{
+      fromItem: typeof itemsWithRows[0];
+      toItem: typeof itemsWithRows[0];
+    }> = [];
+
+    // Build a set of linked element pairs for quick lookup
+    const linkedPairs = new Set<string>();
+    links.forEach((link) => {
+      linkedPairs.add(`${link.fromId}|${link.toId}`);
+      linkedPairs.add(`${link.toId}|${link.fromId}`); // Bidirectional
+    });
+
+    // Check if two elements are linked
+    const areLinked = (id1: string, id2: string) => linkedPairs.has(`${id1}|${id2}`);
+
+    // For each pair of items, check if they could have a causal relationship
+    for (let i = 0; i < itemsWithRows.length; i++) {
+      for (let j = 0; j < itemsWithRows.length; j++) {
+        if (i === j) continue;
+
+        const itemA = itemsWithRows[i];
+        const itemB = itemsWithRows[j];
+
+        // Skip if same source element
+        if (itemA.sourceId === itemB.sourceId) continue;
+
+        // Skip if elements are not linked
+        if (!itemA.sourceId || !itemB.sourceId) continue;
+        if (!areLinked(itemA.sourceId, itemB.sourceId)) continue;
+
+        // Check temporal order: A should end before or when B starts
+        const aEnd = itemA.end || itemA.start;
+        const bStart = itemB.start;
+
+        // A ends before B starts (or same day) = potential causality
+        if (aEnd.getTime() <= bStart.getTime()) {
+          // Check if within the max days threshold
+          const daysDiff = (bStart.getTime() - aEnd.getTime()) / (24 * 60 * 60 * 1000);
+          if (daysDiff <= causalityMaxDays) {
+            connections.push({ fromItem: itemA, toItem: itemB });
+          }
+        }
+      }
+    }
+
+    return connections;
+  }, [showCausality, itemsWithRows, links, causalityMaxDays]);
 
   // Convert date to X position
   const dateToX = useCallback((date: Date): number => {
@@ -263,13 +431,28 @@ export function TimelineView() {
     let step: 'day' | 'week' | 'month' | 'year';
     let format: Intl.DateTimeFormatOptions;
 
-    if (daysVisible < 60) {
+    // Pixel-based step selection for smooth transitions
+    // Choose smallest time unit that gives adequate label spacing
+    const MIN_LABEL_SPACING = 35; // minimum pixels between labels
+
+    const daySpacing = zoom; // pixels per day
+    const weekSpacing = zoom * 7; // pixels per week
+    const monthSpacing = zoom * 30; // pixels per month (approx)
+
+    if (daySpacing >= MIN_LABEL_SPACING) {
+      // Enough space for daily labels
       step = 'day';
       format = { day: 'numeric', month: 'short' };
-    } else if (daysVisible < 365) {
+    } else if (weekSpacing >= MIN_LABEL_SPACING) {
+      // Enough space for weekly labels
+      step = 'week';
+      format = { day: 'numeric', month: 'short' };
+    } else if (monthSpacing >= MIN_LABEL_SPACING) {
+      // Enough space for monthly labels
       step = 'month';
       format = { month: 'short', year: 'numeric' };
     } else {
+      // Fall back to yearly
       step = 'year';
       format = { year: 'numeric' };
     }
@@ -283,6 +466,12 @@ export function TimelineView() {
     } else if (step === 'month') {
       current.setDate(1);
       current.setHours(0, 0, 0, 0);
+    } else if (step === 'week') {
+      // Align to Monday
+      const dayOfWeek = current.getDay();
+      const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      current.setDate(current.getDate() + daysToMonday);
+      current.setHours(0, 0, 0, 0);
     } else {
       current.setHours(0, 0, 0, 0);
     }
@@ -292,7 +481,8 @@ export function TimelineView() {
       if (x >= -50 && x <= containerWidth + 50) {
         const isMain = step === 'year' ||
                        (step === 'month' && current.getMonth() === 0) ||
-                       (step === 'day' && current.getDate() === 1);
+                       (step === 'week' && current.getDate() <= 7) ||
+                       (step === 'day' && (current.getDate() === 1 || current.getDay() === 1)); // 1st of month or Monday
         labels.push({
           x,
           label: current.toLocaleDateString('fr-FR', format),
@@ -305,8 +495,10 @@ export function TimelineView() {
         current.setFullYear(current.getFullYear() + 1);
       } else if (step === 'month') {
         current.setMonth(current.getMonth() + 1);
+      } else if (step === 'week') {
+        current.setDate(current.getDate() + 7);
       } else {
-        current.setDate(current.getDate() + 7); // Weekly for days
+        current.setDate(current.getDate() + 1); // Daily
       }
     }
 
@@ -502,6 +694,43 @@ export function TimelineView() {
               <ArrowUpDown size={10} />
               {newestFirst ? 'Recent ↑' : 'Ancien ↑'}
             </button>
+            <div className="w-px h-4 bg-border-default mx-1" />
+            <button
+              onClick={() => setShowCausality(!showCausality)}
+              className={`px-2 h-6 text-[10px] border flex items-center gap-1 ${
+                showCausality
+                  ? 'bg-accent text-white border-accent rounded-l'
+                  : 'text-text-secondary hover:bg-bg-tertiary border-border-default rounded'
+              }`}
+              title="Afficher les causalités potentielles entre événements d'éléments liés"
+            >
+              <GitBranch size={10} />
+              Causalités
+            </button>
+            {/* Causality time threshold presets */}
+            {showCausality && (
+              <div className="flex items-center border border-l-0 border-border-default rounded-r overflow-hidden">
+                {[
+                  { label: '30j', days: 30 },
+                  { label: '90j', days: 90 },
+                  { label: '1an', days: 365 },
+                  { label: '5ans', days: 1825 },
+                ].map((preset) => (
+                  <button
+                    key={preset.days}
+                    onClick={() => setCausalityMaxDays(preset.days)}
+                    className={`px-1.5 h-6 text-[9px] ${
+                      causalityMaxDays === preset.days
+                        ? 'bg-accent/20 text-accent font-medium'
+                        : 'text-text-tertiary hover:bg-bg-tertiary'
+                    }`}
+                    title={`Max ${preset.label} entre événements`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         }
       />
@@ -510,6 +739,7 @@ export function TimelineView() {
       <div
         ref={containerRef}
         className="flex-1 overflow-hidden relative select-none"
+        data-report-capture="timeline"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -541,15 +771,6 @@ export function TimelineView() {
           className="absolute left-0 right-0 bg-bg-secondary"
           style={{ top: AXIS_HEIGHT, height: contentHeight }}
         >
-          {/* Grid lines */}
-          {axisLabels.filter(l => l.isMain).map((label, i) => (
-            <div
-              key={i}
-              className="absolute top-0 bottom-0 w-px bg-border-default opacity-30"
-              style={{ left: label.x }}
-            />
-          ))}
-
           {/* Today marker */}
           <div
             className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
@@ -577,7 +798,7 @@ export function TimelineView() {
               return (
                 <div
                   key={item.id}
-                  className={`absolute cursor-pointer transition-shadow ${
+                  className={`absolute cursor-pointer transition-shadow transition-opacity ${
                     selected ? 'ring-2 ring-accent ring-offset-1' : ''
                   }`}
                   style={{
@@ -585,6 +806,7 @@ export function TimelineView() {
                     top: y,
                     width: ROW_HEIGHT,
                     height: ROW_HEIGHT,
+                    opacity: item.isDimmed ? 0.3 : 1,
                   }}
                   onClick={(e) => handleItemClick(item, e)}
                   title={anonymousMode ? '' : `${item.label}${item.sublabel ? ` (${item.sublabel})` : ''}\n${formatDateRange(item.start, item.end)}`}
@@ -615,7 +837,7 @@ export function TimelineView() {
             return (
               <div
                 key={item.id}
-                className={`absolute rounded cursor-pointer transition-shadow ${
+                className={`absolute cursor-pointer transition-all ${
                   selected ? 'ring-2 ring-accent ring-offset-1' : ''
                 }`}
                 style={{
@@ -623,16 +845,24 @@ export function TimelineView() {
                   top: y,
                   width: width,
                   height: ROW_HEIGHT,
-                  backgroundColor: `${item.color}25`,
-                  borderLeft: `3px solid ${item.color}`,
-                  borderRadius: '2px',
+                  opacity: item.isDimmed ? 0.3 : 1,
                 }}
                 onClick={(e) => handleItemClick(item, e)}
                 title={anonymousMode ? '' : `${item.label}${item.sublabel ? ` (${item.sublabel})` : ''}\n${formatDateRange(item.start, item.end)}`}
               >
+                {/* Period bar with clear border frame */}
                 <div
-                  className="h-full flex items-center overflow-hidden gap-2 pr-2"
-                  style={{ paddingLeft: contentOffset + 6 }}
+                  className="absolute inset-0 rounded"
+                  style={{
+                    backgroundColor: `${item.color}25`,
+                    border: selected ? 'none' : `1.5px solid ${item.color}`,
+                    boxShadow: selected ? undefined : `inset 0 0 0 1px ${item.color}30`,
+                  }}
+                />
+                {/* Content */}
+                <div
+                  className="relative h-full flex items-center overflow-hidden gap-2 pr-3"
+                  style={{ paddingLeft: contentOffset + 8 }}
                 >
                   {/* Thumbnail - image or shape (blur images if hideMedia enabled) */}
                   <ItemThumbnail
@@ -659,6 +889,93 @@ export function TimelineView() {
               </div>
             );
           })}
+
+          {/* Causal connections - rendered as SVG curves */}
+          {showCausality && causalConnections.length > 0 && (
+            <svg
+              className="absolute inset-0 pointer-events-none z-5"
+              style={{ overflow: 'visible' }}
+            >
+              <defs>
+                <marker
+                  id="causal-arrow"
+                  markerWidth="6"
+                  markerHeight="6"
+                  refX="5"
+                  refY="3"
+                  orient="auto"
+                >
+                  <path
+                    d="M0,0 L6,3 L0,6 L1,3 Z"
+                    fill="var(--color-accent)"
+                    fillOpacity="0.6"
+                  />
+                </marker>
+              </defs>
+              {causalConnections.map((conn, idx) => {
+                // Calculate positions
+                const fromEndX = dateToX(conn.fromItem.end || conn.fromItem.start);
+                const fromY = ROW_GAP + conn.fromItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
+                const toStartX = dateToX(conn.toItem.start);
+                const toY = ROW_GAP + conn.toItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
+
+                // Calculate control point for a nice curve
+                const midX = (fromEndX + toStartX) / 2;
+
+                // Create a curved path
+                const path = `M ${fromEndX} ${fromY}
+                              C ${midX} ${fromY},
+                                ${midX} ${toY},
+                                ${toStartX - 8} ${toY}`;
+
+                // Calculate days between events for tooltip
+                const fromEnd = conn.fromItem.end || conn.fromItem.start;
+                const daysBetween = Math.round((conn.toItem.start.getTime() - fromEnd.getTime()) / (24 * 60 * 60 * 1000));
+                const tooltip = `Causalité potentielle\n${conn.fromItem.label}\n→ ${conn.toItem.label}\n(${daysBetween} jour${daysBetween > 1 ? 's' : ''} après)`;
+
+                return (
+                  <g key={idx} className="cursor-help" style={{ pointerEvents: 'auto' }}>
+                    {/* Invisible wider path for easier hover */}
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth="12"
+                    >
+                      <title>{tooltip}</title>
+                    </path>
+                    {/* Visible path */}
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="var(--color-accent)"
+                      strokeWidth="1.5"
+                      strokeOpacity="0.4"
+                      strokeDasharray="4 3"
+                      markerEnd="url(#causal-arrow)"
+                    >
+                      <title>{tooltip}</title>
+                    </path>
+                  </g>
+                );
+              })}
+            </svg>
+          )}
+
+          {/* Grid lines - rendered on top of items with pointer-events-none */}
+          <div className="absolute inset-0 pointer-events-none z-10">
+            {axisLabels.map((label, i) => (
+              <div
+                key={i}
+                className={`absolute top-0 bottom-0 ${
+                  label.isMain
+                    ? 'w-px bg-text-tertiary/40'
+                    : 'w-px bg-text-tertiary/20'
+                }`}
+                style={{ left: label.x }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -699,8 +1016,10 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
     square: 'rounded-sm',
     diamond: 'rounded-sm rotate-45',
     rectangle: 'rounded-sm',
-    hexagon: 'rounded-sm',
+    hexagon: '', // Uses clip-path
   };
+
+  const hexagonClipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
 
   return (
     <div
@@ -709,6 +1028,7 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
         ...sizeStyle,
         backgroundColor: color,
         fontSize: `${fontSize}px`,
+        clipPath: shape === 'hexagon' ? hexagonClipPath : undefined,
       }}
     >
       <span className={shape === 'diamond' ? '-rotate-45' : ''}>

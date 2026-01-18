@@ -9,3 +9,5 @@ export { AssetsPanel } from './AssetsPanel';
 export { FiltersPanel } from './FiltersPanel';
 export { ViewsPanel } from './ViewsPanel';
 export { InsightsPanel } from './InsightsPanel';
+export { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
+export { StatsOverview } from './StatsOverview';

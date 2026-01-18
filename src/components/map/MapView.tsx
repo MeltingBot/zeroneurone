@@ -4,7 +4,9 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { useInvestigationStore, useSelectionStore, useUIStore } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
+import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import html2canvas from 'html2canvas';
 import type { Element } from '../../types';
 import { MapPin, Clock, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -57,6 +59,39 @@ export function MapView() {
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
+  const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
+  const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+
+  // Calculate dimmed element IDs based on filters, focus, and insights highlighting
+  const dimmedElementIds = useMemo(() => {
+    // If insights highlighting is active, dim everything except highlighted elements
+    if (insightsHighlightedIds.size > 0) {
+      const dimmed = new Set<string>();
+      elements.forEach((el) => {
+        if (!insightsHighlightedIds.has(el.id)) {
+          dimmed.add(el.id);
+        }
+      });
+      return dimmed;
+    }
+
+    // If in focus mode, dim everything except focus element and neighbors
+    if (focusElementId) {
+      const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
+      const dimmed = new Set<string>();
+      elements.forEach((el) => {
+        if (!visibleIds.has(el.id)) {
+          dimmed.add(el.id);
+        }
+      });
+      return dimmed;
+    }
+
+    // Otherwise use filter-based dimming
+    return getDimmedElementIds(elements, filters, hiddenElementIds);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
 
   // Create asset lookup map for thumbnails
   const assetMap = useMemo(() => {
@@ -149,10 +184,14 @@ export function MapView() {
   );
 
   // Get elements with resolved geo positions (considering temporal mode)
+  // Filter out hidden elements
   const resolvedGeoElements = useMemo((): ResolvedGeoElement[] => {
     const result: ResolvedGeoElement[] = [];
 
     elements.forEach((el) => {
+      // Skip hidden elements
+      if (hiddenElementIds.has(el.id)) return;
+
       const position = getPositionAtTime(el, selectedDate);
       if (position) {
         result.push({
@@ -165,7 +204,7 @@ export function MapView() {
     });
 
     return result;
-  }, [elements, selectedDate, getPositionAtTime]);
+  }, [elements, selectedDate, getPositionAtTime, hiddenElementIds]);
 
   // Legacy geoElements for compatibility (elements with current geo)
   const geoElements = useMemo(() => {
@@ -193,7 +232,7 @@ export function MapView() {
   }, [assetMap]);
 
   // Create custom marker HTML with name and thumbnail
-  const createMarkerHtml = useCallback((element: Element, isSelected: boolean): string => {
+  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean): string => {
     const color = element.visual.color || '#f5f5f4';
     const borderColor = element.visual.borderColor || '#a8a29e';
     const thumbnail = getThumbnail(element);
@@ -209,6 +248,9 @@ export function MapView() {
       ? 'box-shadow: 0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3);'
       : 'box-shadow: 0 1px 4px rgba(0,0,0,0.2);';
 
+    // Dimmed style for filtered elements
+    const dimmedStyle = isDimmed ? 'opacity: 0.3;' : '';
+
     if (thumbnail) {
       // Marker with thumbnail - compact card (blur if hideMedia)
       const blurStyle = hideMedia ? 'filter: blur(8px);' : '';
@@ -219,6 +261,7 @@ export function MapView() {
           border-radius: 4px;
           overflow: hidden;
           ${selectedStyle}
+          ${dimmedStyle}
           width: 48px;
         ">
           <div style="
@@ -256,6 +299,7 @@ export function MapView() {
           flex-direction: column;
           align-items: center;
           gap: 2px;
+          ${dimmedStyle}
         ">
           <div style="
             width: 16px;
@@ -285,13 +329,13 @@ export function MapView() {
   }, [getThumbnail, anonymousMode, hideMedia]);
 
   // Create custom icon
-  const createIcon = useCallback((element: Element, isSelected: boolean) => {
+  const createIcon = useCallback((element: Element, isSelected: boolean, isDimmed: boolean) => {
     const thumbnail = getThumbnail(element);
     const hasThumb = !!thumbnail;
 
     return L.divIcon({
       className: 'custom-marker-container',
-      html: createMarkerHtml(element, isSelected),
+      html: createMarkerHtml(element, isSelected, isDimmed),
       iconSize: hasThumb ? [48, 52] : [60, 36],
       iconAnchor: hasThumb ? [24, 52] : [30, 36],
     });
@@ -399,12 +443,13 @@ export function MapView() {
     // Add or update markers
     geoElements.forEach((element) => {
       const isSelected = selectedElementIds.has(element.id);
+      const isDimmed = dimmedElementIds.has(element.id);
       const existingMarker = existingMarkers.get(element.id);
 
       if (existingMarker) {
         // Update position and icon
         existingMarker.setLatLng([element.geo.lat, element.geo.lng]);
-        existingMarker.setIcon(createIcon(element, isSelected));
+        existingMarker.setIcon(createIcon(element, isSelected, isDimmed));
         // Update title (hover tooltip) based on anonymous mode
         const markerElement = existingMarker.getElement();
         if (markerElement) {
@@ -415,7 +460,7 @@ export function MapView() {
       } else {
         // Create new marker (draggable)
         const marker = L.marker([element.geo.lat, element.geo.lng], {
-          icon: createIcon(element, isSelected),
+          icon: createIcon(element, isSelected, isDimmed),
           title: anonymousMode ? '' : element.label,
           zIndexOffset: isSelected ? 1000 : 0,
           draggable: true,
@@ -441,7 +486,7 @@ export function MapView() {
         existingMarkers.set(element.id, marker);
       }
     });
-  }, [geoElements, selectedElementIds, createIcon, selectElement, updateElement, anonymousMode, hideMedia]);
+  }, [geoElements, selectedElementIds, dimmedElementIds, createIcon, selectElement, updateElement, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
   const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {
@@ -515,6 +560,10 @@ export function MapView() {
 
       if (!fromMarker || !toMarker) return;
 
+      // Check if link should be dimmed (either connected element is dimmed)
+      const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
+      const linkOpacity = isLinkDimmed ? 0.3 : 1;
+
       // Skip if both markers are in the same cluster (link would be invisible/redundant)
       if (areInSameCluster(fromMarker, toMarker)) {
         const existingLayer = existingLinkLayers.get(link.id);
@@ -556,10 +605,10 @@ export function MapView() {
       if (existingLinkLayer) {
         // Update existing layers with new positions
         existingLinkLayer.outline.setLatLngs([fromLatLng, toLatLng]);
-        existingLinkLayer.outline.setStyle({ weight: weight + 4, opacity: 0.9 });
+        existingLinkLayer.outline.setStyle({ weight: weight + 4, opacity: 0.9 * linkOpacity });
 
         existingLinkLayer.line.setLatLngs([fromLatLng, toLatLng]);
-        existingLinkLayer.line.setStyle({ color, weight, dashArray, opacity: 1 });
+        existingLinkLayer.line.setStyle({ color, weight, dashArray, opacity: linkOpacity });
 
         // Update tooltip content (label may have changed or anonymousMode toggled)
         const existingTooltip = existingLinkLayer.line.getTooltip();
@@ -588,11 +637,12 @@ export function MapView() {
           if (existingLinkLayer.arrowEnd) {
             existingLinkLayer.arrowEnd.setLatLng(endPos);
             existingLinkLayer.arrowEnd.setIcon(createArrowIcon(color, angle));
-            existingLinkLayer.arrowEnd.setOpacity(1);
+            existingLinkLayer.arrowEnd.setOpacity(linkOpacity);
           } else {
             existingLinkLayer.arrowEnd = L.marker(endPos, {
               icon: createArrowIcon(color, angle),
               interactive: false,
+              opacity: linkOpacity,
             }).addTo(map);
           }
         } else if (existingLinkLayer.arrowEnd) {
@@ -606,11 +656,12 @@ export function MapView() {
           if (existingLinkLayer.arrowStart) {
             existingLinkLayer.arrowStart.setLatLng(startPos);
             existingLinkLayer.arrowStart.setIcon(createArrowIcon(color, angle + 180));
-            existingLinkLayer.arrowStart.setOpacity(1);
+            existingLinkLayer.arrowStart.setOpacity(linkOpacity);
           } else {
             existingLinkLayer.arrowStart = L.marker(startPos, {
               icon: createArrowIcon(color, angle + 180),
               interactive: false,
+              opacity: linkOpacity,
             }).addTo(map);
           }
         } else if (existingLinkLayer.arrowStart) {
@@ -622,7 +673,7 @@ export function MapView() {
         const outline = L.polyline([fromLatLng, toLatLng], {
           color: '#ffffff',
           weight: weight + 4,
-          opacity: 0.9,
+          opacity: 0.9 * linkOpacity,
           lineCap: 'round',
           lineJoin: 'round',
         });
@@ -633,7 +684,7 @@ export function MapView() {
           color,
           weight,
           dashArray,
-          opacity: 1,
+          opacity: linkOpacity,
           lineCap: 'round',
           lineJoin: 'round',
           className: 'link-line',
@@ -665,6 +716,7 @@ export function MapView() {
           arrowEnd = L.marker(endPos, {
             icon: createArrowIcon(color, angle),
             interactive: false,
+            opacity: linkOpacity,
           }).addTo(map);
         }
 
@@ -673,13 +725,14 @@ export function MapView() {
           arrowStart = L.marker(startPos, {
             icon: createArrowIcon(color, angle + 180),
             interactive: false,
+            opacity: linkOpacity,
           }).addTo(map);
         }
 
         existingLinkLayers.set(link.id, { outline, line, arrowStart, arrowEnd });
       }
     });
-  }, [geoLinks, selectLink, clusteringVersion, getVisibleLatLng, areInSameCluster, calculateAngle, createArrowIcon, getPointOnLine, anonymousMode]);
+  }, [geoLinks, selectLink, clusteringVersion, getVisibleLatLng, areInSameCluster, calculateAngle, createArrowIcon, getPointOnLine, anonymousMode, dimmedElementIds]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {
@@ -710,6 +763,63 @@ export function MapView() {
       mapRef.current.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [geoElements, selectedElementIds]);
+
+  // Register capture handler for report screenshots
+  useEffect(() => {
+    const captureHandler = async (): Promise<string | null> => {
+      console.log('Map capture: starting, geoElements count:', geoElements.length);
+
+      if (!mapRef.current) {
+        console.error('Map capture: mapRef not available');
+        return null;
+      }
+
+      // Fit bounds to show all elements
+      if (geoElements.length > 0) {
+        const bounds = L.latLngBounds(
+          geoElements.map((el) => [el.geo.lat, el.geo.lng] as L.LatLngTuple)
+        );
+        mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: false });
+        // Force map to update multiple times to ensure rendering
+        mapRef.current.invalidateSize();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        mapRef.current.invalidateSize();
+      }
+
+      // Wait for tiles to load (longer wait for map tiles)
+      console.log('Map capture: waiting for tiles to load...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Capture
+      const element = document.querySelector('[data-report-capture="map"]') as HTMLElement;
+      if (!element) {
+        console.error('Map capture: element not found');
+        return null;
+      }
+
+      console.log('Map capture: element found, capturing...');
+
+      try {
+        const canvas = await html2canvas(element, {
+          backgroundColor: '#e5e3df', // Match map background
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 10000, // Allow more time for tile images
+          foreignObjectRendering: false, // Better compatibility
+        });
+        console.log('Map capture: success');
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        console.error('Map capture failed:', error);
+        return null;
+      }
+    };
+
+    registerCaptureHandler('map', captureHandler);
+    return () => unregisterCaptureHandler('map');
+  }, [geoElements, registerCaptureHandler, unregisterCaptureHandler]);
 
   // No geo elements
   if (geoElements.length === 0) {
@@ -909,7 +1019,7 @@ export function MapView() {
       )}
 
       {/* Map container */}
-      <div ref={mapContainerRef} className="flex-1" />
+      <div ref={mapContainerRef} className="flex-1" data-report-capture="map" />
 
       {/* Custom styles */}
       <style>{`

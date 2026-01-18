@@ -134,7 +134,6 @@ export function InvestigationPage() {
 
   const selectionCount = selectedElementIds.size + selectedLinkIds.size;
 
-  // Render main view based on displayMode
   // Loading fallback for lazy components
   const ViewLoader = () => (
     <div className="h-full flex items-center justify-center bg-bg-secondary">
@@ -145,6 +144,7 @@ export function InvestigationPage() {
     </div>
   );
 
+  // Render only the active view (React Flow/Leaflet need visible container)
   const renderMainView = () => {
     const view = (() => {
       switch (displayMode) {

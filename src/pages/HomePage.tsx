@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, FolderOpen, Upload } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Tags } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState } from '../components/common';
 import { InvestigationCard } from '../components/home';
@@ -8,6 +8,7 @@ import {
   ConfirmDeleteModal,
   RenameModal,
   ImportModal,
+  TagSetManagerModal,
 } from '../components/modals';
 import { useInvestigationStore } from '../stores';
 
@@ -24,6 +25,7 @@ export function HomePage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isTagSetModalOpen, setIsTagSetModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<string | null>(null);
 
@@ -58,6 +60,14 @@ export function HomePage() {
       <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary panel-shadow">
         <h1 className="text-sm font-semibold text-text-primary">zeroneurone</h1>
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsTagSetModalOpen(true)}
+          >
+            <Tags size={16} />
+            Gérer les tags
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -140,6 +150,11 @@ export function HomePage() {
       <ImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+      />
+
+      <TagSetManagerModal
+        isOpen={isTagSetModalOpen}
+        onClose={() => setIsTagSetModalOpen(false)}
       />
     </Layout>
   );

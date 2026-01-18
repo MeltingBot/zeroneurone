@@ -1,9 +1,10 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
-import type { Link, LinkStyle, LinkDirection, Confidence } from '../../types';
+import type { Link, LinkStyle, LinkDirection, Confidence, Property } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
 import { TagsEditor } from './TagsEditor';
+import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { DEFAULT_COLORS } from '../../types';
 import { AccordionSection, MarkdownEditor } from '../common';
 
@@ -47,6 +48,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const [label, setLabel] = useState(link.label);
   const [notes, setNotes] = useState(link.notes);
   const [source, setSource] = useState(link.source);
+
+  // State for suggested properties popup
+  const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
   // Track which link we're editing to prevent cross-link saves
   const editingLinkIdRef = useRef<string | null>(null);
@@ -156,6 +160,21 @@ export function LinkDetail({ link }: LinkDetailProps) {
       addExistingTag(tag);
     },
     [addExistingTag]
+  );
+
+  // Handle TagSet tag added (to show suggested properties popup)
+  const handleTagSetTagAdded = useCallback((tagSetName: string) => {
+    setSuggestedPropsTagSet(tagSetName);
+  }, []);
+
+  // Handle applying suggested properties from TagSet
+  const handleApplySuggestedProperties = useCallback(
+    (properties: Property[]) => {
+      updateLink(link.id, {
+        properties: [...link.properties, ...properties],
+      });
+    },
+    [link.id, link.properties, updateLink]
   );
 
   // Badges for accordion sections
@@ -280,6 +299,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
           onChange={handleTagsChange}
           suggestions={currentInvestigation?.settings.existingTags}
           onNewTag={handleNewTag}
+          onTagSetTagAdded={handleTagSetTagAdded}
         />
       </AccordionSection>
 
@@ -488,6 +508,16 @@ export function LinkDetail({ link }: LinkDetailProps) {
           </div>
         </div>
       </AccordionSection>
+
+      {/* Suggested Properties Popup */}
+      {suggestedPropsTagSet && (
+        <SuggestedPropertiesPopup
+          tagSetName={suggestedPropsTagSet}
+          existingPropertyKeys={link.properties.map((p) => p.key)}
+          onApply={handleApplySuggestedProperties}
+          onClose={() => setSuggestedPropsTagSet(null)}
+        />
+      )}
     </div>
   );
 }

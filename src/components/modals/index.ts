@@ -7,3 +7,5 @@ export { ImportModal } from './ImportModal';
 export { ExportModal } from './ExportModal';
 export { ReportModal } from './ReportModal';
 export { ShortcutsModal } from './ShortcutsModal';
+export { TagSetManagerModal } from './TagSetManagerModal';
+export { TagSetEditorModal } from './TagSetEditorModal';

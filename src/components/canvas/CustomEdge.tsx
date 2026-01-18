@@ -9,6 +9,7 @@ interface CustomEdgeData {
   hasStartArrow: boolean;
   hasEndArrow: boolean;
   isSelected?: boolean;
+  isDimmed?: boolean;
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
@@ -47,6 +48,7 @@ export function CustomEdge(props: EdgeProps) {
   const hasEndArrow = edgeData?.hasEndArrow ?? false;
   // Use React Flow's selected prop OR our custom isSelected
   const isSelected = selected || (edgeData?.isSelected ?? false);
+  const isDimmed = edgeData?.isDimmed ?? false;
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
@@ -241,8 +243,11 @@ export function CustomEdge(props: EdgeProps) {
     return `${tipX},${tipY} ${leftX},${leftY} ${rightX},${rightY}`;
   };
 
+  // Apply dimmed opacity
+  const edgeOpacity = isDimmed ? 0.3 : 1;
+
   return (
-    <g className="react-flow__edge">
+    <g className="react-flow__edge" style={{ opacity: edgeOpacity, transition: 'opacity 0.2s' }}>
       {/* Selection halo - rendered behind the main line */}
       {isSelected && (
         <path
