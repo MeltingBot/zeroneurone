@@ -25,3 +25,14 @@ dist-ssr
 
 # Project data files
 *.osintracker
+
+# Documentation (generated)
+docs/
+claudedocs/
+
+# Claude AI files
+CLAUDE.md
+.CLAUDE.md
+**/CLAUDE.md
+**/.CLAUDE.md
+.claude/
