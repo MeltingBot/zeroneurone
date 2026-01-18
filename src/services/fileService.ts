@@ -150,6 +150,71 @@ class FileService {
     return db.assets.get(id);
   }
 
+  /**
+   * Save an asset from base64 data (used for receiving assets from peers via sync)
+   * Returns null if asset already exists locally
+   */
+  async saveAssetFromBase64(
+    assetData: {
+      id: string;
+      investigationId: InvestigationId;
+      filename: string;
+      mimeType: string;
+      size: number;
+      hash: string;
+      thumbnailDataUrl: string | null;
+      extractedText: string | null;
+      createdAt: Date;
+    },
+    base64Data: string
+  ): Promise<Asset | null> {
+    await this.ensureInitialized();
+
+    // Check if already exists locally (by hash for deduplication)
+    const existing = await db.assets
+      .where({ investigationId: assetData.investigationId, hash: assetData.hash })
+      .first();
+
+    if (existing) {
+      return null; // Already have this file
+    }
+
+    // Decode base64 to ArrayBuffer
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
+    // Create OPFS path and write file
+    const dirHandle = await this.getAssetDirectory(assetData.investigationId);
+    const extension = getExtension(assetData.filename);
+    const filename = `${assetData.hash}.${extension}`;
+
+    const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(arrayBuffer);
+    await writable.close();
+
+    // Create Asset entry
+    const asset: Asset = {
+      id: assetData.id,
+      investigationId: assetData.investigationId,
+      filename: assetData.filename,
+      mimeType: assetData.mimeType,
+      size: assetData.size,
+      hash: assetData.hash,
+      opfsPath: `investigations/${assetData.investigationId}/assets/${filename}`,
+      thumbnailDataUrl: assetData.thumbnailDataUrl,
+      extractedText: assetData.extractedText,
+      createdAt: assetData.createdAt,
+    };
+
+    await db.assets.add(asset);
+    return asset;
+  }
+
   private async getAssetDirectory(
     investigationId: InvestigationId
   ): Promise<FileSystemDirectoryHandle> {

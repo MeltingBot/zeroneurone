@@ -94,6 +94,11 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
   // Track if awareness is already set up to avoid duplicate setup
   let awarenessSetUp = false;
 
+  // Heartbeat interval for presence detection
+  let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  const HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
+  const STALE_THRESHOLD_MS = 20000; // Consider user stale after 20 seconds without heartbeat
+
   const setupAwarenessListener = () => {
     const awareness = syncService.getAwareness();
     if (!awareness) {
@@ -106,7 +111,13 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awarenessUnsubscribe = null;
     }
 
-    // Set local user state
+    // Clear any existing heartbeat
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    // Set local user state with initial lastSeen
     const { localUser } = get();
 
     awareness.setLocalState({
@@ -120,7 +131,19 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       editing: null,
       editingLink: null,
       viewMode: 'canvas',
+      lastSeen: Date.now(),
     });
+
+    // Start heartbeat to update lastSeen periodically
+    heartbeatInterval = setInterval(() => {
+      const awareness = syncService.getAwareness();
+      if (awareness) {
+        const state = awareness.getLocalState();
+        if (state) {
+          awareness.setLocalState({ ...state, lastSeen: Date.now() });
+        }
+      }
+    }, HEARTBEAT_INTERVAL_MS);
 
     // Listen for changes
     const updateRemoteUsers = () => {
@@ -132,21 +155,29 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       const remoteUsers: UserPresence[] = [];
       const localClientId = awareness.clientID;
       const allStates = awareness.getStates();
+      const now = Date.now();
 
       allStates.forEach((state, clientId) => {
         if (clientId !== localClientId && state.userId) {
-          remoteUsers.push({
-            odUserId: state.userId,
-            name: state.name || 'Anonyme',
-            color: state.color || '#888888',
-            cursor: state.cursor || null,
-            selection: state.selection || [],
-            linkSelection: state.linkSelection || [],
-            dragging: state.dragging || [],
-            editing: state.editing || null,
-            editingLink: state.editingLink || null,
-            viewMode: state.viewMode || 'canvas',
-          });
+          // Check if user is stale (no heartbeat for too long)
+          const lastSeen = state.lastSeen || 0;
+          const isStale = now - lastSeen > STALE_THRESHOLD_MS;
+
+          // Only include non-stale users
+          if (!isStale) {
+            remoteUsers.push({
+              odUserId: state.userId,
+              name: state.name || 'Anonyme',
+              color: state.color || '#888888',
+              cursor: state.cursor || null,
+              selection: state.selection || [],
+              linkSelection: state.linkSelection || [],
+              dragging: state.dragging || [],
+              editing: state.editing || null,
+              editingLink: state.editingLink || null,
+              viewMode: state.viewMode || 'canvas',
+            });
+          }
         }
       });
 
@@ -158,6 +189,10 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
     awareness.on('update', updateRemoteUsers);
     updateRemoteUsers();
 
+    // Also run periodic check to remove stale users
+    // (in case we don't receive awareness updates when they disconnect abruptly)
+    const staleCheckInterval = setInterval(updateRemoteUsers, 5000);
+
     // Trigger a re-broadcast of local state after a delay
     // This helps with relay servers that don't implement full awareness protocol
     setTimeout(() => {
@@ -166,7 +201,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         const state = awareness.getLocalState();
         if (state) {
           // Touch the state to trigger a broadcast
-          awareness.setLocalState({ ...state });
+          awareness.setLocalState({ ...state, lastSeen: Date.now() });
         }
       }
     }, 500);
@@ -175,6 +210,11 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
     awarenessUnsubscribe = () => {
       awareness.off('change', updateRemoteUsers);
       awareness.off('update', updateRemoteUsers);
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+      clearInterval(staleCheckInterval);
       awarenessSetUp = false;
     };
   };

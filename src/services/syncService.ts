@@ -231,6 +231,14 @@ class SyncService {
    */
   async unshare(): Promise<void> {
     if (this.websocketProvider) {
+      // Clear awareness state to notify peers immediately of our departure
+      if (this.websocketProvider.awareness) {
+        this.websocketProvider.awareness.setLocalState(null);
+      }
+
+      // Small delay to let the awareness update propagate before disconnecting
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Disconnect first to prevent auto-reconnect, then destroy
       this.websocketProvider.disconnect();
       this.websocketProvider.destroy();
