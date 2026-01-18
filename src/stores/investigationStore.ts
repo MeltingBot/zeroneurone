@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import * as Y from 'yjs';
 import type {
   Investigation,
   InvestigationId,
@@ -16,6 +17,18 @@ import {
   linkRepository,
 } from '../db/repositories';
 import { fileService } from '../services/fileService';
+import { syncService } from '../services/syncService';
+import { getYMaps } from '../types/yjs';
+import {
+  elementToYMap,
+  yMapToElement,
+  updateElementYMap,
+} from '../services/yjs/elementMapper';
+import {
+  linkToYMap,
+  yMapToLink,
+  updateLinkYMap,
+} from '../services/yjs/linkMapper';
 
 interface InvestigationState {
   // Current investigation
@@ -35,6 +48,7 @@ interface InvestigationState {
   loadInvestigations: () => Promise<void>;
   loadInvestigation: (id: InvestigationId) => Promise<void>;
   createInvestigation: (name: string, description?: string) => Promise<Investigation>;
+  createInvestigationWithId: (id: InvestigationId, name: string, description?: string) => Promise<Investigation>;
   updateInvestigation: (id: InvestigationId, changes: Partial<Investigation>) => Promise<void>;
   deleteInvestigation: (id: InvestigationId) => Promise<void>;
   unloadInvestigation: () => void;
@@ -61,7 +75,82 @@ interface InvestigationState {
   addExistingTag: (tag: string) => Promise<void>;
   addSuggestedProperty: (propertyDef: PropertyDefinition) => Promise<void>;
   associatePropertyWithTags: (propertyDef: PropertyDefinition, tags: string[]) => Promise<void>;
+
+  // Internal: sync Y.Doc state to Zustand
+  _syncFromYDoc: () => void;
 }
+
+// ============================================================================
+// Y.DOC OBSERVER SETUP
+// ============================================================================
+
+let ydocObserverCleanup: (() => void) | null = null;
+
+function setupYDocObserver(
+  ydoc: Y.Doc,
+  syncToZustand: () => void
+): () => void {
+  const { meta: metaMap, elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+  // Throttle the sync to avoid excessive re-renders during rapid changes
+  let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+  let lastSyncTime = 0;
+  const THROTTLE_MS = 50; // Minimum time between syncs
+
+  const throttledSync = () => {
+    const now = Date.now();
+    const timeSinceLastSync = now - lastSyncTime;
+
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
+    }
+
+    if (timeSinceLastSync >= THROTTLE_MS) {
+      // Sync immediately if enough time has passed
+      lastSyncTime = now;
+      syncToZustand();
+    } else {
+      // Schedule sync for later
+      syncTimeout = setTimeout(() => {
+        lastSyncTime = Date.now();
+        syncToZustand();
+        syncTimeout = null;
+      }, THROTTLE_MS - timeSinceLastSync);
+    }
+  };
+
+  // Observe meta changes (investigation name, description)
+  const metaObserver = () => {
+    throttledSync();
+  };
+  metaMap.observe(metaObserver);
+
+  // Observe elements changes
+  const elementsObserver = () => {
+    throttledSync();
+  };
+  elementsMap.observeDeep(elementsObserver);
+
+  // Observe links changes
+  const linksObserver = () => {
+    throttledSync();
+  };
+  linksMap.observeDeep(linksObserver);
+
+  // Return cleanup function
+  return () => {
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
+    }
+    metaMap.unobserve(metaObserver);
+    elementsMap.unobserveDeep(elementsObserver);
+    linksMap.unobserveDeep(linksObserver);
+  };
+}
+
+// ============================================================================
+// STORE IMPLEMENTATION
+// ============================================================================
 
 export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   currentInvestigation: null,
@@ -72,7 +161,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  // Investigations
+  // ============================================================================
+  // INVESTIGATION LIFECYCLE
+  // ============================================================================
+
   loadInvestigations: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -86,10 +178,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   loadInvestigation: async (id: InvestigationId) => {
     set({ isLoading: true, error: null });
     try {
-      const [investigation, elements, links, assets] = await Promise.all([
+      // Load investigation metadata from Dexie
+      let [investigation, assets] = await Promise.all([
         investigationRepository.getById(id),
-        elementRepository.getByInvestigation(id),
-        linkRepository.getByInvestigation(id),
         fileService.getAssetsByInvestigation(id),
       ]);
 
@@ -97,10 +188,101 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         throw new Error('Investigation not found');
       }
 
+      // Check if Y.Doc is already open for this investigation (e.g., from JoinPage)
+      let ydoc = syncService.getYDoc();
+      const currentInvestigationId = syncService.getInvestigationId();
+
+      if (!ydoc || currentInvestigationId !== id) {
+        // Open Y.Doc in local mode (creates or loads from IndexedDB)
+        ydoc = await syncService.openLocal(id);
+      }
+
+      // Check if Y.Doc has existing data
+      const { meta: metaMap, elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+      // Check if we have meta from Y.Doc (from a shared session)
+      const metaName = metaMap.get('name') as string | undefined;
+      const metaDescription = metaMap.get('description') as string | undefined;
+
+      // If Y.Doc has meta but local investigation has default values, update local
+      if (metaName && investigation.description?.startsWith('Session partagée rejointe')) {
+        investigation = {
+          ...investigation,
+          name: metaName,
+          description: metaDescription || '',
+        };
+        // Persist to IndexedDB
+        await investigationRepository.update(id, {
+          name: metaName,
+          description: metaDescription || '',
+        });
+      }
+
+      // Migrate data from Dexie if Y.Doc is empty
+      if (elementsMap.size === 0) {
+        const [dexieElements, dexieLinks] = await Promise.all([
+          elementRepository.getByInvestigation(id),
+          linkRepository.getByInvestigation(id),
+        ]);
+
+        // Migrate elements to Y.Doc
+        ydoc.transact(() => {
+          dexieElements.forEach(element => {
+            const ymap = elementToYMap(element);
+            elementsMap.set(element.id, ymap);
+          });
+
+          dexieLinks.forEach(link => {
+            const ymap = linkToYMap(link);
+            linksMap.set(link.id, ymap);
+          });
+        });
+      }
+
+      // Always update meta map with investigation metadata (so peers can see it)
+      // Only update if we're the source of truth (not a joiner with default values)
+      if (!investigation.description?.startsWith('Session partagée rejointe')) {
+        ydoc.transact(() => {
+          metaMap.set('name', investigation.name);
+          metaMap.set('description', investigation.description || '');
+        });
+      }
+
+      // Setup Y.Doc observer to sync to Zustand
+      if (ydocObserverCleanup) {
+        ydocObserverCleanup();
+      }
+      ydocObserverCleanup = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
+
+      // Initial sync from Y.Doc to Zustand (with deduplication)
+      const elementsById = new Map<string, Element>();
+      elementsMap.forEach((ymap) => {
+        try {
+          const element = yMapToElement(ymap as Y.Map<any>);
+          if (element.id) {
+            elementsById.set(element.id, element);
+          }
+        } catch {
+          // Skip invalid elements
+        }
+      });
+
+      const linksById = new Map<string, Link>();
+      linksMap.forEach((ymap) => {
+        try {
+          const link = yMapToLink(ymap as Y.Map<any>);
+          if (link.id) {
+            linksById.set(link.id, link);
+          }
+        } catch {
+          // Skip invalid links
+        }
+      });
+
       set({
         currentInvestigation: investigation,
-        elements,
-        links,
+        elements: Array.from(elementsById.values()),
+        links: Array.from(linksById.values()),
         assets,
         isLoading: false,
       });
@@ -114,6 +296,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     set((state) => ({
       investigations: [investigation, ...state.investigations],
     }));
+    return investigation;
+  },
+
+  createInvestigationWithId: async (id: InvestigationId, name: string, description?: string) => {
+    const investigation = await investigationRepository.createWithId(id, name, description);
+    // Only add to list if it's not already there
+    set((state) => {
+      const exists = state.investigations.some(inv => inv.id === id);
+      if (exists) {
+        return state;
+      }
+      return {
+        investigations: [investigation, ...state.investigations],
+      };
+    });
     return investigation;
   },
 
@@ -132,6 +329,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   deleteInvestigation: async (id: InvestigationId) => {
     await fileService.deleteInvestigationAssets(id);
+    await syncService.deleteLocalData(id);
     await investigationRepository.delete(id);
     set((state) => ({
       investigations: state.investigations.filter((inv) => inv.id !== id),
@@ -141,6 +339,17 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   unloadInvestigation: () => {
+    // Cleanup Y.Doc observer
+    if (ydocObserverCleanup) {
+      ydocObserverCleanup();
+      ydocObserverCleanup = null;
+    }
+
+    // Don't close sync connection here - it breaks React StrictMode
+    // and shared mode. The connection is closed explicitly via:
+    // - handleGoHome in InvestigationPage
+    // - syncService.close() when opening a different investigation
+
     set({
       currentInvestigation: null,
       elements: [],
@@ -149,118 +358,319 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     });
   },
 
-  // Elements
+  // ============================================================================
+  // ELEMENTS - Via Y.Doc
+  // ============================================================================
+
   createElement: async (label: string, position: Position, options?: Partial<Element>) => {
     const { currentInvestigation } = get();
     if (!currentInvestigation) {
       throw new Error('No investigation loaded');
     }
 
-    const element = await elementRepository.create(
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const now = new Date();
+    const element: Element = {
+      id: crypto.randomUUID(),
+      investigationId: currentInvestigation.id,
+      label,
+      notes: '',
+      tags: [],
+      properties: [],
+      confidence: null,
+      source: '',
+      date: null,
+      dateRange: null,
+      position,
+      geo: null,
+      events: [],
+      visual: {
+        color: '#ffffff',
+        borderColor: '#e5e7eb',
+        shape: 'rectangle',
+        size: 'medium',
+        icon: null,
+        image: null,
+      },
+      assetIds: [],
+      parentGroupId: null,
+      isGroup: false,
+      childIds: [],
+      createdAt: now,
+      updatedAt: now,
+      ...options,
+    };
+
+    // Add to Y.Doc
+    const { elements: elementsMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      const ymap = elementToYMap(element);
+      elementsMap.set(element.id, ymap);
+    });
+
+    // Also persist in Dexie for backwards compatibility
+    await elementRepository.create(
       currentInvestigation.id,
       label,
       position,
       options
-    );
-
-    set((state) => ({
-      elements: [...state.elements, element],
-    }));
+    ).catch(() => {
+      // Ignore Dexie errors - Y.Doc is source of truth
+    });
 
     return element;
   },
 
   updateElement: async (id: ElementId, changes: Partial<Element>) => {
-    await elementRepository.update(id, changes);
-    set((state) => ({
-      elements: state.elements.map((el) =>
-        el.id === id ? { ...el, ...changes, updatedAt: new Date() } : el
-      ),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { elements: elementsMap } = getYMaps(ydoc);
+    const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+
+    if (!ymap) {
+      throw new Error('Element not found');
+    }
+
+    // Update Y.Doc
+    updateElementYMap(ymap, changes, ydoc);
+
+    // Also update Dexie for backwards compatibility
+    await elementRepository.update(id, changes).catch(() => {
+      // Ignore Dexie errors - Y.Doc is source of truth
+    });
   },
 
   deleteElement: async (id: ElementId) => {
-    await elementRepository.delete(id);
-    set((state) => ({
-      elements: state.elements.filter((el) => el.id !== id),
-      links: state.links.filter((link) => link.fromId !== id && link.toId !== id),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+    // Find and delete connected links
+    const linksToDelete: string[] = [];
+    linksMap.forEach((ymap, linkId) => {
+      const map = ymap as Y.Map<any>;
+      if (map.get('fromId') === id || map.get('toId') === id) {
+        linksToDelete.push(linkId);
+      }
+    });
+
+    ydoc.transact(() => {
+      // Delete connected links
+      linksToDelete.forEach(linkId => {
+        linksMap.delete(linkId);
+      });
+      // Delete element
+      elementsMap.delete(id);
+    });
+
+    // Also delete from Dexie for backwards compatibility
+    await elementRepository.delete(id).catch(() => {});
   },
 
   deleteElements: async (ids: ElementId[]) => {
-    await elementRepository.deleteMany(ids);
-    set((state) => ({
-      elements: state.elements.filter((el) => !ids.includes(el.id)),
-      links: state.links.filter(
-        (link) => !ids.includes(link.fromId) && !ids.includes(link.toId)
-      ),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+    // Find and delete connected links
+    const linksToDelete: string[] = [];
+    linksMap.forEach((ymap, linkId) => {
+      const map = ymap as Y.Map<any>;
+      if (ids.includes(map.get('fromId')) || ids.includes(map.get('toId'))) {
+        linksToDelete.push(linkId);
+      }
+    });
+
+    ydoc.transact(() => {
+      // Delete connected links
+      linksToDelete.forEach(linkId => {
+        linksMap.delete(linkId);
+      });
+      // Delete elements
+      ids.forEach(id => {
+        elementsMap.delete(id);
+      });
+    });
+
+    // Also delete from Dexie for backwards compatibility
+    await elementRepository.deleteMany(ids).catch(() => {});
   },
 
   updateElementPosition: async (id: ElementId, position: Position) => {
-    await elementRepository.updatePosition(id, position);
-    set((state) => ({
-      elements: state.elements.map((el) =>
-        el.id === id ? { ...el, position, updatedAt: new Date() } : el
-      ),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { elements: elementsMap } = getYMaps(ydoc);
+    const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+
+    if (!ymap) {
+      throw new Error('Element not found');
+    }
+
+    updateElementYMap(ymap, { position }, ydoc);
+
+    // Also update Dexie
+    await elementRepository.updatePosition(id, position).catch(() => {});
   },
 
   updateElementPositions: async (updates: { id: ElementId; position: Position }[]) => {
-    await elementRepository.updatePositions(updates);
-    set((state) => ({
-      elements: state.elements.map((el) => {
-        const update = updates.find((u) => u.id === el.id);
-        return update ? { ...el, position: update.position, updatedAt: new Date() } : el;
-      }),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { elements: elementsMap } = getYMaps(ydoc);
+
+    ydoc.transact(() => {
+      updates.forEach(({ id, position }) => {
+        const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+        if (ymap) {
+          // Position is stored as plain object, not Y.Map
+          ymap.set('position', { x: position.x, y: position.y });
+          // Update timestamp - _meta is also stored as plain object
+          const currentMeta = ymap.get('_meta') || {};
+          ymap.set('_meta', { ...currentMeta, updatedAt: new Date().toISOString() });
+        }
+      });
+    });
+
+    // Also update Dexie
+    await elementRepository.updatePositions(updates).catch(() => {});
   },
 
-  // Links
+  // ============================================================================
+  // LINKS - Via Y.Doc
+  // ============================================================================
+
   createLink: async (fromId: ElementId, toId: ElementId, options?: Partial<Link>) => {
     const { currentInvestigation } = get();
     if (!currentInvestigation) {
       throw new Error('No investigation loaded');
     }
 
-    const link = await linkRepository.create(
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const now = new Date();
+    const link: Link = {
+      id: crypto.randomUUID(),
+      investigationId: currentInvestigation.id,
+      fromId,
+      toId,
+      sourceHandle: null,
+      targetHandle: null,
+      label: '',
+      notes: '',
+      tags: [],
+      properties: [],
+      directed: false,
+      direction: 'none',
+      confidence: null,
+      source: '',
+      date: null,
+      dateRange: null,
+      visual: {
+        color: '#9ca3af',
+        style: 'solid',
+        thickness: 2,
+      },
+      curveOffset: { x: 0, y: 0 },
+      createdAt: now,
+      updatedAt: now,
+      ...options,
+    };
+
+    // Add to Y.Doc
+    const { links: linksMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      const ymap = linkToYMap(link);
+      linksMap.set(link.id, ymap);
+    });
+
+    // Also persist in Dexie for backwards compatibility
+    await linkRepository.create(
       currentInvestigation.id,
       fromId,
       toId,
       options
-    );
-
-    set((state) => ({
-      links: [...state.links, link],
-    }));
+    ).catch(() => {});
 
     return link;
   },
 
   updateLink: async (id: LinkId, changes: Partial<Link>) => {
-    await linkRepository.update(id, changes);
-    set((state) => ({
-      links: state.links.map((link) =>
-        link.id === id ? { ...link, ...changes, updatedAt: new Date() } : link
-      ),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { links: linksMap } = getYMaps(ydoc);
+    const ymap = linksMap.get(id) as Y.Map<any> | undefined;
+
+    if (!ymap) {
+      throw new Error('Link not found');
+    }
+
+    // Update Y.Doc
+    updateLinkYMap(ymap, changes, ydoc);
+
+    // Also update Dexie
+    await linkRepository.update(id, changes).catch(() => {});
   },
 
   deleteLink: async (id: LinkId) => {
-    await linkRepository.delete(id);
-    set((state) => ({
-      links: state.links.filter((link) => link.id !== id),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { links: linksMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      linksMap.delete(id);
+    });
+
+    // Also delete from Dexie
+    await linkRepository.delete(id).catch(() => {});
   },
 
   deleteLinks: async (ids: LinkId[]) => {
-    await linkRepository.deleteMany(ids);
-    set((state) => ({
-      links: state.links.filter((link) => !ids.includes(link.id)),
-    }));
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { links: linksMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      ids.forEach(id => {
+        linksMap.delete(id);
+      });
+    });
+
+    // Also delete from Dexie
+    await linkRepository.deleteMany(ids).catch(() => {});
   },
 
-  // Assets
+  // ============================================================================
+  // ASSETS - Via OPFS (unchanged)
+  // ============================================================================
+
   addAsset: async (elementId: ElementId, file: File) => {
     const { currentInvestigation } = get();
     if (!currentInvestigation) {
@@ -268,36 +678,57 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }
 
     const asset = await fileService.saveAsset(currentInvestigation.id, file);
-    await elementRepository.addAsset(elementId, asset.id);
+
+    // Update element in Y.Doc
+    const ydoc = syncService.getYDoc();
+    if (ydoc) {
+      const { elements: elementsMap } = getYMaps(ydoc);
+      const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
+      if (ymap) {
+        const assetIdsArray = ymap.get('assetIds') as Y.Array<string>;
+        if (assetIdsArray && !assetIdsArray.toArray().includes(asset.id)) {
+          assetIdsArray.push([asset.id]);
+        }
+      }
+    }
+
+    // Also update Dexie
+    await elementRepository.addAsset(elementId, asset.id).catch(() => {});
 
     set((state) => ({
-      // Update existing asset or add new one
       assets: state.assets.some((a) => a.id === asset.id)
         ? state.assets.map((a) => (a.id === asset.id ? asset : a))
         : [...state.assets, asset],
-      elements: state.elements.map((el) =>
-        el.id === elementId && !el.assetIds.includes(asset.id)
-          ? { ...el, assetIds: [...el.assetIds, asset.id] }
-          : el
-      ),
     }));
 
     return asset;
   },
 
   removeAsset: async (elementId: ElementId, assetId: string) => {
-    await elementRepository.removeAsset(elementId, assetId);
+    // Update element in Y.Doc
+    const ydoc = syncService.getYDoc();
+    if (ydoc) {
+      const { elements: elementsMap } = getYMaps(ydoc);
+      const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
+      if (ymap) {
+        const assetIdsArray = ymap.get('assetIds') as Y.Array<string>;
+        if (assetIdsArray) {
+          const index = assetIdsArray.toArray().indexOf(assetId);
+          if (index !== -1) {
+            assetIdsArray.delete(index, 1);
+          }
+        }
+      }
+    }
 
-    set((state) => ({
-      elements: state.elements.map((el) =>
-        el.id === elementId
-          ? { ...el, assetIds: el.assetIds.filter((id) => id !== assetId) }
-          : el
-      ),
-    }));
+    // Also update Dexie
+    await elementRepository.removeAsset(elementId, assetId).catch(() => {});
   },
 
-  // Settings - Add existing tag for reuse
+  // ============================================================================
+  // SETTINGS - Via Dexie (unchanged)
+  // ============================================================================
+
   addExistingTag: async (tag: string) => {
     const { currentInvestigation } = get();
     if (!currentInvestigation) return;
@@ -320,13 +751,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }));
   },
 
-  // Settings - Add suggested property for reuse
   addSuggestedProperty: async (propertyDef: PropertyDefinition) => {
     const { currentInvestigation } = get();
     if (!currentInvestigation) return;
 
     const suggestedProperties = currentInvestigation.settings.suggestedProperties;
-    // Check if property with same key already exists
     if (suggestedProperties.some(p => p.key === propertyDef.key)) return;
 
     await investigationRepository.addSuggestedProperty(currentInvestigation.id, propertyDef);
@@ -347,7 +776,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }));
   },
 
-  // Settings - Associate a property with tags (for tag-based property suggestions)
   associatePropertyWithTags: async (propertyDef: PropertyDefinition, tags: string[]) => {
     const { currentInvestigation } = get();
     if (!currentInvestigation || tags.length === 0) return;
@@ -358,7 +786,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       tags
     );
 
-    // Update local state
     set((state) => {
       if (!state.currentInvestigation) return state;
 
@@ -368,13 +795,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         if (!associations[tag]) {
           associations[tag] = [];
         }
-        // Check if property with same key already exists
         const existingIndex = associations[tag].findIndex(p => p.key === propertyDef.key);
         if (existingIndex === -1) {
-          // Add new property
           associations[tag] = [...associations[tag], propertyDef];
         } else if (associations[tag][existingIndex].type !== propertyDef.type) {
-          // Update type if different
           associations[tag] = associations[tag].map((p, i) =>
             i === existingIndex ? propertyDef : p
           );
@@ -390,6 +814,83 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           },
         },
       };
+    });
+  },
+
+  // ============================================================================
+  // INTERNAL: SYNC FROM Y.DOC
+  // ============================================================================
+
+  _syncFromYDoc: () => {
+    const ydoc = syncService.getYDoc();
+    const { currentInvestigation } = get();
+    if (!ydoc || !currentInvestigation) {
+      return;
+    }
+
+    const { meta: metaMap, elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+    // Sync investigation metadata from Y.Doc
+    const metaName = metaMap.get('name') as string | undefined;
+    const metaDescription = metaMap.get('description') as string | undefined;
+
+    // Update local investigation if meta has changed
+    let updatedInvestigation = currentInvestigation;
+    if (metaName && (metaName !== currentInvestigation.name || metaDescription !== currentInvestigation.description)) {
+      updatedInvestigation = {
+        ...currentInvestigation,
+        name: metaName,
+        description: metaDescription || '',
+      };
+      // Persist to IndexedDB
+      investigationRepository.update(currentInvestigation.id, {
+        name: metaName,
+        description: metaDescription || '',
+      }).catch(() => {});
+    }
+
+    // Use Map to deduplicate by ID (defensive against any race conditions)
+    const elementsById = new Map<string, Element>();
+    elementsMap.forEach((ymap) => {
+      try {
+        const element = yMapToElement(ymap as Y.Map<any>);
+        if (element.id) {
+          elementsById.set(element.id, element);
+        }
+      } catch {
+        // Skip invalid elements
+      }
+    });
+
+    const linksById = new Map<string, Link>();
+    linksMap.forEach((ymap) => {
+      try {
+        const link = yMapToLink(ymap as Y.Map<any>);
+        if (link.id) {
+          linksById.set(link.id, link);
+        }
+      } catch {
+        // Skip invalid links
+      }
+    });
+
+    const elements = Array.from(elementsById.values());
+    const links = Array.from(linksById.values());
+
+    set({
+      currentInvestigation: updatedInvestigation,
+      elements,
+      links,
+    });
+
+    // Also persist to IndexedDB so stats work on home page
+    // Use bulkPut to upsert all elements/links
+    const investigationId = currentInvestigation.id;
+    Promise.all([
+      elementRepository.bulkUpsert(elements.map(el => ({ ...el, investigationId }))),
+      linkRepository.bulkUpsert(links.map(lk => ({ ...lk, investigationId }))),
+    ]).catch(() => {
+      // Silently ignore IndexedDB errors during sync
     });
   },
 }));

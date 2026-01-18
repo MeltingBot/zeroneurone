@@ -79,6 +79,41 @@ export const investigationRepository = {
     return investigation;
   },
 
+  /**
+   * Create an investigation with a specific UUID
+   * Used when joining a shared investigation to maintain the same ID across clients
+   */
+  async createWithId(id: InvestigationId, name: string, description: string = ''): Promise<Investigation> {
+    // Check if investigation with this ID already exists
+    const existing = await db.investigations.get(id);
+    if (existing) {
+      return rehydrateInvestigation(existing);
+    }
+
+    const investigation: Investigation = {
+      id,
+      name,
+      description,
+      startDate: null,
+      creator: '',
+      tags: [],
+      properties: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      viewport: { x: 0, y: 0, zoom: 1 },
+      settings: {
+        defaultElementVisual: {},
+        defaultLinkVisual: {},
+        suggestedProperties: [],
+        existingTags: [],
+        tagPropertyAssociations: {},
+      },
+    };
+
+    await db.investigations.add(investigation);
+    return investigation;
+  },
+
   async getById(id: InvestigationId): Promise<Investigation | undefined> {
     const investigation = await db.investigations.get(id);
     return investigation ? rehydrateInvestigation(investigation) : undefined;

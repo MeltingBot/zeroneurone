@@ -73,8 +73,6 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
   // Capture a specific view (switches view if needed, hidden by overlay)
   const captureViewScreenshot = async (mode: DisplayMode): Promise<string | null> => {
-    console.log(`Starting capture for ${mode}...`);
-
     // Always switch to ensure the view is properly mounted and visible
     setDisplayMode(mode);
 
@@ -85,7 +83,6 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
     // Wait for handler to be available (component needs to mount and register)
     const handlerReady = await waitForHandler(mode);
     if (!handlerReady) {
-      console.error(`Handler for ${mode} never became available`);
       return null;
     }
 
@@ -94,14 +91,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
     await new Promise(resolve => setTimeout(resolve, extraDelay));
 
     // Capture using fresh reference
-    console.log(`Calling captureView for ${mode}...`);
     const result = await useUIStore.getState().captureView(mode);
-
-    if (!result) {
-      console.error(`Capture for ${mode} returned null`);
-    } else {
-      console.log(`Capture for ${mode} successful`);
-    }
 
     return result;
   };

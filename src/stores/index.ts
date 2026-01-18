@@ -6,3 +6,4 @@ export { useInsightsStore } from './insightsStore';
 export { useToastStore, toast } from './toastStore';
 export { useHistoryStore } from './historyStore';
 export { useTagSetStore } from './tagSetStore';
+export { useSyncStore } from './syncStore';

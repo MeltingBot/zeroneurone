@@ -283,15 +283,7 @@ export function TimelineView() {
   // Register capture handler for report screenshots
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
-      console.log('Timeline capture: starting, items count:', items.length);
-
-      if (!containerRef.current) {
-        console.error('Timeline capture: containerRef not available');
-        return null;
-      }
-
-      if (items.length === 0) {
-        console.warn('Timeline capture: no items to display');
+      if (!containerRef.current || items.length === 0) {
         return null;
       }
 
@@ -313,11 +305,8 @@ export function TimelineView() {
       // Capture
       const element = document.querySelector('[data-report-capture="timeline"]') as HTMLElement;
       if (!element) {
-        console.error('Timeline capture: element not found');
         return null;
       }
-
-      console.log('Timeline capture: element found, capturing...');
 
       try {
         const canvas = await html2canvas(element, {
@@ -329,10 +318,8 @@ export function TimelineView() {
           imageTimeout: 5000,
           foreignObjectRendering: false,
         });
-        console.log('Timeline capture: success');
         return canvas.toDataURL('image/png');
-      } catch (error) {
-        console.error('Timeline capture failed:', error);
+      } catch {
         return null;
       }
     };

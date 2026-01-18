@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard } from 'lucide-react';
 import { Layout, IconButton } from '../components/common';
@@ -11,6 +11,7 @@ const TimelineView = lazy(() => import('../components/timeline').then(m => ({ de
 const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
 import { useInvestigationStore, useUIStore, useSelectionStore, useViewStore } from '../stores';
 import { searchService } from '../services/searchService';
+import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
 
 const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; label: string; shortcut: string }[] = [
@@ -40,6 +41,13 @@ export function InvestigationPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // Handle navigation back to home - properly close sync connection
+  const handleGoHome = useCallback(() => {
+    // Close sync connection before navigating
+    syncService.close();
+    navigate('/');
+  }, [navigate]);
 
   useEffect(() => {
     if (id) {
@@ -122,7 +130,7 @@ export function InvestigationPage() {
             {error || 'Enquête non trouvée'}
           </span>
           <button
-            onClick={() => navigate('/')}
+            onClick={handleGoHome}
             className="text-sm text-accent hover:underline"
           >
             Retour à l'accueil
@@ -167,7 +175,7 @@ export function InvestigationPage() {
       {/* Header */}
       <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary">
         <div className="flex items-center gap-3">
-          <IconButton onClick={() => navigate('/')}>
+          <IconButton onClick={handleGoHome}>
             <ArrowLeft size={16} />
           </IconButton>
           <h1 className="text-sm font-semibold text-text-primary">

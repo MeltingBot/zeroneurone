@@ -267,4 +267,13 @@ export const elementRepository = {
       updatedAt: new Date(),
     });
   },
+
+  /**
+   * Bulk upsert elements (insert or update)
+   * Used for syncing from Y.Doc to IndexedDB
+   */
+  async bulkUpsert(elements: Element[]): Promise<void> {
+    if (elements.length === 0) return;
+    await db.elements.bulkPut(elements);
+  },
 };

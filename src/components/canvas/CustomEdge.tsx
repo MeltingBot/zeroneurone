@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
-import { useUIStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
+import { useUIStore, useSyncStore } from '../../stores';
+
+// Remote user presence info for a link
+interface RemoteLinkPresence {
+  name: string;
+  color: string;
+  isEditing?: boolean;
+}
 
 interface CustomEdgeData {
   color: string;
@@ -40,6 +48,29 @@ export function CustomEdge(props: EdgeProps) {
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const { screenToFlowPosition } = useReactFlow();
   const edgeData = data as CustomEdgeData | undefined;
+
+  // Get remote users directly from sync store for real-time updates
+  const remoteUsers = useSyncStore(
+    useShallow((state) => state.remoteUsers)
+  );
+
+  // Build remote selectors for this link from remote users
+  const remoteLinkSelectors: RemoteLinkPresence[] = [];
+  for (const user of remoteUsers) {
+    const linkSelections = user.linkSelection || [];
+    const editingLink = user.editingLink;
+
+    const isEditingThis = editingLink === id;
+    const isSelectingThis = linkSelections.includes(id);
+
+    if (isEditingThis || isSelectingThis) {
+      remoteLinkSelectors.push({
+        name: user.name,
+        color: user.color,
+        isEditing: isEditingThis,
+      });
+    }
+  }
 
   const color = edgeData?.color ?? 'var(--color-text-tertiary)';
   const thickness = edgeData?.thickness ?? 2;
@@ -259,6 +290,18 @@ export function CustomEdge(props: EdgeProps) {
         />
       )}
 
+      {/* Remote user selection halo - rendered behind the main line */}
+      {remoteLinkSelectors.length > 0 && !isSelected && (
+        <path
+          d={edgePath}
+          fill="none"
+          stroke={remoteLinkSelectors[0].color}
+          strokeWidth={thickness + 4}
+          strokeLinecap="round"
+          strokeOpacity={0.6}
+        />
+      )}
+
       {/* Edge line (shortened to not overlap arrows) */}
       <path
         id={id}
@@ -341,6 +384,54 @@ export function CustomEdge(props: EdgeProps) {
             >
               {String(label)}
             </text>
+          )}
+        </g>
+      )}
+
+      {/* Remote user indicator badge */}
+      {remoteLinkSelectors.length > 0 && (
+        <g transform={`translate(${controlHandleX}, ${controlHandleY - 20})`}>
+          {/* Get initials from name */}
+          {(() => {
+            const user = remoteLinkSelectors[0];
+            const initials = user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            const isEditingLink = user.isEditing;
+
+            return (
+              <>
+                {/* Badge background */}
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={12}
+                  fill={user.color}
+                  style={{
+                    animation: isEditingLink ? 'pulse 1s ease-in-out infinite' : undefined,
+                  }}
+                />
+                {/* Initials text */}
+                <text
+                  x={0}
+                  y={0}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="white"
+                  fontSize={9}
+                  fontWeight="bold"
+                >
+                  {initials}
+                </text>
+              </>
+            );
+          })()}
+          {/* Show +N if more users */}
+          {remoteLinkSelectors.length > 1 && (
+            <>
+              <circle cx={16} cy={0} r={8} fill="var(--color-bg-tertiary)" stroke="var(--color-border-default)" strokeWidth={1} />
+              <text x={16} y={0} textAnchor="middle" dominantBaseline="central" fill="var(--color-text-secondary)" fontSize={8} fontWeight="bold">
+                +{remoteLinkSelectors.length - 1}
+              </text>
+            </>
           )}
         </g>
       )}

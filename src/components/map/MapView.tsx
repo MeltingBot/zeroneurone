@@ -767,10 +767,7 @@ export function MapView() {
   // Register capture handler for report screenshots
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
-      console.log('Map capture: starting, geoElements count:', geoElements.length);
-
       if (!mapRef.current) {
-        console.error('Map capture: mapRef not available');
         return null;
       }
 
@@ -787,17 +784,13 @@ export function MapView() {
       }
 
       // Wait for tiles to load (longer wait for map tiles)
-      console.log('Map capture: waiting for tiles to load...');
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Capture
       const element = document.querySelector('[data-report-capture="map"]') as HTMLElement;
       if (!element) {
-        console.error('Map capture: element not found');
         return null;
       }
-
-      console.log('Map capture: element found, capturing...');
 
       try {
         const canvas = await html2canvas(element, {
@@ -809,10 +802,8 @@ export function MapView() {
           imageTimeout: 10000, // Allow more time for tile images
           foreignObjectRendering: false, // Better compatibility
         });
-        console.log('Map capture: success');
         return canvas.toDataURL('image/png');
-      } catch (error) {
-        console.error('Map capture failed:', error);
+      } catch {
         return null;
       }
     };

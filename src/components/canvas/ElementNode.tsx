@@ -1,7 +1,8 @@
-import { memo, useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+import { useShallow } from 'zustand/react/shallow';
 import type { Element } from '../../types';
-import { useUIStore } from '../../stores';
+import { useUIStore, useSyncStore } from '../../stores';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -17,6 +18,14 @@ function RedactedText({ text, className, style }: { text: string; className?: st
   );
 }
 
+// Remote user presence info for an element
+export interface RemoteUserPresence {
+  name: string;
+  color: string;
+  /** True if the user is actively dragging this element */
+  isDragging?: boolean;
+}
+
 export interface ElementNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
@@ -26,6 +35,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
+  /** Remote users who have this element selected */
+  remoteSelectors?: RemoteUserPresence[];
 }
 
 // Minimum sizes for resizing
@@ -35,6 +46,33 @@ const MIN_HEIGHT = 40;
 function ElementNodeComponent({ data }: NodeProps) {
   const nodeData = data as ElementNodeData;
   const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing } = nodeData;
+
+  // Get sync state for this element
+  const { remoteUsers, mode: syncMode } = useSyncStore(
+    useShallow((state) => ({
+      remoteUsers: state.remoteUsers,
+      mode: state.mode,
+    }))
+  );
+
+  // Compute remote selectors for this element
+  const remoteSelectors: RemoteUserPresence[] = [];
+  for (const user of remoteUsers) {
+    const dragging = user.dragging || [];
+    const selections = user.selection || [];
+
+    const isDraggingThis = dragging.includes(element.id);
+    const isSelectingThis = selections.includes(element.id);
+
+    if (isDraggingThis || isSelectingThis) {
+      remoteSelectors.push({
+        name: user.name,
+        color: user.color,
+        isDragging: isDraggingThis,
+      });
+    }
+  }
+
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -180,6 +218,33 @@ function ElementNodeComponent({ data }: NodeProps) {
       onMouseLeave={() => setIsHovered(false)}
       style={{ width, height }}
     >
+      {/* Remote user selection/dragging indicators - circles with initials */}
+      {remoteSelectors && remoteSelectors.length > 0 && (
+        <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20">
+          {remoteSelectors.slice(0, 3).map((user, idx) => {
+            const initials = user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            return (
+              <div
+                key={idx}
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md ${user.isDragging ? 'animate-pulse' : ''}`}
+                style={{ backgroundColor: user.color }}
+                title={user.isDragging ? `${user.name} déplace` : user.name}
+              >
+                {initials}
+              </div>
+            );
+          })}
+          {remoteSelectors.length > 3 && (
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium text-text-secondary bg-bg-tertiary border border-border-default"
+              title={remoteSelectors.slice(3).map(u => u.name).join(', ')}
+            >
+              +{remoteSelectors.length - 3}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Node Resizer - only visible when selected */}
       <NodeResizer
         minWidth={MIN_WIDTH}
@@ -234,6 +299,17 @@ function ElementNodeComponent({ data }: NodeProps) {
             ? getThemeAwareColor(element.visual.borderColor, true)
             : element.visual.borderColor,
           clipPath: element.visual.shape === 'hexagon' && !hasThumbnail ? hexagonClipPath : undefined,
+          // Remote user selection/dragging ring - more prominent when dragging
+          boxShadow: (() => {
+            if (!remoteSelectors || remoteSelectors.length === 0) return undefined;
+            const draggingUser = remoteSelectors.find(u => u.isDragging);
+            if (draggingUser) {
+              // Dragging: thicker ring with animation effect
+              return `0 0 0 3px ${draggingUser.color}, 0 0 12px ${draggingUser.color}80`;
+            }
+            // Selection: subtle ring
+            return `0 0 0 2px ${remoteSelectors[0].color}60, 0 0 0 4px ${remoteSelectors[0].color}`;
+          })(),
         }}
       >
         {hasThumbnail ? (
@@ -384,4 +460,6 @@ function getThemeAwareColor(color: string, isDarkMode: boolean): string {
   return color;
 }
 
-export const ElementNode = memo(ElementNodeComponent);
+// Note: Not using memo here to allow Zustand store updates to trigger re-renders
+// React Flow has its own optimization layer
+export const ElementNode = ElementNodeComponent;

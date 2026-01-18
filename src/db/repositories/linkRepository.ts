@@ -166,4 +166,13 @@ export const linkRepository = {
       .equals(elementId)
       .delete();
   },
+
+  /**
+   * Bulk upsert links (insert or update)
+   * Used for syncing from Y.Doc to IndexedDB
+   */
+  async bulkUpsert(links: Link[]): Promise<void> {
+    if (links.length === 0) return;
+    await db.links.bulkPut(links);
+  },
 };

@@ -19,7 +19,7 @@ import {
   ConnectionMode,
   type NodeChange,
 } from '@xyflow/react';
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2 } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 
@@ -27,7 +27,8 @@ import { ElementNode, type ElementNodeData } from './ElementNode';
 import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore } from '../../stores';
+import { SyncStatusIndicator, PresenceAvatars, ShareModal } from '../collaboration';
+import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
 import html2canvas from 'html2canvas';
 import type { Element, Link, Position } from '../../types';
 import { generateUUID } from '../../utils';
@@ -55,7 +56,6 @@ function CanvasCaptureHandler() {
 
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
-      console.log('Canvas capture: starting');
 
       // Fit view to show all elements
       fitView({ padding: 0.15, duration: 0 });
@@ -66,11 +66,8 @@ function CanvasCaptureHandler() {
       // Capture
       const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
       if (!element) {
-        console.error('Canvas capture: element not found');
         return null;
       }
-
-      console.log('Canvas capture: element found, enhancing edges...');
 
       // Temporarily increase stroke widths for better capture
       const edges = element.querySelectorAll('.react-flow__edge path');
@@ -85,8 +82,6 @@ function CanvasCaptureHandler() {
         pathEl.style.strokeWidth = `${width}px`;
       });
 
-      console.log(`Canvas capture: enhanced ${edges.length} edges`);
-
       try {
         const canvas = await html2canvas(element, {
           backgroundColor: '#faf8f5',
@@ -97,7 +92,6 @@ function CanvasCaptureHandler() {
           imageTimeout: 5000,
           foreignObjectRendering: false,
         });
-        console.log('Canvas capture: success');
         return canvas.toDataURL('image/png');
       } catch (error) {
         console.error('Canvas capture failed:', error);
@@ -182,7 +176,8 @@ function elementToNode(
   onResize?: (width: number, height: number) => void,
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
-  onStopEditing?: () => void
+  onStopEditing?: () => void,
+  _remoteSelectors?: unknown // Deprecated - ElementNode gets this directly from syncStore
 ): Node {
   return {
     id: element.id,
@@ -197,6 +192,7 @@ function elementToNode(
       isEditing,
       onLabelChange,
       onStopEditing,
+      // remoteSelectors not passed - ElementNode subscribes to syncStore directly
     } satisfies ElementNodeData,
     selected: isSelected,
   };
@@ -339,6 +335,9 @@ export function Canvas() {
   // Context menu state
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
+  // Share modal state
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   // Clipboard for copy/paste of elements
   const copiedElementsRef = useRef<Element[]>([]);
 
@@ -383,6 +382,10 @@ export function Canvas() {
     findPaths,
     clearHighlight: clearInsightsHighlight,
   } = useInsightsStore();
+
+  // Sync store for collaboration presence
+  // Note: remoteUsers is not used here directly anymore - ElementNode and CustomEdge subscribe to syncStore directly
+  const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
@@ -457,34 +460,60 @@ export function Canvas() {
   );
 
   // Convert to React Flow format
+  // Note: remoteSelectors are no longer passed through node data - ElementNode subscribes directly to syncStore
   const nodes = useMemo(
-    () => elements
-      .filter((el) => !hiddenElementIds.has(el.id))
-      .map((el) => {
-        // Get thumbnail from first asset if available
-        const firstAssetId = el.assetIds?.[0];
-        const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
-        // Create resize handler for this element
-        const onResize = (width: number, height: number) => {
-          handleElementResize(el.id, width, height);
-        };
-        // Create label change handler for this element
-        const onLabelChange = (newLabel: string) => {
-          handleElementLabelChange(el.id, newLabel);
-        };
-        return elementToNode(
-          el,
-          selectedElementIds.has(el.id),
-          dimmedElementIds.has(el.id),
-          thumbnail,
-          onResize,
-          editingElementId === el.id,
-          onLabelChange,
-          stopEditing
-        );
-      }),
+    () => {
+      return elements
+        .filter((el) => !hiddenElementIds.has(el.id))
+        .map((el) => {
+          // Get thumbnail from first asset if available
+          const firstAssetId = el.assetIds?.[0];
+          const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
+          // Create resize handler for this element
+          const onResize = (width: number, height: number) => {
+            handleElementResize(el.id, width, height);
+          };
+          // Create label change handler for this element
+          const onLabelChange = (newLabel: string) => {
+            handleElementLabelChange(el.id, newLabel);
+          };
+          return elementToNode(
+            el,
+            selectedElementIds.has(el.id),
+            dimmedElementIds.has(el.id),
+            thumbnail,
+            onResize,
+            editingElementId === el.id,
+            onLabelChange,
+            stopEditing,
+            undefined // remoteSelectors - ElementNode gets this directly from syncStore
+          );
+        });
+    },
     [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing]
   );
+
+  // Update awareness when selection changes
+  useEffect(() => {
+    const selectedIds = Array.from(selectedElementIds);
+    updateSelection(selectedIds);
+  }, [selectedElementIds, updateSelection]);
+
+  // Update awareness when editing state changes
+  useEffect(() => {
+    updateEditing(editingElementId);
+  }, [editingElementId, updateEditing]);
+
+  // Update awareness when link selection changes
+  useEffect(() => {
+    const selectedIds = Array.from(selectedLinkIds);
+    updateLinkSelection(selectedIds);
+  }, [selectedLinkIds, updateLinkSelection]);
+
+  // Update awareness when link editing state changes
+  useEffect(() => {
+    updateEditingLink(editingLinkId);
+  }, [editingLinkId, updateEditingLink]);
 
   // Handle curve offset change for edge dragging (2D offset)
   const handleCurveOffsetChange = useCallback(
@@ -558,12 +587,39 @@ export function Canvas() {
     setRfEdges(edges);
   }, [edges, setRfEdges]);
 
+  // Track currently dragging nodes to update awareness
+  const draggingNodesRef = useRef<Set<string>>(new Set());
+
   // Handle node changes (position, selection)
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
       onNodesChange(changes);
 
-      // Handle position changes
+      // Track dragging state for awareness
+      const allPositionChanges = changes.filter(
+        (c): c is NodeChange & { type: 'position'; id: string; dragging?: boolean } =>
+          c.type === 'position'
+      );
+
+      // Check for nodes that started dragging
+      const nowDragging = new Set<string>();
+      for (const change of allPositionChanges) {
+        if ('dragging' in change && change.dragging === true) {
+          nowDragging.add(change.id);
+        }
+      }
+
+      // Update awareness if dragging state changed
+      const prevDragging = draggingNodesRef.current;
+      const startedDragging = [...nowDragging].filter(id => !prevDragging.has(id));
+      const stoppedDragging = [...prevDragging].filter(id => !nowDragging.has(id));
+
+      if (startedDragging.length > 0 || stoppedDragging.length > 0) {
+        draggingNodesRef.current = nowDragging;
+        updateDragging(Array.from(nowDragging));
+      }
+
+      // Handle position changes (only when drag ends - dragging: false)
       const positionChanges = changes.filter(
         (c): c is NodeChange & { type: 'position'; id: string; position: Position; dragging: boolean } =>
           c.type === 'position' && 'position' in c && c.position !== undefined && 'dragging' in c && !c.dragging
@@ -580,7 +636,7 @@ export function Canvas() {
         updateElementPositions(updates);
       }
     },
-    [onNodesChange, updateElementPosition, updateElementPositions]
+    [onNodesChange, updateElementPosition, updateElementPositions, updateDragging]
   );
 
   // Handle edge changes
@@ -1025,10 +1081,13 @@ export function Canvas() {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
-      // Ignore if typing in an input
+      // Ignore if typing in an input or editable element
+      const target = event.target as HTMLElement;
       if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target.isContentEditable ||
+        target.closest('[contenteditable="true"]')
       ) {
         return;
       }
@@ -1037,6 +1096,7 @@ export function Canvas() {
 
       // Delete selected elements
       if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault();
         const selectedEls = getSelectedElementIds();
         const selectedLks = getSelectedLinkIds();
 
@@ -1289,9 +1349,21 @@ export function Canvas() {
         <ViewToolbar
           showFontToggle
           leftContent={
-            <span className="text-xs text-text-secondary">
-              {elements.length} element{elements.length > 1 ? 's' : ''}, {links.length} lien{links.length > 1 ? 's' : ''}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-text-secondary">
+                {elements.length} element{elements.length > 1 ? 's' : ''}, {links.length} lien{links.length > 1 ? 's' : ''}
+              </span>
+              <div className="w-px h-4 bg-border-default" />
+              <SyncStatusIndicator />
+              <PresenceAvatars />
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded transition-colors"
+                title="Partager"
+              >
+                <Share2 size={16} />
+              </button>
+            </div>
           }
           rightContent={<CanvasZoomControls />}
         />
@@ -1331,6 +1403,8 @@ export function Canvas() {
             connectionMode={ConnectionMode.Loose}
             edgesReconnectable
             selectNodesOnDrag={false}
+            selectionOnDrag
+            panOnDrag={[1, 2]}
             panOnScroll
             zoomOnScroll
             zoomOnDoubleClick={false}
@@ -1426,6 +1500,12 @@ export function Canvas() {
             </div>
           )}
         </div>
+
+        {/* Share Modal */}
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+        />
       </div>
     </ReactFlowProvider>
   );
