@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ModalType, Toast, ToolType, SidePanelTab } from '../types';
+import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode } from '../types';
 import { generateUUID } from '../utils';
 
 export type FontMode = 'readable' | 'handwritten';
 export type ThemeMode = 'light' | 'dark';
+
+// Capture handler type - each view registers a function that fits content and returns screenshot
+export type CaptureHandler = () => Promise<string | null>;
 
 interface UIState {
   // Modal
@@ -35,6 +38,14 @@ interface UIState {
 
   // Anonymous mode (redact names)
   anonymousMode: boolean;
+
+  // Capture system for report screenshots
+  captureHandlers: Map<DisplayMode, CaptureHandler>;
+
+  // Actions - Capture
+  registerCaptureHandler: (mode: DisplayMode, handler: CaptureHandler) => void;
+  unregisterCaptureHandler: (mode: DisplayMode) => void;
+  captureView: (mode: DisplayMode) => Promise<string | null>;
 
   // Actions - Modal
   openModal: (type: ModalType, data?: unknown) => void;
@@ -92,6 +103,32 @@ export const useUIStore = create<UIState>()(
   themeMode: 'light' as ThemeMode,
   hideMedia: false,
   anonymousMode: false,
+  captureHandlers: new Map(),
+
+  // Capture system
+  registerCaptureHandler: (mode, handler) => {
+    set((state) => {
+      const newHandlers = new Map(state.captureHandlers);
+      newHandlers.set(mode, handler);
+      return { captureHandlers: newHandlers };
+    });
+  },
+
+  unregisterCaptureHandler: (mode) => {
+    set((state) => {
+      const newHandlers = new Map(state.captureHandlers);
+      newHandlers.delete(mode);
+      return { captureHandlers: newHandlers };
+    });
+  },
+
+  captureView: async (mode) => {
+    const handler = get().captureHandlers.get(mode);
+    if (handler) {
+      return await handler();
+    }
+    return null;
+  },
 
   // Modal
   openModal: (type, data) => {

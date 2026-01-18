@@ -11,6 +11,7 @@ export type LinkId = UUID;
 export type AssetId = UUID;
 export type ViewId = UUID;
 export type ReportSectionId = UUID;
+export type TagSetId = UUID;
 
 // ============================================================================
 // UTILITY TYPES
@@ -49,7 +50,7 @@ export interface DateRange {
 }
 
 /** Property types for typed input */
-export type PropertyType = 'text' | 'number' | 'date' | 'boolean' | 'country';
+export type PropertyType = 'text' | 'number' | 'date' | 'datetime' | 'boolean' | 'choice' | 'geo' | 'country';
 
 /** Free-form property (key/value) with optional type */
 export interface Property {
@@ -62,6 +63,44 @@ export interface Property {
 export interface PropertyDefinition {
   key: string;
   type: PropertyType;
+}
+
+// ============================================================================
+// TAGSET
+// ============================================================================
+
+/** Suggested property for a TagSet */
+export interface SuggestedProperty {
+  key: string;
+  type: PropertyType;
+  description: string;
+  placeholder: string;
+  /** Available options for 'choice' type */
+  choices?: string[];
+}
+
+/** Default visual appearance for a TagSet */
+export interface TagSetDefaultVisual {
+  color: string | null;
+  shape: ElementShape | null;
+  icon: string | null;
+}
+
+/** TagSet - reusable tag definition with suggested properties */
+export interface TagSet {
+  id: TagSetId;
+  /** Tag name (unique, case-insensitive) */
+  name: string;
+  /** Description for the user */
+  description: string;
+  /** Default appearance when this tag is applied */
+  defaultVisual: TagSetDefaultVisual;
+  /** Suggested properties for this tag */
+  suggestedProperties: SuggestedProperty[];
+  /** Built-in TagSets cannot be deleted */
+  isBuiltIn: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /** Element visual appearance */
@@ -319,7 +358,8 @@ export type ModalType =
   | 'paths'
   | 'create-view'
   | 'create-group'
-  | 'confirm-delete';
+  | 'confirm-delete'
+  | 'tagset-manager';
 
 export interface Toast {
   id: string;

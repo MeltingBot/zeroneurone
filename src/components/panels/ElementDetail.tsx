@@ -1,9 +1,10 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip } from 'lucide-react';
+import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
+import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { VisualEditor } from './VisualEditor';
 import { AssetsPanel } from './AssetsPanel';
 import { GeoPicker } from './GeoPicker';
@@ -38,6 +39,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const [geoLat, setGeoLat] = useState(element.geo?.lat?.toString() ?? '');
   const [geoLng, setGeoLng] = useState(element.geo?.lng?.toString() ?? '');
   const [showGeoPicker, setShowGeoPicker] = useState(false);
+  const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
   // Track which element we're editing to avoid saving to wrong element
   const editingElementIdRef = useRef<string | null>(null);
@@ -187,6 +189,21 @@ export function ElementDetail({ element }: ElementDetailProps) {
       addExistingTag(tag);
     },
     [addExistingTag]
+  );
+
+  // Handle TagSet tag added (show suggested properties popup)
+  const handleTagSetTagAdded = useCallback((tagSetName: string) => {
+    setSuggestedPropsTagSet(tagSetName);
+  }, []);
+
+  // Handle applying suggested properties from popup
+  const handleApplySuggestedProperties = useCallback(
+    (properties: Element['properties']) => {
+      updateElement(element.id, {
+        properties: [...element.properties, ...properties],
+      });
+    },
+    [element.id, element.properties, updateElement]
   );
 
   // Handle new property (save to investigation settings for reuse)
@@ -357,6 +374,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
               onChange={handleTagsChange}
               suggestions={currentInvestigation?.settings.existingTags}
               onNewTag={handleNewTag}
+              onTagSetTagAdded={handleTagSetTagAdded}
             />
           </div>
         </div>
@@ -408,18 +426,41 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
           {/* Date */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Date</label>
+            <label className="text-xs font-medium text-text-secondary">Date de référence</label>
             <input
               type="datetime-local"
               value={date}
               onChange={(e) => handleDateChange(e.target.value)}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
             />
+            <p className="text-[10px] text-text-tertiary">
+              Date d'ajout ou de collecte de l'information. Pour des événements datés, utilisez la section "Événements".
+            </p>
           </div>
         </div>
       </AccordionSection>
 
-      {/* Localisation */}
+      {/* Événements (historique temporel) */}
+      <AccordionSection
+        id="events"
+        title="Événements"
+        icon={<Calendar size={12} />}
+        badge={eventsBadge}
+        defaultOpen={false}
+      >
+        <div className="space-y-2">
+          <p className="text-[10px] text-text-tertiary">
+            Historique des événements datés (visibles sur la timeline)
+          </p>
+          <EventsEditor
+            events={element.events || []}
+            onChange={handleEventsChange}
+            onOpenGeoPicker={handleOpenGeoPickerForHistory}
+          />
+        </div>
+      </AccordionSection>
+
+      {/* Localisation (position géographique) */}
       <AccordionSection
         id="location"
         title="Localisation"
@@ -428,15 +469,18 @@ export function ElementDetail({ element }: ElementDetailProps) {
           <span className="text-[10px] bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
             Geo
           </span>
-        ) : eventsBadge}
+        ) : null}
         defaultOpen={false}
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
+          <p className="text-[10px] text-text-tertiary">
+            Position fixe de l'élément (visible sur la carte)
+          </p>
           {/* Current position */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
-                Position actuelle
+                Coordonnées GPS
               </label>
               {(geoLat || geoLng) && (
                 <button
@@ -459,7 +503,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   placeholder="Latitude"
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
-                <span className="text-[10px] text-text-tertiary">-90 a 90</span>
+                <span className="text-[10px] text-text-tertiary">-90 à 90</span>
               </div>
               <div className="flex-1">
                 <input
@@ -470,7 +514,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   placeholder="Longitude"
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
-                <span className="text-[10px] text-text-tertiary">-180 a 180</span>
+                <span className="text-[10px] text-text-tertiary">-180 à 180</span>
               </div>
             </div>
             <button
@@ -484,13 +528,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
               Choisir sur la carte
             </button>
           </div>
-
-          {/* Events History */}
-          <EventsEditor
-            events={element.events || []}
-            onChange={handleEventsChange}
-            onOpenGeoPicker={handleOpenGeoPickerForHistory}
-          />
         </div>
       </AccordionSection>
 
@@ -541,6 +578,16 @@ export function ElementDetail({ element }: ElementDetailProps) {
           initialLng={element.geo?.lng}
           onConfirm={handleGeoPickerConfirm}
           onCancel={() => setShowGeoPicker(false)}
+        />
+      )}
+
+      {/* Suggested Properties Popup */}
+      {suggestedPropsTagSet && (
+        <SuggestedPropertiesPopup
+          tagSetName={suggestedPropsTagSet}
+          existingPropertyKeys={element.properties.map((p) => p.key)}
+          onApply={handleApplySuggestedProperties}
+          onClose={() => setSuggestedPropsTagSet(null)}
         />
       )}
     </div>

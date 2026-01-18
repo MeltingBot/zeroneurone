@@ -183,7 +183,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-[15vh] z-50"
+      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-[15vh] z-[1000]"
       onClick={onClose}
     >
       <div

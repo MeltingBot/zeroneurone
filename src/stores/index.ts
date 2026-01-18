@@ -5,3 +5,4 @@ export { useUIStore, type FontMode, type ThemeMode } from './uiStore';
 export { useInsightsStore } from './insightsStore';
 export { useToastStore, toast } from './toastStore';
 export { useHistoryStore } from './historyStore';
+export { useTagSetStore } from './tagSetStore';

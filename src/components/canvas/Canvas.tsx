@@ -27,7 +27,8 @@ import { ElementNode, type ElementNodeData } from './ElementNode';
 import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore } from '../../stores';
+import html2canvas from 'html2canvas';
 import type { Element, Link, Position } from '../../types';
 import { generateUUID } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
@@ -46,6 +47,75 @@ const nodeTypes = {
 const edgeTypes = {
   custom: CustomEdge,
 };
+
+// Capture handler for report screenshots - must be inside ReactFlowProvider
+function CanvasCaptureHandler() {
+  const { fitView } = useReactFlow();
+  const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore();
+
+  useEffect(() => {
+    const captureHandler = async (): Promise<string | null> => {
+      console.log('Canvas capture: starting');
+
+      // Fit view to show all elements
+      fitView({ padding: 0.15, duration: 0 });
+
+      // Wait for React Flow to fully render
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Capture
+      const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
+      if (!element) {
+        console.error('Canvas capture: element not found');
+        return null;
+      }
+
+      console.log('Canvas capture: element found, enhancing edges...');
+
+      // Temporarily increase stroke widths for better capture
+      const edges = element.querySelectorAll('.react-flow__edge path');
+      const originalStrokes: { el: SVGPathElement; value: string }[] = [];
+      edges.forEach((edge) => {
+        const pathEl = edge as SVGPathElement;
+        const currentWidth = pathEl.style.strokeWidth ||
+                            edge.getAttribute('stroke-width') || '1';
+        originalStrokes.push({ el: pathEl, value: currentWidth });
+        // Ensure minimum 2px stroke for visibility, multiply by 2 for better capture
+        const width = Math.max(3, parseFloat(currentWidth) * 2);
+        pathEl.style.strokeWidth = `${width}px`;
+      });
+
+      console.log(`Canvas capture: enhanced ${edges.length} edges`);
+
+      try {
+        const canvas = await html2canvas(element, {
+          backgroundColor: '#faf8f5',
+          scale: 3, // Higher scale for better quality
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 5000,
+          foreignObjectRendering: false,
+        });
+        console.log('Canvas capture: success');
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        console.error('Canvas capture failed:', error);
+        return null;
+      } finally {
+        // Restore original stroke widths
+        originalStrokes.forEach(({ el, value }) => {
+          el.style.strokeWidth = value;
+        });
+      }
+    };
+
+    registerCaptureHandler('canvas', captureHandler);
+    return () => unregisterCaptureHandler('canvas');
+  }, [fitView, registerCaptureHandler, unregisterCaptureHandler]);
+
+  return null;
+}
 
 // Zoom controls for the toolbar - must be inside ReactFlowProvider
 function CanvasZoomControls() {
@@ -171,6 +241,7 @@ function getStrokeDasharray(style: string, thickness: number): string | undefine
 function linkToEdge(
   link: Link,
   isSelected: boolean,
+  isDimmed: boolean,
   elements: Element[],
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
@@ -230,6 +301,7 @@ function linkToEdge(
       hasStartArrow,
       hasEndArrow,
       isSelected,
+      isDimmed,
       isEditing,
       onLabelChange,
       onStopEditing,
@@ -455,9 +527,13 @@ export function Canvas() {
       const parallelIndex = parallelEdges.indexOf(link);
       const parallelCount = parallelEdges.length;
 
+      // Link is dimmed if either connected element is dimmed
+      const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
+
       return linkToEdge(
         link,
         selectedLinkIds.has(link.id),
+        isLinkDimmed,
         elements,
         editingLinkId === link.id,
         onLabelChange,
@@ -467,7 +543,7 @@ export function Canvas() {
         onCurveOffsetChange
       );
     });
-  }, [links, elements, selectedLinkIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange]);
+  }, [links, elements, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange]);
 
   // React Flow state
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
@@ -1224,6 +1300,7 @@ export function Canvas() {
         <div
           ref={reactFlowWrapper}
           className="flex-1 relative"
+          data-report-capture="canvas"
           onDrop={handleFileDrop}
           onDragOver={handleFileDragOver}
           onDragLeave={handleFileDragLeave}
@@ -1267,6 +1344,7 @@ export function Canvas() {
               color="var(--color-border-strong)"
               style={{ backgroundColor: 'var(--color-bg-canvas)' }}
             />
+            <CanvasCaptureHandler />
           </ReactFlow>
 
           {/* File drop overlay */}
