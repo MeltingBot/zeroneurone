@@ -30,9 +30,9 @@ services:
       - PORT=3000
       - HOST=0.0.0.0
     healthcheck:
-      test: ["CMD", "node", "server/healthcheck.js"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 3s
       retries: 3
       start_period: 10s
     networks:
