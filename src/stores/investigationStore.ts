@@ -1046,21 +1046,13 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     });
 
     // Also persist to IndexedDB so stats work on home page
-    // Use bulkPut to upsert all elements/links, then delete any that are no longer in Y.Doc
+    // Only upsert - deletions are handled explicitly in deleteElements/deleteLinks
     const investigationId = currentInvestigation.id;
-    const elementIds = elements.map(el => el.id);
-    const linkIds = links.map(lk => lk.id);
 
     Promise.all([
       elementRepository.bulkUpsert(elements.map(el => ({ ...el, investigationId }))),
       linkRepository.bulkUpsert(links.map(lk => ({ ...lk, investigationId }))),
-    ]).then(() => {
-      // After upserting, delete any elements/links in Dexie that are no longer in Y.Doc
-      return Promise.all([
-        elementRepository.deleteNotIn(investigationId, elementIds),
-        linkRepository.deleteNotIn(investigationId, linkIds),
-      ]);
-    }).catch(() => {
+    ]).catch(() => {
       // Silently ignore IndexedDB errors during sync
     });
   },
