@@ -11,3 +11,4 @@ export { Accordion, AccordionSection } from './Accordion';
 export { ViewToolbar } from './ViewToolbar';
 export { DropdownPortal } from './DropdownPortal';
 export { MarkdownEditor, MarkdownPreview } from './MarkdownEditor';
+export { MinResolutionGuard } from './MinResolutionGuard';

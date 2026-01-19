@@ -276,6 +276,8 @@ export interface View {
   filters: ViewFilters;
   hiddenElementIds: ElementId[];
   displayMode: DisplayMode;
+  /** Optional saved element positions for layout restoration */
+  elementPositions?: { id: ElementId; position: Position }[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch } from 'lucide-react';
@@ -364,6 +364,32 @@ export function TimelineView() {
 
   const totalRows = items.length || 1;
 
+  // Virtualization: only render items that are visible in the viewport
+  const [containerWidth, setContainerWidth] = useState(800);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(containerRef.current);
+    setContainerWidth(containerRef.current.clientWidth);
+    return () => observer.disconnect();
+  }, []);
+
+  // Filter items to only those visible horizontally (with buffer)
+  const visibleItems = useMemo(() => {
+    const buffer = 100; // Extra pixels to render outside viewport
+    const viewEndDate = new Date(viewStart.getTime() + ((containerWidth + buffer) / zoom) * 24 * 60 * 60 * 1000);
+    const viewStartBuffer = new Date(viewStart.getTime() - (buffer / zoom) * 24 * 60 * 60 * 1000);
+
+    return itemsWithRows.filter((item) => {
+      const itemEnd = item.end || item.start;
+      // Item is visible if it overlaps with the view range
+      return itemEnd >= viewStartBuffer && item.start <= viewEndDate;
+    });
+  }, [itemsWithRows, viewStart, zoom, containerWidth]);
+
   // Compute potential causal connections between events of linked elements
   const causalConnections = useMemo(() => {
     if (!showCausality) return [];
@@ -544,6 +570,10 @@ export function TimelineView() {
     setViewStart(newViewStart);
   }, [zoom, xToDate]);
 
+  // RAF-based panning for smooth performance
+  const rafRef = useRef<number | null>(null);
+  const pendingViewStartRef = useRef<Date | null>(null);
+
   // Handle mouse drag for panning
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -558,11 +588,25 @@ export function TimelineView() {
     const deltaX = e.clientX - dragStartX;
     const deltaDays = -deltaX / zoom;
     const newViewStart = new Date(dragStartView.getTime() + deltaDays * 24 * 60 * 60 * 1000);
-    setViewStart(newViewStart);
+
+    // Use RAF for smoother updates
+    pendingViewStartRef.current = newViewStart;
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        if (pendingViewStartRef.current) {
+          setViewStart(pendingViewStartRef.current);
+        }
+        rafRef.current = null;
+      });
+    }
   }, [isDragging, dragStartX, dragStartView, zoom]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
   }, []);
 
   // Handle item click
@@ -604,11 +648,22 @@ export function TimelineView() {
     setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
   }, [timeBounds, getContainerWidth]);
 
-  // Cleanup mouse events
+  // Cleanup mouse events and RAF
   useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
     window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   // Center on today at mount
@@ -752,7 +807,7 @@ export function TimelineView() {
       {/* Timeline container */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-hidden relative select-none"
+        className="flex-1 overflow-x-hidden overflow-y-auto relative select-none"
         data-report-capture="timeline"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
@@ -761,19 +816,18 @@ export function TimelineView() {
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         {/* Time axis */}
-        <div className="absolute top-0 left-0 right-0 h-7 bg-bg-primary border-b border-border-default z-10">
+        <div className="absolute top-0 left-0 right-0 h-7 bg-bg-primary border-b border-border-default z-10 overflow-hidden">
           {axisLabels.map((label, i) => (
             <div
               key={i}
-              className="absolute top-0 h-full flex items-end pb-1"
-              style={{ left: label.x }}
+              className="absolute top-0 h-full flex items-end pb-1 will-change-transform"
+              style={{ transform: `translate3d(${label.x}px, 0, 0)` }}
             >
               <span className={`text-[10px] whitespace-nowrap ${label.isMain ? 'text-text-primary font-medium' : 'text-text-tertiary'}`}>
                 {label.label}
               </span>
               <div
                 className={`absolute bottom-0 w-px h-2 ${label.isMain ? 'bg-border-strong' : 'bg-border-default'}`}
-                style={{ left: 0 }}
               />
             </div>
           ))}
@@ -787,14 +841,14 @@ export function TimelineView() {
         >
           {/* Today marker */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
-            style={{ left: todayX }}
+            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 will-change-transform"
+            style={{ transform: `translate3d(${todayX}px, 0, 0)` }}
           >
             <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-red-500 rounded-full" />
           </div>
 
-          {/* Items */}
-          {itemsWithRows.map((item) => {
+          {/* Items - virtualized, only renders visible items */}
+          {visibleItems.map((item) => {
             const x = dateToX(item.start);
             const endX = item.end ? dateToX(item.end) : x + 20;
             const width = Math.max(20, endX - x);
@@ -812,12 +866,11 @@ export function TimelineView() {
               return (
                 <div
                   key={item.id}
-                  className={`absolute cursor-pointer ${
+                  className={`absolute cursor-pointer will-change-transform ${
                     selected ? 'ring-2 ring-accent ring-offset-1' : ''
                   }`}
                   style={{
-                    left: x,
-                    top: y,
+                    transform: `translate3d(${x}px, ${y}px, 0)`,
                     width: ROW_HEIGHT,
                     height: ROW_HEIGHT,
                     opacity: item.isDimmed ? 0.3 : 1,
@@ -860,12 +913,11 @@ export function TimelineView() {
             return (
               <div
                 key={item.id}
-                className={`absolute cursor-pointer ${
+                className={`absolute cursor-pointer will-change-transform ${
                   selected ? 'ring-2 ring-accent ring-offset-1' : ''
                 }`}
                 style={{
-                  left: x,
-                  top: y,
+                  transform: `translate3d(${x}px, ${y}px, 0)`,
                   width: width,
                   height: ROW_HEIGHT,
                   opacity: item.isDimmed ? 0.3 : 1,
@@ -1005,16 +1057,16 @@ export function TimelineView() {
           )}
 
           {/* Grid lines - rendered on top of items with pointer-events-none */}
-          <div className="absolute inset-0 pointer-events-none z-10">
+          <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
             {axisLabels.map((label, i) => (
               <div
                 key={i}
-                className={`absolute top-0 bottom-0 ${
+                className={`absolute top-0 bottom-0 will-change-transform ${
                   label.isMain
                     ? 'w-px bg-text-tertiary/40'
                     : 'w-px bg-text-tertiary/20'
                 }`}
-                style={{ left: label.x }}
+                style={{ transform: `translate3d(${label.x}px, 0, 0)` }}
               />
             ))}
           </div>

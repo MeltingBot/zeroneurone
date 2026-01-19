@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useShallow } from 'zustand/react/shallow';
 import { Loader2 } from 'lucide-react';
@@ -262,29 +262,55 @@ function ElementNodeComponent({ data }: NodeProps) {
         onResizeEnd={handleResizeEnd}
       />
 
-      {/* 4 handles for free-form connections in all directions */}
+      {/* Source handles on all 4 sides */}
       <Handle
         type="source"
         position={Position.Top}
-        id="top"
+        id="source-top"
         className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom"
+        id="source-bottom"
         className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Left}
-        id="left"
+        id="source-left"
         className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Right}
-        id="right"
+        id="source-right"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+
+      {/* Target handles on all 4 sides */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="target-top"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="target-bottom"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target-left"
+        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="target-right"
         className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
       />
 
@@ -490,6 +516,34 @@ function getThemeAwareColor(color: string, isDarkMode: boolean): string {
   return color;
 }
 
-// Note: Not using memo here to allow Zustand store updates to trigger re-renders
-// React Flow has its own optimization layer
-export const ElementNode = ElementNodeComponent;
+// Custom comparison for React.memo - only re-render when data actually changes
+function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
+  const prevData = prevProps.data as ElementNodeData;
+  const nextData = nextProps.data as ElementNodeData;
+
+  // Compare essential props that affect rendering
+  if (prevData.isSelected !== nextData.isSelected) return false;
+  if (prevData.isDimmed !== nextData.isDimmed) return false;
+  if (prevData.isEditing !== nextData.isEditing) return false;
+  if (prevData.thumbnail !== nextData.thumbnail) return false;
+  if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;
+  if (prevData.isLoadingAsset !== nextData.isLoadingAsset) return false;
+
+  // Compare element properties that affect rendering
+  const prevEl = prevData.element;
+  const nextEl = nextData.element;
+  if (prevEl.id !== nextEl.id) return false;
+  if (prevEl.label !== nextEl.label) return false;
+  if (prevEl.visual.color !== nextEl.visual.color) return false;
+  if (prevEl.visual.borderColor !== nextEl.visual.borderColor) return false;
+  if (prevEl.visual.shape !== nextEl.visual.shape) return false;
+  if (prevEl.visual.size !== nextEl.visual.size) return false;
+  if (prevEl.visual.customWidth !== nextEl.visual.customWidth) return false;
+  if (prevEl.visual.customHeight !== nextEl.visual.customHeight) return false;
+  if (prevEl.assetIds?.length !== nextEl.assetIds?.length) return false;
+
+  return true;
+}
+
+// Memoize to prevent re-renders during drag of other nodes
+export const ElementNode = memo(ElementNodeComponent, arePropsEqual);

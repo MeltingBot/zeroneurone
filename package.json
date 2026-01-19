@@ -27,6 +27,8 @@
     "dompurify": "^3.3.1",
     "graphology": "^0.26.0",
     "graphology-communities-louvain": "^2.0.2",
+    "graphology-layout": "^0.6.1",
+    "graphology-layout-forceatlas2": "^0.10.1",
     "graphology-metrics": "^2.4.0",
     "graphology-shortest-path": "^2.1.0",
     "html2canvas": "^1.4.1",

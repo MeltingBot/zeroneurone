@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
 import { useShallow } from 'zustand/react/shallow';
 import { useUIStore, useSyncStore } from '../../stores';
@@ -30,7 +30,7 @@ interface CustomEdgeData {
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void;
 }
 
-export function CustomEdge(props: EdgeProps) {
+function CustomEdgeComponent(props: EdgeProps) {
   const {
     id,
     sourceX,
@@ -481,3 +481,43 @@ export function CustomEdge(props: EdgeProps) {
     </g>
   );
 }
+
+// Custom comparison for React.memo - only re-render when edge data actually changes
+function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean {
+  // Compare position (these change during drag of connected nodes)
+  if (prevProps.sourceX !== nextProps.sourceX) return false;
+  if (prevProps.sourceY !== nextProps.sourceY) return false;
+  if (prevProps.targetX !== nextProps.targetX) return false;
+  if (prevProps.targetY !== nextProps.targetY) return false;
+
+  // Compare selection state
+  if (prevProps.selected !== nextProps.selected) return false;
+
+  // Compare label
+  if (prevProps.label !== nextProps.label) return false;
+
+  // Compare data
+  const prevData = prevProps.data as CustomEdgeData | undefined;
+  const nextData = nextProps.data as CustomEdgeData | undefined;
+
+  if (!prevData && !nextData) return true;
+  if (!prevData || !nextData) return false;
+
+  if (prevData.isSelected !== nextData.isSelected) return false;
+  if (prevData.isDimmed !== nextData.isDimmed) return false;
+  if (prevData.isEditing !== nextData.isEditing) return false;
+  if (prevData.color !== nextData.color) return false;
+  if (prevData.thickness !== nextData.thickness) return false;
+  if (prevData.dashArray !== nextData.dashArray) return false;
+  if (prevData.hasStartArrow !== nextData.hasStartArrow) return false;
+  if (prevData.hasEndArrow !== nextData.hasEndArrow) return false;
+  if (prevData.parallelIndex !== nextData.parallelIndex) return false;
+  if (prevData.parallelCount !== nextData.parallelCount) return false;
+  if (prevData.curveOffset?.x !== nextData.curveOffset?.x) return false;
+  if (prevData.curveOffset?.y !== nextData.curveOffset?.y) return false;
+
+  return true;
+}
+
+// Memoize to prevent re-renders during drag of unrelated nodes
+export const CustomEdge = memo(CustomEdgeComponent, areEdgePropsEqual);

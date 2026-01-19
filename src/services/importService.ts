@@ -16,6 +16,7 @@ import type {
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
+import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
 
 // ============================================================================
 // SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
@@ -266,6 +267,142 @@ class ImportService {
       result.success = true;
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Import from OSINTracker file (.osintracker)
+   */
+  async importFromOsintracker(
+    content: string,
+    targetInvestigationId: InvestigationId
+  ): Promise<ImportResult> {
+    const result: ImportResult = {
+      success: false,
+      elementsImported: 0,
+      linksImported: 0,
+      assetsImported: 0,
+      errors: [],
+      warnings: [],
+    };
+
+    try {
+      // Parse the OSINTracker file (async to load type mappings)
+      const parsed = await parseOsintrackerFile(content);
+
+      // Create ID mappings (original ID -> new ID)
+      const elementIdMap = new Map<string, ElementId>();
+      const assetIdMap = new Map<string, AssetId>();
+
+      // Import assets first (images from base64)
+      for (const assetData of parsed.assets) {
+        try {
+          const file = dataUrlToFile(assetData.dataUrl, assetData.filename);
+          const asset = await fileService.saveAsset(targetInvestigationId, file);
+          assetIdMap.set(assetData.originalElementId, asset.id);
+          result.assetsImported++;
+        } catch (error) {
+          result.warnings.push(
+            `Asset ignoré: ${assetData.filename} - ${error instanceof Error ? error.message : 'Erreur'}`
+          );
+        }
+      }
+
+      // Import elements
+      for (const parsedElement of parsed.elements) {
+        const newId = generateUUID();
+        elementIdMap.set(parsedElement.originalId, newId);
+
+        // Get asset ID if this element had an image
+        const assetId = assetIdMap.get(parsedElement.originalId);
+
+        const element: Element = {
+          id: newId,
+          investigationId: targetInvestigationId,
+          label: parsedElement.label,
+          notes: parsedElement.notes,
+          tags: parsedElement.tags,
+          properties: parsedElement.properties,
+          confidence: parsedElement.confidence,
+          source: parsedElement.source || '',
+          date: parsedElement.date,
+          dateRange: parsedElement.dateRange,
+          position: parsedElement.position,
+          geo: parsedElement.geo,
+          visual: parsedElement.visual,
+          assetIds: assetId ? [assetId] : [],
+          parentGroupId: parsedElement.parentGroupId,
+          isGroup: parsedElement.isGroup,
+          childIds: parsedElement.childIds,
+          events: parsedElement.events,
+          createdAt: parsedElement.createdAt,
+          updatedAt: parsedElement.updatedAt,
+        };
+
+        await db.elements.add(element);
+        result.elementsImported++;
+      }
+
+      // Import links with mapped IDs
+      for (const parsedLink of parsed.links) {
+        const fromId = elementIdMap.get(parsedLink.originalFromId);
+        const toId = elementIdMap.get(parsedLink.originalToId);
+
+        if (!fromId || !toId) {
+          result.warnings.push(
+            `Lien ignoré: éléments source/cible non trouvés (${parsedLink.label})`
+          );
+          continue;
+        }
+
+        const link: Link = {
+          id: generateUUID(),
+          investigationId: targetInvestigationId,
+          fromId,
+          toId,
+          sourceHandle: parsedLink.sourceHandle,
+          targetHandle: parsedLink.targetHandle,
+          label: parsedLink.label,
+          notes: '',
+          properties: parsedLink.properties,
+          confidence: parsedLink.confidence,
+          source: parsedLink.source || '',
+          date: parsedLink.date,
+          dateRange: parsedLink.dateRange,
+          directed: parsedLink.direction !== 'none',
+          direction: parsedLink.direction,
+          visual: parsedLink.visual,
+          curveOffset: { x: 0, y: 0 },
+          createdAt: parsedLink.createdAt,
+          updatedAt: parsedLink.updatedAt,
+        };
+
+        await db.links.add(link);
+        result.linksImported++;
+      }
+
+      // Update investigation with OSINTracker name and description
+      await db.investigations.update(targetInvestigationId, {
+        name: parsed.investigation.name,
+        description: parsed.investigation.description,
+        updatedAt: new Date(),
+      });
+
+      // Add stats to warnings if there were skipped items
+      if (parsed.stats.skippedElements > 0) {
+        result.warnings.push(`${parsed.stats.skippedElements} élément(s) ignoré(s) (sans position)`);
+      }
+      if (parsed.stats.skippedLinks > 0) {
+        result.warnings.push(`${parsed.stats.skippedLinks} lien(s) ignoré(s) (éléments invalides)`);
+      }
+
+      result.success = true;
+    } catch (error) {
+      result.errors.push(
+        `Erreur d'import OSINTracker: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
 
     return result;

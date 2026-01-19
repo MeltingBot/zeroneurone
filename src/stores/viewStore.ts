@@ -5,6 +5,8 @@ import type {
   ElementId,
   View,
   InvestigationId,
+  Position,
+  Element,
 } from '../types';
 import { DEFAULT_FILTERS } from '../types';
 import { db } from '../db/database';
@@ -60,8 +62,8 @@ interface ViewState {
 
   // Actions - Saved views
   loadViews: (investigationId: InvestigationId) => Promise<void>;
-  saveView: (investigationId: InvestigationId, name: string) => Promise<View>;
-  loadView: (view: View) => void;
+  saveView: (investigationId: InvestigationId, name: string, options?: { includePositions?: boolean; elements?: Element[] }) => Promise<View>;
+  loadView: (view: View, updatePositions?: (positions: { id: ElementId; position: Position }[]) => Promise<void>) => void;
   deleteView: (viewId: string) => Promise<void>;
 
   // Derived
@@ -194,7 +196,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({ savedViews: views });
   },
 
-  saveView: async (investigationId, name) => {
+  saveView: async (investigationId, name, options) => {
     const state = get();
     const view: View = {
       id: generateUUID(),
@@ -208,18 +210,31 @@ export const useViewStore = create<ViewState>((set, get) => ({
       updatedAt: new Date(),
     };
 
+    // Include element positions if requested
+    if (options?.includePositions && options?.elements) {
+      view.elementPositions = options.elements.map(el => ({
+        id: el.id,
+        position: { ...el.position },
+      }));
+    }
+
     await db.views.add(view);
     set((s) => ({ savedViews: [...s.savedViews, view] }));
     return view;
   },
 
-  loadView: (view) => {
+  loadView: (view, updatePositions) => {
     set({
       viewport: { ...view.viewport },
       filters: { ...view.filters },
       hiddenElementIds: new Set(view.hiddenElementIds),
       displayMode: view.displayMode,
     });
+
+    // Restore element positions if saved and callback provided
+    if (view.elementPositions && view.elementPositions.length > 0 && updatePositions) {
+      updatePositions(view.elementPositions);
+    }
   },
 
   deleteView: async (viewId) => {

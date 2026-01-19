@@ -32,7 +32,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetInvestigationId === 'new') {
         // Create new investigation with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker)$/i, '');
         const investigation = await createInvestigation(name, '');
         investigationId = investigation.id;
       }
@@ -41,6 +41,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (file.name.endsWith('.zip')) {
         result = await importService.importFromZip(file, investigationId);
+      } else if (file.name.endsWith('.osintracker')) {
+        const content = await importService.readFileAsText(file);
+        result = await importService.importFromOsintracker(content, investigationId);
       } else if (file.name.endsWith('.json')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromJSON(content, investigationId);
@@ -60,7 +63,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           elementsImported: 0,
           linksImported: 0,
           assetsImported: 0,
-          errors: ['Format de fichier non supporté. Utilisez ZIP, JSON ou CSV.'],
+          errors: ['Format de fichier non supporté. Utilisez ZIP, JSON, CSV ou OSINTracker.'],
           warnings: [],
         };
       }
@@ -152,7 +155,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv"
+            accept=".zip,.json,.csv,.osintracker"
             onChange={handleFileSelect}
             className="hidden"
           />
@@ -169,7 +172,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                 {isProcessing ? 'Import en cours...' : 'Sélectionner un fichier'}
               </div>
               <div className="text-xs text-text-tertiary mt-1">
-                ZIP (recommandé), JSON, CSV
+                ZIP, JSON, CSV, OSINTracker
               </div>
             </div>
           </button>

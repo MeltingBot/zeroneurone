@@ -33,12 +33,14 @@ const STYLES: { value: LinkStyle; label: string }[] = [
 
 const THICKNESSES = [1, 2, 3, 4, 5];
 
-// Format date for date input (YYYY-MM-DD) in LOCAL timezone
-function formatDateForInput(date: Date): string {
+// Format date for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
+function formatDateTimeForInput(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 export function LinkDetail({ link }: LinkDetailProps) {
@@ -374,10 +376,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
               <div>
                 <span className="text-[10px] text-text-tertiary">Debut</span>
                 <input
-                  type="date"
-                  value={link.dateRange?.start ? formatDateForInput(new Date(link.dateRange.start)) : ''}
+                  type="datetime-local"
+                  value={link.dateRange?.start ? formatDateTimeForInput(new Date(link.dateRange.start)) : ''}
                   onChange={(e) => {
-                    const newDate = e.target.value ? new Date(e.target.value + 'T12:00:00') : null;
+                    const newDate = e.target.value ? new Date(e.target.value) : null;
                     updateLink(link.id, {
                       dateRange: {
                         start: newDate,
@@ -391,10 +393,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
               <div>
                 <span className="text-[10px] text-text-tertiary">Fin (laisser vide si en cours)</span>
                 <input
-                  type="date"
-                  value={link.dateRange?.end ? formatDateForInput(new Date(link.dateRange.end)) : ''}
+                  type="datetime-local"
+                  value={link.dateRange?.end ? formatDateTimeForInput(new Date(link.dateRange.end)) : ''}
                   onChange={(e) => {
-                    const newDate = e.target.value ? new Date(e.target.value + 'T12:00:00') : null;
+                    const newDate = e.target.value ? new Date(e.target.value) : null;
                     updateLink(link.id, {
                       dateRange: {
                         start: link.dateRange?.start ?? null,

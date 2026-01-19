@@ -35,7 +35,7 @@ export function InvestigationPage() {
 
   const { selectedElementIds, selectedLinkIds } = useSelectionStore();
   const { searchOpen, toggleSearch, closeSearch } = useUIStore();
-  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters } = useViewStore();
+  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews } = useViewStore();
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
@@ -65,6 +65,13 @@ export function InvestigationPage() {
       searchService.loadInvestigation(currentInvestigation.id, elements, links);
     }
   }, [currentInvestigation, elements, links]);
+
+  // Load saved views for this investigation
+  useEffect(() => {
+    if (currentInvestigation) {
+      loadViews(currentInvestigation.id);
+    }
+  }, [currentInvestigation, loadViews]);
 
   // Keyboard shortcuts
   useEffect(() => {

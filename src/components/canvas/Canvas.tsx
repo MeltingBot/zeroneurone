@@ -26,6 +26,7 @@ import { ElementNode, type ElementNodeData } from './ElementNode';
 import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
+import { LayoutDropdown } from './LayoutDropdown';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
@@ -224,13 +225,13 @@ function calculateBestHandles(
   if (absDx > absDy) {
     // Horizontal: use left/right
     return dx > 0
-      ? { sourceHandle: 'right', targetHandle: 'left' }
-      : { sourceHandle: 'left', targetHandle: 'right' };
+      ? { sourceHandle: 'source-right', targetHandle: 'target-left' }
+      : { sourceHandle: 'source-left', targetHandle: 'target-right' };
   } else {
     // Vertical: use top/bottom
     return dy > 0
-      ? { sourceHandle: 'bottom', targetHandle: 'top' }
-      : { sourceHandle: 'top', targetHandle: 'bottom' };
+      ? { sourceHandle: 'source-bottom', targetHandle: 'target-top' }
+      : { sourceHandle: 'source-top', targetHandle: 'target-bottom' };
   }
 }
 
@@ -251,7 +252,7 @@ function linkToEdge(
   link: Link,
   isSelected: boolean,
   isDimmed: boolean,
-  elements: Element[],
+  nodePositions: Map<string, Position>,
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
@@ -260,18 +261,31 @@ function linkToEdge(
   parallelCount?: number,
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void
 ): Edge {
-  // Find source and target elements to calculate best handles
-  const sourceEl = elements.find(e => e.id === link.fromId);
-  const targetEl = elements.find(e => e.id === link.toId);
+  // Get positions from the map (uses real-time positions during drag)
+  const sourcePos = nodePositions.get(link.fromId);
+  const targetPos = nodePositions.get(link.toId);
 
-  let sourceHandle = link.sourceHandle;
-  let targetHandle = link.targetHandle;
+  // ALWAYS calculate best handles based on current positions for dynamic updates during drag
+  // This allows handles to update in real-time as elements are moved
+  let sourceHandle: string;
+  let targetHandle: string;
 
-  // If handles not specified, calculate best ones based on positions
-  if ((!sourceHandle || !targetHandle) && sourceEl && targetEl) {
-    const bestHandles = calculateBestHandles(sourceEl.position, targetEl.position);
-    sourceHandle = sourceHandle || bestHandles.sourceHandle;
-    targetHandle = targetHandle || bestHandles.targetHandle;
+  if (sourcePos && targetPos) {
+    // Calculate optimal handles based on current element positions
+    const bestHandles = calculateBestHandles(sourcePos, targetPos);
+    sourceHandle = bestHandles.sourceHandle;
+    targetHandle = bestHandles.targetHandle;
+  } else {
+    // Fallback to stored handles if positions not available
+    const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
+      if (!handle) return type === 'source' ? 'source-right' : 'target-left';
+      // Already in new format
+      if (handle.startsWith('source-') || handle.startsWith('target-')) return handle;
+      // Convert old format (top, bottom, left, right) to new format
+      return `${type}-${handle}`;
+    };
+    sourceHandle = migrateHandle(link.sourceHandle, 'source');
+    targetHandle = migrateHandle(link.targetHandle, 'target');
   }
 
   const strokeDasharray = getStrokeDasharray(link.visual.style, link.visual.thickness);
@@ -285,8 +299,8 @@ function linkToEdge(
     id: link.id,
     source: link.fromId,
     target: link.toId,
-    sourceHandle: sourceHandle ?? 'right',
-    targetHandle: targetHandle ?? 'left',
+    sourceHandle: sourceHandle ?? 'source-right',
+    targetHandle: targetHandle ?? 'target-left',
     type: 'custom',
     label: link.label || undefined,
     labelStyle: {
@@ -320,6 +334,9 @@ function linkToEdge(
       parallelCount,
       curveOffset: link.curveOffset ?? { x: 0, y: 0 },
       onCurveOffsetChange,
+      // Include handles in data to force React Flow to re-render when they change
+      _sourceHandle: sourceHandle,
+      _targetHandle: targetHandle,
     },
     selected: isSelected,
   };
@@ -563,7 +580,25 @@ export function Canvas() {
     [updateLink]
   );
 
+  // HYBRID MODE: Local state for smooth dragging, sync to Zustand on drag end
+  // This gives us: 1) smooth drag UX, 2) Zustand as source of truth, 3) no desync
+  const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
+  const isDraggingRef = useRef(false);
+
+  // Sync from Zustand to local state when not dragging
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalNodes(nodes);
+    }
+  }, [nodes]);
+
   const edges = useMemo(() => {
+    // Build position map from localNodes for dynamic handle calculation during drag
+    const nodePositions = new Map<string, Position>();
+    for (const node of localNodes) {
+      nodePositions.set(node.id, node.position);
+    }
+
     // Build a map of parallel edges (edges between the same two nodes)
     // Key is normalized "nodeA-nodeB" where nodeA < nodeB alphabetically
     const parallelEdgesMap = new Map<string, Link[]>();
@@ -608,7 +643,7 @@ export function Canvas() {
         link,
         selectedLinkIds.has(link.id),
         isLinkDimmed,
-        elements,
+        nodePositions,
         editingLinkId === link.id,
         onLabelChange,
         stopEditing,
@@ -618,22 +653,13 @@ export function Canvas() {
         onCurveOffsetChange
       );
     });
-  }, [links, elements, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink]);
-
-  // HYBRID MODE: Local state for smooth dragging, sync to Zustand on drag end
-  // This gives us: 1) smooth drag UX, 2) Zustand as source of truth, 3) no desync
-  const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
-  const isDraggingRef = useRef(false);
-
-  // Sync from Zustand to local state when not dragging
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalNodes(nodes);
-    }
-  }, [nodes]);
+  }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink]);
 
   // Track currently dragging nodes to update awareness
   const draggingNodesRef = useRef<Set<string>>(new Set());
+
+  // Track starting positions for undo
+  const dragStartPositionsRef = useRef<Map<string, Position>>(new Map());
 
   // Throttle for position sync during drag (for collaboration)
   const lastDragSyncRef = useRef<number>(0);
@@ -648,7 +674,22 @@ export function Canvas() {
       if (safeChanges.length === 0) return;
 
       // Apply changes locally for smooth dragging
-      setLocalNodes(currentNodes => applyNodeChanges(safeChanges, currentNodes));
+      // Create new node objects to ensure React detects the position changes
+      setLocalNodes(currentNodes => {
+        const updated = applyNodeChanges(safeChanges, currentNodes);
+        // Force new references for nodes that have position changes
+        const positionChangeIds = new Set(
+          safeChanges
+            .filter((c): c is NodeChange & { type: 'position'; id: string } => c.type === 'position')
+            .map(c => c.id)
+        );
+        if (positionChangeIds.size === 0) return updated;
+        return updated.map(node =>
+          positionChangeIds.has(node.id)
+            ? { ...node, position: { ...node.position } }
+            : node
+        );
+      });
 
       // Track dragging state
       const positionChanges = changes.filter(
@@ -665,6 +706,13 @@ export function Canvas() {
           nowDragging.add(change.id);
           if (change.position) {
             draggingChangesWithPosition.push({ id: change.id, position: change.position });
+          }
+          // Capture starting position for undo (only on first drag event)
+          if (!dragStartPositionsRef.current.has(change.id)) {
+            const element = elements.find(el => el.id === change.id);
+            if (element) {
+              dragStartPositionsRef.current.set(change.id, { ...element.position });
+            }
           }
         }
       }
@@ -706,10 +754,40 @@ export function Canvas() {
           id: c.id,
           position: c.position,
         }));
+
+        // Build undo/redo positions from tracked start positions
+        const undoPositions: { id: string; position: Position }[] = [];
+        const redoPositions: { id: string; position: Position }[] = [];
+
+        for (const update of updates) {
+          const startPos = dragStartPositionsRef.current.get(update.id);
+          if (startPos) {
+            // Only track if position actually changed
+            if (startPos.x !== update.position.x || startPos.y !== update.position.y) {
+              undoPositions.push({ id: update.id, position: startPos });
+              redoPositions.push({ id: update.id, position: update.position });
+            }
+          }
+        }
+
+        // Push undo action if positions changed
+        if (undoPositions.length > 0) {
+          pushAction({
+            type: 'move-elements',
+            undo: { positions: undoPositions },
+            redo: { positions: redoPositions },
+          });
+        }
+
+        // Clear tracked positions
+        for (const update of updates) {
+          dragStartPositionsRef.current.delete(update.id);
+        }
+
         updateElementPositions(updates);
       }
     },
-    [updateElementPositions, updateDragging]
+    [updateElementPositions, updateDragging, elements, pushAction]
   );
 
   // Handle edge changes - in controlled mode, we don't need to handle edge changes
@@ -1699,7 +1777,13 @@ export function Canvas() {
               </button>
             </div>
           }
-          rightContent={<CanvasZoomControls />}
+          rightContent={
+            <>
+              <LayoutDropdown />
+              <div className="w-px h-4 bg-border-default mx-1" />
+              <CanvasZoomControls />
+            </>
+          }
         />
 
         {/* Canvas */}
@@ -1764,7 +1848,7 @@ export function Canvas() {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultViewport={viewport}
-            minZoom={0.1}
+            minZoom={0.02}
             maxZoom={4}
             selectionMode={SelectionMode.Partial}
             connectionMode={ConnectionMode.Loose}
@@ -1778,6 +1862,7 @@ export function Canvas() {
             zoomOnScroll
             zoomOnDoubleClick={false}
             fitView={false}
+            nodeDragThreshold={2}
             proOptions={{ hideAttribution: true }}
           >
             <Background

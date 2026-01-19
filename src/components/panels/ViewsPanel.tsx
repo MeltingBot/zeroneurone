@@ -1,29 +1,34 @@
 import { useState, useCallback } from 'react';
-import { Eye, Plus, Trash2, Check } from 'lucide-react';
+import { Eye, Plus, Trash2, Check, LayoutGrid } from 'lucide-react';
 import { useInvestigationStore, useViewStore } from '../../stores';
 import type { View } from '../../types';
 
 export function ViewsPanel() {
-  const { currentInvestigation } = useInvestigationStore();
+  const { currentInvestigation, elements, updateElementPositions } = useInvestigationStore();
   const { savedViews, saveView, loadView, deleteView, hasActiveFilters } = useViewStore();
   const [isCreating, setIsCreating] = useState(false);
   const [newViewName, setNewViewName] = useState('');
+  const [includePositions, setIncludePositions] = useState(false);
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
 
   const handleSaveView = useCallback(async () => {
     if (!currentInvestigation || !newViewName.trim()) return;
 
-    await saveView(currentInvestigation.id, newViewName.trim());
+    await saveView(currentInvestigation.id, newViewName.trim(), {
+      includePositions,
+      elements: includePositions ? elements : undefined,
+    });
     setNewViewName('');
+    setIncludePositions(false);
     setIsCreating(false);
-  }, [currentInvestigation, newViewName, saveView]);
+  }, [currentInvestigation, newViewName, saveView, includePositions, elements]);
 
   const handleLoadView = useCallback(
     (view: View) => {
-      loadView(view);
+      loadView(view, view.elementPositions ? updateElementPositions : undefined);
       setActiveViewId(view.id);
     },
-    [loadView]
+    [loadView, updateElementPositions]
   );
 
   const handleDeleteView = useCallback(
@@ -49,7 +54,8 @@ export function ViewsPanel() {
     [handleSaveView]
   );
 
-  const canSaveView = hasActiveFilters();
+  // Can save if has filters OR if including positions
+  const canSaveView = hasActiveFilters() || includePositions;
 
   return (
     <div className="p-4 space-y-4">
@@ -71,6 +77,17 @@ export function ViewsPanel() {
             autoFocus
             className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
           />
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={includePositions}
+              onChange={(e) => setIncludePositions(e.target.checked)}
+              className="w-4 h-4 rounded border-border-default text-accent focus:ring-accent"
+            />
+            <span className="text-xs text-text-secondary">
+              Inclure les positions ({elements.length} éléments)
+            </span>
+          </label>
           <div className="flex gap-2">
             <button
               onClick={handleSaveView}
@@ -83,6 +100,7 @@ export function ViewsPanel() {
               onClick={() => {
                 setIsCreating(false);
                 setNewViewName('');
+                setIncludePositions(false);
               }}
               className="flex-1 px-3 py-1.5 text-xs font-medium bg-bg-tertiary text-text-secondary rounded hover:bg-border-default"
             >
@@ -93,18 +111,11 @@ export function ViewsPanel() {
       ) : (
         <button
           onClick={() => setIsCreating(true)}
-          disabled={!canSaveView}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border border-dashed border-border-default rounded hover:border-accent hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-default disabled:hover:text-text-tertiary text-text-secondary"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border border-dashed border-border-default rounded hover:border-accent hover:text-accent text-text-secondary"
         >
           <Plus size={14} />
           Sauvegarder la vue actuelle
         </button>
-      )}
-
-      {!canSaveView && !isCreating && (
-        <p className="text-xs text-text-tertiary">
-          Appliquez des filtres pour pouvoir sauvegarder une vue.
-        </p>
       )}
 
       {/* Saved views list */}
@@ -127,6 +138,9 @@ export function ViewsPanel() {
                 <span className="text-sm text-text-primary truncate">
                   {view.name}
                 </span>
+                {view.elementPositions && view.elementPositions.length > 0 && (
+                  <LayoutGrid size={12} className="text-text-tertiary flex-shrink-0" title="Positions sauvegardées" />
+                )}
               </div>
               <button
                 onClick={(e) => handleDeleteView(view.id, e)}
@@ -147,7 +161,16 @@ export function ViewsPanel() {
       {/* View info */}
       {activeViewId && (
         <div className="p-2 bg-bg-secondary rounded text-xs text-text-tertiary">
-          <p>Vue active. Les filtres et le viewport ont été restaurés.</p>
+          {(() => {
+            const activeView = savedViews.find(v => v.id === activeViewId);
+            const hasPositions = activeView?.elementPositions && activeView.elementPositions.length > 0;
+            return (
+              <p>
+                Vue active. Les filtres et le viewport ont été restaurés.
+                {hasPositions && ` Positions de ${activeView.elementPositions.length} éléments restaurées.`}
+              </p>
+            );
+          })()}
         </div>
       )}
     </div>
