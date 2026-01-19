@@ -261,7 +261,8 @@ class ExportService {
     links: Link[],
     assets?: Asset[]
   ): Promise<void> {
-    const timestamp = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
     const baseName = `${investigation.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
 
     switch (format) {

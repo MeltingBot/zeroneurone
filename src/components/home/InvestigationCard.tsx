@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Trash2, Edit2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit2, Download } from 'lucide-react';
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
 import { formatRelativeTime } from '../../utils';
 import type { Investigation } from '../../types';
-import { investigationRepository } from '../../db/repositories';
+import { investigationRepository, elementRepository, linkRepository } from '../../db/repositories';
+import { exportService } from '../../services/exportService';
+import { fileService } from '../../services/fileService';
+import { toast } from '../../stores';
 
 interface InvestigationCardProps {
   investigation: Investigation;
@@ -30,6 +33,18 @@ export function InvestigationCard({
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleExport = async () => {
+    try {
+      const elements = await elementRepository.getByInvestigation(investigation.id);
+      const links = await linkRepository.getByInvestigation(investigation.id);
+      const assets = await fileService.getAssetsByInvestigation(investigation.id);
+      await exportService.exportInvestigation('zip', investigation, elements, links, assets);
+      toast.success('Export ZIP terminé');
+    } catch {
+      toast.error('Erreur lors de l\'export');
+    }
   };
 
   return (
@@ -67,6 +82,12 @@ export function InvestigationCard({
                 <span className="flex items-center gap-2">
                   <Edit2 size={14} />
                   Renommer
+                </span>
+              </DropdownItem>
+              <DropdownItem onClick={handleExport}>
+                <span className="flex items-center gap-2">
+                  <Download size={14} />
+                  Exporter ZIP
                 </span>
               </DropdownItem>
               <DropdownItem destructive onClick={() => onDelete(investigation.id)}>

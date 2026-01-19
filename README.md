@@ -1,7 +1,7 @@
 # ZeroNeurone
 
 <p align="center">
-  <img src="media/zeroneurone.jpg" alt="ZeroNeurone" width="400">
+  <img src="media/zeroneurone.png" alt="ZeroNeurone" width="400">
 </p>
 
 **Outil d'amplification cognitive pour analystes et enqueteurs**
@@ -290,4 +290,4 @@ Les contributions sont les bienvenues ! N'hesitez pas a ouvrir une issue ou une 
 
 ## Licence
 
-[MIT](LICENSE) - Yann Pilpré 2025
+[MIT](LICENSE) - Yann PILPRÉ 2026

@@ -9,3 +9,4 @@ export { ReportModal } from './ReportModal';
 export { ShortcutsModal } from './ShortcutsModal';
 export { TagSetManagerModal } from './TagSetManagerModal';
 export { TagSetEditorModal } from './TagSetEditorModal';
+export { AboutModal } from './AboutModal';
