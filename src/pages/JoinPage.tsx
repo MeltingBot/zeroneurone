@@ -14,7 +14,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { Users, AlertCircle, Loader2, Server, Lock } from 'lucide-react';
+import { Users, AlertCircle, Loader2, Server, Lock, ShieldAlert } from 'lucide-react';
 import { Layout, Button, Input } from '../components/common';
 import { useInvestigationStore, useSyncStore } from '../stores';
 import { syncService } from '../services/syncService';
@@ -23,7 +23,7 @@ import { investigationRepository } from '../db/repositories';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
-type JoinState = 'input' | 'connecting' | 'error';
+type JoinState = 'input' | 'connecting' | 'error' | 'server-warning';
 
 export function JoinPage() {
   // The roomId is now the investigation UUID
@@ -55,25 +55,51 @@ export function JoinPage() {
   const hasValidEncryptionKey = encryptionKeyFromUrl.current && isValidKeyString(encryptionKeyFromUrl.current);
 
   // Server configuration - prioritize URL param, then localStorage
+  const savedServer = localStorage.getItem(STORAGE_KEY) || '';
   const [serverUrl, setServerUrl] = useState(() => {
-    return serverFromUrl || localStorage.getItem(STORAGE_KEY) || '';
+    // Don't automatically use server from URL - need user confirmation if different
+    return savedServer;
   });
-  const [serverInput, setServerInput] = useState(serverUrl);
+  const [serverInput, setServerInput] = useState(serverUrl || serverFromUrl || '');
   const isServerConfigured = serverUrl.trim() !== '';
   const isServerFromUrl = !!serverFromUrl;
+
+  // Check if server from URL is different from saved server
+  const serverMismatch = serverFromUrl && savedServer && serverFromUrl !== savedServer;
+  // Server is new if URL has one but we have nothing saved
+  const serverIsNew = serverFromUrl && !savedServer;
 
   // Investigation name - use name from URL or default
   const [investigationName, setInvestigationName] = useState(
     nameFromUrl || 'Session collaborative'
   );
 
-  // Apply server from URL and save to localStorage
+  // Show warning if server from URL is different from saved one
   useEffect(() => {
+    if (serverMismatch && state === 'input') {
+      setState('server-warning');
+    }
+  }, [serverMismatch, state]);
+
+  // Auto-apply server only if user has no saved server (first time setup)
+  useEffect(() => {
+    if (serverIsNew && state === 'input') {
+      setServerInput(serverFromUrl);
+    }
+  }, [serverIsNew, serverFromUrl, state]);
+
+  const handleAcceptNewServer = () => {
     if (serverFromUrl) {
+      setServerUrl(serverFromUrl);
       localStorage.setItem(STORAGE_KEY, serverFromUrl);
       syncService.setServerUrl(serverFromUrl);
+      setState('input');
     }
-  }, [serverFromUrl]);
+  };
+
+  const handleKeepOldServer = () => {
+    setState('input');
+  };
 
   // Validate investigation ID and encryption key
   useEffect(() => {
@@ -206,6 +232,77 @@ export function JoinPage() {
             <Button variant="primary" onClick={handleRetry}>
               Réessayer
             </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Security warning: server in link is different from saved server
+  if (state === 'server-warning') {
+    return (
+      <Layout>
+        <div className="h-full flex flex-col items-center justify-center">
+          <div className="w-full max-w-lg p-6 bg-bg-primary border border-warning rounded">
+            {/* Warning header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+                <ShieldAlert size={20} className="text-warning" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-warning">
+                  Serveur different
+                </h1>
+                <p className="text-xs text-text-secondary">
+                  Verification de securite
+                </p>
+              </div>
+            </div>
+
+            {/* Warning message */}
+            <div className="mb-6 p-4 bg-warning/5 border border-warning/20 rounded">
+              <p className="text-sm text-text-primary mb-3">
+                Le lien de partage specifie un serveur de synchronisation different de celui que vous avez configure:
+              </p>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2">
+                  <span className="text-text-secondary w-28 flex-shrink-0">Votre serveur:</span>
+                  <code className="font-mono text-text-primary break-all bg-bg-secondary px-1 rounded">
+                    {savedServer.replace(/^wss?:\/\//, '')}
+                  </code>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-text-secondary w-28 flex-shrink-0">Serveur du lien:</span>
+                  <code className="font-mono text-warning break-all bg-warning/10 px-1 rounded">
+                    {serverFromUrl?.replace(/^wss?:\/\//, '')}
+                  </code>
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs text-text-secondary">
+                Utilisez le serveur du lien uniquement si vous faites confiance a son expediteur.
+                Un serveur malveillant pourrait intercepter vos donnees de session.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={handleKeepOldServer}
+                className="flex-1"
+              >
+                Garder mon serveur
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleAcceptNewServer}
+                className="flex-1"
+              >
+                Utiliser le nouveau serveur
+              </Button>
+            </div>
           </div>
         </div>
       </Layout>

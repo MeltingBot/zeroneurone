@@ -7,6 +7,94 @@ import type { Asset, AssetId, InvestigationId } from '../types';
 // Configure pdf.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
+// ============================================================================
+// SECURITY LIMITS FOR FILE UPLOADS
+// ============================================================================
+const FILE_LIMITS = {
+  // Maximum file size: 100 MB
+  MAX_FILE_SIZE: 100 * 1024 * 1024,
+
+  // Maximum base64 payload size from sync: 150 MB (accounts for base64 overhead)
+  MAX_BASE64_SIZE: 150 * 1024 * 1024,
+
+  // Allowed MIME types whitelist
+  ALLOWED_MIME_TYPES: new Set([
+    // Images
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    'image/bmp',
+    'image/tiff',
+    'image/x-icon',
+
+    // Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.oasis.opendocument.text',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/vnd.oasis.opendocument.presentation',
+
+    // Text files
+    'text/plain',
+    'text/csv',
+    'text/html',
+    'text/markdown',
+    'text/xml',
+    'application/json',
+    'application/xml',
+
+    // Archives (for investigation export/import)
+    'application/zip',
+    'application/x-zip-compressed',
+
+    // Audio
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'audio/webm',
+    'audio/aac',
+    'audio/flac',
+
+    // Video
+    'video/mp4',
+    'video/webm',
+    'video/ogg',
+    'video/quicktime',
+    'video/x-msvideo',
+  ]),
+
+  // Additional extensions to allow (when MIME type is empty/generic)
+  ALLOWED_EXTENSIONS: new Set([
+    // Text
+    '.txt', '.md', '.csv', '.json', '.xml', '.html', '.htm',
+    // Documents
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp',
+    // Images
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.ico',
+    // Audio
+    '.mp3', '.wav', '.ogg', '.aac', '.flac', '.m4a',
+    // Video
+    '.mp4', '.webm', '.mov', '.avi', '.mkv',
+    // Archives
+    '.zip',
+  ]),
+};
+
+export class FileValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FileValidationError';
+  }
+}
+
 class FileService {
   private root: FileSystemDirectoryHandle | null = null;
   private initialized = false;
@@ -29,8 +117,71 @@ class FileService {
     }
   }
 
+  /**
+   * Validate a file before saving
+   * @throws FileValidationError if file is invalid
+   */
+  validateFile(file: File): void {
+    // Check file size
+    if (file.size > FILE_LIMITS.MAX_FILE_SIZE) {
+      const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
+      throw new FileValidationError(`Fichier trop volumineux. Taille max: ${maxMB} Mo`);
+    }
+
+    // Check MIME type
+    const mimeAllowed = FILE_LIMITS.ALLOWED_MIME_TYPES.has(file.type);
+
+    // Check extension as fallback (for empty or application/octet-stream MIME)
+    const ext = '.' + getExtension(file.name).toLowerCase();
+    const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
+
+    if (!mimeAllowed && !extAllowed) {
+      throw new FileValidationError(
+        `Type de fichier non autorise: ${file.type || 'inconnu'} (${ext})`
+      );
+    }
+  }
+
+  /**
+   * Validate base64 data from sync before saving
+   * @throws FileValidationError if data is invalid
+   */
+  private validateBase64Data(
+    base64Data: string,
+    mimeType: string,
+    filename: string,
+    size: number
+  ): void {
+    // Check base64 payload size
+    if (base64Data.length > FILE_LIMITS.MAX_BASE64_SIZE) {
+      throw new FileValidationError('Fichier synchronise trop volumineux');
+    }
+
+    // Check declared size
+    if (size > FILE_LIMITS.MAX_FILE_SIZE) {
+      const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
+      throw new FileValidationError(`Fichier trop volumineux. Taille max: ${maxMB} Mo`);
+    }
+
+    // Check MIME type
+    const mimeAllowed = FILE_LIMITS.ALLOWED_MIME_TYPES.has(mimeType);
+
+    // Check extension as fallback
+    const ext = '.' + getExtension(filename).toLowerCase();
+    const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
+
+    if (!mimeAllowed && !extAllowed) {
+      throw new FileValidationError(
+        `Type de fichier non autorise: ${mimeType || 'inconnu'} (${ext})`
+      );
+    }
+  }
+
   async saveAsset(investigationId: InvestigationId, file: File): Promise<Asset> {
     await this.ensureInitialized();
+
+    // Validate file before processing
+    this.validateFile(file);
 
     // 1. Calculate hash
     const arrayBuffer = await file.arrayBuffer();
@@ -169,6 +320,9 @@ class FileService {
     base64Data: string
   ): Promise<Asset | null> {
     await this.ensureInitialized();
+
+    // Validate before processing (security check for synced files)
+    this.validateBase64Data(base64Data, assetData.mimeType, assetData.filename, assetData.size);
 
     // Check if already exists locally (by hash for deduplication)
     const existing = await db.assets

@@ -1,0 +1,81 @@
+# ============================================================================
+# zeroneurone - Docker Compose configuration
+# ============================================================================
+#
+# Deployment with Traefik reverse proxy integration.
+#
+# Usage:
+#   docker compose up -d          # Start in background
+#   docker compose logs -f        # View logs
+#   docker compose down           # Stop
+#
+# Configuration:
+#   Set ZERONEURONE_DOMAIN environment variable or edit the labels below.
+#
+# ============================================================================
+
+services:
+  zeroneurone:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zeroneurone
+    restart: unless-stopped
+    # No ports exposed - Traefik handles external access
+    # Uncomment below for direct access without Traefik:
+    # ports:
+    #   - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - traefik-net
+    labels:
+      # Enable Traefik for this service
+      - "traefik.enable=true"
+
+      # HTTP Router - Main application
+      - "traefik.http.routers.zeroneurone.rule=Host(`${ZERONEURONE_DOMAIN:-zeroneurone.localhost}`)"
+      - "traefik.http.routers.zeroneurone.entrypoints=websecure"
+      - "traefik.http.routers.zeroneurone.tls=true"
+      - "traefik.http.routers.zeroneurone.tls.certresolver=letsencrypt"
+
+      # Service configuration
+      - "traefik.http.services.zeroneurone.loadbalancer.server.port=3000"
+
+      # WebSocket support - important for collaboration
+      # Traefik automatically handles WebSocket upgrade, but we ensure proper headers
+      - "traefik.http.middlewares.zeroneurone-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.zeroneurone.middlewares=zeroneurone-headers"
+
+networks:
+  traefik-net:
+    external: true
+
+# ============================================================================
+# Notes:
+# ============================================================================
+#
+# 1. Make sure the traefik-net network exists:
+#    docker network create traefik-net
+#
+# 2. Set your domain:
+#    export ZERONEURONE_DOMAIN=zeroneurone.example.com
+#    docker compose up -d
+#
+# 3. Or create a .env file:
+#    ZERONEURONE_DOMAIN=zeroneurone.example.com
+#
+# 4. For local development without Traefik, uncomment the ports section
+#    and comment out the labels and networks sections.
+#
+# 5. WebSocket connections work automatically - Traefik handles the
+#    HTTP Upgrade to WebSocket protocol.
+#

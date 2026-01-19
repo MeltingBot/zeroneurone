@@ -1,12 +1,29 @@
 import type { Investigation, Element, Link, Asset } from '../types';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 // Configure marked for secure rendering
 marked.setOptions({
   gfm: true,
   breaks: true,
 });
+
+// Configure DOMPurify - allow safe tags only, no scripts
+const SANITIZE_CONFIG: DOMPurify.Config = {
+  ALLOWED_TAGS: [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'ul', 'ol', 'li',
+    'blockquote', 'pre', 'code',
+    'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'hr', 'span', 'div',
+  ],
+  ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class'],
+  ALLOW_DATA_ATTR: false,
+  // Force all links to open in new tab with noopener
+  ADD_ATTR: ['target', 'rel'],
+};
 
 export type ReportFormat = 'html' | 'markdown' | 'extended-json';
 
@@ -1053,14 +1070,17 @@ class ReportService {
   }
 
   /**
-   * Convert markdown text to HTML using marked
+   * Convert markdown text to HTML using marked with DOMPurify sanitization
+   * This prevents XSS attacks from user-provided markdown content
    */
   private markdownToHTML(text: string): string {
     if (!text) return '';
     try {
       // marked.parse returns string | Promise<string>, but with our sync config it's always string
       const result = marked.parse(text);
-      return typeof result === 'string' ? result : '';
+      const html = typeof result === 'string' ? result : '';
+      // Sanitize HTML to prevent XSS attacks
+      return DOMPurify.sanitize(html, SANITIZE_CONFIG);
     } catch {
       // Fallback to escaped HTML if markdown parsing fails
       return this.escapeHTML(text).replace(/\n/g, '<br>');

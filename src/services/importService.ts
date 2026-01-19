@@ -15,7 +15,42 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
-import { fileService } from './fileService';
+import { fileService, FileValidationError } from './fileService';
+
+// ============================================================================
+// SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
+// ============================================================================
+const ZIP_LIMITS = {
+  // Maximum ZIP file size: 500 MB
+  MAX_ZIP_SIZE: 500 * 1024 * 1024,
+
+  // Maximum total decompressed size: 2 GB (ZIP bomb protection)
+  MAX_DECOMPRESSED_SIZE: 2 * 1024 * 1024 * 1024,
+
+  // Maximum number of files in ZIP
+  MAX_FILES_IN_ZIP: 10000,
+
+  // Maximum single file size inside ZIP: 100 MB (matches file upload limit)
+  MAX_FILE_SIZE_IN_ZIP: 100 * 1024 * 1024,
+
+  // Maximum JSON content size: 50 MB
+  MAX_JSON_SIZE: 50 * 1024 * 1024,
+
+  // Maximum elements/links in a single import
+  MAX_ELEMENTS: 50000,
+  MAX_LINKS: 100000,
+  MAX_ASSETS: 5000,
+
+  // Compression ratio threshold for ZIP bomb detection
+  MAX_COMPRESSION_RATIO: 100, // If decompressed/compressed > 100, suspicious
+};
+
+export class ImportValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ImportValidationError';
+  }
+}
 
 export type ImportFormat = 'json' | 'csv' | 'zip';
 
@@ -37,6 +72,7 @@ export interface CSVImportOptions {
 class ImportService {
   /**
    * Import from ZIP file (full investigation export with assets)
+   * Includes ZIP bomb protection and file validation
    */
   async importFromZip(
     file: File,
@@ -52,7 +88,31 @@ class ImportService {
     };
 
     try {
+      // ========== SECURITY CHECK: ZIP file size ==========
+      if (file.size > ZIP_LIMITS.MAX_ZIP_SIZE) {
+        const maxMB = (ZIP_LIMITS.MAX_ZIP_SIZE / 1024 / 1024).toFixed(0);
+        result.errors.push(`Archive trop volumineuse. Taille max: ${maxMB} Mo`);
+        return result;
+      }
+
       const zip = await JSZip.loadAsync(file);
+
+      // ========== SECURITY CHECK: File count in ZIP ==========
+      const fileCount = Object.keys(zip.files).length;
+      if (fileCount > ZIP_LIMITS.MAX_FILES_IN_ZIP) {
+        result.errors.push(`Trop de fichiers dans l'archive. Max: ${ZIP_LIMITS.MAX_FILES_IN_ZIP}`);
+        return result;
+      }
+
+      // ========== SECURITY CHECK: Estimate decompressed size ==========
+      let estimatedDecompressedSize = 0;
+      for (const [, zipEntry] of Object.entries(zip.files)) {
+        if (!zipEntry.dir) {
+          // JSZip stores _data with uncompressed size in some versions
+          // We'll track actual size as we decompress files
+          estimatedDecompressedSize += (zipEntry as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize || 0;
+        }
+      }
 
       // Read the JSON metadata
       const jsonFile = zip.file('investigation.json');
@@ -62,6 +122,14 @@ class ImportService {
       }
 
       const jsonContent = await jsonFile.async('string');
+
+      // ========== SECURITY CHECK: JSON size ==========
+      if (jsonContent.length > ZIP_LIMITS.MAX_JSON_SIZE) {
+        const maxMB = (ZIP_LIMITS.MAX_JSON_SIZE / 1024 / 1024).toFixed(0);
+        result.errors.push(`Fichier JSON trop volumineux. Taille max: ${maxMB} Mo`);
+        return result;
+      }
+
       const data = JSON.parse(jsonContent) as ExportData;
 
       // Validate structure
@@ -70,9 +138,26 @@ class ImportService {
         return result;
       }
 
+      // ========== SECURITY CHECK: Element/Link/Asset counts ==========
+      if (data.elements.length > ZIP_LIMITS.MAX_ELEMENTS) {
+        result.errors.push(`Trop d'elements. Max: ${ZIP_LIMITS.MAX_ELEMENTS}`);
+        return result;
+      }
+      if (data.links.length > ZIP_LIMITS.MAX_LINKS) {
+        result.errors.push(`Trop de liens. Max: ${ZIP_LIMITS.MAX_LINKS}`);
+        return result;
+      }
+      if (data.assets && data.assets.length > ZIP_LIMITS.MAX_ASSETS) {
+        result.errors.push(`Trop de fichiers joints. Max: ${ZIP_LIMITS.MAX_ASSETS}`);
+        return result;
+      }
+
       // Create ID mappings (old ID -> new ID)
       const elementIdMap = new Map<ElementId, ElementId>();
       const assetIdMap = new Map<AssetId, AssetId>();
+
+      // Track total decompressed size for ZIP bomb detection
+      let totalDecompressedSize = jsonContent.length;
 
       // Import assets from ZIP (if present)
       if (data.assets && data.assets.length > 0) {
@@ -85,6 +170,32 @@ class ImportService {
             }
 
             const arrayBuffer = await assetFile.async('arraybuffer');
+
+            // ========== SECURITY CHECK: Individual file size ==========
+            if (arrayBuffer.byteLength > ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP) {
+              const maxMB = (ZIP_LIMITS.MAX_FILE_SIZE_IN_ZIP / 1024 / 1024).toFixed(0);
+              result.warnings.push(`Asset ignore (trop volumineux, max ${maxMB} Mo): ${assetMeta.filename}`);
+              continue;
+            }
+
+            // ========== SECURITY CHECK: Total decompressed size ==========
+            totalDecompressedSize += arrayBuffer.byteLength;
+            if (totalDecompressedSize > ZIP_LIMITS.MAX_DECOMPRESSED_SIZE) {
+              const maxGB = (ZIP_LIMITS.MAX_DECOMPRESSED_SIZE / 1024 / 1024 / 1024).toFixed(1);
+              result.errors.push(`Taille totale decompresse trop importante. Max: ${maxGB} Go`);
+              return result;
+            }
+
+            // ========== SECURITY CHECK: Compression ratio (ZIP bomb detection) ==========
+            // Only check if we have meaningful compressed size
+            if (file.size > 1024) {
+              const compressionRatio = totalDecompressedSize / file.size;
+              if (compressionRatio > ZIP_LIMITS.MAX_COMPRESSION_RATIO) {
+                result.errors.push(`Ratio de compression suspect (possible ZIP bomb)`);
+                return result;
+              }
+            }
+
             const newAssetId = await this.importAssetFromBuffer(
               arrayBuffer,
               assetMeta,
@@ -93,9 +204,14 @@ class ImportService {
             assetIdMap.set(assetMeta.id, newAssetId);
             result.assetsImported++;
           } catch (error) {
-            result.warnings.push(
-              `Asset ignore: ${assetMeta.filename} - ${error instanceof Error ? error.message : 'Erreur'}`
-            );
+            // Handle file validation errors specifically
+            if (error instanceof FileValidationError) {
+              result.warnings.push(`Asset ignore: ${assetMeta.filename} - ${error.message}`);
+            } else {
+              result.warnings.push(
+                `Asset ignore: ${assetMeta.filename} - ${error instanceof Error ? error.message : 'Erreur'}`
+              );
+            }
           }
         }
       }
@@ -105,7 +221,11 @@ class ImportService {
 
       result.success = true;
     } catch (error) {
-      result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      if (error instanceof ImportValidationError) {
+        result.errors.push(error.message);
+      } else {
+        result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      }
     }
 
     return result;
