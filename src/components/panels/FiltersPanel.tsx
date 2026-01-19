@@ -279,9 +279,14 @@ export function FiltersPanel() {
   // Handle property filter change
   const handlePropertyChange = useCallback(
     (value: string) => {
-      setFilters({ hasProperty: value || null });
+      // Clear badge if changing/clearing property filter
+      if (!value || value !== filters.badgePropertyKey) {
+        setFilters({ hasProperty: value || null, badgePropertyKey: null });
+      } else {
+        setFilters({ hasProperty: value || null });
+      }
     },
-    [setFilters]
+    [setFilters, filters.badgePropertyKey]
   );
 
   // Handle confidence filter change
@@ -438,6 +443,23 @@ export function FiltersPanel() {
               </option>
             ))}
           </select>
+          {filters.hasProperty && (
+            <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filters.badgePropertyKey === filters.hasProperty}
+                onChange={(e) => {
+                  setFilters({
+                    badgePropertyKey: e.target.checked ? filters.hasProperty : null
+                  });
+                }}
+                className="w-3.5 h-3.5 rounded border-border-default text-accent focus:ring-accent focus:ring-offset-0"
+              />
+              <span className="text-xs text-text-secondary">
+                Afficher en badge sur les éléments
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Confidence filter */}

@@ -462,13 +462,6 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Get the current encryption key
-   */
-  getEncryptionKey(): string | null {
-    return this.encryptionKey;
-  }
-
-  /**
    * Check if E2E encryption is active
    */
   isEncrypted(): boolean {

@@ -10,6 +10,8 @@ import {
   ImportModal,
   TagSetManagerModal,
   AboutModal,
+  LocalStorageDisclaimerModal,
+  hasAcknowledgedLocalStorage,
 } from '../components/modals';
 import { useInvestigationStore } from '../stores';
 
@@ -31,8 +33,24 @@ export function HomePage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isTagSetModalOpen, setIsTagSetModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [isDisclaimerModalOpen, setIsDisclaimerModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<string | null>(null);
+
+  // Handle opening create modal with disclaimer check
+  const handleOpenCreateModal = () => {
+    if (hasAcknowledgedLocalStorage()) {
+      setIsCreateModalOpen(true);
+    } else {
+      setIsDisclaimerModalOpen(true);
+    }
+  };
+
+  // Handle disclaimer acceptance - proceed to create modal
+  const handleDisclaimerAccept = () => {
+    setIsDisclaimerModalOpen(false);
+    setIsCreateModalOpen(true);
+  };
 
   useEffect(() => {
     loadInvestigations();
@@ -111,7 +129,7 @@ export function HomePage() {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={handleOpenCreateModal}
               >
                 <Plus size={16} />
                 Nouvelle enquête
@@ -128,7 +146,7 @@ export function HomePage() {
         </div>
       ) : viewMode === 'landing' ? (
         <LandingSection
-          onNewInvestigation={() => setIsCreateModalOpen(true)}
+          onNewInvestigation={handleOpenCreateModal}
           onImport={() => setIsImportModalOpen(true)}
           onAbout={() => setIsAboutModalOpen(true)}
           investigationCount={investigations.length}
@@ -144,7 +162,7 @@ export function HomePage() {
               action={
                 <Button
                   variant="primary"
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={handleOpenCreateModal}
                 >
                   <Plus size={16} />
                   Nouvelle enquête
@@ -204,6 +222,12 @@ export function HomePage() {
       <AboutModal
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
+      />
+
+      <LocalStorageDisclaimerModal
+        isOpen={isDisclaimerModalOpen}
+        onClose={() => setIsDisclaimerModalOpen(false)}
+        onAccept={handleDisclaimerAccept}
       />
     </Layout>
   );

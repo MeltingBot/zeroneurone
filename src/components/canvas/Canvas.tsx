@@ -179,7 +179,8 @@ function elementToNode(
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
   unresolvedCommentCount?: number,
-  isLoadingAsset?: boolean
+  isLoadingAsset?: boolean,
+  badgeProperty?: { value: string; type: string } | null
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -207,6 +208,7 @@ function elementToNode(
       onStopEditing,
       unresolvedCommentCount,
       isLoadingAsset,
+      badgeProperty,
     } satisfies ElementNodeData,
     selected: isSelected,
   };
@@ -265,8 +267,7 @@ function linkToEdge(
   const sourcePos = nodePositions.get(link.fromId);
   const targetPos = nodePositions.get(link.toId);
 
-  // ALWAYS calculate best handles based on current positions for dynamic updates during drag
-  // This allows handles to update in real-time as elements are moved
+  // Calculate handles based on current positions for dynamic updates
   let sourceHandle: string;
   let targetHandle: string;
 
@@ -276,7 +277,7 @@ function linkToEdge(
     sourceHandle = bestHandles.sourceHandle;
     targetHandle = bestHandles.targetHandle;
   } else {
-    // Fallback to stored handles if positions not available
+    // Fallback to stored handles if positions not available (edge case)
     const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
       if (!handle) return type === 'source' ? 'source-right' : 'target-left';
       // Already in new format
@@ -534,6 +535,19 @@ export function Canvas() {
           const unresolvedCommentCount = comments.filter(
             c => c.targetId === el.id && !c.resolved
           ).length;
+          // Get badge property if set in filters
+          let badgeProperty: { value: string; type: string } | null = null;
+          if (filters.badgePropertyKey) {
+            const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
+            if (prop && prop.value != null) {
+              const valueStr = typeof prop.value === 'string'
+                ? prop.value
+                : prop.value instanceof Date
+                  ? prop.value.toLocaleDateString('fr-FR')
+                  : String(prop.value);
+              badgeProperty = { value: valueStr, type: prop.type || 'text' };
+            }
+          }
           return elementToNode(
             el,
             selectedElementIds.has(el.id),
@@ -544,10 +558,11 @@ export function Canvas() {
             onLabelChange,
             stopEditing,
             unresolvedCommentCount,
-            isLoadingAsset
+            isLoadingAsset,
+            badgeProperty
           );
         }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, comments]
+    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, comments, filters.badgePropertyKey]
   );
 
   // Update awareness when selection changes
@@ -584,16 +599,23 @@ export function Canvas() {
   // This gives us: 1) smooth drag UX, 2) Zustand as source of truth, 3) no desync
   const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
   const isDraggingRef = useRef(false);
+  const draggingNodeIdsRef = useRef<Set<string>>(new Set());
+  const lastDragEndRef = useRef<number>(0);
+  const isHandlingSelectionRef = useRef(false);
 
   // Sync from Zustand to local state when not dragging
+  // Skip sync briefly after drag ends to avoid redundant edge recalculation
   useEffect(() => {
-    if (!isDraggingRef.current) {
+    const timeSinceDragEnd = Date.now() - lastDragEndRef.current;
+    const SYNC_DELAY_AFTER_DRAG = 500; // Skip sync for 500ms after drag ends
+
+    if (!isDraggingRef.current && timeSinceDragEnd > SYNC_DELAY_AFTER_DRAG) {
       setLocalNodes(nodes);
     }
   }, [nodes]);
 
   const edges = useMemo(() => {
-    // Build position map from localNodes for dynamic handle calculation during drag
+    // Build position map from localNodes for dynamic handle calculation
     const nodePositions = new Map<string, Position>();
     for (const node of localNodes) {
       nodePositions.set(node.id, node.position);
@@ -655,15 +677,13 @@ export function Canvas() {
     });
   }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink]);
 
-  // Track currently dragging nodes to update awareness
-  const draggingNodesRef = useRef<Set<string>>(new Set());
 
   // Track starting positions for undo
   const dragStartPositionsRef = useRef<Map<string, Position>>(new Map());
 
   // Throttle for position sync during drag (for collaboration)
   const lastDragSyncRef = useRef<number>(0);
-  const DRAG_SYNC_THROTTLE_MS = 100; // Sync positions every 100ms during drag
+  const DRAG_SYNC_THROTTLE_MS = 200; // Sync positions every 200ms during drag (reduced for performance)
 
   // Handle node changes (position, selection)
   // HYBRID: Apply changes locally for smooth drag, sync to Zustand periodically and on drag end
@@ -721,10 +741,10 @@ export function Canvas() {
       isDraggingRef.current = nowDragging.size > 0;
 
       // Update awareness for collaboration
-      const prevDragging = draggingNodesRef.current;
+      const prevDragging = draggingNodeIdsRef.current;
       if (nowDragging.size !== prevDragging.size ||
           [...nowDragging].some(id => !prevDragging.has(id))) {
-        draggingNodesRef.current = nowDragging;
+        draggingNodeIdsRef.current = nowDragging;
         updateDragging(Array.from(nowDragging));
       }
 
@@ -783,6 +803,10 @@ export function Canvas() {
         for (const update of updates) {
           dragStartPositionsRef.current.delete(update.id);
         }
+
+        // Mark drag end time to skip redundant sync from Zustand
+        lastDragEndRef.current = Date.now();
+        draggingNodeIdsRef.current.clear();
 
         updateElementPositions(updates);
       }
@@ -1745,11 +1769,19 @@ export function Canvas() {
   // Handle selection change from selection box
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: Node[]; edges: Edge[] }) => {
+      // Prevent re-entry to avoid infinite loop
+      if (isHandlingSelectionRef.current) return;
+
       if (selectedNodes.length > 0) {
+        isHandlingSelectionRef.current = true;
         selectElements(
           selectedNodes.map((n) => n.id),
           false
         );
+        // Reset flag after a microtask to allow React to settle
+        queueMicrotask(() => {
+          isHandlingSelectionRef.current = false;
+        });
       }
     },
     [selectElements]

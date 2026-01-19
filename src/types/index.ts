@@ -288,6 +288,8 @@ export interface ViewFilters {
   includeTags: string[];
   excludeTags: string[];
   hasProperty: string | null;
+  /** Property key to display as badge on elements (with flag for country type) */
+  badgePropertyKey: string | null;
   textSearch: string;
   minConfidence: Confidence | null;
   dateFrom: Date | null;
@@ -418,6 +420,7 @@ export const DEFAULT_FILTERS: ViewFilters = {
   includeTags: [],
   excludeTags: [],
   hasProperty: null,
+  badgePropertyKey: null,
   textSearch: '',
   minConfidence: null,
   dateFrom: null,

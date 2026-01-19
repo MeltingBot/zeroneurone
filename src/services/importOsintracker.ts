@@ -15,6 +15,9 @@ import { generateUUID } from '../utils';
 interface MasterDataType {
   id: string;
   name: string;
+  color?: {
+    hex: string;
+  };
   localizations?: Array<{
     name: string;
     locale: string;
@@ -27,13 +30,17 @@ interface MasterData {
   };
 }
 
-// Type map cache (typeId -> category name)
-let typeMapCache: Map<string, string> | null = null;
+// Type info cache (typeId -> { name, color })
+interface TypeInfo {
+  name: string;
+  color: string | null;
+}
+let typeMapCache: Map<string, TypeInfo> | null = null;
 
 /**
- * Load and parse the master.json file to get type mappings
+ * Load and parse the master.json file to get type mappings (name + color)
  */
-async function loadTypeMap(): Promise<Map<string, string>> {
+async function loadTypeMap(): Promise<Map<string, TypeInfo>> {
   if (typeMapCache) {
     return typeMapCache;
   }
@@ -46,13 +53,14 @@ async function loadTypeMap(): Promise<Map<string, string>> {
     }
 
     const master: MasterData = await response.json();
-    const typeMap = new Map<string, string>();
+    const typeMap = new Map<string, TypeInfo>();
 
     for (const dataType of master.data.dataTypes) {
       // Prefer French localization, fallback to name
       const frLocalization = dataType.localizations?.find(l => l.locale === 'fr');
       const categoryName = frLocalization?.name || dataType.name;
-      typeMap.set(dataType.id, categoryName);
+      const color = dataType.color?.hex || null;
+      typeMap.set(dataType.id, { name: categoryName, color });
     }
 
     typeMapCache = typeMap;
@@ -97,6 +105,7 @@ interface OsintrackerElement {
   url?: string;
   critical?: boolean;
   countryCode?: string;
+  progress?: string; // Badge content (e.g., "En cours", "Terminé")
   creationDate: number;
   editionDate?: number;
 }
@@ -215,15 +224,15 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       continue;
     }
 
+    // Get type info (name + color) from master.json
+    const typeInfo = osintEl.typeId ? typeMap.get(osintEl.typeId) : null;
+
     // Build tags
     const tags: string[] = [];
 
     // Add category from typeId using master.json mapping
-    if (osintEl.typeId) {
-      const categoryName = typeMap.get(osintEl.typeId);
-      if (categoryName) {
-        tags.push(categoryName);
-      }
+    if (typeInfo?.name) {
+      tags.push(typeInfo.name);
     }
 
     if (osintEl.critical) {
@@ -231,18 +240,32 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     }
 
     // Build properties
-    const properties: Array<{ key: string; value: string; type: 'text' | 'number' | 'date' | 'url' }> = [];
+    const properties: Array<{ key: string; value: string; type: 'text' | 'number' | 'date' | 'url' | 'country' }> = [];
 
-    // Add Badge property with category name
-    if (osintEl.typeId) {
-      const categoryName = typeMap.get(osintEl.typeId);
-      if (categoryName) {
-        properties.push({ key: 'Badge', value: categoryName, type: 'text' });
-      }
+    // Add Badge property from progress field
+    if (osintEl.progress) {
+      properties.push({ key: 'Badge', value: osintEl.progress, type: 'text' });
     }
 
+    // Add country property with type 'country'
     if (osintEl.countryCode) {
-      properties.push({ key: 'Pays', value: osintEl.countryCode, type: 'text' });
+      properties.push({ key: 'Pays', value: osintEl.countryCode, type: 'country' });
+    }
+
+    // Determine element color: use type color from master.json, or yellow for critical, or default
+    let elementColor = '#fffdf9'; // Default warm white
+    let borderColor = '#e8e3db';  // Default border
+
+    if (typeInfo?.color) {
+      elementColor = typeInfo.color;
+      // Darken the color slightly for border (simple approach)
+      borderColor = typeInfo.color;
+    }
+
+    if (osintEl.critical) {
+      // Override with yellow for critical items
+      elementColor = '#fef3c7';
+      borderColor = '#f59e0b';
     }
 
     const element: OsintrackerImportResult['elements'][0] = {
@@ -262,8 +285,8 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       geo: null,
       events: [],
       visual: {
-        color: osintEl.critical ? '#fef3c7' : '#fffdf9', // Yellow for critical
-        borderColor: osintEl.critical ? '#f59e0b' : '#e8e3db',
+        color: elementColor,
+        borderColor: borderColor,
         shape: 'rectangle',
         size: 'medium',
         icon: null,

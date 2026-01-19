@@ -537,6 +537,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
         </div>
       </AccordionSection>
 
+      {/* Timestamps (read-only) */}
+      <div className="px-3 py-2 border-t border-border-default bg-bg-secondary/50">
+        <div className="flex justify-between text-[10px] text-text-tertiary">
+          <span>Cree le {formatDateTimeDisplay(link.createdAt)}</span>
+          <span>Modifie le {formatDateTimeDisplay(link.updatedAt)}</span>
+        </div>
+      </div>
+
       {/* Suggested Properties Popup */}
       {suggestedPropsTagSet && (
         <SuggestedPropertiesPopup
@@ -548,4 +556,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
       )}
     </div>
   );
+}
+
+// Format date for display (DD/MM/YYYY HH:mm)
+function formatDateTimeDisplay(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }

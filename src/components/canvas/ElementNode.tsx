@@ -42,15 +42,25 @@ export interface ElementNodeData extends Record<string, unknown> {
   unresolvedCommentCount?: number;
   /** True if asset is expected but not yet loaded (for collaboration sync) */
   isLoadingAsset?: boolean;
+  /** Property to display as badge (value and type for country flag) */
+  badgeProperty?: { value: string; type: string } | null;
 }
 
 // Minimum sizes for resizing
 const MIN_WIDTH = 60;
 const MIN_HEIGHT = 40;
 
+// Convert country code to flag emoji (e.g., "FR" → "🇫🇷")
+function countryCodeToFlag(countryCode: string): string {
+  const code = countryCode.toUpperCase();
+  if (code.length !== 2) return countryCode;
+  const offset = 127397; // Regional indicator symbol letter A starts at U+1F1E6
+  return String.fromCodePoint(code.charCodeAt(0) + offset, code.charCodeAt(1) + offset);
+}
+
 function ElementNodeComponent({ data }: NodeProps) {
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount, isLoadingAsset } = nodeData;
+  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount, isLoadingAsset, badgeProperty } = nodeData;
 
   // Get sync state for this element
   const { remoteUsers, mode: syncMode } = useSyncStore(
@@ -324,6 +334,15 @@ function ElementNodeComponent({ data }: NodeProps) {
         </div>
       )}
 
+      {/* Property badge - shows filtered property value */}
+      {badgeProperty && !anonymousMode && (
+        <div
+          className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-bg-secondary border border-border-default rounded text-[9px] text-text-secondary whitespace-nowrap shadow-sm z-10"
+        >
+          {badgeProperty.type === 'country' ? countryCodeToFlag(badgeProperty.value) : badgeProperty.value}
+        </div>
+      )}
+
       {/* Node body */}
       <div
         className={`
@@ -528,6 +547,8 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.thumbnail !== nextData.thumbnail) return false;
   if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;
   if (prevData.isLoadingAsset !== nextData.isLoadingAsset) return false;
+  if (prevData.badgeProperty?.value !== nextData.badgeProperty?.value) return false;
+  if (prevData.badgeProperty?.type !== nextData.badgeProperty?.type) return false;
 
   // Compare element properties that affect rendering
   const prevEl = prevData.element;
