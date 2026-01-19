@@ -9,24 +9,18 @@ import type { Element, Link, Investigation, Asset } from '../types';
 import { generateUUID } from '../utils';
 
 // ============================================================================
-// MASTER.JSON TYPE DEFINITIONS (for category mapping)
+// TYPE MAPPING DEFINITIONS (minimal structure for import)
 // ============================================================================
 
-interface MasterDataType {
+interface TypeMapEntry {
   id: string;
   name: string;
-  color?: {
-    hex: string;
-  };
-  localizations?: Array<{
-    name: string;
-    locale: string;
-  }>;
+  color: string | null;
 }
 
-interface MasterData {
+interface TypeMapData {
   data: {
-    dataTypes: MasterDataType[];
+    dataTypes: TypeMapEntry[];
   };
 }
 
@@ -38,7 +32,7 @@ interface TypeInfo {
 let typeMapCache: Map<string, TypeInfo> | null = null;
 
 /**
- * Load and parse the master.json file to get type mappings (name + color)
+ * Load and parse the type mapping file to get type names and colors
  */
 async function loadTypeMap(): Promise<Map<string, TypeInfo>> {
   if (typeMapCache) {
@@ -52,15 +46,11 @@ async function loadTypeMap(): Promise<Map<string, TypeInfo>> {
       return new Map();
     }
 
-    const master: MasterData = await response.json();
+    const data: TypeMapData = await response.json();
     const typeMap = new Map<string, TypeInfo>();
 
-    for (const dataType of master.data.dataTypes) {
-      // Prefer French localization, fallback to name
-      const frLocalization = dataType.localizations?.find(l => l.locale === 'fr');
-      const categoryName = frLocalization?.name || dataType.name;
-      const color = dataType.color?.hex || null;
-      typeMap.set(dataType.id, { name: categoryName, color });
+    for (const dataType of data.data.dataTypes) {
+      typeMap.set(dataType.id, { name: dataType.name, color: dataType.color });
     }
 
     typeMapCache = typeMap;
