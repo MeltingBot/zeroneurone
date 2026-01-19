@@ -46,6 +46,7 @@ export function CustomEdge(props: EdgeProps) {
 
   const fontMode = useUIStore((state) => state.fontMode);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const themeMode = useUIStore((state) => state.themeMode);
   const { screenToFlowPosition } = useReactFlow();
   const edgeData = data as CustomEdgeData | undefined;
 
@@ -72,7 +73,7 @@ export function CustomEdge(props: EdgeProps) {
     }
   }
 
-  const color = edgeData?.color ?? 'var(--color-text-tertiary)';
+  const color = edgeData?.color ?? '#9a948d';
   const thickness = edgeData?.thickness ?? 2;
   const dashArray = edgeData?.dashArray ?? undefined;
   const hasStartArrow = edgeData?.hasStartArrow ?? false;
@@ -192,7 +193,7 @@ export function CustomEdge(props: EdgeProps) {
   const currentOffset = isDragging ? dragOffset : curveOffset;
 
   // Selection halo settings
-  const haloColor = 'var(--color-accent)';
+  const haloColor = '#e07a5f';
   const haloThickness = thickness + 6;
 
   // Arrow size
@@ -233,16 +234,21 @@ export function CustomEdge(props: EdgeProps) {
   const adjustedTargetX = targetX - endOffsetX;
   const adjustedTargetY = targetY - endOffsetY;
 
-  // Create a quadratic bezier path that passes through (or near) the control point
-  // Q command uses a control point, but the curve doesn't pass through it
-  // To make it more "elastic", we double the offset for the control point
-  const curveControlX = midX + currentOffset.x * 2 + perpX * parallelOffset * 2;
-  const curveControlY = midY + currentOffset.y * 2 + perpY * parallelOffset * 2;
+  // Midpoint of adjusted endpoints (where curve would naturally pass at t=0.5 with no offset)
+  const adjustedMidX = (adjustedSourceX + adjustedTargetX) / 2;
+  const adjustedMidY = (adjustedSourceY + adjustedTargetY) / 2;
+
+  // For quadratic bezier: curve at t=0.5 = 0.25*P0 + 0.5*P1 + 0.25*P2
+  // We want the curve to pass through controlHandle at t=0.5
+  // So: controlHandle = 0.5*adjustedMid + 0.5*P1
+  // Therefore: P1 = 2*controlHandle - adjustedMid
+  const curveControlX = 2 * controlHandleX - adjustedMidX;
+  const curveControlY = 2 * controlHandleY - adjustedMidY;
 
   // Build the SVG path: M (move to start) Q (quadratic bezier to end)
   const edgePath = `M ${adjustedSourceX} ${adjustedSourceY} Q ${curveControlX} ${curveControlY} ${adjustedTargetX} ${adjustedTargetY}`;
 
-  // Label position is at the visual midpoint (the control handle)
+  // Label position is at the control handle (which is on the curve at t=0.5)
   const labelX = controlHandleX;
   const labelY = controlHandleY;
 
@@ -278,7 +284,7 @@ export function CustomEdge(props: EdgeProps) {
   const edgeOpacity = isDimmed ? 0.3 : 1;
 
   return (
-    <g className="react-flow__edge" style={{ opacity: edgeOpacity, transition: 'opacity 0.2s' }}>
+    <g className="react-flow__edge" style={{ opacity: edgeOpacity, transition: 'opacity 0.2s', cursor: 'pointer' }}>
       {/* Selection halo - rendered behind the main line */}
       {isSelected && (
         <path
@@ -334,34 +340,35 @@ export function CustomEdge(props: EdgeProps) {
       {/* Label - show when editing or when label exists */}
       {(label || isEditing) && (
         <g transform={`translate(${labelX}, ${labelY})`}>
-          <rect
-            x={-40}
-            y={-12}
-            width={80}
-            height={24}
-            rx={labelBgBorderRadius || 3}
-            style={{
-              fill: (labelBgStyle as React.CSSProperties)?.fill || 'var(--color-bg-primary)',
-              fillOpacity: (labelBgStyle as React.CSSProperties)?.fillOpacity || 0.95,
-            }}
-          />
           {isEditing ? (
-            <foreignObject x={-38} y={-10} width={76} height={20}>
-              <input
-                ref={inputRef}
-                type="text"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onBlur={handleInputBlur}
-                className="w-full h-full text-xs text-center bg-transparent border-none outline-none"
-                style={{
-                  color: 'var(--color-text-primary)',
-                  fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
-                  fontSize: fontMode === 'handwritten' ? '14px' : '11px',
-                }}
+            <>
+              {/* Background for editing input */}
+              <rect
+                x={-40}
+                y={-12}
+                width={80}
+                height={24}
+                rx={3}
+                fill="#fffdf9"
+                fillOpacity={0.95}
               />
-            </foreignObject>
+              <foreignObject x={-38} y={-10} width={76} height={20}>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  onBlur={handleInputBlur}
+                  className="w-full h-full text-xs text-center bg-transparent border-none outline-none"
+                  style={{
+                    color: '#3d3833',
+                    fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
+                    fontSize: fontMode === 'handwritten' ? '14px' : '11px',
+                  }}
+                />
+              </foreignObject>
+            </>
           ) : anonymousMode ? (
             <rect
               x={-20}
@@ -369,15 +376,19 @@ export function CustomEdge(props: EdgeProps) {
               width={40}
               height={10}
               rx={2}
-              fill="var(--color-text-primary)"
+              fill="#3d3833"
             />
           ) : (
             <text
               style={{
                 ...labelStyle,
-                fill: 'var(--color-text-primary)',
+                fill: themeMode === 'dark' ? '#ffffff' : '#3d3833',
+                stroke: themeMode === 'dark' ? '#3d3833' : '#ffffff',
+                strokeWidth: 3,
+                paintOrder: 'stroke fill',
                 fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
-                fontSize: fontMode === 'handwritten' ? '14px' : undefined,
+                fontSize: fontMode === 'handwritten' ? '16px' : '12px',
+                fontWeight: 500,
               }}
               textAnchor="middle"
               dominantBaseline="middle"
@@ -427,8 +438,8 @@ export function CustomEdge(props: EdgeProps) {
           {/* Show +N if more users */}
           {remoteLinkSelectors.length > 1 && (
             <>
-              <circle cx={16} cy={0} r={8} fill="var(--color-bg-tertiary)" stroke="var(--color-border-default)" strokeWidth={1} />
-              <text x={16} y={0} textAnchor="middle" dominantBaseline="central" fill="var(--color-text-secondary)" fontSize={8} fontWeight="bold">
+              <circle cx={16} cy={0} r={8} fill="#f0ece4" stroke="#e8e3db" strokeWidth={1} />
+              <text x={16} y={0} textAnchor="middle" dominantBaseline="central" fill="#6b6560" fontSize={8} fontWeight="bold">
                 +{remoteLinkSelectors.length - 1}
               </text>
             </>
@@ -460,10 +471,7 @@ export function CustomEdge(props: EdgeProps) {
           stroke={isSelected ? '#2563eb' : '#9ca3af'}
           strokeWidth={isSelected ? 3 : 1}
           strokeDasharray={isSelected ? undefined : '2,2'}
-          style={{
-            opacity: isSelected ? 1 : 0.5,
-            transition: 'all 0.15s',
-          }}
+          opacity={isSelected ? 1 : 0.5}
         />
       </g>
     </g>

@@ -276,4 +276,18 @@ export const elementRepository = {
     if (elements.length === 0) return;
     await db.elements.bulkPut(elements);
   },
+
+  /**
+   * Delete elements not in the given list of IDs
+   * Used for syncing deletions from Y.Doc to IndexedDB
+   */
+  async deleteNotIn(investigationId: InvestigationId, keepIds: ElementId[]): Promise<void> {
+    const keepSet = new Set(keepIds);
+    const allElements = await db.elements.where({ investigationId }).toArray();
+    const toDelete = allElements.filter(el => !keepSet.has(el.id)).map(el => el.id);
+
+    if (toDelete.length > 0) {
+      await db.elements.where('id').anyOf(toDelete).delete();
+    }
+  },
 };

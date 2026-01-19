@@ -102,23 +102,32 @@ export function MapView() {
     return map;
   }, [assets]);
 
-  // Calculate time range from all events with geo coordinates
-  const timeRange = useMemo(() => {
+  // Calculate time range and collect all unique event dates for discrete slider
+  const { timeRange, eventDates } = useMemo(() => {
     const allDates: Date[] = [];
 
     elements.forEach((el) => {
-      // Add dates from events that have geo coordinates
-      if (el.events && el.events.length > 0) {
-        el.events.forEach((event) => {
-          if (event.geo) {
-            if (event.date) allDates.push(new Date(event.date));
-            if (event.dateEnd) allDates.push(new Date(event.dateEnd));
-          }
-        });
-      }
-      // Add element's own date if it has geo
-      if (el.geo && el.date) {
-        allDates.push(new Date(el.date));
+      // Only consider elements that have geo (either base geo or events with geo)
+      const hasBaseGeo = !!el.geo;
+      const hasEventGeo = el.events?.some((e) => e.geo);
+
+      if (hasBaseGeo || hasEventGeo) {
+        // Add dates from ALL events (they can use element's base geo if they don't have their own)
+        if (el.events && el.events.length > 0) {
+          el.events.forEach((event) => {
+            // Include event dates if: event has geo OR element has base geo
+            if (event.geo || hasBaseGeo) {
+              if (event.date) allDates.push(new Date(event.date));
+              if (event.dateEnd) allDates.push(new Date(event.dateEnd));
+            }
+          });
+        }
+        // Add element's own date/dateRange if it has base geo
+        if (hasBaseGeo) {
+          if (el.date) allDates.push(new Date(el.date));
+          if (el.dateRange?.start) allDates.push(new Date(el.dateRange.start));
+          if (el.dateRange?.end) allDates.push(new Date(el.dateRange.end));
+        }
       }
     });
 
@@ -129,82 +138,312 @@ export function MapView() {
       if (link.dateRange?.end) allDates.push(new Date(link.dateRange.end));
     });
 
-    if (allDates.length === 0) return null;
+    if (allDates.length === 0) return { timeRange: null, eventDates: [] };
 
-    const timestamps = allDates.map((d) => d.getTime());
+    // Get unique dates sorted chronologically
+    const uniqueTimestamps = [...new Set(allDates.map((d) => d.getTime()))].sort((a, b) => a - b);
+    const sortedDates = uniqueTimestamps.map((t) => new Date(t));
+
     return {
-      min: new Date(Math.min(...timestamps)),
-      max: new Date(Math.max(...timestamps)),
+      timeRange: {
+        min: sortedDates[0],
+        max: sortedDates[sortedDates.length - 1],
+      },
+      eventDates: sortedDates,
     };
   }, [elements, links]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
     (element: Element, date: Date | null): { geo: { lat: number; lng: number }; label?: string } | null => {
-      // If no temporal mode or no date, use current geo
+      // If no temporal mode or no date, show element at most recent position
       if (!date || !temporalMode) {
+        // Get events with geo coordinates, sorted by date (most recent last)
+        const geoEvents = (element.events || [])
+          .filter((e) => e.geo && e.date)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Use most recent event's geo if available
+        if (geoEvents.length > 0) {
+          const mostRecent = geoEvents[geoEvents.length - 1];
+          return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
+        }
+
+        // Otherwise use element's base geo
         return element.geo ? { geo: element.geo } : null;
       }
 
       const targetTime = date.getTime();
+      const hasBaseGeo = !!element.geo;
 
-      // Get events with geo coordinates (sorted by date)
-      const geoEvents = (element.events || [])
-        .filter((e) => e.geo)
+      // Get ALL events with dates (sorted by date)
+      const datedEvents = (element.events || [])
+        .filter((e) => e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      if (geoEvents.length > 0) {
-        // Find the position valid at targetTime
-        for (let i = geoEvents.length - 1; i >= 0; i--) {
-          const event = geoEvents[i];
-          const eventStart = new Date(event.date).getTime();
-          const eventEnd = event.dateEnd ? new Date(event.dateEnd).getTime() : Infinity;
+      if (datedEvents.length > 0) {
+        // Element is visible FROM its first event onwards (not before)
+        // Once it appears, it stays visible to maintain timeline coherence
+        const firstEvent = datedEvents[0];
+        const firstEventStart = new Date(firstEvent.date).getTime();
 
-          if (targetTime >= eventStart && targetTime <= eventEnd && event.geo) {
-            return { geo: { lat: event.geo.lat, lng: event.geo.lng }, label: event.label };
-          }
-        }
-
-        // If target is before first event, no position
-        if (targetTime < new Date(geoEvents[0].date).getTime()) {
+        // Before first event: element doesn't exist yet
+        if (targetTime < firstEventStart) {
           return null;
         }
 
-        // If target is after last event with no end, use last known position
-        const lastEvent = geoEvents[geoEvents.length - 1];
-        if (!lastEvent.dateEnd && targetTime >= new Date(lastEvent.date).getTime() && lastEvent.geo) {
-          return { geo: { lat: lastEvent.geo.lat, lng: lastEvent.geo.lng }, label: lastEvent.label };
+        // Find the most recent event that started before or at targetTime
+        let activeEvent = firstEvent;
+        for (const event of datedEvents) {
+          const eventStart = new Date(event.date).getTime();
+          if (eventStart <= targetTime) {
+            activeEvent = event;
+          } else {
+            break; // Events are sorted, no need to continue
+          }
         }
+
+        // Use active event's geo if available, otherwise element's base geo
+        const eventGeo = activeEvent.geo || element.geo;
+        if (eventGeo) {
+          return { geo: { lat: eventGeo.lat, lng: eventGeo.lng }, label: activeEvent.label };
+        }
+        return null;
       }
 
-      // Fall back to current geo if no event matches
-      return element.geo ? { geo: element.geo } : null;
+      // Element has no dated events - check if element has base geo with temporal data
+      if (hasBaseGeo) {
+        // If element has a dateRange, check if selected date is within it
+        if (element.dateRange?.start) {
+          const elStart = new Date(element.dateRange.start).getTime();
+          const elEnd = element.dateRange.end
+            ? new Date(element.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1 // End of day
+            : Infinity;
+
+          if (targetTime < elStart || targetTime > elEnd) {
+            return null; // Element not active at this time
+          }
+        }
+        // If element has only a single date (no range), check if it matches
+        else if (element.date) {
+          const elDate = new Date(element.date);
+          const elStart = elDate.getTime();
+          const elEnd = elStart + 24 * 60 * 60 * 1000 - 1; // Same day (end of day)
+
+          if (targetTime < elStart || targetTime > elEnd) {
+            return null; // Element not active at this time
+          }
+        }
+        // No temporal data on element - always show
+        return { geo: element.geo };
+      }
+
+      return null;
     },
     [temporalMode]
   );
 
-  // Get elements with resolved geo positions (considering temporal mode)
-  // Filter out hidden elements
-  const resolvedGeoElements = useMemo((): ResolvedGeoElement[] => {
-    const result: ResolvedGeoElement[] = [];
+  // Get any geo position for an element (for link-pulled visibility)
+  // This returns a position even for future events
+  const getAnyGeoPosition = useCallback(
+    (element: Element): { geo: { lat: number; lng: number }; label?: string } | null => {
+      // Try events with geo first (prefer closest to selected date or first)
+      const geoEvents = (element.events || [])
+        .filter((e) => e.geo && e.date)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    elements.forEach((el) => {
-      // Skip hidden elements
-      if (hiddenElementIds.has(el.id)) return;
+      if (geoEvents.length > 0) {
+        // If in temporal mode with a date, find closest event
+        if (temporalMode && selectedDate) {
+          const targetTime = selectedDate.getTime();
+          let closest = geoEvents[0];
+          let closestDiff = Math.abs(new Date(closest.date).getTime() - targetTime);
+          for (const event of geoEvents) {
+            const diff = Math.abs(new Date(event.date).getTime() - targetTime);
+            if (diff < closestDiff) {
+              closestDiff = diff;
+              closest = event;
+            }
+          }
+          return { geo: { lat: closest.geo!.lat, lng: closest.geo!.lng }, label: closest.label };
+        }
+        // Otherwise use most recent
+        const mostRecent = geoEvents[geoEvents.length - 1];
+        return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
+      }
 
-      const position = getPositionAtTime(el, selectedDate);
-      if (position) {
-        result.push({
-          element: el,
-          geo: position.geo,
-          fromEvent: !!position.label,
-          eventLabel: position.label,
+      // Fall back to base geo
+      return element.geo ? { geo: element.geo } : null;
+    },
+    [temporalMode, selectedDate]
+  );
+
+  // Check if a link is active at the selected time
+  const isLinkActiveAtTime = useCallback(
+    (link: typeof links[0]): boolean => {
+      if (!temporalMode || !selectedDate) return true;
+
+      const targetTime = selectedDate.getTime();
+
+      // Check link's own date
+      if (link.date) {
+        const linkDate = new Date(link.date).getTime();
+        const linkEnd = linkDate + 24 * 60 * 60 * 1000 - 1;
+        if (targetTime >= linkDate && targetTime <= linkEnd) return true;
+      }
+
+      // Check link's dateRange
+      if (link.dateRange?.start) {
+        const linkStart = new Date(link.dateRange.start).getTime();
+        const linkEnd = link.dateRange.end
+          ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1
+          : Infinity;
+        if (targetTime >= linkStart && targetTime <= linkEnd) return true;
+        // If link has dateRange but we're outside it, it's not active
+        return false;
+      }
+
+      // No temporal data on link = always active
+      return true;
+    },
+    [temporalMode, selectedDate]
+  );
+
+  // Calculate visibility windows for each element based on links
+  // An element is visible during any link's active period that connects to it
+  const elementLinkVisibility = useMemo(() => {
+    const visibilityMap = new Map<string, { from: number; until: number }[]>();
+
+    links.forEach((link) => {
+      // Get the link's active period
+      let linkFrom: number | null = null;
+      let linkUntil: number | null = null;
+
+      if (link.date) {
+        linkFrom = new Date(link.date).getTime();
+        linkUntil = linkFrom + 24 * 60 * 60 * 1000 - 1;
+      }
+      if (link.dateRange?.start) {
+        const rangeStart = new Date(link.dateRange.start).getTime();
+        const rangeEnd = link.dateRange.end
+          ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1
+          : Infinity;
+        // Merge with date if both exist
+        if (linkFrom !== null) {
+          linkFrom = Math.min(linkFrom, rangeStart);
+          linkUntil = Math.max(linkUntil!, rangeEnd);
+        } else {
+          linkFrom = rangeStart;
+          linkUntil = rangeEnd;
+        }
+      }
+
+      if (linkFrom !== null && linkUntil !== null) {
+        // Add visibility window for both connected elements
+        [link.fromId, link.toId].forEach((elId) => {
+          const existing = visibilityMap.get(elId) || [];
+          existing.push({ from: linkFrom!, until: linkUntil! });
+          visibilityMap.set(elId, existing);
         });
       }
     });
 
+    return visibilityMap;
+  }, [links]);
+
+  // Check if element is visible via any link at a given time
+  const isVisibleViaLink = useCallback(
+    (elementId: string, targetTime: number): boolean => {
+      const windows = elementLinkVisibility.get(elementId);
+      if (!windows) return false;
+      return windows.some((w) => targetTime >= w.from && targetTime <= w.until);
+    },
+    [elementLinkVisibility]
+  );
+
+  // Get elements with resolved geo positions (considering temporal mode)
+  const resolvedGeoElements = useMemo((): ResolvedGeoElement[] => {
+    const result: ResolvedGeoElement[] = [];
+    const addedIds = new Set<string>();
+
+    if (!temporalMode || !selectedDate) {
+      // No temporal mode: show all elements with geo
+      elements.forEach((el) => {
+        if (hiddenElementIds.has(el.id)) return;
+        const position = getPositionAtTime(el, null);
+        if (position) {
+          result.push({
+            element: el,
+            geo: position.geo,
+            fromEvent: !!position.label,
+            eventLabel: position.label,
+          });
+          addedIds.add(el.id);
+        }
+      });
+      return result;
+    }
+
+    const targetTime = selectedDate.getTime();
+
+    // In temporal mode: check each element's visibility
+    elements.forEach((el) => {
+      if (hiddenElementIds.has(el.id)) return;
+
+      // Check if element is visible via an active link
+      const visibleViaActiveLink = isVisibleViaLink(el.id, targetTime);
+
+      // Get element's events
+      const datedEvents = (el.events || [])
+        .filter((e) => e.date)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      // Determine if element is visible based on its own temporal data
+      let visibleByOwnData = false;
+
+      if (datedEvents.length > 0) {
+        // Element has events - visible from first event onwards
+        const firstEventStart = new Date(datedEvents[0].date).getTime();
+        if (targetTime >= firstEventStart) {
+          visibleByOwnData = true;
+        }
+      } else if (el.geo) {
+        // Element has no events but has base geo - check date/dateRange
+        if (el.dateRange?.start) {
+          const elStart = new Date(el.dateRange.start).getTime();
+          const elEnd = el.dateRange.end
+            ? new Date(el.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1
+            : Infinity;
+          if (targetTime >= elStart && targetTime <= elEnd) {
+            visibleByOwnData = true;
+          }
+        } else if (el.date) {
+          const elStart = new Date(el.date).getTime();
+          const elEnd = elStart + 24 * 60 * 60 * 1000 - 1;
+          if (targetTime >= elStart && targetTime <= elEnd) {
+            visibleByOwnData = true;
+          }
+        }
+        // No temporal data = not visible by own data
+      }
+
+      // Element is visible if: visible by own data OR visible via active link
+      if (visibleByOwnData || visibleViaActiveLink) {
+        const position = getPositionAtTime(el, selectedDate) || getAnyGeoPosition(el);
+        if (position) {
+          result.push({
+            element: el,
+            geo: position.geo,
+            fromEvent: !!position.label,
+            eventLabel: position.label,
+          });
+          addedIds.add(el.id);
+        }
+      }
+    });
+
     return result;
-  }, [elements, selectedDate, getPositionAtTime, hiddenElementIds]);
+  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink]);
 
   // Legacy geoElements for compatibility (elements with current geo)
   const geoElements = useMemo(() => {
@@ -217,12 +456,22 @@ export function MapView() {
   // Get geo element IDs for quick lookup
   const geoElementIds = useMemo(() => new Set(geoElements.map(el => el.id)), [geoElements]);
 
-  // Filter links where both elements have geo coordinates
+  // Filter links where both elements have geo coordinates AND are active at selected time
   const geoLinks = useMemo(() => {
-    return links.filter(link =>
-      geoElementIds.has(link.fromId) && geoElementIds.has(link.toId)
-    );
-  }, [links, geoElementIds]);
+    return links.filter(link => {
+      // Both elements must have geo at the current time
+      if (!geoElementIds.has(link.fromId) || !geoElementIds.has(link.toId)) {
+        return false;
+      }
+
+      // In temporal mode, filter by link's active state
+      if (temporalMode && selectedDate) {
+        return isLinkActiveAtTime(link);
+      }
+
+      return true;
+    });
+  }, [links, geoElementIds, temporalMode, selectedDate, isLinkActiveAtTime]);
 
   // Get thumbnail for element
   const getThumbnail = useCallback((element: Element): string | null => {
@@ -834,29 +1083,46 @@ export function MapView() {
     });
   };
 
-  // Handle slider change
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!timeRange) return;
-    const value = parseInt(e.target.value);
-    const totalMs = timeRange.max.getTime() - timeRange.min.getTime();
-    const newDate = new Date(timeRange.min.getTime() + (value / 100) * totalMs);
-    setSelectedDate(newDate);
-  };
+  // Get current event index from selected date
+  const currentEventIndex = useMemo(() => {
+    if (eventDates.length === 0 || !selectedDate) return 0;
+    const selectedTime = selectedDate.getTime();
+    // Find closest event date
+    let closestIdx = 0;
+    let closestDiff = Math.abs(eventDates[0].getTime() - selectedTime);
+    for (let i = 1; i < eventDates.length; i++) {
+      const diff = Math.abs(eventDates[i].getTime() - selectedTime);
+      if (diff < closestDiff) {
+        closestDiff = diff;
+        closestIdx = i;
+      }
+    }
+    return closestIdx;
+  }, [eventDates, selectedDate]);
 
-  // Get slider value from selected date
-  const sliderValue = useMemo(() => {
-    if (!timeRange || !selectedDate) return 50;
-    const totalMs = timeRange.max.getTime() - timeRange.min.getTime();
-    if (totalMs === 0) return 50;
-    const currentMs = selectedDate.getTime() - timeRange.min.getTime();
-    return Math.round((currentMs / totalMs) * 100);
-  }, [timeRange, selectedDate]);
+  // Handle slider change - jump to event date by index
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (eventDates.length === 0) return;
+    const index = parseInt(e.target.value);
+    setSelectedDate(eventDates[index]);
+  };
 
   // Toggle temporal mode
   const handleToggleTemporal = () => {
-    if (!temporalMode && timeRange) {
+    if (!temporalMode && eventDates.length > 0) {
       setTemporalMode(true);
-      setSelectedDate(timeRange.max); // Start at most recent
+      // Start at the event date closest to today (allows navigating both past and future)
+      const now = Date.now();
+      let closestDate = eventDates[0];
+      let closestDiff = Math.abs(eventDates[0].getTime() - now);
+      for (const ed of eventDates) {
+        const diff = Math.abs(ed.getTime() - now);
+        if (diff < closestDiff) {
+          closestDiff = diff;
+          closestDate = ed;
+        }
+      }
+      setSelectedDate(closestDate);
     } else {
       setTemporalMode(false);
       setSelectedDate(null);
@@ -864,38 +1130,43 @@ export function MapView() {
     }
   };
 
-  // Step forward/backward
+  // Step forward/backward through events
   const handleStep = (direction: 'forward' | 'backward') => {
-    if (!timeRange || !selectedDate) return;
-    const totalMs = timeRange.max.getTime() - timeRange.min.getTime();
-    const stepMs = totalMs / 20; // 5% steps
-    const newTime = direction === 'forward'
-      ? Math.min(selectedDate.getTime() + stepMs, timeRange.max.getTime())
-      : Math.max(selectedDate.getTime() - stepMs, timeRange.min.getTime());
-    setSelectedDate(new Date(newTime));
+    if (eventDates.length === 0) return;
+    const newIndex = direction === 'forward'
+      ? Math.min(currentEventIndex + 1, eventDates.length - 1)
+      : Math.max(currentEventIndex - 1, 0);
+    setSelectedDate(eventDates[newIndex]);
   };
 
-  // Play animation
+  // Play animation - step through events
   useEffect(() => {
-    if (!isPlaying || !timeRange || !selectedDate) return;
+    if (!isPlaying || eventDates.length === 0) return;
 
     const interval = setInterval(() => {
       setSelectedDate((prev) => {
-        if (!prev || !timeRange) return prev;
-        const totalMs = timeRange.max.getTime() - timeRange.min.getTime();
-        const stepMs = totalMs / 100; // 1% per step
-        const newTime = prev.getTime() + stepMs;
+        if (!prev) return eventDates[0];
 
-        if (newTime >= timeRange.max.getTime()) {
-          setIsPlaying(false);
-          return timeRange.max;
+        // Find current index and move to next
+        const currentTime = prev.getTime();
+        let currentIdx = 0;
+        for (let i = 0; i < eventDates.length; i++) {
+          if (eventDates[i].getTime() <= currentTime) {
+            currentIdx = i;
+          }
         }
-        return new Date(newTime);
+
+        const nextIdx = currentIdx + 1;
+        if (nextIdx >= eventDates.length) {
+          setIsPlaying(false);
+          return eventDates[eventDates.length - 1];
+        }
+        return eventDates[nextIdx];
       });
-    }, 100);
+    }, 800); // Slower for discrete events
 
     return () => clearInterval(interval);
-  }, [isPlaying, timeRange]);
+  }, [isPlaying, eventDates]);
 
   return (
     <div className="h-full flex flex-col bg-bg-secondary">
@@ -985,12 +1256,12 @@ export function MapView() {
             {formatDate(timeRange.min)}
           </span>
 
-          {/* Slider */}
+          {/* Slider - discrete steps on event dates */}
           <input
             type="range"
             min="0"
-            max="100"
-            value={sliderValue}
+            max={Math.max(0, eventDates.length - 1)}
+            value={currentEventIndex}
             onChange={handleSliderChange}
             className="flex-1 h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
           />
@@ -1000,11 +1271,25 @@ export function MapView() {
             {formatDate(timeRange.max)}
           </span>
 
-          {/* Current date */}
+          {/* Event counter */}
+          <span className="text-[10px] text-text-tertiary whitespace-nowrap">
+            {currentEventIndex + 1}/{eventDates.length}
+          </span>
+
+          {/* Current date - editable input (allows any date to see what's visible at that time) */}
           {selectedDate && (
-            <span className="text-xs font-medium text-accent whitespace-nowrap min-w-24 text-right">
-              {formatDate(selectedDate)}
-            </span>
+            <input
+              type="date"
+              value={selectedDate.toISOString().split('T')[0]}
+              onChange={(e) => {
+                const newDate = new Date(e.target.value);
+                if (!isNaN(newDate.getTime())) {
+                  // Set the exact date entered - allows exploring any point in time
+                  setSelectedDate(newDate);
+                }
+              }}
+              className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-28"
+            />
           )}
         </div>
       )}

@@ -886,6 +886,15 @@ export function Canvas() {
     [selectLink]
   );
 
+  // Focus canvas wrapper when component mounts (for keyboard events after view switch)
+  useEffect(() => {
+    // Small delay to ensure the component is fully rendered
+    const timer = setTimeout(() => {
+      reactFlowWrapper.current?.focus();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle pane click (deselect)
   const handlePaneClick = useCallback(() => {
     clearSelection();
@@ -1371,12 +1380,44 @@ export function Canvas() {
         {/* Canvas */}
         <div
           ref={reactFlowWrapper}
-          className="flex-1 relative"
+          className="flex-1 relative outline-none"
           data-report-capture="canvas"
           onDrop={handleFileDrop}
           onDragOver={handleFileDragOver}
           onDragLeave={handleFileDragLeave}
           tabIndex={0}
+          onKeyDown={(e) => {
+            // Backup handler for delete key when window listener doesn't work
+            if ((e.key === 'Delete' || e.key === 'Backspace') &&
+                !(e.target instanceof HTMLInputElement) &&
+                !(e.target instanceof HTMLTextAreaElement)) {
+              e.preventDefault();
+              const selectedEls = getSelectedElementIds();
+              const selectedLks = getSelectedLinkIds();
+              if (selectedEls.length > 0) {
+                const elementsToDelete = elements.filter(el => selectedEls.includes(el.id));
+                const linksToDelete = links.filter(l =>
+                  selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
+                );
+                pushAction({
+                  type: 'delete-elements',
+                  undo: { elements: elementsToDelete, links: linksToDelete },
+                  redo: { elementIds: selectedEls },
+                });
+                deleteElements(selectedEls);
+              }
+              if (selectedLks.length > 0) {
+                const linksToDelete = links.filter(l => selectedLks.includes(l.id));
+                pushAction({
+                  type: 'delete-link',
+                  undo: { links: linksToDelete },
+                  redo: { linkIds: selectedLks },
+                });
+                deleteLinks(selectedLks);
+              }
+              clearSelection();
+            }
+          }}
         >
           <ReactFlow
             nodes={rfNodes}
@@ -1404,7 +1445,9 @@ export function Canvas() {
             edgesReconnectable
             selectNodesOnDrag={false}
             selectionOnDrag
-            panOnDrag={[1, 2]}
+            panOnDrag
+            selectionKeyCode="Shift"
+            deleteKeyCode={null}
             panOnScroll
             zoomOnScroll
             zoomOnDoubleClick={false}

@@ -21,6 +21,11 @@ interface TimelineItem {
   thumbColor: string;
   thumbShape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
   thumbImageId?: string; // AssetId for image thumbnail
+  // Destination thumbnail info (for links)
+  destThumbLetter?: string;
+  destThumbColor?: string;
+  destThumbShape?: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
+  destThumbImageId?: string;
 }
 
 // Constants
@@ -145,6 +150,11 @@ export function TimelineView() {
         thumbColor: fromElement.visual.color,
         thumbShape: fromElement.visual.shape || 'circle',
         thumbImageId: fromElement.assetIds?.[0] || undefined,
+        // Destination element thumbnail
+        destThumbLetter: toLabel.charAt(0).toUpperCase(),
+        destThumbColor: toElement.visual.color,
+        destThumbShape: toElement.visual.shape || 'circle',
+        destThumbImageId: toElement.assetIds?.[0] || undefined,
       });
     });
 
@@ -167,12 +177,11 @@ export function TimelineView() {
         if (eventTime > maxTime) maxTime = eventTime;
 
         const hasEnd = event.dateEnd && !isNaN(new Date(event.dateEnd).getTime());
-        const endDate = hasEnd ? new Date(event.dateEnd!) : undefined;
+        // If no end date, extend to today (ongoing event)
+        const endDate = hasEnd ? new Date(event.dateEnd!) : now;
 
-        if (endDate) {
-          const endTime = endDate.getTime();
-          if (endTime > maxTime) maxTime = endTime;
-        }
+        const endTime = endDate.getTime();
+        if (endTime > maxTime) maxTime = endTime;
 
         const elementLabel = element.label || 'Sans nom';
         const eventLabel = event.label || 'Événement';
@@ -258,8 +267,14 @@ export function TimelineView() {
 
   useEffect(() => {
     const loadThumbnails = async () => {
-      const imageIds = [...new Set(items.filter(i => i.thumbImageId).map(i => i.thumbImageId!))];
-      if (imageIds.length === 0) return;
+      // Collect all image IDs including destination thumbnails
+      const imageIds = new Set<string>();
+      items.forEach(i => {
+        if (i.thumbImageId) imageIds.add(i.thumbImageId);
+        if (i.destThumbImageId) imageIds.add(i.destThumbImageId);
+      });
+
+      if (imageIds.size === 0) return;
 
       const newThumbnails: Record<string, string> = {};
 
@@ -785,7 +800,7 @@ export function TimelineView() {
               return (
                 <div
                   key={item.id}
-                  className={`absolute cursor-pointer transition-shadow transition-opacity ${
+                  className={`absolute cursor-pointer ${
                     selected ? 'ring-2 ring-accent ring-offset-1' : ''
                   }`}
                   style={{
@@ -824,7 +839,7 @@ export function TimelineView() {
             return (
               <div
                 key={item.id}
-                className={`absolute cursor-pointer transition-all ${
+                className={`absolute cursor-pointer ${
                   selected ? 'ring-2 ring-accent ring-offset-1' : ''
                 }`}
                 style={{
@@ -848,10 +863,10 @@ export function TimelineView() {
                 />
                 {/* Content */}
                 <div
-                  className="relative h-full flex items-center overflow-hidden gap-2 pr-3"
+                  className="relative h-full flex items-center overflow-hidden gap-2 pr-2"
                   style={{ paddingLeft: contentOffset + 8 }}
                 >
-                  {/* Thumbnail - image or shape (blur images if hideMedia enabled) */}
+                  {/* Source thumbnail - image or shape (blur images if hideMedia enabled) */}
                   <ItemThumbnail
                     imageUrl={item.thumbImageId ? thumbnails[item.thumbImageId] : undefined}
                     shape={item.thumbShape}
@@ -868,9 +883,19 @@ export function TimelineView() {
                       <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '2em' }} />
                     </span>
                   ) : (
-                    <span className="text-xs text-text-primary truncate font-medium">
+                    <span className="text-xs text-text-primary truncate font-medium flex-1 min-w-0">
                       {item.label}
                     </span>
+                  )}
+                  {/* Destination thumbnail for links */}
+                  {item.type === 'link' && item.destThumbLetter && (
+                    <ItemThumbnail
+                      imageUrl={item.destThumbImageId ? thumbnails[item.destThumbImageId] : undefined}
+                      shape={item.destThumbShape || 'circle'}
+                      color={item.destThumbColor || '#6b7280'}
+                      letter={anonymousMode ? '?' : item.destThumbLetter}
+                      blur={hideMedia}
+                    />
                   )}
                 </div>
               </div>

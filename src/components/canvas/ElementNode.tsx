@@ -213,7 +213,7 @@ function ElementNodeComponent({ data }: NodeProps) {
 
   return (
     <div
-      className={`relative transition-opacity ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
+      className={`relative transition-opacity cursor-pointer ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{ width, height }}

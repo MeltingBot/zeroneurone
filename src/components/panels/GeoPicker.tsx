@@ -152,7 +152,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
       <div className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[90vw] max-w-2xl h-[80vh] max-h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">

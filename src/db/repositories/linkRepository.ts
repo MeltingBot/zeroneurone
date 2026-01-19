@@ -175,4 +175,18 @@ export const linkRepository = {
     if (links.length === 0) return;
     await db.links.bulkPut(links);
   },
+
+  /**
+   * Delete links not in the given list of IDs
+   * Used for syncing deletions from Y.Doc to IndexedDB
+   */
+  async deleteNotIn(investigationId: InvestigationId, keepIds: LinkId[]): Promise<void> {
+    const keepSet = new Set(keepIds);
+    const allLinks = await db.links.where({ investigationId }).toArray();
+    const toDelete = allLinks.filter(lk => !keepSet.has(lk.id)).map(lk => lk.id);
+
+    if (toDelete.length > 0) {
+      await db.links.where('id').anyOf(toDelete).delete();
+    }
+  },
 };

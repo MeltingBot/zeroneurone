@@ -188,6 +188,24 @@ button {
 }
 
 /* ============================================
+   REACT FLOW CURSOR STYLES
+   ============================================ */
+
+/* Default cursor for canvas background (pan mode) */
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane:active {
+  cursor: grabbing;
+}
+
+/* Selection box cursor */
+.react-flow__selection {
+  cursor: default;
+}
+
+/* ============================================
    SKETCHY / HAND-DRAWN EFFECT CLASSES
    ============================================ */
 
