@@ -27,7 +27,7 @@ import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { SyncStatusIndicator, PresenceAvatars, ShareModal } from '../collaboration';
+import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
 import html2canvas from 'html2canvas';
 import type { Element, Link, Position } from '../../types';
@@ -177,7 +177,7 @@ function elementToNode(
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
-  _remoteSelectors?: unknown // Deprecated - ElementNode gets this directly from syncStore
+  unresolvedCommentCount?: number
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -203,7 +203,7 @@ function elementToNode(
       isEditing,
       onLabelChange,
       onStopEditing,
-      // remoteSelectors not passed - ElementNode subscribes to syncStore directly
+      unresolvedCommentCount,
     } satisfies ElementNodeData,
     selected: isSelected,
   };
@@ -331,6 +331,7 @@ export function Canvas() {
     elements,
     links,
     assets,
+    comments,
     createElement,
     updateElement,
     updateElementPositions,
@@ -508,6 +509,10 @@ export function Canvas() {
           const onLabelChange = (newLabel: string) => {
             handleElementLabelChange(el.id, newLabel);
           };
+          // Count unresolved comments for this element
+          const unresolvedCommentCount = comments.filter(
+            c => c.targetId === el.id && !c.resolved
+          ).length;
           return elementToNode(
             el,
             selectedElementIds.has(el.id),
@@ -517,10 +522,10 @@ export function Canvas() {
             editingElementId === el.id,
             onLabelChange,
             stopEditing,
-            undefined // remoteSelectors - ElementNode gets this directly from syncStore
+            unresolvedCommentCount
           );
         }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing]
+    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, comments]
   );
 
   // Update awareness when selection changes
@@ -1676,6 +1681,8 @@ export function Canvas() {
           showFontToggle
           leftContent={
             <div className="flex items-center gap-3">
+              <LocalUserAvatar />
+              <div className="w-px h-4 bg-border-default" />
               <SyncStatusIndicator />
               <PresenceAvatars />
               <button

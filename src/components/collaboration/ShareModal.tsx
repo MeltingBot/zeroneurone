@@ -19,21 +19,25 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
-  const { mode, share, unshare, localUser, updateLocalUserName, encryptionKey } = useSyncStore();
+  const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore();
   const currentInvestigation = useInvestigationStore((state) => state.currentInvestigation);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
-  // Rebuild share URL when modal opens if already sharing
+  // Rebuild share URL when modal opens if already sharing/connected
+  // Works for both host and client (gets key from syncService)
   useEffect(() => {
-    if (isOpen && mode === 'shared' && encryptionKey && currentInvestigation && !shareUrl) {
-      const url = syncService.buildShareUrl(
-        currentInvestigation.id,
-        encryptionKey,
-        currentInvestigation.name
-      );
-      setShareUrl(url);
+    if (isOpen && mode === 'shared' && currentInvestigation && !shareUrl) {
+      const encryptionKey = syncService.getEncryptionKey();
+      if (encryptionKey) {
+        const url = syncService.buildShareUrl(
+          currentInvestigation.id,
+          encryptionKey,
+          currentInvestigation.name
+        );
+        setShareUrl(url);
+      }
     }
-  }, [isOpen, mode, encryptionKey, currentInvestigation, shareUrl]);
+  }, [isOpen, mode, currentInvestigation, shareUrl]);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -270,7 +274,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                   </Button>
                 </div>
                 <p className="text-xs text-text-tertiary flex items-center gap-1">
-                  {encryptionKey && <Lock size={12} className="text-success" />}
+                  {shareUrl && <Lock size={12} className="text-success" />}
                   Envoyez ce lien aux personnes avec qui vous souhaitez collaborer.
                 </p>
               </div>

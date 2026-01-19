@@ -5,6 +5,7 @@
  * - meta: Y.Map<string>           → Investigation metadata
  * - elements: Y.Map<Y.Map<any>>   → Elements by ID
  * - links: Y.Map<Y.Map<any>>      → Links by ID
+ * - comments: Y.Map<Y.Map<any>>   → Comments by ID
  * - views: Y.Map<Y.Map<any>>      → Saved views
  * - assets: Y.Map<Y.Map<any>>     → Asset metadata (binaries stay in OPFS)
  */
@@ -52,6 +53,7 @@ export interface YInvestigation {
   meta: Y.Map<any>;
   elements: Y.Map<Y.Map<any>>;
   links: Y.Map<Y.Map<any>>;
+  comments: Y.Map<Y.Map<any>>;
   views: Y.Map<Y.Map<any>>;
   assets: Y.Map<Y.Map<any>>;
 }
@@ -64,6 +66,7 @@ export function getYMaps(ydoc: Y.Doc): YInvestigation {
     meta: ydoc.getMap('meta'),
     elements: ydoc.getMap('elements'),
     links: ydoc.getMap('links'),
+    comments: ydoc.getMap('comments'),
     views: ydoc.getMap('views'),
     assets: ydoc.getMap('assets'),
   };

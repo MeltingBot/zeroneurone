@@ -8,6 +8,7 @@ export type UUID = string;
 export type InvestigationId = UUID;
 export type ElementId = UUID;
 export type LinkId = UUID;
+export type CommentId = UUID;
 export type AssetId = UUID;
 export type ViewId = UUID;
 export type ReportSectionId = UUID;
@@ -220,6 +221,26 @@ export interface Link {
   curveOffset: { x: number; y: number };
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ============================================================================
+// COMMENT
+// ============================================================================
+
+export type CommentTargetType = 'element' | 'link';
+
+export interface Comment {
+  id: CommentId;
+  investigationId: InvestigationId;
+  targetId: ElementId | LinkId;
+  targetType: CommentTargetType;
+  authorName: string;
+  authorColor: string;
+  content: string;
+  resolved: boolean;
+  resolvedBy: string | null;
+  resolvedAt: Date | null;
+  createdAt: Date;
 }
 
 // ============================================================================

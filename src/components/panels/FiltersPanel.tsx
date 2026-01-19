@@ -11,6 +11,7 @@ import {
   MapPin,
   Calendar,
   AlertCircle,
+  MessageSquare,
 } from 'lucide-react';
 import { useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
 import type { Confidence } from '../../types';
@@ -34,6 +35,7 @@ interface QuickFilterParams {
   showAllElements: ReturnType<typeof useViewStore>['showAllElements'];
   hiddenElementIds: Set<string>;
   elements: ReturnType<typeof useInvestigationStore>['elements'];
+  comments: ReturnType<typeof useInvestigationStore>['comments'];
 }
 
 const QUICK_FILTERS: QuickFilter[] = [
@@ -134,10 +136,42 @@ const QUICK_FILTERS: QuickFilter[] = [
     },
     isActive: ({ filters }) => filters.minConfidence === 50,
   },
+  {
+    id: 'has-comments',
+    label: 'Commentaires',
+    icon: <MessageSquare size={12} />,
+    description: 'Éléments avec commentaires non résolus',
+    apply: ({ elements, comments, hideElements, hiddenElementIds, showAllElements }) => {
+      // Get element IDs that have unresolved comments
+      const elementsWithUnresolvedComments = new Set(
+        comments.filter(c => !c.resolved && c.targetType === 'element').map(c => c.targetId)
+      );
+      // Get elements WITHOUT unresolved comments
+      const elementsWithoutUnresolved = elements
+        .filter(el => !elementsWithUnresolvedComments.has(el.id))
+        .map(el => el.id);
+      // Toggle: if all without comments are hidden, show them; otherwise hide them
+      const allHidden = elementsWithoutUnresolved.every(id => hiddenElementIds.has(id));
+      if (allHidden) {
+        showAllElements();
+      } else {
+        hideElements(elementsWithoutUnresolved);
+      }
+    },
+    isActive: ({ elements, comments, hiddenElementIds }) => {
+      const elementsWithUnresolvedComments = new Set(
+        comments.filter(c => !c.resolved && c.targetType === 'element').map(c => c.targetId)
+      );
+      const elementsWithoutUnresolved = elements
+        .filter(el => !elementsWithUnresolvedComments.has(el.id))
+        .map(el => el.id);
+      return elementsWithoutUnresolved.length > 0 && elementsWithoutUnresolved.every(id => hiddenElementIds.has(id));
+    },
+  },
 ];
 
 export function FiltersPanel() {
-  const { elements } = useInvestigationStore();
+  const { elements, comments } = useInvestigationStore();
   const {
     filters,
     setFilters,
@@ -225,8 +259,9 @@ export function FiltersPanel() {
       showAllElements,
       hiddenElementIds,
       elements,
+      comments,
     }),
-    [filters, setFilters, clearFilters, isolated, hideElements, showAllElements, hiddenElementIds, elements]
+    [filters, setFilters, clearFilters, isolated, hideElements, showAllElements, hiddenElementIds, elements, comments]
   );
 
   // Handle tag toggle

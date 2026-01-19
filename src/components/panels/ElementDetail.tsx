@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar } from 'lucide-react';
+import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
@@ -10,6 +10,7 @@ import { AssetsPanel } from './AssetsPanel';
 import { GeoPicker } from './GeoPicker';
 import { EventsEditor } from './EventsEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
+import { CommentsSection } from './CommentsSection';
 
 interface ElementDetailProps {
   element: Element;
@@ -28,7 +29,11 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function ElementDetail({ element }: ElementDetailProps) {
-  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags } = useInvestigationStore();
+  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments } = useInvestigationStore();
+
+  // Count unresolved comments for this element
+  const elementComments = comments.filter(c => c.targetId === element.id);
+  const unresolvedCommentCount = elementComments.filter(c => !c.resolved).length;
 
   // Local state for inputs
   const [label, setLabel] = useState(element.label);
@@ -568,6 +573,17 @@ export function ElementDetail({ element }: ElementDetailProps) {
           visual={element.visual}
           onChange={handleVisualChange}
         />
+      </AccordionSection>
+
+      {/* Commentaires */}
+      <AccordionSection
+        id="comments"
+        title="Commentaires"
+        icon={<MessageSquare size={12} />}
+        badge={unresolvedCommentCount > 0 ? unresolvedCommentCount : undefined}
+        defaultOpen={unresolvedCommentCount > 0}
+      >
+        <CommentsSection targetId={element.id} targetType="element" />
       </AccordionSection>
 
       {/* Fichiers attachés */}

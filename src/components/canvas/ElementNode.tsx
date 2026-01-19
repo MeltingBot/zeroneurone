@@ -37,6 +37,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   onStopEditing?: () => void;
   /** Remote users who have this element selected */
   remoteSelectors?: RemoteUserPresence[];
+  /** Number of unresolved comments on this element */
+  unresolvedCommentCount?: number;
 }
 
 // Minimum sizes for resizing
@@ -45,7 +47,7 @@ const MIN_HEIGHT = 40;
 
 function ElementNodeComponent({ data }: NodeProps) {
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing } = nodeData;
+  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount } = nodeData;
 
   // Get sync state for this element
   const { remoteUsers, mode: syncMode } = useSyncStore(
@@ -281,6 +283,16 @@ function ElementNodeComponent({ data }: NodeProps) {
         id="right"
         className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
       />
+
+      {/* Comment indicator - shows when element has unresolved comments */}
+      {unresolvedCommentCount !== undefined && unresolvedCommentCount > 0 && (
+        <div
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center shadow-sm z-10"
+          title={`${unresolvedCommentCount} commentaire${unresolvedCommentCount > 1 ? 's' : ''} non résolu${unresolvedCommentCount > 1 ? 's' : ''}`}
+        >
+          {unresolvedCommentCount > 9 ? '9+' : unresolvedCommentCount}
+        </div>
+      )}
 
       {/* Node body */}
       <div

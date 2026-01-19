@@ -7,6 +7,9 @@ import type {
   ElementId,
   Link,
   LinkId,
+  Comment,
+  CommentId,
+  CommentTargetType,
   Asset,
   Position,
   PropertyDefinition,
@@ -29,12 +32,19 @@ import {
   yMapToLink,
   updateLinkYMap,
 } from '../services/yjs/linkMapper';
+import {
+  commentToYMap,
+  yMapToComment,
+  updateCommentYMap,
+} from '../services/yjs/commentMapper';
+import { useSyncStore } from './syncStore';
 
 interface InvestigationState {
   // Current investigation
   currentInvestigation: Investigation | null;
   elements: Element[];
   links: Link[];
+  comments: Comment[];
   assets: Asset[];
 
   // All investigations (for home page)
@@ -72,6 +82,13 @@ interface InvestigationState {
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
   reorderAssets: (elementId: ElementId, assetIds: string[]) => Promise<void>;
 
+  // Actions - Comments
+  createComment: (targetId: ElementId | LinkId, targetType: CommentTargetType, content: string) => Promise<Comment>;
+  resolveComment: (id: CommentId, resolverName: string) => Promise<void>;
+  unresolveComment: (id: CommentId) => Promise<void>;
+  deleteComment: (id: CommentId) => Promise<void>;
+  getCommentsForTarget: (targetId: ElementId | LinkId) => Comment[];
+
   // Actions - Settings (for reusable tags/properties)
   addExistingTag: (tag: string) => Promise<void>;
   addSuggestedProperty: (propertyDef: PropertyDefinition) => Promise<void>;
@@ -91,7 +108,7 @@ function setupYDocObserver(
   ydoc: Y.Doc,
   syncToZustand: () => void
 ): () => void {
-  const { meta: metaMap, elements: elementsMap, links: linksMap, assets: assetsMap } = getYMaps(ydoc);
+  const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
 
   // Throttle the sync to avoid excessive re-renders during rapid changes
   let syncTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -138,6 +155,12 @@ function setupYDocObserver(
   };
   linksMap.observeDeep(linksObserver);
 
+  // Observe comments changes
+  const commentsObserver = () => {
+    throttledSync();
+  };
+  commentsMap.observeDeep(commentsObserver);
+
   // Observe assets changes
   const assetsObserver = () => {
     throttledSync();
@@ -152,6 +175,7 @@ function setupYDocObserver(
     metaMap.unobserve(metaObserver);
     elementsMap.unobserveDeep(elementsObserver);
     linksMap.unobserveDeep(linksObserver);
+    commentsMap.unobserveDeep(commentsObserver);
     assetsMap.unobserveDeep(assetsObserver);
   };
 }
@@ -164,6 +188,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   currentInvestigation: null,
   elements: [],
   links: [],
+  comments: [],
   assets: [],
   investigations: [],
   isLoading: false,
@@ -436,6 +461,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       currentInvestigation: null,
       elements: [],
       links: [],
+      comments: [],
       assets: [],
     });
   },
@@ -855,6 +881,107 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   // ============================================================================
+  // COMMENTS - Via Y.Doc
+  // ============================================================================
+
+  createComment: async (targetId, targetType, content) => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) {
+      throw new Error('No investigation loaded');
+    }
+
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    // Get user info from syncStore (always available, even offline)
+    const { localUser } = useSyncStore.getState();
+    const authorName = localUser.name;
+    const authorColor = localUser.color;
+
+    const comment: Comment = {
+      id: crypto.randomUUID(),
+      investigationId: currentInvestigation.id,
+      targetId,
+      targetType,
+      authorName,
+      authorColor,
+      content,
+      resolved: false,
+      resolvedBy: null,
+      resolvedAt: null,
+      createdAt: new Date(),
+    };
+
+    // Add to Y.Doc
+    const { comments: commentsMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      const ymap = commentToYMap(comment);
+      commentsMap.set(comment.id, ymap);
+    });
+
+    return comment;
+  },
+
+  resolveComment: async (id, resolverName) => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { comments: commentsMap } = getYMaps(ydoc);
+    const ymap = commentsMap.get(id) as Y.Map<any> | undefined;
+
+    if (!ymap) {
+      throw new Error('Comment not found');
+    }
+
+    updateCommentYMap(ymap, {
+      resolved: true,
+      resolvedBy: resolverName,
+      resolvedAt: new Date(),
+    }, ydoc);
+  },
+
+  unresolveComment: async (id) => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { comments: commentsMap } = getYMaps(ydoc);
+    const ymap = commentsMap.get(id) as Y.Map<any> | undefined;
+
+    if (!ymap) {
+      throw new Error('Comment not found');
+    }
+
+    updateCommentYMap(ymap, {
+      resolved: false,
+      resolvedBy: null,
+      resolvedAt: null,
+    }, ydoc);
+  },
+
+  deleteComment: async (id) => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { comments: commentsMap } = getYMaps(ydoc);
+    ydoc.transact(() => {
+      commentsMap.delete(id);
+    });
+  },
+
+  getCommentsForTarget: (targetId) => {
+    const { comments } = get();
+    return comments.filter(c => c.targetId === targetId);
+  },
+
+  // ============================================================================
   // SETTINGS - Via Dexie (unchanged)
   // ============================================================================
 
@@ -957,7 +1084,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       return;
     }
 
-    const { meta: metaMap, elements: elementsMap, links: linksMap, assets: assetsMap } = getYMaps(ydoc);
+    const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
 
     // Sync investigation metadata from Y.Doc
     const metaName = metaMap.get('name') as string | undefined;
@@ -1003,8 +1130,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
     });
 
+    const commentsById = new Map<string, Comment>();
+    commentsMap.forEach((ymap) => {
+      try {
+        const comment = yMapToComment(ymap as Y.Map<any>);
+        if (comment.id) {
+          commentsById.set(comment.id, comment);
+        }
+      } catch {
+        // Skip invalid comments
+      }
+    });
+
     const elements = Array.from(elementsById.values());
     const links = Array.from(linksById.values());
+    const comments = Array.from(commentsById.values());
 
     // DEFENSIVE: Don't wipe state if Y.Doc appears empty but we had elements
     // This can happen due to IndexedDB sync timing issues
@@ -1073,6 +1213,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       currentInvestigation: updatedInvestigation,
       elements,
       links,
+      comments,
     });
 
     // Also persist to IndexedDB so stats work on home page

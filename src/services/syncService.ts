@@ -112,6 +112,13 @@ class SyncService {
   }
 
   /**
+   * Get the current encryption key (if sharing/connected)
+   */
+  getEncryptionKey(): string | null {
+    return this.encryptionKey;
+  }
+
+  /**
    * Check if an investigation is currently open
    */
   isOpen(): boolean {

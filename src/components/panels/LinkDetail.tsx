@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag, MessageSquare } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Property } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -7,6 +7,7 @@ import { TagsEditor } from './TagsEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { DEFAULT_COLORS } from '../../types';
 import { AccordionSection, MarkdownEditor } from '../common';
+import { CommentsSection } from './CommentsSection';
 
 interface LinkDetailProps {
   link: Link;
@@ -41,8 +42,12 @@ function formatDateForInput(date: Date): string {
 }
 
 export function LinkDetail({ link }: LinkDetailProps) {
-  const { updateLink, elements, currentInvestigation, addSuggestedProperty, addExistingTag } = useInvestigationStore();
+  const { updateLink, elements, currentInvestigation, addSuggestedProperty, addExistingTag, comments } = useInvestigationStore();
   // Note: currentInvestigation is used for suggestions in PropertiesEditor
+
+  // Count unresolved comments for this link
+  const linkComments = comments.filter(c => c.targetId === link.id);
+  const unresolvedCommentCount = linkComments.filter(c => !c.resolved).length;
 
   // Local state for inputs
   const [label, setLabel] = useState(link.label);
@@ -419,6 +424,17 @@ export function LinkDetail({ link }: LinkDetailProps) {
           suggestions={currentInvestigation?.settings.suggestedProperties}
           onNewProperty={handleNewProperty}
         />
+      </AccordionSection>
+
+      {/* Commentaires */}
+      <AccordionSection
+        id="comments"
+        title="Commentaires"
+        icon={<MessageSquare size={12} />}
+        badge={unresolvedCommentCount > 0 ? unresolvedCommentCount : undefined}
+        defaultOpen={unresolvedCommentCount > 0}
+      >
+        <CommentsSection targetId={link.id} targetType="link" />
       </AccordionSection>
 
       {/* Apparence */}
