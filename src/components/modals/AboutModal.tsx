@@ -56,7 +56,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <div>
             <p className="text-sm text-text-secondary">
               Outil d'amplification cognitive pour analystes et enquêteurs.
-              Un tableau blanc infini combinant visualisation de graphe,
+              Un tableau blanc combinant visualisation de graphe,
               cartographie et timeline.
             </p>
           </div>
@@ -69,11 +69,11 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             <ul className="space-y-1.5 text-xs text-text-secondary">
               <li className="flex items-start gap-2">
                 <span className="text-text-tertiary">•</span>
-                <span><strong>L'humain garde le contrôle</strong> — Pas d'actions automatiques, suggestions uniquement sur demande</span>
+                <span><strong>L'humain garde le contrôle</strong> — Pas d'actions automatiques, ni intelligence artificielle, suggestions uniquement sur demande</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-text-tertiary">•</span>
-                <span><strong>100% local par défaut</strong> — Vos données ne quittent jamais votre machine sans action explicite</span>
+                <span><strong>0% Cloud</strong> — Vos données ne quittent jamais votre machine sans action explicite</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-text-tertiary">•</span>
@@ -81,7 +81,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-text-tertiary">•</span>
-                <span><strong>Zéro ontologie imposée</strong> — Créez vos propres concepts, pas de types d'entités forcés</span>
+                <span><strong>Zéro ontologie imposée</strong> — Créez vos propres concepts avec les tags et les propriétés, pas de types d'entités forcés</span>
               </li>
             </ul>
           </div>

@@ -54,8 +54,15 @@ const MIN_HEIGHT = 40;
 function countryCodeToFlag(countryCode: string): string {
   const code = countryCode.toUpperCase();
   if (code.length !== 2) return countryCode;
+  // Check if both characters are letters A-Z
+  if (!/^[A-Z]{2}$/.test(code)) return countryCode;
   const offset = 127397; // Regional indicator symbol letter A starts at U+1F1E6
   return String.fromCodePoint(code.charCodeAt(0) + offset, code.charCodeAt(1) + offset);
+}
+
+// Check if a value looks like a country code (2 uppercase letters)
+function isLikelyCountryCode(value: string): boolean {
+  return /^[A-Z]{2}$/i.test(value.trim());
 }
 
 function ElementNodeComponent({ data }: NodeProps) {
@@ -339,7 +346,9 @@ function ElementNodeComponent({ data }: NodeProps) {
         <div
           className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-bg-secondary border border-border-default rounded text-[9px] text-text-secondary whitespace-nowrap shadow-sm z-10"
         >
-          {badgeProperty.type === 'country' ? countryCodeToFlag(badgeProperty.value) : badgeProperty.value}
+          {(badgeProperty.type === 'country' || isLikelyCountryCode(badgeProperty.value))
+            ? countryCodeToFlag(badgeProperty.value)
+            : badgeProperty.value}
         </div>
       )}
 

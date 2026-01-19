@@ -25,7 +25,7 @@ export function LandingSection({
     {
       icon: Map,
       title: 'Vue cartographique',
-      description: 'Positionnez vos éléments sur une carte interactive',
+      description: 'Positionnez vos éléments sur une carte interactive et temporelle',
     },
     {
       icon: Clock,
@@ -34,17 +34,17 @@ export function LandingSection({
     },
     {
       icon: Search,
-      title: 'Recherche instantanée',
-      description: 'Trouvez n\'importe quel élément en quelques frappes',
+      title: 'Recherche et filtres instantanés',
+      description: 'Trouvez et filtrez n\'importe quel élément en quelques frappes',
     },
     {
       icon: Shield,
-      title: '100% local',
+      title: 'Données 100% local',
       description: 'Vos données restent sur votre machine, jamais transmises',
     },
     {
       icon: Zap,
-      title: 'Collaboration temps réel',
+      title: 'Collaboration sécurisé temps réel',
       description: 'Travaillez à plusieurs sur la même enquête',
     },
   ];
@@ -63,12 +63,12 @@ export function LandingSection({
 
           {/* Tagline */}
           <p className="text-lg text-text-secondary mb-2">
-            Tableau blanc infini pour analystes et enquêteurs
+            Tableau blanc pour analystes et enquêteurs
           </p>
           <p className="text-sm text-text-tertiary max-w-xl">
             Un outil d'amplification cognitive qui combine la simplicité d'un tableau blanc
-            avec la puissance de l'analyse de graphe. Cartographiez vos idées,
-            connectez les indices, révélez les patterns cachés.
+            avec la puissance de l'analyse de graphe. Cartographiez vos idées, géolocalisez vos élements, visualisez les événements,  
+            connectez les indices et révélez les patterns cachés.
           </p>
 
           {/* CTA Buttons */}
