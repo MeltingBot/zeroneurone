@@ -622,11 +622,16 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       updates.forEach(({ id, position }) => {
         const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
         if (ymap) {
-          // Position is stored as plain object, not Y.Map
+          // Position stored as separate fields for better CRDT conflict resolution
+          ymap.set('positionX', position.x);
+          ymap.set('positionY', position.y);
+          // Also update legacy nested object for backwards compatibility
           ymap.set('position', { x: position.x, y: position.y });
           // Update timestamp - _meta is also stored as plain object
           const currentMeta = ymap.get('_meta') || {};
           ymap.set('_meta', { ...currentMeta, updatedAt: new Date().toISOString() });
+        } else {
+          console.warn('[updateElementPositions] ymap not found for', id.slice(0, 8));
         }
       });
     });
@@ -980,11 +985,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         const element = yMapToElement(ymap as Y.Map<any>);
         if (element.id) {
           elementsById.set(element.id, element);
-        } else {
-          console.warn('[_syncFromYDoc] Element with empty ID skipped');
         }
-      } catch (err) {
-        console.warn('[_syncFromYDoc] Failed to parse element from Y.Doc:', err);
+      } catch {
+        // Skip invalid elements
       }
     });
 

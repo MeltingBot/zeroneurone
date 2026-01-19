@@ -46,7 +46,11 @@ export function elementToYMap(element: Element): Y.Map<any> {
     type: prop.type || 'text',
   })));
 
-  // Position as plain object
+  // Position as separate fields for better CRDT conflict resolution
+  // Each coordinate is a separate field so Y.js can merge them independently
+  map.set('positionX', element.position.x);
+  map.set('positionY', element.position.y);
+  // Keep legacy field for backwards compatibility during migration
   map.set('position', { x: element.position.x, y: element.position.y });
 
   // DateRange as plain object or null
@@ -135,9 +139,18 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     properties = propsRaw.map(parsePropertyFromPlain);
   }
 
-  // Handle position - can be Y.Map or plain object
+  // Handle position - prefer separate fields for CRDT, fallback to nested object
+  // This ensures better conflict resolution during collaborative editing
+  const posX = ymap.get('positionX');
+  const posY = ymap.get('positionY');
   let position = { x: 0, y: 0 };
-  if (posRaw instanceof Y.Map) {
+
+  // Use separate fields if available (new format)
+  if (typeof posX === 'number' && typeof posY === 'number') {
+    position = { x: posX, y: posY };
+  }
+  // Fallback to nested object (legacy format)
+  else if (posRaw instanceof Y.Map) {
     position = { x: posRaw.get('x') ?? 0, y: posRaw.get('y') ?? 0 };
   } else if (posRaw && typeof posRaw === 'object') {
     position = { x: posRaw.x ?? 0, y: posRaw.y ?? 0 };
@@ -285,6 +298,10 @@ export function updateElementYMap(
     }
 
     if (changes.position !== undefined) {
+      // Update separate fields for CRDT conflict resolution
+      ymap.set('positionX', changes.position.x);
+      ymap.set('positionY', changes.position.y);
+      // Also update legacy nested object for backwards compatibility
       ymap.set('position', { x: changes.position.x, y: changes.position.y });
     }
 

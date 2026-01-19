@@ -333,7 +333,6 @@ export function Canvas() {
     assets,
     createElement,
     updateElement,
-    updateElementPosition,
     updateElementPositions,
     createLink,
     updateLink,
@@ -626,8 +625,12 @@ export function Canvas() {
   // Track currently dragging nodes to update awareness
   const draggingNodesRef = useRef<Set<string>>(new Set());
 
+  // Throttle for position sync during drag (for collaboration)
+  const lastDragSyncRef = useRef<number>(0);
+  const DRAG_SYNC_THROTTLE_MS = 100; // Sync positions every 100ms during drag
+
   // Handle node changes (position, selection)
-  // HYBRID: Apply changes locally for smooth drag, sync to Zustand on drag end
+  // HYBRID: Apply changes locally for smooth drag, sync to Zustand periodically and on drag end
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
       // Filter out 'remove' changes - deletion is controlled by Zustand only
@@ -639,15 +642,20 @@ export function Canvas() {
 
       // Track dragging state
       const positionChanges = changes.filter(
-        (c): c is NodeChange & { type: 'position'; id: string; dragging?: boolean } =>
+        (c): c is NodeChange & { type: 'position'; id: string; dragging?: boolean; position?: Position } =>
           c.type === 'position'
       );
 
       // Check if any node is currently being dragged
       const nowDragging = new Set<string>();
+      const draggingChangesWithPosition: { id: string; position: Position }[] = [];
+
       for (const change of positionChanges) {
         if ('dragging' in change && change.dragging === true) {
           nowDragging.add(change.id);
+          if (change.position) {
+            draggingChangesWithPosition.push({ id: change.id, position: change.position });
+          }
         }
       }
 
@@ -662,26 +670,36 @@ export function Canvas() {
         updateDragging(Array.from(nowDragging));
       }
 
-      // Sync to Zustand only when drag ends (dragging: false with position)
+      // Throttled sync during drag for collaboration
+      if (draggingChangesWithPosition.length > 0) {
+        const now = Date.now();
+        if (now - lastDragSyncRef.current >= DRAG_SYNC_THROTTLE_MS) {
+          lastDragSyncRef.current = now;
+          // Validate positions before syncing
+          const validUpdates = draggingChangesWithPosition.filter(
+            u => u.position && Number.isFinite(u.position.x) && Number.isFinite(u.position.y)
+          );
+          if (validUpdates.length > 0) {
+            updateElementPositions(validUpdates);
+          }
+        }
+      }
+
+      // Final sync when drag ends (dragging: false with position)
       const dragEndChanges = positionChanges.filter(
         (c): c is NodeChange & { type: 'position'; id: string; position: Position; dragging: boolean } =>
           'position' in c && c.position !== undefined && 'dragging' in c && c.dragging === false
       );
 
       if (dragEndChanges.length > 0) {
-        if (dragEndChanges.length === 1) {
-          const change = dragEndChanges[0];
-          updateElementPosition(change.id, change.position);
-        } else {
-          const updates = dragEndChanges.map((c) => ({
-            id: c.id,
-            position: c.position,
-          }));
-          updateElementPositions(updates);
-        }
+        const updates = dragEndChanges.map((c) => ({
+          id: c.id,
+          position: c.position,
+        }));
+        updateElementPositions(updates);
       }
     },
-    [updateElementPosition, updateElementPositions, updateDragging]
+    [updateElementPositions, updateDragging]
   );
 
   // Handle edge changes - in controlled mode, we don't need to handle edge changes
