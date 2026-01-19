@@ -47,8 +47,9 @@ RUN npm ci --omit=dev
 # Copy built static files from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy production server
+# Copy production server and healthcheck
 COPY server/index.js ./server/index.js
+COPY server/healthcheck.js ./server/healthcheck.js
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S zeroneurone && \
@@ -65,9 +66,9 @@ ENV HOST=0.0.0.0
 # Expose the single port
 EXPOSE 3000
 
-# Health check
+# Health check using Node.js (no wget in Alpine)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD node server/healthcheck.js
 
 # Start the server
 CMD ["node", "server/index.js"]
