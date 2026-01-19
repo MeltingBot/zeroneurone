@@ -145,15 +145,24 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   const posY = ymap.get('positionY');
   let position = { x: 0, y: 0 };
 
-  // Use separate fields if available (new format)
-  if (typeof posX === 'number' && typeof posY === 'number') {
+  // Use separate fields if available and valid (new format)
+  if (typeof posX === 'number' && typeof posY === 'number' &&
+      Number.isFinite(posX) && Number.isFinite(posY)) {
     position = { x: posX, y: posY };
   }
-  // Fallback to nested object (legacy format)
+  // Fallback to nested object (legacy format or if separate fields are invalid)
   else if (posRaw instanceof Y.Map) {
-    position = { x: posRaw.get('x') ?? 0, y: posRaw.get('y') ?? 0 };
+    const x = posRaw.get('x');
+    const y = posRaw.get('y');
+    if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
+      position = { x, y };
+    }
   } else if (posRaw && typeof posRaw === 'object') {
-    position = { x: posRaw.x ?? 0, y: posRaw.y ?? 0 };
+    const x = posRaw.x;
+    const y = posRaw.y;
+    if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
+      position = { x, y };
+    }
   }
 
   // Handle dateRange - can be Y.Map, plain object, or null

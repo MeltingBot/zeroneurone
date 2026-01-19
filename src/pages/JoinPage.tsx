@@ -160,22 +160,46 @@ export function JoinPage() {
       // Open in shared mode with the investigation UUID as roomId and encryption key
       await syncService.openShared(investigationId, encryptionKeyFromUrl.current || undefined);
 
-      // Wait a moment for WebSocket connection to establish
+      // Wait for WebSocket connection and initial sync to complete
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('Délai de connexion dépassé'));
+          // Timeout is OK - we're connected but no peers to sync with
+          const state = syncService.getState();
+          if (state.connected) {
+            resolve();
+          } else {
+            reject(new Error('Délai de connexion dépassé'));
+          }
         }, 10000); // 10 second timeout
+
+        let wasConnected = false;
 
         const checkConnection = () => {
           const state = syncService.getState();
-          if (state.connected) {
-            clearTimeout(timeout);
-            resolve();
-          } else if (state.error) {
+
+          if (state.error) {
             clearTimeout(timeout);
             reject(new Error(state.error));
+            return;
+          }
+
+          if (state.connected) {
+            wasConnected = true;
+            // Wait for sync to complete (syncing becomes false)
+            // or a short delay if no peers to sync with
+            if (!state.syncing) {
+              clearTimeout(timeout);
+              resolve();
+            } else {
+              // Still syncing, check again
+              setTimeout(checkConnection, 100);
+            }
+          } else if (wasConnected) {
+            // Lost connection after being connected
+            clearTimeout(timeout);
+            reject(new Error('Connexion perdue'));
           } else {
-            // Check again in 100ms
+            // Not yet connected, check again
             setTimeout(checkConnection, 100);
           }
         };

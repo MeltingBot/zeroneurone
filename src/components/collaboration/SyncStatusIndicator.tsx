@@ -1,12 +1,12 @@
 /**
- * SyncStatusIndicator - Shows sync status (local, connected, syncing, error)
+ * SyncStatusIndicator - Shows sync status (local, connected, syncing, reconnecting, error)
  */
 
-import { Wifi, WifiOff, RefreshCw, AlertCircle, X } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, AlertCircle, X, RotateCcw } from 'lucide-react';
 import { useSyncStore } from '../../stores';
 
 export function SyncStatusIndicator() {
-  const { mode, connected, syncing, error, unshare } = useSyncStore();
+  const { mode, connected, syncing, reconnecting, error, unshare } = useSyncStore();
 
   const handleDisconnect = () => {
     unshare();
@@ -22,12 +22,25 @@ export function SyncStatusIndicator() {
     );
   }
 
-  // Shared mode with error
-  if (error) {
+  // Shared mode with error (only show if not reconnecting)
+  if (error && !reconnecting) {
     return (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-error" title={error}>
         <AlertCircle size={14} />
         <span>Erreur</span>
+      </div>
+    );
+  }
+
+  // Shared mode, reconnecting after disconnect
+  if (reconnecting) {
+    return (
+      <div
+        className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning"
+        title="Connexion perdue, tentative de reconnexion..."
+      >
+        <RotateCcw size={14} className="animate-spin" />
+        <span>Reconnexion...</span>
       </div>
     );
   }

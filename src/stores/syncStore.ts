@@ -346,6 +346,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         mode: state.mode,
         connected: state.connected,
         syncing: state.syncing,
+        reconnecting: state.reconnecting,
         error: state.error,
         roomId: state.roomId,
         peerCount: state.peerCount,

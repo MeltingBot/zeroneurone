@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useShallow } from 'zustand/react/shallow';
+import { Loader2 } from 'lucide-react';
 import type { Element } from '../../types';
 import { useUIStore, useSyncStore } from '../../stores';
 
@@ -39,6 +40,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   remoteSelectors?: RemoteUserPresence[];
   /** Number of unresolved comments on this element */
   unresolvedCommentCount?: number;
+  /** True if asset is expected but not yet loaded (for collaboration sync) */
+  isLoadingAsset?: boolean;
 }
 
 // Minimum sizes for resizing
@@ -47,7 +50,7 @@ const MIN_HEIGHT = 40;
 
 function ElementNodeComponent({ data }: NodeProps) {
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount } = nodeData;
+  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount, isLoadingAsset } = nodeData;
 
   // Get sync state for this element
   const { remoteUsers, mode: syncMode } = useSyncStore(
@@ -325,7 +328,21 @@ function ElementNodeComponent({ data }: NodeProps) {
           })(),
         }}
       >
-        {hasThumbnail ? (
+        {isLoadingAsset ? (
+          /* Loading state - asset expected but not yet loaded */
+          <>
+            <div className="flex-1 w-full flex items-center justify-center bg-bg-secondary">
+              <Loader2 size={24} className="animate-spin text-text-tertiary" />
+            </div>
+            <div className="w-full px-1 py-0.5 bg-bg-secondary border-t border-border-default flex-shrink-0">
+              <span
+                className={`text-[10px] text-text-tertiary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              >
+                {element.label || 'Chargement...'}
+              </span>
+            </div>
+          </>
+        ) : hasThumbnail ? (
           <>
             {/* Thumbnail preview - using contain to show full image, blur if hideMedia */}
             <div

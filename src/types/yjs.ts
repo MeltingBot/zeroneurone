@@ -25,6 +25,8 @@ export interface SyncState {
   connected: boolean;
   /** Currently syncing with peers */
   syncing: boolean;
+  /** Attempting to reconnect after disconnect */
+  reconnecting: boolean;
   /** Connection error message */
   error: string | null;
   /** Room ID when shared */
@@ -37,6 +39,7 @@ export const DEFAULT_SYNC_STATE: SyncState = {
   mode: 'local',
   connected: false,
   syncing: false,
+  reconnecting: false,
   error: null,
   roomId: null,
   peerCount: 0,

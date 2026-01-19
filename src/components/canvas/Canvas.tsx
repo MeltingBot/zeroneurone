@@ -177,7 +177,8 @@ function elementToNode(
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
-  unresolvedCommentCount?: number
+  unresolvedCommentCount?: number,
+  isLoadingAsset?: boolean
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -204,6 +205,7 @@ function elementToNode(
       onLabelChange,
       onStopEditing,
       unresolvedCommentCount,
+      isLoadingAsset,
     } satisfies ElementNodeData,
     selected: isSelected,
   };
@@ -501,6 +503,8 @@ export function Canvas() {
           // Get thumbnail from first asset if available
           const firstAssetId = el.assetIds?.[0];
           const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
+          // Detect if asset is expected but not yet loaded (for collaboration sync indicator)
+          const isLoadingAsset = Boolean(firstAssetId) && !assetMap.has(firstAssetId);
           // Create resize handler for this element
           const onResize = (width: number, height: number) => {
             handleElementResize(el.id, width, height);
@@ -522,7 +526,8 @@ export function Canvas() {
             editingElementId === el.id,
             onLabelChange,
             stopEditing,
-            unresolvedCommentCount
+            unresolvedCommentCount,
+            isLoadingAsset
           );
         }),
     [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, comments]

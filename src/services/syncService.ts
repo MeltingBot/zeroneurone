@@ -283,23 +283,72 @@ class SyncService {
     // Create encrypted WebSocket class if encryption key is provided
     const WebSocketClass = createEncryptedWebSocketClass(encryptionKey || null);
 
-    // Create WebSocket provider with optional encryption
-    // The roomId is appended to the server URL path
+    // Create WebSocket provider with reconnection options
+    // y-websocket handles automatic reconnection with exponential backoff
     this.websocketProvider = new WebsocketProvider(
       this.serverUrl,
       roomId,
       this.ydoc,
-      { WebSocketPolyfill: WebSocketClass }
+      {
+        WebSocketPolyfill: WebSocketClass,
+        // Max time between reconnection attempts (30 seconds)
+        maxBackoffTime: 30000,
+        // Re-sync interval to ensure consistency after reconnection (10 seconds)
+        resyncInterval: 10000,
+      }
     );
+
+    // Track if we were previously connected (for reconnection detection)
+    let wasConnected = false;
+
+    // Set syncing to true while waiting for initial sync
+    this.setState({ syncing: true });
 
     // Listen to connection status
     this.websocketProvider.on('status', (event: { status: string }) => {
       const connected = event.status === 'connected';
-      this.setState({ connected });
+
+      if (connected) {
+        // Successfully connected or reconnected
+        if (wasConnected) {
+          // This was a reconnection - clear reconnecting state
+          console.log('[SyncService] Reconnected to server');
+        }
+        this.setState({
+          connected: true,
+          reconnecting: false,
+          error: null,
+        });
+        wasConnected = true;
+
+        // After connection, check sync state after a short delay
+        // This handles the case where 'sync' event isn't emitted (no peers, already synced)
+        setTimeout(() => {
+          if (this.websocketProvider?.synced) {
+            this.setState({ syncing: false });
+          }
+        }, 500);
+      } else {
+        // Disconnected
+        if (wasConnected) {
+          // We were connected before, now disconnected - entering reconnection mode
+          console.log('[SyncService] Disconnected, attempting to reconnect...');
+          this.setState({
+            connected: false,
+            reconnecting: true,
+            syncing: true, // Reset syncing state for reconnection
+            error: null, // Don't show error during reconnection attempts
+          });
+        } else {
+          // Never connected yet
+          this.setState({ connected: false });
+        }
+      }
     });
 
     // Listen to sync status
     this.websocketProvider.on('sync', (synced: boolean) => {
+      console.log('[SyncService] Sync event:', synced);
       this.setState({ syncing: !synced });
     });
 
@@ -336,15 +385,30 @@ class SyncService {
       updatePeerCount();
     }
 
-    // Handle connection errors
-    this.websocketProvider.on('connection-error', () => {
-      this.setState({ error: 'Erreur de connexion au serveur' });
+    // Handle connection errors (only show if not in reconnecting mode)
+    this.websocketProvider.on('connection-error', (event: { message?: string }) => {
+      // Don't overwrite reconnecting state with error - let it keep trying
+      if (!this.state.reconnecting) {
+        this.setState({ error: event.message || 'Erreur de connexion au serveur' });
+      }
+    });
+
+    // Handle connection close
+    this.websocketProvider.on('connection-close', () => {
+      if (wasConnected && this.state.mode === 'shared') {
+        // Only set reconnecting if we're still supposed to be in shared mode
+        this.setState({
+          connected: false,
+          reconnecting: true,
+        });
+      }
     });
 
     this.setState({
       mode: 'shared',
       roomId,
       error: null,
+      reconnecting: false,
     });
   }
 
