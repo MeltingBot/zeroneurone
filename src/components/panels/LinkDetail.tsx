@@ -55,6 +55,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
   // Track which link we're editing to prevent cross-link saves
   const editingLinkIdRef = useRef<string | null>(null);
 
+  // Ref to the container for focus management
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Debounced values
   const debouncedLabel = useDebounce(label, 500);
   const debouncedNotes = useDebounce(notes, 500);
@@ -70,6 +73,13 @@ export function LinkDetail({ link }: LinkDetailProps) {
     setLabel(link.label);
     setNotes(link.notes);
     setSource(link.source);
+
+    // Blur any focused input inside this panel when switching links
+    // This ensures keyboard events (like Delete) go to the canvas, not the input
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && containerRef.current?.contains(activeElement)) {
+      activeElement.blur();
+    }
   }, [link.id]);
 
   // Save debounced values only if still editing the same link
@@ -193,7 +203,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const hasPeriod = link.dateRange?.start !== null;
 
   return (
-    <div className="divide-y divide-border-default">
+    <div ref={containerRef} className="divide-y divide-border-default">
       {/* Connexion */}
       <AccordionSection
         id="connection"

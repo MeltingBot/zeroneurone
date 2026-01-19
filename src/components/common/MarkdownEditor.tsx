@@ -17,16 +17,19 @@ export function MarkdownEditor({
   placeholder = 'Markdown: **gras**, *italique*, [lien](url)...',
   minRows = 4,
   className = '',
-  previewByDefault = true,
+  previewByDefault: _previewByDefault = true,
 }: MarkdownEditorProps) {
-  // Start in preview mode if there's content and previewByDefault is true
-  const [isEditing, setIsEditing] = useState(!previewByDefault || !value);
+  // Always start in preview mode, user must click to edit
+  const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Track if we should focus (only when user explicitly clicked to edit)
+  const shouldFocusRef = useRef(false);
 
-  // Focus textarea when switching to edit mode
+  // Focus textarea when switching to edit mode via explicit user action
   useEffect(() => {
-    if (isEditing && textareaRef.current) {
+    if (isEditing && shouldFocusRef.current && textareaRef.current) {
       textareaRef.current.focus();
+      shouldFocusRef.current = false;
     }
   }, [isEditing]);
 
@@ -42,8 +45,9 @@ export function MarkdownEditor({
     setIsEditing(false);
   }, []);
 
-  // When clicking on preview, switch to edit mode
+  // When clicking on preview, switch to edit mode (explicit user action)
   const handlePreviewClick = useCallback(() => {
+    shouldFocusRef.current = true;
     setIsEditing(true);
   }, []);
 

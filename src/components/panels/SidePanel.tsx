@@ -70,6 +70,17 @@ export function SidePanel() {
   const selectedLinks = links.filter((link) => selectedLinkIds.has(link.id));
   const totalSelected = selectedElements.length + selectedLinks.length;
 
+  // Blur any focused input in the panel when selection is cleared
+  // This ensures keyboard events (like Delete) go to the canvas
+  useEffect(() => {
+    if (totalSelected === 0 && panelRef.current) {
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement && panelRef.current.contains(activeElement)) {
+        activeElement.blur();
+      }
+    }
+  }, [totalSelected]);
+
   const filtersActive = hasActiveFilters();
   const insightsActive = highlightedElementIds.size > 0;
 

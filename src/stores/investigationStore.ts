@@ -70,6 +70,7 @@ interface InvestigationState {
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
+  reorderAssets: (elementId: ElementId, assetIds: string[]) => Promise<void>;
 
   // Actions - Settings (for reusable tags/properties)
   addExistingTag: (tag: string) => Promise<void>;
@@ -493,12 +494,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       elementsMap.set(element.id, ymap);
     });
 
-    // Also persist in Dexie for backwards compatibility
+    // Also persist in Dexie for backwards compatibility (with same ID!)
     await elementRepository.create(
       currentInvestigation.id,
       label,
       position,
-      options
+      { ...options, id: element.id }
     ).catch(() => {
       // Ignore Dexie errors - Y.Doc is source of truth
     });
@@ -685,12 +686,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       linksMap.set(link.id, ymap);
     });
 
-    // Also persist in Dexie for backwards compatibility
+    // Also persist in Dexie for backwards compatibility (with same ID!)
     await linkRepository.create(
       currentInvestigation.id,
       fromId,
       toId,
-      options
+      { ...options, id: link.id }
     ).catch(() => {});
 
     return link;
@@ -833,6 +834,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }));
   },
 
+  reorderAssets: async (elementId: ElementId, assetIds: string[]) => {
+    // Update element in Y.Doc
+    const ydoc = syncService.getYDoc();
+    if (ydoc) {
+      const { elements: elementsMap } = getYMaps(ydoc);
+      const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
+      if (ymap) {
+        ymap.set('assetIds', assetIds);
+      }
+    }
+
+    // Also update Dexie
+    await elementRepository.update(elementId, { assetIds }).catch(() => {});
+  },
+
   // ============================================================================
   // SETTINGS - Via Dexie (unchanged)
   // ============================================================================
@@ -931,7 +947,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   _syncFromYDoc: () => {
     const ydoc = syncService.getYDoc();
-    const { currentInvestigation, assets: currentAssets } = get();
+    const { currentInvestigation, assets: currentAssets, elements: currentElements } = get();
     if (!ydoc || !currentInvestigation) {
       return;
     }
@@ -964,9 +980,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         const element = yMapToElement(ymap as Y.Map<any>);
         if (element.id) {
           elementsById.set(element.id, element);
+        } else {
+          console.warn('[_syncFromYDoc] Element with empty ID skipped');
         }
-      } catch {
-        // Skip invalid elements
+      } catch (err) {
+        console.warn('[_syncFromYDoc] Failed to parse element from Y.Doc:', err);
       }
     });
 
@@ -984,6 +1002,15 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     const elements = Array.from(elementsById.values());
     const links = Array.from(linksById.values());
+
+    // DEFENSIVE: Don't wipe state if Y.Doc appears empty but we had elements
+    // This can happen due to IndexedDB sync timing issues
+    const stateElements = get().elements;
+    if (elements.length === 0 && stateElements.length > 0) {
+      console.warn('[_syncFromYDoc] Y.Doc appears empty but state had', stateElements.length, 'elements. Skipping sync to prevent data loss.');
+      console.warn('[_syncFromYDoc] elementsMap.size:', elementsMap.size);
+      return;
+    }
 
     // Sync assets from Y.Doc
     // Check for new assets from peers and save them locally

@@ -44,6 +44,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Track which element we're editing to avoid saving to wrong element
   const editingElementIdRef = useRef<string | null>(null);
 
+  // Ref to the container for focus management
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Debounced values
   const debouncedLabel = useDebounce(label, 500);
   const debouncedNotes = useDebounce(notes, 500);
@@ -60,6 +63,13 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setDate(element.date ? formatDateTimeForInput(element.date) : '');
     setGeoLat(element.geo?.lat?.toString() ?? '');
     setGeoLng(element.geo?.lng?.toString() ?? '');
+
+    // Blur any focused input inside this panel when switching elements
+    // This ensures keyboard events (like Delete) go to the canvas, not the input
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && containerRef.current?.contains(activeElement)) {
+      activeElement.blur();
+    }
   }, [element.id]);
 
   // Save debounced label - only if still editing the same element
@@ -323,7 +333,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   })();
 
   return (
-    <div className="divide-y divide-border-default">
+    <div ref={containerRef} className="divide-y divide-border-default">
       {/* Identité */}
       <AccordionSection
         id="identity"

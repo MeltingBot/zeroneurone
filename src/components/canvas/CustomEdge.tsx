@@ -21,6 +21,7 @@ interface CustomEdgeData {
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
+  onStartEditing?: () => void;
   // For parallel edge offset
   parallelIndex?: number;  // 0, 1, 2, ... for edges between same nodes
   parallelCount?: number;  // Total number of edges between same nodes
@@ -84,6 +85,7 @@ export function CustomEdge(props: EdgeProps) {
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
+  const onStartEditing = edgeData?.onStartEditing;
   const parallelIndex = edgeData?.parallelIndex ?? 0;
   const parallelCount = edgeData?.parallelCount ?? 1;
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };
@@ -319,12 +321,13 @@ export function CustomEdge(props: EdgeProps) {
         style={{ stroke: color, strokeWidth: thickness }}
       />
 
-      {/* Wider invisible path for clicking */}
+      {/* Wider invisible path for easier clicking */}
       <path
         d={edgePath}
         fill="none"
         stroke="transparent"
         strokeWidth={20}
+        style={{ cursor: 'pointer' }}
       />
 
       {/* End arrow - at target connection point */}
@@ -447,33 +450,34 @@ export function CustomEdge(props: EdgeProps) {
         </g>
       )}
 
-      {/* Draggable control point - always visible for debugging */}
-      <g
-        onMouseDown={isSelected ? handleControlPointMouseDown : undefined}
-        style={{
-          cursor: isSelected ? (isDragging ? 'grabbing' : 'grab') : 'default',
-        }}
-      >
-        {/* Hit area - only active when selected */}
-        <circle
-          cx={controlHandleX}
-          cy={controlHandleY}
-          r={isSelected ? 16 : 6}
-          fill="transparent"
-          style={{ pointerEvents: isSelected ? 'auto' : 'none' }}
-        />
-        {/* Visible control point */}
-        <circle
-          cx={controlHandleX}
-          cy={controlHandleY}
-          r={isSelected ? 8 : 5}
-          fill={isSelected ? '#ffffff' : 'transparent'}
-          stroke={isSelected ? '#2563eb' : '#9ca3af'}
-          strokeWidth={isSelected ? 3 : 1}
-          strokeDasharray={isSelected ? undefined : '2,2'}
-          opacity={isSelected ? 1 : 0.5}
-        />
-      </g>
+      {/* Draggable control point - hidden during label editing, only interactive when selected */}
+      {!isEditing && (
+        <g style={{ pointerEvents: 'none' }}>
+          {/* Hit area - only active when selected */}
+          <circle
+            cx={controlHandleX}
+            cy={controlHandleY}
+            r={isSelected ? 16 : 6}
+            fill="transparent"
+            onMouseDown={isSelected ? handleControlPointMouseDown : undefined}
+            style={{
+              pointerEvents: isSelected ? 'auto' : 'none',
+              cursor: isSelected ? (isDragging ? 'grabbing' : 'grab') : 'default',
+            }}
+          />
+          {/* Visible control point */}
+          <circle
+            cx={controlHandleX}
+            cy={controlHandleY}
+            r={isSelected ? 8 : 5}
+            fill={isSelected ? '#ffffff' : 'transparent'}
+            stroke={isSelected ? '#2563eb' : '#9ca3af'}
+            strokeWidth={isSelected ? 3 : 1}
+            strokeDasharray={isSelected ? undefined : '2,2'}
+            opacity={isSelected ? 1 : 0.5}
+          />
+        </g>
+      )}
     </g>
   );
 }

@@ -1,5 +1,5 @@
-import { useCallback, useState, useEffect } from 'react';
-import { Upload, File, Image, FileText, X, Download, Eye } from 'lucide-react';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { Upload, File, Image, FileText, X, Download, Eye, GripVertical } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
@@ -9,13 +9,20 @@ interface AssetsPanelProps {
 }
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
-  const { assets, addAsset, removeAsset } = useInvestigationStore();
+  const { assets, addAsset, removeAsset, reorderAssets } = useInvestigationStore();
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Get assets for this element
-  const elementAssets = assets.filter((a) => element.assetIds.includes(a.id));
+  // Drag-and-drop reordering state
+  const [draggingAssetId, setDraggingAssetId] = useState<string | null>(null);
+  const [dragOverAssetId, setDragOverAssetId] = useState<string | null>(null);
+  const dragCounter = useRef(0);
+
+  // Get assets for this element, preserving order from assetIds
+  const elementAssets = element.assetIds
+    .map((id) => assets.find((a) => a.id === id))
+    .filter((a): a is Asset => a !== undefined);
 
   // Handle paste from clipboard
   const handlePaste = useCallback(
@@ -127,6 +134,60 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
     [element.id, removeAsset]
   );
 
+  // Drag-and-drop reordering handlers
+  const handleReorderDragStart = useCallback((assetId: string) => {
+    setDraggingAssetId(assetId);
+  }, []);
+
+  const handleReorderDragEnter = useCallback((assetId: string) => {
+    dragCounter.current++;
+    if (assetId !== draggingAssetId) {
+      setDragOverAssetId(assetId);
+    }
+  }, [draggingAssetId]);
+
+  const handleReorderDragLeave = useCallback(() => {
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setDragOverAssetId(null);
+    }
+  }, []);
+
+  const handleReorderDrop = useCallback(
+    (targetAssetId: string) => {
+      if (!draggingAssetId || draggingAssetId === targetAssetId) {
+        setDraggingAssetId(null);
+        setDragOverAssetId(null);
+        dragCounter.current = 0;
+        return;
+      }
+
+      // Reorder: move draggingAssetId to the position of targetAssetId
+      const currentOrder = [...element.assetIds];
+      const dragIndex = currentOrder.indexOf(draggingAssetId);
+      const dropIndex = currentOrder.indexOf(targetAssetId);
+
+      if (dragIndex !== -1 && dropIndex !== -1) {
+        // Remove from old position
+        currentOrder.splice(dragIndex, 1);
+        // Insert at new position
+        currentOrder.splice(dropIndex, 0, draggingAssetId);
+        reorderAssets(element.id, currentOrder);
+      }
+
+      setDraggingAssetId(null);
+      setDragOverAssetId(null);
+      dragCounter.current = 0;
+    },
+    [draggingAssetId, element.id, element.assetIds, reorderAssets]
+  );
+
+  const handleReorderDragEnd = useCallback(() => {
+    setDraggingAssetId(null);
+    setDragOverAssetId(null);
+    dragCounter.current = 0;
+  }, []);
+
   const handleDownload = useCallback(async (asset: Asset) => {
     try {
       // Get file from OPFS using fileService (handles directory navigation)
@@ -186,13 +247,21 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       {/* Assets list */}
       {elementAssets.length > 0 && (
         <div className="space-y-2">
-          {elementAssets.map((asset) => (
+          {elementAssets.map((asset, index) => (
             <AssetItem
               key={asset.id}
               asset={asset}
+              index={index}
               onRemove={() => handleRemove(asset.id)}
               onDownload={() => handleDownload(asset)}
               onPreview={() => setPreviewAsset(asset)}
+              isDragging={draggingAssetId === asset.id}
+              isDragOver={dragOverAssetId === asset.id}
+              onDragStart={() => handleReorderDragStart(asset.id)}
+              onDragEnter={() => handleReorderDragEnter(asset.id)}
+              onDragLeave={handleReorderDragLeave}
+              onDrop={() => handleReorderDrop(asset.id)}
+              onDragEnd={handleReorderDragEnd}
             />
           ))}
         </div>
@@ -217,21 +286,73 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
 
 interface AssetItemProps {
   asset: Asset;
+  index: number;
   onRemove: () => void;
   onDownload: () => void;
   onPreview: () => void;
+  isDragging: boolean;
+  isDragOver: boolean;
+  onDragStart: () => void;
+  onDragEnter: () => void;
+  onDragLeave: () => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
 }
 
-function AssetItem({ asset, onRemove, onDownload, onPreview }: AssetItemProps) {
+function AssetItem({
+  asset,
+  index,
+  onRemove,
+  onDownload,
+  onPreview,
+  isDragging,
+  isDragOver,
+  onDragStart,
+  onDragEnter,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+}: AssetItemProps) {
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
 
   const Icon = isImage ? Image : isPdf ? FileText : File;
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-bg-secondary rounded border border-border-default group">
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', asset.id);
+        onDragStart();
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        onDragEnter();
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      }}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
+      onDragEnd={onDragEnd}
+      className={`
+        flex items-center gap-2 p-2 bg-bg-secondary rounded border transition-all group cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-50 border-accent' : 'border-border-default'}
+        ${isDragOver ? 'border-accent bg-accent/5' : ''}
+      `}
+    >
+      {/* Drag handle */}
+      <div className="flex-shrink-0 text-text-tertiary hover:text-text-secondary">
+        <GripVertical size={14} />
+      </div>
+
       {/* Thumbnail or icon */}
-      <div className="w-10 h-10 flex-shrink-0 rounded bg-bg-tertiary flex items-center justify-center overflow-hidden">
+      <div className="w-10 h-10 flex-shrink-0 rounded bg-bg-tertiary flex items-center justify-center overflow-hidden relative">
         {asset.thumbnailDataUrl ? (
           <img
             src={asset.thumbnailDataUrl}
@@ -240,6 +361,10 @@ function AssetItem({ asset, onRemove, onDownload, onPreview }: AssetItemProps) {
           />
         ) : (
           <Icon size={16} className="text-text-tertiary" />
+        )}
+        {/* First asset indicator */}
+        {index === 0 && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" title="Vignette par défaut" />
         )}
       </div>
 

@@ -4,9 +4,8 @@ import {
   ReactFlowProvider,
   Background,
   BackgroundVariant,
-  useNodesState,
-  useEdgesState,
   useReactFlow,
+  applyNodeChanges,
   type Connection,
   type Node,
   type Edge,
@@ -26,6 +25,7 @@ import '@xyflow/react/dist/style.css';
 import { ElementNode, type ElementNodeData } from './ElementNode';
 import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
+import { CanvasContextMenu } from './CanvasContextMenu';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal } from '../collaboration';
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
@@ -179,10 +179,21 @@ function elementToNode(
   onStopEditing?: () => void,
   _remoteSelectors?: unknown // Deprecated - ElementNode gets this directly from syncStore
 ): Node {
+  // Ensure position is valid - fallback to origin if corrupted
+  const position = element.position &&
+    Number.isFinite(element.position.x) &&
+    Number.isFinite(element.position.y)
+    ? element.position
+    : { x: 0, y: 0 };
+
+  if (position !== element.position) {
+    console.warn('[elementToNode] Fixed invalid position for element:', element.id, 'original:', element.position);
+  }
+
   return {
     id: element.id,
     type: 'element',
-    position: element.position,
+    position,
     data: {
       element,
       isSelected,
@@ -242,6 +253,7 @@ function linkToEdge(
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
+  onStartEditing?: () => void,
   parallelIndex?: number,
   parallelCount?: number,
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void
@@ -301,6 +313,7 @@ function linkToEdge(
       isEditing,
       onLabelChange,
       onStopEditing,
+      onStartEditing,
       parallelIndex,
       parallelCount,
       curveOffset: link.curveOffset ?? { x: 0, y: 0 },
@@ -332,17 +345,23 @@ export function Canvas() {
   // File drag state
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
-  // Context menu state
+  // Context menu state (for elements)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+
+  // Canvas context menu state (for empty space right-click)
+  const [canvasContextMenu, setCanvasContextMenu] = useState<{ x: number; y: number; canvasX: number; canvasY: number } | null>(null);
 
   // Share modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Clipboard for copy/paste of elements
   const copiedElementsRef = useRef<Element[]>([]);
+  // Marker to write to system clipboard when copying elements internally
+  // This allows detecting if user copied something else externally since then
+  const CLIPBOARD_MARKER = '__ZERONEURONE_INTERNAL_COPY__';
 
   // History store for undo/redo
-  const { pushAction, undo: undoAction, redo: redoAction } = useHistoryStore();
+  const { pushAction, popUndo, popRedo } = useHistoryStore();
 
   // State for copied elements indicator
   const [hasCopiedElements, setHasCopiedElements] = useState(false);
@@ -446,9 +465,22 @@ export function Canvas() {
   // Handle element label change (inline editing)
   const handleElementLabelChange = useCallback(
     (elementId: string, newLabel: string) => {
+      // Get the old label for undo
+      const element = elements.find(el => el.id === elementId);
+      const oldLabel = element?.label ?? '';
+
+      // Only track if label actually changed
+      if (oldLabel !== newLabel) {
+        pushAction({
+          type: 'update-element',
+          undo: { elementId, changes: { label: oldLabel } },
+          redo: { elementId, changes: { label: newLabel } },
+        });
+      }
+
       updateElement(elementId, { label: newLabel });
     },
-    [updateElement]
+    [elements, updateElement, pushAction]
   );
 
   // Handle link label change (inline editing)
@@ -462,8 +494,8 @@ export function Canvas() {
   // Convert to React Flow format
   // Note: remoteSelectors are no longer passed through node data - ElementNode subscribes directly to syncStore
   const nodes = useMemo(
-    () => {
-      return elements
+    () =>
+      elements
         .filter((el) => !hiddenElementIds.has(el.id))
         .map((el) => {
           // Get thumbnail from first asset if available
@@ -488,8 +520,7 @@ export function Canvas() {
             stopEditing,
             undefined // remoteSelectors - ElementNode gets this directly from syncStore
           );
-        });
-    },
+        }),
     [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing]
   );
 
@@ -548,6 +579,11 @@ export function Canvas() {
         handleCurveOffsetChange(link.id, offset);
       };
 
+      const onStartEditing = () => {
+        selectLink(link.id);
+        startEditingLink(link.id);
+      };
+
       // Find parallel edges for this link
       const key = link.fromId < link.toId
         ? `${link.fromId}-${link.toId}`
@@ -567,84 +603,94 @@ export function Canvas() {
         editingLinkId === link.id,
         onLabelChange,
         stopEditing,
+        onStartEditing,
         parallelIndex,
         parallelCount,
         onCurveOffsetChange
       );
     });
-  }, [links, elements, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange]);
+  }, [links, elements, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink]);
 
-  // React Flow state
-  const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
-  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(edges);
+  // HYBRID MODE: Local state for smooth dragging, sync to Zustand on drag end
+  // This gives us: 1) smooth drag UX, 2) Zustand as source of truth, 3) no desync
+  const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
+  const isDraggingRef = useRef(false);
 
-  // Sync with our state when elements/links change
+  // Sync from Zustand to local state when not dragging
   useEffect(() => {
-    setRfNodes(nodes);
-  }, [nodes, setRfNodes]);
-
-  useEffect(() => {
-    setRfEdges(edges);
-  }, [edges, setRfEdges]);
+    if (!isDraggingRef.current) {
+      setLocalNodes(nodes);
+    }
+  }, [nodes]);
 
   // Track currently dragging nodes to update awareness
   const draggingNodesRef = useRef<Set<string>>(new Set());
 
   // Handle node changes (position, selection)
+  // HYBRID: Apply changes locally for smooth drag, sync to Zustand on drag end
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
-      onNodesChange(changes);
+      // Filter out 'remove' changes - deletion is controlled by Zustand only
+      const safeChanges = changes.filter(c => c.type !== 'remove');
+      if (safeChanges.length === 0) return;
 
-      // Track dragging state for awareness
-      const allPositionChanges = changes.filter(
+      // Apply changes locally for smooth dragging
+      setLocalNodes(currentNodes => applyNodeChanges(safeChanges, currentNodes));
+
+      // Track dragging state
+      const positionChanges = changes.filter(
         (c): c is NodeChange & { type: 'position'; id: string; dragging?: boolean } =>
           c.type === 'position'
       );
 
-      // Check for nodes that started dragging
+      // Check if any node is currently being dragged
       const nowDragging = new Set<string>();
-      for (const change of allPositionChanges) {
+      for (const change of positionChanges) {
         if ('dragging' in change && change.dragging === true) {
           nowDragging.add(change.id);
         }
       }
 
-      // Update awareness if dragging state changed
-      const prevDragging = draggingNodesRef.current;
-      const startedDragging = [...nowDragging].filter(id => !prevDragging.has(id));
-      const stoppedDragging = [...prevDragging].filter(id => !nowDragging.has(id));
+      // Update dragging ref
+      isDraggingRef.current = nowDragging.size > 0;
 
-      if (startedDragging.length > 0 || stoppedDragging.length > 0) {
+      // Update awareness for collaboration
+      const prevDragging = draggingNodesRef.current;
+      if (nowDragging.size !== prevDragging.size ||
+          [...nowDragging].some(id => !prevDragging.has(id))) {
         draggingNodesRef.current = nowDragging;
         updateDragging(Array.from(nowDragging));
       }
 
-      // Handle position changes (only when drag ends - dragging: false)
-      const positionChanges = changes.filter(
+      // Sync to Zustand only when drag ends (dragging: false with position)
+      const dragEndChanges = positionChanges.filter(
         (c): c is NodeChange & { type: 'position'; id: string; position: Position; dragging: boolean } =>
-          c.type === 'position' && 'position' in c && c.position !== undefined && 'dragging' in c && !c.dragging
+          'position' in c && c.position !== undefined && 'dragging' in c && c.dragging === false
       );
 
-      if (positionChanges.length === 1) {
-        const change = positionChanges[0];
-        updateElementPosition(change.id, change.position);
-      } else if (positionChanges.length > 1) {
-        const updates = positionChanges.map((c) => ({
-          id: c.id,
-          position: c.position,
-        }));
-        updateElementPositions(updates);
+      if (dragEndChanges.length > 0) {
+        if (dragEndChanges.length === 1) {
+          const change = dragEndChanges[0];
+          updateElementPosition(change.id, change.position);
+        } else {
+          const updates = dragEndChanges.map((c) => ({
+            id: c.id,
+            position: c.position,
+          }));
+          updateElementPositions(updates);
+        }
       }
     },
-    [onNodesChange, updateElementPosition, updateElementPositions, updateDragging]
+    [updateElementPosition, updateElementPositions, updateDragging]
   );
 
-  // Handle edge changes
+  // Handle edge changes - in controlled mode, we don't need to handle edge changes
+  // All edge modifications go through our Zustand store (createLink, deleteLink, updateLink)
   const handleEdgesChange: OnEdgesChange = useCallback(
-    (changes) => {
-      onEdgesChange(changes);
+    (_changes) => {
+      // Edges are controlled by Zustand store, no action needed here
     },
-    [onEdgesChange]
+    []
   );
 
   // Handle connection (link creation)
@@ -696,6 +742,9 @@ export function Canvas() {
   const handleNodeContextMenu: NodeMouseHandler = useCallback(
     (event, node) => {
       event.preventDefault();
+      // Close canvas context menu if open
+      setCanvasContextMenu(null);
+
       const element = elements.find((el) => el.id === node.id);
       if (element) {
         setContextMenu({
@@ -713,6 +762,168 @@ export function Canvas() {
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
   }, []);
+
+  // Close canvas context menu
+  const closeCanvasContextMenu = useCallback(() => {
+    setCanvasContextMenu(null);
+  }, []);
+
+  // Handle right-click on empty canvas
+  const handlePaneContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      // Close element context menu if open
+      setContextMenu(null);
+
+      // Calculate canvas position from screen position (same formula as double-click)
+      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+      const canvasX = bounds
+        ? (event.clientX - bounds.left - viewport.x) / viewport.zoom
+        : (event.clientX - viewport.x) / viewport.zoom;
+      const canvasY = bounds
+        ? (event.clientY - bounds.top - viewport.y) / viewport.zoom
+        : (event.clientY - viewport.y) / viewport.zoom;
+
+      setCanvasContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        canvasX,
+        canvasY,
+      });
+    },
+    [viewport]
+  );
+
+  // Create element from canvas context menu
+  const handleCanvasContextMenuCreate = useCallback(async () => {
+    if (!canvasContextMenu) return;
+
+    const newElement = await createElement('', {
+      x: canvasContextMenu.canvasX,
+      y: canvasContextMenu.canvasY,
+    });
+
+    // Save for undo
+    pushAction({
+      type: 'create-element',
+      undo: {},
+      redo: { elements: [newElement], elementIds: [newElement.id] },
+    });
+
+    // Select the new element
+    selectElement(newElement.id);
+  }, [canvasContextMenu, createElement, selectElement, pushAction]);
+
+  // Paste from canvas context menu (at cursor position)
+  const handleCanvasContextMenuPaste = useCallback(async () => {
+    if (!canvasContextMenu) return;
+
+    const { canvasX, canvasY } = canvasContextMenu;
+
+    // Try to read clipboard for external content (images, files)
+    let pastedFromClipboard = false;
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      let imageFile: File | null = null;
+
+      // Only take the first image found (clipboard may have multiple representations)
+      for (const item of clipboardItems) {
+        if (imageFile) break;
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type);
+            imageFile = new File([blob], `image.${type.split('/')[1]}`, { type });
+            break;
+          }
+        }
+      }
+
+      // If we found an image in clipboard, create element with it
+      if (imageFile) {
+        pastedFromClipboard = true;
+        const position = { x: canvasX, y: canvasY };
+        const label = imageFile.name.replace(/\.[^/.]+$/, '') || 'Image';
+        const newElement = await createElement(label, position);
+
+        try {
+          await addAsset(newElement.id, imageFile);
+        } catch (assetError) {
+          console.error('Failed to add asset:', assetError);
+          // Element was created, asset failed - still consider it a success
+        }
+
+        pushAction({
+          type: 'create-element',
+          undo: {},
+          redo: { elements: [newElement], elementIds: [newElement.id] },
+        });
+
+        selectElements([newElement.id]);
+        return;
+      }
+    } catch {
+      // Clipboard API not available or permission denied
+      // Only fall back to internal paste if we didn't already create an element
+    }
+
+    // Fall back to internal copied elements (only if we didn't paste from clipboard)
+    if (pastedFromClipboard || copiedElementsRef.current.length === 0) return;
+
+    const newElements: Element[] = [];
+    const oldToNewIdMap = new Map<string, string>();
+
+    // Calculate offset from original elements to paste position
+    const firstElement = copiedElementsRef.current[0];
+    const deltaX = canvasX - firstElement.position.x;
+    const deltaY = canvasY - firstElement.position.y;
+
+    // First pass: create all elements with new IDs
+    for (const el of copiedElementsRef.current) {
+      const newId = generateUUID();
+      oldToNewIdMap.set(el.id, newId);
+
+      const newPosition = {
+        x: el.position.x + deltaX,
+        y: el.position.y + deltaY,
+      };
+
+      const newElement = await createElement(el.label, newPosition, {
+        ...el,
+        id: newId,
+        assetIds: [...el.assetIds],
+      });
+      newElements.push(newElement);
+    }
+
+    // Second pass: recreate links between copied elements
+    const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
+    const relevantLinks = links.filter(l =>
+      copiedIds.has(l.fromId) && copiedIds.has(l.toId)
+    );
+
+    for (const link of relevantLinks) {
+      const newFromId = oldToNewIdMap.get(link.fromId);
+      const newToId = oldToNewIdMap.get(link.toId);
+      if (newFromId && newToId) {
+        await createLink(newFromId, newToId, {
+          label: link.label,
+          visual: link.visual,
+          direction: link.direction,
+        });
+      }
+    }
+
+    // Save for undo
+    const newElementIds = newElements.map(el => el.id);
+    pushAction({
+      type: 'create-elements',
+      undo: {},
+      redo: { elements: newElements, elementIds: newElementIds },
+    });
+
+    // Select all pasted elements
+    selectElements(newElementIds);
+  }, [canvasContextMenu, links, createElement, createLink, selectElements, pushAction, addAsset]);
 
   // Context menu actions
   const handleContextMenuFocus = useCallback(
@@ -755,8 +966,10 @@ export function Canvas() {
     if (elsToCopy.length > 0) {
       copiedElementsRef.current = elsToCopy;
       setHasCopiedElements(true);
+      // Write marker to system clipboard so we can detect external copies later
+      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
     }
-  }, [elements, getSelectedElementIds, contextMenu]);
+  }, [elements, getSelectedElementIds, contextMenu, CLIPBOARD_MARKER]);
 
   // Cut handler for context menu
   const handleContextMenuCut = useCallback(async () => {
@@ -771,6 +984,8 @@ export function Canvas() {
       // Copy first
       copiedElementsRef.current = elsToCut;
       setHasCopiedElements(true);
+      // Write marker to system clipboard so we can detect external copies later
+      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
 
       // Then delete
       const idsToDelete = elsToCut.map(el => el.id);
@@ -787,7 +1002,7 @@ export function Canvas() {
       await deleteElements(idsToDelete);
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, contextMenu, deleteElements, clearSelection, pushAction]);
+  }, [elements, links, getSelectedElementIds, contextMenu, deleteElements, clearSelection, pushAction, CLIPBOARD_MARKER]);
 
   // Paste handler for context menu (paste at context menu position)
   const handleContextMenuPaste = useCallback(async () => {
@@ -877,13 +1092,47 @@ export function Canvas() {
     return undefined;
   }, [contextMenu, selectedElementIds, elements]);
 
-  // Handle edge click
+  // Double-click detection for edges (since onEdgeDoubleClick doesn't work reliably)
+  const edgeClickCountRef = useRef<{ id: string; count: number; timer: ReturnType<typeof setTimeout> | null }>({
+    id: '',
+    count: 0,
+    timer: null,
+  });
+
+  // Handle edge click (with double-click detection)
   const handleEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       const isShiftKey = event.shiftKey;
-      selectLink(edge.id, isShiftKey);
+
+      // Double-click detection
+      const clickData = edgeClickCountRef.current;
+
+      if (clickData.id === edge.id) {
+        clickData.count += 1;
+      } else {
+        // Different edge - reset
+        if (clickData.timer) clearTimeout(clickData.timer);
+        clickData.id = edge.id;
+        clickData.count = 1;
+      }
+
+      if (clickData.count === 1) {
+        // First click - select and start timer
+        selectLink(edge.id, isShiftKey);
+        clickData.timer = setTimeout(() => {
+          clickData.count = 0;
+        }, 300);
+      } else if (clickData.count >= 2) {
+        // Double-click detected - start editing
+        if (clickData.timer) {
+          clearTimeout(clickData.timer);
+          clickData.timer = null;
+        }
+        clickData.count = 0;
+        startEditingLink(edge.id);
+      }
     },
-    [selectLink]
+    [selectLink, startEditingLink]
   );
 
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
@@ -913,9 +1162,17 @@ export function Canvas() {
       };
 
       const newElement = await createElement('Nouvel élément', position);
+
+      // Save for undo
+      pushAction({
+        type: 'create-element',
+        undo: {},
+        redo: { elements: [newElement], elementIds: [newElement.id] },
+      });
+
       selectElement(newElement.id);
     },
-    [createElement, selectElement, viewport]
+    [createElement, selectElement, viewport, pushAction]
   );
 
   // Handle double click on node - start inline label editing
@@ -929,9 +1186,10 @@ export function Canvas() {
   );
 
   // Handle double click on edge - start inline label editing
+  // Note: This is kept as a fallback but main double-click detection is in handleEdgeClick
   const handleEdgeDoubleClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
-      event.stopPropagation(); // Prevent pane double-click from creating new element
+      event.stopPropagation();
       selectLink(edge.id);
       startEditingLink(edge.id);
     },
@@ -1004,9 +1262,9 @@ export function Canvas() {
     }
   }, []);
 
-  // Handle undo
+  // Handle undo (for keyboard shortcut - uses popUndo to get action then executes)
   const handleUndo = useCallback(async () => {
-    const action = undoAction();
+    const action = popUndo();
     if (!action) return;
 
     switch (action.type) {
@@ -1040,6 +1298,13 @@ export function Canvas() {
         }
         break;
 
+      case 'update-element':
+        // Restore previous values
+        if (action.undo.elementId && action.undo.changes) {
+          await updateElement(action.undo.elementId, action.undo.changes);
+        }
+        break;
+
       case 'move-elements':
       case 'move-element':
         // Restore previous positions
@@ -1048,11 +1313,11 @@ export function Canvas() {
         }
         break;
     }
-  }, [undoAction, createElement, createLink, deleteElements, updateElementPositions]);
+  }, [popUndo, createElement, createLink, deleteElements, updateElement, updateElementPositions]);
 
-  // Handle redo
+  // Handle redo (for keyboard shortcut - uses popRedo to get action then executes)
   const handleRedo = useCallback(async () => {
-    const action = redoAction();
+    const action = popRedo();
     if (!action) return;
 
     switch (action.type) {
@@ -1077,6 +1342,13 @@ export function Canvas() {
         }
         break;
 
+      case 'update-element':
+        // Re-apply changes
+        if (action.redo.elementId && action.redo.changes) {
+          await updateElement(action.redo.elementId, action.redo.changes);
+        }
+        break;
+
       case 'move-elements':
       case 'move-element':
         // Apply new positions
@@ -1085,7 +1357,7 @@ export function Canvas() {
         }
         break;
     }
-  }, [redoAction, deleteElements, deleteLinks, createElement, updateElementPositions]);
+  }, [popRedo, deleteElements, deleteLinks, createElement, updateElement, updateElementPositions]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -1146,6 +1418,8 @@ export function Canvas() {
         if (selectedEls.length > 0) {
           copiedElementsRef.current = elements.filter(el => selectedEls.includes(el.id));
           setHasCopiedElements(true);
+          // Write marker to system clipboard so we can detect external copies later
+          navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
         }
       }
 
@@ -1157,6 +1431,8 @@ export function Canvas() {
           const elsToCut = elements.filter(el => selectedEls.includes(el.id));
           copiedElementsRef.current = elsToCut;
           setHasCopiedElements(true);
+          // Write marker to system clipboard so we can detect external copies later
+          navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
 
           // Delete the cut elements
           const linksToDelete = links.filter(l =>
@@ -1219,12 +1495,74 @@ export function Canvas() {
       const centerX = (-viewport.x + (reactFlowWrapper.current?.clientWidth || 800) / 2) / viewport.zoom;
       const centerY = (-viewport.y + (reactFlowWrapper.current?.clientHeight || 600) / 2) / viewport.zoom;
 
-      // Check if we have copied elements to paste
+      // Check clipboard text for our marker (to know if last copy was internal elements)
+      const clipboardText = event.clipboardData?.getData('text/plain') || '';
+      const hasInternalCopyMarker = clipboardText === CLIPBOARD_MARKER;
+
+      // Collect files from clipboard (only if NO internal marker - external copy overwrites marker)
+      let files: File[] = [];
+      if (!hasInternalCopyMarker) {
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (const item of items) {
+            if (item.kind === 'file') {
+              const file = item.getAsFile();
+              if (file) files.push(file);
+            }
+          }
+        }
+
+        // Deduplicate: if all files have generic names (image.xxx, blob, etc.), keep only the first
+        // This handles clipboard having multiple representations of the same image
+        if (files.length > 1) {
+          const allGeneric = files.every(f => /^(image|blob|pasted-|Capture|Screenshot)/i.test(f.name));
+          if (allGeneric) {
+            files = [files[0]];
+          }
+        }
+      }
+
+      // PRIORITY 1: External files (no internal marker means user copied externally)
+      if (files.length > 0) {
+        // If an element is selected, let AssetsPanel handle the paste
+        // (it will add the file to the selected element instead of creating a new one)
+        const selectedIds = getSelectedElementIds();
+        if (selectedIds.length > 0) {
+          return; // AssetsPanel will handle this via its own paste listener
+        }
+
+        // No element selected: create new element with the first file only
+        event.preventDefault();
+
+        const file = files[0];
+        const position = { x: centerX, y: centerY };
+        const label = file.name.replace(/\.[^/.]+$/, '') || 'Image';
+
+        const newElement = await createElement(label, position);
+        try {
+          await addAsset(newElement.id, file);
+        } catch (err) {
+          console.error('Failed to add asset:', err);
+        }
+
+        // Save for undo
+        pushAction({
+          type: 'create-element',
+          undo: {},
+          redo: { elements: [newElement], elementIds: [newElement.id] },
+        });
+
+        // Select the created element
+        selectElements([newElement.id]);
+        return;
+      }
+
+      // PRIORITY 2: Internal copied elements (marker present)
       if (copiedElementsRef.current.length > 0) {
         event.preventDefault();
 
         const offset = 40; // Offset for pasted elements
-        const newElementIds: string[] = [];
+        const newElements: Element[] = [];
         const oldToNewIdMap = new Map<string, string>();
 
         // First pass: create all elements with new IDs
@@ -1237,12 +1575,12 @@ export function Canvas() {
             y: el.position.y + offset,
           };
 
-          await createElement(el.label, newPosition, {
+          const newElement = await createElement(el.label, newPosition, {
             ...el,
             id: newId,
             assetIds: [...el.assetIds], // Keep same assets
           });
-          newElementIds.push(newId);
+          newElements.push(newElement);
         }
 
         // Second pass: recreate links between copied elements
@@ -1264,11 +1602,11 @@ export function Canvas() {
         }
 
         // Save for undo
-        const createdElements = elements.filter(el => newElementIds.includes(el.id));
+        const newElementIds = newElements.map(el => el.id);
         pushAction({
           type: 'create-elements',
           undo: {},
-          redo: { elements: createdElements, elementIds: newElementIds },
+          redo: { elements: newElements, elementIds: newElementIds },
         });
 
         // Select all pasted elements
@@ -1283,47 +1621,7 @@ export function Canvas() {
         return;
       }
 
-      // Fall back to file paste
-      const items = event.clipboardData?.items;
-      if (!items) return;
-
-      const files: File[] = [];
-      for (const item of items) {
-        if (item.kind === 'file') {
-          const file = item.getAsFile();
-          if (file) files.push(file);
-        }
-      }
-
-      if (files.length === 0) return;
-
-      // If an element is selected, let AssetsPanel handle the paste
-      // (it will add the file to the selected element instead of creating a new one)
-      const selectedIds = getSelectedElementIds();
-      if (selectedIds.length > 0) {
-        return; // AssetsPanel will handle this
-      }
-
-      event.preventDefault();
-
-      // Create elements for each pasted file (no element selected)
-      const newElementIds: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const position = {
-          x: centerX + i * 120,
-          y: centerY + i * 30,
-        };
-
-        // Use filename (without extension) as label
-        const label = file.name.replace(/\.[^/.]+$/, '');
-        const newElement = await createElement(label, position);
-        await addAsset(newElement.id, file);
-        newElementIds.push(newElement.id);
-      }
-
-      // Select all created elements
-      selectElements(newElementIds);
+      // No files and no copied elements - nothing to paste
     };
 
     window.addEventListener('paste', handlePaste);
@@ -1351,6 +1649,7 @@ export function Canvas() {
     [selectElements]
   );
 
+
   return (
     <ReactFlowProvider>
       <div className="w-full h-full flex flex-col">
@@ -1359,10 +1658,6 @@ export function Canvas() {
           showFontToggle
           leftContent={
             <div className="flex items-center gap-3">
-              <span className="text-xs text-text-secondary">
-                {elements.length} element{elements.length > 1 ? 's' : ''}, {links.length} lien{links.length > 1 ? 's' : ''}
-              </span>
-              <div className="w-px h-4 bg-border-default" />
               <SyncStatusIndicator />
               <PresenceAvatars />
               <button
@@ -1420,8 +1715,8 @@ export function Canvas() {
           }}
         >
           <ReactFlow
-            nodes={rfNodes}
-            edges={rfEdges}
+            nodes={localNodes}
+            edges={edges}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={handleConnect}
@@ -1432,6 +1727,7 @@ export function Canvas() {
             onEdgeClick={handleEdgeClick}
             onEdgeDoubleClick={handleEdgeDoubleClick}
             onPaneClick={handlePaneClick}
+            onPaneContextMenu={handlePaneContextMenu}
             onDoubleClick={handlePaneDoubleClick}
             onViewportChange={handleViewportChange}
             onSelectionChange={handleSelectionChange}
@@ -1475,7 +1771,7 @@ export function Canvas() {
             </div>
           )}
 
-          {/* Context menu */}
+          {/* Context menu for elements */}
           {contextMenu && (
             <ContextMenu
               x={contextMenu.x}
@@ -1497,6 +1793,17 @@ export function Canvas() {
               onPaste={handleContextMenuPaste}
               onFindPaths={handleFindPaths}
               onClose={closeContextMenu}
+            />
+          )}
+
+          {/* Context menu for canvas (empty space) */}
+          {canvasContextMenu && (
+            <CanvasContextMenu
+              x={canvasContextMenu.x}
+              y={canvasContextMenu.y}
+              onCreateElement={handleCanvasContextMenuCreate}
+              onPaste={handleCanvasContextMenuPaste}
+              onClose={closeCanvasContextMenu}
             />
           )}
 
