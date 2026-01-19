@@ -39,6 +39,9 @@ interface UIState {
   // Anonymous mode (redact names)
   anonymousMode: boolean;
 
+  // Show comment badges on elements
+  showCommentBadges: boolean;
+
   // Capture system for report screenshots
   captureHandlers: Map<DisplayMode, CaptureHandler>;
 
@@ -87,6 +90,9 @@ interface UIState {
 
   // Actions - Anonymous mode
   toggleAnonymousMode: () => void;
+
+  // Actions - Comment badges
+  toggleShowCommentBadges: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -103,6 +109,7 @@ export const useUIStore = create<UIState>()(
   themeMode: 'light' as ThemeMode,
   hideMedia: false,
   anonymousMode: false,
+  showCommentBadges: true,
   captureHandlers: new Map(),
 
   // Capture system
@@ -239,10 +246,15 @@ export const useUIStore = create<UIState>()(
   toggleAnonymousMode: () => {
     set((state) => ({ anonymousMode: !state.anonymousMode }));
   },
+
+  // Comment badges
+  toggleShowCommentBadges: () => {
+    set((state) => ({ showCommentBadges: !state.showCommentBadges }));
+  },
 }),
     {
       name: 'zeroneurone-ui-settings',
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, hideMedia: state.hideMedia, anonymousMode: state.anonymousMode }),
+      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, hideMedia: state.hideMedia, anonymousMode: state.anonymousMode, showCommentBadges: state.showCommentBadges }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

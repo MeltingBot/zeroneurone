@@ -82,6 +82,7 @@ function ElementNodeComponent({ data }: NodeProps) {
   const themeMode = useUIStore((state) => state.themeMode);
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const showCommentBadges = useUIStore((state) => state.showCommentBadges);
 
   // Focus input when entering edit mode
   useEffect(() => {
@@ -285,7 +286,7 @@ function ElementNodeComponent({ data }: NodeProps) {
       />
 
       {/* Comment indicator - shows when element has unresolved comments */}
-      {unresolvedCommentCount !== undefined && unresolvedCommentCount > 0 && (
+      {showCommentBadges && unresolvedCommentCount !== undefined && unresolvedCommentCount > 0 && (
         <div
           className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center shadow-sm z-10"
           title={`${unresolvedCommentCount} commentaire${unresolvedCommentCount > 1 ? 's' : ''} non résolu${unresolvedCommentCount > 1 ? 's' : ''}`}

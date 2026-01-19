@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Undo2, Redo2, Sun, Moon, Image, ImageOff, Eye, EyeOff, Type, PenTool } from 'lucide-react';
+import { Undo2, Redo2, Sun, Moon, Image, ImageOff, Eye, EyeOff, Type, PenTool, MessageCircle, MessageCircleOff } from 'lucide-react';
 import { useUIStore, useHistoryStore } from '../../stores';
 
 interface ViewToolbarProps {
@@ -19,7 +19,7 @@ export function ViewToolbar({
   rightContent,
   showFontToggle = false,
 }: ViewToolbarProps) {
-  const { fontMode, toggleFontMode, themeMode, toggleThemeMode, hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode } = useUIStore();
+  const { fontMode, toggleFontMode, themeMode, toggleThemeMode, hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
   const { canUndo, canRedo, undo, redo } = useHistoryStore();
 
   const canUndoNow = canUndo();
@@ -102,6 +102,15 @@ export function ViewToolbar({
           title={anonymousMode ? 'Afficher les noms' : 'Mode anonyme (caviardage)'}
         >
           {anonymousMode ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+
+        {/* Comment badges toggle */}
+        <button
+          onClick={toggleShowCommentBadges}
+          className={`p-1.5 rounded transition-colors ${showCommentBadges ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
+          title={showCommentBadges ? 'Masquer les badges de commentaires' : 'Afficher les badges de commentaires'}
+        >
+          {showCommentBadges ? <MessageCircle size={16} /> : <MessageCircleOff size={16} />}
         </button>
       </div>
     </div>

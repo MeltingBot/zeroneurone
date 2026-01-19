@@ -55,10 +55,11 @@ export function MapView() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { elements, links, assets, updateElement } = useInvestigationStore();
+  const { elements, links, assets, comments, updateElement } = useInvestigationStore();
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
@@ -101,6 +102,17 @@ export function MapView() {
     });
     return map;
   }, [assets]);
+
+  // Calculate unresolved comment counts per element
+  const unresolvedCommentCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    comments.forEach((comment) => {
+      if (comment.targetType === 'element' && !comment.resolved) {
+        counts.set(comment.targetId, (counts.get(comment.targetId) || 0) + 1);
+      }
+    });
+    return counts;
+  }, [comments]);
 
   // Calculate time range and collect all unique event dates for discrete slider
   const { timeRange, eventDates } = useMemo(() => {
@@ -481,7 +493,7 @@ export function MapView() {
   }, [assetMap]);
 
   // Create custom marker HTML with name and thumbnail
-  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean): string => {
+  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number): string => {
     const color = element.visual.color || '#f5f5f4';
     const borderColor = element.visual.borderColor || '#a8a29e';
     const thumbnail = getThumbnail(element);
@@ -500,19 +512,42 @@ export function MapView() {
     // Dimmed style for filtered elements
     const dimmedStyle = isDimmed ? 'opacity: 0.3;' : '';
 
+    // Comment indicator badge (only if showCommentBadges is enabled)
+    const commentBadge = showCommentBadges && unresolvedCommentCount && unresolvedCommentCount > 0
+      ? `<div style="
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          width: 16px;
+          height: 16px;
+          background-color: #f59e0b;
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 9px;
+          font-weight: bold;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          z-index: 10;
+        ">${unresolvedCommentCount}</div>`
+      : '';
+
     if (thumbnail) {
       // Marker with thumbnail - compact card (blur if hideMedia)
       const blurStyle = hideMedia ? 'filter: blur(8px);' : '';
       return `
         <div class="map-marker-card" style="
+          position: relative;
           background: var(--color-bg-primary, #ffffff);
           border: 1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};
           border-radius: 4px;
-          overflow: hidden;
+          overflow: visible;
           ${selectedStyle}
           ${dimmedStyle}
           width: 48px;
         ">
+          ${commentBadge}
           <div style="
             width: 48px;
             height: 36px;
@@ -520,6 +555,7 @@ export function MapView() {
             background-size: cover;
             background-position: center;
             background-color: var(--color-bg-secondary, #f7f4ef);
+            border-radius: 4px 4px 0 0;
             ${blurStyle}
           "></div>
           <div style="
@@ -544,12 +580,14 @@ export function MapView() {
       // Marker without thumbnail - small dot with label
       return `
         <div class="map-marker-simple" style="
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 2px;
           ${dimmedStyle}
         ">
+          ${commentBadge}
           <div style="
             width: 16px;
             height: 16px;
@@ -575,16 +613,16 @@ export function MapView() {
         </div>
       `;
     }
-  }, [getThumbnail, anonymousMode, hideMedia]);
+  }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges]);
 
   // Create custom icon
-  const createIcon = useCallback((element: Element, isSelected: boolean, isDimmed: boolean) => {
+  const createIcon = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number) => {
     const thumbnail = getThumbnail(element);
     const hasThumb = !!thumbnail;
 
     return L.divIcon({
       className: 'custom-marker-container',
-      html: createMarkerHtml(element, isSelected, isDimmed),
+      html: createMarkerHtml(element, isSelected, isDimmed, unresolvedCommentCount),
       iconSize: hasThumb ? [48, 52] : [60, 36],
       iconAnchor: hasThumb ? [24, 52] : [30, 36],
     });
@@ -693,12 +731,13 @@ export function MapView() {
     geoElements.forEach((element) => {
       const isSelected = selectedElementIds.has(element.id);
       const isDimmed = dimmedElementIds.has(element.id);
+      const commentCount = unresolvedCommentCounts.get(element.id);
       const existingMarker = existingMarkers.get(element.id);
 
       if (existingMarker) {
         // Update position and icon
         existingMarker.setLatLng([element.geo.lat, element.geo.lng]);
-        existingMarker.setIcon(createIcon(element, isSelected, isDimmed));
+        existingMarker.setIcon(createIcon(element, isSelected, isDimmed, commentCount));
         // Update title (hover tooltip) based on anonymous mode
         const markerElement = existingMarker.getElement();
         if (markerElement) {
@@ -709,7 +748,7 @@ export function MapView() {
       } else {
         // Create new marker (draggable)
         const marker = L.marker([element.geo.lat, element.geo.lng], {
-          icon: createIcon(element, isSelected, isDimmed),
+          icon: createIcon(element, isSelected, isDimmed, commentCount),
           title: anonymousMode ? '' : element.label,
           zIndexOffset: isSelected ? 1000 : 0,
           draggable: true,
@@ -735,7 +774,7 @@ export function MapView() {
         existingMarkers.set(element.id, marker);
       }
     });
-  }, [geoElements, selectedElementIds, dimmedElementIds, createIcon, selectElement, updateElement, anonymousMode, hideMedia]);
+  }, [geoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
   const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {

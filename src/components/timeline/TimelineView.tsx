@@ -16,6 +16,7 @@ interface TimelineItem {
   type: 'link' | 'event' | 'property';
   sourceId?: string; // For selection
   isDimmed?: boolean; // For filter dimming
+  unresolvedCommentCount?: number; // Number of unresolved comments
   // Thumbnail info from source element
   thumbLetter: string;
   thumbColor: string;
@@ -48,10 +49,11 @@ export function TimelineView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links } = useInvestigationStore();
+  const { elements, links, comments } = useInvestigationStore();
   const { selectElement, selectLink, selectedElementIds, selectedLinkIds } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
@@ -108,6 +110,13 @@ export function TimelineView() {
     let minTime = Infinity;
     let maxTime = -Infinity;
 
+    // Helper to count unresolved comments for a target
+    const getUnresolvedCommentCount = (targetId: string, targetType: 'element' | 'link'): number => {
+      return comments.filter(
+        c => c.targetId === targetId && c.targetType === targetType && !c.resolved
+      ).length;
+    };
+
     // 1. Process links with dateRange
     links.forEach((link) => {
       if (!link.dateRange?.start) return;
@@ -146,6 +155,7 @@ export function TimelineView() {
         type: 'link',
         sourceId: link.id,
         isDimmed: isLinkDimmed,
+        unresolvedCommentCount: getUnresolvedCommentCount(link.id, 'link'),
         thumbLetter: fromLabel.charAt(0).toUpperCase(),
         thumbColor: fromElement.visual.color,
         thumbShape: fromElement.visual.shape || 'circle',
@@ -195,6 +205,7 @@ export function TimelineView() {
           type: 'event',
           sourceId: element.id,
           isDimmed: isElementDimmed,
+          unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
           thumbLetter: elementLabel.charAt(0).toUpperCase(),
           thumbColor: element.visual.color,
           thumbShape: element.visual.shape || 'circle',
@@ -233,6 +244,7 @@ export function TimelineView() {
           type: 'property',
           sourceId: element.id,
           isDimmed: isElementDimmed,
+          unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
           thumbLetter: elementLabel.charAt(0).toUpperCase(),
           thumbColor: element.visual.color,
           thumbShape: element.visual.shape || 'circle',
@@ -260,7 +272,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, hiddenElementIds, dimmedElementIds]);
+  }, [elements, links, comments, hiddenElementIds, dimmedElementIds]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -831,6 +843,15 @@ export function TimelineView() {
                       size={ROW_HEIGHT}
                     />
                   )}
+                  {/* Comment indicator */}
+                  {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
+                    <div
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
+                      title={`${item.unresolvedCommentCount} commentaire${item.unresolvedCommentCount > 1 ? 's' : ''} non résolu${item.unresolvedCommentCount > 1 ? 's' : ''}`}
+                    >
+                      {item.unresolvedCommentCount}
+                    </div>
+                  )}
                 </div>
               );
             }
@@ -861,6 +882,15 @@ export function TimelineView() {
                     boxShadow: selected ? undefined : `inset 0 0 0 1px ${item.color}30`,
                   }}
                 />
+                {/* Comment indicator */}
+                {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
+                  <div
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
+                    title={`${item.unresolvedCommentCount} commentaire${item.unresolvedCommentCount > 1 ? 's' : ''} non résolu${item.unresolvedCommentCount > 1 ? 's' : ''}`}
+                  >
+                    {item.unresolvedCommentCount}
+                  </div>
+                )}
                 {/* Content */}
                 <div
                   className="relative h-full flex items-center overflow-hidden gap-2 pr-2"
