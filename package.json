@@ -12,7 +12,7 @@
     "sync-server": "y-websocket-server",
     "relay-server": "node relay-server.js",
     "start": "node server/index.js",
-    "docker:build": "docker build -t zeroneurone .",
+    "docker:build": "docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t zeroneurone .",
     "docker:run": "docker run -p 3000:3000 --rm zeroneurone",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",

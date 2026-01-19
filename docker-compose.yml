@@ -19,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     container_name: zeroneurone
     restart: unless-stopped
     # No ports exposed - Traefik handles external access
@@ -73,9 +75,12 @@ networks:
 # 3. Or create a .env file:
 #    ZERONEURONE_DOMAIN=zeroneurone.example.com
 #
-# 4. For local development without Traefik, uncomment the ports section
+# 4. To include git commit in the build (shows version at bottom of screen):
+#    GIT_COMMIT=$(git rev-parse HEAD) docker compose build
+#
+# 5. For local development without Traefik, uncomment the ports section
 #    and comment out the labels and networks sections.
 #
-# 5. WebSocket connections work automatically - Traefik handles the
+# 6. WebSocket connections work automatically - Traefik handles the
 #    HTTP Upgrade to WebSocket protocol.
 #

@@ -18,6 +18,9 @@
 # ----------------------------------------------------------------------------
 FROM node:22-alpine AS builder
 
+# Git commit hash passed at build time
+ARG GIT_COMMIT=unknown
+
 WORKDIR /app
 
 # Copy package files first for better layer caching
@@ -29,8 +32,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with version info
 # Skip TypeScript strict checking, use Vite directly
+ENV VITE_APP_VERSION=$GIT_COMMIT
 RUN npx vite build
 
 # ----------------------------------------------------------------------------
