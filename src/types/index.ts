@@ -51,7 +51,7 @@ export interface DateRange {
 }
 
 /** Property types for typed input */
-export type PropertyType = 'text' | 'number' | 'date' | 'datetime' | 'boolean' | 'choice' | 'geo' | 'country';
+export type PropertyType = 'text' | 'number' | 'date' | 'datetime' | 'boolean' | 'choice' | 'geo' | 'country' | 'link';
 
 /** Free-form property (key/value) with optional type */
 export interface Property {

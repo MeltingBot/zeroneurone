@@ -28,6 +28,7 @@ const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: 'choice', label: 'Choix multiple' },
   { value: 'country', label: 'Pays' },
   { value: 'geo', label: 'Coordonnées' },
+  { value: 'link', label: 'Lien' },
 ];
 
 const COLOR_OPTIONS = [

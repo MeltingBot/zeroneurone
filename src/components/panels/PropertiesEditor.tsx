@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { X, Plus, ChevronDown, Check } from 'lucide-react';
+import { X, Plus, ChevronDown, Check, ExternalLink } from 'lucide-react';
 import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { COUNTRIES, getCountryByCode, type Country } from '../../data/countries';
@@ -19,6 +19,7 @@ const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: 'date', label: 'Date' },
   { value: 'boolean', label: 'Booléen' },
   { value: 'country', label: 'Pays' },
+  { value: 'link', label: 'Lien' },
 ];
 
 function getTypeLabel(type: PropertyType): string {
@@ -435,6 +436,36 @@ function PropertyValueInput({
           compact={compact}
         />
       );
+
+    case 'link': {
+      const url = String(value ?? '');
+      const isValidUrl = url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('www.'));
+      const openUrl = isValidUrl
+        ? url.startsWith('www.') ? `https://${url}` : url
+        : null;
+      return (
+        <div className="relative flex items-center gap-1">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => onChange(e.target.value || null)}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder || 'https://...'}
+            className={`${baseInputClass} ${openUrl ? 'pr-7' : ''}`}
+          />
+          {openUrl && (
+            <button
+              type="button"
+              onClick={() => window.open(openUrl, '_blank', 'noopener,noreferrer')}
+              className="absolute right-1.5 p-0.5 text-text-tertiary hover:text-accent transition-colors"
+              title="Ouvrir dans un nouvel onglet"
+            >
+              <ExternalLink size={12} />
+            </button>
+          )}
+        </div>
+      );
+    }
 
     default:
       return (
