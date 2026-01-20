@@ -614,14 +614,24 @@ export function Canvas() {
 
   // Sync from Zustand to local state when not dragging
   // Skip sync briefly after drag ends to avoid redundant edge recalculation
+  // BUT always sync immediately if node count changed (deletion/addition)
   useEffect(() => {
+    const nodeCountChanged = nodes.length !== localNodes.length;
+
+    // Always sync immediately if nodes were added or deleted
+    if (nodeCountChanged) {
+      setLocalNodes(nodes);
+      return;
+    }
+
+    // For position-only changes, apply delay after drag
     const timeSinceDragEnd = Date.now() - lastDragEndRef.current;
     const SYNC_DELAY_AFTER_DRAG = 500; // Skip sync for 500ms after drag ends
 
     if (!isDraggingRef.current && timeSinceDragEnd > SYNC_DELAY_AFTER_DRAG) {
       setLocalNodes(nodes);
     }
-  }, [nodes]);
+  }, [nodes, localNodes.length]);
 
   const edges = useMemo(() => {
     // Build position map from localNodes for dynamic handle calculation
