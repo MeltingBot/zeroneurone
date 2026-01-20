@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee } from 'lucide-react';
 import { Layout, IconButton } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, ReportModal, ShortcutsModal } from '../components/modals';
@@ -258,6 +258,24 @@ export function InvestigationPage() {
           >
             <Keyboard size={14} />
           </button>
+          <a
+            href="https://github.com/MeltingBot/zeroneurone"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            title="GitHub"
+          >
+            <Github size={14} />
+          </a>
+          <a
+            href="https://ko-fi.com/yannpilpre"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            title="Soutenir sur Ko-fi"
+          >
+            <Coffee size={14} />
+          </a>
         </div>
       </header>
 
