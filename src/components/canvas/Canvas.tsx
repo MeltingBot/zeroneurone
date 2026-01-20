@@ -611,16 +611,25 @@ export function Canvas() {
   const draggingNodeIdsRef = useRef<Set<string>>(new Set());
   const lastDragEndRef = useRef<number>(0);
   const isHandlingSelectionRef = useRef(false);
+  const localNodeIdsRef = useRef<Set<string>>(new Set(nodes.map(n => n.id)));
 
-  // Sync from Zustand to local state when not dragging
-  // Skip sync briefly after drag ends to avoid redundant edge recalculation
-  // BUT always sync immediately if node count changed (deletion/addition)
+  // Sync from Zustand to local state
+  // Always sync immediately if element set changed (deletion/addition)
+  // For position-only changes, apply delay after drag to avoid redundant recalculation
   useEffect(() => {
-    const nodeCountChanged = nodes.length !== localNodes.length;
+    // Check if element set changed by comparing IDs from the store directly
+    const currentElementIds = new Set(elements.map(e => e.id));
+    const prevNodeIds = localNodeIdsRef.current;
 
-    // Always sync immediately if nodes were added or deleted
-    if (nodeCountChanged) {
+    const nodeSetChanged =
+      currentElementIds.size !== prevNodeIds.size ||
+      [...currentElementIds].some(id => !prevNodeIds.has(id)) ||
+      [...prevNodeIds].some(id => !currentElementIds.has(id));
+
+    // Always sync immediately if elements were added or deleted
+    if (nodeSetChanged) {
       setLocalNodes(nodes);
+      localNodeIdsRef.current = currentElementIds;
       return;
     }
 
@@ -631,7 +640,7 @@ export function Canvas() {
     if (!isDraggingRef.current && timeSinceDragEnd > SYNC_DELAY_AFTER_DRAG) {
       setLocalNodes(nodes);
     }
-  }, [nodes, localNodes.length]);
+  }, [elements, nodes]);
 
   const edges = useMemo(() => {
     // Build position map from localNodes for dynamic handle calculation
