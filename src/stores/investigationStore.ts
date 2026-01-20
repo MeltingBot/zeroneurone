@@ -1146,12 +1146,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const links = Array.from(linksById.values());
     const comments = Array.from(commentsById.values());
 
-    // DEFENSIVE: Don't wipe state if Y.Doc appears empty but we had elements
-    // This can happen due to IndexedDB sync timing issues
+    // DEFENSIVE: Don't wipe state if Y.Doc appears empty due to sync issues
+    // But DO allow sync if elementsMap is genuinely empty (user deleted all elements)
     const stateElements = get().elements;
-    if (elements.length === 0 && stateElements.length > 0) {
-      console.warn('[_syncFromYDoc] Y.Doc appears empty but state had', stateElements.length, 'elements. Skipping sync to prevent data loss.');
-      console.warn('[_syncFromYDoc] elementsMap.size:', elementsMap.size);
+    if (elements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
+      // elementsMap has entries but we couldn't parse them - likely a sync issue
+      console.warn('[_syncFromYDoc] Y.Doc parsing failed. elementsMap.size:', elementsMap.size, 'but parsed 0 elements. Skipping sync.');
       return;
     }
 

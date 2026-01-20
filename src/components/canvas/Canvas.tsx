@@ -615,6 +615,13 @@ export function Canvas() {
 
   // Handle element deletions immediately - filter out nodes that no longer exist in elements
   useEffect(() => {
+    // Special case: if elements is empty, force localNodes to empty immediately
+    if (elements.length === 0) {
+      setLocalNodes([]);
+      localNodeIdsRef.current = new Set();
+      return;
+    }
+
     const currentElementIds = new Set(elements.map(e => e.id));
 
     setLocalNodes(prev => {
