@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag, MessageSquare } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag, MessageSquare, ExternalLink } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Property } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -11,6 +11,20 @@ import { CommentsSection } from './CommentsSection';
 
 interface LinkDetailProps {
   link: Link;
+}
+
+// Check if a string looks like a URL
+function isUrl(str: string): boolean {
+  if (!str) return false;
+  const trimmed = str.trim();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('www.');
+}
+
+// Get a proper URL (add https:// if needed)
+function toUrl(str: string): string {
+  const trimmed = str.trim();
+  if (trimmed.startsWith('www.')) return `https://${trimmed}`;
+  return trimmed;
 }
 
 // Debounce hook
@@ -357,16 +371,28 @@ export function LinkDetail({ link }: LinkDetailProps) {
           {/* Source */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">Source</label>
-            <input
-              type="text"
-              value={source}
-              onChange={(e) => {
-                editingLinkIdRef.current = link.id;
-                setSource(e.target.value);
-              }}
-              placeholder="Source de l'information..."
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={source}
+                onChange={(e) => {
+                  editingLinkIdRef.current = link.id;
+                  setSource(e.target.value);
+                }}
+                placeholder="Source de l'information..."
+                className={`w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary ${isUrl(source) ? 'pr-9' : ''}`}
+              />
+              {isUrl(source) && (
+                <button
+                  type="button"
+                  onClick={() => window.open(toUrl(source), '_blank', 'noopener,noreferrer')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-tertiary hover:text-accent transition-colors"
+                  title="Ouvrir dans un nouvel onglet"
+                >
+                  <ExternalLink size={14} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Period (start/end) */}

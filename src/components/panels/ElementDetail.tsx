@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare } from 'lucide-react';
+import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
@@ -14,6 +14,20 @@ import { CommentsSection } from './CommentsSection';
 
 interface ElementDetailProps {
   element: Element;
+}
+
+// Check if a string looks like a URL
+function isUrl(str: string): boolean {
+  if (!str) return false;
+  const trimmed = str.trim();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('www.');
+}
+
+// Get a proper URL (add https:// if needed)
+function toUrl(str: string): string {
+  const trimmed = str.trim();
+  if (trimmed.startsWith('www.')) return `https://${trimmed}`;
+  return trimmed;
 }
 
 // Debounce hook
@@ -427,16 +441,28 @@ export function ElementDetail({ element }: ElementDetailProps) {
           {/* Source */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">Source</label>
-            <input
-              type="text"
-              value={source}
-              onChange={(e) => {
-                editingElementIdRef.current = element.id;
-                setSource(e.target.value);
-              }}
-              placeholder="Source de l'information..."
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={source}
+                onChange={(e) => {
+                  editingElementIdRef.current = element.id;
+                  setSource(e.target.value);
+                }}
+                placeholder="Source de l'information..."
+                className={`w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all ${isUrl(source) ? 'pr-9' : ''}`}
+              />
+              {isUrl(source) && (
+                <button
+                  type="button"
+                  onClick={() => window.open(toUrl(source), '_blank', 'noopener,noreferrer')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-tertiary hover:text-accent transition-colors"
+                  title="Ouvrir dans un nouvel onglet"
+                >
+                  <ExternalLink size={14} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Date */}

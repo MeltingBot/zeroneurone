@@ -455,6 +455,17 @@ export function Canvas() {
     return getDimmedElementIds(elements, filters, hiddenElementIds);
   }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
 
+  // Pre-compute comment counts per element (O(c) instead of O(n*c))
+  const commentCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const c of comments) {
+      if (!c.resolved && c.targetType === 'element') {
+        map.set(c.targetId, (map.get(c.targetId) || 0) + 1);
+      }
+    }
+    return map;
+  }, [comments]);
+
   // Create asset lookup map for thumbnail retrieval
   const assetMap = useMemo(() => {
     const map = new Map<string, string | null>();
@@ -531,10 +542,8 @@ export function Canvas() {
           const onLabelChange = (newLabel: string) => {
             handleElementLabelChange(el.id, newLabel);
           };
-          // Count unresolved comments for this element
-          const unresolvedCommentCount = comments.filter(
-            c => c.targetId === el.id && !c.resolved
-          ).length;
+          // Get pre-computed comment count (O(1) lookup instead of O(c) filter)
+          const unresolvedCommentCount = commentCountMap.get(el.id) || 0;
           // Get badge property if set in filters
           let badgeProperty: { value: string; type: string } | null = null;
           if (filters.badgePropertyKey) {
@@ -562,7 +571,7 @@ export function Canvas() {
             badgeProperty
           );
         }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, comments, filters.badgePropertyKey]
+    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, commentCountMap, filters.badgePropertyKey]
   );
 
   // Update awareness when selection changes
@@ -1895,6 +1904,7 @@ export function Canvas() {
             zoomOnDoubleClick={false}
             fitView={false}
             nodeDragThreshold={2}
+            onlyRenderVisibleElements
             proOptions={{ hideAttribution: true }}
           >
             <Background
