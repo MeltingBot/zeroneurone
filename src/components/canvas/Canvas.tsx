@@ -613,21 +613,36 @@ export function Canvas() {
   const isHandlingSelectionRef = useRef(false);
   const localNodeIdsRef = useRef<Set<string>>(new Set(nodes.map(n => n.id)));
 
-  // Sync from Zustand to local state
-  // Always sync immediately if element set changed (deletion/addition)
-  // For position-only changes, apply delay after drag to avoid redundant recalculation
+  // Handle element deletions immediately - filter out nodes that no longer exist in elements
   useEffect(() => {
-    // Check if element set changed by comparing IDs from the store directly
+    const currentElementIds = new Set(elements.map(e => e.id));
+
+    setLocalNodes(prev => {
+      // Check if any nodes in localNodes are no longer in elements (deleted)
+      const hasDeletedNodes = prev.some(n => !currentElementIds.has(n.id));
+
+      if (hasDeletedNodes) {
+        // Filter out deleted nodes immediately
+        const filtered = prev.filter(n => currentElementIds.has(n.id));
+        localNodeIdsRef.current = new Set(filtered.map(n => n.id));
+        return filtered;
+      }
+
+      return prev;
+    });
+  }, [elements]);
+
+  // Sync new/updated nodes from Zustand to local state
+  // Apply delay after drag to avoid redundant recalculation
+  useEffect(() => {
     const currentElementIds = new Set(elements.map(e => e.id));
     const prevNodeIds = localNodeIdsRef.current;
 
-    const nodeSetChanged =
-      currentElementIds.size !== prevNodeIds.size ||
-      [...currentElementIds].some(id => !prevNodeIds.has(id)) ||
-      [...prevNodeIds].some(id => !currentElementIds.has(id));
+    // Check for additions - any ID in elements that's not in localNodes
+    const hasNewNodes = [...currentElementIds].some(id => !prevNodeIds.has(id));
 
-    // Always sync immediately if elements were added or deleted
-    if (nodeSetChanged) {
+    // Sync immediately if new elements were added
+    if (hasNewNodes) {
       setLocalNodes(nodes);
       localNodeIdsRef.current = currentElementIds;
       return;
@@ -639,6 +654,7 @@ export function Canvas() {
 
     if (!isDraggingRef.current && timeSinceDragEnd > SYNC_DELAY_AFTER_DRAG) {
       setLocalNodes(nodes);
+      localNodeIdsRef.current = currentElementIds;
     }
   }, [elements, nodes]);
 
