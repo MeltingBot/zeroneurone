@@ -1190,23 +1190,26 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
     });
 
-    // Save new assets to OPFS in background
+    // Save new assets to OPFS in background - update state progressively
     if (newAssetsToSave.length > 0) {
-      Promise.all(
-        newAssetsToSave.map(({ assetData, base64Data }) =>
-          fileService.saveAssetFromBase64(assetData, base64Data)
-        )
-      ).then((savedAssets) => {
-        // Update state with newly saved assets
-        const validAssets = savedAssets.filter((a): a is Asset => a !== null);
-        if (validAssets.length > 0) {
-          set((state) => ({
-            assets: [...state.assets, ...validAssets],
-          }));
-        }
-      }).catch((error) => {
-        console.warn('Failed to save assets from peers:', error);
-      });
+      console.log(`[Sync] Saving ${newAssetsToSave.length} new asset(s) from peers...`);
+
+      // Save each asset and update state immediately when done
+      for (const { assetData, base64Data } of newAssetsToSave) {
+        fileService.saveAssetFromBase64(assetData, base64Data)
+          .then((savedAsset) => {
+            if (savedAsset) {
+              console.log(`[Sync] Asset saved: ${savedAsset.filename}`);
+              // Update state immediately with this asset
+              set((state) => ({
+                assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],
+              }));
+            }
+          })
+          .catch((error) => {
+            console.warn(`[Sync] Failed to save asset ${assetData.filename}:`, error);
+          });
+      }
     }
 
     set({
