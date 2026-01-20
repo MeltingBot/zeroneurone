@@ -49,6 +49,15 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
                   <span className="ml-1 font-mono">({commitHash.slice(0, 7)})</span>
                 )}
               </p>
+              <a
+                href="https://github.com/MeltingBot/zeroneurone"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-1.5 text-xs text-text-secondary hover:text-accent transition-colors"
+              >
+                <Github size={14} />
+                <span>GitHub</span>
+              </a>
             </div>
           </div>
 
