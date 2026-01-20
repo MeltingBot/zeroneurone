@@ -815,7 +815,334 @@ class ImportService {
   }
 
   /**
-   * Import elements from CSV file
+   * Import unified CSV file with type column (elements and links in one file)
+   */
+  async importFromCSV(
+    content: string,
+    targetInvestigationId: InvestigationId,
+    options: Partial<CSVImportOptions> = {}
+  ): Promise<ImportResult> {
+    const opts: CSVImportOptions = {
+      hasHeaders: true,
+      delimiter: ',',
+      createMissingElements: true,
+      ...options,
+    };
+
+    const result: ImportResult = {
+      success: false,
+      elementsImported: 0,
+      linksImported: 0,
+      assetsImported: 0,
+      errors: [],
+      warnings: [],
+    };
+
+    try {
+      const lines = content.split('\n').filter((line) => line.trim());
+      if (lines.length === 0) {
+        result.errors.push('Fichier CSV vide');
+        return result;
+      }
+
+      const headers = this.parseCSVLine(lines[0], opts.delimiter).map(h => h.toLowerCase());
+      const dataLines = lines.slice(1);
+
+      // Check if this is a unified format (has 'type' column)
+      const typeIdx = headers.findIndex((h) => h === 'type');
+
+      if (typeIdx === -1) {
+        // No type column - use legacy detection
+        const isLinksCSV = headers.includes('de') || headers.includes('vers') ||
+          headers.includes('from') || headers.includes('to') || headers.includes('source') || headers.includes('target');
+
+        if (isLinksCSV) {
+          return this.importLinksFromCSV(content, targetInvestigationId, opts);
+        } else {
+          return this.importElementsFromCSV(content, targetInvestigationId, opts);
+        }
+      }
+
+      // Unified format with type column
+      const labelIdx = headers.findIndex((h) => ['label', 'nom', 'name'].includes(h));
+      const deIdx = headers.findIndex((h) => ['de', 'from', 'source'].includes(h));
+      const versIdx = headers.findIndex((h) => ['vers', 'to', 'target'].includes(h));
+      const notesIdx = headers.findIndex((h) => ['notes', 'description'].includes(h));
+      const tagsIdx = headers.findIndex((h) => ['tags', 'etiquettes'].includes(h));
+      const confidenceIdx = headers.findIndex((h) => ['confiance', 'confidence'].includes(h));
+      const sourceIdx = headers.findIndex((h) => h === 'source' && deIdx !== headers.indexOf(h)); // Avoid conflict with 'de'
+      const dateIdx = headers.findIndex((h) => h === 'date');
+      const dateStartIdx = headers.findIndex((h) => ['date_debut', 'date_start'].includes(h));
+      const dateEndIdx = headers.findIndex((h) => ['date_fin', 'date_end'].includes(h));
+      const latIdx = headers.findIndex((h) => ['latitude', 'lat'].includes(h));
+      const lngIdx = headers.findIndex((h) => ['longitude', 'lng', 'lon'].includes(h));
+      const directedIdx = headers.findIndex((h) => ['dirige', 'directed'].includes(h));
+      const colorIdx = headers.findIndex((h) => ['couleur', 'color'].includes(h));
+      const shapeIdx = headers.findIndex((h) => ['forme', 'shape'].includes(h));
+      const styleIdx = headers.findIndex((h) => h === 'style');
+
+      // Track created elements by label for linking
+      const elementsByLabel = new Map<string, Element>();
+
+      // First, get existing elements
+      const existingElements = await db.elements
+        .where({ investigationId: targetInvestigationId })
+        .toArray();
+      existingElements.forEach((el) => {
+        elementsByLabel.set(el.label.toLowerCase(), el);
+      });
+
+      // First pass: create all elements
+      let rowNum = 2;
+      for (const line of dataLines) {
+        const values = this.parseCSVLine(line, opts.delimiter);
+        if (values.length === 0) {
+          rowNum++;
+          continue;
+        }
+
+        const type = values[typeIdx]?.toLowerCase().trim();
+        if (type !== 'element') {
+          rowNum++;
+          continue;
+        }
+
+        const label = labelIdx >= 0 ? values[labelIdx]?.trim() : '';
+        if (!label) {
+          result.warnings.push(`Ligne ${rowNum}: label vide, élément ignoré`);
+          rowNum++;
+          continue;
+        }
+
+        // Skip if element already exists
+        if (elementsByLabel.has(label.toLowerCase())) {
+          rowNum++;
+          continue;
+        }
+
+        // Parse geo coordinates
+        let geo: GeoCoordinates | null = null;
+        if (latIdx >= 0 && lngIdx >= 0 && values[latIdx] && values[lngIdx]) {
+          const lat = parseFloat(values[latIdx]);
+          const lng = parseFloat(values[lngIdx]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            geo = { lat, lng };
+          }
+        }
+
+        // Parse date
+        let date: Date | null = null;
+        if (dateIdx >= 0 && values[dateIdx]) {
+          const parsed = new Date(values[dateIdx]);
+          if (!isNaN(parsed.getTime())) {
+            date = parsed;
+          }
+        }
+
+        // Parse confidence
+        let confidence: Confidence | null = null;
+        if (confidenceIdx >= 0 && values[confidenceIdx]) {
+          const conf = parseInt(values[confidenceIdx]);
+          if (conf >= 0 && conf <= 100 && conf % 10 === 0) {
+            confidence = conf as Confidence;
+          }
+        }
+
+        const element: Element = {
+          id: generateUUID(),
+          investigationId: targetInvestigationId,
+          label,
+          notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
+          tags: tagsIdx >= 0 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
+          properties: [],
+          confidence,
+          source: sourceIdx >= 0 ? values[sourceIdx] || '' : '',
+          date,
+          dateRange: null,
+          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          geo,
+          visual: {
+            ...DEFAULT_ELEMENT_VISUAL,
+            color: colorIdx >= 0 && values[colorIdx] ? values[colorIdx] : DEFAULT_ELEMENT_VISUAL.color,
+            shape: shapeIdx >= 0 && this.isValidShape(values[shapeIdx]) ? values[shapeIdx] as ElementShape : DEFAULT_ELEMENT_VISUAL.shape,
+          },
+          assetIds: [],
+          parentGroupId: null,
+          isGroup: false,
+          childIds: [],
+          events: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await db.elements.add(element);
+        elementsByLabel.set(label.toLowerCase(), element);
+        result.elementsImported++;
+        rowNum++;
+      }
+
+      // Second pass: create all links
+      rowNum = 2;
+      for (const line of dataLines) {
+        const values = this.parseCSVLine(line, opts.delimiter);
+        if (values.length === 0) {
+          rowNum++;
+          continue;
+        }
+
+        const type = values[typeIdx]?.toLowerCase().trim();
+        if (type !== 'lien' && type !== 'link') {
+          rowNum++;
+          continue;
+        }
+
+        const deValue = deIdx >= 0 ? values[deIdx]?.trim().toLowerCase() : '';
+        const versValue = versIdx >= 0 ? values[versIdx]?.trim().toLowerCase() : '';
+
+        if (!deValue || !versValue) {
+          result.warnings.push(`Ligne ${rowNum}: de/vers vide, lien ignoré`);
+          rowNum++;
+          continue;
+        }
+
+        let fromElement = elementsByLabel.get(deValue);
+        let toElement = elementsByLabel.get(versValue);
+
+        // Create missing elements if option enabled
+        if (!fromElement && opts.createMissingElements) {
+          fromElement = {
+            id: generateUUID(),
+            investigationId: targetInvestigationId,
+            label: values[deIdx].trim(),
+            notes: '',
+            tags: [],
+            properties: [],
+            confidence: null,
+            source: '',
+            date: null,
+            dateRange: null,
+            position: { x: Math.random() * 500, y: Math.random() * 500 },
+            geo: null,
+            visual: { ...DEFAULT_ELEMENT_VISUAL },
+            assetIds: [],
+            parentGroupId: null,
+            isGroup: false,
+            childIds: [],
+            events: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          await db.elements.add(fromElement);
+          elementsByLabel.set(deValue, fromElement);
+          result.elementsImported++;
+        }
+
+        if (!toElement && opts.createMissingElements) {
+          toElement = {
+            id: generateUUID(),
+            investigationId: targetInvestigationId,
+            label: values[versIdx].trim(),
+            notes: '',
+            tags: [],
+            properties: [],
+            confidence: null,
+            source: '',
+            date: null,
+            dateRange: null,
+            position: { x: Math.random() * 500, y: Math.random() * 500 },
+            geo: null,
+            visual: { ...DEFAULT_ELEMENT_VISUAL },
+            assetIds: [],
+            parentGroupId: null,
+            isGroup: false,
+            childIds: [],
+            events: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          await db.elements.add(toElement);
+          elementsByLabel.set(versValue, toElement);
+          result.elementsImported++;
+        }
+
+        if (!fromElement || !toElement) {
+          result.warnings.push(`Ligne ${rowNum}: élément(s) non trouvé(s): ${!fromElement ? deValue : ''} ${!toElement ? versValue : ''}`);
+          rowNum++;
+          continue;
+        }
+
+        // Parse directed
+        const directedValue = directedIdx >= 0 ? values[directedIdx]?.toLowerCase() : '';
+        const isDirected = ['true', 'oui', 'yes', '1'].includes(directedValue);
+
+        // Parse confidence
+        let linkConfidence: Confidence | null = null;
+        if (confidenceIdx >= 0 && values[confidenceIdx]) {
+          const conf = parseInt(values[confidenceIdx]);
+          if (conf >= 0 && conf <= 100 && conf % 10 === 0) {
+            linkConfidence = conf as Confidence;
+          }
+        }
+
+        // Parse date range
+        let dateRange: { start: Date | null; end: Date | null } | null = null;
+        if (dateStartIdx >= 0 && values[dateStartIdx]) {
+          const startDate = new Date(values[dateStartIdx]);
+          const endDate = dateEndIdx >= 0 && values[dateEndIdx] ? new Date(values[dateEndIdx]) : startDate;
+          if (!isNaN(startDate.getTime())) {
+            dateRange = {
+              start: startDate,
+              end: !isNaN(endDate.getTime()) ? endDate : startDate,
+            };
+          }
+        }
+
+        const link: Link = {
+          id: generateUUID(),
+          investigationId: targetInvestigationId,
+          fromId: fromElement.id,
+          toId: toElement.id,
+          sourceHandle: null,
+          targetHandle: null,
+          label: labelIdx >= 0 ? values[labelIdx] || '' : '',
+          notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
+          properties: [],
+          confidence: linkConfidence,
+          source: '',
+          date: null,
+          dateRange,
+          directed: isDirected,
+          direction: isDirected ? 'forward' : 'none',
+          visual: {
+            ...DEFAULT_LINK_VISUAL,
+            color: colorIdx >= 0 && values[colorIdx] ? values[colorIdx] : DEFAULT_LINK_VISUAL.color,
+            style: styleIdx >= 0 && this.isValidLinkStyle(values[styleIdx]) ? values[styleIdx] as LinkStyle : DEFAULT_LINK_VISUAL.style,
+          },
+          curveOffset: { x: 0, y: 0 },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await db.links.add(link);
+        result.linksImported++;
+        rowNum++;
+      }
+
+      // Update investigation timestamp
+      await db.investigations.update(targetInvestigationId, {
+        updatedAt: new Date(),
+      });
+
+      result.success = result.elementsImported > 0 || result.linksImported > 0;
+    } catch (error) {
+      result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Import elements from CSV file (legacy format without type column)
    */
   async importElementsFromCSV(
     content: string,

@@ -66,17 +66,9 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
         result = await importService.importFromJSON(content, currentInvestigation.id);
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
-        // Detect if it's elements or links based on headers (French or English)
-        const firstLine = content.split('\n')[0].toLowerCase();
-        const isLinksCSV = firstLine.includes('de,') || firstLine.includes('vers') ||
-          firstLine.includes('from') || firstLine.includes('source,') || firstLine.includes('target');
-        if (isLinksCSV) {
-          result = await importService.importLinksFromCSV(content, currentInvestigation.id, {
-            createMissingElements,
-          });
-        } else {
-          result = await importService.importElementsFromCSV(content, currentInvestigation.id);
-        }
+        result = await importService.importFromCSV(content, currentInvestigation.id, {
+          createMissingElements,
+        });
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, currentInvestigation.id);
@@ -306,36 +298,24 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                 </div>
               )}
 
-              {/* CSV Templates */}
+              {/* CSV Template */}
               <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-text-primary">Modèles CSV</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        const template = exportService.generateElementsTemplate();
-                        exportService.download(template, 'modele_elements.csv', 'text/csv');
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-accent rounded transition-colors"
-                    >
-                      <Download size={12} />
-                      Éléments
-                    </button>
-                    <button
-                      onClick={() => {
-                        const template = exportService.generateLinksTemplate();
-                        exportService.download(template, 'modele_liens.csv', 'text/csv');
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-accent rounded transition-colors"
-                    >
-                      <Download size={12} />
-                      Liens
-                    </button>
-                  </div>
+                  <span className="text-xs font-medium text-text-primary">Modèle CSV</span>
+                  <button
+                    onClick={() => {
+                      const template = exportService.generateCSVTemplate();
+                      exportService.download(template, 'modele_csv.csv', 'text/csv');
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-accent rounded transition-colors"
+                  >
+                    <Download size={12} />
+                    Télécharger
+                  </button>
                 </div>
                 <div className="text-xs text-text-tertiary space-y-1">
-                  <p><strong>Éléments:</strong> label, notes, tags, confiance, source, date, latitude, longitude</p>
-                  <p><strong>Liens:</strong> de, vers, label, confiance, date_debut, date_fin, dirige (oui/non)</p>
+                  <p><strong>Format unifié:</strong> type (element/lien), label, de, vers, notes, tags, confiance...</p>
+                  <p>Les liens référencent les éléments par leur label dans les colonnes "de" et "vers"</p>
                 </div>
               </div>
             </div>

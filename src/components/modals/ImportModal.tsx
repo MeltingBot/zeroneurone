@@ -50,17 +50,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         result = await importService.importFromJSON(content, investigationId);
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
-        const firstLine = content.split('\n')[0].toLowerCase();
-        // Detect links CSV by presence of from/to columns (French or English)
-        const isLinksCSV = firstLine.includes('de,') || firstLine.includes('vers') ||
-          firstLine.includes('from') || firstLine.includes('source,') || firstLine.includes('target');
-        if (isLinksCSV) {
-          result = await importService.importLinksFromCSV(content, investigationId, {
-            createMissingElements,
-          });
-        } else {
-          result = await importService.importElementsFromCSV(content, investigationId);
-        }
+        result = await importService.importFromCSV(content, investigationId, {
+          createMissingElements,
+        });
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, investigationId);
@@ -112,26 +104,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     onClose();
   }, [onClose]);
 
-  const downloadElementsTemplate = useCallback(() => {
-    const template = exportService.generateElementsTemplate();
-    const blob = new Blob([template], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'modele_elements.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-  }, []);
-
-  const downloadLinksTemplate = useCallback(() => {
-    const template = exportService.generateLinksTemplate();
-    const blob = new Blob([template], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'modele_liens.csv';
-    link.click();
-    URL.revokeObjectURL(url);
+  const downloadCSVTemplate = useCallback(() => {
+    const template = exportService.generateCSVTemplate();
+    exportService.download(template, 'modele_csv.csv', 'text/csv');
   }, []);
 
   if (!isOpen) return null;
@@ -220,31 +195,24 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </label>
           </div>
 
-          {/* CSV Templates */}
+          {/* CSV Template */}
           <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
-            <div className="flex items-center gap-2 mb-2">
-              <FileSpreadsheet size={14} className="text-text-secondary" />
-              <span className="text-xs font-medium text-text-primary">Modèles CSV</span>
-            </div>
-            <div className="flex gap-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet size={14} className="text-text-secondary" />
+                <span className="text-xs font-medium text-text-primary">Modèle CSV</span>
+              </div>
               <button
-                onClick={downloadElementsTemplate}
+                onClick={downloadCSVTemplate}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
               >
                 <Download size={12} />
-                Éléments
-              </button>
-              <button
-                onClick={downloadLinksTemplate}
-                className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
-              >
-                <Download size={12} />
-                Liens
+                Télécharger
               </button>
             </div>
-            <div className="mt-2 text-xs text-text-tertiary space-y-1">
-              <p><strong>Éléments:</strong> label, notes, tags, confiance, source, date, latitude, longitude</p>
-              <p><strong>Liens:</strong> de, vers, label, confiance, date_debut, date_fin, dirige (oui/non)</p>
+            <div className="text-xs text-text-tertiary space-y-1">
+              <p><strong>Format unifié:</strong> type (element/lien), label, de, vers, notes, tags, confiance...</p>
+              <p>Les liens référencent les éléments par leur label dans les colonnes "de" et "vers"</p>
             </div>
           </div>
 
