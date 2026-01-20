@@ -96,93 +96,93 @@ class ExportService {
   }
 
   /**
-   * Export elements to CSV format
+   * Export elements to CSV format (French columns for user-friendliness)
    */
   exportElementsToCSV(elements: Element[]): string {
     const headers = [
-      'id',
       'label',
       'notes',
       'tags',
-      'confidence',
+      'confiance',
       'source',
       'date',
-      'dateRangeStart',
-      'dateRangeEnd',
-      'positionX',
-      'positionY',
-      'geoLat',
-      'geoLng',
-      'color',
-      'shape',
-      'size',
-      'createdAt',
-      'updatedAt',
+      'latitude',
+      'longitude',
+      'couleur',
+      'forme',
     ];
 
     const rows = elements.map((el) => [
-      el.id,
       this.escapeCSV(el.label),
       this.escapeCSV(el.notes),
       this.escapeCSV(el.tags.join(';')),
       el.confidence ?? '',
       this.escapeCSV(el.source),
-      el.date ? new Date(el.date).toISOString() : '',
-      el.dateRange?.start ? new Date(el.dateRange.start).toISOString() : '',
-      el.dateRange?.end ? new Date(el.dateRange.end).toISOString() : '',
-      el.position.x,
-      el.position.y,
+      el.date ? new Date(el.date).toISOString().slice(0, 10) : '',
       el.geo?.lat ?? '',
       el.geo?.lng ?? '',
       el.visual.color,
       el.visual.shape,
-      el.visual.size,
-      new Date(el.createdAt).toISOString(),
-      new Date(el.updatedAt).toISOString(),
     ]);
 
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
   }
 
   /**
-   * Export links to CSV format
+   * Export links to CSV format (French columns, uses element labels instead of IDs)
    */
-  exportLinksToCSV(links: Link[]): string {
+  exportLinksToCSV(links: Link[], elements: Element[]): string {
+    // Build a map of element IDs to labels for resolving links
+    const elementLabels = new Map<string, string>();
+    elements.forEach((el) => elementLabels.set(el.id, el.label));
+
     const headers = [
-      'id',
-      'fromId',
-      'toId',
+      'de',
+      'vers',
       'label',
       'notes',
-      'confidence',
+      'confiance',
       'source',
-      'date',
-      'color',
+      'date_debut',
+      'date_fin',
+      'dirige',
+      'couleur',
       'style',
-      'thickness',
-      'directed',
-      'createdAt',
-      'updatedAt',
     ];
 
     const rows = links.map((link) => [
-      link.id,
-      link.fromId,
-      link.toId,
+      this.escapeCSV(elementLabels.get(link.fromId) || link.fromId),
+      this.escapeCSV(elementLabels.get(link.toId) || link.toId),
       this.escapeCSV(link.label),
       this.escapeCSV(link.notes),
       link.confidence ?? '',
       this.escapeCSV(link.source),
-      link.date ? new Date(link.date).toISOString() : '',
+      link.dateRange?.start ? new Date(link.dateRange.start).toISOString().slice(0, 10) : '',
+      link.dateRange?.end ? new Date(link.dateRange.end).toISOString().slice(0, 10) : '',
+      link.directed ? 'oui' : 'non',
       link.visual.color,
       link.visual.style,
-      link.visual.thickness,
-      link.directed,
-      new Date(link.createdAt).toISOString(),
-      new Date(link.updatedAt).toISOString(),
     ]);
 
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+  }
+
+  /**
+   * Generate CSV template for elements with example
+   */
+  generateElementsTemplate(): string {
+    const headers = ['label', 'notes', 'tags', 'confiance', 'source', 'date', 'latitude', 'longitude', 'couleur', 'forme'];
+    const example = ['Jean Dupont', 'Suspect principal', 'suspect;priorite', '80', 'Enquete terrain', '2024-01-15', '48.8566', '2.3522', '#fef3c7', 'circle'];
+    return [headers.join(','), example.join(',')].join('\n');
+  }
+
+  /**
+   * Generate CSV template for links with example
+   */
+  generateLinksTemplate(): string {
+    const headers = ['de', 'vers', 'label', 'notes', 'confiance', 'date_debut', 'date_fin', 'dirige', 'couleur', 'style'];
+    const example = ['Jean Dupont', 'Marie Martin', 'Appel telephonique', 'Duree 5 min', '90', '2024-01-15', '2024-01-15', 'oui', '#d4cec4', 'solid'];
+    return [headers.join(','), example.join(',')].join('\n');
   }
 
   /**
@@ -280,9 +280,9 @@ class ExportService {
         // Export elements CSV
         const elementsCSV = this.exportElementsToCSV(elements);
         this.download(elementsCSV, `${baseName}_elements.csv`, 'text/csv');
-        // Export links CSV
-        const linksCSV = this.exportLinksToCSV(links);
-        this.download(linksCSV, `${baseName}_links.csv`, 'text/csv');
+        // Export links CSV (needs elements to resolve labels)
+        const linksCSV = this.exportLinksToCSV(links, elements);
+        this.download(linksCSV, `${baseName}_liens.csv`, 'text/csv');
         break;
       }
       case 'graphml': {

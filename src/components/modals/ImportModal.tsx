@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
-import { X, Upload, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { importService, type ImportResult } from '../../services/importService';
+import { exportService } from '../../services/exportService';
 import { useInvestigationStore, toast } from '../../stores';
 
 interface ImportModalProps {
@@ -50,7 +51,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
         const firstLine = content.split('\n')[0].toLowerCase();
-        if (firstLine.includes('from') || firstLine.includes('source') || firstLine.includes('target')) {
+        // Detect links CSV by presence of from/to columns (French or English)
+        const isLinksCSV = firstLine.includes('de,') || firstLine.includes('vers') ||
+          firstLine.includes('from') || firstLine.includes('source,') || firstLine.includes('target');
+        if (isLinksCSV) {
           result = await importService.importLinksFromCSV(content, investigationId, {
             createMissingElements,
           });
@@ -107,6 +111,28 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setTargetInvestigationId('new');
     onClose();
   }, [onClose]);
+
+  const downloadElementsTemplate = useCallback(() => {
+    const template = exportService.generateElementsTemplate();
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'modele_elements.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const downloadLinksTemplate = useCallback(() => {
+    const template = exportService.generateLinksTemplate();
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'modele_liens.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -192,6 +218,34 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             <label htmlFor="createMissing" className="text-xs text-text-secondary">
               Créer les éléments manquants (CSV liens)
             </label>
+          </div>
+
+          {/* CSV Templates */}
+          <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
+            <div className="flex items-center gap-2 mb-2">
+              <FileSpreadsheet size={14} className="text-text-secondary" />
+              <span className="text-xs font-medium text-text-primary">Modèles CSV</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={downloadElementsTemplate}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
+              >
+                <Download size={12} />
+                Éléments
+              </button>
+              <button
+                onClick={downloadLinksTemplate}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
+              >
+                <Download size={12} />
+                Liens
+              </button>
+            </div>
+            <div className="mt-2 text-xs text-text-tertiary space-y-1">
+              <p><strong>Éléments:</strong> label, notes, tags, confiance, source, date, latitude, longitude</p>
+              <p><strong>Liens:</strong> de, vers, label, confiance, date_debut, date_fin, dirige (oui/non)</p>
+            </div>
           </div>
 
           {/* Import result */}

@@ -857,22 +857,22 @@ class ImportService {
         dataLines = lines;
       }
 
-      // Find column indices
-      const labelIdx = headers.findIndex((h) => h.toLowerCase() === 'label');
-      const notesIdx = headers.findIndex((h) => h.toLowerCase() === 'notes');
-      const tagsIdx = headers.findIndex((h) => h.toLowerCase() === 'tags');
+      // Find column indices (accept both French and English column names)
+      const labelIdx = headers.findIndex((h) => ['label', 'nom', 'name'].includes(h.toLowerCase()));
+      const notesIdx = headers.findIndex((h) => ['notes', 'description'].includes(h.toLowerCase()));
+      const tagsIdx = headers.findIndex((h) => ['tags', 'etiquettes'].includes(h.toLowerCase()));
       const posXIdx = headers.findIndex((h) => h.toLowerCase().includes('positionx') || h.toLowerCase() === 'x');
       const posYIdx = headers.findIndex((h) => h.toLowerCase().includes('positiony') || h.toLowerCase() === 'y');
-      const geoLatIdx = headers.findIndex((h) => h.toLowerCase().includes('lat'));
-      const geoLngIdx = headers.findIndex((h) => h.toLowerCase().includes('lng') || h.toLowerCase().includes('lon'));
-      const dateIdx = headers.findIndex((h) => h.toLowerCase() === 'date');
-      const confidenceIdx = headers.findIndex((h) => h.toLowerCase() === 'confidence');
-      const sourceIdx = headers.findIndex((h) => h.toLowerCase() === 'source');
-      const colorIdx = headers.findIndex((h) => h.toLowerCase() === 'color');
-      const shapeIdx = headers.findIndex((h) => h.toLowerCase() === 'shape');
+      const geoLatIdx = headers.findIndex((h) => ['lat', 'latitude'].includes(h.toLowerCase()));
+      const geoLngIdx = headers.findIndex((h) => ['lng', 'lon', 'longitude'].includes(h.toLowerCase()));
+      const dateIdx = headers.findIndex((h) => ['date'].includes(h.toLowerCase()));
+      const confidenceIdx = headers.findIndex((h) => ['confidence', 'confiance'].includes(h.toLowerCase()));
+      const sourceIdx = headers.findIndex((h) => ['source'].includes(h.toLowerCase()));
+      const colorIdx = headers.findIndex((h) => ['color', 'couleur'].includes(h.toLowerCase()));
+      const shapeIdx = headers.findIndex((h) => ['shape', 'forme'].includes(h.toLowerCase()));
 
       if (labelIdx === -1) {
-        result.errors.push('Colonne "label" requise non trouvee');
+        result.errors.push('Colonne "label" requise non trouvée');
         return result;
       }
 
@@ -1030,21 +1030,24 @@ class ImportService {
         dataLines = lines;
       }
 
-      // Find column indices
+      // Find column indices (accept both French and English column names)
       const fromIdx = headers.findIndex((h) =>
-        h.toLowerCase() === 'from' || h.toLowerCase() === 'fromid' || h.toLowerCase() === 'source'
+        ['from', 'fromid', 'source', 'de', 'origine'].includes(h.toLowerCase())
       );
       const toIdx = headers.findIndex((h) =>
-        h.toLowerCase() === 'to' || h.toLowerCase() === 'toid' || h.toLowerCase() === 'target'
+        ['to', 'toid', 'target', 'vers', 'destination', 'cible'].includes(h.toLowerCase())
       );
-      const labelIdx = headers.findIndex((h) => h.toLowerCase() === 'label');
-      const notesIdx = headers.findIndex((h) => h.toLowerCase() === 'notes');
-      const directedIdx = headers.findIndex((h) => h.toLowerCase() === 'directed');
-      const colorIdx = headers.findIndex((h) => h.toLowerCase() === 'color');
-      const styleIdx = headers.findIndex((h) => h.toLowerCase() === 'style');
+      const labelIdx = headers.findIndex((h) => ['label', 'relation', 'type'].includes(h.toLowerCase()));
+      const notesIdx = headers.findIndex((h) => ['notes', 'description'].includes(h.toLowerCase()));
+      const directedIdx = headers.findIndex((h) => ['directed', 'dirige', 'direction'].includes(h.toLowerCase()));
+      const colorIdx = headers.findIndex((h) => ['color', 'couleur'].includes(h.toLowerCase()));
+      const styleIdx = headers.findIndex((h) => ['style'].includes(h.toLowerCase()));
+      const confidenceIdx = headers.findIndex((h) => ['confidence', 'confiance'].includes(h.toLowerCase()));
+      const dateStartIdx = headers.findIndex((h) => ['date_debut', 'date_start', 'debut', 'start'].includes(h.toLowerCase()));
+      const dateEndIdx = headers.findIndex((h) => ['date_fin', 'date_end', 'fin', 'end'].includes(h.toLowerCase()));
 
       if (fromIdx === -1 || toIdx === -1) {
-        result.errors.push('Colonnes "from" et "to" requises non trouvees');
+        result.errors.push('Colonnes "de" et "vers" (ou "from" et "to") requises non trouvées');
         return result;
       }
 
@@ -1133,7 +1136,32 @@ class ImportService {
             continue;
           }
 
-          const isDirected = directedIdx >= 0 ? values[directedIdx]?.toLowerCase() === 'true' : false;
+          // Parse directed (accept true/false, oui/non, yes/no)
+          const directedValue = directedIdx >= 0 ? values[directedIdx]?.toLowerCase() : '';
+          const isDirected = ['true', 'oui', 'yes', '1'].includes(directedValue);
+
+          // Parse confidence
+          let linkConfidence: Confidence | null = null;
+          if (confidenceIdx >= 0 && values[confidenceIdx]) {
+            const conf = parseInt(values[confidenceIdx]);
+            if (conf >= 0 && conf <= 100 && conf % 10 === 0) {
+              linkConfidence = conf as Confidence;
+            }
+          }
+
+          // Parse date range
+          let dateRange: { start: Date | null; end: Date | null } | null = null;
+          if (dateStartIdx >= 0 && values[dateStartIdx]) {
+            const startDate = new Date(values[dateStartIdx]);
+            const endDate = dateEndIdx >= 0 && values[dateEndIdx] ? new Date(values[dateEndIdx]) : startDate;
+            if (!isNaN(startDate.getTime())) {
+              dateRange = {
+                start: startDate,
+                end: !isNaN(endDate.getTime()) ? endDate : startDate,
+              };
+            }
+          }
+
           const link: Link = {
             id: generateUUID(),
             investigationId: targetInvestigationId,
@@ -1144,10 +1172,10 @@ class ImportService {
             label: labelIdx >= 0 ? values[labelIdx] || '' : '',
             notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
             properties: [],
-            confidence: null,
+            confidence: linkConfidence,
             source: '',
             date: null,
-            dateRange: null,
+            dateRange,
             directed: isDirected,
             direction: isDirected ? 'forward' : 'none',
             visual: {

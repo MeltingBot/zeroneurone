@@ -66,9 +66,11 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
         result = await importService.importFromJSON(content, currentInvestigation.id);
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
-        // Detect if it's elements or links based on headers
+        // Detect if it's elements or links based on headers (French or English)
         const firstLine = content.split('\n')[0].toLowerCase();
-        if (firstLine.includes('from') || firstLine.includes('source') || firstLine.includes('target')) {
+        const isLinksCSV = firstLine.includes('de,') || firstLine.includes('vers') ||
+          firstLine.includes('from') || firstLine.includes('source,') || firstLine.includes('target');
+        if (isLinksCSV) {
           result = await importService.importLinksFromCSV(content, currentInvestigation.id, {
             createMissingElements,
           });
@@ -304,24 +306,37 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                 </div>
               )}
 
-              {/* Help text */}
-              <div className="text-xs text-text-tertiary space-y-2 pt-2 border-t border-border-default">
-                <p className="font-medium">Formats attendus:</p>
-                <p>
-                  <strong>ZIP:</strong> Archive complete avec fichiers joints (export ZeroNeurone)
-                </p>
-                <p>
-                  <strong>JSON:</strong> Metadonnees uniquement (sans fichiers joints)
-                </p>
-                <p>
-                  <strong>CSV Elements:</strong> Colonnes: label, notes, tags, positionX, positionY, lat, lng, date, confidence, source, color, shape
-                </p>
-                <p>
-                  <strong>CSV Liens:</strong> Colonnes: from, to, label, notes, tags, directed, color, style
-                </p>
-                <p>
-                  <strong>GraphML/XML:</strong> Format graphe standard (Gephi, yEd) avec attributs label, color, notes
-                </p>
+              {/* CSV Templates */}
+              <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-text-primary">Modèles CSV</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const template = exportService.generateElementsTemplate();
+                        exportService.download(template, 'modele_elements.csv', 'text/csv');
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-accent rounded transition-colors"
+                    >
+                      <Download size={12} />
+                      Éléments
+                    </button>
+                    <button
+                      onClick={() => {
+                        const template = exportService.generateLinksTemplate();
+                        exportService.download(template, 'modele_liens.csv', 'text/csv');
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-accent rounded transition-colors"
+                    >
+                      <Download size={12} />
+                      Liens
+                    </button>
+                  </div>
+                </div>
+                <div className="text-xs text-text-tertiary space-y-1">
+                  <p><strong>Éléments:</strong> label, notes, tags, confiance, source, date, latitude, longitude</p>
+                  <p><strong>Liens:</strong> de, vers, label, confiance, date_debut, date_fin, dirige (oui/non)</p>
+                </div>
               </div>
             </div>
           )}
