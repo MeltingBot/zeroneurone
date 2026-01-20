@@ -86,11 +86,11 @@ export function HomePage() {
 
   return (
     <Layout>
-      {/* Header */}
-      <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary panel-shadow">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold text-text-primary">ZeroNeurone</h1>
-          {viewMode === 'list' && (
+      {/* Header - only shown in list view */}
+      {viewMode === 'list' && (
+        <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary panel-shadow">
+          <div className="flex items-center gap-3">
+            <h1 className="text-sm font-semibold text-text-primary">ZeroNeurone</h1>
             <button
               onClick={() => setViewMode('landing')}
               className="p-1.5 hover:bg-bg-tertiary rounded transition-colors"
@@ -98,46 +98,42 @@ export function HomePage() {
             >
               <Home size={16} className="text-text-secondary" />
             </button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {viewMode === 'list' && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAboutModalOpen(true)}
-              >
-                <Info size={16} />
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsTagSetModalOpen(true)}
-              >
-                <Tags size={16} />
-                Gérer les tags
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsImportModalOpen(true)}
-              >
-                <Upload size={16} />
-                Importer
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleOpenCreateModal}
-              >
-                <Plus size={16} />
-                Nouvelle enquête
-              </Button>
-            </>
-          )}
-        </div>
-      </header>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAboutModalOpen(true)}
+            >
+              <Info size={16} />
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsTagSetModalOpen(true)}
+            >
+              <Tags size={16} />
+              Gérer les tags
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsImportModalOpen(true)}
+            >
+              <Upload size={16} />
+              Importer
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenCreateModal}
+            >
+              <Plus size={16} />
+              Nouvelle enquête
+            </Button>
+          </div>
+        </header>
+      )}
 
       {/* Content */}
       {isLoading || viewMode === null ? (
