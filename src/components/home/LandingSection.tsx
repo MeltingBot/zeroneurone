@@ -66,7 +66,7 @@ export function LandingSection({
             Tableau blanc pour analystes et enquêteurs
           </p>
           <p className="text-sm text-text-tertiary max-w-xl">
-            Un outil d'amplification cognitive qui combine la simplicité d'un tableau blanc
+            Un outil Open Source d'amplification cognitive qui combine la simplicité d'un tableau blanc
             avec la puissance de l'analyse de graphe. Cartographiez vos idées, géolocalisez vos élements, visualisez les événements,  
             connectez les indices et révélez les patterns cachés.
           </p>
