@@ -116,14 +116,17 @@ export function PropertiesEditor({
     setSelectedSuggestionIndex(-1);
   }, []);
 
-  const handleKeyPress = useCallback(
+  // Key handler for the name field - Enter focuses type selector instead of adding
+  const handleNameKeyPress = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (selectedSuggestionIndex >= 0 && filteredSuggestions[selectedSuggestionIndex]) {
           handleSelectSuggestion(filteredSuggestions[selectedSuggestionIndex]);
         } else if (newKey.trim()) {
-          handleAddProperty();
+          // Focus type button instead of adding immediately
+          typeButtonRef.current?.focus();
+          setShowTypeDropdown(true);
         }
       } else if (e.key === 'Escape') {
         resetForm();
@@ -137,7 +140,22 @@ export function PropertiesEditor({
         setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
       }
     },
-    [handleAddProperty, handleSelectSuggestion, filteredSuggestions, selectedSuggestionIndex, showSuggestions, newKey, resetForm]
+    [handleSelectSuggestion, filteredSuggestions, selectedSuggestionIndex, showSuggestions, newKey, resetForm]
+  );
+
+  // Key handler for the value field - Enter adds the property
+  const handleValueKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (newKey.trim()) {
+          handleAddProperty();
+        }
+      } else if (e.key === 'Escape') {
+        resetForm();
+      }
+    },
+    [handleAddProperty, newKey, resetForm]
   );
 
   const handleCloseSuggestions = useCallback(() => {
@@ -184,7 +202,7 @@ export function PropertiesEditor({
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
-              onKeyDown={handleKeyPress}
+              onKeyDown={handleNameKeyPress}
               autoFocus
               placeholder="Ex: SIREN, Nationalité..."
               className="w-full px-2 py-1.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
@@ -270,7 +288,7 @@ export function PropertiesEditor({
               type={newType}
               value={newValue}
               onChange={setNewValue}
-              onKeyDown={handleKeyPress}
+              onKeyDown={handleValueKeyPress}
               placeholder="Valeur..."
             />
           </div>
