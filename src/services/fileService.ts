@@ -365,7 +365,8 @@ class FileService {
       createdAt: assetData.createdAt,
     };
 
-    await db.assets.add(asset);
+    // Use put() instead of add() to handle potential duplicate IDs from sync
+    await db.assets.put(asset);
     return asset;
   }
 
