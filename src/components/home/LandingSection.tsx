@@ -1,4 +1,4 @@
-import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info } from 'lucide-react';
+import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, Github, Coffee } from 'lucide-react';
 import { Button } from '../common';
 
 interface LandingSectionProps {
@@ -112,15 +112,33 @@ export function LandingSection({
           ))}
         </div>
 
-        {/* About Link */}
-        <div className="text-center border-t border-border-default pt-6">
+        {/* Footer Links */}
+        <div className="flex items-center justify-center gap-4 border-t border-border-default pt-6">
           <button
             onClick={onAbout}
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
             <Info size={14} />
-            À propos de ZeroNeurone
+            À propos
           </button>
+          <a
+            href="https://github.com/MeltingBot/zeroneurone"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            <Github size={14} />
+            GitHub
+          </a>
+          <a
+            href="https://ko-fi.com/yannpilpre"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            <Coffee size={14} />
+            Ko-fi
+          </a>
         </div>
       </div>
     </div>
