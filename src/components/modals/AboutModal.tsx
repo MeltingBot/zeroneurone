@@ -1,4 +1,4 @@
-import { X, Github, Heart, ExternalLink } from 'lucide-react';
+import { Github, Heart, ExternalLink } from 'lucide-react';
 import { Modal } from '../common';
 
 interface AboutModalProps {
@@ -23,21 +23,8 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
   const commitHash = (window as unknown as { __GIT_COMMIT__?: string }).__GIT_COMMIT__;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <div className="flex flex-col max-h-[80vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border-default">
-          <h2 className="text-sm font-semibold text-text-primary">À propos</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-bg-tertiary rounded transition-colors"
-          >
-            <X size={16} className="text-text-tertiary" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+    <Modal isOpen={isOpen} onClose={onClose} title="À propos" width="md">
+      <div className="space-y-6">
           {/* Logo and version */}
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Zero Neurone" className="w-20 h-auto" />
@@ -139,12 +126,11 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             </div>
           </div>
 
-          {/* Credits */}
-          <div className="flex items-center justify-center gap-1 text-xs text-text-tertiary pt-2">
-            <span>Fait avec</span>
-            <Heart size={12} className="text-error" />
-            <span>pour les enquêteurs du monde entier</span>
-          </div>
+        {/* Credits */}
+        <div className="flex items-center justify-center gap-1 text-xs text-text-tertiary pt-2">
+          <span>Fait avec</span>
+          <Heart size={12} className="text-error" />
+          <span>pour les enquêteurs du monde entier</span>
         </div>
       </div>
     </Modal>
