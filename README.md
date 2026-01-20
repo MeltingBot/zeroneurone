@@ -60,6 +60,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Export ZIP complet (JSON + assets)
 - Export PNG/PDF du canvas
 - Import CSV pour donnees tabulaires
+- Import GraphML pour donnees de graphes
 - Rapports personnalisables
 
 ## Stack Technique
@@ -277,7 +278,6 @@ Ou deployer votre propre serveur y-websocket.
 
 ## Roadmap
 
-- [ ] Import/export GEXF, GraphML
 - [ ] Analyse temporelle avancee
 - [ ] Templates d'enquete
 - [ ] Plugins et extensibilite
