@@ -1,5 +1,5 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, Scissors, Clipboard } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, Scissors, Clipboard, Image } from 'lucide-react';
 
 interface ContextMenuProps {
   x: number;
@@ -9,6 +9,7 @@ interface ContextMenuProps {
   isFocused: boolean;
   isHidden: boolean;
   hasCopiedElements: boolean;
+  hasPreviewableAsset: boolean;
   // For path finding when 2 elements are selected
   otherSelectedId?: string;
   otherSelectedLabel?: string;
@@ -20,6 +21,7 @@ interface ContextMenuProps {
   onCopy: () => void;
   onCut: () => void;
   onPaste: () => void;
+  onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
   onClose: () => void;
 }
@@ -38,6 +40,7 @@ function ContextMenuComponent({
   isFocused,
   isHidden,
   hasCopiedElements,
+  hasPreviewableAsset,
   otherSelectedId,
   otherSelectedLabel,
   onFocus,
@@ -48,6 +51,7 @@ function ContextMenuComponent({
   onCopy,
   onCut,
   onPaste,
+  onPreview,
   onFindPaths,
   onClose,
 }: ContextMenuProps) {
@@ -113,6 +117,22 @@ function ContextMenuComponent({
             {hasTwoSelected ? `${elementLabel} ↔ ${otherSelectedLabel}` : elementLabel}
           </span>
         </div>
+
+        {/* Preview (if element has previewable assets) */}
+        {hasPreviewableAsset && onPreview && (
+          <div className="py-1 border-b border-border-default">
+            <button
+              onClick={() => {
+                onPreview();
+                onClose();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+            >
+              <Image size={14} />
+              Aperçu
+            </button>
+          </div>
+        )}
 
         {/* Copy/Cut/Paste */}
         <div className="py-1 border-b border-border-default">

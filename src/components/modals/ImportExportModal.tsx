@@ -75,13 +75,16 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
         } else {
           result = await importService.importElementsFromCSV(content, currentInvestigation.id);
         }
+      } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
+        const content = await importService.readFileAsText(file);
+        result = await importService.importFromGraphML(content, currentInvestigation.id);
       } else {
         result = {
           success: false,
           elementsImported: 0,
           linksImported: 0,
           assetsImported: 0,
-          errors: ['Format de fichier non supporte. Utilisez ZIP, JSON ou CSV.'],
+          errors: ['Format de fichier non supporte. Utilisez ZIP, JSON, CSV ou GraphML.'],
           warnings: [],
         };
       }
@@ -205,7 +208,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".zip,.json,.csv"
+                accept=".zip,.json,.csv,.graphml,.xml"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -222,7 +225,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                     {isProcessing ? 'Import en cours...' : 'Selectionner un fichier'}
                   </div>
                   <div className="text-xs text-text-tertiary mt-1">
-                    Formats supportes: ZIP (recommande), JSON, CSV
+                    Formats supportes: ZIP, JSON, CSV, GraphML/XML
                   </div>
                 </div>
               </button>
@@ -315,6 +318,9 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                 </p>
                 <p>
                   <strong>CSV Liens:</strong> Colonnes: from, to, label, notes, tags, directed, color, style
+                </p>
+                <p>
+                  <strong>GraphML/XML:</strong> Format graphe standard (Gephi, yEd) avec attributs label, color, notes
                 </p>
               </div>
             </div>

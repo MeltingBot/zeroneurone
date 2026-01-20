@@ -93,6 +93,9 @@ interface UIState {
 
   // Actions - Comment badges
   toggleShowCommentBadges: () => void;
+
+  // Actions - Reset investigation-specific state
+  resetInvestigationState: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -251,10 +254,19 @@ export const useUIStore = create<UIState>()(
   toggleShowCommentBadges: () => {
     set((state) => ({ showCommentBadges: !state.showCommentBadges }));
   },
+
+  // Reset investigation-specific state (called when closing an investigation)
+  resetInvestigationState: () => {
+    set({
+      hideMedia: false,
+      anonymousMode: false,
+    });
+  },
 }),
     {
       name: 'zeroneurone-ui-settings',
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, hideMedia: state.hideMedia, anonymousMode: state.anonymousMode, showCommentBadges: state.showCommentBadges }),
+      // Only persist global preferences, NOT investigation-specific settings (hideMedia, anonymousMode)
+      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

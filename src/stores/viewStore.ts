@@ -68,6 +68,9 @@ interface ViewState {
 
   // Derived
   hasActiveFilters: () => boolean;
+
+  // Reset investigation-specific state
+  resetInvestigationState: () => void;
 }
 
 export const useViewStore = create<ViewState>((set, get) => ({
@@ -257,5 +260,17 @@ export const useViewStore = create<ViewState>((set, get) => ({
       filters.dateTo !== null ||
       filters.hasGeo !== null
     );
+  },
+
+  // Reset investigation-specific state (called when closing an investigation)
+  resetInvestigationState: () => {
+    set({
+      filters: { ...DEFAULT_FILTERS },
+      hiddenElementIds: new Set(),
+      focusElementId: null,
+      focusDepth: 1,
+      savedViews: [],
+      displayMode: 'canvas',
+    });
   },
 }));

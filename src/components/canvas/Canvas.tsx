@@ -31,15 +31,17 @@ import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
 import html2canvas from 'html2canvas';
-import type { Element, Link, Position } from '../../types';
+import type { Element, Link, Position, Asset } from '../../types';
 import { generateUUID } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { fileService } from '../../services/fileService';
 
 interface ContextMenuState {
   x: number;
   y: number;
   elementId: string;
   elementLabel: string;
+  previewAsset: Asset | null;
 }
 
 const nodeTypes = {
@@ -373,6 +375,9 @@ export function Canvas() {
 
   // Share modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Asset preview modal state
+  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
 
   // Clipboard for copy/paste of elements
   const copiedElementsRef = useRef<Element[]>([]);
@@ -928,15 +933,21 @@ export function Canvas() {
 
       const element = elements.find((el) => el.id === node.id);
       if (element) {
+        // Find first previewable asset (image or PDF)
+        const previewableAsset = element.assetIds
+          .map(id => assets.find(a => a.id === id))
+          .find(a => a && (a.mimeType.startsWith('image/') || a.mimeType === 'application/pdf')) || null;
+
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
           elementId: element.id,
           elementLabel: element.label || 'Sans nom',
+          previewAsset: previewableAsset,
         });
       }
     },
-    [elements]
+    [elements, assets]
   );
 
   // Close context menu
@@ -1134,6 +1145,13 @@ export function Canvas() {
       clearSelection();
     }
   }, [contextMenu, deleteElements, clearSelection]);
+
+  // Preview handler for context menu
+  const handleContextMenuPreview = useCallback(() => {
+    if (contextMenu?.previewAsset) {
+      setPreviewAsset(contextMenu.previewAsset);
+    }
+  }, [contextMenu]);
 
   // Copy handler for context menu
   const handleContextMenuCopy = useCallback(() => {
@@ -1980,6 +1998,7 @@ export function Canvas() {
               isFocused={focusElementId === contextMenu.elementId}
               isHidden={hiddenElementIds.has(contextMenu.elementId)}
               hasCopiedElements={hasCopiedElements}
+              hasPreviewableAsset={!!contextMenu.previewAsset}
               otherSelectedId={otherSelectedElement?.id}
               otherSelectedLabel={otherSelectedElement?.label || 'Sans nom'}
               onFocus={handleContextMenuFocus}
@@ -1990,6 +2009,7 @@ export function Canvas() {
               onCopy={handleContextMenuCopy}
               onCut={handleContextMenuCut}
               onPaste={handleContextMenuPaste}
+              onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
               onClose={closeContextMenu}
             />
@@ -2055,7 +2075,143 @@ export function Canvas() {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
         />
+
+        {/* Asset Preview Modal */}
+        {previewAsset && (
+          <AssetPreviewModal
+            asset={previewAsset}
+            onClose={() => setPreviewAsset(null)}
+          />
+        )}
       </div>
     </ReactFlowProvider>
+  );
+}
+
+// Asset preview modal component (reusable)
+interface AssetPreviewModalProps {
+  asset: Asset;
+  onClose: () => void;
+}
+
+function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isImage = asset.mimeType.startsWith('image/');
+  const isPdf = asset.mimeType === 'application/pdf';
+
+  // Load file from OPFS
+  useEffect(() => {
+    let mounted = true;
+    let url: string | null = null;
+
+    const loadFile = async () => {
+      try {
+        setIsLoading(true);
+        url = await fileService.getAssetUrl(asset);
+        if (mounted) {
+          setFileUrl(url);
+        }
+      } catch (error) {
+        console.error('Error loading file:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    if (isImage || isPdf) {
+      loadFile();
+    } else {
+      setIsLoading(false);
+    }
+
+    return () => {
+      mounted = false;
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [asset, isImage, isPdf]);
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className={`bg-bg-primary rounded shadow-lg flex flex-col ${
+          isPdf ? 'w-[90vw] h-[90vh]' : 'max-w-4xl max-h-[90vh]'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 border-b border-border-default flex-shrink-0">
+          <h3 className="text-sm font-medium text-text-primary truncate pr-4">
+            {asset.filename}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
+            title="Fermer (Echap)"
+          >
+            <span className="sr-only">Fermer</span>
+            ×
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-text-secondary">Chargement...</span>
+              </div>
+            </div>
+          ) : isPdf && fileUrl ? (
+            <iframe
+              src={fileUrl}
+              className="w-full h-full border-0"
+              title={asset.filename}
+            />
+          ) : isImage && fileUrl ? (
+            <div className="p-4 flex items-center justify-center h-full">
+              <img
+                src={fileUrl}
+                alt={asset.filename}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          ) : asset.thumbnailDataUrl ? (
+            <div className="p-4 flex items-center justify-center h-full">
+              <img
+                src={asset.thumbnailDataUrl}
+                alt={asset.filename}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-4 py-8 text-text-tertiary">
+              <span className="text-4xl">📄</span>
+              <p className="text-sm">Aperçu non disponible</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

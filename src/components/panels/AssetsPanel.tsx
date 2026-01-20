@@ -414,59 +414,118 @@ interface AssetPreviewModalProps {
 }
 
 function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load image from OPFS
-  useState(() => {
-    const loadImage = async () => {
+  const isImage = asset.mimeType.startsWith('image/');
+  const isPdf = asset.mimeType === 'application/pdf';
+
+  // Load file from OPFS
+  useEffect(() => {
+    let mounted = true;
+    let url: string | null = null;
+
+    const loadFile = async () => {
       try {
-        const url = await fileService.getAssetUrl(asset);
-        setImageUrl(url);
+        setIsLoading(true);
+        url = await fileService.getAssetUrl(asset);
+        if (mounted) {
+          setFileUrl(url);
+        }
       } catch (error) {
-        console.error('Error loading image:', error);
+        console.error('Error loading file:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    if (asset.mimeType.startsWith('image/')) {
-      loadImage();
+    if (isImage || isPdf) {
+      loadFile();
+    } else {
+      setIsLoading(false);
     }
-  });
+
+    return () => {
+      mounted = false;
+      // Revoke object URL to free memory
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [asset, isImage, isPdf]);
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
-        className="bg-bg-primary rounded shadow-lg max-w-4xl max-h-[90vh] overflow-auto"
+        className={`bg-bg-primary rounded shadow-lg flex flex-col ${
+          isPdf ? 'w-[90vw] h-[90vh]' : 'max-w-4xl max-h-[90vh]'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border-default">
-          <h3 className="text-sm font-medium text-text-primary">
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 border-b border-border-default flex-shrink-0">
+          <h3 className="text-sm font-medium text-text-primary truncate pr-4">
             {asset.filename}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 text-text-tertiary hover:text-text-primary"
+            className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
+            title="Fermer (Echap)"
           >
             <X size={16} />
           </button>
         </div>
-        <div className="p-4">
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={asset.filename}
-              className="max-w-full max-h-[70vh] object-contain"
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-text-secondary">Chargement...</span>
+              </div>
+            </div>
+          ) : isPdf && fileUrl ? (
+            /* PDF Viewer using iframe with browser's native PDF viewer */
+            <iframe
+              src={fileUrl}
+              className="w-full h-full border-0"
+              title={asset.filename}
             />
+          ) : isImage && fileUrl ? (
+            <div className="p-4 flex items-center justify-center h-full">
+              <img
+                src={fileUrl}
+                alt={asset.filename}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
           ) : asset.thumbnailDataUrl ? (
-            <img
-              src={asset.thumbnailDataUrl}
-              alt={asset.filename}
-              className="max-w-full max-h-[70vh] object-contain"
-            />
+            <div className="p-4 flex items-center justify-center h-full">
+              <img
+                src={asset.thumbnailDataUrl}
+                alt={asset.filename}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
           ) : (
-            <div className="flex flex-col items-center gap-4 py-8 text-text-tertiary">
+            <div className="flex flex-col items-center justify-center h-full gap-4 py-8 text-text-tertiary">
               <FileText size={48} />
               <p className="text-sm">Aperçu non disponible</p>
             </div>
