@@ -103,7 +103,13 @@ class ExportService {
     const elementLabels = new Map<string, string>();
     elements.forEach((el) => elementLabels.set(el.id, el.label));
 
-    const headers = [
+    // Collect all unique property keys from elements and links
+    const propertyKeys = new Set<string>();
+    elements.forEach((el) => el.properties?.forEach((p) => propertyKeys.add(p.key)));
+    links.forEach((link) => link.properties?.forEach((p) => propertyKeys.add(p.key)));
+    const sortedPropertyKeys = Array.from(propertyKeys).sort((a, b) => a.localeCompare(b, 'fr'));
+
+    const baseHeaders = [
       'type',
       'label',
       'de',
@@ -122,12 +128,13 @@ class ExportService {
       'forme',
       'style',
     ];
+    const headers = [...baseHeaders, ...sortedPropertyKeys];
 
     const rows: string[][] = [];
 
     // Add elements
     for (const el of elements) {
-      rows.push([
+      const baseRow = [
         'element',
         this.escapeCSV(el.label),
         '', // de
@@ -145,12 +152,18 @@ class ExportService {
         el.visual.color,
         el.visual.shape,
         '', // style
-      ]);
+      ];
+      // Add property values
+      const propsMap = new Map(el.properties?.map((p) => [p.key, p.value]) ?? []);
+      for (const key of sortedPropertyKeys) {
+        baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
+      }
+      rows.push(baseRow);
     }
 
     // Add links
     for (const link of links) {
-      rows.push([
+      const baseRow = [
         'lien',
         this.escapeCSV(link.label),
         this.escapeCSV(elementLabels.get(link.fromId) || link.fromId),
@@ -168,7 +181,13 @@ class ExportService {
         link.visual.color,
         '', // forme
         link.visual.style,
-      ]);
+      ];
+      // Add property values
+      const propsMap = new Map(link.properties?.map((p) => [p.key, p.value]) ?? []);
+      for (const key of sortedPropertyKeys) {
+        baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
+      }
+      rows.push(baseRow);
     }
 
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
@@ -176,15 +195,17 @@ class ExportService {
 
   /**
    * Generate unified CSV template with examples
+   * Includes custom property columns to show how they work
    */
   generateCSVTemplate(): string {
-    const headers = ['type', 'label', 'de', 'vers', 'notes', 'tags', 'confiance', 'source', 'date', 'date_debut', 'date_fin', 'latitude', 'longitude', 'dirige', 'couleur', 'forme', 'style'];
+    // Base headers + example custom properties
+    const headers = ['type', 'label', 'de', 'vers', 'notes', 'tags', 'confiance', 'source', 'date', 'date_debut', 'date_fin', 'latitude', 'longitude', 'dirige', 'couleur', 'forme', 'style', 'prenom', 'nom', 'telephone'];
     const examples = [
-      ['element', 'Jean Dupont', '', '', 'Suspect principal', 'suspect;priorite', '80', 'Enquete', '2024-01-15', '', '', '48.8566', '2.3522', '', '#fef3c7', 'circle', ''],
-      ['element', 'Marie Martin', '', '', 'Temoin', 'temoin', '60', '', '', '', '', '', '', '', '#dbeafe', 'circle', ''],
-      ['element', '06 12 34 56 78', '', '', 'Telephone prepaye', 'telephone', '', '', '', '', '', '', '', '', '#dcfce7', 'square', ''],
-      ['lien', 'Appel', 'Jean Dupont', 'Marie Martin', 'Duree 5 min', '', '90', '', '', '2024-01-15', '2024-01-15', '', '', 'oui', '#d4cec4', '', 'solid'],
-      ['lien', 'Proprietaire', 'Jean Dupont', '06 12 34 56 78', '', '', '100', '', '', '', '', '', '', 'oui', '#d4cec4', '', 'solid'],
+      ['element', 'Jean Dupont', '', '', 'Suspect principal', 'personne;suspect', '80', 'Enquete', '2024-01-15', '', '', '48.8566', '2.3522', '', '#fef3c7', 'circle', '', 'Jean', 'Dupont', '06 11 22 33 44'],
+      ['element', 'Marie Martin', '', '', 'Temoin', 'personne;temoin', '60', '', '', '', '', '', '', '', '#dbeafe', 'circle', '', 'Marie', 'Martin', ''],
+      ['element', '06 12 34 56 78', '', '', 'Telephone prepaye', 'telephone', '', '', '', '', '', '', '', '', '#dcfce7', 'square', '', '', '', ''],
+      ['lien', 'Appel', 'Jean Dupont', 'Marie Martin', 'Duree 5 min', '', '90', '', '', '2024-01-15', '2024-01-15', '', '', 'oui', '#d4cec4', '', 'solid', '', '', ''],
+      ['lien', 'Proprietaire', 'Jean Dupont', '06 12 34 56 78', '', '', '100', '', '', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', ''],
     ];
     return [headers.join(','), ...examples.map((row) => row.join(','))].join('\n');
   }

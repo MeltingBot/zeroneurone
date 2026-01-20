@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, Hexagon, RectangleHorizontal, Download, Upload } from 'lucide-react';
+import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, Hexagon, RectangleHorizontal, Download, Upload, HelpCircle } from 'lucide-react';
 import { Modal, Button, IconButton } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
 import { TagSetEditorModal } from './TagSetEditorModal';
@@ -64,6 +64,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
   const [editingTagSet, setEditingTagSet] = useState<TagSet | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tagSets = getAll();
@@ -100,7 +101,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
   }, [confirmReset, resetToDefaults, showToast]);
 
   // Export all TagSets to JSON file
-  const handleExport = useCallback(() => {
+  const handleExportJSON = useCallback(() => {
     const exportData: TagSetExportData = {
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
@@ -124,15 +125,98 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast('success', `${tagSets.length} tags exportés`);
+    showToast('success', `${tagSets.length} tags exportés (JSON)`);
   }, [tagSets, showToast]);
+
+  // Export all TagSets to CSV file
+  const handleExportCSV = useCallback(() => {
+    const escapeCSV = (value: string) => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes(';')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
+    const headers = ['nom', 'description', 'couleur', 'forme', 'proprietes'];
+    const rows = tagSets.map((ts) => {
+      // Format properties as "key:type;key:type;..."
+      const propsStr = ts.suggestedProperties
+        .map((p) => `${p.key}:${p.type}${p.choices ? ':' + p.choices.join('|') : ''}`)
+        .join(';');
+      return [
+        escapeCSV(ts.name),
+        escapeCSV(ts.description),
+        ts.defaultVisual.color || '',
+        ts.defaultVisual.shape || '',
+        escapeCSV(propsStr),
+      ].join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `zeroneurone-tagsets-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast('success', `${tagSets.length} tags exportés (CSV)`);
+  }, [tagSets, showToast]);
+
+  // Download CSV template for TagSets
+  const handleDownloadTemplate = useCallback(() => {
+    const template = `nom,description,couleur,forme,proprietes
+Personne,Une personne physique,#3b82f6,circle,prenom:text;nom:text;date_naissance:date
+Entreprise,Une societe,#22c55e,square,raison_sociale:text;siret:text
+Vehicule,Un vehicule,#f97316,diamond,immatriculation:text;marque:text;modele:text
+Adresse,Une adresse postale,#8b5cf6,hexagon,rue:text;ville:text;code_postal:text`;
+
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'modele-tagsets.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, []);
 
   // Trigger file input for import
   const handleImportClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  // Handle file selection for import
+  // Parse CSV line handling quoted values
+  const parseCSVLine = useCallback((line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current);
+    return result;
+  }, []);
+
+  // Handle file selection for import (JSON or CSV)
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -142,31 +226,103 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
-
-      if (!isValidExportData(data)) {
-        showToast('error', 'Format de fichier invalide');
-        return;
-      }
-
       let imported = 0;
       let skipped = 0;
 
-      for (const exportedTagSet of data.tagSets) {
-        // Skip if name already exists
-        if (nameExists(exportedTagSet.name)) {
-          skipped++;
-          continue;
+      if (file.name.endsWith('.csv')) {
+        // CSV import
+        const lines = text.split('\n').filter((l) => l.trim());
+        if (lines.length < 2) {
+          showToast('error', 'Fichier CSV vide ou invalide');
+          return;
         }
 
-        await create({
-          name: exportedTagSet.name,
-          description: exportedTagSet.description,
-          defaultVisual: exportedTagSet.defaultVisual,
-          suggestedProperties: exportedTagSet.suggestedProperties,
-          isBuiltIn: false,
-        });
-        imported++;
+        const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().trim());
+        const nameIdx = headers.findIndex((h) => ['nom', 'name'].includes(h));
+        const descIdx = headers.findIndex((h) => ['description', 'desc'].includes(h));
+        const colorIdx = headers.findIndex((h) => ['couleur', 'color'].includes(h));
+        const shapeIdx = headers.findIndex((h) => ['forme', 'shape'].includes(h));
+        const propsIdx = headers.findIndex((h) => ['proprietes', 'properties', 'props'].includes(h));
+
+        if (nameIdx === -1) {
+          showToast('error', 'Colonne "nom" manquante dans le CSV');
+          return;
+        }
+
+        for (let i = 1; i < lines.length; i++) {
+          const values = parseCSVLine(lines[i]);
+          const name = values[nameIdx]?.trim();
+          if (!name) continue;
+
+          if (nameExists(name)) {
+            skipped++;
+            continue;
+          }
+
+          // Parse properties from "key:type;key:type" format
+          const suggestedProperties: SuggestedProperty[] = [];
+          if (propsIdx >= 0 && values[propsIdx]) {
+            const propsStr = values[propsIdx].trim();
+            if (propsStr) {
+              const propParts = propsStr.split(';');
+              for (const part of propParts) {
+                const [key, type, choicesStr] = part.split(':');
+                if (key && type) {
+                  const prop: SuggestedProperty = {
+                    key: key.trim(),
+                    type: type.trim() as SuggestedProperty['type'],
+                    description: '',
+                    placeholder: '',
+                  };
+                  if (choicesStr) {
+                    prop.choices = choicesStr.split('|').map((c) => c.trim());
+                  }
+                  suggestedProperties.push(prop);
+                }
+              }
+            }
+          }
+
+          const shape = shapeIdx >= 0 ? values[shapeIdx]?.trim() : '';
+          const validShapes = ['circle', 'square', 'diamond', 'hexagon', 'rectangle'];
+
+          await create({
+            name,
+            description: descIdx >= 0 ? values[descIdx] || '' : '',
+            defaultVisual: {
+              color: colorIdx >= 0 && values[colorIdx] ? values[colorIdx].trim() : null,
+              shape: validShapes.includes(shape) ? shape as ElementShape : null,
+              icon: null,
+            },
+            suggestedProperties,
+            isBuiltIn: false,
+          });
+          imported++;
+        }
+      } else {
+        // JSON import
+        const data = JSON.parse(text);
+
+        if (!isValidExportData(data)) {
+          showToast('error', 'Format de fichier JSON invalide');
+          return;
+        }
+
+        for (const exportedTagSet of data.tagSets) {
+          if (nameExists(exportedTagSet.name)) {
+            skipped++;
+            continue;
+          }
+
+          await create({
+            name: exportedTagSet.name,
+            description: exportedTagSet.description,
+            defaultVisual: exportedTagSet.defaultVisual,
+            suggestedProperties: exportedTagSet.suggestedProperties,
+            isBuiltIn: false,
+          });
+          imported++;
+        }
       }
 
       if (imported > 0 && skipped > 0) {
@@ -182,7 +338,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
       console.error('Import error:', err);
       showToast('error', 'Erreur lors de l\'import du fichier');
     }
-  }, [create, nameExists, showToast]);
+  }, [create, nameExists, showToast, parseCSVLine]);
 
   return (
     <>
@@ -208,9 +364,13 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
                 <Upload size={14} />
                 Importer
               </Button>
-              <Button variant="secondary" onClick={handleExport}>
+              <Button variant="secondary" onClick={handleExportCSV}>
                 <Download size={14} />
-                Exporter
+                CSV
+              </Button>
+              <Button variant="secondary" onClick={handleExportJSON}>
+                <Download size={14} />
+                JSON
               </Button>
               <Button variant="secondary" onClick={onClose}>
                 Fermer
@@ -219,7 +379,64 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
           </div>
         }
       >
-        <div className="space-y-2">
+        <div className="space-y-3">
+          {/* Help section */}
+          <div className="border border-border-default rounded">
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <HelpCircle size={14} />
+              <span>Comment utiliser les tags ?</span>
+              <span className="ml-auto text-text-tertiary">{showHelp ? '−' : '+'}</span>
+            </button>
+            {showHelp && (
+              <div className="px-3 pb-3 text-xs text-text-tertiary space-y-3 border-t border-border-default pt-2">
+                <div>
+                  <p className="font-medium text-text-secondary mb-1">Qu'est-ce qu'un Tag ?</p>
+                  <p>
+                    Un tag catégorise vos éléments (ex: "Personne", "Entreprise", "Véhicule").
+                    Chaque tag peut définir une couleur, une forme, et des propriétés suggérées.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-text-secondary mb-1">Propriétés suggérées</p>
+                  <p>
+                    Quand vous ajoutez un tag à un élément, ses propriétés suggérées s'affichent automatiquement.
+                    Ex: tag "Personne" → champs "Prénom", "Nom", "Date de naissance".
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-text-secondary mb-1">Importer vos tags (CSV ou JSON)</p>
+                  <p className="mb-2">
+                    Créez vos propres tags en important un fichier CSV ou JSON.
+                  </p>
+                  <div className="bg-bg-secondary p-2 rounded text-xs font-mono">
+                    <p className="text-text-secondary mb-1">Format CSV:</p>
+                    <p>nom,description,couleur,forme,proprietes</p>
+                    <p>Personne,Une personne,#3b82f6,circle,prenom:text;nom:text</p>
+                  </div>
+                  <button
+                    onClick={handleDownloadTemplate}
+                    className="mt-2 flex items-center gap-1 text-accent hover:underline"
+                  >
+                    <Download size={12} />
+                    Télécharger le modèle CSV
+                  </button>
+                </div>
+                <div>
+                  <p className="font-medium text-text-secondary mb-1">Types de propriétés</p>
+                  <p className="font-mono text-xs">
+                    text, number, date, datetime, boolean, choice, country, geo, link
+                  </p>
+                  <p className="mt-1">
+                    Pour les choix multiples: <code className="bg-bg-tertiary px-1 rounded">statut:choice:actif|inactif|suspendu</code>
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* TagSet list */}
           {tagSets.map((tagSet) => (
             <TagSetListItem
@@ -243,7 +460,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
           <input
             ref={fileInputRef}
             type="file"
-            accept=".json"
+            accept=".json,.csv"
             onChange={handleFileChange}
             className="hidden"
           />

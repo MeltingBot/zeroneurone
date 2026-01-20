@@ -881,6 +881,23 @@ class ImportService {
       const shapeIdx = headers.findIndex((h) => ['forme', 'shape'].includes(h));
       const styleIdx = headers.findIndex((h) => h === 'style');
 
+      // Known headers (reserved columns) - any other column becomes a property
+      const knownHeaders = new Set([
+        'type', 'label', 'nom', 'name', 'de', 'from', 'source', 'vers', 'to', 'target',
+        'notes', 'description', 'tags', 'etiquettes', 'confiance', 'confidence',
+        'date', 'date_debut', 'date_start', 'date_fin', 'date_end',
+        'latitude', 'lat', 'longitude', 'lng', 'lon',
+        'dirige', 'directed', 'couleur', 'color', 'forme', 'shape', 'style',
+      ]);
+
+      // Find custom property columns (columns not in knownHeaders)
+      const customPropertyIndices: { index: number; name: string }[] = [];
+      headers.forEach((header, index) => {
+        if (!knownHeaders.has(header) && header.trim()) {
+          customPropertyIndices.push({ index, name: header });
+        }
+      });
+
       // Track created elements by label for linking
       const elementsByLabel = new Map<string, Element>();
 
@@ -948,13 +965,22 @@ class ImportService {
           }
         }
 
+        // Parse custom properties from additional columns
+        const properties: Array<{ key: string; value: string }> = [];
+        for (const { index, name } of customPropertyIndices) {
+          const value = values[index]?.trim();
+          if (value) {
+            properties.push({ key: name, value });
+          }
+        }
+
         const element: Element = {
           id: generateUUID(),
           investigationId: targetInvestigationId,
           label,
           notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
           tags: tagsIdx >= 0 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
-          properties: [],
+          properties,
           confidence,
           source: sourceIdx >= 0 ? values[sourceIdx] || '' : '',
           date,
@@ -1097,6 +1123,15 @@ class ImportService {
           }
         }
 
+        // Parse custom properties from additional columns
+        const linkProperties: Array<{ key: string; value: string }> = [];
+        for (const { index, name } of customPropertyIndices) {
+          const value = values[index]?.trim();
+          if (value) {
+            linkProperties.push({ key: name, value });
+          }
+        }
+
         const link: Link = {
           id: generateUUID(),
           investigationId: targetInvestigationId,
@@ -1106,7 +1141,7 @@ class ImportService {
           targetHandle: null,
           label: labelIdx >= 0 ? values[labelIdx] || '' : '',
           notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
-          properties: [],
+          properties: linkProperties,
           confidence: linkConfidence,
           source: '',
           date: null,
