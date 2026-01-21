@@ -94,6 +94,12 @@ interface InvestigationState {
   addSuggestedProperty: (propertyDef: PropertyDefinition) => Promise<void>;
   associatePropertyWithTags: (propertyDef: PropertyDefinition, tags: string[]) => Promise<void>;
 
+  // Actions - Display settings
+  toggleConfidenceIndicator: () => Promise<void>;
+  togglePropertyDisplay: (propertyKey: string) => Promise<void>;
+  setTagDisplayMode: (mode: 'none' | 'icons' | 'labels' | 'both') => Promise<void>;
+  setTagDisplaySize: (size: 'small' | 'medium' | 'large') => Promise<void>;
+
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
 }
@@ -1090,6 +1096,118 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           settings: {
             ...state.currentInvestigation.settings,
             tagPropertyAssociations: associations,
+          },
+        },
+      };
+    });
+  },
+
+  // ============================================================================
+  // DISPLAY SETTINGS
+  // ============================================================================
+
+  toggleConfidenceIndicator: async () => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) return;
+
+    const newValue = !currentInvestigation.settings.showConfidenceIndicator;
+
+    await investigationRepository.update(currentInvestigation.id, {
+      settings: {
+        ...currentInvestigation.settings,
+        showConfidenceIndicator: newValue,
+      },
+    });
+
+    set((state) => {
+      if (!state.currentInvestigation) return state;
+      return {
+        currentInvestigation: {
+          ...state.currentInvestigation,
+          settings: {
+            ...state.currentInvestigation.settings,
+            showConfidenceIndicator: newValue,
+          },
+        },
+      };
+    });
+  },
+
+  togglePropertyDisplay: async (propertyKey: string) => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) return;
+
+    const currentDisplayed = currentInvestigation.settings.displayedProperties || [];
+    const isDisplayed = currentDisplayed.includes(propertyKey);
+    const newDisplayed = isDisplayed
+      ? currentDisplayed.filter(k => k !== propertyKey)
+      : [...currentDisplayed, propertyKey];
+
+    await investigationRepository.update(currentInvestigation.id, {
+      settings: {
+        ...currentInvestigation.settings,
+        displayedProperties: newDisplayed,
+      },
+    });
+
+    set((state) => {
+      if (!state.currentInvestigation) return state;
+      return {
+        currentInvestigation: {
+          ...state.currentInvestigation,
+          settings: {
+            ...state.currentInvestigation.settings,
+            displayedProperties: newDisplayed,
+          },
+        },
+      };
+    });
+  },
+
+  setTagDisplayMode: async (mode: 'none' | 'icons' | 'labels' | 'both') => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) return;
+
+    await investigationRepository.update(currentInvestigation.id, {
+      settings: {
+        ...currentInvestigation.settings,
+        tagDisplayMode: mode,
+      },
+    });
+
+    set((state) => {
+      if (!state.currentInvestigation) return state;
+      return {
+        currentInvestigation: {
+          ...state.currentInvestigation,
+          settings: {
+            ...state.currentInvestigation.settings,
+            tagDisplayMode: mode,
+          },
+        },
+      };
+    });
+  },
+
+  setTagDisplaySize: async (size: 'small' | 'medium' | 'large') => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) return;
+
+    await investigationRepository.update(currentInvestigation.id, {
+      settings: {
+        ...currentInvestigation.settings,
+        tagDisplaySize: size,
+      },
+    });
+
+    set((state) => {
+      if (!state.currentInvestigation) return state;
+      return {
+        currentInvestigation: {
+          ...state.currentInvestigation,
+          settings: {
+            ...state.currentInvestigation.settings,
+            tagDisplaySize: size,
           },
         },
       };

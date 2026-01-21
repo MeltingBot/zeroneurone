@@ -43,7 +43,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function ElementDetail({ element }: ElementDetailProps) {
-  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments } = useInvestigationStore();
+  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments, toggleConfidenceIndicator, togglePropertyDisplay } = useInvestigationStore();
 
   // Count unresolved comments for this element
   const elementComments = comments.filter(c => c.targetId === element.id);
@@ -436,6 +436,25 @@ export function ElementDetail({ element }: ElementDetailProps) {
               onChange={(e) => handleConfidenceChange(parseInt(e.target.value))}
               className="w-full h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
             />
+            {/* Toggle to show confidence on canvas */}
+            <label className="flex items-center gap-2 cursor-pointer mt-2">
+              <button
+                type="button"
+                onClick={() => toggleConfidenceIndicator()}
+                className={`relative w-8 h-4 rounded-full transition-colors ${
+                  currentInvestigation?.settings.showConfidenceIndicator ? 'bg-accent' : 'bg-bg-tertiary'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+                    currentInvestigation?.settings.showConfidenceIndicator ? 'translate-x-4' : ''
+                  }`}
+                />
+              </button>
+              <span className="text-xs text-text-secondary">
+                Afficher sur le canvas
+              </span>
+            </label>
           </div>
 
           {/* Source */}
@@ -585,6 +604,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
           onChange={handlePropertiesChange}
           suggestions={propertySuggestions}
           onNewProperty={handleNewProperty}
+          displayedProperties={currentInvestigation?.settings.displayedProperties}
+          onToggleDisplayProperty={togglePropertyDisplay}
         />
       </AccordionSection>
 

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { useShallow } from 'zustand/react/shallow';
 import { Loader2 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
-import { useUIStore, useSyncStore } from '../../stores';
+import { useUIStore, useSyncStore, useTagSetStore } from '../../stores';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -44,6 +45,14 @@ export interface ElementNodeData extends Record<string, unknown> {
   isLoadingAsset?: boolean;
   /** Property to display as badge (value and type for country flag) */
   badgeProperty?: { value: string; type: string } | null;
+  /** Show confidence indicator (🤝 + %) */
+  showConfidenceIndicator?: boolean;
+  /** Properties to display below the element */
+  displayedPropertyValues?: { key: string; value: string }[];
+  /** Tag display mode: none, icons, labels, or both */
+  tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both';
+  /** Tag display size */
+  tagDisplaySize?: 'small' | 'medium' | 'large';
 }
 
 // Minimum sizes for resizing
@@ -67,7 +76,7 @@ function isLikelyCountryCode(value: string): boolean {
 
 function ElementNodeComponent({ data }: NodeProps) {
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount, isLoadingAsset, badgeProperty } = nodeData;
+  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
 
   // Get sync state for this element
   const { remoteUsers, mode: syncMode } = useSyncStore(
@@ -103,6 +112,33 @@ function ElementNodeComponent({ data }: NodeProps) {
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
+
+  // Get tag data from TagSets
+  const tagSetsMap = useTagSetStore((state) => state.tagSets);
+  const tagsToDisplay = useMemo(() => {
+    if (tagDisplayMode === 'none' || !element.tags || element.tags.length === 0) return [];
+    const tags: { name: string; iconName: string | null }[] = [];
+    for (const tagName of element.tags) {
+      let iconName: string | null = null;
+      for (const ts of tagSetsMap.values()) {
+        if (ts.name === tagName) {
+          iconName = ts.defaultVisual.icon;
+          break;
+        }
+      }
+      tags.push({ name: tagName, iconName });
+    }
+    return tags;
+  }, [tagDisplayMode, element.tags, tagSetsMap]);
+
+  // Tag size configuration
+  const tagSizeConfig = useMemo(() => {
+    switch (tagDisplaySize) {
+      case 'large': return { iconSize: 18, fontSize: 'text-sm', padding: 'px-2 py-1', boxSize: 'w-7 h-7' };
+      case 'medium': return { iconSize: 16, fontSize: 'text-xs', padding: 'px-1.5 py-0.5', boxSize: 'w-6 h-6' };
+      default: return { iconSize: 14, fontSize: 'text-[11px]', padding: 'px-1.5 py-0.5', boxSize: 'w-5 h-5' };
+    }
+  }, [tagDisplaySize]);
 
   // Focus input when entering edit mode
   useEffect(() => {
@@ -341,14 +377,106 @@ function ElementNodeComponent({ data }: NodeProps) {
         </div>
       )}
 
+      {/* Confidence indicator - 🤝 + % */}
+      {showConfidenceIndicator && element.confidence !== null && (
+        <div
+          className="absolute -top-2 -left-2 px-1.5 py-0.5 bg-bg-secondary border border-border-default rounded text-xs flex items-center gap-1 shadow-sm z-10"
+          title={`Confiance: ${element.confidence}%`}
+        >
+          <span className="text-sm">🤝</span>
+          <span className="text-text-secondary font-medium">{element.confidence}%</span>
+        </div>
+      )}
+
+      {/* Tags display */}
+      {tagsToDisplay.length > 0 && (
+        <div
+          className="absolute -bottom-1 -right-1 flex items-center gap-0.5 z-10"
+        >
+          {tagsToDisplay.slice(0, 4).map(({ name, iconName }) => {
+            const IconComponent = iconName
+              ? (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[iconName]
+              : null;
+            const showIcon = (tagDisplayMode === 'icons' || tagDisplayMode === 'both') && IconComponent;
+            const showLabel = tagDisplayMode === 'labels' || tagDisplayMode === 'both';
+
+            // Icon only mode
+            if (tagDisplayMode === 'icons') {
+              if (!IconComponent) return null;
+              return (
+                <div
+                  key={name}
+                  className={`${tagSizeConfig.boxSize} rounded bg-bg-secondary border border-border-default flex items-center justify-center shadow-sm`}
+                  title={name}
+                >
+                  <IconComponent size={tagSizeConfig.iconSize} className="text-text-secondary" />
+                </div>
+              );
+            }
+
+            // Label or both mode
+            return (
+              <div
+                key={name}
+                className={`${tagSizeConfig.padding} rounded bg-bg-secondary border border-border-default flex items-center gap-0.5 shadow-sm`}
+                title={name}
+              >
+                {showIcon && <IconComponent size={tagSizeConfig.iconSize} className="text-text-secondary" />}
+                {showLabel && <span className={`${tagSizeConfig.fontSize} text-text-secondary whitespace-nowrap`}>{name}</span>}
+              </div>
+            );
+          })}
+          {tagsToDisplay.length > 4 && (
+            <div
+              className={`${tagSizeConfig.boxSize} rounded bg-bg-secondary border border-border-default flex items-center justify-center ${tagSizeConfig.fontSize} text-text-tertiary shadow-sm`}
+              title={tagsToDisplay.slice(4).map(t => t.name).join(', ')}
+            >
+              +{tagsToDisplay.length - 4}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Property badge - shows filtered property value */}
       {badgeProperty && !anonymousMode && (
         <div
-          className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-bg-secondary border border-border-default rounded text-[9px] text-text-secondary whitespace-nowrap shadow-sm z-10"
+          className={`absolute -bottom-6 left-1/2 -translate-x-1/2 bg-bg-secondary border border-border-default rounded shadow-sm z-10 ${
+            (badgeProperty.type === 'country' || isLikelyCountryCode(badgeProperty.value))
+              ? 'px-1.5 py-0.5 text-lg'
+              : 'px-2 py-0.5 text-xs text-text-secondary whitespace-nowrap'
+          }`}
         >
           {(badgeProperty.type === 'country' || isLikelyCountryCode(badgeProperty.value))
             ? countryCodeToFlag(badgeProperty.value)
             : badgeProperty.value}
+        </div>
+      )}
+
+      {/* Displayed properties - shows selected properties below the element */}
+      {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10"
+          style={{ top: badgeProperty ? 'calc(100% + 28px)' : 'calc(100% + 6px)' }}
+        >
+          {displayedPropertyValues.slice(0, 3).map(({ key, value }) => {
+            const isCountry = isLikelyCountryCode(value);
+            // Truncate value to 20 chars max
+            const displayValue = value.length > 20 ? value.slice(0, 20) + '...' : value;
+            return (
+              <div
+                key={key}
+                className="px-1.5 py-0.5 bg-bg-tertiary border border-border-default rounded shadow-sm whitespace-nowrap"
+                title={`${key}: ${value}`}
+              >
+                <span className="text-[10px] text-text-tertiary">{key}:</span>{' '}
+                {isCountry ? (
+                  <span className="text-base">{countryCodeToFlag(value)}</span>
+                ) : (
+                  <span className="text-[11px] text-text-secondary">{displayValue}</span>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -559,11 +687,25 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.badgeProperty?.value !== nextData.badgeProperty?.value) return false;
   if (prevData.badgeProperty?.type !== nextData.badgeProperty?.type) return false;
 
+  // Compare display settings that affect rendering
+  if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
+  if (prevData.tagDisplayMode !== nextData.tagDisplayMode) return false;
+  if (prevData.tagDisplaySize !== nextData.tagDisplaySize) return false;
+
+  // Compare displayed properties (shallow array comparison)
+  const prevProps2 = prevData.displayedPropertyValues ?? [];
+  const nextProps2 = nextData.displayedPropertyValues ?? [];
+  if (prevProps2.length !== nextProps2.length) return false;
+  for (let i = 0; i < prevProps2.length; i++) {
+    if (prevProps2[i].key !== nextProps2[i].key || prevProps2[i].value !== nextProps2[i].value) return false;
+  }
+
   // Compare element properties that affect rendering
   const prevEl = prevData.element;
   const nextEl = nextData.element;
   if (prevEl.id !== nextEl.id) return false;
   if (prevEl.label !== nextEl.label) return false;
+  if (prevEl.confidence !== nextEl.confidence) return false;
   if (prevEl.visual.color !== nextEl.visual.color) return false;
   if (prevEl.visual.borderColor !== nextEl.visual.borderColor) return false;
   if (prevEl.visual.shape !== nextEl.visual.shape) return false;
@@ -571,6 +713,14 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.visual.customWidth !== nextEl.visual.customWidth) return false;
   if (prevEl.visual.customHeight !== nextEl.visual.customHeight) return false;
   if (prevEl.assetIds?.length !== nextEl.assetIds?.length) return false;
+
+  // Compare tags for tag display
+  if (prevEl.tags?.length !== nextEl.tags?.length) return false;
+  if (prevEl.tags && nextEl.tags) {
+    for (let i = 0; i < prevEl.tags.length; i++) {
+      if (prevEl.tags[i] !== nextEl.tags[i]) return false;
+    }
+  }
 
   return true;
 }

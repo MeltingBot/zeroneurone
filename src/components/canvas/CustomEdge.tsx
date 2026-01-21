@@ -28,6 +28,9 @@ interface CustomEdgeData {
   // For manual curve offset (draggable) - 2D offset from midpoint
   curveOffset?: { x: number; y: number };
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void;
+  // Confidence indicator
+  showConfidenceIndicator?: boolean;
+  confidence?: number | null;
 }
 
 function CustomEdgeComponent(props: EdgeProps) {
@@ -90,6 +93,8 @@ function CustomEdgeComponent(props: EdgeProps) {
   const parallelCount = edgeData?.parallelCount ?? 1;
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };
   const onCurveOffsetChange = edgeData?.onCurveOffsetChange;
+  const showConfidenceIndicator = edgeData?.showConfidenceIndicator ?? false;
+  const confidence = edgeData?.confidence;
 
   // Calculate perpendicular offset for parallel edges
   const parallelSpacing = 30;
@@ -402,6 +407,32 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
+      {/* Confidence indicator - 🤝 + % */}
+      {showConfidenceIndicator && confidence !== null && confidence !== undefined && (
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0)})`}>
+          <rect
+            x={-18}
+            y={-8}
+            width={36}
+            height={16}
+            rx={3}
+            fill={themeMode === 'dark' ? '#3d3833' : '#fffdf9'}
+            stroke={themeMode === 'dark' ? '#6b6560' : '#e8e3db'}
+            strokeWidth={1}
+          />
+          <text
+            x={0}
+            y={0}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={9}
+            fill={themeMode === 'dark' ? '#ffffff' : '#3d3833'}
+          >
+            🤝 {confidence}%
+          </text>
+        </g>
+      )}
+
       {/* Remote user indicator badge */}
       {remoteLinkSelectors.length > 0 && (
         <g transform={`translate(${controlHandleX}, ${controlHandleY - 20})`}>
@@ -515,6 +546,8 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.parallelCount !== nextData.parallelCount) return false;
   if (prevData.curveOffset?.x !== nextData.curveOffset?.x) return false;
   if (prevData.curveOffset?.y !== nextData.curveOffset?.y) return false;
+  if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
+  if (prevData.confidence !== nextData.confidence) return false;
 
   return true;
 }

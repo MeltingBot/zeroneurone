@@ -182,7 +182,11 @@ function elementToNode(
   onStopEditing?: () => void,
   unresolvedCommentCount?: number,
   isLoadingAsset?: boolean,
-  badgeProperty?: { value: string; type: string } | null
+  badgeProperty?: { value: string; type: string } | null,
+  showConfidenceIndicator?: boolean,
+  displayedPropertyValues?: { key: string; value: string }[],
+  tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both',
+  tagDisplaySize?: 'small' | 'medium' | 'large'
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -211,6 +215,10 @@ function elementToNode(
       unresolvedCommentCount,
       isLoadingAsset,
       badgeProperty,
+      showConfidenceIndicator,
+      displayedPropertyValues,
+      tagDisplayMode,
+      tagDisplaySize,
     } satisfies ElementNodeData,
     selected: isSelected,
   };
@@ -263,7 +271,8 @@ function linkToEdge(
   onStartEditing?: () => void,
   parallelIndex?: number,
   parallelCount?: number,
-  onCurveOffsetChange?: (offset: { x: number; y: number }) => void
+  onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
+  showConfidenceIndicator?: boolean
 ): Edge {
   // Get positions from the map (uses real-time positions during drag)
   const sourcePos = nodePositions.get(link.fromId);
@@ -340,6 +349,9 @@ function linkToEdge(
       // Include handles in data to force React Flow to re-render when they change
       _sourceHandle: sourceHandle,
       _targetHandle: targetHandle,
+      // Confidence indicator
+      showConfidenceIndicator,
+      confidence: link.confidence,
     },
     selected: isSelected,
   };
@@ -350,6 +362,7 @@ export function Canvas() {
 
   // Stores
   const {
+    currentInvestigation,
     elements,
     links,
     assets,
@@ -527,6 +540,15 @@ export function Canvas() {
     [updateLink]
   );
 
+  // Get display settings from investigation (with stable references to avoid infinite loops)
+  const showConfidenceIndicator = currentInvestigation?.settings?.showConfidenceIndicator ?? false;
+  const tagDisplayMode = currentInvestigation?.settings?.tagDisplayMode ?? 'icons';
+  const tagDisplaySize = currentInvestigation?.settings?.tagDisplaySize ?? 'small';
+  const displayedProperties = useMemo(
+    () => currentInvestigation?.settings?.displayedProperties ?? [],
+    [currentInvestigation?.settings?.displayedProperties]
+  );
+
   // Convert to React Flow format
   // Note: remoteSelectors are no longer passed through node data - ElementNode subscribes directly to syncStore
   const nodes = useMemo(
@@ -562,6 +584,20 @@ export function Canvas() {
               badgeProperty = { value: valueStr, type: prop.type || 'text' };
             }
           }
+          // Compute displayed property values for this element
+          const displayedPropertyValues = displayedProperties
+            .map(key => {
+              const prop = el.properties.find(p => p.key === key);
+              if (!prop || prop.value == null) return null;
+              const valueStr = typeof prop.value === 'string'
+                ? prop.value
+                : prop.value instanceof Date
+                  ? prop.value.toLocaleDateString('fr-FR')
+                  : String(prop.value);
+              return { key, value: valueStr };
+            })
+            .filter((p): p is { key: string; value: string } => p !== null);
+
           return elementToNode(
             el,
             selectedElementIds.has(el.id),
@@ -573,10 +609,14 @@ export function Canvas() {
             stopEditing,
             unresolvedCommentCount,
             isLoadingAsset,
-            badgeProperty
+            badgeProperty,
+            showConfidenceIndicator,
+            displayedPropertyValues,
+            tagDisplayMode,
+            tagDisplaySize
           );
         }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, commentCountMap, filters.badgePropertyKey]
+    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, commentCountMap, filters.badgePropertyKey, showConfidenceIndicator, displayedProperties, tagDisplayMode, tagDisplaySize]
   );
 
   // Update awareness when selection changes
@@ -728,10 +768,11 @@ export function Canvas() {
         onStartEditing,
         parallelIndex,
         parallelCount,
-        onCurveOffsetChange
+        onCurveOffsetChange,
+        showConfidenceIndicator
       );
     });
-  }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink]);
+  }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator]);
 
 
   // Track starting positions for undo

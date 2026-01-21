@@ -72,6 +72,10 @@ export const investigationRepository = {
         suggestedProperties: [],
         existingTags: [],
         tagPropertyAssociations: {},
+        showConfidenceIndicator: false,
+        displayedProperties: [],
+        tagDisplayMode: 'icons',
+        tagDisplaySize: 'small',
       },
     };
 
@@ -107,6 +111,10 @@ export const investigationRepository = {
         suggestedProperties: [],
         existingTags: [],
         tagPropertyAssociations: {},
+        showConfidenceIndicator: false,
+        displayedProperties: [],
+        tagDisplayMode: 'icons',
+        tagDisplaySize: 'small',
       },
     };
 

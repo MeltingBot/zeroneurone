@@ -164,6 +164,14 @@ export interface InvestigationSettings {
   existingTags: string[];
   /** Properties associated with each tag (e.g., "Entreprise" -> [{key: "SIREN", type: "text"}]) */
   tagPropertyAssociations: Record<string, PropertyDefinition[]>;
+  /** Show confidence indicator (🤝 + %) on elements and links */
+  showConfidenceIndicator?: boolean;
+  /** Property keys to display on elements/links (e.g., ["SIREN", "Email"]) */
+  displayedProperties?: string[];
+  /** Tag display mode on canvas elements: none, icons only, labels only, or both */
+  tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both';
+  /** Tag display size on canvas elements */
+  tagDisplaySize?: 'small' | 'medium' | 'large';
 }
 
 // ============================================================================

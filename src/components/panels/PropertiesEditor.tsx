@@ -11,6 +11,10 @@ interface PropertiesEditorProps {
   suggestions?: PropertyDefinition[];
   /** Callback when a new property is created */
   onNewProperty?: (propertyDef: PropertyDefinition) => void;
+  /** Properties to display on canvas (global setting) */
+  displayedProperties?: string[];
+  /** Callback to toggle a property display on canvas */
+  onToggleDisplayProperty?: (propertyKey: string) => void;
 }
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
@@ -31,6 +35,8 @@ export function PropertiesEditor({
   onChange,
   suggestions = [],
   onNewProperty,
+  displayedProperties = [],
+  onToggleDisplayProperty,
 }: PropertiesEditorProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newKey, setNewKey] = useState('');
@@ -182,6 +188,8 @@ export function PropertiesEditor({
               property={prop}
               onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
               onRemove={() => handleRemoveProperty(prop.key)}
+              isDisplayed={displayedProperties.includes(prop.key)}
+              onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
             />
           ))}
         </div>
@@ -332,13 +340,29 @@ interface PropertyRowProps {
   property: Property;
   onUpdate: (value: Property['value']) => void;
   onRemove: () => void;
+  isDisplayed?: boolean;
+  onToggleDisplay?: () => void;
 }
 
-function PropertyRow({ property, onUpdate, onRemove }: PropertyRowProps) {
+function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDisplay }: PropertyRowProps) {
   const type = property.type || 'text';
 
   return (
     <div className="flex items-start gap-2">
+      {/* Display toggle checkbox */}
+      {onToggleDisplay && (
+        <button
+          onClick={onToggleDisplay}
+          className={`mt-0.5 w-4 h-4 flex items-center justify-center border rounded transition-colors ${
+            isDisplayed
+              ? 'bg-accent border-accent text-white'
+              : 'border-border-default hover:border-accent text-transparent'
+          }`}
+          title={isDisplayed ? 'Masquer sur le canvas' : 'Afficher sur le canvas'}
+        >
+          {isDisplayed && <Check size={10} />}
+        </button>
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium text-text-secondary truncate">

@@ -112,6 +112,7 @@ export function ViewToolbar({
         >
           {showCommentBadges ? <MessageCircle size={16} /> : <MessageCircleOff size={16} />}
         </button>
+
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
-import { Modal, Button, Input, IconButton } from '../common';
+import { Modal, Button, Input, IconButton, IconPicker } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
 import type { TagSet, SuggestedProperty, ElementShape, PropertyType } from '../../types';
 import { DEFAULT_COLORS } from '../../types';
@@ -56,6 +56,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
   const [description, setDescription] = useState(tagSet?.description || '');
   const [color, setColor] = useState(tagSet?.defaultVisual.color || null);
   const [shape, setShape] = useState<ElementShape | null>(tagSet?.defaultVisual.shape || null);
+  const [icon, setIcon] = useState<string | null>(tagSet?.defaultVisual.icon || null);
   const [properties, setProperties] = useState<SuggestedProperty[]>(
     tagSet?.suggestedProperties || []
   );
@@ -77,7 +78,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
         await update(tagSet.id, {
           name: name.trim(),
           description: description.trim(),
-          defaultVisual: { color, shape, icon: tagSet.defaultVisual.icon },
+          defaultVisual: { color, shape, icon },
           suggestedProperties: properties,
         });
         showToast('success', `Tag "${name}" modifié`);
@@ -85,7 +86,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
         await create({
           name: name.trim(),
           description: description.trim(),
-          defaultVisual: { color, shape, icon: null },
+          defaultVisual: { color, shape, icon },
           suggestedProperties: properties,
           isBuiltIn: false,
         });
@@ -105,6 +106,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
     description,
     color,
     shape,
+    icon,
     properties,
     update,
     create,
@@ -240,6 +242,14 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Icon picker */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-tertiary w-16">Icône</span>
+            <div className="flex-1">
+              <IconPicker value={icon} onChange={setIcon} />
+            </div>
           </div>
         </div>
 
