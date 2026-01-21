@@ -19,7 +19,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
   ];
 
   // Get version from global (injected at build time)
-  const version = (window as unknown as { __APP_VERSION__?: string }).__APP_VERSION__ || '0.5.0';
+  const version = (window as unknown as { __APP_VERSION__?: string }).__APP_VERSION__ || '0.8.5';
   const commitHash = (window as unknown as { __GIT_COMMIT__?: string }).__GIT_COMMIT__;
 
   return (
