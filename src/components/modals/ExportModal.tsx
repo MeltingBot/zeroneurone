@@ -62,111 +62,25 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         return;
       }
 
-      // Dynamic import html2canvas
-      const html2canvas = (await import('html2canvas')).default;
+      // Dynamic import html-to-image (better SVG support than html2canvas)
+      const { toPng } = await import('html-to-image');
 
-      // Prepare SVG elements for capture - inline all styles
-      const svgElements = element.querySelectorAll('svg');
-      const originalSvgStyles: { el: SVGElement; style: string }[] = [];
-
-      svgElements.forEach((svg) => {
-        originalSvgStyles.push({ el: svg, style: svg.getAttribute('style') || '' });
-        // Ensure SVG is visible and has proper dimensions
-        const rect = svg.getBoundingClientRect();
-        svg.setAttribute('style', `${svg.getAttribute('style') || ''}; overflow: visible;`);
-        svg.setAttribute('width', String(rect.width));
-        svg.setAttribute('height', String(rect.height));
+      const dataUrl = await toPng(element, {
+        backgroundColor: '#faf8f5',
+        pixelRatio: scale, // Higher pixel ratio = higher resolution output
+        skipFonts: true, // Skip font embedding to avoid errors
       });
 
-      // Prepare edges - inline stroke styles for better capture
-      const edges = element.querySelectorAll('.react-flow__edge path, .react-flow__edge line, .react-flow__edge polyline');
-      const originalEdgeStyles: { el: SVGElement; stroke: string; strokeWidth: string; fill: string }[] = [];
+      // Download the PNG
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-      edges.forEach((edge) => {
-        const el = edge as SVGElement;
-        const computedStyle = window.getComputedStyle(el);
-        originalEdgeStyles.push({
-          el,
-          stroke: el.getAttribute('stroke') || '',
-          strokeWidth: el.getAttribute('stroke-width') || '',
-          fill: el.getAttribute('fill') || '',
-        });
-
-        // Force inline styles for html2canvas to pick up
-        el.setAttribute('stroke', computedStyle.stroke || '#6b7280');
-        el.setAttribute('stroke-width', String(Math.max(2, parseFloat(computedStyle.strokeWidth || '1') * 1.5)));
-        el.setAttribute('fill', computedStyle.fill || 'none');
-      });
-
-      // Also handle edge markers (arrows)
-      const markers = element.querySelectorAll('marker path, marker polygon');
-      const originalMarkerStyles: { el: SVGElement; fill: string; stroke: string }[] = [];
-
-      markers.forEach((marker) => {
-        const el = marker as SVGElement;
-        const computedStyle = window.getComputedStyle(el);
-        originalMarkerStyles.push({
-          el,
-          fill: el.getAttribute('fill') || '',
-          stroke: el.getAttribute('stroke') || '',
-        });
-        el.setAttribute('fill', computedStyle.fill || '#6b7280');
-        el.setAttribute('stroke', computedStyle.stroke || 'none');
-      });
-
-      try {
-        const canvas = await html2canvas(element, {
-          backgroundColor: '#faf8f5',
-          scale: scale,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 15000,
-          foreignObjectRendering: false,
-          onclone: (clonedDoc) => {
-            // Ensure SVG edges are visible in cloned document
-            const clonedEdges = clonedDoc.querySelectorAll('.react-flow__edge');
-            clonedEdges.forEach((edge) => {
-              (edge as HTMLElement).style.opacity = '1';
-              (edge as HTMLElement).style.visibility = 'visible';
-            });
-          },
-        });
-
-        // Download the PNG
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `${currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        toast.success(`Export PNG (${scale}x) terminé`);
-        onClose();
-      } finally {
-        // Restore original SVG styles
-        originalSvgStyles.forEach(({ el, style }) => {
-          if (style) {
-            el.setAttribute('style', style);
-          } else {
-            el.removeAttribute('style');
-          }
-        });
-
-        // Restore original edge styles
-        originalEdgeStyles.forEach(({ el, stroke, strokeWidth, fill }) => {
-          if (stroke) el.setAttribute('stroke', stroke); else el.removeAttribute('stroke');
-          if (strokeWidth) el.setAttribute('stroke-width', strokeWidth); else el.removeAttribute('stroke-width');
-          if (fill) el.setAttribute('fill', fill); else el.removeAttribute('fill');
-        });
-
-        // Restore marker styles
-        originalMarkerStyles.forEach(({ el, fill, stroke }) => {
-          if (fill) el.setAttribute('fill', fill); else el.removeAttribute('fill');
-          if (stroke) el.setAttribute('stroke', stroke); else el.removeAttribute('stroke');
-        });
-      }
+      toast.success(`Export PNG (${scale}x) terminé`);
+      onClose();
     } catch (err) {
       console.error('PNG export failed:', err);
       toast.error('Erreur lors de l\'export PNG');
