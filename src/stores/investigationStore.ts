@@ -802,10 +802,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('No investigation loaded');
     }
 
-    // Check file size limit in shared mode (base64 adds ~33%, server limit is 100MB)
-    const MAX_SHARED_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+    // Warn about large files in shared mode (sync can be slow or fail)
+    const LARGE_FILE_WARNING_SIZE = 10 * 1024 * 1024; // 10 MB
     const syncState = syncService.getState();
-    if (syncState.mode === 'shared' && file.size > MAX_SHARED_FILE_SIZE) {
+    if (syncState.mode === 'shared' && file.size > LARGE_FILE_WARNING_SIZE) {
       const { toast } = await import('./toastStore');
       toast.warning(
         `Fichier volumineux (${Math.round(file.size / 1024 / 1024)} MB). La synchronisation peut être lente ou échouer.`,
