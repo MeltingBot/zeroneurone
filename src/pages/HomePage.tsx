@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, FolderOpen, Upload, Tags, Home, Info } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState } from '../components/common';
 import { InvestigationCard, LandingSection } from '../components/home';
@@ -13,7 +13,7 @@ import {
   LocalStorageDisclaimerModal,
   hasAcknowledgedLocalStorage,
 } from '../components/modals';
-import { useInvestigationStore } from '../stores';
+import { useInvestigationStore, useUIStore } from '../stores';
 
 type ViewMode = 'landing' | 'list';
 
@@ -27,6 +27,8 @@ export function HomePage() {
     updateInvestigation,
     deleteInvestigation,
   } = useInvestigationStore();
+
+  const { themeMode, toggleThemeMode } = useUIStore();
 
   const [viewMode, setViewMode] = useState<ViewMode | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -103,6 +105,14 @@ export function HomePage() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={toggleThemeMode}
+              title={themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
+            >
+              {themeMode === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setIsAboutModalOpen(true)}
             >
               <Info size={16} />
@@ -147,6 +157,8 @@ export function HomePage() {
           onAbout={() => setIsAboutModalOpen(true)}
           investigationCount={investigations.length}
           onViewInvestigations={() => setViewMode('list')}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
         />
       ) : (
         <main className="flex-1 overflow-y-auto p-6">

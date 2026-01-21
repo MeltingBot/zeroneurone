@@ -53,6 +53,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both';
   /** Tag display size */
   tagDisplaySize?: 'small' | 'medium' | 'large';
+  /** Theme mode for color adjustments */
+  themeMode?: 'light' | 'dark';
 }
 
 // Minimum sizes for resizing
@@ -108,7 +110,8 @@ function ElementNodeComponent({ data }: NodeProps) {
   const [editValue, setEditValue] = useState(element.label || '');
   const inputRef = useRef<HTMLInputElement>(null);
   const fontMode = useUIStore((state) => state.fontMode);
-  const themeMode = useUIStore((state) => state.themeMode);
+  // Get themeMode from data (passed from Canvas) for proper memo comparison
+  const themeMode = data.themeMode ?? 'light';
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
@@ -659,16 +662,15 @@ function darkenColor(color: string, amount: number = 0.6): string {
 // Get theme-aware background color
 function getThemeAwareColor(color: string, isDarkMode: boolean): string {
   if (!isDarkMode) return color;
-  // In dark mode, darken very light colors
+
+  // In dark mode, slightly darken very light colors (white/near-white only)
+  // Keep pastel and medium colors as-is - they look good on dark background
   const brightness = getColorBrightness(color);
-  if (brightness > 200) {
-    // Very light color (white, cream, light gray) -> use dark variant
-    return darkenColor(color, 0.25);
-  } else if (brightness > 150) {
-    // Light color -> moderate darkening
-    return darkenColor(color, 0.4);
+  if (brightness > 245) {
+    // Pure white or near-white -> use a subtle off-white/cream
+    return darkenColor(color, 0.85);
   }
-  // Already a medium/dark color, keep it
+  // Keep all other colors (including pastels) as-is
   return color;
 }
 
@@ -691,6 +693,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
   if (prevData.tagDisplayMode !== nextData.tagDisplayMode) return false;
   if (prevData.tagDisplaySize !== nextData.tagDisplaySize) return false;
+  if (prevData.themeMode !== nextData.themeMode) return false;
 
   // Compare displayed properties (shallow array comparison)
   const prevProps2 = prevData.displayedPropertyValues ?? [];

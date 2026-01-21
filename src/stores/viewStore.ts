@@ -38,6 +38,8 @@ interface ViewState {
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
   setZoom: (zoom: number) => void;
   panTo: (x: number, y: number) => void;
+  saveViewportForInvestigation: (investigationId: InvestigationId) => void;
+  loadViewportForInvestigation: (investigationId: InvestigationId) => boolean;
 
   // Actions - Display mode
   setDisplayMode: (mode: DisplayMode) => void;
@@ -85,6 +87,33 @@ export const useViewStore = create<ViewState>((set, get) => ({
   // Viewport
   setViewport: (viewport) => {
     set({ viewport });
+  },
+
+  // Save viewport for a specific investigation
+  saveViewportForInvestigation: (investigationId: InvestigationId) => {
+    const { viewport } = get();
+    try {
+      localStorage.setItem(`viewport_${investigationId}`, JSON.stringify(viewport));
+    } catch {
+      // Ignore localStorage errors
+    }
+  },
+
+  // Load viewport for a specific investigation
+  loadViewportForInvestigation: (investigationId: InvestigationId) => {
+    try {
+      const saved = localStorage.getItem(`viewport_${investigationId}`);
+      if (saved) {
+        const viewport = JSON.parse(saved);
+        if (viewport && typeof viewport.x === 'number' && typeof viewport.y === 'number' && typeof viewport.zoom === 'number') {
+          set({ viewport });
+          return true;
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return false;
   },
 
   setZoom: (zoom) => {
@@ -265,6 +294,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   // Reset investigation-specific state (called when closing an investigation)
   resetInvestigationState: () => {
     set({
+      viewport: { x: 0, y: 0, zoom: 1 },
       filters: { ...DEFAULT_FILTERS },
       hiddenElementIds: new Set(),
       focusElementId: null,

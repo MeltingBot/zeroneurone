@@ -55,7 +55,7 @@ const edgeTypes = {
 // Capture handler for report screenshots - must be inside ReactFlowProvider
 function CanvasCaptureHandler() {
   const { fitView } = useReactFlow();
-  const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore();
+  const { registerCaptureHandler, unregisterCaptureHandler, themeMode } = useUIStore();
 
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
@@ -186,7 +186,8 @@ function elementToNode(
   showConfidenceIndicator?: boolean,
   displayedPropertyValues?: { key: string; value: string }[],
   tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both',
-  tagDisplaySize?: 'small' | 'medium' | 'large'
+  tagDisplaySize?: 'small' | 'medium' | 'large',
+  themeMode?: 'light' | 'dark'
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -219,6 +220,7 @@ function elementToNode(
       displayedPropertyValues,
       tagDisplayMode,
       tagDisplaySize,
+      themeMode,
     } satisfies ElementNodeData,
     selected: isSelected,
   };
@@ -444,6 +446,9 @@ export function Canvas() {
   // Note: remoteUsers is not used here directly anymore - ElementNode and CustomEdge subscribe to syncStore directly
   const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
 
+  // UI store for theme mode
+  const themeMode = useUIStore((state) => state.themeMode);
+
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
     // If insights highlighting is active, dim everything except highlighted elements
@@ -613,10 +618,11 @@ export function Canvas() {
             showConfidenceIndicator,
             displayedPropertyValues,
             tagDisplayMode,
-            tagDisplaySize
+            tagDisplaySize,
+            themeMode
           );
         }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, commentCountMap, filters.badgePropertyKey, showConfidenceIndicator, displayedProperties, tagDisplayMode, tagDisplaySize]
+    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, commentCountMap, filters.badgePropertyKey, showConfidenceIndicator, displayedProperties, tagDisplayMode, tagDisplaySize, themeMode]
   );
 
   // Update awareness when selection changes

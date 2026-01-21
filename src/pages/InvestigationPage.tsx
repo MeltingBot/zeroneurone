@@ -35,7 +35,7 @@ export function InvestigationPage() {
 
   const { selectedElementIds, selectedLinkIds } = useSelectionStore();
   const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState } = useUIStore();
-  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState } = useViewStore();
+  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
@@ -52,15 +52,21 @@ export function InvestigationPage() {
   useEffect(() => {
     if (id) {
       loadInvestigation(id);
+      // Load saved viewport for this investigation
+      loadViewportForInvestigation(id);
     }
     return () => {
+      // Save viewport before unloading
+      if (id) {
+        saveViewportForInvestigation(id);
+      }
       unloadInvestigation();
       searchService.clear();
       // Reset investigation-specific state (filters, redaction settings)
       resetUIState();
       resetViewState();
     };
-  }, [id, loadInvestigation, unloadInvestigation, resetUIState, resetViewState]);
+  }, [id, loadInvestigation, unloadInvestigation, resetUIState, resetViewState, loadViewportForInvestigation, saveViewportForInvestigation]);
 
   // Load search index when elements/links change
   useEffect(() => {

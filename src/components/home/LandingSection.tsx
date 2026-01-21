@@ -1,4 +1,4 @@
-import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, Github, Coffee } from 'lucide-react';
+import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Button } from '../common';
 
 interface LandingSectionProps {
@@ -7,6 +7,8 @@ interface LandingSectionProps {
   onAbout: () => void;
   investigationCount: number;
   onViewInvestigations: () => void;
+  themeMode: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
 export function LandingSection({
@@ -15,6 +17,8 @@ export function LandingSection({
   onAbout,
   investigationCount,
   onViewInvestigations,
+  themeMode,
+  onToggleTheme,
 }: LandingSectionProps) {
   const features = [
     {
@@ -114,6 +118,14 @@ export function LandingSection({
 
         {/* Footer Links */}
         <div className="flex items-center justify-center gap-4 border-t border-border-default pt-6">
+          <button
+            onClick={onToggleTheme}
+            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            title={themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
+          >
+            {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+            {themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
+          </button>
           <button
             onClick={onAbout}
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
