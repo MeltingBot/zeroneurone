@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { fileService } from '../../services/fileService';
-import { useInvestigationStore, useUIStore, toast } from '../../stores';
+import { useInvestigationStore, toast } from '../../stores';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -29,7 +29,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [showPngOptions, setShowPngOptions] = useState(false);
 
   const { currentInvestigation, elements, links } = useInvestigationStore();
-  const captureHandlers = useUIStore((state) => state.captureHandlers);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     if (!currentInvestigation) return;
@@ -57,14 +56,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
     setIsProcessing(true);
     try {
-      // Get the canvas capture handler
-      const captureCanvas = captureHandlers.get('canvas');
-      if (!captureCanvas) {
-        toast.error('Canvas non disponible pour l\'export');
-        return;
-      }
-
-      // Temporarily override scale in html2canvas by calling custom export
       const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
       if (!element) {
         toast.error('Canvas non trouvé');
@@ -74,16 +65,53 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Dynamic import html2canvas
       const html2canvas = (await import('html2canvas')).default;
 
-      // Temporarily increase stroke widths for better capture
-      const edges = element.querySelectorAll('.react-flow__edge path');
-      const originalStrokes: { el: SVGPathElement; value: string }[] = [];
+      // Prepare SVG elements for capture - inline all styles
+      const svgElements = element.querySelectorAll('svg');
+      const originalSvgStyles: { el: SVGElement; style: string }[] = [];
+
+      svgElements.forEach((svg) => {
+        originalSvgStyles.push({ el: svg, style: svg.getAttribute('style') || '' });
+        // Ensure SVG is visible and has proper dimensions
+        const rect = svg.getBoundingClientRect();
+        svg.setAttribute('style', `${svg.getAttribute('style') || ''}; overflow: visible;`);
+        svg.setAttribute('width', String(rect.width));
+        svg.setAttribute('height', String(rect.height));
+      });
+
+      // Prepare edges - inline stroke styles for better capture
+      const edges = element.querySelectorAll('.react-flow__edge path, .react-flow__edge line, .react-flow__edge polyline');
+      const originalEdgeStyles: { el: SVGElement; stroke: string; strokeWidth: string; fill: string }[] = [];
+
       edges.forEach((edge) => {
-        const pathEl = edge as SVGPathElement;
-        const currentWidth = pathEl.style.strokeWidth ||
-                            edge.getAttribute('stroke-width') || '1';
-        originalStrokes.push({ el: pathEl, value: currentWidth });
-        const width = Math.max(3, parseFloat(currentWidth) * 2);
-        pathEl.style.strokeWidth = `${width}px`;
+        const el = edge as SVGElement;
+        const computedStyle = window.getComputedStyle(el);
+        originalEdgeStyles.push({
+          el,
+          stroke: el.getAttribute('stroke') || '',
+          strokeWidth: el.getAttribute('stroke-width') || '',
+          fill: el.getAttribute('fill') || '',
+        });
+
+        // Force inline styles for html2canvas to pick up
+        el.setAttribute('stroke', computedStyle.stroke || '#6b7280');
+        el.setAttribute('stroke-width', String(Math.max(2, parseFloat(computedStyle.strokeWidth || '1') * 1.5)));
+        el.setAttribute('fill', computedStyle.fill || 'none');
+      });
+
+      // Also handle edge markers (arrows)
+      const markers = element.querySelectorAll('marker path, marker polygon');
+      const originalMarkerStyles: { el: SVGElement; fill: string; stroke: string }[] = [];
+
+      markers.forEach((marker) => {
+        const el = marker as SVGElement;
+        const computedStyle = window.getComputedStyle(el);
+        originalMarkerStyles.push({
+          el,
+          fill: el.getAttribute('fill') || '',
+          stroke: el.getAttribute('stroke') || '',
+        });
+        el.setAttribute('fill', computedStyle.fill || '#6b7280');
+        el.setAttribute('stroke', computedStyle.stroke || 'none');
       });
 
       try {
@@ -93,8 +121,16 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           logging: false,
           useCORS: true,
           allowTaint: true,
-          imageTimeout: 10000,
+          imageTimeout: 15000,
           foreignObjectRendering: false,
+          onclone: (clonedDoc) => {
+            // Ensure SVG edges are visible in cloned document
+            const clonedEdges = clonedDoc.querySelectorAll('.react-flow__edge');
+            clonedEdges.forEach((edge) => {
+              (edge as HTMLElement).style.opacity = '1';
+              (edge as HTMLElement).style.visibility = 'visible';
+            });
+          },
         });
 
         // Download the PNG
@@ -109,9 +145,26 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         toast.success(`Export PNG (${scale}x) terminé`);
         onClose();
       } finally {
-        // Restore original stroke widths
-        originalStrokes.forEach(({ el, value }) => {
-          el.style.strokeWidth = value;
+        // Restore original SVG styles
+        originalSvgStyles.forEach(({ el, style }) => {
+          if (style) {
+            el.setAttribute('style', style);
+          } else {
+            el.removeAttribute('style');
+          }
+        });
+
+        // Restore original edge styles
+        originalEdgeStyles.forEach(({ el, stroke, strokeWidth, fill }) => {
+          if (stroke) el.setAttribute('stroke', stroke); else el.removeAttribute('stroke');
+          if (strokeWidth) el.setAttribute('stroke-width', strokeWidth); else el.removeAttribute('stroke-width');
+          if (fill) el.setAttribute('fill', fill); else el.removeAttribute('fill');
+        });
+
+        // Restore marker styles
+        originalMarkerStyles.forEach(({ el, fill, stroke }) => {
+          if (fill) el.setAttribute('fill', fill); else el.removeAttribute('fill');
+          if (stroke) el.setAttribute('stroke', stroke); else el.removeAttribute('stroke');
         });
       }
     } catch (err) {
@@ -120,7 +173,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, captureHandlers, onClose]);
+  }, [currentInvestigation, onClose]);
 
   if (!isOpen) return null;
 
