@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { fileService } from '../../services/fileService';
-import { useInvestigationStore, toast } from '../../stores';
+import { useInvestigationStore, useUIStore, toast } from '../../stores';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -16,10 +16,20 @@ const exportFormats: { format: ExportFormat; label: string; description: string;
   { format: 'graphml', label: 'GraphML', description: 'Format graphe standard (Gephi, yEd)', icon: FileText },
 ];
 
+const pngScaleOptions = [
+  { scale: 1, label: '1x', description: 'Taille normale' },
+  { scale: 2, label: '2x', description: 'Haute définition' },
+  { scale: 3, label: '3x', description: 'Très haute définition' },
+  { scale: 4, label: '4x', description: 'Ultra haute définition' },
+];
+
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPngScale, setSelectedPngScale] = useState(2);
+  const [showPngOptions, setShowPngOptions] = useState(false);
 
   const { currentInvestigation, elements, links } = useInvestigationStore();
+  const captureHandlers = useUIStore((state) => state.captureHandlers);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     if (!currentInvestigation) return;
@@ -41,6 +51,76 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       setIsProcessing(false);
     }
   }, [currentInvestigation, elements, links, onClose]);
+
+  const handleExportPng = useCallback(async (scale: number) => {
+    if (!currentInvestigation) return;
+
+    setIsProcessing(true);
+    try {
+      // Get the canvas capture handler
+      const captureCanvas = captureHandlers.get('canvas');
+      if (!captureCanvas) {
+        toast.error('Canvas non disponible pour l\'export');
+        return;
+      }
+
+      // Temporarily override scale in html2canvas by calling custom export
+      const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
+      if (!element) {
+        toast.error('Canvas non trouvé');
+        return;
+      }
+
+      // Dynamic import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+
+      // Temporarily increase stroke widths for better capture
+      const edges = element.querySelectorAll('.react-flow__edge path');
+      const originalStrokes: { el: SVGPathElement; value: string }[] = [];
+      edges.forEach((edge) => {
+        const pathEl = edge as SVGPathElement;
+        const currentWidth = pathEl.style.strokeWidth ||
+                            edge.getAttribute('stroke-width') || '1';
+        originalStrokes.push({ el: pathEl, value: currentWidth });
+        const width = Math.max(3, parseFloat(currentWidth) * 2);
+        pathEl.style.strokeWidth = `${width}px`;
+      });
+
+      try {
+        const canvas = await html2canvas(element, {
+          backgroundColor: '#faf8f5',
+          scale: scale,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 10000,
+          foreignObjectRendering: false,
+        });
+
+        // Download the PNG
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `${currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.success(`Export PNG (${scale}x) terminé`);
+        onClose();
+      } finally {
+        // Restore original stroke widths
+        originalStrokes.forEach(({ el, value }) => {
+          el.style.strokeWidth = value;
+        });
+      }
+    } catch (err) {
+      console.error('PNG export failed:', err);
+      toast.error('Erreur lors de l\'export PNG');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [currentInvestigation, captureHandlers, onClose]);
 
   if (!isOpen) return null;
 
@@ -74,6 +154,52 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </p>
 
           <div className="space-y-3">
+            {/* PNG Export with scale selection */}
+            <div className="rounded-lg border border-border-default overflow-hidden">
+              <button
+                onClick={() => setShowPngOptions(!showPngOptions)}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
+              >
+                <Image size={20} className="text-text-secondary" />
+                <div className="text-left flex-1">
+                  <div className="text-sm font-medium text-text-primary">
+                    PNG (image du canvas)
+                  </div>
+                  <div className="text-xs text-text-tertiary">
+                    Capture visuelle avec choix de résolution
+                  </div>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`text-text-tertiary transition-transform ${showPngOptions ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showPngOptions && (
+                <div className="border-t border-border-default bg-bg-secondary p-2">
+                  <div className="text-xs text-text-tertiary mb-2 px-1">Résolution :</div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {pngScaleOptions.map((option) => (
+                      <button
+                        key={option.scale}
+                        onClick={() => handleExportPng(option.scale)}
+                        disabled={isProcessing}
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors disabled:opacity-50 ${
+                          selectedPngScale === option.scale
+                            ? 'border-accent bg-accent/10 text-accent'
+                            : 'border-border-default hover:border-accent hover:bg-accent/5 text-text-primary'
+                        }`}
+                        title={option.description}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Other export formats */}
             {exportFormats.map((format) => {
               const Icon = format.icon;
               return (
