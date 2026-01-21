@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, Hexagon, RectangleHorizontal, Download, Upload, HelpCircle } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { Modal, Button, IconButton } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
 import { TagSetEditorModal } from './TagSetEditorModal';
@@ -494,9 +495,14 @@ interface TagSetListItemProps {
 }
 
 function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
+  // Get custom icon if set, otherwise use shape icon
+  const CustomIcon = tagSet.defaultVisual.icon
+    ? (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[tagSet.defaultVisual.icon]
+    : null;
   const ShapeIcon = tagSet.defaultVisual.shape
     ? shapeIcons[tagSet.defaultVisual.shape]
     : Circle;
+  const DisplayIcon = CustomIcon || ShapeIcon;
 
   return (
     <div className="flex items-center gap-3 p-3 bg-bg-secondary border border-border-default rounded hover:border-border-strong transition-colors group">
@@ -507,9 +513,8 @@ function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
           backgroundColor: tagSet.defaultVisual.color || 'var(--color-bg-tertiary)',
         }}
       >
-        <ShapeIcon
-          size={16}
-          className="text-text-primary"
+        <DisplayIcon
+          size={18}
           style={{
             color: tagSet.defaultVisual.color ? 'white' : 'var(--color-text-secondary)',
           }}

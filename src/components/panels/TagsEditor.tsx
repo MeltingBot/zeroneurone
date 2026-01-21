@@ -256,6 +256,8 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
               {filteredSuggestions.length > 0 ? (
                 filteredSuggestions.map((suggestion, index) => {
                   const isTagSet = tagSetNames.has(suggestion);
+                  const suggestionIconName = tagIcons.get(suggestion);
+                  const SuggestionIcon = suggestionIconName ? getIconComponent(suggestionIconName) : null;
                   return (
                     <button
                       key={suggestion}
@@ -264,11 +266,14 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                         e.preventDefault(); // Prevent input blur
                         handleAddTag(suggestion);
                       }}
-                      className={`w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary flex items-center justify-between gap-2 ${
+                      className={`w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary flex items-center gap-2 ${
                         index === selectedSuggestionIndex ? 'bg-bg-secondary' : ''
                       }`}
                     >
-                      <span>{suggestion}</span>
+                      {SuggestionIcon && (
+                        <SuggestionIcon size={14} className="text-text-tertiary flex-shrink-0" />
+                      )}
+                      <span className="flex-1">{suggestion}</span>
                       {isTagSet && (
                         <Sparkles size={10} className="text-accent flex-shrink-0" />
                       )}
