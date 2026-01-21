@@ -396,12 +396,14 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
       // If in shared mode, schedule additional syncs to catch late-arriving data
       // This handles the case where Y.Doc updates arrive after the initial load
-      const state = syncService.getState();
-      if (state.mode === 'shared' && state.connected) {
-        // Re-sync after short delays to catch late data (links often arrive after elements)
-        setTimeout(() => get()._syncFromYDoc(), 200);
-        setTimeout(() => get()._syncFromYDoc(), 500);
-        setTimeout(() => get()._syncFromYDoc(), 1000);
+      // Use longer delays for slow networks (Docker/Cloudflare can add latency)
+      const syncState = syncService.getState();
+      if (syncState.mode === 'shared' && syncState.connected) {
+        // Re-sync after delays to catch late data (links often arrive after elements)
+        setTimeout(() => get()._syncFromYDoc(), 300);
+        setTimeout(() => get()._syncFromYDoc(), 800);
+        setTimeout(() => get()._syncFromYDoc(), 1500);
+        setTimeout(() => get()._syncFromYDoc(), 3000);
       }
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -798,6 +800,17 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const { currentInvestigation } = get();
     if (!currentInvestigation) {
       throw new Error('No investigation loaded');
+    }
+
+    // Check file size limit in shared mode (base64 adds ~33%, server limit is 100MB)
+    const MAX_SHARED_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+    const syncState = syncService.getState();
+    if (syncState.mode === 'shared' && file.size > MAX_SHARED_FILE_SIZE) {
+      const { toast } = await import('./toastStore');
+      toast.warning(
+        `Fichier volumineux (${Math.round(file.size / 1024 / 1024)} MB). La synchronisation peut être lente ou échouer.`,
+        8000
+      );
     }
 
     const asset = await fileService.saveAsset(currentInvestigation.id, file);

@@ -29,7 +29,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 // ============================================================================
 const LIMITS = {
   // Message limits
-  MAX_MESSAGE_SIZE: 16 * 1024 * 1024,    // 16 MB max per message (for large media)
+  MAX_MESSAGE_SIZE: 100 * 1024 * 1024,   // 100 MB max per message (for large media in base64)
 
   // Rate limiting (relaxed for media sync)
   RATE_WINDOW_MS: 1000,                  // 1 second window
