@@ -18,6 +18,9 @@ interface SelectionState {
   deselectLink: (id: LinkId) => void;
   toggleLink: (id: LinkId) => void;
 
+  // Select both elements and links at once (for box selection)
+  selectBoth: (elementIds: ElementId[], linkIds: LinkId[], addToSelection?: boolean) => void;
+
   clearSelection: () => void;
   clearElementSelection: () => void;
   clearLinkSelection: () => void;
@@ -123,6 +126,23 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
     } else {
       get().selectLink(id, true);
     }
+  },
+
+  selectBoth: (elementIds: ElementId[], linkIds: LinkId[], addToSelection = false) => {
+    set((state) => {
+      const newElementSet = addToSelection
+        ? new Set(state.selectedElementIds)
+        : new Set<ElementId>();
+      const newLinkSet = addToSelection
+        ? new Set(state.selectedLinkIds)
+        : new Set<LinkId>();
+      elementIds.forEach((id) => newElementSet.add(id));
+      linkIds.forEach((id) => newLinkSet.add(id));
+      return {
+        selectedElementIds: newElementSet,
+        selectedLinkIds: newLinkSet,
+      };
+    });
   },
 
   clearSelection: () => {

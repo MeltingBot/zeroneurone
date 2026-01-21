@@ -274,7 +274,8 @@ function linkToEdge(
   parallelIndex?: number,
   parallelCount?: number,
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
-  showConfidenceIndicator?: boolean
+  showConfidenceIndicator?: boolean,
+  displayedPropertyValues?: { key: string; value: string }[]
 ): Edge {
   // Get positions from the map (uses real-time positions during drag)
   const sourcePos = nodePositions.get(link.fromId);
@@ -354,6 +355,8 @@ function linkToEdge(
       // Confidence indicator
       showConfidenceIndicator,
       confidence: link.confidence,
+      // Displayed properties
+      displayedPropertyValues,
     },
     selected: isSelected,
   };
@@ -412,6 +415,7 @@ export function Canvas() {
     selectElement,
     selectElements,
     selectLink,
+    selectBoth,
     clearSelection,
     getSelectedElementIds,
     getSelectedLinkIds,
@@ -763,6 +767,20 @@ export function Canvas() {
       // Link is dimmed if either connected element is dimmed
       const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
 
+      // Compute displayed property values for this link
+      const linkDisplayedPropertyValues = displayedProperties
+        .map(key => {
+          const prop = link.properties?.find(p => p.key === key);
+          if (!prop || prop.value == null) return null;
+          const valueStr = typeof prop.value === 'string'
+            ? prop.value
+            : prop.value instanceof Date
+              ? prop.value.toLocaleDateString('fr-FR')
+              : String(prop.value);
+          return { key, value: valueStr };
+        })
+        .filter((p): p is { key: string; value: string } => p !== null);
+
       return linkToEdge(
         link,
         selectedLinkIds.has(link.id),
@@ -775,10 +793,11 @@ export function Canvas() {
         parallelIndex,
         parallelCount,
         onCurveOffsetChange,
-        showConfidenceIndicator
+        showConfidenceIndicator,
+        linkDisplayedPropertyValues
       );
     });
-  }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator]);
+  }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
 
 
   // Track starting positions for undo
@@ -1884,14 +1903,15 @@ export function Canvas() {
 
   // Handle selection change from selection box
   const handleSelectionChange = useCallback(
-    ({ nodes: selectedNodes }: { nodes: Node[]; edges: Edge[] }) => {
+    ({ nodes: selectedNodes, edges: selectedEdges }: { nodes: Node[]; edges: Edge[] }) => {
       // Prevent re-entry to avoid infinite loop
       if (isHandlingSelectionRef.current) return;
 
-      if (selectedNodes.length > 0) {
+      if (selectedNodes.length > 0 || selectedEdges.length > 0) {
         isHandlingSelectionRef.current = true;
-        selectElements(
+        selectBoth(
           selectedNodes.map((n) => n.id),
+          selectedEdges.map((e) => e.id),
           false
         );
         // Reset flag after a microtask to allow React to settle
@@ -1900,7 +1920,7 @@ export function Canvas() {
         });
       }
     },
-    [selectElements]
+    [selectBoth]
   );
 
 

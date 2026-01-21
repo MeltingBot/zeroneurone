@@ -31,6 +31,8 @@ interface CustomEdgeData {
   // Confidence indicator
   showConfidenceIndicator?: boolean;
   confidence?: number | null;
+  // Displayed properties
+  displayedPropertyValues?: { key: string; value: string }[];
 }
 
 function CustomEdgeComponent(props: EdgeProps) {
@@ -95,6 +97,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const onCurveOffsetChange = edgeData?.onCurveOffsetChange;
   const showConfidenceIndicator = edgeData?.showConfidenceIndicator ?? false;
   const confidence = edgeData?.confidence;
+  const displayedPropertyValues = edgeData?.displayedPropertyValues;
 
   // Calculate perpendicular offset for parallel edges
   const parallelSpacing = 30;
@@ -433,6 +436,41 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
+      {/* Displayed properties */}
+      {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0) + (showConfidenceIndicator && confidence !== null ? 18 : 0)})`}>
+          {displayedPropertyValues.slice(0, 2).map(({ key, value }, index) => {
+            const displayValue = value.length > 15 ? value.slice(0, 15) + '...' : value;
+            const displayText = `${key}: ${displayValue}`;
+            const textWidth = Math.min(displayText.length * 5 + 8, 100);
+            return (
+              <g key={key} transform={`translate(0, ${index * 14})`}>
+                <rect
+                  x={-textWidth / 2}
+                  y={-6}
+                  width={textWidth}
+                  height={12}
+                  rx={2}
+                  fill={themeMode === 'dark' ? '#3d3833' : '#f7f4ef'}
+                  stroke={themeMode === 'dark' ? '#6b6560' : '#e8e3db'}
+                  strokeWidth={0.5}
+                />
+                <text
+                  x={0}
+                  y={0}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={8}
+                  fill={themeMode === 'dark' ? '#9a948d' : '#6b6560'}
+                >
+                  {displayText}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      )}
+
       {/* Remote user indicator badge */}
       {remoteLinkSelectors.length > 0 && (
         <g transform={`translate(${controlHandleX}, ${controlHandleY - 20})`}>
@@ -548,6 +586,14 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.curveOffset?.y !== nextData.curveOffset?.y) return false;
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
   if (prevData.confidence !== nextData.confidence) return false;
+
+  // Compare displayed properties
+  const prevDisplayedProps = prevData.displayedPropertyValues ?? [];
+  const nextDisplayedProps = nextData.displayedPropertyValues ?? [];
+  if (prevDisplayedProps.length !== nextDisplayedProps.length) return false;
+  for (let i = 0; i < prevDisplayedProps.length; i++) {
+    if (prevDisplayedProps[i].key !== nextDisplayedProps[i].key || prevDisplayedProps[i].value !== nextDisplayedProps[i].value) return false;
+  }
 
   return true;
 }

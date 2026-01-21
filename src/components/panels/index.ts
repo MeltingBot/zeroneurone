@@ -1,6 +1,7 @@
 export { SidePanel } from './SidePanel';
 export { ElementDetail } from './ElementDetail';
 export { LinkDetail } from './LinkDetail';
+export { MultiSelectionDetail } from './MultiSelectionDetail';
 export { InvestigationDetail } from './InvestigationDetail';
 export { TagsEditor } from './TagsEditor';
 export { PropertiesEditor } from './PropertiesEditor';

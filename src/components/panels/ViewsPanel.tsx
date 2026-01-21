@@ -23,6 +23,7 @@ export function ViewsPanel() {
   const {
     currentInvestigation,
     elements,
+    links,
     updateElementPositions,
     toggleConfidenceIndicator,
     togglePropertyDisplay,
@@ -43,7 +44,7 @@ export function ViewsPanel() {
   const showConfidence = settings?.showConfidenceIndicator ?? false;
   const displayedProperties = settings?.displayedProperties ?? [];
 
-  // Get all unique property keys from elements
+  // Get all unique property keys from elements and links
   const allPropertyKeys = useMemo(() => {
     const keys = new Set<string>();
     for (const el of elements) {
@@ -51,8 +52,15 @@ export function ViewsPanel() {
         if (prop.key) keys.add(prop.key);
       }
     }
+    for (const link of links) {
+      if (link.properties) {
+        for (const prop of link.properties) {
+          if (prop.key) keys.add(prop.key);
+        }
+      }
+    }
     return Array.from(keys).sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [elements]);
+  }, [elements, links]);
 
   // Filter properties by search
   const filteredPropertyKeys = useMemo(() => {

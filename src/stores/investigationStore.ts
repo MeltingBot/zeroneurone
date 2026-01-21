@@ -77,6 +77,10 @@ interface InvestigationState {
   deleteLink: (id: LinkId) => Promise<void>;
   deleteLinks: (ids: LinkId[]) => Promise<void>;
 
+  // Actions - Bulk updates
+  updateElements: (ids: ElementId[], changes: Partial<Element>) => Promise<void>;
+  updateLinks: (ids: LinkId[], changes: Partial<Link>) => Promise<void>;
+
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
@@ -796,6 +800,56 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also delete from Dexie
     await linkRepository.deleteMany(ids).catch(() => {});
+  },
+
+  // ============================================================================
+  // BULK UPDATES
+  // ============================================================================
+
+  updateElements: async (ids: ElementId[], changes: Partial<Element>) => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { elements: elementsMap } = getYMaps(ydoc);
+
+    ydoc.transact(() => {
+      ids.forEach(id => {
+        const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+        if (ymap) {
+          updateElementYMap(ymap, changes, ydoc);
+        }
+      });
+    });
+
+    // Also update Dexie for backwards compatibility
+    await Promise.all(
+      ids.map(id => elementRepository.update(id, changes).catch(() => {}))
+    );
+  },
+
+  updateLinks: async (ids: LinkId[], changes: Partial<Link>) => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) {
+      throw new Error('Y.Doc not available');
+    }
+
+    const { links: linksMap } = getYMaps(ydoc);
+
+    ydoc.transact(() => {
+      ids.forEach(id => {
+        const ymap = linksMap.get(id) as Y.Map<any> | undefined;
+        if (ymap) {
+          updateLinkYMap(ymap, changes, ydoc);
+        }
+      });
+    });
+
+    // Also update Dexie
+    await Promise.all(
+      ids.map(id => linkRepository.update(id, changes).catch(() => {}))
+    );
   },
 
   // ============================================================================

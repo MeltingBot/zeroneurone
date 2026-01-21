@@ -225,11 +225,12 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
   return (
     <div ref={containerRef} className="divide-y divide-border-default">
-      {/* Connexion */}
+      {/* Connexion (equivalent to Identity in ElementDetail) */}
       <AccordionSection
         id="connection"
         title="Connexion"
         icon={<Link2 size={12} />}
+        badge={tagsBadge}
         defaultOpen={true}
       >
         <div className="space-y-4">
@@ -292,46 +293,34 @@ export function LinkDetail({ link }: LinkDetailProps) {
               })}
             </div>
           </div>
+
+          {/* Notes */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-text-secondary">Notes</label>
+            <MarkdownEditor
+              value={notes}
+              onChange={(value) => {
+                editingLinkIdRef.current = link.id;
+                setNotes(value);
+              }}
+              placeholder="Markdown: **gras**, *italique*, [lien](url), listes..."
+              minRows={3}
+              maxRows={10}
+            />
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-text-secondary">Tags</label>
+            <TagsEditor
+              tags={link.tags}
+              onChange={handleTagsChange}
+              suggestions={currentInvestigation?.settings.existingTags}
+              onNewTag={handleNewTag}
+              onTagSetTagAdded={handleTagSetTagAdded}
+            />
+          </div>
         </div>
-      </AccordionSection>
-
-      {/* Notes */}
-      <AccordionSection
-        id="notes"
-        title="Notes"
-        icon={<FileText size={12} />}
-        badge={notes ? (
-          <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">1</span>
-        ) : null}
-        defaultOpen={false}
-      >
-        <MarkdownEditor
-          value={notes}
-          onChange={(value) => {
-            editingLinkIdRef.current = link.id;
-            setNotes(value);
-          }}
-          placeholder="Markdown: **gras**, *italique*, [lien](url), listes..."
-          minRows={4}
-          maxRows={10}
-        />
-      </AccordionSection>
-
-      {/* Tags */}
-      <AccordionSection
-        id="tags"
-        title="Tags"
-        icon={<Tag size={12} />}
-        badge={tagsBadge}
-        defaultOpen={false}
-      >
-        <TagsEditor
-          tags={link.tags}
-          onChange={handleTagsChange}
-          suggestions={currentInvestigation?.settings.existingTags}
-          onNewTag={handleNewTag}
-          onTagSetTagAdded={handleTagSetTagAdded}
-        />
       </AccordionSection>
 
       {/* Métadonnées */}
@@ -454,17 +443,6 @@ export function LinkDetail({ link }: LinkDetailProps) {
         />
       </AccordionSection>
 
-      {/* Commentaires */}
-      <AccordionSection
-        id="comments"
-        title="Commentaires"
-        icon={<MessageSquare size={12} />}
-        badge={unresolvedCommentCount > 0 ? unresolvedCommentCount : undefined}
-        defaultOpen={unresolvedCommentCount > 0}
-      >
-        <CommentsSection targetId={link.id} targetType="link" />
-      </AccordionSection>
-
       {/* Apparence */}
       <AccordionSection
         id="appearance"
@@ -561,6 +539,17 @@ export function LinkDetail({ link }: LinkDetailProps) {
             </div>
           </div>
         </div>
+      </AccordionSection>
+
+      {/* Commentaires */}
+      <AccordionSection
+        id="comments"
+        title="Commentaires"
+        icon={<MessageSquare size={12} />}
+        badge={unresolvedCommentCount > 0 ? unresolvedCommentCount : undefined}
+        defaultOpen={unresolvedCommentCount > 0}
+      >
+        <CommentsSection targetId={link.id} targetType="link" />
       </AccordionSection>
 
       {/* Timestamps (read-only) */}

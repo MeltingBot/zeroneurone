@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
 import { LinkDetail } from './LinkDetail';
+import { MultiSelectionDetail } from './MultiSelectionDetail';
 import { InvestigationDetail } from './InvestigationDetail';
 import { FiltersPanel } from './FiltersPanel';
 import { ViewsPanel } from './ViewsPanel';
@@ -143,24 +144,11 @@ export function SidePanel() {
       );
     }
 
-    // Multiple items selected
+    // Multiple items selected - show bulk edit panel
     if (totalSelected > 1) {
       return (
-        <div className="flex-1 p-4">
-          <p className="text-sm text-text-secondary">
-            {totalSelected} élément{totalSelected > 1 ? 's' : ''} sélectionné{totalSelected > 1 ? 's' : ''}
-          </p>
-          <ul className="mt-2 space-y-1 text-xs text-text-tertiary">
-            {selectedElements.length > 0 && (
-              <li>{selectedElements.length} élément{selectedElements.length > 1 ? 's' : ''}</li>
-            )}
-            {selectedLinks.length > 0 && (
-              <li>{selectedLinks.length} lien{selectedLinks.length > 1 ? 's' : ''}</li>
-            )}
-          </ul>
-          <p className="mt-4 text-xs text-text-tertiary">
-            L'édition multiple sera disponible dans une future version.
-          </p>
+        <div className="flex-1 overflow-y-auto">
+          <MultiSelectionDetail />
         </div>
       );
     }
@@ -268,11 +256,11 @@ export function SidePanel() {
             <span className="text-xs text-text-secondary">
               {totalSelected === 0
                 ? 'Enquête'
-                : selectedElements.length === 1
+                : selectedElements.length === 1 && selectedLinks.length === 0
                 ? 'Élément'
-                : selectedLinks.length === 1
+                : selectedLinks.length === 1 && selectedElements.length === 0
                 ? 'Lien'
-                : `${totalSelected} sélectionnés`}
+                : 'Sélection multiple'}
             </span>
             {totalSelected > 0 && (
               <IconButton onClick={clearSelection} title="Désélectionner">
