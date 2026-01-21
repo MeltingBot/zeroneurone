@@ -169,6 +169,21 @@ function CanvasZoomControls() {
   );
 }
 
+// Viewport controller - watches for pending viewport changes and applies them
+function ViewportController() {
+  const { setViewport } = useReactFlow();
+  const { pendingViewport, clearPendingViewport } = useViewStore();
+
+  useEffect(() => {
+    if (pendingViewport) {
+      setViewport(pendingViewport, { duration: 300 });
+      clearPendingViewport();
+    }
+  }, [pendingViewport, setViewport, clearPendingViewport]);
+
+  return null;
+}
+
 
 // Convert our Element to React Flow Node
 function elementToNode(
@@ -2042,6 +2057,7 @@ export function Canvas() {
               style={{ backgroundColor: 'var(--color-bg-canvas)' }}
             />
             <CanvasCaptureHandler />
+            <ViewportController />
           </ReactFlow>
 
           {/* File drop overlay */}

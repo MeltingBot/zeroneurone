@@ -20,6 +20,13 @@ interface ViewState {
     zoom: number;
   };
 
+  // Pending viewport change (to be applied by Canvas via React Flow)
+  pendingViewport: {
+    x: number;
+    y: number;
+    zoom: number;
+  } | null;
+
   // Display mode
   displayMode: DisplayMode;
 
@@ -40,6 +47,8 @@ interface ViewState {
   panTo: (x: number, y: number) => void;
   saveViewportForInvestigation: (investigationId: InvestigationId) => void;
   loadViewportForInvestigation: (investigationId: InvestigationId) => boolean;
+  requestViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
+  clearPendingViewport: () => void;
 
   // Actions - Display mode
   setDisplayMode: (mode: DisplayMode) => void;
@@ -77,6 +86,7 @@ interface ViewState {
 
 export const useViewStore = create<ViewState>((set, get) => ({
   viewport: { x: 0, y: 0, zoom: 1 },
+  pendingViewport: null,
   displayMode: 'canvas',
   filters: { ...DEFAULT_FILTERS },
   hiddenElementIds: new Set(),
@@ -126,6 +136,14 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set((state) => ({
       viewport: { ...state.viewport, x, y },
     }));
+  },
+
+  requestViewportChange: (viewport) => {
+    set({ pendingViewport: viewport });
+  },
+
+  clearPendingViewport: () => {
+    set({ pendingViewport: null });
   },
 
   // Display mode

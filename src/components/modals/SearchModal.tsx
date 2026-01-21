@@ -6,10 +6,11 @@ import {
   useMemo,
   type KeyboardEvent,
 } from 'react';
-import { Search, Box, Link2, X } from 'lucide-react';
+import { Search, Box, Link2, X, Tag } from 'lucide-react';
 import { useInvestigationStore, useSelectionStore, useViewStore } from '../../stores';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
+import { getCountryByCode } from '../../data/countries';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -20,12 +21,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showTags, setShowTags] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const { elements, links } = useInvestigationStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
-  const { setViewport, viewport } = useViewStore();
+  const { requestViewportChange } = useViewStore();
 
   // Create maps for quick lookup
   const elementsMap = useMemo(
@@ -75,28 +77,48 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     (result: SearchResult) => {
       clearSelection();
 
+      // Zoom level for showing the found element clearly
+      const targetZoom = 1.0;
+      // Approximate canvas size (window minus side panel ~350px)
+      const canvasWidth = window.innerWidth - 350;
+      const canvasHeight = window.innerHeight;
+
       if (result.type === 'element') {
         const element = elementsMap.get(result.id);
         if (element) {
           selectElement(element.id);
+          // Get element center (position is top-left, add half of typical size)
+          const elementWidth = element.visual?.size?.width ?? 150;
+          const elementHeight = element.visual?.size?.height ?? 60;
+          const centerX = element.position.x + elementWidth / 2;
+          const centerY = element.position.y + elementHeight / 2;
           // Center viewport on element
-          setViewport({
-            x: -element.position.x * viewport.zoom + window.innerWidth / 3,
-            y: -element.position.y * viewport.zoom + window.innerHeight / 3,
-            zoom: viewport.zoom,
+          requestViewportChange({
+            x: -centerX * targetZoom + canvasWidth / 2,
+            y: -centerY * targetZoom + canvasHeight / 2,
+            zoom: targetZoom,
           });
         }
       } else {
         const link = linksMap.get(result.id);
         if (link) {
           selectLink(link.id);
-          // Center viewport on link source
+          // Center viewport on link midpoint
           const fromElement = elementsMap.get(link.fromId);
-          if (fromElement) {
-            setViewport({
-              x: -fromElement.position.x * viewport.zoom + window.innerWidth / 3,
-              y: -fromElement.position.y * viewport.zoom + window.innerHeight / 3,
-              zoom: viewport.zoom,
+          const toElement = elementsMap.get(link.toId);
+          if (fromElement && toElement) {
+            const midX = (fromElement.position.x + toElement.position.x) / 2;
+            const midY = (fromElement.position.y + toElement.position.y) / 2;
+            requestViewportChange({
+              x: -midX * targetZoom + canvasWidth / 2,
+              y: -midY * targetZoom + canvasHeight / 2,
+              zoom: targetZoom,
+            });
+          } else if (fromElement) {
+            requestViewportChange({
+              x: -fromElement.position.x * targetZoom + canvasWidth / 2,
+              y: -fromElement.position.y * targetZoom + canvasHeight / 2,
+              zoom: targetZoom,
             });
           }
         }
@@ -110,8 +132,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       selectElement,
       selectLink,
       clearSelection,
-      setViewport,
-      viewport.zoom,
+      requestViewportChange,
       onClose,
     ]
   );
@@ -158,20 +179,74 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [elementsMap, linksMap]
   );
 
-  const getResultExcerpt = useCallback(
+  // Get matching property info from search result
+  const getMatchingProperty = useCallback(
+    (result: SearchResult): { key: string; value: string } | null => {
+      if (!query.trim()) return null;
+      const queryLower = query.toLowerCase();
+
+      const properties = result.type === 'element'
+        ? elementsMap.get(result.id)?.properties
+        : linksMap.get(result.id)?.properties;
+
+      if (!properties) return null;
+
+      for (const prop of properties) {
+        const valueStr = String(prop.value ?? '');
+
+        // Check if property key or value matches query
+        const keyMatches = prop.key.toLowerCase().includes(queryLower);
+        const valueMatches = valueStr.toLowerCase().includes(queryLower);
+
+        // For country type, also check country name
+        let countryNameMatches = false;
+        let country = null;
+        if (prop.type === 'country' || /^[A-Z]{2}$/i.test(valueStr)) {
+          country = getCountryByCode(valueStr.toUpperCase());
+          if (country) {
+            countryNameMatches = country.name.toLowerCase().includes(queryLower);
+          }
+        }
+
+        if (keyMatches || valueMatches || countryNameMatches) {
+          // Format country values with flag
+          if (country) {
+            return { key: prop.key, value: `${country.flag} ${country.name}` };
+          }
+          return { key: prop.key, value: valueStr };
+        }
+      }
+      return null;
+    },
+    [elementsMap, linksMap, query]
+  );
+
+  // Get tags for a result
+  const getResultTags = useCallback(
+    (result: SearchResult): string[] => {
+      if (result.type === 'element') {
+        const el = elementsMap.get(result.id);
+        return el?.tags || [];
+      } else {
+        const link = linksMap.get(result.id);
+        return link?.tags || [];
+      }
+    },
+    [elementsMap, linksMap]
+  );
+
+  // Get excerpt (notes) for a result
+  const getResultNotes = useCallback(
     (result: SearchResult): string | null => {
       if (result.type === 'element') {
         const el = elementsMap.get(result.id);
         if (el?.notes) {
-          return el.notes.substring(0, 100) + (el.notes.length > 100 ? '...' : '');
-        }
-        if (el?.tags.length) {
-          return el.tags.join(', ');
+          return el.notes.substring(0, 80) + (el.notes.length > 80 ? '...' : '');
         }
       } else {
         const link = linksMap.get(result.id);
         if (link?.notes) {
-          return link.notes.substring(0, 100) + (link.notes.length > 100 ? '...' : '');
+          return link.notes.substring(0, 80) + (link.notes.length > 80 ? '...' : '');
         }
       }
       return null;
@@ -218,58 +293,104 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             </div>
           )}
 
-          {results.map((result, index) => (
-            <button
-              key={result.id}
-              onClick={() => handleSelect(result)}
-              className={`w-full px-4 py-3 flex items-start gap-3 text-left transition-colors ${
-                index === selectedIndex
-                  ? 'bg-accent/10'
-                  : 'hover:bg-bg-secondary'
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
-                  result.type === 'element'
-                    ? 'bg-accent/20 text-accent'
-                    : 'bg-bg-tertiary text-text-secondary'
+          {results.map((result, index) => {
+            const matchingProp = getMatchingProperty(result);
+            const tags = getResultTags(result);
+            const notes = getResultNotes(result);
+
+            return (
+              <button
+                key={result.id}
+                onClick={() => handleSelect(result)}
+                className={`w-full px-4 py-3 flex items-start gap-3 text-left transition-colors ${
+                  index === selectedIndex
+                    ? 'bg-accent/10'
+                    : 'hover:bg-bg-secondary'
                 }`}
               >
-                {result.type === 'element' ? (
-                  <Box size={16} />
-                ) : (
-                  <Link2 size={16} />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-text-primary truncate">
-                  {getResultLabel(result)}
+                <div
+                  className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
+                    result.type === 'element'
+                      ? 'bg-accent/20 text-accent'
+                      : 'bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  {result.type === 'element' ? (
+                    <Box size={16} />
+                  ) : (
+                    <Link2 size={16} />
+                  )}
                 </div>
-                {getResultExcerpt(result) && (
-                  <div className="text-xs text-text-tertiary truncate mt-0.5">
-                    {getResultExcerpt(result)}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-text-primary truncate">
+                    {getResultLabel(result)}
                   </div>
-                )}
-              </div>
-              <div className="text-xs text-text-tertiary">
-                {result.type === 'element' ? 'Élément' : 'Lien'}
-              </div>
-            </button>
-          ))}
+                  {/* Matching property */}
+                  {matchingProp && (
+                    <div className="text-xs text-accent mt-0.5">
+                      <span className="text-text-tertiary">{matchingProp.key}:</span> {matchingProp.value}
+                    </div>
+                  )}
+                  {/* Notes excerpt */}
+                  {notes && !matchingProp && (
+                    <div className="text-xs text-text-tertiary truncate mt-0.5">
+                      {notes}
+                    </div>
+                  )}
+                  {/* Tags */}
+                  {showTags && tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {tags.slice(0, 4).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-1.5 py-0.5 text-[10px] bg-bg-tertiary text-text-secondary rounded"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {tags.length > 4 && (
+                        <span className="text-[10px] text-text-tertiary">
+                          +{tags.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-text-tertiary">
+                  {result.type === 'element' ? 'Élément' : 'Lien'}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Footer hint */}
         {results.length > 0 && (
-          <div className="px-4 py-2 border-t border-border-default text-xs text-text-tertiary flex items-center gap-4">
-            <span>
-              <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">↑↓</kbd> pour naviguer
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Entrée</kbd> pour sélectionner
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Échap</kbd> pour fermer
-            </span>
+          <div className="px-4 py-2 border-t border-border-default text-xs text-text-tertiary flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span>
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">↑↓</kbd> naviguer
+              </span>
+              <span>
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Entrée</kbd> sélectionner
+              </span>
+              <span>
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Échap</kbd> fermer
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTags(!showTags);
+              }}
+              className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                showTags ? 'bg-accent/10 text-accent' : 'hover:bg-bg-tertiary'
+              }`}
+              title="Afficher les tags"
+            >
+              <Tag size={12} />
+              <span>Tags</span>
+            </button>
           </div>
         )}
       </div>

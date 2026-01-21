@@ -1,5 +1,6 @@
 import MiniSearch from 'minisearch';
-import type { Element, Link, SearchDocument, SearchResult } from '../types';
+import type { Element, Link, SearchDocument, SearchResult, Property } from '../types';
+import { getCountryByCode } from '../data/countries';
 
 class SearchService {
   private index: MiniSearch<SearchDocument>;
@@ -137,6 +138,21 @@ class SearchService {
     this.currentInvestigationId = null;
   }
 
+  /**
+   * Format a property for indexing, including country names for country-type properties
+   */
+  private formatPropertyForIndex(p: Property): string {
+    const value = String(p.value ?? '');
+    // If it's a country property, also add the country name
+    if (p.type === 'country' && value) {
+      const country = getCountryByCode(value);
+      if (country) {
+        return `${p.key} ${value} ${country.name}`;
+      }
+    }
+    return `${p.key} ${value}`;
+  }
+
   private elementToDocument(element: Element): SearchDocument {
     return {
       id: element.id,
@@ -146,7 +162,7 @@ class SearchService {
       notes: element.notes,
       tags: element.tags.join(' '),
       properties: element.properties
-        .map((p) => `${p.key} ${String(p.value ?? '')}`)
+        .map((p) => this.formatPropertyForIndex(p))
         .join(' '),
       extractedText: '', // Will be filled from assets later
     };
@@ -159,9 +175,9 @@ class SearchService {
       investigationId: link.investigationId,
       label: link.label,
       notes: link.notes,
-      tags: '', // Links don't have tags
+      tags: link.tags?.join(' ') ?? '',
       properties: link.properties
-        .map((p) => `${p.key} ${String(p.value ?? '')}`)
+        .map((p) => this.formatPropertyForIndex(p))
         .join(' '),
       extractedText: '',
     };

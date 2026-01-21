@@ -101,6 +101,7 @@ interface InvestigationState {
   // Actions - Display settings
   toggleConfidenceIndicator: () => Promise<void>;
   togglePropertyDisplay: (propertyKey: string) => Promise<void>;
+  clearDisplayedProperties: () => Promise<void>;
   setTagDisplayMode: (mode: 'none' | 'icons' | 'labels' | 'both') => Promise<void>;
   setTagDisplaySize: (size: 'small' | 'medium' | 'large') => Promise<void>;
 
@@ -1212,6 +1213,31 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           settings: {
             ...state.currentInvestigation.settings,
             displayedProperties: newDisplayed,
+          },
+        },
+      };
+    });
+  },
+
+  clearDisplayedProperties: async () => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) return;
+
+    await investigationRepository.update(currentInvestigation.id, {
+      settings: {
+        ...currentInvestigation.settings,
+        displayedProperties: [],
+      },
+    });
+
+    set((state) => {
+      if (!state.currentInvestigation) return state;
+      return {
+        currentInvestigation: {
+          ...state.currentInvestigation,
+          settings: {
+            ...state.currentInvestigation.settings,
+            displayedProperties: [],
           },
         },
       };

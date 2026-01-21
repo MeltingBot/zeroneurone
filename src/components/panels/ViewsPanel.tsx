@@ -27,6 +27,7 @@ export function ViewsPanel() {
     updateElementPositions,
     toggleConfidenceIndicator,
     togglePropertyDisplay,
+    clearDisplayedProperties,
     setTagDisplayMode,
     setTagDisplaySize,
   } = useInvestigationStore();
@@ -241,18 +242,21 @@ export function ViewsPanel() {
                 {filteredPropertyKeys.length > 0 ? (
                   filteredPropertyKeys.map((key) => {
                     const isDisplayed = displayedProperties.includes(key);
+                    const isAtLimit = displayedProperties.length >= 3 && !isDisplayed;
                     return (
                       <label
                         key={key}
-                        className={`flex items-center gap-2 cursor-pointer py-1.5 px-2 rounded transition-colors ${
-                          isDisplayed ? 'bg-accent/10 hover:bg-accent/15' : 'hover:bg-bg-tertiary'
+                        className={`flex items-center gap-2 py-1.5 px-2 rounded transition-colors ${
+                          isDisplayed ? 'bg-accent/10 hover:bg-accent/15 cursor-pointer' :
+                          isAtLimit ? 'opacity-50 cursor-not-allowed' : 'hover:bg-bg-tertiary cursor-pointer'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isDisplayed}
+                          disabled={isAtLimit}
                           onChange={() => togglePropertyDisplay(key)}
-                          className="w-4 h-4 rounded border-border-default text-accent focus:ring-accent"
+                          className="w-4 h-4 rounded border-border-default text-accent focus:ring-accent disabled:opacity-50"
                         />
                         <span className={`text-xs truncate ${isDisplayed ? 'text-text-primary font-medium' : 'text-text-secondary'}`}>
                           {key}
@@ -271,15 +275,13 @@ export function ViewsPanel() {
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[10px] text-text-tertiary">
                   {displayedProperties.length > 0
-                    ? `${displayedProperties.length} sélectionnée${displayedProperties.length > 1 ? 's' : ''}`
-                    : 'Aucune sélection'
+                    ? `${displayedProperties.length}/3 sélectionnée${displayedProperties.length > 1 ? 's' : ''}`
+                    : 'Max. 3'
                   }
                 </span>
                 {displayedProperties.length > 0 && (
                   <button
-                    onClick={() => {
-                      displayedProperties.forEach(key => togglePropertyDisplay(key));
-                    }}
+                    onClick={() => clearDisplayedProperties()}
                     className="text-[10px] text-text-tertiary hover:text-error"
                   >
                     Tout désélectionner
