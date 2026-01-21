@@ -393,6 +393,16 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         assets,
         isLoading: false,
       });
+
+      // If in shared mode, schedule additional syncs to catch late-arriving data
+      // This handles the case where Y.Doc updates arrive after the initial load
+      const state = syncService.getState();
+      if (state.mode === 'shared' && state.connected) {
+        // Re-sync after short delays to catch late data (links often arrive after elements)
+        setTimeout(() => get()._syncFromYDoc(), 200);
+        setTimeout(() => get()._syncFromYDoc(), 500);
+        setTimeout(() => get()._syncFromYDoc(), 1000);
+      }
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
     }
@@ -1190,12 +1200,25 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
     });
 
-    // Save new assets to OPFS in background - update state progressively
+    // Save new assets to OPFS in background - update state progressively with progress tracking
     if (newAssetsToSave.length > 0) {
       console.log(`[Sync] Saving ${newAssetsToSave.length} new asset(s) from peers...`);
 
-      // Save each asset and update state immediately when done
+      // Calculate total size for progress tracking
+      const totalSize = newAssetsToSave.reduce((sum, item) => sum + (item.assetData.size || 0), 0);
+
+      // Start progress tracking
+      const syncStore = useSyncStore.getState();
+      syncStore.startMediaSync(newAssetsToSave.length, totalSize);
+
+      let completedCount = 0;
+      let completedSize = 0;
+
+      // Save each asset and update state + progress immediately when done
       for (const { assetData, base64Data } of newAssetsToSave) {
+        // Update current asset being synced
+        syncStore.updateMediaSyncProgress(completedCount, completedSize, assetData.filename);
+
         fileService.saveAssetFromBase64(assetData, base64Data)
           .then((savedAsset) => {
             if (savedAsset) {
@@ -1204,10 +1227,27 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
               set((state) => ({
                 assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],
               }));
+
+              // Update progress
+              completedCount++;
+              completedSize += assetData.size || 0;
+              syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
+
+              // If all done, clear progress
+              if (completedCount === newAssetsToSave.length) {
+                setTimeout(() => syncStore.completeMediaSync(), 500);
+              }
             }
           })
           .catch((error) => {
             console.warn(`[Sync] Failed to save asset ${assetData.filename}:`, error);
+            // Still count as completed for progress (failed)
+            completedCount++;
+            syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
+
+            if (completedCount === newAssetsToSave.length) {
+              setTimeout(() => syncStore.completeMediaSync(), 500);
+            }
           });
       }
     }

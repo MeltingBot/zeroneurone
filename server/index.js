@@ -336,6 +336,7 @@ const server = createServer((req, res) => {
 const wss = new WebSocketServer({
   server,
   maxPayload: LIMITS.MAX_MESSAGE_SIZE,
+  perMessageDeflate: false, // Disable compression for binary data reliability
 });
 setupWebSocketRelay(wss);
 

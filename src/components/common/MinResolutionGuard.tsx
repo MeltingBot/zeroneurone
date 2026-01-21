@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 
 const MIN_WIDTH = 1280;
-const MIN_HEIGHT = 800;
+const MIN_HEIGHT = 720;
 
 interface MinResolutionGuardProps {
   children: React.ReactNode;

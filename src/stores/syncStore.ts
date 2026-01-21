@@ -45,6 +45,20 @@ function getOrCreateLocalUser(): LocalUser {
 // STORE INTERFACE
 // ============================================================================
 
+/** Media sync progress tracking */
+export interface MediaSyncProgress {
+  /** Total number of assets to sync */
+  total: number;
+  /** Number of assets completed */
+  completed: number;
+  /** Total size in bytes */
+  totalSize: number;
+  /** Completed size in bytes */
+  completedSize: number;
+  /** Currently syncing asset filename */
+  currentAsset: string | null;
+}
+
 interface SyncStoreState extends SyncState {
   /** Local user info */
   localUser: LocalUser;
@@ -54,6 +68,9 @@ interface SyncStoreState extends SyncState {
 
   /** Current encryption key (if sharing) */
   encryptionKey: string | null;
+
+  /** Media sync progress (null when not syncing media) */
+  mediaSyncProgress: MediaSyncProgress | null;
 
   /** Actions */
   share: (investigationName?: string) => Promise<{ shareUrl: string; encryptionKey: string }>;
@@ -68,6 +85,11 @@ interface SyncStoreState extends SyncState {
   updateDragging: (elementIds: string[]) => void;
   updateEditing: (elementId: string | null) => void;
   updateEditingLink: (linkId: string | null) => void;
+
+  /** Media sync progress updates */
+  startMediaSync: (total: number, totalSize: number) => void;
+  updateMediaSyncProgress: (completed: number, completedSize: number, currentAsset: string | null) => void;
+  completeMediaSync: () => void;
 
   /** Internal: called by syncService state changes */
   _syncStateChanged: (state: SyncState) => void;
@@ -152,7 +174,8 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         return;
       }
 
-      const remoteUsers: UserPresence[] = [];
+      // Use Map to deduplicate by userId (same user may have multiple clientIds)
+      const usersByUserId = new Map<string, UserPresence>();
       const localClientId = awareness.clientID;
       const allStates = awareness.getStates();
       const now = Date.now();
@@ -165,23 +188,29 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
           // Only include non-stale users
           if (!isStale) {
-            remoteUsers.push({
-              odUserId: state.userId,
-              name: state.name || 'Anonyme',
-              color: state.color || '#888888',
-              cursor: state.cursor || null,
-              selection: state.selection || [],
-              linkSelection: state.linkSelection || [],
-              dragging: state.dragging || [],
-              editing: state.editing || null,
-              editingLink: state.editingLink || null,
-              viewMode: state.viewMode || 'canvas',
-            });
+            const userId = state.userId as string;
+            const existing = usersByUserId.get(userId);
+
+            // Keep the most recent entry for this userId
+            if (!existing || (existing && lastSeen > (existing.cursor ? Date.now() : 0))) {
+              usersByUserId.set(userId, {
+                odUserId: userId,
+                name: state.name || 'Anonyme',
+                color: state.color || '#888888',
+                cursor: state.cursor || null,
+                selection: state.selection || [],
+                linkSelection: state.linkSelection || [],
+                dragging: state.dragging || [],
+                editing: state.editing || null,
+                editingLink: state.editingLink || null,
+                viewMode: state.viewMode || 'canvas',
+              });
+            }
           }
         }
       });
 
-      set({ remoteUsers });
+      set({ remoteUsers: Array.from(usersByUserId.values()) });
     };
 
     awareness.on('change', updateRemoteUsers);
@@ -225,6 +254,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
     localUser,
     remoteUsers: [],
     encryptionKey: null,
+    mediaSyncProgress: null,
 
     // Share the current investigation
     // Uses the investigation UUID as room ID and generates a new encryption key
@@ -338,6 +368,38 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
       const state = awareness.getLocalState() || {};
       awareness.setLocalState({ ...state, editingLink: linkId });
+    },
+
+    // Start tracking media sync progress
+    startMediaSync: (total, totalSize) => {
+      set({
+        mediaSyncProgress: {
+          total,
+          completed: 0,
+          totalSize,
+          completedSize: 0,
+          currentAsset: null,
+        },
+      });
+    },
+
+    // Update media sync progress
+    updateMediaSyncProgress: (completed, completedSize, currentAsset) => {
+      set((state) => ({
+        mediaSyncProgress: state.mediaSyncProgress
+          ? {
+              ...state.mediaSyncProgress,
+              completed,
+              completedSize,
+              currentAsset,
+            }
+          : null,
+      }));
+    },
+
+    // Complete media sync (clear progress)
+    completeMediaSync: () => {
+      set({ mediaSyncProgress: null });
     },
 
     // Internal: handle sync state changes from service
