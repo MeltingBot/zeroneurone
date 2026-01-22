@@ -256,11 +256,15 @@ function ElementNodeComponent({ data }: NodeProps) {
   // Clip-path for hexagon shape
   const hexagonClipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
 
-  // Compute border color for hexagon drop-shadow (since clip-path clips regular borders)
+  // Compute border for hexagon using drop-shadow (since clip-path clips regular borders)
   const hexBorderColor = themeMode === 'dark'
     ? getThemeAwareColor(element.visual.borderColor, true)
     : element.visual.borderColor;
-  const hexagonBorderFilter = `drop-shadow(1px 0 0 ${hexBorderColor}) drop-shadow(-1px 0 0 ${hexBorderColor}) drop-shadow(0 1px 0 ${hexBorderColor}) drop-shadow(0 -1px 0 ${hexBorderColor})`;
+  const hexBorderWidth = element.visual.borderWidth ?? 2;
+  // Use drop-shadow with offset matching border width for visible border effect
+  const hexagonBorderFilter = hexBorderWidth > 0
+    ? `drop-shadow(0 0 1px ${hexBorderColor}) drop-shadow(${hexBorderWidth}px 0 0 ${hexBorderColor}) drop-shadow(-${hexBorderWidth}px 0 0 ${hexBorderColor}) drop-shadow(0 ${hexBorderWidth}px 0 ${hexBorderColor}) drop-shadow(0 -${hexBorderWidth}px 0 ${hexBorderColor})`
+    : undefined;
 
   // Handle visibility: show when hovered or selected
   const handleOpacity = isHovered || isSelected ? 'opacity-100' : 'opacity-0';
@@ -494,7 +498,7 @@ function ElementNodeComponent({ data }: NodeProps) {
         className={`
           w-full h-full
           flex flex-col items-center justify-center overflow-hidden
-          ${element.visual.shape === 'hexagon' && !hasThumbnail ? '' : 'border-2'} transition-all
+          transition-all
           ${hasThumbnail ? 'sketchy-border-soft' : shapeStyles[element.visual.shape]}
           ${isSelected ? 'selection-ring' : 'node-shadow hover:node-shadow-hover'}
         `}
@@ -502,6 +506,9 @@ function ElementNodeComponent({ data }: NodeProps) {
           backgroundColor: hasThumbnail
             ? 'var(--color-bg-primary)'
             : getThemeAwareColor(element.visual.color, themeMode === 'dark'),
+          // Border properties (hexagon uses drop-shadow instead)
+          borderWidth: element.visual.shape === 'hexagon' && !hasThumbnail ? 0 : (element.visual.borderWidth ?? 2),
+          borderStyle: element.visual.borderStyle ?? 'solid',
           borderColor: themeMode === 'dark' && !hasThumbnail
             ? getThemeAwareColor(element.visual.borderColor, true)
             : element.visual.borderColor,

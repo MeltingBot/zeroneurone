@@ -108,6 +108,8 @@ export interface TagSet {
 export interface ElementVisual {
   color: string;
   borderColor: string;
+  borderWidth?: number;  // default: 2
+  borderStyle?: 'solid' | 'dashed' | 'dotted';  // default: 'solid'
   shape: ElementShape;
   size: ElementSize;
   icon: string | null;

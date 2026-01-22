@@ -15,6 +15,13 @@ const SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'hexagon', label: 'Hexagone' },
 ];
 
+const BORDER_WIDTHS = [1, 2, 3, 4];
+const BORDER_STYLES: { value: 'solid' | 'dashed' | 'dotted'; label: string }[] = [
+  { value: 'solid', label: 'Plein' },
+  { value: 'dashed', label: 'Tirets' },
+  { value: 'dotted', label: 'Points' },
+];
+
 export function VisualEditor({ visual, onChange }: VisualEditorProps) {
   const handleColorChange = useCallback(
     (color: string) => {
@@ -26,6 +33,20 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
   const handleBorderColorChange = useCallback(
     (borderColor: string) => {
       onChange({ borderColor });
+    },
+    [onChange]
+  );
+
+  const handleBorderWidthChange = useCallback(
+    (borderWidth: number) => {
+      onChange({ borderWidth });
+    },
+    [onChange]
+  );
+
+  const handleBorderStyleChange = useCallback(
+    (borderStyle: 'solid' | 'dashed' | 'dotted') => {
+      onChange({ borderStyle });
     },
     [onChange]
   );
@@ -117,6 +138,49 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
               className="w-6 h-6 rounded cursor-pointer border-0 p-0"
               aria-label="Bordure personnalisée"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Border width and style - side by side */}
+      <div className="flex gap-4">
+        {/* Border width */}
+        <div className="space-y-1.5 flex-1">
+          <label className="text-xs text-text-tertiary">Épaisseur</label>
+          <div className="flex gap-1">
+            {BORDER_WIDTHS.map((width) => (
+              <button
+                key={width}
+                onClick={() => handleBorderWidthChange(width)}
+                className={`flex-1 px-2 py-1 text-xs rounded border transition-colors ${
+                  (visual.borderWidth ?? 2) === width
+                    ? 'bg-accent text-white border-accent'
+                    : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+                }`}
+              >
+                {width}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Border style */}
+        <div className="space-y-1.5 flex-1">
+          <label className="text-xs text-text-tertiary">Style</label>
+          <div className="flex gap-1">
+            {BORDER_STYLES.map((style) => (
+              <button
+                key={style.value}
+                onClick={() => handleBorderStyleChange(style.value)}
+                className={`flex-1 px-2 py-1 text-xs rounded border transition-colors ${
+                  (visual.borderStyle ?? 'solid') === style.value
+                    ? 'bg-accent text-white border-accent'
+                    : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+                }`}
+              >
+                {style.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
