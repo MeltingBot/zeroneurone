@@ -1,16 +1,19 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Eye, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2 } from 'lucide-react';
+import {
+  Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
+  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles
+} from 'lucide-react';
 import { useInvestigationStore, useViewStore } from '../../stores';
 import type { View } from '../../types';
 
 type TagDisplayMode = 'none' | 'icons' | 'labels' | 'both';
 type TagDisplaySize = 'small' | 'medium' | 'large';
 
-const TAG_MODE_OPTIONS: { value: TagDisplayMode; label: string }[] = [
-  { value: 'none', label: 'Masqués' },
-  { value: 'icons', label: 'Icônes' },
-  { value: 'labels', label: 'Labels' },
-  { value: 'both', label: 'Les deux' },
+const TAG_MODE_OPTIONS: { value: TagDisplayMode; label: string; icon: React.ReactNode }[] = [
+  { value: 'none', label: 'Masqués', icon: <EyeOff size={14} /> },
+  { value: 'icons', label: 'Icônes', icon: <Grid2X2 size={14} /> },
+  { value: 'labels', label: 'Labels', icon: <Type size={14} /> },
+  { value: 'both', label: 'Icônes + Labels', icon: <Layers size={14} /> },
 ];
 
 const TAG_SIZE_OPTIONS: { value: TagDisplaySize; label: string }[] = [
@@ -150,13 +153,14 @@ export function ViewsPanel() {
               <button
                 key={opt.value}
                 onClick={() => handleModeChange(opt.value)}
-                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                title={opt.label}
+                className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
                   tagDisplayMode === opt.value
                     ? 'bg-accent text-white'
                     : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
                 }`}
               >
-                {opt.label}
+                {opt.icon}
               </button>
             ))}
           </div>
@@ -212,57 +216,64 @@ export function ViewsPanel() {
             <span>Liaisons</span>
           </div>
 
-          {/* Curve mode */}
-          <div className="space-y-1.5 pl-4">
-            <span className="text-[10px] text-text-tertiary">Forme</span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setLinkCurveMode('curved')}
-                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                  linkCurveMode === 'curved'
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                }`}
-              >
-                Courbes
-              </button>
-              <button
-                onClick={() => setLinkCurveMode('straight')}
-                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                  linkCurveMode === 'straight'
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                }`}
-              >
-                Droites
-              </button>
+          {/* Curve mode + Anchor mode in a row */}
+          <div className="flex gap-4 pl-4">
+            {/* Curve mode */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-text-tertiary">Forme</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setLinkCurveMode('curved')}
+                  title="Courbes"
+                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
+                    linkCurveMode === 'curved'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  <Spline size={14} />
+                </button>
+                <button
+                  onClick={() => setLinkCurveMode('straight')}
+                  title="Droites"
+                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
+                    linkCurveMode === 'straight'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  <Minus size={14} />
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Anchor mode */}
-          <div className="space-y-1.5 pl-4">
-            <span className="text-[10px] text-text-tertiary">Ancrage</span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setLinkAnchorMode('manual')}
-                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                  linkAnchorMode === 'manual'
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                }`}
-              >
-                Manuel
-              </button>
-              <button
-                onClick={() => setLinkAnchorMode('auto')}
-                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                  linkAnchorMode === 'auto'
-                    ? 'bg-accent text-white'
-                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                }`}
-              >
-                Optimisé
-              </button>
+            {/* Anchor mode */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-text-tertiary">Ancrage</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setLinkAnchorMode('manual')}
+                  title="Manuel"
+                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
+                    linkAnchorMode === 'manual'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  <Hand size={14} />
+                </button>
+                <button
+                  onClick={() => setLinkAnchorMode('auto')}
+                  title="Optimisé"
+                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
+                    linkAnchorMode === 'auto'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  <Sparkles size={14} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
