@@ -118,7 +118,7 @@ export interface ElementVisual {
   customHeight?: number;
 }
 
-export type ElementShape = 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
+export type ElementShape = 'circle' | 'square' | 'diamond' | 'rectangle';
 export type ElementSize = 'small' | 'medium' | 'large' | number;
 
 /** Link visual appearance */

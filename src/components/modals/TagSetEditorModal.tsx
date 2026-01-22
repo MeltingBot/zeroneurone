@@ -16,7 +16,6 @@ const SHAPE_OPTIONS: { value: ElementShape; label: string }[] = [
   { value: 'square', label: 'Carré' },
   { value: 'diamond', label: 'Losange' },
   { value: 'rectangle', label: 'Rectangle' },
-  { value: 'hexagon', label: 'Hexagone' },
 ];
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [

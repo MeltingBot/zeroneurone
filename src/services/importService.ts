@@ -1614,7 +1614,7 @@ class ImportService {
 
   private isValidShape(value: string | undefined): boolean {
     if (!value) return false;
-    return ['circle', 'square', 'diamond', 'rectangle', 'hexagon'].includes(value.toLowerCase());
+    return ['circle', 'square', 'diamond', 'rectangle'].includes(value.toLowerCase());
   }
 
   private isValidLinkStyle(value: string | undefined): boolean {

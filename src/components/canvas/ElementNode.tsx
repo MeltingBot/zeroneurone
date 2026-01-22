@@ -215,8 +215,8 @@ function ElementNodeComponent({ data }: NodeProps) {
       return { width: Math.min(width, 250), height };
     }
 
-    if (shape === 'circle' || shape === 'hexagon') {
-      // Circle/Hexagon: need to be big enough to contain text
+    if (shape === 'circle') {
+      // Circle: need to be big enough to contain text
       // Diameter should accommodate text width with some margin
       const size = Math.max(estimatedTextWidth * 0.8, baseSize, 50);
       return { width: Math.min(size, 150), height: Math.min(size, 150) };
@@ -250,21 +250,7 @@ function ElementNodeComponent({ data }: NodeProps) {
     square: 'sketchy-border',
     diamond: 'sketchy-border rotate-45',
     rectangle: 'sketchy-border',
-    hexagon: '', // Hexagon uses clip-path instead
   };
-
-  // Clip-path for hexagon shape
-  const hexagonClipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
-
-  // Compute border for hexagon using drop-shadow (since clip-path clips regular borders)
-  const hexBorderColor = themeMode === 'dark'
-    ? getThemeAwareColor(element.visual.borderColor, true)
-    : element.visual.borderColor;
-  const hexBorderWidth = element.visual.borderWidth ?? 2;
-  // Use drop-shadow with offset matching border width for visible border effect
-  const hexagonBorderFilter = hexBorderWidth > 0
-    ? `drop-shadow(0 0 1px ${hexBorderColor}) drop-shadow(${hexBorderWidth}px 0 0 ${hexBorderColor}) drop-shadow(-${hexBorderWidth}px 0 0 ${hexBorderColor}) drop-shadow(0 ${hexBorderWidth}px 0 ${hexBorderColor}) drop-shadow(0 -${hexBorderWidth}px 0 ${hexBorderColor})`
-    : undefined;
 
   // Handle visibility: show when hovered or selected
   const handleOpacity = isHovered || isSelected ? 'opacity-100' : 'opacity-0';
@@ -506,15 +492,12 @@ function ElementNodeComponent({ data }: NodeProps) {
           backgroundColor: hasThumbnail
             ? 'var(--color-bg-primary)'
             : getThemeAwareColor(element.visual.color, themeMode === 'dark'),
-          // Border properties (hexagon uses drop-shadow instead)
-          borderWidth: element.visual.shape === 'hexagon' && !hasThumbnail ? 0 : (element.visual.borderWidth ?? 2),
+          // Border properties
+          borderWidth: element.visual.borderWidth ?? 2,
           borderStyle: element.visual.borderStyle ?? 'solid',
           borderColor: themeMode === 'dark' && !hasThumbnail
             ? getThemeAwareColor(element.visual.borderColor, true)
             : element.visual.borderColor,
-          clipPath: element.visual.shape === 'hexagon' && !hasThumbnail ? hexagonClipPath : undefined,
-          // Hexagon uses drop-shadow for border since clip-path clips regular borders
-          filter: element.visual.shape === 'hexagon' && !hasThumbnail ? hexagonBorderFilter : undefined,
           // Remote user selection/dragging ring - more prominent when dragging
           boxShadow: (() => {
             if (!remoteSelectors || remoteSelectors.length === 0) return undefined;

@@ -20,12 +20,12 @@ interface TimelineItem {
   // Thumbnail info from source element
   thumbLetter: string;
   thumbColor: string;
-  thumbShape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
+  thumbShape: 'circle' | 'square' | 'diamond' | 'rectangle';
   thumbImageId?: string; // AssetId for image thumbnail
   // Destination thumbnail info (for links)
   destThumbLetter?: string;
   destThumbColor?: string;
-  destThumbShape?: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
+  destThumbShape?: 'circle' | 'square' | 'diamond' | 'rectangle';
   destThumbImageId?: string;
 }
 
@@ -1143,7 +1143,7 @@ export function TimelineView() {
 // Thumbnail component showing element image or shape with color
 function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
   imageUrl?: string;
-  shape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
+  shape: 'circle' | 'square' | 'diamond' | 'rectangle';
   color: string;
   letter: string;
   blur?: boolean;
@@ -1174,10 +1174,7 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
     square: 'rounded-sm',
     diamond: 'rounded-sm rotate-45',
     rectangle: 'rounded-sm',
-    hexagon: '', // Uses clip-path
   };
-
-  const hexagonClipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
 
   return (
     <div
@@ -1186,7 +1183,6 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
         ...sizeStyle,
         backgroundColor: color,
         fontSize: `${fontSize}px`,
-        clipPath: shape === 'hexagon' ? hexagonClipPath : undefined,
       }}
     >
       <span className={shape === 'diamond' ? '-rotate-45' : ''}>

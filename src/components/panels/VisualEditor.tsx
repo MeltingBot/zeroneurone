@@ -12,14 +12,13 @@ const SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'square', label: 'Carré' },
   { value: 'diamond', label: 'Losange' },
   { value: 'rectangle', label: 'Rectangle' },
-  { value: 'hexagon', label: 'Hexagone' },
 ];
 
-const BORDER_WIDTHS = [1, 2, 3, 4];
+const BORDER_WIDTHS = [1, 2, 3, 4, 5];
 const BORDER_STYLES: { value: 'solid' | 'dashed' | 'dotted'; label: string }[] = [
-  { value: 'solid', label: 'Plein' },
+  { value: 'solid', label: 'Continu' },
   { value: 'dashed', label: 'Tirets' },
-  { value: 'dotted', label: 'Points' },
+  { value: 'dotted', label: 'Pointillé' },
 ];
 
 export function VisualEditor({ visual, onChange }: VisualEditorProps) {
@@ -142,46 +141,53 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
         </div>
       </div>
 
-      {/* Border width and style - side by side */}
-      <div className="flex gap-4">
-        {/* Border width */}
-        <div className="space-y-1.5 flex-1">
-          <label className="text-xs text-text-tertiary">Épaisseur</label>
-          <div className="flex gap-1">
-            {BORDER_WIDTHS.map((width) => (
-              <button
-                key={width}
-                onClick={() => handleBorderWidthChange(width)}
-                className={`flex-1 px-2 py-1 text-xs rounded border transition-colors ${
-                  (visual.borderWidth ?? 2) === width
-                    ? 'bg-accent text-white border-accent'
-                    : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
-                }`}
-              >
-                {width}
-              </button>
-            ))}
-          </div>
+      {/* Border style */}
+      <div className="space-y-1.5">
+        <label className="text-xs text-text-tertiary">Style de bordure</label>
+        <div className="flex gap-2">
+          {BORDER_STYLES.map((style) => (
+            <button
+              key={style.value}
+              onClick={() => handleBorderStyleChange(style.value)}
+              className={`flex-1 px-2 py-1.5 text-xs rounded border ${
+                (visual.borderStyle ?? 'solid') === style.value
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+              }`}
+            >
+              {style.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Border style */}
-        <div className="space-y-1.5 flex-1">
-          <label className="text-xs text-text-tertiary">Style</label>
-          <div className="flex gap-1">
-            {BORDER_STYLES.map((style) => (
-              <button
-                key={style.value}
-                onClick={() => handleBorderStyleChange(style.value)}
-                className={`flex-1 px-2 py-1 text-xs rounded border transition-colors ${
-                  (visual.borderStyle ?? 'solid') === style.value
-                    ? 'bg-accent text-white border-accent'
-                    : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
-                }`}
-              >
-                {style.label}
-              </button>
-            ))}
-          </div>
+      {/* Border width */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-text-tertiary">Épaisseur</label>
+          <span className="text-xs text-text-tertiary">{visual.borderWidth ?? 2}px</span>
+        </div>
+        <div className="flex gap-1">
+          {BORDER_WIDTHS.map((width) => (
+            <button
+              key={width}
+              onClick={() => handleBorderWidthChange(width)}
+              className={`flex-1 h-8 rounded border flex items-center justify-center ${
+                (visual.borderWidth ?? 2) === width
+                  ? 'bg-accent border-accent'
+                  : 'bg-bg-secondary border-border-default hover:border-accent'
+              }`}
+            >
+              <div
+                className="rounded-full"
+                style={{
+                  width: '100%',
+                  height: width,
+                  backgroundColor: (visual.borderWidth ?? 2) === width ? 'white' : visual.borderColor,
+                }}
+              />
+            </button>
+          ))}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, Hexagon, RectangleHorizontal, Download, Upload, HelpCircle } from 'lucide-react';
+import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Download, Upload, HelpCircle } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { Modal, Button, IconButton } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
@@ -15,7 +15,6 @@ const shapeIcons: Record<ElementShape, typeof Circle> = {
   circle: Circle,
   square: Square,
   diamond: Diamond,
-  hexagon: Hexagon,
   rectangle: RectangleHorizontal,
 };
 
@@ -173,7 +172,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
 Personne,Une personne physique,#3b82f6,circle,prenom:text;nom:text;date_naissance:date
 Entreprise,Une societe,#22c55e,square,raison_sociale:text;siret:text
 Vehicule,Un vehicule,#f97316,diamond,immatriculation:text;marque:text;modele:text
-Adresse,Une adresse postale,#8b5cf6,hexagon,rue:text;ville:text;code_postal:text`;
+Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:text`;
 
     const blob = new Blob([template], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -285,7 +284,7 @@ Adresse,Une adresse postale,#8b5cf6,hexagon,rue:text;ville:text;code_postal:text
           }
 
           const shape = shapeIdx >= 0 ? values[shapeIdx]?.trim() : '';
-          const validShapes = ['circle', 'square', 'diamond', 'hexagon', 'rectangle'];
+          const validShapes = ['circle', 'square', 'diamond', 'rectangle'];
 
           await create({
             name,

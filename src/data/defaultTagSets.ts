@@ -171,7 +171,7 @@ export const DEFAULT_TAG_SETS: TagSet[] = [
     description: 'Portefeuille de cryptomonnaie...',
     defaultVisual: {
       color: '#f97316',
-      shape: 'hexagon',
+      shape: 'diamond',
       icon: 'Wallet',
     },
     suggestedProperties: [

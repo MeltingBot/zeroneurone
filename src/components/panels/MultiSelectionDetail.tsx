@@ -31,7 +31,6 @@ const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'square', label: '□' },
   { value: 'diamond', label: '◇' },
   { value: 'rectangle', label: '▭' },
-  { value: 'hexagon', label: '⬡' },
 ];
 
 const LINK_DIRECTIONS: { value: LinkDirection; icon: typeof Minus; label: string }[] = [
