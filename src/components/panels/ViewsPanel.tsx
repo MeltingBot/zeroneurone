@@ -264,7 +264,7 @@ export function ViewsPanel() {
                 </button>
                 <button
                   onClick={() => setLinkAnchorMode('auto')}
-                  title="Optimisé"
+                  title="Automatique"
                   className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
                     linkAnchorMode === 'auto'
                       ? 'bg-accent text-white'
