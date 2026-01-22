@@ -2,8 +2,10 @@
  * SyncStatusIndicator - Shows sync status (local, connected, syncing, reconnecting, error)
  */
 
+import { useState } from 'react';
 import { Wifi, WifiOff, RefreshCw, AlertCircle, X, RotateCcw, Download } from 'lucide-react';
 import { useSyncStore } from '../../stores';
+import { Modal, Button } from '../common';
 
 /** Format bytes to human readable string */
 function formatBytes(bytes: number): string {
@@ -16,34 +18,36 @@ function formatBytes(bytes: number): string {
 
 export function SyncStatusIndicator() {
   const { mode, connected, syncing, reconnecting, error, unshare, mediaSyncProgress } = useSyncStore();
+  const [showWarning, setShowWarning] = useState(false);
 
   const handleDisconnect = () => {
+    setShowWarning(true);
+  };
+
+  const handleConfirmDisconnect = () => {
+    setShowWarning(false);
     unshare();
   };
 
-  // Local mode - no indicator needed or minimal
+  // Determine status content
+  let statusContent: React.ReactNode;
+
   if (mode === 'local') {
-    return (
+    statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-tertiary">
         <WifiOff size={14} />
         <span>Local</span>
       </div>
     );
-  }
-
-  // Shared mode with error (only show if not reconnecting)
-  if (error && !reconnecting) {
-    return (
+  } else if (error && !reconnecting) {
+    statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-error" title={error}>
         <AlertCircle size={14} />
         <span>Erreur</span>
       </div>
     );
-  }
-
-  // Shared mode, reconnecting after disconnect
-  if (reconnecting) {
-    return (
+  } else if (reconnecting) {
+    statusContent = (
       <div
         className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning"
         title="Connexion perdue, tentative de reconnexion..."
@@ -52,28 +56,20 @@ export function SyncStatusIndicator() {
         <span>Reconnexion...</span>
       </div>
     );
-  }
-
-  // Shared mode, syncing
-  if (syncing) {
-    return (
+  } else if (syncing) {
+    statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning">
         <RefreshCw size={14} className="animate-spin" />
         <span>Sync...</span>
       </div>
     );
-  }
-
-  // Shared mode, connected - show icon and disconnect button
-  if (connected) {
-    // Calculate media sync progress percentage
+  } else if (connected) {
     const progressPercent = mediaSyncProgress
       ? Math.round((mediaSyncProgress.completed / mediaSyncProgress.total) * 100)
       : 0;
 
-    return (
+    statusContent = (
       <div className="flex items-center gap-2">
-        {/* Media sync progress indicator */}
         {mediaSyncProgress && (
           <div
             className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning bg-bg-secondary rounded border border-border-default"
@@ -90,7 +86,6 @@ export function SyncStatusIndicator() {
             </div>
           </div>
         )}
-        {/* Connection status */}
         <div className="flex items-center gap-1 px-2 py-1 text-xs text-success" title="Connecté">
           <Wifi size={14} />
           <button
@@ -103,13 +98,41 @@ export function SyncStatusIndicator() {
         </div>
       </div>
     );
+  } else {
+    statusContent = (
+      <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary">
+        <RefreshCw size={14} className="animate-spin" />
+        <span>Connexion...</span>
+      </div>
+    );
   }
 
-  // Shared mode, connecting...
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary">
-      <RefreshCw size={14} className="animate-spin" />
-      <span>Connexion...</span>
-    </div>
+    <>
+      {statusContent}
+      <Modal
+        isOpen={showWarning}
+        onClose={() => setShowWarning(false)}
+        title="Se déconnecter du partage"
+        width="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowWarning(false)}>
+              Annuler
+            </Button>
+            <Button variant="primary" onClick={handleConfirmDisconnect}>
+              Se déconnecter
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Les autres participants pourront toujours utiliser le lien de partage pour synchroniser leurs modifications et reprendre la collaboration.
+        </p>
+        <p className="text-sm text-text-secondary mt-2">
+          Vous pourrez rejoindre la session plus tard via le meme lien.
+        </p>
+      </Modal>
+    </>
   );
 }

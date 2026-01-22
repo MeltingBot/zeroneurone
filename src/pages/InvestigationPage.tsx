@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee } from 'lucide-react';
-import { Layout, IconButton } from '../components/common';
+import { Layout, IconButton, Modal, Button } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, ReportModal, ShortcutsModal } from '../components/modals';
 
@@ -9,7 +9,7 @@ import { SearchModal, ExportModal, ReportModal, ShortcutsModal } from '../compon
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
 const TimelineView = lazy(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
-import { useInvestigationStore, useUIStore, useSelectionStore, useViewStore } from '../stores';
+import { useInvestigationStore, useUIStore, useSelectionStore, useViewStore, useSyncStore } from '../stores';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
@@ -37,14 +37,26 @@ export function InvestigationPage() {
   const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState } = useUIStore();
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
+  const syncMode = useSyncStore((state) => state.mode);
+
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [collabLeaveWarning, setCollabLeaveWarning] = useState(false);
 
-  // Handle navigation back to home - properly close sync connection
+  // Handle navigation back to home - show warning if in collab mode
   const handleGoHome = useCallback(() => {
-    // Close sync connection before navigating
+    if (syncMode === 'shared') {
+      setCollabLeaveWarning(true);
+    } else {
+      syncService.close();
+      navigate('/');
+    }
+  }, [navigate, syncMode]);
+
+  const handleConfirmLeave = useCallback(() => {
+    setCollabLeaveWarning(false);
     syncService.close();
     navigate('/');
   }, [navigate]);
@@ -341,6 +353,31 @@ export function InvestigationPage() {
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
       />
+
+      {/* Warning when leaving a collaborative session */}
+      <Modal
+        isOpen={collabLeaveWarning}
+        onClose={() => setCollabLeaveWarning(false)}
+        title="Quitter la session collaborative"
+        width="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCollabLeaveWarning(false)}>
+              Annuler
+            </Button>
+            <Button variant="primary" onClick={handleConfirmLeave}>
+              Quitter
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Les autres participants pourront toujours utiliser le lien de partage pour synchroniser leurs modifications et reprendre la collaboration.
+        </p>
+        <p className="text-sm text-text-secondary mt-2">
+          Vous pourrez également rejoindre la session plus tard via le meme lien.
+        </p>
+      </Modal>
     </Layout>
   );
 }
