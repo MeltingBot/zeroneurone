@@ -28,6 +28,8 @@ interface CustomEdgeData {
   // For manual curve offset (draggable) - 2D offset from midpoint
   curveOffset?: { x: number; y: number };
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void;
+  // Curve mode: straight lines or curved bezier
+  curveMode?: 'straight' | 'curved';
   // Confidence indicator
   showConfidenceIndicator?: boolean;
   confidence?: number | null;
@@ -113,6 +115,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const parallelCount = edgeData?.parallelCount ?? 1;
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };
   const onCurveOffsetChange = edgeData?.onCurveOffsetChange;
+  const curveMode = edgeData?.curveMode ?? 'curved';
   const showConfidenceIndicator = edgeData?.showConfidenceIndicator ?? false;
   const confidence = edgeData?.confidence;
   const displayedPropertyValues = edgeData?.displayedPropertyValues;
@@ -235,85 +238,116 @@ function CustomEdgeComponent(props: EdgeProps) {
   const edgeDy = targetY - sourceY;
   const edgeLength = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
 
-  // Calculate natural curve offset for smooth S-curve when user hasn't set a custom offset
-  // This mimics React Flow's default bezier connection line
-  const hasCustomOffset = currentOffset.x !== 0 || currentOffset.y !== 0;
-
-  // Get handle directions from handle IDs
-  const sourceDir = getHandleDirection(sourceHandleId, 'source');
-  const targetDir = getHandleDirection(targetHandleId, 'target');
-
-  // Curve factor: minimum 40px for short edges, scales with length, capped at 80px
-  // This ensures curves always approach handles perpendicular even for short edges
-  const curveFactor = Math.max(40, Math.min(edgeLength * 0.3, 80));
-
-  // Calculate control points for cubic bezier (like React Flow's default edge)
-  let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
-
   // Perpendicular vector for parallel offset
   const perpX = edgeLength > 0 ? -edgeDy / edgeLength : 0;
   const perpY = edgeLength > 0 ? edgeDx / edgeLength : 0;
 
-  if (hasCustomOffset) {
-    // User has dragged the control point - use quadratic bezier through that point
-    const midX = (sourceX + targetX) / 2;
-    const midY = (sourceY + targetY) / 2;
+  // Determine if using straight lines or curves
+  const isStraight = curveMode === 'straight';
 
-    const controlHandleX = midX + currentOffset.x + perpX * parallelOffset;
-    const controlHandleY = midY + currentOffset.y + perpY * parallelOffset;
+  // Variables for path calculation
+  let edgePath: string;
+  let controlHandleX: number;
+  let controlHandleY: number;
+  let startAngle: number;
+  let endAngle: number;
 
-    // Use quadratic bezier converted to cubic (control points at 2/3 from endpoints)
-    cp1x = sourceX + (2/3) * (controlHandleX - sourceX);
-    cp1y = sourceY + (2/3) * (controlHandleY - sourceY);
-    cp2x = targetX + (2/3) * (controlHandleX - targetX);
-    cp2y = targetY + (2/3) * (controlHandleY - targetY);
+  if (isStraight) {
+    // STRAIGHT LINE MODE
+    // Midpoint for label (with parallel offset for multiple edges)
+    const midX = (sourceX + targetX) / 2 + perpX * parallelOffset;
+    const midY = (sourceY + targetY) / 2 + perpY * parallelOffset;
+    controlHandleX = midX;
+    controlHandleY = midY;
+
+    // Arrow angles based on line direction
+    startAngle = Math.atan2(edgeDy, edgeDx);
+    endAngle = startAngle;
+
+    // Arrow offsets
+    const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
+    const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
+    const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
+    const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
+
+    // Adjusted endpoints
+    const adjustedSourceX = sourceX + startOffsetX + perpX * parallelOffset;
+    const adjustedSourceY = sourceY + startOffsetY + perpY * parallelOffset;
+    const adjustedTargetX = targetX - endOffsetX + perpX * parallelOffset;
+    const adjustedTargetY = targetY - endOffsetY + perpY * parallelOffset;
+
+    // Straight line path
+    edgePath = `M ${adjustedSourceX} ${adjustedSourceY} L ${adjustedTargetX} ${adjustedTargetY}`;
   } else {
-    // Natural S-curve using handle directions
-    // Control points extend in the direction of the handle (perpendicular to connector face)
-    cp1x = sourceX + sourceDir.dx * curveFactor;
-    cp1y = sourceY + sourceDir.dy * curveFactor;
-    cp2x = targetX + targetDir.dx * curveFactor;
-    cp2y = targetY + targetDir.dy * curveFactor;
+    // CURVED MODE
+    const hasCustomOffset = currentOffset.x !== 0 || currentOffset.y !== 0;
 
-    // Apply parallel offset for multiple edges between same nodes
-    if (parallelOffset !== 0) {
-      cp1x += perpX * parallelOffset;
-      cp1y += perpY * parallelOffset;
-      cp2x += perpX * parallelOffset;
-      cp2y += perpY * parallelOffset;
+    // Get handle directions from handle IDs
+    const sourceDir = getHandleDirection(sourceHandleId, 'source');
+    const targetDir = getHandleDirection(targetHandleId, 'target');
+
+    // Curve factor: minimum 40px for short edges, scales with length, capped at 80px
+    const curveFactor = Math.max(40, Math.min(edgeLength * 0.3, 80));
+
+    // Calculate control points for cubic bezier
+    let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
+
+    if (hasCustomOffset) {
+      // User has dragged the control point - use quadratic bezier through that point
+      const midX = (sourceX + targetX) / 2;
+      const midY = (sourceY + targetY) / 2;
+
+      const controlX = midX + currentOffset.x + perpX * parallelOffset;
+      const controlY = midY + currentOffset.y + perpY * parallelOffset;
+
+      // Convert quadratic to cubic bezier
+      cp1x = sourceX + (2/3) * (controlX - sourceX);
+      cp1y = sourceY + (2/3) * (controlY - sourceY);
+      cp2x = targetX + (2/3) * (controlX - targetX);
+      cp2y = targetY + (2/3) * (controlY - targetY);
+    } else {
+      // Natural S-curve using handle directions
+      cp1x = sourceX + sourceDir.dx * curveFactor;
+      cp1y = sourceY + sourceDir.dy * curveFactor;
+      cp2x = targetX + targetDir.dx * curveFactor;
+      cp2y = targetY + targetDir.dy * curveFactor;
+
+      // Apply parallel offset
+      if (parallelOffset !== 0) {
+        cp1x += perpX * parallelOffset;
+        cp1y += perpY * parallelOffset;
+        cp2x += perpX * parallelOffset;
+        cp2y += perpY * parallelOffset;
+      }
     }
+
+    // Midpoint of cubic bezier at t=0.5
+    controlHandleX = 0.125 * sourceX + 0.375 * cp1x + 0.375 * cp2x + 0.125 * targetX;
+    controlHandleY = 0.125 * sourceY + 0.375 * cp1y + 0.375 * cp2y + 0.125 * targetY;
+
+    // Arrow angles based on control points
+    startAngle = Math.atan2(cp1y - sourceY, cp1x - sourceX);
+    endAngle = Math.atan2(targetY - cp2y, targetX - cp2x);
+
+    // Arrow offsets
+    const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
+    const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
+    const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
+    const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
+
+    // Adjusted endpoints and control points
+    const adjustedSourceX = sourceX + startOffsetX;
+    const adjustedSourceY = sourceY + startOffsetY;
+    const adjustedTargetX = targetX - endOffsetX;
+    const adjustedTargetY = targetY - endOffsetY;
+    const adjustedCp1x = hasStartArrow ? cp1x + startOffsetX * 0.5 : cp1x;
+    const adjustedCp1y = hasStartArrow ? cp1y + startOffsetY * 0.5 : cp1y;
+    const adjustedCp2x = hasEndArrow ? cp2x - endOffsetX * 0.5 : cp2x;
+    const adjustedCp2y = hasEndArrow ? cp2y - endOffsetY * 0.5 : cp2y;
+
+    // Cubic bezier path
+    edgePath = `M ${adjustedSourceX} ${adjustedSourceY} C ${adjustedCp1x} ${adjustedCp1y} ${adjustedCp2x} ${adjustedCp2y} ${adjustedTargetX} ${adjustedTargetY}`;
   }
-
-  // Calculate the visual midpoint of the curve (for label and control handle)
-  // For cubic bezier at t=0.5: P = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
-  // At t=0.5: P = 0.125*P0 + 0.375*P1 + 0.375*P2 + 0.125*P3
-  const controlHandleX = 0.125 * sourceX + 0.375 * cp1x + 0.375 * cp2x + 0.125 * targetX;
-  const controlHandleY = 0.125 * sourceY + 0.375 * cp1y + 0.375 * cp2y + 0.125 * targetY;
-
-  // For arrows: calculate angle at endpoints using control points
-  const startAngle = Math.atan2(cp1y - sourceY, cp1x - sourceX);
-  const endAngle = Math.atan2(targetY - cp2y, targetX - cp2x);
-
-  // For arrows: shorten the path so arrow doesn't overlap with line
-  const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
-  const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
-  const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
-  const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
-
-  // Adjusted endpoints for the path (shortened to make room for arrows)
-  const adjustedSourceX = sourceX + startOffsetX;
-  const adjustedSourceY = sourceY + startOffsetY;
-  const adjustedTargetX = targetX - endOffsetX;
-  const adjustedTargetY = targetY - endOffsetY;
-
-  // Adjust control points proportionally for arrow offset
-  const adjustedCp1x = hasStartArrow ? cp1x + startOffsetX * 0.5 : cp1x;
-  const adjustedCp1y = hasStartArrow ? cp1y + startOffsetY * 0.5 : cp1y;
-  const adjustedCp2x = hasEndArrow ? cp2x - endOffsetX * 0.5 : cp2x;
-  const adjustedCp2y = hasEndArrow ? cp2y - endOffsetY * 0.5 : cp2y;
-
-  // Build the SVG path: M (move to start) C (cubic bezier to end)
-  const edgePath = `M ${adjustedSourceX} ${adjustedSourceY} C ${adjustedCp1x} ${adjustedCp1y} ${adjustedCp2x} ${adjustedCp2y} ${adjustedTargetX} ${adjustedTargetY}`;
 
   // Label position is at the control handle (which is on the curve at t=0.5)
   const labelX = controlHandleX;
@@ -576,8 +610,8 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
-      {/* Draggable control point - hidden during label editing, only interactive when selected */}
-      {!isEditing && (
+      {/* Draggable control point - hidden during label editing or straight mode, only interactive when selected */}
+      {!isEditing && !isStraight && (
         <g style={{ pointerEvents: 'none' }}>
           {/* Hit area - only active when selected */}
           <circle
@@ -641,6 +675,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.parallelCount !== nextData.parallelCount) return false;
   if (prevData.curveOffset?.x !== nextData.curveOffset?.x) return false;
   if (prevData.curveOffset?.y !== nextData.curveOffset?.y) return false;
+  if (prevData.curveMode !== nextData.curveMode) return false;
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
   if (prevData.confidence !== nextData.confidence) return false;
 

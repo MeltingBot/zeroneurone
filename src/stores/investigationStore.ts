@@ -105,6 +105,7 @@ interface InvestigationState {
   setTagDisplayMode: (mode: 'none' | 'icons' | 'labels' | 'both') => Promise<void>;
   setTagDisplaySize: (size: 'small' | 'medium' | 'large') => Promise<void>;
   setLinkAnchorMode: (mode: 'auto' | 'manual') => Promise<void>;
+  setLinkCurveMode: (mode: 'straight' | 'curved') => Promise<void>;
 
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
@@ -1314,6 +1315,31 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           settings: {
             ...state.currentInvestigation.settings,
             linkAnchorMode: mode,
+          },
+        },
+      };
+    });
+  },
+
+  setLinkCurveMode: async (mode: 'straight' | 'curved') => {
+    const { currentInvestigation } = get();
+    if (!currentInvestigation) return;
+
+    await investigationRepository.update(currentInvestigation.id, {
+      settings: {
+        ...currentInvestigation.settings,
+        linkCurveMode: mode,
+      },
+    });
+
+    set((state) => {
+      if (!state.currentInvestigation) return state;
+      return {
+        currentInvestigation: {
+          ...state.currentInvestigation,
+          settings: {
+            ...state.currentInvestigation.settings,
+            linkCurveMode: mode,
           },
         },
       };

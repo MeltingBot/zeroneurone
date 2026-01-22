@@ -283,6 +283,7 @@ function linkToEdge(
   isDimmed: boolean,
   nodePositions: Map<string, Position>,
   linkAnchorMode: 'auto' | 'manual',
+  linkCurveMode: 'straight' | 'curved',
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
@@ -382,6 +383,8 @@ function linkToEdge(
       parallelCount,
       curveOffset: link.curveOffset ?? { x: 0, y: 0 },
       onCurveOffsetChange,
+      // Curve mode: straight or curved
+      curveMode: linkCurveMode,
       // Include handles in data to force React Flow to re-render when they change
       _sourceHandle: sourceHandle,
       _targetHandle: targetHandle,
@@ -587,6 +590,7 @@ export function Canvas() {
   const tagDisplayMode = currentInvestigation?.settings?.tagDisplayMode ?? 'icons';
   const tagDisplaySize = currentInvestigation?.settings?.tagDisplaySize ?? 'small';
   const linkAnchorMode = currentInvestigation?.settings?.linkAnchorMode ?? 'manual';
+  const linkCurveMode = currentInvestigation?.settings?.linkCurveMode ?? 'curved';
   const displayedProperties = useMemo(
     () => currentInvestigation?.settings?.displayedProperties ?? [],
     [currentInvestigation?.settings?.displayedProperties]
@@ -821,6 +825,7 @@ export function Canvas() {
         isLinkDimmed,
         nodePositions,
         linkAnchorMode,
+        linkCurveMode,
         editingLinkId === link.id,
         onLabelChange,
         stopEditing,
@@ -832,7 +837,7 @@ export function Canvas() {
         linkDisplayedPropertyValues
       );
     });
-  }, [links, localNodes, selectedLinkIds, dimmedElementIds, linkAnchorMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
+  }, [links, localNodes, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
 
 
   // Track starting positions for undo

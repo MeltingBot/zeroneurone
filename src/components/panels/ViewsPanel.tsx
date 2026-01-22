@@ -31,6 +31,7 @@ export function ViewsPanel() {
     setTagDisplayMode,
     setTagDisplaySize,
     setLinkAnchorMode,
+    setLinkCurveMode,
   } = useInvestigationStore();
   const { savedViews, saveView, loadView, deleteView, hasActiveFilters } = useViewStore();
   const [isCreating, setIsCreating] = useState(false);
@@ -46,6 +47,7 @@ export function ViewsPanel() {
   const showConfidence = settings?.showConfidenceIndicator ?? false;
   const displayedProperties = settings?.displayedProperties ?? [];
   const linkAnchorMode = settings?.linkAnchorMode ?? 'manual';
+  const linkCurveMode = settings?.linkCurveMode ?? 'curved';
 
   // Get all unique property keys from elements and links
   const allPropertyKeys = useMemo(() => {
@@ -203,34 +205,68 @@ export function ViewsPanel() {
           </button>
         </div>
 
-        {/* Link anchor mode */}
-        <div className="space-y-2">
+        {/* Links section */}
+        <div className="space-y-3">
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <Link2 size={12} />
-            <span>Ancrage des liaisons</span>
+            <span>Liaisons</span>
           </div>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setLinkAnchorMode('manual')}
-              className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                linkAnchorMode === 'manual'
-                  ? 'bg-accent text-white'
-                  : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-              }`}
-            >
-              Manuel
-            </button>
-            <button
-              onClick={() => setLinkAnchorMode('auto')}
-              className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                linkAnchorMode === 'auto'
-                  ? 'bg-accent text-white'
-                  : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-              }`}
-            >
-              Optimisé
-            </button>
+
+          {/* Curve mode */}
+          <div className="space-y-1.5 pl-4">
+            <span className="text-[10px] text-text-tertiary">Forme</span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setLinkCurveMode('curved')}
+                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                  linkCurveMode === 'curved'
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                }`}
+              >
+                Courbes
+              </button>
+              <button
+                onClick={() => setLinkCurveMode('straight')}
+                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                  linkCurveMode === 'straight'
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                }`}
+              >
+                Droites
+              </button>
+            </div>
           </div>
+
+          {/* Anchor mode - only show when curved */}
+          {linkCurveMode === 'curved' && (
+            <div className="space-y-1.5 pl-4">
+              <span className="text-[10px] text-text-tertiary">Ancrage</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setLinkAnchorMode('manual')}
+                  className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                    linkAnchorMode === 'manual'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  Manuel
+                </button>
+                <button
+                  onClick={() => setLinkAnchorMode('auto')}
+                  className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                    linkAnchorMode === 'auto'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  Optimisé
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Properties display */}
