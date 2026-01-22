@@ -35,6 +35,22 @@ interface CustomEdgeData {
   displayedPropertyValues?: { key: string; value: string }[];
 }
 
+// Helper to get handle direction vector from handle ID
+// Returns [dx, dy] unit vector indicating the direction the curve should exit/enter
+function getHandleDirection(handleId: string | null | undefined, type: 'source' | 'target'): { dx: number; dy: number } {
+  const defaultDir = type === 'source' ? { dx: 1, dy: 0 } : { dx: -1, dy: 0 }; // default: horizontal
+  if (!handleId) return defaultDir;
+
+  const position = handleId.split('-')[1]; // e.g., 'source-right' -> 'right'
+  switch (position) {
+    case 'top': return { dx: 0, dy: -1 };
+    case 'bottom': return { dx: 0, dy: 1 };
+    case 'left': return { dx: -1, dy: 0 };
+    case 'right': return { dx: 1, dy: 0 };
+    default: return defaultDir;
+  }
+}
+
 function CustomEdgeComponent(props: EdgeProps) {
   const {
     id,
@@ -42,6 +58,8 @@ function CustomEdgeComponent(props: EdgeProps) {
     sourceY,
     targetX,
     targetY,
+    sourceHandleId,
+    targetHandleId,
     label,
     labelStyle,
     labelBgStyle,
@@ -110,12 +128,13 @@ function CustomEdgeComponent(props: EdgeProps) {
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>(curveOffset);
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; offsetX: number; offsetY: number } | null>(null);
 
-  // Sync dragOffset with curveOffset when not dragging
+  // Sync dragOffset with curveOffset only when curveOffset changes (external update)
+  // Don't sync on isDragging change to avoid resetting to stale props value
   useEffect(() => {
     if (!isDragging) {
       setDragOffset(curveOffset);
     }
-  }, [curveOffset, isDragging]);
+  }, [curveOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Local state for editing
   const [editValue, setEditValue] = useState(String(label || ''));
@@ -199,8 +218,9 @@ function CustomEdgeComponent(props: EdgeProps) {
     };
   }, [isDragging, onCurveOffsetChange, dragOffset, screenToFlowPosition]);
 
-  // Use dragOffset during drag, otherwise curveOffset
-  const currentOffset = isDragging ? dragOffset : curveOffset;
+  // Always use dragOffset (synced from curveOffset via useEffect when not dragging)
+  // This prevents snap-back to stale curveOffset when drag ends before store update propagates
+  const currentOffset = dragOffset;
 
   // Selection halo settings
   const haloColor = '#e07a5f';
@@ -210,27 +230,69 @@ function CustomEdgeComponent(props: EdgeProps) {
   const arrowLength = 16;
   const arrowWidth = 12;
 
-  // Calculate the midpoint and perpendicular direction
-  const midX = (sourceX + targetX) / 2;
-  const midY = (sourceY + targetY) / 2;
+  // Calculate edge direction and length
   const edgeDx = targetX - sourceX;
   const edgeDy = targetY - sourceY;
   const edgeLength = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
 
-  // Perpendicular unit vector
+  // Calculate natural curve offset for smooth S-curve when user hasn't set a custom offset
+  // This mimics React Flow's default bezier connection line
+  const hasCustomOffset = currentOffset.x !== 0 || currentOffset.y !== 0;
+
+  // Get handle directions from handle IDs
+  const sourceDir = getHandleDirection(sourceHandleId, 'source');
+  const targetDir = getHandleDirection(targetHandleId, 'target');
+
+  // Curve factor: minimum 40px for short edges, scales with length, capped at 80px
+  // This ensures curves always approach handles perpendicular even for short edges
+  const curveFactor = Math.max(40, Math.min(edgeLength * 0.3, 80));
+
+  // Calculate control points for cubic bezier (like React Flow's default edge)
+  let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
+
+  // Perpendicular vector for parallel offset
   const perpX = edgeLength > 0 ? -edgeDy / edgeLength : 0;
   const perpY = edgeLength > 0 ? edgeDx / edgeLength : 0;
 
-  // Control point for the quadratic bezier (the draggable point)
-  // Uses direct 2D offset + parallel edge offset (perpendicular)
-  const controlHandleX = midX + currentOffset.x + perpX * parallelOffset;
-  const controlHandleY = midY + currentOffset.y + perpY * parallelOffset;
+  if (hasCustomOffset) {
+    // User has dragged the control point - use quadratic bezier through that point
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2;
 
-  // For arrows: calculate angle at endpoints
-  // Start angle: from source to control point
-  const startAngle = Math.atan2(controlHandleY - sourceY, controlHandleX - sourceX);
-  // End angle: from control point to target
-  const endAngle = Math.atan2(targetY - controlHandleY, targetX - controlHandleX);
+    const controlHandleX = midX + currentOffset.x + perpX * parallelOffset;
+    const controlHandleY = midY + currentOffset.y + perpY * parallelOffset;
+
+    // Use quadratic bezier converted to cubic (control points at 2/3 from endpoints)
+    cp1x = sourceX + (2/3) * (controlHandleX - sourceX);
+    cp1y = sourceY + (2/3) * (controlHandleY - sourceY);
+    cp2x = targetX + (2/3) * (controlHandleX - targetX);
+    cp2y = targetY + (2/3) * (controlHandleY - targetY);
+  } else {
+    // Natural S-curve using handle directions
+    // Control points extend in the direction of the handle (perpendicular to connector face)
+    cp1x = sourceX + sourceDir.dx * curveFactor;
+    cp1y = sourceY + sourceDir.dy * curveFactor;
+    cp2x = targetX + targetDir.dx * curveFactor;
+    cp2y = targetY + targetDir.dy * curveFactor;
+
+    // Apply parallel offset for multiple edges between same nodes
+    if (parallelOffset !== 0) {
+      cp1x += perpX * parallelOffset;
+      cp1y += perpY * parallelOffset;
+      cp2x += perpX * parallelOffset;
+      cp2y += perpY * parallelOffset;
+    }
+  }
+
+  // Calculate the visual midpoint of the curve (for label and control handle)
+  // For cubic bezier at t=0.5: P = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
+  // At t=0.5: P = 0.125*P0 + 0.375*P1 + 0.375*P2 + 0.125*P3
+  const controlHandleX = 0.125 * sourceX + 0.375 * cp1x + 0.375 * cp2x + 0.125 * targetX;
+  const controlHandleY = 0.125 * sourceY + 0.375 * cp1y + 0.375 * cp2y + 0.125 * targetY;
+
+  // For arrows: calculate angle at endpoints using control points
+  const startAngle = Math.atan2(cp1y - sourceY, cp1x - sourceX);
+  const endAngle = Math.atan2(targetY - cp2y, targetX - cp2x);
 
   // For arrows: shorten the path so arrow doesn't overlap with line
   const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
@@ -244,19 +306,14 @@ function CustomEdgeComponent(props: EdgeProps) {
   const adjustedTargetX = targetX - endOffsetX;
   const adjustedTargetY = targetY - endOffsetY;
 
-  // Midpoint of adjusted endpoints (where curve would naturally pass at t=0.5 with no offset)
-  const adjustedMidX = (adjustedSourceX + adjustedTargetX) / 2;
-  const adjustedMidY = (adjustedSourceY + adjustedTargetY) / 2;
+  // Adjust control points proportionally for arrow offset
+  const adjustedCp1x = hasStartArrow ? cp1x + startOffsetX * 0.5 : cp1x;
+  const adjustedCp1y = hasStartArrow ? cp1y + startOffsetY * 0.5 : cp1y;
+  const adjustedCp2x = hasEndArrow ? cp2x - endOffsetX * 0.5 : cp2x;
+  const adjustedCp2y = hasEndArrow ? cp2y - endOffsetY * 0.5 : cp2y;
 
-  // For quadratic bezier: curve at t=0.5 = 0.25*P0 + 0.5*P1 + 0.25*P2
-  // We want the curve to pass through controlHandle at t=0.5
-  // So: controlHandle = 0.5*adjustedMid + 0.5*P1
-  // Therefore: P1 = 2*controlHandle - adjustedMid
-  const curveControlX = 2 * controlHandleX - adjustedMidX;
-  const curveControlY = 2 * controlHandleY - adjustedMidY;
-
-  // Build the SVG path: M (move to start) Q (quadratic bezier to end)
-  const edgePath = `M ${adjustedSourceX} ${adjustedSourceY} Q ${curveControlX} ${curveControlY} ${adjustedTargetX} ${adjustedTargetY}`;
+  // Build the SVG path: M (move to start) C (cubic bezier to end)
+  const edgePath = `M ${adjustedSourceX} ${adjustedSourceY} C ${adjustedCp1x} ${adjustedCp1y} ${adjustedCp2x} ${adjustedCp2y} ${adjustedTargetX} ${adjustedTargetY}`;
 
   // Label position is at the control handle (which is on the curve at t=0.5)
   const labelX = controlHandleX;

@@ -282,6 +282,7 @@ function linkToEdge(
   isSelected: boolean,
   isDimmed: boolean,
   nodePositions: Map<string, Position>,
+  linkAnchorMode: 'auto' | 'manual',
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
@@ -292,28 +293,45 @@ function linkToEdge(
   showConfidenceIndicator?: boolean,
   displayedPropertyValues?: { key: string; value: string }[]
 ): Edge {
-  // Get positions from the map (uses real-time positions during drag)
-  const sourcePos = nodePositions.get(link.fromId);
-  const targetPos = nodePositions.get(link.toId);
+  // Helper to migrate old handle format and fix type mismatches
+  const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
+    if (!handle) return type === 'source' ? 'source-right' : 'target-left';
 
-  // Calculate handles based on current positions for dynamic updates
+    // Already in new format - check if type matches
+    if (handle.startsWith('source-') || handle.startsWith('target-')) {
+      const [prefix, position] = handle.split('-');
+      // If handle type doesn't match expected type, convert it
+      // e.g., "target-top" used as sourceHandle -> "source-top"
+      if (prefix !== type) {
+        return `${type}-${position}`;
+      }
+      return handle;
+    }
+
+    // Convert old format (top, bottom, left, right) to new format
+    return `${type}-${handle}`;
+  };
+
+  // Calculate handles based on anchor mode
   let sourceHandle: string;
   let targetHandle: string;
 
-  if (sourcePos && targetPos) {
-    // Calculate optimal handles based on current element positions
-    const bestHandles = calculateBestHandles(sourcePos, targetPos);
-    sourceHandle = bestHandles.sourceHandle;
-    targetHandle = bestHandles.targetHandle;
+  if (linkAnchorMode === 'auto') {
+    // Auto mode: calculate optimal handles based on element positions
+    const sourcePos = nodePositions.get(link.fromId);
+    const targetPos = nodePositions.get(link.toId);
+
+    if (sourcePos && targetPos) {
+      const bestHandles = calculateBestHandles(sourcePos, targetPos);
+      sourceHandle = bestHandles.sourceHandle;
+      targetHandle = bestHandles.targetHandle;
+    } else {
+      // Fallback to stored handles if positions not available
+      sourceHandle = migrateHandle(link.sourceHandle, 'source');
+      targetHandle = migrateHandle(link.targetHandle, 'target');
+    }
   } else {
-    // Fallback to stored handles if positions not available (edge case)
-    const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
-      if (!handle) return type === 'source' ? 'source-right' : 'target-left';
-      // Already in new format
-      if (handle.startsWith('source-') || handle.startsWith('target-')) return handle;
-      // Convert old format (top, bottom, left, right) to new format
-      return `${type}-${handle}`;
-    };
+    // Manual mode: use stored handles from the link
     sourceHandle = migrateHandle(link.sourceHandle, 'source');
     targetHandle = migrateHandle(link.targetHandle, 'target');
   }
@@ -568,6 +586,7 @@ export function Canvas() {
   const showConfidenceIndicator = currentInvestigation?.settings?.showConfidenceIndicator ?? false;
   const tagDisplayMode = currentInvestigation?.settings?.tagDisplayMode ?? 'icons';
   const tagDisplaySize = currentInvestigation?.settings?.tagDisplaySize ?? 'small';
+  const linkAnchorMode = currentInvestigation?.settings?.linkAnchorMode ?? 'manual';
   const displayedProperties = useMemo(
     () => currentInvestigation?.settings?.displayedProperties ?? [],
     [currentInvestigation?.settings?.displayedProperties]
@@ -801,6 +820,7 @@ export function Canvas() {
         selectedLinkIds.has(link.id),
         isLinkDimmed,
         nodePositions,
+        linkAnchorMode,
         editingLinkId === link.id,
         onLabelChange,
         stopEditing,
@@ -812,7 +832,7 @@ export function Canvas() {
         linkDisplayedPropertyValues
       );
     });
-  }, [links, localNodes, selectedLinkIds, dimmedElementIds, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
+  }, [links, localNodes, selectedLinkIds, dimmedElementIds, linkAnchorMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
 
 
   // Track starting positions for undo

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Eye, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2 } from 'lucide-react';
+import { Eye, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2 } from 'lucide-react';
 import { useInvestigationStore, useViewStore } from '../../stores';
 import type { View } from '../../types';
 
@@ -30,6 +30,7 @@ export function ViewsPanel() {
     clearDisplayedProperties,
     setTagDisplayMode,
     setTagDisplaySize,
+    setLinkAnchorMode,
   } = useInvestigationStore();
   const { savedViews, saveView, loadView, deleteView, hasActiveFilters } = useViewStore();
   const [isCreating, setIsCreating] = useState(false);
@@ -44,6 +45,7 @@ export function ViewsPanel() {
   const tagDisplaySize = settings?.tagDisplaySize ?? 'small';
   const showConfidence = settings?.showConfidenceIndicator ?? false;
   const displayedProperties = settings?.displayedProperties ?? [];
+  const linkAnchorMode = settings?.linkAnchorMode ?? 'manual';
 
   // Get all unique property keys from elements and links
   const allPropertyKeys = useMemo(() => {
@@ -199,6 +201,36 @@ export function ViewsPanel() {
               }`}
             />
           </button>
+        </div>
+
+        {/* Link anchor mode */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <Link2 size={12} />
+            <span>Ancrage des liaisons</span>
+          </div>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setLinkAnchorMode('manual')}
+              className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                linkAnchorMode === 'manual'
+                  ? 'bg-accent text-white'
+                  : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+              }`}
+            >
+              Manuel
+            </button>
+            <button
+              onClick={() => setLinkAnchorMode('auto')}
+              className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                linkAnchorMode === 'auto'
+                  ? 'bg-accent text-white'
+                  : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+              }`}
+            >
+              Optimisé
+            </button>
+          </div>
         </div>
 
         {/* Properties display */}

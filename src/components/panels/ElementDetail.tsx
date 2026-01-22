@@ -516,6 +516,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
             events={element.events || []}
             onChange={handleEventsChange}
             onOpenGeoPicker={handleOpenGeoPickerForHistory}
+            suggestions={propertySuggestions}
+            onNewProperty={handleNewProperty}
           />
         </div>
       </AccordionSection>

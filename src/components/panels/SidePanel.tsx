@@ -26,7 +26,7 @@ interface Tab {
 export function SidePanel() {
   const { selectedElementIds, selectedLinkIds, clearSelection } = useSelectionStore();
   const { elements, links, currentInvestigation } = useInvestigationStore();
-  const { hasActiveFilters } = useViewStore();
+  const { hasActiveFilters, displayMode } = useViewStore();
   const { highlightedElementIds } = useInsightsStore();
 
   const [activeTab, setActiveTab] = useState<TabId>('detail');
@@ -84,12 +84,20 @@ export function SidePanel() {
 
   const filtersActive = hasActiveFilters();
   const insightsActive = highlightedElementIds.size > 0;
+  const isCanvasMode = displayMode === 'canvas';
+
+  // Switch away from views tab when leaving canvas mode
+  useEffect(() => {
+    if (!isCanvasMode && activeTab === 'views') {
+      setActiveTab('detail');
+    }
+  }, [isCanvasMode, activeTab]);
 
   const tabs: Tab[] = [
     { id: 'detail', label: 'Détail', icon: Info },
     { id: 'insights', label: 'Insights', icon: Network, badge: insightsActive },
     { id: 'filters', label: 'Filtres', icon: Filter, badge: filtersActive },
-    { id: 'views', label: 'Vues', icon: Eye },
+    ...(isCanvasMode ? [{ id: 'views' as TabId, label: 'Vues', icon: Eye }] : []),
   ];
 
   if (isCollapsed) {

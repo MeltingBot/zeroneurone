@@ -40,7 +40,7 @@ export interface ElementEvent {
 
   // Optional contextual data - user adds what's relevant
   geo?: GeoCoordinates; // If present, event appears on map
-  properties?: Record<string, string>; // Free-form key-value data
+  properties?: Property[]; // Typed properties (same system as elements/links)
   source?: string;      // Source of this information
 }
 
@@ -172,6 +172,8 @@ export interface InvestigationSettings {
   tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both';
   /** Tag display size on canvas elements */
   tagDisplaySize?: 'small' | 'medium' | 'large';
+  /** Link anchor mode: auto (system chooses best handles) or manual (user controls) */
+  linkAnchorMode?: 'auto' | 'manual';
 }
 
 // ============================================================================

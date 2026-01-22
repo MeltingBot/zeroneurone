@@ -102,6 +102,7 @@ export function TimelineView() {
   const [newestFirst, setNewestFirst] = useState(false); // false = oldest at top (default)
   const [showCausality, setShowCausality] = useState(false); // Show potential causal links
   const [causalityMaxDays, setCausalityMaxDays] = useState(365); // Max days between events for causality
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null); // Show info panel on click
 
   // Build timeline items from links and element events
   const { items, timeBounds } = useMemo(() => {
@@ -194,11 +195,32 @@ export function TimelineView() {
         if (endTime > maxTime) maxTime = endTime;
 
         const elementLabel = element.label || 'Sans nom';
-        const eventLabel = event.label || 'Événement';
+        const eventLabel = event.label || '';
+        const isDefaultName = element.label === 'Nouvel élément' || !element.label;
+
+        // Format event properties as sublabel
+        let eventSublabel: string | undefined;
+        if (event.properties && event.properties.length > 0) {
+          eventSublabel = event.properties
+            .filter((p) => p.value !== null && p.value !== undefined && p.value !== '')
+            .map((p) => `${p.key}: ${String(p.value)}`)
+            .join(' | ');
+        }
+
+        // Build label: prefer event label alone if element has default name
+        let itemLabel: string;
+        if (eventLabel && isDefaultName) {
+          itemLabel = eventLabel;
+        } else if (eventLabel) {
+          itemLabel = `${elementLabel}: ${eventLabel}`;
+        } else {
+          itemLabel = elementLabel;
+        }
 
         itemsList.push({
           id: `ev-${element.id}-${index}`,
-          label: `${elementLabel}: ${eventLabel}`,
+          label: itemLabel,
+          sublabel: eventSublabel,
           start: eventDate,
           end: endDate,
           color: element.visual.color,
@@ -612,6 +634,9 @@ export function TimelineView() {
   // Handle item click
   const handleItemClick = useCallback((item: TimelineItem, e: React.MouseEvent) => {
     e.stopPropagation();
+    // Toggle info panel
+    setExpandedItemId(prev => prev === item.id ? null : item.id);
+    // Also select the element/link
     if (item.type === 'link' && item.sourceId) {
       selectLink(item.sourceId);
     } else if ((item.type === 'event' || item.type === 'property') && item.sourceId) {
@@ -813,6 +838,7 @@ export function TimelineView() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onClick={() => setExpandedItemId(null)}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         {/* Time axis */}
@@ -876,7 +902,6 @@ export function TimelineView() {
                     opacity: item.isDimmed ? 0.3 : 1,
                   }}
                   onClick={(e) => handleItemClick(item, e)}
-                  title={anonymousMode ? '' : `${item.label}${item.sublabel ? ` (${item.sublabel})` : ''}\n${formatDateRange(item.start, item.end)}`}
                 >
                   {hasThumbImage ? (
                     // Show image thumbnail for property items
@@ -923,7 +948,6 @@ export function TimelineView() {
                   opacity: item.isDimmed ? 0.3 : 1,
                 }}
                 onClick={(e) => handleItemClick(item, e)}
-                title={anonymousMode ? '' : `${item.label}${item.sublabel ? ` (${item.sublabel})` : ''}\n${formatDateRange(item.start, item.end)}`}
               >
                 {/* Period bar with clear border frame */}
                 <div
@@ -965,9 +989,16 @@ export function TimelineView() {
                       <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '2em' }} />
                     </span>
                   ) : (
-                    <span className="text-xs text-text-primary truncate font-medium flex-1 min-w-0">
-                      {item.label}
-                    </span>
+                    <div className="flex flex-col flex-1 min-w-0 justify-center">
+                      <span className="text-xs text-text-primary truncate font-medium">
+                        {item.label}
+                      </span>
+                      {item.sublabel && (
+                        <span className="text-[10px] text-text-tertiary truncate">
+                          {item.sublabel}
+                        </span>
+                      )}
+                    </div>
                   )}
                   {/* Destination thumbnail for links */}
                   {item.type === 'link' && item.destThumbLetter && (
@@ -983,6 +1014,39 @@ export function TimelineView() {
               </div>
             );
           })}
+
+          {/* Info panel for clicked item */}
+          {expandedItemId && (() => {
+            const expandedItem = visibleItems.find(i => i.id === expandedItemId);
+            if (!expandedItem) return null;
+            const x = Math.max(8, dateToX(expandedItem.start));
+            const y = ROW_GAP + expandedItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT + 4;
+            return (
+              <div
+                className="absolute z-30 bg-bg-primary border border-border-default rounded shadow-lg p-2 max-w-xs"
+                style={{ transform: `translate3d(${x}px, ${y}px, 0)` }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-xs font-medium text-text-primary mb-1">
+                  {expandedItem.label}
+                </div>
+                {expandedItem.sublabel && (
+                  <div className="text-[10px] text-text-secondary mb-1">
+                    {expandedItem.sublabel}
+                  </div>
+                )}
+                <div className="text-[10px] text-text-tertiary">
+                  {formatDateRange(expandedItem.start, expandedItem.end)}
+                </div>
+                <button
+                  onClick={() => setExpandedItemId(null)}
+                  className="absolute top-1 right-1 p-0.5 text-text-tertiary hover:text-text-primary"
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Causal connections - rendered as SVG curves */}
           {showCausality && causalConnections.length > 0 && (

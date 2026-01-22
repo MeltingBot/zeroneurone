@@ -1,18 +1,25 @@
 import { useState, useCallback } from 'react';
 import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText } from 'lucide-react';
-import type { ElementEvent } from '../../types';
+import type { ElementEvent, PropertyDefinition } from '../../types';
 import { generateUUID } from '../../utils';
+import { PropertiesEditor } from './PropertiesEditor';
 
 interface EventsEditorProps {
   events: ElementEvent[];
   onChange: (events: ElementEvent[]) => void;
   onOpenGeoPicker: (callback: (lat: number, lng: number) => void) => void;
+  /** Property suggestions from the investigation */
+  suggestions?: PropertyDefinition[];
+  /** Callback when a new property is created */
+  onNewProperty?: (propertyDef: PropertyDefinition) => void;
 }
 
 export function EventsEditor({
   events,
   onChange,
   onOpenGeoPicker,
+  suggestions = [],
+  onNewProperty,
 }: EventsEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -289,16 +296,18 @@ export function EventsEditor({
                         </div>
                       </div>
 
-                      {/* Properties (key-value pairs) */}
+                      {/* Properties */}
                       <div>
-                        <label className="text-[10px] text-text-tertiary">Propriétés additionnelles</label>
-                        <EventPropertiesEditor
-                          properties={event.properties || {}}
+                        <label className="text-[10px] text-text-tertiary">Propriétés</label>
+                        <PropertiesEditor
+                          properties={event.properties || []}
                           onChange={(properties) =>
                             handleUpdate(event.id, {
-                              properties: Object.keys(properties).length > 0 ? properties : undefined,
+                              properties: properties.length > 0 ? properties : undefined,
                             })
                           }
+                          suggestions={suggestions}
+                          onNewProperty={onNewProperty}
                         />
                       </div>
                     </div>
@@ -313,72 +322,3 @@ export function EventsEditor({
   );
 }
 
-// Sub-component for event properties
-interface EventPropertiesEditorProps {
-  properties: Record<string, string>;
-  onChange: (properties: Record<string, string>) => void;
-}
-
-function EventPropertiesEditor({ properties, onChange }: EventPropertiesEditorProps) {
-  const entries = Object.entries(properties);
-
-  const handleAddProperty = () => {
-    onChange({ ...properties, '': '' });
-  };
-
-  const handleRemoveProperty = (key: string) => {
-    const newProps = { ...properties };
-    delete newProps[key];
-    onChange(newProps);
-  };
-
-  const handleUpdateKey = (oldKey: string, newKey: string) => {
-    if (oldKey === newKey) return;
-    const newProps: Record<string, string> = {};
-    for (const [k, v] of Object.entries(properties)) {
-      newProps[k === oldKey ? newKey : k] = v;
-    }
-    onChange(newProps);
-  };
-
-  const handleUpdateValue = (key: string, value: string) => {
-    onChange({ ...properties, [key]: value });
-  };
-
-  return (
-    <div className="space-y-1">
-      {entries.map(([key, value], index) => (
-        <div key={index} className="flex items-center gap-1">
-          <input
-            type="text"
-            value={key}
-            onChange={(e) => handleUpdateKey(key, e.target.value)}
-            placeholder="Clé"
-            className="w-24 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-          />
-          <span className="text-text-tertiary">:</span>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => handleUpdateValue(key, e.target.value)}
-            placeholder="Valeur"
-            className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-          />
-          <button
-            onClick={() => handleRemoveProperty(key)}
-            className="p-1 text-text-tertiary hover:text-error"
-          >
-            <Trash2 size={10} />
-          </button>
-        </div>
-      ))}
-      <button
-        onClick={handleAddProperty}
-        className="text-xs text-text-tertiary hover:text-accent flex items-center gap-1"
-      >
-        <Plus size={10} />
-        Ajouter une propriété
-      </button>
-    </div>
-  );
-}
