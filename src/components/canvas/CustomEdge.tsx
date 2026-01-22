@@ -28,8 +28,8 @@ interface CustomEdgeData {
   // For manual curve offset (draggable) - 2D offset from midpoint
   curveOffset?: { x: number; y: number };
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void;
-  // Curve mode: straight lines or curved bezier
-  curveMode?: 'straight' | 'curved';
+  // Curve mode: straight lines, curved bezier, or orthogonal (right angles)
+  curveMode?: 'straight' | 'curved' | 'orthogonal';
   // Confidence indicator
   showConfidenceIndicator?: boolean;
   confidence?: number | null;
@@ -242,8 +242,9 @@ function CustomEdgeComponent(props: EdgeProps) {
   const perpX = edgeLength > 0 ? -edgeDy / edgeLength : 0;
   const perpY = edgeLength > 0 ? edgeDx / edgeLength : 0;
 
-  // Determine if using straight lines or curves
+  // Determine path mode
   const isStraight = curveMode === 'straight';
+  const isOrthogonal = curveMode === 'orthogonal';
 
   // Variables for path calculation
   let edgePath: string;
@@ -278,6 +279,128 @@ function CustomEdgeComponent(props: EdgeProps) {
 
     // Straight line path
     edgePath = `M ${adjustedSourceX} ${adjustedSourceY} L ${adjustedTargetX} ${adjustedTargetY}`;
+  } else if (isOrthogonal) {
+    // ORTHOGONAL MODE (right angles only)
+    // Get handle directions
+    const sourceDir = getHandleDirection(sourceHandleId, 'source');
+    const targetDir = getHandleDirection(targetHandleId, 'target');
+
+    // Minimum segment length for clean routing
+    const minSegment = 20;
+
+    // Calculate waypoints based on handle directions
+    // sourceDir: direction the edge exits the source
+    // targetDir: direction the edge enters the target (we need opposite for routing)
+    const srcHorizontal = sourceDir.dx !== 0;
+    const tgtHorizontal = targetDir.dx !== 0;
+
+    let waypoints: { x: number; y: number }[] = [];
+
+    if (srcHorizontal && tgtHorizontal) {
+      // Both horizontal: route via vertical middle segment
+      const midX = (sourceX + targetX) / 2 + parallelOffset;
+      waypoints = [
+        { x: midX, y: sourceY },
+        { x: midX, y: targetY },
+      ];
+    } else if (!srcHorizontal && !tgtHorizontal) {
+      // Both vertical: route via horizontal middle segment
+      const midY = (sourceY + targetY) / 2 + parallelOffset;
+      waypoints = [
+        { x: sourceX, y: midY },
+        { x: targetX, y: midY },
+      ];
+    } else if (srcHorizontal && !tgtHorizontal) {
+      // Source horizontal, target vertical: single corner
+      // Go horizontal first, then vertical
+      const cornerX = targetX;
+      const cornerY = sourceY;
+      // Check if we need to go around
+      const goingRight = sourceDir.dx > 0;
+      const targetLeft = targetX < sourceX;
+
+      if ((goingRight && !targetLeft) || (!goingRight && targetLeft)) {
+        // Direct corner works
+        waypoints = [{ x: cornerX, y: cornerY + parallelOffset }];
+      } else {
+        // Need to route around with extra segment
+        const detourX = sourceX + sourceDir.dx * minSegment;
+        const midY = (sourceY + targetY) / 2;
+        waypoints = [
+          { x: detourX, y: sourceY },
+          { x: detourX, y: midY + parallelOffset },
+          { x: targetX, y: midY + parallelOffset },
+        ];
+      }
+    } else {
+      // Source vertical, target horizontal: single corner
+      const cornerX = sourceX;
+      const cornerY = targetY;
+      const goingDown = sourceDir.dy > 0;
+      const targetBelow = targetY > sourceY;
+
+      if ((goingDown && targetBelow) || (!goingDown && !targetBelow)) {
+        // Direct corner works
+        waypoints = [{ x: cornerX + parallelOffset, y: cornerY }];
+      } else {
+        // Need to route around with extra segment
+        const detourY = sourceY + sourceDir.dy * minSegment;
+        const midX = (sourceX + targetX) / 2;
+        waypoints = [
+          { x: sourceX, y: detourY },
+          { x: midX + parallelOffset, y: detourY },
+          { x: midX + parallelOffset, y: targetY },
+        ];
+      }
+    }
+
+    // Calculate arrow angles based on final segment directions
+    if (waypoints.length > 0) {
+      const firstWp = waypoints[0];
+      startAngle = Math.atan2(firstWp.y - sourceY, firstWp.x - sourceX);
+      const lastWp = waypoints[waypoints.length - 1];
+      endAngle = Math.atan2(targetY - lastWp.y, targetX - lastWp.x);
+    } else {
+      startAngle = Math.atan2(edgeDy, edgeDx);
+      endAngle = startAngle;
+    }
+
+    // Arrow offsets
+    const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
+    const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
+    const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
+    const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
+
+    // Build path
+    const adjustedSourceX = sourceX + startOffsetX;
+    const adjustedSourceY = sourceY + startOffsetY;
+    const adjustedTargetX = targetX - endOffsetX;
+    const adjustedTargetY = targetY - endOffsetY;
+
+    let pathParts = [`M ${adjustedSourceX} ${adjustedSourceY}`];
+    for (const wp of waypoints) {
+      pathParts.push(`L ${wp.x} ${wp.y}`);
+    }
+    pathParts.push(`L ${adjustedTargetX} ${adjustedTargetY}`);
+    edgePath = pathParts.join(' ');
+
+    // Control handle at midpoint of the path for label placement
+    if (waypoints.length >= 2) {
+      // Place at middle of the middle segment
+      const midIndex = Math.floor(waypoints.length / 2);
+      const wp1 = midIndex === 0 ? { x: sourceX, y: sourceY } : waypoints[midIndex - 1];
+      const wp2 = waypoints[midIndex];
+      controlHandleX = (wp1.x + wp2.x) / 2;
+      controlHandleY = (wp1.y + wp2.y) / 2;
+    } else if (waypoints.length === 1) {
+      // Single corner: place between source and corner
+      controlHandleX = (sourceX + waypoints[0].x) / 2;
+      controlHandleY = (sourceY + waypoints[0].y) / 2;
+    } else {
+      // Fallback to midpoint
+      controlHandleX = (sourceX + targetX) / 2;
+      controlHandleY = (sourceY + targetY) / 2;
+    }
   } else {
     // CURVED MODE
     const hasCustomOffset = currentOffset.x !== 0 || currentOffset.y !== 0;
@@ -610,8 +733,8 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
-      {/* Draggable control point - hidden during label editing or straight mode, only interactive when selected */}
-      {!isEditing && !isStraight && (
+      {/* Draggable control point - hidden during label editing, straight mode, or orthogonal mode, only interactive when selected */}
+      {!isEditing && !isStraight && !isOrthogonal && (
         <g style={{ pointerEvents: 'none' }}>
           {/* Hit area - only active when selected */}
           <circle

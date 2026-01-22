@@ -174,8 +174,8 @@ export interface InvestigationSettings {
   tagDisplaySize?: 'small' | 'medium' | 'large';
   /** Link anchor mode: auto (system chooses best handles) or manual (user controls) */
   linkAnchorMode?: 'auto' | 'manual';
-  /** Link curve mode: straight lines or curved bezier */
-  linkCurveMode?: 'straight' | 'curved';
+  /** Link curve mode: straight lines, curved bezier, or orthogonal (right angles) */
+  linkCurveMode?: 'straight' | 'curved' | 'orthogonal';
 }
 
 // ============================================================================

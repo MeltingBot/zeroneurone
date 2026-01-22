@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
-  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles
+  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight
 } from 'lucide-react';
 import { useInvestigationStore, useViewStore } from '../../stores';
 import type { View } from '../../types';
@@ -243,6 +243,17 @@ export function ViewsPanel() {
                   }`}
                 >
                   <Minus size={14} />
+                </button>
+                <button
+                  onClick={() => setLinkCurveMode('orthogonal')}
+                  title="Angles droits"
+                  className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
+                    linkCurveMode === 'orthogonal'
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                  }`}
+                >
+                  <CornerDownRight size={14} />
                 </button>
               </div>
             </div>

@@ -105,7 +105,7 @@ interface InvestigationState {
   setTagDisplayMode: (mode: 'none' | 'icons' | 'labels' | 'both') => Promise<void>;
   setTagDisplaySize: (size: 'small' | 'medium' | 'large') => Promise<void>;
   setLinkAnchorMode: (mode: 'auto' | 'manual') => Promise<void>;
-  setLinkCurveMode: (mode: 'straight' | 'curved') => Promise<void>;
+  setLinkCurveMode: (mode: 'straight' | 'curved' | 'orthogonal') => Promise<void>;
 
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
@@ -1321,7 +1321,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     });
   },
 
-  setLinkCurveMode: async (mode: 'straight' | 'curved') => {
+  setLinkCurveMode: async (mode: 'straight' | 'curved' | 'orthogonal') => {
     const { currentInvestigation } = get();
     if (!currentInvestigation) return;
 

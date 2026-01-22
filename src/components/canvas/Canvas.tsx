@@ -283,7 +283,7 @@ function linkToEdge(
   isDimmed: boolean,
   nodePositions: Map<string, Position>,
   linkAnchorMode: 'auto' | 'manual',
-  linkCurveMode: 'straight' | 'curved',
+  linkCurveMode: 'straight' | 'curved' | 'orthogonal',
   isEditing?: boolean,
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
