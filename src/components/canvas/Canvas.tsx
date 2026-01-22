@@ -585,12 +585,22 @@ export function Canvas() {
     [updateLink]
   );
 
-  // Get display settings from investigation (with stable references to avoid infinite loops)
-  const showConfidenceIndicator = currentInvestigation?.settings?.showConfidenceIndicator ?? false;
-  const tagDisplayMode = currentInvestigation?.settings?.tagDisplayMode ?? 'icons';
-  const tagDisplaySize = currentInvestigation?.settings?.tagDisplaySize ?? 'small';
-  const linkAnchorMode = currentInvestigation?.settings?.linkAnchorMode ?? 'manual';
-  const linkCurveMode = currentInvestigation?.settings?.linkCurveMode ?? 'curved';
+  // Get display settings from investigation using specific selectors for reactivity
+  const showConfidenceIndicator = useInvestigationStore(
+    (state) => state.currentInvestigation?.settings?.showConfidenceIndicator ?? false
+  );
+  const tagDisplayMode = useInvestigationStore(
+    (state) => state.currentInvestigation?.settings?.tagDisplayMode ?? 'icons'
+  );
+  const tagDisplaySize = useInvestigationStore(
+    (state) => state.currentInvestigation?.settings?.tagDisplaySize ?? 'small'
+  );
+  const linkAnchorMode = useInvestigationStore(
+    (state) => state.currentInvestigation?.settings?.linkAnchorMode ?? 'manual'
+  );
+  const linkCurveMode = useInvestigationStore(
+    (state) => state.currentInvestigation?.settings?.linkCurveMode ?? 'curved'
+  );
   const displayedProperties = useMemo(
     () => currentInvestigation?.settings?.displayedProperties ?? [],
     [currentInvestigation?.settings?.displayedProperties]
