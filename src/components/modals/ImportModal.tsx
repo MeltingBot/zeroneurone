@@ -178,6 +178,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               <div className="text-xs text-text-tertiary mt-1">
                 ZIP, JSON, CSV, GraphML/XML, OSINTracker
               </div>
+              <div className="text-xs text-text-tertiary mt-0.5">
+                JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph
+              </div>
             </div>
           </button>
 

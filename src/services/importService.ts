@@ -18,6 +18,9 @@ import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
 import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
+import { importPredicaGraph, isPredicaGraphFormat } from './importPredictagraph';
+import { importOsintIndustries, isOsintIndustriesFormat } from './importOsintIndustries';
+import { importOIPalette, isOIPaletteFormat } from './importOIPalette';
 
 // ============================================================================
 // SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
@@ -222,6 +225,9 @@ class ImportService {
       await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, result);
 
       result.success = true;
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
     } catch (error) {
       if (error instanceof ImportValidationError) {
         result.errors.push(error.message);
@@ -234,7 +240,8 @@ class ImportService {
   }
 
   /**
-   * Import from JSON file (without assets)
+   * Import from JSON file with auto-detection of format
+   * Supports: ZeroNeurone native, OSINT Industries, Graph Palette (OI), PredicaGraph
    */
   async importFromJSON(
     content: string,
@@ -250,8 +257,102 @@ class ImportService {
     };
 
     try {
-      const data = JSON.parse(content) as ExportData;
+      const data = JSON.parse(content);
+      const format = this.detectJsonFormat(data);
 
+      let importResult: ImportResult;
+      switch (format) {
+        case 'zeroneurone':
+          importResult = await this.importNativeJSON(data, targetInvestigationId);
+          break;
+        case 'osint-industries':
+          importResult = await importOsintIndustries(content, targetInvestigationId);
+          break;
+        case 'oi-palette':
+          importResult = await importOIPalette(content, targetInvestigationId);
+          break;
+        case 'predicagraph':
+          importResult = await importPredicaGraph(content, targetInvestigationId);
+          break;
+        default:
+          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph');
+          return result;
+      }
+
+      if (importResult.success && importResult.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
+      return importResult;
+    } catch (error) {
+      result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Detect the JSON format from parsed data
+   */
+  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'unknown' {
+    // ZeroNeurone native: { version, elements, links }
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const obj = data as Record<string, unknown>;
+      if (obj.version && obj.elements && obj.links) {
+        return 'zeroneurone';
+      }
+    }
+
+    // OSINT Industries: Array with objects having module, query, status
+    if (isOsintIndustriesFormat(data)) {
+      return 'osint-industries';
+    }
+
+    // Graph Palette (OI): { nodes } with textNode, moduleNode, imageNode types
+    if (isOIPaletteFormat(data)) {
+      return 'oi-palette';
+    }
+
+    // PredicaGraph: { nodes, edges } with node.data.type like person, location, social-*
+    if (isPredicaGraphFormat(data)) {
+      return 'predicagraph';
+    }
+
+    return 'unknown';
+  }
+
+  /**
+   * Apply default display settings for imported investigations
+   * Sets curved links with auto anchoring for better readability
+   */
+  private async applyImportDisplaySettings(investigationId: InvestigationId): Promise<void> {
+    const investigation = await db.investigations.get(investigationId);
+    if (!investigation) return;
+    await db.investigations.update(investigationId, {
+      settings: {
+        ...investigation.settings,
+        linkAnchorMode: 'auto',
+        linkCurveMode: 'curved',
+      },
+    });
+  }
+
+  /**
+   * Import native ZeroNeurone JSON format (without assets)
+   */
+  private async importNativeJSON(
+    data: ExportData,
+    targetInvestigationId: InvestigationId
+  ): Promise<ImportResult> {
+    const result: ImportResult = {
+      success: false,
+      elementsImported: 0,
+      linksImported: 0,
+      assetsImported: 0,
+      errors: [],
+      warnings: [],
+    };
+
+    try {
       // Validate structure
       if (!data.version || !data.elements || !data.links) {
         result.errors.push('Format JSON invalide: champs manquants');
@@ -401,6 +502,9 @@ class ImportService {
       }
 
       result.success = true;
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
     } catch (error) {
       result.errors.push(
         `Erreur d'import OSINTracker: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
@@ -676,6 +780,9 @@ class ImportService {
       });
 
       result.success = result.elementsImported > 0;
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
     } catch (error) {
       result.errors.push(`Erreur d'import GraphML: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
@@ -1172,6 +1279,9 @@ class ImportService {
       });
 
       result.success = result.elementsImported > 0 || result.linksImported > 0;
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
@@ -1337,6 +1447,9 @@ class ImportService {
       });
 
       result.success = result.elementsImported > 0;
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
@@ -1570,6 +1683,9 @@ class ImportService {
       });
 
       result.success = result.linksImported > 0 || result.elementsImported > 0;
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
