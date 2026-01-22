@@ -239,34 +239,32 @@ export function ViewsPanel() {
             </div>
           </div>
 
-          {/* Anchor mode - only show when curved */}
-          {linkCurveMode === 'curved' && (
-            <div className="space-y-1.5 pl-4">
-              <span className="text-[10px] text-text-tertiary">Ancrage</span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setLinkAnchorMode('manual')}
-                  className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                    linkAnchorMode === 'manual'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  Manuel
-                </button>
-                <button
-                  onClick={() => setLinkAnchorMode('auto')}
-                  className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
-                    linkAnchorMode === 'auto'
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
-                  }`}
-                >
-                  Optimisé
-                </button>
-              </div>
+          {/* Anchor mode */}
+          <div className="space-y-1.5 pl-4">
+            <span className="text-[10px] text-text-tertiary">Ancrage</span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setLinkAnchorMode('manual')}
+                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                  linkAnchorMode === 'manual'
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                }`}
+              >
+                Manuel
+              </button>
+              <button
+                onClick={() => setLinkAnchorMode('auto')}
+                className={`flex-1 px-2 py-1.5 text-[10px] rounded transition-colors ${
+                  linkAnchorMode === 'auto'
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-secondary hover:bg-bg-tertiary text-text-secondary'
+                }`}
+              >
+                Optimisé
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Properties display */}
