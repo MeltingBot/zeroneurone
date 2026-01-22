@@ -1,9 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Modal, Button, Input, IconButton, IconPicker } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
 import type { TagSet, SuggestedProperty, ElementShape, PropertyType } from '../../types';
-import { DEFAULT_COLORS } from '../../types';
 
 interface TagSetEditorModalProps {
   isOpen: boolean;

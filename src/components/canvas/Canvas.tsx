@@ -707,71 +707,30 @@ export function Canvas() {
     [updateLink]
   );
 
-  // HYBRID MODE: Local state for smooth dragging, sync to Zustand on drag end
-  // This gives us: 1) smooth drag UX, 2) Zustand as source of truth, 3) no desync
-  const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
+  // Dragging state refs (no state to avoid re-renders during drag)
   const isDraggingRef = useRef(false);
   const draggingNodeIdsRef = useRef<Set<string>>(new Set());
   const lastDragEndRef = useRef<number>(0);
   const isHandlingSelectionRef = useRef(false);
-  const localNodeIdsRef = useRef<Set<string>>(new Set(nodes.map(n => n.id)));
 
-  // Handle element deletions immediately - filter out nodes that no longer exist in elements
+  // Local nodes state for smooth drag - ReactFlow controls this during drag
+  const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
+
+  // Sync from store to local when NOT dragging
+  // This allows visual changes from detail panel to appear immediately
   useEffect(() => {
-    // Special case: if elements is empty, force localNodes to empty immediately
-    if (elements.length === 0) {
-      setLocalNodes([]);
-      localNodeIdsRef.current = new Set();
-      return;
-    }
-
-    const currentElementIds = new Set(elements.map(e => e.id));
-
-    setLocalNodes(prev => {
-      // Check if any nodes in localNodes are no longer in elements (deleted)
-      const hasDeletedNodes = prev.some(n => !currentElementIds.has(n.id));
-
-      if (hasDeletedNodes) {
-        // Filter out deleted nodes immediately
-        const filtered = prev.filter(n => currentElementIds.has(n.id));
-        localNodeIdsRef.current = new Set(filtered.map(n => n.id));
-        return filtered;
-      }
-
-      return prev;
-    });
-  }, [elements]);
-
-  // Sync new/updated nodes from Zustand to local state
-  // Apply delay after drag to avoid redundant recalculation
-  useEffect(() => {
-    const currentElementIds = new Set(elements.map(e => e.id));
-    const prevNodeIds = localNodeIdsRef.current;
-
-    // Check for additions - any ID in elements that's not in localNodes
-    const hasNewNodes = [...currentElementIds].some(id => !prevNodeIds.has(id));
-
-    // Sync immediately if new elements were added
-    if (hasNewNodes) {
+    if (!isDraggingRef.current) {
       setLocalNodes(nodes);
-      localNodeIdsRef.current = currentElementIds;
-      return;
     }
+  }, [nodes]);
 
-    // For position-only changes, apply delay after drag
-    const timeSinceDragEnd = Date.now() - lastDragEndRef.current;
-    const SYNC_DELAY_AFTER_DRAG = 500; // Skip sync for 500ms after drag ends
-
-    if (!isDraggingRef.current && timeSinceDragEnd > SYNC_DELAY_AFTER_DRAG) {
-      setLocalNodes(nodes);
-      localNodeIdsRef.current = currentElementIds;
-    }
-  }, [elements, nodes]);
+  // Use local nodes for display - this allows smooth drag
+  const displayNodes = localNodes;
 
   const edges = useMemo(() => {
-    // Build position map from localNodes for dynamic handle calculation
+    // Build position map from displayNodes for dynamic handle calculation
     const nodePositions = new Map<string, Position>();
-    for (const node of localNodes) {
+    for (const node of displayNodes) {
       nodePositions.set(node.id, node.position);
     }
 
@@ -847,7 +806,7 @@ export function Canvas() {
         linkDisplayedPropertyValues
       );
     });
-  }, [links, localNodes, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
+  }, [links, displayNodes, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
 
 
   // Track starting positions for undo
@@ -858,30 +817,15 @@ export function Canvas() {
   const DRAG_SYNC_THROTTLE_MS = 200; // Sync positions every 200ms during drag (reduced for performance)
 
   // Handle node changes (position, selection)
-  // HYBRID: Apply changes locally for smooth drag, sync to Zustand periodically and on drag end
+  // HYBRID: Apply position changes locally for smooth drag, sync to Zustand periodically and on drag end
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
       // Filter out 'remove' changes - deletion is controlled by Zustand only
       const safeChanges = changes.filter(c => c.type !== 'remove');
       if (safeChanges.length === 0) return;
 
-      // Apply changes locally for smooth dragging
-      // Create new node objects to ensure React detects the position changes
-      setLocalNodes(currentNodes => {
-        const updated = applyNodeChanges(safeChanges, currentNodes);
-        // Force new references for nodes that have position changes
-        const positionChangeIds = new Set(
-          safeChanges
-            .filter((c): c is NodeChange & { type: 'position'; id: string } => c.type === 'position')
-            .map(c => c.id)
-        );
-        if (positionChangeIds.size === 0) return updated;
-        return updated.map(node =>
-          positionChangeIds.has(node.id)
-            ? { ...node, position: { ...node.position } }
-            : node
-        );
-      });
+      // Apply changes to local nodes for smooth visual updates during drag
+      setLocalNodes(nds => applyNodeChanges(safeChanges, nds));
 
       // Track dragging state
       const positionChanges = changes.filter(
@@ -2047,7 +1991,7 @@ export function Canvas() {
           }}
         >
           <ReactFlow
-            nodes={localNodes}
+            nodes={displayNodes}
             edges={edges}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}

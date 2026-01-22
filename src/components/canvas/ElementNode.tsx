@@ -209,10 +209,16 @@ function ElementNodeComponent({ data }: NodeProps) {
     const shape = element.visual.shape;
 
     if (shape === 'rectangle') {
-      // Rectangle: expand horizontally to fit text
-      const width = Math.max(estimatedTextWidth, baseSize, 80);
-      const height = Math.max(baseSize * 0.6, 36);
-      return { width: Math.min(width, 250), height };
+      // Rectangle: clearly wider than tall, horizontal card-like shape
+      const width = Math.max(estimatedTextWidth * 1.2, 120);
+      const height = Math.max(baseSize * 0.5, 40);
+      return { width: Math.min(width, 280), height };
+    }
+
+    if (shape === 'square') {
+      // Square: equal width and height, compact
+      const size = Math.max(baseSize, 60);
+      return { width: size, height: size };
     }
 
     if (shape === 'circle') {
@@ -228,9 +234,8 @@ function ElementNodeComponent({ data }: NodeProps) {
       return { width: Math.min(size, 150), height: Math.min(size, 150) };
     }
 
-    // Square or default
-    const size = Math.max(estimatedTextWidth * 0.7, baseSize, 50);
-    return { width: Math.min(size, 150), height: Math.min(size, 150) };
+    // Default fallback (shouldn't reach here)
+    return { width: baseSize, height: baseSize };
   };
 
   const defaultDimensions = getDefaultDimensions();
@@ -709,8 +714,12 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.confidence !== nextEl.confidence) return false;
   if (prevEl.visual.color !== nextEl.visual.color) return false;
   if (prevEl.visual.borderColor !== nextEl.visual.borderColor) return false;
+  if (prevEl.visual.borderWidth !== nextEl.visual.borderWidth) return false;
+  if (prevEl.visual.borderStyle !== nextEl.visual.borderStyle) return false;
   if (prevEl.visual.shape !== nextEl.visual.shape) return false;
   if (prevEl.visual.size !== nextEl.visual.size) return false;
+  if (prevEl.visual.icon !== nextEl.visual.icon) return false;
+  if (prevEl.visual.image !== nextEl.visual.image) return false;
   if (prevEl.visual.customWidth !== nextEl.visual.customWidth) return false;
   if (prevEl.visual.customHeight !== nextEl.visual.customHeight) return false;
   if (prevEl.assetIds?.length !== nextEl.assetIds?.length) return false;

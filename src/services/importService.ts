@@ -12,6 +12,7 @@ import type {
   Confidence,
   ElementShape,
   LinkStyle,
+  Property,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
@@ -366,6 +367,7 @@ class ImportService {
           targetHandle: parsedLink.targetHandle,
           label: parsedLink.label,
           notes: '',
+          tags: parsedLink.tags || [],
           properties: parsedLink.properties,
           confidence: parsedLink.confidence,
           source: parsedLink.source || '',
@@ -488,8 +490,8 @@ class ImportService {
 
         // Generate position if not available
         const position: Position = {
-          x: nodeData.x ?? (gridX * gridSpacing),
-          y: nodeData.y ?? (gridY * gridSpacing),
+          x: typeof nodeData.x === 'number' ? nodeData.x : (gridX * gridSpacing),
+          y: typeof nodeData.y === 'number' ? nodeData.y : (gridY * gridSpacing),
         };
 
         // Advance grid position for next node without position
@@ -513,7 +515,7 @@ class ImportService {
         // Build properties from additional attributes (exclude known fields)
         const knownNodeFields = ['label', 'name', 'titre', 'title', 'notes', 'description', 'desc',
           'tags', 'color', 'colour', 'shape', 'x', 'y', 'lat', 'lng', 'lon', 'longitude', 'latitude'];
-        const nodeProperties: { key: string; value: string; type: 'text' | 'number' | 'date' | 'url' }[] = [];
+        const nodeProperties: Property[] = [];
         for (const [key, value] of Object.entries(nodeData)) {
           if (value !== undefined && !knownNodeFields.includes(key)) {
             nodeProperties.push({ key, value: String(value), type: 'text' });
@@ -547,7 +549,7 @@ class ImportService {
           geo,
           visual: {
             ...DEFAULT_ELEMENT_VISUAL,
-            color: nodeData.color || nodeData.colour || DEFAULT_ELEMENT_VISUAL.color,
+            color: String(nodeData.color || nodeData.colour || DEFAULT_ELEMENT_VISUAL.color),
             shape: this.isValidShape(nodeData.shape) ? nodeData.shape as ElementShape : DEFAULT_ELEMENT_VISUAL.shape,
           },
           assetIds: [],
@@ -630,7 +632,7 @@ class ImportService {
           'notes', 'description', 'desc', 'date', 'date_heure', 'datetime', 'timestamp', 'time', 'date_time',
           'confidence', 'indice_confiance', 'weight', 'poids', 'score',
           'color', 'colour', 'edgecolor', 'style'];
-        const edgeProperties: { key: string; value: string; type: 'text' | 'number' | 'date' | 'url' }[] = [];
+        const edgeProperties: Property[] = [];
         for (const [key, value] of Object.entries(edgeData)) {
           if (value !== undefined && !knownEdgeFields.includes(key)) {
             edgeProperties.push({ key, value: String(value), type: 'text' });
@@ -656,7 +658,7 @@ class ImportService {
           direction: isDirected ? 'forward' : 'none',
           visual: {
             ...DEFAULT_LINK_VISUAL,
-            color: edgeData.color || edgeData.colour || edgeData.edgecolor || DEFAULT_LINK_VISUAL.color,
+            color: String(edgeData.color || edgeData.colour || edgeData.edgecolor || DEFAULT_LINK_VISUAL.color),
             style: this.isValidLinkStyle(edgeData.style) ? edgeData.style as LinkStyle : DEFAULT_LINK_VISUAL.style,
           },
           curveOffset: { x: 0, y: 0 },
@@ -1141,6 +1143,7 @@ class ImportService {
           targetHandle: null,
           label: labelIdx >= 0 ? values[labelIdx] || '' : '',
           notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
+          tags: [],
           properties: linkProperties,
           confidence: linkConfidence,
           source: '',
@@ -1533,6 +1536,7 @@ class ImportService {
             targetHandle: null,
             label: labelIdx >= 0 ? values[labelIdx] || '' : '',
             notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
+            tags: [],
             properties: [],
             confidence: linkConfidence,
             source: '',
@@ -1612,13 +1616,13 @@ class ImportService {
     return result;
   }
 
-  private isValidShape(value: string | undefined): boolean {
-    if (!value) return false;
+  private isValidShape(value: string | number | undefined): boolean {
+    if (!value || typeof value !== 'string') return false;
     return ['circle', 'square', 'diamond', 'rectangle'].includes(value.toLowerCase());
   }
 
-  private isValidLinkStyle(value: string | undefined): boolean {
-    if (!value) return false;
+  private isValidLinkStyle(value: string | number | undefined): boolean {
+    if (!value || typeof value !== 'string') return false;
     return ['solid', 'dashed', 'dotted'].includes(value.toLowerCase());
   }
 }

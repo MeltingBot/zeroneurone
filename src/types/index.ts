@@ -418,6 +418,8 @@ export type SidePanelTab = 'detail' | 'insights' | 'views' | 'filters';
 export const DEFAULT_ELEMENT_VISUAL: ElementVisual = {
   color: '#f5f5f4', // neutral light gray - works on both light and dark themes
   borderColor: '#a8a29e', // warm gray border
+  borderWidth: 2,
+  borderStyle: 'solid',
   shape: 'circle',
   size: 'medium',
   icon: null,

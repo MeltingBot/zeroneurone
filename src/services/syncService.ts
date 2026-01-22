@@ -386,10 +386,13 @@ class SyncService {
     }
 
     // Handle connection errors (only show if not in reconnecting mode)
-    this.websocketProvider.on('connection-error', (event: { message?: string }) => {
+    this.websocketProvider.on('connection-error', (event: Event | { message?: string }) => {
       // Don't overwrite reconnecting state with error - let it keep trying
       if (!this.state.reconnecting) {
-        this.setState({ error: event.message || 'Erreur de connexion au serveur' });
+        const message = (event && typeof event === 'object' && 'message' in event)
+          ? (event as { message?: string }).message
+          : 'Erreur de connexion au serveur';
+        this.setState({ error: message || 'Erreur de connexion au serveur' });
       }
     });
 

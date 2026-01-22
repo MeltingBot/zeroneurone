@@ -10,7 +10,7 @@ marked.setOptions({
 });
 
 // Configure DOMPurify - allow safe tags only, no scripts
-const SANITIZE_CONFIG: DOMPurify.Config = {
+const SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -1080,7 +1080,7 @@ class ReportService {
       const result = marked.parse(text);
       const html = typeof result === 'string' ? result : '';
       // Sanitize HTML to prevent XSS attacks
-      return DOMPurify.sanitize(html, SANITIZE_CONFIG);
+      return DOMPurify.sanitize(html, SANITIZE_CONFIG) as string;
     } catch {
       // Fallback to escaped HTML if markdown parsing fails
       return this.escapeHTML(text).replace(/\n/g, '<br>');

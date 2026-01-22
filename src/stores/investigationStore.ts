@@ -1352,7 +1352,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   _syncFromYDoc: () => {
     const ydoc = syncService.getYDoc();
-    const { currentInvestigation, assets: currentAssets, elements: currentElements } = get();
+    const { currentInvestigation, assets: currentAssets } = get();
     if (!ydoc || !currentInvestigation) {
       return;
     }

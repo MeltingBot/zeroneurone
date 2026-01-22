@@ -154,7 +154,7 @@ class ExportService {
         '', // style
       ];
       // Add property values
-      const propsMap = new Map(el.properties?.map((p) => [p.key, p.value]) ?? []);
+      const propsMap = new Map(el.properties?.map((p) => [p.key, String(p.value)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }
@@ -183,7 +183,7 @@ class ExportService {
         link.visual.style,
       ];
       // Add property values
-      const propsMap = new Map(link.properties?.map((p) => [p.key, p.value]) ?? []);
+      const propsMap = new Map(link.properties?.map((p) => [p.key, String(p.value)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }

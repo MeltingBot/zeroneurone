@@ -72,6 +72,8 @@ export function elementToYMap(element: Element): Y.Map<any> {
   map.set('visual', {
     color: element.visual.color,
     borderColor: element.visual.borderColor,
+    borderWidth: element.visual.borderWidth,
+    borderStyle: element.visual.borderStyle,
     shape: element.visual.shape,
     size: element.visual.size,
     icon: element.visual.icon,
@@ -201,12 +203,20 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   }
 
   // Handle visual - can be Y.Map or plain object
+  // Migration: hexagon shape is no longer supported, convert to square
+  const migrateShape = (shape: string | undefined): string => {
+    if (shape === 'hexagon') return 'square';
+    return shape ?? DEFAULT_ELEMENT_VISUAL.shape;
+  };
+
   let visual = { ...DEFAULT_ELEMENT_VISUAL };
   if (visualRaw instanceof Y.Map) {
     visual = {
       color: visualRaw.get('color') ?? DEFAULT_ELEMENT_VISUAL.color,
       borderColor: visualRaw.get('borderColor') ?? DEFAULT_ELEMENT_VISUAL.borderColor,
-      shape: visualRaw.get('shape') ?? DEFAULT_ELEMENT_VISUAL.shape,
+      borderWidth: visualRaw.get('borderWidth') ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
+      borderStyle: visualRaw.get('borderStyle') ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
+      shape: migrateShape(visualRaw.get('shape')) as typeof DEFAULT_ELEMENT_VISUAL.shape,
       size: visualRaw.get('size') ?? DEFAULT_ELEMENT_VISUAL.size,
       icon: visualRaw.get('icon') ?? null,
       image: visualRaw.get('image') ?? null,
@@ -217,7 +227,9 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     visual = {
       color: visualRaw.color ?? DEFAULT_ELEMENT_VISUAL.color,
       borderColor: visualRaw.borderColor ?? DEFAULT_ELEMENT_VISUAL.borderColor,
-      shape: visualRaw.shape ?? DEFAULT_ELEMENT_VISUAL.shape,
+      borderWidth: visualRaw.borderWidth ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
+      borderStyle: visualRaw.borderStyle ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
+      shape: migrateShape(visualRaw.shape) as typeof DEFAULT_ELEMENT_VISUAL.shape,
       size: visualRaw.size ?? DEFAULT_ELEMENT_VISUAL.size,
       icon: visualRaw.icon ?? null,
       image: visualRaw.image ?? null,

@@ -5,8 +5,7 @@
  * Format: Dexie JSON export with data, relation, and investigation tables
  */
 
-import type { Element, Link, Investigation, Asset } from '../types';
-import { generateUUID } from '../utils';
+import type { Element, Link, Investigation, Confidence } from '../types';
 
 // ============================================================================
 // TYPE MAPPING DEFINITIONS (minimal structure for import)
@@ -198,8 +197,20 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     originalId: osintInvestigation.id,
     name: osintInvestigation.name || 'Investigation importée',
     description: osintInvestigation.description || '',
+    startDate: null,
+    creator: '',
+    tags: [],
+    properties: [],
     createdAt: new Date(osintInvestigation.creationDate),
     updatedAt: new Date(osintInvestigation.editionDate || osintInvestigation.creationDate),
+    viewport: { x: 0, y: 0, zoom: 1 },
+    settings: {
+      defaultElementVisual: {},
+      defaultLinkVisual: {},
+      suggestedProperties: [],
+      existingTags: [],
+      tagPropertyAssociations: {},
+    },
   };
 
   // Convert elements
@@ -230,7 +241,7 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
     }
 
     // Build properties
-    const properties: Array<{ key: string; value: string; type: 'text' | 'number' | 'date' | 'url' | 'country' }> = [];
+    const properties: Array<{ key: string; value: string; type: 'text' | 'number' | 'date' | 'link' | 'country' }> = [];
 
     // Add Badge property from progress field
     if (osintEl.progress) {
@@ -265,7 +276,7 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       tags,
       properties,
       confidence: null,
-      source: osintEl.url || null,
+      source: osintEl.url || '',
       date: null,
       dateRange: null,
       position: {
@@ -353,8 +364,9 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       continue;
     }
 
-    // Convert rating (1-5) to confidence (0-100)
-    const confidence = osintRel.rating ? Math.round((osintRel.rating / 5) * 100) : null;
+    // Convert rating (1-5) to confidence (0-100), rounded to nearest 10
+    const rawConfidence = osintRel.rating ? Math.round((osintRel.rating / 5) * 100) : null;
+    const confidence = rawConfidence !== null ? (Math.round(rawConfidence / 10) * 10) as Confidence : null;
 
     // Determine direction
     let direction: 'none' | 'forward' | 'backward' | 'both' = 'forward';
@@ -371,20 +383,24 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       originalFromId: osintRel.originId,
       originalToId: osintRel.targetId,
       label: osintRel.label || '',
+      notes: osintRel.comments || '',
+      tags: [],
       direction,
+      directed: true, // OSINTracker links are always directed or bidirectional
       confidence,
-      source: null,
+      source: '',
       date: startDateTime,
       dateRange: startDateTime ? {
         start: startDateTime,
         end: endDateTime ?? null,
       } : null,
-      properties: osintRel.comments ? [{ key: 'Notes', value: osintRel.comments, type: 'text' }] : [],
+      properties: [],
       visual: {
         color: osintRel.critical ? '#f59e0b' : '#9a948d',
         thickness: osintRel.critical ? 2 : 1,
         style: 'solid',
       },
+      curveOffset: { x: 0, y: 0 },
       sourceHandle: null,
       targetHandle: null,
       createdAt: new Date(osintRel.creationDate),

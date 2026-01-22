@@ -52,7 +52,8 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
 
   const handleShapeChange = useCallback(
     (shape: ElementShape) => {
-      onChange({ shape });
+      // Reset custom dimensions when changing shape so new shape uses its default dimensions
+      onChange({ shape, customWidth: undefined, customHeight: undefined });
     },
     [onChange]
   );
