@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ElementVisual, ElementShape, ElementSize } from '../../types';
+import type { ElementVisual, ElementShape } from '../../types';
 import { DEFAULT_COLORS } from '../../types';
 
 interface VisualEditorProps {
@@ -13,12 +13,6 @@ const SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'diamond', label: 'Losange' },
   { value: 'rectangle', label: 'Rectangle' },
   { value: 'hexagon', label: 'Hexagone' },
-];
-
-const SIZES: { value: ElementSize; label: string }[] = [
-  { value: 'small', label: 'Petit' },
-  { value: 'medium', label: 'Moyen' },
-  { value: 'large', label: 'Grand' },
 ];
 
 export function VisualEditor({ visual, onChange }: VisualEditorProps) {
@@ -39,13 +33,6 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
   const handleShapeChange = useCallback(
     (shape: ElementShape) => {
       onChange({ shape });
-    },
-    [onChange]
-  );
-
-  const handleSizeChange = useCallback(
-    (size: ElementSize) => {
-      onChange({ size });
     },
     [onChange]
   );
@@ -148,26 +135,6 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
             </option>
           ))}
         </select>
-      </div>
-
-      {/* Size */}
-      <div className="space-y-1.5">
-        <label className="text-xs text-text-tertiary">Taille</label>
-        <div className="flex gap-2">
-          {SIZES.map((size) => (
-            <button
-              key={size.value}
-              onClick={() => handleSizeChange(size.value)}
-              className={`flex-1 px-2 py-1.5 text-xs rounded border ${
-                visual.size === size.value
-                  ? 'bg-accent text-white border-accent'
-                  : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
-              }`}
-            >
-              {size.label}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );

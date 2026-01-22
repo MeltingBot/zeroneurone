@@ -17,7 +17,6 @@ import type {
   Element,
   Link,
   ElementShape,
-  ElementSize,
   LinkDirection,
   LinkStyle,
   Confidence,
@@ -33,12 +32,6 @@ const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'diamond', label: '◇' },
   { value: 'rectangle', label: '▭' },
   { value: 'hexagon', label: '⬡' },
-];
-
-const ELEMENT_SIZES: { value: ElementSize; label: string }[] = [
-  { value: 'small', label: 'S' },
-  { value: 'medium', label: 'M' },
-  { value: 'large', label: 'L' },
 ];
 
 const LINK_DIRECTIONS: { value: LinkDirection; icon: typeof Minus; label: string }[] = [
@@ -256,17 +249,6 @@ export function MultiSelectionDetail() {
     [selectedElementIds, selectedElements, updateElements]
   );
 
-  const handleSizeChange = useCallback(
-    async (size: ElementSize) => {
-      const elementIds = Array.from(selectedElementIds);
-      if (elementIds.length > 0) {
-        for (const el of selectedElements) {
-          await updateElements([el.id], { visual: { ...el.visual, size } });
-        }
-      }
-    },
-    [selectedElementIds, selectedElements, updateElements]
-  );
 
   const handleBorderColorChange = useCallback(
     async (borderColor: string) => {
@@ -513,22 +495,6 @@ export function MultiSelectionDetail() {
                     className="flex-1 px-2 py-1.5 text-sm rounded border bg-bg-secondary text-text-secondary border-border-default hover:border-accent transition-colors"
                   >
                     {shape.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Size */}
-            <div className="space-y-1.5">
-              <label className="text-xs text-text-tertiary">Taille</label>
-              <div className="flex gap-1">
-                {ELEMENT_SIZES.map((size) => (
-                  <button
-                    key={size.value}
-                    onClick={() => handleSizeChange(size.value)}
-                    className="flex-1 px-2 py-1.5 text-xs rounded border bg-bg-secondary text-text-secondary border-border-default hover:border-accent transition-colors"
-                  >
-                    {size.label}
                   </button>
                 ))}
               </div>
