@@ -18,14 +18,15 @@ import {
   Merge,
   Search,
   Group,
+  Ungroup,
 } from 'lucide-react';
 import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import type { Element } from '../../types';
 
 export function InsightsPanel() {
-  const { elements, links, createGroup } = useInvestigationStore();
-  const { selectElement, selectElements } = useSelectionStore();
+  const { elements, links, createGroup, dissolveGroup } = useInvestigationStore();
+  const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
   const {
     clusters,
@@ -176,6 +177,32 @@ export function InsightsPanel() {
       return elementIds.length > 0 && elementIds.every((id) => hiddenElementIds.has(id));
     },
     [hiddenElementIds]
+  );
+
+  // Check if all elements in a list are selected
+  const areAllSelected = useCallback(
+    (elementIds: string[]) => {
+      return elementIds.length > 0 && elementIds.every((id) => selectedElementIds.has(id));
+    },
+    [selectedElementIds]
+  );
+
+  // Find the group that contains all cluster elements (if any)
+  const getClusterGroupId = useCallback(
+    (elementIds: string[]): string | null => {
+      const clusterElements = elements.filter(
+        (el) => elementIds.includes(el.id) && !el.isGroup
+      );
+      if (clusterElements.length === 0) return null;
+      const firstParent = clusterElements[0].parentGroupId;
+      if (!firstParent) return null;
+      // All cluster elements must share the same parent group
+      if (clusterElements.every((el) => el.parentGroupId === firstParent)) {
+        return firstParent;
+      }
+      return null;
+    },
+    [elements]
   );
 
   // Toggle visibility for a group of elements
@@ -464,16 +491,17 @@ export function InsightsPanel() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1 mt-2">
                         <ActionButton
-                          icon={<MousePointer2 size={10} />}
-                          label="Sélectionner"
-                          onClick={() => handleSelectCluster(cluster.elementIds)}
-                        />
-                        <ActionButton
-                          icon={<Filter size={10} />}
-                          label="Filtrer"
-                          onClick={() => handleFilterCluster(cluster.elementIds)}
+                          icon={areAllSelected(cluster.elementIds) ? <X size={10} /> : <MousePointer2 size={10} />}
+                          label={areAllSelected(cluster.elementIds) ? "Désélect." : "Sélect."}
+                          onClick={() => {
+                            if (areAllSelected(cluster.elementIds)) {
+                              clearSelection();
+                            } else {
+                              handleSelectCluster(cluster.elementIds);
+                            }
+                          }}
                         />
                         <ActionButton
                           icon={areAllHidden(cluster.elementIds) ? <Eye size={10} /> : <EyeOff size={10} />}
@@ -481,10 +509,26 @@ export function InsightsPanel() {
                           onClick={() => toggleHideElements(cluster.elementIds)}
                         />
                         <ActionButton
-                          icon={<Group size={10} />}
-                          label="Grouper"
-                          onClick={() => handleGroupCluster(cluster.elementIds, cluster.id)}
+                          icon={<Filter size={10} />}
+                          label="Filtrer"
+                          onClick={() => handleFilterCluster(cluster.elementIds)}
                         />
+                        {(() => {
+                          const groupId = getClusterGroupId(cluster.elementIds);
+                          return groupId ? (
+                            <ActionButton
+                              icon={<Ungroup size={10} />}
+                              label="Dissoudre"
+                              onClick={() => dissolveGroup(groupId)}
+                            />
+                          ) : (
+                            <ActionButton
+                              icon={<Group size={10} />}
+                              label="Grouper"
+                              onClick={() => handleGroupCluster(cluster.elementIds, cluster.id)}
+                            />
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
