@@ -864,8 +864,26 @@ export function Canvas() {
 
   const edges = useMemo(() => {
     // Build position map from displayNodes for dynamic handle calculation
+    // For child nodes (inside groups), compute absolute position by adding parent offset
     const nodePositions = new Map<string, Position>();
+    const parentPositions = new Map<string, Position>();
     for (const node of displayNodes) {
+      if (node.type === 'groupFrame') {
+        parentPositions.set(node.id, node.position);
+      }
+    }
+    for (const node of displayNodes) {
+      const parentId = (node as any).parentId as string | undefined;
+      if (parentId) {
+        const parentPos = parentPositions.get(parentId);
+        if (parentPos) {
+          nodePositions.set(node.id, {
+            x: node.position.x + parentPos.x,
+            y: node.position.y + parentPos.y,
+          });
+          continue;
+        }
+      }
       nodePositions.set(node.id, node.position);
     }
 
