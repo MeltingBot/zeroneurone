@@ -274,7 +274,6 @@ function elementToNode(
 
   if (element.parentGroupId) {
     (node as any).parentId = element.parentGroupId;
-    (node as any).extent = 'parent';
   }
 
   return node;
@@ -840,10 +839,14 @@ export function Canvas() {
   // Use local nodes for display - this allows smooth drag
   const displayNodes = localNodes;
 
-  const edges = useMemo(() => {
-    // Build position map from displayNodes for dynamic handle calculation
-    // For child nodes (inside groups), compute absolute position by adding parent offset
-    const nodePositions = new Map<string, Position>();
+  // Track node positions in a ref (updated every frame, but doesn't trigger re-renders)
+  const nodePositionsRef = useRef(new Map<string, Position>());
+  // Version counter to trigger edge recomputation on drag-end / structural changes
+  const [edgeVersion, setEdgeVersion] = useState(0);
+
+  // Update positions ref from displayNodes (cheap, no re-render)
+  useEffect(() => {
+    const positions = new Map<string, Position>();
     const parentPositions = new Map<string, Position>();
     for (const node of displayNodes) {
       if (node.type === 'groupFrame') {
@@ -855,15 +858,25 @@ export function Canvas() {
       if (parentId) {
         const parentPos = parentPositions.get(parentId);
         if (parentPos) {
-          nodePositions.set(node.id, {
+          positions.set(node.id, {
             x: node.position.x + parentPos.x,
             y: node.position.y + parentPos.y,
           });
           continue;
         }
       }
-      nodePositions.set(node.id, node.position);
+      positions.set(node.id, node.position);
     }
+    nodePositionsRef.current = positions;
+
+    // Only trigger edge recomputation when not dragging
+    if (!isDraggingRef.current) {
+      setEdgeVersion(v => v + 1);
+    }
+  }, [displayNodes]);
+
+  const edges = useMemo(() => {
+    const nodePositions = nodePositionsRef.current;
 
     // Viewport culling: filter edges whose both endpoints are off-screen
     const bufferPx = 200;
@@ -954,7 +967,8 @@ export function Canvas() {
         linkDisplayedPropertyValues
       );
     });
-  }, [links, displayNodes, viewport, wrapperSize, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [links, edgeVersion, viewport, wrapperSize, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
 
 
   // Track starting positions for undo
@@ -1112,6 +1126,9 @@ export function Canvas() {
         setActiveGuides([]);
 
         updateElementPositions(updates);
+
+        // Trigger edge recomputation now that drag is done
+        setEdgeVersion(v => v + 1);
       }
     },
     [updateElementPositions, updateDragging, elements, pushAction, showAlignGuides, localNodes]
