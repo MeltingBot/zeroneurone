@@ -5,6 +5,7 @@ import type {
   Element,
   ElementId,
   Link,
+  LinkId,
   Property,
   AssetId,
   ElementShape,
@@ -262,7 +263,9 @@ export async function importExcalidraw(
         properties,
         confidence: null,
         source: '',
-        dates: null,
+        date: null,
+        dateRange: null,
+        events: [],
         geo: null,
         visual: {
           ...DEFAULT_ELEMENT_VISUAL,
@@ -275,8 +278,10 @@ export async function importExcalidraw(
           customHeight: Math.round(shape.height),
         },
         position,
-        assets: [],
-        parentId: null,
+        assetIds: [],
+        parentGroupId: null,
+        isGroup: false,
+        childIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -346,7 +351,9 @@ export async function importExcalidraw(
         properties: [],
         confidence: null,
         source: '',
-        dates: null,
+        date: null,
+        dateRange: null,
+        events: [],
         geo: null,
         visual: {
           ...DEFAULT_ELEMENT_VISUAL,
@@ -357,8 +364,10 @@ export async function importExcalidraw(
           image: visualImageId,
         },
         position,
-        assets: visualImageId ? [visualImageId] : [],
-        parentId: null,
+        assetIds: visualImageId ? [visualImageId] : [],
+        parentGroupId: null,
+        isGroup: false,
+        childIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -390,7 +399,9 @@ export async function importExcalidraw(
         properties: [],
         confidence: null,
         source: '',
-        dates: null,
+        date: null,
+        dateRange: null,
+        events: [],
         geo: null,
         visual: {
           ...DEFAULT_ELEMENT_VISUAL,
@@ -401,8 +412,10 @@ export async function importExcalidraw(
           borderWidth: 0,
         },
         position,
-        assets: [],
-        parentId: null,
+        assetIds: [],
+        parentGroupId: null,
+        isGroup: false,
+        childIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -436,21 +449,25 @@ export async function importExcalidraw(
         }
       }
 
-      const linkId = generateUUID() as ElementId;
+      const linkId = generateUUID() as LinkId;
 
       const link: Link = {
         id: linkId,
         investigationId: targetInvestigationId,
         fromId,
         toId,
+        sourceHandle: null,
+        targetHandle: null,
         label,
         notes: '',
         tags: [],
         properties: [],
+        directed: false,
+        direction: mapArrowDirection(arrow.startArrowhead, arrow.endArrowhead),
         confidence: null,
         source: '',
-        dates: null,
-        direction: mapArrowDirection(arrow.startArrowhead, arrow.endArrowhead),
+        date: null,
+        dateRange: null,
         visual: {
           ...DEFAULT_LINK_VISUAL,
           style: mapStrokeStyle(arrow.strokeStyle),
@@ -459,6 +476,7 @@ export async function importExcalidraw(
             ? (EXCALIDRAW_COLORS[arrow.strokeColor] || arrow.strokeColor)
             : DEFAULT_LINK_VISUAL.color,
         },
+        curveOffset: { x: 0, y: 0 },
         createdAt: new Date(),
         updatedAt: new Date(),
       };
