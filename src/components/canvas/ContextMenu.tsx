@@ -317,7 +317,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <EyeOff size={14} />
-              Masquer l'élément
+              {hasMultipleSelected ? 'Masquer la sélection' : "Masquer l'élément"}
             </button>
           )}
         </div>

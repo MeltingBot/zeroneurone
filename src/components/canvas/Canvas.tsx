@@ -528,6 +528,7 @@ export function Canvas() {
     setFocus,
     clearFocus,
     hideElement,
+    hideElements,
     showElement,
   } = useViewStore();
 
@@ -1411,9 +1412,15 @@ export function Canvas() {
 
   const handleContextMenuHide = useCallback(() => {
     if (contextMenu) {
-      hideElement(contextMenu.elementId);
+      const selectedEls = getSelectedElementIds();
+      if (selectedEls.length > 1 && selectedEls.includes(contextMenu.elementId)) {
+        hideElements(selectedEls);
+        clearSelection();
+      } else {
+        hideElement(contextMenu.elementId);
+      }
     }
-  }, [contextMenu, hideElement]);
+  }, [contextMenu, hideElement, hideElements, getSelectedElementIds, clearSelection]);
 
   const handleContextMenuShow = useCallback(() => {
     if (contextMenu) {
