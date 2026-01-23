@@ -18,11 +18,13 @@ import {
   ConnectionMode,
   type NodeChange,
 } from '@xyflow/react';
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2, Grid3x3, Magnet, Map as MapIcon } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 
 import { ElementNode, type ElementNodeData } from './ElementNode';
+import { DraggableMinimap } from './DraggableMinimap';
+import { AlignmentGuides, computeGuides, type Guide } from './AlignmentGuides';
 import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
@@ -486,8 +488,15 @@ export function Canvas() {
   // Note: remoteUsers is not used here directly anymore - ElementNode and CustomEdge subscribe to syncStore directly
   const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
 
-  // UI store for theme mode
+  // UI store for theme mode and canvas settings
   const themeMode = useUIStore((state) => state.themeMode);
+  const snapToGrid = useUIStore((state) => state.snapToGrid);
+  const showAlignGuides = useUIStore((state) => state.showAlignGuides);
+  const gridSize = useUIStore((state) => state.gridSize);
+  const toggleSnapToGrid = useUIStore((state) => state.toggleSnapToGrid);
+  const toggleAlignGuides = useUIStore((state) => state.toggleAlignGuides);
+  const showMinimap = useUIStore((state) => state.showMinimap);
+  const toggleMinimap = useUIStore((state) => state.toggleMinimap);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
@@ -724,6 +733,10 @@ export function Canvas() {
     }
   }, [nodes]);
 
+  // Alignment guides state
+  const [activeGuides, setActiveGuides] = useState<Guide[]>([]);
+  const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ id: string; position: { x: number; y: number } } | null>(null);
+
   // Use local nodes for display - this allows smooth drag
   const displayNodes = localNodes;
 
@@ -856,6 +869,15 @@ export function Canvas() {
       // Update dragging ref
       isDraggingRef.current = nowDragging.size > 0;
 
+      // Update alignment guides during drag
+      if (showAlignGuides && nowDragging.size === 1 && draggingChangesWithPosition.length > 0) {
+        const dragInfo = draggingChangesWithPosition[0];
+        setDraggedNodeInfo({ id: dragInfo.id, position: dragInfo.position });
+      } else if (nowDragging.size === 0) {
+        setDraggedNodeInfo(null);
+        setActiveGuides([]);
+      }
+
       // Update awareness for collaboration
       const prevDragging = draggingNodeIdsRef.current;
       if (nowDragging.size !== prevDragging.size ||
@@ -888,8 +910,29 @@ export function Canvas() {
       if (dragEndChanges.length > 0) {
         const updates = dragEndChanges.map((c) => ({
           id: c.id,
-          position: c.position,
+          position: { ...c.position },
         }));
+
+        // Apply alignment guide snapping on drag end (single node only)
+        if (showAlignGuides && updates.length === 1) {
+          const update = updates[0];
+          const guides = computeGuides(update.id, update.position, localNodes);
+          if (guides.length > 0) {
+            // Find the closest x and y guide to snap to
+            const xGuide = guides.find(g => g.type === 'x');
+            const yGuide = guides.find(g => g.type === 'y');
+            if (xGuide) {
+              update.position = { ...update.position, x: xGuide.snappedValue };
+            }
+            if (yGuide) {
+              update.position = { ...update.position, y: yGuide.snappedValue };
+            }
+            // Update local nodes to reflect the snapped position
+            setLocalNodes(nds => nds.map(n =>
+              n.id === update.id ? { ...n, position: update.position } : n
+            ));
+          }
+        }
 
         // Build undo/redo positions from tracked start positions
         const undoPositions: { id: string; position: Position }[] = [];
@@ -924,10 +967,14 @@ export function Canvas() {
         lastDragEndRef.current = Date.now();
         draggingNodeIdsRef.current.clear();
 
+        // Clear alignment guides
+        setDraggedNodeInfo(null);
+        setActiveGuides([]);
+
         updateElementPositions(updates);
       }
     },
-    [updateElementPositions, updateDragging, elements, pushAction]
+    [updateElementPositions, updateDragging, elements, pushAction, showAlignGuides, localNodes]
   );
 
   // Handle edge changes - in controlled mode, we don't need to handle edge changes
@@ -1331,6 +1378,60 @@ export function Canvas() {
     selectElements(newElementIds);
   }, [contextMenu, viewport, createElement, createLink, links, selectElements, pushAction]);
 
+  // Duplicate handler for context menu
+  const handleContextMenuDuplicate = useCallback(async () => {
+    if (!contextMenu) return;
+    const selectedEls = getSelectedElementIds();
+    const elIds = selectedEls.length > 0 ? selectedEls : [contextMenu.elementId];
+    const elsToDuplicate = elements.filter(el => elIds.includes(el.id));
+    if (elsToDuplicate.length === 0) return;
+
+    const offset = 40;
+    const newElements: Element[] = [];
+    const oldToNewIdMap = new Map<string, string>();
+
+    for (const el of elsToDuplicate) {
+      const newId = generateUUID();
+      oldToNewIdMap.set(el.id, newId);
+      const newPosition = {
+        x: el.position.x + offset,
+        y: el.position.y + offset,
+      };
+      const newElement = await createElement(el.label, newPosition, {
+        ...el,
+        id: newId,
+        position: newPosition,
+        assetIds: [...el.assetIds],
+      });
+      newElements.push(newElement);
+    }
+
+    // Recreate links between duplicated elements
+    const elIdSet = new Set(elIds);
+    const relevantLinks = links.filter(l =>
+      elIdSet.has(l.fromId) && elIdSet.has(l.toId)
+    );
+    for (const link of relevantLinks) {
+      const newFromId = oldToNewIdMap.get(link.fromId);
+      const newToId = oldToNewIdMap.get(link.toId);
+      if (newFromId && newToId) {
+        await createLink(newFromId, newToId, {
+          label: link.label,
+          visual: link.visual,
+          direction: link.direction,
+        });
+      }
+    }
+
+    const newElementIds = newElements.map(el => el.id);
+    pushAction({
+      type: 'create-elements',
+      undo: {},
+      redo: { elements: newElements, elementIds: newElementIds },
+    });
+    selectElements(newElementIds);
+  }, [contextMenu, elements, links, getSelectedElementIds, createElement, createLink, selectElements, pushAction]);
+
   const handleFindPaths = useCallback(
     (fromId: string, toId: string) => {
       findPaths(fromId, toId);
@@ -1709,6 +1810,59 @@ export function Canvas() {
         }
       }
 
+      // Duplicate with Ctrl+D
+      if (event.key === 'd' && isCtrlOrMeta) {
+        event.preventDefault();
+        const selectedEls = getSelectedElementIds();
+        if (selectedEls.length > 0) {
+          const elsToDuplicate = elements.filter(el => selectedEls.includes(el.id));
+          const offset = 40;
+          const newElements: Element[] = [];
+          const oldToNewIdMap = new Map<string, string>();
+
+          for (const el of elsToDuplicate) {
+            const newId = generateUUID();
+            oldToNewIdMap.set(el.id, newId);
+            const newPosition = {
+              x: el.position.x + offset,
+              y: el.position.y + offset,
+            };
+            const newElement = await createElement(el.label, newPosition, {
+              ...el,
+              id: newId,
+              position: newPosition,
+              assetIds: [...el.assetIds],
+            });
+            newElements.push(newElement);
+          }
+
+          // Recreate links between duplicated elements
+          const selectedSet = new Set(selectedEls);
+          const relevantLinks = links.filter(l =>
+            selectedSet.has(l.fromId) && selectedSet.has(l.toId)
+          );
+          for (const link of relevantLinks) {
+            const newFromId = oldToNewIdMap.get(link.fromId);
+            const newToId = oldToNewIdMap.get(link.toId);
+            if (newFromId && newToId) {
+              await createLink(newFromId, newToId, {
+                label: link.label,
+                visual: link.visual,
+                direction: link.direction,
+              });
+            }
+          }
+
+          const newElementIds = newElements.map(el => el.id);
+          pushAction({
+            type: 'create-elements',
+            undo: {},
+            redo: { elements: newElements, elementIds: newElementIds },
+          });
+          selectElements(newElementIds);
+        }
+      }
+
       // Undo with Ctrl+Z
       if (event.key === 'z' && isCtrlOrMeta && !event.shiftKey) {
         event.preventDefault();
@@ -1732,6 +1886,8 @@ export function Canvas() {
     deleteLinks,
     clearSelection,
     selectElements,
+    createElement,
+    createLink,
     elements,
     links,
     pushAction,
@@ -1941,6 +2097,28 @@ export function Canvas() {
           }
           rightContent={
             <>
+              <button
+                onClick={toggleSnapToGrid}
+                className={`p-1.5 rounded transition-colors ${snapToGrid ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                title="Grille magnetique"
+              >
+                <Grid3x3 size={16} />
+              </button>
+              <button
+                onClick={toggleAlignGuides}
+                className={`p-1.5 rounded transition-colors ${showAlignGuides ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                title="Guides d'alignement"
+              >
+                <Magnet size={16} />
+              </button>
+              <button
+                onClick={toggleMinimap}
+                className={`p-1.5 rounded transition-colors ${showMinimap ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                title="Minimap"
+              >
+                <MapIcon size={16} />
+              </button>
+              <div className="w-px h-4 bg-border-default mx-1" />
               <LayoutDropdown />
               <div className="w-px h-4 bg-border-default mx-1" />
               <CanvasZoomControls />
@@ -2010,6 +2188,8 @@ export function Canvas() {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultViewport={viewport}
+            snapToGrid={snapToGrid}
+            snapGrid={[gridSize, gridSize]}
             minZoom={0.02}
             maxZoom={4}
             selectionMode={SelectionMode.Partial}
@@ -2029,15 +2209,25 @@ export function Canvas() {
             proOptions={{ hideAttribution: true }}
           >
             <Background
-              variant={BackgroundVariant.Dots}
-              gap={20}
-              size={1}
+              variant={snapToGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots}
+              gap={gridSize}
+              size={snapToGrid ? 0.5 : 1}
               color="var(--color-border-strong)"
               style={{ backgroundColor: 'var(--color-bg-canvas)' }}
             />
             <CanvasCaptureHandler />
             <ViewportController />
+            <DraggableMinimap />
           </ReactFlow>
+
+          {/* Alignment guides overlay */}
+          {showAlignGuides && draggedNodeInfo && (
+            <AlignmentGuides
+              draggedNodeId={draggedNodeInfo.id}
+              dragPosition={draggedNodeInfo.position}
+              nodes={displayNodes}
+            />
+          )}
 
           {/* File drop overlay */}
           {isDraggingFile && (
@@ -2071,6 +2261,7 @@ export function Canvas() {
               onCopy={handleContextMenuCopy}
               onCut={handleContextMenuCut}
               onPaste={handleContextMenuPaste}
+              onDuplicate={handleContextMenuDuplicate}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
               onClose={closeContextMenu}

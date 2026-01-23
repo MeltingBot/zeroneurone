@@ -1,5 +1,5 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, Scissors, Clipboard, Image } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image } from 'lucide-react';
 
 interface ContextMenuProps {
   x: number;
@@ -21,6 +21,7 @@ interface ContextMenuProps {
   onCopy: () => void;
   onCut: () => void;
   onPaste: () => void;
+  onDuplicate: () => void;
   onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
   onClose: () => void;
@@ -51,6 +52,7 @@ function ContextMenuComponent({
   onCopy,
   onCut,
   onPaste,
+  onDuplicate,
   onPreview,
   onFindPaths,
   onClose,
@@ -173,6 +175,17 @@ function ContextMenuComponent({
             <Clipboard size={14} />
             Coller
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
+          </button>
+          <button
+            onClick={() => {
+              onDuplicate();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+          >
+            <CopyPlus size={14} />
+            Dupliquer
+            <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
           </button>
         </div>
 

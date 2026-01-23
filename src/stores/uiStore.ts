@@ -42,6 +42,14 @@ interface UIState {
   // Show comment badges on elements
   showCommentBadges: boolean;
 
+  // Minimap
+  showMinimap: boolean;
+
+  // Snap-to-grid and alignment guides
+  snapToGrid: boolean;
+  showAlignGuides: boolean;
+  gridSize: number;
+
   // Capture system for report screenshots
   captureHandlers: Map<DisplayMode, CaptureHandler>;
 
@@ -94,6 +102,13 @@ interface UIState {
   // Actions - Comment badges
   toggleShowCommentBadges: () => void;
 
+  // Actions - Minimap
+  toggleMinimap: () => void;
+
+  // Actions - Snap-to-grid and alignment guides
+  toggleSnapToGrid: () => void;
+  toggleAlignGuides: () => void;
+
   // Actions - Reset investigation-specific state
   resetInvestigationState: () => void;
 }
@@ -113,6 +128,10 @@ export const useUIStore = create<UIState>()(
   hideMedia: false,
   anonymousMode: false,
   showCommentBadges: true,
+  showMinimap: true,
+  snapToGrid: false,
+  showAlignGuides: true,
+  gridSize: 20,
   captureHandlers: new Map(),
 
   // Capture system
@@ -255,6 +274,20 @@ export const useUIStore = create<UIState>()(
     set((state) => ({ showCommentBadges: !state.showCommentBadges }));
   },
 
+  // Minimap
+  toggleMinimap: () => {
+    set((state) => ({ showMinimap: !state.showMinimap }));
+  },
+
+  // Snap-to-grid and alignment guides
+  toggleSnapToGrid: () => {
+    set((state) => ({ snapToGrid: !state.snapToGrid }));
+  },
+
+  toggleAlignGuides: () => {
+    set((state) => ({ showAlignGuides: !state.showAlignGuides }));
+  },
+
   // Reset investigation-specific state (called when closing an investigation)
   resetInvestigationState: () => {
     set({
@@ -266,7 +299,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT investigation-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges }),
+      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {
