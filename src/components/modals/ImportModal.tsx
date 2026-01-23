@@ -57,14 +57,21 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, investigationId);
       } else {
-        result = {
-          success: false,
-          elementsImported: 0,
-          linksImported: 0,
-          assetsImported: 0,
-          errors: ['Format de fichier non supporté. Utilisez ZIP, JSON, CSV, GraphML/XML, OSINTracker ou Excalidraw.'],
-          warnings: [],
-        };
+        // Unknown extension: try JSON auto-detection (handles .excalidraw and similar)
+        const content = await importService.readFileAsText(file);
+        try {
+          JSON.parse(content);
+          result = await importService.importFromJSON(content, investigationId);
+        } catch {
+          result = {
+            success: false,
+            elementsImported: 0,
+            linksImported: 0,
+            assetsImported: 0,
+            errors: ['Format de fichier non reconnu. Formats supportés: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.'],
+            warnings: [],
+          };
+        }
       }
 
       setImportResult(result);
@@ -159,7 +166,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,*/*"
             onChange={handleFileSelect}
             className="hidden"
           />
