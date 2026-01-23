@@ -867,7 +867,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   createGroup: async (label: string, position: Position, size: { width: number; height: number }, childIds?: ElementId[]) => {
-    const { createElement, updateElement, elements } = get();
+    const { createElement, elements } = get();
 
     const group = await createElement(label, position, {
       isGroup: true,
@@ -885,18 +885,41 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       },
     });
 
-    // Set parentGroupId on children
+    // Batch all child updates in a single Y.js transaction for instant visual update
     if (childIds && childIds.length > 0) {
-      for (const childId of childIds) {
-        const child = elements.find(el => el.id === childId);
-        if (child) {
-          await updateElement(childId, {
-            parentGroupId: group.id,
-            position: {
-              x: child.position.x - position.x,
-              y: child.position.y - position.y,
-            },
-          });
+      const ydoc = syncService.getYDoc();
+      if (ydoc) {
+        const { elements: elementsMap } = getYMaps(ydoc);
+
+        ydoc.transact(() => {
+          for (const childId of childIds) {
+            const child = elements.find(el => el.id === childId);
+            if (child) {
+              const ymap = elementsMap.get(childId) as any;
+              if (ymap) {
+                const relX = child.position.x - position.x;
+                const relY = child.position.y - position.y;
+                ymap.set('parentGroupId', group.id);
+                ymap.set('positionX', relX);
+                ymap.set('positionY', relY);
+                ymap.set('position', { x: relX, y: relY });
+              }
+            }
+          }
+        });
+
+        // Persist to Dexie in background
+        for (const childId of childIds) {
+          const child = elements.find(el => el.id === childId);
+          if (child) {
+            elementRepository.update(childId, {
+              parentGroupId: group.id,
+              position: {
+                x: child.position.x - position.x,
+                y: child.position.y - position.y,
+              },
+            }).catch(() => {});
+          }
         }
       }
     }

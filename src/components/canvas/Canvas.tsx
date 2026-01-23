@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
+import { useCallback, useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -823,8 +823,8 @@ export function Canvas() {
   const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
 
   // Sync from store to local when NOT dragging
-  // This allows visual changes from detail panel to appear immediately
-  useEffect(() => {
+  // useLayoutEffect prevents one-frame flash when group structure changes
+  useLayoutEffect(() => {
     if (!isDraggingRef.current) {
       setLocalNodes(nodes);
     }
