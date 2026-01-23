@@ -80,6 +80,7 @@ interface InvestigationState {
   // Actions - Bulk updates
   updateElements: (ids: ElementId[], changes: Partial<Element>) => Promise<void>;
   updateLinks: (ids: LinkId[], changes: Partial<Link>) => Promise<void>;
+  pasteElements: (elements: Element[], links: Link[]) => void;
 
   // Actions - Groups
   createGroup: (label: string, position: Position, size: { width: number; height: number }, childIds?: ElementId[]) => Promise<Element>;
@@ -860,6 +861,36 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     await Promise.all(
       ids.map(id => linkRepository.update(id, changes).catch(() => {}))
     );
+  },
+
+  // Batch paste: create all elements and links in a single Y.js transaction
+  pasteElements: (newElements: Element[], newLinks: Link[]) => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) return;
+
+    const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+    ydoc.transact(() => {
+      for (const element of newElements) {
+        const ymap = elementToYMap(element);
+        elementsMap.set(element.id, ymap);
+      }
+      for (const link of newLinks) {
+        const ymap = linkToYMap(link);
+        linksMap.set(link.id, ymap);
+      }
+    });
+
+    // Persist to Dexie in background (fire-and-forget)
+    const invId = get().currentInvestigation?.id;
+    if (invId) {
+      for (const el of newElements) {
+        elementRepository.create(invId, el.label, el.position, { ...el }).catch(() => {});
+      }
+      for (const link of newLinks) {
+        linkRepository.create(invId, link.fromId, link.toId, { ...link }).catch(() => {});
+      }
+    }
   },
 
   // ============================================================================

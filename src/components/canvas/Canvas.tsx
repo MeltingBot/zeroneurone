@@ -458,6 +458,7 @@ export function Canvas() {
     createGroup,
     removeFromGroup,
     dissolveGroup,
+    pasteElements,
   } = useInvestigationStore();
 
   // Wrapper size for viewport culling
@@ -1359,49 +1360,50 @@ export function Canvas() {
     // Fall back to internal copied elements (only if we didn't paste from clipboard)
     if (pastedFromClipboard || copiedElementsRef.current.length === 0) return;
 
-    const newElements: Element[] = [];
+    const now = new Date();
     const oldToNewIdMap = new Map<string, string>();
 
-    // Calculate offset from original elements to paste position
-    const firstElement = copiedElementsRef.current[0];
-    const deltaX = canvasX - firstElement.position.x;
-    const deltaY = canvasY - firstElement.position.y;
+    // Calculate center of copied elements and offset to paste position
+    const sumX = copiedElementsRef.current.reduce((sum, el) => sum + el.position.x, 0);
+    const sumY = copiedElementsRef.current.reduce((sum, el) => sum + el.position.y, 0);
+    const centerX = sumX / copiedElementsRef.current.length;
+    const centerY = sumY / copiedElementsRef.current.length;
 
-    // First pass: create all elements with new IDs
-    for (const el of copiedElementsRef.current) {
+    // Build all elements centered at paste position
+    const newElements: Element[] = copiedElementsRef.current.map(el => {
       const newId = generateUUID();
       oldToNewIdMap.set(el.id, newId);
-
-      const newPosition = {
-        x: el.position.x + deltaX,
-        y: el.position.y + deltaY,
-      };
-
-      const newElement = await createElement(el.label, newPosition, {
+      return {
         ...el,
         id: newId,
-        assetIds: [...el.assetIds],
-      });
-      newElements.push(newElement);
-    }
+        investigationId: currentInvestigation!.id,
+        position: {
+          x: canvasX + (el.position.x - centerX),
+          y: canvasY + (el.position.y - centerY),
+        },
+        parentGroupId: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
 
-    // Second pass: recreate links between copied elements
+    // Build all links between copied elements
     const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
     const relevantLinks = links.filter(l =>
       copiedIds.has(l.fromId) && copiedIds.has(l.toId)
     );
+    const newLinks: Link[] = relevantLinks.map(link => ({
+      ...link,
+      id: generateUUID(),
+      investigationId: currentInvestigation!.id,
+      fromId: oldToNewIdMap.get(link.fromId)!,
+      toId: oldToNewIdMap.get(link.toId)!,
+      createdAt: now,
+      updatedAt: now,
+    })).filter(l => l.fromId && l.toId);
 
-    for (const link of relevantLinks) {
-      const newFromId = oldToNewIdMap.get(link.fromId);
-      const newToId = oldToNewIdMap.get(link.toId);
-      if (newFromId && newToId) {
-        await createLink(newFromId, newToId, {
-          label: link.label,
-          visual: link.visual,
-          direction: link.direction,
-        });
-      }
-    }
+    // Single Y.js transaction
+    pasteElements(newElements, newLinks);
 
     // Save for undo
     const newElementIds = newElements.map(el => el.id);
@@ -1413,7 +1415,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [canvasContextMenu, links, createElement, createLink, selectElements, pushAction, addAsset]);
+  }, [canvasContextMenu, links, currentInvestigation, pasteElements, selectElements, pushAction, addAsset]);
 
   // Context menu actions
   const handleContextMenuFocus = useCallback(
@@ -1508,9 +1510,12 @@ export function Canvas() {
   }, [elements, links, getSelectedElementIds, contextMenu, deleteElements, clearSelection, pushAction, CLIPBOARD_MARKER]);
 
   // Paste handler for context menu (paste at context menu position)
-  const handleContextMenuPaste = useCallback(async () => {
+  const handleContextMenuPaste = useCallback(() => {
     if (copiedElementsRef.current.length === 0) return;
     if (!reactFlowWrapper.current || !contextMenu) return;
+
+    const now = new Date();
+    const oldToNewIdMap = new Map<string, string>();
 
     // Calculate paste position relative to context menu click
     const bounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -1523,48 +1528,44 @@ export function Canvas() {
     const centerX = sumX / copiedElementsRef.current.length;
     const centerY = sumY / copiedElementsRef.current.length;
 
-    const newElementIds: string[] = [];
-    const oldToNewIdMap = new Map<string, string>();
-    const newElements: Element[] = [];
-
-    // Create all elements with offset from paste position
-    for (const el of copiedElementsRef.current) {
+    // Build all elements with positions centered at paste position
+    const newElements: Element[] = copiedElementsRef.current.map(el => {
       const newId = generateUUID();
       oldToNewIdMap.set(el.id, newId);
-
-      const newPosition = {
-        x: pasteX + (el.position.x - centerX),
-        y: pasteY + (el.position.y - centerY),
-      };
-
-      const newElement = await createElement(el.label, newPosition, {
+      return {
         ...el,
         id: newId,
-        assetIds: [...el.assetIds],
-      });
-      newElementIds.push(newId);
-      newElements.push(newElement);
-    }
+        investigationId: currentInvestigation!.id,
+        position: {
+          x: pasteX + (el.position.x - centerX),
+          y: pasteY + (el.position.y - centerY),
+        },
+        parentGroupId: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
 
-    // Recreate links between copied elements
+    // Build all links between copied elements
     const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
     const relevantLinks = links.filter(l =>
       copiedIds.has(l.fromId) && copiedIds.has(l.toId)
     );
+    const newLinks: Link[] = relevantLinks.map(link => ({
+      ...link,
+      id: generateUUID(),
+      investigationId: currentInvestigation!.id,
+      fromId: oldToNewIdMap.get(link.fromId)!,
+      toId: oldToNewIdMap.get(link.toId)!,
+      createdAt: now,
+      updatedAt: now,
+    })).filter(l => l.fromId && l.toId);
 
-    for (const link of relevantLinks) {
-      const newFromId = oldToNewIdMap.get(link.fromId);
-      const newToId = oldToNewIdMap.get(link.toId);
-      if (newFromId && newToId) {
-        await createLink(newFromId, newToId, {
-          label: link.label,
-          visual: link.visual,
-          direction: link.direction,
-        });
-      }
-    }
+    // Single Y.js transaction for all elements + links
+    pasteElements(newElements, newLinks);
 
     // Save for undo
+    const newElementIds = newElements.map(el => el.id);
     pushAction({
       type: 'create-elements',
       undo: {},
@@ -1573,52 +1574,55 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [contextMenu, viewport, createElement, createLink, links, selectElements, pushAction]);
+  }, [contextMenu, viewport, currentInvestigation, pasteElements, links, selectElements, pushAction]);
 
   // Duplicate handler for context menu
-  const handleContextMenuDuplicate = useCallback(async () => {
+  const handleContextMenuDuplicate = useCallback(() => {
     if (!contextMenu) return;
     const selectedEls = getSelectedElementIds();
     const elIds = selectedEls.length > 0 ? selectedEls : [contextMenu.elementId];
     const elsToDuplicate = elements.filter(el => elIds.includes(el.id));
     if (elsToDuplicate.length === 0) return;
 
+    const now = new Date();
     const offset = 40;
-    const newElements: Element[] = [];
     const oldToNewIdMap = new Map<string, string>();
 
-    for (const el of elsToDuplicate) {
+    // Build all elements with offset
+    const newElements: Element[] = elsToDuplicate.map(el => {
       const newId = generateUUID();
       oldToNewIdMap.set(el.id, newId);
-      const newPosition = {
-        x: el.position.x + offset,
-        y: el.position.y + offset,
-      };
-      const newElement = await createElement(el.label, newPosition, {
+      return {
         ...el,
         id: newId,
-        position: newPosition,
-        assetIds: [...el.assetIds],
-      });
-      newElements.push(newElement);
-    }
+        investigationId: currentInvestigation!.id,
+        position: {
+          x: el.position.x + offset,
+          y: el.position.y + offset,
+        },
+        parentGroupId: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
 
-    // Recreate links between duplicated elements
+    // Build all links between duplicated elements
     const elIdSet = new Set(elIds);
     const relevantLinks = links.filter(l =>
       elIdSet.has(l.fromId) && elIdSet.has(l.toId)
     );
-    for (const link of relevantLinks) {
-      const newFromId = oldToNewIdMap.get(link.fromId);
-      const newToId = oldToNewIdMap.get(link.toId);
-      if (newFromId && newToId) {
-        await createLink(newFromId, newToId, {
-          label: link.label,
-          visual: link.visual,
-          direction: link.direction,
-        });
-      }
-    }
+    const newLinks: Link[] = relevantLinks.map(link => ({
+      ...link,
+      id: generateUUID(),
+      investigationId: currentInvestigation!.id,
+      fromId: oldToNewIdMap.get(link.fromId)!,
+      toId: oldToNewIdMap.get(link.toId)!,
+      createdAt: now,
+      updatedAt: now,
+    })).filter(l => l.fromId && l.toId);
+
+    // Single Y.js transaction
+    pasteElements(newElements, newLinks);
 
     const newElementIds = newElements.map(el => el.id);
     pushAction({
@@ -1627,7 +1631,7 @@ export function Canvas() {
       redo: { elements: newElements, elementIds: newElementIds },
     });
     selectElements(newElementIds);
-  }, [contextMenu, elements, links, getSelectedElementIds, createElement, createLink, selectElements, pushAction]);
+  }, [contextMenu, elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction]);
 
   // Group selection handler for context menu
   const handleGroupSelection = useCallback(async () => {
@@ -2057,42 +2061,44 @@ export function Canvas() {
         const selectedEls = getSelectedElementIds();
         if (selectedEls.length > 0) {
           const elsToDuplicate = elements.filter(el => selectedEls.includes(el.id));
+          const now = new Date();
           const offset = 40;
-          const newElements: Element[] = [];
           const oldToNewIdMap = new Map<string, string>();
 
-          for (const el of elsToDuplicate) {
+          const newElements: Element[] = elsToDuplicate.map(el => {
             const newId = generateUUID();
             oldToNewIdMap.set(el.id, newId);
-            const newPosition = {
-              x: el.position.x + offset,
-              y: el.position.y + offset,
-            };
-            const newElement = await createElement(el.label, newPosition, {
+            return {
               ...el,
               id: newId,
-              position: newPosition,
-              assetIds: [...el.assetIds],
-            });
-            newElements.push(newElement);
-          }
+              investigationId: currentInvestigation!.id,
+              position: {
+                x: el.position.x + offset,
+                y: el.position.y + offset,
+              },
+              parentGroupId: null,
+              createdAt: now,
+              updatedAt: now,
+            };
+          });
 
-          // Recreate links between duplicated elements
+          // Build links between duplicated elements
           const selectedSet = new Set(selectedEls);
           const relevantLinks = links.filter(l =>
             selectedSet.has(l.fromId) && selectedSet.has(l.toId)
           );
-          for (const link of relevantLinks) {
-            const newFromId = oldToNewIdMap.get(link.fromId);
-            const newToId = oldToNewIdMap.get(link.toId);
-            if (newFromId && newToId) {
-              await createLink(newFromId, newToId, {
-                label: link.label,
-                visual: link.visual,
-                direction: link.direction,
-              });
-            }
-          }
+          const newLinks: Link[] = relevantLinks.map(link => ({
+            ...link,
+            id: generateUUID(),
+            investigationId: currentInvestigation!.id,
+            fromId: oldToNewIdMap.get(link.fromId)!,
+            toId: oldToNewIdMap.get(link.toId)!,
+            createdAt: now,
+            updatedAt: now,
+          })).filter(l => l.fromId && l.toId);
+
+          // Single Y.js transaction
+          pasteElements(newElements, newLinks);
 
           const newElementIds = newElements.map(el => el.id);
           pushAction({
@@ -2164,7 +2170,8 @@ export function Canvas() {
     selectElement,
     createElement,
     createGroup,
-    createLink,
+    pasteElements,
+    currentInvestigation,
     elements,
     links,
     viewport,
@@ -2254,45 +2261,50 @@ export function Canvas() {
       if (copiedElementsRef.current.length > 0) {
         event.preventDefault();
 
-        const offset = 40; // Offset for pasted elements
-        const newElements: Element[] = [];
+        const now = new Date();
         const oldToNewIdMap = new Map<string, string>();
 
-        // First pass: create all elements with new IDs
-        for (const el of copiedElementsRef.current) {
+        // Calculate center of copied elements
+        const sumX = copiedElementsRef.current.reduce((sum, el) => sum + el.position.x, 0);
+        const sumY = copiedElementsRef.current.reduce((sum, el) => sum + el.position.y, 0);
+        const copiedCenterX = sumX / copiedElementsRef.current.length;
+        const copiedCenterY = sumY / copiedElementsRef.current.length;
+
+        // Build all elements with positions centered at viewport center
+        const newElements: Element[] = copiedElementsRef.current.map(el => {
           const newId = generateUUID();
           oldToNewIdMap.set(el.id, newId);
-
-          const newPosition = {
-            x: el.position.x + offset,
-            y: el.position.y + offset,
-          };
-
-          const newElement = await createElement(el.label, newPosition, {
+          return {
             ...el,
             id: newId,
-            assetIds: [...el.assetIds], // Keep same assets
-          });
-          newElements.push(newElement);
-        }
+            investigationId: currentInvestigation!.id,
+            position: {
+              x: centerX + (el.position.x - copiedCenterX),
+              y: centerY + (el.position.y - copiedCenterY),
+            },
+            parentGroupId: null,
+            createdAt: now,
+            updatedAt: now,
+          };
+        });
 
-        // Second pass: recreate links between copied elements
+        // Build all links between copied elements
         const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
         const relevantLinks = links.filter(l =>
           copiedIds.has(l.fromId) && copiedIds.has(l.toId)
         );
+        const newLinks: Link[] = relevantLinks.map(link => ({
+          ...link,
+          id: generateUUID(),
+          investigationId: currentInvestigation!.id,
+          fromId: oldToNewIdMap.get(link.fromId)!,
+          toId: oldToNewIdMap.get(link.toId)!,
+          createdAt: now,
+          updatedAt: now,
+        })).filter(l => l.fromId && l.toId);
 
-        for (const link of relevantLinks) {
-          const newFromId = oldToNewIdMap.get(link.fromId);
-          const newToId = oldToNewIdMap.get(link.toId);
-          if (newFromId && newToId) {
-            await createLink(newFromId, newToId, {
-              label: link.label,
-              visual: link.visual,
-              direction: link.direction,
-            });
-          }
-        }
+        // Single Y.js transaction for all elements + links
+        pasteElements(newElements, newLinks);
 
         // Save for undo
         const newElementIds = newElements.map(el => el.id);
@@ -2304,13 +2316,6 @@ export function Canvas() {
 
         // Select all pasted elements
         selectElements(newElementIds);
-
-        // Update copied elements positions for next paste
-        copiedElementsRef.current = copiedElementsRef.current.map(el => ({
-          ...el,
-          position: { x: el.position.x + offset, y: el.position.y + offset },
-        }));
-
         return;
       }
 
@@ -2319,7 +2324,7 @@ export function Canvas() {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [viewport, createElement, createLink, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds]);
+  }, [viewport, pasteElements, currentInvestigation, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds]);
 
   // Handle viewport change
   const handleViewportChange = useCallback(
