@@ -484,6 +484,19 @@ export function Canvas() {
     dissolveGroup,
   } = useInvestigationStore();
 
+  // Wrapper size for viewport culling
+  const [wrapperSize, setWrapperSize] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    if (!reactFlowWrapper.current) return;
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      setWrapperSize({ width, height });
+    });
+    observer.observe(reactFlowWrapper.current);
+    return () => observer.disconnect();
+  }, []);
+
   // File drag state
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
@@ -680,83 +693,114 @@ export function Canvas() {
     [currentInvestigation?.settings?.displayedProperties]
   );
 
-  // Convert to React Flow format
-  // Note: remoteSelectors are no longer passed through node data - ElementNode subscribes directly to syncStore
-  const nodes = useMemo(
-    () =>
-      elements
-        .filter((el) => !hiddenElementIds.has(el.id))
-        .map((el) => {
-          // Get thumbnail from first asset if available
-          const firstAssetId = el.assetIds?.[0];
-          const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
-          // Detect if asset is expected but not yet loaded (for collaboration sync indicator)
-          const isLoadingAsset = Boolean(firstAssetId) && !assetMap.has(firstAssetId);
-          // Create resize handler for this element
-          const onResize = (width: number, height: number) => {
-            handleElementResize(el.id, width, height);
-          };
-          // Create label change handler for this element
-          // For annotations, update notes instead of label
-          const onLabelChange = el.isAnnotation
-            ? (newContent: string) => { updateElement(el.id, { notes: newContent }); }
-            : (newLabel: string) => { handleElementLabelChange(el.id, newLabel); };
-          // Get pre-computed comment count (O(1) lookup instead of O(c) filter)
-          const unresolvedCommentCount = commentCountMap.get(el.id) || 0;
-          // Get badge property if set in filters
-          let badgeProperty: { value: string; type: string } | null = null;
-          if (filters.badgePropertyKey) {
-            const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
-            if (prop && prop.value != null) {
-              const valueStr = typeof prop.value === 'string'
-                ? prop.value
-                : prop.value instanceof Date
-                  ? prop.value.toLocaleDateString('fr-FR')
-                  : String(prop.value);
-              badgeProperty = { value: valueStr, type: prop.type || 'text' };
-            }
-          }
-          // Compute displayed property values for this element
-          const displayedPropertyValues = displayedProperties
-            .map(key => {
-              const prop = el.properties.find(p => p.key === key);
-              if (!prop || prop.value == null) return null;
-              const valueStr = typeof prop.value === 'string'
-                ? prop.value
-                : prop.value instanceof Date
-                  ? prop.value.toLocaleDateString('fr-FR')
-                  : String(prop.value);
-              return { key, value: valueStr };
-            })
-            .filter((p): p is { key: string; value: string } => p !== null);
+  // --- Stable callback refs (eliminates 500+ closure recreations per recalcul) ---
+  const handleResizeRef = useRef(handleElementResize);
+  const handleLabelChangeRef = useRef(handleElementLabelChange);
+  const updateElementRef = useRef(updateElement);
 
-          return elementToNode(
-            el,
-            selectedElementIds.has(el.id),
-            dimmedElementIds.has(el.id),
-            thumbnail,
-            onResize,
-            editingElementId === el.id,
-            onLabelChange,
-            stopEditing,
-            unresolvedCommentCount,
-            isLoadingAsset,
-            badgeProperty,
-            showConfidenceIndicator,
-            displayedPropertyValues,
-            tagDisplayMode,
-            tagDisplaySize,
-            themeMode
-          );
-        })
-        // Sort: group nodes must appear before their children for React Flow
-        .sort((a, b) => {
-          if (a.type === 'groupFrame' && b.type !== 'groupFrame') return -1;
-          if (a.type !== 'groupFrame' && b.type === 'groupFrame') return 1;
-          return 0;
-        }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, updateElement, stopEditing, commentCountMap, filters.badgePropertyKey, showConfidenceIndicator, displayedProperties, tagDisplayMode, tagDisplaySize, themeMode]
-  );
+  useEffect(() => {
+    handleResizeRef.current = handleElementResize;
+    handleLabelChangeRef.current = handleElementLabelChange;
+    updateElementRef.current = updateElement;
+  });
+
+  const callbacksCache = useRef(new Map<string, {
+    onResize: (w: number, h: number) => void;
+    onLabelChange: (val: string) => void;
+  }>());
+
+  function getCallbacks(elementId: string, isAnnotation: boolean) {
+    let cached = callbacksCache.current.get(elementId);
+    if (!cached) {
+      cached = {
+        onResize: (w: number, h: number) => handleResizeRef.current(elementId, w, h),
+        onLabelChange: isAnnotation
+          ? (val: string) => updateElementRef.current(elementId, { notes: val })
+          : (val: string) => handleLabelChangeRef.current(elementId, val),
+      };
+      callbacksCache.current.set(elementId, cached);
+    }
+    return cached;
+  }
+
+  // Clean stale entries from callbacks cache when elements change
+  useEffect(() => {
+    const currentIds = new Set(elements.map(el => el.id));
+    for (const id of callbacksCache.current.keys()) {
+      if (!currentIds.has(id)) callbacksCache.current.delete(id);
+    }
+  }, [elements]);
+
+  // --- Phase A: Node structures (depends on data only) ---
+  const nodeStructures = useMemo(() => {
+    return elements
+      .filter((el) => !hiddenElementIds.has(el.id))
+      .map((el) => {
+        const firstAssetId = el.assetIds?.[0];
+        const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
+        const isLoadingAsset = Boolean(firstAssetId) && !assetMap.has(firstAssetId);
+        const unresolvedCommentCount = commentCountMap.get(el.id) || 0;
+
+        let badgeProperty: { value: string; type: string } | null = null;
+        if (filters.badgePropertyKey) {
+          const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
+          if (prop && prop.value != null) {
+            const valueStr = typeof prop.value === 'string'
+              ? prop.value
+              : prop.value instanceof Date
+                ? prop.value.toLocaleDateString('fr-FR')
+                : String(prop.value);
+            badgeProperty = { value: valueStr, type: prop.type || 'text' };
+          }
+        }
+
+        const displayedPropertyValues = displayedProperties
+          .map(key => {
+            const prop = el.properties.find(p => p.key === key);
+            if (!prop || prop.value == null) return null;
+            const valueStr = typeof prop.value === 'string'
+              ? prop.value
+              : prop.value instanceof Date
+                ? prop.value.toLocaleDateString('fr-FR')
+                : String(prop.value);
+            return { key, value: valueStr };
+          })
+          .filter((p): p is { key: string; value: string } => p !== null);
+
+        return { el, thumbnail, isLoadingAsset, unresolvedCommentCount, badgeProperty, displayedPropertyValues };
+      });
+  }, [elements, hiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties]);
+
+  // --- Phase B: Final node assembly (depends on visual state) ---
+  const nodes = useMemo(() => {
+    return nodeStructures
+      .map(({ el, thumbnail, isLoadingAsset, unresolvedCommentCount, badgeProperty, displayedPropertyValues }) => {
+        const callbacks = getCallbacks(el.id, Boolean(el.isAnnotation));
+        return elementToNode(
+          el,
+          selectedElementIds.has(el.id),
+          dimmedElementIds.has(el.id),
+          thumbnail,
+          callbacks.onResize,
+          editingElementId === el.id,
+          callbacks.onLabelChange,
+          stopEditing,
+          unresolvedCommentCount,
+          isLoadingAsset,
+          badgeProperty,
+          showConfidenceIndicator,
+          displayedPropertyValues,
+          tagDisplayMode,
+          tagDisplaySize,
+          themeMode,
+        );
+      })
+      .sort((a, b) => {
+        if (a.type === 'groupFrame' && b.type !== 'groupFrame') return -1;
+        if (a.type !== 'groupFrame' && b.type === 'groupFrame') return 1;
+        return 0;
+      });
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -812,6 +856,8 @@ export function Canvas() {
   // Alignment guides state
   const [activeGuides, setActiveGuides] = useState<Guide[]>([]);
   const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ id: string; position: { x: number; y: number } } | null>(null);
+  const lastGuideUpdateRef = useRef<number>(0);
+  const GUIDE_THROTTLE_MS = 100;
 
   // Use local nodes for display - this allows smooth drag
   const displayNodes = localNodes;
@@ -823,11 +869,26 @@ export function Canvas() {
       nodePositions.set(node.id, node.position);
     }
 
-    // Build a map of parallel edges (edges between the same two nodes)
-    // Key is normalized "nodeA-nodeB" where nodeA < nodeB alphabetically
-    const parallelEdgesMap = new Map<string, Link[]>();
+    // Viewport culling: filter edges whose both endpoints are off-screen
+    const bufferPx = 200;
+    const vLeft = (-viewport.x - bufferPx) / viewport.zoom;
+    const vTop = (-viewport.y - bufferPx) / viewport.zoom;
+    const vRight = (-viewport.x + (wrapperSize.width + bufferPx)) / viewport.zoom;
+    const vBottom = (-viewport.y + (wrapperSize.height + bufferPx)) / viewport.zoom;
 
-    for (const link of links) {
+    const visibleLinks = links.filter(link => {
+      const fromPos = nodePositions.get(link.fromId);
+      const toPos = nodePositions.get(link.toId);
+      if (!fromPos || !toPos) return true; // keep if unknown position
+      const fromVisible = fromPos.x >= vLeft && fromPos.x <= vRight && fromPos.y >= vTop && fromPos.y <= vBottom;
+      const toVisible = toPos.x >= vLeft && toPos.x <= vRight && toPos.y >= vTop && toPos.y <= vBottom;
+      return fromVisible || toVisible;
+    });
+
+    // Build parallel edges map with pre-computed indices (eliminates indexOf O(n))
+    const parallelEdgesMap = new Map<string, { link: Link; index: number }[]>();
+
+    for (const link of visibleLinks) {
       const key = link.fromId < link.toId
         ? `${link.fromId}-${link.toId}`
         : `${link.toId}-${link.fromId}`;
@@ -835,10 +896,11 @@ export function Canvas() {
       if (!parallelEdgesMap.has(key)) {
         parallelEdgesMap.set(key, []);
       }
-      parallelEdgesMap.get(key)!.push(link);
+      const arr = parallelEdgesMap.get(key)!;
+      arr.push({ link, index: arr.length });
     }
 
-    return links.map(link => {
+    return visibleLinks.map(link => {
       const onLabelChange = (newLabel: string) => {
         handleLinkLabelChange(link.id, newLabel);
       };
@@ -852,13 +914,14 @@ export function Canvas() {
         startEditingLink(link.id);
       };
 
-      // Find parallel edges for this link
+      // Get pre-computed parallel index (O(1) instead of indexOf O(n))
       const key = link.fromId < link.toId
         ? `${link.fromId}-${link.toId}`
         : `${link.toId}-${link.fromId}`;
-      const parallelEdges = parallelEdgesMap.get(key) || [link];
-      const parallelIndex = parallelEdges.indexOf(link);
-      const parallelCount = parallelEdges.length;
+      const parallelEntries = parallelEdgesMap.get(key)!;
+      const entry = parallelEntries.find(e => e.link === link)!;
+      const parallelIndex = entry.index;
+      const parallelCount = parallelEntries.length;
 
       // Link is dimmed if either connected element is dimmed
       const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
@@ -895,7 +958,7 @@ export function Canvas() {
         linkDisplayedPropertyValues
       );
     });
-  }, [links, displayNodes, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
+  }, [links, displayNodes, viewport, wrapperSize, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
 
 
   // Track starting positions for undo
@@ -945,10 +1008,14 @@ export function Canvas() {
       // Update dragging ref
       isDraggingRef.current = nowDragging.size > 0;
 
-      // Update alignment guides during drag
+      // Update alignment guides during drag (throttled to reduce recomputations)
       if (showAlignGuides && nowDragging.size === 1 && draggingChangesWithPosition.length > 0) {
-        const dragInfo = draggingChangesWithPosition[0];
-        setDraggedNodeInfo({ id: dragInfo.id, position: dragInfo.position });
+        const now = Date.now();
+        if (now - lastGuideUpdateRef.current >= GUIDE_THROTTLE_MS) {
+          lastGuideUpdateRef.current = now;
+          const dragInfo = draggingChangesWithPosition[0];
+          setDraggedNodeInfo({ id: dragInfo.id, position: dragInfo.position });
+        }
       } else if (nowDragging.size === 0) {
         setDraggedNodeInfo(null);
         setActiveGuides([]);
