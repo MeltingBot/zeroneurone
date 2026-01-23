@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
+import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
 import { useInvestigationStore, toast } from '../../stores';
 
@@ -89,6 +90,20 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     }
   }, [currentInvestigation, onClose]);
 
+  const handleExportSvg = useCallback(() => {
+    if (!currentInvestigation) return;
+
+    const settings = currentInvestigation.settings;
+    const svgString = buildSVGExport(elements, links, {
+      linkAnchorMode: settings?.linkAnchorMode ?? 'auto',
+      linkCurveMode: settings?.linkCurveMode ?? 'curved',
+    });
+    const baseName = currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_');
+    exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
+    toast.success('Export SVG termin\u00e9');
+    onClose();
+  }, [currentInvestigation, elements, links, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -165,6 +180,23 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 </div>
               )}
             </div>
+
+            {/* SVG Export */}
+            <button
+              onClick={handleExportSvg}
+              disabled={isProcessing}
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+            >
+              <Pen size={20} className="text-text-secondary" />
+              <div className="text-left">
+                <div className="text-sm font-medium text-text-primary">
+                  SVG (vectoriel)
+                </div>
+                <div className="text-xs text-text-tertiary">
+                  Image vectorielle editable (Inkscape, Illustrator)
+                </div>
+              </div>
+            </button>
 
             {/* Other export formats */}
             {exportFormats.map((format) => {
