@@ -18,7 +18,7 @@ import {
   ConnectionMode,
   type NodeChange,
 } from '@xyflow/react';
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2, Grid3x3, Magnet, Map as MapIcon } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 
@@ -2349,6 +2349,38 @@ export function Canvas() {
               >
                 <Share2 size={16} />
               </button>
+              <div className="w-px h-4 bg-border-default" />
+              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <span className="flex items-center gap-1">
+                  <Box size={12} />
+                  {elements.length}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Link2 size={12} />
+                  {links.length}
+                </span>
+              </div>
+              {selectedElementIds.size + selectedLinkIds.size > 0 && (
+                <>
+                  <div className="w-px h-4 bg-border-default" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-accent font-medium">
+                      {selectedElementIds.size === 1 && selectedLinkIds.size === 0
+                        ? '1 élément'
+                        : selectedLinkIds.size === 1 && selectedElementIds.size === 0
+                        ? '1 lien'
+                        : `${selectedElementIds.size + selectedLinkIds.size} sélectionnés`}
+                    </span>
+                    <button
+                      onClick={clearSelection}
+                      className="p-0.5 text-text-tertiary hover:text-text-primary rounded transition-colors"
+                      title="Désélectionner"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           }
           rightContent={

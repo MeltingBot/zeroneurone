@@ -9,7 +9,7 @@ import { SearchModal, ExportModal, ReportModal, ShortcutsModal } from '../compon
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
 const TimelineView = lazy(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
-import { useInvestigationStore, useUIStore, useSelectionStore, useViewStore, useSyncStore } from '../stores';
+import { useInvestigationStore, useUIStore, useViewStore, useSyncStore } from '../stores';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
@@ -33,7 +33,6 @@ export function InvestigationPage() {
     unloadInvestigation,
   } = useInvestigationStore();
 
-  const { selectedElementIds, selectedLinkIds } = useSelectionStore();
   const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState } = useUIStore();
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
@@ -167,8 +166,6 @@ export function InvestigationPage() {
       </Layout>
     );
   }
-
-  const selectionCount = selectedElementIds.size + selectedLinkIds.size;
 
   // Loading fallback for lazy components
   const ViewLoader = () => (
@@ -311,27 +308,6 @@ export function InvestigationPage() {
         <SidePanel />
       </div>
 
-      {/* Footer / Status bar */}
-      <footer className="h-8 flex items-center justify-between px-4 border-t border-border-default bg-bg-secondary text-xs text-text-secondary">
-        <div className="flex items-center gap-4">
-          <span>
-            {elements.length} élément{elements.length !== 1 ? 's' : ''}
-          </span>
-          <span>
-            {links.length} lien{links.length !== 1 ? 's' : ''}
-          </span>
-          <span className="text-text-tertiary">
-            Vue: {viewOptions.find((v) => v.mode === displayMode)?.label}
-          </span>
-        </div>
-        <div>
-          {selectionCount > 0 && (
-            <span>
-              {selectionCount} sélectionné{selectionCount !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-      </footer>
 
       {/* Search modal */}
       <SearchModal isOpen={searchOpen} onClose={closeSearch} />

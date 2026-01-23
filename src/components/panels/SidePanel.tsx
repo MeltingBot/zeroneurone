@@ -7,7 +7,7 @@ import { InvestigationDetail } from './InvestigationDetail';
 import { FiltersPanel } from './FiltersPanel';
 import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
-import { X, Info, Filter, Eye, Network, PanelRightClose } from 'lucide-react';
+import { Info, Filter, Eye, Network, PanelRightClose } from 'lucide-react';
 import { IconButton } from '../common';
 
 const MIN_WIDTH = 280;
@@ -24,7 +24,7 @@ interface Tab {
 }
 
 export function SidePanel() {
-  const { selectedElementIds, selectedLinkIds, clearSelection } = useSelectionStore();
+  const { selectedElementIds, selectedLinkIds } = useSelectionStore();
   const { elements, links, currentInvestigation } = useInvestigationStore();
   const { hasActiveFilters, displayMode } = useViewStore();
   const { highlightedElementIds } = useInsightsStore();
@@ -258,25 +258,6 @@ export function SidePanel() {
           </div>
         </div>
 
-        {/* Selection info for detail tab */}
-        {activeTab === 'detail' && (
-          <div className="flex items-center justify-between px-4 py-2 bg-bg-secondary border-t border-border-default">
-            <span className="text-xs text-text-secondary">
-              {totalSelected === 0
-                ? 'Enquête'
-                : selectedElements.length === 1 && selectedLinks.length === 0
-                ? 'Élément'
-                : selectedLinks.length === 1 && selectedElements.length === 0
-                ? 'Lien'
-                : 'Sélection multiple'}
-            </span>
-            {totalSelected > 0 && (
-              <IconButton onClick={clearSelection} title="Désélectionner">
-                <X size={12} />
-              </IconButton>
-            )}
-          </div>
-        )}
       </header>
 
       {/* Tab content */}
