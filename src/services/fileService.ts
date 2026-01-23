@@ -1,6 +1,11 @@
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { db } from '../db/database';
 import { generateUUID, bufferToHex, getExtension } from '../utils';
 import type { Asset, AssetId, InvestigationId } from '../types';
+
+// Configure pdf.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // ============================================================================
 // SECURITY LIMITS FOR FILE UPLOADS
@@ -377,10 +382,15 @@ class FileService {
     return investigation.getDirectoryHandle('assets', { create: true });
   }
 
-  private async generateThumbnail(file: File, _arrayBuffer: ArrayBuffer): Promise<string | null> {
+  private async generateThumbnail(file: File, arrayBuffer: ArrayBuffer): Promise<string | null> {
     // Handle images
     if (file.type.startsWith('image/')) {
       return this.generateImageThumbnail(file);
+    }
+
+    // Handle PDFs
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      return this.generatePdfThumbnail(arrayBuffer);
     }
 
     return null;
@@ -421,7 +431,42 @@ class FileService {
     }
   }
 
-  private async extractText(file: File, _arrayBuffer: ArrayBuffer): Promise<string | null> {
+  private async generatePdfThumbnail(arrayBuffer: ArrayBuffer): Promise<string | null> {
+    try {
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      const page = await pdf.getPage(1);
+
+      const viewport = page.getViewport({ scale: 1 });
+      const maxSize = 200;
+      const scale = Math.min(maxSize / viewport.width, maxSize / viewport.height);
+      const scaledViewport = page.getViewport({ scale });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(scaledViewport.width);
+      canvas.height = Math.round(scaledViewport.height);
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      await page.render({
+        canvasContext: ctx,
+        viewport: scaledViewport,
+        canvas: canvas,
+      }).promise;
+
+      return canvas.toDataURL('image/jpeg', 0.8);
+    } catch (error) {
+      console.warn('Failed to generate PDF thumbnail:', error);
+      return null;
+    }
+  }
+
+  private async extractText(file: File, arrayBuffer: ArrayBuffer): Promise<string | null> {
     // Extract text from text files
     if (file.type.startsWith('text/') || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
       try {
@@ -431,7 +476,36 @@ class FileService {
       }
     }
 
+    // Extract text from PDFs
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      return this.extractPdfText(arrayBuffer);
+    }
+
     return null;
+  }
+
+  private async extractPdfText(arrayBuffer: ArrayBuffer): Promise<string | null> {
+    try {
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      const textParts: string[] = [];
+      const maxPages = Math.min(pdf.numPages, 10);
+
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item) => ('str' in item ? item.str : ''))
+          .join(' ');
+        textParts.push(pageText);
+      }
+
+      return textParts.join('\n\n');
+    } catch (error) {
+      console.warn('Failed to extract PDF text:', error);
+      return null;
+    }
   }
 }
 
