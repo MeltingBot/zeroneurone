@@ -34,7 +34,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { generateUUID } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
@@ -78,38 +78,15 @@ function CanvasCaptureHandler() {
         return null;
       }
 
-      // Temporarily increase stroke widths for better capture
-      const edges = element.querySelectorAll('.react-flow__edge path');
-      const originalStrokes: { el: SVGPathElement; value: string }[] = [];
-      edges.forEach((edge) => {
-        const pathEl = edge as SVGPathElement;
-        const currentWidth = pathEl.style.strokeWidth ||
-                            edge.getAttribute('stroke-width') || '1';
-        originalStrokes.push({ el: pathEl, value: currentWidth });
-        // Ensure minimum 2px stroke for visibility, multiply by 2 for better capture
-        const width = Math.max(3, parseFloat(currentWidth) * 2);
-        pathEl.style.strokeWidth = `${width}px`;
-      });
-
       try {
-        const canvas = await html2canvas(element, {
+        return await toPng(element, {
           backgroundColor: '#faf8f5',
-          scale: 3, // Higher scale for better quality
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 5000,
-          foreignObjectRendering: false,
+          pixelRatio: 3,
+          skipFonts: true,
         });
-        return canvas.toDataURL('image/png');
       } catch (error) {
         console.error('Canvas capture failed:', error);
         return null;
-      } finally {
-        // Restore original stroke widths
-        originalStrokes.forEach(({ el, value }) => {
-          el.style.strokeWidth = value;
-        });
       }
     };
 

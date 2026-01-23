@@ -4,7 +4,7 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 interface TimelineItem {
   id: string;
@@ -358,16 +358,11 @@ export function TimelineView() {
       }
 
       try {
-        const canvas = await html2canvas(element, {
+        return await toPng(element, {
           backgroundColor: '#faf8f5',
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 5000,
-          foreignObjectRendering: false,
+          pixelRatio: 2,
+          skipFonts: true,
         });
-        return canvas.toDataURL('image/png');
       } catch {
         return null;
       }

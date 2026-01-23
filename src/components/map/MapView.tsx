@@ -6,7 +6,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import type { Element } from '../../types';
 import { MapPin, Clock, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -1081,16 +1081,11 @@ export function MapView() {
       }
 
       try {
-        const canvas = await html2canvas(element, {
-          backgroundColor: '#e5e3df', // Match map background
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 10000, // Allow more time for tile images
-          foreignObjectRendering: false, // Better compatibility
+        return await toPng(element, {
+          backgroundColor: '#e5e3df',
+          pixelRatio: 2,
+          skipFonts: true,
         });
-        return canvas.toDataURL('image/png');
       } catch {
         return null;
       }
