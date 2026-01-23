@@ -23,6 +23,8 @@ import '@xyflow/react/dist/style.css';
 
 
 import { ElementNode, type ElementNodeData } from './ElementNode';
+import { GroupNode, type GroupNodeData } from './GroupNode';
+import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
 import { AlignmentGuides, computeGuides, type Guide } from './AlignmentGuides';
 import { CustomEdge } from './CustomEdge';
@@ -48,6 +50,8 @@ interface ContextMenuState {
 
 const nodeTypes = {
   element: ElementNode,
+  groupFrame: GroupNode,
+  annotation: AnnotationNode,
 };
 
 const edgeTypes = {
@@ -217,7 +221,56 @@ function elementToNode(
     console.warn('[elementToNode] Fixed invalid position for element:', element.id, 'original:', element.position);
   }
 
-  return {
+  if (element.isAnnotation) {
+    return {
+      id: element.id,
+      type: 'annotation',
+      position,
+      data: {
+        element,
+        isSelected,
+        isDimmed,
+        isEditing,
+        onLabelChange,
+        onStopEditing,
+        onResize,
+      } satisfies AnnotationNodeData,
+      selected: isSelected,
+      style: {
+        width: element.visual.customWidth || 200,
+      },
+    };
+  }
+
+  if (element.isGroup) {
+    return {
+      id: element.id,
+      type: 'groupFrame',
+      position,
+      data: {
+        element,
+        isSelected,
+        isDimmed,
+        onResize,
+        isEditing,
+        onLabelChange,
+        onStopEditing,
+        themeMode,
+        unresolvedCommentCount,
+        showConfidenceIndicator,
+        displayedPropertyValues,
+        tagDisplayMode,
+        tagDisplaySize,
+      } satisfies GroupNodeData,
+      selected: isSelected,
+      style: {
+        width: element.visual.customWidth || 300,
+        height: element.visual.customHeight || 200,
+      },
+    };
+  }
+
+  const node: Node = {
     id: element.id,
     type: 'element',
     position,
@@ -241,6 +294,13 @@ function elementToNode(
     } satisfies ElementNodeData,
     selected: isSelected,
   };
+
+  if (element.parentGroupId) {
+    (node as any).parentId = element.parentGroupId;
+    (node as any).extent = 'parent';
+  }
+
+  return node;
 }
 
 // Calculate best handles based on element positions
@@ -402,6 +462,7 @@ function linkToEdge(
 
 export function Canvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Stores
   const {
@@ -418,6 +479,9 @@ export function Canvas() {
     deleteElements,
     deleteLinks,
     addAsset,
+    createGroup,
+    removeFromGroup,
+    dissolveGroup,
   } = useInvestigationStore();
 
   // File drag state
@@ -487,6 +551,7 @@ export function Canvas() {
   // Sync store for collaboration presence
   // Note: remoteUsers is not used here directly anymore - ElementNode and CustomEdge subscribe to syncStore directly
   const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
+  const syncMode = useSyncStore((state) => state.mode);
 
   // UI store for theme mode and canvas settings
   const themeMode = useUIStore((state) => state.themeMode);
@@ -632,9 +697,10 @@ export function Canvas() {
             handleElementResize(el.id, width, height);
           };
           // Create label change handler for this element
-          const onLabelChange = (newLabel: string) => {
-            handleElementLabelChange(el.id, newLabel);
-          };
+          // For annotations, update notes instead of label
+          const onLabelChange = el.isAnnotation
+            ? (newContent: string) => { updateElement(el.id, { notes: newContent }); }
+            : (newLabel: string) => { handleElementLabelChange(el.id, newLabel); };
           // Get pre-computed comment count (O(1) lookup instead of O(c) filter)
           const unresolvedCommentCount = commentCountMap.get(el.id) || 0;
           // Get badge property if set in filters
@@ -682,8 +748,14 @@ export function Canvas() {
             tagDisplaySize,
             themeMode
           );
+        })
+        // Sort: group nodes must appear before their children for React Flow
+        .sort((a, b) => {
+          if (a.type === 'groupFrame' && b.type !== 'groupFrame') return -1;
+          if (a.type !== 'groupFrame' && b.type === 'groupFrame') return 1;
+          return 0;
         }),
-    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, stopEditing, commentCountMap, filters.badgePropertyKey, showConfidenceIndicator, displayedProperties, tagDisplayMode, tagDisplaySize, themeMode]
+    [elements, selectedElementIds, hiddenElementIds, dimmedElementIds, assetMap, handleElementResize, editingElementId, handleElementLabelChange, updateElement, stopEditing, commentCountMap, filters.badgePropertyKey, showConfidenceIndicator, displayedProperties, tagDisplayMode, tagDisplaySize, themeMode]
   );
 
   // Update awareness when selection changes
@@ -721,6 +793,10 @@ export function Canvas() {
   const draggingNodeIdsRef = useRef<Set<string>>(new Set());
   const lastDragEndRef = useRef<number>(0);
   const isHandlingSelectionRef = useRef(false);
+
+  // Ref for sync mode - used inside handleNodesChange without adding it as dependency
+  const syncModeRef = useRef(syncMode);
+  syncModeRef.current = syncMode;
 
   // Local nodes state for smooth drag - ReactFlow controls this during drag
   const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
@@ -886,8 +962,9 @@ export function Canvas() {
         updateDragging(Array.from(nowDragging));
       }
 
-      // Throttled sync during drag for collaboration
-      if (draggingChangesWithPosition.length > 0) {
+      // Throttled sync during drag - only needed for real-time collaboration
+      // In local mode, positions are synced on drag end only (much better perf)
+      if (syncModeRef.current === 'shared' && draggingChangesWithPosition.length > 0) {
         const now = Date.now();
         if (now - lastDragSyncRef.current >= DRAG_SYNC_THROTTLE_MS) {
           lastDragSyncRef.current = now;
@@ -1112,6 +1189,42 @@ export function Canvas() {
     // Select the new element
     selectElement(newElement.id);
   }, [canvasContextMenu, createElement, selectElement, pushAction]);
+
+  // Create group from canvas context menu
+  const handleCanvasContextMenuCreateGroup = useCallback(async () => {
+    if (!canvasContextMenu) return;
+
+    const group = await createGroup('Groupe', {
+      x: canvasContextMenu.canvasX,
+      y: canvasContextMenu.canvasY,
+    }, { width: 300, height: 200 });
+
+    selectElement(group.id);
+  }, [canvasContextMenu, createGroup, selectElement]);
+
+  // Create annotation from canvas context menu
+  const handleCanvasContextMenuCreateAnnotation = useCallback(async () => {
+    if (!canvasContextMenu) return;
+
+    const annotation = await createElement('', {
+      x: canvasContextMenu.canvasX,
+      y: canvasContextMenu.canvasY,
+    }, {
+      isAnnotation: true,
+      notes: '',
+      visual: {
+        color: '#ffffff',
+        borderColor: '#e5e7eb',
+        shape: 'rectangle',
+        size: 'medium',
+        icon: null,
+        image: null,
+        customWidth: 200,
+      },
+    });
+
+    selectElement(annotation.id);
+  }, [canvasContextMenu, createElement, selectElement]);
 
   // Paste from canvas context menu (at cursor position)
   const handleCanvasContextMenuPaste = useCallback(async () => {
@@ -1431,6 +1544,50 @@ export function Canvas() {
     });
     selectElements(newElementIds);
   }, [contextMenu, elements, links, getSelectedElementIds, createElement, createLink, selectElements, pushAction]);
+
+  // Group selection handler for context menu
+  const handleGroupSelection = useCallback(async () => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length < 2) return;
+    const selectedElements = elements.filter(el => selectedEls.includes(el.id) && !el.isGroup);
+    if (selectedElements.length < 2) return;
+
+    // Calculate bounding box of selected elements with padding
+    const padding = 40;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const el of selectedElements) {
+      const w = el.visual.customWidth || 120;
+      const h = el.visual.customHeight || 60;
+      minX = Math.min(minX, el.position.x);
+      minY = Math.min(minY, el.position.y);
+      maxX = Math.max(maxX, el.position.x + w);
+      maxY = Math.max(maxY, el.position.y + h);
+    }
+
+    const groupPos = { x: minX - padding, y: minY - padding };
+    const groupSize = {
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2,
+    };
+
+    await createGroup('Groupe', groupPos, groupSize, selectedEls);
+    clearSelection();
+  }, [elements, getSelectedElementIds, createGroup, clearSelection]);
+
+  // Dissolve group handler
+  const handleDissolveGroup = useCallback(async () => {
+    if (!contextMenu) return;
+    const el = elements.find(e => e.id === contextMenu.elementId);
+    if (!el?.isGroup) return;
+    await dissolveGroup(contextMenu.elementId);
+    clearSelection();
+  }, [contextMenu, elements, dissolveGroup, clearSelection]);
+
+  // Remove from group handler
+  const handleRemoveFromGroup = useCallback(async () => {
+    if (!contextMenu) return;
+    await removeFromGroup([contextMenu.elementId]);
+  }, [contextMenu, removeFromGroup]);
 
   const handleFindPaths = useCallback(
     (fromId: string, toId: string) => {
@@ -1863,6 +2020,40 @@ export function Canvas() {
         }
       }
 
+      // New element with E (no modifier) at cursor position
+      if (event.key === 'e' && !isCtrlOrMeta && !event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
+        const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
+        const el = await createElement('', { x: mx, y: my });
+        selectElement(el.id);
+      }
+
+      // New note with N (no modifier) at cursor position
+      if (event.key === 'n' && !isCtrlOrMeta && !event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
+        const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
+        const annotation = await createElement('', { x: mx, y: my }, {
+          isAnnotation: true,
+          notes: '',
+          visual: { color: '#ffffff', borderColor: '#e5e7eb', shape: 'rectangle', size: 'medium', icon: null, image: null, customWidth: 200 },
+        });
+        selectElement(annotation.id);
+      }
+
+      // New visual group with G (no modifier) at cursor position
+      if (event.key === 'g' && !isCtrlOrMeta && !event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
+        const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
+        const group = await createGroup('Groupe', { x: mx, y: my }, { width: 300, height: 200 });
+        selectElement(group.id);
+      }
+
       // Undo with Ctrl+Z
       if (event.key === 'z' && isCtrlOrMeta && !event.shiftKey) {
         event.preventDefault();
@@ -1886,10 +2077,13 @@ export function Canvas() {
     deleteLinks,
     clearSelection,
     selectElements,
+    selectElement,
     createElement,
+    createGroup,
     createLink,
     elements,
     links,
+    viewport,
     pushAction,
     handleUndo,
     handleRedo,
@@ -2131,6 +2325,7 @@ export function Canvas() {
           ref={reactFlowWrapper}
           className="flex-1 relative outline-none"
           data-report-capture="canvas"
+          onMouseMove={(e) => { lastMousePosRef.current = { x: e.clientX, y: e.clientY }; }}
           onDrop={handleFileDrop}
           onDragOver={handleFileDragOver}
           onDragLeave={handleFileDragLeave}
@@ -2264,6 +2459,12 @@ export function Canvas() {
               onDuplicate={handleContextMenuDuplicate}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
+              isGroup={!!elements.find(el => el.id === contextMenu.elementId)?.isGroup}
+              isInGroup={!!elements.find(el => el.id === contextMenu.elementId)?.parentGroupId}
+              hasMultipleSelected={selectedElementIds.size > 1}
+              onGroupSelection={handleGroupSelection}
+              onDissolveGroup={handleDissolveGroup}
+              onRemoveFromGroup={handleRemoveFromGroup}
               onClose={closeContextMenu}
             />
           )}
@@ -2274,6 +2475,8 @@ export function Canvas() {
               x={canvasContextMenu.x}
               y={canvasContextMenu.y}
               onCreateElement={handleCanvasContextMenuCreate}
+              onCreateGroup={handleCanvasContextMenuCreateGroup}
+              onCreateAnnotation={handleCanvasContextMenuCreateAnnotation}
               onPaste={handleCanvasContextMenuPaste}
               onClose={closeCanvasContextMenu}
             />

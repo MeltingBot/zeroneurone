@@ -507,6 +507,7 @@ async function convertPaletteNode(
     assetIds,
     parentGroupId: null,
     isGroup: node.type === 'groupNode',
+    isAnnotation: false,
     childIds: [],
     events: [],
     createdAt: new Date(),

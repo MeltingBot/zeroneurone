@@ -296,6 +296,7 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
       assetIds: [],
       parentGroupId: null,
       isGroup: false,
+      isAnnotation: false,
       childIds: [],
       createdAt: new Date(osintEl.creationDate),
       updatedAt: new Date(osintEl.editionDate || osintEl.creationDate),

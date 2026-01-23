@@ -205,6 +205,54 @@ button {
   cursor: default;
 }
 
+/* Suppress default selection outline/shadow on group frame nodes */
+.react-flow__node-groupFrame.selected,
+.react-flow__node-groupFrame.selected:focus,
+.react-flow__node-groupFrame.selected:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Suppress default selection outline/shadow on annotation nodes */
+.react-flow__node-annotation.selected,
+.react-flow__node-annotation.selected:focus,
+.react-flow__node-annotation.selected:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Annotation node: ensure wrapper auto-sizes to content height */
+.react-flow__node-annotation {
+  height: auto !important;
+}
+
+/* Annotation node resize handles */
+.react-flow__node-annotation .react-flow__resize-control.handle {
+  width: 8px !important;
+  height: 8px !important;
+  background: #374151 !important;
+  border: 1.5px solid white !important;
+  border-radius: 2px !important;
+}
+
+.react-flow__node-annotation .react-flow__resize-control.line {
+  border-color: transparent !important;
+}
+
+/* Group node resize handles - match element handle size */
+.react-flow__node-groupFrame .react-flow__resize-control.handle {
+  width: 8px !important;
+  height: 8px !important;
+  background: #374151 !important;
+  border: 1.5px solid white !important;
+  border-radius: 2px !important;
+}
+
+/* Group node resize lines - invisible, only handles are shown */
+.react-flow__node-groupFrame .react-flow__resize-control.line {
+  border-color: transparent !important;
+}
+
 /* ============================================
    SKETCHY / HAND-DRAWN EFFECT CLASSES
    ============================================ */

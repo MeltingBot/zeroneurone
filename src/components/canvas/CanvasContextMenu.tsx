@@ -1,10 +1,12 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
-import { Plus, Clipboard } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote } from 'lucide-react';
 
 interface CanvasContextMenuProps {
   x: number;
   y: number;
   onCreateElement: () => void;
+  onCreateGroup: () => void;
+  onCreateAnnotation: () => void;
   onPaste: () => void;
   onClose: () => void;
 }
@@ -13,6 +15,8 @@ function CanvasContextMenuComponent({
   x,
   y,
   onCreateElement,
+  onCreateGroup,
+  onCreateAnnotation,
   onPaste,
   onClose,
 }: CanvasContextMenuProps) {
@@ -82,7 +86,29 @@ function CanvasContextMenuComponent({
           >
             <Plus size={14} />
             Nouvel element
-            <span className="ml-auto text-xs text-text-tertiary">Dbl-clic</span>
+            <span className="ml-auto text-xs text-text-tertiary">E</span>
+          </button>
+          <button
+            onClick={() => {
+              onCreateGroup();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+          >
+            <Group size={14} />
+            Nouveau groupe visuel
+            <span className="ml-auto text-xs text-text-tertiary">G</span>
+          </button>
+          <button
+            onClick={() => {
+              onCreateAnnotation();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+          >
+            <StickyNote size={14} />
+            Nouvelle note
+            <span className="ml-auto text-xs text-text-tertiary">N</span>
           </button>
         </div>
 

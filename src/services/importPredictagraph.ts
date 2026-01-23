@@ -276,6 +276,7 @@ export async function importPredicaGraph(
         assetIds,
         parentGroupId: null,
         isGroup: false,
+        isAnnotation: false,
         childIds: [],
         events: [],
         createdAt: new Date(),

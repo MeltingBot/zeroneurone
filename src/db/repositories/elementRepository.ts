@@ -50,6 +50,7 @@ function createDefaultElement(
     assetIds: [],
     parentGroupId: null,
     isGroup: false,
+    isAnnotation: false,
     childIds: [],
     createdAt: new Date(),
     updatedAt: new Date(),

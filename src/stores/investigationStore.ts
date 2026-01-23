@@ -81,6 +81,12 @@ interface InvestigationState {
   updateElements: (ids: ElementId[], changes: Partial<Element>) => Promise<void>;
   updateLinks: (ids: LinkId[], changes: Partial<Link>) => Promise<void>;
 
+  // Actions - Groups
+  createGroup: (label: string, position: Position, size: { width: number; height: number }, childIds?: ElementId[]) => Promise<Element>;
+  addToGroup: (elementIds: ElementId[], groupId: ElementId) => Promise<void>;
+  removeFromGroup: (elementIds: ElementId[]) => Promise<void>;
+  dissolveGroup: (groupId: ElementId) => Promise<void>;
+
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
@@ -532,6 +538,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       assetIds: [],
       parentGroupId: null,
       isGroup: false,
+      isAnnotation: false,
       childIds: [],
       createdAt: now,
       updatedAt: now,
@@ -853,6 +860,139 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     await Promise.all(
       ids.map(id => linkRepository.update(id, changes).catch(() => {}))
     );
+  },
+
+  // ============================================================================
+  // GROUPS
+  // ============================================================================
+
+  createGroup: async (label: string, position: Position, size: { width: number; height: number }, childIds?: ElementId[]) => {
+    const { createElement, updateElement, elements } = get();
+
+    const group = await createElement(label, position, {
+      isGroup: true,
+      childIds: childIds || [],
+      visual: {
+        color: '#ffffff',
+        borderColor: '#e5e7eb',
+        borderStyle: 'dashed',
+        shape: 'rectangle',
+        size: 'medium',
+        icon: null,
+        image: null,
+        customWidth: size.width,
+        customHeight: size.height,
+      },
+    });
+
+    // Set parentGroupId on children
+    if (childIds && childIds.length > 0) {
+      for (const childId of childIds) {
+        const child = elements.find(el => el.id === childId);
+        if (child) {
+          await updateElement(childId, {
+            parentGroupId: group.id,
+            position: {
+              x: child.position.x - position.x,
+              y: child.position.y - position.y,
+            },
+          });
+        }
+      }
+    }
+
+    return group;
+  },
+
+  addToGroup: async (elementIds: ElementId[], groupId: ElementId) => {
+    const { elements, updateElement } = get();
+    const group = elements.find(el => el.id === groupId);
+    if (!group || !group.isGroup) return;
+
+    const newChildIds = [...group.childIds];
+
+    for (const elementId of elementIds) {
+      const child = elements.find(el => el.id === elementId);
+      if (!child || child.isGroup) continue; // Don't nest groups
+      if (child.parentGroupId === groupId) continue; // Already in this group
+
+      // Remove from previous group if any
+      if (child.parentGroupId) {
+        const prevGroup = elements.find(el => el.id === child.parentGroupId);
+        if (prevGroup) {
+          await updateElement(prevGroup.id, {
+            childIds: prevGroup.childIds.filter(id => id !== elementId),
+          });
+        }
+      }
+
+      // Convert position to relative (subtract group position)
+      await updateElement(elementId, {
+        parentGroupId: groupId,
+        position: {
+          x: child.position.x - group.position.x,
+          y: child.position.y - group.position.y,
+        },
+      });
+
+      if (!newChildIds.includes(elementId)) {
+        newChildIds.push(elementId);
+      }
+    }
+
+    await updateElement(groupId, { childIds: newChildIds });
+  },
+
+  removeFromGroup: async (elementIds: ElementId[]) => {
+    const { elements, updateElement } = get();
+
+    for (const elementId of elementIds) {
+      const child = elements.find(el => el.id === elementId);
+      if (!child || !child.parentGroupId) continue;
+
+      const group = elements.find(el => el.id === child.parentGroupId);
+      if (group) {
+        // Convert position back to absolute (add group position)
+        await updateElement(elementId, {
+          parentGroupId: null,
+          position: {
+            x: child.position.x + group.position.x,
+            y: child.position.y + group.position.y,
+          },
+        });
+
+        // Remove from group's childIds
+        await updateElement(group.id, {
+          childIds: group.childIds.filter(id => id !== elementId),
+        });
+      } else {
+        // Group not found, just clear parentGroupId
+        await updateElement(elementId, { parentGroupId: null });
+      }
+    }
+  },
+
+  dissolveGroup: async (groupId: ElementId) => {
+    const { elements, updateElement, deleteElement } = get();
+    const group = elements.find(el => el.id === groupId);
+    if (!group || !group.isGroup) return;
+
+    // Convert all children to absolute positions
+    for (const childId of group.childIds) {
+      const child = elements.find(el => el.id === childId);
+      if (child) {
+        await updateElement(childId, {
+          parentGroupId: null,
+          position: {
+            x: child.position.x + group.position.x,
+            y: child.position.y + group.position.y,
+          },
+        });
+      }
+    }
+
+    // Delete the group element
+    await deleteElement(groupId);
   },
 
   // ============================================================================

@@ -43,7 +43,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function ElementDetail({ element }: ElementDetailProps) {
-  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments, toggleConfidenceIndicator, togglePropertyDisplay } = useInvestigationStore();
+  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments, togglePropertyDisplay } = useInvestigationStore();
 
   // Count unresolved comments for this element
   const elementComments = comments.filter(c => c.targetId === element.id);
@@ -351,6 +351,48 @@ export function ElementDetail({ element }: ElementDetailProps) {
     return allSuggestions;
   })();
 
+  // Simplified view for annotations (just notes + border)
+  if (element.isAnnotation) {
+    return (
+      <div ref={containerRef} className="divide-y divide-border-default">
+        {/* Contenu */}
+        <AccordionSection
+          id="content"
+          title="Contenu"
+          icon={<FileText size={12} />}
+          defaultOpen={true}
+        >
+          <div className="space-y-1.5">
+            <MarkdownEditor
+              value={notes}
+              onChange={(value) => {
+                editingElementIdRef.current = element.id;
+                setNotes(value);
+              }}
+              placeholder="Markdown: **gras**, *italique*, # titre, - liste..."
+              minRows={4}
+              maxRows={15}
+            />
+          </div>
+        </AccordionSection>
+
+        {/* Apparence */}
+        <AccordionSection
+          id="visual"
+          title="Apparence"
+          icon={<Palette size={12} />}
+          defaultOpen={false}
+        >
+          <VisualEditor
+            visual={element.visual}
+            onChange={handleVisualChange}
+            hideShape
+          />
+        </AccordionSection>
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="divide-y divide-border-default">
       {/* Identité */}
@@ -436,25 +478,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
               onChange={(e) => handleConfidenceChange(parseInt(e.target.value))}
               className="w-full h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
             />
-            {/* Toggle to show confidence on canvas */}
-            <label className="flex items-center gap-2 cursor-pointer mt-2">
-              <button
-                type="button"
-                onClick={() => toggleConfidenceIndicator()}
-                className={`relative w-8 h-4 rounded-full transition-colors ${
-                  currentInvestigation?.settings.showConfidenceIndicator ? 'bg-accent' : 'bg-bg-tertiary'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
-                    currentInvestigation?.settings.showConfidenceIndicator ? 'translate-x-4' : ''
-                  }`}
-                />
-              </button>
-              <span className="text-xs text-text-secondary">
-                Afficher sur le canvas
-              </span>
-            </label>
           </div>
 
           {/* Source */}

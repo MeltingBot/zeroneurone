@@ -1,5 +1,5 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect } from 'lucide-react';
 
 interface ContextMenuProps {
   x: number;
@@ -24,6 +24,13 @@ interface ContextMenuProps {
   onDuplicate: () => void;
   onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
+  // Group actions
+  isGroup: boolean;
+  isInGroup: boolean;
+  hasMultipleSelected: boolean;
+  onGroupSelection: () => void;
+  onDissolveGroup: () => void;
+  onRemoveFromGroup: () => void;
   onClose: () => void;
 }
 
@@ -55,6 +62,12 @@ function ContextMenuComponent({
   onDuplicate,
   onPreview,
   onFindPaths,
+  isGroup,
+  isInGroup,
+  hasMultipleSelected,
+  onGroupSelection,
+  onDissolveGroup,
+  onRemoveFromGroup,
   onClose,
 }: ContextMenuProps) {
   const hasTwoSelected = !!otherSelectedId && !!otherSelectedLabel;
@@ -202,6 +215,48 @@ function ContextMenuComponent({
               <Route size={14} />
               Trouver les chemins
             </button>
+          </div>
+        )}
+
+        {/* Group actions */}
+        {(hasMultipleSelected || isGroup || isInGroup) && (
+          <div className="py-1 border-b border-border-default">
+            {hasMultipleSelected && !isGroup && (
+              <button
+                onClick={() => {
+                  onGroupSelection();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Group size={14} />
+                Grouper la sélection
+              </button>
+            )}
+            {isGroup && (
+              <button
+                onClick={() => {
+                  onDissolveGroup();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Ungroup size={14} />
+                Dissoudre le groupe
+              </button>
+            )}
+            {isInGroup && (
+              <button
+                onClick={() => {
+                  onRemoveFromGroup();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <BoxSelect size={14} />
+                Retirer du groupe
+              </button>
+            )}
           </div>
         )}
 

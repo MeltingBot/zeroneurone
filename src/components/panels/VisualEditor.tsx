@@ -5,6 +5,7 @@ import { DEFAULT_COLORS } from '../../types';
 interface VisualEditorProps {
   visual: ElementVisual;
   onChange: (visual: Partial<ElementVisual>) => void;
+  hideShape?: boolean;
 }
 
 const SHAPES: { value: ElementShape; label: string }[] = [
@@ -21,7 +22,7 @@ const BORDER_STYLES: { value: 'solid' | 'dashed' | 'dotted'; label: string }[] =
   { value: 'dotted', label: 'Pointillé' },
 ];
 
-export function VisualEditor({ visual, onChange }: VisualEditorProps) {
+export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps) {
   const handleColorChange = useCallback(
     (color: string) => {
       onChange({ color });
@@ -193,6 +194,7 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
       </div>
 
       {/* Shape */}
+      {!hideShape && (
       <div className="space-y-1.5">
         <label className="text-xs text-text-tertiary">Forme</label>
         <select
@@ -207,6 +209,7 @@ export function VisualEditor({ visual, onChange }: VisualEditorProps) {
           ))}
         </select>
       </div>
+      )}
     </div>
   );
 }

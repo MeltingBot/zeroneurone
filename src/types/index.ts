@@ -204,6 +204,7 @@ export interface Element {
   assetIds: AssetId[];
   parentGroupId: ElementId | null;
   isGroup: boolean;
+  isAnnotation: boolean;
   childIds: ElementId[];
   createdAt: Date;
   updatedAt: Date;

@@ -32,6 +32,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
   map.set('date', dateToYjs(element.date));
   map.set('parentGroupId', element.parentGroupId);
   map.set('isGroup', element.isGroup);
+  map.set('isAnnotation', element.isAnnotation);
 
   // Notes as plain string (will be converted to Y.Text on first update)
   map.set('notes', element.notes || '');
@@ -277,6 +278,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     assetIds,
     parentGroupId: ymap.get('parentGroupId') ?? null,
     isGroup: ymap.get('isGroup') ?? false,
+    isAnnotation: ymap.get('isAnnotation') ?? false,
     childIds,
     createdAt,
     updatedAt,
@@ -374,6 +376,10 @@ export function updateElementYMap(
 
     if (changes.isGroup !== undefined) {
       ymap.set('isGroup', changes.isGroup);
+    }
+
+    if (changes.isAnnotation !== undefined) {
+      ymap.set('isAnnotation', changes.isAnnotation);
     }
 
     if (changes.childIds !== undefined) {
