@@ -533,9 +533,7 @@ export function Canvas() {
 
   const {
     highlightedElementIds: insightsHighlightedIds,
-    pathResults,
     findPaths,
-    clearHighlight: clearInsightsHighlight,
   } = useInsightsStore();
 
   // Sync store for collaboration presence
@@ -2613,35 +2611,6 @@ export function Canvas() {
             </div>
           )}
 
-          {/* Path results indicator */}
-          {pathResults.length > 0 && (
-            <div className="absolute top-4 left-4 z-40 flex items-center gap-2 px-3 py-2 bg-pastel-green border border-success sketchy-border-soft node-shadow">
-              <span className="text-sm text-success font-medium">
-                Chemin trouve ({pathResults[0].length} lien{pathResults[0].length > 1 ? 's' : ''})
-              </span>
-              <button
-                onClick={clearInsightsHighlight}
-                className="text-xs text-success hover:opacity-80 underline"
-              >
-                Fermer
-              </button>
-            </div>
-          )}
-
-          {/* Insights highlight indicator */}
-          {insightsHighlightedIds.size > 0 && pathResults.length === 0 && (
-            <div className="absolute top-4 left-4 z-40 flex items-center gap-2 px-3 py-2 bg-pastel-purple border border-border-sketchy sketchy-border-soft node-shadow">
-              <span className="text-sm text-text-primary font-medium">
-                {insightsHighlightedIds.size} element{insightsHighlightedIds.size > 1 ? 's' : ''} surligne{insightsHighlightedIds.size > 1 ? 's' : ''}
-              </span>
-              <button
-                onClick={clearInsightsHighlight}
-                className="text-xs text-text-secondary hover:text-text-primary underline"
-              >
-                Fermer
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Share Modal */}
