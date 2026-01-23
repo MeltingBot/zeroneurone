@@ -17,13 +17,14 @@ import {
   ArrowRight,
   Merge,
   Search,
+  Group,
 } from 'lucide-react';
 import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import type { Element } from '../../types';
 
 export function InsightsPanel() {
-  const { elements, links } = useInvestigationStore();
+  const { elements, links, createGroup } = useInvestigationStore();
   const { selectElement, selectElements } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
   const {
@@ -137,6 +138,36 @@ export function InsightsPanel() {
       }
     },
     [elements, clearFilters, setFilters]
+  );
+
+  // Create a visual group from cluster elements
+  const handleGroupCluster = useCallback(
+    async (elementIds: string[], clusterId: number) => {
+      const clusterElements = elements.filter(
+        (el) => elementIds.includes(el.id) && !el.isGroup && !el.parentGroupId
+      );
+      if (clusterElements.length < 2) return;
+
+      const padding = 40;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const el of clusterElements) {
+        const w = el.visual.customWidth || 120;
+        const h = el.visual.customHeight || 60;
+        minX = Math.min(minX, el.position.x);
+        minY = Math.min(minY, el.position.y);
+        maxX = Math.max(maxX, el.position.x + w);
+        maxY = Math.max(maxY, el.position.y + h);
+      }
+
+      const groupPos = { x: minX - padding, y: minY - padding };
+      const groupSize = {
+        width: maxX - minX + padding * 2,
+        height: maxY - minY + padding * 2,
+      };
+
+      await createGroup(`Cluster ${clusterId + 1}`, groupPos, groupSize, clusterElements.map(el => el.id));
+    },
+    [elements, createGroup]
   );
 
   // Check if all elements in a list are hidden
@@ -448,6 +479,11 @@ export function InsightsPanel() {
                           icon={areAllHidden(cluster.elementIds) ? <Eye size={10} /> : <EyeOff size={10} />}
                           label={areAllHidden(cluster.elementIds) ? "Afficher" : "Masquer"}
                           onClick={() => toggleHideElements(cluster.elementIds)}
+                        />
+                        <ActionButton
+                          icon={<Group size={10} />}
+                          label="Grouper"
+                          onClick={() => handleGroupCluster(cluster.elementIds, cluster.id)}
                         />
                       </div>
                     </div>
