@@ -21,6 +21,7 @@ import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
 import { importPredicaGraph, isPredicaGraphFormat } from './importPredictagraph';
 import { importOsintIndustries, isOsintIndustriesFormat } from './importOsintIndustries';
 import { importOIPalette, isOIPaletteFormat } from './importOIPalette';
+import { importExcalidraw, isExcalidrawFormat } from './importExcalidraw';
 
 // ============================================================================
 // SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
@@ -274,8 +275,11 @@ class ImportService {
         case 'predicagraph':
           importResult = await importPredicaGraph(content, targetInvestigationId);
           break;
+        case 'excalidraw':
+          importResult = await importExcalidraw(content, targetInvestigationId);
+          break;
         default:
-          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph');
+          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw');
           return result;
       }
 
@@ -293,7 +297,12 @@ class ImportService {
   /**
    * Detect the JSON format from parsed data
    */
-  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'unknown' {
+  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'unknown' {
+    // Excalidraw: { type: "excalidraw", elements: [...] }
+    if (isExcalidrawFormat(data)) {
+      return 'excalidraw';
+    }
+
     // ZeroNeurone native: { version, elements, links }
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       const obj = data as Record<string, unknown>;

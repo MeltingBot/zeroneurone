@@ -45,7 +45,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       } else if (file.name.endsWith('.osintracker')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromOsintracker(content, investigationId);
-      } else if (file.name.endsWith('.json')) {
+      } else if (file.name.endsWith('.json') || file.name.endsWith('.excalidraw')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromJSON(content, investigationId);
       } else if (file.name.endsWith('.csv')) {
@@ -62,7 +62,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           elementsImported: 0,
           linksImported: 0,
           assetsImported: 0,
-          errors: ['Format de fichier non supporté. Utilisez ZIP, JSON, CSV, GraphML/XML ou OSINTracker.'],
+          errors: ['Format de fichier non supporté. Utilisez ZIP, JSON, CSV, GraphML/XML, OSINTracker ou Excalidraw.'],
           warnings: [],
         };
       }
@@ -159,7 +159,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.xml"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw"
             onChange={handleFileSelect}
             className="hidden"
           />
@@ -176,10 +176,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                 {isProcessing ? 'Import en cours...' : 'Sélectionner un fichier'}
               </div>
               <div className="text-xs text-text-tertiary mt-1">
-                ZIP, JSON, CSV, GraphML/XML, OSINTracker
+                ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw
               </div>
               <div className="text-xs text-text-tertiary mt-0.5">
-                JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph
+                JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw
               </div>
             </div>
           </button>
