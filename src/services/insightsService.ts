@@ -28,8 +28,9 @@ class InsightsService {
     this.elements = elements;
     this.graph = new Graph({ type: 'undirected', multi: true });
 
-    // Add nodes
+    // Add nodes (exclude visual groups - they're containers, not graph nodes)
     for (const element of elements) {
+      if (element.isGroup) continue;
       this.graph.addNode(element.id, { label: element.label });
     }
 

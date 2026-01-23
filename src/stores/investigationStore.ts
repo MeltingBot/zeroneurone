@@ -973,26 +973,51 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   dissolveGroup: async (groupId: ElementId) => {
-    const { elements, updateElement, deleteElement } = get();
+    const { elements } = get();
     const group = elements.find(el => el.id === groupId);
     if (!group || !group.isGroup) return;
 
-    // Convert all children to absolute positions
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) return;
+
+    const { elements: elementsMap } = getYMaps(ydoc);
+
+    // Batch all updates in a single transaction for instant visual update
+    ydoc.transact(() => {
+      // Convert all children to absolute positions
+      for (const childId of group.childIds) {
+        const child = elements.find(el => el.id === childId);
+        if (child) {
+          const ymap = elementsMap.get(childId) as any;
+          if (ymap) {
+            const absX = child.position.x + group.position.x;
+            const absY = child.position.y + group.position.y;
+            ymap.set('parentGroupId', null);
+            ymap.set('positionX', absX);
+            ymap.set('positionY', absY);
+            ymap.set('position', { x: absX, y: absY });
+          }
+        }
+      }
+
+      // Delete the group element
+      elementsMap.delete(groupId);
+    });
+
+    // Persist to Dexie in background
     for (const childId of group.childIds) {
       const child = elements.find(el => el.id === childId);
       if (child) {
-        await updateElement(childId, {
+        elementRepository.update(childId, {
           parentGroupId: null,
           position: {
             x: child.position.x + group.position.x,
             y: child.position.y + group.position.y,
           },
-        });
+        }).catch(() => {});
       }
     }
-
-    // Delete the group element
-    await deleteElement(groupId);
+    elementRepository.delete(groupId).catch(() => {});
   },
 
   // ============================================================================
