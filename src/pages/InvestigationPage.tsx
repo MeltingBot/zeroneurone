@@ -9,7 +9,7 @@ import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportMo
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
 const TimelineView = lazy(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
-import { useInvestigationStore, useUIStore, useViewStore, useSyncStore } from '../stores';
+import { useInvestigationStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore } from '../stores';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
@@ -37,6 +37,8 @@ export function InvestigationPage() {
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
+  const clearSelection = useSelectionStore((state) => state.clearSelection);
+  const clearInsights = useInsightsStore((state) => state.clear);
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
@@ -73,11 +75,13 @@ export function InvestigationPage() {
       }
       unloadInvestigation();
       searchService.clear();
-      // Reset investigation-specific state (filters, redaction settings)
+      // Reset investigation-specific state (selection, filters, insights, redaction)
+      clearSelection();
+      clearInsights();
       resetUIState();
       resetViewState();
     };
-  }, [id, loadInvestigation, unloadInvestigation, resetUIState, resetViewState, loadViewportForInvestigation, saveViewportForInvestigation]);
+  }, [id, loadInvestigation, unloadInvestigation, clearSelection, clearInsights, resetUIState, resetViewState, loadViewportForInvestigation, saveViewportForInvestigation]);
 
   // Load search index: full rebuild on investigation load, incremental updates after
   const searchInitializedRef = useRef<string | null>(null);
