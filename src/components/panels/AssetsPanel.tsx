@@ -1,8 +1,10 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { Upload, File, Image, FileText, X, Download, Eye, GripVertical } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
+import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
+import { metadataService } from '../../services/metadataService';
 
 interface AssetsPanelProps {
   element: Element;
@@ -10,6 +12,7 @@ interface AssetsPanelProps {
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
   const { assets, addAsset, removeAsset, reorderAssets } = useInvestigationStore();
+  const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -23,6 +26,27 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
   const elementAssets = element.assetIds
     .map((id) => assets.find((a) => a.id === id))
     .filter((a): a is Asset => a !== undefined);
+
+  // Extract metadata from a file and queue for import if found
+  const extractAndQueueMetadata = useCallback(
+    async (file: File) => {
+      try {
+        const buffer = await file.arrayBuffer();
+        const metadata = await metadataService.extractMetadata(file, buffer);
+        if (metadata && (metadata.properties.length > 0 || metadata.geo)) {
+          pushMetadataImport({
+            elementId: element.id,
+            elementLabel: element.label,
+            filename: file.name,
+            metadata,
+          });
+        }
+      } catch (error) {
+        console.error('Metadata extraction failed:', error);
+      }
+    },
+    [element.id, element.label, pushMetadataImport]
+  );
 
   // Handle paste from clipboard
   const handlePaste = useCallback(
@@ -48,15 +72,15 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       setIsUploading(true);
       try {
         for (const file of files) {
+          let uploadedFile = file;
           // If the file doesn't have a name (clipboard images), give it one
           if (!file.name || file.name === 'image.png') {
             const ext = file.type.split('/')[1] || 'png';
             const blob = file.slice(0, file.size, file.type);
-            const namedFile = new window.File([blob], `pasted-${Date.now()}.${ext}`, { type: file.type });
-            await addAsset(element.id, namedFile);
-          } else {
-            await addAsset(element.id, file);
+            uploadedFile = new window.File([blob], `pasted-${Date.now()}.${ext}`, { type: file.type });
           }
+          await addAsset(element.id, uploadedFile);
+          await extractAndQueueMetadata(uploadedFile);
         }
       } catch (error) {
         console.error('Error pasting files:', error);
@@ -64,7 +88,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         setIsUploading(false);
       }
     },
-    [element.id, addAsset]
+    [element.id, addAsset, extractAndQueueMetadata]
   );
 
   // Listen for paste events when this element is selected
@@ -85,6 +109,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       try {
         for (const file of files) {
           await addAsset(element.id, file);
+          await extractAndQueueMetadata(file);
         }
       } catch (error) {
         console.error('Error uploading files:', error);
@@ -92,7 +117,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         setIsUploading(false);
       }
     },
-    [element.id, addAsset]
+    [element.id, addAsset, extractAndQueueMetadata]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -114,6 +139,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       try {
         for (const file of Array.from(files)) {
           await addAsset(element.id, file);
+          await extractAndQueueMetadata(file);
         }
       } catch (error) {
         console.error('Error uploading files:', error);
@@ -124,7 +150,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       // Reset input
       e.target.value = '';
     },
-    [element.id, addAsset]
+    [element.id, addAsset, extractAndQueueMetadata]
   );
 
   const handleRemove = useCallback(

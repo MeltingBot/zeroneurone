@@ -11,3 +11,4 @@ export { TagSetManagerModal } from './TagSetManagerModal';
 export { TagSetEditorModal } from './TagSetEditorModal';
 export { AboutModal } from './AboutModal';
 export { LocalStorageDisclaimerModal, hasAcknowledgedLocalStorage } from './LocalStorageDisclaimerModal';
+export { MetadataImportModal } from './MetadataImportModal';

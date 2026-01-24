@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee } from 'lucide-react';
 import { Layout, IconButton, Modal, Button } from '../components/common';
 import { SidePanel } from '../components/panels';
-import { SearchModal, ExportModal, ReportModal, ShortcutsModal } from '../components/modals';
+import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal } from '../components/modals';
 
 // Lazy load heavy components for better initial load
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
@@ -329,6 +329,9 @@ export function InvestigationPage() {
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
       />
+
+      {/* Metadata import modal */}
+      <MetadataImportModal />
 
       {/* Warning when leaving a collaborative session */}
       <Modal

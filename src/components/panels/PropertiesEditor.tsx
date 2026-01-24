@@ -21,6 +21,7 @@ const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: 'text', label: 'Texte' },
   { value: 'number', label: 'Numérique' },
   { value: 'date', label: 'Date' },
+  { value: 'datetime', label: 'Date/heure' },
   { value: 'boolean', label: 'Booléen' },
   { value: 'country', label: 'Pays' },
   { value: 'link', label: 'Lien' },
@@ -28,6 +29,24 @@ const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
 
 function getTypeLabel(type: PropertyType): string {
   return PROPERTY_TYPES.find((t) => t.value === type)?.label ?? 'Texte';
+}
+
+/** Format Date for datetime-local input (YYYY-MM-DDTHH:mm) using LOCAL timezone */
+function formatDateTimeForInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/** Format Date for date input (YYYY-MM-DD) using LOCAL timezone */
+function formatDateForInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function PropertiesEditor({
@@ -457,12 +476,33 @@ function PropertyValueInput({
           type="date"
           value={
             value instanceof Date
-              ? value.toISOString().split('T')[0]
+              ? formatDateForInput(value)
               : value
               ? String(value).split('T')[0]
               : ''
           }
           onChange={(e) => {
+            // Append T12:00 to avoid UTC midnight day-shift (ES spec: date-only = UTC)
+            onChange(e.target.value ? new Date(e.target.value + 'T12:00:00') : null);
+          }}
+          onKeyDown={onKeyDown}
+          className={baseInputClass}
+        />
+      );
+
+    case 'datetime':
+      return (
+        <input
+          type="datetime-local"
+          value={
+            value instanceof Date
+              ? formatDateTimeForInput(value)
+              : value
+              ? String(value).slice(0, 16)
+              : ''
+          }
+          onChange={(e) => {
+            // datetime-local value has no TZ suffix → interpreted as local time (correct)
             onChange(e.target.value ? new Date(e.target.value) : null);
           }}
           onKeyDown={onKeyDown}

@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode } from '../types';
+import type { ExtractedMetadata } from '../services/metadataService';
 import { generateUUID } from '../utils';
+
+export interface MetadataImportItem {
+  elementId: string;
+  elementLabel: string;
+  filename: string;
+  metadata: ExtractedMetadata;
+}
 
 export type FontMode = 'readable' | 'handwritten';
 export type ThemeMode = 'light' | 'dark';
@@ -49,6 +57,9 @@ interface UIState {
   snapToGrid: boolean;
   showAlignGuides: boolean;
   gridSize: number;
+
+  // Metadata import queue
+  metadataImportQueue: MetadataImportItem[];
 
   // Capture system for report screenshots
   captureHandlers: Map<DisplayMode, CaptureHandler>;
@@ -109,6 +120,10 @@ interface UIState {
   toggleSnapToGrid: () => void;
   toggleAlignGuides: () => void;
 
+  // Actions - Metadata import queue
+  pushMetadataImport: (item: MetadataImportItem) => void;
+  shiftMetadataImport: () => void;
+
   // Actions - Reset investigation-specific state
   resetInvestigationState: () => void;
 }
@@ -132,6 +147,7 @@ export const useUIStore = create<UIState>()(
   snapToGrid: false,
   showAlignGuides: true,
   gridSize: 20,
+  metadataImportQueue: [],
   captureHandlers: new Map(),
 
   // Capture system
@@ -286,6 +302,19 @@ export const useUIStore = create<UIState>()(
 
   toggleAlignGuides: () => {
     set((state) => ({ showAlignGuides: !state.showAlignGuides }));
+  },
+
+  // Metadata import queue
+  pushMetadataImport: (item) => {
+    set((state) => ({
+      metadataImportQueue: [...state.metadataImportQueue, item],
+    }));
+  },
+
+  shiftMetadataImport: () => {
+    set((state) => ({
+      metadataImportQueue: state.metadataImportQueue.slice(1),
+    }));
   },
 
   // Reset investigation-specific state (called when closing an investigation)

@@ -39,6 +39,7 @@ import type { Element, Link, Position, Asset } from '../../types';
 import { generateUUID } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { fileService } from '../../services/fileService';
+import { metadataService } from '../../services/metadataService';
 
 interface ContextMenuState {
   x: number;
@@ -543,6 +544,7 @@ export function Canvas() {
   const syncMode = useSyncStore((state) => state.mode);
 
   // UI store for theme mode and canvas settings
+  const pushMetadataImport = useUIStore((state) => state.pushMetadataImport);
   const themeMode = useUIStore((state) => state.themeMode);
   const snapToGrid = useUIStore((state) => state.snapToGrid);
   const showAlignGuides = useUIStore((state) => state.showAlignGuides);
@@ -1826,8 +1828,23 @@ export function Canvas() {
         // Dropped on an element - attach files to it
         const elementId = nodeElement.getAttribute('data-id');
         if (elementId) {
+          const targetElement = elements.find((e) => e.id === elementId);
           for (const file of files) {
             await addAsset(elementId, file);
+            try {
+              const buffer = await file.arrayBuffer();
+              const metadata = await metadataService.extractMetadata(file, buffer);
+              if (metadata && (metadata.properties.length > 0 || metadata.geo)) {
+                pushMetadataImport({
+                  elementId,
+                  elementLabel: targetElement?.label || '',
+                  filename: file.name,
+                  metadata,
+                });
+              }
+            } catch (err) {
+              console.error('Metadata extraction failed:', err);
+            }
           }
           return;
         }
@@ -1845,9 +1862,23 @@ export function Canvas() {
         const label = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
         const newElement = await createElement(label, position);
         await addAsset(newElement.id, file);
+        try {
+          const buffer = await file.arrayBuffer();
+          const metadata = await metadataService.extractMetadata(file, buffer);
+          if (metadata && (metadata.properties.length > 0 || metadata.geo)) {
+            pushMetadataImport({
+              elementId: newElement.id,
+              elementLabel: newElement.label,
+              filename: file.name,
+              metadata,
+            });
+          }
+        } catch (err) {
+          console.error('Metadata extraction failed:', err);
+        }
       }
     },
-    [createElement, addAsset, viewport]
+    [createElement, addAsset, viewport, elements, pushMetadataImport]
   );
 
   const handleFileDragOver = useCallback((event: React.DragEvent) => {
