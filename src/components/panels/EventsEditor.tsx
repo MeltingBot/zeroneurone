@@ -21,7 +21,6 @@ export function EventsEditor({
   suggestions = [],
   onNewProperty,
 }: EventsEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Sort events by date (most recent first)
@@ -38,7 +37,6 @@ export function EventsEditor({
     };
     onChange([...events, newEvent]);
     setExpandedEventId(newEvent.id);
-    setIsExpanded(true);
   }, [events, onChange]);
 
   // Remove event
@@ -103,33 +101,21 @@ export function EventsEditor({
 
   return (
     <div className="space-y-2">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-text-primary"
-        >
-          {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          Historique / Événements ({events.length})
-        </button>
-        <button
-          onClick={handleAdd}
-          className="p-1 text-text-tertiary hover:text-accent hover:bg-bg-tertiary rounded"
-          title="Ajouter un événement"
-        >
-          <Plus size={14} />
-        </button>
-      </div>
+      {/* Add button - always at top */}
+      <button
+        onClick={handleAdd}
+        className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default w-full justify-center"
+      >
+        <Plus size={12} />
+        Ajouter un événement
+      </button>
 
-      {/* Expanded list */}
-      {isExpanded && (
-        <div className="space-y-2 pl-2 border-l-2 border-border-default">
-          {sortedEvents.length === 0 ? (
-            <p className="text-xs text-text-tertiary py-2">
-              Aucun événement. Ajoutez des événements pour suivre l'historique.
-            </p>
-          ) : (
-            sortedEvents.map((event) => {
+      {/* Events list - scrollable when many */}
+      {sortedEvents.length === 0 ? (
+        <p className="text-xs text-text-tertiary">Aucun événement</p>
+      ) : (
+        <div className="space-y-2 pl-2 border-l-2 border-border-default max-h-[400px] overflow-y-auto">
+          {sortedEvents.map((event) => {
               const isEventExpanded = expandedEventId === event.id;
 
               return (
@@ -314,8 +300,7 @@ export function EventsEditor({
                   )}
                 </div>
               );
-            })
-          )}
+            })}
         </div>
       )}
     </div>

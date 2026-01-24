@@ -381,83 +381,100 @@ export function TimelineView() {
 
   const totalRows = items.length || 1;
 
-  // Virtualization: only render items that are visible in the viewport
+  // Virtualization: only render items visible in viewport (horizontal + vertical)
   const [containerWidth, setContainerWidth] = useState(800);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(600);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       setContainerWidth(entries[0].contentRect.width);
+      setContainerHeight(entries[0].contentRect.height);
     });
     observer.observe(containerRef.current);
     setContainerWidth(containerRef.current.clientWidth);
+    setContainerHeight(containerRef.current.clientHeight);
     return () => observer.disconnect();
   }, []);
 
-  // Filter items to only those visible horizontally (with buffer)
+  // Track scroll position for vertical virtualization
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
+  // Filter items to only those visible (horizontal + vertical)
   const visibleItems = useMemo(() => {
     const buffer = 100; // Extra pixels to render outside viewport
     const viewEndDate = new Date(viewStart.getTime() + ((containerWidth + buffer) / zoom) * 24 * 60 * 60 * 1000);
     const viewStartBuffer = new Date(viewStart.getTime() - (buffer / zoom) * 24 * 60 * 60 * 1000);
 
+    // Vertical bounds
+    const rowSize = ROW_HEIGHT + ROW_GAP;
+    const vBuffer = 200; // Extra pixels vertically
+    const minRow = Math.max(0, Math.floor((scrollTop - vBuffer) / rowSize));
+    const maxRow = Math.ceil((scrollTop + containerHeight + vBuffer) / rowSize);
+
     return itemsWithRows.filter((item) => {
+      // Vertical check first (cheaper)
+      if (item.row < minRow || item.row > maxRow) return false;
+      // Horizontal check
       const itemEnd = item.end || item.start;
-      // Item is visible if it overlaps with the view range
       return itemEnd >= viewStartBuffer && item.start <= viewEndDate;
     });
-  }, [itemsWithRows, viewStart, zoom, containerWidth]);
+  }, [itemsWithRows, viewStart, zoom, containerWidth, scrollTop, containerHeight]);
 
-  // Compute potential causal connections between events of linked elements
+  // Compute potential causal connections between visible events of linked elements
   const causalConnections = useMemo(() => {
     if (!showCausality) return [];
+    // Only compute for visible items to avoid O(n²) on full dataset
+    if (visibleItems.length > 500) return []; // Too many to compute
 
     const connections: Array<{
-      fromItem: typeof itemsWithRows[0];
-      toItem: typeof itemsWithRows[0];
+      fromItem: typeof visibleItems[0];
+      toItem: typeof visibleItems[0];
     }> = [];
 
     // Build a set of linked element pairs for quick lookup
     const linkedPairs = new Set<string>();
     links.forEach((link) => {
       linkedPairs.add(`${link.fromId}|${link.toId}`);
-      linkedPairs.add(`${link.toId}|${link.fromId}`); // Bidirectional
+      linkedPairs.add(`${link.toId}|${link.fromId}`);
     });
 
-    // Check if two elements are linked
-    const areLinked = (id1: string, id2: string) => linkedPairs.has(`${id1}|${id2}`);
+    for (let i = 0; i < visibleItems.length; i++) {
+      for (let j = i + 1; j < visibleItems.length; j++) {
+        const itemA = visibleItems[i];
+        const itemB = visibleItems[j];
 
-    // For each pair of items, check if they could have a causal relationship
-    for (let i = 0; i < itemsWithRows.length; i++) {
-      for (let j = 0; j < itemsWithRows.length; j++) {
-        if (i === j) continue;
-
-        const itemA = itemsWithRows[i];
-        const itemB = itemsWithRows[j];
-
-        // Skip if same source element
         if (itemA.sourceId === itemB.sourceId) continue;
-
-        // Skip if elements are not linked
         if (!itemA.sourceId || !itemB.sourceId) continue;
-        if (!areLinked(itemA.sourceId, itemB.sourceId)) continue;
+        if (!linkedPairs.has(`${itemA.sourceId}|${itemB.sourceId}`)) continue;
 
-        // Check temporal order: A should end before or when B starts
         const aEnd = itemA.end || itemA.start;
         const bStart = itemB.start;
+        const bEnd = itemB.end || itemB.start;
+        const aStart = itemA.start;
 
-        // A ends before B starts (or same day) = potential causality
+        // Check A→B
         if (aEnd.getTime() <= bStart.getTime()) {
-          // Check if within the max days threshold
           const daysDiff = (bStart.getTime() - aEnd.getTime()) / (24 * 60 * 60 * 1000);
           if (daysDiff <= causalityMaxDays) {
             connections.push({ fromItem: itemA, toItem: itemB });
+          }
+        }
+        // Check B→A
+        else if (bEnd.getTime() <= aStart.getTime()) {
+          const daysDiff = (aStart.getTime() - bEnd.getTime()) / (24 * 60 * 60 * 1000);
+          if (daysDiff <= causalityMaxDays) {
+            connections.push({ fromItem: itemB, toItem: itemA });
           }
         }
       }
     }
 
     return connections;
-  }, [showCausality, itemsWithRows, links, causalityMaxDays]);
+  }, [showCausality, visibleItems, links, causalityMaxDays]);
 
   // Convert date to X position
   const dateToX = useCallback((date: Date): number => {
@@ -829,6 +846,7 @@ export function TimelineView() {
         ref={containerRef}
         className="flex-1 overflow-x-hidden overflow-y-auto relative select-none"
         data-report-capture="timeline"
+        onScroll={handleScroll}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

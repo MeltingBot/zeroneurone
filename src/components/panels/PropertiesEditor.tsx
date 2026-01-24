@@ -198,23 +198,7 @@ export function PropertiesEditor({
 
   return (
     <div className="space-y-2">
-      {/* Properties list */}
-      {properties.length > 0 && (
-        <div className="space-y-2">
-          {properties.map((prop) => (
-            <PropertyRow
-              key={prop.key}
-              property={prop}
-              onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
-              onRemove={() => handleRemoveProperty(prop.key)}
-              isDisplayed={displayedProperties.includes(prop.key)}
-              onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Add new property */}
+      {/* Add new property - always at top */}
       {isAdding ? (
         <div className="space-y-2 p-2 bg-bg-secondary rounded border border-border-default">
           {/* Property key input */}
@@ -345,6 +329,22 @@ export function PropertiesEditor({
           <Plus size={12} />
           Ajouter une propriété
         </button>
+      )}
+
+      {/* Properties list - scrollable when many */}
+      {properties.length > 0 && (
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {properties.map((prop) => (
+            <PropertyRow
+              key={prop.key}
+              property={prop}
+              onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
+              onRemove={() => handleRemoveProperty(prop.key)}
+              isDisplayed={displayedProperties.includes(prop.key)}
+              onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
+            />
+          ))}
+        </div>
       )}
 
       {properties.length === 0 && !isAdding && (
