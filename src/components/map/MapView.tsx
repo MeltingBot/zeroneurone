@@ -5,6 +5,7 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
+import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
 import type { Element } from '../../types';
@@ -56,6 +57,7 @@ export function MapView() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const { elements, links, assets, comments, updateElement } = useInvestigationStore();
+  const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
@@ -711,6 +713,9 @@ export function MapView() {
     };
   }, [clearSelection]);
 
+  // Track drag start position for undo/redo
+  const dragStartGeoRef = useRef<{ id: string; geo: { lat: number; lng: number } } | null>(null);
+
   // Update markers when elements change
   useEffect(() => {
     if (!mapRef.current || !clusterGroupRef.current) return;
@@ -760,13 +765,24 @@ export function MapView() {
           selectElement(element.id);
         });
 
-        // Drag to update position
+        // Drag to update geo position (with undo/redo support)
+        marker.on('dragstart', () => {
+          const pos = marker.getLatLng();
+          dragStartGeoRef.current = { id: element.id, geo: { lat: pos.lat, lng: pos.lng } };
+        });
         marker.on('dragend', () => {
           const newPos = marker.getLatLng();
-          updateElement(element.id, {
-            geo: { lat: newPos.lat, lng: newPos.lng }
-          });
-          // Trigger clustering update
+          const newGeo = { lat: newPos.lat, lng: newPos.lng };
+          const oldGeo = dragStartGeoRef.current?.geo;
+          updateElement(element.id, { geo: newGeo });
+          if (oldGeo) {
+            pushAction({
+              type: 'update-element',
+              undo: { elementId: element.id, changes: { geo: oldGeo } },
+              redo: { elementId: element.id, changes: { geo: newGeo } },
+            });
+          }
+          dragStartGeoRef.current = null;
           setClusteringVersion(v => v + 1);
         });
 
@@ -774,7 +790,7 @@ export function MapView() {
         existingMarkers.set(element.id, marker);
       }
     });
-  }, [geoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, anonymousMode, hideMedia]);
+  }, [geoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
   const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {
