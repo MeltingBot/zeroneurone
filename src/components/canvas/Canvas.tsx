@@ -18,6 +18,7 @@ import {
   ConnectionMode,
   type NodeChange,
 } from '@xyflow/react';
+
 import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
@@ -36,6 +37,7 @@ import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } fro
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
+import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { fileService } from '../../services/fileService';
@@ -177,6 +179,7 @@ function elementToNode(
   thumbnail: string | null,
   onResize?: (width: number, height: number) => void,
   isEditing?: boolean,
+  remoteSelectors?: RemoteUserPresence[],
   onLabelChange?: (newLabel: string) => void,
   onStopEditing?: () => void,
   unresolvedCommentCount?: number,
@@ -261,6 +264,7 @@ function elementToNode(
       isEditing,
       onLabelChange,
       onStopEditing,
+      remoteSelectors,
       unresolvedCommentCount,
       isLoadingAsset,
       badgeProperty,
@@ -331,7 +335,8 @@ function linkToEdge(
   parallelCount?: number,
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
   showConfidenceIndicator?: boolean,
-  displayedPropertyValues?: { key: string; value: string }[]
+  displayedPropertyValues?: { key: string; value: string }[],
+  remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[]
 ): Edge {
   // Helper to migrate old handle format and fix type mismatches
   const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
@@ -432,6 +437,8 @@ function linkToEdge(
       confidence: link.confidence,
       // Displayed properties
       displayedPropertyValues,
+      // Remote user presence (passed from Canvas, not subscribed per-edge)
+      remoteLinkSelectors,
     },
     selected: isSelected,
   };
@@ -441,26 +448,24 @@ export function Canvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Stores
-  const {
-    currentInvestigation,
-    elements,
-    links,
-    assets,
-    comments,
-    createElement,
-    updateElement,
-    updateElementPositions,
-    createLink,
-    updateLink,
-    deleteElements,
-    deleteLinks,
-    addAsset,
-    createGroup,
-    removeFromGroup,
-    dissolveGroup,
-    pasteElements,
-  } = useInvestigationStore();
+  // Stores — individual selectors to avoid re-renders when unrelated state changes
+  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
+  const elements = useInvestigationStore((s) => s.elements);
+  const links = useInvestigationStore((s) => s.links);
+  const assets = useInvestigationStore((s) => s.assets);
+  const comments = useInvestigationStore((s) => s.comments);
+  const createElement = useInvestigationStore((s) => s.createElement);
+  const updateElement = useInvestigationStore((s) => s.updateElement);
+  const updateElementPositions = useInvestigationStore((s) => s.updateElementPositions);
+  const createLink = useInvestigationStore((s) => s.createLink);
+  const updateLink = useInvestigationStore((s) => s.updateLink);
+  const deleteElements = useInvestigationStore((s) => s.deleteElements);
+  const deleteLinks = useInvestigationStore((s) => s.deleteLinks);
+  const addAsset = useInvestigationStore((s) => s.addAsset);
+  const createGroup = useInvestigationStore((s) => s.createGroup);
+  const removeFromGroup = useInvestigationStore((s) => s.removeFromGroup);
+  const dissolveGroup = useInvestigationStore((s) => s.dissolveGroup);
+  const pasteElements = useInvestigationStore((s) => s.pasteElements);
 
   // Wrapper size for viewport culling
   const [wrapperSize, setWrapperSize] = useState({ width: 800, height: 600 });
@@ -539,9 +544,50 @@ export function Canvas() {
   } = useInsightsStore();
 
   // Sync store for collaboration presence
-  // Note: remoteUsers is not used here directly anymore - ElementNode and CustomEdge subscribe to syncStore directly
   const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
   const syncMode = useSyncStore((state) => state.mode);
+  const remoteUsers = useSyncStore((state) => state.remoteUsers);
+
+  // Pre-compute remote user presence per element/link (single subscription instead of n+m)
+  const remoteUsersByElement = useMemo(() => {
+    if (!remoteUsers || remoteUsers.length === 0) return new Map<string, RemoteUserPresence[]>();
+    const map = new Map<string, RemoteUserPresence[]>();
+    for (const user of remoteUsers) {
+      const dragging = user.dragging || [];
+      const selections = user.selection || [];
+      const allIds = new Set([...dragging, ...selections]);
+      for (const id of allIds) {
+        const list = map.get(id) || [];
+        list.push({
+          name: user.name,
+          color: user.color,
+          isDragging: dragging.includes(id),
+        });
+        map.set(id, list);
+      }
+    }
+    return map;
+  }, [remoteUsers]);
+
+  const remoteUsersByLink = useMemo(() => {
+    if (!remoteUsers || remoteUsers.length === 0) return new Map<string, { name: string; color: string; isEditing?: boolean }[]>();
+    const map = new Map<string, { name: string; color: string; isEditing?: boolean }[]>();
+    for (const user of remoteUsers) {
+      const linkSelections = user.linkSelection || [];
+      const editingLink = user.editingLink;
+      const allLinkIds = new Set([...linkSelections, ...(editingLink ? [editingLink] : [])]);
+      for (const id of allLinkIds) {
+        const list = map.get(id) || [];
+        list.push({
+          name: user.name,
+          color: user.color,
+          isEditing: editingLink === id,
+        });
+        map.set(id, list);
+      }
+    }
+    return map;
+  }, [remoteUsers]);
 
   // UI store for theme mode and canvas settings
   const pushMetadataImport = useUIStore((state) => state.pushMetadataImport);
@@ -761,6 +807,7 @@ export function Canvas() {
           thumbnail,
           callbacks.onResize,
           editingElementId === el.id,
+          remoteUsersByElement.get(el.id),
           callbacks.onLabelChange,
           stopEditing,
           unresolvedCommentCount,
@@ -778,7 +825,7 @@ export function Canvas() {
         if (a.type !== 'groupFrame' && b.type === 'groupFrame') return 1;
         return 0;
       });
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -965,11 +1012,12 @@ export function Canvas() {
         parallelCount,
         onCurveOffsetChange,
         showConfidenceIndicator,
-        linkDisplayedPropertyValues
+        linkDisplayedPropertyValues,
+        remoteUsersByLink.get(link.id)
       );
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, viewport, wrapperSize, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties]);
+  }, [links, edgeVersion, viewport, wrapperSize, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties, remoteUsersByLink]);
 
 
   // Track starting positions for undo

@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee } from 'lucide-react';
 import { Layout, IconButton, Modal, Button } from '../components/common';
@@ -79,10 +79,18 @@ export function InvestigationPage() {
     };
   }, [id, loadInvestigation, unloadInvestigation, resetUIState, resetViewState, loadViewportForInvestigation, saveViewportForInvestigation]);
 
-  // Load search index when elements/links change
+  // Load search index: full rebuild on investigation load, incremental updates after
+  const searchInitializedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (currentInvestigation && elements.length >= 0) {
+    if (!currentInvestigation) return;
+
+    if (searchInitializedRef.current !== currentInvestigation.id) {
+      // First load or investigation changed: full rebuild
       searchService.loadInvestigation(currentInvestigation.id, elements, links);
+      searchInitializedRef.current = currentInvestigation.id;
+    } else {
+      // Subsequent changes: incremental sync (only diffs)
+      searchService.syncIncremental(elements, links);
     }
   }, [currentInvestigation, elements, links]);
 

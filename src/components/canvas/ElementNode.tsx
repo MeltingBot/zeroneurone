@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
-import { useShallow } from 'zustand/react/shallow';
 import { Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
-import { useUIStore, useSyncStore, useTagSetStore } from '../../stores';
+import { useUIStore, useTagSetStore } from '../../stores';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -78,33 +77,7 @@ function isLikelyCountryCode(value: string): boolean {
 
 function ElementNodeComponent({ data }: NodeProps) {
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
-
-  // Get sync state for this element
-  const { remoteUsers, mode: syncMode } = useSyncStore(
-    useShallow((state) => ({
-      remoteUsers: state.remoteUsers,
-      mode: state.mode,
-    }))
-  );
-
-  // Compute remote selectors for this element
-  const remoteSelectors: RemoteUserPresence[] = [];
-  for (const user of remoteUsers) {
-    const dragging = user.dragging || [];
-    const selections = user.selection || [];
-
-    const isDraggingThis = dragging.includes(element.id);
-    const isSelectingThis = selections.includes(element.id);
-
-    if (isDraggingThis || isSelectingThis) {
-      remoteSelectors.push({
-        name: user.name,
-        color: user.color,
-        isDragging: isDraggingThis,
-      });
-    }
-  }
+  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -691,6 +664,16 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isLoadingAsset !== nextData.isLoadingAsset) return false;
   if (prevData.badgeProperty?.value !== nextData.badgeProperty?.value) return false;
   if (prevData.badgeProperty?.type !== nextData.badgeProperty?.type) return false;
+
+  // Compare remote selectors
+  const prevRemote = prevData.remoteSelectors ?? [];
+  const nextRemote = nextData.remoteSelectors ?? [];
+  if (prevRemote.length !== nextRemote.length) return false;
+  for (let i = 0; i < prevRemote.length; i++) {
+    if (prevRemote[i].name !== nextRemote[i].name) return false;
+    if (prevRemote[i].color !== nextRemote[i].color) return false;
+    if (prevRemote[i].isDragging !== nextRemote[i].isDragging) return false;
+  }
 
   // Compare display settings that affect rendering
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;

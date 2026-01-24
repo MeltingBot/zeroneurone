@@ -1634,16 +1634,73 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
     });
 
-    const elements = Array.from(elementsById.values());
-    const links = Array.from(linksById.values());
-    const comments = Array.from(commentsById.values());
+    const newElements = Array.from(elementsById.values());
+    const newLinks = Array.from(linksById.values());
+    const newComments = Array.from(commentsById.values());
 
     // DEFENSIVE: Don't wipe state if Y.Doc appears empty due to sync issues
     // But DO allow sync if elementsMap is genuinely empty (user deleted all elements)
     const stateElements = get().elements;
-    if (elements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
+    if (newElements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
       // elementsMap has entries but we couldn't parse them - likely a sync issue
       console.warn('[_syncFromYDoc] Y.Doc parsing failed. elementsMap.size:', elementsMap.size, 'but parsed 0 elements. Skipping sync.');
+      return;
+    }
+
+    // Differential sync: only update state if content actually changed
+    const stateLinks = get().links;
+    const stateComments = get().comments;
+
+    // Check if elements changed (by count, then ID set, then content)
+    const elementsChanged = (() => {
+      if (newElements.length !== stateElements.length) return true;
+      for (let i = 0; i < newElements.length; i++) {
+        const newEl = newElements[i];
+        const stateEl = stateElements.find(e => e.id === newEl.id);
+        if (!stateEl) return true;
+        // Compare key fields that can change via collaboration
+        if (stateEl.label !== newEl.label) return true;
+        if (stateEl.notes !== newEl.notes) return true;
+        if (stateEl.position.x !== newEl.position.x || stateEl.position.y !== newEl.position.y) return true;
+        if (stateEl.visual.color !== newEl.visual.color) return true;
+        if (stateEl.visual.shape !== newEl.visual.shape) return true;
+        if (stateEl.visual.size !== newEl.visual.size) return true;
+        if (stateEl.confidence !== newEl.confidence) return true;
+        if (stateEl.tags?.length !== newEl.tags?.length) return true;
+        if (stateEl.properties?.length !== newEl.properties?.length) return true;
+        if (stateEl.parentGroupId !== newEl.parentGroupId) return true;
+        if (stateEl.assetIds?.length !== newEl.assetIds?.length) return true;
+      }
+      return false;
+    })();
+
+    const linksChanged = (() => {
+      if (newLinks.length !== stateLinks.length) return true;
+      for (let i = 0; i < newLinks.length; i++) {
+        const newLk = newLinks[i];
+        const stateLk = stateLinks.find(l => l.id === newLk.id);
+        if (!stateLk) return true;
+        if (stateLk.label !== newLk.label) return true;
+        if (stateLk.fromId !== newLk.fromId || stateLk.toId !== newLk.toId) return true;
+        if (stateLk.visual?.color !== newLk.visual?.color) return true;
+        if (stateLk.confidence !== newLk.confidence) return true;
+      }
+      return false;
+    })();
+
+    const commentsChanged = newComments.length !== stateComments.length ||
+      newComments.some((c) => {
+        const sc = stateComments.find(sc => sc.id === c.id);
+        return !sc || sc.content !== c.content || sc.resolved !== c.resolved;
+      });
+
+    // Use structural sharing: keep old reference if unchanged
+    const elements = elementsChanged ? newElements : stateElements;
+    const links = linksChanged ? newLinks : stateLinks;
+    const comments = commentsChanged ? newComments : stateComments;
+
+    // Skip state update entirely if nothing changed
+    if (!elementsChanged && !linksChanged && !commentsChanged && updatedInvestigation === currentInvestigation) {
       return;
     }
 

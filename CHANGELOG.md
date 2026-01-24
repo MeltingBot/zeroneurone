@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.5
+
+### Performance
+- Web Worker for graph computations (insights, layout) — UI stays responsive during heavy analysis
+- Tarjan O(V+E) bridge detection replacing brute-force O(n²*(n+m))
+- Sorted + sliding window for similar labels replacing O(n²) pairwise comparison
+- Incremental Y.js sync with structural sharing (only changed elements trigger re-render)
+- Incremental search index (MiniSearch syncs diffs instead of full rebuild)
+- Optimized Zustand store subscriptions (individual selectors, no bulk destructuring)
+- Remote user presence lifted to Canvas level (1 subscription instead of n+m)
+
 ## 0.9.1
 
 ### Features

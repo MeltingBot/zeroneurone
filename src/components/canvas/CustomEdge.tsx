@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
-import { useShallow } from 'zustand/react/shallow';
-import { useUIStore, useSyncStore } from '../../stores';
+import { useUIStore } from '../../stores';
 
 // Remote user presence info for a link
 interface RemoteLinkPresence {
@@ -35,6 +34,8 @@ interface CustomEdgeData {
   confidence?: number | null;
   // Displayed properties
   displayedPropertyValues?: { key: string; value: string }[];
+  // Remote user presence (passed from Canvas level)
+  remoteLinkSelectors?: RemoteLinkPresence[];
 }
 
 // Helper to get handle direction vector from handle ID
@@ -76,28 +77,8 @@ function CustomEdgeComponent(props: EdgeProps) {
   const { screenToFlowPosition } = useReactFlow();
   const edgeData = data as CustomEdgeData | undefined;
 
-  // Get remote users directly from sync store for real-time updates
-  const remoteUsers = useSyncStore(
-    useShallow((state) => state.remoteUsers)
-  );
-
-  // Build remote selectors for this link from remote users
-  const remoteLinkSelectors: RemoteLinkPresence[] = [];
-  for (const user of remoteUsers) {
-    const linkSelections = user.linkSelection || [];
-    const editingLink = user.editingLink;
-
-    const isEditingThis = editingLink === id;
-    const isSelectingThis = linkSelections.includes(id);
-
-    if (isEditingThis || isSelectingThis) {
-      remoteLinkSelectors.push({
-        name: user.name,
-        color: user.color,
-        isEditing: isEditingThis,
-      });
-    }
-  }
+  // Remote link selectors passed from Canvas (single subscription instead of per-edge)
+  const remoteLinkSelectors = edgeData?.remoteLinkSelectors ?? [];
 
   const color = edgeData?.color ?? '#9a948d';
   const thickness = edgeData?.thickness ?? 2;
@@ -808,6 +789,16 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevDisplayedProps.length !== nextDisplayedProps.length) return false;
   for (let i = 0; i < prevDisplayedProps.length; i++) {
     if (prevDisplayedProps[i].key !== nextDisplayedProps[i].key || prevDisplayedProps[i].value !== nextDisplayedProps[i].value) return false;
+  }
+
+  // Compare remote link selectors
+  const prevRemote = prevData.remoteLinkSelectors ?? [];
+  const nextRemote = nextData.remoteLinkSelectors ?? [];
+  if (prevRemote.length !== nextRemote.length) return false;
+  for (let i = 0; i < prevRemote.length; i++) {
+    if (prevRemote[i].name !== nextRemote[i].name) return false;
+    if (prevRemote[i].color !== nextRemote[i].color) return false;
+    if (prevRemote[i].isEditing !== nextRemote[i].isEditing) return false;
   }
 
   return true;

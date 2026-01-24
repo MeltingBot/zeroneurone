@@ -22,8 +22,12 @@ class SearchService {
     });
   }
 
+  // Track indexed document IDs for incremental updates
+  private indexedIds = new Set<string>();
+
   /**
-   * Load and index all elements and links for an investigation
+   * Load and index all elements and links for an investigation (full rebuild).
+   * Use syncIncremental() for subsequent updates.
    */
   loadInvestigation(
     investigationId: string,
@@ -33,18 +37,51 @@ class SearchService {
     // Reset if different investigation
     if (this.currentInvestigationId !== investigationId) {
       this.index = this.createIndex();
+      this.indexedIds.clear();
       this.currentInvestigationId = investigationId;
     }
 
     // Index elements
     for (const element of elements) {
       this.indexElement(element);
+      this.indexedIds.add(element.id);
     }
 
     // Index links
     for (const link of links) {
       this.indexLink(link);
+      this.indexedIds.add(link.id);
     }
+  }
+
+  /**
+   * Incrementally sync the search index with the current elements/links.
+   * Detects adds, removes, and updates.
+   */
+  syncIncremental(elements: Element[], links: Link[]): void {
+    const currentIds = new Set<string>();
+
+    // Process elements: add/update
+    for (const element of elements) {
+      currentIds.add(element.id);
+      // Always re-index (MiniSearch handles discard internally)
+      this.indexElement(element);
+    }
+
+    // Process links: add/update
+    for (const link of links) {
+      currentIds.add(link.id);
+      this.indexLink(link);
+    }
+
+    // Remove documents no longer present
+    for (const id of this.indexedIds) {
+      if (!currentIds.has(id)) {
+        try { this.index.discard(id); } catch { /* already gone */ }
+      }
+    }
+
+    this.indexedIds = currentIds;
   }
 
   /**

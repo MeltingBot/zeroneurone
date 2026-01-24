@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
 import { layoutService, type LayoutType } from '../../services/layoutService';
+import { graphWorkerService } from '../../services/graphWorkerService';
 import { useInvestigationStore, useHistoryStore } from '../../stores';
 import type { Position } from '../../types';
 
@@ -35,9 +36,6 @@ export function LayoutDropdown() {
     setIsApplying(true);
     setIsOpen(false);
 
-    // Small delay to show loading state
-    await new Promise(resolve => setTimeout(resolve, 50));
-
     try {
       // Save old positions for undo
       const oldPositions: { id: string; position: Position }[] = elements.map(el => ({
@@ -45,13 +43,21 @@ export function LayoutDropdown() {
         position: { ...el.position },
       }));
 
-      // Apply layout
-      const result = layoutService.applyLayout(layoutType, elements, links);
+      // Calculate center from current positions
+      const centerX = elements.reduce((sum, el) => sum + el.position.x, 0) / elements.length;
+      const centerY = elements.reduce((sum, el) => sum + el.position.y, 0) / elements.length;
+
+      // Apply layout in Web Worker (non-blocking)
+      const positions = await graphWorkerService.computeLayout(
+        elements,
+        links,
+        { layoutType, center: { x: centerX, y: centerY } }
+      );
 
       // Build new positions array
       const newPositions: { id: string; position: Position }[] = [];
-      for (const [id, position] of result.positions) {
-        newPositions.push({ id, position });
+      for (const [id, pos] of Object.entries(positions)) {
+        newPositions.push({ id, position: pos });
       }
 
       if (newPositions.length > 0) {
@@ -63,6 +69,17 @@ export function LayoutDropdown() {
         });
 
         // Apply new positions
+        await updateElementPositions(newPositions);
+      }
+    } catch (error) {
+      console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
+      // Fallback to main-thread computation
+      const result = layoutService.applyLayout(layoutType, elements, links);
+      const newPositions: { id: string; position: Position }[] = [];
+      for (const [id, position] of result.positions) {
+        newPositions.push({ id, position });
+      }
+      if (newPositions.length > 0) {
         await updateElementPositions(newPositions);
       }
     } finally {

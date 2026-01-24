@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
 import { insightsService, type PathResult } from '../services/insightsService';
+import { graphWorkerService } from '../services/graphWorkerService';
 
 interface InsightsState {
   // Results
@@ -13,6 +14,8 @@ interface InsightsState {
 
   // UI state
   isComputing: boolean;
+  computeProgress: number;
+  computePhase: string;
   highlightedElementIds: Set<ElementId>;
   highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | null;
   selectedClusterId: number | null;
@@ -46,6 +49,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   computedAt: null,
 
   isComputing: false,
+  computeProgress: 0,
+  computePhase: '',
   highlightedElementIds: new Set(),
   highlightType: null,
   selectedClusterId: null,
@@ -56,12 +61,18 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 
   // Actions
   computeInsights: (elements, links) => {
-    set({ isComputing: true });
+    set({ isComputing: true, computeProgress: 0, computePhase: 'starting' });
 
-    // Use setTimeout to allow UI to update
-    setTimeout(() => {
+    // Use Web Worker for off-main-thread computation
+    graphWorkerService.computeInsights(
+      elements,
+      links,
+      (percent, phase) => {
+        set({ computeProgress: percent, computePhase: phase });
+      }
+    ).then((results) => {
+      // Also update the insightsService graph for path finding (fast, stays on main thread)
       insightsService.buildGraph(elements, links);
-      const results = insightsService.computeInsights();
 
       set({
         clusters: results.clusters,
@@ -69,10 +80,28 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         bridges: results.bridges,
         isolated: results.isolated,
         similarLabels: results.similarLabels,
-        computedAt: results.computedAt,
+        computedAt: new Date(),
         isComputing: false,
+        computeProgress: 100,
+        computePhase: 'done',
       });
-    }, 10);
+    }).catch((error) => {
+      console.error('[InsightsStore] Worker computation failed, falling back to main thread:', error);
+      // Fallback to main-thread computation
+      setTimeout(() => {
+        insightsService.buildGraph(elements, links);
+        const results = insightsService.computeInsights();
+        set({
+          clusters: results.clusters,
+          centrality: results.centrality,
+          bridges: results.bridges,
+          isolated: results.isolated,
+          similarLabels: results.similarLabels,
+          computedAt: results.computedAt,
+          isComputing: false,
+        });
+      }, 10);
+    });
   },
 
   highlightCluster: (clusterId) => {
@@ -177,6 +206,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       similarLabels: [],
       computedAt: null,
       isComputing: false,
+      computeProgress: 0,
+      computePhase: '',
       highlightedElementIds: new Set(),
       highlightType: null,
       selectedClusterId: null,
