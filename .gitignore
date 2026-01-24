@@ -30,6 +30,9 @@ dist-ssr
 docs/
 claudedocs/
 
+# Personal project docs (not versioned)
+doc_perso/
+
 # Claude AI files
 CLAUDE.md
 .CLAUDE.md

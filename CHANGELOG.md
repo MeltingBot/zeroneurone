@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.1
+
+### Features
+- Toggle actions for clusters in Insights panel (select/deselect, hide/show, group/dissolve)
+
+### Performance
+- Batch paste/duplicate operations in single Y.js transaction (instant paste of 300+ elements)
+- Freeze edge computation during drag for smooth node movement
+- Instant group/dissolve with batched Y.js transactions
+
+### Fixes
+- Remove insights overlay popups from canvas (cleaner UI)
+- Stabilize cluster detection (consistent results between runs)
+- Paste now centers elements at viewport/cursor position instead of original location
+
 ## 0.9.0
 
 ### Features
