@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
+import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence } from '../../types';
 
 // Quick filter definitions
@@ -396,8 +397,12 @@ export function FiltersPanel() {
             Tags ({tagsWithCounts.length})
           </label>
           {tagsWithCounts.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-              {tagsWithCounts.map(({ tag, count }) => {
+            <ProgressiveList
+              items={tagsWithCounts}
+              initialCount={30}
+              increment={30}
+              className="flex flex-wrap gap-1.5"
+              renderItem={({ tag, count }) => {
                 const isSelected = filters.includeTags.includes(tag);
                 return (
                   <button
@@ -419,8 +424,8 @@ export function FiltersPanel() {
                     </span>
                   </button>
                 );
-              })}
-            </div>
+              }}
+            />
           ) : (
             <p className="text-xs text-text-tertiary">Aucun tag disponible</p>
           )}
@@ -546,8 +551,12 @@ export function FiltersPanel() {
               Tout afficher
             </button>
           </div>
-          <div className="space-y-1">
-            {Array.from(hiddenElementIds).slice(0, 10).map((id) => {
+          <ProgressiveList
+            items={Array.from(hiddenElementIds)}
+            initialCount={20}
+            increment={20}
+            className="space-y-1"
+            renderItem={(id) => {
               const element = elements.find((el) => el.id === id);
               if (!element) return null;
               return (
@@ -567,13 +576,8 @@ export function FiltersPanel() {
                   </button>
                 </div>
               );
-            })}
-            {hiddenElementIds.size > 10 && (
-              <p className="text-[10px] text-text-tertiary text-center pt-1">
-                +{hiddenElementIds.size - 10} autres
-              </p>
-            )}
-          </div>
+            }}
+          />
         </div>
       )}
     </div>

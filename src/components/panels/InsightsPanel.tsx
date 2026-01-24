@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
+import { ProgressiveList } from '../common/ProgressiveList';
 import type { Element } from '../../types';
 
 export function InsightsPanel() {
@@ -466,8 +467,12 @@ export function InsightsPanel() {
                 isExpanded={expandedSections.has('clusters')}
                 onToggle={() => toggleSection('clusters')}
               >
-                <div className="space-y-1">
-                  {clusters.map((cluster) => (
+                <ProgressiveList
+                  items={clusters}
+                  initialCount={10}
+                  increment={10}
+                  className="space-y-1"
+                  renderItem={(cluster) => (
                     <div
                       key={cluster.id}
                       className={`p-2 rounded border transition-colors ${
@@ -531,8 +536,8 @@ export function InsightsPanel() {
                         })()}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                />
               </InsightSection>
             )}
 
@@ -607,8 +612,12 @@ export function InsightsPanel() {
                   </div>
 
                   {/* List bridge elements */}
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {bridges.map((bridgeId) => (
+                  <ProgressiveList
+                    items={bridges}
+                    initialCount={20}
+                    increment={20}
+                    className="space-y-1"
+                    renderItem={(bridgeId) => (
                       <div
                         key={bridgeId}
                         className="px-2 py-1 text-xs text-text-secondary hover:bg-bg-secondary rounded cursor-pointer"
@@ -619,8 +628,8 @@ export function InsightsPanel() {
                       >
                         {getElementLabel(bridgeId)}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  />
                 </div>
               </InsightSection>
             )}
@@ -662,8 +671,12 @@ export function InsightsPanel() {
                   </div>
 
                   {/* List isolated elements */}
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {isolated.map((isolatedId) => (
+                  <ProgressiveList
+                    items={isolated}
+                    initialCount={20}
+                    increment={20}
+                    className="space-y-1"
+                    renderItem={(isolatedId) => (
                       <div
                         key={isolatedId}
                         className="px-2 py-1 text-xs text-text-secondary hover:bg-bg-secondary rounded cursor-pointer"
@@ -671,8 +684,8 @@ export function InsightsPanel() {
                       >
                         {getElementLabel(isolatedId)}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  />
                 </div>
               </InsightSection>
             )}
@@ -688,8 +701,12 @@ export function InsightsPanel() {
                 onToggle={() => toggleSection('similar')}
                 description="Éléments avec des noms similaires"
               >
-                <div className="space-y-1">
-                  {similarLabels.slice(0, 10).map((pair, index) => (
+                <ProgressiveList
+                  items={similarLabels}
+                  initialCount={10}
+                  increment={10}
+                  className="space-y-1"
+                  renderItem={(pair, index) => (
                     <div
                       key={index}
                       className="p-2 rounded hover:bg-bg-secondary transition-colors"
@@ -719,15 +736,14 @@ export function InsightsPanel() {
                           icon={<Merge size={10} />}
                           label="Fusionner"
                           onClick={() => {
-                            // TODO: Implement merge functionality
                             selectElements([pair.elementId1, pair.elementId2]);
                           }}
                           disabled
                         />
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                />
               </InsightSection>
             )}
           </div>

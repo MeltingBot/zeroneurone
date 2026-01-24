@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.7
+
+### Performance
+- Progressive list rendering in panels (ProgressiveList component) — clusters, bridges, isolated, tags, hidden elements load incrementally instead of all-at-once DOM rendering
+
+### Fixes
+- Clear selection and insights when switching between investigations
+- Show loading phases ("Ouverture...", "Synchronisation...", "Fichiers...", "Elements...") instead of static "Chargement..." text
+- Scrollable properties/events lists with add button at top (avoids losing access to other accordion sections)
+- Timeline vertical virtualization for 10,000+ items
+- Undo/redo support for map marker drag (geo position changes)
+
 ## 0.9.5
 
 ### Performance
