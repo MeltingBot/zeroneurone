@@ -28,6 +28,7 @@ export function InvestigationPage() {
     elements,
     links,
     isLoading,
+    loadingPhase,
     error,
     loadInvestigation,
     unloadInvestigation,
@@ -154,8 +155,9 @@ export function InvestigationPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="h-full flex items-center justify-center">
-          <span className="text-sm text-text-secondary">Chargement...</span>
+        <div className="h-full flex flex-col items-center justify-center gap-2">
+          <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-text-secondary">{loadingPhase || 'Chargement...'}</span>
         </div>
       </Layout>
     );

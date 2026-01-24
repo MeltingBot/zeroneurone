@@ -52,6 +52,7 @@ interface InvestigationState {
 
   // Loading states
   isLoading: boolean;
+  loadingPhase: string;
   error: string | null;
 
   // Actions - Investigations
@@ -212,6 +213,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   assets: [],
   investigations: [],
   isLoading: false,
+  loadingPhase: '',
   error: null,
 
   // ============================================================================
@@ -229,7 +231,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   loadInvestigation: async (id: InvestigationId) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, loadingPhase: 'Ouverture...', error: null });
     try {
       // Load investigation metadata from Dexie
       let [investigation, assets] = await Promise.all([
@@ -240,6 +242,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       if (!investigation) {
         throw new Error('Investigation not found');
       }
+
+      set({ loadingPhase: 'Synchronisation...' });
 
       // Check if Y.Doc is already open for this investigation (e.g., from JoinPage)
       let ydoc = syncService.getYDoc();
@@ -291,6 +295,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           });
         });
       }
+
+      set({ loadingPhase: `Fichiers (${assets.length})...` });
 
       // Always update meta map with investigation metadata (so peers can see it)
       // Only update if we're the source of truth (not a joiner with default values)
@@ -381,6 +387,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
       ydocObserverCleanup = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
 
+      set({ loadingPhase: `Elements (${elementsMap.size + linksMap.size})...` });
+
       // Initial sync from Y.Doc to Zustand (with deduplication)
       const elementsById = new Map<string, Element>();
       elementsMap.forEach((ymap) => {
@@ -412,6 +420,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         links: Array.from(linksById.values()),
         assets,
         isLoading: false,
+        loadingPhase: '',
       });
 
       // If in shared mode, schedule additional syncs to catch late-arriving data
@@ -426,7 +435,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         setTimeout(() => get()._syncFromYDoc(), 3000);
       }
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      set({ error: (error as Error).message, isLoading: false, loadingPhase: '' });
     }
   },
 
