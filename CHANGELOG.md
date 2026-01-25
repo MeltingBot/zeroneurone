@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.8
+
+### Features
+- Storage management modal with detailed breakdown (IndexedDB, OPFS, Y.js history)
+- Persistent storage protection (`navigator.storage.persist()`) to prevent browser eviction
+- Full backup export/import (all investigations, elements, links, files, tags in one ZIP)
+- Y.js history purge option to free up storage space
+
+### Fixes
+- Version display in About modal now reads from package.json (was stuck at 0.5.0)
+
 ## 0.9.7
 
 ### Performance

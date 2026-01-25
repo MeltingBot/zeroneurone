@@ -10,5 +10,6 @@ export { ShortcutsModal } from './ShortcutsModal';
 export { TagSetManagerModal } from './TagSetManagerModal';
 export { TagSetEditorModal } from './TagSetEditorModal';
 export { AboutModal } from './AboutModal';
+export { StorageModal } from './StorageModal';
 export { LocalStorageDisclaimerModal, hasAcknowledgedLocalStorage } from './LocalStorageDisclaimerModal';
 export { MetadataImportModal } from './MetadataImportModal';

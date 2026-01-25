@@ -18,9 +18,9 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
     { name: 'Graphology', url: 'https://graphology.github.io', description: 'Analyse de graphe' },
   ];
 
-  // Get version from global (injected at build time)
-  const version = (window as unknown as { __APP_VERSION__?: string }).__APP_VERSION__ || '0.5.0';
-  const commitHash = (window as unknown as { __GIT_COMMIT__?: string }).__GIT_COMMIT__;
+  // Get version from build-time constants (injected by Vite)
+  const version = __APP_VERSION__;
+  const buildTime = __BUILD_TIME__;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="À propos" width="md">
@@ -32,8 +32,10 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
               <h3 className="text-lg font-semibold text-text-primary">ZeroNeurone</h3>
               <p className="text-xs text-text-tertiary">
                 Version {version}
-                {commitHash && (
-                  <span className="ml-1 font-mono">({commitHash.slice(0, 7)})</span>
+                {buildTime && (
+                  <span className="ml-1 text-text-tertiary/60">
+                    ({new Date(buildTime).toLocaleDateString('fr-FR')})
+                  </span>
                 )}
               </p>
               <div className="flex items-center gap-3 mt-1.5">

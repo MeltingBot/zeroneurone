@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState } from '../components/common';
 import { InvestigationCard, LandingSection } from '../components/home';
@@ -10,6 +10,7 @@ import {
   ImportModal,
   TagSetManagerModal,
   AboutModal,
+  StorageModal,
   LocalStorageDisclaimerModal,
   hasAcknowledgedLocalStorage,
 } from '../components/modals';
@@ -35,6 +36,7 @@ export function HomePage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isTagSetModalOpen, setIsTagSetModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [isDisclaimerModalOpen, setIsDisclaimerModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<string | null>(null);
@@ -114,8 +116,17 @@ export function HomePage() {
               variant="ghost"
               size="sm"
               onClick={() => setIsAboutModalOpen(true)}
+              title="À propos"
             >
               <Info size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsStorageModalOpen(true)}
+              title="Stockage"
+            >
+              <HardDrive size={16} />
             </Button>
             <Button
               variant="secondary"
@@ -230,6 +241,11 @@ export function HomePage() {
       <AboutModal
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
+      />
+
+      <StorageModal
+        isOpen={isStorageModalOpen}
+        onClose={() => setIsStorageModalOpen(false)}
       />
 
       <LocalStorageDisclaimerModal
