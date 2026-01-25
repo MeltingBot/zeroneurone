@@ -1459,12 +1459,13 @@ export function Canvas() {
     // Single Y.js transaction
     pasteElements(newElements, newLinks);
 
-    // Save for undo
+    // Save for undo (include both element and link IDs)
     const newElementIds = newElements.map(el => el.id);
+    const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
       undo: {},
-      redo: { elements: newElements, elementIds: newElementIds },
+      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
 
     // Select all pasted elements
@@ -1618,12 +1619,13 @@ export function Canvas() {
     // Single Y.js transaction for all elements + links
     pasteElements(newElements, newLinks);
 
-    // Save for undo
+    // Save for undo (include both element and link IDs)
     const newElementIds = newElements.map(el => el.id);
+    const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
       undo: {},
-      redo: { elements: newElements, elementIds: newElementIds },
+      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
 
     // Select all pasted elements
@@ -1678,11 +1680,13 @@ export function Canvas() {
     // Single Y.js transaction
     pasteElements(newElements, newLinks);
 
+    // Save for undo (include both element and link IDs)
     const newElementIds = newElements.map(el => el.id);
+    const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
       undo: {},
-      redo: { elements: newElements, elementIds: newElementIds },
+      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
   }, [contextMenu, elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction]);
@@ -2183,11 +2187,13 @@ export function Canvas() {
           // Single Y.js transaction
           pasteElements(newElements, newLinks);
 
+          // Save for undo (include both element and link IDs)
           const newElementIds = newElements.map(el => el.id);
+          const newLinkIds = newLinks.map(l => l.id);
           pushAction({
             type: 'create-elements',
             undo: {},
-            redo: { elements: newElements, elementIds: newElementIds },
+            redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
           });
           selectElements(newElementIds);
         }
@@ -2389,12 +2395,13 @@ export function Canvas() {
         // Single Y.js transaction for all elements + links
         pasteElements(newElements, newLinks);
 
-        // Save for undo
+        // Save for undo (include both element and link IDs)
         const newElementIds = newElements.map(el => el.id);
+        const newLinkIds = newLinks.map(l => l.id);
         pushAction({
           type: 'create-elements',
           undo: {},
-          redo: { elements: newElements, elementIds: newElementIds },
+          redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
         });
 
         // Select all pasted elements

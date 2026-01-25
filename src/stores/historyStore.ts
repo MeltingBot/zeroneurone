@@ -125,6 +125,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         if (action.redo.elementIds) {
           await store.deleteElements(action.redo.elementIds);
         }
+        // Also delete created links (for paste/duplicate operations)
+        if (action.redo.linkIds) {
+          await store.deleteLinks(action.redo.linkIds);
+        }
         break;
 
       case 'update-element':
