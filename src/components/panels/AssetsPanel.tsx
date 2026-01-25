@@ -506,8 +506,8 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
       onClick={onClose}
     >
       <div
-        className={`bg-bg-primary rounded shadow-lg flex flex-col ${
-          isPdf ? 'w-[90vw] h-[90vh]' : 'max-w-[90vw] h-[90vh]'
+        className={`bg-bg-primary rounded shadow-lg ${
+          isPdf ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -526,9 +526,9 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         </div>
 
         {/* Content */}
-        <div className={`flex-1 min-h-0 ${isPdf ? 'overflow-hidden' : 'overflow-auto'}`}>
+        <div className={isPdf ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center p-8">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                 <span className="text-xs text-text-secondary">{tCommon('status.loading')}</span>
@@ -558,7 +558,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
               />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-4 py-8 text-text-tertiary">
+            <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
               <FileText size={48} />
               <p className="text-sm">Aperçu non disponible</p>
             </div>
