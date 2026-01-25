@@ -80,6 +80,26 @@ export function MarkdownEditor({
   );
 }
 
+// Generate slug from heading text for anchor links
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+// Extract text content from React children
+function getTextContent(children: React.ReactNode): string {
+  if (typeof children === 'string') return children;
+  if (Array.isArray(children)) return children.map(getTextContent).join('');
+  if (children && typeof children === 'object' && 'props' in children) {
+    return getTextContent((children as React.ReactElement).props.children);
+  }
+  return '';
+}
+
 /** Read-only markdown preview component */
 export function MarkdownPreview({ content, className = '' }: { content: string; className?: string }) {
   return (
@@ -89,23 +109,53 @@ export function MarkdownPreview({ content, className = '' }: { content: string; 
           p: ({ children }) => <p className="mb-2 last:mb-0 text-text-primary">{children}</p>,
           strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
           em: ({ children }) => <em className="italic">{children}</em>,
-          h1: ({ children }) => <h1 className="text-base font-semibold mb-2">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-sm font-semibold mb-2">{children}</h2>,
-          h3: ({ children }) => <h3 className="text-sm font-medium mb-1">{children}</h3>,
+          h1: ({ children }) => {
+            const id = slugify(getTextContent(children));
+            return <h1 id={id} className="text-base font-semibold mb-2">{children}</h1>;
+          },
+          h2: ({ children }) => {
+            const id = slugify(getTextContent(children));
+            return <h2 id={id} className="text-sm font-semibold mb-2">{children}</h2>;
+          },
+          h3: ({ children }) => {
+            const id = slugify(getTextContent(children));
+            return <h3 id={id} className="text-sm font-medium mb-1">{children}</h3>;
+          },
           ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-0.5">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-0.5">{children}</ol>,
           li: ({ children }) => <li>{children}</li>,
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            // Anchor links (starting with #) - scroll within document
+            if (href?.startsWith('#')) {
+              return (
+                <a
+                  href={href}
+                  className="text-accent hover:underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const targetId = href.slice(1);
+                    const target = document.getElementById(targetId);
+                    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  {children}
+                </a>
+              );
+            }
+            // External links - open in new tab
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {children}
+              </a>
+            );
+          },
           code: ({ children }) => (
             <code className="px-1 py-0.5 bg-bg-tertiary rounded text-xs font-mono">
               {children}
