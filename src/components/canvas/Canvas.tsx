@@ -1359,6 +1359,106 @@ export function Canvas() {
     selectElement(annotation.id);
   }, [canvasContextMenu, createElement, selectElement]);
 
+  // Selection handlers for canvas context menu (work without contextMenu state)
+  const handleSelectionCopy = useCallback(() => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length === 0) return;
+    const elsToCopy = elements.filter(el => selectedEls.includes(el.id));
+    if (elsToCopy.length > 0) {
+      copiedElementsRef.current = elsToCopy;
+      setHasCopiedElements(true);
+      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+    }
+  }, [elements, getSelectedElementIds, CLIPBOARD_MARKER]);
+
+  const handleSelectionCut = useCallback(async () => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length === 0) return;
+    const elsToCut = elements.filter(el => selectedEls.includes(el.id));
+    if (elsToCut.length > 0) {
+      copiedElementsRef.current = elsToCut;
+      setHasCopiedElements(true);
+      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+      // Save for undo
+      const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
+      pushAction({
+        type: 'delete-elements',
+        undo: { elements: elsToCut, links: relevantLinks },
+        redo: { elementIds: selectedEls, linkIds: relevantLinks.map(l => l.id) },
+      });
+      await deleteElements(selectedEls);
+      clearSelection();
+    }
+  }, [elements, links, getSelectedElementIds, deleteElements, clearSelection, pushAction, CLIPBOARD_MARKER]);
+
+  const handleSelectionDuplicate = useCallback(async () => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length === 0 || !currentInvestigation) return;
+    const elsToDuplicate = elements.filter(el => selectedEls.includes(el.id));
+    if (elsToDuplicate.length === 0) return;
+
+    const now = new Date();
+    const offset = 40;
+    const oldToNewIdMap = new Map<string, string>();
+
+    const newElements: Element[] = elsToDuplicate.map(el => {
+      const newId = generateUUID();
+      oldToNewIdMap.set(el.id, newId);
+      return {
+        ...el,
+        id: newId,
+        investigationId: currentInvestigation.id,
+        position: { x: el.position.x + offset, y: el.position.y + offset },
+        parentGroupId: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
+
+    const elIdSet = new Set(selectedEls);
+    const relevantLinks = links.filter(l => elIdSet.has(l.fromId) && elIdSet.has(l.toId));
+    const newLinks: Link[] = relevantLinks.map(link => ({
+      ...link,
+      id: generateUUID(),
+      investigationId: currentInvestigation.id,
+      fromId: oldToNewIdMap.get(link.fromId)!,
+      toId: oldToNewIdMap.get(link.toId)!,
+      createdAt: now,
+      updatedAt: now,
+    })).filter(l => l.fromId && l.toId);
+
+    pasteElements(newElements, newLinks);
+    const newElementIds = newElements.map(el => el.id);
+    const newLinkIds = newLinks.map(l => l.id);
+    pushAction({
+      type: 'create-elements',
+      undo: {},
+      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
+    });
+    selectElements(newElementIds);
+  }, [elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction]);
+
+  const handleSelectionDelete = useCallback(async () => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length === 0) return;
+    const elsToDelete = elements.filter(el => selectedEls.includes(el.id));
+    const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
+    pushAction({
+      type: 'delete-elements',
+      undo: { elements: elsToDelete, links: relevantLinks },
+      redo: { elementIds: selectedEls, linkIds: relevantLinks.map(l => l.id) },
+    });
+    await deleteElements(selectedEls);
+    clearSelection();
+  }, [elements, links, getSelectedElementIds, deleteElements, clearSelection, pushAction]);
+
+  const handleSelectionHide = useCallback(() => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length === 0) return;
+    hideElements(selectedEls);
+    clearSelection();
+  }, [getSelectedElementIds, hideElements, clearSelection]);
+
   // Paste from canvas context menu (at cursor position)
   const handleCanvasContextMenuPaste = useCallback(async () => {
     if (!canvasContextMenu) return;
@@ -2690,6 +2790,13 @@ export function Canvas() {
               onCreateGroup={handleCanvasContextMenuCreateGroup}
               onCreateAnnotation={handleCanvasContextMenuCreateAnnotation}
               onPaste={handleCanvasContextMenuPaste}
+              selectedCount={selectedElementIds.size}
+              onCopySelection={handleSelectionCopy}
+              onCutSelection={handleSelectionCut}
+              onDuplicateSelection={handleSelectionDuplicate}
+              onDeleteSelection={handleSelectionDelete}
+              onHideSelection={handleSelectionHide}
+              onGroupSelection={handleGroupSelection}
               onClose={closeCanvasContextMenu}
             />
           )}

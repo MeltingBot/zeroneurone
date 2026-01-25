@@ -1,13 +1,22 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
-import { Plus, Clipboard, Group, StickyNote } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff } from 'lucide-react';
 
 interface CanvasContextMenuProps {
   x: number;
   y: number;
+  // Create actions
   onCreateElement: () => void;
   onCreateGroup: () => void;
   onCreateAnnotation: () => void;
   onPaste: () => void;
+  // Selection actions (when elements are selected)
+  selectedCount?: number;
+  onCopySelection?: () => void;
+  onCutSelection?: () => void;
+  onDuplicateSelection?: () => void;
+  onDeleteSelection?: () => void;
+  onHideSelection?: () => void;
+  onGroupSelection?: () => void;
   onClose: () => void;
 }
 
@@ -18,8 +27,16 @@ function CanvasContextMenuComponent({
   onCreateGroup,
   onCreateAnnotation,
   onPaste,
+  selectedCount = 0,
+  onCopySelection,
+  onCutSelection,
+  onDuplicateSelection,
+  onDeleteSelection,
+  onHideSelection,
+  onGroupSelection,
   onClose,
 }: CanvasContextMenuProps) {
+  const hasSelection = selectedCount > 0;
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
 
@@ -75,6 +92,97 @@ function CanvasContextMenuComponent({
         className="fixed z-50 min-w-44 py-1 bg-bg-primary border border-border-default sketchy-border-soft panel-shadow"
         style={{ left: position.x, top: position.y }}
       >
+        {/* Selection actions (when elements are selected) */}
+        {hasSelection && (
+          <>
+            <div className="px-3 py-1.5 border-b border-border-default">
+              <span className="text-xs text-text-secondary">
+                {selectedCount} element{selectedCount > 1 ? 's' : ''} selectionne{selectedCount > 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="py-1 border-b border-border-default">
+              {onCopySelection && (
+                <button
+                  onClick={() => {
+                    onCopySelection();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  <Copy size={14} />
+                  Copier
+                  <span className="ml-auto text-xs text-text-tertiary">Ctrl+C</span>
+                </button>
+              )}
+              {onCutSelection && (
+                <button
+                  onClick={() => {
+                    onCutSelection();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  <Scissors size={14} />
+                  Couper
+                  <span className="ml-auto text-xs text-text-tertiary">Ctrl+X</span>
+                </button>
+              )}
+              {onDuplicateSelection && (
+                <button
+                  onClick={() => {
+                    onDuplicateSelection();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  <CopyPlus size={14} />
+                  Dupliquer
+                  <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
+                </button>
+              )}
+            </div>
+            <div className="py-1 border-b border-border-default">
+              {selectedCount > 1 && onGroupSelection && (
+                <button
+                  onClick={() => {
+                    onGroupSelection();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  <Group size={14} />
+                  Grouper
+                </button>
+              )}
+              {onHideSelection && (
+                <button
+                  onClick={() => {
+                    onHideSelection();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  <EyeOff size={14} />
+                  Masquer
+                </button>
+              )}
+              {onDeleteSelection && (
+                <button
+                  onClick={() => {
+                    onDeleteSelection();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-error hover:bg-pastel-pink transition-colors"
+                >
+                  <Trash2 size={14} />
+                  Supprimer
+                  <span className="ml-auto text-xs text-text-tertiary">Suppr</span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
         {/* Create new element */}
         <div className="py-1">
           <button
