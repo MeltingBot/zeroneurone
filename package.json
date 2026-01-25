@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "0.9.9",
+  "version": "0.9.11",
   "license": "MIT",
   "type": "module",
   "scripts": {
