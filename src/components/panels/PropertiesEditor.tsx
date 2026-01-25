@@ -413,6 +413,7 @@ function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDispla
 }
 
 // Property value input component based on type
+// Uses local state for text inputs, syncs on blur for performance
 interface PropertyValueInputProps {
   type: PropertyType;
   value: Property['value'];
@@ -434,6 +435,16 @@ function PropertyValueInput({
   t,
   locale,
 }: PropertyValueInputProps) {
+  // Local state for text-based inputs (syncs on blur)
+  const [localText, setLocalText] = useState(String(value ?? ''));
+  const [localNumber, setLocalNumber] = useState(value !== null && value !== undefined ? String(value) : '');
+
+  // Sync local state when prop value changes externally (undo/redo, collab)
+  useEffect(() => {
+    setLocalText(String(value ?? ''));
+    setLocalNumber(value !== null && value !== undefined ? String(value) : '');
+  }, [value]);
+
   const baseInputClass = compact
     ? 'w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary'
     : 'w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary';
@@ -465,10 +476,14 @@ function PropertyValueInput({
       return (
         <input
           type="number"
-          value={value !== null && value !== undefined ? String(value) : ''}
-          onChange={(e) => {
-            const num = parseFloat(e.target.value);
-            onChange(isNaN(num) ? null : num);
+          value={localNumber}
+          onChange={(e) => setLocalNumber(e.target.value)}
+          onBlur={() => {
+            const num = parseFloat(localNumber);
+            const newVal = isNaN(num) ? null : num;
+            if (newVal !== value) {
+              onChange(newVal);
+            }
           }}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
@@ -488,7 +503,7 @@ function PropertyValueInput({
               : ''
           }
           onChange={(e) => {
-            // Append T12:00 to avoid UTC midnight day-shift (ES spec: date-only = UTC)
+            // Date pickers don't need blur optimization (no typing)
             onChange(e.target.value ? new Date(e.target.value + 'T12:00:00') : null);
           }}
           onKeyDown={onKeyDown}
@@ -508,7 +523,7 @@ function PropertyValueInput({
               : ''
           }
           onChange={(e) => {
-            // datetime-local value has no TZ suffix → interpreted as local time (correct)
+            // Datetime pickers don't need blur optimization (no typing)
             onChange(e.target.value ? new Date(e.target.value) : null);
           }}
           onKeyDown={onKeyDown}
@@ -528,17 +543,22 @@ function PropertyValueInput({
       );
 
     case 'link': {
-      const url = String(value ?? '');
-      const isValidUrl = url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('www.'));
+      const isValidUrl = localText && (localText.startsWith('http://') || localText.startsWith('https://') || localText.startsWith('www.'));
       const openUrl = isValidUrl
-        ? url.startsWith('www.') ? `https://${url}` : url
+        ? localText.startsWith('www.') ? `https://${localText}` : localText
         : null;
       return (
         <div className="relative flex items-center gap-1">
           <input
             type="url"
-            value={url}
-            onChange={(e) => onChange(e.target.value || null)}
+            value={localText}
+            onChange={(e) => setLocalText(e.target.value)}
+            onBlur={() => {
+              const newVal = localText || null;
+              if (newVal !== value) {
+                onChange(newVal);
+              }
+            }}
             onKeyDown={onKeyDown}
             placeholder={placeholder || 'https://...'}
             className={`${baseInputClass} ${openUrl ? 'pr-7' : ''}`}
@@ -561,15 +581,21 @@ function PropertyValueInput({
       return (
         <input
           type="text"
-          value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value || null)}
+          value={localText}
+          onChange={(e) => setLocalText(e.target.value)}
+          onBlur={() => {
+            const newVal = localText || null;
+            if (newVal !== value) {
+              onChange(newVal);
+            }
+          }}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           className={baseInputClass}
         />
       );
   }
-};
+}
 
 // Country picker component
 interface CountryPickerProps {

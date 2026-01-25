@@ -5,6 +5,7 @@ import type {
   InvestigationId,
   Element,
   ElementId,
+  ElementEvent,
   Link,
   LinkId,
   Comment,
@@ -1660,39 +1661,70 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const stateLinks = get().links;
     const stateComments = get().comments;
 
-    // Check if elements changed (by count, then ID set, then content)
+    // Helper: shallow compare arrays of {key, value} objects
+    const propsEqual = (a: Array<{key: string; value: string}> | undefined, b: Array<{key: string; value: string}> | undefined): boolean => {
+      if (a === b) return true;
+      if (!a || !b || a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i].key !== b[i].key || a[i].value !== b[i].value) return false;
+      }
+      return true;
+    };
+
+    // Helper: compare events arrays
+    const eventsEqual = (a: ElementEvent[] | undefined, b: ElementEvent[] | undefined): boolean => {
+      if (a === b) return true;
+      if (!a || !b || a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        const ae = a[i], be = b[i];
+        if (ae.id !== be.id || ae.label !== be.label || ae.description !== be.description ||
+            ae.source !== be.source || String(ae.date) !== String(be.date) ||
+            String(ae.dateEnd) !== String(be.dateEnd) ||
+            ae.geo?.lat !== be.geo?.lat || ae.geo?.lng !== be.geo?.lng ||
+            !propsEqual(ae.properties, be.properties)) return false;
+      }
+      return true;
+    };
+
+    // Check if elements changed - use Map for O(1) lookups
     const elementsChanged = (() => {
       if (newElements.length !== stateElements.length) return true;
-      for (let i = 0; i < newElements.length; i++) {
-        const newEl = newElements[i];
-        const stateEl = stateElements.find(e => e.id === newEl.id);
+      const stateMap = new Map(stateElements.map(e => [e.id, e]));
+      for (const newEl of newElements) {
+        const stateEl = stateMap.get(newEl.id);
         if (!stateEl) return true;
-        // Compare key fields that can change via collaboration
-        if (stateEl.label !== newEl.label) return true;
-        if (stateEl.notes !== newEl.notes) return true;
-        if (stateEl.position.x !== newEl.position.x || stateEl.position.y !== newEl.position.y) return true;
-        if (stateEl.visual.color !== newEl.visual.color) return true;
-        if (stateEl.visual.shape !== newEl.visual.shape) return true;
-        if (stateEl.visual.size !== newEl.visual.size) return true;
-        if (stateEl.confidence !== newEl.confidence) return true;
-        if (stateEl.tags?.length !== newEl.tags?.length) return true;
-        if (stateEl.properties?.length !== newEl.properties?.length) return true;
-        if (stateEl.parentGroupId !== newEl.parentGroupId) return true;
-        if (stateEl.assetIds?.length !== newEl.assetIds?.length) return true;
+        // Compare primitive fields first (fast)
+        if (stateEl.label !== newEl.label ||
+            stateEl.notes !== newEl.notes ||
+            stateEl.position.x !== newEl.position.x || stateEl.position.y !== newEl.position.y ||
+            stateEl.visual.color !== newEl.visual.color ||
+            stateEl.visual.shape !== newEl.visual.shape ||
+            stateEl.visual.size !== newEl.visual.size ||
+            stateEl.confidence !== newEl.confidence ||
+            stateEl.parentGroupId !== newEl.parentGroupId ||
+            stateEl.tags?.length !== newEl.tags?.length ||
+            stateEl.assetIds?.length !== newEl.assetIds?.length) return true;
+        // Compare arrays (slightly slower)
+        if (!propsEqual(stateEl.properties, newEl.properties)) return true;
+        if (!eventsEqual(stateEl.events, newEl.events)) return true;
       }
       return false;
     })();
 
+    // Check if links changed - use Map for O(1) lookups
     const linksChanged = (() => {
       if (newLinks.length !== stateLinks.length) return true;
-      for (let i = 0; i < newLinks.length; i++) {
-        const newLk = newLinks[i];
-        const stateLk = stateLinks.find(l => l.id === newLk.id);
+      const stateMap = new Map(stateLinks.map(l => [l.id, l]));
+      for (const newLk of newLinks) {
+        const stateLk = stateMap.get(newLk.id);
         if (!stateLk) return true;
-        if (stateLk.label !== newLk.label) return true;
-        if (stateLk.fromId !== newLk.fromId || stateLk.toId !== newLk.toId) return true;
-        if (stateLk.visual?.color !== newLk.visual?.color) return true;
-        if (stateLk.confidence !== newLk.confidence) return true;
+        if (stateLk.label !== newLk.label ||
+            stateLk.fromId !== newLk.fromId || stateLk.toId !== newLk.toId ||
+            stateLk.visual?.color !== newLk.visual?.color ||
+            stateLk.confidence !== newLk.confidence ||
+            stateLk.notes !== newLk.notes ||
+            stateLk.tags?.length !== newLk.tags?.length) return true;
+        if (!propsEqual(stateLk.properties, newLk.properties)) return true;
       }
       return false;
     })();

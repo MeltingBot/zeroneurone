@@ -373,7 +373,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
               }}
               placeholder={t('detail.placeholders.markdown')}
               minRows={4}
-              maxRows={15}
             />
           </div>
         </AccordionSection>
@@ -435,7 +434,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
               }}
               placeholder={t('detail.placeholders.markdown')}
               minRows={3}
-              maxRows={10}
             />
           </div>
 

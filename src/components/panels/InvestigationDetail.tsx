@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Settings, Calendar } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
-import type { Investigation, Property } from '../../types';
+import type { Investigation, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
@@ -108,10 +108,10 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
     [addExistingTag]
   );
 
-  // Handle new property key (save to investigation settings for reuse)
+  // Handle new property (save to investigation settings for reuse)
   const handleNewProperty = useCallback(
-    (key: string) => {
-      addSuggestedProperty(key);
+    (propertyDef: PropertyDefinition) => {
+      addSuggestedProperty(propertyDef);
     },
     [addSuggestedProperty]
   );

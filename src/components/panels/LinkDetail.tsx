@@ -1,8 +1,8 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag, MessageSquare, ExternalLink } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
-import type { Link, LinkStyle, LinkDirection, Confidence, Property } from '../../types';
+import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
 import { TagsEditor } from './TagsEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
@@ -168,10 +168,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
     [link.id, updateLink]
   );
 
-  // Handle new property key (save to investigation settings for reuse)
+  // Handle new property (save to investigation settings for reuse)
   const handleNewProperty = useCallback(
-    (key: string) => {
-      addSuggestedProperty(key);
+    (propertyDef: PropertyDefinition) => {
+      addSuggestedProperty(propertyDef);
     },
     [addSuggestedProperty]
   );
@@ -307,7 +307,6 @@ export function LinkDetail({ link }: LinkDetailProps) {
               }}
               placeholder={t('detail.placeholders.markdown')}
               minRows={3}
-              maxRows={10}
             />
           </div>
 
