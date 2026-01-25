@@ -1,0 +1,425 @@
+{
+  "tabs": {
+    "detail": "Xehetasuna",
+    "insights": "Analisiak",
+    "filters": "Iragazkiak",
+    "views": "Ikuspegiak",
+    "collapsePanel": "Panela tolestu"
+  },
+  "investigation": {
+    "sections": {
+      "information": "Informazioa",
+      "dates": "Datak",
+      "properties": "Propietateak"
+    },
+    "labels": {
+      "name": "Izena",
+      "description": "Deskribapena",
+      "creator": "Sortzailea",
+      "tags": "Etiketak",
+      "startDate": "Hasiera data",
+      "createdAt": "Sortze data",
+      "updatedAt": "Aldaketa data"
+    },
+    "placeholders": {
+      "name": "Ikerketaren izena",
+      "creator": "Sortzailearen izena..."
+    }
+  },
+  "detail": {
+    "noSelection": "Ez dago elementurik hautatuta",
+    "multipleSelection": "{{count}} elementu hautatuta",
+    "element": "Elementua",
+    "link": "Lotura",
+    "group": "Taldea",
+    "annotation": "Oharpena",
+    "sections": {
+      "identity": "Identitatea",
+      "content": "Edukia",
+      "connection": "Konexioa",
+      "metadata": "Metadatuak",
+      "events": "Gertaerak",
+      "location": "Kokapena",
+      "properties": "Propietateak",
+      "appearance": "Itxura",
+      "comments": "Iruzkinak",
+      "files": "Fitxategiak"
+    },
+    "placeholders": {
+      "label": "Izenik gabe",
+      "linkLabel": "Izenik gabeko erlazioa",
+      "notes": "Oharrak...",
+      "source": "Informazioaren iturria...",
+      "markdown": "Markdown: **lodia**, *etzana*, [esteka](url), zerrendak...",
+      "keyName": "Izena...",
+      "keyValue": "Balioa..."
+    },
+    "labels": {
+      "name": "Izena",
+      "label": "Etiketa",
+      "notes": "Oharrak",
+      "tags": "Etiketak",
+      "confidence": "Konfiantza",
+      "confidenceUndefined": "Definitu gabea",
+      "source": "Iturria",
+      "referenceDate": "Erreferentzia data",
+      "dateCollected": "Bilketa data",
+      "dateCollectedHelp": "Informazioaren gehitze edo bilketa data",
+      "useEventsForDates": "Datatutako gertaeretarako, erabili 'Gertaerak' sekzioa",
+      "direction": "Norabidea",
+      "directionNone": "Gezirik gabe",
+      "directionForward": "Helburura",
+      "directionBackward": "Jatorrira",
+      "directionBoth": "Bi norabidetan",
+      "openInNewTab": "Fitxa berrian ireki"
+    },
+    "tags": {
+      "editIcon": "Ikonoa editatu",
+      "addIcon": "Ikonoa gehitu",
+      "deleteTag": "{{tag}} etiketa ezabatu",
+      "newTagPlaceholder": "Etiketa berria...",
+      "pressEnterToCreate": "Enter \"{{value}}\" sortzeko",
+      "typeToFilter": "Idatzi iragazteko...",
+      "add": "Gehitu",
+      "noTags": "Etiketarik ez"
+    },
+    "warnings": {
+      "noName": "Elementuak ez du izenik"
+    },
+    "link": {
+      "linkedElements": "Lotutako elementuak",
+      "deletedElement": "Ezabatutako elementua",
+      "relationPeriod": "Erlazioaren epealdia",
+      "periodStart": "Hasiera",
+      "periodEnd": "Amaiera (hutsik utzi oraindik aktibo bada)"
+    },
+    "events": {
+      "title": "Gertaerak",
+      "description": "Datatutako gertaeren historia (denbora-lerroan ikusgai)",
+      "add": "Gertaera gehitu",
+      "labelPlaceholder": "Etiketa (adib.: Marseillako geldialdia, Webgunea hackeatuta...)",
+      "noEvents": "Gertaerarik ez",
+      "hasLocation": "Posizioa du",
+      "hasDescription": "Deskribapena du",
+      "delete": "Ezabatu",
+      "dateTo": "arte",
+      "dateEndOptional": "Amaiera (aukerakoa)",
+      "descriptionLabel": "Deskribapena",
+      "descriptionPlaceholder": "Deskribapen zehatza...",
+      "sourceLabel": "Iturria",
+      "sourcePlaceholder": "Informazioaren iturria...",
+      "locationOptional": "Kokapena (aukerakoa)",
+      "clearLocation": "Garbitu",
+      "pickOnMap": "Mapa"
+    },
+    "location": {
+      "title": "Kokapena",
+      "description": "Elementuaren posizio finkoa (mapan ikusgai)",
+      "gpsCoordinates": "GPS koordenatuak",
+      "latitude": "Latitudea",
+      "longitude": "Longitudea",
+      "latRange": "-90 eta 90",
+      "lngRange": "-180 eta 180",
+      "pickOnMap": "Mapan aukeratu",
+      "clearLocation": "Garbitu",
+      "removeLocation": "Kokapena ezabatu",
+      "noLocation": "Ez dago posiziorik definituta"
+    },
+    "properties": {
+      "title": "Propietateak",
+      "add": "Gehitu",
+      "addProperty": "Propietatea gehitu",
+      "selectAll": "Dena hautatu",
+      "deselectAll": "Dena deshautatu",
+      "ignore": "Ezikusi",
+      "keyPlaceholder": "Gakoa",
+      "valuePlaceholder": "Balioa",
+      "typePlaceholder": "Mota",
+      "optionsPlaceholder": "Aukerak komaz bereizita",
+      "noProperties": "Propietaterik ez",
+      "namePlaceholder": "Adib.: SIREN, Nazionalitatea...",
+      "noMatch": "Ez dago bat-etortzerik",
+      "suggestedFor": "\"{{name}}\"-rako iradokitako propietateak",
+      "cancel": "Utzi",
+      "showOnCanvas": "Arbelan erakutsi",
+      "hideOnCanvas": "Arbelatik ezkutatu",
+      "deleteProperty": "{{key}} propietatea ezabatu",
+      "selectCountry": "Herrialdea hautatu...",
+      "search": "Bilatu...",
+      "clearSelection": "Hautapena garbitu",
+      "noCountryFound": "Ez da herrialderik aurkitu",
+      "types": {
+        "text": "Testua",
+        "number": "Zenbakizkoa",
+        "date": "Data",
+        "datetime": "Data/ordua",
+        "boolean": "Boolearra",
+        "country": "Herrialdea",
+        "link": "Esteka",
+        "choice": "Aukera",
+        "geo": "Koord."
+      },
+      "booleanYes": "Bai",
+      "booleanNo": "Ez"
+    },
+    "appearance": {
+      "title": "Itxura",
+      "color": "Kolorea",
+      "borderColor": "Ertzaren kolorea",
+      "defaultGray": "Grisa lehenetsia",
+      "customColor": "Kolore pertsonalizatua",
+      "shape": "Forma",
+      "size": "Tamaina",
+      "style": "Estiloa",
+      "thickness": "Lodiera"
+    },
+    "files": {
+      "title": "Fitxategiak",
+      "drop": "Jaregin fitxategiak hemen",
+      "noFiles": "Fitxategirik ez",
+      "delete": "Fitxategia ezabatu",
+      "download": "Deskargatu",
+      "preview": "Aurrebista",
+      "defaultThumbnail": "Miniatura lehenetsia",
+      "closeEsc": "Itxi (Esc)"
+    },
+    "timestamps": {
+      "createdAt": "Sortze data",
+      "updatedAt": "Aldaketa data"
+    },
+    "comments": {
+      "addPlaceholder": "Iruzkina gehitu...",
+      "noComments": "Iruzkinik ez",
+      "markResolved": "Ebatzitzat markatu",
+      "markUnresolved": "Ebatzi gabekotzat markatu",
+      "delete": "Ezabatu",
+      "resolvedBy": "{{name}}(e)k ebatzi du",
+      "time": {
+        "justNow": "Oraintxe bertan",
+        "minutesAgo": "Duela {{count}} min",
+        "hoursAgo": "Duela {{count}} h",
+        "daysAgo": "Duela {{count}} egun"
+      }
+    },
+    "geoPicker": {
+      "title": "Kokapena aukeratu",
+      "searchPlaceholder": "Helbidea, hiria bilatu...",
+      "search": "Bilatu",
+      "noResults": "Ez da emaitzarik aurkitu",
+      "searchError": "Bilaketa errorea",
+      "clickToPlace": "Egin klik mapan markatzailea jartzeko"
+    },
+    "multi": {
+      "title": "Edizio masiboa",
+      "elements": "{{count}} elementu",
+      "links": "{{count}} lotura",
+      "addOrRemoveTags": "Etiketak gehitu edo kendu hautatutako elementu guztiei",
+      "removeFromSelection": "Hautapenetik kendu",
+      "addPropertyToAll": "Propietatea gehitu hautatutako elementu guztiei",
+      "setConfidenceAll": "Konfiantza maila ezarri guztientzat",
+      "setColorAll": "Kolorea ezarri guztientzat",
+      "elementsSection": "Elementuak ({{count}})",
+      "linksSection": "Loturak ({{count}})"
+    }
+  },
+  "filters": {
+    "title": "Iragazkiak",
+    "elementsCount": "{{matching}}/{{total}} elementu",
+    "active": "{{count}} iragazki aktibo",
+    "clearAll": "Dena garbitu",
+    "hiddenCount": "{{count}} elementu ezkutatuta",
+    "activeFilters": "Iragazki aktiboak",
+    "noName": "Izenik gabe",
+    "show": "Erakutsi",
+    "sections": {
+      "quickFilters": "Iragazki azkarrak",
+      "textSearch": "Testu bilaketa",
+      "tags": "Etiketak",
+      "types": "Motak",
+      "confidence": "Konfiantza",
+      "property": "Propietatea",
+      "date": "Data"
+    },
+    "placeholders": {
+      "textSearch": "Izenez edo oharrez iragazi...",
+      "allProperties": "Guztiak",
+      "all": "Guztiak"
+    },
+    "quick": {
+      "isolated": "Isolatuak",
+      "isolatedDesc": "Konexiorik gabeko elementuak",
+      "noTags": "Etiketarik gabe",
+      "noTagsDesc": "Etiketarik gabeko elementuak",
+      "noGeo": "Geo gabe",
+      "noGeoDesc": "Koordenaturik gabeko elementuak",
+      "noDate": "Datarik gabe",
+      "noDateDesc": "Datarik gabeko elementuak",
+      "lowConfidence": "Konfiantza baxua",
+      "lowConfidenceDesc": "Konfiantza < 50%",
+      "hasComments": "Iruzkinak",
+      "hasCommentsDesc": "Ebatzi gabeko iruzkindun elementuak"
+    },
+    "property": {
+      "hasProperty": "Propietatea du",
+      "showAsBadge": "Elementuetan txartel gisa erakutsi"
+    },
+    "confidence": {
+      "minimum": "Gutxieneko konfiantza"
+    },
+    "tags": {
+      "noTags": "Ez dago etiketarik erabilgarri"
+    },
+    "hiddenElements": {
+      "title": "Ezkutatuak",
+      "count": "{{count}} elementu ezkutatuta",
+      "showAll": "Dena erakutsi",
+      "noHidden": "Ez dago elementu ezkutaturik"
+    }
+  },
+  "insights": {
+    "title": "Analisiak",
+    "computing": "Analisia abian...",
+    "noData": "Gehitu elementuak eta loturak analisiak ikusteko.",
+    "noInsights": "Ez da analisirik antzeman. Gehitu lotura gehiago elementuen artean.",
+    "lastComputed": "Azken analisia:",
+    "refresh": "Freskatu",
+    "noName": "Izenik gabe",
+    "noResults": "Emaitzarik ez",
+    "links": "{{count}} lotura",
+    "elements": "{{count}} elementu",
+    "sections": {
+      "clusters": "Clusterrak",
+      "bridges": "Zubiak",
+      "centrality": "Zentralitatea",
+      "isolated": "Isolatuak",
+      "similar": "Antzekoak"
+    },
+    "clusters": {
+      "title": "Clusterrak",
+      "description": "Indartsuki konektatutako elementu taldeak",
+      "name": "{{id}} clusterra",
+      "count": "{{count}} cluster",
+      "elements": "{{count}} elementu",
+      "actions": {
+        "select": "Haut.",
+        "deselect": "Deshaut.",
+        "hide": "Ezkut.",
+        "show": "Erak.",
+        "filter": "Iragazi",
+        "group": "Taldek.",
+        "dissolve": "Desegin"
+      }
+    },
+    "bridges": {
+      "title": "Zubiak",
+      "description": "Grafoaren zati desberdinak lotzen dituzten elementuak",
+      "count": "{{count}} zubi",
+      "noBridges": "Ez da zubirik antzeman",
+      "showBridges": "Zubiak erakutsi",
+      "hideBridges": "Nabarmentzea ezkutatu",
+      "selectAll": "Guztiak hautatu",
+      "hideAll": "Guztiak ezkutatu",
+      "showAll": "Guztiak erakutsi"
+    },
+    "centrality": {
+      "title": "Konektatuenak",
+      "description": "Konektaturiko elementuak",
+      "degree": "Gradua",
+      "betweenness": "Bitartekotasuna"
+    },
+    "isolated": {
+      "title": "Isolatuak",
+      "description": "Konexiorik gabeko elementuak",
+      "count": "{{count}} elementu isolatuta",
+      "noIsolated": "Ez dago elementu isolaturik",
+      "showIsolated": "Isolatuak erakutsi",
+      "hideIsolated": "Nabarmentzea ezkutatu",
+      "selectAll": "Guztiak hautatu",
+      "hideAll": "Guztiak ezkutatu",
+      "showAll": "Guztiak erakutsi"
+    },
+    "similar": {
+      "title": "Bikoiztu potentzialak",
+      "description": "Izen antzekodun elementuak",
+      "count": "{{count}} bikote antzeko",
+      "noSimilar": "Ez dago etiketa antzekorik",
+      "select": "Hautatu",
+      "merge": "Batu"
+    },
+    "paths": {
+      "title": "Bide bilaketa",
+      "button": "Bi elementuren arteko bidea aurkitu",
+      "from": "Nondik",
+      "to": "Nora",
+      "searchPlaceholder": "Elementua bilatu...",
+      "pathFound": "Bidea aurkituta ({{count}} urrats)",
+      "noPath": "Ez da biderik aurkitu elementu hauen artean",
+      "pathLength": "{{count}} urrats"
+    }
+  },
+  "views": {
+    "title": "Ikuspegiak",
+    "canvasDisplay": "Arbelan bistaratzea",
+    "tags": "Etiketak",
+    "tagSize": "Tamaina:",
+    "tagModes": {
+      "hidden": "Ezkutatuak",
+      "icons": "Ikonoak",
+      "labels": "Etiketak",
+      "both": "Ikonoak + Etiketak"
+    },
+    "confidenceIndicator": "Konfiantza adierazlea",
+    "links": "Loturak",
+    "linkShape": "Forma",
+    "linkCurves": "Kurbak",
+    "linkStraight": "Zuzenak",
+    "linkOrthogonal": "Angelu zuzenak",
+    "linkAnchor": "Ainguratzea",
+    "linkAnchorManual": "Eskuzkoa",
+    "linkAnchorAuto": "Automatikoa",
+    "propertiesDisplay": "Bistaratutako propietateak",
+    "propertiesAvailable": "{{count}} erabilgarri",
+    "searchProperty": "Propietatea bilatu...",
+    "noResultsFor": "Ez dago emaitzarik \"{{search}}\"-rako",
+    "propertiesSelected": "{{count}}/3 hautatuta",
+    "maxProperties": "Geh. 3",
+    "deselectAll": "Dena deshautatu",
+    "noPropertiesDefined": "Ez dago propietaterik definituta elementuetan",
+    "savedViews": "Gordetako ikuspegiak",
+    "save": "Ikuspegia gorde",
+    "load": "Kargatu",
+    "delete": "Ezabatu",
+    "rename": "Izena aldatu",
+    "noViews": "Ez dago gordetako ikuspegiri",
+    "namePlaceholder": "Ikuspegiaren izena...",
+    "includePositions": "Posizioak sartu ({{count}} elementu)",
+    "saveButton": "Gorde",
+    "cancelButton": "Utzi",
+    "saveCurrentView": "Uneko ikuspegia gorde",
+    "savedPositions": "Gordetako posizioak",
+    "deleteView": "Ikuspegia ezabatu",
+    "activeView": "Ikuspegi aktiboa. Iragazkiak eta ikuspegia berrezarrita.",
+    "positionsRestored": "{{count}} elementuren posizioak berrezarrita.",
+    "saveDescription": "Iragazkiak, zooma eta ezkutatutako elementuak gordetzen ditu"
+  },
+  "assets": {
+    "title": "Fitxategiak",
+    "noAssets": "Fitxategirik ez",
+    "drop": "Fitxategiak jaregin",
+    "deleteConfirm": "Fitxategi hau ezabatu?",
+    "usedBy": "{{count}} elementuk erabiltzen du"
+  },
+  "history": {
+    "title": "Historia",
+    "noHistory": "Ekintzarik ez",
+    "undo": "Desegin",
+    "redo": "Berregin"
+  },
+  "collaboration": {
+    "title": "Lankidetza",
+    "connected": "Konektatuta",
+    "disconnected": "Deskonektatuta",
+    "users": "{{count}} erabiltzaile",
+    "you": "Zu"
+  }
+}

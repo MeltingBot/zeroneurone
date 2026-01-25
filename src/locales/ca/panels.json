@@ -1,0 +1,425 @@
+{
+  "tabs": {
+    "detail": "Detall",
+    "insights": "Anàlisis",
+    "filters": "Filtres",
+    "views": "Vistes",
+    "collapsePanel": "Contraure el panell"
+  },
+  "investigation": {
+    "sections": {
+      "information": "Informació",
+      "dates": "Dates",
+      "properties": "Propietats"
+    },
+    "labels": {
+      "name": "Nom",
+      "description": "Descripció",
+      "creator": "Creador",
+      "tags": "Etiquetes",
+      "startDate": "Data d'inici",
+      "createdAt": "Creat el",
+      "updatedAt": "Modificat el"
+    },
+    "placeholders": {
+      "name": "Nom de la investigació",
+      "creator": "Nom del creador..."
+    }
+  },
+  "detail": {
+    "noSelection": "Cap element seleccionat",
+    "multipleSelection": "{{count}} elements seleccionats",
+    "element": "Element",
+    "link": "Enllaç",
+    "group": "Grup",
+    "annotation": "Anotació",
+    "sections": {
+      "identity": "Identitat",
+      "content": "Contingut",
+      "connection": "Connexió",
+      "metadata": "Metadades",
+      "events": "Esdeveniments",
+      "location": "Localització",
+      "properties": "Propietats",
+      "appearance": "Aparença",
+      "comments": "Comentaris",
+      "files": "Fitxers"
+    },
+    "placeholders": {
+      "label": "Sense nom",
+      "linkLabel": "Relació sense nom",
+      "notes": "Notes...",
+      "source": "Font de la informació...",
+      "markdown": "Markdown: **negreta**, *cursiva*, [enllaç](url), llistes...",
+      "keyName": "Nom...",
+      "keyValue": "Valor..."
+    },
+    "labels": {
+      "name": "Nom",
+      "label": "Etiqueta",
+      "notes": "Notes",
+      "tags": "Etiquetes",
+      "confidence": "Confiança",
+      "confidenceUndefined": "No definida",
+      "source": "Font",
+      "referenceDate": "Data de referència",
+      "dateCollected": "Data de recollida",
+      "dateCollectedHelp": "Data d'addició o recollida de la informació",
+      "useEventsForDates": "Per a esdeveniments datats, utilitzeu la secció 'Esdeveniments'",
+      "direction": "Direcció",
+      "directionNone": "Sense fletxa",
+      "directionForward": "Cap a la destinació",
+      "directionBackward": "Cap a l'origen",
+      "directionBoth": "Bidireccional",
+      "openInNewTab": "Obrir en una nova pestanya"
+    },
+    "tags": {
+      "editIcon": "Editar icona",
+      "addIcon": "Afegir una icona",
+      "deleteTag": "Eliminar l'etiqueta {{tag}}",
+      "newTagPlaceholder": "Nova etiqueta...",
+      "pressEnterToCreate": "Retorn per crear \"{{value}}\"",
+      "typeToFilter": "Escriviu per filtrar...",
+      "add": "Afegir",
+      "noTags": "Sense etiquetes"
+    },
+    "warnings": {
+      "noName": "L'element no té nom"
+    },
+    "link": {
+      "linkedElements": "Elements enllaçats",
+      "deletedElement": "Element eliminat",
+      "relationPeriod": "Període de la relació",
+      "periodStart": "Inici",
+      "periodEnd": "Fi (deixar buit si en curs)"
+    },
+    "events": {
+      "title": "Esdeveniments",
+      "description": "Historial d'esdeveniments datats (visibles a la línia de temps)",
+      "add": "Afegir un esdeveniment",
+      "labelPlaceholder": "Etiqueta (ex: Escala Marsella, Lloc piratejat...)",
+      "noEvents": "Sense esdeveniments",
+      "hasLocation": "Té posició",
+      "hasDescription": "Té descripció",
+      "delete": "Eliminar",
+      "dateTo": "a",
+      "dateEndOptional": "Fi (opcional)",
+      "descriptionLabel": "Descripció",
+      "descriptionPlaceholder": "Descripció detallada...",
+      "sourceLabel": "Font",
+      "sourcePlaceholder": "Font de la informació...",
+      "locationOptional": "Localització (opcional)",
+      "clearLocation": "Esborrar",
+      "pickOnMap": "Mapa"
+    },
+    "location": {
+      "title": "Localització",
+      "description": "Posició fixa de l'element (visible al mapa)",
+      "gpsCoordinates": "Coordenades GPS",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "latRange": "-90 a 90",
+      "lngRange": "-180 a 180",
+      "pickOnMap": "Triar al mapa",
+      "clearLocation": "Esborrar",
+      "removeLocation": "Eliminar la localització",
+      "noLocation": "Cap posició definida"
+    },
+    "properties": {
+      "title": "Propietats",
+      "add": "Afegir",
+      "addProperty": "Afegir una propietat",
+      "selectAll": "Seleccionar tot",
+      "deselectAll": "Desseleccionar tot",
+      "ignore": "Ignorar",
+      "keyPlaceholder": "Clau",
+      "valuePlaceholder": "Valor",
+      "typePlaceholder": "Tipus",
+      "optionsPlaceholder": "Opcions separades per comes",
+      "noProperties": "Sense propietats",
+      "namePlaceholder": "Ex: SIREN, Nacionalitat...",
+      "noMatch": "Sense coincidències",
+      "suggestedFor": "Propietats suggerides per a \"{{name}}\"",
+      "cancel": "Cancel·lar",
+      "showOnCanvas": "Mostrar al llenç",
+      "hideOnCanvas": "Amagar del llenç",
+      "deleteProperty": "Eliminar la propietat {{key}}",
+      "selectCountry": "Seleccionar un país...",
+      "search": "Cercar...",
+      "clearSelection": "Esborrar selecció",
+      "noCountryFound": "Cap país trobat",
+      "types": {
+        "text": "Text",
+        "number": "Numèric",
+        "date": "Data",
+        "datetime": "Data/hora",
+        "boolean": "Booleà",
+        "country": "País",
+        "link": "Enllaç",
+        "choice": "Elecció",
+        "geo": "Coord."
+      },
+      "booleanYes": "Sí",
+      "booleanNo": "No"
+    },
+    "appearance": {
+      "title": "Aparença",
+      "color": "Color",
+      "borderColor": "Color de la vora",
+      "defaultGray": "Gris per defecte",
+      "customColor": "Color personalitzat",
+      "shape": "Forma",
+      "size": "Mida",
+      "style": "Estil",
+      "thickness": "Gruix"
+    },
+    "files": {
+      "title": "Fitxers",
+      "drop": "Deixeu anar fitxers aquí",
+      "noFiles": "Sense fitxers",
+      "delete": "Eliminar el fitxer",
+      "download": "Descarregar",
+      "preview": "Previsualització",
+      "defaultThumbnail": "Miniatura per defecte",
+      "closeEsc": "Tancar (Esc)"
+    },
+    "timestamps": {
+      "createdAt": "Creat el",
+      "updatedAt": "Modificat el"
+    },
+    "comments": {
+      "addPlaceholder": "Afegir un comentari...",
+      "noComments": "Sense comentaris",
+      "markResolved": "Marcar com a resolt",
+      "markUnresolved": "Marcar com a no resolt",
+      "delete": "Eliminar",
+      "resolvedBy": "Resolt per {{name}}",
+      "time": {
+        "justNow": "Ara mateix",
+        "minutesAgo": "Fa {{count}} min",
+        "hoursAgo": "Fa {{count}} h",
+        "daysAgo": "Fa {{count}} d"
+      }
+    },
+    "geoPicker": {
+      "title": "Triar una localització",
+      "searchPlaceholder": "Cercar una adreça, ciutat...",
+      "search": "Cercar",
+      "noResults": "Sense resultats trobats",
+      "searchError": "Error de cerca",
+      "clickToPlace": "Feu clic al mapa per col·locar un marcador"
+    },
+    "multi": {
+      "title": "Modificació massiva",
+      "elements": "{{count}} element(s)",
+      "links": "{{count}} enllaç(os)",
+      "addOrRemoveTags": "Afegir o treure etiquetes de tots els elements seleccionats",
+      "removeFromSelection": "Treure de la selecció",
+      "addPropertyToAll": "Afegir una propietat a tots els elements seleccionats",
+      "setConfidenceAll": "Definir el nivell de confiança per a tots",
+      "setColorAll": "Definir el color per a tots",
+      "elementsSection": "Elements ({{count}})",
+      "linksSection": "Enllaços ({{count}})"
+    }
+  },
+  "filters": {
+    "title": "Filtres",
+    "elementsCount": "{{matching}}/{{total}} elements",
+    "active": "{{count}} filtre(s) actiu(s)",
+    "clearAll": "Esborrar tot",
+    "hiddenCount": "{{count}} element(s) amagat(s)",
+    "activeFilters": "Filtres actius",
+    "noName": "Sense nom",
+    "show": "Mostrar",
+    "sections": {
+      "quickFilters": "Filtres ràpids",
+      "textSearch": "Cerca de text",
+      "tags": "Etiquetes",
+      "types": "Tipus",
+      "confidence": "Confiança",
+      "property": "Propietat",
+      "date": "Data"
+    },
+    "placeholders": {
+      "textSearch": "Filtrar per nom o notes...",
+      "allProperties": "Totes",
+      "all": "Totes"
+    },
+    "quick": {
+      "isolated": "Aïllats",
+      "isolatedDesc": "Elements sense connexió",
+      "noTags": "Sense etiquetes",
+      "noTagsDesc": "Elements sense cap etiqueta",
+      "noGeo": "Sense geo",
+      "noGeoDesc": "Elements sense coordenades",
+      "noDate": "Sense data",
+      "noDateDesc": "Elements sense data",
+      "lowConfidence": "Confiança baixa",
+      "lowConfidenceDesc": "Confiança < 50%",
+      "hasComments": "Comentaris",
+      "hasCommentsDesc": "Elements amb comentaris sense resoldre"
+    },
+    "property": {
+      "hasProperty": "Té la propietat",
+      "showAsBadge": "Mostrar com a insígnia als elements"
+    },
+    "confidence": {
+      "minimum": "Confiança mínima"
+    },
+    "tags": {
+      "noTags": "Sense etiquetes disponibles"
+    },
+    "hiddenElements": {
+      "title": "Amagats",
+      "count": "{{count}} element(s) amagat(s)",
+      "showAll": "Mostrar tot",
+      "noHidden": "Cap element amagat"
+    }
+  },
+  "insights": {
+    "title": "Anàlisis",
+    "computing": "Anàlisi en curs...",
+    "noData": "Afegiu elements i enllaços per veure les anàlisis.",
+    "noInsights": "Cap anàlisi detectada. Afegiu més enllaços entre els elements.",
+    "lastComputed": "Última anàlisi:",
+    "refresh": "Actualitzar",
+    "noName": "Sense nom",
+    "noResults": "Sense resultats",
+    "links": "{{count}} enllaços",
+    "elements": "{{count}} elements",
+    "sections": {
+      "clusters": "Clústers",
+      "bridges": "Ponts",
+      "centrality": "Centralitat",
+      "isolated": "Aïllats",
+      "similar": "Similars"
+    },
+    "clusters": {
+      "title": "Clústers",
+      "description": "Grups d'elements fortament connectats",
+      "name": "Clúster {{id}}",
+      "count": "{{count}} clúster(s)",
+      "elements": "{{count}} elements",
+      "actions": {
+        "select": "Select.",
+        "deselect": "Desselect.",
+        "hide": "Amagar",
+        "show": "Mostrar",
+        "filter": "Filtrar",
+        "group": "Agrupar",
+        "dissolve": "Dissoldre"
+      }
+    },
+    "bridges": {
+      "title": "Ponts",
+      "description": "Elements que connecten diferents parts del graf",
+      "count": "{{count}} pont(s)",
+      "noBridges": "Cap pont detectat",
+      "showBridges": "Mostrar ponts",
+      "hideBridges": "Amagar ressaltat",
+      "selectAll": "Seleccionar tots",
+      "hideAll": "Amagar tots",
+      "showAll": "Mostrar tots"
+    },
+    "centrality": {
+      "title": "Més connectats",
+      "description": "Elements més connectats",
+      "degree": "Grau",
+      "betweenness": "Intermediació"
+    },
+    "isolated": {
+      "title": "Aïllats",
+      "description": "Elements sense cap connexió",
+      "count": "{{count}} element(s) aïllat(s)",
+      "noIsolated": "Cap element aïllat",
+      "showIsolated": "Mostrar aïllats",
+      "hideIsolated": "Amagar ressaltat",
+      "selectAll": "Seleccionar tots",
+      "hideAll": "Amagar tots",
+      "showAll": "Mostrar tots"
+    },
+    "similar": {
+      "title": "Duplicats potencials",
+      "description": "Elements amb noms similars",
+      "count": "{{count}} parella(es) similar(s)",
+      "noSimilar": "Cap etiqueta similar",
+      "select": "Seleccionar",
+      "merge": "Fusionar"
+    },
+    "paths": {
+      "title": "Cerca de camí",
+      "button": "Trobar un camí entre dos elements",
+      "from": "De",
+      "to": "A",
+      "searchPlaceholder": "Cercar un element...",
+      "pathFound": "Camí trobat ({{count}} passos)",
+      "noPath": "Cap camí trobat entre aquests elements",
+      "pathLength": "{{count}} pas(sos)"
+    }
+  },
+  "views": {
+    "title": "Vistes",
+    "canvasDisplay": "Visualització al llenç",
+    "tags": "Etiquetes",
+    "tagSize": "Mida:",
+    "tagModes": {
+      "hidden": "Amagades",
+      "icons": "Icones",
+      "labels": "Etiquetes",
+      "both": "Icones + Etiquetes"
+    },
+    "confidenceIndicator": "Indicador de confiança",
+    "links": "Enllaços",
+    "linkShape": "Forma",
+    "linkCurves": "Corbes",
+    "linkStraight": "Rectes",
+    "linkOrthogonal": "Angles rectes",
+    "linkAnchor": "Ancoratge",
+    "linkAnchorManual": "Manual",
+    "linkAnchorAuto": "Automàtic",
+    "propertiesDisplay": "Propietats mostrades",
+    "propertiesAvailable": "{{count}} disponible(s)",
+    "searchProperty": "Cercar una propietat...",
+    "noResultsFor": "Sense resultats per a \"{{search}}\"",
+    "propertiesSelected": "{{count}}/3 seleccionada(es)",
+    "maxProperties": "Màx. 3",
+    "deselectAll": "Desseleccionar tot",
+    "noPropertiesDefined": "Cap propietat definida als elements",
+    "savedViews": "Vistes desades",
+    "save": "Desar vista",
+    "load": "Carregar",
+    "delete": "Eliminar",
+    "rename": "Reanomenar",
+    "noViews": "Sense vistes desades",
+    "namePlaceholder": "Nom de la vista...",
+    "includePositions": "Incloure posicions ({{count}} elements)",
+    "saveButton": "Desar",
+    "cancelButton": "Cancel·lar",
+    "saveCurrentView": "Desar la vista actual",
+    "savedPositions": "Posicions desades",
+    "deleteView": "Eliminar la vista",
+    "activeView": "Vista activa. Filtres i vista restaurats.",
+    "positionsRestored": "Posicions de {{count}} elements restaurades.",
+    "saveDescription": "Desa els filtres, el zoom i els elements amagats"
+  },
+  "assets": {
+    "title": "Fitxers",
+    "noAssets": "Sense fitxers",
+    "drop": "Deixeu anar fitxers",
+    "deleteConfirm": "Eliminar aquest fitxer?",
+    "usedBy": "Utilitzat per {{count}} element(s)"
+  },
+  "history": {
+    "title": "Historial",
+    "noHistory": "Sense accions",
+    "undo": "Desfer",
+    "redo": "Refer"
+  },
+  "collaboration": {
+    "title": "Col·laboració",
+    "connected": "Connectat",
+    "disconnected": "Desconnectat",
+    "users": "{{count}} usuari(s)",
+    "you": "Vós"
+  }
+}

@@ -1,0 +1,425 @@
+{
+  "tabs": {
+    "detail": "Деталі",
+    "insights": "Аналітика",
+    "filters": "Фільтри",
+    "views": "Види",
+    "collapsePanel": "Згорнути панель"
+  },
+  "investigation": {
+    "sections": {
+      "information": "Інформація",
+      "dates": "Дати",
+      "properties": "Властивості"
+    },
+    "labels": {
+      "name": "Назва",
+      "description": "Опис",
+      "creator": "Автор",
+      "tags": "Теги",
+      "startDate": "Дата початку",
+      "createdAt": "Створено",
+      "updatedAt": "Змінено"
+    },
+    "placeholders": {
+      "name": "Назва розслідування",
+      "creator": "Ім'я автора..."
+    }
+  },
+  "detail": {
+    "noSelection": "Елемент не вибрано",
+    "multipleSelection": "{{count}} елементів вибрано",
+    "element": "Елемент",
+    "link": "Зв'язок",
+    "group": "Група",
+    "annotation": "Анотація",
+    "sections": {
+      "identity": "Ідентичність",
+      "content": "Вміст",
+      "connection": "З'єднання",
+      "metadata": "Метадані",
+      "events": "Події",
+      "location": "Розташування",
+      "properties": "Властивості",
+      "appearance": "Вигляд",
+      "comments": "Коментарі",
+      "files": "Файли"
+    },
+    "placeholders": {
+      "label": "Без назви",
+      "linkLabel": "Зв'язок без назви",
+      "notes": "Нотатки...",
+      "source": "Джерело інформації...",
+      "markdown": "Markdown: **жирний**, *курсив*, [посилання](url), списки...",
+      "keyName": "Назва...",
+      "keyValue": "Значення..."
+    },
+    "labels": {
+      "name": "Назва",
+      "label": "Мітка",
+      "notes": "Нотатки",
+      "tags": "Теги",
+      "confidence": "Достовірність",
+      "confidenceUndefined": "Не визначено",
+      "source": "Джерело",
+      "referenceDate": "Дата посилання",
+      "dateCollected": "Дата збору",
+      "dateCollectedHelp": "Дата додавання або збору інформації",
+      "useEventsForDates": "Для датованих подій використовуйте розділ 'Події'",
+      "direction": "Напрямок",
+      "directionNone": "Без стрілки",
+      "directionForward": "До цілі",
+      "directionBackward": "До джерела",
+      "directionBoth": "Двонаправлений",
+      "openInNewTab": "Відкрити в новій вкладці"
+    },
+    "tags": {
+      "editIcon": "Редагувати іконку",
+      "addIcon": "Додати іконку",
+      "deleteTag": "Видалити тег {{tag}}",
+      "newTagPlaceholder": "Новий тег...",
+      "pressEnterToCreate": "Enter для створення \"{{value}}\"",
+      "typeToFilter": "Введіть для фільтрації...",
+      "add": "Додати",
+      "noTags": "Немає тегів"
+    },
+    "warnings": {
+      "noName": "Елемент не має назви"
+    },
+    "link": {
+      "linkedElements": "Пов'язані елементи",
+      "deletedElement": "Видалений елемент",
+      "relationPeriod": "Період зв'язку",
+      "periodStart": "Початок",
+      "periodEnd": "Кінець (порожнє, якщо триває)"
+    },
+    "events": {
+      "title": "Події",
+      "description": "Історія датованих подій (видимі на хронології)",
+      "add": "Додати подію",
+      "labelPlaceholder": "Мітка (напр.: Зупинка в Марселі, Сайт зламано...)",
+      "noEvents": "Немає подій",
+      "hasLocation": "Має позицію",
+      "hasDescription": "Має опис",
+      "delete": "Видалити",
+      "dateTo": "до",
+      "dateEndOptional": "Кінець (необов'язково)",
+      "descriptionLabel": "Опис",
+      "descriptionPlaceholder": "Детальний опис...",
+      "sourceLabel": "Джерело",
+      "sourcePlaceholder": "Джерело інформації...",
+      "locationOptional": "Розташування (необов'язково)",
+      "clearLocation": "Очистити",
+      "pickOnMap": "Карта"
+    },
+    "location": {
+      "title": "Розташування",
+      "description": "Фіксована позиція елемента (видима на карті)",
+      "gpsCoordinates": "GPS координати",
+      "latitude": "Широта",
+      "longitude": "Довгота",
+      "latRange": "-90 до 90",
+      "lngRange": "-180 до 180",
+      "pickOnMap": "Вибрати на карті",
+      "clearLocation": "Очистити",
+      "removeLocation": "Видалити розташування",
+      "noLocation": "Позицію не визначено"
+    },
+    "properties": {
+      "title": "Властивості",
+      "add": "Додати",
+      "addProperty": "Додати властивість",
+      "selectAll": "Вибрати все",
+      "deselectAll": "Зняти вибір",
+      "ignore": "Ігнорувати",
+      "keyPlaceholder": "Ключ",
+      "valuePlaceholder": "Значення",
+      "typePlaceholder": "Тип",
+      "optionsPlaceholder": "Варіанти через кому",
+      "noProperties": "Немає властивостей",
+      "namePlaceholder": "Напр.: ЄДРПОУ, Громадянство...",
+      "noMatch": "Немає збігів",
+      "suggestedFor": "Рекомендовані властивості для \"{{name}}\"",
+      "cancel": "Скасувати",
+      "showOnCanvas": "Показати на дошці",
+      "hideOnCanvas": "Сховати з дошки",
+      "deleteProperty": "Видалити властивість {{key}}",
+      "selectCountry": "Вибрати країну...",
+      "search": "Пошук...",
+      "clearSelection": "Очистити вибір",
+      "noCountryFound": "Країну не знайдено",
+      "types": {
+        "text": "Текст",
+        "number": "Числовий",
+        "date": "Дата",
+        "datetime": "Дата/час",
+        "boolean": "Логічний",
+        "country": "Країна",
+        "link": "Посилання",
+        "choice": "Вибір",
+        "geo": "Коорд."
+      },
+      "booleanYes": "Так",
+      "booleanNo": "Ні"
+    },
+    "appearance": {
+      "title": "Вигляд",
+      "color": "Колір",
+      "borderColor": "Колір межі",
+      "defaultGray": "Сірий за замовчуванням",
+      "customColor": "Власний колір",
+      "shape": "Форма",
+      "size": "Розмір",
+      "style": "Стиль",
+      "thickness": "Товщина"
+    },
+    "files": {
+      "title": "Файли",
+      "drop": "Перетягніть файли сюди",
+      "noFiles": "Немає файлів",
+      "delete": "Видалити файл",
+      "download": "Завантажити",
+      "preview": "Попередній перегляд",
+      "defaultThumbnail": "Мініатюра за замовчуванням",
+      "closeEsc": "Закрити (Esc)"
+    },
+    "timestamps": {
+      "createdAt": "Створено",
+      "updatedAt": "Змінено"
+    },
+    "comments": {
+      "addPlaceholder": "Додати коментар...",
+      "noComments": "Немає коментарів",
+      "markResolved": "Позначити як вирішене",
+      "markUnresolved": "Позначити як невирішене",
+      "delete": "Видалити",
+      "resolvedBy": "Вирішено {{name}}",
+      "time": {
+        "justNow": "Щойно",
+        "minutesAgo": "{{count}} хв тому",
+        "hoursAgo": "{{count}} год тому",
+        "daysAgo": "{{count}} дн тому"
+      }
+    },
+    "geoPicker": {
+      "title": "Вибрати розташування",
+      "searchPlaceholder": "Пошук адреси, міста...",
+      "search": "Пошук",
+      "noResults": "Результатів не знайдено",
+      "searchError": "Помилка пошуку",
+      "clickToPlace": "Клацніть на карті, щоб розмістити маркер"
+    },
+    "multi": {
+      "title": "Масове редагування",
+      "elements": "{{count}} елементів",
+      "links": "{{count}} зв'язків",
+      "addOrRemoveTags": "Додати або видалити теги з усіх вибраних елементів",
+      "removeFromSelection": "Видалити з вибору",
+      "addPropertyToAll": "Додати властивість до всіх вибраних елементів",
+      "setConfidenceAll": "Встановити рівень достовірності для всіх",
+      "setColorAll": "Встановити колір для всіх",
+      "elementsSection": "Елементи ({{count}})",
+      "linksSection": "Зв'язки ({{count}})"
+    }
+  },
+  "filters": {
+    "title": "Фільтри",
+    "elementsCount": "{{matching}}/{{total}} елементів",
+    "active": "{{count}} активних фільтрів",
+    "clearAll": "Очистити все",
+    "hiddenCount": "{{count}} прихованих елементів",
+    "activeFilters": "Активні фільтри",
+    "noName": "Без назви",
+    "show": "Показати",
+    "sections": {
+      "quickFilters": "Швидкі фільтри",
+      "textSearch": "Текстовий пошук",
+      "tags": "Теги",
+      "types": "Типи",
+      "confidence": "Достовірність",
+      "property": "Властивість",
+      "date": "Дата"
+    },
+    "placeholders": {
+      "textSearch": "Фільтрувати за назвою або нотатками...",
+      "allProperties": "Всі",
+      "all": "Всі"
+    },
+    "quick": {
+      "isolated": "Ізольовані",
+      "isolatedDesc": "Елементи без зв'язків",
+      "noTags": "Без тегів",
+      "noTagsDesc": "Елементи без жодного тегу",
+      "noGeo": "Без гео",
+      "noGeoDesc": "Елементи без координат",
+      "noDate": "Без дати",
+      "noDateDesc": "Елементи без дати",
+      "lowConfidence": "Низька достовірність",
+      "lowConfidenceDesc": "Достовірність < 50%",
+      "hasComments": "Коментарі",
+      "hasCommentsDesc": "Елементи з невирішеними коментарями"
+    },
+    "property": {
+      "hasProperty": "Має властивість",
+      "showAsBadge": "Показувати як значок на елементах"
+    },
+    "confidence": {
+      "minimum": "Мінімальна достовірність"
+    },
+    "tags": {
+      "noTags": "Немає доступних тегів"
+    },
+    "hiddenElements": {
+      "title": "Приховані",
+      "count": "{{count}} прихованих елементів",
+      "showAll": "Показати все",
+      "noHidden": "Немає прихованих елементів"
+    }
+  },
+  "insights": {
+    "title": "Аналітика",
+    "computing": "Аналіз триває...",
+    "noData": "Додайте елементи та зв'язки, щоб побачити аналітику.",
+    "noInsights": "Аналітики не виявлено. Додайте більше зв'язків між елементами.",
+    "lastComputed": "Останній аналіз:",
+    "refresh": "Оновити",
+    "noName": "Без назви",
+    "noResults": "Немає результатів",
+    "links": "{{count}} зв'язків",
+    "elements": "{{count}} елементів",
+    "sections": {
+      "clusters": "Кластери",
+      "bridges": "Мости",
+      "centrality": "Центральність",
+      "isolated": "Ізольовані",
+      "similar": "Схожі"
+    },
+    "clusters": {
+      "title": "Кластери",
+      "description": "Групи сильно пов'язаних елементів",
+      "name": "Кластер {{id}}",
+      "count": "{{count}} кластерів",
+      "elements": "{{count}} елементів",
+      "actions": {
+        "select": "Вибрати",
+        "deselect": "Зняти",
+        "hide": "Сховати",
+        "show": "Показати",
+        "filter": "Фільтр",
+        "group": "Групувати",
+        "dissolve": "Розформ."
+      }
+    },
+    "bridges": {
+      "title": "Мости",
+      "description": "Елементи, що з'єднують різні частини графу",
+      "count": "{{count}} мостів",
+      "noBridges": "Мостів не виявлено",
+      "showBridges": "Показати мости",
+      "hideBridges": "Сховати виділення",
+      "selectAll": "Вибрати всі",
+      "hideAll": "Сховати всі",
+      "showAll": "Показати всі"
+    },
+    "centrality": {
+      "title": "Найбільш пов'язані",
+      "description": "Елементи з найбільшою кількістю зв'язків",
+      "degree": "Ступінь",
+      "betweenness": "Посередництво"
+    },
+    "isolated": {
+      "title": "Ізольовані",
+      "description": "Елементи без жодних зв'язків",
+      "count": "{{count}} ізольованих елементів",
+      "noIsolated": "Немає ізольованих елементів",
+      "showIsolated": "Показати ізольовані",
+      "hideIsolated": "Сховати виділення",
+      "selectAll": "Вибрати всі",
+      "hideAll": "Сховати всі",
+      "showAll": "Показати всі"
+    },
+    "similar": {
+      "title": "Потенційні дублікати",
+      "description": "Елементи зі схожими назвами",
+      "count": "{{count}} схожих пар",
+      "noSimilar": "Немає схожих міток",
+      "select": "Вибрати",
+      "merge": "Об'єднати"
+    },
+    "paths": {
+      "title": "Пошук шляху",
+      "button": "Знайти шлях між двома елементами",
+      "from": "Від",
+      "to": "До",
+      "searchPlaceholder": "Пошук елемента...",
+      "pathFound": "Шлях знайдено ({{count}} кроків)",
+      "noPath": "Шлях між цими елементами не знайдено",
+      "pathLength": "{{count}} кроків"
+    }
+  },
+  "views": {
+    "title": "Види",
+    "canvasDisplay": "Відображення на дошці",
+    "tags": "Теги",
+    "tagSize": "Розмір:",
+    "tagModes": {
+      "hidden": "Приховані",
+      "icons": "Іконки",
+      "labels": "Мітки",
+      "both": "Іконки + Мітки"
+    },
+    "confidenceIndicator": "Індикатор достовірності",
+    "links": "Зв'язки",
+    "linkShape": "Форма",
+    "linkCurves": "Криві",
+    "linkStraight": "Прямі",
+    "linkOrthogonal": "Прямі кути",
+    "linkAnchor": "Прив'язка",
+    "linkAnchorManual": "Ручна",
+    "linkAnchorAuto": "Автоматична",
+    "propertiesDisplay": "Відображувані властивості",
+    "propertiesAvailable": "{{count}} доступно",
+    "searchProperty": "Пошук властивості...",
+    "noResultsFor": "Немає результатів для \"{{search}}\"",
+    "propertiesSelected": "{{count}}/3 вибрано",
+    "maxProperties": "Макс. 3",
+    "deselectAll": "Зняти вибір",
+    "noPropertiesDefined": "На елементах не визначено властивостей",
+    "savedViews": "Збережені види",
+    "save": "Зберегти вид",
+    "load": "Завантажити",
+    "delete": "Видалити",
+    "rename": "Перейменувати",
+    "noViews": "Немає збережених видів",
+    "namePlaceholder": "Назва виду...",
+    "includePositions": "Включити позиції ({{count}} елементів)",
+    "saveButton": "Зберегти",
+    "cancelButton": "Скасувати",
+    "saveCurrentView": "Зберегти поточний вид",
+    "savedPositions": "Збережені позиції",
+    "deleteView": "Видалити вид",
+    "activeView": "Активний вид. Фільтри та вид відновлено.",
+    "positionsRestored": "Відновлено позиції {{count}} елементів.",
+    "saveDescription": "Зберігає фільтри, масштаб та приховані елементи"
+  },
+  "assets": {
+    "title": "Файли",
+    "noAssets": "Немає файлів",
+    "drop": "Перетягніть файли",
+    "deleteConfirm": "Видалити цей файл?",
+    "usedBy": "Використовується {{count}} елементами"
+  },
+  "history": {
+    "title": "Історія",
+    "noHistory": "Немає дій",
+    "undo": "Скасувати",
+    "redo": "Повторити"
+  },
+  "collaboration": {
+    "title": "Співпраця",
+    "connected": "Підключено",
+    "disconnected": "Відключено",
+    "users": "{{count}} користувачів",
+    "you": "Ви"
+  }
+}

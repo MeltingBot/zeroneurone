@@ -1,0 +1,325 @@
+{
+  "home": {
+    "title": "ZeroNeurone",
+    "backToHome": "Powrót do strony głównej",
+    "newInvestigation": "Nowe śledztwo",
+    "manageTags": "Zarządzaj tagami",
+    "import": "Importuj",
+    "about": "O aplikacji",
+    "storage": "Przechowywanie",
+    "darkMode": "Tryb ciemny",
+    "lightMode": "Tryb jasny",
+    "noInvestigations": "Brak śledztw",
+    "createFirst": "Utwórz swoje pierwsze śledztwo, aby rozpocząć",
+    "viewInvestigations": "Zobacz śledztwa",
+    "investigationCount": "{{count}} śledztw(o/a)",
+    "loading": "Ładowanie...",
+    "card": {
+      "modified": "Zmodyfikowano {{time}}",
+      "elementCount": "{{count}} element(ów)",
+      "linkCount": "{{count}} połączenie(ń)",
+      "rename": "Zmień nazwę",
+      "exportZip": "Eksportuj ZIP",
+      "delete": "Usuń",
+      "exportSuccess": "Eksport ZIP zakończony",
+      "exportError": "Błąd podczas eksportu"
+    },
+    "landing": {
+      "subtitle": "Tablica dla analityków i śledczych",
+      "description": "Narzędzie Open Source do wzmocnienia kognitywnego, łączące prostotę tablicy z mocą analizy grafów. Mapuj swoje pomysły, geolokalizuj elementy, wizualizuj zdarzenia, łącz wskazówki i odkrywaj ukryte wzorce.",
+      "startNew": "Nowe śledztwo",
+      "importExisting": "Importuj",
+      "viewExisting": "Zobacz moje {{count}} śledztw(o/a)",
+      "features": {
+        "graph": {
+          "title": "Graf relacyjny",
+          "description": "Wizualizuj połączenia między osobami, miejscami i pojęciami"
+        },
+        "map": {
+          "title": "Widok mapy",
+          "description": "Umieść elementy na interaktywnej i czasowej mapie"
+        },
+        "timeline": {
+          "title": "Oś czasu",
+          "description": "Organizuj zdarzenia chronologicznie"
+        },
+        "search": {
+          "title": "Natychmiastowe wyszukiwanie i filtry",
+          "description": "Znajdź i przefiltruj dowolny element w sekundach"
+        },
+        "local": {
+          "title": "Dane 100% lokalne",
+          "description": "Twoje dane pozostają na Twoim komputerze, nigdy nie są przesyłane"
+        },
+        "collab": {
+          "title": "Bezpieczna współpraca w czasie rzeczywistym",
+          "description": "Pracuj z innymi nad tym samym śledztwem"
+        }
+      }
+    }
+  },
+  "investigation": {
+    "loading": {
+      "opening": "Otwieranie...",
+      "syncing": "Synchronizacja...",
+      "files": "Pliki...",
+      "elements": "Elementy..."
+    },
+    "toolbar": {
+      "select": "Zaznaczanie",
+      "pan": "Przesuwanie",
+      "addElement": "Dodaj element",
+      "addGroup": "Dodaj grupę",
+      "addAnnotation": "Dodaj adnotację",
+      "autoLayout": "Automatyczny układ",
+      "fitView": "Dopasuj widok",
+      "zoomIn": "Powiększ",
+      "zoomOut": "Pomniejsz",
+      "resetView": "Resetuj widok",
+      "share": "Udostępnij",
+      "deselect": "Odznacz",
+      "snapToGrid": "Przyciąganie do siatki",
+      "alignGuides": "Linie pomocnicze",
+      "minimap": "Minimapa",
+      "hideMinimap": "Ukryj minimapę",
+      "closeEsc": "Zamknij (Esc)",
+      "close": "Zamknij",
+      "loading": "Ładowanie...",
+      "oneElement": "1 element",
+      "oneLink": "1 połączenie",
+      "selectedCount": "{{count}} zaznaczonych"
+    },
+    "contextMenu": {
+      "addElement": "Nowy element",
+      "addGroup": "Nowa grupa",
+      "addAnnotation": "Nowa adnotacja",
+      "edit": "Edytuj",
+      "duplicate": "Duplikuj",
+      "delete": "Usuń",
+      "hide": "Ukryj",
+      "hideSelection": "Ukryj zaznaczenie",
+      "hideElement": "Ukryj element",
+      "show": "Pokaż",
+      "showElement": "Pokaż element",
+      "bringToFront": "Przenieś na wierzch",
+      "sendToBack": "Przenieś na spód",
+      "group": "Grupuj",
+      "groupSelection": "Grupuj zaznaczenie",
+      "ungroup": "Rozgrupuj",
+      "dissolveGroup": "Rozwiąż grupę",
+      "addToGroup": "Dodaj do grupy",
+      "removeFromGroup": "Usuń z grupy",
+      "selectAll": "Zaznacz wszystko",
+      "copy": "Kopiuj",
+      "cut": "Wytnij",
+      "paste": "Wklej",
+      "focusMode": "Tryb skupienia",
+      "exitFocus": "Wyjdź z trybu skupienia",
+      "focusNeighbors1": "Bezpośredni sąsiedzi",
+      "focusNeighbors2": "Sąsiedzi 2 połączenia",
+      "focusNeighbors3": "Sąsiedzi 3 połączenia",
+      "preview": "Podgląd",
+      "findPaths": "Znajdź ścieżki"
+    },
+    "viewToolbar": {
+      "undo": "Cofnij (Ctrl+Z)",
+      "redo": "Ponów (Ctrl+Shift+Z)",
+      "readableFont": "Czytelna czcionka",
+      "handwrittenFont": "Czcionka odręczna",
+      "darkMode": "Tryb ciemny",
+      "lightMode": "Tryb jasny",
+      "showMedia": "Pokaż media",
+      "blurMedia": "Rozmyj media",
+      "showNames": "Pokaż nazwy",
+      "anonymousMode": "Tryb anonimowy (redakcja)",
+      "hideCommentBadges": "Ukryj odznaki komentarzy",
+      "showCommentBadges": "Pokaż odznaki komentarzy"
+    },
+    "views": {
+      "canvas": "Tablica",
+      "map": "Mapa",
+      "split": "Podzielony",
+      "timeline": "Oś czasu",
+      "report": "Raport"
+    },
+    "panels": {
+      "detail": "Szczegóły",
+      "filters": "Filtry",
+      "insights": "Analizy",
+      "views": "Widoki"
+    },
+    "emptyCanvas": {
+      "title": "Pusta tablica",
+      "hint": "Kliknij dwukrotnie, aby utworzyć element",
+      "orDrop": "lub upuść pliki"
+    },
+    "layout": {
+      "title": "Algorytmy układu",
+      "button": "Rozmieść",
+      "buttonTitle": "Automatyczne rozmieszczenie grafu",
+      "undoHint": "Ctrl+Z, aby cofnąć po zastosowaniu",
+      "types": {
+        "force": {
+          "name": "Siła (klastry)",
+          "description": "Grupuje połączone elementy, rozdziela klastry"
+        },
+        "circular": {
+          "name": "Kołowy",
+          "description": "Rozmieszcza elementy w okręgu"
+        },
+        "grid": {
+          "name": "Siatka",
+          "description": "Wyrównuje elementy w regularnej siatce"
+        },
+        "random": {
+          "name": "Rozproszenie",
+          "description": "Losowo rozprasza elementy"
+        }
+      }
+    },
+    "toast": {
+      "elementCreated": "Element utworzony",
+      "elementsDeleted": "{{count}} element(ów) usunięto",
+      "linkCreated": "Połączenie utworzone",
+      "copied": "Skopiowano do schowka",
+      "pasted": "{{count}} element(ów) wklejono",
+      "saved": "Zapisano",
+      "exportSuccess": "Eksport zakończony",
+      "exportError": "Błąd podczas eksportu"
+    },
+    "notFound": "Nie znaleziono śledztwa",
+    "header": {
+      "report": "Raport",
+      "generateReport": "Generuj raport",
+      "export": "Eksportuj",
+      "search": "Szukaj",
+      "clearFilters": "Wyczyść filtry",
+      "activeFilters": "Aktywne filtry",
+      "shortcuts": "Skróty klawiszowe",
+      "supportKofi": "Wesprzyj na Ko-fi"
+    },
+    "collab": {
+      "leaveTitle": "Opuść sesję współpracy",
+      "leaveMessage": "Inni uczestnicy mogą nadal używać linku udostępniania do synchronizacji zmian i wznowienia współpracy.",
+      "rejoinMessage": "Możesz również dołączyć do sesji później przez ten sam link.",
+      "leave": "Opuść"
+    }
+  },
+  "map": {
+    "noGeoElements": "Brak elementów z geolokalizacją",
+    "addLocation": "Dodaj współrzędne do elementów, aby zobaczyć je na mapie",
+    "pickLocation": "Kliknij na mapie, aby ustawić pozycję",
+    "elementsLocated": "{{count}} element(ów) zlokalizowanych",
+    "linksCount": "({{count}} połączenie(ń))",
+    "temporalMode": "Tryb czasowy",
+    "temporal": "Czasowy",
+    "zoomToSelection": "Przybliż do zaznaczenia",
+    "selection": "Zaznaczenie",
+    "fitAll": "Dopasuj do wszystkich elementów",
+    "fit": "Dopasuj",
+    "stepBack": "Krok wstecz",
+    "stepForward": "Krok naprzód",
+    "play": "Odtwórz",
+    "pause": "Pauza",
+    "unnamed": "Bez nazwy"
+  },
+  "timeline": {
+    "noEvents": "Brak datowanych zdarzeń",
+    "addDates": "Dodaj daty do elementów lub utwórz zdarzenia",
+    "noTemporalData": "Brak danych czasowych",
+    "howToAddTimeline": "Aby zobaczyć elementy na osi czasu:",
+    "addPeriodToLinks": "Dodaj okres do połączeń (data rozpoczęcia/zakończenia)",
+    "addEventsToHistory": "Dodaj zdarzenia w historii elementów",
+    "eventsCount": "{{count}} zdarzenie(ń)",
+    "zoomHint": "Ctrl+kółko: zoom | Przeciągnij: przesuń",
+    "zoomPreset1Year": "1 rok",
+    "zoomPreset6Months": "6 miesięcy",
+    "zoomPreset1Month": "1 miesiąc",
+    "zoomPreset1Week": "1 tydzień",
+    "zoomIn": "Powiększ",
+    "zoomOut": "Pomniejsz",
+    "today": "Dziś",
+    "todayShort": "Dziś",
+    "fitAll": "Wszystko",
+    "centerOnToday": "Wyśrodkuj na dziś",
+    "viewAll": "Zobacz wszystko",
+    "newestFirst": "Najnowsze na górze",
+    "oldestFirst": "Najstarsze na górze",
+    "recentUp": "Nowe ↑",
+    "oldUp": "Stare ↑",
+    "causality": "Przyczynowość",
+    "causalityHint": "Pokaż potencjalne przyczynowości między zdarzeniami połączonych elementów",
+    "maxDaysBetweenEvents": "Maks. {{days}} między zdarzeniami",
+    "unresolvedComments": "{{count}} nierozwiązanych komentarzy",
+    "potentialCausality": "Potencjalna przyczynowość",
+    "daysAfter": "({{count}} dni później)",
+    "unnamed": "Bez nazwy",
+    "relation": "relacja",
+    "newElement": "Nowy element"
+  },
+  "report": {
+    "title": "Raport",
+    "untitled": "Bez tytułu",
+    "addSection": "Dodaj sekcję",
+    "sections": {
+      "title": "Tytuł",
+      "text": "Tekst",
+      "canvas": "Tablica",
+      "map": "Mapa",
+      "timeline": "Oś czasu",
+      "table": "Tabela",
+      "insights": "Analizy"
+    },
+    "export": "Eksportuj do PDF",
+    "print": "Drukuj"
+  },
+  "join": {
+    "title": "Dołącz do sesji",
+    "sessionId": "Sesja: {{id}}...",
+    "connecting": "Łączenie...",
+    "syncing": "Synchronizacja z sesją {{id}}...",
+    "connectionError": "Błąd połączenia",
+    "cannotJoin": "Nie można dołączyć do sesji. Sprawdź link i spróbuj ponownie.",
+    "backToHome": "Powrót do strony głównej",
+    "retry": "Spróbuj ponownie",
+    "serverWarning": {
+      "title": "Inny serwer",
+      "subtitle": "Weryfikacja bezpieczeństwa",
+      "message": "Link udostępniania wskazuje na inny serwer synchronizacji niż ten, który skonfigurowałeś:",
+      "yourServer": "Twój serwer:",
+      "linkServer": "Serwer z linku:",
+      "trustNote": "Użyj serwera z linku tylko jeśli ufasz nadawcy. Złośliwy serwer może przechwycić dane Twojej sesji.",
+      "keepOld": "Zachowaj mój serwer",
+      "useNew": "Użyj nowego serwera"
+    },
+    "serverNotConfigured": {
+      "title": "Serwer nieskonfigurowany",
+      "message": "Aby dołączyć do sesji współpracy, musisz skonfigurować ten sam serwer synchronizacji co gospodarz.",
+      "save": "Zapisz",
+      "placeholder": "wss://serwer.przyklad.com"
+    },
+    "serverInfo": {
+      "label": "Serwer synchronizacji",
+      "providedByLink": "dostarczony przez link",
+      "modify": "Modyfikuj"
+    },
+    "userInfo": {
+      "joiningAs": "Dołączysz jako"
+    },
+    "localCopy": {
+      "label": "Nazwa Twojej lokalnej kopii",
+      "hint": "Ta nazwa będzie używana do identyfikacji tej sesji na Twoim urządzeniu."
+    },
+    "join": "Dołącz",
+    "defaultSessionName": "Sesja współpracy",
+    "sharedSessionJoined": "Dołączono do sesji współdzielonej {{date}}",
+    "errors": {
+      "invalidSessionId": "Nieprawidłowy ID sesji",
+      "configureServerFirst": "Najpierw skonfiguruj serwer synchronizacji",
+      "invalidServerUrl": "Serwer musi zaczynać się od ws:// lub wss://",
+      "connectionTimeout": "Przekroczono limit czasu połączenia",
+      "connectionLost": "Utracono połączenie",
+      "connectionError": "Błąd podczas łączenia"
+    }
+  }
+}

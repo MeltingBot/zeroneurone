@@ -1,0 +1,325 @@
+{
+  "home": {
+    "title": "ZeroNeurone",
+    "backToHome": "Tornar a l'inici",
+    "newInvestigation": "Nova investigació",
+    "manageTags": "Gestionar etiquetes",
+    "import": "Importar",
+    "about": "Quant a",
+    "storage": "Emmagatzematge",
+    "darkMode": "Mode fosc",
+    "lightMode": "Mode clar",
+    "noInvestigations": "Sense investigacions",
+    "createFirst": "Creeu la vostra primera investigació per començar",
+    "viewInvestigations": "Veure investigacions",
+    "investigationCount": "{{count}} investigació/ns",
+    "loading": "Carregant...",
+    "card": {
+      "modified": "Modificat {{time}}",
+      "elementCount": "{{count}} element(s)",
+      "linkCount": "{{count}} enllaç(os)",
+      "rename": "Reanomenar",
+      "exportZip": "Exportar ZIP",
+      "delete": "Eliminar",
+      "exportSuccess": "Exportació ZIP acabada",
+      "exportError": "Error durant l'exportació"
+    },
+    "landing": {
+      "subtitle": "Pissarra per a analistes i investigadors",
+      "description": "Una eina de codi obert d'amplificació cognitiva que combina la simplicitat d'una pissarra amb la potència de l'anàlisi de grafs. Mapeu les vostres idees, geolocalitzeu els vostres elements, visualitzeu els esdeveniments, connecteu les pistes i reveleu els patrons ocults.",
+      "startNew": "Nova investigació",
+      "importExisting": "Importar",
+      "viewExisting": "Veure les meves {{count}} investigació/ns",
+      "features": {
+        "graph": {
+          "title": "Graf relacional",
+          "description": "Visualitzeu les connexions entre persones, llocs i conceptes"
+        },
+        "map": {
+          "title": "Vista de mapa",
+          "description": "Posicioneu els vostres elements en un mapa interactiu i temporal"
+        },
+        "timeline": {
+          "title": "Línia de temps",
+          "description": "Organitzeu els esdeveniments cronològicament"
+        },
+        "search": {
+          "title": "Cerca i filtres instantanis",
+          "description": "Trobeu i filtreu qualsevol element en segons"
+        },
+        "local": {
+          "title": "Dades 100% locals",
+          "description": "Les vostres dades romanen a la vostra màquina, mai es transmeten"
+        },
+        "collab": {
+          "title": "Col·laboració segura en temps real",
+          "description": "Treballeu amb altres en la mateixa investigació"
+        }
+      }
+    }
+  },
+  "investigation": {
+    "loading": {
+      "opening": "Obrint...",
+      "syncing": "Sincronitzant...",
+      "files": "Fitxers...",
+      "elements": "Elements..."
+    },
+    "toolbar": {
+      "select": "Selecció",
+      "pan": "Desplaçament",
+      "addElement": "Afegir un element",
+      "addGroup": "Afegir un grup",
+      "addAnnotation": "Afegir una anotació",
+      "autoLayout": "Disposició automàtica",
+      "fitView": "Ajustar vista",
+      "zoomIn": "Apropar",
+      "zoomOut": "Allunyar",
+      "resetView": "Restablir vista",
+      "share": "Compartir",
+      "deselect": "Desseleccionar",
+      "snapToGrid": "Graella magnètica",
+      "alignGuides": "Guies d'alineació",
+      "minimap": "Minimapa",
+      "hideMinimap": "Amagar minimapa",
+      "closeEsc": "Tancar (Esc)",
+      "close": "Tancar",
+      "loading": "Carregant...",
+      "oneElement": "1 element",
+      "oneLink": "1 enllaç",
+      "selectedCount": "{{count}} seleccionats"
+    },
+    "contextMenu": {
+      "addElement": "Nou element",
+      "addGroup": "Nou grup",
+      "addAnnotation": "Nova anotació",
+      "edit": "Editar",
+      "duplicate": "Duplicar",
+      "delete": "Eliminar",
+      "hide": "Amagar",
+      "hideSelection": "Amagar selecció",
+      "hideElement": "Amagar element",
+      "show": "Mostrar",
+      "showElement": "Mostrar element",
+      "bringToFront": "Portar al davant",
+      "sendToBack": "Enviar al darrere",
+      "group": "Agrupar",
+      "groupSelection": "Agrupar selecció",
+      "ungroup": "Desagrupar",
+      "dissolveGroup": "Dissoldre grup",
+      "addToGroup": "Afegir al grup",
+      "removeFromGroup": "Treure del grup",
+      "selectAll": "Seleccionar tot",
+      "copy": "Copiar",
+      "cut": "Tallar",
+      "paste": "Enganxar",
+      "focusMode": "Mode focus",
+      "exitFocus": "Sortir del mode focus",
+      "focusNeighbors1": "Veïns directes",
+      "focusNeighbors2": "Veïns a 2 enllaços",
+      "focusNeighbors3": "Veïns a 3 enllaços",
+      "preview": "Previsualització",
+      "findPaths": "Trobar camins"
+    },
+    "viewToolbar": {
+      "undo": "Desfer (Ctrl+Z)",
+      "redo": "Refer (Ctrl+Maj+Z)",
+      "readableFont": "Font llegible",
+      "handwrittenFont": "Font manuscrita",
+      "darkMode": "Mode fosc",
+      "lightMode": "Mode clar",
+      "showMedia": "Mostrar mitjans",
+      "blurMedia": "Difuminar mitjans",
+      "showNames": "Mostrar noms",
+      "anonymousMode": "Mode anònim (redacció)",
+      "hideCommentBadges": "Amagar insígnies de comentaris",
+      "showCommentBadges": "Mostrar insígnies de comentaris"
+    },
+    "views": {
+      "canvas": "Llenç",
+      "map": "Mapa",
+      "split": "Dividida",
+      "timeline": "Línia de temps",
+      "report": "Informe"
+    },
+    "panels": {
+      "detail": "Detall",
+      "filters": "Filtres",
+      "insights": "Anàlisis",
+      "views": "Vistes"
+    },
+    "emptyCanvas": {
+      "title": "Llenç buit",
+      "hint": "Doble clic per crear un element",
+      "orDrop": "o deixeu anar fitxers"
+    },
+    "layout": {
+      "title": "Algoritmes de disposició",
+      "button": "Organitzar",
+      "buttonTitle": "Reorganització automàtica del graf",
+      "undoHint": "Ctrl+Z per desfer després d'aplicar",
+      "types": {
+        "force": {
+          "name": "Força (clústers)",
+          "description": "Agrupa elements connectats, separa clústers"
+        },
+        "circular": {
+          "name": "Circular",
+          "description": "Disposa els elements en cercle"
+        },
+        "grid": {
+          "name": "Graella",
+          "description": "Alinea els elements en graella regular"
+        },
+        "random": {
+          "name": "Dispersió",
+          "description": "Dispersa els elements aleatòriament"
+        }
+      }
+    },
+    "toast": {
+      "elementCreated": "Element creat",
+      "elementsDeleted": "{{count}} element(s) eliminat(s)",
+      "linkCreated": "Enllaç creat",
+      "copied": "Copiat al porta-retalls",
+      "pasted": "{{count}} element(s) enganxat(s)",
+      "saved": "Desat",
+      "exportSuccess": "Exportació acabada",
+      "exportError": "Error durant l'exportació"
+    },
+    "notFound": "Investigació no trobada",
+    "header": {
+      "report": "Informe",
+      "generateReport": "Generar un informe",
+      "export": "Exportar",
+      "search": "Cercar",
+      "clearFilters": "Esborrar filtres",
+      "activeFilters": "Filtres actius",
+      "shortcuts": "Dreceres de teclat",
+      "supportKofi": "Donar suport a Ko-fi"
+    },
+    "collab": {
+      "leaveTitle": "Abandonar la sessió col·laborativa",
+      "leaveMessage": "Els altres participants podran seguir utilitzant l'enllaç de compartició per sincronitzar les seves modificacions i reprendre la col·laboració.",
+      "rejoinMessage": "Podreu tornar a unir-vos a la sessió més tard a través del mateix enllaç.",
+      "leave": "Abandonar"
+    }
+  },
+  "map": {
+    "noGeoElements": "Cap element geolocalitzat",
+    "addLocation": "Afegiu coordenades als elements per veure'ls al mapa",
+    "pickLocation": "Feu clic al mapa per definir la posició",
+    "elementsLocated": "{{count}} element(s) localitzat(s)",
+    "linksCount": "({{count}} enllaç(os))",
+    "temporalMode": "Mode temporal",
+    "temporal": "Temporal",
+    "zoomToSelection": "Zoom a la selecció",
+    "selection": "Selecció",
+    "fitAll": "Ajustar a tots els elements",
+    "fit": "Ajustar",
+    "stepBack": "Retrocedir",
+    "stepForward": "Avançar",
+    "play": "Reproduir",
+    "pause": "Pausa",
+    "unnamed": "Sense nom"
+  },
+  "timeline": {
+    "noEvents": "Cap esdeveniment datat",
+    "addDates": "Afegiu dates als elements o creeu esdeveniments",
+    "noTemporalData": "Sense dades temporals",
+    "howToAddTimeline": "Per veure elements a la línia de temps:",
+    "addPeriodToLinks": "Afegiu un període als enllaços (data inici/fi)",
+    "addEventsToHistory": "Afegiu esdeveniments a l'historial dels elements",
+    "eventsCount": "{{count}} esdeveniment(s)",
+    "zoomHint": "Ctrl+roda: zoom | Arrossegar: moure",
+    "zoomPreset1Year": "1 any",
+    "zoomPreset6Months": "6 mesos",
+    "zoomPreset1Month": "1 mes",
+    "zoomPreset1Week": "1 setm.",
+    "zoomIn": "Apropar",
+    "zoomOut": "Allunyar",
+    "today": "Avui",
+    "todayShort": "Avui",
+    "fitAll": "Tot",
+    "centerOnToday": "Centrar a avui",
+    "viewAll": "Veure tot",
+    "newestFirst": "Més recent a dalt",
+    "oldestFirst": "Més antic a dalt",
+    "recentUp": "Recent ↑",
+    "oldUp": "Antic ↑",
+    "causality": "Causalitats",
+    "causalityHint": "Mostrar causalitats potencials entre esdeveniments d'elements enllaçats",
+    "maxDaysBetweenEvents": "Màx. {{days}} entre esdeveniments",
+    "unresolvedComments": "{{count}} comentari(s) sense resoldre",
+    "potentialCausality": "Causalitat potencial",
+    "daysAfter": "({{count}} dia/es després)",
+    "unnamed": "Sense nom",
+    "relation": "relació",
+    "newElement": "Nou element"
+  },
+  "report": {
+    "title": "Informe",
+    "untitled": "Sense títol",
+    "addSection": "Afegir una secció",
+    "sections": {
+      "title": "Títol",
+      "text": "Text",
+      "canvas": "Llenç",
+      "map": "Mapa",
+      "timeline": "Línia de temps",
+      "table": "Taula",
+      "insights": "Anàlisis"
+    },
+    "export": "Exportar a PDF",
+    "print": "Imprimir"
+  },
+  "join": {
+    "title": "Unir-se a una sessió",
+    "sessionId": "Sessió: {{id}}...",
+    "connecting": "Connectant...",
+    "syncing": "Sincronitzant amb la sessió {{id}}...",
+    "connectionError": "Error de connexió",
+    "cannotJoin": "No es pot unir a la sessió. Comproveu l'enllaç i torneu a provar.",
+    "backToHome": "Tornar a l'inici",
+    "retry": "Tornar a provar",
+    "serverWarning": {
+      "title": "Servidor diferent",
+      "subtitle": "Verificació de seguretat",
+      "message": "L'enllaç de compartició especifica un servidor de sincronització diferent del que heu configurat:",
+      "yourServer": "El vostre servidor:",
+      "linkServer": "Servidor de l'enllaç:",
+      "trustNote": "Utilitzeu el servidor de l'enllaç només si confieu en el seu remitent. Un servidor maliciós podria interceptar les dades de la vostra sessió.",
+      "keepOld": "Mantenir el meu servidor",
+      "useNew": "Utilitzar el nou servidor"
+    },
+    "serverNotConfigured": {
+      "title": "Servidor no configurat",
+      "message": "Per unir-vos a una sessió col·laborativa, heu de configurar el mateix servidor de sincronització que l'amfitrió.",
+      "save": "Desar",
+      "placeholder": "wss://servidor.exemple.com"
+    },
+    "serverInfo": {
+      "label": "Servidor de sincronització",
+      "providedByLink": "proporcionat per l'enllaç",
+      "modify": "Modificar"
+    },
+    "userInfo": {
+      "joiningAs": "Us unireu com a"
+    },
+    "localCopy": {
+      "label": "Nom de la vostra còpia local",
+      "hint": "Aquest nom s'utilitzarà per identificar aquesta sessió al vostre dispositiu."
+    },
+    "join": "Unir-se",
+    "defaultSessionName": "Sessió col·laborativa",
+    "sharedSessionJoined": "Sessió compartida unida el {{date}}",
+    "errors": {
+      "invalidSessionId": "ID de sessió invàlid",
+      "configureServerFirst": "Configureu primer un servidor de sincronització",
+      "invalidServerUrl": "El servidor ha de començar amb ws:// o wss://",
+      "connectionTimeout": "Temps de connexió esgotat",
+      "connectionLost": "Connexió perduda",
+      "connectionError": "Error durant la connexió"
+    }
+  }
+}

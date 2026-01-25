@@ -1,0 +1,325 @@
+{
+  "home": {
+    "title": "ZeroNeurone",
+    "backToHome": "Hasierara itzuli",
+    "newInvestigation": "Ikerketa berria",
+    "manageTags": "Etiketak kudeatu",
+    "import": "Inportatu",
+    "about": "Honi buruz",
+    "storage": "Biltegiratzea",
+    "darkMode": "Modu iluna",
+    "lightMode": "Modu argia",
+    "noInvestigations": "Ikerketarik ez",
+    "createFirst": "Sortu zure lehen ikerketa hasteko",
+    "viewInvestigations": "Ikerketak ikusi",
+    "investigationCount": "{{count}} ikerketa",
+    "loading": "Kargatzen...",
+    "card": {
+      "modified": "Aldatua {{time}}",
+      "elementCount": "{{count}} elementu",
+      "linkCount": "{{count}} lotura",
+      "rename": "Izena aldatu",
+      "exportZip": "ZIP esportatu",
+      "delete": "Ezabatu",
+      "exportSuccess": "ZIP esportazioa bukatuta",
+      "exportError": "Errorea esportatzean"
+    },
+    "landing": {
+      "subtitle": "Arbela analista eta ikertzaileentzat",
+      "description": "Kode irekiko tresna kognitibo indargarria, arbel baten sinpletasuna grafo analisiaren indarrarekin konbinatzen duena. Mapatu zure ideiak, geolokalizatu zure elementuak, bistaratu gertaerak, lotu pistak eta ezkutuko patroiak azaldu.",
+      "startNew": "Ikerketa berria",
+      "importExisting": "Inportatu",
+      "viewExisting": "Nire {{count}} ikerketa ikusi",
+      "features": {
+        "graph": {
+          "title": "Erlazio-grafoa",
+          "description": "Pertsonen, lekuen eta kontzeptuen arteko loturak bistaratu"
+        },
+        "map": {
+          "title": "Mapa ikuspegia",
+          "description": "Zure elementuak mapa interaktibo eta tenporalean kokatu"
+        },
+        "timeline": {
+          "title": "Denbora-lerroa",
+          "description": "Gertaerak kronologikoki antolatu"
+        },
+        "search": {
+          "title": "Berehalako bilaketa eta iragazkiak",
+          "description": "Edozein elementu aurkitu eta iragazi segundotan"
+        },
+        "local": {
+          "title": "Datuak %100 lokalak",
+          "description": "Zure datuak zure makinan geratzen dira, inoiz ez dira transmititzen"
+        },
+        "collab": {
+          "title": "Lankidetza segurua denbora errealean",
+          "description": "Lan egin beste batzuekin ikerketa berean"
+        }
+      }
+    }
+  },
+  "investigation": {
+    "loading": {
+      "opening": "Irekitzen...",
+      "syncing": "Sinkronizatzen...",
+      "files": "Fitxategiak...",
+      "elements": "Elementuak..."
+    },
+    "toolbar": {
+      "select": "Hautapena",
+      "pan": "Mugimendua",
+      "addElement": "Elementua gehitu",
+      "addGroup": "Taldea gehitu",
+      "addAnnotation": "Oharpena gehitu",
+      "autoLayout": "Antolamendu automatikoa",
+      "fitView": "Ikuspegia doitu",
+      "zoomIn": "Handitu",
+      "zoomOut": "Txikitu",
+      "resetView": "Ikuspegia berrezarri",
+      "share": "Partekatu",
+      "deselect": "Deshautatu",
+      "snapToGrid": "Sareta magnetikoa",
+      "alignGuides": "Lerrokatze gidak",
+      "minimap": "Minimapa",
+      "hideMinimap": "Minimapa ezkutatu",
+      "closeEsc": "Itxi (Esc)",
+      "close": "Itxi",
+      "loading": "Kargatzen...",
+      "oneElement": "Elementu 1",
+      "oneLink": "Lotura 1",
+      "selectedCount": "{{count}} hautatuta"
+    },
+    "contextMenu": {
+      "addElement": "Elementu berria",
+      "addGroup": "Talde berria",
+      "addAnnotation": "Oharpen berria",
+      "edit": "Editatu",
+      "duplicate": "Bikoiztu",
+      "delete": "Ezabatu",
+      "hide": "Ezkutatu",
+      "hideSelection": "Hautapena ezkutatu",
+      "hideElement": "Elementua ezkutatu",
+      "show": "Erakutsi",
+      "showElement": "Elementua erakutsi",
+      "bringToFront": "Aurrera ekarri",
+      "sendToBack": "Atzera bidali",
+      "group": "Taldekatu",
+      "groupSelection": "Hautapena taldekatu",
+      "ungroup": "Taldea desegin",
+      "dissolveGroup": "Taldea desegin",
+      "addToGroup": "Taldera gehitu",
+      "removeFromGroup": "Taldetik kendu",
+      "selectAll": "Dena hautatu",
+      "copy": "Kopiatu",
+      "cut": "Ebaki",
+      "paste": "Itsatsi",
+      "focusMode": "Foku modua",
+      "exitFocus": "Foku modutik irten",
+      "focusNeighbors1": "Zuzeneko auzokideak",
+      "focusNeighbors2": "2 loturako auzokideak",
+      "focusNeighbors3": "3 loturako auzokideak",
+      "preview": "Aurrebista",
+      "findPaths": "Bideak aurkitu"
+    },
+    "viewToolbar": {
+      "undo": "Desegin (Ctrl+Z)",
+      "redo": "Berregin (Ctrl+Shift+Z)",
+      "readableFont": "Letra irakurgarria",
+      "handwrittenFont": "Eskuz idatzitako letra",
+      "darkMode": "Modu iluna",
+      "lightMode": "Modu argia",
+      "showMedia": "Multimedia erakutsi",
+      "blurMedia": "Multimedia lausotu",
+      "showNames": "Izenak erakutsi",
+      "anonymousMode": "Modu anonimoa (zentsura)",
+      "hideCommentBadges": "Iruzkin txartelak ezkutatu",
+      "showCommentBadges": "Iruzkin txartelak erakutsi"
+    },
+    "views": {
+      "canvas": "Arbela",
+      "map": "Mapa",
+      "split": "Zatitua",
+      "timeline": "Denbora-lerroa",
+      "report": "Txostena"
+    },
+    "panels": {
+      "detail": "Xehetasuna",
+      "filters": "Iragazkiak",
+      "insights": "Analisiak",
+      "views": "Ikuspegiak"
+    },
+    "emptyCanvas": {
+      "title": "Arbela hutsa",
+      "hint": "Klik bikoitza elementu bat sortzeko",
+      "orDrop": "edo fitxategiak jaregin"
+    },
+    "layout": {
+      "title": "Antolamendu algoritmoak",
+      "button": "Antolatu",
+      "buttonTitle": "Grafoaren antolamendu automatikoa",
+      "undoHint": "Ctrl+Z aplikatu ondoren desegiteko",
+      "types": {
+        "force": {
+          "name": "Indarra (cluster)",
+          "description": "Konektatutako elementuak taldekatu, clusterrak banatu"
+        },
+        "circular": {
+          "name": "Zirkularra",
+          "description": "Elementuak zirkulu batean antolatu"
+        },
+        "grid": {
+          "name": "Sareta",
+          "description": "Elementuak sareta erregular batean lerrokatu"
+        },
+        "random": {
+          "name": "Sakabanaketa",
+          "description": "Elementuak ausaz sakabanatu"
+        }
+      }
+    },
+    "toast": {
+      "elementCreated": "Elementua sortuta",
+      "elementsDeleted": "{{count}} elementu ezabatuta",
+      "linkCreated": "Lotura sortuta",
+      "copied": "Arbelean kopiatuta",
+      "pasted": "{{count}} elementu itsatsita",
+      "saved": "Gordeta",
+      "exportSuccess": "Esportazioa bukatuta",
+      "exportError": "Errorea esportatzean"
+    },
+    "notFound": "Ikerketa ez da aurkitu",
+    "header": {
+      "report": "Txostena",
+      "generateReport": "Txostena sortu",
+      "export": "Esportatu",
+      "search": "Bilatu",
+      "clearFilters": "Iragazkiak garbitu",
+      "activeFilters": "Iragazki aktiboak",
+      "shortcuts": "Teklatuko lasterbideak",
+      "supportKofi": "Ko-fi-n lagundu"
+    },
+    "collab": {
+      "leaveTitle": "Lankidetza saioa utzi",
+      "leaveMessage": "Beste partaideek partekatzeko esteka erabiltzen jarrai dezakete aldaketak sinkronizatzeko eta lankidetza berriro hasteko.",
+      "rejoinMessage": "Zuk ere saiora itzul zaitezke geroago esteka beraren bidez.",
+      "leave": "Utzi"
+    }
+  },
+  "map": {
+    "noGeoElements": "Ez dago geolokalizatutako elementurik",
+    "addLocation": "Gehitu koordenatuak elementuei mapan ikusteko",
+    "pickLocation": "Egin klik mapan posizioa ezartzeko",
+    "elementsLocated": "{{count}} elementu kokatuta",
+    "linksCount": "({{count}} lotura)",
+    "temporalMode": "Denbora modua",
+    "temporal": "Denborazkoa",
+    "zoomToSelection": "Hautapenera zoom egin",
+    "selection": "Hautapena",
+    "fitAll": "Elementu guztietara doitu",
+    "fit": "Doitu",
+    "stepBack": "Atzera",
+    "stepForward": "Aurrera",
+    "play": "Erreproduzitu",
+    "pause": "Pausatu",
+    "unnamed": "Izenik gabe"
+  },
+  "timeline": {
+    "noEvents": "Ez dago datatutako gertaerarik",
+    "addDates": "Gehitu datak elementuei edo sortu gertaerak",
+    "noTemporalData": "Ez dago denbora daturik",
+    "howToAddTimeline": "Denbora-lerroan elementuak ikusteko:",
+    "addPeriodToLinks": "Gehitu epealdia loturei (hasiera/amaiera data)",
+    "addEventsToHistory": "Gehitu gertaerak elementuen historian",
+    "eventsCount": "{{count}} gertaera",
+    "zoomHint": "Ctrl+gurpila: zoom | Arrastatu: mugitu",
+    "zoomPreset1Year": "Urte 1",
+    "zoomPreset6Months": "6 hilabete",
+    "zoomPreset1Month": "Hilabete 1",
+    "zoomPreset1Week": "Aste 1",
+    "zoomIn": "Handitu",
+    "zoomOut": "Txikitu",
+    "today": "Gaur",
+    "todayShort": "Gaur",
+    "fitAll": "Dena",
+    "centerOnToday": "Gaurkoan zentratu",
+    "viewAll": "Dena ikusi",
+    "newestFirst": "Berriena goian",
+    "oldestFirst": "Zaharrena goian",
+    "recentUp": "Berria ↑",
+    "oldUp": "Zaharra ↑",
+    "causality": "Kausalitatea",
+    "causalityHint": "Lotutako elementuen gertaeren arteko kausalitate potentzialak erakutsi",
+    "maxDaysBetweenEvents": "Gehienez {{days}} gertaeren artean",
+    "unresolvedComments": "{{count}} iruzkin ebatzi gabe",
+    "potentialCausality": "Kausalitate potentziala",
+    "daysAfter": "({{count}} egun geroago)",
+    "unnamed": "Izenik gabe",
+    "relation": "erlazioa",
+    "newElement": "Elementu berria"
+  },
+  "report": {
+    "title": "Txostena",
+    "untitled": "Izenik gabe",
+    "addSection": "Sekzioa gehitu",
+    "sections": {
+      "title": "Izenburua",
+      "text": "Testua",
+      "canvas": "Arbela",
+      "map": "Mapa",
+      "timeline": "Denbora-lerroa",
+      "table": "Taula",
+      "insights": "Analisiak"
+    },
+    "export": "PDF gisa esportatu",
+    "print": "Inprimatu"
+  },
+  "join": {
+    "title": "Saio batera batu",
+    "sessionId": "Saioa: {{id}}...",
+    "connecting": "Konektatzen...",
+    "syncing": "{{id}} saioarekin sinkronizatzen...",
+    "connectionError": "Konexio errorea",
+    "cannotJoin": "Ezin da saiora batu. Egiaztatu esteka eta saiatu berriro.",
+    "backToHome": "Hasierara itzuli",
+    "retry": "Berriro saiatu",
+    "serverWarning": {
+      "title": "Zerbitzari desberdina",
+      "subtitle": "Segurtasun egiaztapena",
+      "message": "Partekatzeko estekak konfiguratu duzunarekin desberdina den sinkronizazio zerbitzari bat zehazten du:",
+      "yourServer": "Zure zerbitzaria:",
+      "linkServer": "Estekaren zerbitzaria:",
+      "trustNote": "Erabili estekaren zerbitzaria bidaltzailean konfiantza baduzu soilik. Zerbitzari gaiztoak zure saioko datuak atzeman ditzake.",
+      "keepOld": "Nire zerbitzaria mantendu",
+      "useNew": "Zerbitzari berria erabili"
+    },
+    "serverNotConfigured": {
+      "title": "Zerbitzaria konfiguratu gabe",
+      "message": "Lankidetza saio batera batzeko, ostalariak erabiltzen duen sinkronizazio zerbitzari bera konfiguratu behar duzu.",
+      "save": "Gorde",
+      "placeholder": "wss://zerbitzaria.adibidea.com"
+    },
+    "serverInfo": {
+      "label": "Sinkronizazio zerbitzaria",
+      "providedByLink": "estekak emandakoa",
+      "modify": "Aldatu"
+    },
+    "userInfo": {
+      "joiningAs": "Honela batuko zara"
+    },
+    "localCopy": {
+      "label": "Zure kopia lokalaren izena",
+      "hint": "Izen hau erabiliko da saio hau zure gailuan identifikatzeko."
+    },
+    "join": "Batu",
+    "defaultSessionName": "Lankidetza saioa",
+    "sharedSessionJoined": "Partekatutako saiora batuta {{date}}(e)an",
+    "errors": {
+      "invalidSessionId": "Saio ID baliogabea",
+      "configureServerFirst": "Lehenik sinkronizazio zerbitzari bat konfiguratu",
+      "invalidServerUrl": "Zerbitzariak ws:// edo wss:// -rekin hasi behar du",
+      "connectionTimeout": "Konexio denbora-muga",
+      "connectionLost": "Konexioa galdu da",
+      "connectionError": "Errorea konektatzean"
+    }
+  }
+}
