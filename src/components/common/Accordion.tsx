@@ -58,7 +58,7 @@ export function AccordionSection({
 
       <div
         className={`transition-all duration-200 ${
-          isOpen ? 'max-h-[2000px] opacity-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
+          isOpen ? 'max-h-[500px] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden'
         }`}
       >
         <div className="px-4 pb-4 pt-1">
