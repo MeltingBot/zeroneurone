@@ -80,6 +80,7 @@ function ToastItem({ id, type, message, Icon, onRemove }: ToastItemProps) {
     <div
       role="alert"
       aria-live="polite"
+      data-testid="toast"
       className={`
         flex items-start gap-3 p-3 sketchy-border-soft border node-shadow
         transition-all duration-200

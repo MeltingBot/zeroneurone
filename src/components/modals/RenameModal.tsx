@@ -57,6 +57,7 @@ export function RenameModal({
             variant="primary"
             onClick={handleSubmit}
             disabled={!name.trim() || name.trim() === currentName || isLoading}
+            data-testid="rename-confirm"
           >
             {isLoading ? t('modals:rename.renaming') : t('modals:rename.rename')}
           </Button>
@@ -69,6 +70,7 @@ export function RenameModal({
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
+          data-testid="rename-input"
         />
       </form>
     </Modal>

@@ -130,7 +130,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       />
 
       {/* Modal */}
-      <div className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary rounded-lg shadow-xl">
+      <div className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary rounded-lg shadow-xl" data-testid="import-modal">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
@@ -172,6 +172,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,*/*"
             onChange={handleFileSelect}
             className="hidden"
+            data-testid="import-file-input"
           />
 
           {/* Import button */}

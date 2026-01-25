@@ -52,6 +52,7 @@ export function InvestigationCard({
   return (
     <div
       onClick={handleOpen}
+      data-testid={`investigation-card-${investigation.id}`}
       className="
         border border-border-default sketchy-border node-shadow
         hover:bg-bg-secondary hover:node-shadow-hover
@@ -75,24 +76,24 @@ export function InvestigationCard({
           <div onClick={handleMenuClick}>
             <DropdownMenu
               trigger={
-                <IconButton size="sm">
+                <IconButton size="sm" data-testid="card-menu">
                   <MoreHorizontal size={14} />
                 </IconButton>
               }
             >
-              <DropdownItem onClick={() => onRename(investigation.id)}>
+              <DropdownItem onClick={() => onRename(investigation.id)} data-testid="rename-action">
                 <span className="flex items-center gap-2">
                   <Edit2 size={14} />
                   {t('home.card.rename')}
                 </span>
               </DropdownItem>
-              <DropdownItem onClick={handleExport}>
+              <DropdownItem onClick={handleExport} data-testid="export-action">
                 <span className="flex items-center gap-2">
                   <Download size={14} />
                   {t('home.card.exportZip')}
                 </span>
               </DropdownItem>
-              <DropdownItem destructive onClick={() => onDelete(investigation.id)}>
+              <DropdownItem destructive onClick={() => onDelete(investigation.id)} data-testid="delete-action">
                 <span className="flex items-center gap-2">
                   <Trash2 size={14} />
                   {t('home.card.delete')}

@@ -2528,6 +2528,7 @@ export function Canvas() {
         <div
           ref={reactFlowWrapper}
           className="flex-1 relative outline-none"
+          data-testid="canvas"
           data-report-capture="canvas"
           onMouseMove={(e) => { lastMousePosRef.current = { x: e.clientX, y: e.clientY }; }}
           onDrop={handleFileDrop}

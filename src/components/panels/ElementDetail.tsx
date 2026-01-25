@@ -417,6 +417,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
               }}
               placeholder={t('detail.placeholders.label')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
+              data-testid="element-label-input"
             />
             {!label && (
               <p className="text-xs text-warning">{t('detail.warnings.noName')}</p>

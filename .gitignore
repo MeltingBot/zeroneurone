@@ -39,3 +39,8 @@ CLAUDE.md
 **/CLAUDE.md
 **/.CLAUDE.md
 .claude/
+
+# Playwright
+.playwright-mcp/
+playwright-report/
+test-results/

@@ -143,6 +143,7 @@ export function HomePage() {
               variant="secondary"
               size="sm"
               onClick={() => setIsImportModalOpen(true)}
+              data-testid="import-button"
             >
               <Upload size={16} />
               {t('home.import')}
@@ -151,6 +152,7 @@ export function HomePage() {
               variant="primary"
               size="sm"
               onClick={handleOpenCreateModal}
+              data-testid="new-investigation"
             >
               <Plus size={16} />
               {t('home.newInvestigation')}
@@ -175,7 +177,7 @@ export function HomePage() {
           onToggleTheme={toggleThemeMode}
         />
       ) : (
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6" data-testid="investigation-list">
           {investigations.length === 0 ? (
             <EmptyState
               icon={FolderOpen}

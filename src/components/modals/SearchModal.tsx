@@ -280,6 +280,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             onKeyDown={handleKeyDown}
             placeholder={t('search.placeholder')}
             className="flex-1 bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none"
+            data-testid="search-input"
           />
           <button
             onClick={onClose}
@@ -306,6 +307,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               <button
                 key={result.id}
                 onClick={() => handleSelect(result)}
+                data-testid="search-result"
                 className={`w-full px-4 py-3 flex items-start gap-3 text-left transition-colors ${
                   index === selectedIndex
                     ? 'bg-accent/10'

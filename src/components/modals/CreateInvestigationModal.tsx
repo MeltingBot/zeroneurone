@@ -54,6 +54,7 @@ export function CreateInvestigationModal({
             variant="primary"
             onClick={handleSubmit}
             disabled={!name.trim() || isLoading}
+            data-testid="create-button"
           >
             {isLoading ? t('common:status.saving') : t('createInvestigation.create')}
           </Button>
@@ -67,6 +68,7 @@ export function CreateInvestigationModal({
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
+          data-testid="investigation-name"
         />
         <Textarea
           label={t('createInvestigation.descriptionPlaceholder')}
@@ -74,6 +76,7 @@ export function CreateInvestigationModal({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
+          data-testid="investigation-description"
         />
       </form>
     </Modal>

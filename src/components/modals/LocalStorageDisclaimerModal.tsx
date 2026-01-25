@@ -75,7 +75,7 @@ export function LocalStorageDisclaimerModal({
           <Button variant="secondary" onClick={onClose}>
             {t('common:actions.cancel')}
           </Button>
-          <Button variant="primary" onClick={handleAccept}>
+          <Button variant="primary" onClick={handleAccept} data-testid="disclaimer-accept">
             {t('localStorage.acknowledge')}
           </Button>
         </div>

@@ -52,12 +52,14 @@ interface DropdownItemProps {
   onClick?: () => void;
   destructive?: boolean;
   children: ReactNode;
+  'data-testid'?: string;
 }
 
-export function DropdownItem({ onClick, destructive, children }: DropdownItemProps) {
+export function DropdownItem({ onClick, destructive, children, 'data-testid': testId }: DropdownItemProps) {
   return (
     <button
       onClick={onClick}
+      data-testid={testId}
       className={`
         w-full px-3 py-1.5 text-sm text-left
         hover:bg-bg-tertiary

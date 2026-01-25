@@ -218,6 +218,7 @@ export function SidePanel() {
       ref={panelRef}
       className="border-l border-border-default bg-bg-primary flex flex-col overflow-hidden relative"
       style={{ width: `${width}px` }}
+      data-testid="detail-panel"
     >
       {/* Resize handle */}
       <div

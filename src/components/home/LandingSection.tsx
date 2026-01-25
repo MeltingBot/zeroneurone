@@ -33,7 +33,7 @@ export function LandingSection({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto" data-testid="landing-section">
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex flex-col items-center text-center mb-12">
@@ -54,11 +54,11 @@ export function LandingSection({
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 mt-8">
-            <Button variant="primary" size="md" onClick={onNewInvestigation}>
+            <Button variant="primary" size="md" onClick={onNewInvestigation} data-testid="new-investigation">
               <Plus size={18} />
               {t('home.landing.startNew')}
             </Button>
-            <Button variant="secondary" size="md" onClick={onImport}>
+            <Button variant="secondary" size="md" onClick={onImport} data-testid="import-button">
               <Upload size={18} />
               {t('home.landing.importExisting')}
             </Button>
