@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface MarkdownEditorProps {
   value: string;
@@ -105,6 +106,7 @@ export function MarkdownPreview({ content, className = '' }: { content: string; 
   return (
     <div className={`markdown-preview ${className}`}>
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           p: ({ children }) => <p className="mb-2 last:mb-0 text-text-primary">{children}</p>,
           strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
@@ -172,6 +174,30 @@ export function MarkdownPreview({ content, className = '' }: { content: string; 
             </blockquote>
           ),
           hr: () => <hr className="my-2 border-border-default" />,
+          table: ({ children }) => (
+            <div className="overflow-x-auto mb-2">
+              <table className="min-w-full text-xs border border-border-default">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-bg-tertiary">{children}</thead>
+          ),
+          tbody: ({ children }) => <tbody>{children}</tbody>,
+          tr: ({ children }) => (
+            <tr className="border-b border-border-default last:border-b-0">{children}</tr>
+          ),
+          th: ({ children }) => (
+            <th className="px-2 py-1.5 text-left font-semibold text-text-primary border-r border-border-default last:border-r-0">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-2 py-1.5 text-text-secondary border-r border-border-default last:border-r-0">
+              {children}
+            </td>
+          ),
         }}
       >
         {content}
