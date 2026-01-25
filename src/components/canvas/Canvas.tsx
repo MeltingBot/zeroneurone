@@ -2786,7 +2786,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     >
       <div
         className={`bg-bg-primary rounded shadow-lg flex flex-col ${
-          isPdf ? 'w-[90vw] h-[90vh]' : 'max-w-4xl max-h-[90vh]'
+          isPdf ? 'w-[90vw] h-[90vh]' : 'max-w-[90vw] h-[90vh]'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -2806,7 +2806,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className={`flex-1 min-h-0 ${isPdf ? 'overflow-hidden' : 'overflow-auto'}`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-2">
@@ -2821,19 +2821,19 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
               title={asset.filename}
             />
           ) : isImage && fileUrl ? (
-            <div className="p-4 flex items-center justify-center h-full">
+            <div className="p-4 text-center">
               <img
                 src={fileUrl}
                 alt={asset.filename}
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full inline-block"
               />
             </div>
           ) : asset.thumbnailDataUrl ? (
-            <div className="p-4 flex items-center justify-center h-full">
+            <div className="p-4 text-center">
               <img
                 src={asset.thumbnailDataUrl}
                 alt={asset.filename}
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full inline-block"
               />
             </div>
           ) : (
