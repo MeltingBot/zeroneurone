@@ -1,0 +1,425 @@
+{
+  "tabs": {
+    "detail": "Details",
+    "insights": "Analyses",
+    "filters": "Filters",
+    "views": "Weergaven",
+    "collapsePanel": "Paneel inklappen"
+  },
+  "investigation": {
+    "sections": {
+      "information": "Informatie",
+      "dates": "Datums",
+      "properties": "Eigenschappen"
+    },
+    "labels": {
+      "name": "Naam",
+      "description": "Beschrijving",
+      "creator": "Maker",
+      "tags": "Tags",
+      "startDate": "Startdatum",
+      "createdAt": "Aangemaakt op",
+      "updatedAt": "Gewijzigd op"
+    },
+    "placeholders": {
+      "name": "Naam van het onderzoek",
+      "creator": "Naam van de maker..."
+    }
+  },
+  "detail": {
+    "noSelection": "Geen element geselecteerd",
+    "multipleSelection": "{{count}} elementen geselecteerd",
+    "element": "Element",
+    "link": "Verbinding",
+    "group": "Groep",
+    "annotation": "Annotatie",
+    "sections": {
+      "identity": "Identiteit",
+      "content": "Inhoud",
+      "connection": "Verbinding",
+      "metadata": "Metadata",
+      "events": "Gebeurtenissen",
+      "location": "Locatie",
+      "properties": "Eigenschappen",
+      "appearance": "Weergave",
+      "comments": "Opmerkingen",
+      "files": "Bestanden"
+    },
+    "placeholders": {
+      "label": "Naamloos",
+      "linkLabel": "Naamloze relatie",
+      "notes": "Notities...",
+      "source": "Bron van de informatie...",
+      "markdown": "Markdown: **vet**, *cursief*, [link](url), lijsten...",
+      "keyName": "Naam...",
+      "keyValue": "Waarde..."
+    },
+    "labels": {
+      "name": "Naam",
+      "label": "Label",
+      "notes": "Notities",
+      "tags": "Tags",
+      "confidence": "Betrouwbaarheid",
+      "confidenceUndefined": "Niet gedefinieerd",
+      "source": "Bron",
+      "referenceDate": "Referentiedatum",
+      "dateCollected": "Verzameldatum",
+      "dateCollectedHelp": "Datum van toevoeging of verzameling van de informatie",
+      "useEventsForDates": "Gebruik de sectie 'Gebeurtenissen' voor gedateerde gebeurtenissen",
+      "direction": "Richting",
+      "directionNone": "Geen pijl",
+      "directionForward": "Naar bestemming",
+      "directionBackward": "Naar bron",
+      "directionBoth": "Bidirectioneel",
+      "openInNewTab": "Openen in nieuw tabblad"
+    },
+    "tags": {
+      "editIcon": "Pictogram bewerken",
+      "addIcon": "Pictogram toevoegen",
+      "deleteTag": "Tag {{tag}} verwijderen",
+      "newTagPlaceholder": "Nieuwe tag...",
+      "pressEnterToCreate": "Enter om \"{{value}}\" aan te maken",
+      "typeToFilter": "Typ om te filteren...",
+      "add": "Toevoegen",
+      "noTags": "Geen tags"
+    },
+    "warnings": {
+      "noName": "Het element heeft geen naam"
+    },
+    "link": {
+      "linkedElements": "Verbonden elementen",
+      "deletedElement": "Verwijderd element",
+      "relationPeriod": "Relatieperiode",
+      "periodStart": "Start",
+      "periodEnd": "Einde (leeg laten indien lopend)"
+    },
+    "events": {
+      "title": "Gebeurtenissen",
+      "description": "Geschiedenis van gedateerde gebeurtenissen (zichtbaar op de tijdlijn)",
+      "add": "Gebeurtenis toevoegen",
+      "labelPlaceholder": "Label (bijv.: Stop in Marseille, Site gehackt...)",
+      "noEvents": "Geen gebeurtenissen",
+      "hasLocation": "Heeft positie",
+      "hasDescription": "Heeft beschrijving",
+      "delete": "Verwijderen",
+      "dateTo": "tot",
+      "dateEndOptional": "Einde (optioneel)",
+      "descriptionLabel": "Beschrijving",
+      "descriptionPlaceholder": "Gedetailleerde beschrijving...",
+      "sourceLabel": "Bron",
+      "sourcePlaceholder": "Bron van de informatie...",
+      "locationOptional": "Locatie (optioneel)",
+      "clearLocation": "Wissen",
+      "pickOnMap": "Kaart"
+    },
+    "location": {
+      "title": "Locatie",
+      "description": "Vaste positie van het element (zichtbaar op de kaart)",
+      "gpsCoordinates": "GPS-coördinaten",
+      "latitude": "Breedtegraad",
+      "longitude": "Lengtegraad",
+      "latRange": "-90 tot 90",
+      "lngRange": "-180 tot 180",
+      "pickOnMap": "Kiezen op kaart",
+      "clearLocation": "Wissen",
+      "removeLocation": "Locatie verwijderen",
+      "noLocation": "Geen positie gedefinieerd"
+    },
+    "properties": {
+      "title": "Eigenschappen",
+      "add": "Toevoegen",
+      "addProperty": "Eigenschap toevoegen",
+      "selectAll": "Alles selecteren",
+      "deselectAll": "Selectie opheffen",
+      "ignore": "Negeren",
+      "keyPlaceholder": "Sleutel",
+      "valuePlaceholder": "Waarde",
+      "typePlaceholder": "Type",
+      "optionsPlaceholder": "Opties gescheiden door komma's",
+      "noProperties": "Geen eigenschappen",
+      "namePlaceholder": "Bijv.: KvK, Nationaliteit...",
+      "noMatch": "Geen overeenkomsten",
+      "suggestedFor": "Voorgestelde eigenschappen voor \"{{name}}\"",
+      "cancel": "Annuleren",
+      "showOnCanvas": "Tonen op canvas",
+      "hideOnCanvas": "Verbergen van canvas",
+      "deleteProperty": "Eigenschap {{key}} verwijderen",
+      "selectCountry": "Selecteer een land...",
+      "search": "Zoeken...",
+      "clearSelection": "Selectie wissen",
+      "noCountryFound": "Geen land gevonden",
+      "types": {
+        "text": "Tekst",
+        "number": "Numeriek",
+        "date": "Datum",
+        "datetime": "Datum/tijd",
+        "boolean": "Boolean",
+        "country": "Land",
+        "link": "Link",
+        "choice": "Keuze",
+        "geo": "Coörd."
+      },
+      "booleanYes": "Ja",
+      "booleanNo": "Nee"
+    },
+    "appearance": {
+      "title": "Weergave",
+      "color": "Kleur",
+      "borderColor": "Randkleur",
+      "defaultGray": "Standaard grijs",
+      "customColor": "Aangepaste kleur",
+      "shape": "Vorm",
+      "size": "Grootte",
+      "style": "Stijl",
+      "thickness": "Dikte"
+    },
+    "files": {
+      "title": "Bestanden",
+      "drop": "Sleep bestanden hier",
+      "noFiles": "Geen bestanden",
+      "delete": "Bestand verwijderen",
+      "download": "Downloaden",
+      "preview": "Voorbeeld",
+      "defaultThumbnail": "Standaard miniatuur",
+      "closeEsc": "Sluiten (Esc)"
+    },
+    "timestamps": {
+      "createdAt": "Aangemaakt op",
+      "updatedAt": "Gewijzigd op"
+    },
+    "comments": {
+      "addPlaceholder": "Opmerking toevoegen...",
+      "noComments": "Geen opmerkingen",
+      "markResolved": "Markeren als opgelost",
+      "markUnresolved": "Markeren als onopgelost",
+      "delete": "Verwijderen",
+      "resolvedBy": "Opgelost door {{name}}",
+      "time": {
+        "justNow": "Zojuist",
+        "minutesAgo": "{{count}} min geleden",
+        "hoursAgo": "{{count}} uur geleden",
+        "daysAgo": "{{count}} dag(en) geleden"
+      }
+    },
+    "geoPicker": {
+      "title": "Locatie kiezen",
+      "searchPlaceholder": "Zoek een adres, stad...",
+      "search": "Zoeken",
+      "noResults": "Geen resultaten gevonden",
+      "searchError": "Zoekfout",
+      "clickToPlace": "Klik op de kaart om een marker te plaatsen"
+    },
+    "multi": {
+      "title": "Bulkbewerking",
+      "elements": "{{count}} element(en)",
+      "links": "{{count}} verbinding(en)",
+      "addOrRemoveTags": "Tags toevoegen of verwijderen van alle geselecteerde elementen",
+      "removeFromSelection": "Uit selectie verwijderen",
+      "addPropertyToAll": "Eigenschap toevoegen aan alle geselecteerde elementen",
+      "setConfidenceAll": "Betrouwbaarheidsniveau instellen voor allen",
+      "setColorAll": "Kleur instellen voor allen",
+      "elementsSection": "Elementen ({{count}})",
+      "linksSection": "Verbindingen ({{count}})"
+    }
+  },
+  "filters": {
+    "title": "Filters",
+    "elementsCount": "{{matching}}/{{total}} elementen",
+    "active": "{{count}} actieve filter(s)",
+    "clearAll": "Alles wissen",
+    "hiddenCount": "{{count}} verborgen element(en)",
+    "activeFilters": "Actieve filters",
+    "noName": "Naamloos",
+    "show": "Tonen",
+    "sections": {
+      "quickFilters": "Snelfilters",
+      "textSearch": "Tekstzoeken",
+      "tags": "Tags",
+      "types": "Types",
+      "confidence": "Betrouwbaarheid",
+      "property": "Eigenschap",
+      "date": "Datum"
+    },
+    "placeholders": {
+      "textSearch": "Filteren op naam of notities...",
+      "allProperties": "Alle",
+      "all": "Alle"
+    },
+    "quick": {
+      "isolated": "Geïsoleerd",
+      "isolatedDesc": "Elementen zonder verbinding",
+      "noTags": "Zonder tags",
+      "noTagsDesc": "Elementen zonder tag",
+      "noGeo": "Zonder geo",
+      "noGeoDesc": "Elementen zonder coördinaten",
+      "noDate": "Zonder datum",
+      "noDateDesc": "Elementen zonder datum",
+      "lowConfidence": "Lage betrouwbaarheid",
+      "lowConfidenceDesc": "Betrouwbaarheid < 50%",
+      "hasComments": "Opmerkingen",
+      "hasCommentsDesc": "Elementen met onopgeloste opmerkingen"
+    },
+    "property": {
+      "hasProperty": "Heeft eigenschap",
+      "showAsBadge": "Tonen als badge op elementen"
+    },
+    "confidence": {
+      "minimum": "Minimale betrouwbaarheid"
+    },
+    "tags": {
+      "noTags": "Geen tags beschikbaar"
+    },
+    "hiddenElements": {
+      "title": "Verborgen",
+      "count": "{{count}} verborgen element(en)",
+      "showAll": "Alles tonen",
+      "noHidden": "Geen verborgen elementen"
+    }
+  },
+  "insights": {
+    "title": "Analyses",
+    "computing": "Analyse bezig...",
+    "noData": "Voeg elementen en verbindingen toe om analyses te zien.",
+    "noInsights": "Geen analyses gedetecteerd. Voeg meer verbindingen toe tussen elementen.",
+    "lastComputed": "Laatste analyse:",
+    "refresh": "Vernieuwen",
+    "noName": "Naamloos",
+    "noResults": "Geen resultaten",
+    "links": "{{count}} verbindingen",
+    "elements": "{{count}} elementen",
+    "sections": {
+      "clusters": "Clusters",
+      "bridges": "Bruggen",
+      "centrality": "Centraliteit",
+      "isolated": "Geïsoleerd",
+      "similar": "Vergelijkbaar"
+    },
+    "clusters": {
+      "title": "Clusters",
+      "description": "Groepen van sterk verbonden elementen",
+      "name": "Cluster {{id}}",
+      "count": "{{count}} cluster(s)",
+      "elements": "{{count}} elementen",
+      "actions": {
+        "select": "Select.",
+        "deselect": "Deselect.",
+        "hide": "Verberg",
+        "show": "Toon",
+        "filter": "Filter",
+        "group": "Groep",
+        "dissolve": "Ontbind"
+      }
+    },
+    "bridges": {
+      "title": "Bruggen",
+      "description": "Elementen die verschillende delen van de graaf verbinden",
+      "count": "{{count}} brug(gen)",
+      "noBridges": "Geen bruggen gedetecteerd",
+      "showBridges": "Bruggen tonen",
+      "hideBridges": "Markering verbergen",
+      "selectAll": "Alles selecteren",
+      "hideAll": "Alles verbergen",
+      "showAll": "Alles tonen"
+    },
+    "centrality": {
+      "title": "Meest verbonden",
+      "description": "Elementen met de meeste verbindingen",
+      "degree": "Graad",
+      "betweenness": "Tussenligging"
+    },
+    "isolated": {
+      "title": "Geïsoleerd",
+      "description": "Elementen zonder verbindingen",
+      "count": "{{count}} geïsoleerd(e) element(en)",
+      "noIsolated": "Geen geïsoleerde elementen",
+      "showIsolated": "Geïsoleerde tonen",
+      "hideIsolated": "Markering verbergen",
+      "selectAll": "Alles selecteren",
+      "hideAll": "Alles verbergen",
+      "showAll": "Alles tonen"
+    },
+    "similar": {
+      "title": "Potentiële duplicaten",
+      "description": "Elementen met vergelijkbare namen",
+      "count": "{{count}} vergelijkbare paren",
+      "noSimilar": "Geen vergelijkbare labels",
+      "select": "Selecteren",
+      "merge": "Samenvoegen"
+    },
+    "paths": {
+      "title": "Pad zoeken",
+      "button": "Pad vinden tussen twee elementen",
+      "from": "Van",
+      "to": "Naar",
+      "searchPlaceholder": "Element zoeken...",
+      "pathFound": "Pad gevonden ({{count}} stappen)",
+      "noPath": "Geen pad gevonden tussen deze elementen",
+      "pathLength": "{{count}} stap(pen)"
+    }
+  },
+  "views": {
+    "title": "Weergaven",
+    "canvasDisplay": "Weergave op canvas",
+    "tags": "Tags",
+    "tagSize": "Grootte:",
+    "tagModes": {
+      "hidden": "Verborgen",
+      "icons": "Pictogrammen",
+      "labels": "Labels",
+      "both": "Pictogrammen + Labels"
+    },
+    "confidenceIndicator": "Betrouwbaarheidsindicator",
+    "links": "Verbindingen",
+    "linkShape": "Vorm",
+    "linkCurves": "Curven",
+    "linkStraight": "Recht",
+    "linkOrthogonal": "Rechte hoeken",
+    "linkAnchor": "Verankering",
+    "linkAnchorManual": "Handmatig",
+    "linkAnchorAuto": "Automatisch",
+    "propertiesDisplay": "Weergegeven eigenschappen",
+    "propertiesAvailable": "{{count}} beschikbaar",
+    "searchProperty": "Eigenschap zoeken...",
+    "noResultsFor": "Geen resultaten voor \"{{search}}\"",
+    "propertiesSelected": "{{count}}/3 geselecteerd",
+    "maxProperties": "Max. 3",
+    "deselectAll": "Selectie opheffen",
+    "noPropertiesDefined": "Geen eigenschappen gedefinieerd op elementen",
+    "savedViews": "Opgeslagen weergaven",
+    "save": "Weergave opslaan",
+    "load": "Laden",
+    "delete": "Verwijderen",
+    "rename": "Hernoemen",
+    "noViews": "Geen opgeslagen weergaven",
+    "namePlaceholder": "Naam van weergave...",
+    "includePositions": "Posities opnemen ({{count}} elementen)",
+    "saveButton": "Opslaan",
+    "cancelButton": "Annuleren",
+    "saveCurrentView": "Huidige weergave opslaan",
+    "savedPositions": "Opgeslagen posities",
+    "deleteView": "Weergave verwijderen",
+    "activeView": "Actieve weergave. Filters en weergave hersteld.",
+    "positionsRestored": "Posities van {{count}} elementen hersteld.",
+    "saveDescription": "Slaat filters, zoom en verborgen elementen op"
+  },
+  "assets": {
+    "title": "Bestanden",
+    "noAssets": "Geen bestanden",
+    "drop": "Sleep bestanden",
+    "deleteConfirm": "Dit bestand verwijderen?",
+    "usedBy": "Gebruikt door {{count}} element(en)"
+  },
+  "history": {
+    "title": "Geschiedenis",
+    "noHistory": "Geen acties",
+    "undo": "Ongedaan maken",
+    "redo": "Opnieuw doen"
+  },
+  "collaboration": {
+    "title": "Samenwerking",
+    "connected": "Verbonden",
+    "disconnected": "Niet verbonden",
+    "users": "{{count}} gebruiker(s)",
+    "you": "U"
+  }
+}

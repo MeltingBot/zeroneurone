@@ -1,0 +1,325 @@
+{
+  "home": {
+    "title": "ZeroNeurone",
+    "backToHome": "Terug naar home",
+    "newInvestigation": "Nieuw onderzoek",
+    "manageTags": "Tags beheren",
+    "import": "Importeren",
+    "about": "Over",
+    "storage": "Opslag",
+    "darkMode": "Donkere modus",
+    "lightMode": "Lichte modus",
+    "noInvestigations": "Geen onderzoeken",
+    "createFirst": "Maak uw eerste onderzoek aan om te beginnen",
+    "viewInvestigations": "Onderzoeken bekijken",
+    "investigationCount": "{{count}} onderzoek(en)",
+    "loading": "Laden...",
+    "card": {
+      "modified": "Gewijzigd {{time}}",
+      "elementCount": "{{count}} element(en)",
+      "linkCount": "{{count}} verbinding(en)",
+      "rename": "Hernoemen",
+      "exportZip": "ZIP exporteren",
+      "delete": "Verwijderen",
+      "exportSuccess": "ZIP-export voltooid",
+      "exportError": "Fout tijdens export"
+    },
+    "landing": {
+      "subtitle": "Whiteboard voor analisten en onderzoekers",
+      "description": "Een Open Source tool voor cognitieve versterking die de eenvoud van een whiteboard combineert met de kracht van grafenanalyse. Breng uw ideeën in kaart, geolocaliseer uw elementen, visualiseer gebeurtenissen, verbind aanwijzingen en onthul verborgen patronen.",
+      "startNew": "Nieuw onderzoek",
+      "importExisting": "Importeren",
+      "viewExisting": "Bekijk mijn {{count}} onderzoek(en)",
+      "features": {
+        "graph": {
+          "title": "Relationele graaf",
+          "description": "Visualiseer verbindingen tussen personen, plaatsen en concepten"
+        },
+        "map": {
+          "title": "Kaartweergave",
+          "description": "Plaats uw elementen op een interactieve en temporele kaart"
+        },
+        "timeline": {
+          "title": "Tijdlijn",
+          "description": "Organiseer gebeurtenissen chronologisch"
+        },
+        "search": {
+          "title": "Directe zoek- en filterfuncties",
+          "description": "Vind en filter elk element in seconden"
+        },
+        "local": {
+          "title": "100% lokale gegevens",
+          "description": "Uw gegevens blijven op uw computer, worden nooit verzonden"
+        },
+        "collab": {
+          "title": "Veilige realtime samenwerking",
+          "description": "Werk samen met anderen aan hetzelfde onderzoek"
+        }
+      }
+    }
+  },
+  "investigation": {
+    "loading": {
+      "opening": "Openen...",
+      "syncing": "Synchroniseren...",
+      "files": "Bestanden...",
+      "elements": "Elementen..."
+    },
+    "toolbar": {
+      "select": "Selectie",
+      "pan": "Verplaatsen",
+      "addElement": "Element toevoegen",
+      "addGroup": "Groep toevoegen",
+      "addAnnotation": "Annotatie toevoegen",
+      "autoLayout": "Automatische indeling",
+      "fitView": "Weergave aanpassen",
+      "zoomIn": "Inzoomen",
+      "zoomOut": "Uitzoomen",
+      "resetView": "Weergave herstellen",
+      "share": "Delen",
+      "deselect": "Selectie opheffen",
+      "snapToGrid": "Magnetisch raster",
+      "alignGuides": "Uitlijnhulplijnen",
+      "minimap": "Minimap",
+      "hideMinimap": "Minimap verbergen",
+      "closeEsc": "Sluiten (Esc)",
+      "close": "Sluiten",
+      "loading": "Laden...",
+      "oneElement": "1 element",
+      "oneLink": "1 verbinding",
+      "selectedCount": "{{count}} geselecteerd"
+    },
+    "contextMenu": {
+      "addElement": "Nieuw element",
+      "addGroup": "Nieuwe groep",
+      "addAnnotation": "Nieuwe annotatie",
+      "edit": "Bewerken",
+      "duplicate": "Dupliceren",
+      "delete": "Verwijderen",
+      "hide": "Verbergen",
+      "hideSelection": "Selectie verbergen",
+      "hideElement": "Element verbergen",
+      "show": "Tonen",
+      "showElement": "Element tonen",
+      "bringToFront": "Naar voren brengen",
+      "sendToBack": "Naar achteren brengen",
+      "group": "Groeperen",
+      "groupSelection": "Selectie groeperen",
+      "ungroup": "Groepering opheffen",
+      "dissolveGroup": "Groep ontbinden",
+      "addToGroup": "Aan groep toevoegen",
+      "removeFromGroup": "Uit groep verwijderen",
+      "selectAll": "Alles selecteren",
+      "copy": "Kopiëren",
+      "cut": "Knippen",
+      "paste": "Plakken",
+      "focusMode": "Focusmodus",
+      "exitFocus": "Focusmodus verlaten",
+      "focusNeighbors1": "Directe buren",
+      "focusNeighbors2": "Buren op 2 verbindingen",
+      "focusNeighbors3": "Buren op 3 verbindingen",
+      "preview": "Voorbeeld",
+      "findPaths": "Paden zoeken"
+    },
+    "viewToolbar": {
+      "undo": "Ongedaan maken (Ctrl+Z)",
+      "redo": "Opnieuw doen (Ctrl+Shift+Z)",
+      "readableFont": "Leesbaar lettertype",
+      "handwrittenFont": "Handgeschreven lettertype",
+      "darkMode": "Donkere modus",
+      "lightMode": "Lichte modus",
+      "showMedia": "Media tonen",
+      "blurMedia": "Media vervagen",
+      "showNames": "Namen tonen",
+      "anonymousMode": "Anonieme modus (redactie)",
+      "hideCommentBadges": "Commentaarbadges verbergen",
+      "showCommentBadges": "Commentaarbadges tonen"
+    },
+    "views": {
+      "canvas": "Canvas",
+      "map": "Kaart",
+      "split": "Gesplitst",
+      "timeline": "Tijdlijn",
+      "report": "Rapport"
+    },
+    "panels": {
+      "detail": "Details",
+      "filters": "Filters",
+      "insights": "Analyses",
+      "views": "Weergaven"
+    },
+    "emptyCanvas": {
+      "title": "Leeg canvas",
+      "hint": "Dubbelklik om een element aan te maken",
+      "orDrop": "of sleep bestanden"
+    },
+    "layout": {
+      "title": "Indelingsalgoritmen",
+      "button": "Indelen",
+      "buttonTitle": "Automatische herindeling van de graaf",
+      "undoHint": "Ctrl+Z om ongedaan te maken na toepassing",
+      "types": {
+        "force": {
+          "name": "Kracht (clusters)",
+          "description": "Groepeert verbonden elementen, scheidt clusters"
+        },
+        "circular": {
+          "name": "Circulair",
+          "description": "Plaatst elementen in een cirkel"
+        },
+        "grid": {
+          "name": "Raster",
+          "description": "Lijnt elementen uit in een regelmatig raster"
+        },
+        "random": {
+          "name": "Verspreiding",
+          "description": "Verspreidt elementen willekeurig"
+        }
+      }
+    },
+    "toast": {
+      "elementCreated": "Element aangemaakt",
+      "elementsDeleted": "{{count}} element(en) verwijderd",
+      "linkCreated": "Verbinding aangemaakt",
+      "copied": "Gekopieerd naar klembord",
+      "pasted": "{{count}} element(en) geplakt",
+      "saved": "Opgeslagen",
+      "exportSuccess": "Export voltooid",
+      "exportError": "Fout tijdens export"
+    },
+    "notFound": "Onderzoek niet gevonden",
+    "header": {
+      "report": "Rapport",
+      "generateReport": "Rapport genereren",
+      "export": "Exporteren",
+      "search": "Zoeken",
+      "clearFilters": "Filters wissen",
+      "activeFilters": "Actieve filters",
+      "shortcuts": "Sneltoetsen",
+      "supportKofi": "Steun op Ko-fi"
+    },
+    "collab": {
+      "leaveTitle": "Samenwerkingssessie verlaten",
+      "leaveMessage": "Andere deelnemers kunnen de deellink blijven gebruiken om wijzigingen te synchroniseren en de samenwerking te hervatten.",
+      "rejoinMessage": "U kunt later ook weer deelnemen aan de sessie via dezelfde link.",
+      "leave": "Verlaten"
+    }
+  },
+  "map": {
+    "noGeoElements": "Geen geogelokaliseerde elementen",
+    "addLocation": "Voeg coördinaten toe aan elementen om ze op de kaart te zien",
+    "pickLocation": "Klik op de kaart om de positie te bepalen",
+    "elementsLocated": "{{count}} element(en) gelokaliseerd",
+    "linksCount": "({{count}} verbinding(en))",
+    "temporalMode": "Temporele modus",
+    "temporal": "Temporeel",
+    "zoomToSelection": "Inzoomen op selectie",
+    "selection": "Selectie",
+    "fitAll": "Aanpassen aan alle elementen",
+    "fit": "Aanpassen",
+    "stepBack": "Stap terug",
+    "stepForward": "Stap vooruit",
+    "play": "Afspelen",
+    "pause": "Pauze",
+    "unnamed": "Naamloos"
+  },
+  "timeline": {
+    "noEvents": "Geen gedateerde gebeurtenissen",
+    "addDates": "Voeg datums toe aan elementen of maak gebeurtenissen aan",
+    "noTemporalData": "Geen temporele gegevens",
+    "howToAddTimeline": "Om elementen op de tijdlijn te zien:",
+    "addPeriodToLinks": "Voeg een periode toe aan verbindingen (start-/einddatum)",
+    "addEventsToHistory": "Voeg gebeurtenissen toe aan de geschiedenis van elementen",
+    "eventsCount": "{{count}} gebeurtenis(sen)",
+    "zoomHint": "Ctrl+scroll: zoom | Slepen: verplaatsen",
+    "zoomPreset1Year": "1 jaar",
+    "zoomPreset6Months": "6 maanden",
+    "zoomPreset1Month": "1 maand",
+    "zoomPreset1Week": "1 week",
+    "zoomIn": "Inzoomen",
+    "zoomOut": "Uitzoomen",
+    "today": "Vandaag",
+    "todayShort": "Vandaag",
+    "fitAll": "Alles",
+    "centerOnToday": "Centreren op vandaag",
+    "viewAll": "Alles bekijken",
+    "newestFirst": "Nieuwste bovenaan",
+    "oldestFirst": "Oudste bovenaan",
+    "recentUp": "Recent ↑",
+    "oldUp": "Oud ↑",
+    "causality": "Causaliteit",
+    "causalityHint": "Potentiële causaliteiten tonen tussen gebeurtenissen van verbonden elementen",
+    "maxDaysBetweenEvents": "Max. {{days}} tussen gebeurtenissen",
+    "unresolvedComments": "{{count}} onopgeloste opmerking(en)",
+    "potentialCausality": "Potentiële causaliteit",
+    "daysAfter": "({{count}} dag(en) later)",
+    "unnamed": "Naamloos",
+    "relation": "relatie",
+    "newElement": "Nieuw element"
+  },
+  "report": {
+    "title": "Rapport",
+    "untitled": "Zonder titel",
+    "addSection": "Sectie toevoegen",
+    "sections": {
+      "title": "Titel",
+      "text": "Tekst",
+      "canvas": "Canvas",
+      "map": "Kaart",
+      "timeline": "Tijdlijn",
+      "table": "Tabel",
+      "insights": "Analyses"
+    },
+    "export": "Exporteren naar PDF",
+    "print": "Afdrukken"
+  },
+  "join": {
+    "title": "Deelnemen aan sessie",
+    "sessionId": "Sessie: {{id}}...",
+    "connecting": "Verbinden...",
+    "syncing": "Synchroniseren met sessie {{id}}...",
+    "connectionError": "Verbindingsfout",
+    "cannotJoin": "Kan niet deelnemen aan de sessie. Controleer de link en probeer opnieuw.",
+    "backToHome": "Terug naar home",
+    "retry": "Opnieuw proberen",
+    "serverWarning": {
+      "title": "Andere server",
+      "subtitle": "Veiligheidscontrole",
+      "message": "De deellink verwijst naar een andere synchronisatieserver dan die u hebt geconfigureerd:",
+      "yourServer": "Uw server:",
+      "linkServer": "Server van de link:",
+      "trustNote": "Gebruik de server van de link alleen als u de afzender vertrouwt. Een kwaadaardige server kan uw sessiegegevens onderscheppen.",
+      "keepOld": "Mijn server behouden",
+      "useNew": "Nieuwe server gebruiken"
+    },
+    "serverNotConfigured": {
+      "title": "Server niet geconfigureerd",
+      "message": "Om deel te nemen aan een samenwerkingssessie moet u dezelfde synchronisatieserver configureren als de host.",
+      "save": "Opslaan",
+      "placeholder": "wss://server.voorbeeld.nl"
+    },
+    "serverInfo": {
+      "label": "Synchronisatieserver",
+      "providedByLink": "verstrekt door de link",
+      "modify": "Wijzigen"
+    },
+    "userInfo": {
+      "joiningAs": "U neemt deel als"
+    },
+    "localCopy": {
+      "label": "Naam van uw lokale kopie",
+      "hint": "Deze naam wordt gebruikt om deze sessie op uw apparaat te identificeren."
+    },
+    "join": "Deelnemen",
+    "defaultSessionName": "Samenwerkingssessie",
+    "sharedSessionJoined": "Gedeelde sessie toegetreden op {{date}}",
+    "errors": {
+      "invalidSessionId": "Ongeldig sessie-ID",
+      "configureServerFirst": "Configureer eerst een synchronisatieserver",
+      "invalidServerUrl": "Server moet beginnen met ws:// of wss://",
+      "connectionTimeout": "Verbindingstimeout",
+      "connectionLost": "Verbinding verloren",
+      "connectionError": "Fout tijdens verbinden"
+    }
+  }
+}
