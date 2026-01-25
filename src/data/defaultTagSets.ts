@@ -139,7 +139,7 @@ export const DEFAULT_TAG_SETS: TagSet[] = [
       icon: 'Globe',
     },
     suggestedProperties: [
-      { key: 'URL', type: 'text', description: '', placeholder: 'https://example.com' },
+      { key: 'URL', type: 'link', description: '', placeholder: 'https://example.com' },
       { key: 'Domaine', type: 'text', description: '', placeholder: 'example.com' },
       { key: 'Registrar', type: 'text', description: '', placeholder: 'OVH' },
       { key: 'Date création', type: 'date', description: '', placeholder: '2010-05-20' },
@@ -160,7 +160,7 @@ export const DEFAULT_TAG_SETS: TagSet[] = [
     suggestedProperties: [
       { key: 'Plateforme', type: 'choice', description: '', placeholder: '', choices: ['Twitter/X', 'Facebook', 'Instagram', 'LinkedIn', 'Telegram', 'TikTok', 'YouTube', 'Snapchat', 'Discord', 'Autre'] },
       { key: 'Username', type: 'text', description: '', placeholder: '@johndoe' },
-      { key: 'URL profil', type: 'text', description: '', placeholder: 'https://twitter.com/johndoe' },
+      { key: 'URL profil', type: 'link', description: '', placeholder: 'https://twitter.com/johndoe' },
       { key: 'Nom affiché', type: 'text', description: '', placeholder: 'John Doe' },
       { key: 'Followers', type: 'number', description: '', placeholder: '1234' },
     ],
