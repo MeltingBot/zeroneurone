@@ -25,6 +25,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
   // Get version from build-time constants (injected by Vite)
   const version = __APP_VERSION__;
   const buildTime = __BUILD_TIME__;
+  const gitCommit = __GIT_COMMIT__;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('about.title')} width="md">
@@ -36,6 +37,9 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
               <h3 className="text-lg font-semibold text-text-primary">ZeroNeurone</h3>
               <p className="text-xs text-text-tertiary">
                 {t('about.version', { version })}
+                {gitCommit && (
+                  <span className="ml-1 font-mono text-text-tertiary/70">({gitCommit})</span>
+                )}
                 {buildTime && (
                   <span className="ml-1 text-text-tertiary/60">
                     {t('about.buildDate', { date: new Date(buildTime).toLocaleDateString(locale) })}
