@@ -8,10 +8,12 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue)
+![Version](https://img.shields.io/badge/version-0.9.11-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
+![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8)
+![i18n](https://img.shields.io/badge/i18n-11%20langues-orange)
 
 ## Philosophie
 
@@ -28,25 +30,33 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Multi-selection et manipulation groupee
 - Zoom et navigation fluides
 - Personnalisation visuelle (couleurs, formes, tailles, icones)
+- Groupes visuels imbriques
+- Annotations (post-its)
+- Menu contextuel avec actions sur la selection
+- Minimap pour navigation rapide
+- Grille d'alignement magnetique
 
 ### Gestion des Donnees
 - **Elements** : Noeuds du graphe (personnes, entreprises, lieux, concepts, documents...)
 - **Liens** : Relations entre elements avec metadonnees completes
 - **Proprietes** : Paires cle/valeur personnalisables
 - **Tags** : Organisation libre et filtrage
-- **Pieces jointes** : Images, PDF, documents avec extraction de texte
+- **Pieces jointes** : Images, PDF, documents avec extraction de texte (EXIF, metadonnees PDF/DOCX/XLSX)
+- **Description Markdown** : Support complet avec tables, liens d'ancrage, code, citations
 
 ### Analyse de Graphe
 - Detection de communautes (Louvain)
 - Centralite (degre, intermediaire)
-- Identification des ponts entre clusters
+- Identification des ponts entre clusters (Tarjan O(V+E))
 - Plus court chemin entre elements
 - Mode focus (voisinage a N niveaux)
+- Detection des noeuds isoles
+- Analyse de similarite des labels
 
 ### Vues Multiples
 - **Canvas** : Vue graphe principale
 - **Carte** : Visualisation geographique (Leaflet)
-- **Timeline** : Frise chronologique des evenements
+- **Timeline** : Frise chronologique virtualisee (10k+ elements)
 - **Vue partagee** : Combinaison carte/canvas
 
 ### Collaboration Temps Reel
@@ -55,13 +65,51 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Curseurs et selections des collaborateurs visibles
 - Synchronisation des pieces jointes
 - Detection de presence avec heartbeat
+- Sync incrementale optimisee
 
 ### Export & Import
 - Export ZIP complet (JSON + assets)
-- Export PNG/PDF du canvas
+- Export PNG haute resolution (zoom/scale configurable)
+- Export SVG natif (vectoriel)
+- Export PDF du canvas
+- Export CSV (avec positions/groupes)
 - Import CSV pour donnees tabulaires
 - Import GraphML pour donnees de graphes
-- Rapports personnalisables
+- Import Excalidraw
+- Import ZIP (restauration complete)
+- Rapports personnalisables avec sections et captures
+
+### Layouts Automatiques
+- Force-directed (physique)
+- Circulaire
+- Hierarchique
+
+### PWA & Hors-ligne
+- Installation sur mobile et desktop
+- Fonctionne 100% hors-ligne
+- Cache intelligent des tuiles OpenStreetMap
+- Service Worker avec mise a jour automatique
+
+### Accessibilite (WCAG AA)
+- Labels ARIA sur tous les controles interactifs
+- Navigation complete au clavier
+- Focus trap dans les modals
+- Skip link pour acces rapide au contenu
+- Contraste suffisant
+
+### Internationalisation
+11 langues supportees :
+- Francais (fr)
+- English (en)
+- Espanol (es)
+- Deutsch (de)
+- Catala (ca)
+- Euskara (eu)
+- Italiano (it)
+- Polski (pl)
+- Portugues (pt)
+- Ukrainska (ua)
+- Nederlands (nl)
 
 ## Stack Technique
 
@@ -76,7 +124,9 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 | Recherche | MiniSearch |
 | Sync | Yjs + y-websocket + y-indexeddb |
 | Crypto | Web Crypto API (AES-256-GCM) |
+| PWA | vite-plugin-pwa |
 | Style | Tailwind CSS |
+| Tests E2E | Playwright |
 
 ## Installation
 
@@ -101,10 +151,17 @@ L'application sera accessible sur `http://localhost:5173`
 | Action | Raccourci |
 |--------|-----------|
 | Recherche | `Ctrl+K` |
-| Supprimer selection | `Delete` / `Backspace` |
+| Copier | `Ctrl+C` |
+| Couper | `Ctrl+X` |
+| Coller | `Ctrl+V` |
+| Dupliquer | `Ctrl+D` |
 | Annuler | `Ctrl+Z` |
 | Retablir | `Ctrl+Shift+Z` |
+| Supprimer selection | `Delete` / `Backspace` |
 | Mode focus | `F` |
+| Nouvel element | `E` |
+| Nouveau groupe | `G` |
+| Nouvelle annotation | `N` |
 | Vue Canvas | `1` |
 | Vue Carte | `2` |
 | Vue Partagee | `3` |
@@ -160,10 +217,12 @@ src/
 │   ├── syncService.ts          # Gestion Y.Doc et providers
 │   ├── cryptoService.ts        # Chiffrement E2E
 │   ├── searchService.ts        # Integration MiniSearch
-│   ├── insightsService.ts      # Analyse Graphology
+│   ├── insightsService.ts      # Analyse Graphology (Web Worker)
 │   ├── fileService.ts          # Gestion OPFS
 │   ├── importService.ts        # Import ZIP/CSV
 │   └── exportService.ts        # Export ZIP/PNG/PDF
+├── workers/                    # Web Workers (analyse, layout)
+├── i18n/                       # Traductions (11 langues)
 ├── types/                      # Types TypeScript
 └── utils/                      # Utilitaires
 ```
@@ -198,7 +257,13 @@ src/
 npm run dev
 
 # Verification TypeScript
-npx tsc --noEmit
+npm run typecheck
+
+# Tests E2E
+npm run test:e2e
+
+# Tests E2E avec interface
+npm run test:e2e:ui
 
 # Linting
 npm run lint
@@ -278,11 +343,31 @@ Ou deployer votre propre serveur y-websocket.
 
 ## Roadmap
 
-- [ ] Analyse temporelle avancee
-- [ ] Templates d'enquete
-- [ ] Plugins et extensibilite
-- [ ] Application desktop (Tauri)
+### v1.0 — Stabilisation (en cours)
+- [x] Tests E2E Playwright
+- [x] PWA complete
+- [x] Accessibilite WCAG AA
+- [x] i18n (11 langues)
+- [ ] Documentation utilisateur
+- [ ] Error boundaries
+
+### v1.1 — Analyse avancee
+- [ ] Betweenness centrality
+- [ ] Filtre temporel sur timeline
+- [ ] Recherche dans les properties
+- [ ] Export des resultats d'analyse
+
+### v1.2 — Import/Integration
+- [ ] Import Maltego (MTGL/MTGX)
+- [ ] Import STIX/TAXII
+- [ ] Merge d'investigations
+- [ ] API REST locale
+
+### Au-dela
+- [ ] Theming personnalisable
+- [ ] Plugin system
 - [ ] Mode presentation
+- [ ] Application desktop (Tauri)
 
 ## Contribuer
 
