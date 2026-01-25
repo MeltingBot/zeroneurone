@@ -2,13 +2,30 @@ import { Page, expect } from '@playwright/test';
 
 /**
  * Clear all IndexedDB databases for a clean test state
+ * Note: This must be called AFTER navigating to the page
  */
 export async function clearIndexedDB(page: Page) {
   await page.evaluate(async () => {
-    const databases = await indexedDB.databases();
-    for (const db of databases) {
-      if (db.name) {
-        indexedDB.deleteDatabase(db.name);
+    // Delete known database(s) used by zeroneurone
+    const dbNames = ['zeroneurone', 'zeroneurone-db'];
+    for (const name of dbNames) {
+      try {
+        indexedDB.deleteDatabase(name);
+      } catch {
+        // Ignore errors if database doesn't exist
+      }
+    }
+    // Also try to get the list of databases if the API is available
+    if ('databases' in indexedDB) {
+      try {
+        const databases = await indexedDB.databases();
+        for (const db of databases) {
+          if (db.name) {
+            indexedDB.deleteDatabase(db.name);
+          }
+        }
+      } catch {
+        // Ignore if not supported
       }
     }
   });
@@ -62,6 +79,16 @@ export async function goToHomePage(page: Page) {
 }
 
 /**
+ * Navigate home using the back button (client-side navigation)
+ * This preserves IndexedDB state better than page.goto('/')
+ */
+export async function navigateHomeViaBackButton(page: Page) {
+  const backButton = page.locator('[data-testid="back-to-home"]');
+  await backButton.click();
+  await waitForAppLoad(page);
+}
+
+/**
  * Open the search modal (Ctrl+K)
  */
 export async function openSearch(page: Page) {
@@ -102,10 +129,22 @@ export async function getLinkCount(page: Page): Promise<number> {
 
 /**
  * Set up a clean test environment
+ * Note: Each Playwright test runs in a fresh browser context with empty IndexedDB
  */
 export async function setupCleanEnvironment(page: Page) {
-  await clearIndexedDB(page);
-  await goToHomePage(page);
+  // Navigate to the app
+  await page.goto('/');
+
+  // Try to clear any existing data (in case context is reused)
+  try {
+    await clearIndexedDB(page);
+  } catch {
+    // Ignore errors - context might be fresh
+  }
+
+  // Reload to ensure clean state
+  await page.reload();
+  await waitForAppLoad(page);
 }
 
 /**

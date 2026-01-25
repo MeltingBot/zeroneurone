@@ -216,7 +216,7 @@ export function InvestigationPage() {
       {/* Header */}
       <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary">
         <div className="flex items-center gap-3">
-          <IconButton onClick={handleGoHome}>
+          <IconButton onClick={handleGoHome} data-testid="back-to-home">
             <ArrowLeft size={16} />
           </IconButton>
           <h1 className="text-sm font-semibold text-text-primary">

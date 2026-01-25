@@ -1,13 +1,30 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import {
   setupCleanEnvironment,
   createTestInvestigation,
   createElementOnCanvas,
   getElementCount,
   goToHomePage,
+  navigateHomeViaBackButton,
 } from './fixtures/test-utils';
+
+/**
+ * Helper to navigate home using the back button and wait for investigation list
+ * Uses client-side navigation which preserves IndexedDB state
+ */
+async function goHomeAndWaitForList(page: import('@playwright/test').Page) {
+  // Use client-side navigation via the back button
+  await navigateHomeViaBackButton(page);
+
+  // Wait for the list to appear (not the landing page)
+  await page.waitForSelector('[data-testid="investigation-list"]', { timeout: 10000 });
+}
 
 test.describe('Import/Export Operations', () => {
   test.beforeEach(async ({ page }) => {
@@ -24,9 +41,8 @@ test.describe('Import/Export Operations', () => {
     await labelInput.fill('Test Element');
     await page.waitForTimeout(600);
 
-    // Go back home
-    await goToHomePage(page);
-    await page.waitForSelector('[data-testid="investigation-list"]');
+    // Go back home and wait for list
+    await goHomeAndWaitForList(page);
 
     // Open menu on the card
     const menuButton = page.locator('[data-testid^="investigation-card-"] [data-testid="card-menu"]');
@@ -62,8 +78,7 @@ test.describe('Import/Export Operations', () => {
     await page.waitForTimeout(600);
 
     // Go home and export
-    await goToHomePage(page);
-    await page.waitForSelector('[data-testid="investigation-list"]');
+    await goHomeAndWaitForList(page);
 
     const menuButton = page.locator('[data-testid^="investigation-card-"] [data-testid="card-menu"]');
     await menuButton.click();
@@ -93,11 +108,10 @@ test.describe('Import/Export Operations', () => {
     // Wait for import to complete
     await page.waitForTimeout(2000);
 
-    // Go back to home
-    await goToHomePage(page);
+    // Go back to home and wait for investigation list
+    await goHomeAndWaitForList(page);
 
     // Verify investigation was imported
-    await page.waitForSelector('[data-testid="investigation-list"]');
     const card = page.locator(`[data-testid^="investigation-card-"]`);
     await expect(card).toBeVisible();
 

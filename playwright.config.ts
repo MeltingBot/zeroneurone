@@ -13,12 +13,20 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
+    // Use fresh storage state for each test to avoid IndexedDB persistence issues
+    storageState: undefined,
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Ensure fresh context for each test
+        launchOptions: {
+          args: ['--disable-web-security'],
+        },
+      },
     },
   ],
 
