@@ -182,5 +182,8 @@
     "de": "Deutsch",
     "eu": "Euskara",
     "ca": "Català"
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content"
   }
 }

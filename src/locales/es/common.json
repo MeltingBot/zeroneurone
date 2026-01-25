@@ -180,5 +180,8 @@
     "en": "English",
     "es": "Español",
     "de": "Deutsch"
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content"
   }
 }

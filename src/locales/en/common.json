@@ -176,5 +176,8 @@
   },
   "language": {
     "switch": "Switch language"
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content"
   }
 }

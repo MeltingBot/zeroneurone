@@ -187,5 +187,8 @@
     "pl": "Polski",
     "uk": "Українська",
     "nl": "Nederlands"
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content"
   }
 }
