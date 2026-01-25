@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, useId, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { IconButton } from './IconButton';
 
@@ -17,6 +18,20 @@ const widthStyles = {
   lg: 'w-[640px]',
 };
 
+// Get all focusable elements within a container
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  const focusableSelectors = [
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    'a[href]',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(', ');
+
+  return Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors));
+}
+
 export function Modal({
   isOpen,
   onClose,
@@ -25,22 +40,69 @@ export function Modal({
   footer,
   width = 'md',
 }: ModalProps) {
-  // Handle escape key
+  const { t } = useTranslation('common');
+  const titleId = useId();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  // Handle escape key and focus trap
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
+    if (!isOpen) return;
+
+    // Store the previously focused element
+    previousActiveElement.current = document.activeElement as HTMLElement;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      // Focus trap with Tab key
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = getFocusableElements(modalRef.current);
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // Shift + Tab: going backwards
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab: going forward
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    // Focus the first focusable element in the modal
+    setTimeout(() => {
+      if (modalRef.current) {
+        const focusableElements = getFocusableElements(modalRef.current);
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+        }
+      }
+    }, 0);
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
+
+      // Restore focus to the previously focused element
+      if (previousActiveElement.current) {
+        previousActiveElement.current.focus();
+      }
     };
   }, [isOpen, onClose]);
 
@@ -52,10 +114,15 @@ export function Modal({
       <div
         className="absolute inset-0 bg-text-primary/40"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className={`
           relative
           bg-bg-primary sketchy-border-soft modal-shadow
@@ -66,8 +133,8 @@ export function Modal({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
-          <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
-          <IconButton onClick={onClose} size="sm">
+          <h2 id={titleId} className="text-sm font-semibold text-text-primary">{title}</h2>
+          <IconButton onClick={onClose} size="sm" aria-label={t('actions.close')}>
             <X size={16} />
           </IconButton>
         </div>

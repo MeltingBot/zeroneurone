@@ -184,5 +184,8 @@
     "ca": "Català",
     "it": "Italiano",
     "pt": "Português"
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content"
   }
 }
