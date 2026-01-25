@@ -49,7 +49,7 @@ export function PropertiesEditor({
   const { t, i18n } = useTranslation('panels');
   const [isAdding, setIsAdding] = useState(false);
   const [newKey, setNewKey] = useState('');
-  const [newValue, setNewValue] = useState<string | number | boolean | null>('');
+  const [newValue, setNewValue] = useState<string | number | boolean | Date | null>('');
   const [newType, setNewType] = useState<PropertyType>('text');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);

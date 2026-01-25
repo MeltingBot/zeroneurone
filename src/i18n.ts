@@ -1,4 +1,4 @@
-import i18n from 'i18next';
+import i18n, { type Resource } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
@@ -26,8 +26,8 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = languagesConfig;
 const translationModules = import.meta.glob('./locales/*/!(languages).json', { eager: true });
 
 // Build the resources object dynamically from the glob imports
-function buildResources(): Record<string, Record<string, unknown>> {
-  const resources: Record<string, Record<string, unknown>> = {};
+function buildResources(): Resource {
+  const resources: Resource = {};
 
   for (const [path, module] of Object.entries(translationModules)) {
     // Path format: ../public/locales/{lang}/{namespace}.json
@@ -37,7 +37,7 @@ function buildResources(): Record<string, Record<string, unknown>> {
       if (!resources[lang]) {
         resources[lang] = {};
       }
-      resources[lang][namespace] = (module as { default: unknown }).default;
+      resources[lang][namespace] = (module as { default: Record<string, string> }).default;
     }
   }
 

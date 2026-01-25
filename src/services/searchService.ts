@@ -1,6 +1,6 @@
 import MiniSearch from 'minisearch';
 import type { Element, Link, SearchDocument, SearchResult, Property } from '../types';
-import { getCountryByCode } from '../data/countries';
+import { getCountryByCode, getCountryName } from '../data/countries';
 
 class SearchService {
   private index: MiniSearch<SearchDocument>;
@@ -184,7 +184,8 @@ class SearchService {
     if (p.type === 'country' && value) {
       const country = getCountryByCode(value);
       if (country) {
-        return `${p.key} ${value} ${country.name}`;
+        // Index with country name in French (fallback) for search
+        return `${p.key} ${value} ${getCountryName(country.code, 'fr')}`;
       }
     }
     return `${p.key} ${value}`;
