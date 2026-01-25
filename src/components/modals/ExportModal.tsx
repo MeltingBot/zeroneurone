@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
@@ -10,21 +11,22 @@ interface ExportModalProps {
   onClose: () => void;
 }
 
-const exportFormats: { format: ExportFormat; label: string; description: string; icon: typeof FileJson }[] = [
-  { format: 'zip', label: 'ZIP (complet)', description: 'Archive avec fichiers joints (recommandé)', icon: FileArchive },
-  { format: 'json', label: 'JSON', description: 'Métadonnées uniquement (sans fichiers)', icon: FileJson },
-  { format: 'csv', label: 'CSV', description: 'Tableaux éléments et liens séparés', icon: FileSpreadsheet },
-  { format: 'graphml', label: 'GraphML', description: 'Format graphe standard (Gephi, yEd)', icon: FileText },
+const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; icon: typeof FileJson }[] = [
+  { format: 'zip', labelKey: 'zip', descKey: 'zipDesc', icon: FileArchive },
+  { format: 'json', labelKey: 'json', descKey: 'jsonDesc', icon: FileJson },
+  { format: 'csv', labelKey: 'csv', descKey: 'csvDesc', icon: FileSpreadsheet },
+  { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
 ];
 
 const pngScaleOptions = [
-  { scale: 1, label: '1x', description: 'Taille normale' },
-  { scale: 2, label: '2x', description: 'Haute définition' },
-  { scale: 3, label: '3x', description: 'Très haute définition' },
-  { scale: 4, label: '4x', description: 'Ultra haute définition' },
+  { scale: 1, label: '1x', descKey: '1x' },
+  { scale: 2, label: '2x', descKey: '2x' },
+  { scale: 3, label: '3x', descKey: '3x' },
+  { scale: 4, label: '4x', descKey: '4x' },
 ];
 
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
+  const { t } = useTranslation('modals');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPngScale, setSelectedPngScale] = useState(2);
   const [showPngOptions, setShowPngOptions] = useState(false);
@@ -43,14 +45,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       }
 
       await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets);
-      toast.success(`Export ${format.toUpperCase()} terminé`);
+      toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
-      toast.error('Erreur lors de l\'export');
+      toast.error(t('export.error'));
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, elements, links, onClose]);
+  }, [currentInvestigation, elements, links, onClose, t]);
 
   const handleExportPng = useCallback(async (scale: number) => {
     if (!currentInvestigation) return;
@@ -59,7 +61,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     try {
       const element = document.querySelector('[data-report-capture="canvas"]') as HTMLElement;
       if (!element) {
-        toast.error('Canvas non trouvé');
+        toast.error(t('export.canvasNotFound'));
         return;
       }
 
@@ -80,15 +82,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       link.click();
       document.body.removeChild(link);
 
-      toast.success(`Export PNG (${scale}x) terminé`);
+      toast.success(t('export.successFormat', { format: `PNG (${scale}x)` }));
       onClose();
     } catch (err) {
       console.error('PNG export failed:', err);
-      toast.error('Erreur lors de l\'export PNG');
+      toast.error(t('export.errorPng'));
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, onClose]);
+  }, [currentInvestigation, onClose, t]);
 
   const handleExportSvg = useCallback(() => {
     if (!currentInvestigation) return;
@@ -100,9 +102,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     });
     const baseName = currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_');
     exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
-    toast.success('Export SVG termin\u00e9');
+    toast.success(t('export.successFormat', { format: 'SVG' }));
     onClose();
-  }, [currentInvestigation, elements, links, onClose]);
+  }, [currentInvestigation, elements, links, onClose, t]);
 
   if (!isOpen) return null;
 
@@ -119,7 +121,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
-            Exporter l'enquête
+            {t('export.title')}
           </h2>
           <button
             onClick={onClose}
@@ -132,7 +134,11 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         {/* Content */}
         <div className="p-4">
           <p className="text-xs text-text-secondary mb-4">
-            Exporter "{currentInvestigation?.name}" ({elements.length} éléments, {links.length} liens)
+            {t('export.description', {
+              name: currentInvestigation?.name,
+              elements: elements.length,
+              links: links.length,
+            })}
           </p>
 
           <div className="space-y-3">
@@ -146,10 +152,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 <Image size={20} className="text-text-secondary" />
                 <div className="text-left flex-1">
                   <div className="text-sm font-medium text-text-primary">
-                    PNG (image du canvas)
+                    {t('export.formats.png')}
                   </div>
                   <div className="text-xs text-text-tertiary">
-                    Capture visuelle avec choix de résolution
+                    {t('export.formats.pngDesc')}
                   </div>
                 </div>
                 <ChevronDown
@@ -159,7 +165,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
               </button>
               {showPngOptions && (
                 <div className="border-t border-border-default bg-bg-secondary p-2">
-                  <div className="text-xs text-text-tertiary mb-2 px-1">Résolution :</div>
+                  <div className="text-xs text-text-tertiary mb-2 px-1">{t('export.resolution')} :</div>
                   <div className="grid grid-cols-4 gap-2">
                     {pngScaleOptions.map((option) => (
                       <button
@@ -171,7 +177,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                             ? 'border-accent bg-accent/10 text-accent'
                             : 'border-border-default hover:border-accent hover:bg-accent/5 text-text-primary'
                         }`}
-                        title={option.description}
+                        title={t(`export.scale.${option.descKey}`)}
                       >
                         {option.label}
                       </button>
@@ -190,10 +196,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
               <Pen size={20} className="text-text-secondary" />
               <div className="text-left">
                 <div className="text-sm font-medium text-text-primary">
-                  SVG (vectoriel)
+                  {t('export.formats.svg')}
                 </div>
                 <div className="text-xs text-text-tertiary">
-                  Image vectorielle editable (Inkscape, Illustrator)
+                  {t('export.formats.svgDesc')}
                 </div>
               </div>
             </button>
@@ -211,10 +217,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                   <Icon size={20} className="text-text-secondary" />
                   <div className="text-left">
                     <div className="text-sm font-medium text-text-primary">
-                      {format.label}
+                      {t(`export.formats.${format.labelKey}`)}
                     </div>
                     <div className="text-xs text-text-tertiary">
-                      {format.description}
+                      {t(`export.formats.${format.descKey}`)}
                     </div>
                   </div>
                 </button>

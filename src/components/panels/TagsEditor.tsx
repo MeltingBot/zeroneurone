@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo, type KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Plus, Sparkles } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { DropdownPortal, IconPickerCompact } from '../common';
@@ -16,6 +17,7 @@ interface TagsEditorProps {
 }
 
 export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSetTagAdded }: TagsEditorProps) {
+  const { t } = useTranslation('panels');
   const [inputValue, setInputValue] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -202,7 +204,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                 <button
                   onClick={() => setEditingTagIcon(tag)}
                   className="hover:text-accent focus:outline-none"
-                  title="Modifier l'icône"
+                  title={t('detail.tags.editIcon')}
                 >
                   <IconComponent size={12} className="text-text-tertiary" />
                 </button>
@@ -210,7 +212,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                 <button
                   onClick={() => setEditingTagIcon(tag)}
                   className="opacity-0 group-hover:opacity-100 hover:text-accent focus:outline-none transition-opacity"
-                  title="Ajouter une icône"
+                  title={t('detail.tags.addIcon')}
                 >
                   <Plus size={10} />
                 </button>
@@ -219,7 +221,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
               <button
                 onClick={() => handleRemoveTag(tag)}
                 className="hover:text-error focus:outline-none"
-                aria-label={`Supprimer le tag ${tag}`}
+                aria-label={t('detail.tags.deleteTag', { tag })}
               >
                 <X size={12} />
               </button>
@@ -242,7 +244,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
               onFocus={() => setShowSuggestions(true)}
               onKeyDown={handleKeyDown}
               autoFocus
-              placeholder="Nouveau tag..."
+              placeholder={t('detail.tags.newTagPlaceholder')}
               className="px-2 py-0.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary min-w-[120px]"
             />
 
@@ -282,11 +284,11 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                 })
               ) : inputValue.trim() ? (
                 <div className="px-2 py-1.5 text-xs text-text-tertiary">
-                  Entrée pour créer "{inputValue.trim()}"
+                  {t('detail.tags.pressEnterToCreate', { value: inputValue.trim() })}
                 </div>
               ) : (
                 <div className="px-2 py-1.5 text-xs text-text-tertiary">
-                  Tapez pour filtrer...
+                  {t('detail.tags.typeToFilter')}
                 </div>
               )}
             </DropdownPortal>
@@ -297,13 +299,13 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
             className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default"
           >
             <Plus size={12} />
-            Ajouter
+            {t('detail.tags.add')}
           </button>
         )}
       </div>
 
       {tags.length === 0 && !isAdding && (
-        <p className="text-xs text-text-tertiary">Aucun tag</p>
+        <p className="text-xs text-text-tertiary">{t('detail.tags.noTags')}</p>
       )}
     </div>
   );

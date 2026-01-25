@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { importService, type ImportResult } from '../../services/importService';
@@ -11,6 +12,7 @@ interface ImportModalProps {
 }
 
 export function ImportModal({ isOpen, onClose }: ImportModalProps) {
+  const { t, i18n } = useTranslation('modals');
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -68,7 +70,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             elementsImported: 0,
             linksImported: 0,
             assetsImported: 0,
-            errors: ['Format de fichier non reconnu. Formats supportés: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.'],
+            errors: [t('import.unknownFormat')],
             warnings: [],
           };
         }
@@ -77,7 +79,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       setImportResult(result);
 
       if (result.success) {
-        toast.success('Import réussi');
+        toast.success(t('import.success'));
         // Navigate to the investigation
         setTimeout(() => {
           onClose();
@@ -90,7 +92,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         elementsImported: 0,
         linksImported: 0,
         assetsImported: 0,
-        errors: [error instanceof Error ? error.message : 'Erreur inconnue'],
+        errors: [error instanceof Error ? error.message : t('import.unknownError')],
         warnings: [],
       });
     } finally {
@@ -99,7 +101,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose]);
+  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose, t]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -113,8 +115,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
   const downloadCSVTemplate = useCallback(() => {
     const template = exportService.generateCSVTemplate();
-    exportService.download(template, 'modele_csv.csv', 'text/csv');
-  }, []);
+    const filename = i18n.language === 'fr' ? 'modele_csv.csv' : 'csv_template.csv';
+    exportService.download(template, filename, 'text/csv');
+  }, [i18n.language]);
 
   if (!isOpen) return null;
 
@@ -131,7 +134,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
-            Importer une enquête
+            {t('import.title')}
           </h2>
           <button
             onClick={handleClose}
@@ -146,14 +149,14 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           {/* Target selection */}
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-2">
-              Importer dans
+              {t('import.importInto')}
             </label>
             <select
               value={targetInvestigationId}
               onChange={(e) => setTargetInvestigationId(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-border-default rounded bg-bg-primary text-text-primary"
             >
-              <option value="new">Nouvelle enquête</option>
+              <option value="new">{t('import.newInvestigation')}</option>
               {investigations.map((inv) => (
                 <option key={inv.id} value={inv.id}>
                   {inv.name}
@@ -180,13 +183,13 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             <Upload size={32} className="text-text-tertiary" />
             <div className="text-center">
               <div className="text-sm font-medium text-text-primary">
-                {isProcessing ? 'Import en cours...' : 'Sélectionner un fichier'}
+                {isProcessing ? t('import.importing') : t('import.selectFile')}
               </div>
               <div className="text-xs text-text-tertiary mt-1">
-                ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw
+                {t('import.supportedFormats')}
               </div>
               <div className="text-xs text-text-tertiary mt-0.5">
-                JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw
+                {t('import.jsonFormats')}
               </div>
             </div>
           </button>
@@ -201,7 +204,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               className="rounded border-border-default"
             />
             <label htmlFor="createMissing" className="text-xs text-text-secondary">
-              Créer les éléments manquants (CSV liens)
+              {t('import.createMissing')}
             </label>
           </div>
 
@@ -210,19 +213,19 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet size={14} className="text-text-secondary" />
-                <span className="text-xs font-medium text-text-primary">Modèle CSV</span>
+                <span className="text-xs font-medium text-text-primary">{t('import.csvTemplate.title')}</span>
               </div>
               <button
                 onClick={downloadCSVTemplate}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
               >
                 <Download size={12} />
-                Télécharger
+                {t('import.csvTemplate.download')}
               </button>
             </div>
             <div className="text-xs text-text-tertiary space-y-1">
-              <p><strong>Format unifié:</strong> type (element/lien), label, de, vers, notes, tags, confiance...</p>
-              <p>Les liens référencent les éléments par leur label dans les colonnes "de" et "vers"</p>
+              <p dangerouslySetInnerHTML={{ __html: t('import.csvTemplate.format') }} />
+              <p>{t('import.csvTemplate.description')}</p>
             </div>
           </div>
 
@@ -246,20 +249,20 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                     importResult.success ? 'text-green-800' : 'text-red-800'
                   }`}
                 >
-                  {importResult.success ? 'Import réussi' : 'Erreur d\'import'}
+                  {importResult.success ? t('import.success') : t('import.error')}
                 </span>
               </div>
 
               {importResult.success && (
                 <div className="text-xs text-green-700 space-y-1">
                   {importResult.elementsImported > 0 && (
-                    <p>{importResult.elementsImported} élément(s) importé(s)</p>
+                    <p>{t('import.successElements', { count: importResult.elementsImported })}</p>
                   )}
                   {importResult.linksImported > 0 && (
-                    <p>{importResult.linksImported} lien(s) importé(s)</p>
+                    <p>{t('import.successLinks', { count: importResult.linksImported })}</p>
                   )}
                   {importResult.assetsImported > 0 && (
-                    <p>{importResult.assetsImported} fichier(s) importé(s)</p>
+                    <p>{t('import.successAssets', { count: importResult.assetsImported })}</p>
                   )}
                 </div>
               )}
@@ -274,12 +277,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
               {importResult.warnings.length > 0 && (
                 <div className="text-xs text-yellow-700 mt-2">
-                  <p className="font-medium">Avertissements:</p>
+                  <p className="font-medium">{t('import.warnings')}</p>
                   {importResult.warnings.slice(0, 5).map((warn, i) => (
                     <p key={i}>{warn}</p>
                   ))}
                   {importResult.warnings.length > 5 && (
-                    <p>... et {importResult.warnings.length - 5} autres</p>
+                    <p>{t('import.andMore', { count: importResult.warnings.length - 5 })}</p>
                   )}
                 </div>
               )}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -76,6 +77,7 @@ function isLikelyCountryCode(value: string): boolean {
 }
 
 function ElementNodeComponent({ data }: NodeProps) {
+  const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
   const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
 
@@ -173,7 +175,7 @@ function ElementNodeComponent({ data }: NodeProps) {
     }
 
     // Calculate size based on label
-    const label = element.label || 'Sans nom';
+    const label = element.label || t('empty.unnamed');
     const labelLength = label.length;
 
     // Estimate text width (average 7px per character + padding)
@@ -499,7 +501,7 @@ function ElementNodeComponent({ data }: NodeProps) {
               <span
                 className={`text-[10px] text-text-tertiary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
               >
-                {element.label || 'Chargement...'}
+                {element.label || t('status.loading')}
               </span>
             </div>
           </>
@@ -529,7 +531,7 @@ function ElementNodeComponent({ data }: NodeProps) {
                 />
               ) : anonymousMode ? (
                 <RedactedText
-                  text={element.label || 'Sans nom'}
+                  text={element.label || t('empty.unnamed')}
                   className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
                 />
               ) : (
@@ -542,7 +544,7 @@ function ElementNodeComponent({ data }: NodeProps) {
                     wordBreak: 'break-word',
                   }}
                 >
-                  {element.label || 'Sans nom'}
+                  {element.label || t('empty.unnamed')}
                 </span>
               )}
             </div>
@@ -573,7 +575,7 @@ function ElementNodeComponent({ data }: NodeProps) {
               />
             ) : anonymousMode ? (
               <RedactedText
-                text={element.label || 'Sans nom'}
+                text={element.label || t('empty.unnamed')}
                 className={`text-xs font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
               />
             ) : (
@@ -591,7 +593,7 @@ function ElementNodeComponent({ data }: NodeProps) {
                   wordBreak: 'break-word',
                 }}
               >
-                {element.label || 'Sans nom'}
+                {element.label || t('empty.unnamed')}
               </span>
             )}
           </div>

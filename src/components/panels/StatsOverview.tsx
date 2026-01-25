@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Link2, Network, CircleOff, GitBranch, Copy } from 'lucide-react';
 import { useInvestigationStore, useInsightsStore } from '../../stores';
 
@@ -41,6 +42,7 @@ interface StatsOverviewProps {
 }
 
 export function StatsOverview({ onStatClick, activeStat }: StatsOverviewProps) {
+  const { t } = useTranslation('common');
   const { elements, links } = useInvestigationStore();
   const { clusters, isolated, bridges, similarLabels } = useInsightsStore();
 
@@ -58,42 +60,42 @@ export function StatsOverview({ onStatClick, activeStat }: StatsOverviewProps) {
       <StatItem
         icon={<Box size={12} />}
         value={stats.elements}
-        label="éléments"
+        label={t('stats.elements')}
         onClick={onStatClick ? () => onStatClick('elements') : undefined}
         highlight={activeStat === 'elements'}
       />
       <StatItem
         icon={<Link2 size={12} />}
         value={stats.links}
-        label="liens"
+        label={t('stats.links')}
         onClick={onStatClick ? () => onStatClick('links') : undefined}
         highlight={activeStat === 'links'}
       />
       <StatItem
         icon={<Network size={12} />}
         value={stats.clusters}
-        label="clusters"
+        label={t('stats.clusters')}
         onClick={onStatClick ? () => onStatClick('clusters') : undefined}
         highlight={activeStat === 'clusters'}
       />
       <StatItem
         icon={<CircleOff size={12} />}
         value={stats.isolated}
-        label="isolés"
+        label={t('stats.isolated')}
         onClick={onStatClick ? () => onStatClick('isolated') : undefined}
         highlight={activeStat === 'isolated'}
       />
       <StatItem
         icon={<GitBranch size={12} />}
         value={stats.bridges}
-        label="ponts"
+        label={t('stats.bridges')}
         onClick={onStatClick ? () => onStatClick('bridges') : undefined}
         highlight={activeStat === 'bridges'}
       />
       <StatItem
         icon={<Copy size={12} />}
         value={stats.duplicates}
-        label="doublons"
+        label={t('stats.duplicates')}
         onClick={onStatClick ? () => onStatClick('duplicates') : undefined}
         highlight={activeStat === 'duplicates'}
       />

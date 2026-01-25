@@ -1,0 +1,325 @@
+{
+  "home": {
+    "title": "ZeroNeurone",
+    "backToHome": "Back to home",
+    "newInvestigation": "New investigation",
+    "manageTags": "Manage tags",
+    "import": "Import",
+    "about": "About",
+    "storage": "Storage",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "noInvestigations": "No investigations",
+    "createFirst": "Create your first investigation to get started",
+    "viewInvestigations": "View investigations",
+    "investigationCount": "{{count}} investigation(s)",
+    "loading": "Loading...",
+    "card": {
+      "modified": "Modified {{time}}",
+      "elementCount": "{{count}} element(s)",
+      "linkCount": "{{count}} link(s)",
+      "rename": "Rename",
+      "exportZip": "Export ZIP",
+      "delete": "Delete",
+      "exportSuccess": "ZIP export complete",
+      "exportError": "Export error"
+    },
+    "landing": {
+      "subtitle": "Whiteboard for analysts and investigators",
+      "description": "An Open Source cognitive amplification tool that combines the simplicity of a whiteboard with the power of graph analysis. Map your ideas, geolocate your elements, visualize events, connect clues and reveal hidden patterns.",
+      "startNew": "New investigation",
+      "importExisting": "Import",
+      "viewExisting": "View my {{count}} investigation(s)",
+      "features": {
+        "graph": {
+          "title": "Relational graph",
+          "description": "Visualize connections between people, places and concepts"
+        },
+        "map": {
+          "title": "Map view",
+          "description": "Position your elements on an interactive and temporal map"
+        },
+        "timeline": {
+          "title": "Timeline",
+          "description": "Organize events chronologically"
+        },
+        "search": {
+          "title": "Instant search and filters",
+          "description": "Find and filter any element in a few keystrokes"
+        },
+        "local": {
+          "title": "100% local data",
+          "description": "Your data stays on your machine, never transmitted"
+        },
+        "collab": {
+          "title": "Secure real-time collaboration",
+          "description": "Work together on the same investigation"
+        }
+      }
+    }
+  },
+  "investigation": {
+    "loading": {
+      "opening": "Opening...",
+      "syncing": "Syncing...",
+      "files": "Files...",
+      "elements": "Elements..."
+    },
+    "toolbar": {
+      "select": "Select",
+      "pan": "Pan",
+      "addElement": "Add element",
+      "addGroup": "Add group",
+      "addAnnotation": "Add annotation",
+      "autoLayout": "Auto layout",
+      "fitView": "Fit view",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "resetView": "Reset view",
+      "share": "Share",
+      "deselect": "Deselect",
+      "snapToGrid": "Snap to grid",
+      "alignGuides": "Alignment guides",
+      "minimap": "Minimap",
+      "hideMinimap": "Hide minimap",
+      "closeEsc": "Close (Esc)",
+      "close": "Close",
+      "loading": "Loading...",
+      "oneElement": "1 element",
+      "oneLink": "1 link",
+      "selectedCount": "{{count}} selected"
+    },
+    "contextMenu": {
+      "addElement": "New element",
+      "addGroup": "New group",
+      "addAnnotation": "New annotation",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "hide": "Hide",
+      "hideSelection": "Hide selection",
+      "hideElement": "Hide element",
+      "show": "Show",
+      "showElement": "Show element",
+      "bringToFront": "Bring to front",
+      "sendToBack": "Send to back",
+      "group": "Group",
+      "groupSelection": "Group selection",
+      "ungroup": "Ungroup",
+      "dissolveGroup": "Dissolve group",
+      "addToGroup": "Add to group",
+      "removeFromGroup": "Remove from group",
+      "selectAll": "Select all",
+      "copy": "Copy",
+      "cut": "Cut",
+      "paste": "Paste",
+      "focusMode": "Focus mode",
+      "exitFocus": "Exit focus mode",
+      "focusNeighbors1": "Direct neighbors",
+      "focusNeighbors2": "2-link neighbors",
+      "focusNeighbors3": "3-link neighbors",
+      "preview": "Preview",
+      "findPaths": "Find paths"
+    },
+    "viewToolbar": {
+      "undo": "Undo (Ctrl+Z)",
+      "redo": "Redo (Ctrl+Shift+Z)",
+      "readableFont": "Readable font",
+      "handwrittenFont": "Handwritten font",
+      "darkMode": "Dark mode",
+      "lightMode": "Light mode",
+      "showMedia": "Show media",
+      "blurMedia": "Blur media",
+      "showNames": "Show names",
+      "anonymousMode": "Anonymous mode (redaction)",
+      "hideCommentBadges": "Hide comment badges",
+      "showCommentBadges": "Show comment badges"
+    },
+    "views": {
+      "canvas": "Canvas",
+      "map": "Map",
+      "split": "Split",
+      "timeline": "Timeline",
+      "report": "Report"
+    },
+    "panels": {
+      "detail": "Detail",
+      "filters": "Filters",
+      "insights": "Insights",
+      "views": "Views"
+    },
+    "emptyCanvas": {
+      "title": "Empty canvas",
+      "hint": "Double-click to create an element",
+      "orDrop": "or drop files"
+    },
+    "layout": {
+      "title": "Layout algorithms",
+      "button": "Arrange",
+      "buttonTitle": "Automatic graph rearrangement",
+      "undoHint": "Ctrl+Z to undo after applying",
+      "types": {
+        "force": {
+          "name": "Force (clusters)",
+          "description": "Groups connected elements, separates clusters"
+        },
+        "circular": {
+          "name": "Circular",
+          "description": "Arranges elements in a circle"
+        },
+        "grid": {
+          "name": "Grid",
+          "description": "Aligns elements in a regular grid"
+        },
+        "random": {
+          "name": "Scatter",
+          "description": "Randomly scatters elements"
+        }
+      }
+    },
+    "toast": {
+      "elementCreated": "Element created",
+      "elementsDeleted": "{{count}} element(s) deleted",
+      "linkCreated": "Link created",
+      "copied": "Copied to clipboard",
+      "pasted": "{{count}} element(s) pasted",
+      "saved": "Saved",
+      "exportSuccess": "Export complete",
+      "exportError": "Export error"
+    },
+    "notFound": "Investigation not found",
+    "header": {
+      "report": "Report",
+      "generateReport": "Generate report",
+      "export": "Export",
+      "search": "Search",
+      "clearFilters": "Clear filters",
+      "activeFilters": "Active filters",
+      "shortcuts": "Keyboard shortcuts",
+      "supportKofi": "Support on Ko-fi"
+    },
+    "collab": {
+      "leaveTitle": "Leave collaborative session",
+      "leaveMessage": "Other participants can still use the sharing link to sync their changes and resume collaboration.",
+      "rejoinMessage": "You can also rejoin the session later using the same link.",
+      "leave": "Leave"
+    }
+  },
+  "map": {
+    "noGeoElements": "No geolocated elements",
+    "addLocation": "Add coordinates to elements to see them on the map",
+    "pickLocation": "Click on the map to set location",
+    "elementsLocated": "{{count}} element(s) located",
+    "linksCount": "({{count}} link(s))",
+    "temporalMode": "Temporal mode",
+    "temporal": "Temporal",
+    "zoomToSelection": "Zoom to selection",
+    "selection": "Selection",
+    "fitAll": "Fit all elements",
+    "fit": "Fit",
+    "stepBack": "Step back",
+    "stepForward": "Step forward",
+    "play": "Play",
+    "pause": "Pause",
+    "unnamed": "Unnamed"
+  },
+  "timeline": {
+    "noEvents": "No dated events",
+    "addDates": "Add dates to elements or create events",
+    "noTemporalData": "No temporal data",
+    "howToAddTimeline": "To see elements on the timeline:",
+    "addPeriodToLinks": "Add a period to links (start/end date)",
+    "addEventsToHistory": "Add events in element history",
+    "eventsCount": "{{count}} event(s)",
+    "zoomHint": "Ctrl+wheel: zoom | Drag: pan",
+    "zoomPreset1Year": "1 year",
+    "zoomPreset6Months": "6 months",
+    "zoomPreset1Month": "1 month",
+    "zoomPreset1Week": "1 week",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "today": "Today",
+    "todayShort": "Today",
+    "fitAll": "All",
+    "centerOnToday": "Center on today",
+    "viewAll": "View all",
+    "newestFirst": "Newest first",
+    "oldestFirst": "Oldest first",
+    "recentUp": "Recent ↑",
+    "oldUp": "Old ↑",
+    "causality": "Causality",
+    "causalityHint": "Show potential causal links between events of linked elements",
+    "maxDaysBetweenEvents": "Max {{days}} between events",
+    "unresolvedComments": "{{count}} unresolved comment(s)",
+    "potentialCausality": "Potential causality",
+    "daysAfter": "({{count}} day(s) after)",
+    "unnamed": "Unnamed",
+    "relation": "relation",
+    "newElement": "New element"
+  },
+  "report": {
+    "title": "Report",
+    "untitled": "Untitled",
+    "addSection": "Add section",
+    "sections": {
+      "title": "Title",
+      "text": "Text",
+      "canvas": "Canvas",
+      "map": "Map",
+      "timeline": "Timeline",
+      "table": "Table",
+      "insights": "Insights"
+    },
+    "export": "Export to PDF",
+    "print": "Print"
+  },
+  "join": {
+    "title": "Join a session",
+    "sessionId": "Session: {{id}}...",
+    "connecting": "Connecting...",
+    "syncing": "Syncing with session {{id}}...",
+    "connectionError": "Connection error",
+    "cannotJoin": "Unable to join the session. Check the link and try again.",
+    "backToHome": "Back to home",
+    "retry": "Retry",
+    "serverWarning": {
+      "title": "Different server",
+      "subtitle": "Security verification",
+      "message": "The share link specifies a different sync server than the one you have configured:",
+      "yourServer": "Your server:",
+      "linkServer": "Link server:",
+      "trustNote": "Only use the link server if you trust its sender. A malicious server could intercept your session data.",
+      "keepOld": "Keep my server",
+      "useNew": "Use the new server"
+    },
+    "serverNotConfigured": {
+      "title": "Server not configured",
+      "message": "To join a collaborative session, you must configure the same sync server as the host.",
+      "save": "Save",
+      "placeholder": "wss://server.example.com"
+    },
+    "serverInfo": {
+      "label": "Sync server",
+      "providedByLink": "provided by link",
+      "modify": "Modify"
+    },
+    "userInfo": {
+      "joiningAs": "You will join as"
+    },
+    "localCopy": {
+      "label": "Name of your local copy",
+      "hint": "This name will be used to identify this session on your device."
+    },
+    "join": "Join",
+    "defaultSessionName": "Collaborative session",
+    "sharedSessionJoined": "Shared session joined on {{date}}",
+    "errors": {
+      "invalidSessionId": "Invalid session ID",
+      "configureServerFirst": "Configure a sync server first",
+      "invalidServerUrl": "Server must start with ws:// or wss://",
+      "connectionTimeout": "Connection timeout",
+      "connectionLost": "Connection lost",
+      "connectionError": "Connection error"
+    }
+  }
+}

@@ -1,0 +1,325 @@
+{
+  "home": {
+    "title": "ZeroNeurone",
+    "backToHome": "Zurück zur Startseite",
+    "newInvestigation": "Neue Ermittlung",
+    "manageTags": "Tags verwalten",
+    "import": "Importieren",
+    "about": "Über",
+    "storage": "Speicher",
+    "darkMode": "Dunkler Modus",
+    "lightMode": "Heller Modus",
+    "noInvestigations": "Keine Ermittlungen",
+    "createFirst": "Erstellen Sie Ihre erste Ermittlung, um zu beginnen",
+    "viewInvestigations": "Ermittlungen anzeigen",
+    "investigationCount": "{{count}} Ermittlung(en)",
+    "loading": "Wird geladen...",
+    "card": {
+      "modified": "Geändert {{time}}",
+      "elementCount": "{{count}} Element(e)",
+      "linkCount": "{{count}} Verbindung(en)",
+      "rename": "Umbenennen",
+      "exportZip": "ZIP exportieren",
+      "delete": "Löschen",
+      "exportSuccess": "ZIP-Export abgeschlossen",
+      "exportError": "Fehler beim Export"
+    },
+    "landing": {
+      "subtitle": "Whiteboard für Analysten und Ermittler",
+      "description": "Ein Open-Source-Tool zur kognitiven Verstärkung, das die Einfachheit eines Whiteboards mit der Leistung der Graphenanalyse kombiniert. Kartieren Sie Ihre Ideen, geolokalisieren Sie Ihre Elemente, visualisieren Sie Ereignisse, verbinden Sie Hinweise und enthüllen Sie versteckte Muster.",
+      "startNew": "Neue Ermittlung",
+      "importExisting": "Importieren",
+      "viewExisting": "Meine {{count}} Ermittlung(en) anzeigen",
+      "features": {
+        "graph": {
+          "title": "Beziehungsgraph",
+          "description": "Visualisieren Sie Verbindungen zwischen Personen, Orten und Konzepten"
+        },
+        "map": {
+          "title": "Kartenansicht",
+          "description": "Positionieren Sie Ihre Elemente auf einer interaktiven und zeitlichen Karte"
+        },
+        "timeline": {
+          "title": "Zeitleiste",
+          "description": "Organisieren Sie Ereignisse chronologisch"
+        },
+        "search": {
+          "title": "Sofortige Suche und Filter",
+          "description": "Finden und filtern Sie jedes Element in Sekunden"
+        },
+        "local": {
+          "title": "100% lokale Daten",
+          "description": "Ihre Daten bleiben auf Ihrem Gerät, werden nie übertragen"
+        },
+        "collab": {
+          "title": "Sichere Echtzeit-Zusammenarbeit",
+          "description": "Arbeiten Sie gemeinsam an derselben Ermittlung"
+        }
+      }
+    }
+  },
+  "investigation": {
+    "loading": {
+      "opening": "Wird geöffnet...",
+      "syncing": "Wird synchronisiert...",
+      "files": "Dateien...",
+      "elements": "Elemente..."
+    },
+    "toolbar": {
+      "select": "Auswahl",
+      "pan": "Verschieben",
+      "addElement": "Element hinzufügen",
+      "addGroup": "Gruppe hinzufügen",
+      "addAnnotation": "Anmerkung hinzufügen",
+      "autoLayout": "Automatisches Layout",
+      "fitView": "Ansicht anpassen",
+      "zoomIn": "Vergrößern",
+      "zoomOut": "Verkleinern",
+      "resetView": "Ansicht zurücksetzen",
+      "share": "Teilen",
+      "deselect": "Auswahl aufheben",
+      "snapToGrid": "Am Raster ausrichten",
+      "alignGuides": "Ausrichtungshilfen",
+      "minimap": "Minimap",
+      "hideMinimap": "Minimap ausblenden",
+      "closeEsc": "Schließen (Esc)",
+      "close": "Schließen",
+      "loading": "Wird geladen...",
+      "oneElement": "1 Element",
+      "oneLink": "1 Verbindung",
+      "selectedCount": "{{count}} ausgewählt"
+    },
+    "contextMenu": {
+      "addElement": "Neues Element",
+      "addGroup": "Neue Gruppe",
+      "addAnnotation": "Neue Anmerkung",
+      "edit": "Bearbeiten",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
+      "hide": "Ausblenden",
+      "hideSelection": "Auswahl ausblenden",
+      "hideElement": "Element ausblenden",
+      "show": "Einblenden",
+      "showElement": "Element einblenden",
+      "bringToFront": "In den Vordergrund",
+      "sendToBack": "In den Hintergrund",
+      "group": "Gruppieren",
+      "groupSelection": "Auswahl gruppieren",
+      "ungroup": "Gruppierung aufheben",
+      "dissolveGroup": "Gruppe auflösen",
+      "addToGroup": "Zur Gruppe hinzufügen",
+      "removeFromGroup": "Aus Gruppe entfernen",
+      "selectAll": "Alles auswählen",
+      "copy": "Kopieren",
+      "cut": "Ausschneiden",
+      "paste": "Einfügen",
+      "focusMode": "Fokusmodus",
+      "exitFocus": "Fokusmodus beenden",
+      "focusNeighbors1": "Direkte Nachbarn",
+      "focusNeighbors2": "Nachbarn in 2 Verbindungen",
+      "focusNeighbors3": "Nachbarn in 3 Verbindungen",
+      "preview": "Vorschau",
+      "findPaths": "Pfade finden"
+    },
+    "viewToolbar": {
+      "undo": "Rückgängig (Strg+Z)",
+      "redo": "Wiederholen (Strg+Umschalt+Z)",
+      "readableFont": "Lesbare Schrift",
+      "handwrittenFont": "Handschrift",
+      "darkMode": "Dunkler Modus",
+      "lightMode": "Heller Modus",
+      "showMedia": "Medien anzeigen",
+      "blurMedia": "Medien unscharf",
+      "showNames": "Namen anzeigen",
+      "anonymousMode": "Anonymer Modus (Schwärzung)",
+      "hideCommentBadges": "Kommentar-Badges ausblenden",
+      "showCommentBadges": "Kommentar-Badges anzeigen"
+    },
+    "views": {
+      "canvas": "Arbeitsfläche",
+      "map": "Karte",
+      "split": "Geteilt",
+      "timeline": "Zeitleiste",
+      "report": "Bericht"
+    },
+    "panels": {
+      "detail": "Detail",
+      "filters": "Filter",
+      "insights": "Analysen",
+      "views": "Ansichten"
+    },
+    "emptyCanvas": {
+      "title": "Leere Arbeitsfläche",
+      "hint": "Doppelklick zum Erstellen eines Elements",
+      "orDrop": "oder Dateien ablegen"
+    },
+    "layout": {
+      "title": "Layout-Algorithmen",
+      "button": "Anordnen",
+      "buttonTitle": "Automatische Graphenanordnung",
+      "undoHint": "Strg+Z zum Rückgängigmachen nach Anwendung",
+      "types": {
+        "force": {
+          "name": "Kraft (Cluster)",
+          "description": "Gruppiert verbundene Elemente, trennt Cluster"
+        },
+        "circular": {
+          "name": "Kreisförmig",
+          "description": "Ordnet Elemente kreisförmig an"
+        },
+        "grid": {
+          "name": "Raster",
+          "description": "Richtet Elemente in regelmäßigem Raster aus"
+        },
+        "random": {
+          "name": "Streuung",
+          "description": "Verteilt Elemente zufällig"
+        }
+      }
+    },
+    "toast": {
+      "elementCreated": "Element erstellt",
+      "elementsDeleted": "{{count}} Element(e) gelöscht",
+      "linkCreated": "Verbindung erstellt",
+      "copied": "In Zwischenablage kopiert",
+      "pasted": "{{count}} Element(e) eingefügt",
+      "saved": "Gespeichert",
+      "exportSuccess": "Export abgeschlossen",
+      "exportError": "Fehler beim Export"
+    },
+    "notFound": "Ermittlung nicht gefunden",
+    "header": {
+      "report": "Bericht",
+      "generateReport": "Bericht generieren",
+      "export": "Exportieren",
+      "search": "Suchen",
+      "clearFilters": "Filter löschen",
+      "activeFilters": "Aktive Filter",
+      "shortcuts": "Tastenkürzel",
+      "supportKofi": "Auf Ko-fi unterstützen"
+    },
+    "collab": {
+      "leaveTitle": "Kollaborative Sitzung verlassen",
+      "leaveMessage": "Die anderen Teilnehmer können den Freigabelink weiterhin nutzen, um ihre Änderungen zu synchronisieren und die Zusammenarbeit fortzusetzen.",
+      "rejoinMessage": "Sie können der Sitzung später über denselben Link wieder beitreten.",
+      "leave": "Verlassen"
+    }
+  },
+  "map": {
+    "noGeoElements": "Keine geolokalisierte Elemente",
+    "addLocation": "Fügen Sie Koordinaten zu Elementen hinzu, um sie auf der Karte zu sehen",
+    "pickLocation": "Klicken Sie auf die Karte, um die Position festzulegen",
+    "elementsLocated": "{{count}} Element(e) lokalisiert",
+    "linksCount": "({{count}} Verbindung(en))",
+    "temporalMode": "Zeitlicher Modus",
+    "temporal": "Zeitlich",
+    "zoomToSelection": "Auf Auswahl zoomen",
+    "selection": "Auswahl",
+    "fitAll": "Alle Elemente anpassen",
+    "fit": "Anpassen",
+    "stepBack": "Zurück",
+    "stepForward": "Vorwärts",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "unnamed": "Unbenannt"
+  },
+  "timeline": {
+    "noEvents": "Keine datierten Ereignisse",
+    "addDates": "Fügen Sie Daten zu Elementen hinzu oder erstellen Sie Ereignisse",
+    "noTemporalData": "Keine zeitlichen Daten",
+    "howToAddTimeline": "Um Elemente auf der Zeitleiste zu sehen:",
+    "addPeriodToLinks": "Fügen Sie einen Zeitraum zu Verbindungen hinzu (Start-/Enddatum)",
+    "addEventsToHistory": "Fügen Sie Ereignisse in der Historie der Elemente hinzu",
+    "eventsCount": "{{count}} Ereignis(se)",
+    "zoomHint": "Strg+Mausrad: Zoom | Ziehen: Verschieben",
+    "zoomPreset1Year": "1 Jahr",
+    "zoomPreset6Months": "6 Monate",
+    "zoomPreset1Month": "1 Monat",
+    "zoomPreset1Week": "1 Woche",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "today": "Heute",
+    "todayShort": "Heute",
+    "fitAll": "Alle",
+    "centerOnToday": "Auf heute zentrieren",
+    "viewAll": "Alle anzeigen",
+    "newestFirst": "Neueste zuerst",
+    "oldestFirst": "Älteste zuerst",
+    "recentUp": "Neu ↑",
+    "oldUp": "Alt ↑",
+    "causality": "Kausalitäten",
+    "causalityHint": "Potenzielle Kausalitäten zwischen Ereignissen verbundener Elemente anzeigen",
+    "maxDaysBetweenEvents": "Max. {{days}} zwischen Ereignissen",
+    "unresolvedComments": "{{count}} ungelöste(r) Kommentar(e)",
+    "potentialCausality": "Potenzielle Kausalität",
+    "daysAfter": "({{count}} Tag(e) danach)",
+    "unnamed": "Unbenannt",
+    "relation": "Beziehung",
+    "newElement": "Neues Element"
+  },
+  "report": {
+    "title": "Bericht",
+    "untitled": "Ohne Titel",
+    "addSection": "Abschnitt hinzufügen",
+    "sections": {
+      "title": "Titel",
+      "text": "Text",
+      "canvas": "Arbeitsfläche",
+      "map": "Karte",
+      "timeline": "Zeitleiste",
+      "table": "Tabelle",
+      "insights": "Analysen"
+    },
+    "export": "Als PDF exportieren",
+    "print": "Drucken"
+  },
+  "join": {
+    "title": "Sitzung beitreten",
+    "sessionId": "Sitzung: {{id}}...",
+    "connecting": "Verbindung wird hergestellt...",
+    "syncing": "Synchronisierung mit Sitzung {{id}}...",
+    "connectionError": "Verbindungsfehler",
+    "cannotJoin": "Sitzung kann nicht beigetreten werden. Überprüfen Sie den Link und versuchen Sie es erneut.",
+    "backToHome": "Zurück zur Startseite",
+    "retry": "Erneut versuchen",
+    "serverWarning": {
+      "title": "Anderer Server",
+      "subtitle": "Sicherheitsprüfung",
+      "message": "Der Freigabelink gibt einen anderen Synchronisierungsserver an als den, den Sie konfiguriert haben:",
+      "yourServer": "Ihr Server:",
+      "linkServer": "Server des Links:",
+      "trustNote": "Verwenden Sie den Server des Links nur, wenn Sie dem Absender vertrauen. Ein bösartiger Server könnte Ihre Sitzungsdaten abfangen.",
+      "keepOld": "Meinen Server behalten",
+      "useNew": "Neuen Server verwenden"
+    },
+    "serverNotConfigured": {
+      "title": "Server nicht konfiguriert",
+      "message": "Um einer kollaborativen Sitzung beizutreten, müssen Sie denselben Synchronisierungsserver wie der Host konfigurieren.",
+      "save": "Speichern",
+      "placeholder": "wss://server.beispiel.com"
+    },
+    "serverInfo": {
+      "label": "Synchronisierungsserver",
+      "providedByLink": "vom Link bereitgestellt",
+      "modify": "Ändern"
+    },
+    "userInfo": {
+      "joiningAs": "Sie treten bei als"
+    },
+    "localCopy": {
+      "label": "Name Ihrer lokalen Kopie",
+      "hint": "Dieser Name wird verwendet, um diese Sitzung auf Ihrem Gerät zu identifizieren."
+    },
+    "join": "Beitreten",
+    "defaultSessionName": "Kollaborative Sitzung",
+    "sharedSessionJoined": "Geteilte Sitzung beigetreten am {{date}}",
+    "errors": {
+      "invalidSessionId": "Ungültige Sitzungs-ID",
+      "configureServerFirst": "Konfigurieren Sie zuerst einen Synchronisierungsserver",
+      "invalidServerUrl": "Der Server muss mit ws:// oder wss:// beginnen",
+      "connectionTimeout": "Verbindungs-Timeout",
+      "connectionLost": "Verbindung verloren",
+      "connectionError": "Fehler bei der Verbindung"
+    }
+  }
+}

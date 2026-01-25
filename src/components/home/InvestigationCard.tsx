@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Trash2, Edit2, Download } from 'lucide-react';
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
@@ -20,6 +21,7 @@ export function InvestigationCard({
   onDelete,
   onRename,
 }: InvestigationCardProps) {
+  const { t, i18n } = useTranslation('pages');
   const navigate = useNavigate();
   const [stats, setStats] = useState({ elementCount: 0, linkCount: 0 });
 
@@ -41,9 +43,9 @@ export function InvestigationCard({
       const links = await linkRepository.getByInvestigation(investigation.id);
       const assets = await fileService.getAssetsByInvestigation(investigation.id);
       await exportService.exportInvestigation('zip', investigation, elements, links, assets);
-      toast.success('Export ZIP terminé');
+      toast.success(t('home.card.exportSuccess'));
     } catch {
-      toast.error('Erreur lors de l\'export');
+      toast.error(t('home.card.exportError'));
     }
   };
 
@@ -65,9 +67,9 @@ export function InvestigationCard({
               {investigation.name}
             </h3>
             <p className="text-xs text-text-secondary mt-1">
-              Modifié {formatRelativeTime(investigation.updatedAt)} •{' '}
-              {stats.elementCount} élément{stats.elementCount !== 1 ? 's' : ''}
-              {stats.linkCount > 0 && ` • ${stats.linkCount} lien${stats.linkCount !== 1 ? 's' : ''}`}
+              {t('home.card.modified', { time: formatRelativeTime(investigation.updatedAt, i18n.language) })} •{' '}
+              {t('home.card.elementCount', { count: stats.elementCount })}
+              {stats.linkCount > 0 && ` • ${t('home.card.linkCount', { count: stats.linkCount })}`}
             </p>
           </div>
           <div onClick={handleMenuClick}>
@@ -81,19 +83,19 @@ export function InvestigationCard({
               <DropdownItem onClick={() => onRename(investigation.id)}>
                 <span className="flex items-center gap-2">
                   <Edit2 size={14} />
-                  Renommer
+                  {t('home.card.rename')}
                 </span>
               </DropdownItem>
               <DropdownItem onClick={handleExport}>
                 <span className="flex items-center gap-2">
                   <Download size={14} />
-                  Exporter ZIP
+                  {t('home.card.exportZip')}
                 </span>
               </DropdownItem>
               <DropdownItem destructive onClick={() => onDelete(investigation.id)}>
                 <span className="flex items-center gap-2">
                   <Trash2 size={14} />
-                  Supprimer
+                  {t('home.card.delete')}
                 </span>
               </DropdownItem>
             </DropdownMenu>

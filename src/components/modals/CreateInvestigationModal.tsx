@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Button, Input, Textarea } from '../common';
 
 interface CreateInvestigationModalProps {
@@ -12,6 +13,7 @@ export function CreateInvestigationModal({
   onClose,
   onCreate,
 }: CreateInvestigationModalProps) {
+  const { t } = useTranslation('modals');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,34 +43,34 @@ export function CreateInvestigationModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Nouvelle enquête"
+      title={t('createInvestigation.title')}
       width="sm"
       footer={
         <>
           <Button variant="secondary" onClick={handleClose}>
-            Annuler
+            {t('common:actions.cancel')}
           </Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
             disabled={!name.trim() || isLoading}
           >
-            {isLoading ? 'Création...' : 'Créer'}
+            {isLoading ? t('common:status.saving') : t('createInvestigation.create')}
           </Button>
         </>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Nom"
-          placeholder="Affaire..."
+          label={t('common:labels.name')}
+          placeholder={t('createInvestigation.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
         />
         <Textarea
-          label="Description (optionnel)"
-          placeholder="Notes sur l'enquête..."
+          label={t('createInvestigation.descriptionPlaceholder')}
+          placeholder={t('common:labels.description')}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}

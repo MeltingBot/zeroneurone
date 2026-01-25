@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Modal, Button, Input, IconButton, IconPicker } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
@@ -10,23 +11,23 @@ interface TagSetEditorModalProps {
   tagSet?: TagSet; // If provided, editing; otherwise creating
 }
 
-const SHAPE_OPTIONS: { value: ElementShape; label: string }[] = [
-  { value: 'circle', label: 'Cercle' },
-  { value: 'square', label: 'Carré' },
-  { value: 'diamond', label: 'Losange' },
-  { value: 'rectangle', label: 'Rectangle' },
+const SHAPE_OPTIONS: { value: ElementShape; labelKey: string }[] = [
+  { value: 'circle', labelKey: 'tagSetEditor.shapes.circle' },
+  { value: 'square', labelKey: 'tagSetEditor.shapes.square' },
+  { value: 'diamond', labelKey: 'tagSetEditor.shapes.diamond' },
+  { value: 'rectangle', labelKey: 'tagSetEditor.shapes.rectangle' },
 ];
 
-const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
-  { value: 'text', label: 'Texte' },
-  { value: 'number', label: 'Nombre' },
-  { value: 'date', label: 'Date' },
-  { value: 'datetime', label: 'Date et heure' },
-  { value: 'boolean', label: 'Oui/Non' },
-  { value: 'choice', label: 'Choix multiple' },
-  { value: 'country', label: 'Pays' },
-  { value: 'geo', label: 'Coordonnées' },
-  { value: 'link', label: 'Lien' },
+const PROPERTY_TYPES: { value: PropertyType; labelKey: string }[] = [
+  { value: 'text', labelKey: 'tagSetEditor.propertyTypes.text' },
+  { value: 'number', labelKey: 'tagSetEditor.propertyTypes.number' },
+  { value: 'date', labelKey: 'tagSetEditor.propertyTypes.date' },
+  { value: 'datetime', labelKey: 'tagSetEditor.propertyTypes.datetime' },
+  { value: 'boolean', labelKey: 'tagSetEditor.propertyTypes.boolean' },
+  { value: 'choice', labelKey: 'tagSetEditor.propertyTypes.choice' },
+  { value: 'country', labelKey: 'tagSetEditor.propertyTypes.country' },
+  { value: 'geo', labelKey: 'tagSetEditor.propertyTypes.geo' },
+  { value: 'link', labelKey: 'tagSetEditor.propertyTypes.link' },
 ];
 
 const COLOR_OPTIONS = [
@@ -44,6 +45,7 @@ const COLOR_OPTIONS = [
 ];
 
 export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModalProps) {
+  const { t } = useTranslation(['modals', 'common']);
   const { create, update, nameExists } = useTagSetStore();
   const showToast = useUIStore((state) => state.showToast);
 
@@ -62,10 +64,10 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
 
   // Validation
   const nameError = useMemo(() => {
-    if (!name.trim()) return 'Le nom est requis';
-    if (nameExists(name.trim(), tagSet?.id)) return 'Ce nom existe déjà';
+    if (!name.trim()) return t('tagSetEditor.nameRequired');
+    if (nameExists(name.trim(), tagSet?.id)) return t('tagSetEditor.nameExists');
     return null;
-  }, [name, nameExists, tagSet?.id]);
+  }, [name, nameExists, tagSet?.id, t]);
 
   const handleSubmit = useCallback(async () => {
     if (nameError) return;
@@ -79,7 +81,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
           defaultVisual: { color, shape, icon },
           suggestedProperties: properties,
         });
-        showToast('success', `Tag "${name}" modifié`);
+        showToast('success', t('tagSetEditor.tagModified', { name }));
       } else {
         await create({
           name: name.trim(),
@@ -88,11 +90,11 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
           suggestedProperties: properties,
           isBuiltIn: false,
         });
-        showToast('success', `Tag "${name}" créé`);
+        showToast('success', t('tagSetEditor.tagCreated', { name }));
       }
       onClose();
     } catch (error) {
-      showToast('error', 'Erreur lors de la sauvegarde');
+      showToast('error', t('tagSetEditor.saveError'));
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +112,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
     create,
     showToast,
     onClose,
+    t,
   ]);
 
   const handleAddProperty = useCallback(() => {
@@ -146,19 +149,19 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? `Modifier "${tagSet.name}"` : 'Nouveau tag'}
+      title={isEditing ? t('tagSetEditor.titleEdit', { name: tagSet.name }) : t('tagSetEditor.titleNew')}
       width="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Annuler
+            {t('common:actions.cancel')}
           </Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
             disabled={!!nameError || isLoading}
           >
-            {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+            {isLoading ? t('tagSets.saving') : t('tagSets.save')}
           </Button>
         </>
       }
@@ -166,11 +169,11 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
       <div className="space-y-6">
         {/* Name */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">Nom</label>
+          <label className="text-xs font-medium text-text-secondary">{t('tagSetEditor.nameLabel')}</label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Personne, Entreprise..."
+            placeholder={t('tagSetEditor.nameExample')}
             autoFocus
           />
           {nameError && name.trim() && (
@@ -180,23 +183,23 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">Description</label>
+          <label className="text-xs font-medium text-text-secondary">{t('tagSetEditor.descriptionLabel')}</label>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description optionnelle..."
+            placeholder={t('tagSetEditor.descriptionPlaceholder')}
           />
         </div>
 
         {/* Default Visual */}
         <div className="space-y-3">
           <label className="text-xs font-medium text-text-secondary">
-            Apparence par défaut
+            {t('tagSetEditor.defaultAppearance')}
           </label>
 
           {/* Color picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-text-tertiary w-16">Couleur</span>
+            <span className="text-xs text-text-tertiary w-16">{t('tagSetEditor.colorOption')}</span>
             <div className="flex gap-1 flex-wrap">
               <button
                 onClick={() => setColor(null)}
@@ -205,7 +208,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
                     ? 'border-accent ring-2 ring-accent/30'
                     : 'border-border-default'
                 } bg-bg-tertiary flex items-center justify-center text-xs text-text-tertiary`}
-                title="Aucune"
+                title={t('tagSetEditor.noneOption')}
               >
                 ×
               </button>
@@ -227,16 +230,16 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
 
           {/* Shape picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-text-tertiary w-16">Forme</span>
+            <span className="text-xs text-text-tertiary w-16">{t('tagSetEditor.shapeOption')}</span>
             <select
               value={shape || ''}
               onChange={(e) => setShape((e.target.value as ElementShape) || null)}
               className="px-2 py-1 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent"
             >
-              <option value="">Aucune</option>
+              <option value="">{t('tagSetEditor.noneOption')}</option>
               {SHAPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </select>
@@ -244,7 +247,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
 
           {/* Icon picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-text-tertiary w-16">Icône</span>
+            <span className="text-xs text-text-tertiary w-16">{t('tagSetEditor.iconOption')}</span>
             <div className="flex-1">
               <IconPicker value={icon} onChange={setIcon} />
             </div>
@@ -254,7 +257,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
         {/* Suggested Properties */}
         <div className="space-y-3">
           <label className="text-xs font-medium text-text-secondary">
-            Propriétés suggérées
+            {t('tagSetEditor.suggestedProperties')}
           </label>
 
           <div className="space-y-2">
@@ -276,7 +279,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
               className="w-full flex items-center justify-center gap-2 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-secondary border border-dashed border-border-default rounded transition-colors"
             >
               <Plus size={12} />
-              Ajouter une propriété
+              {t('tagSetEditor.addProperty')}
             </button>
           </div>
         </div>
@@ -304,6 +307,7 @@ function PropertyEditor({
   onMoveUp,
   onMoveDown,
 }: PropertyEditorProps) {
+  const { t } = useTranslation(['modals', 'common']);
   const [showChoices, setShowChoices] = useState(property.type === 'choice');
 
   const handleTypeChange = useCallback(
@@ -330,7 +334,7 @@ function PropertyEditor({
           onClick={onMoveUp}
           size="sm"
           disabled={index === 0}
-          title="Monter"
+          title={t('tagSetEditor.moveUp')}
         >
           <ChevronUp size={12} />
         </IconButton>
@@ -338,7 +342,7 @@ function PropertyEditor({
           onClick={onMoveDown}
           size="sm"
           disabled={index === total - 1}
-          title="Descendre"
+          title={t('tagSetEditor.moveDown')}
         >
           <ChevronDown size={12} />
         </IconButton>
@@ -351,7 +355,7 @@ function PropertyEditor({
             type="text"
             value={property.key}
             onChange={(e) => onChange({ key: e.target.value })}
-            placeholder="Nom de la propriété"
+            placeholder={t('tagSetEditor.propertyName')}
             className="flex-1 px-2 py-1 text-sm bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
           <select
@@ -361,7 +365,7 @@ function PropertyEditor({
           >
             {PROPERTY_TYPES.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </select>
@@ -371,7 +375,7 @@ function PropertyEditor({
           type="text"
           value={property.placeholder}
           onChange={(e) => onChange({ placeholder: e.target.value })}
-          placeholder="Exemple de valeur"
+          placeholder={t('tagSetEditor.exampleValue')}
           className="w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-tertiary"
         />
 
@@ -380,14 +384,14 @@ function PropertyEditor({
             type="text"
             value={property.choices?.join(', ') || ''}
             onChange={(e) => handleChoicesChange(e.target.value)}
-            placeholder="Options séparées par des virgules"
+            placeholder={t('tagSetEditor.choicesPlaceholder')}
             className="w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
         )}
       </div>
 
       {/* Remove button */}
-      <IconButton onClick={onRemove} size="sm" title="Supprimer">
+      <IconButton onClick={onRemove} size="sm" title={t('common:actions.delete')}>
         <Trash2 size={12} />
       </IconButton>
     </div>

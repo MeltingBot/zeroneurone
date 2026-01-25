@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch } from 'lucide-react';
@@ -39,13 +40,14 @@ const AXIS_HEIGHT = 28;
 
 // Zoom presets (pixels per day) with approximate visible range at 800px width
 const ZOOM_PRESETS = [
-  { label: '1 an', zoom: 0.8 },    // ~3 years visible
-  { label: '6 mois', zoom: 1.5 },  // ~1.5 years visible
-  { label: '1 mois', zoom: 8 },    // ~3 months visible
-  { label: '1 sem.', zoom: 30 },   // ~3 weeks visible
+  { labelKey: 'timeline.zoomPreset1Year', zoom: 0.8 },    // ~3 years visible
+  { labelKey: 'timeline.zoomPreset6Months', zoom: 1.5 },  // ~1.5 years visible
+  { labelKey: 'timeline.zoomPreset1Month', zoom: 8 },    // ~3 months visible
+  { labelKey: 'timeline.zoomPreset1Week', zoom: 30 },   // ~3 weeks visible
 ] as const;
 
 export function TimelineView() {
+  const { t, i18n } = useTranslation('pages');
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -139,9 +141,9 @@ export function TimelineView() {
       if (startTime < minTime) minTime = startTime;
       if (endTime > maxTime) maxTime = endTime;
 
-      const fromLabel = fromElement.label || 'Sans nom';
-      const toLabel = toElement.label || 'Sans nom';
-      const linkLabel = link.label || 'relation';
+      const fromLabel = fromElement.label || t('timeline.unnamed');
+      const toLabel = toElement.label || t('timeline.unnamed');
+      const linkLabel = link.label || t('timeline.relation');
 
       // Check if link should be dimmed (either connected element is dimmed)
       const isLinkDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id);
@@ -194,9 +196,9 @@ export function TimelineView() {
         const endTime = endDate.getTime();
         if (endTime > maxTime) maxTime = endTime;
 
-        const elementLabel = element.label || 'Sans nom';
+        const elementLabel = element.label || t('timeline.unnamed');
         const eventLabel = event.label || '';
-        const isDefaultName = element.label === 'Nouvel élément' || !element.label;
+        const isDefaultName = element.label === t('timeline.newElement') || !element.label;
 
         // Format event properties as sublabel
         let eventSublabel: string | undefined;
@@ -255,7 +257,7 @@ export function TimelineView() {
         if (propTime < minTime) minTime = propTime;
         if (propTime > maxTime) maxTime = propTime;
 
-        const elementLabel = element.label || 'Sans nom';
+        const elementLabel = element.label || t('timeline.unnamed');
 
         itemsList.push({
           id: `prop-${element.id}-${index}`,
@@ -559,7 +561,7 @@ export function TimelineView() {
                        (step === 'day' && (current.getDate() === 1 || current.getDay() === 1)); // 1st of month or Monday
         labels.push({
           x,
-          label: current.toLocaleDateString('fr-FR', format),
+          label: current.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', format),
           isMain,
         });
       }
@@ -577,7 +579,7 @@ export function TimelineView() {
     }
 
     return labels;
-  }, [viewStart, zoom, dateToX, xToDate, getContainerWidth]);
+  }, [viewStart, zoom, dateToX, xToDate, getContainerWidth, i18n.language]);
 
   // Today marker position
   const todayX = useMemo(() => dateToX(new Date()), [dateToX]);
@@ -727,11 +729,11 @@ export function TimelineView() {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
         <Calendar size={48} className="text-text-tertiary mb-4" />
-        <p className="text-sm text-text-secondary">Aucune donnee temporelle</p>
+        <p className="text-sm text-text-secondary">{t('timeline.noTemporalData')}</p>
         <p className="text-xs text-text-tertiary mt-2 text-center max-w-sm px-4">
-          Pour voir des elements sur la timeline :<br/>
-          - Ajoutez une <b>periode</b> aux liens (date debut/fin)<br/>
-          - Ajoutez des <b>evenements</b> dans l'historique des elements
+          {t('timeline.howToAddTimeline')}<br/>
+          - {t('timeline.addPeriodToLinks')}<br/>
+          - {t('timeline.addEventsToHistory')}
         </p>
       </div>
     );
@@ -747,10 +749,10 @@ export function TimelineView() {
         leftContent={
           <>
             <span className="text-xs text-text-secondary">
-              {items.length} evenement{items.length > 1 ? 's' : ''}
+              {t('timeline.eventsCount', { count: items.length })}
             </span>
             <span className="text-[10px] text-text-tertiary hidden sm:inline">
-              Ctrl+molette: zoom | Glisser: deplacer
+              {t('timeline.zoomHint')}
             </span>
           </>
         }
@@ -762,7 +764,7 @@ export function TimelineView() {
                 const isActive = Math.abs(zoom - preset.zoom) < preset.zoom * 0.3;
                 return (
                   <button
-                    key={preset.label}
+                    key={preset.labelKey}
                     onClick={() => {
                       const containerWidth = getContainerWidth();
                       const daysVisible = containerWidth / preset.zoom;
@@ -773,20 +775,20 @@ export function TimelineView() {
                     }}
                     className={`px-2 h-6 text-[10px] ${isActive ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
                   >
-                    {preset.label}
+                    {t(preset.labelKey)}
                   </button>
                 );
               })}
             </div>
-            <button onClick={handleZoomOut} className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded" title="Zoom arriere">
+            <button onClick={handleZoomOut} className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded" title={t('timeline.zoomOut')}>
               <ZoomOut size={16} />
             </button>
-            <button onClick={handleZoomIn} className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded" title="Zoom avant">
+            <button onClick={handleZoomIn} className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded" title={t('timeline.zoomIn')}>
               <ZoomIn size={16} />
             </button>
             <div className="w-px h-4 bg-border-default mx-1" />
-            <button onClick={handleToday} className="px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default" title="Centrer sur aujourd'hui">Auj.</button>
-            <button onClick={handleFitAll} className="px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default" title="Voir tout">Tout</button>
+            <button onClick={handleToday} className="px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default" title={t('timeline.centerOnToday')}>{t('timeline.todayShort')}</button>
+            <button onClick={handleFitAll} className="px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default" title={t('timeline.viewAll')}>{t('timeline.fitAll')}</button>
             <div className="w-px h-4 bg-border-default mx-1" />
             <button
               onClick={() => setNewestFirst(!newestFirst)}
@@ -795,10 +797,10 @@ export function TimelineView() {
                   ? 'bg-accent text-white border-accent'
                   : 'text-text-secondary hover:bg-bg-tertiary border-border-default'
               }`}
-              title={newestFirst ? 'Plus recent en haut' : 'Plus ancien en haut'}
+              title={newestFirst ? t('timeline.newestFirst') : t('timeline.oldestFirst')}
             >
               <ArrowUpDown size={10} />
-              {newestFirst ? 'Recent ↑' : 'Ancien ↑'}
+              {newestFirst ? t('timeline.recentUp') : t('timeline.oldUp')}
             </button>
             <div className="w-px h-4 bg-border-default mx-1" />
             <button
@@ -808,10 +810,10 @@ export function TimelineView() {
                   ? 'bg-accent text-white border-accent rounded-l'
                   : 'text-text-secondary hover:bg-bg-tertiary border-border-default rounded'
               }`}
-              title="Afficher les causalités potentielles entre événements d'éléments liés"
+              title={t('timeline.causalityHint')}
             >
               <GitBranch size={10} />
-              Causalités
+              {t('timeline.causality')}
             </button>
             {/* Causality time threshold presets */}
             {showCausality && (
@@ -830,7 +832,7 @@ export function TimelineView() {
                         ? 'bg-accent/20 text-accent font-medium'
                         : 'text-text-tertiary hover:bg-bg-tertiary'
                     }`}
-                    title={`Max ${preset.label} entre événements`}
+                    title={t('timeline.maxDaysBetweenEvents', { days: preset.label })}
                   >
                     {preset.label}
                   </button>
@@ -938,7 +940,7 @@ export function TimelineView() {
                   {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                     <div
                       className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
-                      title={`${item.unresolvedCommentCount} commentaire${item.unresolvedCommentCount > 1 ? 's' : ''} non résolu${item.unresolvedCommentCount > 1 ? 's' : ''}`}
+                      title={t('timeline.unresolvedComments', { count: item.unresolvedCommentCount })}
                     >
                       {item.unresolvedCommentCount}
                     </div>
@@ -975,7 +977,7 @@ export function TimelineView() {
                 {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                   <div
                     className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm z-10"
-                    title={`${item.unresolvedCommentCount} commentaire${item.unresolvedCommentCount > 1 ? 's' : ''} non résolu${item.unresolvedCommentCount > 1 ? 's' : ''}`}
+                    title={t('timeline.unresolvedComments', { count: item.unresolvedCommentCount })}
                   >
                     {item.unresolvedCommentCount}
                   </div>
@@ -1049,7 +1051,7 @@ export function TimelineView() {
                   </div>
                 )}
                 <div className="text-[10px] text-text-tertiary">
-                  {formatDateRange(expandedItem.start, expandedItem.end)}
+                  {formatDateRange(expandedItem.start, expandedItem.end, i18n.language === 'fr' ? 'fr-FR' : 'en-US')}
                 </div>
                 <button
                   onClick={() => setExpandedItemId(null)}
@@ -1102,7 +1104,7 @@ export function TimelineView() {
                 // Calculate days between events for tooltip
                 const fromEnd = conn.fromItem.end || conn.fromItem.start;
                 const daysBetween = Math.round((conn.toItem.start.getTime() - fromEnd.getTime()) / (24 * 60 * 60 * 1000));
-                const tooltip = `Causalité potentielle\n${conn.fromItem.label}\n→ ${conn.toItem.label}\n(${daysBetween} jour${daysBetween > 1 ? 's' : ''} après)`;
+                const tooltip = `${t('timeline.potentialCausality')}\n${conn.fromItem.label}\n→ ${conn.toItem.label}\n${t('timeline.daysAfter', { count: daysBetween })}`;
 
                 return (
                   <g key={idx} className="cursor-help" style={{ pointerEvents: 'auto' }}>
@@ -1205,10 +1207,10 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
   );
 }
 
-function formatDateRange(start: Date, end?: Date): string {
+function formatDateRange(start: Date, end?: Date, locale: string = 'en-US'): string {
   const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
-  const startStr = start.toLocaleDateString('fr-FR', opts);
+  const startStr = start.toLocaleDateString(locale, opts);
   if (!end) return startStr;
-  const endStr = end.toLocaleDateString('fr-FR', opts);
+  const endStr = end.toLocaleDateString(locale, opts);
   return `${startStr} → ${endStr}`;
 }

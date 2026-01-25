@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Undo2, Redo2, Sun, Moon, Image, ImageOff, Eye, EyeOff, Type, PenTool, MessageCircle, MessageCircleOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Undo2, Redo2, Image, ImageOff, Eye, EyeOff, Type, PenTool, MessageCircle, MessageCircleOff } from 'lucide-react';
 import { useUIStore, useHistoryStore } from '../../stores';
 
 interface ViewToolbarProps {
@@ -19,7 +20,8 @@ export function ViewToolbar({
   rightContent,
   showFontToggle = false,
 }: ViewToolbarProps) {
-  const { fontMode, toggleFontMode, themeMode, toggleThemeMode, hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
+  const { t } = useTranslation('pages');
+  const { fontMode, toggleFontMode, hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
   const { canUndo, canRedo, undo, redo } = useHistoryStore();
 
   const canUndoNow = canUndo();
@@ -51,7 +53,7 @@ export function ViewToolbar({
           onClick={undo}
           disabled={!canUndoNow}
           className={`p-1.5 rounded transition-colors ${canUndoNow ? 'hover:bg-bg-tertiary text-text-secondary' : 'opacity-40 cursor-not-allowed text-text-tertiary'}`}
-          title="Annuler (Ctrl+Z)"
+          title={t('investigation.viewToolbar.undo')}
         >
           <Undo2 size={16} />
         </button>
@@ -59,7 +61,7 @@ export function ViewToolbar({
           onClick={redo}
           disabled={!canRedoNow}
           className={`p-1.5 rounded transition-colors ${canRedoNow ? 'hover:bg-bg-tertiary text-text-secondary' : 'opacity-40 cursor-not-allowed text-text-tertiary'}`}
-          title="Refaire (Ctrl+Shift+Z)"
+          title={t('investigation.viewToolbar.redo')}
         >
           <Redo2 size={16} />
         </button>
@@ -71,26 +73,17 @@ export function ViewToolbar({
           <button
             onClick={toggleFontMode}
             className={`p-1.5 rounded transition-colors ${fontMode === 'handwritten' ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-            title={fontMode === 'handwritten' ? 'Police lisible' : 'Police manuscrite'}
+            title={fontMode === 'handwritten' ? t('investigation.viewToolbar.readableFont') : t('investigation.viewToolbar.handwrittenFont')}
           >
             {fontMode === 'handwritten' ? <Type size={16} /> : <PenTool size={16} />}
           </button>
         )}
 
-        {/* Theme toggle */}
-        <button
-          onClick={toggleThemeMode}
-          className="p-1.5 hover:bg-bg-tertiary rounded transition-colors"
-          title={themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
-        >
-          {themeMode === 'light' ? <Moon size={16} className="text-text-secondary" /> : <Sun size={16} className="text-text-secondary" />}
-        </button>
-
         {/* Hide media toggle */}
         <button
           onClick={toggleHideMedia}
           className={`p-1.5 rounded transition-colors ${hideMedia ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-          title={hideMedia ? 'Afficher les medias' : 'Flouter les medias'}
+          title={hideMedia ? t('investigation.viewToolbar.showMedia') : t('investigation.viewToolbar.blurMedia')}
         >
           {hideMedia ? <ImageOff size={16} /> : <Image size={16} />}
         </button>
@@ -99,7 +92,7 @@ export function ViewToolbar({
         <button
           onClick={toggleAnonymousMode}
           className={`p-1.5 rounded transition-colors ${anonymousMode ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-          title={anonymousMode ? 'Afficher les noms' : 'Mode anonyme (caviardage)'}
+          title={anonymousMode ? t('investigation.viewToolbar.showNames') : t('investigation.viewToolbar.anonymousMode')}
         >
           {anonymousMode ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
@@ -108,7 +101,7 @@ export function ViewToolbar({
         <button
           onClick={toggleShowCommentBadges}
           className={`p-1.5 rounded transition-colors ${showCommentBadges ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-          title={showCommentBadges ? 'Masquer les badges de commentaires' : 'Afficher les badges de commentaires'}
+          title={showCommentBadges ? t('investigation.viewToolbar.hideCommentBadges') : t('investigation.viewToolbar.showCommentBadges')}
         >
           {showCommentBadges ? <MessageCircle size={16} /> : <MessageCircleOff size={16} />}
         </button>

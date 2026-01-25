@@ -2,6 +2,7 @@ import type { Investigation, Element, Link, Asset } from '../types';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import i18next from 'i18next';
 
 // Configure marked for secure rendering
 marked.setOptions({
@@ -65,6 +66,13 @@ export const DEFAULT_REPORT_OPTIONS: ReportOptions = {
 
 class ReportService {
   /**
+   * Helper to get translation with fallback
+   */
+  private t(key: string, options?: Record<string, unknown>): string {
+    return i18next.t(`modals:report.content.${key}`, options) as string;
+  }
+
+  /**
    * Generate report in specified format
    */
   generate(
@@ -73,23 +81,41 @@ class ReportService {
     elements: Element[],
     links: Link[],
     assets: Asset[],
-    options: ReportOptions
+    options: ReportOptions,
+    language?: string
   ): string {
+    // Set language for this generation if provided
+    const currentLang = i18next.language;
+    if (language && language !== currentLang) {
+      i18next.changeLanguage(language);
+    }
+
     // Build insights if needed
     if (options.includeInsights && elements.length > 0) {
       insightsService.buildGraph(elements, links);
     }
 
+    let result: string;
     switch (format) {
       case 'html':
-        return this.generateHTML(investigation, elements, links, assets, options);
+        result = this.generateHTML(investigation, elements, links, assets, options, language);
+        break;
       case 'markdown':
-        return this.generateMarkdown(investigation, elements, links, assets, options);
+        result = this.generateMarkdown(investigation, elements, links, assets, options, language);
+        break;
       case 'extended-json':
-        return this.generateExtendedJSON(investigation, elements, links, assets);
+        result = this.generateExtendedJSON(investigation, elements, links, assets, language);
+        break;
       default:
-        return this.generateMarkdown(investigation, elements, links, assets, options);
+        result = this.generateMarkdown(investigation, elements, links, assets, options, language);
     }
+
+    // Restore language if changed
+    if (language && language !== currentLang) {
+      i18next.changeLanguage(currentLang);
+    }
+
+    return result;
   }
 
   /**
@@ -100,11 +126,13 @@ class ReportService {
     elements: Element[],
     links: Link[],
     assets: Asset[],
-    options: ReportOptions
+    options: ReportOptions,
+    language?: string
   ): string {
     const title = options.title || investigation.name;
     const sortedElements = this.sortElements(elements, options.sortElementsBy);
     const insights = options.includeInsights ? insightsService.computeInsights() : null;
+    const locale = language || i18next.language || 'fr';
 
     // Collect all events from all elements
     const allEvents = elements.flatMap(el =>
@@ -120,7 +148,7 @@ class ReportService {
     const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0);
 
     let html = `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${locale}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -205,7 +233,7 @@ class ReportService {
 <body>
   <header>
     <h1>${this.escapeHTML(title)}</h1>
-    <p class="meta">Rapport genere le ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR')}</p>
+    <p class="meta">${this.t('generatedOn', { date: new Date().toLocaleDateString(locale), time: new Date().toLocaleTimeString(locale) })}</p>
   </header>
 `;
 
@@ -223,27 +251,27 @@ class ReportService {
     <div class="summary-grid">
       <div class="summary-item">
         <div class="summary-value">${elements.length}</div>
-        <div class="summary-label">Elements</div>
+        <div class="summary-label">${this.t('elements')}</div>
       </div>
       <div class="summary-item">
         <div class="summary-value">${links.length}</div>
-        <div class="summary-label">Liens</div>
+        <div class="summary-label">${this.t('links')}</div>
       </div>
       <div class="summary-item">
         <div class="summary-value">${totalEvents}</div>
-        <div class="summary-label">Evenements</div>
+        <div class="summary-label">${this.t('events')}</div>
       </div>
       <div class="summary-item">
         <div class="summary-value">${geoElements.length}</div>
-        <div class="summary-label">Localisations</div>
+        <div class="summary-label">${this.t('locations')}</div>
       </div>
       <div class="summary-item">
         <div class="summary-value">${Object.keys(tagCounts).length}</div>
-        <div class="summary-label">Tags</div>
+        <div class="summary-label">${this.t('tags')}</div>
       </div>
       <div class="summary-item">
         <div class="summary-value">${totalFiles}</div>
-        <div class="summary-label">Fichiers</div>
+        <div class="summary-label">${this.t('files')}</div>
       </div>
     </div>
   </section>\n`;
@@ -252,21 +280,21 @@ class ReportService {
     // Canvas screenshot section (map/timeline will have separate export system)
     if (options.canvasScreenshot) {
       html += `  <section class="screenshot-section">
-    <h2>Vue du graphe</h2>
-    <img src="${options.canvasScreenshot}" alt="Capture du graphe" style="width:100%;height:auto;border:1px solid var(--color-border);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1)" />
+    <h2>${this.t('graphView')}</h2>
+    <img src="${options.canvasScreenshot}" alt="${this.t('graphView')}" style="width:100%;height:auto;border:1px solid var(--color-border);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1)" />
   </section>\n`;
     }
 
     // Insights
     if (options.includeInsights && insights) {
       html += `  <section>
-    <h2>Analyse du graphe</h2>\n`;
+    <h2>${this.t('graphAnalysis')}</h2>\n`;
 
       if (insights.clusters.length > 1) {
         html += `    <div class="insight-box">
-      <div class="insight-title">Clusters identifies (${insights.clusters.length})</div>
+      <div class="insight-title">${this.t('clustersIdentified')} (${insights.clusters.length})</div>
       <table>
-        <tr><th>Cluster</th><th>Nb elements</th><th>Elements</th></tr>
+        <tr><th>${this.t('cluster')}</th><th>${this.t('nbElements')}</th><th>${this.t('elements')}</th></tr>
         ${insights.clusters.map(c => {
           const clusterElements = c.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
           const more = c.elementIds.length > 5 ? ` (+${c.elementIds.length - 5})` : '';
@@ -279,13 +307,13 @@ class ReportService {
       if (insights.centrality.length > 0) {
         const topCentral = insights.centrality.slice(0, 10);
         html += `    <div class="insight-box">
-      <div class="insight-title">Elements centraux (top ${topCentral.length})</div>
+      <div class="insight-title">${this.t('centralElements')} (top ${topCentral.length})</div>
       <table>
-        <tr><th>Element</th><th>Score centralite</th><th>Connexions</th></tr>
+        <tr><th>${this.t('element')}</th><th>${this.t('centralityScore')}</th><th>${this.t('connections')}</th></tr>
         ${topCentral.map(c => {
           const el = elements.find(e => e.id === c.elementId);
           const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
-          return `<tr><td>${this.escapeHTML(el?.label || 'Inconnu')}</td><td>${c.score.toFixed(3)}</td><td>${connectionCount}</td></tr>`;
+          return `<tr><td>${this.escapeHTML(el?.label || this.t('unknown'))}</td><td>${c.score.toFixed(3)}</td><td>${connectionCount}</td></tr>`;
         }).join('\n        ')}
       </table>
     </div>\n`;
@@ -293,12 +321,12 @@ class ReportService {
 
       if (insights.bridges.length > 0) {
         html += `    <div class="insight-box">
-      <div class="insight-title">Elements ponts (${insights.bridges.length})</div>
-      <p style="font-size:9pt;color:var(--color-secondary)">Elements connectant differents groupes</p>
+      <div class="insight-title">${this.t('bridgeElements')} (${insights.bridges.length})</div>
+      <p style="font-size:9pt;color:var(--color-secondary)">${this.t('bridgeDescription')}</p>
       <ul class="insight-list">
         ${insights.bridges.slice(0, 10).map(id => {
           const el = elements.find(e => e.id === id);
-          return `<li>${this.escapeHTML(el?.label || 'Inconnu')}</li>`;
+          return `<li>${this.escapeHTML(el?.label || this.t('unknown'))}</li>`;
         }).join('\n        ')}
       </ul>
     </div>\n`;
@@ -306,14 +334,14 @@ class ReportService {
 
       if (insights.isolated.length > 0) {
         html += `    <div class="insight-box">
-      <div class="insight-title">Elements isoles (${insights.isolated.length})</div>
-      <p style="font-size:9pt;color:var(--color-secondary)">Elements sans connexion</p>
+      <div class="insight-title">${this.t('isolatedElements')} (${insights.isolated.length})</div>
+      <p style="font-size:9pt;color:var(--color-secondary)">${this.t('isolatedDescription')}</p>
       <ul class="insight-list">
         ${insights.isolated.slice(0, 10).map(id => {
           const el = elements.find(e => e.id === id);
-          return `<li>${this.escapeHTML(el?.label || 'Inconnu')}</li>`;
+          return `<li>${this.escapeHTML(el?.label || this.t('unknown'))}</li>`;
         }).join('\n        ')}
-        ${insights.isolated.length > 10 ? `<li>... et ${insights.isolated.length - 10} autres</li>` : ''}
+        ${insights.isolated.length > 10 ? `<li>${this.t('andMore', { count: insights.isolated.length - 10 })}</li>` : ''}
       </ul>
     </div>\n`;
       }
@@ -324,12 +352,12 @@ class ReportService {
     // Timeline (real events)
     if (options.includeTimeline && allEvents.length > 0) {
       html += `  <section>
-    <h2>Chronologie (${allEvents.length} evenements)</h2>
+    <h2>${this.t('timeline')} (${allEvents.length} ${this.t('events').toLowerCase()})</h2>
     <table class="timeline-table">
-      <tr><th>Date</th><th>Element</th><th>Evenement</th><th>Details</th></tr>
+      <tr><th>${this.t('date')}</th><th>${this.t('element')}</th><th>${this.t('event')}</th><th>${this.t('details')}</th></tr>
       ${allEvents.map(ev => {
-        const dateStr = new Date(ev.date).toLocaleDateString('fr-FR');
-        const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString('fr-FR')}` : '';
+        const dateStr = new Date(ev.date).toLocaleDateString(locale);
+        const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
         const location = ev.geo ? `${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}` : '';
         return `<tr>
         <td>${dateStr}${endStr}</td>
@@ -345,10 +373,10 @@ class ReportService {
     // Elements
     if (options.includeElements) {
       html += `  <section>
-    <h2>Elements (${elements.length})</h2>\n`;
+    <h2>${this.t('elements')} (${elements.length})</h2>\n`;
 
       if (options.groupElementsByTag) {
-        const tagGroups = this.groupByTags(sortedElements);
+        const tagGroups = this.groupByTags(sortedElements, locale);
         for (const [tag, tagElements] of Object.entries(tagGroups)) {
           html += `    <h3>${this.escapeHTML(tag)} (${tagElements.length})</h3>\n`;
           html += this.renderElementsTableHTML(tagElements, assets, options);
@@ -363,9 +391,9 @@ class ReportService {
     // Links
     if (options.includeLinks && links.length > 0) {
       html += `  <section>
-    <h2>Liens (${links.length})</h2>
+    <h2>${this.t('links')} (${links.length})</h2>
     <table>
-      <tr><th>De</th><th>Vers</th><th>Type</th><th>Label</th><th>Notes</th></tr>
+      <tr><th>${this.t('from')}</th><th>${this.t('to')}</th><th>${this.t('type')}</th><th>${this.t('label')}</th><th>${this.t('notes')}</th></tr>
       ${links.map(link => {
         const fromEl = elements.find(e => e.id === link.fromId);
         const toEl = elements.find(e => e.id === link.toId);
@@ -385,7 +413,7 @@ class ReportService {
     // Files with media previews
     if (options.includeFiles && totalFiles > 0) {
       html += `  <section>
-    <h2>Fichiers joints (${totalFiles})</h2>
+    <h2>${this.t('attachedFiles')} (${totalFiles})</h2>
     <div class="media-grid">\n`;
 
       for (const el of elements) {
@@ -416,7 +444,7 @@ class ReportService {
 
       if (elementsWithData.length > 0) {
         html += `  <section>
-    <h2>Fiches detaillees (${elementsWithData.length})</h2>\n`;
+    <h2>${this.t('detailedSheets')} (${elementsWithData.length})</h2>\n`;
 
         for (const el of elementsWithData) {
           // Get connections
@@ -437,17 +465,17 @@ class ReportService {
           html += `    <div class="fiche">
       <h3 style="margin:0 0 8pt;color:var(--color-primary)">${this.escapeHTML(el.label)}</h3>
       <table class="fiche-table">
-        <tr><th colspan="2" style="background:var(--color-bg-alt)">Identite</th></tr>
-        <tr><td>Tags</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join(' ') : '-'}</td></tr>
-        <tr><td>Confiance</td><td>${el.confidence !== null ? `${el.confidence}%` : '-'}</td></tr>
-        <tr><td>Source</td><td>${el.source ? this.escapeHTML(el.source) : '-'}</td></tr>
-        ${el.notes ? `<tr><td>Notes</td><td class="markdown-content">${this.markdownToHTML(el.notes)}</td></tr>` : ''}
+        <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('identity')}</th></tr>
+        <tr><td>${this.t('tags')}</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join(' ') : '-'}</td></tr>
+        <tr><td>${this.t('confidence')}</td><td>${el.confidence !== null ? `${el.confidence}%` : '-'}</td></tr>
+        <tr><td>${this.t('source')}</td><td>${el.source ? this.escapeHTML(el.source) : '-'}</td></tr>
+        ${el.notes ? `<tr><td>${this.t('notes')}</td><td class="markdown-content">${this.markdownToHTML(el.notes)}</td></tr>` : ''}
       </table>\n`;
 
           // Properties
           if (el.properties.length > 0) {
             html += `      <table class="fiche-table">
-        <tr><th colspan="2" style="background:var(--color-bg-alt)">Proprietes (${el.properties.length})</th></tr>
+        <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('properties')} (${el.properties.length})</th></tr>
         ${el.properties.map(p => `<tr><td>${this.escapeHTML(p.key)}</td><td>${this.escapeHTML(String(p.value ?? ''))}</td></tr>`).join('\n        ')}
       </table>\n`;
           }
@@ -455,10 +483,10 @@ class ReportService {
           // Events
           if (el.events.length > 0) {
             html += `      <table class="fiche-table">
-        <tr><th colspan="2" style="background:var(--color-bg-alt)">Evenements (${el.events.length})</th></tr>
+        <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('events')} (${el.events.length})</th></tr>
         ${el.events.map(ev => {
-          const dateStr = new Date(ev.date).toLocaleDateString('fr-FR');
-          const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString('fr-FR')}` : '';
+          const dateStr = new Date(ev.date).toLocaleDateString(locale);
+          const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
           const geo = ev.geo ? ` [${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
           return `<tr><td>${dateStr}${endStr}</td><td><b>${this.escapeHTML(ev.label)}</b>${ev.description ? ` - ${this.escapeHTML(ev.description)}` : ''}${geo}</td></tr>`;
         }).join('\n        ')}
@@ -468,7 +496,7 @@ class ReportService {
           // Connections
           if (connections.length > 0) {
             html += `      <table class="fiche-table">
-        <tr><th colspan="2" style="background:var(--color-bg-alt)">Relations (${connections.length})</th></tr>
+        <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('relations')} (${connections.length})</th></tr>
         ${connections.map(c => `<tr><td>${c.direction}</td><td><b>${this.escapeHTML(c.label)}</b>${c.linkLabel ? ` (${this.escapeHTML(c.linkLabel)})` : ''}</td></tr>`).join('\n        ')}
       </table>\n`;
           }
@@ -476,7 +504,7 @@ class ReportService {
           // Files with previews
           if (elAssets.length > 0) {
             html += `      <div style="margin-bottom:8pt">
-        <div style="font-size:8pt;text-transform:uppercase;color:var(--color-secondary);padding:4pt 0;background:var(--color-bg-alt)">Fichiers (${elAssets.length})</div>
+        <div style="font-size:8pt;text-transform:uppercase;color:var(--color-secondary);padding:4pt 0;background:var(--color-bg-alt)">${this.t('files')} (${elAssets.length})</div>
         <div class="media-grid" style="margin-top:6pt">
           ${elAssets.map(a => {
             const isImage = a.mimeType.startsWith('image/');
@@ -512,13 +540,13 @@ class ReportService {
 
     let html = `    <table>
       <tr>
-        <th>Element</th>
-        <th>Notes</th>
-        <th>Tags</th>
-        <th>Confiance</th>
-        <th>Source</th>
-        ${showProps ? '<th>Proprietes</th>' : ''}
-        ${options.includeFiles ? '<th>Fichiers</th>' : ''}
+        <th>${this.t('element')}</th>
+        <th>${this.t('notes')}</th>
+        <th>${this.t('tags')}</th>
+        <th>${this.t('confidence')}</th>
+        <th>${this.t('source')}</th>
+        ${showProps ? `<th>${this.t('properties')}</th>` : ''}
+        ${options.includeFiles ? `<th>${this.t('files')}</th>` : ''}
       </tr>
       ${elements.map(el => {
         const propsHtml = showProps && el.properties.length > 0
@@ -553,11 +581,13 @@ class ReportService {
     elements: Element[],
     links: Link[],
     assets: Asset[],
-    options: ReportOptions
+    options: ReportOptions,
+    language?: string
   ): string {
     const title = options.title || investigation.name;
     const sortedElements = this.sortElements(elements, options.sortElementsBy);
     const insights = options.includeInsights ? insightsService.computeInsights() : null;
+    const locale = language || i18next.language || 'fr';
 
     // Collect all events
     const allEvents = elements.flatMap(el =>
@@ -572,7 +602,7 @@ class ReportService {
     const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0);
 
     let md = `# ${title}\n\n`;
-    md += `*Rapport genere le ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR')}*\n\n`;
+    md += `*${this.t('generatedOn', { date: new Date().toLocaleDateString(locale), time: new Date().toLocaleTimeString(locale) })}*\n\n`;
 
     // Description
     if (options.includeDescription && investigation.description) {
@@ -584,24 +614,24 @@ class ReportService {
       const geoElements = elements.filter(el => el.geo || el.events.some(ev => ev.geo));
       const tagCounts = this.getTagCounts(elements);
 
-      md += `## Resume\n\n`;
-      md += `| Metrique | Valeur |\n`;
+      md += `## ${this.t('summary')}\n\n`;
+      md += `| ${this.t('metric')} | ${this.t('value')} |\n`;
       md += `|----------|--------|\n`;
-      md += `| Elements | ${elements.length} |\n`;
-      md += `| Liens | ${links.length} |\n`;
-      md += `| Evenements | ${totalEvents} |\n`;
-      md += `| Localisations | ${geoElements.length} |\n`;
-      md += `| Tags uniques | ${Object.keys(tagCounts).length} |\n`;
-      md += `| Fichiers | ${totalFiles} |\n\n`;
+      md += `| ${this.t('elements')} | ${elements.length} |\n`;
+      md += `| ${this.t('links')} | ${links.length} |\n`;
+      md += `| ${this.t('events')} | ${totalEvents} |\n`;
+      md += `| ${this.t('locations')} | ${geoElements.length} |\n`;
+      md += `| ${this.t('uniqueTags')} | ${Object.keys(tagCounts).length} |\n`;
+      md += `| ${this.t('files')} | ${totalFiles} |\n\n`;
     }
 
     // Insights
     if (options.includeInsights && insights) {
-      md += `## Analyse du graphe\n\n`;
+      md += `## ${this.t('graphAnalysis')}\n\n`;
 
       if (insights.clusters.length > 1) {
-        md += `### Clusters (${insights.clusters.length})\n\n`;
-        md += `| Cluster | Nb elements | Elements |\n`;
+        md += `### ${this.t('clustersIdentified')} (${insights.clusters.length})\n\n`;
+        md += `| ${this.t('cluster')} | ${this.t('nbElements')} | ${this.t('elements')} |\n`;
         md += `|---------|-------------|----------|\n`;
         for (const cluster of insights.clusters) {
           const clusterEls = cluster.elementIds.map(id => elements.find(e => e.id === id)?.label || '?').slice(0, 5);
@@ -612,37 +642,37 @@ class ReportService {
       }
 
       if (insights.centrality.length > 0) {
-        md += `### Elements centraux (top 10)\n\n`;
-        md += `| Element | Score | Connexions |\n`;
+        md += `### ${this.t('centralElements')} (top 10)\n\n`;
+        md += `| ${this.t('element')} | ${this.t('centralityScore')} | ${this.t('connections')} |\n`;
         md += `|---------|-------|------------|\n`;
         const topCentral = insights.centrality.slice(0, 10);
         for (const c of topCentral) {
           const el = elements.find(e => e.id === c.elementId);
           const connectionCount = links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length;
-          md += `| ${el?.label || 'Inconnu'} | ${c.score.toFixed(3)} | ${connectionCount} |\n`;
+          md += `| ${el?.label || this.t('unknown')} | ${c.score.toFixed(3)} | ${connectionCount} |\n`;
         }
         md += `\n`;
       }
 
       if (insights.bridges.length > 0) {
-        md += `### Elements ponts (${insights.bridges.length})\n\n`;
-        md += `*Elements connectant differents groupes*\n\n`;
+        md += `### ${this.t('bridgeElements')} (${insights.bridges.length})\n\n`;
+        md += `*${this.t('bridgeDescription')}*\n\n`;
         for (const id of insights.bridges.slice(0, 10)) {
           const el = elements.find(e => e.id === id);
-          md += `- ${el?.label || 'Inconnu'}\n`;
+          md += `- ${el?.label || this.t('unknown')}\n`;
         }
         md += `\n`;
       }
 
       if (insights.isolated.length > 0) {
-        md += `### Elements isoles (${insights.isolated.length})\n\n`;
-        md += `*Elements sans connexion*\n\n`;
+        md += `### ${this.t('isolatedElements')} (${insights.isolated.length})\n\n`;
+        md += `*${this.t('isolatedDescription')}*\n\n`;
         for (const id of insights.isolated.slice(0, 10)) {
           const el = elements.find(e => e.id === id);
-          md += `- ${el?.label || 'Inconnu'}\n`;
+          md += `- ${el?.label || this.t('unknown')}\n`;
         }
         if (insights.isolated.length > 10) {
-          md += `- ... et ${insights.isolated.length - 10} autres\n`;
+          md += `- ${this.t('andMore', { count: insights.isolated.length - 10 })}\n`;
         }
         md += `\n`;
       }
@@ -650,12 +680,12 @@ class ReportService {
 
     // Timeline (real events)
     if (options.includeTimeline && allEvents.length > 0) {
-      md += `## Chronologie (${allEvents.length} evenements)\n\n`;
-      md += `| Date | Element | Evenement | Details |\n`;
+      md += `## ${this.t('timeline')} (${allEvents.length} ${this.t('events').toLowerCase()})\n\n`;
+      md += `| ${this.t('date')} | ${this.t('element')} | ${this.t('event')} | ${this.t('details')} |\n`;
       md += `|------|---------|-----------|----------|\n`;
       for (const ev of allEvents) {
-        const dateStr = new Date(ev.date).toLocaleDateString('fr-FR');
-        const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString('fr-FR')}` : '';
+        const dateStr = new Date(ev.date).toLocaleDateString(locale);
+        const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
         const location = ev.geo ? `[${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
         const details = [ev.description, location].filter(Boolean).join(' ');
         md += `| ${dateStr}${endStr} | ${ev.elementLabel} | ${ev.label} | ${details || '-'} |\n`;
@@ -665,10 +695,10 @@ class ReportService {
 
     // Elements
     if (options.includeElements) {
-      md += `## Elements (${elements.length})\n\n`;
+      md += `## ${this.t('elements')} (${elements.length})\n\n`;
 
       if (options.groupElementsByTag) {
-        const tagGroups = this.groupByTags(sortedElements);
+        const tagGroups = this.groupByTags(sortedElements, locale);
         for (const [tag, tagElements] of Object.entries(tagGroups)) {
           md += `### ${tag} (${tagElements.length})\n\n`;
           md += this.renderElementsTableMarkdown(tagElements, assets, options);
@@ -680,8 +710,8 @@ class ReportService {
 
     // Links
     if (options.includeLinks && links.length > 0) {
-      md += `## Liens (${links.length})\n\n`;
-      md += `| De | Vers | Type | Label | Notes |\n`;
+      md += `## ${this.t('links')} (${links.length})\n\n`;
+      md += `| ${this.t('from')} | ${this.t('to')} | ${this.t('type')} | ${this.t('label')} | ${this.t('notes')} |\n`;
       md += `|----|------|------|-------|-------|\n`;
       for (const link of links) {
         const fromEl = elements.find(e => e.id === link.fromId);
@@ -694,8 +724,8 @@ class ReportService {
 
     // Files
     if (options.includeFiles && totalFiles > 0) {
-      md += `## Fichiers joints (${totalFiles})\n\n`;
-      md += `| Element | Fichier | Type | Taille |\n`;
+      md += `## ${this.t('attachedFiles')} (${totalFiles})\n\n`;
+      md += `| ${this.t('element')} | ${this.t('filename')} | ${this.t('fileType')} | ${this.t('size')} |\n`;
       md += `|---------|---------|------|--------|\n`;
       for (const el of elements) {
         for (const assetId of el.assetIds) {
@@ -716,7 +746,7 @@ class ReportService {
       );
 
       if (elementsWithData.length > 0) {
-        md += `## Fiches detaillees (${elementsWithData.length})\n\n`;
+        md += `## ${this.t('detailedSheets')} (${elementsWithData.length})\n\n`;
 
         for (const el of elementsWithData) {
           // Get connections
@@ -737,21 +767,21 @@ class ReportService {
           md += `### ${el.label}\n\n`;
 
           // Identity
-          md += `**Identite**\n\n`;
-          md += `| Champ | Valeur |\n`;
+          md += `**${this.t('identity')}**\n\n`;
+          md += `| ${this.t('field')} | ${this.t('value')} |\n`;
           md += `|-------|--------|\n`;
-          md += `| Tags | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
-          md += `| Confiance | ${el.confidence !== null ? `${el.confidence}%` : '-'} |\n`;
-          md += `| Source | ${el.source || '-'} |\n`;
+          md += `| ${this.t('tags')} | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
+          md += `| ${this.t('confidence')} | ${el.confidence !== null ? `${el.confidence}%` : '-'} |\n`;
+          md += `| ${this.t('source')} | ${el.source || '-'} |\n`;
           if (el.notes) {
-            md += `| Notes | ${el.notes.replace(/\n/g, ' ')} |\n`;
+            md += `| ${this.t('notes')} | ${el.notes.replace(/\n/g, ' ')} |\n`;
           }
           md += `\n`;
 
           // Properties
           if (el.properties.length > 0) {
-            md += `**Proprietes (${el.properties.length})**\n\n`;
-            md += `| Propriete | Valeur |\n`;
+            md += `**${this.t('properties')} (${el.properties.length})**\n\n`;
+            md += `| ${this.t('property')} | ${this.t('value')} |\n`;
             md += `|-----------|--------|\n`;
             for (const p of el.properties) {
               md += `| ${p.key} | ${p.value ?? ''} |\n`;
@@ -761,12 +791,12 @@ class ReportService {
 
           // Events
           if (el.events.length > 0) {
-            md += `**Evenements (${el.events.length})**\n\n`;
-            md += `| Date | Evenement | Details |\n`;
+            md += `**${this.t('events')} (${el.events.length})**\n\n`;
+            md += `| ${this.t('date')} | ${this.t('event')} | ${this.t('details')} |\n`;
             md += `|------|-----------|----------|\n`;
             for (const ev of el.events) {
-              const dateStr = new Date(ev.date).toLocaleDateString('fr-FR');
-              const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString('fr-FR')}` : '';
+              const dateStr = new Date(ev.date).toLocaleDateString(locale);
+              const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
               const geo = ev.geo ? ` [${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
               md += `| ${dateStr}${endStr} | ${ev.label} | ${ev.description || '-'}${geo} |\n`;
             }
@@ -775,8 +805,8 @@ class ReportService {
 
           // Connections
           if (connections.length > 0) {
-            md += `**Relations (${connections.length})**\n\n`;
-            md += `| Direction | Element | Type de lien |\n`;
+            md += `**${this.t('relations')} (${connections.length})**\n\n`;
+            md += `| ${this.t('direction')} | ${this.t('element')} | ${this.t('linkType')} |\n`;
             md += `|-----------|---------|---------------|\n`;
             for (const c of connections) {
               md += `| ${c.direction} | ${c.label} | ${c.linkLabel || '-'} |\n`;
@@ -786,8 +816,8 @@ class ReportService {
 
           // Files
           if (elAssets.length > 0) {
-            md += `**Fichiers (${elAssets.length})**\n\n`;
-            md += `| Type | Fichier | Taille |\n`;
+            md += `**${this.t('files')} (${elAssets.length})**\n\n`;
+            md += `| ${this.t('fileType')} | ${this.t('filename')} | ${this.t('size')} |\n`;
             md += `|------|---------|--------|\n`;
             for (const a of elAssets) {
               md += `| ${a.mimeType.split('/')[0]} | ${a.filename} | ${(a.size / 1024).toFixed(1)} Ko |\n`;
@@ -810,9 +840,9 @@ class ReportService {
     const showProps = options.includeProperties;
     const showFiles = options.includeFiles;
 
-    let md = `| Element | Notes | Tags | Confiance | Source |`;
-    if (showProps) md += ` Proprietes |`;
-    if (showFiles) md += ` Fichiers |`;
+    let md = `| ${this.t('element')} | ${this.t('notes')} | ${this.t('tags')} | ${this.t('confidence')} | ${this.t('source')} |`;
+    if (showProps) md += ` ${this.t('properties')} |`;
+    if (showFiles) md += ` ${this.t('files')} |`;
     md += `\n`;
 
     md += `|---------|-------|------|-----------|--------|`;
@@ -851,7 +881,8 @@ class ReportService {
     investigation: Investigation,
     elements: Element[],
     links: Link[],
-    _assets: Asset[]
+    _assets: Asset[],
+    _language?: string
   ): string {
     const insights = insightsService.computeInsights();
 
@@ -921,9 +952,9 @@ class ReportService {
         return {
           id: link.id,
           fromId: link.fromId,
-          fromLabel: fromEl?.label || 'Inconnu',
+          fromLabel: fromEl?.label || this.t('unknown'),
           toId: link.toId,
-          toLabel: toEl?.label || 'Inconnu',
+          toLabel: toEl?.label || this.t('unknown'),
           label: link.label || null,
           notes: link.notes || null,
           directed: link.directed,
@@ -941,15 +972,15 @@ class ReportService {
         clusters: insights.clusters.map(c => ({
           id: c.id,
           size: c.elementIds.length,
-          elementLabels: c.elementIds.map(id => elementMap.get(id)?.label || 'Inconnu'),
+          elementLabels: c.elementIds.map(id => elementMap.get(id)?.label || this.t('unknown')),
         })),
         centralElements: insights.centrality.slice(0, 15).map(c => ({
-          label: elementMap.get(c.elementId)?.label || 'Inconnu',
+          label: elementMap.get(c.elementId)?.label || this.t('unknown'),
           centralityScore: c.score,
           connectionCount: links.filter(l => l.fromId === c.elementId || l.toId === c.elementId).length,
         })),
-        bridgeElements: insights.bridges.slice(0, 10).map(id => elementMap.get(id)?.label || 'Inconnu'),
-        isolatedElements: insights.isolated.map(id => elementMap.get(id)?.label || 'Inconnu'),
+        bridgeElements: insights.bridges.slice(0, 10).map(id => elementMap.get(id)?.label || this.t('unknown')),
+        isolatedElements: insights.isolated.map(id => elementMap.get(id)?.label || this.t('unknown')),
       } : null,
     };
 
@@ -1028,12 +1059,13 @@ class ReportService {
     });
   }
 
-  private groupByTags(elements: Element[]): Record<string, Element[]> {
-    const groups: Record<string, Element[]> = { 'Sans tag': [] };
+  private groupByTags(elements: Element[], _locale?: string): Record<string, Element[]> {
+    const noTagLabel = this.t('noTag');
+    const groups: Record<string, Element[]> = { [noTagLabel]: [] };
 
     for (const el of elements) {
       if (el.tags.length === 0) {
-        groups['Sans tag'].push(el);
+        groups[noTagLabel].push(el);
       } else {
         for (const tag of el.tags) {
           if (!groups[tag]) groups[tag] = [];
@@ -1042,9 +1074,9 @@ class ReportService {
       }
     }
 
-    // Remove empty "Sans tag" group
-    if (groups['Sans tag'].length === 0) {
-      delete groups['Sans tag'];
+    // Remove empty "No tag" group
+    if (groups[noTagLabel].length === 0) {
+      delete groups[noTagLabel];
     }
 
     return groups;

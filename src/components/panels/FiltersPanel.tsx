@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   X,
   Filter,
@@ -6,7 +7,6 @@ import {
   Eye,
   EyeOff,
   CircleOff,
-  Link2,
   Tag,
   MapPin,
   Calendar,
@@ -17,12 +17,12 @@ import { useInvestigationStore, useViewStore, useInsightsStore } from '../../sto
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence } from '../../types';
 
-// Quick filter definitions
-interface QuickFilter {
+// Quick filter definitions (without labels - those come from translations)
+interface QuickFilterDef {
   id: string;
-  label: string;
+  labelKey: string;
+  descKey: string;
   icon: React.ReactNode;
-  description: string;
   apply: (params: QuickFilterParams) => void;
   isActive: (params: QuickFilterParams) => boolean;
 }
@@ -39,14 +39,13 @@ interface QuickFilterParams {
   comments: ReturnType<typeof useInvestigationStore>['comments'];
 }
 
-const QUICK_FILTERS: QuickFilter[] = [
+const QUICK_FILTER_DEFS: QuickFilterDef[] = [
   {
     id: 'isolated',
-    label: 'Isolés',
+    labelKey: 'isolated',
+    descKey: 'isolatedDesc',
     icon: <CircleOff size={12} />,
-    description: 'Éléments sans connexion',
     apply: ({ isolated, hideElements, hiddenElementIds, showAllElements }) => {
-      // Toggle: if all isolated are hidden, show them; otherwise hide them
       const allHidden = isolated.every((id) => hiddenElementIds.has(id));
       if (allHidden) {
         showAllElements();
@@ -60,9 +59,9 @@ const QUICK_FILTERS: QuickFilter[] = [
   },
   {
     id: 'no-tags',
-    label: 'Sans tags',
+    labelKey: 'noTags',
+    descKey: 'noTagsDesc',
     icon: <Tag size={12} />,
-    description: 'Éléments sans aucun tag',
     apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
       const noTagElements = elements.filter((el) => el.tags.length === 0).map((el) => el.id);
       const allHidden = noTagElements.every((id) => hiddenElementIds.has(id));
@@ -79,9 +78,9 @@ const QUICK_FILTERS: QuickFilter[] = [
   },
   {
     id: 'no-geo',
-    label: 'Sans geo',
+    labelKey: 'noGeo',
+    descKey: 'noGeoDesc',
     icon: <MapPin size={12} />,
-    description: 'Éléments sans coordonnées',
     apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
       const noGeoElements = elements
         .filter((el) => !el.geo || (el.geo.lat === 0 && el.geo.lng === 0))
@@ -102,9 +101,9 @@ const QUICK_FILTERS: QuickFilter[] = [
   },
   {
     id: 'no-date',
-    label: 'Sans date',
+    labelKey: 'noDate',
+    descKey: 'noDateDesc',
     icon: <Calendar size={12} />,
-    description: 'Éléments sans date',
     apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
       const noDateElements = elements
         .filter((el) => !el.date && (!el.dateRange || (!el.dateRange.start && !el.dateRange.end)))
@@ -125,9 +124,9 @@ const QUICK_FILTERS: QuickFilter[] = [
   },
   {
     id: 'low-confidence',
-    label: 'Confiance faible',
+    labelKey: 'lowConfidence',
+    descKey: 'lowConfidenceDesc',
     icon: <AlertCircle size={12} />,
-    description: 'Confiance < 50%',
     apply: ({ setFilters, filters }) => {
       if (filters.minConfidence === 50) {
         setFilters({ minConfidence: null });
@@ -139,19 +138,16 @@ const QUICK_FILTERS: QuickFilter[] = [
   },
   {
     id: 'has-comments',
-    label: 'Commentaires',
+    labelKey: 'hasComments',
+    descKey: 'hasCommentsDesc',
     icon: <MessageSquare size={12} />,
-    description: 'Éléments avec commentaires non résolus',
     apply: ({ elements, comments, hideElements, hiddenElementIds, showAllElements }) => {
-      // Get element IDs that have unresolved comments
       const elementsWithUnresolvedComments = new Set(
         comments.filter(c => !c.resolved && c.targetType === 'element').map(c => c.targetId)
       );
-      // Get elements WITHOUT unresolved comments
       const elementsWithoutUnresolved = elements
         .filter(el => !elementsWithUnresolvedComments.has(el.id))
         .map(el => el.id);
-      // Toggle: if all without comments are hidden, show them; otherwise hide them
       const allHidden = elementsWithoutUnresolved.every(id => hiddenElementIds.has(id));
       if (allHidden) {
         showAllElements();
@@ -172,6 +168,7 @@ const QUICK_FILTERS: QuickFilter[] = [
 ];
 
 export function FiltersPanel() {
+  const { t } = useTranslation('panels');
   const { elements, comments } = useInvestigationStore();
   const {
     filters,
@@ -315,7 +312,7 @@ export function FiltersPanel() {
           <div className="flex items-center gap-2">
             <Filter size={14} className="text-text-secondary" />
             <span className="text-sm font-medium text-text-primary">
-              {matchingCount}/{elements.length} éléments
+              {t('filters.elementsCount', { matching: matchingCount, total: elements.length })}
             </span>
           </div>
           {(isActive || hiddenElementIds.size > 0) && (
@@ -327,13 +324,13 @@ export function FiltersPanel() {
               className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             >
               <RotateCcw size={12} />
-              Tout effacer
+              {t('filters.clearAll')}
             </button>
           )}
         </div>
         {hiddenElementIds.size > 0 && (
           <p className="text-[10px] text-text-tertiary mt-1">
-            {hiddenElementIds.size} élément{hiddenElementIds.size > 1 ? 's' : ''} masqué{hiddenElementIds.size > 1 ? 's' : ''}
+            {t('filters.hiddenCount', { count: hiddenElementIds.size })}
           </p>
         )}
       </div>
@@ -343,10 +340,10 @@ export function FiltersPanel() {
         {/* Quick filters */}
         <div className="space-y-2">
           <label className="text-xs font-medium text-text-secondary">
-            Filtres rapides
+            {t('filters.sections.quickFilters')}
           </label>
           <div className="flex flex-wrap gap-1.5">
-            {QUICK_FILTERS.map((qf) => {
+            {QUICK_FILTER_DEFS.map((qf) => {
               const active = qf.isActive(quickFilterParams);
               return (
                 <button
@@ -357,10 +354,10 @@ export function FiltersPanel() {
                       ? 'bg-accent text-white border-accent'
                       : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent hover:text-text-primary'
                   }`}
-                  title={qf.description}
+                  title={t(`filters.quick.${qf.descKey}`)}
                 >
                   {qf.icon}
-                  {qf.label}
+                  {t(`filters.quick.${qf.labelKey}`)}
                 </button>
               );
             })}
@@ -370,14 +367,14 @@ export function FiltersPanel() {
         {/* Text search */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-secondary">
-            Recherche texte
+            {t('filters.sections.textSearch')}
           </label>
           <div className="relative">
             <input
               type="text"
               value={filters.textSearch}
               onChange={(e) => handleTextSearchChange(e.target.value)}
-              placeholder="Filtrer par nom ou notes..."
+              placeholder={t('filters.placeholders.textSearch')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary pr-8"
             />
             {filters.textSearch && (
@@ -394,7 +391,7 @@ export function FiltersPanel() {
         {/* Tags filter */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-secondary">
-            Tags ({tagsWithCounts.length})
+            {t('filters.sections.tags')} ({tagsWithCounts.length})
           </label>
           {tagsWithCounts.length > 0 ? (
             <ProgressiveList
@@ -427,21 +424,21 @@ export function FiltersPanel() {
               }}
             />
           ) : (
-            <p className="text-xs text-text-tertiary">Aucun tag disponible</p>
+            <p className="text-xs text-text-tertiary">{t('filters.tags.noTags')}</p>
           )}
         </div>
 
         {/* Property filter */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-secondary">
-            Possède la propriété
+            {t('filters.property.hasProperty')}
           </label>
           <select
             value={filters.hasProperty || ''}
             onChange={(e) => handlePropertyChange(e.target.value)}
             className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
           >
-            <option value="">Toutes</option>
+            <option value="">{t('filters.placeholders.allProperties')}</option>
             {allPropertyKeys.map((key) => (
               <option key={key} value={key}>
                 {key}
@@ -461,7 +458,7 @@ export function FiltersPanel() {
                 className="w-3.5 h-3.5 rounded border-border-default text-accent focus:ring-accent focus:ring-offset-0"
               />
               <span className="text-xs text-text-secondary">
-                Afficher en badge sur les éléments
+                {t('filters.property.showAsBadge')}
               </span>
             </label>
           )}
@@ -471,7 +468,7 @@ export function FiltersPanel() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-text-secondary">
-              Confiance minimum
+              {t('filters.confidence.minimum')}
             </label>
             {filters.minConfidence !== null && (
               <span className="text-xs text-accent">{filters.minConfidence}%+</span>
@@ -490,7 +487,7 @@ export function FiltersPanel() {
             className="w-full h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
           />
           <div className="flex justify-between text-[10px] text-text-tertiary">
-            <span>Toutes</span>
+            <span>{t('filters.placeholders.all')}</span>
             <span>100%</span>
           </div>
         </div>
@@ -500,7 +497,7 @@ export function FiltersPanel() {
           <div className="p-2 bg-accent/5 border border-accent/20 rounded">
             <div className="flex items-center gap-1 text-xs text-accent mb-1">
               <Filter size={10} />
-              Filtres actifs
+              {t('filters.activeFilters')}
             </div>
             <div className="flex flex-wrap gap-1">
               {filters.textSearch && (
@@ -535,51 +532,77 @@ export function FiltersPanel() {
 
       {/* Hidden elements section */}
       {hiddenElementIds.size > 0 && (
-        <div className="border-t border-border-default p-3 max-h-48 overflow-y-auto">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <EyeOff size={12} className="text-text-secondary" />
-              <span className="text-xs font-medium text-text-primary">
-                Masqués ({hiddenElementIds.size})
-              </span>
-            </div>
-            <button
-              onClick={showAllElements}
-              className="flex items-center gap-1 px-2 py-1 text-[10px] text-accent hover:bg-accent/10 rounded"
-            >
-              <Eye size={10} />
-              Tout afficher
-            </button>
-          </div>
-          <ProgressiveList
-            items={Array.from(hiddenElementIds)}
-            initialCount={20}
-            increment={20}
-            className="space-y-1"
-            renderItem={(id) => {
-              const element = elements.find((el) => el.id === id);
-              if (!element) return null;
-              return (
-                <div
-                  key={id}
-                  className="flex items-center justify-between p-1.5 bg-bg-secondary rounded text-xs"
-                >
-                  <span className="text-text-primary truncate flex-1">
-                    {element.label || 'Sans nom'}
-                  </span>
-                  <button
-                    onClick={() => showElement(id)}
-                    className="text-accent hover:bg-accent/10 p-1 rounded"
-                    title="Afficher"
-                  >
-                    <Eye size={12} />
-                  </button>
-                </div>
-              );
-            }}
-          />
-        </div>
+        <HiddenElementsSection
+          hiddenElementIds={hiddenElementIds}
+          elements={elements}
+          showElement={showElement}
+          showAllElements={showAllElements}
+        />
       )}
+    </div>
+  );
+}
+
+// Hidden elements section (extracted to use translations)
+interface HiddenElementsSectionProps {
+  hiddenElementIds: Set<string>;
+  elements: ReturnType<typeof useInvestigationStore>['elements'];
+  showElement: (id: string) => void;
+  showAllElements: () => void;
+}
+
+function HiddenElementsSection({
+  hiddenElementIds,
+  elements,
+  showElement,
+  showAllElements,
+}: HiddenElementsSectionProps) {
+  const { t } = useTranslation('panels');
+
+  return (
+    <div className="border-t border-border-default p-3 max-h-48 overflow-y-auto">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <EyeOff size={12} className="text-text-secondary" />
+          <span className="text-xs font-medium text-text-primary">
+            {t('filters.hiddenElements.title')} ({hiddenElementIds.size})
+          </span>
+        </div>
+        <button
+          onClick={showAllElements}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] text-accent hover:bg-accent/10 rounded"
+        >
+          <Eye size={10} />
+          {t('filters.hiddenElements.showAll')}
+        </button>
+      </div>
+      <ProgressiveList
+        items={Array.from(hiddenElementIds)}
+        initialCount={20}
+        increment={20}
+        className="space-y-1"
+        renderItem={(id) => {
+          const element = elements.find((el) => el.id === id);
+          if (!element) return null;
+          return (
+            <div
+              key={id}
+              className="flex items-center justify-between p-1.5 bg-bg-secondary rounded text-xs"
+            >
+              <span className="text-text-primary truncate flex-1">
+                {element.label || t('filters.noName')}
+              </span>
+              <button
+                onClick={() => showElement(id)}
+                className="text-accent hover:bg-accent/10 p-1 rounded"
+                title={t('filters.show')}
+              >
+                <Eye size={12} />
+              </button>
+            </div>
+          );
+        }}
+      />
     </div>
   );
 }

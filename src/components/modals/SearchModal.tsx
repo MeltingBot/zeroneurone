@@ -6,11 +6,12 @@ import {
   useMemo,
   type KeyboardEvent,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Box, Link2, X, Tag } from 'lucide-react';
 import { useInvestigationStore, useSelectionStore, useViewStore } from '../../stores';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
-import { getCountryByCode } from '../../data/countries';
+import { getCountryByCode, getCountryName } from '../../data/countries';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface SearchModalProps {
 }
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
+  const { t, i18n } = useTranslation('modals');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -167,16 +169,16 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     (result: SearchResult): string => {
       if (result.type === 'element') {
         const el = elementsMap.get(result.id);
-        return el?.label || 'Sans nom';
+        return el?.label || t('search.noName');
       } else {
         const link = linksMap.get(result.id);
-        if (!link) return 'Lien';
+        if (!link) return t('search.link');
         const from = elementsMap.get(link.fromId);
         const to = elementsMap.get(link.toId);
         return link.label || `${from?.label || '?'} → ${to?.label || '?'}`;
       }
     },
-    [elementsMap, linksMap]
+    [elementsMap, linksMap, t]
   );
 
   // Get matching property info from search result
@@ -201,24 +203,26 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         // For country type, also check country name
         let countryNameMatches = false;
         let country = null;
+        let countryName = '';
         if (prop.type === 'country' || /^[A-Z]{2}$/i.test(valueStr)) {
           country = getCountryByCode(valueStr.toUpperCase());
           if (country) {
-            countryNameMatches = country.name.toLowerCase().includes(queryLower);
+            countryName = getCountryName(country.code, i18n.language);
+            countryNameMatches = countryName.toLowerCase().includes(queryLower);
           }
         }
 
         if (keyMatches || valueMatches || countryNameMatches) {
           // Format country values with flag
           if (country) {
-            return { key: prop.key, value: `${country.flag} ${country.name}` };
+            return { key: prop.key, value: `${country.flag} ${countryName}` };
           }
           return { key: prop.key, value: valueStr };
         }
       }
       return null;
     },
-    [elementsMap, linksMap, query]
+    [elementsMap, linksMap, query, i18n.language]
   );
 
   // Get tags for a result
@@ -274,7 +278,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Rechercher des éléments et liens..."
+            placeholder={t('search.placeholder')}
             className="flex-1 bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none"
           />
           <button
@@ -289,7 +293,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         <div ref={resultsRef} className="max-h-96 overflow-y-auto">
           {query && results.length === 0 && (
             <div className="px-4 py-8 text-center text-text-tertiary">
-              <p className="text-sm">Aucun résultat pour "{query}"</p>
+              <p className="text-sm">{t('search.noResults', { query })}</p>
             </div>
           )}
 
@@ -357,7 +361,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   )}
                 </div>
                 <div className="text-xs text-text-tertiary">
-                  {result.type === 'element' ? 'Élément' : 'Lien'}
+                  {result.type === 'element' ? t('search.element') : t('search.link')}
                 </div>
               </button>
             );
@@ -369,13 +373,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
           <div className="px-4 py-2 border-t border-border-default text-xs text-text-tertiary flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span>
-                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">↑↓</kbd> naviguer
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">↑↓</kbd> {t('search.navigate')}
               </span>
               <span>
-                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Entrée</kbd> sélectionner
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">↵</kbd> {t('search.select')}
               </span>
               <span>
-                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Échap</kbd> fermer
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Esc</kbd> {t('search.close')}
               </span>
             </div>
             <button
@@ -386,7 +390,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                 showTags ? 'bg-accent/10 text-accent' : 'hover:bg-bg-tertiary'
               }`}
-              title="Afficher les tags"
+              title={t('search.showTags')}
             >
               <Tag size={12} />
               <span>Tags</span>

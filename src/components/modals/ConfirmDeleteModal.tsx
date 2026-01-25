@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Button } from '../common';
 
 interface ConfirmDeleteModalProps {
@@ -16,9 +17,11 @@ export function ConfirmDeleteModal({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Supprimer',
+  confirmLabel,
 }: ConfirmDeleteModalProps) {
+  const { t } = useTranslation(['modals', 'common']);
   const [isLoading, setIsLoading] = useState(false);
+  const label = confirmLabel || t('modals:confirmDelete.confirm');
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -39,7 +42,7 @@ export function ConfirmDeleteModal({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Annuler
+            {t('common:actions.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -47,7 +50,7 @@ export function ConfirmDeleteModal({
             disabled={isLoading}
             className="bg-error hover:bg-red-700"
           >
-            {isLoading ? 'Suppression...' : confirmLabel}
+            {isLoading ? t('modals:confirmDelete.deleting') : label}
           </Button>
         </>
       }

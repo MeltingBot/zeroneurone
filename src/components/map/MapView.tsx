@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
@@ -42,6 +43,7 @@ interface LinkLayer {
 }
 
 export function MapView() {
+  const { t, i18n } = useTranslation('pages');
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -499,7 +501,7 @@ export function MapView() {
     const color = element.visual.color || '#f5f5f4';
     const borderColor = element.visual.borderColor || '#a8a29e';
     const thumbnail = getThumbnail(element);
-    const label = element.label || 'Sans nom';
+    const label = element.label || t('map.unnamed');
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
 
     // Anonymous mode: show redacted label
@@ -615,7 +617,7 @@ export function MapView() {
         </div>
       `;
     }
-  }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges]);
+  }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges, t]);
 
   // Create custom icon
   const createIcon = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number) => {
@@ -1116,9 +1118,9 @@ export function MapView() {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
         <MapPin size={48} className="text-text-tertiary mb-4" />
-        <p className="text-sm text-text-secondary">Aucun element geolocalisable</p>
+        <p className="text-sm text-text-secondary">{t('map.noGeoElements')}</p>
         <p className="text-xs text-text-tertiary mt-2">
-          Ajoutez des coordonnees aux elements pour les voir sur la carte
+          {t('map.addLocation')}
         </p>
       </div>
     );
@@ -1126,7 +1128,7 @@ export function MapView() {
 
   // Format date for display
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -1224,10 +1226,10 @@ export function MapView() {
       <ViewToolbar
         leftContent={
           <span className="text-xs text-text-secondary">
-            {geoElements.length} element{geoElements.length > 1 ? 's' : ''} localise{geoElements.length > 1 ? 's' : ''}
+            {t('map.elementsLocated', { count: geoElements.length })}
             {geoLinks.length > 0 && (
               <span className="ml-2 text-text-tertiary">
-                ({geoLinks.length} lien{geoLinks.length > 1 ? 's' : ''})
+                {t('map.linksCount', { count: geoLinks.length })}
               </span>
             )}
           </span>
@@ -1243,27 +1245,27 @@ export function MapView() {
                     ? 'bg-accent text-white'
                     : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
                 }`}
-                title="Mode temporel"
+                title={t('map.temporalMode')}
               >
                 <Clock size={12} />
-                Temporel
+                {t('map.temporal')}
               </button>
             )}
             {selectedElementIds.size > 0 && (
               <button
                 onClick={handleZoomToSelected}
                 className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-                title="Zoom sur la selection"
+                title={t('map.zoomToSelection')}
               >
-                Selection
+                {t('map.selection')}
               </button>
             )}
             <button
               onClick={handleFit}
               className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-              title="Ajuster a tous les elements"
+              title={t('map.fitAll')}
             >
-              Ajuster
+              {t('map.fit')}
             </button>
           </>
         }
@@ -1277,7 +1279,7 @@ export function MapView() {
             <button
               onClick={() => handleStep('backward')}
               className="p-1 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-              title="Reculer"
+              title={t('map.stepBack')}
             >
               <SkipBack size={14} />
             </button>
@@ -1288,14 +1290,14 @@ export function MapView() {
                   ? 'bg-accent text-white'
                   : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
               }`}
-              title={isPlaying ? 'Pause' : 'Lecture'}
+              title={isPlaying ? t('map.pause') : t('map.play')}
             >
               {isPlaying ? <Pause size={14} /> : <Play size={14} />}
             </button>
             <button
               onClick={() => handleStep('forward')}
               className="p-1 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-              title="Avancer"
+              title={t('map.stepForward')}
             >
               <SkipForward size={14} />
             </button>

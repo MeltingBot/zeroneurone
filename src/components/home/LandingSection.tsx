@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, Github, Coffee, Sun, Moon } from 'lucide-react';
-import { Button } from '../common';
+import { Button, LanguageSwitcher } from '../common';
 
 interface LandingSectionProps {
   onNewInvestigation: () => void;
@@ -20,37 +21,15 @@ export function LandingSection({
   themeMode,
   onToggleTheme,
 }: LandingSectionProps) {
+  const { t } = useTranslation('pages');
+
   const features = [
-    {
-      icon: Network,
-      title: 'Graphe relationnel',
-      description: 'Visualisez les connexions entre personnes, lieux et concepts',
-    },
-    {
-      icon: Map,
-      title: 'Vue cartographique',
-      description: 'Positionnez vos éléments sur une carte interactive et temporelle',
-    },
-    {
-      icon: Clock,
-      title: 'Timeline',
-      description: 'Organisez les événements chronologiquement',
-    },
-    {
-      icon: Search,
-      title: 'Recherche et filtres instantanés',
-      description: 'Trouvez et filtrez n\'importe quel élément en quelques frappes',
-    },
-    {
-      icon: Shield,
-      title: 'Données 100% local',
-      description: 'Vos données restent sur votre machine, jamais transmises',
-    },
-    {
-      icon: Zap,
-      title: 'Collaboration sécurisé temps réel',
-      description: 'Travaillez à plusieurs sur la même enquête',
-    },
+    { icon: Network, key: 'graph' },
+    { icon: Map, key: 'map' },
+    { icon: Clock, key: 'timeline' },
+    { icon: Search, key: 'search' },
+    { icon: Shield, key: 'local' },
+    { icon: Zap, key: 'collab' },
   ];
 
   return (
@@ -67,23 +46,21 @@ export function LandingSection({
 
           {/* Tagline */}
           <p className="text-lg text-text-secondary mb-2">
-            Tableau blanc pour analystes et enquêteurs
+            {t('home.landing.subtitle')}
           </p>
           <p className="text-sm text-text-tertiary max-w-xl">
-            Un outil Open Source d'amplification cognitive qui combine la simplicité d'un tableau blanc
-            avec la puissance de l'analyse de graphe. Cartographiez vos idées, géolocalisez vos élements, visualisez les événements,  
-            connectez les indices et révélez les patterns cachés.
+            {t('home.landing.description')}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 mt-8">
             <Button variant="primary" size="md" onClick={onNewInvestigation}>
               <Plus size={18} />
-              Nouvelle enquête
+              {t('home.landing.startNew')}
             </Button>
             <Button variant="secondary" size="md" onClick={onImport}>
               <Upload size={18} />
-              Importer
+              {t('home.landing.importExisting')}
             </Button>
           </div>
 
@@ -93,7 +70,7 @@ export function LandingSection({
               onClick={onViewInvestigations}
               className="mt-4 text-sm text-accent hover:underline"
             >
-              Voir mes {investigationCount} enquête{investigationCount > 1 ? 's' : ''}
+              {t('home.landing.viewExisting', { count: investigationCount })}
             </button>
           )}
         </div>
@@ -102,15 +79,15 @@ export function LandingSection({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
           {features.map((feature) => (
             <div
-              key={feature.title}
+              key={feature.key}
               className="p-4 bg-bg-secondary border border-border-default rounded"
             >
               <feature.icon size={20} className="text-text-secondary mb-2" />
               <h3 className="text-sm font-semibold text-text-primary mb-1">
-                {feature.title}
+                {t(`home.landing.features.${feature.key}.title`)}
               </h3>
               <p className="text-xs text-text-tertiary">
-                {feature.description}
+                {t(`home.landing.features.${feature.key}.description`)}
               </p>
             </div>
           ))}
@@ -121,17 +98,18 @@ export function LandingSection({
           <button
             onClick={onToggleTheme}
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
-            title={themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
+            title={themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
           >
             {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-            {themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
+            {themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
           </button>
+          <LanguageSwitcher size="sm" showLabel direction="up" />
           <button
             onClick={onAbout}
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
             <Info size={14} />
-            À propos
+            {t('home.about')}
           </button>
           <a
             href="https://github.com/MeltingBot/zeroneurone"

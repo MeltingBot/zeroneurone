@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Layers,
   Tag,
@@ -33,22 +34,20 @@ const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'rectangle', label: '▭' },
 ];
 
-const LINK_DIRECTIONS: { value: LinkDirection; icon: typeof Minus; label: string }[] = [
-  { value: 'none', icon: Minus, label: 'Sans flèche' },
-  { value: 'forward', icon: ArrowRight, label: 'Vers la cible' },
-  { value: 'backward', icon: ArrowLeft, label: 'Vers la source' },
-  { value: 'both', icon: ArrowLeftRight, label: 'Bidirectionnel' },
+const LINK_DIRECTION_DEFS: { value: LinkDirection; icon: typeof Minus; labelKey: string }[] = [
+  { value: 'none', icon: Minus, labelKey: 'directionNone' },
+  { value: 'forward', icon: ArrowRight, labelKey: 'directionForward' },
+  { value: 'backward', icon: ArrowLeft, labelKey: 'directionBackward' },
+  { value: 'both', icon: ArrowLeftRight, labelKey: 'directionBoth' },
 ];
 
-const LINK_STYLES: { value: LinkStyle; label: string }[] = [
-  { value: 'solid', label: 'Continu' },
-  { value: 'dashed', label: 'Tirets' },
-  { value: 'dotted', label: 'Pointillé' },
-];
+const LINK_STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
 
 const LINK_THICKNESSES = [1, 2, 3, 4, 5];
 
 export function MultiSelectionDetail() {
+  const { t } = useTranslation('panels');
+  const { t: tCommon } = useTranslation('common');
   const {
     elements,
     links,
@@ -306,20 +305,20 @@ export function MultiSelectionDetail() {
         <div className="flex items-center gap-2">
           <Layers size={14} className="text-accent" />
           <span className="text-sm font-medium text-text-primary">
-            Modification en masse
+            {t('detail.multi.title')}
           </span>
         </div>
         <div className="text-xs text-text-secondary mt-1">
           {elementCount > 0 && (
             <span className="inline-flex items-center gap-1 mr-2">
               <span className="w-2 h-2 rounded-full bg-accent" />
-              {elementCount} élément{elementCount > 1 ? 's' : ''}
+              {t('detail.multi.elements', { count: elementCount })}
             </span>
           )}
           {linkCount > 0 && (
             <span className="inline-flex items-center gap-1">
               <span className="w-4 h-0.5 bg-accent" />
-              {linkCount} lien{linkCount > 1 ? 's' : ''}
+              {t('detail.multi.links', { count: linkCount })}
             </span>
           )}
         </div>
@@ -328,7 +327,7 @@ export function MultiSelectionDetail() {
       {/* Tags - Common */}
       <AccordionSection
         id="bulk-tags"
-        title="Tags"
+        title={tCommon('labels.tags')}
         icon={<Tag size={12} />}
         badge={allSelectedTags.length > 0 ? (
           <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">
@@ -339,7 +338,7 @@ export function MultiSelectionDetail() {
       >
         <div className="space-y-3">
           <p className="text-[10px] text-text-tertiary">
-            Ajouter ou retirer des tags sur tous les éléments sélectionnés
+            {t('detail.multi.addOrRemoveTags')}
           </p>
 
           {/* Current tags in selection */}
@@ -354,7 +353,7 @@ export function MultiSelectionDetail() {
                   <button
                     onClick={() => handleRemoveTag(tag)}
                     className="hover:text-error"
-                    title="Retirer de la sélection"
+                    title={t('detail.multi.removeFromSelection')}
                   >
                     <X size={10} />
                   </button>
@@ -380,13 +379,13 @@ export function MultiSelectionDetail() {
       {/* Properties - Common */}
       <AccordionSection
         id="bulk-properties"
-        title="Propriétés"
+        title={t('detail.sections.properties')}
         icon={<Settings size={12} />}
         defaultOpen={false}
       >
         <div className="space-y-3">
           <p className="text-[10px] text-text-tertiary">
-            Ajouter une propriété à tous les éléments sélectionnés
+            {t('detail.multi.addPropertyToAll')}
           </p>
 
           <div className="flex gap-2">
@@ -394,14 +393,14 @@ export function MultiSelectionDetail() {
               type="text"
               value={newPropertyKey}
               onChange={(e) => setNewPropertyKey(e.target.value)}
-              placeholder="Nom..."
+              placeholder={t('detail.placeholders.keyName')}
               className="flex-1 px-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
             <input
               type="text"
               value={newPropertyValue}
               onChange={(e) => setNewPropertyValue(e.target.value)}
-              placeholder="Valeur..."
+              placeholder={t('detail.placeholders.keyValue')}
               className="flex-1 px-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
             <button
@@ -418,13 +417,13 @@ export function MultiSelectionDetail() {
       {/* Confidence - Common */}
       <AccordionSection
         id="bulk-confidence"
-        title="Confiance"
+        title={t('detail.labels.confidence')}
         icon={<Percent size={12} />}
         defaultOpen={false}
       >
         <div className="space-y-2">
           <p className="text-[10px] text-text-tertiary">
-            Définir le niveau de confiance pour tous
+            {t('detail.multi.setConfidenceAll')}
           </p>
           <input
             type="range"
@@ -446,13 +445,13 @@ export function MultiSelectionDetail() {
       {/* Color - Common */}
       <AccordionSection
         id="bulk-color"
-        title="Couleur"
+        title={t('detail.appearance.color')}
         icon={<Palette size={12} />}
         defaultOpen={false}
       >
         <div className="space-y-2">
           <p className="text-[10px] text-text-tertiary">
-            Définir la couleur pour tous
+            {t('detail.multi.setColorAll')}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {DEFAULT_COLORS.map((color) => (
@@ -461,14 +460,14 @@ export function MultiSelectionDetail() {
                 onClick={() => handleColorChange(color)}
                 className="w-6 h-6 rounded border-2 border-transparent hover:border-accent transition-colors"
                 style={{ backgroundColor: color }}
-                aria-label={`Couleur ${color}`}
+                aria-label={`${t('detail.appearance.color')} ${color}`}
               />
             ))}
             <input
               type="color"
               onChange={(e) => handleColorChange(e.target.value)}
               className="w-6 h-6 rounded cursor-pointer border-0 p-0"
-              aria-label="Couleur personnalisée"
+              aria-label={t('detail.appearance.customColor')}
             />
           </div>
         </div>
@@ -478,14 +477,14 @@ export function MultiSelectionDetail() {
       {elementCount > 0 && (
         <AccordionSection
           id="bulk-elements"
-          title={`Éléments (${elementCount})`}
+          title={t('detail.multi.elementsSection', { count: elementCount })}
           icon={<span className="w-3 h-3 rounded-full border-2 border-current" />}
           defaultOpen={false}
         >
           <div className="space-y-4">
             {/* Shape */}
             <div className="space-y-1.5">
-              <label className="text-xs text-text-tertiary">Forme</label>
+              <label className="text-xs text-text-tertiary">{t('detail.appearance.shape')}</label>
               <div className="flex gap-1">
                 {ELEMENT_SHAPES.map((shape) => (
                   <button
@@ -501,7 +500,7 @@ export function MultiSelectionDetail() {
 
             {/* Border Color */}
             <div className="space-y-1.5">
-              <label className="text-xs text-text-tertiary">Couleur de bordure</label>
+              <label className="text-xs text-text-tertiary">{t('detail.appearance.borderColor')}</label>
               <div className="flex flex-wrap gap-1.5">
                 {DEFAULT_COLORS.slice(0, 8).map((color) => (
                   <button
@@ -521,21 +520,21 @@ export function MultiSelectionDetail() {
       {linkCount > 0 && (
         <AccordionSection
           id="bulk-links"
-          title={`Liens (${linkCount})`}
+          title={t('detail.multi.linksSection', { count: linkCount })}
           icon={<span className="w-4 h-0.5 bg-current" />}
           defaultOpen={false}
         >
           <div className="space-y-4">
             {/* Direction */}
             <div className="space-y-1.5">
-              <label className="text-xs text-text-tertiary">Direction</label>
+              <label className="text-xs text-text-tertiary">{t('detail.labels.direction')}</label>
               <div className="flex gap-1">
-                {LINK_DIRECTIONS.map(({ value, icon: Icon, label }) => (
+                {LINK_DIRECTION_DEFS.map(({ value, icon: Icon, labelKey }) => (
                   <button
                     key={value}
                     onClick={() => handleDirectionChange(value)}
                     className="flex-1 flex items-center justify-center p-2 rounded border bg-bg-secondary text-text-secondary border-border-default hover:border-accent transition-colors"
-                    title={label}
+                    title={t(`detail.labels.${labelKey}`)}
                   >
                     <Icon size={16} />
                   </button>
@@ -545,15 +544,15 @@ export function MultiSelectionDetail() {
 
             {/* Style */}
             <div className="space-y-1.5">
-              <label className="text-xs text-text-tertiary">Style</label>
+              <label className="text-xs text-text-tertiary">{t('detail.appearance.style')}</label>
               <div className="flex gap-2">
-                {LINK_STYLES.map((style) => (
+                {LINK_STYLE_VALUES.map((style) => (
                   <button
-                    key={style.value}
-                    onClick={() => handleStyleChange(style.value)}
+                    key={style}
+                    onClick={() => handleStyleChange(style)}
                     className="flex-1 px-2 py-1.5 text-xs rounded border bg-bg-secondary text-text-secondary border-border-default hover:border-accent transition-colors"
                   >
-                    {style.label}
+                    {tCommon(`linkStyles.${style}`)}
                   </button>
                 ))}
               </div>
@@ -561,17 +560,17 @@ export function MultiSelectionDetail() {
 
             {/* Thickness */}
             <div className="space-y-1.5">
-              <label className="text-xs text-text-tertiary">Épaisseur</label>
+              <label className="text-xs text-text-tertiary">{t('detail.appearance.thickness')}</label>
               <div className="flex gap-1">
-                {LINK_THICKNESSES.map((t) => (
+                {LINK_THICKNESSES.map((thickness) => (
                   <button
-                    key={t}
-                    onClick={() => handleThicknessChange(t)}
+                    key={thickness}
+                    onClick={() => handleThicknessChange(thickness)}
                     className="flex-1 h-8 rounded border flex items-center justify-center bg-bg-secondary border-border-default hover:border-accent transition-colors"
                   >
                     <div
                       className="rounded-full bg-text-secondary"
-                      style={{ width: '100%', height: t }}
+                      style={{ width: '100%', height: thickness }}
                     />
                   </button>
                 ))}

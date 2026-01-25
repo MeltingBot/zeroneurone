@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Layout, Button, EmptyState } from '../components/common';
+import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
 import { InvestigationCard, LandingSection } from '../components/home';
 import {
   CreateInvestigationModal,
@@ -19,6 +20,7 @@ import { useInvestigationStore, useUIStore } from '../stores';
 type ViewMode = 'landing' | 'list';
 
 export function HomePage() {
+  const { t } = useTranslation('pages');
   const navigate = useNavigate();
   const {
     investigations,
@@ -94,11 +96,11 @@ export function HomePage() {
       {viewMode === 'list' && (
         <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary panel-shadow">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-semibold text-text-primary">ZeroNeurone</h1>
+            <h1 className="text-sm font-semibold text-text-primary">{t('home.title')}</h1>
             <button
               onClick={() => setViewMode('landing')}
               className="p-1.5 hover:bg-bg-tertiary rounded transition-colors"
-              title="Retour à l'accueil"
+              title={t('home.backToHome')}
             >
               <Home size={16} className="text-text-secondary" />
             </button>
@@ -108,15 +110,16 @@ export function HomePage() {
               variant="ghost"
               size="sm"
               onClick={toggleThemeMode}
-              title={themeMode === 'light' ? 'Mode sombre' : 'Mode clair'}
+              title={themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
             >
               {themeMode === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </Button>
+            <LanguageSwitcher size="md" />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsAboutModalOpen(true)}
-              title="À propos"
+              title={t('home.about')}
             >
               <Info size={16} />
             </Button>
@@ -124,7 +127,7 @@ export function HomePage() {
               variant="ghost"
               size="sm"
               onClick={() => setIsStorageModalOpen(true)}
-              title="Stockage"
+              title={t('home.storage')}
             >
               <HardDrive size={16} />
             </Button>
@@ -134,7 +137,7 @@ export function HomePage() {
               onClick={() => setIsTagSetModalOpen(true)}
             >
               <Tags size={16} />
-              Gérer les tags
+              {t('home.manageTags')}
             </Button>
             <Button
               variant="secondary"
@@ -142,7 +145,7 @@ export function HomePage() {
               onClick={() => setIsImportModalOpen(true)}
             >
               <Upload size={16} />
-              Importer
+              {t('home.import')}
             </Button>
             <Button
               variant="primary"
@@ -150,7 +153,7 @@ export function HomePage() {
               onClick={handleOpenCreateModal}
             >
               <Plus size={16} />
-              Nouvelle enquête
+              {t('home.newInvestigation')}
             </Button>
           </div>
         </header>
@@ -159,7 +162,7 @@ export function HomePage() {
       {/* Content */}
       {isLoading || viewMode === null ? (
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-sm text-text-secondary">Chargement...</span>
+          <span className="text-sm text-text-secondary">{t('home.loading')}</span>
         </div>
       ) : viewMode === 'landing' ? (
         <LandingSection
@@ -176,15 +179,15 @@ export function HomePage() {
           {investigations.length === 0 ? (
             <EmptyState
               icon={FolderOpen}
-              title="Aucune enquête"
-              description="Créez votre première enquête pour commencer"
+              title={t('home.noInvestigations')}
+              description={t('home.createFirst')}
               action={
                 <Button
                   variant="primary"
                   onClick={handleOpenCreateModal}
                 >
                   <Plus size={16} />
-                  Nouvelle enquête
+                  {t('home.newInvestigation')}
                 </Button>
               }
             />
@@ -216,8 +219,8 @@ export function HomePage() {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Supprimer l'enquête"
-        message={`Supprimer "${targetInvestigation?.name}" ? Cette action est irréversible.`}
+        title={t('modals:confirmDelete.deleteInvestigation')}
+        message={t('modals:confirmDelete.deleteInvestigationMessage', { name: targetInvestigation?.name })}
       />
 
       <RenameModal
@@ -225,7 +228,7 @@ export function HomePage() {
         onClose={() => setRenameTarget(null)}
         onRename={handleRename}
         currentName={targetInvestigation?.name || ''}
-        title="Renommer l'enquête"
+        title={t('modals:rename.renameInvestigation')}
       />
 
       <ImportModal

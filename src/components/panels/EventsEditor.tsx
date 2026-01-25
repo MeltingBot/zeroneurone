@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import type { ElementEvent, PropertyDefinition } from '../../types';
 import { generateUUID } from '../../utils';
@@ -21,6 +22,7 @@ export function EventsEditor({
   suggestions = [],
   onNewProperty,
 }: EventsEditorProps) {
+  const { t } = useTranslation('panels');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Sort events by date (most recent first)
@@ -107,12 +109,12 @@ export function EventsEditor({
         className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default w-full justify-center"
       >
         <Plus size={12} />
-        Ajouter un événement
+        {t('detail.events.add')}
       </button>
 
       {/* Events list - scrollable when many */}
       {sortedEvents.length === 0 ? (
-        <p className="text-xs text-text-tertiary">Aucun événement</p>
+        <p className="text-xs text-text-tertiary">{t('detail.events.noEvents')}</p>
       ) : (
         <div className="space-y-2 pl-2 border-l-2 border-border-default max-h-[400px] overflow-y-auto">
           {sortedEvents.map((event) => {
@@ -137,18 +139,18 @@ export function EventsEditor({
                           handleUpdate(event.id, { label: e.target.value });
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        placeholder="Label (ex: Escale Marseille, Site piraté...)"
+                        placeholder={t('detail.events.labelPlaceholder')}
                         className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
                       />
                     </button>
                     <div className="flex items-center gap-1">
                       {event.geo && (
-                        <span title="A une position">
+                        <span title={t('detail.events.hasLocation')}>
                           <MapPin size={12} className="text-accent" />
                         </span>
                       )}
                       {event.description && (
-                        <span title="A une description">
+                        <span title={t('detail.events.hasDescription')}>
                           <FileText size={12} className="text-text-tertiary" />
                         </span>
                       )}
@@ -161,7 +163,7 @@ export function EventsEditor({
                       <button
                         onClick={() => handleRemove(event.id)}
                         className="p-1 text-text-tertiary hover:text-error hover:bg-pastel-pink rounded"
-                        title="Supprimer"
+                        title={t('detail.events.delete')}
                       >
                         <Trash2 size={12} />
                       </button>
@@ -183,7 +185,7 @@ export function EventsEditor({
                       }}
                       className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
                     />
-                    <span className="text-xs text-text-tertiary">à</span>
+                    <span className="text-xs text-text-tertiary">{t('detail.events.dateTo')}</span>
                     <input
                       type="date"
                       value={event.dateEnd ? formatDateForInput(new Date(event.dateEnd)) : ''}
@@ -192,7 +194,7 @@ export function EventsEditor({
                           dateEnd: e.target.value ? new Date(e.target.value + 'T12:00:00') : undefined,
                         });
                       }}
-                      placeholder="Fin (optionnel)"
+                      placeholder={t('detail.events.dateEndOptional')}
                       className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
                     />
                   </div>
@@ -202,13 +204,13 @@ export function EventsEditor({
                     <div className="space-y-2 pt-2 border-t border-border-default">
                       {/* Description */}
                       <div>
-                        <label className="text-[10px] text-text-tertiary">Description</label>
+                        <label className="text-[10px] text-text-tertiary">{t('detail.events.descriptionLabel')}</label>
                         <textarea
                           value={event.description || ''}
                           onChange={(e) =>
                             handleUpdate(event.id, { description: e.target.value || undefined })
                           }
-                          placeholder="Description détaillée..."
+                          placeholder={t('detail.events.descriptionPlaceholder')}
                           rows={2}
                           className="w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent resize-y"
                         />
@@ -216,14 +218,14 @@ export function EventsEditor({
 
                       {/* Source */}
                       <div>
-                        <label className="text-[10px] text-text-tertiary">Source</label>
+                        <label className="text-[10px] text-text-tertiary">{t('detail.events.sourceLabel')}</label>
                         <input
                           type="text"
                           value={event.source || ''}
                           onChange={(e) =>
                             handleUpdate(event.id, { source: e.target.value || undefined })
                           }
-                          placeholder="Source de l'information..."
+                          placeholder={t('detail.events.sourcePlaceholder')}
                           className="w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
                         />
                       </div>
@@ -233,14 +235,14 @@ export function EventsEditor({
                         <div className="flex items-center justify-between">
                           <label className="text-[10px] text-text-tertiary flex items-center gap-1">
                             <MapPin size={10} />
-                            Localisation (optionnel)
+                            {t('detail.events.locationOptional')}
                           </label>
                           {event.geo && (
                             <button
                               onClick={() => handleClearGeo(event.id)}
                               className="text-[10px] text-text-tertiary hover:text-error"
                             >
-                              Effacer
+                              {t('detail.events.clearLocation')}
                             </button>
                           )}
                         </div>
@@ -257,7 +259,7 @@ export function EventsEditor({
                               }
                             }}
                             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-                            placeholder="Lat"
+                            placeholder={t('detail.location.latitude')}
                           />
                           <input
                             type="text"
@@ -271,20 +273,20 @@ export function EventsEditor({
                               }
                             }}
                             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-                            placeholder="Lng"
+                            placeholder={t('detail.location.longitude')}
                           />
                           <button
                             onClick={() => handlePickLocation(event.id)}
                             className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
                           >
-                            Carte
+                            {t('detail.events.pickOnMap')}
                           </button>
                         </div>
                       </div>
 
                       {/* Properties */}
                       <div>
-                        <label className="text-[10px] text-text-tertiary">Propriétés</label>
+                        <label className="text-[10px] text-text-tertiary">{t('detail.properties.title')}</label>
                         <PropertiesEditor
                           properties={event.properties || []}
                           onChange={(properties) =>

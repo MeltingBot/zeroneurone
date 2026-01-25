@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, FileText, Download, Printer, FileCode, Camera, Loader, Braces } from 'lucide-react';
 import {
   reportService,
@@ -20,6 +21,7 @@ interface ScreenshotOptions {
 }
 
 export function ReportModal({ isOpen, onClose }: ReportModalProps) {
+  const { t, i18n } = useTranslation('modals');
   const { currentInvestigation, elements, links, assets } = useInvestigationStore();
   const { displayMode, setDisplayMode } = useViewStore();
   const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore();
@@ -114,33 +116,33 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
       // Force light theme for screenshots
       if (hasScreenshots && themeMode !== 'light') {
-        setCaptureStatus('Passage en mode clair...');
+        setCaptureStatus(t('report.capture.switchingLight'));
         setThemeMode('light');
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Capture canvas screenshot
       if (screenshotOptions.canvas) {
-        setCaptureStatus('Capture du graphe...');
+        setCaptureStatus(t('report.capture.capturingGraph'));
         finalOptions.canvasScreenshot = await captureViewScreenshot('canvas');
       }
 
       // Restore original view if we switched (use getState for fresh value)
       const currentMode = useViewStore.getState().displayMode;
       if (hasScreenshots && currentMode !== originalState.displayMode) {
-        setCaptureStatus('Restauration de la vue...');
+        setCaptureStatus(t('report.capture.restoringView'));
         setDisplayMode(originalState.displayMode);
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Restore original theme
       if (hasScreenshots && originalState.themeMode !== 'light') {
-        setCaptureStatus('Restauration du theme...');
+        setCaptureStatus(t('report.capture.restoringTheme'));
         setThemeMode(originalState.themeMode);
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      setCaptureStatus('Generation du rapport...');
+      setCaptureStatus(t('report.capture.generating'));
 
       const content = reportService.generate(
         format,
@@ -148,13 +150,14 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
         elements,
         links,
         assets,
-        finalOptions
+        finalOptions,
+        i18n.language
       );
 
       if (action === 'print') {
         const htmlContent = format === 'html'
           ? content
-          : reportService.generate('html', currentInvestigation, elements, links, assets, finalOptions);
+          : reportService.generate('html', currentInvestigation, elements, links, assets, finalOptions, i18n.language);
         reportService.openForPrint(htmlContent);
       } else {
         const timestamp = new Date().toISOString().slice(0, 10);
@@ -178,10 +181,10 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           <div className="flex flex-col items-center gap-4">
             <Loader size={32} className="animate-spin text-accent" />
             <p className="text-sm text-text-primary font-medium">
-              {captureStatus || 'Preparation des captures...'}
+              {captureStatus || t('report.capture.preparing')}
             </p>
             <p className="text-xs text-text-tertiary">
-              Les vues sont ajustees pour afficher tous les elements
+              {t('report.capture.viewsAdjusted')}
             </p>
           </div>
         </div>
@@ -199,7 +202,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
           <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <FileText size={16} />
-            Generer un rapport
+            {t('report.title')}
           </h2>
           <button
             onClick={onClose}
@@ -215,7 +218,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           {/* Title */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-text-secondary mb-1">
-              Titre du rapport
+              {t('report.reportTitle')}
             </label>
             <input
               type="text"
@@ -230,7 +233,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           {/* Content options */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-text-secondary mb-2">
-              Contenu a inclure
+              {t('report.contentToInclude')}
             </label>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm">
@@ -241,7 +244,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Description de l'enquete</span>
+                <span className="text-text-primary">{t('report.includeDescription')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -251,7 +254,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Resume statistique</span>
+                <span className="text-text-primary">{t('report.includeSummary')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -261,7 +264,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Analyse du graphe (clusters, centralite)</span>
+                <span className="text-text-primary">{t('report.includeInsights')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -271,7 +274,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Chronologie des evenements</span>
+                <span className="text-text-primary">{t('report.includeTimeline')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -281,7 +284,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Liste des elements ({elements.length})</span>
+                <span className="text-text-primary">{t('report.includeElements')} ({elements.length})</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -291,7 +294,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Liste des liens ({links.length})</span>
+                <span className="text-text-primary">{t('report.includeLinks')} ({links.length})</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -301,7 +304,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Proprietes personnalisees</span>
+                <span className="text-text-primary">{t('report.includeProperties')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -311,7 +314,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Fichiers joints ({assets.length})</span>
+                <span className="text-text-primary">{t('report.includeFiles')} ({assets.length})</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -321,7 +324,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Fiches detaillees</span>
+                <span className="text-text-primary">{t('report.includeFiches')}</span>
               </label>
             </div>
           </div>
@@ -330,7 +333,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           <div className="mb-4">
             <label className="block text-xs font-medium text-text-secondary mb-2 flex items-center gap-1">
               <Camera size={12} />
-              Capture d'ecran
+              {t('report.screenshot')}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -340,10 +343,10 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                 disabled={isGenerating}
                 className="rounded border-border-default"
               />
-              <span className="text-text-primary">Inclure le graphe</span>
+              <span className="text-text-primary">{t('report.includeGraph')}</span>
             </label>
             <p className="text-xs text-text-tertiary mt-1">
-              Capture en pleine largeur, mode clair
+              {t('report.screenshotHint')}
             </p>
           </div>
 
@@ -351,7 +354,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           {options.includeElements && (
             <div className="mb-4 pl-4 border-l-2 border-border-default">
               <label className="block text-xs font-medium text-text-secondary mb-2">
-                Options des elements
+                {t('report.elementOptions')}
               </label>
               <label className="flex items-center gap-2 text-sm mb-2">
                 <input
@@ -361,19 +364,19 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">Grouper par tag</span>
+                <span className="text-text-primary">{t('report.groupByTag')}</span>
               </label>
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-text-secondary">Trier par:</span>
+                <span className="text-text-secondary">{t('report.sortBy')}</span>
                 <select
                   value={options.sortElementsBy}
                   onChange={(e) => updateOption('sortElementsBy', e.target.value as ReportOptions['sortElementsBy'])}
                   className="px-2 py-1 text-sm border border-border-default rounded bg-bg-primary"
                   disabled={isGenerating}
                 >
-                  <option value="label">Nom</option>
-                  <option value="date">Date</option>
-                  <option value="confidence">Confiance</option>
+                  <option value="label">{t('report.sortByName')}</option>
+                  <option value="date">{t('report.sortByDate')}</option>
+                  <option value="confidence">{t('report.sortByConfidence')}</option>
                 </select>
               </div>
             </div>
@@ -381,21 +384,21 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
           {/* Preview info */}
           <div className="p-3 bg-bg-secondary rounded-lg text-xs text-text-secondary">
-            <p className="font-medium mb-1">Apercu:</p>
+            <p className="font-medium mb-1">{t('report.preview')}</p>
             <p>
-              Le rapport contiendra{' '}
+              {t('report.previewContent')}{' '}
               {[
-                options.includeDescription && 'la description',
-                options.includeSummary && 'un resume',
-                options.includeInsights && 'l\'analyse du graphe',
-                options.includeTimeline && 'la chronologie',
-                options.includeElements && `${elements.length} elements`,
-                options.includeLinks && `${links.length} liens`,
-                options.includeProperties && 'les proprietes',
-                options.includeFiles && `${assets.length} fichiers`,
-                options.includeFiches && 'les fiches detaillees',
-                screenshotOptions.canvas && 'capture du graphe',
-              ].filter(Boolean).join(', ') || 'aucun contenu'}.
+                options.includeDescription && t('report.previewDescription'),
+                options.includeSummary && t('report.previewSummary'),
+                options.includeInsights && t('report.previewInsights'),
+                options.includeTimeline && t('report.previewTimeline'),
+                options.includeElements && t('report.previewElements', { count: elements.length }),
+                options.includeLinks && t('report.previewLinks', { count: links.length }),
+                options.includeProperties && t('report.previewProperties'),
+                options.includeFiles && t('report.previewFiles', { count: assets.length }),
+                options.includeFiches && t('report.previewFiches'),
+                screenshotOptions.canvas && t('report.previewGraphCapture'),
+              ].filter(Boolean).join(', ') || t('report.previewNoContent')}.
             </p>
           </div>
         </div>
@@ -423,7 +426,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               onClick={() => handleGenerate('extended-json', 'download')}
               disabled={isGenerating}
               className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
-              title="Export JSON structure avec donnees enrichies"
+              title={t('report.jsonTooltip')}
             >
               <Braces size={20} className="text-text-secondary" />
               <span className="text-xs font-medium text-text-primary">JSON+</span>
@@ -434,11 +437,11 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
             >
               <Printer size={20} className="text-text-secondary" />
-              <span className="text-xs font-medium text-text-primary">Imprimer</span>
+              <span className="text-xs font-medium text-text-primary">{t('report.print')}</span>
             </button>
           </div>
           <p className="text-xs text-text-tertiary text-center mt-2">
-            JSON+: donnees structurees avec analyse du graphe
+            {t('report.jsonDescription')}
           </p>
         </div>
       </div>

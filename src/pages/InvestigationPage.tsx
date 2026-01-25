@@ -1,7 +1,8 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee } from 'lucide-react';
-import { Layout, IconButton, Modal, Button } from '../components/common';
+import { useTranslation } from 'react-i18next';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee, Sun, Moon } from 'lucide-react';
+import { Layout, IconButton, Modal, Button, LanguageSwitcher } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal } from '../components/modals';
 
@@ -14,13 +15,14 @@ import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
 
-const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; label: string; shortcut: string }[] = [
-  { mode: 'canvas', icon: LayoutGrid, label: 'Canvas', shortcut: '1' },
-  { mode: 'map', icon: Map, label: 'Carte', shortcut: '2' },
-  { mode: 'timeline', icon: Calendar, label: 'Timeline', shortcut: '3' },
+const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; labelKey: string; shortcut: string }[] = [
+  { mode: 'canvas', icon: LayoutGrid, labelKey: 'canvas', shortcut: '1' },
+  { mode: 'map', icon: Map, labelKey: 'map', shortcut: '2' },
+  { mode: 'timeline', icon: Calendar, labelKey: 'timeline', shortcut: '3' },
 ];
 
 export function InvestigationPage() {
+  const { t } = useTranslation('pages');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const {
@@ -34,7 +36,7 @@ export function InvestigationPage() {
     unloadInvestigation,
   } = useInvestigationStore();
 
-  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState } = useUIStore();
+  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState, themeMode, toggleThemeMode } = useUIStore();
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
@@ -157,7 +159,7 @@ export function InvestigationPage() {
       <Layout>
         <div className="h-full flex flex-col items-center justify-center gap-2">
           <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-text-secondary">{loadingPhase || 'Chargement...'}</span>
+          <span className="text-xs text-text-secondary">{loadingPhase || t('home.loading')}</span>
         </div>
       </Layout>
     );
@@ -168,13 +170,13 @@ export function InvestigationPage() {
       <Layout>
         <div className="h-full flex flex-col items-center justify-center gap-4">
           <span className="text-sm text-error">
-            {error || 'Enquête non trouvée'}
+            {error || t('investigation.notFound')}
           </span>
           <button
             onClick={handleGoHome}
             className="text-sm text-accent hover:underline"
           >
-            Retour à l'accueil
+            {t('home.backToHome')}
           </button>
         </div>
       </Layout>
@@ -186,7 +188,7 @@ export function InvestigationPage() {
     <div className="h-full flex items-center justify-center bg-bg-secondary">
       <div className="flex flex-col items-center gap-2">
         <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs text-text-secondary">Chargement...</span>
+        <span className="text-xs text-text-secondary">{t('home.loading')}</span>
       </div>
     </div>
   );
@@ -227,6 +229,7 @@ export function InvestigationPage() {
           {viewOptions.map((option) => {
             const Icon = option.icon;
             const isActive = displayMode === option.mode;
+            const label = t(`investigation.views.${option.labelKey}`);
             return (
               <button
                 key={option.mode}
@@ -236,10 +239,10 @@ export function InvestigationPage() {
                     ? 'bg-bg-primary text-text-primary shadow-sm'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
-                title={`${option.label} (${option.shortcut})`}
+                title={`${label} (${option.shortcut})`}
               >
                 <Icon size={14} />
-                <span className="hidden md:inline">{option.label}</span>
+                <span className="hidden md:inline">{label}</span>
               </button>
             );
           })}
@@ -251,34 +254,44 @@ export function InvestigationPage() {
             <button
               onClick={clearFilters}
               className="flex items-center gap-1.5 px-2 py-1 text-xs bg-accent/10 text-accent rounded hover:bg-accent/20 transition-colors"
-              title="Effacer les filtres"
+              title={t('investigation.header.clearFilters')}
             >
               <Filter size={14} />
-              <span>Filtres actifs</span>
+              <span>{t('investigation.header.activeFilters')}</span>
             </button>
           )}
           <button
             onClick={() => setReportOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title="Generer un rapport"
+            title={t('investigation.header.generateReport')}
           >
             <FileText size={14} />
-            <span className="hidden sm:inline">Rapport</span>
+            <span className="hidden sm:inline">{t('investigation.header.report')}</span>
           </button>
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggleThemeMode}
+            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
+            title={themeMode === 'light' ? t('investigation.viewToolbar.darkMode') : t('investigation.viewToolbar.lightMode')}
+          >
+            {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+          </button>
+          {/* Language selector */}
+          <LanguageSwitcher size="sm" />
           <button
             onClick={() => setExportOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title="Exporter"
+            title={t('investigation.header.export')}
           >
             <Download size={14} />
-            <span className="hidden sm:inline">Exporter</span>
+            <span className="hidden sm:inline">{t('investigation.header.export')}</span>
           </button>
           <button
             onClick={toggleSearch}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
           >
             <Search size={14} />
-            <span className="hidden sm:inline">Rechercher</span>
+            <span className="hidden sm:inline">{t('investigation.header.search')}</span>
             <kbd className="hidden sm:inline px-1 py-0.5 bg-bg-tertiary rounded text-text-tertiary text-[10px]">
               Ctrl+K
             </kbd>
@@ -286,7 +299,7 @@ export function InvestigationPage() {
           <button
             onClick={() => setShortcutsOpen(true)}
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title="Raccourcis clavier (?)"
+            title={`${t('investigation.header.shortcuts')} (?)`}
           >
             <Keyboard size={14} />
           </button>
@@ -304,7 +317,7 @@ export function InvestigationPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title="Soutenir sur Ko-fi"
+            title={t('investigation.header.supportKofi')}
           >
             <Coffee size={14} />
           </a>
@@ -351,24 +364,24 @@ export function InvestigationPage() {
       <Modal
         isOpen={collabLeaveWarning}
         onClose={() => setCollabLeaveWarning(false)}
-        title="Quitter la session collaborative"
+        title={t('investigation.collab.leaveTitle')}
         width="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setCollabLeaveWarning(false)}>
-              Annuler
+              {t('common:actions.cancel')}
             </Button>
             <Button variant="primary" onClick={handleConfirmLeave}>
-              Quitter
+              {t('investigation.collab.leave')}
             </Button>
           </>
         }
       >
         <p className="text-sm text-text-secondary">
-          Les autres participants pourront toujours utiliser le lien de partage pour synchroniser leurs modifications et reprendre la collaboration.
+          {t('investigation.collab.leaveMessage')}
         </p>
         <p className="text-sm text-text-secondary mt-2">
-          Vous pourrez également rejoindre la session plus tard via le meme lien.
+          {t('investigation.collab.rejoinMessage')}
         </p>
       </Modal>
     </Layout>

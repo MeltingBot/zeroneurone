@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { DropdownPortal } from './DropdownPortal';
@@ -66,11 +67,13 @@ interface IconPickerProps {
   placeholder?: string;
 }
 
-export function IconPicker({ value, onChange, placeholder = 'Choisir une icône...' }: IconPickerProps) {
+export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
+  const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const placeholderText = placeholder || t('iconPicker.placeholder');
 
   // Filter icons based on search
   const filteredIcons = useMemo(() => {
@@ -137,7 +140,7 @@ export function IconPicker({ value, onChange, placeholder = 'Choisir une icône.
             </button>
           </>
         ) : (
-          <span className="flex-1 text-left text-text-tertiary">{placeholder}</span>
+          <span className="flex-1 text-left text-text-tertiary">{placeholderText}</span>
         )}
       </button>
 
@@ -156,7 +159,7 @@ export function IconPicker({ value, onChange, placeholder = 'Choisir une icône.
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher une icône..."
+              placeholder={t('iconPicker.searchPlaceholder')}
               className="w-full pl-7 pr-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
           </div>
@@ -165,11 +168,11 @@ export function IconPicker({ value, onChange, placeholder = 'Choisir une icône.
         {/* Icons grid */}
         <div className="p-2 max-h-64 overflow-y-auto">
           {!search && (
-            <p className="text-[10px] text-text-tertiary mb-2">Icônes populaires</p>
+            <p className="text-[10px] text-text-tertiary mb-2">{t('iconPicker.popularIcons')}</p>
           )}
           {search && filteredIcons.length === 0 ? (
             <p className="text-xs text-text-tertiary text-center py-4">
-              Aucune icône trouvée
+              {t('iconPicker.noIconFound')}
             </p>
           ) : (
             <div className="grid grid-cols-8 gap-1">
@@ -197,7 +200,7 @@ export function IconPicker({ value, onChange, placeholder = 'Choisir une icône.
           )}
           {filteredIcons.length > 64 && (
             <p className="text-[10px] text-text-tertiary text-center mt-2">
-              +{filteredIcons.length - 64} autres (affinez la recherche)
+              {t('iconPicker.moreIconsRefine', { count: filteredIcons.length - 64 })}
             </p>
           )}
         </div>
@@ -213,6 +216,7 @@ interface IconPickerCompactProps {
 }
 
 export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
+  const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -260,7 +264,7 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
             ? 'bg-bg-secondary border-border-default text-text-secondary hover:bg-bg-tertiary'
             : 'border-dashed border-border-default text-text-tertiary hover:border-accent hover:text-accent'
         }`}
-        title={value ? `Icône: ${value}` : 'Ajouter une icône'}
+        title={value ? `${value}` : t('iconPicker.addIcon')}
       >
         {SelectedIcon ? <SelectedIcon size={14} /> : <Plus size={12} />}
       </button>
@@ -280,7 +284,7 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher une icône..."
+              placeholder={t('iconPicker.searchPlaceholder')}
               className="w-full pl-7 pr-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
           </div>
@@ -293,7 +297,7 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
               }}
               className="w-full mt-1 px-2 py-1 text-xs text-text-tertiary hover:text-error hover:bg-bg-secondary rounded transition-colors"
             >
-              Supprimer l'icône
+              {t('iconPicker.removeIcon')}
             </button>
           )}
         </div>
@@ -301,11 +305,11 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
         {/* Icons grid */}
         <div className="p-2 max-h-64 overflow-y-auto">
           {!search && (
-            <p className="text-[10px] text-text-tertiary mb-2">Icônes populaires</p>
+            <p className="text-[10px] text-text-tertiary mb-2">{t('iconPicker.popularIcons')}</p>
           )}
           {search && filteredIcons.length === 0 ? (
             <p className="text-xs text-text-tertiary text-center py-4">
-              Aucune icône trouvée
+              {t('iconPicker.noIconFound')}
             </p>
           ) : (
             <div className="grid grid-cols-8 gap-1">
@@ -333,7 +337,7 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
           )}
           {filteredIcons.length > 64 && (
             <p className="text-[10px] text-text-tertiary text-center mt-2">
-              +{filteredIcons.length - 64} autres
+              {t('iconPicker.moreIcons', { count: filteredIcons.length - 64 })}
             </p>
           )}
         </div>

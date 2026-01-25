@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MiniMap } from '@xyflow/react';
 import { GripHorizontal, X } from 'lucide-react';
 import { useUIStore } from '../../stores';
@@ -21,6 +22,7 @@ const HANDLE_HEIGHT = 20;
 const INITIAL_MARGIN = 12;
 
 export function DraggableMinimap() {
+  const { t } = useTranslation('pages');
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const isDraggingRef = useRef(false);
@@ -123,7 +125,7 @@ export function DraggableMinimap() {
           onClick={(e) => { e.stopPropagation(); toggleMinimap(); }}
           onMouseDown={(e) => e.stopPropagation()}
           className="p-0.5 text-text-tertiary hover:text-text-secondary rounded"
-          title="Masquer la minimap"
+          title={t('investigation.toolbar.hideMinimap')}
         >
           <X size={10} />
         </button>

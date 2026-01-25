@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Download, Upload, HelpCircle } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { Modal, Button, IconButton } from '../common';
@@ -58,6 +59,7 @@ function isValidExportedTagSet(data: unknown): data is ExportedTagSet {
 }
 
 export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps) {
+  const { t } = useTranslation(['modals', 'common']);
   const { getAll, delete: deleteTagSet, resetToDefaults, create, nameExists } = useTagSetStore();
   const showToast = useUIStore((state) => state.showToast);
 
@@ -83,12 +85,12 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
   }, []);
 
   const handleDelete = useCallback(async (id: TagSetId, name: string) => {
-    if (!confirm(`Supprimer le tag "${name}" ? Les tags existants sur les éléments resteront mais ne seront plus associés à ce TagSet.`)) {
+    if (!confirm(t('tagSets.deleteConfirm', { name }))) {
       return;
     }
     await deleteTagSet(id);
-    showToast('success', `Tag "${name}" supprimé`);
-  }, [deleteTagSet, showToast]);
+    showToast('success', t('tagSets.tagDeleted', { name }));
+  }, [deleteTagSet, showToast, t]);
 
   const handleReset = useCallback(async () => {
     if (!confirmReset) {
@@ -96,9 +98,9 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
       return;
     }
     await resetToDefaults();
-    showToast('success', 'Tags réinitialisés aux valeurs par défaut');
+    showToast('success', t('tagSets.tagsReset'));
     setConfirmReset(false);
-  }, [confirmReset, resetToDefaults, showToast]);
+  }, [confirmReset, resetToDefaults, showToast, t]);
 
   // Export all TagSets to JSON file
   const handleExportJSON = useCallback(() => {
@@ -125,8 +127,8 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast('success', `${tagSets.length} tags exportés (JSON)`);
-  }, [tagSets, showToast]);
+    showToast('success', t('tagSets.tagsExportedJson', { count: tagSets.length }));
+  }, [tagSets, showToast, t]);
 
   // Export all TagSets to CSV file
   const handleExportCSV = useCallback(() => {
@@ -163,8 +165,8 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast('success', `${tagSets.length} tags exportés (CSV)`);
-  }, [tagSets, showToast]);
+    showToast('success', t('tagSets.tagsExportedCsv', { count: tagSets.length }));
+  }, [tagSets, showToast, t]);
 
   // Download CSV template for TagSets
   const handleDownloadTemplate = useCallback(() => {
@@ -233,7 +235,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
         // CSV import
         const lines = text.split('\n').filter((l) => l.trim());
         if (lines.length < 2) {
-          showToast('error', 'Fichier CSV vide ou invalide');
+          showToast('error', t('tagSets.csvEmptyOrInvalid'));
           return;
         }
 
@@ -245,7 +247,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
         const propsIdx = headers.findIndex((h) => ['proprietes', 'properties', 'props'].includes(h));
 
         if (nameIdx === -1) {
-          showToast('error', 'Colonne "nom" manquante dans le CSV');
+          showToast('error', t('tagSets.csvMissingNameColumn'));
           return;
         }
 
@@ -304,7 +306,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
         const data = JSON.parse(text);
 
         if (!isValidExportData(data)) {
-          showToast('error', 'Format de fichier JSON invalide');
+          showToast('error', t('tagSets.invalidJsonFormat'));
           return;
         }
 
@@ -326,26 +328,26 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
       }
 
       if (imported > 0 && skipped > 0) {
-        showToast('success', `${imported} tags importés, ${skipped} ignorés (déjà existants)`);
+        showToast('success', t('tagSets.tagsImportedWithSkipped', { imported, skipped }));
       } else if (imported > 0) {
-        showToast('success', `${imported} tags importés`);
+        showToast('success', t('tagSets.tagsImported', { imported }));
       } else if (skipped > 0) {
-        showToast('warning', `Aucun tag importé (${skipped} déjà existants)`);
+        showToast('warning', t('tagSets.noTagsImported', { skipped }));
       } else {
-        showToast('warning', 'Aucun tag à importer');
+        showToast('warning', t('tagSets.noTagsToImport'));
       }
     } catch (err) {
       console.error('Import error:', err);
-      showToast('error', 'Erreur lors de l\'import du fichier');
+      showToast('error', t('tagSets.importError'));
     }
-  }, [create, nameExists, showToast, parseCSVLine]);
+  }, [create, nameExists, showToast, parseCSVLine, t]);
 
   return (
     <>
       <Modal
         isOpen={isOpen && !editingTagSet && !isCreating}
         onClose={onClose}
-        title="Gestion des tags"
+        title={t('tagSets.title')}
         width="lg"
         footer={
           <div className="flex justify-between w-full">
@@ -356,13 +358,13 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
                 className={confirmReset ? 'text-error border-error' : ''}
               >
                 <RotateCcw size={14} />
-                {confirmReset ? 'Confirmer' : 'Réinitialiser'}
+                {confirmReset ? t('tagSets.confirmReset') : t('tagSets.reset')}
               </Button>
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={handleImportClick}>
                 <Upload size={14} />
-                Importer
+                {t('common:actions.import')}
               </Button>
               <Button variant="secondary" onClick={handleExportCSV}>
                 <Download size={14} />
@@ -373,7 +375,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
                 JSON
               </Button>
               <Button variant="secondary" onClick={onClose}>
-                Fermer
+                {t('common:actions.close')}
               </Button>
             </div>
           </div>
@@ -387,32 +389,24 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors"
             >
               <HelpCircle size={14} />
-              <span>Comment utiliser les tags ?</span>
+              <span>{t('tagSets.help.title')}</span>
               <span className="ml-auto text-text-tertiary">{showHelp ? '−' : '+'}</span>
             </button>
             {showHelp && (
               <div className="px-3 pb-3 text-xs text-text-tertiary space-y-3 border-t border-border-default pt-2">
                 <div>
-                  <p className="font-medium text-text-secondary mb-1">Qu'est-ce qu'un Tag ?</p>
-                  <p>
-                    Un tag catégorise vos éléments (ex: "Personne", "Entreprise", "Véhicule").
-                    Chaque tag peut définir une couleur, une forme, et des propriétés suggérées.
-                  </p>
+                  <p className="font-medium text-text-secondary mb-1">{t('tagSets.help.whatIsTag')}</p>
+                  <p>{t('tagSets.help.tagDescription')}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-text-secondary mb-1">Propriétés suggérées</p>
-                  <p>
-                    Quand vous ajoutez un tag à un élément, ses propriétés suggérées s'affichent automatiquement.
-                    Ex: tag "Personne" → champs "Prénom", "Nom", "Date de naissance".
-                  </p>
+                  <p className="font-medium text-text-secondary mb-1">{t('tagSets.help.suggestedPropertiesTitle')}</p>
+                  <p>{t('tagSets.help.suggestedPropertiesDesc')}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-text-secondary mb-1">Importer vos tags (CSV ou JSON)</p>
-                  <p className="mb-2">
-                    Créez vos propres tags en important un fichier CSV ou JSON.
-                  </p>
+                  <p className="font-medium text-text-secondary mb-1">{t('tagSets.help.importTitle')}</p>
+                  <p className="mb-2">{t('tagSets.help.importDesc')}</p>
                   <div className="bg-bg-secondary p-2 rounded text-xs font-mono">
-                    <p className="text-text-secondary mb-1">Format CSV:</p>
+                    <p className="text-text-secondary mb-1">{t('tagSets.help.csvFormat')}</p>
                     <p>nom,description,couleur,forme,proprietes</p>
                     <p>Personne,Une personne,#3b82f6,circle,prenom:text;nom:text</p>
                   </div>
@@ -421,16 +415,16 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
                     className="mt-2 flex items-center gap-1 text-accent hover:underline"
                   >
                     <Download size={12} />
-                    Télécharger le modèle CSV
+                    {t('tagSets.help.downloadTemplate')}
                   </button>
                 </div>
                 <div>
-                  <p className="font-medium text-text-secondary mb-1">Types de propriétés</p>
+                  <p className="font-medium text-text-secondary mb-1">{t('tagSets.help.propertyTypesTitle')}</p>
                   <p className="font-mono text-xs">
                     text, number, date, datetime, boolean, choice, country, geo, link
                   </p>
                   <p className="mt-1">
-                    Pour les choix multiples: <code className="bg-bg-tertiary px-1 rounded">statut:choice:actif|inactif|suspendu</code>
+                    {t('tagSets.help.propertyTypesChoiceDesc')} <code className="bg-bg-tertiary px-1 rounded">statut:choice:actif|inactif|suspendu</code>
                   </p>
                 </div>
               </div>
@@ -453,7 +447,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
             className="w-full flex items-center justify-center gap-2 py-3 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-secondary border border-dashed border-border-default rounded transition-colors"
           >
             <Plus size={14} />
-            Nouveau tag
+            {t('tagSets.newTag')}
           </button>
 
           {/* Hidden file input for import */}
@@ -494,6 +488,8 @@ interface TagSetListItemProps {
 }
 
 function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
+  const { t } = useTranslation(['modals', 'common']);
+
   // Get custom icon if set, otherwise use shape icon
   const CustomIcon = tagSet.defaultVisual.icon
     ? (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[tagSet.defaultVisual.icon]
@@ -526,18 +522,18 @@ function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
           {tagSet.name}
         </div>
         <div className="text-xs text-text-tertiary">
-          {tagSet.suggestedProperties.length} propriétés
-          {tagSet.isBuiltIn && ' • Par défaut'}
+          {t('tagSets.propertiesCount', { count: tagSet.suggestedProperties.length })}
+          {tagSet.isBuiltIn && ` • ${t('tagSets.builtIn')}`}
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <IconButton onClick={onEdit} size="sm" title="Modifier">
+        <IconButton onClick={onEdit} size="sm" title={t('common:actions.edit')}>
           <Pencil size={14} />
         </IconButton>
         {!tagSet.isBuiltIn && (
-          <IconButton onClick={onDelete} size="sm" title="Supprimer">
+          <IconButton onClick={onDelete} size="sm" title={t('common:actions.delete')}>
             <Trash2 size={14} />
           </IconButton>
         )}

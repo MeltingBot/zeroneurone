@@ -1,0 +1,425 @@
+{
+  "tabs": {
+    "detail": "Detail",
+    "insights": "Analysen",
+    "filters": "Filter",
+    "views": "Ansichten",
+    "collapsePanel": "Panel einklappen"
+  },
+  "investigation": {
+    "sections": {
+      "information": "Informationen",
+      "dates": "Daten",
+      "properties": "Eigenschaften"
+    },
+    "labels": {
+      "name": "Name",
+      "description": "Beschreibung",
+      "creator": "Ersteller",
+      "tags": "Tags",
+      "startDate": "Startdatum",
+      "createdAt": "Erstellt am",
+      "updatedAt": "Geändert am"
+    },
+    "placeholders": {
+      "name": "Name der Ermittlung",
+      "creator": "Name des Erstellers..."
+    }
+  },
+  "detail": {
+    "noSelection": "Kein Element ausgewählt",
+    "multipleSelection": "{{count}} Elemente ausgewählt",
+    "element": "Element",
+    "link": "Verbindung",
+    "group": "Gruppe",
+    "annotation": "Anmerkung",
+    "sections": {
+      "identity": "Identität",
+      "content": "Inhalt",
+      "connection": "Verbindung",
+      "metadata": "Metadaten",
+      "events": "Ereignisse",
+      "location": "Standort",
+      "properties": "Eigenschaften",
+      "appearance": "Darstellung",
+      "comments": "Kommentare",
+      "files": "Dateien"
+    },
+    "placeholders": {
+      "label": "Unbenannt",
+      "linkLabel": "Unbenannte Beziehung",
+      "notes": "Notizen...",
+      "source": "Informationsquelle...",
+      "markdown": "Markdown: **fett**, *kursiv*, [Link](url), Listen...",
+      "keyName": "Name...",
+      "keyValue": "Wert..."
+    },
+    "labels": {
+      "name": "Name",
+      "label": "Bezeichnung",
+      "notes": "Notizen",
+      "tags": "Tags",
+      "confidence": "Vertrauen",
+      "confidenceUndefined": "Nicht definiert",
+      "source": "Quelle",
+      "referenceDate": "Referenzdatum",
+      "dateCollected": "Erfassungsdatum",
+      "dateCollectedHelp": "Datum der Hinzufügung oder Erfassung der Information",
+      "useEventsForDates": "Für datierte Ereignisse verwenden Sie den Abschnitt 'Ereignisse'",
+      "direction": "Richtung",
+      "directionNone": "Ohne Pfeil",
+      "directionForward": "Zum Ziel",
+      "directionBackward": "Zur Quelle",
+      "directionBoth": "Bidirektional",
+      "openInNewTab": "In neuem Tab öffnen"
+    },
+    "tags": {
+      "editIcon": "Symbol bearbeiten",
+      "addIcon": "Symbol hinzufügen",
+      "deleteTag": "Tag {{tag}} löschen",
+      "newTagPlaceholder": "Neuer Tag...",
+      "pressEnterToCreate": "Eingabe zum Erstellen von \"{{value}}\"",
+      "typeToFilter": "Zum Filtern tippen...",
+      "add": "Hinzufügen",
+      "noTags": "Keine Tags"
+    },
+    "warnings": {
+      "noName": "Das Element hat keinen Namen"
+    },
+    "link": {
+      "linkedElements": "Verbundene Elemente",
+      "deletedElement": "Gelöschtes Element",
+      "relationPeriod": "Beziehungszeitraum",
+      "periodStart": "Beginn",
+      "periodEnd": "Ende (leer lassen wenn laufend)"
+    },
+    "events": {
+      "title": "Ereignisse",
+      "description": "Verlauf datierter Ereignisse (sichtbar auf der Zeitleiste)",
+      "add": "Ereignis hinzufügen",
+      "labelPlaceholder": "Bezeichnung (z.B.: Zwischenstopp Marseille, Website gehackt...)",
+      "noEvents": "Keine Ereignisse",
+      "hasLocation": "Hat Position",
+      "hasDescription": "Hat Beschreibung",
+      "delete": "Löschen",
+      "dateTo": "bis",
+      "dateEndOptional": "Ende (optional)",
+      "descriptionLabel": "Beschreibung",
+      "descriptionPlaceholder": "Detaillierte Beschreibung...",
+      "sourceLabel": "Quelle",
+      "sourcePlaceholder": "Informationsquelle...",
+      "locationOptional": "Standort (optional)",
+      "clearLocation": "Löschen",
+      "pickOnMap": "Karte"
+    },
+    "location": {
+      "title": "Standort",
+      "description": "Feste Position des Elements (sichtbar auf der Karte)",
+      "gpsCoordinates": "GPS-Koordinaten",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad",
+      "latRange": "-90 bis 90",
+      "lngRange": "-180 bis 180",
+      "pickOnMap": "Auf Karte wählen",
+      "clearLocation": "Löschen",
+      "removeLocation": "Standort entfernen",
+      "noLocation": "Keine Position definiert"
+    },
+    "properties": {
+      "title": "Eigenschaften",
+      "add": "Hinzufügen",
+      "addProperty": "Eigenschaft hinzufügen",
+      "selectAll": "Alles auswählen",
+      "deselectAll": "Alles abwählen",
+      "ignore": "Ignorieren",
+      "keyPlaceholder": "Schlüssel",
+      "valuePlaceholder": "Wert",
+      "typePlaceholder": "Typ",
+      "optionsPlaceholder": "Optionen durch Kommas getrennt",
+      "noProperties": "Keine Eigenschaften",
+      "namePlaceholder": "Z.B.: SIREN, Nationalität...",
+      "noMatch": "Keine Übereinstimmung",
+      "suggestedFor": "Vorgeschlagene Eigenschaften für \"{{name}}\"",
+      "cancel": "Abbrechen",
+      "showOnCanvas": "Auf Arbeitsfläche anzeigen",
+      "hideOnCanvas": "Von Arbeitsfläche ausblenden",
+      "deleteProperty": "Eigenschaft {{key}} löschen",
+      "selectCountry": "Land auswählen...",
+      "search": "Suchen...",
+      "clearSelection": "Auswahl löschen",
+      "noCountryFound": "Kein Land gefunden",
+      "types": {
+        "text": "Text",
+        "number": "Numerisch",
+        "date": "Datum",
+        "datetime": "Datum/Uhrzeit",
+        "boolean": "Boolesch",
+        "country": "Land",
+        "link": "Link",
+        "choice": "Auswahl",
+        "geo": "Koord."
+      },
+      "booleanYes": "Ja",
+      "booleanNo": "Nein"
+    },
+    "appearance": {
+      "title": "Darstellung",
+      "color": "Farbe",
+      "borderColor": "Randfarbe",
+      "defaultGray": "Standard-Grau",
+      "customColor": "Benutzerdefinierte Farbe",
+      "shape": "Form",
+      "size": "Größe",
+      "style": "Stil",
+      "thickness": "Stärke"
+    },
+    "files": {
+      "title": "Dateien",
+      "drop": "Dateien hier ablegen",
+      "noFiles": "Keine Dateien",
+      "delete": "Datei löschen",
+      "download": "Herunterladen",
+      "preview": "Vorschau",
+      "defaultThumbnail": "Standard-Miniatur",
+      "closeEsc": "Schließen (Esc)"
+    },
+    "timestamps": {
+      "createdAt": "Erstellt am",
+      "updatedAt": "Geändert am"
+    },
+    "comments": {
+      "addPlaceholder": "Kommentar hinzufügen...",
+      "noComments": "Keine Kommentare",
+      "markResolved": "Als gelöst markieren",
+      "markUnresolved": "Als ungelöst markieren",
+      "delete": "Löschen",
+      "resolvedBy": "Gelöst von {{name}}",
+      "time": {
+        "justNow": "Gerade eben",
+        "minutesAgo": "Vor {{count}} Min.",
+        "hoursAgo": "Vor {{count}} Std.",
+        "daysAgo": "Vor {{count}} T."
+      }
+    },
+    "geoPicker": {
+      "title": "Standort wählen",
+      "searchPlaceholder": "Adresse, Stadt suchen...",
+      "search": "Suchen",
+      "noResults": "Keine Ergebnisse gefunden",
+      "searchError": "Suchfehler",
+      "clickToPlace": "Klicken Sie auf die Karte, um einen Marker zu setzen"
+    },
+    "multi": {
+      "title": "Massenbearbeitung",
+      "elements": "{{count}} Element(e)",
+      "links": "{{count}} Verbindung(en)",
+      "addOrRemoveTags": "Tags zu allen ausgewählten Elementen hinzufügen oder entfernen",
+      "removeFromSelection": "Aus Auswahl entfernen",
+      "addPropertyToAll": "Eigenschaft zu allen ausgewählten Elementen hinzufügen",
+      "setConfidenceAll": "Vertrauensstufe für alle festlegen",
+      "setColorAll": "Farbe für alle festlegen",
+      "elementsSection": "Elemente ({{count}})",
+      "linksSection": "Verbindungen ({{count}})"
+    }
+  },
+  "filters": {
+    "title": "Filter",
+    "elementsCount": "{{matching}}/{{total}} Elemente",
+    "active": "{{count}} aktive(r) Filter",
+    "clearAll": "Alle löschen",
+    "hiddenCount": "{{count}} ausgeblendete(s) Element(e)",
+    "activeFilters": "Aktive Filter",
+    "noName": "Unbenannt",
+    "show": "Einblenden",
+    "sections": {
+      "quickFilters": "Schnellfilter",
+      "textSearch": "Textsuche",
+      "tags": "Tags",
+      "types": "Typen",
+      "confidence": "Vertrauen",
+      "property": "Eigenschaft",
+      "date": "Datum"
+    },
+    "placeholders": {
+      "textSearch": "Nach Name oder Notizen filtern...",
+      "allProperties": "Alle",
+      "all": "Alle"
+    },
+    "quick": {
+      "isolated": "Isoliert",
+      "isolatedDesc": "Elemente ohne Verbindung",
+      "noTags": "Ohne Tags",
+      "noTagsDesc": "Elemente ohne Tags",
+      "noGeo": "Ohne Geo",
+      "noGeoDesc": "Elemente ohne Koordinaten",
+      "noDate": "Ohne Datum",
+      "noDateDesc": "Elemente ohne Datum",
+      "lowConfidence": "Niedriges Vertrauen",
+      "lowConfidenceDesc": "Vertrauen < 50%",
+      "hasComments": "Kommentare",
+      "hasCommentsDesc": "Elemente mit ungelösten Kommentaren"
+    },
+    "property": {
+      "hasProperty": "Hat die Eigenschaft",
+      "showAsBadge": "Als Badge auf Elementen anzeigen"
+    },
+    "confidence": {
+      "minimum": "Mindestvertrauen"
+    },
+    "tags": {
+      "noTags": "Keine Tags verfügbar"
+    },
+    "hiddenElements": {
+      "title": "Ausgeblendet",
+      "count": "{{count}} ausgeblendete(s) Element(e)",
+      "showAll": "Alle einblenden",
+      "noHidden": "Keine ausgeblendeten Elemente"
+    }
+  },
+  "insights": {
+    "title": "Analysen",
+    "computing": "Analyse läuft...",
+    "noData": "Fügen Sie Elemente und Verbindungen hinzu, um Analysen zu sehen.",
+    "noInsights": "Keine Erkenntnisse erkannt. Fügen Sie mehr Verbindungen zwischen Elementen hinzu.",
+    "lastComputed": "Letzte Analyse:",
+    "refresh": "Aktualisieren",
+    "noName": "Unbenannt",
+    "noResults": "Keine Ergebnisse",
+    "links": "{{count}} Verbindungen",
+    "elements": "{{count}} Elemente",
+    "sections": {
+      "clusters": "Cluster",
+      "bridges": "Brücken",
+      "centrality": "Zentralität",
+      "isolated": "Isoliert",
+      "similar": "Ähnlich"
+    },
+    "clusters": {
+      "title": "Cluster",
+      "description": "Gruppen stark verbundener Elemente",
+      "name": "Cluster {{id}}",
+      "count": "{{count}} Cluster",
+      "elements": "{{count}} Elemente",
+      "actions": {
+        "select": "Ausw.",
+        "deselect": "Abw.",
+        "hide": "Ausbl.",
+        "show": "Einbl.",
+        "filter": "Filtern",
+        "group": "Grupp.",
+        "dissolve": "Auflösen"
+      }
+    },
+    "bridges": {
+      "title": "Brücken",
+      "description": "Elemente, die verschiedene Teile des Graphen verbinden",
+      "count": "{{count}} Brücke(n)",
+      "noBridges": "Keine Brücken erkannt",
+      "showBridges": "Brücken anzeigen",
+      "hideBridges": "Hervorhebung ausblenden",
+      "selectAll": "Alle auswählen",
+      "hideAll": "Alle ausblenden",
+      "showAll": "Alle einblenden"
+    },
+    "centrality": {
+      "title": "Am stärksten verbunden",
+      "description": "Am stärksten verbundene Elemente",
+      "degree": "Grad",
+      "betweenness": "Zwischenposition"
+    },
+    "isolated": {
+      "title": "Isoliert",
+      "description": "Elemente ohne Verbindungen",
+      "count": "{{count}} isolierte(s) Element(e)",
+      "noIsolated": "Keine isolierten Elemente",
+      "showIsolated": "Isolierte anzeigen",
+      "hideIsolated": "Hervorhebung ausblenden",
+      "selectAll": "Alle auswählen",
+      "hideAll": "Alle ausblenden",
+      "showAll": "Alle einblenden"
+    },
+    "similar": {
+      "title": "Potenzielle Duplikate",
+      "description": "Elemente mit ähnlichen Namen",
+      "count": "{{count}} ähnliche(s) Paar(e)",
+      "noSimilar": "Keine ähnlichen Bezeichnungen",
+      "select": "Auswählen",
+      "merge": "Zusammenführen"
+    },
+    "paths": {
+      "title": "Pfadsuche",
+      "button": "Pfad zwischen zwei Elementen finden",
+      "from": "Von",
+      "to": "Nach",
+      "searchPlaceholder": "Element suchen...",
+      "pathFound": "Pfad gefunden ({{count}} Schritte)",
+      "noPath": "Kein Pfad zwischen diesen Elementen gefunden",
+      "pathLength": "{{count}} Schritt(e)"
+    }
+  },
+  "views": {
+    "title": "Ansichten",
+    "canvasDisplay": "Anzeige auf der Arbeitsfläche",
+    "tags": "Tags",
+    "tagSize": "Größe:",
+    "tagModes": {
+      "hidden": "Ausgeblendet",
+      "icons": "Symbole",
+      "labels": "Bezeichnungen",
+      "both": "Symbole + Bezeichnungen"
+    },
+    "confidenceIndicator": "Vertrauensindikator",
+    "links": "Verbindungen",
+    "linkShape": "Form",
+    "linkCurves": "Kurven",
+    "linkStraight": "Gerade",
+    "linkOrthogonal": "Rechtwinklig",
+    "linkAnchor": "Verankerung",
+    "linkAnchorManual": "Manuell",
+    "linkAnchorAuto": "Automatisch",
+    "propertiesDisplay": "Angezeigte Eigenschaften",
+    "propertiesAvailable": "{{count}} verfügbar",
+    "searchProperty": "Eigenschaft suchen...",
+    "noResultsFor": "Keine Ergebnisse für \"{{search}}\"",
+    "propertiesSelected": "{{count}}/3 ausgewählt",
+    "maxProperties": "Max. 3",
+    "deselectAll": "Alles abwählen",
+    "noPropertiesDefined": "Keine Eigenschaften für Elemente definiert",
+    "savedViews": "Gespeicherte Ansichten",
+    "save": "Ansicht speichern",
+    "load": "Laden",
+    "delete": "Löschen",
+    "rename": "Umbenennen",
+    "noViews": "Keine gespeicherten Ansichten",
+    "namePlaceholder": "Name der Ansicht...",
+    "includePositions": "Positionen einschließen ({{count}} Elemente)",
+    "saveButton": "Speichern",
+    "cancelButton": "Abbrechen",
+    "saveCurrentView": "Aktuelle Ansicht speichern",
+    "savedPositions": "Gespeicherte Positionen",
+    "deleteView": "Ansicht löschen",
+    "activeView": "Aktive Ansicht. Filter und Ansicht wiederhergestellt.",
+    "positionsRestored": "Positionen von {{count}} Elementen wiederhergestellt.",
+    "saveDescription": "Speichert Filter, Zoom und ausgeblendete Elemente"
+  },
+  "assets": {
+    "title": "Dateien",
+    "noAssets": "Keine Dateien",
+    "drop": "Dateien ablegen",
+    "deleteConfirm": "Diese Datei löschen?",
+    "usedBy": "Verwendet von {{count}} Element(en)"
+  },
+  "history": {
+    "title": "Verlauf",
+    "noHistory": "Keine Aktionen",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen"
+  },
+  "collaboration": {
+    "title": "Zusammenarbeit",
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "users": "{{count}} Benutzer",
+    "you": "Sie"
+  }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Network,
   Star,
@@ -26,6 +27,7 @@ import { ProgressiveList } from '../common/ProgressiveList';
 import type { Element } from '../../types';
 
 export function InsightsPanel() {
+  const { t, i18n } = useTranslation('panels');
   const { elements, links, createGroup, dissolveGroup } = useInvestigationStore();
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
@@ -167,9 +169,9 @@ export function InsightsPanel() {
         height: maxY - minY + padding * 2,
       };
 
-      await createGroup(`Cluster ${clusterId + 1}`, groupPos, groupSize, clusterElements.map(el => el.id));
+      await createGroup(t('insights.clusters.name', { id: clusterId + 1 }), groupPos, groupSize, clusterElements.map(el => el.id));
     },
-    [elements, createGroup]
+    [elements, createGroup, t]
   );
 
   // Check if all elements in a list are hidden
@@ -305,17 +307,18 @@ export function InsightsPanel() {
   const getElementLabel = useCallback(
     (elementId: string) => {
       const element = elements.find((el) => el.id === elementId);
-      return element?.label || 'Sans nom';
+      return element?.label || t('insights.noName');
     },
-    [elements]
+    [elements, t]
   );
 
   // Elements sorted by label for path finding dropdown
   const sortedElements = useMemo(() => {
+    const locale = i18n.language === 'en' ? 'en' : 'fr';
     return [...elements].sort((a, b) =>
-      (a.label || '').localeCompare(b.label || '', 'fr')
+      (a.label || '').localeCompare(b.label || '', locale)
     );
-  }, [elements]);
+  }, [elements, i18n.language]);
 
   const hasData = elements.length > 0;
   const hasInsights =
@@ -339,7 +342,7 @@ export function InsightsPanel() {
         {isComputing && (
           <div className="flex items-center gap-2 p-4 text-sm text-text-secondary">
             <Loader2 size={14} className="animate-spin" />
-            Analyse en cours...
+            {t('insights.computing')}
           </div>
         )}
 
@@ -347,7 +350,7 @@ export function InsightsPanel() {
         {!hasData && !isComputing && (
           <div className="text-center py-8 px-4">
             <p className="text-sm text-text-tertiary">
-              Ajoutez des éléments et des liens pour voir les insights.
+              {t('insights.noData')}
             </p>
           </div>
         )}
@@ -362,13 +365,13 @@ export function InsightsPanel() {
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-bg-secondary hover:bg-bg-tertiary border border-border-default rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Route size={14} />
-                Trouver un chemin entre deux éléments
+                {t('insights.paths.button')}
               </button>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-text-secondary">
-                    Recherche de chemin
+                    {t('insights.paths.title')}
                   </span>
                   <button
                     onClick={handleCancelPathFinding}
@@ -380,7 +383,7 @@ export function InsightsPanel() {
 
                 {/* From selector */}
                 <div className="space-y-1">
-                  <label className="text-[10px] text-text-tertiary">De</label>
+                  <label className="text-[10px] text-text-tertiary">{t('insights.paths.from')}</label>
                   <ElementAutocomplete
                     elements={sortedElements}
                     value={pathFrom}
@@ -393,13 +396,15 @@ export function InsightsPanel() {
                         clearPaths();
                       }
                     }}
-                    placeholder="Rechercher un élément..."
+                    placeholder={t('insights.paths.searchPlaceholder')}
+                    noNameLabel={t('insights.noName')}
+                    noResultsLabel={t('insights.noResults')}
                   />
                 </div>
 
                 {/* To selector */}
                 <div className="space-y-1">
-                  <label className="text-[10px] text-text-tertiary">Vers</label>
+                  <label className="text-[10px] text-text-tertiary">{t('insights.paths.to')}</label>
                   <ElementAutocomplete
                     elements={sortedElements}
                     excludeIds={pathFrom ? [pathFrom] : []}
@@ -413,7 +418,9 @@ export function InsightsPanel() {
                         clearPaths();
                       }
                     }}
-                    placeholder="Rechercher un élément..."
+                    placeholder={t('insights.paths.searchPlaceholder')}
+                    noNameLabel={t('insights.noName')}
+                    noResultsLabel={t('insights.noResults')}
                     disabled={!pathFrom}
                   />
                 </div>
@@ -422,7 +429,7 @@ export function InsightsPanel() {
                 {pathResults.length > 0 && (
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded">
                     <div className="text-xs text-accent font-medium mb-1">
-                      Chemin trouvé ({pathResults[0].length} étapes)
+                      {t('insights.paths.pathFound', { count: pathResults[0].length })}
                     </div>
                     <div className="flex flex-wrap items-center gap-1 text-xs text-text-secondary">
                       {pathResults[0].path.map((nodeId, idx) => (
@@ -445,7 +452,7 @@ export function InsightsPanel() {
                 {pathFrom && pathTo && pathResults.length === 0 && (
                   <div className="mt-2 p-2 bg-warning/10 border border-warning/30 rounded">
                     <div className="text-xs text-warning">
-                      Aucun chemin trouvé entre ces éléments
+                      {t('insights.paths.noPath')}
                     </div>
                   </div>
                 )}
@@ -461,7 +468,7 @@ export function InsightsPanel() {
             {clusters.length > 0 && (
               <InsightSection
                 id="clusters"
-                title="Clusters"
+                title={t('insights.clusters.title')}
                 icon={<Network size={12} />}
                 count={clusters.length}
                 isExpanded={expandedSections.has('clusters')}
@@ -487,10 +494,10 @@ export function InsightsPanel() {
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-text-primary">
-                            Cluster {cluster.id + 1}
+                            {t('insights.clusters.name', { id: cluster.id + 1 })}
                           </span>
                           <span className="text-xs text-text-tertiary">
-                            {cluster.size} éléments
+                            {t('insights.clusters.elements', { count: cluster.size })}
                           </span>
                         </div>
                       </div>
@@ -499,7 +506,7 @@ export function InsightsPanel() {
                       <div className="flex flex-wrap gap-1 mt-2">
                         <ActionButton
                           icon={areAllSelected(cluster.elementIds) ? <X size={10} /> : <MousePointer2 size={10} />}
-                          label={areAllSelected(cluster.elementIds) ? "Désélect." : "Sélect."}
+                          label={areAllSelected(cluster.elementIds) ? t('insights.clusters.actions.deselect') : t('insights.clusters.actions.select')}
                           onClick={() => {
                             if (areAllSelected(cluster.elementIds)) {
                               clearSelection();
@@ -510,12 +517,12 @@ export function InsightsPanel() {
                         />
                         <ActionButton
                           icon={areAllHidden(cluster.elementIds) ? <Eye size={10} /> : <EyeOff size={10} />}
-                          label={areAllHidden(cluster.elementIds) ? "Afficher" : "Masquer"}
+                          label={areAllHidden(cluster.elementIds) ? t('insights.clusters.actions.show') : t('insights.clusters.actions.hide')}
                           onClick={() => toggleHideElements(cluster.elementIds)}
                         />
                         <ActionButton
                           icon={<Filter size={10} />}
-                          label="Filtrer"
+                          label={t('insights.clusters.actions.filter')}
                           onClick={() => handleFilterCluster(cluster.elementIds)}
                         />
                         {(() => {
@@ -523,13 +530,13 @@ export function InsightsPanel() {
                           return groupId ? (
                             <ActionButton
                               icon={<Ungroup size={10} />}
-                              label="Dissoudre"
+                              label={t('insights.clusters.actions.dissolve')}
                               onClick={() => dissolveGroup(groupId)}
                             />
                           ) : (
                             <ActionButton
                               icon={<Group size={10} />}
-                              label="Grouper"
+                              label={t('insights.clusters.actions.group')}
                               onClick={() => handleGroupCluster(cluster.elementIds, cluster.id)}
                             />
                           );
@@ -545,7 +552,7 @@ export function InsightsPanel() {
             {centrality.length > 0 && (
               <InsightSection
                 id="centrality"
-                title="Plus connectés"
+                title={t('insights.centrality.title')}
                 icon={<Star size={12} />}
                 count={centrality.length}
                 isExpanded={expandedSections.has('centrality')}
@@ -567,7 +574,7 @@ export function InsightsPanel() {
                         {getElementLabel(item.elementId)}
                       </span>
                       <span className="text-xs text-text-tertiary ml-2 tabular-nums">
-                        {item.degree} liens
+                        {t('insights.links', { count: item.degree })}
                       </span>
                     </div>
                   ))}
@@ -579,12 +586,12 @@ export function InsightsPanel() {
             {bridges.length > 0 && (
               <InsightSection
                 id="bridges"
-                title="Ponts"
+                title={t('insights.bridges.title')}
                 icon={<GitBranch size={12} />}
                 count={bridges.length}
                 isExpanded={expandedSections.has('bridges')}
                 onToggle={() => toggleSection('bridges')}
-                description="Éléments reliant différentes parties du graphe"
+                description={t('insights.bridges.description')}
               >
                 <div className="space-y-2">
                   <button
@@ -595,18 +602,18 @@ export function InsightsPanel() {
                         : 'hover:bg-bg-secondary border border-transparent text-text-primary'
                     }`}
                   >
-                    {highlightType === 'bridge' ? 'Masquer la surbrillance' : 'Afficher les ponts'}
+                    {highlightType === 'bridge' ? t('insights.bridges.hideBridges') : t('insights.bridges.showBridges')}
                   </button>
 
                   <div className="flex gap-1">
                     <ActionButton
                       icon={<MousePointer2 size={10} />}
-                      label="Sélectionner tous"
+                      label={t('insights.bridges.selectAll')}
                       onClick={handleSelectBridges}
                     />
                     <ActionButton
                       icon={areAllHidden(bridges) ? <Eye size={10} /> : <EyeOff size={10} />}
-                      label={areAllHidden(bridges) ? "Afficher tous" : "Masquer tous"}
+                      label={areAllHidden(bridges) ? t('insights.bridges.showAll') : t('insights.bridges.hideAll')}
                       onClick={handleToggleHideBridges}
                     />
                   </div>
@@ -638,12 +645,12 @@ export function InsightsPanel() {
             {isolated.length > 0 && (
               <InsightSection
                 id="isolated"
-                title="Isolés"
+                title={t('insights.isolated.title')}
                 icon={<CircleOff size={12} />}
                 count={isolated.length}
                 isExpanded={expandedSections.has('isolated')}
                 onToggle={() => toggleSection('isolated')}
-                description="Éléments sans aucune connexion"
+                description={t('insights.isolated.description')}
               >
                 <div className="space-y-2">
                   <button
@@ -654,18 +661,18 @@ export function InsightsPanel() {
                         : 'hover:bg-bg-secondary border border-transparent text-text-primary'
                     }`}
                   >
-                    {highlightType === 'isolated' ? 'Masquer la surbrillance' : 'Afficher les isolés'}
+                    {highlightType === 'isolated' ? t('insights.isolated.hideIsolated') : t('insights.isolated.showIsolated')}
                   </button>
 
                   <div className="flex gap-1">
                     <ActionButton
                       icon={<MousePointer2 size={10} />}
-                      label="Sélectionner tous"
+                      label={t('insights.isolated.selectAll')}
                       onClick={handleSelectIsolated}
                     />
                     <ActionButton
                       icon={areAllHidden(isolated) ? <Eye size={10} /> : <EyeOff size={10} />}
-                      label={areAllHidden(isolated) ? "Afficher tous" : "Masquer tous"}
+                      label={areAllHidden(isolated) ? t('insights.isolated.showAll') : t('insights.isolated.hideAll')}
                       onClick={handleToggleHideIsolated}
                     />
                   </div>
@@ -694,12 +701,12 @@ export function InsightsPanel() {
             {similarLabels.length > 0 && (
               <InsightSection
                 id="similar"
-                title="Doublons potentiels"
+                title={t('insights.similar.title')}
                 icon={<Copy size={12} />}
                 count={similarLabels.length}
                 isExpanded={expandedSections.has('similar')}
                 onToggle={() => toggleSection('similar')}
-                description="Éléments avec des noms similaires"
+                description={t('insights.similar.description')}
               >
                 <ProgressiveList
                   items={similarLabels}
@@ -729,12 +736,12 @@ export function InsightsPanel() {
                       <div className="flex gap-1 mt-1">
                         <ActionButton
                           icon={<MousePointer2 size={10} />}
-                          label="Sélectionner"
+                          label={t('insights.similar.select')}
                           onClick={() => handleSimilarClick(pair.elementId1, pair.elementId2)}
                         />
                         <ActionButton
                           icon={<Merge size={10} />}
-                          label="Fusionner"
+                          label={t('insights.similar.merge')}
                           onClick={() => {
                             selectElements([pair.elementId1, pair.elementId2]);
                           }}
@@ -753,7 +760,7 @@ export function InsightsPanel() {
         {hasData && !hasInsights && !isComputing && (
           <div className="text-center py-8 px-4">
             <p className="text-sm text-text-tertiary">
-              Aucun insight détecté. Ajoutez plus de liens entre les éléments.
+              {t('insights.noInsights')}
             </p>
           </div>
         )}
@@ -762,8 +769,8 @@ export function InsightsPanel() {
         {computedAt && (
           <div className="p-3 border-t border-border-default">
             <p className="text-[10px] text-text-tertiary text-center">
-              Dernière analyse :{' '}
-              {computedAt.toLocaleString('fr-FR', {
+              {t('insights.lastComputed')}{' '}
+              {computedAt.toLocaleString(i18n.language === 'en' ? 'en-US' : 'fr-FR', {
                 day: '2-digit',
                 month: '2-digit',
                 hour: '2-digit',
@@ -862,6 +869,8 @@ interface ElementAutocompleteProps {
   value: string | null;
   onChange: (elementId: string) => void;
   placeholder?: string;
+  noNameLabel?: string;
+  noResultsLabel?: string;
   disabled?: boolean;
 }
 
@@ -870,7 +879,9 @@ function ElementAutocomplete({
   excludeIds = [],
   value,
   onChange,
-  placeholder = 'Rechercher un élément...',
+  placeholder,
+  noNameLabel = 'Unnamed',
+  noResultsLabel = 'No results',
   disabled = false,
 }: ElementAutocompleteProps) {
   const [query, setQuery] = useState('');
@@ -1002,7 +1013,7 @@ function ElementAutocomplete({
   };
 
   // Determine what to display in the input
-  const displayValue = isEditing ? query : (value ? (selectedElement?.label || 'Sans nom') : query);
+  const displayValue = isEditing ? query : (value ? (selectedElement?.label || noNameLabel) : query);
   const showDropdown = isOpen && (isEditing || !value);
 
   return (
@@ -1053,7 +1064,7 @@ function ElementAutocomplete({
                   : 'text-text-primary hover:bg-bg-secondary'
               }`}
             >
-              {el.label || 'Sans nom'}
+              {el.label || noNameLabel}
             </div>
           ))}
         </div>
@@ -1062,7 +1073,7 @@ function ElementAutocomplete({
       {/* No results */}
       {showDropdown && query && filteredElements.length === 0 && (
         <div className="absolute z-50 w-full mt-1 px-3 py-2 bg-bg-primary border border-border-default rounded shadow-lg">
-          <span className="text-xs text-text-tertiary">Aucun résultat</span>
+          <span className="text-xs text-text-tertiary">{noResultsLabel}</span>
         </div>
       )}
     </div>

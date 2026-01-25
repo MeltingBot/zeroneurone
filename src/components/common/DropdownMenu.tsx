@@ -4,9 +4,10 @@ interface DropdownMenuProps {
   trigger: ReactNode;
   children: ReactNode;
   align?: 'left' | 'right';
+  direction?: 'down' | 'up';
 }
 
-export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMenuProps) {
+export function DropdownMenu({ trigger, children, align = 'right', direction = 'down' }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -32,11 +33,12 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
       {isOpen && (
         <div
           className={`
-            absolute z-10 mt-1
+            absolute z-50
             min-w-[160px]
             bg-bg-primary border border-border-default sketchy-border-soft panel-shadow
             py-1
             ${align === 'right' ? 'right-0' : 'left-0'}
+            ${direction === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'}
           `}
         >
           <div onClick={() => setIsOpen(false)}>{children}</div>

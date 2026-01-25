@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Search, Check } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -24,6 +25,7 @@ interface GeoPickerProps {
 }
 
 export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPickerProps) {
+  const { t } = useTranslation(['panels', 'common']);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -126,15 +128,15 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
         updateMarker(latNum, lngNum);
         mapRef.current.setView([latNum, lngNum], 14);
       } else {
-        setSearchError('Aucun résultat trouvé');
+        setSearchError(t('panels:detail.geoPicker.noResults'));
       }
     } catch (error) {
-      setSearchError('Erreur de recherche');
+      setSearchError(t('panels:detail.geoPicker.searchError'));
       console.error('Geocoding error:', error);
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, updateMarker]);
+  }, [searchQuery, updateMarker, t]);
 
   // Handle Enter key in search
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
@@ -157,7 +159,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
-            Choisir une localisation
+            {t('panels:detail.geoPicker.title')}
           </h2>
           <button
             onClick={onCancel}
@@ -175,7 +177,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              placeholder="Rechercher une adresse, ville..."
+              placeholder={t('panels:detail.geoPicker.searchPlaceholder')}
               className="flex-1 px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary"
             />
             <button
@@ -184,7 +186,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
               className="px-3 py-2 bg-accent text-white text-sm font-medium sketchy-border hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
             >
               <Search size={14} />
-              {isSearching ? '...' : 'Chercher'}
+              {isSearching ? '...' : t('panels:detail.geoPicker.search')}
             </button>
           </div>
           {searchError && (
@@ -203,7 +205,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
                 <strong>Lat:</strong> {selectedLat.toFixed(6)}, <strong>Lng:</strong> {selectedLng.toFixed(6)}
               </span>
             ) : (
-              <span className="text-text-tertiary">Cliquez sur la carte pour placer un marqueur</span>
+              <span className="text-text-tertiary">{t('panels:detail.geoPicker.clickToPlace')}</span>
             )}
           </div>
           <div className="flex gap-2">
@@ -211,7 +213,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
               onClick={onCancel}
               className="px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary sketchy-border transition-colors"
             >
-              Annuler
+              {t('common:actions.cancel')}
             </button>
             <button
               onClick={handleConfirm}
@@ -219,7 +221,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
               className="px-3 py-1.5 bg-accent text-white text-sm font-medium sketchy-border hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
             >
               <Check size={14} />
-              Confirmer
+              {t('common:actions.confirm')}
             </button>
           </div>
         </div>

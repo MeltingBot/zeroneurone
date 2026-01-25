@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Plus, ChevronDown, Check, ExternalLink } from 'lucide-react';
 import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
-import { COUNTRIES, getCountryByCode, type Country } from '../../data/countries';
+import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
 
 interface PropertiesEditorProps {
   properties: Property[];
@@ -17,19 +18,7 @@ interface PropertiesEditorProps {
   onToggleDisplayProperty?: (propertyKey: string) => void;
 }
 
-const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
-  { value: 'text', label: 'Texte' },
-  { value: 'number', label: 'Numérique' },
-  { value: 'date', label: 'Date' },
-  { value: 'datetime', label: 'Date/heure' },
-  { value: 'boolean', label: 'Booléen' },
-  { value: 'country', label: 'Pays' },
-  { value: 'link', label: 'Lien' },
-];
-
-function getTypeLabel(type: PropertyType): string {
-  return PROPERTY_TYPES.find((t) => t.value === type)?.label ?? 'Texte';
-}
+const PROPERTY_TYPE_VALUES: PropertyType[] = ['text', 'number', 'date', 'datetime', 'boolean', 'country', 'link'];
 
 /** Format Date for datetime-local input (YYYY-MM-DDTHH:mm) using LOCAL timezone */
 function formatDateTimeForInput(date: Date): string {
@@ -57,6 +46,7 @@ export function PropertiesEditor({
   displayedProperties = [],
   onToggleDisplayProperty,
 }: PropertiesEditorProps) {
+  const { t, i18n } = useTranslation('panels');
   const [isAdding, setIsAdding] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState<string | number | boolean | null>('');
@@ -66,6 +56,10 @@ export function PropertiesEditor({
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const typeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const getTypeLabel = useCallback((type: PropertyType): string => {
+    return t(`detail.properties.types.${type}`);
+  }, [t]);
 
   // Filter suggestions based on input value and exclude already used keys
   const existingKeys = properties.map((p) => p.key);
@@ -203,7 +197,7 @@ export function PropertiesEditor({
         <div className="space-y-2 p-2 bg-bg-secondary rounded border border-border-default">
           {/* Property key input */}
           <div className="space-y-1">
-            <label className="text-[10px] font-medium text-text-tertiary uppercase">Nom</label>
+            <label className="text-[10px] font-medium text-text-tertiary uppercase">{t('detail.labels.name')}</label>
             <input
               ref={keyInputRef}
               type="text"
@@ -215,7 +209,7 @@ export function PropertiesEditor({
               onFocus={() => setShowSuggestions(true)}
               onKeyDown={handleNameKeyPress}
               autoFocus
-              placeholder="Ex: SIREN, Nationalité..."
+              placeholder={t('detail.properties.namePlaceholder')}
               className="w-full px-2 py-1.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
 
@@ -247,7 +241,7 @@ export function PropertiesEditor({
                 ))
               ) : (
                 <div className="px-2 py-1.5 text-xs text-text-tertiary">
-                  Aucune correspondance
+                  {t('detail.properties.noMatch')}
                 </div>
               )}
             </DropdownPortal>
@@ -255,7 +249,7 @@ export function PropertiesEditor({
 
           {/* Type selector */}
           <div className="space-y-1">
-            <label className="text-[10px] font-medium text-text-tertiary uppercase">Type</label>
+            <label className="text-[10px] font-medium text-text-tertiary uppercase">{t('detail.properties.typePlaceholder')}</label>
             <button
               ref={typeButtonRef}
               type="button"
@@ -272,21 +266,21 @@ export function PropertiesEditor({
               onClose={handleCloseTypeDropdown}
               className="min-w-[150px]"
             >
-              {PROPERTY_TYPES.map((type) => (
+              {PROPERTY_TYPE_VALUES.map((typeValue) => (
                 <button
-                  key={type.value}
+                  key={typeValue}
                   type="button"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    setNewType(type.value);
+                    setNewType(typeValue);
                     setShowTypeDropdown(false);
                   }}
                   className={`w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary flex items-center justify-between ${
-                    newType === type.value ? 'bg-bg-secondary' : ''
+                    newType === typeValue ? 'bg-bg-secondary' : ''
                   }`}
                 >
-                  <span>{type.label}</span>
-                  {newType === type.value && <Check size={12} className="text-accent" />}
+                  <span>{getTypeLabel(typeValue)}</span>
+                  {newType === typeValue && <Check size={12} className="text-accent" />}
                 </button>
               ))}
             </DropdownPortal>
@@ -294,13 +288,15 @@ export function PropertiesEditor({
 
           {/* Value input based on type */}
           <div className="space-y-1">
-            <label className="text-[10px] font-medium text-text-tertiary uppercase">Valeur</label>
+            <label className="text-[10px] font-medium text-text-tertiary uppercase">{t('detail.properties.valuePlaceholder')}</label>
             <PropertyValueInput
               type={newType}
               value={newValue}
               onChange={setNewValue}
               onKeyDown={handleValueKeyPress}
-              placeholder="Valeur..."
+              placeholder={t('detail.properties.valuePlaceholder')}
+              t={t}
+              locale={i18n.language}
             />
           </div>
 
@@ -311,13 +307,13 @@ export function PropertiesEditor({
               disabled={!newKey.trim()}
               className="flex-1 px-2 py-1 text-xs font-medium bg-accent text-white rounded hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Ajouter
+              {t('detail.properties.add')}
             </button>
             <button
               onClick={resetForm}
               className="flex-1 px-2 py-1 text-xs font-medium bg-bg-tertiary text-text-secondary rounded hover:bg-border-default"
             >
-              Annuler
+              {t('detail.properties.cancel')}
             </button>
           </div>
         </div>
@@ -327,7 +323,7 @@ export function PropertiesEditor({
           className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default w-full justify-center"
         >
           <Plus size={12} />
-          Ajouter une propriété
+          {t('detail.properties.addProperty')}
         </button>
       )}
 
@@ -342,13 +338,15 @@ export function PropertiesEditor({
               onRemove={() => handleRemoveProperty(prop.key)}
               isDisplayed={displayedProperties.includes(prop.key)}
               onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
+              t={t}
+              locale={i18n.language}
             />
           ))}
         </div>
       )}
 
       {properties.length === 0 && !isAdding && (
-        <p className="text-xs text-text-tertiary">Aucune propriété</p>
+        <p className="text-xs text-text-tertiary">{t('detail.properties.noProperties')}</p>
       )}
     </div>
   );
@@ -361,9 +359,11 @@ interface PropertyRowProps {
   onRemove: () => void;
   isDisplayed?: boolean;
   onToggleDisplay?: () => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
+  locale: string;
 }
 
-function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDisplay }: PropertyRowProps) {
+function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDisplay, t, locale }: PropertyRowProps) {
   const type = property.type || 'text';
 
   return (
@@ -377,7 +377,7 @@ function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDispla
               ? 'bg-accent border-accent text-white'
               : 'border-border-default hover:border-accent text-transparent'
           }`}
-          title={isDisplayed ? 'Masquer sur le canvas' : 'Afficher sur le canvas'}
+          title={isDisplayed ? t('detail.properties.hideOnCanvas') : t('detail.properties.showOnCanvas')}
         >
           {isDisplayed && <Check size={10} />}
         </button>
@@ -388,21 +388,23 @@ function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDispla
             {property.key}
           </span>
           <span className="text-[10px] text-text-tertiary bg-bg-tertiary px-1 py-0.5 rounded">
-            {getTypeLabel(type)}
+            {t(`detail.properties.types.${type}`)}
           </span>
         </div>
         <PropertyValueInput
           type={type}
           value={property.value}
           onChange={onUpdate}
-          placeholder="Valeur..."
+          placeholder={t('detail.properties.valuePlaceholder')}
           compact
+          t={t}
+          locale={locale}
         />
       </div>
       <button
         onClick={onRemove}
         className="p-1 text-text-tertiary hover:text-error focus:outline-none"
-        aria-label={`Supprimer la propriété ${property.key}`}
+        aria-label={t('detail.properties.deleteProperty', { key: property.key })}
       >
         <X size={14} />
       </button>
@@ -418,6 +420,8 @@ interface PropertyValueInputProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   placeholder?: string;
   compact?: boolean;
+  t: (key: string, options?: Record<string, unknown>) => string;
+  locale: string;
 }
 
 function PropertyValueInput({
@@ -427,6 +431,8 @@ function PropertyValueInput({
   onKeyDown,
   placeholder,
   compact = false,
+  t,
+  locale,
 }: PropertyValueInputProps) {
   const baseInputClass = compact
     ? 'w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary'
@@ -450,7 +456,7 @@ function PropertyValueInput({
             />
           </button>
           <span className="text-xs text-text-secondary">
-            {value ? 'Oui' : 'Non'}
+            {value ? t('detail.properties.booleanYes') : t('detail.properties.booleanNo')}
           </span>
         </div>
       );
@@ -516,6 +522,8 @@ function PropertyValueInput({
           value={String(value ?? '')}
           onChange={onChange}
           compact={compact}
+          t={t}
+          locale={locale}
         />
       );
 
@@ -540,7 +548,7 @@ function PropertyValueInput({
               type="button"
               onClick={() => window.open(openUrl, '_blank', 'noopener,noreferrer')}
               className="absolute right-1.5 p-0.5 text-text-tertiary hover:text-accent transition-colors"
-              title="Ouvrir dans un nouvel onglet"
+              title={t('detail.labels.openInNewTab')}
             >
               <ExternalLink size={12} />
             </button>
@@ -568,26 +576,32 @@ interface CountryPickerProps {
   value: string;
   onChange: (value: string | null) => void;
   compact?: boolean;
+  t: (key: string, options?: Record<string, unknown>) => string;
+  locale: string;
 }
 
-function CountryPicker({ value, onChange, compact = false }: CountryPickerProps) {
+function CountryPicker({ value, onChange, compact = false, t, locale }: CountryPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Get countries with localized names (already sorted alphabetically)
+  const localizedCountries = getLocalizedCountries(locale);
+
   const selectedCountry = value ? getCountryByCode(value) : null;
+  const selectedCountryName = value ? getCountryName(value, locale) : null;
 
   const filteredCountries = search
-    ? COUNTRIES.filter(
+    ? localizedCountries.filter(
         (c) =>
           c.name.toLowerCase().includes(search.toLowerCase()) ||
           c.code.toLowerCase().includes(search.toLowerCase())
       )
-    : COUNTRIES;
+    : localizedCountries;
 
   const handleSelect = useCallback(
-    (country: Country) => {
+    (country: LocalizedCountry) => {
       onChange(country.code);
       setIsOpen(false);
       setSearch('');
@@ -624,14 +638,14 @@ function CountryPicker({ value, onChange, compact = false }: CountryPickerProps)
         onClick={() => setIsOpen(!isOpen)}
         className={`${baseClass} flex items-center justify-between text-left`}
       >
-        {selectedCountry ? (
+        {selectedCountry && selectedCountryName ? (
           <span className="flex items-center gap-1.5">
             <span>{selectedCountry.flag}</span>
-            <span>{selectedCountry.name}</span>
+            <span>{selectedCountryName}</span>
             <span className="text-text-tertiary">({selectedCountry.code})</span>
           </span>
         ) : (
-          <span className="text-text-tertiary">Sélectionner un pays...</span>
+          <span className="text-text-tertiary">{t('detail.properties.selectCountry')}</span>
         )}
         <ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -648,7 +662,7 @@ function CountryPicker({ value, onChange, compact = false }: CountryPickerProps)
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher..."
+            placeholder={t('detail.properties.search')}
             className="w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
           />
         </div>
@@ -662,7 +676,7 @@ function CountryPicker({ value, onChange, compact = false }: CountryPickerProps)
               }}
               className="w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary text-text-tertiary italic"
             >
-              Effacer la sélection
+              {t('detail.properties.clearSelection')}
             </button>
           )}
           {filteredCountries.map((country) => (
@@ -685,7 +699,7 @@ function CountryPicker({ value, onChange, compact = false }: CountryPickerProps)
           ))}
           {filteredCountries.length === 0 && (
             <div className="px-2 py-1.5 text-xs text-text-tertiary">
-              Aucun pays trouvé
+              {t('detail.properties.noCountryFound')}
             </div>
           )}
         </div>

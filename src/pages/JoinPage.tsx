@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Users, AlertCircle, Loader2, Server, Lock, ShieldAlert } from 'lucide-react';
 import { Layout, Button, Input } from '../components/common';
@@ -26,6 +27,7 @@ const STORAGE_KEY = 'zeroneurone-signaling-server';
 type JoinState = 'input' | 'connecting' | 'error' | 'server-warning';
 
 export function JoinPage() {
+  const { t, i18n } = useTranslation('pages');
   // The roomId is now the investigation UUID
   const { roomId: investigationId } = useParams<{ roomId: string }>();
   const [searchParams] = useSearchParams();
@@ -71,7 +73,7 @@ export function JoinPage() {
 
   // Investigation name - use name from URL or default
   const [investigationName, setInvestigationName] = useState(
-    nameFromUrl || 'Session collaborative'
+    nameFromUrl || t('join.defaultSessionName')
   );
 
   // Show warning if server from URL is different from saved one
@@ -104,10 +106,10 @@ export function JoinPage() {
   // Validate investigation ID and encryption key
   useEffect(() => {
     if (!investigationId) {
-      setError('ID de session invalide');
+      setError(t('join.errors.invalidSessionId'));
       setState('error');
     }
-  }, [investigationId]);
+  }, [investigationId, t]);
 
   const handleSaveServer = () => {
     const url = serverInput.trim();
@@ -124,14 +126,14 @@ export function JoinPage() {
     if (!investigationId) return;
 
     if (!isServerConfigured) {
-      setError('Configurez d\'abord un serveur de synchronisation');
+      setError(t('join.errors.configureServerFirst'));
       return;
     }
 
     // Validate server URL format
     const trimmedUrl = serverUrl.trim();
     if (!trimmedUrl.startsWith('ws://') && !trimmedUrl.startsWith('wss://')) {
-      setError('Le serveur doit commencer par ws:// ou wss://');
+      setError(t('join.errors.invalidServerUrl'));
       return;
     }
 
@@ -146,11 +148,12 @@ export function JoinPage() {
       let existingInvestigation = await investigationRepository.getById(investigationId);
 
       if (!existingInvestigation) {
+        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
         // Create investigation with the specific UUID from the share link
         existingInvestigation = await createInvestigationWithId(
           investigationId,
-          investigationName || 'Session collaborative',
-          `Session partagée rejointe le ${new Date().toLocaleDateString('fr-FR')}`
+          investigationName || t('join.defaultSessionName'),
+          t('join.sharedSessionJoined', { date: new Date().toLocaleDateString(locale) })
         );
       }
 
@@ -168,7 +171,7 @@ export function JoinPage() {
           if (state.connected) {
             resolve();
           } else {
-            reject(new Error('Délai de connexion dépassé'));
+            reject(new Error(t('join.errors.connectionTimeout')));
           }
         }, 10000); // 10 second timeout
 
@@ -197,7 +200,7 @@ export function JoinPage() {
           } else if (wasConnected) {
             // Lost connection after being connected
             clearTimeout(timeout);
-            reject(new Error('Connexion perdue'));
+            reject(new Error(t('join.errors.connectionLost')));
           } else {
             // Not yet connected, check again
             setTimeout(checkConnection, 100);
@@ -211,7 +214,7 @@ export function JoinPage() {
       // Navigate to the investigation
       navigate(`/investigation/${existingInvestigation.id}`, { replace: true });
     } catch (err) {
-      setError((err as Error).message || 'Erreur lors de la connexion');
+      setError((err as Error).message || t('join.errors.connectionError'));
       setState('error');
     }
   };
@@ -227,10 +230,10 @@ export function JoinPage() {
         <div className="h-full flex flex-col items-center justify-center gap-6">
           <div className="flex items-center gap-3 text-accent">
             <Loader2 size={24} className="animate-spin" />
-            <span className="text-lg font-medium">Connexion en cours...</span>
+            <span className="text-lg font-medium">{t('join.connecting')}</span>
           </div>
           <p className="text-sm text-text-secondary flex items-center gap-1">
-            Synchronisation avec la session {investigationId?.slice(0, 8)}...
+            {t('join.syncing', { id: investigationId?.slice(0, 8) })}
             {hasValidEncryptionKey && <Lock size={12} className="text-success" />}
           </p>
         </div>
@@ -244,17 +247,17 @@ export function JoinPage() {
         <div className="h-full flex flex-col items-center justify-center gap-6">
           <div className="flex items-center gap-3 text-error">
             <AlertCircle size={24} />
-            <span className="text-lg font-medium">Erreur de connexion</span>
+            <span className="text-lg font-medium">{t('join.connectionError')}</span>
           </div>
           <p className="text-sm text-text-secondary max-w-md text-center">
-            {error || 'Impossible de rejoindre la session. Vérifiez le lien et réessayez.'}
+            {error || t('join.cannotJoin')}
           </p>
           <div className="flex gap-3">
             <Button variant="secondary" onClick={() => navigate('/')}>
-              Retour à l'accueil
+              {t('join.backToHome')}
             </Button>
             <Button variant="primary" onClick={handleRetry}>
-              Réessayer
+              {t('join.retry')}
             </Button>
           </div>
         </div>
@@ -275,10 +278,10 @@ export function JoinPage() {
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-warning">
-                  Serveur different
+                  {t('join.serverWarning.title')}
                 </h1>
                 <p className="text-xs text-text-secondary">
-                  Verification de securite
+                  {t('join.serverWarning.subtitle')}
                 </p>
               </div>
             </div>
@@ -286,18 +289,18 @@ export function JoinPage() {
             {/* Warning message */}
             <div className="mb-6 p-4 bg-warning/5 border border-warning/20 rounded">
               <p className="text-sm text-text-primary mb-3">
-                Le lien de partage specifie un serveur de synchronisation different de celui que vous avez configure:
+                {t('join.serverWarning.message')}
               </p>
 
               <div className="space-y-2 text-xs">
                 <div className="flex items-start gap-2">
-                  <span className="text-text-secondary w-28 flex-shrink-0">Votre serveur:</span>
+                  <span className="text-text-secondary w-28 flex-shrink-0">{t('join.serverWarning.yourServer')}</span>
                   <code className="font-mono text-text-primary break-all bg-bg-secondary px-1 rounded">
                     {savedServer.replace(/^wss?:\/\//, '')}
                   </code>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-text-secondary w-28 flex-shrink-0">Serveur du lien:</span>
+                  <span className="text-text-secondary w-28 flex-shrink-0">{t('join.serverWarning.linkServer')}</span>
                   <code className="font-mono text-warning break-all bg-warning/10 px-1 rounded">
                     {serverFromUrl?.replace(/^wss?:\/\//, '')}
                   </code>
@@ -305,8 +308,7 @@ export function JoinPage() {
               </div>
 
               <p className="mt-4 text-xs text-text-secondary">
-                Utilisez le serveur du lien uniquement si vous faites confiance a son expediteur.
-                Un serveur malveillant pourrait intercepter vos donnees de session.
+                {t('join.serverWarning.trustNote')}
               </p>
             </div>
 
@@ -317,14 +319,14 @@ export function JoinPage() {
                 onClick={handleKeepOldServer}
                 className="flex-1"
               >
-                Garder mon serveur
+                {t('join.serverWarning.keepOld')}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleAcceptNewServer}
                 className="flex-1"
               >
-                Utiliser le nouveau serveur
+                {t('join.serverWarning.useNew')}
               </Button>
             </div>
           </div>
@@ -344,10 +346,10 @@ export function JoinPage() {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-text-primary">
-                Rejoindre une session
+                {t('join.title')}
               </h1>
               <p className="text-xs text-text-secondary flex items-center gap-1">
-                Session: {investigationId?.slice(0, 8)}...
+                {t('join.sessionId', { id: investigationId?.slice(0, 8) })}
                 {hasValidEncryptionKey && <Lock size={10} className="text-success" />}
               </p>
             </div>
@@ -360,17 +362,17 @@ export function JoinPage() {
               <div className="flex items-center gap-2 mb-2">
                 <Server size={16} className="text-warning" />
                 <span className="text-sm font-medium text-warning">
-                  Serveur non configuré
+                  {t('join.serverNotConfigured.title')}
                 </span>
               </div>
               <p className="text-xs text-text-secondary mb-3">
-                Pour rejoindre une session collaborative, vous devez configurer le même serveur de synchronisation que l'hôte.
+                {t('join.serverNotConfigured.message')}
               </p>
               <div className="space-y-2">
                 <Input
                   value={serverInput}
                   onChange={(e) => setServerInput(e.target.value)}
-                  placeholder="wss://serveur.example.com"
+                  placeholder={t('join.serverNotConfigured.placeholder')}
                   className="text-xs font-mono"
                 />
                 <Button
@@ -378,7 +380,7 @@ export function JoinPage() {
                   onClick={handleSaveServer}
                   disabled={!serverInput.trim()}
                 >
-                  Enregistrer
+                  {t('join.serverNotConfigured.save')}
                 </Button>
               </div>
             </div>
@@ -388,9 +390,9 @@ export function JoinPage() {
           {isServerConfigured && (
             <div className="mb-4 p-3 bg-bg-secondary rounded border border-border-default">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-text-secondary">Serveur de synchronisation</p>
+                <p className="text-xs text-text-secondary">{t('join.serverInfo.label')}</p>
                 {isServerFromUrl && (
-                  <span className="text-xs text-success">fourni par le lien</span>
+                  <span className="text-xs text-success">{t('join.serverInfo.providedByLink')}</span>
                 )}
               </div>
               <div className="flex items-center justify-between">
@@ -405,7 +407,7 @@ export function JoinPage() {
                       setServerUrl('');
                     }}
                   >
-                    Modifier
+                    {t('join.serverInfo.modify')}
                   </button>
                 )}
               </div>
@@ -414,7 +416,7 @@ export function JoinPage() {
 
           {/* User info - editable */}
           <div className="mb-4 p-3 bg-bg-secondary rounded border border-border-default">
-            <p className="text-xs text-text-secondary mb-1">Vous rejoindrez en tant que</p>
+            <p className="text-xs text-text-secondary mb-1">{t('join.userInfo.joiningAs')}</p>
             <div className="flex items-center gap-2">
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white flex-shrink-0"
@@ -469,15 +471,15 @@ export function JoinPage() {
           {/* Investigation name input */}
           <div className="mb-6">
             <label className="block text-xs font-medium text-text-secondary mb-1.5">
-              Nom de votre copie locale
+              {t('join.localCopy.label')}
             </label>
             <Input
               value={investigationName}
               onChange={(e) => setInvestigationName(e.target.value)}
-              placeholder="Session collaborative"
+              placeholder={t('join.defaultSessionName')}
             />
             <p className="mt-1 text-xs text-text-tertiary">
-              Ce nom sera utilisé pour identifier cette session sur votre appareil.
+              {t('join.localCopy.hint')}
             </p>
           </div>
 
@@ -488,7 +490,7 @@ export function JoinPage() {
               onClick={() => navigate('/')}
               className="flex-1"
             >
-              Annuler
+              {t('common:actions.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -496,7 +498,7 @@ export function JoinPage() {
               disabled={!isServerConfigured}
               className="flex-1"
             >
-              Rejoindre
+              {t('join.join')}
             </Button>
           </div>
         </div>

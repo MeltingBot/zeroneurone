@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
@@ -43,6 +44,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function ElementDetail({ element }: ElementDetailProps) {
+  const { t } = useTranslation('panels');
   const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments, togglePropertyDisplay } = useInvestigationStore();
 
   // Count unresolved comments for this element
@@ -355,10 +357,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
   if (element.isAnnotation) {
     return (
       <div ref={containerRef} className="divide-y divide-border-default">
-        {/* Contenu */}
+        {/* Content */}
         <AccordionSection
           id="content"
-          title="Contenu"
+          title={t('detail.sections.content')}
           icon={<FileText size={12} />}
           defaultOpen={true}
         >
@@ -369,17 +371,17 @@ export function ElementDetail({ element }: ElementDetailProps) {
                 editingElementIdRef.current = element.id;
                 setNotes(value);
               }}
-              placeholder="Markdown: **gras**, *italique*, # titre, - liste..."
+              placeholder={t('detail.placeholders.markdown')}
               minRows={4}
               maxRows={15}
             />
           </div>
         </AccordionSection>
 
-        {/* Apparence */}
+        {/* Appearance */}
         <AccordionSection
           id="visual"
-          title="Apparence"
+          title={t('detail.sections.appearance')}
           icon={<Palette size={12} />}
           defaultOpen={false}
         >
@@ -395,10 +397,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
   return (
     <div ref={containerRef} className="divide-y divide-border-default">
-      {/* Identité */}
+      {/* Identity */}
       <AccordionSection
         id="identity"
-        title="Identité"
+        title={t('detail.sections.identity')}
         icon={<Tag size={12} />}
         badge={tagsBadge}
         defaultOpen={true}
@@ -406,7 +408,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
         <div className="space-y-4">
           {/* Label */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Nom</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.name')}</label>
             <input
               type="text"
               value={label}
@@ -414,24 +416,24 @@ export function ElementDetail({ element }: ElementDetailProps) {
                 editingElementIdRef.current = element.id;
                 setLabel(e.target.value);
               }}
-              placeholder="Sans nom"
+              placeholder={t('detail.placeholders.label')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
             />
             {!label && (
-              <p className="text-xs text-warning">L'element n'a pas de nom</p>
+              <p className="text-xs text-warning">{t('detail.warnings.noName')}</p>
             )}
           </div>
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Notes</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.notes')}</label>
             <MarkdownEditor
               value={notes}
               onChange={(value) => {
                 editingElementIdRef.current = element.id;
                 setNotes(value);
               }}
-              placeholder="Markdown: **gras**, *italique*, [lien](url), listes..."
+              placeholder={t('detail.placeholders.markdown')}
               minRows={3}
               maxRows={10}
             />
@@ -439,7 +441,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Tags</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.tags')}</label>
             <TagsEditor
               tags={element.tags}
               onChange={handleTagsChange}
@@ -451,10 +453,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
         </div>
       </AccordionSection>
 
-      {/* Métadonnées */}
+      {/* Metadata */}
       <AccordionSection
         id="metadata"
-        title="Métadonnées"
+        title={t('detail.sections.metadata')}
         icon={<FileText size={12} />}
         defaultOpen={false}
       >
@@ -463,10 +465,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
-                Confiance
+                {t('detail.labels.confidence')}
               </label>
               <span className="text-xs text-text-tertiary">
-                {confidence !== null ? `${confidence}%` : 'Non définie'}
+                {confidence !== null ? `${confidence}%` : t('detail.labels.confidenceUndefined')}
               </span>
             </div>
             <input
@@ -482,7 +484,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
           {/* Source */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Source</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.source')}</label>
             <div className="relative">
               <input
                 type="text"
@@ -491,7 +493,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   editingElementIdRef.current = element.id;
                   setSource(e.target.value);
                 }}
-                placeholder="Source de l'information..."
+                placeholder={t('detail.placeholders.source')}
                 className={`w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all ${isUrl(source) ? 'pr-9' : ''}`}
               />
               {isUrl(source) && (
@@ -499,7 +501,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   type="button"
                   onClick={() => window.open(toUrl(source), '_blank', 'noopener,noreferrer')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-tertiary hover:text-accent transition-colors"
-                  title="Ouvrir dans un nouvel onglet"
+                  title={t('detail.labels.openInNewTab')}
                 >
                   <ExternalLink size={14} />
                 </button>
@@ -509,7 +511,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
           {/* Date */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Date de référence</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.referenceDate')}</label>
             <input
               type="datetime-local"
               value={date}
@@ -517,23 +519,23 @@ export function ElementDetail({ element }: ElementDetailProps) {
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
             />
             <p className="text-[10px] text-text-tertiary">
-              Date d'ajout ou de collecte de l'information. Pour des événements datés, utilisez la section "Événements".
+              {t('detail.labels.dateCollectedHelp')}. {t('detail.labels.useEventsForDates')}
             </p>
           </div>
         </div>
       </AccordionSection>
 
-      {/* Événements (historique temporel) */}
+      {/* Events */}
       <AccordionSection
         id="events"
-        title="Événements"
+        title={t('detail.sections.events')}
         icon={<Calendar size={12} />}
         badge={eventsBadge}
         defaultOpen={false}
       >
         <div className="space-y-2">
           <p className="text-[10px] text-text-tertiary">
-            Historique des événements datés (visibles sur la timeline)
+            {t('detail.events.description')}
           </p>
           <EventsEditor
             events={element.events || []}
@@ -545,10 +547,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
         </div>
       </AccordionSection>
 
-      {/* Localisation (position géographique) */}
+      {/* Location */}
       <AccordionSection
         id="location"
-        title="Localisation"
+        title={t('detail.sections.location')}
         icon={<MapPin size={12} />}
         badge={hasGeo ? (
           <span className="text-[10px] bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
@@ -559,22 +561,22 @@ export function ElementDetail({ element }: ElementDetailProps) {
       >
         <div className="space-y-3">
           <p className="text-[10px] text-text-tertiary">
-            Position fixe de l'élément (visible sur la carte)
+            {t('detail.location.description')}
           </p>
           {/* Current position */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
-                Coordonnées GPS
+                {t('detail.location.gpsCoordinates')}
               </label>
               {(geoLat || geoLng) && (
                 <button
                   onClick={handleClearGeo}
                   className="text-xs text-text-tertiary hover:text-error transition-colors flex items-center gap-0.5"
-                  title="Supprimer la localisation"
+                  title={t('detail.location.removeLocation')}
                 >
                   <X size={12} />
-                  Effacer
+                  {t('detail.location.clearLocation')}
                 </button>
               )}
             </div>
@@ -585,10 +587,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   value={geoLat}
                   onChange={(e) => setGeoLat(e.target.value)}
                   onBlur={() => handleGeoChange(geoLat, geoLng)}
-                  placeholder="Latitude"
+                  placeholder={t('detail.location.latitude')}
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
-                <span className="text-[10px] text-text-tertiary">-90 à 90</span>
+                <span className="text-[10px] text-text-tertiary">{t('detail.location.latRange')}</span>
               </div>
               <div className="flex-1">
                 <input
@@ -596,10 +598,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   value={geoLng}
                   onChange={(e) => setGeoLng(e.target.value)}
                   onBlur={() => handleGeoChange(geoLat, geoLng)}
-                  placeholder="Longitude"
+                  placeholder={t('detail.location.longitude')}
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
-                <span className="text-[10px] text-text-tertiary">-180 à 180</span>
+                <span className="text-[10px] text-text-tertiary">{t('detail.location.lngRange')}</span>
               </div>
             </div>
             <button
@@ -610,16 +612,16 @@ export function ElementDetail({ element }: ElementDetailProps) {
               className="w-full px-3 py-2 text-sm bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-2 text-text-secondary"
             >
               <MapIcon size={14} />
-              Choisir sur la carte
+              {t('detail.location.pickOnMap')}
             </button>
           </div>
         </div>
       </AccordionSection>
 
-      {/* Propriétés */}
+      {/* Properties */}
       <AccordionSection
         id="properties"
-        title="Propriétés"
+        title={t('detail.sections.properties')}
         icon={<Settings size={12} />}
         badge={propertiesBadge}
         defaultOpen={false}
@@ -634,10 +636,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
         />
       </AccordionSection>
 
-      {/* Apparence */}
+      {/* Appearance */}
       <AccordionSection
         id="appearance"
-        title="Apparence"
+        title={t('detail.sections.appearance')}
         icon={<Palette size={12} />}
         defaultOpen={false}
       >
@@ -647,10 +649,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
         />
       </AccordionSection>
 
-      {/* Commentaires */}
+      {/* Comments */}
       <AccordionSection
         id="comments"
-        title="Commentaires"
+        title={t('detail.sections.comments')}
         icon={<MessageSquare size={12} />}
         badge={unresolvedCommentCount > 0 ? unresolvedCommentCount : undefined}
         defaultOpen={unresolvedCommentCount > 0}
@@ -658,10 +660,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
         <CommentsSection targetId={element.id} targetType="element" />
       </AccordionSection>
 
-      {/* Fichiers attachés */}
+      {/* Files */}
       <AccordionSection
         id="assets"
-        title="Fichiers"
+        title={t('detail.sections.files')}
         icon={<Paperclip size={12} />}
         badge={assetsBadge}
         defaultOpen={false}
@@ -672,8 +674,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {/* Timestamps (read-only) */}
       <div className="px-3 py-2 border-t border-border-default bg-bg-secondary/50">
         <div className="flex justify-between text-[10px] text-text-tertiary">
-          <span>Cree le {formatDateTimeDisplay(element.createdAt)}</span>
-          <span>Modifie le {formatDateTimeDisplay(element.updatedAt)}</span>
+          <span>{t('detail.timestamps.createdAt')} {formatDateTimeDisplay(element.createdAt)}</span>
+          <span>{t('detail.timestamps.updatedAt')} {formatDateTimeDisplay(element.updatedAt)}</span>
         </div>
       </div>
 

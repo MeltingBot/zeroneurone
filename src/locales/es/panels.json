@@ -1,0 +1,425 @@
+{
+  "tabs": {
+    "detail": "Detalle",
+    "insights": "Análisis",
+    "filters": "Filtros",
+    "views": "Vistas",
+    "collapsePanel": "Contraer panel"
+  },
+  "investigation": {
+    "sections": {
+      "information": "Información",
+      "dates": "Fechas",
+      "properties": "Propiedades"
+    },
+    "labels": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "creator": "Creador",
+      "tags": "Tags",
+      "startDate": "Fecha de inicio",
+      "createdAt": "Creado el",
+      "updatedAt": "Modificado el"
+    },
+    "placeholders": {
+      "name": "Nombre de la investigación",
+      "creator": "Nombre del creador..."
+    }
+  },
+  "detail": {
+    "noSelection": "Ningún elemento seleccionado",
+    "multipleSelection": "{{count}} elementos seleccionados",
+    "element": "Elemento",
+    "link": "Enlace",
+    "group": "Grupo",
+    "annotation": "Anotación",
+    "sections": {
+      "identity": "Identidad",
+      "content": "Contenido",
+      "connection": "Conexión",
+      "metadata": "Metadatos",
+      "events": "Eventos",
+      "location": "Localización",
+      "properties": "Propiedades",
+      "appearance": "Apariencia",
+      "comments": "Comentarios",
+      "files": "Archivos"
+    },
+    "placeholders": {
+      "label": "Sin nombre",
+      "linkLabel": "Relación sin nombre",
+      "notes": "Notas...",
+      "source": "Fuente de la información...",
+      "markdown": "Markdown: **negrita**, *cursiva*, [enlace](url), listas...",
+      "keyName": "Nombre...",
+      "keyValue": "Valor..."
+    },
+    "labels": {
+      "name": "Nombre",
+      "label": "Etiqueta",
+      "notes": "Notas",
+      "tags": "Tags",
+      "confidence": "Confianza",
+      "confidenceUndefined": "No definida",
+      "source": "Fuente",
+      "referenceDate": "Fecha de referencia",
+      "dateCollected": "Fecha de recolección",
+      "dateCollectedHelp": "Fecha de adición o recolección de la información",
+      "useEventsForDates": "Para eventos fechados, use la sección 'Eventos'",
+      "direction": "Dirección",
+      "directionNone": "Sin flecha",
+      "directionForward": "Hacia el destino",
+      "directionBackward": "Hacia el origen",
+      "directionBoth": "Bidireccional",
+      "openInNewTab": "Abrir en una nueva pestaña"
+    },
+    "tags": {
+      "editIcon": "Editar icono",
+      "addIcon": "Añadir un icono",
+      "deleteTag": "Eliminar el tag {{tag}}",
+      "newTagPlaceholder": "Nuevo tag...",
+      "pressEnterToCreate": "Enter para crear \"{{value}}\"",
+      "typeToFilter": "Escriba para filtrar...",
+      "add": "Añadir",
+      "noTags": "Sin tags"
+    },
+    "warnings": {
+      "noName": "El elemento no tiene nombre"
+    },
+    "link": {
+      "linkedElements": "Elementos enlazados",
+      "deletedElement": "Elemento eliminado",
+      "relationPeriod": "Período de la relación",
+      "periodStart": "Inicio",
+      "periodEnd": "Fin (dejar vacío si en curso)"
+    },
+    "events": {
+      "title": "Eventos",
+      "description": "Historial de eventos fechados (visibles en la línea de tiempo)",
+      "add": "Añadir un evento",
+      "labelPlaceholder": "Etiqueta (ej: Escala Marsella, Sitio hackeado...)",
+      "noEvents": "Sin eventos",
+      "hasLocation": "Tiene posición",
+      "hasDescription": "Tiene descripción",
+      "delete": "Eliminar",
+      "dateTo": "a",
+      "dateEndOptional": "Fin (opcional)",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Descripción detallada...",
+      "sourceLabel": "Fuente",
+      "sourcePlaceholder": "Fuente de la información...",
+      "locationOptional": "Localización (opcional)",
+      "clearLocation": "Borrar",
+      "pickOnMap": "Mapa"
+    },
+    "location": {
+      "title": "Localización",
+      "description": "Posición fija del elemento (visible en el mapa)",
+      "gpsCoordinates": "Coordenadas GPS",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "latRange": "-90 a 90",
+      "lngRange": "-180 a 180",
+      "pickOnMap": "Elegir en el mapa",
+      "clearLocation": "Borrar",
+      "removeLocation": "Eliminar la localización",
+      "noLocation": "Sin posición definida"
+    },
+    "properties": {
+      "title": "Propiedades",
+      "add": "Añadir",
+      "addProperty": "Añadir una propiedad",
+      "selectAll": "Seleccionar todo",
+      "deselectAll": "Deseleccionar todo",
+      "ignore": "Ignorar",
+      "keyPlaceholder": "Clave",
+      "valuePlaceholder": "Valor",
+      "typePlaceholder": "Tipo",
+      "optionsPlaceholder": "Opciones separadas por comas",
+      "noProperties": "Sin propiedades",
+      "namePlaceholder": "Ej: SIREN, Nacionalidad...",
+      "noMatch": "Sin coincidencias",
+      "suggestedFor": "Propiedades sugeridas para \"{{name}}\"",
+      "cancel": "Cancelar",
+      "showOnCanvas": "Mostrar en el lienzo",
+      "hideOnCanvas": "Ocultar del lienzo",
+      "deleteProperty": "Eliminar la propiedad {{key}}",
+      "selectCountry": "Seleccionar un país...",
+      "search": "Buscar...",
+      "clearSelection": "Borrar selección",
+      "noCountryFound": "Ningún país encontrado",
+      "types": {
+        "text": "Texto",
+        "number": "Numérico",
+        "date": "Fecha",
+        "datetime": "Fecha/hora",
+        "boolean": "Booleano",
+        "country": "País",
+        "link": "Enlace",
+        "choice": "Elección",
+        "geo": "Coord."
+      },
+      "booleanYes": "Sí",
+      "booleanNo": "No"
+    },
+    "appearance": {
+      "title": "Apariencia",
+      "color": "Color",
+      "borderColor": "Color del borde",
+      "defaultGray": "Gris por defecto",
+      "customColor": "Color personalizado",
+      "shape": "Forma",
+      "size": "Tamaño",
+      "style": "Estilo",
+      "thickness": "Grosor"
+    },
+    "files": {
+      "title": "Archivos",
+      "drop": "Suelte archivos aquí",
+      "noFiles": "Sin archivos",
+      "delete": "Eliminar el archivo",
+      "download": "Descargar",
+      "preview": "Vista previa",
+      "defaultThumbnail": "Miniatura por defecto",
+      "closeEsc": "Cerrar (Esc)"
+    },
+    "timestamps": {
+      "createdAt": "Creado el",
+      "updatedAt": "Modificado el"
+    },
+    "comments": {
+      "addPlaceholder": "Añadir un comentario...",
+      "noComments": "Sin comentarios",
+      "markResolved": "Marcar como resuelto",
+      "markUnresolved": "Marcar como no resuelto",
+      "delete": "Eliminar",
+      "resolvedBy": "Resuelto por {{name}}",
+      "time": {
+        "justNow": "Ahora mismo",
+        "minutesAgo": "Hace {{count}}min",
+        "hoursAgo": "Hace {{count}}h",
+        "daysAgo": "Hace {{count}}d"
+      }
+    },
+    "geoPicker": {
+      "title": "Elegir una localización",
+      "searchPlaceholder": "Buscar una dirección, ciudad...",
+      "search": "Buscar",
+      "noResults": "Sin resultados encontrados",
+      "searchError": "Error de búsqueda",
+      "clickToPlace": "Haga clic en el mapa para colocar un marcador"
+    },
+    "multi": {
+      "title": "Modificación masiva",
+      "elements": "{{count}} elemento(s)",
+      "links": "{{count}} enlace(s)",
+      "addOrRemoveTags": "Añadir o quitar tags de todos los elementos seleccionados",
+      "removeFromSelection": "Quitar de la selección",
+      "addPropertyToAll": "Añadir una propiedad a todos los elementos seleccionados",
+      "setConfidenceAll": "Definir el nivel de confianza para todos",
+      "setColorAll": "Definir el color para todos",
+      "elementsSection": "Elementos ({{count}})",
+      "linksSection": "Enlaces ({{count}})"
+    }
+  },
+  "filters": {
+    "title": "Filtros",
+    "elementsCount": "{{matching}}/{{total}} elementos",
+    "active": "{{count}} filtro(s) activo(s)",
+    "clearAll": "Borrar todo",
+    "hiddenCount": "{{count}} elemento(s) oculto(s)",
+    "activeFilters": "Filtros activos",
+    "noName": "Sin nombre",
+    "show": "Mostrar",
+    "sections": {
+      "quickFilters": "Filtros rápidos",
+      "textSearch": "Búsqueda de texto",
+      "tags": "Tags",
+      "types": "Tipos",
+      "confidence": "Confianza",
+      "property": "Propiedad",
+      "date": "Fecha"
+    },
+    "placeholders": {
+      "textSearch": "Filtrar por nombre o notas...",
+      "allProperties": "Todas",
+      "all": "Todas"
+    },
+    "quick": {
+      "isolated": "Aislados",
+      "isolatedDesc": "Elementos sin conexión",
+      "noTags": "Sin tags",
+      "noTagsDesc": "Elementos sin ningún tag",
+      "noGeo": "Sin geo",
+      "noGeoDesc": "Elementos sin coordenadas",
+      "noDate": "Sin fecha",
+      "noDateDesc": "Elementos sin fecha",
+      "lowConfidence": "Confianza baja",
+      "lowConfidenceDesc": "Confianza < 50%",
+      "hasComments": "Comentarios",
+      "hasCommentsDesc": "Elementos con comentarios sin resolver"
+    },
+    "property": {
+      "hasProperty": "Tiene la propiedad",
+      "showAsBadge": "Mostrar como insignia en los elementos"
+    },
+    "confidence": {
+      "minimum": "Confianza mínima"
+    },
+    "tags": {
+      "noTags": "Sin tags disponibles"
+    },
+    "hiddenElements": {
+      "title": "Ocultos",
+      "count": "{{count}} elemento(s) oculto(s)",
+      "showAll": "Mostrar todo",
+      "noHidden": "Ningún elemento oculto"
+    }
+  },
+  "insights": {
+    "title": "Análisis",
+    "computing": "Análisis en curso...",
+    "noData": "Añada elementos y enlaces para ver los análisis.",
+    "noInsights": "Sin análisis detectados. Añada más enlaces entre los elementos.",
+    "lastComputed": "Último análisis:",
+    "refresh": "Actualizar",
+    "noName": "Sin nombre",
+    "noResults": "Sin resultados",
+    "links": "{{count}} enlaces",
+    "elements": "{{count}} elementos",
+    "sections": {
+      "clusters": "Clusters",
+      "bridges": "Puentes",
+      "centrality": "Centralidad",
+      "isolated": "Aislados",
+      "similar": "Similares"
+    },
+    "clusters": {
+      "title": "Clusters",
+      "description": "Grupos de elementos fuertemente conectados",
+      "name": "Cluster {{id}}",
+      "count": "{{count}} cluster(s)",
+      "elements": "{{count}} elementos",
+      "actions": {
+        "select": "Select.",
+        "deselect": "Deselect.",
+        "hide": "Ocultar",
+        "show": "Mostrar",
+        "filter": "Filtrar",
+        "group": "Agrupar",
+        "dissolve": "Disolver"
+      }
+    },
+    "bridges": {
+      "title": "Puentes",
+      "description": "Elementos que conectan diferentes partes del grafo",
+      "count": "{{count}} puente(s)",
+      "noBridges": "Sin puentes detectados",
+      "showBridges": "Mostrar puentes",
+      "hideBridges": "Ocultar resaltado",
+      "selectAll": "Seleccionar todos",
+      "hideAll": "Ocultar todos",
+      "showAll": "Mostrar todos"
+    },
+    "centrality": {
+      "title": "Más conectados",
+      "description": "Elementos más conectados",
+      "degree": "Grado",
+      "betweenness": "Intermediación"
+    },
+    "isolated": {
+      "title": "Aislados",
+      "description": "Elementos sin ninguna conexión",
+      "count": "{{count}} elemento(s) aislado(s)",
+      "noIsolated": "Sin elementos aislados",
+      "showIsolated": "Mostrar aislados",
+      "hideIsolated": "Ocultar resaltado",
+      "selectAll": "Seleccionar todos",
+      "hideAll": "Ocultar todos",
+      "showAll": "Mostrar todos"
+    },
+    "similar": {
+      "title": "Duplicados potenciales",
+      "description": "Elementos con nombres similares",
+      "count": "{{count}} par(es) similar(es)",
+      "noSimilar": "Sin etiquetas similares",
+      "select": "Seleccionar",
+      "merge": "Fusionar"
+    },
+    "paths": {
+      "title": "Búsqueda de camino",
+      "button": "Encontrar un camino entre dos elementos",
+      "from": "De",
+      "to": "A",
+      "searchPlaceholder": "Buscar un elemento...",
+      "pathFound": "Camino encontrado ({{count}} pasos)",
+      "noPath": "Sin camino encontrado entre estos elementos",
+      "pathLength": "{{count}} paso(s)"
+    }
+  },
+  "views": {
+    "title": "Vistas",
+    "canvasDisplay": "Visualización en el lienzo",
+    "tags": "Tags",
+    "tagSize": "Tamaño:",
+    "tagModes": {
+      "hidden": "Ocultos",
+      "icons": "Iconos",
+      "labels": "Etiquetas",
+      "both": "Iconos + Etiquetas"
+    },
+    "confidenceIndicator": "Indicador de confianza",
+    "links": "Enlaces",
+    "linkShape": "Forma",
+    "linkCurves": "Curvas",
+    "linkStraight": "Rectas",
+    "linkOrthogonal": "Ángulos rectos",
+    "linkAnchor": "Anclaje",
+    "linkAnchorManual": "Manual",
+    "linkAnchorAuto": "Automático",
+    "propertiesDisplay": "Propiedades mostradas",
+    "propertiesAvailable": "{{count}} disponible(s)",
+    "searchProperty": "Buscar una propiedad...",
+    "noResultsFor": "Sin resultados para \"{{search}}\"",
+    "propertiesSelected": "{{count}}/3 seleccionada(s)",
+    "maxProperties": "Máx. 3",
+    "deselectAll": "Deseleccionar todo",
+    "noPropertiesDefined": "Sin propiedades definidas en los elementos",
+    "savedViews": "Vistas guardadas",
+    "save": "Guardar vista",
+    "load": "Cargar",
+    "delete": "Eliminar",
+    "rename": "Renombrar",
+    "noViews": "Sin vistas guardadas",
+    "namePlaceholder": "Nombre de la vista...",
+    "includePositions": "Incluir posiciones ({{count}} elementos)",
+    "saveButton": "Guardar",
+    "cancelButton": "Cancelar",
+    "saveCurrentView": "Guardar la vista actual",
+    "savedPositions": "Posiciones guardadas",
+    "deleteView": "Eliminar la vista",
+    "activeView": "Vista activa. Filtros y vista restaurados.",
+    "positionsRestored": "Posiciones de {{count}} elementos restauradas.",
+    "saveDescription": "Guarda los filtros, el zoom y los elementos ocultos"
+  },
+  "assets": {
+    "title": "Archivos",
+    "noAssets": "Sin archivos",
+    "drop": "Suelte archivos",
+    "deleteConfirm": "¿Eliminar este archivo?",
+    "usedBy": "Usado por {{count}} elemento(s)"
+  },
+  "history": {
+    "title": "Historial",
+    "noHistory": "Sin acciones",
+    "undo": "Deshacer",
+    "redo": "Rehacer"
+  },
+  "collaboration": {
+    "title": "Colaboración",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "users": "{{count}} usuario(s)",
+    "you": "Usted"
+  }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, FileText, Settings, Palette, Calendar, Tag, MessageSquare, ExternalLink } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Property } from '../../types';
@@ -39,11 +40,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const STYLES: { value: LinkStyle; label: string }[] = [
-  { value: 'solid', label: 'Continu' },
-  { value: 'dashed', label: 'Tirets' },
-  { value: 'dotted', label: 'Pointille' },
-];
+const STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
 
 const THICKNESSES = [1, 2, 3, 4, 5];
 
@@ -58,6 +55,8 @@ function formatDateTimeForInput(date: Date): string {
 }
 
 export function LinkDetail({ link }: LinkDetailProps) {
+  const { t } = useTranslation('panels');
+  const { t: tCommon } = useTranslation('common');
   const { updateLink, elements, currentInvestigation, addSuggestedProperty, addExistingTag, comments } = useInvestigationStore();
   // Note: currentInvestigation is used for suggestions in PropertiesEditor
 
@@ -223,12 +222,20 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
   const hasPeriod = link.dateRange?.start !== null;
 
+  // Direction options with icons
+  const directionOptions: { value: LinkDirection; icon: typeof Minus; labelKey: string }[] = [
+    { value: 'none', icon: Minus, labelKey: 'directionNone' },
+    { value: 'forward', icon: ArrowRight, labelKey: 'directionForward' },
+    { value: 'backward', icon: ArrowLeft, labelKey: 'directionBackward' },
+    { value: 'both', icon: ArrowLeftRight, labelKey: 'directionBoth' },
+  ];
+
   return (
     <div ref={containerRef} className="divide-y divide-border-default">
-      {/* Connexion (equivalent to Identity in ElementDetail) */}
+      {/* Connection */}
       <AccordionSection
         id="connection"
-        title="Connexion"
+        title={t('detail.sections.connection')}
         icon={<Link2 size={12} />}
         badge={tagsBadge}
         defaultOpen={true}
@@ -236,22 +243,22 @@ export function LinkDetail({ link }: LinkDetailProps) {
         <div className="space-y-4">
           {/* Connection info */}
           <div className="p-2 bg-bg-secondary rounded border border-border-default">
-            <div className="text-xs text-text-tertiary mb-1">Elements lies</div>
+            <div className="text-xs text-text-tertiary mb-1">{t('detail.link.linkedElements')}</div>
             <div className="flex items-center gap-2 text-sm text-text-primary">
-              <span className="truncate flex-1">{fromElement?.label || 'Element supprime'}</span>
+              <span className="truncate flex-1">{fromElement?.label || t('detail.link.deletedElement')}</span>
               <span className="text-text-tertiary flex-shrink-0">
                 {(link.direction || (link.directed ? 'forward' : 'none')) === 'none' && '—'}
                 {(link.direction || (link.directed ? 'forward' : 'none')) === 'forward' && '→'}
                 {(link.direction || (link.directed ? 'forward' : 'none')) === 'backward' && '←'}
                 {(link.direction || (link.directed ? 'forward' : 'none')) === 'both' && '↔'}
               </span>
-              <span className="truncate flex-1 text-right">{toElement?.label || 'Element supprime'}</span>
+              <span className="truncate flex-1 text-right">{toElement?.label || t('detail.link.deletedElement')}</span>
             </div>
           </div>
 
           {/* Label */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Libelle</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.label')}</label>
             <input
               type="text"
               value={label}
@@ -259,21 +266,16 @@ export function LinkDetail({ link }: LinkDetailProps) {
                 editingLinkIdRef.current = link.id;
                 setLabel(e.target.value);
               }}
-              placeholder="Relation non nommee"
+              placeholder={t('detail.placeholders.linkLabel')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
           </div>
 
           {/* Direction selector */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Direction</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.direction')}</label>
             <div className="flex gap-1">
-              {[
-                { value: 'none' as LinkDirection, icon: Minus, label: 'Sans fleche' },
-                { value: 'forward' as LinkDirection, icon: ArrowRight, label: 'Vers la cible' },
-                { value: 'backward' as LinkDirection, icon: ArrowLeft, label: 'Vers la source' },
-                { value: 'both' as LinkDirection, icon: ArrowLeftRight, label: 'Bidirectionnel' },
-              ].map(({ value, icon: Icon, label }) => {
+              {directionOptions.map(({ value, icon: Icon, labelKey }) => {
                 const currentDirection = link.direction || (link.directed ? 'forward' : 'none');
                 const isSelected = currentDirection === value;
                 return (
@@ -285,7 +287,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
                         ? 'bg-accent text-white border-accent'
                         : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
                     }`}
-                    title={label}
+                    title={t(`detail.labels.${labelKey}`)}
                   >
                     <Icon size={16} />
                   </button>
@@ -296,14 +298,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Notes</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.notes')}</label>
             <MarkdownEditor
               value={notes}
               onChange={(value) => {
                 editingLinkIdRef.current = link.id;
                 setNotes(value);
               }}
-              placeholder="Markdown: **gras**, *italique*, [lien](url), listes..."
+              placeholder={t('detail.placeholders.markdown')}
               minRows={3}
               maxRows={10}
             />
@@ -311,7 +313,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Tags</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.tags')}</label>
             <TagsEditor
               tags={link.tags}
               onChange={handleTagsChange}
@@ -323,14 +325,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
         </div>
       </AccordionSection>
 
-      {/* Métadonnées */}
+      {/* Metadata */}
       <AccordionSection
         id="metadata"
-        title="Métadonnées"
+        title={t('detail.sections.metadata')}
         icon={<Calendar size={12} />}
         badge={hasPeriod ? (
           <span className="text-[10px] bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
-            Periode
+            {tCommon('labels.date')}
           </span>
         ) : null}
         defaultOpen={false}
@@ -340,10 +342,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
-                Confiance
+                {t('detail.labels.confidence')}
               </label>
               <span className="text-xs text-text-tertiary">
-                {link.confidence !== null ? `${link.confidence}%` : 'Non definie'}
+                {link.confidence !== null ? `${link.confidence}%` : t('detail.labels.confidenceUndefined')}
               </span>
             </div>
             <input
@@ -359,7 +361,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
           {/* Source */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Source</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.source')}</label>
             <div className="relative">
               <input
                 type="text"
@@ -368,7 +370,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
                   editingLinkIdRef.current = link.id;
                   setSource(e.target.value);
                 }}
-                placeholder="Source de l'information..."
+                placeholder={t('detail.placeholders.source')}
                 className={`w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary ${isUrl(source) ? 'pr-9' : ''}`}
               />
               {isUrl(source) && (
@@ -376,7 +378,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
                   type="button"
                   onClick={() => window.open(toUrl(source), '_blank', 'noopener,noreferrer')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-tertiary hover:text-accent transition-colors"
-                  title="Ouvrir dans un nouvel onglet"
+                  title={t('detail.labels.openInNewTab')}
                 >
                   <ExternalLink size={14} />
                 </button>
@@ -386,10 +388,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
           {/* Period (start/end) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">Periode de la relation</label>
+            <label className="text-xs font-medium text-text-secondary">{t('detail.link.relationPeriod')}</label>
             <div className="space-y-2">
               <div>
-                <span className="text-[10px] text-text-tertiary">Debut</span>
+                <span className="text-[10px] text-text-tertiary">{t('detail.link.periodStart')}</span>
                 <input
                   type="datetime-local"
                   value={link.dateRange?.start ? formatDateTimeForInput(new Date(link.dateRange.start)) : ''}
@@ -406,7 +408,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
                 />
               </div>
               <div>
-                <span className="text-[10px] text-text-tertiary">Fin (laisser vide si en cours)</span>
+                <span className="text-[10px] text-text-tertiary">{t('detail.link.periodEnd')}</span>
                 <input
                   type="datetime-local"
                   value={link.dateRange?.end ? formatDateTimeForInput(new Date(link.dateRange.end)) : ''}
@@ -427,10 +429,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
         </div>
       </AccordionSection>
 
-      {/* Propriétés */}
+      {/* Properties */}
       <AccordionSection
         id="properties"
-        title="Propriétés"
+        title={t('detail.sections.properties')}
         icon={<Settings size={12} />}
         badge={propertiesBadge}
         defaultOpen={false}
@@ -443,17 +445,17 @@ export function LinkDetail({ link }: LinkDetailProps) {
         />
       </AccordionSection>
 
-      {/* Apparence */}
+      {/* Appearance */}
       <AccordionSection
         id="appearance"
-        title="Apparence"
+        title={t('detail.sections.appearance')}
         icon={<Palette size={12} />}
         defaultOpen={false}
       >
         <div className="space-y-4">
           {/* Color */}
           <div className="space-y-1.5">
-            <label className="text-xs text-text-tertiary">Couleur</label>
+            <label className="text-xs text-text-tertiary">{t('detail.appearance.color')}</label>
             <div className="flex flex-wrap gap-1.5">
               {/* Default gray */}
               <button
@@ -464,7 +466,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
                     : 'border-border-default'
                 }`}
                 style={{ backgroundColor: '#6b7280' }}
-                aria-label="Gris par defaut"
+                aria-label={t('detail.appearance.defaultGray')}
               />
               {DEFAULT_COLORS.map((color) => (
                 <button
@@ -476,7 +478,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
                       : 'border-transparent'
                   }`}
                   style={{ backgroundColor: color }}
-                  aria-label={`Couleur ${color}`}
+                  aria-label={`${t('detail.appearance.color')} ${color}`}
                 />
               ))}
               <input
@@ -484,26 +486,26 @@ export function LinkDetail({ link }: LinkDetailProps) {
                 value={link.visual.color}
                 onChange={(e) => handleColorChange(e.target.value)}
                 className="w-6 h-6 rounded cursor-pointer border-0 p-0"
-                aria-label="Couleur personnalisee"
+                aria-label={t('detail.appearance.customColor')}
               />
             </div>
           </div>
 
           {/* Style */}
           <div className="space-y-1.5">
-            <label className="text-xs text-text-tertiary">Style</label>
+            <label className="text-xs text-text-tertiary">{t('detail.appearance.style')}</label>
             <div className="flex gap-2">
-              {STYLES.map((style) => (
+              {STYLE_VALUES.map((style) => (
                 <button
-                  key={style.value}
-                  onClick={() => handleStyleChange(style.value)}
+                  key={style}
+                  onClick={() => handleStyleChange(style)}
                   className={`flex-1 px-2 py-1.5 text-xs rounded border ${
-                    link.visual.style === style.value
+                    link.visual.style === style
                       ? 'bg-accent text-white border-accent'
                       : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
                   }`}
                 >
-                  {style.label}
+                  {tCommon(`linkStyles.${style}`)}
                 </button>
               ))}
             </div>
@@ -512,16 +514,16 @@ export function LinkDetail({ link }: LinkDetailProps) {
           {/* Thickness */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-text-tertiary">Epaisseur</label>
+              <label className="text-xs text-text-tertiary">{t('detail.appearance.thickness')}</label>
               <span className="text-xs text-text-tertiary">{link.visual.thickness}px</span>
             </div>
             <div className="flex gap-1">
-              {THICKNESSES.map((t) => (
+              {THICKNESSES.map((thickness) => (
                 <button
-                  key={t}
-                  onClick={() => handleThicknessChange(t)}
+                  key={thickness}
+                  onClick={() => handleThicknessChange(thickness)}
                   className={`flex-1 h-8 rounded border flex items-center justify-center ${
-                    link.visual.thickness === t
+                    link.visual.thickness === thickness
                       ? 'bg-accent border-accent'
                       : 'bg-bg-secondary border-border-default hover:border-accent'
                   }`}
@@ -530,8 +532,8 @@ export function LinkDetail({ link }: LinkDetailProps) {
                     className="rounded-full"
                     style={{
                       width: '100%',
-                      height: t,
-                      backgroundColor: link.visual.thickness === t ? 'white' : link.visual.color,
+                      height: thickness,
+                      backgroundColor: link.visual.thickness === thickness ? 'white' : link.visual.color,
                     }}
                   />
                 </button>
@@ -541,10 +543,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
         </div>
       </AccordionSection>
 
-      {/* Commentaires */}
+      {/* Comments */}
       <AccordionSection
         id="comments"
-        title="Commentaires"
+        title={t('detail.sections.comments')}
         icon={<MessageSquare size={12} />}
         badge={unresolvedCommentCount > 0 ? unresolvedCommentCount : undefined}
         defaultOpen={unresolvedCommentCount > 0}
@@ -555,8 +557,8 @@ export function LinkDetail({ link }: LinkDetailProps) {
       {/* Timestamps (read-only) */}
       <div className="px-3 py-2 border-t border-border-default bg-bg-secondary/50">
         <div className="flex justify-between text-[10px] text-text-tertiary">
-          <span>Cree le {formatDateTimeDisplay(link.createdAt)}</span>
-          <span>Modifie le {formatDateTimeDisplay(link.updatedAt)}</span>
+          <span>{t('detail.timestamps.createdAt')} {formatDateTimeDisplay(link.createdAt)}</span>
+          <span>{t('detail.timestamps.updatedAt')} {formatDateTimeDisplay(link.updatedAt)}</span>
         </div>
       </div>
 

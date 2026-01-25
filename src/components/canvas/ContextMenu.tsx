@@ -1,4 +1,5 @@
-import { memo, useRef, useState, useLayoutEffect } from 'react';
+import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect } from 'lucide-react';
 
 interface ContextMenuProps {
@@ -35,10 +36,10 @@ interface ContextMenuProps {
 }
 
 const focusDepthOptions = [
-  { depth: 1, label: 'Voisins directs' },
-  { depth: 2, label: 'Voisins à 2 liens' },
-  { depth: 3, label: 'Voisins à 3 liens' },
-];
+  { depth: 1, labelKey: 'investigation.contextMenu.focusNeighbors1' },
+  { depth: 2, labelKey: 'investigation.contextMenu.focusNeighbors2' },
+  { depth: 3, labelKey: 'investigation.contextMenu.focusNeighbors3' },
+] as const;
 
 function ContextMenuComponent({
   x,
@@ -70,6 +71,7 @@ function ContextMenuComponent({
   onRemoveFromGroup,
   onClose,
 }: ContextMenuProps) {
+  const { t } = useTranslation('pages');
   const hasTwoSelected = !!otherSelectedId && !!otherSelectedLabel;
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
@@ -144,7 +146,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <Image size={14} />
-              Aperçu
+              {t('investigation.contextMenu.preview')}
             </button>
           </div>
         )}
@@ -159,7 +161,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Copy size={14} />
-            Copier
+            {t('investigation.contextMenu.copy')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+C</span>
           </button>
           <button
@@ -170,7 +172,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Scissors size={14} />
-            Couper
+            {t('investigation.contextMenu.cut')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+X</span>
           </button>
           <button
@@ -186,7 +188,7 @@ function ContextMenuComponent({
             }`}
           >
             <Clipboard size={14} />
-            Coller
+            {t('investigation.contextMenu.paste')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
           </button>
           <button
@@ -197,7 +199,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <CopyPlus size={14} />
-            Dupliquer
+            {t('investigation.contextMenu.duplicate')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
           </button>
         </div>
@@ -213,7 +215,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <Route size={14} />
-              Trouver les chemins
+              {t('investigation.contextMenu.findPaths')}
             </button>
           </div>
         )}
@@ -230,7 +232,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Group size={14} />
-                Grouper la sélection
+                {t('investigation.contextMenu.groupSelection')}
               </button>
             )}
             {isGroup && (
@@ -242,7 +244,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Ungroup size={14} />
-                Dissoudre le groupe
+                {t('investigation.contextMenu.dissolveGroup')}
               </button>
             )}
             {isInGroup && (
@@ -254,7 +256,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <BoxSelect size={14} />
-                Retirer du groupe
+                {t('investigation.contextMenu.removeFromGroup')}
               </button>
             )}
           </div>
@@ -271,12 +273,12 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <X size={14} />
-              Quitter le mode focus
+              {t('investigation.contextMenu.exitFocus')}
             </button>
           ) : (
             <>
               <div className="px-3 py-1 text-xs text-text-tertiary">
-                Mode focus
+                {t('investigation.contextMenu.focusMode')}
               </div>
               {focusDepthOptions.map((option) => (
                 <button
@@ -288,7 +290,7 @@ function ContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   <Focus size={14} />
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               ))}
             </>
@@ -306,7 +308,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <Eye size={14} />
-              Afficher l'élément
+              {t('investigation.contextMenu.showElement')}
             </button>
           ) : (
             <button
@@ -317,7 +319,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <EyeOff size={14} />
-              {hasMultipleSelected ? 'Masquer la sélection' : "Masquer l'élément"}
+              {hasMultipleSelected ? t('investigation.contextMenu.hideSelection') : t('investigation.contextMenu.hideElement')}
             </button>
           )}
         </div>
@@ -332,7 +334,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-error hover:bg-pastel-pink transition-colors"
           >
             <Trash2 size={14} />
-            Supprimer
+            {t('investigation.contextMenu.delete')}
           </button>
         </div>
       </div>

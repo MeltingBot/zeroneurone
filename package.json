@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "0.9.8",
+  "version": "0.9.9",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -33,6 +33,8 @@
     "graphology-metrics": "^2.4.0",
     "graphology-shortest-path": "^2.1.0",
     "html-to-image": "^1.11.13",
+    "i18next": "^25.8.0",
+    "i18next-browser-languagedetector": "^8.2.0",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
@@ -43,6 +45,7 @@
     "postcss": "^8.5.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^16.5.3",
     "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.12.0",

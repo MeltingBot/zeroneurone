@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, File, Image, FileText, X, Download, Eye, GripVertical } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
@@ -11,6 +12,8 @@ interface AssetsPanelProps {
 }
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
+  const { t } = useTranslation('common');
+  const { t: tPanels } = useTranslation('panels');
   const { assets, addAsset, removeAsset, reorderAssets } = useInvestigationStore();
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
   const [isDragging, setIsDragging] = useState(false);
@@ -339,6 +342,8 @@ function AssetItem({
   onDrop,
   onDragEnd,
 }: AssetItemProps) {
+  const { t } = useTranslation('common');
+  const { t: tPanels } = useTranslation('panels');
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
 
@@ -390,7 +395,7 @@ function AssetItem({
         )}
         {/* First asset indicator */}
         {index === 0 && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" title="Vignette par défaut" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" title={tPanels('detail.files.defaultThumbnail')} />
         )}
       </div>
 
@@ -410,7 +415,7 @@ function AssetItem({
           <button
             onClick={onPreview}
             className="p-1 text-text-tertiary hover:text-text-primary"
-            title="Aperçu"
+            title={tPanels('detail.files.preview')}
           >
             <Eye size={14} />
           </button>
@@ -418,14 +423,14 @@ function AssetItem({
         <button
           onClick={onDownload}
           className="p-1 text-text-tertiary hover:text-text-primary"
-          title="Télécharger"
+          title={t('actions.download')}
         >
           <Download size={14} />
         </button>
         <button
           onClick={onRemove}
           className="p-1 text-text-tertiary hover:text-error"
-          title="Supprimer"
+          title={t('actions.delete')}
         >
           <X size={14} />
         </button>
@@ -440,6 +445,8 @@ interface AssetPreviewModalProps {
 }
 
 function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
+  const { t: tCommon } = useTranslation('common');
+  const { t: tPanels } = useTranslation('panels');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -512,7 +519,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           <button
             onClick={onClose}
             className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
-            title="Fermer (Echap)"
+            title={tPanels('detail.files.closeEsc')}
           >
             <X size={16} />
           </button>
@@ -524,7 +531,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-text-secondary">Chargement...</span>
+                <span className="text-xs text-text-secondary">{tCommon('status.loading')}</span>
               </div>
             </div>
           ) : isPdf && fileUrl ? (

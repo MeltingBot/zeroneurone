@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -102,6 +103,7 @@ function CanvasCaptureHandler() {
 
 // Zoom controls for the toolbar - must be inside ReactFlowProvider
 function CanvasZoomControls() {
+  const { t } = useTranslation('pages');
   const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow();
 
   const handleZoomIn = useCallback(() => {
@@ -125,14 +127,14 @@ function CanvasZoomControls() {
       <button
         onClick={handleZoomOut}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title="Zoom arrière"
+        title={t('investigation.toolbar.zoomOut')}
       >
         <ZoomOut size={16} />
       </button>
       <button
         onClick={handleZoomIn}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title="Zoom avant"
+        title={t('investigation.toolbar.zoomIn')}
       >
         <ZoomIn size={16} />
       </button>
@@ -140,14 +142,14 @@ function CanvasZoomControls() {
       <button
         onClick={handleFitView}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title="Ajuster à la vue"
+        title={t('investigation.toolbar.fitView')}
       >
         <Maximize2 size={16} />
       </button>
       <button
         onClick={handleReset}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title="Reinitialiser la vue"
+        title={t('investigation.toolbar.resetView')}
       >
         <RotateCcw size={16} />
       </button>
@@ -445,6 +447,8 @@ function linkToEdge(
 }
 
 export function Canvas() {
+  const { t } = useTranslation('common');
+  const { t: tPages } = useTranslation('pages');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -1255,7 +1259,7 @@ export function Canvas() {
           x: event.clientX,
           y: event.clientY,
           elementId: element.id,
-          elementLabel: element.label || 'Sans nom',
+          elementLabel: element.label || t('empty.unnamed'),
           previewAsset: previewableAsset,
         });
       }
@@ -1816,7 +1820,7 @@ export function Canvas() {
         y: (event.clientY - bounds.top - viewport.y) / viewport.zoom,
       };
 
-      const newElement = await createElement('Nouvel élément', position);
+      const newElement = await createElement(t('labels.newElement'), position);
 
       // Save for undo
       pushAction({
@@ -2451,7 +2455,7 @@ export function Canvas() {
               <button
                 onClick={() => setIsShareModalOpen(true)}
                 className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded transition-colors"
-                title="Partager"
+                title={tPages('investigation.toolbar.share')}
               >
                 <Share2 size={16} />
               </button>
@@ -2472,15 +2476,15 @@ export function Canvas() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-accent font-medium">
                       {selectedElementIds.size === 1 && selectedLinkIds.size === 0
-                        ? '1 élément'
+                        ? tPages('investigation.toolbar.oneElement')
                         : selectedLinkIds.size === 1 && selectedElementIds.size === 0
-                        ? '1 lien'
-                        : `${selectedElementIds.size + selectedLinkIds.size} sélectionnés`}
+                        ? tPages('investigation.toolbar.oneLink')
+                        : tPages('investigation.toolbar.selectedCount', { count: selectedElementIds.size + selectedLinkIds.size })}
                     </span>
                     <button
                       onClick={clearSelection}
                       className="p-0.5 text-text-tertiary hover:text-text-primary rounded transition-colors"
-                      title="Désélectionner"
+                      title={tPages('investigation.toolbar.deselect')}
                     >
                       <X size={12} />
                     </button>
@@ -2494,21 +2498,21 @@ export function Canvas() {
               <button
                 onClick={toggleSnapToGrid}
                 className={`p-1.5 rounded transition-colors ${snapToGrid ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title="Grille magnetique"
+                title={tPages('investigation.toolbar.snapToGrid')}
               >
                 <Grid3x3 size={16} />
               </button>
               <button
                 onClick={toggleAlignGuides}
                 className={`p-1.5 rounded transition-colors ${showAlignGuides ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title="Guides d'alignement"
+                title={tPages('investigation.toolbar.alignGuides')}
               >
                 <Magnet size={16} />
               </button>
               <button
                 onClick={toggleMinimap}
                 className={`p-1.5 rounded transition-colors ${showMinimap ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title="Minimap"
+                title={tPages('investigation.toolbar.minimap')}
               >
                 <MapIcon size={16} />
               </button>
@@ -2647,7 +2651,7 @@ export function Canvas() {
               hasCopiedElements={hasCopiedElements}
               hasPreviewableAsset={!!contextMenu.previewAsset}
               otherSelectedId={otherSelectedElement?.id}
-              otherSelectedLabel={otherSelectedElement?.label || 'Sans nom'}
+              otherSelectedLabel={otherSelectedElement?.label || t('empty.unnamed')}
               onFocus={handleContextMenuFocus}
               onClearFocus={clearFocus}
               onHide={handleContextMenuHide}
@@ -2722,6 +2726,7 @@ interface AssetPreviewModalProps {
 }
 
 function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
+  const { t } = useTranslation('pages');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -2793,9 +2798,9 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           <button
             onClick={onClose}
             className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
-            title="Fermer (Echap)"
+            title={t('investigation.toolbar.closeEsc')}
           >
-            <span className="sr-only">Fermer</span>
+            <span className="sr-only">{t('investigation.toolbar.close')}</span>
             ×
           </button>
         </div>
@@ -2806,7 +2811,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-text-secondary">Chargement...</span>
+                <span className="text-xs text-text-secondary">{t('investigation.toolbar.loading')}</span>
               </div>
             </div>
           ) : isPdf && fileUrl ? (

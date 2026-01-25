@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Button, Input } from '../common';
 
 interface RenameModalProps {
@@ -15,11 +16,14 @@ export function RenameModal({
   onClose,
   onRename,
   currentName,
-  title = 'Renommer',
-  label = 'Nom',
+  title,
+  label,
 }: RenameModalProps) {
+  const { t } = useTranslation(['modals', 'common']);
   const [name, setName] = useState(currentName);
   const [isLoading, setIsLoading] = useState(false);
+  const modalTitle = title || t('modals:rename.title');
+  const fieldLabel = label || t('modals:rename.label');
 
   useEffect(() => {
     setName(currentName);
@@ -42,26 +46,26 @@ export function RenameModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={title}
+      title={modalTitle}
       width="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Annuler
+            {t('common:actions.cancel')}
           </Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
             disabled={!name.trim() || name.trim() === currentName || isLoading}
           >
-            {isLoading ? 'Renommage...' : 'Renommer'}
+            {isLoading ? t('modals:rename.renaming') : t('modals:rename.rename')}
           </Button>
         </>
       }
     >
       <form onSubmit={handleSubmit}>
         <Input
-          label={label}
+          label={fieldLabel}
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus

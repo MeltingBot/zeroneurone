@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
 import { LinkDetail } from './LinkDetail';
@@ -24,6 +25,8 @@ interface Tab {
 }
 
 export function SidePanel() {
+  const { t } = useTranslation('panels');
+  const { t: tCommon } = useTranslation('common');
   const { selectedElementIds, selectedLinkIds } = useSelectionStore();
   const { elements, links, currentInvestigation } = useInvestigationStore();
   const { hasActiveFilters, displayMode } = useViewStore();
@@ -94,10 +97,10 @@ export function SidePanel() {
   }, [isCanvasMode, activeTab]);
 
   const tabs: Tab[] = [
-    { id: 'detail', label: 'Détail', icon: Info },
-    { id: 'insights', label: 'Insights', icon: Network, badge: insightsActive },
-    { id: 'filters', label: 'Filtres', icon: Filter, badge: filtersActive },
-    ...(isCanvasMode ? [{ id: 'views' as TabId, label: 'Vues', icon: Eye }] : []),
+    { id: 'detail', label: t('tabs.detail'), icon: Info },
+    { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
+    { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
+    ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
   ];
 
   if (isCollapsed) {
@@ -146,7 +149,7 @@ export function SidePanel() {
       return (
         <div className="flex-1 flex items-center justify-center p-4">
           <p className="text-sm text-text-tertiary text-center">
-            Aucune enquête chargée.
+            {tCommon('empty.noInvestigationLoaded')}
           </p>
         </div>
       );
@@ -252,7 +255,7 @@ export function SidePanel() {
 
           {/* Collapse button */}
           <div className="ml-auto">
-            <IconButton onClick={() => setIsCollapsed(true)} title="Réduire le panneau">
+            <IconButton onClick={() => setIsCollapsed(true)} title={t('tabs.collapsePanel')}>
               <PanelRightClose size={14} />
             </IconButton>
           </div>

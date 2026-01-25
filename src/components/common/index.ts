@@ -13,3 +13,4 @@ export { DropdownPortal } from './DropdownPortal';
 export { MarkdownEditor, MarkdownPreview } from './MarkdownEditor';
 export { MinResolutionGuard } from './MinResolutionGuard';
 export { IconPicker, IconPickerCompact } from './IconPicker';
+export { LanguageSwitcher } from './LanguageSwitcher';

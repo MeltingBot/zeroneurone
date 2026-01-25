@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   HardDrive,
   Database,
@@ -30,15 +31,16 @@ interface StorageModalProps {
   onClose: () => void;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 o';
+function formatBytes(bytes: number, locale: string): string {
+  if (bytes === 0) return locale === 'fr' ? '0 o' : '0 B';
   const k = 1024;
-  const sizes = ['o', 'Ko', 'Mo', 'Go'];
+  const sizes = locale === 'fr' ? ['o', 'Ko', 'Mo', 'Go'] : ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 export function StorageModal({ isOpen, onClose }: StorageModalProps) {
+  const { t, i18n } = useTranslation('modals');
   const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPersisting, setIsPersisting] = useState(false);
@@ -94,10 +96,10 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
       const blob = await backupService.exportAll();
       const timestamp = new Date().toISOString().slice(0, 10);
       backupService.downloadBlob(blob, `zeroneurone_backup_${timestamp}.zip`);
-      setBackupMessage('Export terminé');
+      setBackupMessage(t('storage.backup.exportSuccess'));
     } catch (error) {
       console.error('Export failed:', error);
-      setBackupMessage('Erreur lors de l\'export');
+      setBackupMessage(t('storage.backup.error'));
     } finally {
       setIsExporting(false);
     }
@@ -113,15 +115,19 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
       const result = await backupService.importAll(file, setBackupMessage);
       if (result.success) {
         setBackupMessage(
-          `Import réussi: ${result.investigations} enquête(s), ${result.elements} élément(s), ${result.links} lien(s)`
+          t('storage.backup.importSuccess', {
+            investigations: result.investigations,
+            elements: result.elements,
+            links: result.links,
+          })
         );
         await loadStorageInfo();
       } else {
-        setBackupMessage(result.errors.join(', ') || 'Erreur lors de l\'import');
+        setBackupMessage(result.errors.join(', ') || t('storage.backup.error'));
       }
     } catch (error) {
       console.error('Import failed:', error);
-      setBackupMessage('Erreur lors de l\'import');
+      setBackupMessage(t('storage.backup.error'));
     } finally {
       setIsImporting(false);
       // Reset file input
@@ -132,7 +138,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
   };
 
   const handlePurgeYjs = async () => {
-    if (!confirm('Purger l\'historique Y.js ?\n\nCela libérera de l\'espace mais supprimera l\'historique d\'annulation. Les données seront conservées.')) {
+    if (!confirm(t('storage.purge.confirm'))) {
       return;
     }
 
@@ -141,21 +147,23 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
     try {
       const result = await purgeYjsDatabases();
       if (result.errors.length > 0) {
-        setPurgeMessage(`${result.deleted} base(s) supprimée(s), ${result.errors.length} erreur(s)`);
+        setPurgeMessage(t('storage.purge.successWithErrors', { deleted: result.deleted, errors: result.errors.length }));
       } else {
-        setPurgeMessage(`${result.deleted} base(s) supprimée(s)`);
+        setPurgeMessage(t('storage.purge.success', { count: result.deleted }));
       }
       await loadStorageInfo();
     } catch (error) {
       console.error('Purge failed:', error);
-      setPurgeMessage('Erreur lors de la purge');
+      setPurgeMessage(t('storage.purge.error'));
     } finally {
       setIsPurging(false);
     }
   };
 
+  const locale = i18n.language;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Stockage" width="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('storage.title')} width="md">
       <div className="space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -168,13 +176,13 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               <div className="flex items-center gap-2 mb-2">
                 <HardDrive size={14} className="text-text-secondary" />
                 <span className="text-xs font-medium text-text-primary">
-                  Espace utilisé
+                  {t('storage.spaceUsed')}
                 </span>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-text-secondary">
-                    {formatBytes(storageInfo.totalUsage)} / {formatBytes(storageInfo.totalQuota)}
+                    {formatBytes(storageInfo.totalUsage, locale)} / {formatBytes(storageInfo.totalQuota, locale)}
                   </span>
                   <span className="text-text-tertiary tabular-nums">
                     {storageInfo.percentUsed.toFixed(1)}%
@@ -206,12 +214,12 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                   )}
                   <div>
                     <span className="text-xs font-medium text-text-primary">
-                      Stockage persistant
+                      {t('storage.persistent.title')}
                     </span>
                     <p className="text-[10px] text-text-tertiary">
                       {storageInfo.isPersistent
-                        ? 'Protection active (désactivable via paramètres navigateur)'
-                        : 'Le navigateur peut supprimer les données si l\'espace est insuffisant'}
+                        ? t('storage.persistent.protected')
+                        : t('storage.persistent.notProtected')}
                     </p>
                   </div>
                 </div>
@@ -226,7 +234,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                     ) : (
                       <Shield size={12} />
                     )}
-                    Protéger
+                    {t('common:actions.protect')}
                   </button>
                 )}
               </div>
@@ -239,12 +247,12 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                   {persistResult === 'success' ? (
                     <>
                       <Check size={10} />
-                      Stockage protégé avec succès
+                      {t('storage.persistent.success')}
                     </>
                   ) : (
                     <>
                       <X size={10} />
-                      Refusé par le navigateur (ajoutez le site aux favoris ou utilisez-le régulièrement)
+                      {t('storage.persistent.denied')}
                     </>
                   )}
                 </div>
@@ -256,7 +264,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               <div className="flex items-center gap-2 mb-3">
                 <Database size={14} className="text-text-secondary" />
                 <span className="text-xs font-medium text-text-primary">
-                  Détails du stockage
+                  {t('storage.details.title')}
                 </span>
               </div>
 
@@ -269,10 +277,10 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                         storageInfo.indexedDBSupported ? 'bg-success' : 'bg-error'
                       }`}
                     />
-                    <span className="text-text-secondary">IndexedDB</span>
+                    <span className="text-text-secondary">{t('storage.details.indexedDB')}</span>
                   </div>
                   <span className="text-text-tertiary">
-                    {storageInfo.indexedDBSupported ? 'Supporté' : 'Non supporté'}
+                    {storageInfo.indexedDBSupported ? t('storage.details.supported') : t('storage.details.notSupported')}
                   </span>
                 </div>
 
@@ -284,10 +292,10 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                         storageInfo.opfsSupported ? 'bg-success' : 'bg-error'
                       }`}
                     />
-                    <span className="text-text-secondary">OPFS (fichiers)</span>
+                    <span className="text-text-secondary">{t('storage.details.opfs')}</span>
                   </div>
                   <span className="text-text-tertiary">
-                    {storageInfo.opfsSupported ? 'Supporté' : 'Non supporté'}
+                    {storageInfo.opfsSupported ? t('storage.details.supported') : t('storage.details.notSupported')}
                   </span>
                 </div>
 
@@ -295,10 +303,10 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-warning" />
-                    <span className="text-text-secondary">Historique Y.js</span>
+                    <span className="text-text-secondary">{t('storage.details.yjsHistory')}</span>
                   </div>
                   <span className="text-text-tertiary">
-                    ~{formatBytes(storageInfo.ydocEstimatedSize)} ({storageInfo.ydocDatabases.length} base{storageInfo.ydocDatabases.length !== 1 ? 's' : ''})
+                    ~{formatBytes(storageInfo.ydocEstimatedSize, locale)} ({t('storage.details.databases', { count: storageInfo.ydocDatabases.length })})
                   </span>
                 </div>
               </div>
@@ -308,7 +316,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                 <div className="mt-3 pt-3 border-t border-border-default">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] text-text-tertiary flex-1">
-                      L'historique Y.js stocke les modifications pour l'annulation. Purger libère de l'espace.
+                      {t('storage.purge.description')}
                     </p>
                     <button
                       onClick={handlePurgeYjs}
@@ -320,7 +328,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                       ) : (
                         <Trash2 size={12} />
                       )}
-                      Purger
+                      {t('common:actions.purge')}
                     </button>
                   </div>
                   {purgeMessage && (
@@ -335,37 +343,37 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               <div className="flex items-center gap-2 mb-3">
                 <FolderOpen size={14} className="text-text-secondary" />
                 <span className="text-xs font-medium text-text-primary">
-                  Contenu stocké
+                  {t('storage.content.title')}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center gap-2 text-xs">
                   <FolderOpen size={12} className="text-text-tertiary" />
-                  <span className="text-text-secondary">Enquêtes</span>
+                  <span className="text-text-secondary">{t('storage.content.investigations')}</span>
                   <span className="ml-auto text-text-primary tabular-nums">
                     {storageInfo.investigationCount}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <FileText size={12} className="text-text-tertiary" />
-                  <span className="text-text-secondary">Éléments</span>
+                  <span className="text-text-secondary">{t('storage.content.elements')}</span>
                   <span className="ml-auto text-text-primary tabular-nums">
-                    {storageInfo.elementCount.toLocaleString('fr-FR')}
+                    {storageInfo.elementCount.toLocaleString(locale)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <Link2 size={12} className="text-text-tertiary" />
-                  <span className="text-text-secondary">Liens</span>
+                  <span className="text-text-secondary">{t('storage.content.links')}</span>
                   <span className="ml-auto text-text-primary tabular-nums">
-                    {storageInfo.linkCount.toLocaleString('fr-FR')}
+                    {storageInfo.linkCount.toLocaleString(locale)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <Image size={12} className="text-text-tertiary" />
-                  <span className="text-text-secondary">Fichiers</span>
+                  <span className="text-text-secondary">{t('storage.content.files')}</span>
                   <span className="ml-auto text-text-primary tabular-nums">
-                    {storageInfo.assetCount.toLocaleString('fr-FR')}
+                    {storageInfo.assetCount.toLocaleString(locale)}
                   </span>
                 </div>
               </div>
@@ -376,7 +384,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               <div className="flex items-center gap-2 mb-3">
                 <Download size={14} className="text-text-secondary" />
                 <span className="text-xs font-medium text-text-primary">
-                  Sauvegarde complète
+                  {t('storage.backup.title')}
                 </span>
               </div>
 
@@ -391,7 +399,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                   ) : (
                     <Download size={12} />
                   )}
-                  Exporter tout
+                  {t('storage.backup.exportAll')}
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -403,7 +411,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                   ) : (
                     <Upload size={12} />
                   )}
-                  Importer
+                  {t('storage.backup.import')}
                 </button>
                 <input
                   ref={fileInputRef}
@@ -419,7 +427,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               )}
 
               <p className="mt-2 text-[10px] text-text-tertiary">
-                Toutes les enquêtes, fichiers et tags. L'import ajoute sans remplacer.
+                {t('storage.backup.description')}
               </p>
             </div>
 
@@ -430,14 +438,14 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
                 className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
               >
                 <RefreshCw size={12} />
-                Actualiser
+                {t('common:actions.refresh')}
               </button>
             </div>
           </>
         ) : (
           <div className="text-center py-8">
             <p className="text-sm text-text-tertiary">
-              Impossible de récupérer les informations de stockage
+              {t('common:errors.generic')}
             </p>
           </div>
         )}

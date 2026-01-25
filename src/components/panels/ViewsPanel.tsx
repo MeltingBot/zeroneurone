@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
   Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight
@@ -9,11 +10,11 @@ import type { View } from '../../types';
 type TagDisplayMode = 'none' | 'icons' | 'labels' | 'both';
 type TagDisplaySize = 'small' | 'medium' | 'large';
 
-const TAG_MODE_OPTIONS: { value: TagDisplayMode; label: string; icon: React.ReactNode }[] = [
-  { value: 'none', label: 'Masqués', icon: <EyeOff size={14} /> },
-  { value: 'icons', label: 'Icônes', icon: <Grid2X2 size={14} /> },
-  { value: 'labels', label: 'Labels', icon: <Type size={14} /> },
-  { value: 'both', label: 'Icônes + Labels', icon: <Layers size={14} /> },
+const TAG_MODE_OPTIONS: { value: TagDisplayMode; labelKey: string; icon: React.ReactNode }[] = [
+  { value: 'none', labelKey: 'hidden', icon: <EyeOff size={14} /> },
+  { value: 'icons', labelKey: 'icons', icon: <Grid2X2 size={14} /> },
+  { value: 'labels', labelKey: 'labels', icon: <Type size={14} /> },
+  { value: 'both', labelKey: 'both', icon: <Layers size={14} /> },
 ];
 
 const TAG_SIZE_OPTIONS: { value: TagDisplaySize; label: string }[] = [
@@ -23,6 +24,7 @@ const TAG_SIZE_OPTIONS: { value: TagDisplaySize; label: string }[] = [
 ];
 
 export function ViewsPanel() {
+  const { t } = useTranslation('panels');
   const {
     currentInvestigation,
     elements,
@@ -137,14 +139,14 @@ export function ViewsPanel() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Settings2 size={16} className="text-text-secondary" />
-          <h3 className="text-sm font-semibold text-text-primary">Affichage sur le canvas</h3>
+          <h3 className="text-sm font-semibold text-text-primary">{t('views.canvasDisplay')}</h3>
         </div>
 
         {/* Tags display */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <Tag size={12} />
-            <span>Tags</span>
+            <span>{t('views.tags')}</span>
           </div>
 
           {/* Mode selector */}
@@ -153,7 +155,7 @@ export function ViewsPanel() {
               <button
                 key={opt.value}
                 onClick={() => handleModeChange(opt.value)}
-                title={opt.label}
+                title={t(`views.tagModes.${opt.labelKey}`)}
                 className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
                   tagDisplayMode === opt.value
                     ? 'bg-accent text-white'
@@ -168,7 +170,7 @@ export function ViewsPanel() {
           {/* Size selector (only if mode is not 'none') */}
           {tagDisplayMode !== 'none' && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-text-tertiary">Taille:</span>
+              <span className="text-[10px] text-text-tertiary">{t('views.tagSize')}</span>
               <div className="flex gap-1">
                 {TAG_SIZE_OPTIONS.map((opt) => (
                   <button
@@ -192,7 +194,7 @@ export function ViewsPanel() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <Percent size={12} />
-            <span>Indicateur de confiance</span>
+            <span>{t('views.confidenceIndicator')}</span>
           </div>
           <button
             type="button"
@@ -213,18 +215,18 @@ export function ViewsPanel() {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <Link2 size={12} />
-            <span>Liaisons</span>
+            <span>{t('views.links')}</span>
           </div>
 
           {/* Curve mode + Anchor mode in a row */}
           <div className="flex gap-4 pl-4">
             {/* Curve mode */}
             <div className="space-y-1.5">
-              <span className="text-[10px] text-text-tertiary">Forme</span>
+              <span className="text-[10px] text-text-tertiary">{t('views.linkShape')}</span>
               <div className="flex gap-1">
                 <button
                   onClick={() => setLinkCurveMode('curved')}
-                  title="Courbes"
+                  title={t('views.linkCurves')}
                   className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
                     linkCurveMode === 'curved'
                       ? 'bg-accent text-white'
@@ -235,7 +237,7 @@ export function ViewsPanel() {
                 </button>
                 <button
                   onClick={() => setLinkCurveMode('straight')}
-                  title="Droites"
+                  title={t('views.linkStraight')}
                   className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
                     linkCurveMode === 'straight'
                       ? 'bg-accent text-white'
@@ -246,7 +248,7 @@ export function ViewsPanel() {
                 </button>
                 <button
                   onClick={() => setLinkCurveMode('orthogonal')}
-                  title="Angles droits"
+                  title={t('views.linkOrthogonal')}
                   className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
                     linkCurveMode === 'orthogonal'
                       ? 'bg-accent text-white'
@@ -260,11 +262,11 @@ export function ViewsPanel() {
 
             {/* Anchor mode */}
             <div className="space-y-1.5">
-              <span className="text-[10px] text-text-tertiary">Ancrage</span>
+              <span className="text-[10px] text-text-tertiary">{t('views.linkAnchor')}</span>
               <div className="flex gap-1">
                 <button
                   onClick={() => setLinkAnchorMode('manual')}
-                  title="Manuel"
+                  title={t('views.linkAnchorManual')}
                   className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
                     linkAnchorMode === 'manual'
                       ? 'bg-accent text-white'
@@ -275,7 +277,7 @@ export function ViewsPanel() {
                 </button>
                 <button
                   onClick={() => setLinkAnchorMode('auto')}
-                  title="Automatique"
+                  title={t('views.linkAnchorAuto')}
                   className={`w-8 h-7 flex items-center justify-center rounded transition-colors ${
                     linkAnchorMode === 'auto'
                       ? 'bg-accent text-white'
@@ -294,11 +296,11 @@ export function ViewsPanel() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs text-text-secondary">
               <Hash size={12} />
-              <span>Propriétés affichées</span>
+              <span>{t('views.propertiesDisplay')}</span>
             </div>
             {allPropertyKeys.length > 0 && (
               <span className="text-[10px] text-text-tertiary">
-                {allPropertyKeys.length} disponible{allPropertyKeys.length > 1 ? 's' : ''}
+                {t('views.propertiesAvailable', { count: allPropertyKeys.length })}
               </span>
             )}
           </div>
@@ -312,7 +314,7 @@ export function ViewsPanel() {
                   type="text"
                   value={propertySearch}
                   onChange={(e) => setPropertySearch(e.target.value)}
-                  placeholder="Rechercher une propriété..."
+                  placeholder={t('views.searchProperty')}
                   className="w-full pl-8 pr-8 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
                 />
                 {propertySearch && (
@@ -354,7 +356,7 @@ export function ViewsPanel() {
                   })
                 ) : (
                   <p className="text-xs text-text-tertiary py-3 text-center">
-                    Aucun résultat pour "{propertySearch}"
+                    {t('views.noResultsFor', { search: propertySearch })}
                   </p>
                 )}
               </div>
@@ -363,8 +365,8 @@ export function ViewsPanel() {
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[10px] text-text-tertiary">
                   {displayedProperties.length > 0
-                    ? `${displayedProperties.length}/3 sélectionnée${displayedProperties.length > 1 ? 's' : ''}`
-                    : 'Max. 3'
+                    ? t('views.propertiesSelected', { count: displayedProperties.length })
+                    : t('views.maxProperties')
                   }
                 </span>
                 {displayedProperties.length > 0 && (
@@ -372,14 +374,14 @@ export function ViewsPanel() {
                     onClick={() => clearDisplayedProperties()}
                     className="text-[10px] text-text-tertiary hover:text-error"
                   >
-                    Tout désélectionner
+                    {t('views.deselectAll')}
                   </button>
                 )}
               </div>
             </>
           ) : (
             <p className="text-xs text-text-tertiary py-3 text-center bg-bg-secondary rounded">
-              Aucune propriété définie sur les éléments
+              {t('views.noPropertiesDefined')}
             </p>
           )}
         </div>
@@ -391,7 +393,7 @@ export function ViewsPanel() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Eye size={16} className="text-text-secondary" />
-          <h3 className="text-sm font-semibold text-text-primary">Vues sauvegardées</h3>
+          <h3 className="text-sm font-semibold text-text-primary">{t('views.savedViews')}</h3>
         </div>
 
         {/* Save current view */}
@@ -402,7 +404,7 @@ export function ViewsPanel() {
               value={newViewName}
               onChange={(e) => setNewViewName(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Nom de la vue..."
+              placeholder={t('views.namePlaceholder')}
               autoFocus
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
             />
@@ -414,7 +416,7 @@ export function ViewsPanel() {
                 className="w-4 h-4 rounded border-border-default text-accent focus:ring-accent"
               />
               <span className="text-xs text-text-secondary">
-                Inclure les positions ({elements.length} éléments)
+                {t('views.includePositions', { count: elements.length })}
               </span>
             </label>
             <div className="flex gap-2">
@@ -423,7 +425,7 @@ export function ViewsPanel() {
                 disabled={!newViewName.trim()}
                 className="flex-1 px-3 py-1.5 text-xs font-medium bg-accent text-white rounded hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sauvegarder
+                {t('views.saveButton')}
               </button>
               <button
                 onClick={() => {
@@ -433,7 +435,7 @@ export function ViewsPanel() {
                 }}
                 className="flex-1 px-3 py-1.5 text-xs font-medium bg-bg-tertiary text-text-secondary rounded hover:bg-border-default"
               >
-                Annuler
+                {t('views.cancelButton')}
               </button>
             </div>
           </div>
@@ -443,7 +445,7 @@ export function ViewsPanel() {
             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium border border-dashed border-border-default rounded hover:border-accent hover:text-accent text-text-secondary"
           >
             <Plus size={14} />
-            Sauvegarder la vue actuelle
+            {t('views.saveCurrentView')}
           </button>
         )}
 
@@ -468,13 +470,13 @@ export function ViewsPanel() {
                     {view.name}
                   </span>
                   {view.elementPositions && view.elementPositions.length > 0 && (
-                    <LayoutGrid size={12} className="text-text-tertiary flex-shrink-0" title="Positions sauvegardées" />
+                    <LayoutGrid size={12} className="text-text-tertiary flex-shrink-0" title={t('views.savedPositions')} />
                   )}
                 </div>
                 <button
                   onClick={(e) => handleDeleteView(view.id, e)}
                   className="p-1 text-text-tertiary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Supprimer la vue"
+                  title={t('views.deleteView')}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -483,7 +485,7 @@ export function ViewsPanel() {
           </div>
         ) : (
           <p className="text-xs text-text-tertiary text-center py-4">
-            Aucune vue sauvegardée
+            {t('views.noViews')}
           </p>
         )}
 
@@ -495,8 +497,8 @@ export function ViewsPanel() {
               const hasPositions = activeView?.elementPositions && activeView.elementPositions.length > 0;
               return (
                 <p>
-                  Vue active. Les filtres et le viewport ont été restaurés.
-                  {hasPositions && ` Positions de ${activeView.elementPositions.length} éléments restaurées.`}
+                  {t('views.activeView')}
+                  {hasPositions && ` ${t('views.positionsRestored', { count: activeView.elementPositions.length })}`}
                 </p>
               );
             })()}

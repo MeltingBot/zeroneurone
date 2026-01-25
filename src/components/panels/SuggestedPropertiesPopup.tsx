@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Check } from 'lucide-react';
 import { useTagSetStore } from '../../stores';
 import type { Property, SuggestedProperty } from '../../types';
@@ -16,6 +17,7 @@ export function SuggestedPropertiesPopup({
   onApply,
   onClose,
 }: SuggestedPropertiesPopupProps) {
+  const { t } = useTranslation('panels');
   const tagSet = useTagSetStore((state) => state.getByName(tagSetName));
 
   // Filter out properties that already exist on the element
@@ -85,7 +87,7 @@ export function SuggestedPropertiesPopup({
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
           <span className="text-xs font-medium text-text-primary">
-            Propriétés suggérées pour "{tagSetName}"
+            {t('detail.properties.suggestedFor', { name: tagSetName })}
           </span>
           <button
             onClick={onClose}
@@ -109,7 +111,7 @@ export function SuggestedPropertiesPopup({
                 className="w-3.5 h-3.5 rounded border-border-default accent-accent"
               />
               <span className="text-xs text-text-primary flex-1">{prop.key}</span>
-              <span className="text-[10px] text-text-tertiary">{getTypeLabel(prop.type)}</span>
+              <span className="text-[10px] text-text-tertiary">{t(`detail.properties.types.${prop.type}`, { defaultValue: prop.type })}</span>
             </label>
           ))}
         </div>
@@ -120,14 +122,14 @@ export function SuggestedPropertiesPopup({
             onClick={handleToggleAll}
             className="text-xs text-text-secondary hover:text-text-primary transition-colors"
           >
-            {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+            {allSelected ? t('detail.properties.deselectAll') : t('detail.properties.selectAll')}
           </button>
           <div className="flex gap-2">
             <button
               onClick={onClose}
               className="px-3 py-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
             >
-              Ignorer
+              {t('detail.properties.ignore')}
             </button>
             <button
               onClick={handleApply}
@@ -135,25 +137,11 @@ export function SuggestedPropertiesPopup({
               className="px-3 py-1 text-xs bg-accent text-white rounded hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
             >
               <Check size={12} />
-              Ajouter ({selectedKeys.size})
+              {t('detail.properties.add')} ({selectedKeys.size})
             </button>
           </div>
         </div>
       </div>
     </div>
   );
-}
-
-function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    text: 'Texte',
-    number: 'Nombre',
-    date: 'Date',
-    datetime: 'Date/heure',
-    boolean: 'Oui/Non',
-    choice: 'Choix',
-    country: 'Pays',
-    geo: 'Coord.',
-  };
-  return labels[type] || type;
 }

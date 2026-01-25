@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useToastStore, type ToastType } from '../../stores/toastStore';
 
@@ -56,6 +57,7 @@ interface ToastItemProps {
 }
 
 function ToastItem({ id, type, message, Icon, onRemove }: ToastItemProps) {
+  const { t } = useTranslation('common');
   const [isExiting, setIsExiting] = useState(false);
 
   const handleRemove = () => {
@@ -91,7 +93,7 @@ function ToastItem({ id, type, message, Icon, onRemove }: ToastItemProps) {
       <button
         onClick={handleRemove}
         className="shrink-0 p-0.5 rounded hover:bg-black/10 transition-colors"
-        aria-label="Fermer"
+        aria-label={t('actions.close')}
       >
         <X size={14} />
       </button>

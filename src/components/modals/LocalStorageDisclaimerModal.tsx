@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Modal, Button } from '../common';
 import { HardDrive, AlertTriangle, Download } from 'lucide-react';
 
@@ -14,13 +15,15 @@ export function LocalStorageDisclaimerModal({
   onClose,
   onAccept,
 }: LocalStorageDisclaimerModalProps) {
+  const { t } = useTranslation('modals');
+
   const handleAccept = () => {
     localStorage.setItem(STORAGE_KEY, 'true');
     onAccept();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Stockage local des donnees">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('localStorage.title')}>
       <div className="space-y-5">
         {/* Icon and intro */}
         <div className="flex items-start gap-4">
@@ -29,11 +32,10 @@ export function LocalStorageDisclaimerModal({
           </div>
           <div className="flex-1">
             <p className="text-sm text-text-primary font-medium mb-1">
-              Vos donnees sont stockees localement
+              {t('localStorage.warning')}
             </p>
             <p className="text-sm text-text-secondary">
-              Toutes les enquetes et fichiers sont enregistres dans le stockage
-              de votre navigateur (IndexedDB et OPFS).
+              {t('localStorage.description')}
             </p>
           </div>
         </div>
@@ -42,29 +44,20 @@ export function LocalStorageDisclaimerModal({
         <div className="bg-warning/5 border border-warning/20 rounded p-4 space-y-3">
           <div className="flex items-center gap-2 text-warning">
             <AlertTriangle size={16} />
-            <span className="text-sm font-medium">Important</span>
+            <span className="text-sm font-medium">{t('common:status.warning')}</span>
           </div>
           <ul className="text-sm text-text-secondary space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-warning mt-0.5">•</span>
-              <span>
-                Les donnees peuvent etre <strong className="text-text-primary">supprimees</strong> si
-                vous videz le cache de votre navigateur
-              </span>
+              <span dangerouslySetInnerHTML={{ __html: t('localStorage.bullets.deleted') }} />
             </li>
             <li className="flex items-start gap-2">
               <span className="text-warning mt-0.5">•</span>
-              <span>
-                Les donnees ne sont <strong className="text-text-primary">pas synchronisees</strong> entre
-                vos appareils
-              </span>
+              <span dangerouslySetInnerHTML={{ __html: t('localStorage.bullets.notSynced') }} />
             </li>
             <li className="flex items-start gap-2">
               <span className="text-warning mt-0.5">•</span>
-              <span>
-                En navigation privee, les donnees seront <strong className="text-text-primary">perdues</strong> a
-                la fermeture
-              </span>
+              <span dangerouslySetInnerHTML={{ __html: t('localStorage.bullets.privateMode') }} />
             </li>
           </ul>
         </div>
@@ -73,19 +66,17 @@ export function LocalStorageDisclaimerModal({
         <div className="flex items-start gap-3 p-3 bg-bg-secondary rounded">
           <Download size={18} className="text-accent mt-0.5" />
           <p className="text-sm text-text-secondary">
-            <strong className="text-text-primary">Recommandation :</strong> Exportez
-            regulierement vos enquetes via le bouton "Exporter" pour conserver
-            une sauvegarde de vos donnees.
+            {t('localStorage.recommendation')}
           </p>
         </div>
 
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose}>
-            Annuler
+            {t('common:actions.cancel')}
           </Button>
           <Button variant="primary" onClick={handleAccept}>
-            J'ai bien compris
+            {t('localStorage.acknowledge')}
           </Button>
         </div>
       </div>

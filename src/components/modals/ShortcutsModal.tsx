@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { X, Keyboard } from 'lucide-react';
 
 interface ShortcutsModalProps {
@@ -5,50 +6,52 @@ interface ShortcutsModalProps {
   onClose: () => void;
 }
 
-const shortcuts = [
+const shortcutsByCategory = [
   {
-    category: 'Navigation',
+    categoryKey: 'navigation',
     items: [
-      { keys: ['1'], description: 'Vue Canvas' },
-      { keys: ['2'], description: 'Vue Carte' },
-      { keys: ['3'], description: 'Vue Split (Canvas + Carte)' },
-      { keys: ['4'], description: 'Vue Timeline' },
+      { keys: ['1'], descKey: 'canvasView' },
+      { keys: ['2'], descKey: 'mapView' },
+      { keys: ['3'], descKey: 'splitView' },
+      { keys: ['4'], descKey: 'timelineView' },
     ],
   },
   {
-    category: 'Recherche',
+    categoryKey: 'search',
     items: [
-      { keys: ['Ctrl', 'K'], description: 'Ouvrir la recherche' },
-      { keys: ['Escape'], description: 'Fermer la recherche' },
+      { keys: ['Ctrl', 'K'], descKey: 'search' },
+      { keys: ['Escape'], descKey: 'closeSearch' },
     ],
   },
   {
-    category: 'Canvas',
+    categoryKey: 'canvas',
     items: [
-      { keys: ['Suppr'], description: 'Supprimer la selection' },
-      { keys: ['Ctrl', 'A'], description: 'Tout selectionner' },
-      { keys: ['Escape'], description: 'Annuler la selection' },
-      { keys: ['Clic droit'], description: 'Menu contextuel' },
+      { keys: ['Del'], descKey: 'delete' },
+      { keys: ['Ctrl', 'A'], descKey: 'selectAll' },
+      { keys: ['Escape'], descKey: 'cancelSelection' },
+      { keys: ['→'], descKey: 'contextMenu' },
     ],
   },
   {
-    category: 'Edition',
+    categoryKey: 'editing',
     items: [
-      { keys: ['Double-clic'], description: 'Editer un element' },
-      { keys: ['Shift', 'Clic'], description: 'Selection multiple' },
-      { keys: ['Glisser'], description: 'Deplacer les elements' },
+      { keys: ['⏬⏬'], descKey: 'editElement' },
+      { keys: ['Shift', '⏬'], descKey: 'multiSelect' },
+      { keys: ['⌖'], descKey: 'moveElements' },
     ],
   },
   {
-    category: 'Zoom',
+    categoryKey: 'zoom',
     items: [
-      { keys: ['Molette'], description: 'Zoom avant/arriere' },
-      { keys: ['Ctrl', '0'], description: 'Reinitialiser le zoom' },
+      { keys: ['⟳'], descKey: 'zoomOut' },
+      { keys: ['Ctrl', '0'], descKey: 'resetZoom' },
     ],
   },
 ];
 
 export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
+  const { t } = useTranslation('modals');
+
   if (!isOpen) return null;
 
   return (
@@ -65,7 +68,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
           <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <Keyboard size={16} />
-            Raccourcis clavier
+            {t('shortcuts.title')}
           </h2>
           <button
             onClick={onClose}
@@ -78,10 +81,10 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         {/* Content */}
         <div className="p-4 overflow-y-auto flex-1">
           <div className="space-y-6">
-            {shortcuts.map((section) => (
-              <div key={section.category}>
+            {shortcutsByCategory.map((section) => (
+              <div key={section.categoryKey}>
                 <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">
-                  {section.category}
+                  {t(`shortcuts.categories.${section.categoryKey}`)}
                 </h3>
                 <div className="space-y-2">
                   {section.items.map((shortcut, index) => (
@@ -90,7 +93,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
                       className="flex items-center justify-between py-1"
                     >
                       <span className="text-sm text-text-primary">
-                        {shortcut.description}
+                        {t(`shortcuts.shortcuts.${shortcut.descKey}`)}
                       </span>
                       <div className="flex items-center gap-1">
                         {shortcut.keys.map((key, keyIndex) => (
@@ -115,7 +118,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         {/* Footer */}
         <div className="px-4 py-3 border-t border-border-default bg-bg-secondary text-center shrink-0">
           <p className="text-xs text-text-tertiary">
-            Appuyez sur <kbd className="px-1.5 py-0.5 bg-bg-primary border border-border-default rounded text-[10px]">?</kbd> pour afficher cette aide
+            {t('shortcuts.helpHint', { key: '?' })}
           </p>
         </div>
       </div>

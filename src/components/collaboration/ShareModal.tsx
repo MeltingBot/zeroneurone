@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Copy, Check, Link2, Link2Off, Users, Server, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
@@ -19,6 +20,7 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
+  const { t } = useTranslation('modals');
   const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore();
   const currentInvestigation = useInvestigationStore((state) => state.currentInvestigation);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -128,11 +130,11 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Collaboration"
+      title={t('collaboration.title')}
       width="sm"
       footer={
         <Button variant="secondary" onClick={handleClose}>
-          Fermer
+          {t('collaboration.close')}
         </Button>
       }
     >
@@ -140,7 +142,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
         {/* User identity section */}
         <div className="space-y-2">
           <label className="text-xs font-medium text-text-secondary">
-            Votre nom (visible par les autres)
+            {t('collaboration.yourName')}
           </label>
           <div className="flex items-center gap-2">
             <div
@@ -186,10 +188,10 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
             onClick={() => setShowServerConfig(!showServerConfig)}
           >
             <Server size={14} />
-            <span>Serveur de synchronisation</span>
+            <span>{t('collaboration.server')}</span>
             {showServerConfig ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             {!isServerConfigured && (
-              <span className="ml-auto text-warning">Non configuré</span>
+              <span className="ml-auto text-warning">{t('collaboration.notConfigured')}</span>
             )}
             {isServerConfigured && !showServerConfig && (
               <span className="ml-auto text-text-tertiary truncate max-w-[150px]">
@@ -203,7 +205,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
               <Input
                 value={serverInput}
                 onChange={(e) => setServerInput(e.target.value)}
-                placeholder="wss://votre-serveur.example.com"
+                placeholder={t('collaboration.serverPlaceholder')}
                 className="text-xs font-mono"
               />
               <div className="flex gap-2">
@@ -212,12 +214,11 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                   onClick={handleSaveServer}
                   disabled={serverInput === serverUrl}
                 >
-                  Enregistrer
+                  {t('collaboration.save')}
                 </Button>
               </div>
               <p className="text-xs text-text-tertiary">
-                Utilisez un serveur y-websocket compatible.
-                Vous pouvez héberger le vôtre avec{' '}
+                {t('collaboration.serverHelp')}{' '}
                 <code className="bg-bg-tertiary px-1 rounded">y-websocket</code>.
               </p>
             </div>
@@ -231,13 +232,12 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
               <div className="flex items-start gap-3 text-text-secondary">
                 <Users size={20} className="mt-0.5 flex-shrink-0" />
                 <p className="text-sm">
-                  Partagez cette investigation pour collaborer en temps réel.
-                  Chaque participant verra les modifications instantanément.
+                  {t('collaboration.shareDescription')}
                 </p>
               </div>
               {!isServerConfigured && (
                 <p className="text-xs text-warning bg-warning/10 px-3 py-2 rounded">
-                  Configurez d'abord un serveur de synchronisation pour activer le partage.
+                  {t('collaboration.serverRequired')}
                 </p>
               )}
               <Button
@@ -247,7 +247,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                 className="w-full"
               >
                 <Link2 size={16} />
-                {isLoading ? 'Partage...' : 'Partager'}
+                {isLoading ? t('collaboration.sharing') : t('collaboration.share')}
               </Button>
             </div>
           ) : (
@@ -255,7 +255,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
               {/* Share URL */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-text-secondary">
-                  Lien de partage
+                  {t('collaboration.shareLink')}
                 </label>
                 <div className="flex gap-2">
                   <Input
@@ -267,7 +267,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                     variant="secondary"
                     size="sm"
                     onClick={handleCopy}
-                    title="Copier le lien"
+                    title={t('collaboration.copyLink')}
                     disabled={!shareUrl}
                   >
                     {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
@@ -275,7 +275,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                 </div>
                 <p className="text-xs text-text-tertiary flex items-center gap-1">
                   {shareUrl && <Lock size={12} className="text-success" />}
-                  Envoyez ce lien aux personnes avec qui vous souhaitez collaborer.
+                  {t('collaboration.shareLinkHelp')}
                 </p>
               </div>
 
@@ -288,7 +288,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                   className="w-full text-error hover:bg-error/10"
                 >
                   <Link2Off size={16} />
-                  {isLoading ? 'Arrêt...' : 'Arrêter le partage'}
+                  {isLoading ? t('collaboration.stopping') : t('collaboration.stopSharing')}
                 </Button>
               </div>
             </div>

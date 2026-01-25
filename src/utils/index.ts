@@ -58,7 +58,7 @@ export function formatFileSize(bytes: number): string {
 /**
  * Format relative time (e.g., "il y a 2 heures")
  */
-export function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date, locale: string = 'fr'): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -66,12 +66,14 @@ export function formatRelativeTime(date: Date): string {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffSec < 60) return "à l'instant";
-  if (diffMin < 60) return `il y a ${diffMin} min`;
-  if (diffHour < 24) return `il y a ${diffHour}h`;
-  if (diffDay < 7) return `il y a ${diffDay}j`;
+  const isFr = locale.startsWith('fr');
 
-  return date.toLocaleDateString('fr-FR', {
+  if (diffSec < 60) return isFr ? "à l'instant" : "just now";
+  if (diffMin < 60) return isFr ? `il y a ${diffMin} min` : `${diffMin} min ago`;
+  if (diffHour < 24) return isFr ? `il y a ${diffHour}h` : `${diffHour}h ago`;
+  if (diffDay < 7) return isFr ? `il y a ${diffDay}j` : `${diffDay}d ago`;
+
+  return date.toLocaleDateString(isFr ? 'fr-FR' : 'en-US', {
     day: 'numeric',
     month: 'short',
   });
