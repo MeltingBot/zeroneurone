@@ -30,6 +30,18 @@ const PROPERTY_TYPES: { value: PropertyType; labelKey: string }[] = [
   { value: 'link', labelKey: 'tagSetEditor.propertyTypes.link' },
 ];
 
+/** Detect if a property key suggests a URL/link type */
+function suggestsLinkType(key: string): boolean {
+  if (!key) return false;
+  const lower = key.toLowerCase().trim();
+  const linkKeywords = [
+    'url', 'link', 'lien', 'site', 'website', 'web', 'href',
+    'homepage', 'page', 'linkedin', 'facebook', 'twitter', 'instagram',
+    'github', 'gitlab', 'source', 'référence', 'reference', 'wiki',
+  ];
+  return linkKeywords.some(kw => lower.includes(kw));
+}
+
 const COLOR_OPTIONS = [
   '#3b82f6', // Blue
   '#8b5cf6', // Violet
@@ -318,6 +330,19 @@ function PropertyEditor({
     [onChange]
   );
 
+  // Auto-detect link type when key suggests a URL
+  const handleKeyChange = useCallback(
+    (newKey: string) => {
+      const changes: Partial<SuggestedProperty> = { key: newKey };
+      // Auto-switch to 'link' type if key suggests URL and current type is 'text'
+      if (property.type === 'text' && suggestsLinkType(newKey)) {
+        changes.type = 'link';
+      }
+      onChange(changes);
+    },
+    [onChange, property.type]
+  );
+
   const handleChoicesChange = useCallback(
     (choicesStr: string) => {
       const choices = choicesStr.split(',').map((c) => c.trim()).filter(Boolean);
@@ -354,7 +379,7 @@ function PropertyEditor({
           <input
             type="text"
             value={property.key}
-            onChange={(e) => onChange({ key: e.target.value })}
+            onChange={(e) => handleKeyChange(e.target.value)}
             placeholder={t('tagSetEditor.propertyName')}
             className="flex-1 px-2 py-1 text-sm bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
