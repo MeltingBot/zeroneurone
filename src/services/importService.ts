@@ -844,15 +844,30 @@ class ImportService {
     assetIdMap: Map<AssetId, AssetId>,
     result: ImportResult
   ): Promise<void> {
-    // Import elements with updated asset IDs
+    // First pass: create ID mappings for all elements
     for (const importedElement of data.elements) {
       const newId = generateUUID();
       elementIdMap.set(importedElement.id, newId);
+    }
+
+    // Second pass: import elements with mapped IDs
+    for (const importedElement of data.elements) {
+      const newId = elementIdMap.get(importedElement.id)!;
 
       // Map old asset IDs to new ones (only those that were successfully imported)
       const newAssetIds = (importedElement.assetIds || [])
         .map((oldId: AssetId) => assetIdMap.get(oldId))
         .filter((id): id is AssetId => id !== undefined);
+
+      // Map parentGroupId to new ID
+      const newParentGroupId = importedElement.parentGroupId
+        ? elementIdMap.get(importedElement.parentGroupId) || null
+        : null;
+
+      // Map childIds to new IDs
+      const newChildIds = (importedElement.childIds || [])
+        .map((oldId: ElementId) => elementIdMap.get(oldId))
+        .filter((id): id is ElementId => id !== undefined);
 
       const element: Element = {
         ...importedElement,
@@ -872,8 +887,8 @@ class ImportService {
           : null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        parentGroupId: null, // Reset group relations
-        childIds: [],
+        parentGroupId: newParentGroupId,
+        childIds: newChildIds,
       };
 
       await db.elements.add(element);
@@ -996,10 +1011,14 @@ class ImportService {
       const dateEndIdx = headers.findIndex((h) => ['date_fin', 'date_end'].includes(h));
       const latIdx = headers.findIndex((h) => ['latitude', 'lat'].includes(h));
       const lngIdx = headers.findIndex((h) => ['longitude', 'lng', 'lon'].includes(h));
+      const posXIdx = headers.findIndex((h) => ['position_x', 'x', 'posx'].includes(h));
+      const posYIdx = headers.findIndex((h) => ['position_y', 'y', 'posy'].includes(h));
       const directedIdx = headers.findIndex((h) => ['dirige', 'directed'].includes(h));
       const colorIdx = headers.findIndex((h) => ['couleur', 'color'].includes(h));
       const shapeIdx = headers.findIndex((h) => ['forme', 'shape'].includes(h));
       const styleIdx = headers.findIndex((h) => h === 'style');
+      const isGroupIdx = headers.findIndex((h) => ['est_groupe', 'is_group', 'isgroup'].includes(h));
+      const parentGroupIdx = headers.findIndex((h) => ['groupe_parent', 'parent_group', 'parentgroup'].includes(h));
 
       // Known headers (reserved columns) - any other column becomes a property
       const knownHeaders = new Set([
@@ -1007,7 +1026,9 @@ class ImportService {
         'notes', 'description', 'tags', 'etiquettes', 'confiance', 'confidence',
         'date', 'date_debut', 'date_start', 'date_fin', 'date_end',
         'latitude', 'lat', 'longitude', 'lng', 'lon',
+        'position_x', 'x', 'posx', 'position_y', 'y', 'posy',
         'dirige', 'directed', 'couleur', 'color', 'forme', 'shape', 'style',
+        'est_groupe', 'is_group', 'isgroup', 'groupe_parent', 'parent_group', 'parentgroup',
       ]);
 
       // Find custom property columns (columns not in knownHeaders)
@@ -1094,6 +1115,22 @@ class ImportService {
           }
         }
 
+        // Parse position
+        let posX = Math.random() * 500;
+        let posY = Math.random() * 500;
+        if (posXIdx >= 0 && values[posXIdx]) {
+          const parsed = parseFloat(values[posXIdx]);
+          if (!isNaN(parsed)) posX = parsed;
+        }
+        if (posYIdx >= 0 && values[posYIdx]) {
+          const parsed = parseFloat(values[posYIdx]);
+          if (!isNaN(parsed)) posY = parsed;
+        }
+
+        // Parse group fields
+        const isGroup = isGroupIdx >= 0 && ['oui', 'yes', 'true', '1'].includes(values[isGroupIdx]?.toLowerCase().trim());
+        const parentGroupId = parentGroupIdx >= 0 && values[parentGroupIdx]?.trim() ? values[parentGroupIdx].trim() : null;
+
         const element: Element = {
           id: generateUUID(),
           investigationId: targetInvestigationId,
@@ -1105,7 +1142,7 @@ class ImportService {
           source: sourceIdx >= 0 ? values[sourceIdx] || '' : '',
           date,
           dateRange: null,
-          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          position: { x: posX, y: posY },
           geo,
           visual: {
             ...DEFAULT_ELEMENT_VISUAL,
@@ -1113,8 +1150,8 @@ class ImportService {
             shape: shapeIdx >= 0 && this.isValidShape(values[shapeIdx]) ? values[shapeIdx] as ElementShape : DEFAULT_ELEMENT_VISUAL.shape,
           },
           assetIds: [],
-          parentGroupId: null,
-          isGroup: false,
+          parentGroupId,
+          isGroup,
           isAnnotation: false,
           childIds: [],
           events: [],

@@ -641,14 +641,21 @@ function darkenColor(color: string, amount: number = 0.6): string {
 function getThemeAwareColor(color: string, isDarkMode: boolean): string {
   if (!isDarkMode) return color;
 
-  // In dark mode, slightly darken very light colors (white/near-white only)
-  // Keep pastel and medium colors as-is - they look good on dark background
+  // In dark mode, invert very light colors to darker equivalents
+  // This ensures elements remain visible on dark canvas
   const brightness = getColorBrightness(color);
-  if (brightness > 245) {
-    // Pure white or near-white -> use a subtle off-white/cream
-    return darkenColor(color, 0.85);
+  if (brightness > 230) {
+    // Very light colors (white, near-white, very light grays) -> invert to dark
+    // Map brightness 230-255 to a dark range (40-60)
+    const darkBrightness = 50;
+    const factor = darkBrightness / brightness;
+    return darkenColor(color, factor);
   }
-  // Keep all other colors (including pastels) as-is
+  if (brightness > 200) {
+    // Light colors (light grays, pastels) -> darken moderately
+    return darkenColor(color, 0.5);
+  }
+  // Keep medium and dark colors as-is
   return color;
 }
 

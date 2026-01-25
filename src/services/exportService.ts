@@ -123,10 +123,14 @@ class ExportService {
       'date_fin',
       'latitude',
       'longitude',
+      'position_x',
+      'position_y',
       'dirige',
       'couleur',
       'forme',
       'style',
+      'est_groupe',
+      'groupe_parent',
     ];
     const headers = [...baseHeaders, ...sortedPropertyKeys];
 
@@ -148,10 +152,14 @@ class ExportService {
         '', // date_fin
         el.geo?.lat?.toString() ?? '',
         el.geo?.lng?.toString() ?? '',
+        el.position?.x?.toString() ?? '',
+        el.position?.y?.toString() ?? '',
         '', // dirige
         el.visual.color,
         el.visual.shape,
         '', // style
+        el.isGroup ? 'oui' : 'non',
+        el.parentGroupId ?? '',
       ];
       // Add property values
       const propsMap = new Map(el.properties?.map((p) => [p.key, String(p.value)]) ?? []);
@@ -177,10 +185,14 @@ class ExportService {
         link.dateRange?.end ? new Date(link.dateRange.end).toISOString().slice(0, 10) : '',
         '', // latitude
         '', // longitude
+        '', // position_x
+        '', // position_y
         link.directed ? 'oui' : 'non',
         link.visual.color,
         '', // forme
         link.visual.style,
+        '', // est_groupe
+        '', // groupe_parent
       ];
       // Add property values
       const propsMap = new Map(link.properties?.map((p) => [p.key, String(p.value)]) ?? []);
@@ -199,13 +211,13 @@ class ExportService {
    */
   generateCSVTemplate(): string {
     // Base headers + example custom properties
-    const headers = ['type', 'label', 'de', 'vers', 'notes', 'tags', 'confiance', 'source', 'date', 'date_debut', 'date_fin', 'latitude', 'longitude', 'dirige', 'couleur', 'forme', 'style', 'prenom', 'nom', 'telephone'];
+    const headers = ['type', 'label', 'de', 'vers', 'notes', 'tags', 'confiance', 'source', 'date', 'date_debut', 'date_fin', 'latitude', 'longitude', 'position_x', 'position_y', 'dirige', 'couleur', 'forme', 'style', 'est_groupe', 'groupe_parent', 'prenom', 'nom', 'telephone'];
     const examples = [
-      ['element', 'Jean Dupont', '', '', 'Suspect principal', 'personne;suspect', '80', 'Enquete', '2024-01-15', '', '', '48.8566', '2.3522', '', '#fef3c7', 'circle', '', 'Jean', 'Dupont', '06 11 22 33 44'],
-      ['element', 'Marie Martin', '', '', 'Temoin', 'personne;temoin', '60', '', '', '', '', '', '', '', '#dbeafe', 'circle', '', 'Marie', 'Martin', ''],
-      ['element', '06 12 34 56 78', '', '', 'Telephone prepaye', 'telephone', '', '', '', '', '', '', '', '', '#dcfce7', 'square', '', '', '', ''],
-      ['lien', 'Appel', 'Jean Dupont', 'Marie Martin', 'Duree 5 min', '', '90', '', '', '2024-01-15', '2024-01-15', '', '', 'oui', '#d4cec4', '', 'solid', '', '', ''],
-      ['lien', 'Proprietaire', 'Jean Dupont', '06 12 34 56 78', '', '', '100', '', '', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', ''],
+      ['element', 'Jean Dupont', '', '', 'Suspect principal', 'personne;suspect', '80', 'Enquete', '2024-01-15', '', '', '48.8566', '2.3522', '100', '200', '', '#fef3c7', 'circle', '', 'non', '', 'Jean', 'Dupont', '06 11 22 33 44'],
+      ['element', 'Marie Martin', '', '', 'Temoin', 'personne;temoin', '60', '', '', '', '', '', '', '300', '200', '', '#dbeafe', 'circle', '', 'non', '', 'Marie', 'Martin', ''],
+      ['element', '06 12 34 56 78', '', '', 'Telephone prepaye', 'telephone', '', '', '', '', '', '', '', '200', '400', '', '#dcfce7', 'square', '', 'non', '', '', '', ''],
+      ['lien', 'Appel', 'Jean Dupont', 'Marie Martin', 'Duree 5 min', '', '90', '', '', '2024-01-15', '2024-01-15', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', '', '', ''],
+      ['lien', 'Proprietaire', 'Jean Dupont', '06 12 34 56 78', '', '', '100', '', '', '', '', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', '', '', ''],
     ];
     return [headers.join(','), ...examples.map((row) => row.join(','))].join('\n');
   }

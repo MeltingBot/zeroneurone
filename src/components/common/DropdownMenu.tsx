@@ -33,7 +33,7 @@ export function DropdownMenu({ trigger, children, align = 'right', direction = '
       {isOpen && (
         <div
           className={`
-            absolute z-50
+            absolute z-[1000]
             min-w-[160px]
             bg-bg-primary border border-border-default sketchy-border-soft panel-shadow
             py-1
