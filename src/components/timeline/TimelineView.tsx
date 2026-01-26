@@ -584,27 +584,46 @@ export function TimelineView() {
   // Today marker position
   const todayX = useMemo(() => dateToX(new Date()), [dateToX]);
 
-  // Handle wheel zoom
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    e.preventDefault();
+  // Handle wheel zoom - use ref to avoid stale closures
+  const zoomRef = useRef(zoom);
+  const viewStartRef = useRef(viewStart);
+  useEffect(() => {
+    zoomRef.current = zoom;
+    viewStartRef.current = viewStart;
+  }, [zoom, viewStart]);
 
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
+  // Wheel zoom with native event listener for proper preventDefault
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const mouseX = e.clientX - rect.left;
-    const dateAtMouse = xToDate(mouseX);
+    const handleWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
 
-    const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * zoomFactor));
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
 
-    // Adjust viewStart to keep mouse position stable
-    const newDaysFromStart = mouseX / newZoom;
-    const newViewStart = new Date(dateAtMouse.getTime() - newDaysFromStart * 24 * 60 * 60 * 1000);
+      // Convert X to date using current refs
+      const currentZoom = zoomRef.current;
+      const currentViewStart = viewStartRef.current;
+      const days = mouseX / currentZoom;
+      const dateAtMouse = new Date(currentViewStart.getTime() + days * 24 * 60 * 60 * 1000);
 
-    setZoom(newZoom);
-    setViewStart(newViewStart);
-  }, [zoom, xToDate]);
+      const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom * zoomFactor));
+
+      // Adjust viewStart to keep mouse position stable
+      const newDaysFromStart = mouseX / newZoom;
+      const newViewStart = new Date(dateAtMouse.getTime() - newDaysFromStart * 24 * 60 * 60 * 1000);
+
+      setZoom(newZoom);
+      setViewStart(newViewStart);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
 
   // RAF-based panning for smooth performance
   const rafRef = useRef<number | null>(null);
@@ -849,7 +868,6 @@ export function TimelineView() {
         className="flex-1 overflow-x-hidden overflow-y-auto relative select-none"
         data-report-capture="timeline"
         onScroll={handleScroll}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
