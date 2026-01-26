@@ -1070,20 +1070,37 @@ export function TimelineView() {
               style={{ overflow: 'visible' }}
             >
               <defs>
-                <marker
-                  id="causal-arrow"
-                  markerWidth="6"
-                  markerHeight="6"
-                  refX="5"
-                  refY="3"
-                  orient="auto"
-                >
-                  <path
-                    d="M0,0 L6,3 L0,6 L1,3 Z"
-                    fill="var(--color-accent)"
-                    fillOpacity="0.6"
-                  />
+                {/* Gradient definitions for different time gaps */}
+                <linearGradient id="causal-gradient-short" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.7" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.5" />
+                </linearGradient>
+                <linearGradient id="causal-gradient-medium" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.7" />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.5" />
+                </linearGradient>
+                <linearGradient id="causal-gradient-long" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.4" />
+                </linearGradient>
+                {/* Arrow markers for each color */}
+                <marker id="causal-arrow-short" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#10b981" fillOpacity="0.8" />
                 </marker>
+                <marker id="causal-arrow-medium" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#f59e0b" fillOpacity="0.8" />
+                </marker>
+                <marker id="causal-arrow-long" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                  <path d="M0,1 L6,4 L0,7 L2,4 Z" fill="#ef4444" fillOpacity="0.7" />
+                </marker>
+                {/* Glow filter */}
+                <filter id="causal-glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
               {causalConnections.map((conn, idx) => {
                 // Calculate positions
@@ -1092,43 +1109,125 @@ export function TimelineView() {
                 const toStartX = dateToX(conn.toItem.start);
                 const toY = ROW_GAP + conn.toItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
 
-                // Calculate control point for a nice curve
-                const midX = (fromEndX + toStartX) / 2;
-
-                // Create a curved path
-                const path = `M ${fromEndX} ${fromY}
-                              C ${midX} ${fromY},
-                                ${midX} ${toY},
-                                ${toStartX - 8} ${toY}`;
-
-                // Calculate days between events for tooltip
+                // Calculate days between events
                 const fromEnd = conn.fromItem.end || conn.fromItem.start;
                 const daysBetween = Math.round((conn.toItem.start.getTime() - fromEnd.getTime()) / (24 * 60 * 60 * 1000));
+
+                // Determine color category based on days between
+                let colorCategory: 'short' | 'medium' | 'long';
+                if (daysBetween <= 30) {
+                  colorCategory = 'short';
+                } else if (daysBetween <= 180) {
+                  colorCategory = 'medium';
+                } else {
+                  colorCategory = 'long';
+                }
+
+                // Calculate better bezier control points for natural curves
+                const horizontalDist = toStartX - fromEndX;
+                const verticalDist = toY - fromY;
+                const absVerticalDist = Math.abs(verticalDist);
+
+                // Control point offset scales with both horizontal and vertical distance
+                const cpOffsetX = Math.min(horizontalDist * 0.4, 150);
+                const cpOffsetY = absVerticalDist > 50 ? absVerticalDist * 0.3 : 20;
+
+                // Create a more natural S-curve when items are far apart vertically
+                let path: string;
+                if (absVerticalDist < ROW_HEIGHT * 2) {
+                  // Simple curve for items close together
+                  const midX = (fromEndX + toStartX) / 2;
+                  path = `M ${fromEndX + 4} ${fromY}
+                          Q ${midX} ${fromY + (verticalDist > 0 ? cpOffsetY : -cpOffsetY)},
+                            ${toStartX - 10} ${toY}`;
+                } else {
+                  // S-curve for items far apart
+                  const cp1x = fromEndX + cpOffsetX;
+                  const cp1y = fromY;
+                  const cp2x = toStartX - cpOffsetX;
+                  const cp2y = toY;
+                  path = `M ${fromEndX + 4} ${fromY}
+                          C ${cp1x} ${cp1y},
+                            ${cp2x} ${cp2y},
+                            ${toStartX - 10} ${toY}`;
+                }
+
+                // Calculate midpoint for label placement
+                const midX = (fromEndX + toStartX) / 2;
+                const midY = (fromY + toY) / 2;
+
+                // Format duration label
+                let durationLabel: string;
+                if (daysBetween < 1) {
+                  durationLabel = '<1j';
+                } else if (daysBetween < 30) {
+                  durationLabel = `${daysBetween}j`;
+                } else if (daysBetween < 365) {
+                  const months = Math.round(daysBetween / 30);
+                  durationLabel = `${months}m`;
+                } else {
+                  const years = (daysBetween / 365).toFixed(1);
+                  durationLabel = `${years}a`;
+                }
+
                 const tooltip = `${t('timeline.potentialCausality')}\n${conn.fromItem.label}\n→ ${conn.toItem.label}\n${t('timeline.daysAfter', { count: daysBetween })}`;
 
                 return (
-                  <g key={idx} className="cursor-help" style={{ pointerEvents: 'auto' }}>
+                  <g key={idx} className="cursor-help causal-connection" style={{ pointerEvents: 'auto' }}>
                     {/* Invisible wider path for easier hover */}
                     <path
                       d={path}
                       fill="none"
                       stroke="transparent"
-                      strokeWidth="12"
+                      strokeWidth="16"
                     >
                       <title>{tooltip}</title>
                     </path>
-                    {/* Visible path */}
+                    {/* Glow effect path */}
                     <path
                       d={path}
                       fill="none"
-                      stroke="var(--color-accent)"
-                      strokeWidth="1.5"
-                      strokeOpacity="0.4"
-                      strokeDasharray="4 3"
-                      markerEnd="url(#causal-arrow)"
+                      stroke={`url(#causal-gradient-${colorCategory})`}
+                      strokeWidth="4"
+                      strokeOpacity="0.2"
+                      filter="url(#causal-glow)"
+                    />
+                    {/* Main visible path */}
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke={`url(#causal-gradient-${colorCategory})`}
+                      strokeWidth="2"
+                      strokeDasharray="6 4"
+                      markerEnd={`url(#causal-arrow-${colorCategory})`}
+                      className="transition-opacity"
                     >
                       <title>{tooltip}</title>
                     </path>
+                    {/* Duration label background */}
+                    <rect
+                      x={midX - 14}
+                      y={midY - 8}
+                      width="28"
+                      height="16"
+                      rx="3"
+                      fill="white"
+                      fillOpacity="0.9"
+                      stroke={colorCategory === 'short' ? '#10b981' : colorCategory === 'medium' ? '#f59e0b' : '#ef4444'}
+                      strokeWidth="1"
+                      strokeOpacity="0.5"
+                    />
+                    {/* Duration label text */}
+                    <text
+                      x={midX}
+                      y={midY + 4}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fontWeight="500"
+                      fill={colorCategory === 'short' ? '#059669' : colorCategory === 'medium' ? '#d97706' : '#dc2626'}
+                    >
+                      {durationLabel}
+                    </text>
                   </g>
                 );
               })}
