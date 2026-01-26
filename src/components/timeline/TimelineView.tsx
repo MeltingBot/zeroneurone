@@ -1204,30 +1204,33 @@ export function TimelineView() {
                     >
                       <title>{tooltip}</title>
                     </path>
-                    {/* Duration label background */}
-                    <rect
-                      x={midX - 14}
-                      y={midY - 8}
-                      width="28"
-                      height="16"
-                      rx="3"
-                      fill="white"
-                      fillOpacity="0.9"
-                      stroke={colorCategory === 'short' ? '#10b981' : colorCategory === 'medium' ? '#f59e0b' : '#ef4444'}
-                      strokeWidth="1"
-                      strokeOpacity="0.5"
-                    />
-                    {/* Duration label text */}
-                    <text
-                      x={midX}
-                      y={midY + 4}
-                      textAnchor="middle"
-                      fontSize="10"
-                      fontWeight="500"
-                      fill={colorCategory === 'short' ? '#059669' : colorCategory === 'medium' ? '#d97706' : '#dc2626'}
-                    >
-                      {durationLabel}
-                    </text>
+                    {/* Duration label group with tooltip */}
+                    <g className="cursor-help">
+                      <title>{tooltip}</title>
+                      <rect
+                        x={midX - 14}
+                        y={midY - 8}
+                        width="28"
+                        height="16"
+                        rx="3"
+                        fill="white"
+                        fillOpacity="0.9"
+                        stroke={colorCategory === 'short' ? '#10b981' : colorCategory === 'medium' ? '#f59e0b' : '#ef4444'}
+                        strokeWidth="1"
+                        strokeOpacity="0.5"
+                      />
+                      <text
+                        x={midX}
+                        y={midY + 4}
+                        textAnchor="middle"
+                        fontSize="10"
+                        fontWeight="500"
+                        fill={colorCategory === 'short' ? '#059669' : colorCategory === 'medium' ? '#d97706' : '#dc2626'}
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        {durationLabel}
+                      </text>
+                    </g>
                   </g>
                 );
               })}
