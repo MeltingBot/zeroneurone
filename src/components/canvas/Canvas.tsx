@@ -65,7 +65,7 @@ const edgeTypes = {
 // Capture handler for report screenshots - must be inside ReactFlowProvider
 function CanvasCaptureHandler() {
   const { fitView } = useReactFlow();
-  const { registerCaptureHandler, unregisterCaptureHandler, themeMode } = useUIStore();
+  const { registerCaptureHandler, unregisterCaptureHandler } = useUIStore();
 
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
@@ -883,7 +883,7 @@ export function Canvas() {
   }, [nodes]);
 
   // Alignment guides state
-  const [activeGuides, setActiveGuides] = useState<Guide[]>([]);
+  const [_activeGuides, setActiveGuides] = useState<Guide[]>([]);
   const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ id: string; position: { x: number; y: number } } | null>(null);
   const lastGuideUpdateRef = useRef<number>(0);
   const GUIDE_THROTTLE_MS = 100;
@@ -1279,7 +1279,7 @@ export function Canvas() {
 
   // Handle right-click on empty canvas
   const handlePaneContextMenu = useCallback(
-    (event: React.MouseEvent) => {
+    (event: MouseEvent | React.MouseEvent<globalThis.Element, MouseEvent>) => {
       event.preventDefault();
       // Close element context menu if open
       setContextMenu(null);

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Check } from 'lucide-react';
 import { useTagSetStore } from '../../stores';
-import type { Property, SuggestedProperty } from '../../types';
+import type { Property } from '../../types';
 
 interface SuggestedPropertiesPopupProps {
   tagSetName: string;

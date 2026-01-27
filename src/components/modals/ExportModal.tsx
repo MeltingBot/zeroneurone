@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
@@ -16,6 +16,7 @@ const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; 
   { format: 'json', labelKey: 'json', descKey: 'jsonDesc', icon: FileJson },
   { format: 'csv', labelKey: 'csv', descKey: 'csvDesc', icon: FileSpreadsheet },
   { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
+  { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
 ];
 
 const pngScaleOptions = [
@@ -28,7 +29,7 @@ const pngScaleOptions = [
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const { t } = useTranslation('modals');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedPngScale, setSelectedPngScale] = useState(2);
+  const [selectedPngScale, _setSelectedPngScale] = useState(2);
   const [showPngOptions, setShowPngOptions] = useState(false);
 
   const { currentInvestigation, elements, links } = useInvestigationStore();

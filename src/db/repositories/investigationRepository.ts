@@ -1,6 +1,6 @@
 import { db } from '../database';
 import { generateUUID } from '../../utils';
-import type { Investigation, InvestigationId, PropertyDefinition, PropertyType } from '../../types';
+import type { Investigation, InvestigationId, PropertyDefinition } from '../../types';
 
 /**
  * Migrate old string-based property to PropertyDefinition

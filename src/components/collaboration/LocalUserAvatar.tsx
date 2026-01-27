@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { User } from 'lucide-react';
 import { useSyncStore } from '../../stores';
 
 export function LocalUserAvatar() {

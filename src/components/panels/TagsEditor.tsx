@@ -59,7 +59,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
 
   // Get icon component by name
   const getIconComponent = useCallback((name: string) => {
-    return (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
+    return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
   }, []);
 
   // Merge TagSet names with investigation suggestions (unique, sorted)

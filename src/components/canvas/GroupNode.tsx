@@ -162,7 +162,7 @@ function GroupNodeComponent({ data }: NodeProps) {
           <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 z-10">
             {tagsToDisplay.slice(0, 4).map(({ name, iconName }) => {
               const IconComponent = iconName
-                ? (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[iconName]
+                ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[iconName]
                 : null;
               const showIcon = (tagDisplayMode === 'icons' || tagDisplayMode === 'both') && IconComponent;
               const showLabel = tagDisplayMode === 'labels' || tagDisplayMode === 'both';

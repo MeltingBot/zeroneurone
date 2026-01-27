@@ -251,7 +251,7 @@ export function MapView() {
           }
         }
         // No temporal data on element - always show
-        return { geo: element.geo };
+        return element.geo ? { geo: element.geo } : null;
       }
 
       return null;

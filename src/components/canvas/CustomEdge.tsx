@@ -65,8 +65,8 @@ function CustomEdgeComponent(props: EdgeProps) {
     targetHandleId,
     label,
     labelStyle,
-    labelBgStyle,
-    labelBgBorderRadius,
+    // labelBgStyle, // Unused - we use custom label styling
+    // labelBgBorderRadius, // Unused
     data,
     selected,  // React Flow's built-in selected state
   } = props;
@@ -91,7 +91,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
-  const onStartEditing = edgeData?.onStartEditing;
+  // const onStartEditing = edgeData?.onStartEditing; // Currently unused
   const parallelIndex = edgeData?.parallelIndex ?? 0;
   const parallelCount = edgeData?.parallelCount ?? 1;
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };

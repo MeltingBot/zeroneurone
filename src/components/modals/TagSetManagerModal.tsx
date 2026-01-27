@@ -492,7 +492,7 @@ function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
 
   // Get custom icon if set, otherwise use shape icon
   const CustomIcon = tagSet.defaultVisual.icon
-    ? (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[tagSet.defaultVisual.icon]
+    ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[tagSet.defaultVisual.icon]
     : null;
   const ShapeIcon = tagSet.defaultVisual.shape
     ? shapeIcons[tagSet.defaultVisual.shape]

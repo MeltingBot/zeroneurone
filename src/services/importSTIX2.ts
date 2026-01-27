@@ -53,6 +53,10 @@ interface STIXObject {
   relationship_type?: string;
   source_ref?: string;
   target_ref?: string;
+  // Sighting fields
+  sighting_of_ref?: string;
+  observed_data_refs?: string[];
+  where_sighted_refs?: string[];
   // Indicator fields
   pattern?: string;
   pattern_type?: string;
@@ -99,7 +103,7 @@ interface STIXObject {
 const STIX_TYPE_STYLES: Record<string, { color: string; shape: ElementShape; icon?: string }> = {
   'threat-actor': { color: '#dc2626', shape: 'diamond', icon: 'user-x' },
   'campaign': { color: '#ea580c', shape: 'rectangle', icon: 'target' },
-  'malware': { color: '#b91c1c', shape: 'hexagon', icon: 'bug' },
+  'malware': { color: '#b91c1c', shape: 'diamond', icon: 'bug' },
   'attack-pattern': { color: '#7c3aed', shape: 'diamond', icon: 'zap' },
   'indicator': { color: '#ca8a04', shape: 'circle', icon: 'alert-triangle' },
   'infrastructure': { color: '#0284c7', shape: 'rectangle', icon: 'server' },

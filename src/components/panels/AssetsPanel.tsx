@@ -12,8 +12,7 @@ interface AssetsPanelProps {
 }
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
-  const { t } = useTranslation('common');
-  const { t: tPanels } = useTranslation('panels');
+  useTranslation('panels'); // Load namespace for child components
   const { assets, addAsset, removeAsset, reorderAssets } = useInvestigationStore();
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
   const [isDragging, setIsDragging] = useState(false);

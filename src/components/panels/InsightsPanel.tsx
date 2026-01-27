@@ -43,8 +43,8 @@ export function InsightsPanel() {
     highlightType,
     selectedClusterId,
     pathResults,
-    pathFromId,
-    pathToId,
+    // pathFromId, // Currently unused - for path finding UI
+    // pathToId,
     computeInsights,
     highlightCluster,
     highlightCentralElement,

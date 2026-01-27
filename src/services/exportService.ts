@@ -3,7 +3,7 @@ import type { Investigation, Element, Link, Asset } from '../types';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
 
-export type ExportFormat = 'json' | 'csv' | 'graphml' | 'zip';
+export type ExportFormat = 'json' | 'csv' | 'graphml' | 'geojson' | 'zip';
 
 /** Asset metadata for export (without binary data) */
 export interface ExportedAssetMeta {
@@ -266,6 +266,120 @@ class ExportService {
   }
 
   /**
+   * Export to GeoJSON format for GIS tools
+   * Only includes elements with valid geo coordinates
+   * Links are exported as LineStrings if both endpoints have geo
+   */
+  exportToGeoJSON(
+    investigation: Investigation,
+    elements: Element[],
+    links: Link[]
+  ): string {
+    // Build element map for link endpoint lookup
+    const elementMap = new Map(elements.map(el => [el.id, el]));
+
+    // Filter elements with valid geo coordinates
+    const geoElements = elements.filter(
+      el => el.geo && (el.geo.lat !== 0 || el.geo.lng !== 0)
+    );
+
+    // Build features from elements
+    const elementFeatures = geoElements.map(el => ({
+      type: 'Feature' as const,
+      id: el.id,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [el.geo!.lng, el.geo!.lat], // GeoJSON uses [lng, lat]
+      },
+      properties: {
+        name: el.label,
+        type: 'element',
+        notes: el.notes || null,
+        tags: el.tags.length > 0 ? el.tags : null,
+        confidence: el.confidence,
+        source: el.source || null,
+        date: el.date ? new Date(el.date).toISOString() : null,
+        color: el.visual.color,
+        shape: el.visual.shape,
+        // Include custom properties
+        ...Object.fromEntries(
+          el.properties?.map(p => [`prop_${p.key}`, p.value]) ?? []
+        ),
+      },
+    }));
+
+    // Build features from links (as LineStrings if both endpoints have geo)
+    const linkFeatures = links
+      .map(link => {
+        const fromEl = elementMap.get(link.fromId);
+        const toEl = elementMap.get(link.toId);
+
+        // Skip if either endpoint doesn't have geo
+        if (!fromEl?.geo || !toEl?.geo) return null;
+        if (fromEl.geo.lat === 0 && fromEl.geo.lng === 0) return null;
+        if (toEl.geo.lat === 0 && toEl.geo.lng === 0) return null;
+
+        return {
+          type: 'Feature' as const,
+          id: link.id,
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: [
+              [fromEl.geo.lng, fromEl.geo.lat],
+              [toEl.geo.lng, toEl.geo.lat],
+            ],
+          },
+          properties: {
+            name: link.label || `${fromEl.label} → ${toEl.label}`,
+            type: 'link',
+            from: fromEl.label,
+            to: toEl.label,
+            fromId: link.fromId,
+            toId: link.toId,
+            notes: link.notes || null,
+            tags: link.tags?.length > 0 ? link.tags : null,
+            confidence: link.confidence,
+            source: link.source || null,
+            directed: link.directed,
+            dateStart: link.dateRange?.start ? new Date(link.dateRange.start).toISOString() : null,
+            dateEnd: link.dateRange?.end ? new Date(link.dateRange.end).toISOString() : null,
+            color: link.visual.color,
+            style: link.visual.style,
+            // Include custom properties
+            ...Object.fromEntries(
+              link.properties?.map(p => [`prop_${p.key}`, p.value]) ?? []
+            ),
+          },
+        };
+      })
+      .filter((f): f is NonNullable<typeof f> => f !== null);
+
+    const geojson = {
+      type: 'FeatureCollection' as const,
+      name: investigation.name,
+      metadata: {
+        exportedAt: new Date().toISOString(),
+        source: 'zeroneurone',
+        version: this.VERSION,
+        investigation: {
+          id: investigation.id,
+          name: investigation.name,
+          description: investigation.description,
+        },
+        stats: {
+          totalElements: elements.length,
+          elementsWithGeo: geoElements.length,
+          totalLinks: links.length,
+          linksWithGeo: linkFeatures.length,
+        },
+      },
+      features: [...elementFeatures, ...linkFeatures],
+    };
+
+    return JSON.stringify(geojson, null, 2);
+  }
+
+  /**
    * Download string data as a file
    */
   download(content: string, filename: string, mimeType: string): void {
@@ -322,6 +436,11 @@ class ExportService {
       case 'graphml': {
         const graphml = this.exportToGraphML(investigation, elements, links);
         this.download(graphml, `${baseName}.graphml`, 'application/xml');
+        break;
+      }
+      case 'geojson': {
+        const geojson = this.exportToGeoJSON(investigation, elements, links);
+        this.download(geojson, `${baseName}.geojson`, 'application/geo+json');
         break;
       }
     }

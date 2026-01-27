@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
@@ -500,9 +500,6 @@ export function TimelineView() {
     const labels: { x: number; label: string; isMain: boolean }[] = [];
     const containerWidth = getContainerWidth();
     const viewEnd = xToDate(containerWidth);
-
-    const msPerDay = 24 * 60 * 60 * 1000;
-    const daysVisible = (viewEnd.getTime() - viewStart.getTime()) / msPerDay;
 
     let step: 'day' | 'week' | 'month' | 'year';
     let format: Intl.DateTimeFormatOptions;

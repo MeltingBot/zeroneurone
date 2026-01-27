@@ -35,7 +35,7 @@ function Avatar({ name, color, isLocal }: AvatarProps) {
 }
 
 export function PresenceAvatars() {
-  const { mode, localUser, remoteUsers, connected } = useSyncStore();
+  const { mode, localUser, remoteUsers } = useSyncStore();
 
   // Don't show in local mode
   if (mode === 'local') {

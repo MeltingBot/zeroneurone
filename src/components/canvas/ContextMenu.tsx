@@ -1,4 +1,4 @@
-import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
+import { memo, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect } from 'lucide-react';
 

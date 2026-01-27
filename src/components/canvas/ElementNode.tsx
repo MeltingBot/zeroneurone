@@ -374,7 +374,7 @@ function ElementNodeComponent({ data }: NodeProps) {
         >
           {tagsToDisplay.slice(0, 4).map(({ name, iconName }) => {
             const IconComponent = iconName
-              ? (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[iconName]
+              ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[iconName]
               : null;
             const showIcon = (tagDisplayMode === 'icons' || tagDisplayMode === 'both') && IconComponent;
             const showLabel = tagDisplayMode === 'labels' || tagDisplayMode === 'both';

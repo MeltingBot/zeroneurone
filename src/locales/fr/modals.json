@@ -60,6 +60,8 @@
       "csvDesc": "Tableaux éléments et liens séparés",
       "graphml": "GraphML",
       "graphmlDesc": "Format graphe standard (Gephi, yEd)",
+      "geojson": "GeoJSON",
+      "geojsonDesc": "Format géographique pour SIG (QGIS, ArcGIS)",
       "png": "PNG (image du canvas)",
       "pngDesc": "Capture visuelle avec choix de résolution",
       "svg": "SVG (vectoriel)",

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, isValidElement } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -7,6 +7,7 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   minRows?: number;
+  maxRows?: number;
   className?: string;
   /** If true, show preview by default when there's content */
   previewByDefault?: boolean;
@@ -95,8 +96,8 @@ function slugify(text: string): string {
 function getTextContent(children: React.ReactNode): string {
   if (typeof children === 'string') return children;
   if (Array.isArray(children)) return children.map(getTextContent).join('');
-  if (children && typeof children === 'object' && 'props' in children) {
-    return getTextContent((children as React.ReactElement).props.children);
+  if (isValidElement<{ children?: React.ReactNode }>(children)) {
+    return getTextContent(children.props.children);
   }
   return '';
 }

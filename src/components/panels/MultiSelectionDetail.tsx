@@ -15,8 +15,6 @@ import {
 } from 'lucide-react';
 import { useInvestigationStore, useSelectionStore } from '../../stores';
 import type {
-  Element,
-  Link,
   ElementShape,
   LinkDirection,
   LinkStyle,
@@ -72,7 +70,6 @@ export function MultiSelectionDetail() {
 
   const elementCount = selectedElements.length;
   const linkCount = selectedLinks.length;
-  const totalCount = elementCount + linkCount;
 
   // Collect all existing tags from selection
   const allSelectedTags = useMemo(() => {

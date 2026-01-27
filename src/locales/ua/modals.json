@@ -60,6 +60,8 @@
       "csvDesc": "Окремі таблиці елементів та зв'язків",
       "graphml": "GraphML",
       "graphmlDesc": "Стандартний формат графу (Gephi, yEd)",
+      "geojson": "GeoJSON",
+      "geojsonDesc": "Географічний формат для ГІС (QGIS, ArcGIS)",
       "png": "PNG (зображення дошки)",
       "pngDesc": "Візуальний знімок з вибором роздільності",
       "svg": "SVG (векторний)",

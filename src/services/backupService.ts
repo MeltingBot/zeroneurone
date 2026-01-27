@@ -6,7 +6,6 @@ import type {
   Investigation,
   Element,
   Link,
-  Asset,
   View,
   Report,
   TagSet,

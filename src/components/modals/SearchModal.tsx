@@ -90,8 +90,8 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         if (element) {
           selectElement(element.id);
           // Get element center (position is top-left, add half of typical size)
-          const elementWidth = element.visual?.size?.width ?? 150;
-          const elementHeight = element.visual?.size?.height ?? 60;
+          const elementWidth = (element.visual?.size as number | undefined) ?? 150;
+          const elementHeight = Math.round(elementWidth * 0.4); // Approximate height based on width
           const centerX = element.position.x + elementWidth / 2;
           const centerY = element.position.y + elementHeight / 2;
           // Center viewport on element

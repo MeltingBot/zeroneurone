@@ -38,7 +38,7 @@ export function ViewsPanel() {
     setLinkAnchorMode,
     setLinkCurveMode,
   } = useInvestigationStore();
-  const { savedViews, saveView, loadView, deleteView, hasActiveFilters } = useViewStore();
+  const { savedViews, saveView, loadView, deleteView } = useViewStore();
   const [isCreating, setIsCreating] = useState(false);
   const [newViewName, setNewViewName] = useState('');
   const [includePositions, setIncludePositions] = useState(false);
@@ -129,9 +129,6 @@ export function ViewsPanel() {
   const handleSizeChange = useCallback((size: TagDisplaySize) => {
     setTagDisplaySize(size);
   }, [setTagDisplaySize]);
-
-  // Can save if has filters OR if including positions
-  const canSaveView = hasActiveFilters() || includePositions;
 
   return (
     <div className="p-4 space-y-6">
@@ -470,7 +467,9 @@ export function ViewsPanel() {
                     {view.name}
                   </span>
                   {view.elementPositions && view.elementPositions.length > 0 && (
-                    <LayoutGrid size={12} className="text-text-tertiary flex-shrink-0" title={t('views.savedPositions')} />
+                    <span title={t('views.savedPositions')}>
+                      <LayoutGrid size={12} className="text-text-tertiary flex-shrink-0" />
+                    </span>
                   )}
                 </div>
                 <button
@@ -498,7 +497,7 @@ export function ViewsPanel() {
               return (
                 <p>
                   {t('views.activeView')}
-                  {hasPositions && ` ${t('views.positionsRestored', { count: activeView.elementPositions.length })}`}
+                  {hasPositions && ` ${t('views.positionsRestored', { count: activeView?.elementPositions?.length ?? 0 })}`}
                 </p>
               );
             })()}

@@ -60,6 +60,8 @@
       "csvDesc": "Elementu eta lotura taulak bereizita",
       "graphml": "GraphML",
       "graphmlDesc": "Grafo formatu estandarra (Gephi, yEd)",
+      "geojson": "GeoJSON",
+      "geojsonDesc": "GIS formatu geografikoa (QGIS, ArcGIS)",
       "png": "PNG (arbelaren irudia)",
       "pngDesc": "Kaptura bisuala bereizmen aukerarekin",
       "svg": "SVG (bektoriala)",

@@ -21,8 +21,6 @@ export function CommentsSection({ targetId, targetType }: CommentsSectionProps) 
     .filter(c => c.targetId === targetId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const unresolvedCount = targetComments.filter(c => !c.resolved).length;
-
   // Get current user name for resolving
   const getCurrentUserName = useCallback(() => {
     return localUser.name;

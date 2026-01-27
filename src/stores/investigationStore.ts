@@ -14,6 +14,7 @@ import type {
   Asset,
   Position,
   PropertyDefinition,
+  Property,
 } from '../types';
 import {
   investigationRepository,
@@ -1661,12 +1662,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const stateLinks = get().links;
     const stateComments = get().comments;
 
-    // Helper: shallow compare arrays of {key, value} objects
-    const propsEqual = (a: Array<{key: string; value: string}> | undefined, b: Array<{key: string; value: string}> | undefined): boolean => {
+    // Helper: shallow compare arrays of Property objects
+    const propsEqual = (a: Property[] | undefined, b: Property[] | undefined): boolean => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       for (let i = 0; i < a.length; i++) {
-        if (a[i].key !== b[i].key || a[i].value !== b[i].value) return false;
+        if (a[i].key !== b[i].key || String(a[i].value) !== String(b[i].value) || a[i].type !== b[i].type) return false;
       }
       return true;
     };

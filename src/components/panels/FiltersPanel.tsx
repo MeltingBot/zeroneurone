@@ -15,9 +15,21 @@ import {
 } from 'lucide-react';
 import { useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
 import { ProgressiveList } from '../common/ProgressiveList';
-import type { Confidence } from '../../types';
+import type { Confidence, Element, Comment, ViewFilters } from '../../types';
 
 // Quick filter definitions (without labels - those come from translations)
+interface QuickFilterParams {
+  filters: ViewFilters;
+  setFilters: (filters: Partial<ViewFilters>) => void;
+  clearFilters: () => void;
+  isolated: string[];
+  hideElements: (ids: string[]) => void;
+  showAllElements: () => void;
+  hiddenElementIds: Set<string>;
+  elements: Element[];
+  comments: Comment[];
+}
+
 interface QuickFilterDef {
   id: string;
   labelKey: string;
@@ -25,18 +37,6 @@ interface QuickFilterDef {
   icon: React.ReactNode;
   apply: (params: QuickFilterParams) => void;
   isActive: (params: QuickFilterParams) => boolean;
-}
-
-interface QuickFilterParams {
-  filters: ReturnType<typeof useViewStore>['filters'];
-  setFilters: ReturnType<typeof useViewStore>['setFilters'];
-  clearFilters: ReturnType<typeof useViewStore>['clearFilters'];
-  isolated: string[];
-  hideElements: ReturnType<typeof useViewStore>['hideElements'];
-  showAllElements: ReturnType<typeof useViewStore>['showAllElements'];
-  hiddenElementIds: Set<string>;
-  elements: ReturnType<typeof useInvestigationStore>['elements'];
-  comments: ReturnType<typeof useInvestigationStore>['comments'];
 }
 
 const QUICK_FILTER_DEFS: QuickFilterDef[] = [
@@ -186,11 +186,6 @@ export function FiltersPanel() {
 
   const isActive = hasActiveFilters();
 
-  // Count visible vs total elements
-  const visibleCount = useMemo(() => {
-    return elements.filter((el) => !hiddenElementIds.has(el.id)).length;
-  }, [elements, hiddenElementIds]);
-
   // Count elements matching current filters
   const matchingCount = useMemo(() => {
     return elements.filter((el) => {
@@ -285,15 +280,6 @@ export function FiltersPanel() {
       }
     },
     [setFilters, filters.badgePropertyKey]
-  );
-
-  // Handle confidence filter change
-  const handleConfidenceChange = useCallback(
-    (value: string) => {
-      const confidence = value ? (parseInt(value) as Confidence) : null;
-      setFilters({ minConfidence: confidence });
-    },
-    [setFilters]
   );
 
   // Handle text search change
@@ -546,7 +532,7 @@ export function FiltersPanel() {
 // Hidden elements section (extracted to use translations)
 interface HiddenElementsSectionProps {
   hiddenElementIds: Set<string>;
-  elements: ReturnType<typeof useInvestigationStore>['elements'];
+  elements: Element[];
   showElement: (id: string) => void;
   showAllElements: () => void;
 }

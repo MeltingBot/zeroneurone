@@ -86,7 +86,7 @@ export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
 
   // Get the icon component for rendering
   const getIconComponent = useCallback((name: string) => {
-    return (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
+    return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
   }, []);
 
   const handleSelect = useCallback((iconName: string) => {
@@ -231,7 +231,7 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
   }, [search]);
 
   const getIconComponent = useCallback((name: string) => {
-    return (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
+    return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
   }, []);
 
   const handleSelect = useCallback((iconName: string) => {

@@ -2,7 +2,7 @@ import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee, Sun, Moon } from 'lucide-react';
-import { Layout, IconButton, Modal, Button, LanguageSwitcher } from '../components/common';
+import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal } from '../components/modals';
 
@@ -194,21 +194,42 @@ export function InvestigationPage() {
   );
 
   // Render only the active view (React Flow/Leaflet need visible container)
+  // Each view is wrapped in its own ErrorBoundary for isolated error recovery
   const renderMainView = () => {
-    const view = (() => {
-      switch (displayMode) {
-        case 'canvas':
-          return <Canvas />;
-        case 'timeline':
-          return <TimelineView />;
-        case 'map':
-          return <MapView />;
-        default:
-          return <Canvas />;
-      }
-    })();
-
-    return <Suspense fallback={<ViewLoader />}>{view}</Suspense>;
+    switch (displayMode) {
+      case 'canvas':
+        return (
+          <ErrorBoundary scope="Canvas" showHomeButton>
+            <Suspense fallback={<ViewLoader />}>
+              <Canvas />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      case 'timeline':
+        return (
+          <ErrorBoundary scope="Timeline" showHomeButton>
+            <Suspense fallback={<ViewLoader />}>
+              <TimelineView />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      case 'map':
+        return (
+          <ErrorBoundary scope="Carte" showHomeButton>
+            <Suspense fallback={<ViewLoader />}>
+              <MapView />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      default:
+        return (
+          <ErrorBoundary scope="Canvas" showHomeButton>
+            <Suspense fallback={<ViewLoader />}>
+              <Canvas />
+            </Suspense>
+          </ErrorBoundary>
+        );
+    }
   };
 
   return (
@@ -332,7 +353,9 @@ export function InvestigationPage() {
         </main>
 
         {/* Side panel */}
-        <SidePanel />
+        <ErrorBoundary scope="Panneau" compact>
+          <SidePanel />
+        </ErrorBoundary>
       </div>
 
 
