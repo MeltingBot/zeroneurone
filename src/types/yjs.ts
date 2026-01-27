@@ -99,7 +99,7 @@ export interface UserPresence {
   /** Link ID currently being edited */
   editingLink: string | null;
   /** Current view mode */
-  viewMode: 'canvas' | 'map' | 'timeline' | 'split';
+  viewMode: 'canvas' | 'map' | 'timeline';
 }
 
 export const USER_COLORS = [

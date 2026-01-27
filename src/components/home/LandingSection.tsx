@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, Github, Coffee, Sun, Moon } from 'lucide-react';
+import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 
 interface LandingSectionProps {
@@ -111,6 +111,15 @@ export function LandingSection({
             <Info size={14} />
             {t('home.about')}
           </button>
+          <a
+            href="https://doc.zeroneurone.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            <BookOpen size={14} />
+            {t('home.documentation')}
+          </a>
           <a
             href="https://github.com/MeltingBot/zeroneurone"
             target="_blank"

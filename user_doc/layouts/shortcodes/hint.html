@@ -1,0 +1,9 @@
+{{/* Hint shortcode for callout boxes */}}
+{{/* Usage: {{< hint info >}} Content {{< /hint >}} */}}
+{{/* Types: info, warning, danger */}}
+
+{{ $type := .Get 0 | default "info" }}
+
+<div class="book-hint {{ $type }}">
+  {{ .Inner | markdownify }}
+</div>

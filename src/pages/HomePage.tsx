@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
 import { InvestigationCard, LandingSection } from '../components/home';
@@ -123,6 +123,15 @@ export function HomePage() {
             >
               <Info size={16} />
             </Button>
+            <a
+              href="https://doc.zeroneurone.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
+              title={t('home.documentation')}
+            >
+              <BookOpen size={16} />
+            </a>
             <Button
               variant="ghost"
               size="sm"

@@ -1,0 +1,13 @@
+# Hugo generated
+public/
+resources/
+
+# Theme (cloned separately)
+themes/
+
+# Hugo cache
+.hugo_build.lock
+
+# OS files
+.DS_Store
+Thumbs.db

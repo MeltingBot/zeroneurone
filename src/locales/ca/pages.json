@@ -6,6 +6,7 @@
     "manageTags": "Gestionar etiquetes",
     "import": "Importar",
     "about": "Quant a",
+    "documentation": "Documentació",
     "storage": "Emmagatzematge",
     "darkMode": "Mode fosc",
     "lightMode": "Mode clar",
@@ -196,6 +197,7 @@
       "clearFilters": "Esborrar filtres",
       "activeFilters": "Filtres actius",
       "shortcuts": "Dreceres de teclat",
+      "documentation": "Documentació",
       "supportKofi": "Donar suport a Ko-fi"
     },
     "collab": {

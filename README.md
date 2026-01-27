@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-0.9.13-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -343,13 +343,13 @@ Ou deployer votre propre serveur y-websocket.
 
 ## Roadmap
 
-### v1.0 — Stabilisation (en cours)
+### v1.0 — Stabilisation
 - [x] Tests E2E Playwright
 - [x] PWA complete
 - [x] Accessibilite WCAG AA
 - [x] i18n (11 langues)
-- [ ] Documentation utilisateur
-- [ ] Error boundaries
+- [x] Documentation utilisateur : [doc.zeroneurone.com](https://doc.zeroneurone.com)
+- [x] Error boundaries
 
 ### v1.1 — Analyse avancee
 - [ ] Betweenness centrality

@@ -1,0 +1,51 @@
+// Custom styles for ZeroNeurone documentation
+// This file is automatically included by hugo-book theme
+
+// Hint boxes with dark mode support
+.book-hint {
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 4px 4px 0;
+  border-left: 4px solid;
+
+  // Info (default)
+  &.info {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+  }
+
+  // Warning
+  &.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+  }
+
+  // Danger
+  &.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+  }
+
+  // Paragraphs inside hints
+  p:first-child {
+    margin-top: 0;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Dark mode adjustments
+body.dark {
+  .book-hint {
+    &.info {
+      background: rgba(59, 130, 246, 0.15);
+    }
+    &.warning {
+      background: rgba(245, 158, 11, 0.15);
+    }
+    &.danger {
+      background: rgba(239, 68, 68, 0.15);
+    }
+  }
+}

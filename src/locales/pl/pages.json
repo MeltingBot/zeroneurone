@@ -6,6 +6,7 @@
     "manageTags": "Zarządzaj tagami",
     "import": "Importuj",
     "about": "O aplikacji",
+    "documentation": "Dokumentacja",
     "storage": "Przechowywanie",
     "darkMode": "Tryb ciemny",
     "lightMode": "Tryb jasny",
@@ -196,6 +197,7 @@
       "clearFilters": "Wyczyść filtry",
       "activeFilters": "Aktywne filtry",
       "shortcuts": "Skróty klawiszowe",
+      "documentation": "Dokumentacja",
       "supportKofi": "Wesprzyj na Ko-fi"
     },
     "collab": {

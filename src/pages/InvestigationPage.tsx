@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, Github, Coffee, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal } from '../components/modals';
@@ -324,6 +324,15 @@ export function InvestigationPage() {
           >
             <Keyboard size={14} />
           </button>
+          <a
+            href="https://doc.zeroneurone.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            title={t('investigation.header.documentation')}
+          >
+            <BookOpen size={14} />
+          </a>
           <a
             href="https://github.com/MeltingBot/zeroneurone"
             target="_blank"

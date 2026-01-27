@@ -6,6 +6,7 @@
     "manageTags": "Gerir tags",
     "import": "Importar",
     "about": "Sobre",
+    "documentation": "Documentação",
     "storage": "Armazenamento",
     "darkMode": "Modo escuro",
     "lightMode": "Modo claro",
@@ -196,6 +197,7 @@
       "clearFilters": "Limpar filtros",
       "activeFilters": "Filtros ativos",
       "shortcuts": "Atalhos de teclado",
+      "documentation": "Documentação",
       "supportKofi": "Apoiar no Ko-fi"
     },
     "collab": {

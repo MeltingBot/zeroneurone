@@ -1,0 +1,51 @@
+# Hugo configuration for ZeroNeurone documentation
+# Theme: hugo-book (https://github.com/alex-shpak/hugo-book)
+
+baseURL = "https://doc.zeroneurone.com/"
+title = "ZeroNeurone"
+theme = "hugo-book"
+
+# Multi-language setup
+defaultContentLanguage = "fr"
+defaultContentLanguageInSubdir = true
+
+[languages]
+  [languages.fr]
+    languageName = "Français"
+    contentDir = "content/fr"
+    weight = 1
+    [languages.fr.params]
+      bookToC = true
+
+  [languages.en]
+    languageName = "English"
+    contentDir = "content/en"
+    weight = 2
+    [languages.en.params]
+      bookToC = true
+
+[params]
+  # Book theme settings
+  BookTheme = "auto"
+  BookToC = true
+  BookSection = "/"
+  BookRepo = "https://github.com/MeltingBot/zeroneurone"
+  BookEditPath = "edit/main/user_doc/content"
+  BookDateFormat = "2 January 2006"
+
+  # Logo
+  BookLogo = "/images/logo.png"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+
+[menu]
+  [[menu.after]]
+    name = "GitHub"
+    url = "https://github.com/MeltingBot/zeroneurone"
+    weight = 10

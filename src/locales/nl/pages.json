@@ -6,6 +6,7 @@
     "manageTags": "Tags beheren",
     "import": "Importeren",
     "about": "Over",
+    "documentation": "Documentatie",
     "storage": "Opslag",
     "darkMode": "Donkere modus",
     "lightMode": "Lichte modus",
@@ -196,6 +197,7 @@
       "clearFilters": "Filters wissen",
       "activeFilters": "Actieve filters",
       "shortcuts": "Sneltoetsen",
+      "documentation": "Documentatie",
       "supportKofi": "Steun op Ko-fi"
     },
     "collab": {

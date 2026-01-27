@@ -6,6 +6,7 @@
     "manageTags": "Керувати тегами",
     "import": "Імпортувати",
     "about": "Про застосунок",
+    "documentation": "Документація",
     "storage": "Сховище",
     "darkMode": "Темний режим",
     "lightMode": "Світлий режим",
@@ -196,6 +197,7 @@
       "clearFilters": "Очистити фільтри",
       "activeFilters": "Активні фільтри",
       "shortcuts": "Клавіатурні скорочення",
+      "documentation": "Документація",
       "supportKofi": "Підтримати на Ko-fi"
     },
     "collab": {

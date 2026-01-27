@@ -6,6 +6,7 @@
     "manageTags": "Etiketak kudeatu",
     "import": "Inportatu",
     "about": "Honi buruz",
+    "documentation": "Dokumentazioa",
     "storage": "Biltegiratzea",
     "darkMode": "Modu iluna",
     "lightMode": "Modu argia",
@@ -196,6 +197,7 @@
       "clearFilters": "Iragazkiak garbitu",
       "activeFilters": "Iragazki aktiboak",
       "shortcuts": "Teklatuko lasterbideak",
+      "documentation": "Dokumentazioa",
       "supportKofi": "Ko-fi-n lagundu"
     },
     "collab": {

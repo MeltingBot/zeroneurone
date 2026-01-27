@@ -1,0 +1,73 @@
+services:
+  # Development server with live reload
+  dev:
+    image: hugomods/hugo:exts-0.147.0
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        if [ ! -d /src/themes/hugo-book ]; then
+          echo "Downloading hugo-book theme..."
+          mkdir -p /src/themes
+          git clone --depth 1 https://github.com/alex-shpak/hugo-book.git /src/themes/hugo-book
+        fi
+        hugo server --bind 0.0.0.0 --buildDrafts --buildFuture
+    working_dir: /src
+    volumes:
+      - .:/src
+    ports:
+      - "1313:1313"
+    profiles:
+      - dev
+
+  # Build static site only
+  build:
+    image: hugomods/hugo:exts-0.147.0
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        if [ ! -d /src/themes/hugo-book ]; then
+          echo "Downloading hugo-book theme..."
+          mkdir -p /src/themes
+          git clone --depth 1 https://github.com/alex-shpak/hugo-book.git /src/themes/hugo-book
+        fi
+        hugo --minify
+    working_dir: /src
+    volumes:
+      - .:/src
+    profiles:
+      - build
+
+  # Production server
+  docs:
+    image: zeroneurone-doc:latest
+    container_name: zeroneurone-docs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.services.zeroneurone-docs.loadbalancer.server.port=80"
+      # Router HTTPS (pour accès direct ou Cloudflare Full)
+      - "traefik.http.routers.zeroneurone-docs.rule=Host(`doc.zeroneurone.com`)"
+      - "traefik.http.routers.zeroneurone-docs.entrypoints=websecure"
+      - "traefik.http.routers.zeroneurone-docs.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.zeroneurone-docs.service=zeroneurone-docs"
+      - "traefik.http.routers.zeroneurone-docs.middlewares=cloudflare-ips@file"
+      # Router HTTP (pour Cloudflare Flexible)
+      - "traefik.http.routers.zeroneurone-docs-http.rule=Host(`doc.zeroneurone.com`)"
+      - "traefik.http.routers.zeroneurone-docs-http.entrypoints=web"
+      - "traefik.http.routers.zeroneurone-docs-http.service=zeroneurone-docs"
+      - "traefik.http.routers.zeroneurone-docs-http.middlewares=cloudflare-ips@file"
+
+networks:
+  web:
+    external: true

@@ -12,8 +12,7 @@ const shortcutsByCategory = [
     items: [
       { keys: ['1'], descKey: 'canvasView' },
       { keys: ['2'], descKey: 'mapView' },
-      { keys: ['3'], descKey: 'splitView' },
-      { keys: ['4'], descKey: 'timelineView' },
+      { keys: ['3'], descKey: 'timelineView' },
     ],
   },
   {
