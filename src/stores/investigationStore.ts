@@ -1698,6 +1698,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         if (stateEl.label !== newEl.label ||
             stateEl.notes !== newEl.notes ||
             stateEl.position.x !== newEl.position.x || stateEl.position.y !== newEl.position.y ||
+            stateEl.geo?.lat !== newEl.geo?.lat || stateEl.geo?.lng !== newEl.geo?.lng ||
             stateEl.visual.color !== newEl.visual.color ||
             stateEl.visual.shape !== newEl.visual.shape ||
             stateEl.visual.size !== newEl.visual.size ||

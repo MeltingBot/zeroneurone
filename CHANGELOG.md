@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5
+
+### Fixes
+- Fix map geo position not persisting after view change (add geo to Y.Doc differential sync comparison)
+- Fix map drag prioritizing element.geo over event.geo for manually positioned markers
+
 ## 1.0.4
 
 ### Fixes

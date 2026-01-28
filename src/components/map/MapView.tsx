@@ -179,21 +179,26 @@ export function MapView() {
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
     (element: Element, date: Date | null): { geo: { lat: number; lng: number }; label?: string } | null => {
-      // If no temporal mode or no date, show element at most recent position
+      // If no temporal mode or no date, show element at its current position
       if (!date || !temporalMode) {
-        // Get events with geo coordinates, sorted by date (most recent last)
+        // Priority 1: Use element.geo if it exists (may have been manually positioned/dragged)
+        // This ensures dragged positions are respected even if element has events with geo
+        if (element.geo) {
+          return { geo: element.geo };
+        }
+
+        // Priority 2: Fall back to most recent event's geo if element has no base geo
+        // This allows elements with only event-based positions to still appear on map
         const geoEvents = (element.events || [])
           .filter((e) => e.geo && e.date)
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        // Use most recent event's geo if available
         if (geoEvents.length > 0) {
           const mostRecent = geoEvents[geoEvents.length - 1];
           return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
         }
 
-        // Otherwise use element's base geo
-        return element.geo ? { geo: element.geo } : null;
+        return null;
       }
 
       const targetTime = date.getTime();
@@ -270,7 +275,12 @@ export function MapView() {
   // This returns a position even for future events
   const getAnyGeoPosition = useCallback(
     (element: Element): { geo: { lat: number; lng: number }; label?: string } | null => {
-      // Try events with geo first (prefer closest to selected date or first)
+      // Priority 1: Use element.geo if it exists (consistent with getPositionAtTime)
+      if (element.geo) {
+        return { geo: element.geo };
+      }
+
+      // Priority 2: Try events with geo (prefer closest to selected date or most recent)
       const geoEvents = (element.events || [])
         .filter((e) => e.geo && e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -295,8 +305,7 @@ export function MapView() {
         return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
       }
 
-      // Fall back to base geo
-      return element.geo ? { geo: element.geo } : null;
+      return null;
     },
     [temporalMode, selectedDate]
   );
@@ -850,30 +859,42 @@ export function MapView() {
         });
 
         // Drag to update geo position (with undo/redo support)
+        // Capture element.id at marker creation time to avoid closure issues
+        const markerId = element.id;
         marker.on('dragstart', () => {
           const pos = marker.getLatLng();
-          dragStartGeoRef.current = { id: element.id, geo: { lat: pos.lat, lng: pos.lng } };
+          dragStartGeoRef.current = { id: markerId, geo: { lat: pos.lat, lng: pos.lng } };
         });
         marker.on('dragend', () => {
           const newPos = marker.getLatLng();
           const newGeo = { lat: newPos.lat, lng: newPos.lng };
-          const oldGeo = dragStartGeoRef.current?.geo;
-          const elementId = element.id;
 
-          // Store dragged position to override event-based positions
-          // Use state (not ref) to trigger re-render with new position
+          // Verify we're updating the correct element (safety check)
+          const dragStart = dragStartGeoRef.current;
+          if (dragStart && dragStart.id !== markerId) {
+            // Race condition - dragStartGeoRef was overwritten by another marker
+            // Skip undo/redo but still update position
+            console.warn('Map drag: id mismatch, skipping undo/redo');
+          }
+
+          const oldGeo = dragStart?.id === markerId ? dragStart.geo : null;
+
+          // Store dragged position to trigger immediate re-render
+          // (updateElement updates store but re-render may be async)
           setDraggedPositions(prev => {
             const next = new Map(prev);
-            next.set(elementId, newGeo);
+            next.set(markerId, newGeo);
             return next;
           });
 
-          updateElement(elementId, { geo: newGeo });
+          // Update element.geo in store - this is the persisted position
+          updateElement(markerId, { geo: newGeo });
+
           if (oldGeo) {
             pushAction({
               type: 'update-element',
-              undo: { elementId, changes: { geo: oldGeo } },
-              redo: { elementId, changes: { geo: newGeo } },
+              undo: { elementId: markerId, changes: { geo: oldGeo } },
+              redo: { elementId: markerId, changes: { geo: newGeo } },
             });
           }
           dragStartGeoRef.current = null;
