@@ -57,13 +57,15 @@ function EventItem({
     setLngStr(event.geo?.lng?.toFixed(6) ?? '');
   }, [event.id, event.label, event.description, event.source, event.geo?.lat, event.geo?.lng]);
 
-  // Format date for date input (YYYY-MM-DD) in LOCAL timezone
-  const formatDateForInput = (date: Date): string => {
+  // Format date for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
+  const formatDateTimeForInput = (date: Date): string => {
     const d = new Date(date);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   // Blur handlers - sync to parent
@@ -146,31 +148,36 @@ function EventItem({
         </div>
       </div>
 
-      {/* Dates - always visible (date pickers sync immediately, no typing lag) */}
-      <div className="flex items-center gap-2">
-        <Calendar size={12} className="text-text-tertiary shrink-0" />
-        <input
-          type="date"
-          value={formatDateForInput(new Date(event.date))}
-          onChange={(e) => {
-            if (e.target.value) {
-              onUpdate({ date: new Date(e.target.value + 'T12:00:00') });
-            }
-          }}
-          className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-        />
-        <span className="text-xs text-text-tertiary">{t('detail.events.dateTo')}</span>
-        <input
-          type="date"
-          value={event.dateEnd ? formatDateForInput(new Date(event.dateEnd)) : ''}
-          onChange={(e) => {
-            onUpdate({
-              dateEnd: e.target.value ? new Date(e.target.value + 'T12:00:00') : undefined,
-            });
-          }}
-          placeholder={t('detail.events.dateEndOptional')}
-          className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-        />
+      {/* Dates - always visible (datetime pickers sync immediately, no typing lag) */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <Calendar size={12} className="text-text-tertiary shrink-0" />
+          <span className="text-[10px] text-text-tertiary w-8">{t('detail.events.dateFrom')}</span>
+          <input
+            type="datetime-local"
+            value={formatDateTimeForInput(new Date(event.date))}
+            onChange={(e) => {
+              if (e.target.value) {
+                onUpdate({ date: new Date(e.target.value) });
+              }
+            }}
+            className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3" /> {/* Spacer to align with calendar icon */}
+          <span className="text-[10px] text-text-tertiary w-8">{t('detail.events.dateTo')}</span>
+          <input
+            type="datetime-local"
+            value={event.dateEnd ? formatDateTimeForInput(new Date(event.dateEnd)) : ''}
+            onChange={(e) => {
+              onUpdate({
+                dateEnd: e.target.value ? new Date(e.target.value) : undefined,
+              });
+            }}
+            className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+          />
+        </div>
       </div>
 
       {/* Expanded details */}

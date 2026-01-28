@@ -875,7 +875,7 @@ function ChoicePicker({ value, choices, onChange, compact = false, t }: ChoicePi
 
       <DropdownPortal
         anchorRef={inputRef}
-        isOpen={isOpen && (filteredChoices.length > 0 || showAddOption || (value && !inputValue))}
+        isOpen={isOpen && (filteredChoices.length > 0 || showAddOption || Boolean(value && !inputValue))}
         onClose={handleClose}
         className="min-w-[150px] max-h-48"
       >

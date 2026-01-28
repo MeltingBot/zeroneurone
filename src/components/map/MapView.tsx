@@ -718,40 +718,119 @@ export function MapView() {
   // Track drag start position for undo/redo
   const dragStartGeoRef = useRef<{ id: string; geo: { lat: number; lng: number } } | null>(null);
 
+  // Track manually dragged positions - these override resolved positions temporarily
+  // This prevents markers from snapping back to event-based positions after drag
+  const draggedPositionsRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
+
+  // Track previous selection to detect selection-only changes (avoids icon update during spiderfy)
+  const prevSelectionRef = useRef<Set<string>>(new Set());
+
+  // Clean up dragged positions when elements are removed
+  useEffect(() => {
+    const currentIds = new Set(elements.map((el) => el.id));
+    draggedPositionsRef.current.forEach((_, id) => {
+      if (!currentIds.has(id)) {
+        draggedPositionsRef.current.delete(id);
+      }
+    });
+  }, [elements]);
+
+  // Compute effective positions (dragged positions override resolved positions)
+  const effectiveGeoElements = useMemo(() => {
+    return geoElements.map((element) => {
+      const draggedPos = draggedPositionsRef.current.get(element.id);
+      if (draggedPos) {
+        return { ...element, geo: draggedPos };
+      }
+      return element;
+    });
+  }, [geoElements]);
+
   // Update markers when elements change
   useEffect(() => {
     if (!mapRef.current || !clusterGroupRef.current) return;
 
     const clusterGroup = clusterGroupRef.current;
     const existingMarkers = markersRef.current;
-    const currentIds = new Set(geoElements.map((el) => el.id));
+    const currentIds = new Set(effectiveGeoElements.map((el) => el.id));
 
     // Remove markers for elements that no longer exist or lost geo
     existingMarkers.forEach((marker, id) => {
       if (!currentIds.has(id)) {
         clusterGroup.removeLayer(marker);
         existingMarkers.delete(id);
+        // Also clean up dragged position
+        draggedPositionsRef.current.delete(id);
       }
     });
 
+    // Detect if this is a selection-only change (no position or data changes)
+    const selectionOnlyChange = (() => {
+      if (prevSelectionRef.current.size !== selectedElementIds.size) return true;
+      for (const id of selectedElementIds) {
+        if (!prevSelectionRef.current.has(id)) return true;
+      }
+      return false;
+    })();
+
     // Add or update markers
-    geoElements.forEach((element) => {
+    effectiveGeoElements.forEach((element) => {
       const isSelected = selectedElementIds.has(element.id);
       const isDimmed = dimmedElementIds.has(element.id);
       const commentCount = unresolvedCommentCounts.get(element.id);
       const existingMarker = existingMarkers.get(element.id);
 
       if (existingMarker) {
-        // Update position and icon
-        existingMarker.setLatLng([element.geo.lat, element.geo.lng]);
-        existingMarker.setIcon(createIcon(element, isSelected, isDimmed, commentCount));
+        // Check if position actually changed (need to refresh cluster)
+        const currentLatLng = existingMarker.getLatLng();
+        const positionChanged =
+          Math.abs(currentLatLng.lat - element.geo.lat) > 0.000001 ||
+          Math.abs(currentLatLng.lng - element.geo.lng) > 0.000001;
+
+        // Update position if changed
+        if (positionChanged) {
+          existingMarker.setLatLng([element.geo.lat, element.geo.lng]);
+        }
+
+        // Check if marker is currently spiderfied
+        // If so and this is just a selection change, update via CSS class instead of setIcon
+        // to avoid any potential cluster recalculation
+        const visibleParent = clusterGroup.getVisibleParent(existingMarker);
+        const isSpiderfied = visibleParent === existingMarker &&
+          existingMarker.getElement()?.closest('.leaflet-marker-pane')?.querySelector('.leaflet-marker-icon.leaflet-marker-draggable') !== null;
+
+        // Only skip setIcon if: spiderfied + selection-only change + position didn't change
+        const skipSetIcon = isSpiderfied && selectionOnlyChange && !positionChanged;
+
+        if (!skipSetIcon) {
+          // Update icon (for selection state, dimming, etc.)
+          existingMarker.setIcon(createIcon(element, isSelected, isDimmed, commentCount));
+        } else {
+          // For selection-only changes in spiderfied state, just update visual with CSS
+          const markerEl = existingMarker.getElement();
+          if (markerEl) {
+            const card = markerEl.querySelector('.map-marker-card, .map-marker-simple');
+            if (card instanceof HTMLElement) {
+              if (isSelected) {
+                card.style.boxShadow = '0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3)';
+              } else {
+                card.style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
+              }
+            }
+          }
+        }
+
         // Update title (hover tooltip) based on anonymous mode
         const markerElement = existingMarker.getElement();
         if (markerElement) {
           markerElement.setAttribute('title', anonymousMode ? '' : (element.label || ''));
         }
-        // Refresh cluster to reflect changes
-        clusterGroup.refreshClusters(existingMarker);
+
+        // Only refresh cluster if position actually changed
+        // This preserves spiderfied state when just selection changes
+        if (positionChanged) {
+          clusterGroup.refreshClusters(existingMarker);
+        }
       } else {
         // Create new marker (draggable)
         const marker = L.marker([element.geo.lat, element.geo.lng], {
@@ -776,6 +855,10 @@ export function MapView() {
           const newPos = marker.getLatLng();
           const newGeo = { lat: newPos.lat, lng: newPos.lng };
           const oldGeo = dragStartGeoRef.current?.geo;
+
+          // Store dragged position to override event-based positions
+          draggedPositionsRef.current.set(element.id, newGeo);
+
           updateElement(element.id, { geo: newGeo });
           if (oldGeo) {
             pushAction({
@@ -792,7 +875,10 @@ export function MapView() {
         existingMarkers.set(element.id, marker);
       }
     });
-  }, [geoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
+
+    // Update previous selection reference
+    prevSelectionRef.current = new Set(selectedElementIds);
+  }, [effectiveGeoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
   const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {

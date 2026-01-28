@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.3
+
+### Fixes
+- Events now support hours/minutes (datetime-local input instead of date-only)
+- Events dates stacked vertically for better visibility in narrow panels
+- SidePanel collapse button always visible (was hidden at default width)
+- Map cluster no longer closes when clicking on spiderfied element
+- Map drag now saves position correctly (dragged positions override event-based positions)
+- Fix PropertiesEditor dropdown isOpen type error
+
 ## 1.0.2
 
 ### Fixes
