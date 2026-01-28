@@ -125,6 +125,157 @@ Menu **⋯** → **Importer** → **Télécharger le modèle CSV**
 
 ---
 
+### GraphML
+
+**Format standard** pour l'échange de graphes, compatible avec Gephi, yEd, Cytoscape.
+
+#### Structure attendue
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="label" for="node" attr.name="label" attr.type="string"/>
+  <key id="x" for="node" attr.name="x" attr.type="double"/>
+  <key id="y" for="node" attr.name="y" attr.type="double"/>
+  <graph edgedefault="undirected">
+    <node id="n1">
+      <data key="label">Élément 1</data>
+      <data key="x">100</data>
+      <data key="y">200</data>
+    </node>
+    <edge source="n1" target="n2">
+      <data key="label">Relation</data>
+    </edge>
+  </graph>
+</graphml>
+```
+
+#### Attributs reconnus (noeuds)
+
+| Attribut | Description |
+|----------|-------------|
+| label, name, titre | Nom de l'élément |
+| notes, description | Notes |
+| x, y | Position sur le canvas |
+| lat, latitude | Coordonnée latitude |
+| lng, lon, longitude | Coordonnée longitude |
+| color, colour | Couleur (#hex) |
+| tags | Tags séparés par ; |
+
+#### Attributs reconnus (liens)
+
+| Attribut | Description |
+|----------|-------------|
+| label, relation, type | Nom du lien |
+| confidence, weight, poids | Indice de confiance (0-1 → converti en 0-100) |
+| date, datetime | Date du lien |
+| color, edgecolor | Couleur (#hex) |
+
+---
+
+### Excalidraw
+
+**Format de dessin** Excalidraw (.excalidraw ou JSON).
+
+Les éléments Excalidraw sont convertis en éléments ZeroNeurone :
+- Rectangles, ellipses, diamants → Éléments avec forme correspondante
+- Flèches → Liens entre éléments
+- Texte → Label de l'élément le plus proche
+
+#### Exemple
+
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "elements": [
+    {
+      "type": "rectangle",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100
+    }
+  ]
+}
+```
+
+---
+
+### OSINT Industries
+
+**Format JSON** exporté depuis OSINT Industries.
+
+Structure attendue : tableau d'objets avec `module`, `query`, `status`.
+
+```json
+[
+  {
+    "module": "email",
+    "query": "john@example.com",
+    "status": "found",
+    "data": { ... }
+  }
+]
+```
+
+---
+
+### Graph Palette (OI)
+
+**Format JSON** exporté depuis Graph Palette / OSINT Industries Palette.
+
+Structure attendue : objet avec `nodes` contenant des types `textNode`, `moduleNode`, `imageNode`.
+
+```json
+{
+  "nodes": [
+    {
+      "type": "textNode",
+      "data": { "label": "John Doe" },
+      "position": { "x": 100, "y": 200 }
+    }
+  ]
+}
+```
+
+---
+
+### PredicaGraph
+
+**Format JSON** exporté depuis PredicaGraph.
+
+Structure attendue : objet avec `nodes` et `edges`, où les noeuds ont un `data.type` (person, location, social-*, etc.).
+
+```json
+{
+  "nodes": [
+    {
+      "id": "1",
+      "data": { "type": "person", "label": "John Doe" },
+      "position": { "x": 100, "y": 200 }
+    }
+  ],
+  "edges": [
+    { "source": "1", "target": "2", "label": "knows" }
+  ]
+}
+```
+
+---
+
+### OSINTracker
+
+**Format propriétaire** OSINTracker (.osintracker).
+
+L'import préserve :
+- Éléments avec positions et propriétés
+- Liens entre éléments
+- Images intégrées (base64 → fichiers joints)
+- Métadonnées de l'enquête
+
+---
+
 ### STIX 2.1
 
 **Format cyber threat intelligence** standard.

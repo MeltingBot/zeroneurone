@@ -123,6 +123,7 @@
       "pickOnMap": "Вибрати на карті",
       "clearLocation": "Очистити",
       "removeLocation": "Видалити розташування",
+      "saveLocation": "Зберегти",
       "noLocation": "Позицію не визначено"
     },
     "properties": {
@@ -160,7 +161,8 @@
         "geo": "Коорд."
       },
       "booleanYes": "Так",
-      "booleanNo": "Ні"
+      "booleanNo": "Ні",
+      "selectOption": "Оберіть опцію..."
     },
     "appearance": {
       "title": "Вигляд",

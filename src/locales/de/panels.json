@@ -123,6 +123,7 @@
       "pickOnMap": "Auf Karte wählen",
       "clearLocation": "Löschen",
       "removeLocation": "Standort entfernen",
+      "saveLocation": "Speichern",
       "noLocation": "Keine Position definiert"
     },
     "properties": {
@@ -160,7 +161,8 @@
         "geo": "Koord."
       },
       "booleanYes": "Ja",
-      "booleanNo": "Nein"
+      "booleanNo": "Nein",
+      "selectOption": "Option auswählen..."
     },
     "appearance": {
       "title": "Darstellung",

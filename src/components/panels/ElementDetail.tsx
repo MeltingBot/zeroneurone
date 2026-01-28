@@ -1,8 +1,12 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, X, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
-import { useInvestigationStore } from '../../stores';
+import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
+import { useInvestigationStore, useTagSetStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
+import { syncService } from '../../services/syncService';
+import { getYMaps } from '../../types/yjs';
+import { yMapToElement } from '../../services/yjs/elementMapper';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
@@ -59,6 +63,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const [date, setDate] = useState(element.date ? formatDateTimeForInput(element.date) : '');
   const [geoLat, setGeoLat] = useState(element.geo?.lat?.toString() ?? '');
   const [geoLng, setGeoLng] = useState(element.geo?.lng?.toString() ?? '');
+  // Track what was last saved locally (independent of prop update timing)
+  const [lastSavedGeo, setLastSavedGeo] = useState<{ lat: number; lng: number } | null>(element.geo);
   const [showGeoPicker, setShowGeoPicker] = useState(false);
   const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
@@ -68,6 +74,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Ref to the container for focus management
   const containerRef = useRef<HTMLDivElement>(null);
 
+
   // Debounced values
   const debouncedLabel = useDebounce(label, 500);
   const debouncedNotes = useDebounce(notes, 500);
@@ -75,23 +82,64 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
   // Sync local state when element changes (different element selected)
   useEffect(() => {
-    // Reset editing state and sync values when switching elements
-    editingElementIdRef.current = null;
-    setLabel(element.label);
-    setNotes(element.notes);
-    setSource(element.source);
-    setConfidence(element.confidence);
-    setDate(element.date ? formatDateTimeForInput(element.date) : '');
-    setGeoLat(element.geo?.lat?.toString() ?? '');
-    setGeoLng(element.geo?.lng?.toString() ?? '');
-
-    // Blur any focused input inside this panel when switching elements
-    // This ensures keyboard events (like Delete) go to the canvas, not the input
+    // IMPORTANT: Blur any focused input FIRST (before resetting state)
+    // This ensures onBlur handlers can save with the current values
     const activeElement = document.activeElement;
     if (activeElement instanceof HTMLElement && containerRef.current?.contains(activeElement)) {
       activeElement.blur();
     }
+
+    // Read DIRECTLY from Y.Doc (source of truth) instead of Zustand
+    // Zustand state may be stale due to 50ms throttled sync from Y.Doc
+    let freshElement: Element | null = null;
+
+    const ydoc = syncService.getYDoc();
+    if (ydoc) {
+      try {
+        const { elements: elementsMap } = getYMaps(ydoc);
+        const ymap = elementsMap.get(element.id);
+        if (ymap) {
+          freshElement = yMapToElement(ymap);
+        }
+      } catch (e) {
+        console.warn('[ElementDetail] Failed to read from Y.Doc:', e);
+      }
+    }
+
+    // Fallback to Zustand if Y.Doc read failed
+    if (!freshElement) {
+      freshElement = useInvestigationStore.getState().elements.find(el => el.id === element.id) ?? null;
+    }
+
+    if (!freshElement) return;
+
+    // Then reset editing state and sync values for the new element
+    editingElementIdRef.current = null;
+    setLabel(freshElement.label);
+    setNotes(freshElement.notes);
+    setSource(freshElement.source);
+    setConfidence(freshElement.confidence);
+    setDate(freshElement.date ? formatDateTimeForInput(freshElement.date) : '');
+    setGeoLat(freshElement.geo?.lat?.toString() ?? '');
+    setGeoLng(freshElement.geo?.lng?.toString() ?? '');
+    setLastSavedGeo(freshElement.geo ?? null);
   }, [element.id]);
+
+  // Sync label when changed externally (e.g., double-click rename on canvas)
+  useEffect(() => {
+    // Only sync if we're not currently editing this field
+    if (editingElementIdRef.current !== element.id) {
+      setLabel(element.label);
+    }
+  }, [element.label, element.id]);
+
+  // Note: We intentionally don't sync on element.geo changes
+  // The [element.id] effect handles initial load when element changes
+  // Local state (geoLat, geoLng, lastSavedGeo) is managed by:
+  // - User typing in inputs
+  // - Map picker selection
+  // - Save button (handleValidateGeoClick)
+  // - Clear button (handleClearGeo)
 
   // Save debounced label - only if still editing the same element
   useEffect(() => {
@@ -134,31 +182,49 @@ export function ElementDetail({ element }: ElementDetailProps) {
     [element.id, updateElement]
   );
 
-  // Handle geo coordinates change
-  const handleGeoChange = useCallback(
-    (lat: string, lng: string) => {
-      const latNum = parseFloat(lat);
-      const lngNum = parseFloat(lng);
-
-      // Both must be valid numbers or both empty
-      if (lat === '' && lng === '') {
-        updateElement(element.id, { geo: null });
-      } else if (!isNaN(latNum) && !isNaN(lngNum)) {
-        // Validate ranges
-        if (latNum >= -90 && latNum <= 90 && lngNum >= -180 && lngNum <= 180) {
-          updateElement(element.id, { geo: { lat: latNum, lng: lngNum } });
-        }
-      }
-    },
-    [element.id, updateElement]
-  );
-
   // Clear geo coordinates
   const handleClearGeo = useCallback(() => {
-    setGeoLat('');
-    setGeoLng('');
-    updateElement(element.id, { geo: null });
-  }, [element.id, updateElement]);
+    // Use flushSync to force synchronous state updates before any async operations
+    // This prevents React batching from being affected by store updates
+    flushSync(() => {
+      setGeoLat('');
+      setGeoLng('');
+      setLastSavedGeo(null);
+    });
+    // Then update store (async, but local state is already committed)
+    useInvestigationStore.getState().updateElement(element.id, { geo: null });
+  }, [element.id]);
+
+  // Validate and save geo coordinates from button click
+  const handleValidateGeoClick = useCallback(() => {
+    const latTrimmed = geoLat.trim();
+    const lngTrimmed = geoLng.trim();
+
+    // Both must be filled
+    if (!latTrimmed || !lngTrimmed) return;
+
+    const latNum = parseFloat(latTrimmed);
+    const lngNum = parseFloat(lngTrimmed);
+
+    // Both must be valid numbers
+    if (isNaN(latNum) || isNaN(lngNum)) return;
+
+    // Both must be in valid range
+    if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) return;
+
+    const newGeo = { lat: latNum, lng: lngNum };
+
+    // Use flushSync to force synchronous state updates before any async operations
+    // This prevents React batching from being affected by store updates
+    flushSync(() => {
+      setGeoLat(latNum.toString());
+      setGeoLng(lngNum.toString());
+      setLastSavedGeo(newGeo);
+    });
+
+    // Then update store (async, but local state is already committed)
+    useInvestigationStore.getState().updateElement(element.id, { geo: newGeo });
+  }, [geoLat, geoLng, element.id]);
 
   // Pending geo picker callback (for events editor)
   const pendingGeoPickerCallback = useRef<((lat: number, lng: number) => void) | null>(null);
@@ -171,14 +237,18 @@ export function ElementDetail({ element }: ElementDetailProps) {
         pendingGeoPickerCallback.current(lat, lng);
         pendingGeoPickerCallback.current = null;
       } else {
-        // Default: update current geo
-        setGeoLat(lat.toString());
-        setGeoLng(lng.toString());
-        updateElement(element.id, { geo: { lat, lng } });
+        // Save immediately when selecting from map (user expects instant feedback)
+        const newGeo = { lat, lng };
+        flushSync(() => {
+          setGeoLat(lat.toString());
+          setGeoLng(lng.toString());
+          setLastSavedGeo(newGeo);
+        });
+        useInvestigationStore.getState().updateElement(element.id, { geo: newGeo });
       }
       setShowGeoPicker(false);
     },
-    [element.id, updateElement]
+    [element.id]
   );
 
   // Handle opening geo picker for events editor
@@ -283,10 +353,77 @@ export function ElementDetail({ element }: ElementDetailProps) {
     </span>
   ) : null;
 
-  const hasGeo = element.geo !== null;
+  // Use lastSavedGeo for immediate UI feedback (instead of element.geo which may be stale)
+  const hasGeo = lastSavedGeo !== null;
+
+  // Check if current input values match the saved geo (nothing to save)
+  const geoInputsMatchSaved = (() => {
+    const latTrimmed = geoLat.trim();
+    const lngTrimmed = geoLng.trim();
+
+    // Both empty → matches if nothing saved
+    if (!latTrimmed && !lngTrimmed) {
+      return !hasGeo;
+    }
+
+    // Parse numbers
+    const latNum = parseFloat(latTrimmed);
+    const lngNum = parseFloat(lngTrimmed);
+
+    // Both must be valid numbers in range to compare
+    const latValid = latTrimmed && !isNaN(latNum) && latNum >= -90 && latNum <= 90;
+    const lngValid = lngTrimmed && !isNaN(lngNum) && lngNum >= -180 && lngNum <= 180;
+
+    // If both are valid, check if they match saved values
+    if (latValid && lngValid && hasGeo && lastSavedGeo) {
+      return latNum === lastSavedGeo.lat && lngNum === lastSavedGeo.lng;
+    }
+
+    // Any input that differs from saved state → show Save button
+    return false;
+  })();
+
+  // Check if Save button can actually save (both coords valid)
+  const canSaveGeo = (() => {
+    const latTrimmed = geoLat.trim();
+    const lngTrimmed = geoLng.trim();
+    if (!latTrimmed || !lngTrimmed) return false;
+    const latNum = parseFloat(latTrimmed);
+    const lngNum = parseFloat(lngTrimmed);
+    if (isNaN(latNum) || isNaN(lngNum)) return false;
+    if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) return false;
+    return true;
+  })();
+
+  // Check if there's anything to clear (values in inputs OR saved geo)
+  const hasGeoToClear = !!(geoLat.trim() || geoLng.trim() || hasGeo);
 
   // Get all elements from the store
   const elements = useInvestigationStore((state) => state.elements);
+
+  // Get TagSets to retrieve choices for 'choice' type properties
+  const tagSetsMap = useTagSetStore((state) => state.tagSets);
+
+  // Build a map of property key -> choices from TagSets and investigation suggestedProperties
+  const propertyChoicesMap = useMemo(() => {
+    const choicesMap = new Map<string, string[]>();
+    // From TagSets
+    for (const tagSet of tagSetsMap.values()) {
+      for (const suggestedProp of tagSet.suggestedProperties) {
+        if (suggestedProp.type === 'choice' && suggestedProp.choices) {
+          choicesMap.set(suggestedProp.key, suggestedProp.choices);
+        }
+      }
+    }
+    // From investigation suggestedProperties (overrides TagSet if exists)
+    const investigationSuggested = currentInvestigation?.settings.suggestedProperties || [];
+    for (const prop of investigationSuggested) {
+      if (prop.type === 'choice' && prop.choices) {
+        choicesMap.set(prop.key, prop.choices);
+      }
+    }
+    return choicesMap;
+  }, [tagSetsMap, currentInvestigation?.settings.suggestedProperties]);
 
   // Compute property suggestions based on actual usage on elements
   // The type comes from the actual properties on elements (most recent/explicit wins)
@@ -302,9 +439,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
         const propType = prop.type || 'text';
         // Prefer non-text types (user explicitly chose them)
         if (!existing || (existing.type === 'text' && propType !== 'text')) {
+          const choices = propertyChoicesMap.get(prop.key);
           actualPropertyTypes.set(prop.key, {
             key: prop.key,
-            type: propType
+            type: propType,
+            ...(choices && { choices })
           });
         }
       }
@@ -320,7 +459,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
           if (!tagBasedProperties.has(p.key)) {
             // Use actual type from elements if available, otherwise use association type
             const actualType = actualPropertyTypes.get(p.key);
-            tagBasedProperties.set(p.key, actualType || p);
+            const choices = propertyChoicesMap.get(p.key);
+            tagBasedProperties.set(p.key, actualType || { ...p, ...(choices && { choices }) });
           }
         });
       }
@@ -334,19 +474,51 @@ export function ElementDetail({ element }: ElementDetailProps) {
         if (!usedProperties.has(prop.key)) {
           // Use the authoritative type we computed
           const actualType = actualPropertyTypes.get(prop.key);
+          const choices = propertyChoicesMap.get(prop.key);
           usedProperties.set(prop.key, actualType || {
             key: prop.key,
-            type: prop.type || 'text'
+            type: prop.type || 'text',
+            ...(choices && { choices })
           });
         }
       }
     }
 
-    // Merge: tag-based first (most relevant), then other used properties
+    // Merge: tag-based first (most relevant), then other used properties, then investigation suggestions
     const allSuggestions: PropertyDefinition[] = [...tagBasedProperties.values()];
+    const addedKeys = new Set(tagBasedProperties.keys());
+
     for (const [key, prop] of usedProperties) {
-      if (!tagBasedProperties.has(key)) {
+      if (!addedKeys.has(key)) {
         allSuggestions.push(prop);
+        addedKeys.add(key);
+      }
+    }
+
+    // Add investigation suggestedProperties (these have choices saved by user)
+    const investigationSuggested = currentInvestigation?.settings.suggestedProperties || [];
+    for (const prop of investigationSuggested) {
+      if (!addedKeys.has(prop.key)) {
+        allSuggestions.push(prop);
+        addedKeys.add(prop.key);
+      }
+    }
+
+    // Add TagSet suggested properties for the current element's tags
+    // This ensures choices from TagSets are always available, even if the property
+    // hasn't been added to tagPropertyAssociations yet
+    for (const tag of element.tags) {
+      // Find TagSet with this name
+      for (const tagSet of tagSetsMap.values()) {
+        if (tagSet.name === tag) {
+          for (const suggestedProp of tagSet.suggestedProperties) {
+            if (!addedKeys.has(suggestedProp.key)) {
+              allSuggestions.push(suggestedProp);
+              addedKeys.add(suggestedProp.key);
+            }
+          }
+          break;
+        }
       }
     }
 
@@ -414,6 +586,13 @@ export function ElementDetail({ element }: ElementDetailProps) {
               onChange={(e) => {
                 editingElementIdRef.current = element.id;
                 setLabel(e.target.value);
+              }}
+              onBlur={(e) => {
+                // Save immediately on blur (don't wait for debounce)
+                if (e.target.value !== element.label) {
+                  updateElement(element.id, { label: e.target.value });
+                }
+                editingElementIdRef.current = null;
               }}
               placeholder={t('detail.placeholders.label')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
@@ -568,15 +747,32 @@ export function ElementDetail({ element }: ElementDetailProps) {
               <label className="text-xs font-medium text-text-secondary">
                 {t('detail.location.gpsCoordinates')}
               </label>
-              {(geoLat || geoLng) && (
-                <button
-                  onClick={handleClearGeo}
-                  className="text-xs text-text-tertiary hover:text-error transition-colors flex items-center gap-0.5"
-                  title={t('detail.location.removeLocation')}
-                >
-                  <X size={12} />
-                  {t('detail.location.clearLocation')}
-                </button>
+              {hasGeoToClear && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleValidateGeoClick}
+                    disabled={geoInputsMatchSaved || !canSaveGeo}
+                    className={`text-xs transition-colors flex items-center gap-1 ${
+                      !geoInputsMatchSaved && canSaveGeo
+                        ? 'text-success hover:text-success/80'
+                        : 'text-text-tertiary/30 cursor-not-allowed'
+                    }`}
+                    title={t('detail.location.saveLocation')}
+                  >
+                    <Check size={12} />
+                    {t('detail.location.saveLocation')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearGeo}
+                    className="text-xs transition-colors flex items-center gap-0.5 text-text-tertiary hover:text-error"
+                    title={t('detail.location.removeLocation')}
+                  >
+                    <X size={12} />
+                    {t('detail.location.clearLocation')}
+                  </button>
+                </div>
               )}
             </div>
             <div className="flex gap-2">
@@ -585,7 +781,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   type="text"
                   value={geoLat}
                   onChange={(e) => setGeoLat(e.target.value)}
-                  onBlur={() => handleGeoChange(geoLat, geoLng)}
                   placeholder={t('detail.location.latitude')}
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
@@ -596,7 +791,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   type="text"
                   value={geoLng}
                   onChange={(e) => setGeoLng(e.target.value)}
-                  onBlur={() => handleGeoChange(geoLat, geoLng)}
                   placeholder={t('detail.location.longitude')}
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
@@ -681,8 +875,18 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {/* Geo Picker Modal */}
       {showGeoPicker && (
         <GeoPicker
-          initialLat={element.geo?.lat}
-          initialLng={element.geo?.lng}
+          initialLat={(() => {
+            // Use current input value if valid, otherwise fallback to lastSavedGeo
+            const latNum = parseFloat(geoLat);
+            if (!isNaN(latNum) && latNum >= -90 && latNum <= 90) return latNum;
+            return lastSavedGeo?.lat;
+          })()}
+          initialLng={(() => {
+            // Use current input value if valid, otherwise fallback to lastSavedGeo
+            const lngNum = parseFloat(geoLng);
+            if (!isNaN(lngNum) && lngNum >= -180 && lngNum <= 180) return lngNum;
+            return lastSavedGeo?.lng;
+          })()}
           onConfirm={handleGeoPickerConfirm}
           onCancel={() => setShowGeoPicker(false)}
         />

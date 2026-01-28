@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.1
+
+### Fixes
+- Fix geo coordinates reverting after save (use flushSync + read from Y.Doc)
+- Fix map picker not centering on existing coordinates when reopening
+- Fix choice-type properties not showing dropdown list from TagSets
+- Add free text input for choice properties (can enter value not in list)
+- Fix modal focus stealing when typing in input fields
+
+## 1.0.0
+
+### Features
+- GeoJSON export for map data
+- STIX 2.1 import support for cyber threat intelligence
+
+### Fixes
+- Enable Ctrl+wheel zoom on timeline
+- All TypeScript errors resolved
+
 ## 0.9.8
 
 ### Features

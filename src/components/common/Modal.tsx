@@ -45,6 +45,11 @@ export function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
+  // Use a ref for onClose to avoid re-running the effect when the callback changes
+  // This prevents focus stealing when parent components re-render
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   // Handle escape key and focus trap
   useEffect(() => {
     if (!isOpen) return;
@@ -54,7 +59,7 @@ export function Modal({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -104,7 +109,7 @@ export function Modal({
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

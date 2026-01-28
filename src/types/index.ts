@@ -64,6 +64,8 @@ export interface Property {
 export interface PropertyDefinition {
   key: string;
   type: PropertyType;
+  /** Available options for 'choice' type */
+  choices?: string[];
 }
 
 // ============================================================================

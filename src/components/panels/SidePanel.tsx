@@ -168,7 +168,7 @@ export function SidePanel() {
     if (selectedElements.length === 1) {
       return (
         <div className="flex-1 overflow-y-auto">
-          <ElementDetail element={selectedElements[0]} />
+          <ElementDetail key={selectedElements[0].id} element={selectedElements[0]} />
         </div>
       );
     }

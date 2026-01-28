@@ -123,6 +123,7 @@
       "pickOnMap": "Wybierz na mapie",
       "clearLocation": "Wyczyść",
       "removeLocation": "Usuń lokalizację",
+      "saveLocation": "Zapisz",
       "noLocation": "Nie określono pozycji"
     },
     "properties": {
@@ -160,7 +161,8 @@
         "geo": "Współ."
       },
       "booleanYes": "Tak",
-      "booleanNo": "Nie"
+      "booleanNo": "Nie",
+      "selectOption": "Wybierz opcję..."
     },
     "appearance": {
       "title": "Wygląd",

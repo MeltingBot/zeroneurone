@@ -18,7 +18,7 @@ interface PropertiesEditorProps {
   onToggleDisplayProperty?: (propertyKey: string) => void;
 }
 
-const PROPERTY_TYPE_VALUES: PropertyType[] = ['text', 'number', 'date', 'datetime', 'boolean', 'country', 'link'];
+const PROPERTY_TYPE_VALUES: PropertyType[] = ['text', 'number', 'date', 'datetime', 'boolean', 'choice', 'country', 'link'];
 
 /** Format Date for datetime-local input (YYYY-MM-DDTHH:mm) using LOCAL timezone */
 function formatDateTimeForInput(date: Date): string {
@@ -51,6 +51,7 @@ export function PropertiesEditor({
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState<string | number | boolean | Date | null>('');
   const [newType, setNewType] = useState<PropertyType>('text');
+  const [newChoices, setNewChoices] = useState(''); // Comma-separated choices for 'choice' type
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -76,13 +77,14 @@ export function PropertiesEditor({
     setNewKey('');
     setNewValue('');
     setNewType('text');
+    setNewChoices('');
     setIsAdding(false);
     setShowSuggestions(false);
     setShowTypeDropdown(false);
     setSelectedSuggestionIndex(-1);
   }, []);
 
-  const handleAddProperty = useCallback((keyToAdd?: string, typeToUse?: PropertyType) => {
+  const handleAddProperty = useCallback((keyToAdd?: string, typeToUse?: PropertyType, choicesToUse?: string[]) => {
     const trimmedKey = (keyToAdd || newKey).trim();
     const finalType = typeToUse || newType;
 
@@ -104,11 +106,15 @@ export function PropertiesEditor({
 
       // Always notify parent to update association (will update type if different)
       if (onNewProperty) {
-        onNewProperty({ key: trimmedKey, type: finalType });
+        // Parse choices from comma-separated string or use provided choices
+        const choices = choicesToUse || (finalType === 'choice' && newChoices.trim()
+          ? newChoices.split(',').map(c => c.trim()).filter(c => c.length > 0)
+          : undefined);
+        onNewProperty({ key: trimmedKey, type: finalType, ...(choices && { choices }) });
       }
       resetForm();
     }
-  }, [newKey, newValue, newType, properties, onChange, onNewProperty, suggestions, resetForm]);
+  }, [newKey, newValue, newType, newChoices, properties, onChange, onNewProperty, suggestions, resetForm]);
 
   const handleRemoveProperty = useCallback(
     (keyToRemove: string) => {
@@ -131,6 +137,12 @@ export function PropertiesEditor({
   const handleSelectSuggestion = useCallback((suggestion: PropertyDefinition) => {
     setNewKey(suggestion.key);
     setNewType(suggestion.type);
+    // Also set choices if the suggestion has them
+    if (suggestion.choices && suggestion.choices.length > 0) {
+      setNewChoices(suggestion.choices.join(', '));
+    } else {
+      setNewChoices('');
+    }
     setShowSuggestions(false);
     setSelectedSuggestionIndex(-1);
   }, []);
@@ -286,6 +298,20 @@ export function PropertiesEditor({
             </DropdownPortal>
           </div>
 
+          {/* Options input for 'choice' type */}
+          {newType === 'choice' && (
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-text-tertiary uppercase">{t('detail.properties.optionsPlaceholder')}</label>
+              <input
+                type="text"
+                value={newChoices}
+                onChange={(e) => setNewChoices(e.target.value)}
+                placeholder={t('detail.properties.optionsPlaceholder')}
+                className="w-full px-2 py-1.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
+              />
+            </div>
+          )}
+
           {/* Value input based on type */}
           <div className="space-y-1">
             <label className="text-[10px] font-medium text-text-tertiary uppercase">{t('detail.properties.valuePlaceholder')}</label>
@@ -330,18 +356,24 @@ export function PropertiesEditor({
       {/* Properties list - scrollable when many */}
       {properties.length > 0 && (
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {properties.map((prop) => (
-            <PropertyRow
-              key={prop.key}
-              property={prop}
-              onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
-              onRemove={() => handleRemoveProperty(prop.key)}
-              isDisplayed={displayedProperties.includes(prop.key)}
-              onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
-              t={t}
-              locale={i18n.language}
-            />
-          ))}
+          {properties.map((prop) => {
+            // Find choices from suggestions if this is a choice type property
+            const suggestion = suggestions.find((s) => s.key === prop.key);
+            const choices = suggestion?.choices;
+            return (
+              <PropertyRow
+                key={prop.key}
+                property={prop}
+                onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
+                onRemove={() => handleRemoveProperty(prop.key)}
+                isDisplayed={displayedProperties.includes(prop.key)}
+                onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
+                choices={choices}
+                t={t}
+                locale={i18n.language}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -359,11 +391,12 @@ interface PropertyRowProps {
   onRemove: () => void;
   isDisplayed?: boolean;
   onToggleDisplay?: () => void;
+  choices?: string[];
   t: (key: string, options?: Record<string, unknown>) => string;
   locale: string;
 }
 
-function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDisplay, t, locale }: PropertyRowProps) {
+function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDisplay, choices, t, locale }: PropertyRowProps) {
   const type = property.type || 'text';
 
   return (
@@ -396,6 +429,7 @@ function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDispla
           value={property.value}
           onChange={onUpdate}
           placeholder={t('detail.properties.valuePlaceholder')}
+          choices={choices}
           compact
           t={t}
           locale={locale}
@@ -420,6 +454,7 @@ interface PropertyValueInputProps {
   onChange: (value: Property['value']) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   placeholder?: string;
+  choices?: string[];
   compact?: boolean;
   t: (key: string, options?: Record<string, unknown>) => string;
   locale: string;
@@ -431,6 +466,7 @@ function PropertyValueInput({
   onChange,
   onKeyDown,
   placeholder,
+  choices,
   compact = false,
   t,
   locale,
@@ -528,6 +564,17 @@ function PropertyValueInput({
           }}
           onKeyDown={onKeyDown}
           className={baseInputClass}
+        />
+      );
+
+    case 'choice':
+      return (
+        <ChoicePicker
+          value={String(value ?? '')}
+          choices={choices || []}
+          onChange={onChange}
+          compact={compact}
+          t={t}
         />
       );
 
@@ -727,6 +774,151 @@ function CountryPicker({ value, onChange, compact = false, t, locale }: CountryP
             <div className="px-2 py-1.5 text-xs text-text-tertiary">
               {t('detail.properties.noCountryFound')}
             </div>
+          )}
+        </div>
+      </DropdownPortal>
+    </div>
+  );
+}
+
+// Choice picker component for choice type properties (with free text input)
+interface ChoicePickerProps {
+  value: string;
+  choices: string[];
+  onChange: (value: string | null) => void;
+  compact?: boolean;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}
+
+function ChoicePicker({ value, choices, onChange, compact = false, t }: ChoicePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value || '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync input value with prop value when it changes externally
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
+  const handleSelect = useCallback(
+    (choice: string) => {
+      onChange(choice);
+      setInputValue(choice);
+      setIsOpen(false);
+    },
+    [onChange]
+  );
+
+  const handleClear = useCallback(() => {
+    onChange(null);
+    setInputValue('');
+    setIsOpen(false);
+  }, [onChange]);
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    setIsOpen(true);
+  }, []);
+
+  const handleInputBlur = useCallback(() => {
+    // Save free text on blur
+    const trimmed = inputValue.trim();
+    if (trimmed !== value) {
+      onChange(trimmed || null);
+    }
+  }, [inputValue, value, onChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const trimmed = inputValue.trim();
+      if (trimmed) {
+        onChange(trimmed);
+        setIsOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
+  }, [inputValue, onChange]);
+
+  const baseClass = compact
+    ? 'w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary'
+    : 'w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary';
+
+  // Filter choices based on input value
+  const filteredChoices = choices.filter(choice =>
+    choice.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  // Check if current input matches exactly one of the choices
+  const isExactMatch = choices.some(c => c.toLowerCase() === inputValue.toLowerCase());
+  const showAddOption = inputValue.trim() && !isExactMatch && filteredChoices.length === 0;
+
+  return (
+    <div>
+      <input
+        ref={inputRef}
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={() => setIsOpen(true)}
+        onBlur={handleInputBlur}
+        onKeyDown={handleKeyDown}
+        placeholder={choices.length > 0 ? t('detail.properties.selectOption') : t('detail.properties.valuePlaceholder')}
+        className={baseClass}
+      />
+
+      <DropdownPortal
+        anchorRef={inputRef}
+        isOpen={isOpen && (filteredChoices.length > 0 || showAddOption || (value && !inputValue))}
+        onClose={handleClose}
+        className="min-w-[150px] max-h-48"
+      >
+        <div className="overflow-y-auto max-h-44">
+          {value && !inputValue && (
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleClear();
+              }}
+              className="w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary text-text-tertiary italic"
+            >
+              {t('detail.properties.clearSelection')}
+            </button>
+          )}
+          {filteredChoices.map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(choice);
+              }}
+              className={`w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary flex items-center justify-between ${
+                value === choice ? 'bg-bg-secondary' : ''
+              }`}
+            >
+              <span>{choice}</span>
+              {value === choice && <Check size={12} className="text-accent" />}
+            </button>
+          ))}
+          {showAddOption && (
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(inputValue.trim());
+              }}
+              className="w-full px-2 py-1.5 text-xs text-left hover:bg-bg-secondary text-accent"
+            >
+              {t('detail.tags.pressEnterToCreate', { value: inputValue.trim() })}
+            </button>
           )}
         </div>
       </DropdownPortal>

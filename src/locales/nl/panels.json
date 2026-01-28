@@ -123,6 +123,7 @@
       "pickOnMap": "Kiezen op kaart",
       "clearLocation": "Wissen",
       "removeLocation": "Locatie verwijderen",
+      "saveLocation": "Opslaan",
       "noLocation": "Geen positie gedefinieerd"
     },
     "properties": {
@@ -160,7 +161,8 @@
         "geo": "Coörd."
       },
       "booleanYes": "Ja",
-      "booleanNo": "Nee"
+      "booleanNo": "Nee",
+      "selectOption": "Selecteer een optie..."
     },
     "appearance": {
       "title": "Weergave",

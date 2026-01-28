@@ -123,6 +123,7 @@
       "pickOnMap": "Triar al mapa",
       "clearLocation": "Esborrar",
       "removeLocation": "Eliminar la localització",
+      "saveLocation": "Desar",
       "noLocation": "Cap posició definida"
     },
     "properties": {
@@ -160,7 +161,8 @@
         "geo": "Coord."
       },
       "booleanYes": "Sí",
-      "booleanNo": "No"
+      "booleanNo": "No",
+      "selectOption": "Selecciona una opció..."
     },
     "appearance": {
       "title": "Aparença",

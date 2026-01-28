@@ -123,6 +123,7 @@
       "pickOnMap": "Mapan aukeratu",
       "clearLocation": "Garbitu",
       "removeLocation": "Kokapena ezabatu",
+      "saveLocation": "Gorde",
       "noLocation": "Ez dago posiziorik definituta"
     },
     "properties": {
@@ -160,7 +161,8 @@
         "geo": "Koord."
       },
       "booleanYes": "Bai",
-      "booleanNo": "Ez"
+      "booleanNo": "Ez",
+      "selectOption": "Aukeratu aukera bat..."
     },
     "appearance": {
       "title": "Itxura",

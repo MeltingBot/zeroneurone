@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, Sparkles } from 'lucide-react';
+import { X, Plus, Sparkles, Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { DropdownPortal, IconPickerCompact } from '../common';
 import { useTagSetStore } from '../../stores';
@@ -247,6 +247,16 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
               placeholder={t('detail.tags.newTagPlaceholder')}
               className="px-2 py-0.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary min-w-[120px]"
             />
+            {/* Validation button */}
+            <button
+              type="button"
+              onClick={() => handleAddTag()}
+              disabled={!inputValue.trim()}
+              className="p-1 text-text-tertiary hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title={t('detail.tags.add')}
+            >
+              <Check size={14} />
+            </button>
 
             {/* Suggestions dropdown */}
             <DropdownPortal

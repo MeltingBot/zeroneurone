@@ -64,10 +64,11 @@ export function LocalStorageDisclaimerModal({
 
         {/* Recommendation */}
         <div className="flex items-start gap-3 p-3 bg-bg-secondary rounded">
-          <Download size={18} className="text-accent mt-0.5" />
-          <p className="text-sm text-text-secondary">
-            {t('localStorage.recommendation')}
-          </p>
+          <Download size={18} className="text-accent mt-0.5 flex-shrink-0" />
+          <p
+            className="text-sm text-text-secondary"
+            dangerouslySetInnerHTML={{ __html: t('localStorage.recommendation') }}
+          />
         </div>
 
         {/* Actions */}
