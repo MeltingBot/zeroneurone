@@ -53,8 +53,8 @@ export function MapView() {
   // Track clustering state for dynamic link positioning
   const [clusteringVersion, setClusteringVersion] = useState(0);
 
-  // Track if cluster is currently spiderfied (to avoid setIcon during click)
-  const [isSpiderfied, setIsSpiderfied] = useState(false);
+  // Track if cluster is currently spiderfied (use ref to avoid triggering effect re-runs)
+  const isSpiderfiedRef = useRef(false);
 
   // Track manually dragged positions - these override resolved positions
   // Using state (not ref) to trigger re-renders when positions change
@@ -690,11 +690,11 @@ export function MapView() {
     });
     clusterGroupRef.current.on('spiderfied', () => {
       setClusteringVersion(v => v + 1);
-      setIsSpiderfied(true);
+      isSpiderfiedRef.current = true;
     });
     clusterGroupRef.current.on('unspiderfied', () => {
       setClusteringVersion(v => v + 1);
-      setIsSpiderfied(false);
+      isSpiderfiedRef.current = false;
     });
 
     // Add zoom control to top-right
@@ -803,7 +803,7 @@ export function MapView() {
 
         // When cluster is spiderfied and only selection changed (no position change),
         // update visual via CSS only to avoid setIcon triggering cluster recalculation
-        const skipSetIcon = isSpiderfied && selectionChanged && !positionChanged;
+        const skipSetIcon = isSpiderfiedRef.current && selectionChanged && !positionChanged;
 
         if (!skipSetIcon) {
           // Update icon (for selection state, dimming, etc.)
@@ -887,7 +887,7 @@ export function MapView() {
 
     // Update previous selection reference
     prevSelectionRef.current = new Set(selectedElementIds);
-  }, [effectiveGeoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia, isSpiderfied]);
+  }, [effectiveGeoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
   const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {

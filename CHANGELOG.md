@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+### Fixes
+- Fix map cluster closing immediately after spiderfy (use ref instead of state for isSpiderfied flag to avoid triggering effect re-runs)
+
 ## 1.0.3
 
 ### Fixes
