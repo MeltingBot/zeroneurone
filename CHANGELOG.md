@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.8
+
+### Features
+- Map view: add satellite imagery layer (ArcGIS World Imagery)
+- Layer control to switch between OpenStreetMap and Satellite views
+
 ## 1.0.7
 
 ### Improvements

@@ -659,11 +659,26 @@ export function MapView() {
       zoomControl: false, // We'll add custom controls
     });
 
-    // Add tile layer (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Base layers
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
-    }).addTo(mapRef.current);
+    });
+
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19,
+    });
+
+    // Add default layer (OSM)
+    osmLayer.addTo(mapRef.current);
+
+    // Add layer control
+    L.control.layers(
+      { 'OpenStreetMap': osmLayer, 'Satellite': satelliteLayer },
+      {},
+      { position: 'topright' }
+    ).addTo(mapRef.current);
 
     // Create marker cluster group with custom options
     clusterGroupRef.current = L.markerClusterGroup({
