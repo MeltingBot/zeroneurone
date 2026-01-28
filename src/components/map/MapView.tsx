@@ -667,7 +667,7 @@ export function MapView() {
 
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
-      maxZoom: 19,
+      maxZoom: 18, // Satellite imagery not available beyond zoom 18 in most areas
     });
 
     // Add default layer (OSM)
@@ -679,6 +679,16 @@ export function MapView() {
       {},
       { position: 'topright' }
     ).addTo(mapRef.current);
+
+    // Adjust zoom when switching layers (satellite has lower max zoom)
+    mapRef.current.on('baselayerchange', (e: L.LayersControlEvent) => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      if (e.name === 'Satellite' && map.getZoom() > 18) {
+        map.setZoom(18);
+      }
+    });
 
     // Create marker cluster group with custom options
     clusterGroupRef.current = L.markerClusterGroup({
