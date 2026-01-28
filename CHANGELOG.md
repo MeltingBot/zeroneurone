@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.9
+
+### Features
+- Map view: add satellite imagery layer (ArcGIS World Imagery)
+- Layer control to switch between OpenStreetMap and Satellite views
+
+### Fixes
+- Limit satellite layer zoom to 18 (no imagery beyond this level)
+- Auto-adjust zoom when switching to satellite if currently above 18
+
 ## 1.0.8
 
 ### Features
