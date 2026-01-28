@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.6
+
+### Fixes
+- Fix collaborative sync for element resize (customWidth/customHeight)
+- Fix collaborative sync for all visual properties (border, icon, image)
+- Fix collaborative sync for link visual properties (style, thickness, curveOffset, direction, handles)
+- Fix collaborative sync for element/link dates and source fields
+
 ## 1.0.5
 
 ### Fixes

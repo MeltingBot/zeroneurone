@@ -1700,10 +1700,23 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
             stateEl.position.x !== newEl.position.x || stateEl.position.y !== newEl.position.y ||
             stateEl.geo?.lat !== newEl.geo?.lat || stateEl.geo?.lng !== newEl.geo?.lng ||
             stateEl.visual.color !== newEl.visual.color ||
+            stateEl.visual.borderColor !== newEl.visual.borderColor ||
+            stateEl.visual.borderWidth !== newEl.visual.borderWidth ||
+            stateEl.visual.borderStyle !== newEl.visual.borderStyle ||
             stateEl.visual.shape !== newEl.visual.shape ||
             stateEl.visual.size !== newEl.visual.size ||
+            stateEl.visual.icon !== newEl.visual.icon ||
+            stateEl.visual.image !== newEl.visual.image ||
+            stateEl.visual.customWidth !== newEl.visual.customWidth ||
+            stateEl.visual.customHeight !== newEl.visual.customHeight ||
             stateEl.confidence !== newEl.confidence ||
             stateEl.parentGroupId !== newEl.parentGroupId ||
+            stateEl.isGroup !== newEl.isGroup ||
+            stateEl.isAnnotation !== newEl.isAnnotation ||
+            stateEl.source !== newEl.source ||
+            stateEl.date?.getTime() !== newEl.date?.getTime() ||
+            stateEl.dateRange?.start?.getTime() !== newEl.dateRange?.start?.getTime() ||
+            stateEl.dateRange?.end?.getTime() !== newEl.dateRange?.end?.getTime() ||
             stateEl.tags?.length !== newEl.tags?.length ||
             stateEl.assetIds?.length !== newEl.assetIds?.length) return true;
         // Compare arrays (slightly slower)
@@ -1722,9 +1735,20 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         if (!stateLk) return true;
         if (stateLk.label !== newLk.label ||
             stateLk.fromId !== newLk.fromId || stateLk.toId !== newLk.toId ||
+            stateLk.sourceHandle !== newLk.sourceHandle ||
+            stateLk.targetHandle !== newLk.targetHandle ||
+            stateLk.direction !== newLk.direction ||
             stateLk.visual?.color !== newLk.visual?.color ||
+            stateLk.visual?.style !== newLk.visual?.style ||
+            stateLk.visual?.thickness !== newLk.visual?.thickness ||
+            stateLk.curveOffset?.x !== newLk.curveOffset?.x ||
+            stateLk.curveOffset?.y !== newLk.curveOffset?.y ||
             stateLk.confidence !== newLk.confidence ||
             stateLk.notes !== newLk.notes ||
+            stateLk.source !== newLk.source ||
+            stateLk.date?.getTime() !== newLk.date?.getTime() ||
+            stateLk.dateRange?.start?.getTime() !== newLk.dateRange?.start?.getTime() ||
+            stateLk.dateRange?.end?.getTime() !== newLk.dateRange?.end?.getTime() ||
             stateLk.tags?.length !== newLk.tags?.length) return true;
         if (!propsEqual(stateLk.properties, newLk.properties)) return true;
       }
