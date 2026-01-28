@@ -108,10 +108,12 @@ Open http://localhost:1313
 
 Translations are in `src/locales/{lang}/`. To add a new language:
 
-1. Copy an existing language folder
-2. Translate all JSON files
-3. Add the language to `src/i18n.ts`
+1. Add the language to `src/locales/languages.json` (code, label, flag)
+2. Copy an existing language folder (e.g., `src/locales/en/`)
+3. Translate all JSON files (common.json, modals.json, panels.json, pages.json)
 4. Submit a PR
+
+No code changes required — languages are loaded dynamically.
 
 ## Pull Request Guidelines
 
@@ -233,10 +235,12 @@ Ouvrez http://localhost:1313
 
 Les traductions sont dans `src/locales/{lang}/`. Pour ajouter une nouvelle langue :
 
-1. Copiez un dossier de langue existant
-2. Traduisez tous les fichiers JSON
-3. Ajoutez la langue à `src/i18n.ts`
+1. Ajoutez la langue à `src/locales/languages.json` (code, label, flag)
+2. Copiez un dossier de langue existant (ex: `src/locales/en/`)
+3. Traduisez tous les fichiers JSON (common.json, modals.json, panels.json, pages.json)
 4. Soumettez une PR
+
+Aucune modification de code requise — les langues sont chargées dynamiquement.
 
 ## Règles pour les Pull Requests
 
