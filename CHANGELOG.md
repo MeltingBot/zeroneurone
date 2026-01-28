@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.7
+
+### Improvements
+- Complete i18n for collaboration UI (status indicator, user avatar, presence)
+- All 11 locales updated with collaboration strings
+
+### Changes
+- License updated with full author name
+- README roadmap updated (STIX2 marked complete)
+
 ## 1.0.6
 
 ### Fixes

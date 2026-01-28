@@ -350,6 +350,7 @@ Ou deployer votre propre serveur y-websocket.
 - [x] i18n (11 langues)
 - [x] Documentation utilisateur : [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - [x] Error boundaries
+- [x] Import STIX2
 
 ### v1.1 — Analyse avancee
 - [ ] Betweenness centrality
@@ -359,9 +360,8 @@ Ou deployer votre propre serveur y-websocket.
 
 ### v1.2 — Import/Integration
 - [ ] Import Maltego (MTGL/MTGX)
-- [ ] Import STIX/TAXII
 - [ ] Merge d'investigations
-- [ ] API REST locale
+- [ ] ~API REST locale~
 
 ### Au-dela
 - [ ] Theming personnalisable
