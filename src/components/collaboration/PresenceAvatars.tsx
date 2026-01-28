@@ -2,15 +2,17 @@
  * PresenceAvatars - Shows connected users with their colors
  */
 
+import { useTranslation } from 'react-i18next';
 import { useSyncStore } from '../../stores';
 
 interface AvatarProps {
   name: string;
   color: string;
   isLocal?: boolean;
+  youLabel: string;
 }
 
-function Avatar({ name, color, isLocal }: AvatarProps) {
+function Avatar({ name, color, isLocal, youLabel }: AvatarProps) {
   // Get initials (first letter of first two words)
   const initials = name
     .split(' ')
@@ -27,7 +29,7 @@ function Avatar({ name, color, isLocal }: AvatarProps) {
         ${isLocal ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg-primary' : ''}
       `}
       style={{ backgroundColor: color }}
-      title={isLocal ? `${name} (vous)` : name}
+      title={isLocal ? `${name} (${youLabel})` : name}
     >
       <span className="text-white drop-shadow-sm">{initials}</span>
     </div>
@@ -35,6 +37,7 @@ function Avatar({ name, color, isLocal }: AvatarProps) {
 }
 
 export function PresenceAvatars() {
+  const { t } = useTranslation('panels');
   const { mode, localUser, remoteUsers } = useSyncStore();
 
   // Don't show in local mode
@@ -51,6 +54,9 @@ export function PresenceAvatars() {
   const displayUsers = allUsers.slice(0, 5);
   const overflowCount = allUsers.length - 5;
 
+  const youLabel = t('collaboration.you');
+  const othersLabel = t('collaboration.others');
+
   return (
     <div className="flex items-center -space-x-2">
       {displayUsers.map((user) => (
@@ -59,6 +65,7 @@ export function PresenceAvatars() {
           name={user.name}
           color={user.color}
           isLocal={user.isLocal}
+          youLabel={youLabel}
         />
       ))}
       {overflowCount > 0 && (
@@ -69,7 +76,7 @@ export function PresenceAvatars() {
             bg-bg-tertiary text-text-secondary
             border-2 border-bg-primary
           "
-          title={`+${overflowCount} autres`}
+          title={`+${overflowCount} ${othersLabel}`}
         >
           +{overflowCount}
         </div>

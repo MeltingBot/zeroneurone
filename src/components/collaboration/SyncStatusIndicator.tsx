@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Wifi, WifiOff, RefreshCw, AlertCircle, X, RotateCcw, Download } from 'lucide-react';
 import { useSyncStore } from '../../stores';
 import { Modal, Button } from '../common';
@@ -17,6 +18,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function SyncStatusIndicator() {
+  const { t } = useTranslation('panels');
   const { mode, connected, syncing, reconnecting, error, unshare, mediaSyncProgress } = useSyncStore();
   const [showWarning, setShowWarning] = useState(false);
 
@@ -36,31 +38,31 @@ export function SyncStatusIndicator() {
     statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-tertiary">
         <WifiOff size={14} />
-        <span>Local</span>
+        <span>{t('collaboration.local')}</span>
       </div>
     );
   } else if (error && !reconnecting) {
     statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-error" title={error}>
         <AlertCircle size={14} />
-        <span>Erreur</span>
+        <span>{t('collaboration.error')}</span>
       </div>
     );
   } else if (reconnecting) {
     statusContent = (
       <div
         className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning"
-        title="Connexion perdue, tentative de reconnexion..."
+        title={t('collaboration.reconnectingTitle')}
       >
         <RotateCcw size={14} className="animate-spin" />
-        <span>Reconnexion...</span>
+        <span>{t('collaboration.reconnecting')}</span>
       </div>
     );
   } else if (syncing) {
     statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning">
         <RefreshCw size={14} className="animate-spin" />
-        <span>Sync...</span>
+        <span>{t('collaboration.syncing')}</span>
       </div>
     );
   } else if (connected) {
@@ -73,7 +75,7 @@ export function SyncStatusIndicator() {
         {mediaSyncProgress && (
           <div
             className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning bg-bg-secondary rounded border border-border-default"
-            title={mediaSyncProgress.currentAsset || `${mediaSyncProgress.completed}/${mediaSyncProgress.total} fichiers`}
+            title={mediaSyncProgress.currentAsset || t('collaboration.filesProgress', { completed: mediaSyncProgress.completed, total: mediaSyncProgress.total })}
           >
             <Download size={14} className="animate-pulse" />
             <div className="flex flex-col">
@@ -86,12 +88,12 @@ export function SyncStatusIndicator() {
             </div>
           </div>
         )}
-        <div className="flex items-center gap-1 px-2 py-1 text-xs text-success" title="Connecté">
+        <div className="flex items-center gap-1 px-2 py-1 text-xs text-success" title={t('collaboration.connected')}>
           <Wifi size={14} />
           <button
             onClick={handleDisconnect}
             className="ml-1 p-0.5 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-error transition-colors"
-            title="Se déconnecter du partage"
+            title={t('collaboration.disconnectTitle')}
           >
             <X size={12} />
           </button>
@@ -102,7 +104,7 @@ export function SyncStatusIndicator() {
     statusContent = (
       <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary">
         <RefreshCw size={14} className="animate-spin" />
-        <span>Connexion...</span>
+        <span>{t('collaboration.connecting')}</span>
       </div>
     );
   }
@@ -113,24 +115,24 @@ export function SyncStatusIndicator() {
       <Modal
         isOpen={showWarning}
         onClose={() => setShowWarning(false)}
-        title="Se déconnecter du partage"
+        title={t('collaboration.disconnectTitle')}
         width="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowWarning(false)}>
-              Annuler
+              {t('collaboration.cancel')}
             </Button>
             <Button variant="primary" onClick={handleConfirmDisconnect}>
-              Se déconnecter
+              {t('collaboration.disconnect')}
             </Button>
           </>
         }
       >
         <p className="text-sm text-text-secondary">
-          Les autres participants pourront toujours utiliser le lien de partage pour synchroniser leurs modifications et reprendre la collaboration.
+          {t('collaboration.disconnectWarning')}
         </p>
         <p className="text-sm text-text-secondary mt-2">
-          Vous pourrez rejoindre la session plus tard via le meme lien.
+          {t('collaboration.disconnectResume')}
         </p>
       </Modal>
     </>

@@ -423,6 +423,21 @@
     "connected": "Verbunden",
     "disconnected": "Getrennt",
     "users": "{{count}} Benutzer",
-    "you": "Sie"
+    "you": "Sie",
+    "others": "weitere",
+    "local": "Lokal",
+    "error": "Fehler",
+    "reconnecting": "Verbindung wird wiederhergestellt...",
+    "reconnectingTitle": "Verbindung verloren, Wiederverbindungsversuch...",
+    "syncing": "Sync...",
+    "connecting": "Verbinden...",
+    "disconnect": "Trennen",
+    "disconnectTitle": "Freigabe trennen",
+    "cancel": "Abbrechen",
+    "disconnectWarning": "Andere Teilnehmer können den Freigabelink weiterhin verwenden, um Änderungen zu synchronisieren und die Zusammenarbeit fortzusetzen.",
+    "disconnectResume": "Sie können der Sitzung später über denselben Link wieder beitreten.",
+    "filesProgress": "{{completed}}/{{total}} Dateien",
+    "yourName": "Ihr Name",
+    "clickToEditName": "Sie: {{name}} (klicken zum Bearbeiten)"
   }
 }

@@ -423,6 +423,21 @@
     "connected": "Połączony",
     "disconnected": "Rozłączony",
     "users": "{{count}} użytkowników",
-    "you": "Ty"
+    "you": "Ty",
+    "others": "innych",
+    "local": "Lokalnie",
+    "error": "Błąd",
+    "reconnecting": "Ponowne łączenie...",
+    "reconnectingTitle": "Połączenie utracone, próba ponownego połączenia...",
+    "syncing": "Synchronizacja...",
+    "connecting": "Łączenie...",
+    "disconnect": "Rozłącz",
+    "disconnectTitle": "Rozłącz się od udostępniania",
+    "cancel": "Anuluj",
+    "disconnectWarning": "Inni uczestnicy nadal będą mogli korzystać z linku udostępniania, aby synchronizować swoje zmiany i kontynuować współpracę.",
+    "disconnectResume": "Możesz dołączyć do sesji później, korzystając z tego samego linku.",
+    "filesProgress": "{{completed}}/{{total}} plików",
+    "yourName": "Twoje imię",
+    "clickToEditName": "Ty: {{name}} (kliknij, aby edytować)"
   }
 }

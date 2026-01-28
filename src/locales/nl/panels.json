@@ -423,6 +423,21 @@
     "connected": "Verbonden",
     "disconnected": "Niet verbonden",
     "users": "{{count}} gebruiker(s)",
-    "you": "U"
+    "you": "U",
+    "others": "anderen",
+    "local": "Lokaal",
+    "error": "Fout",
+    "reconnecting": "Opnieuw verbinden...",
+    "reconnectingTitle": "Verbinding verbroken, opnieuw proberen te verbinden...",
+    "syncing": "Synchroniseren...",
+    "connecting": "Verbinden...",
+    "disconnect": "Verbreken",
+    "disconnectTitle": "Delen verbreken",
+    "cancel": "Annuleren",
+    "disconnectWarning": "Andere deelnemers kunnen de deellink nog steeds gebruiken om hun wijzigingen te synchroniseren en de samenwerking voort te zetten.",
+    "disconnectResume": "U kunt later opnieuw deelnemen aan de sessie via dezelfde link.",
+    "filesProgress": "{{completed}}/{{total}} bestanden",
+    "yourName": "Uw naam",
+    "clickToEditName": "U: {{name}} (klik om te bewerken)"
   }
 }

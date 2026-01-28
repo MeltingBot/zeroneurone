@@ -423,6 +423,21 @@
     "connected": "Connected",
     "disconnected": "Disconnected",
     "users": "{{count}} user(s)",
-    "you": "You"
+    "you": "You",
+    "others": "others",
+    "local": "Local",
+    "error": "Error",
+    "reconnecting": "Reconnecting...",
+    "reconnectingTitle": "Connection lost, attempting to reconnect...",
+    "syncing": "Sync...",
+    "connecting": "Connecting...",
+    "disconnect": "Disconnect",
+    "disconnectTitle": "Disconnect from sharing",
+    "cancel": "Cancel",
+    "disconnectWarning": "Other participants will still be able to use the share link to sync their changes and resume collaboration.",
+    "disconnectResume": "You can rejoin the session later using the same link.",
+    "filesProgress": "{{completed}}/{{total}} files",
+    "yourName": "Your name",
+    "clickToEditName": "You: {{name}} (click to edit)"
   }
 }

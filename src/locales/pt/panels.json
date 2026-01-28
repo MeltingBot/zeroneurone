@@ -423,6 +423,21 @@
     "connected": "Conectado",
     "disconnected": "Desconectado",
     "users": "{{count}} utilizador(es)",
-    "you": "Você"
+    "you": "Você",
+    "others": "outros",
+    "local": "Local",
+    "error": "Erro",
+    "reconnecting": "A reconectar...",
+    "reconnectingTitle": "Ligação perdida, a tentar reconectar...",
+    "syncing": "A sincronizar...",
+    "connecting": "A conectar...",
+    "disconnect": "Desconectar",
+    "disconnectTitle": "Desconectar da partilha",
+    "cancel": "Cancelar",
+    "disconnectWarning": "Os outros participantes poderão continuar a usar o link de partilha para sincronizar as suas alterações e retomar a colaboração.",
+    "disconnectResume": "Pode voltar a juntar-se à sessão mais tarde usando o mesmo link.",
+    "filesProgress": "{{completed}}/{{total}} ficheiros",
+    "yourName": "O seu nome",
+    "clickToEditName": "Você: {{name}} (clique para editar)"
   }
 }

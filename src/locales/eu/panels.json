@@ -423,6 +423,21 @@
     "connected": "Konektatuta",
     "disconnected": "Deskonektatuta",
     "users": "{{count}} erabiltzaile",
-    "you": "Zu"
+    "you": "Zu",
+    "others": "beste",
+    "local": "Lokala",
+    "error": "Errorea",
+    "reconnecting": "Birkonektatzen...",
+    "reconnectingTitle": "Konexioa galdu da, birkonektatzeko saiakera...",
+    "syncing": "Sinkronizatzen...",
+    "connecting": "Konektatzen...",
+    "disconnect": "Deskonektatu",
+    "disconnectTitle": "Partekatzetik deskonektatu",
+    "cancel": "Utzi",
+    "disconnectWarning": "Beste parte-hartzaileek partekatzeko esteka erabiltzen jarraitu ahal izango dute aldaketak sinkronizatzeko eta lankidetza berriro hasteko.",
+    "disconnectResume": "Saiora berriro sartu zaitezke geroago esteka bera erabiliz.",
+    "filesProgress": "{{completed}}/{{total}} fitxategi",
+    "yourName": "Zure izena",
+    "clickToEditName": "Zu: {{name}} (klikatu editatzeko)"
   }
 }

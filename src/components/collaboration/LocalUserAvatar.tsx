@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSyncStore } from '../../stores';
 
 export function LocalUserAvatar() {
+  const { t } = useTranslation('panels');
   const { localUser, updateLocalUserName } = useSyncStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(localUser.name);
@@ -77,14 +79,14 @@ export function LocalUserAvatar() {
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
             className="w-32 px-1 py-0.5 text-sm bg-transparent border-none outline-none text-text-primary"
-            placeholder="Votre nom"
+            placeholder={t('collaboration.yourName')}
           />
         </div>
       ) : (
         <button
           onClick={() => setIsEditing(true)}
           className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-bg-tertiary transition-colors"
-          title={`Vous: ${localUser.name} (cliquer pour modifier)`}
+          title={t('collaboration.clickToEditName', { name: localUser.name })}
         >
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium"

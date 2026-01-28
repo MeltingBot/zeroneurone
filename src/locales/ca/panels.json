@@ -423,6 +423,21 @@
     "connected": "Connectat",
     "disconnected": "Desconnectat",
     "users": "{{count}} usuari(s)",
-    "you": "Vós"
+    "you": "Vós",
+    "others": "altres",
+    "local": "Local",
+    "error": "Error",
+    "reconnecting": "Reconnectant...",
+    "reconnectingTitle": "Connexió perduda, intentant reconnectar...",
+    "syncing": "Sincronitzant...",
+    "connecting": "Connectant...",
+    "disconnect": "Desconnectar",
+    "disconnectTitle": "Desconnectar de la compartició",
+    "cancel": "Cancel·lar",
+    "disconnectWarning": "Els altres participants podran seguir utilitzant l'enllaç de compartició per sincronitzar els seus canvis i reprendre la col·laboració.",
+    "disconnectResume": "Podeu tornar a unir-vos a la sessió més tard utilitzant el mateix enllaç.",
+    "filesProgress": "{{completed}}/{{total}} fitxers",
+    "yourName": "El vostre nom",
+    "clickToEditName": "Vós: {{name}} (feu clic per editar)"
   }
 }
