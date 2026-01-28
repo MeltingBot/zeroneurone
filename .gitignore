@@ -44,3 +44,7 @@ CLAUDE.md
 .playwright-mcp/
 playwright-report/
 test-results/
+
+# Environment variables
+.env
+.env.local
