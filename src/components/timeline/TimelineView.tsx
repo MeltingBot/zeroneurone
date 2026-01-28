@@ -1050,7 +1050,22 @@ export function TimelineView() {
             const expandedItem = visibleItems.find(i => i.id === expandedItemId);
             if (!expandedItem) return null;
             const x = Math.max(8, dateToX(expandedItem.start));
-            const y = ROW_GAP + expandedItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT + 4;
+            const itemY = ROW_GAP + expandedItem.row * (ROW_HEIGHT + ROW_GAP);
+
+            // Estimate panel height (title + sublabel + date + padding)
+            const panelHeight = 80;
+
+            // Calculate position below the item
+            const yBelow = itemY + ROW_HEIGHT + 4;
+
+            // Check if panel would be cut off at bottom
+            // Compare with visible viewport (scrollTop + containerHeight - AXIS_HEIGHT)
+            const visibleBottom = scrollTop + containerHeight - AXIS_HEIGHT;
+            const wouldBeClipped = (yBelow + panelHeight) > visibleBottom;
+
+            // If clipped, show above the item instead
+            const y = wouldBeClipped ? itemY - panelHeight - 4 : yBelow;
+
             return (
               <div
                 className="absolute z-30 bg-bg-primary border border-border-default rounded shadow-lg p-2 max-w-xs"

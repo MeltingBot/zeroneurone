@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+### Fixes
+- Fix timeline tooltip cut off at bottom of screen (now displays above element when needed)
+
 ## 1.0.1
 
 ### Fixes
