@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.11
+
+### Features
+- Add sticky note icon indicator on annotations
+
+### Fixes
+- Improve note text contrast based on background color (auto dark/light)
+
 ## 1.0.10
 
 ### Fixes
