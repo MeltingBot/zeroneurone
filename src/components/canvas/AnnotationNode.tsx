@@ -247,7 +247,7 @@ function AnnotationNodeComponent({ data }: NodeProps) {
         {/* Note indicator icon */}
         <StickyNote
           size={12}
-          className="absolute top-1 right-1 opacity-40"
+          className="absolute top-1 right-1 opacity-60"
           style={{ color: textColor }}
         />
 
