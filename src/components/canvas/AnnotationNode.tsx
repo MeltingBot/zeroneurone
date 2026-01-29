@@ -1,5 +1,6 @@
 import { memo, useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
+import { StickyNote } from 'lucide-react';
 import type { Element } from '../../types';
 import { useUIStore } from '../../stores';
 
@@ -241,7 +242,15 @@ function AnnotationNodeComponent({ data }: NodeProps) {
         style={containerStyle}
         onDoubleClick={handleDoubleClick}
         onClick={handleContentClick}
+        className="relative"
       >
+        {/* Note indicator icon */}
+        <StickyNote
+          size={12}
+          className="absolute top-1 right-1 opacity-40"
+          style={{ color: textColor }}
+        />
+
         {isEditing ? (
           <textarea
             ref={textareaRef}
