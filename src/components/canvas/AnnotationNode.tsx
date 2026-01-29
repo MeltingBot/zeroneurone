@@ -3,6 +3,18 @@ import { NodeResizer, type NodeProps } from '@xyflow/react';
 import type { Element } from '../../types';
 import { useUIStore } from '../../stores';
 
+// Helper to determine if a color is light (for text contrast)
+function isLightColor(color: string): boolean {
+  if (color.startsWith('var(')) return true; // CSS variables assumed light
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return true;
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 128;
+}
+
 export interface AnnotationNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
@@ -180,6 +192,12 @@ function AnnotationNodeComponent({ data }: NodeProps) {
 
   const bgColor = element.visual.color || 'var(--color-bg-primary)';
 
+  // Determine text color based on background brightness
+  const textColor = useMemo(() => {
+    if (!element.visual.color) return undefined; // Use CSS variable default
+    return isLightColor(element.visual.color) ? '#374151' : '#f3f4f6';
+  }, [element.visual.color]);
+
   const containerStyle = useMemo(() => ({
     width: '100%',
     opacity: isDimmed ? 0.3 : 1,
@@ -231,13 +249,13 @@ function AnnotationNodeComponent({ data }: NodeProps) {
             onChange={handleTextareaChange}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent border-none outline-none resize-none text-[13px] text-text-secondary nodrag nowheel nopan"
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+            className={`w-full bg-transparent border-none outline-none resize-none text-[13px] nodrag nowheel nopan ${!textColor ? 'text-text-secondary' : ''}`}
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: textColor }}
           />
         ) : (
           <div
-            className="text-[13px] text-text-secondary"
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+            className={`text-[13px] ${!textColor ? 'text-text-secondary' : ''}`}
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: textColor }}
           >
             {renderedContent}
           </div>
