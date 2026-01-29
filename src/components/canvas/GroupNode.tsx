@@ -4,6 +4,19 @@ import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
 import { useUIStore, useTagSetStore } from '../../stores';
 
+// Redacted text component for anonymous mode
+function RedactedText({ text, className }: { text: string; className?: string }) {
+  const charCount = Math.max(3, Math.min(text.length, 15));
+  return (
+    <span className={className}>
+      <span
+        className="inline-block bg-text-primary rounded-sm"
+        style={{ width: `${charCount * 0.5}em`, height: '0.9em', verticalAlign: 'middle' }}
+      />
+    </span>
+  );
+}
+
 export interface GroupNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
@@ -32,6 +45,7 @@ function GroupNodeComponent({ data }: NodeProps) {
   } = nodeData;
   const inputRef = useRef<HTMLInputElement>(null);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
+  const anonymousMode = useUIStore((state) => state.anonymousMode);
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
 
   const handleResizeEnd = useCallback(
@@ -129,6 +143,8 @@ function GroupNodeComponent({ data }: NodeProps) {
               onKeyDown={handleKeyDown}
               className="text-xs font-medium bg-transparent border-b border-accent outline-none w-full text-text-primary"
             />
+          ) : anonymousMode ? (
+            <RedactedText text={element.label || 'Groupe'} className="text-xs font-medium truncate block" />
           ) : (
             <span className="text-xs font-medium text-text-secondary truncate block">
               {element.label || 'Groupe'}
@@ -202,8 +218,8 @@ function GroupNodeComponent({ data }: NodeProps) {
           </div>
         )}
 
-        {/* Displayed properties - bottom center */}
-        {displayedPropertyValues && displayedPropertyValues.length > 0 && (
+        {/* Displayed properties - bottom center (hidden in anonymous mode) */}
+        {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
           <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10">
             {displayedPropertyValues.slice(0, 3).map(({ key, value }) => {
               const displayValue = value.length > 20 ? value.slice(0, 20) + '...' : value;

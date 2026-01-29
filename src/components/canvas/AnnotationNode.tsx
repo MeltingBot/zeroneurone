@@ -1,6 +1,7 @@
 import { memo, useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
 import type { Element } from '../../types';
+import { useUIStore } from '../../stores';
 
 export interface AnnotationNodeData extends Record<string, unknown> {
   element: Element;
@@ -84,6 +85,7 @@ function formatInline(text: string): React.ReactNode {
 function AnnotationNodeComponent({ data }: NodeProps) {
   const nodeData = data as AnnotationNodeData;
   const { element, isSelected, isDimmed, onLabelChange, onStopEditing, onResize } = nodeData;
+  const anonymousMode = useUIStore((state) => state.anonymousMode);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [localEditing, setLocalEditing] = useState(false);
   const [editValue, setEditValue] = useState(element.notes || '');
@@ -190,8 +192,20 @@ function AnnotationNodeComponent({ data }: NodeProps) {
   const renderedContent = useMemo(() => {
     const text = element.notes || '';
     if (!text || text === 'Note...') return <span className="text-text-tertiary italic text-[13px]">Note...</span>;
+    if (anonymousMode) {
+      // Show redacted blocks for each line
+      const lines = text.split('\n').filter(l => l.trim());
+      return lines.map((line, i) => (
+        <div key={i} className="mb-0.5">
+          <span
+            className="inline-block bg-text-primary rounded-sm"
+            style={{ width: `${Math.max(3, Math.min(line.length, 20)) * 0.4}em`, height: '0.9em', verticalAlign: 'middle' }}
+          />
+        </div>
+      ));
+    }
     return renderMarkdown(text);
-  }, [element.notes]);
+  }, [element.notes, anonymousMode]);
 
   return (
     <>

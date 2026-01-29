@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.10
+
+### Fixes
+- Apply redaction (anonymous mode) to group labels
+- Apply redaction to annotation/note content
+- Hide displayed properties on groups in anonymous mode
+
 ## 1.0.9
 
 ### Features
