@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch } from 'lucide-react';
+import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { toPng } from 'html-to-image';
+import { TimelineRangeSlider } from './TimelineRangeSlider';
 
 interface TimelineItem {
   id: string;
@@ -105,6 +106,11 @@ export function TimelineView() {
   const [showCausality, setShowCausality] = useState(false); // Show potential causal links
   const [causalityMaxDays, setCausalityMaxDays] = useState(365); // Max days between events for causality
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null); // Show info panel on click
+
+  // Temporal filter state
+  const [showTemporalFilter, setShowTemporalFilter] = useState(false);
+  const [filterStartDate, setFilterStartDate] = useState<Date | null>(null);
+  const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
 
   // Build timeline items from links and element events
   const { items, timeBounds } = useMemo(() => {
@@ -374,14 +380,29 @@ export function TimelineView() {
     return () => unregisterCaptureHandler('timeline');
   }, [items, timeBounds, registerCaptureHandler, unregisterCaptureHandler]);
 
+  // Apply temporal filter to items
+  const filteredItems = useMemo(() => {
+    if (!filterStartDate && !filterEndDate) return items;
+
+    return items.filter((item) => {
+      const itemStart = item.start.getTime();
+
+      // Filter by item START date being within the selected range
+      if (filterStartDate && itemStart < filterStartDate.getTime()) return false;
+      if (filterEndDate && itemStart > filterEndDate.getTime()) return false;
+
+      return true;
+    });
+  }, [items, filterStartDate, filterEndDate]);
+
   // Each item gets its own row for clarity
   // Sort order: oldest at top by default, or newest at top if newestFirst
   const itemsWithRows = useMemo(() => {
-    const sortedItems = newestFirst ? [...items].reverse() : items;
+    const sortedItems = newestFirst ? [...filteredItems].reverse() : filteredItems;
     return sortedItems.map((item, index) => ({ ...item, row: index }));
-  }, [items, newestFirst]);
+  }, [filteredItems, newestFirst]);
 
-  const totalRows = items.length || 1;
+  const totalRows = filteredItems.length || 1;
 
   // Virtualization: only render items visible in viewport (horizontal + vertical)
   const [containerWidth, setContainerWidth] = useState(800);
@@ -765,7 +786,10 @@ export function TimelineView() {
         leftContent={
           <>
             <span className="text-xs text-text-secondary">
-              {t('timeline.eventsCount', { count: items.length })}
+              {filterStartDate || filterEndDate
+                ? t('timeline.filteredEventsCount', { filtered: filteredItems.length, total: items.length })
+                : t('timeline.eventsCount', { count: items.length })
+              }
             </span>
             <span className="text-[10px] text-text-tertiary hidden sm:inline">
               {t('timeline.zoomHint')}
@@ -855,9 +879,41 @@ export function TimelineView() {
                 ))}
               </div>
             )}
+            <div className="w-px h-4 bg-border-default mx-1" />
+            {/* Temporal filter toggle */}
+            <button
+              onClick={() => setShowTemporalFilter(!showTemporalFilter)}
+              className={`px-2 h-6 text-[10px] rounded border flex items-center gap-1 ${
+                showTemporalFilter || filterStartDate || filterEndDate
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-text-secondary hover:bg-bg-tertiary border-border-default'
+              }`}
+              title={t('timeline.temporalFilterHint')}
+            >
+              <Filter size={10} />
+              {t('timeline.filter')}
+            </button>
           </>
         }
       />
+
+      {/* Temporal filter slider */}
+      {showTemporalFilter && timeBounds && (
+        <TimelineRangeSlider
+          minDate={timeBounds.min}
+          maxDate={timeBounds.max}
+          startDate={filterStartDate}
+          endDate={filterEndDate}
+          onRangeChange={(start, end) => {
+            setFilterStartDate(start);
+            setFilterEndDate(end);
+          }}
+          onClear={() => {
+            setFilterStartDate(null);
+            setFilterEndDate(null);
+          }}
+        />
+      )}
 
       {/* Timeline container */}
       <div

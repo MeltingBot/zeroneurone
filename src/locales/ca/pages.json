@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} dia/es després)",
     "unnamed": "Sense nom",
     "relation": "relació",
-    "newElement": "Nou element"
+    "newElement": "Nou element",
+    "filter": "Filtre",
+    "filteredEventsCount": "{{filtered}}/{{total}} esdeveniment(s)",
+    "temporalFilter": "Període",
+    "temporalFilterHint": "Filtrar per període temporal",
+    "stepBackward": "Retrocedir un mes",
+    "stepForward": "Avançar un mes",
+    "playAnimation": "Animar el període",
+    "pauseAnimation": "Pausa",
+    "clearFilter": "Esborrar filtre",
+    "dragToMoveRange": "Arrossega per moure el període"
   },
   "report": {
     "title": "Informe",

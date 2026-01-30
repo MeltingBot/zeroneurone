@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} egun geroago)",
     "unnamed": "Izenik gabe",
     "relation": "erlazioa",
-    "newElement": "Elementu berria"
+    "newElement": "Elementu berria",
+    "filter": "Iragazkia",
+    "filteredEventsCount": "{{filtered}}/{{total}} gertaera",
+    "temporalFilter": "Aldia",
+    "temporalFilterHint": "Aldi tenporalez iragazi",
+    "stepBackward": "Hilabete bat atzera",
+    "stepForward": "Hilabete bat aurrera",
+    "playAnimation": "Aldia animatu",
+    "pauseAnimation": "Pausa",
+    "clearFilter": "Iragazkia garbitu",
+    "dragToMoveRange": "Arrastatu aldia mugitzeko"
   },
   "report": {
     "title": "Txostena",

@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} day(s) after)",
     "unnamed": "Unnamed",
     "relation": "relation",
-    "newElement": "New element"
+    "newElement": "New element",
+    "filter": "Filter",
+    "filteredEventsCount": "{{filtered}}/{{total}} event(s)",
+    "temporalFilter": "Period",
+    "temporalFilterHint": "Filter by time period",
+    "stepBackward": "Step back one month",
+    "stepForward": "Step forward one month",
+    "playAnimation": "Animate time period",
+    "pauseAnimation": "Pause",
+    "clearFilter": "Clear filter",
+    "dragToMoveRange": "Drag to move the time range"
   },
   "report": {
     "title": "Report",

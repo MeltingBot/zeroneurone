@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} dag(en) later)",
     "unnamed": "Naamloos",
     "relation": "relatie",
-    "newElement": "Nieuw element"
+    "newElement": "Nieuw element",
+    "filter": "Filter",
+    "filteredEventsCount": "{{filtered}}/{{total}} gebeurtenis(sen)",
+    "temporalFilter": "Periode",
+    "temporalFilterHint": "Filteren op tijdsperiode",
+    "stepBackward": "Een maand terug",
+    "stepForward": "Een maand vooruit",
+    "playAnimation": "Periode animeren",
+    "pauseAnimation": "Pauze",
+    "clearFilter": "Filter wissen",
+    "dragToMoveRange": "Sleep om de periode te verplaatsen"
   },
   "report": {
     "title": "Rapport",

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+### Features
+- Timeline temporal filter with range slider for date-based filtering
+- Animation controls (play/pause) to animate through time periods
+- Step forward/backward buttons for manual navigation
+- Draggable range to shift the entire filter window
+- Date input fields for precise date selection
+
 ## 1.0.12
 
 ### Fixes

@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} Tag(e) danach)",
     "unnamed": "Unbenannt",
     "relation": "Beziehung",
-    "newElement": "Neues Element"
+    "newElement": "Neues Element",
+    "filter": "Filter",
+    "filteredEventsCount": "{{filtered}}/{{total}} Ereignis(se)",
+    "temporalFilter": "Zeitraum",
+    "temporalFilterHint": "Nach Zeitraum filtern",
+    "stepBackward": "Einen Monat zurück",
+    "stepForward": "Einen Monat vor",
+    "playAnimation": "Zeitraum animieren",
+    "pauseAnimation": "Pause",
+    "clearFilter": "Filter löschen",
+    "dragToMoveRange": "Ziehen um den Zeitraum zu verschieben"
   },
   "report": {
     "title": "Bericht",

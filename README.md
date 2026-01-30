@@ -354,8 +354,7 @@ Ou deployer votre propre serveur y-websocket.
 
 ### v1.1 — Analyse avancee
 - [ ] Betweenness centrality
-- [ ] Filtre temporel sur timeline
-- [ ] Recherche dans les properties
+- [x] Filtre temporel sur timeline
 - [ ] Export des resultats d'analyse
 
 ### v1.2 — Integration

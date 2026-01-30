@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} jour(s) après)",
     "unnamed": "Sans nom",
     "relation": "relation",
-    "newElement": "Nouvel élément"
+    "newElement": "Nouvel élément",
+    "filter": "Filtre",
+    "filteredEventsCount": "{{filtered}}/{{total}} événement(s)",
+    "temporalFilter": "Période",
+    "temporalFilterHint": "Filtrer par période temporelle",
+    "stepBackward": "Reculer d'un mois",
+    "stepForward": "Avancer d'un mois",
+    "playAnimation": "Animer la période",
+    "pauseAnimation": "Pause",
+    "clearFilter": "Effacer le filtre",
+    "dragToMoveRange": "Glisser pour déplacer la période"
   },
   "report": {
     "title": "Rapport",

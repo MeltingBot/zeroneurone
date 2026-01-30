@@ -257,7 +257,17 @@
     "daysAfter": "({{count}} днів пізніше)",
     "unnamed": "Без назви",
     "relation": "зв'язок",
-    "newElement": "Новий елемент"
+    "newElement": "Новий елемент",
+    "filter": "Фільтр",
+    "filteredEventsCount": "{{filtered}}/{{total}} подія/й",
+    "temporalFilter": "Період",
+    "temporalFilterHint": "Фільтрувати за часовим періодом",
+    "stepBackward": "На місяць назад",
+    "stepForward": "На місяць вперед",
+    "playAnimation": "Анімувати період",
+    "pauseAnimation": "Пауза",
+    "clearFilter": "Очистити фільтр",
+    "dragToMoveRange": "Перетягніть для переміщення періоду"
   },
   "report": {
     "title": "Звіт",
