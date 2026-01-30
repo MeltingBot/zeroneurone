@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.11-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -55,7 +55,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 
 ### Vues Multiples
 - **Canvas** : Vue graphe principale
-- **Carte** : Visualisation geographique (Leaflet)
+- **Carte** : Visualisation geographique (Leaflet) avec vue satellite
 - **Timeline** : Frise chronologique virtualisee (10k+ elements)
 - **Vue partagee** : Combinaison carte/canvas
 
@@ -343,7 +343,7 @@ Ou deployer votre propre serveur y-websocket.
 
 ## Roadmap
 
-### v1.0 — Stabilisation
+### v1.0 — Stabilisation ✓
 - [x] Tests E2E Playwright
 - [x] PWA complete
 - [x] Accessibilite WCAG AA
@@ -358,16 +358,13 @@ Ou deployer votre propre serveur y-websocket.
 - [ ] Recherche dans les properties
 - [ ] Export des resultats d'analyse
 
-### v1.2 — Import/Integration
-- [ ] Import Maltego (MTGL/MTGX)
+### v1.2 — Integration
 - [ ] Merge d'investigations
-- [ ] ~API REST locale~
+- [ ] Import depuis tableur avec mapping colonnes
 
-### Au-dela
+### Idees futures
 - [ ] Theming personnalisable
-- [ ] Plugin system
 - [ ] Mode presentation
-- [ ] Application desktop (Tauri)
 
 ## Contribuer
 
