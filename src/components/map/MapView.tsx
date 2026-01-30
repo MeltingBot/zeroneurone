@@ -1475,10 +1475,13 @@ export function MapView() {
               type="date"
               value={selectedDate.toISOString().split('T')[0]}
               onChange={(e) => {
-                const newDate = new Date(e.target.value);
-                if (!isNaN(newDate.getTime())) {
-                  // Set the exact date entered - allows exploring any point in time
-                  setSelectedDate(newDate);
+                const dateStr = e.target.value;
+                // Only update if valid date (YYYY-MM-DD format complete)
+                if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                  const newDate = new Date(dateStr + 'T12:00:00');
+                  if (!isNaN(newDate.getTime())) {
+                    setSelectedDate(newDate);
+                  }
                 }
               }}
               className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-28"

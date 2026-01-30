@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.12
+
+### Fixes
+- Fix date input reset issue when manually typing dates (especially in Brave browser)
+- Use local state for date/datetime inputs to prevent reset during field navigation
+
 ## 1.0.11
 
 ### Features

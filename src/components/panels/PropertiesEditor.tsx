@@ -474,11 +474,19 @@ function PropertyValueInput({
   // Local state for text-based inputs (syncs on blur)
   const [localText, setLocalText] = useState(String(value ?? ''));
   const [localNumber, setLocalNumber] = useState(value !== null && value !== undefined ? String(value) : '');
+  const [localDate, setLocalDate] = useState(() =>
+    value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : ''
+  );
+  const [localDateTime, setLocalDateTime] = useState(() =>
+    value instanceof Date ? formatDateTimeForInput(value) : value ? String(value).slice(0, 16) : ''
+  );
 
   // Sync local state when prop value changes externally (undo/redo, collab)
   useEffect(() => {
     setLocalText(String(value ?? ''));
     setLocalNumber(value !== null && value !== undefined ? String(value) : '');
+    setLocalDate(value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : '');
+    setLocalDateTime(value instanceof Date ? formatDateTimeForInput(value) : value ? String(value).slice(0, 16) : '');
   }, [value]);
 
   const baseInputClass = compact
@@ -531,16 +539,18 @@ function PropertyValueInput({
       return (
         <input
           type="date"
-          value={
-            value instanceof Date
-              ? formatDateForInput(value)
-              : value
-              ? String(value).split('T')[0]
-              : ''
-          }
-          onChange={(e) => {
-            // Date pickers don't need blur optimization (no typing)
-            onChange(e.target.value ? new Date(e.target.value + 'T12:00:00') : null);
+          value={localDate}
+          onChange={(e) => setLocalDate(e.target.value)}
+          onBlur={() => {
+            // Sync to parent on blur with valid date or null
+            if (!localDate) {
+              if (value !== null) onChange(null);
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
+              const parsed = new Date(localDate + 'T12:00:00');
+              if (!isNaN(parsed.getTime())) {
+                onChange(parsed);
+              }
+            }
           }}
           onKeyDown={onKeyDown}
           className={baseInputClass}
@@ -551,16 +561,18 @@ function PropertyValueInput({
       return (
         <input
           type="datetime-local"
-          value={
-            value instanceof Date
-              ? formatDateTimeForInput(value)
-              : value
-              ? String(value).slice(0, 16)
-              : ''
-          }
-          onChange={(e) => {
-            // Datetime pickers don't need blur optimization (no typing)
-            onChange(e.target.value ? new Date(e.target.value) : null);
+          value={localDateTime}
+          onChange={(e) => setLocalDateTime(e.target.value)}
+          onBlur={() => {
+            // Sync to parent on blur with valid datetime or null
+            if (!localDateTime) {
+              if (value !== null) onChange(null);
+            } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(localDateTime)) {
+              const parsed = new Date(localDateTime);
+              if (!isNaN(parsed.getTime())) {
+                onChange(parsed);
+              }
+            }
           }}
           onKeyDown={onKeyDown}
           className={baseInputClass}

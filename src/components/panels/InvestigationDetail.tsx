@@ -78,8 +78,15 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
   const handleStartDateChange = useCallback(
     (value: string) => {
       setStartDate(value);
-      const newDate = value ? new Date(value) : null;
-      updateInvestigation(investigation.id, { startDate: newDate });
+      // Only update if empty (clearing) or valid date (YYYY-MM-DD format complete)
+      if (!value) {
+        updateInvestigation(investigation.id, { startDate: null });
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const parsed = new Date(value + 'T12:00:00');
+        if (!isNaN(parsed.getTime())) {
+          updateInvestigation(investigation.id, { startDate: parsed });
+        }
+      }
     },
     [investigation.id, updateInvestigation]
   );
