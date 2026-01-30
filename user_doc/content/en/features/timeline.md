@@ -115,15 +115,35 @@ In timeline mode, selection stays synchronized with the canvas:
 
 ---
 
-## Temporal Filters
+## Temporal Filter
 
-### Visible Period
+The temporal filter allows you to restrict the display to a specific period.
 
-The top bar indicates the currently visible period.
+### Activate the Filter
 
-### Filter by Date
+Click the **Filter** button in the toolbar to show the date range slider.
 
-In the **Filters** panel, define a date range to hide elements outside the period.
+### Filter Controls
+
+| Element | Function |
+|---------|----------|
+| **Handles** | Drag to set start/end of period |
+| **Center area** | Drag to move the entire window |
+| **Date fields** | Enter precise dates |
+| **Play/Pause** | Automatic animation through time |
+| **Forward/Back** | Manual shift by 30 days |
+| **X** | Clear the filter |
+
+### Time Animation
+
+The **Play** button animates the filter window through time:
+- Preserves the duration of the selected window
+- Advances by one day every 100ms
+- Automatically stops at end of timeline
+
+### Indicator
+
+When a filter is active, the counter displays "X / Y events" to indicate how many elements are visible out of the total.
 
 
 ---

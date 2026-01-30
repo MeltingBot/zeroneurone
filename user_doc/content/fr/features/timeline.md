@@ -115,15 +115,35 @@ En mode timeline, la sélection reste synchronisée avec le canvas :
 
 ---
 
-## Filtres temporels
+## Filtre temporel
 
-### Période visible
+Le filtre temporel permet de restreindre l'affichage à une période spécifique.
 
-La barre en haut indique la période actuellement visible.
+### Activer le filtre
 
-### Filtrer par date
+Cliquez sur le bouton **Filtre** dans la barre d'outils pour afficher le slider de dates.
 
-Dans le panneau **Filtres**, définissez une plage de dates pour masquer les éléments hors période.
+### Contrôles du filtre
+
+| Élément | Fonction |
+|---------|----------|
+| **Curseurs** | Glissez pour définir début/fin de période |
+| **Zone centrale** | Glissez pour déplacer toute la fenêtre |
+| **Champs date** | Saisissez des dates précises |
+| **Play/Pause** | Animation automatique dans le temps |
+| **Avance/Recul** | Décalage manuel de 30 jours |
+| **X** | Effacer le filtre |
+
+### Animation temporelle
+
+Le bouton **Play** anime la fenêtre de filtre à travers le temps :
+- Conserve la durée de la fenêtre sélectionnée
+- Avance d'un jour toutes les 100ms
+- S'arrête automatiquement en fin de timeline
+
+### Indicateur
+
+Quand un filtre est actif, le compteur affiche "X / Y événements" pour indiquer combien d'éléments sont visibles sur le total.
 
 
 ---
