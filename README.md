@@ -57,7 +57,6 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - **Canvas** : Vue graphe principale
 - **Carte** : Visualisation geographique (Leaflet) avec vue satellite
 - **Timeline** : Frise chronologique virtualisee (10k+ elements)
-- **Vue partagee** : Combinaison carte/canvas
 
 ### Collaboration Temps Reel
 - Synchronisation via WebSocket avec chiffrement E2E (AES-256-GCM)
@@ -165,8 +164,7 @@ L'application sera accessible sur `http://localhost:5173`
 | Nouvelle annotation | `N` |
 | Vue Canvas | `1` |
 | Vue Carte | `2` |
-| Vue Partagee | `3` |
-| Vue Timeline | `4` |
+| Vue Timeline | `3` |
 
 ### Interactions Canvas
 
