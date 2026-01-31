@@ -21,6 +21,14 @@
     "renameInvestigation": "Ikerketaren izena aldatu",
     "namePlaceholder": "Izen berria"
   },
+  "importIntoCurrent": {
+    "title": "Ikerketara inportatu",
+    "description": "ZIP fitxategi bat uneko ikerketara inportatu. Inportatutako elementuak non kokatu aukeratu ahal izango duzu.",
+    "selectZip": "ZIP fitxategia hautatu",
+    "zipFormat": ".zip fitxategiak soilik",
+    "zipOnly": "ZIP fitxategiak soilik onartzen dira",
+    "emptyZip": "ZIP fitxategia hutsik dago edo ez du elementurik"
+  },
   "import": {
     "title": "Ikerketa inportatu",
     "dropzone": "Jaregin fitxategia edo egin klik hautatzeko",

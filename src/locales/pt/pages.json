@@ -154,6 +154,14 @@
       "hint": "Duplo clique para criar um elemento",
       "orDrop": "ou largue ficheiros"
     },
+    "importPlacement": {
+      "instructions": "Clique para posicionar os elementos importados",
+      "importing": "A importar...",
+      "cancel": "Cancelar (Esc)",
+      "elements": "{{count}} elemento(s)",
+      "success": "{{count}} elemento(s) importado(s)",
+      "error": "Importação falhou"
+    },
     "layout": {
       "title": "Algoritmos de disposição",
       "button": "Organizar",

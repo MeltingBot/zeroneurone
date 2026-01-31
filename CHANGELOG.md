@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0
+
+### Features
+- Import into current investigation: merge elements from a ZIP file into the active canvas
+- Click-to-place import with visual preview (bounding box follows cursor)
+- Zoom and pan during import placement mode
+- Escape key to cancel import placement
+- Proper handling of grouped elements (preserve relative positions)
+
 ## 1.1.0
 
 ### Features

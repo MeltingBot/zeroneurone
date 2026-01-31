@@ -21,6 +21,14 @@
     "renameInvestigation": "Reanomenar la investigació",
     "namePlaceholder": "Nou nom"
   },
+  "importIntoCurrent": {
+    "title": "Importar a la investigació",
+    "description": "Importar un fitxer ZIP a la investigació actual. Podreu triar on col·locar els elements importats.",
+    "selectZip": "Seleccionar un fitxer ZIP",
+    "zipFormat": "Només fitxers .zip",
+    "zipOnly": "Només s'admeten fitxers ZIP",
+    "emptyZip": "El fitxer ZIP és buit o no conté elements"
+  },
   "import": {
     "title": "Importar una investigació",
     "dropzone": "Deixeu anar un fitxer o feu clic per seleccionar",

@@ -21,6 +21,14 @@
     "renameInvestigation": "Renomear a investigação",
     "namePlaceholder": "Novo nome"
   },
+  "importIntoCurrent": {
+    "title": "Importar na investigação atual",
+    "description": "Fundir elementos de um ficheiro ZIP na investigação atualmente aberta. Os elementos importados serão posicionados na tela.",
+    "selectZip": "Selecionar um ficheiro ZIP",
+    "zipFormat": "Formato ZIP ZeroNeurone",
+    "zipOnly": "Apenas ficheiros ZIP ZeroNeurone são suportados para fusão",
+    "emptyZip": "O ficheiro ZIP não contém elementos"
+  },
   "import": {
     "title": "Importar uma investigação",
     "dropzone": "Largue um ficheiro ou clique para selecionar",

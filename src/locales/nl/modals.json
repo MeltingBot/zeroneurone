@@ -21,6 +21,14 @@
     "renameInvestigation": "Onderzoek hernoemen",
     "namePlaceholder": "Nieuwe naam"
   },
+  "importIntoCurrent": {
+    "title": "Importeren in huidig onderzoek",
+    "description": "Elementen uit een ZIP-bestand samenvoegen met het momenteel geopende onderzoek. De geïmporteerde elementen worden op het canvas geplaatst.",
+    "selectZip": "Selecteer een ZIP-bestand",
+    "zipFormat": "ZeroNeurone ZIP-formaat",
+    "zipOnly": "Alleen ZeroNeurone ZIP-bestanden worden ondersteund voor samenvoegen",
+    "emptyZip": "Het ZIP-bestand bevat geen elementen"
+  },
   "import": {
     "title": "Onderzoek importeren",
     "dropzone": "Sleep een bestand of klik om te selecteren",

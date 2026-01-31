@@ -11,6 +11,25 @@ export interface MetadataImportItem {
   metadata: ExtractedMetadata;
 }
 
+/** Data for import placement mode */
+export interface ImportPlacementData {
+  /** Bounding box of elements to import (min/max coordinates) */
+  boundingBox: {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    width: number;
+    height: number;
+  };
+  /** The file to import */
+  file: File;
+  /** Target investigation ID */
+  investigationId: string;
+  /** Callback after successful import */
+  onComplete?: () => void;
+}
+
 export type FontMode = 'readable' | 'handwritten';
 export type ThemeMode = 'light' | 'dark';
 
@@ -60,6 +79,10 @@ interface UIState {
 
   // Metadata import queue
   metadataImportQueue: MetadataImportItem[];
+
+  // Import placement mode
+  importPlacementMode: boolean;
+  importPlacementData: ImportPlacementData | null;
 
   // Capture system for report screenshots
   captureHandlers: Map<DisplayMode, CaptureHandler>;
@@ -124,6 +147,10 @@ interface UIState {
   pushMetadataImport: (item: MetadataImportItem) => void;
   shiftMetadataImport: () => void;
 
+  // Actions - Import placement mode
+  enterImportPlacementMode: (data: ImportPlacementData) => void;
+  exitImportPlacementMode: () => void;
+
   // Actions - Reset investigation-specific state
   resetInvestigationState: () => void;
 }
@@ -148,6 +175,8 @@ export const useUIStore = create<UIState>()(
   showAlignGuides: true,
   gridSize: 20,
   metadataImportQueue: [],
+  importPlacementMode: false,
+  importPlacementData: null,
   captureHandlers: new Map(),
 
   // Capture system
@@ -317,11 +346,29 @@ export const useUIStore = create<UIState>()(
     }));
   },
 
+  // Import placement mode
+  enterImportPlacementMode: (data) => {
+    set({
+      importPlacementMode: true,
+      importPlacementData: data,
+      activeModal: null, // Close any open modal
+    });
+  },
+
+  exitImportPlacementMode: () => {
+    set({
+      importPlacementMode: false,
+      importPlacementData: null,
+    });
+  },
+
   // Reset investigation-specific state (called when closing an investigation)
   resetInvestigationState: () => {
     set({
       hideMedia: false,
       anonymousMode: false,
+      importPlacementMode: false,
+      importPlacementData: null,
     });
   },
 }),

@@ -154,6 +154,14 @@
       "hint": "Double-cliquez pour créer un élément",
       "orDrop": "ou déposez des fichiers"
     },
+    "importPlacement": {
+      "instructions": "Cliquez pour placer les éléments importés",
+      "importing": "Import en cours...",
+      "cancel": "Annuler (Esc)",
+      "elements": "{{count}} élément(s)",
+      "success": "{{count}} élément(s) importé(s)",
+      "error": "Échec de l'import"
+    },
     "layout": {
       "title": "Algorithmes de layout",
       "button": "Arranger",
@@ -192,6 +200,7 @@
     "header": {
       "report": "Rapport",
       "generateReport": "Générer un rapport",
+      "import": "Importer",
       "export": "Exporter",
       "search": "Rechercher",
       "clearFilters": "Effacer les filtres",

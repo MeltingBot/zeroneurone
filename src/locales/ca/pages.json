@@ -154,6 +154,14 @@
       "hint": "Doble clic per crear un element",
       "orDrop": "o deixeu anar fitxers"
     },
+    "importPlacement": {
+      "instructions": "Feu clic per col·locar els elements importats",
+      "importing": "Important...",
+      "cancel": "Cancel·lar (Esc)",
+      "elements": "{{count}} element(s)",
+      "success": "{{count}} element(s) importat(s)",
+      "error": "Error d'importació"
+    },
     "layout": {
       "title": "Algoritmes de disposició",
       "button": "Organitzar",

@@ -154,6 +154,14 @@
       "hint": "Klik bikoitza elementu bat sortzeko",
       "orDrop": "edo fitxategiak jaregin"
     },
+    "importPlacement": {
+      "instructions": "Egin klik inportatutako elementuak kokatzeko",
+      "importing": "Inportatzen...",
+      "cancel": "Utzi (Esc)",
+      "elements": "{{count}} elementu",
+      "success": "{{count}} elementu inportatuta",
+      "error": "Inportazio errorea"
+    },
     "layout": {
       "title": "Antolamendu algoritmoak",
       "button": "Antolatu",

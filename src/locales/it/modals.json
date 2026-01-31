@@ -21,6 +21,14 @@
     "renameInvestigation": "Rinomina l'indagine",
     "namePlaceholder": "Nuovo nome"
   },
+  "importIntoCurrent": {
+    "title": "Importa nell'indagine corrente",
+    "description": "Unisci elementi da un file ZIP nell'indagine attualmente aperta. Gli elementi importati saranno posizionati sulla lavagna.",
+    "selectZip": "Seleziona un file ZIP",
+    "zipFormat": "ZeroNeurone formato ZIP",
+    "zipOnly": "Solo i file ZIP di ZeroNeurone sono supportati per l'unione",
+    "emptyZip": "Il file ZIP non contiene elementi"
+  },
   "import": {
     "title": "Importa un'indagine",
     "dropzone": "Trascina un file o clicca per selezionare",

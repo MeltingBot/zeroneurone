@@ -21,6 +21,14 @@
     "renameInvestigation": "Renombrar la investigación",
     "namePlaceholder": "Nuevo nombre"
   },
+  "importIntoCurrent": {
+    "title": "Importar a la investigación",
+    "description": "Importar un archivo ZIP a la investigación actual. Podrá elegir dónde colocar los elementos importados.",
+    "selectZip": "Seleccionar un archivo ZIP",
+    "zipFormat": "Solo archivos .zip",
+    "zipOnly": "Solo se admiten archivos ZIP",
+    "emptyZip": "El archivo ZIP está vacío o no contiene elementos"
+  },
   "import": {
     "title": "Importar una investigación",
     "dropzone": "Suelte un archivo o haga clic para seleccionar",

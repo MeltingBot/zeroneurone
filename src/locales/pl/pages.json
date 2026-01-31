@@ -154,6 +154,14 @@
       "hint": "Kliknij dwukrotnie, aby utworzyć element",
       "orDrop": "lub upuść pliki"
     },
+    "importPlacement": {
+      "instructions": "Kliknij, aby umieścić zaimportowane elementy",
+      "importing": "Importowanie...",
+      "cancel": "Anuluj (Esc)",
+      "elements": "{{count}} element(ów)",
+      "success": "{{count}} element(ów) zaimportowano",
+      "error": "Import nie powiódł się"
+    },
     "layout": {
       "title": "Algorytmy układu",
       "button": "Rozmieść",

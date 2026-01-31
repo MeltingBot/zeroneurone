@@ -1,10 +1,10 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
-import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal } from '../components/modals';
+import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
 
 // Lazy load heavy components for better initial load
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
@@ -45,6 +45,7 @@ export function InvestigationPage() {
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [collabLeaveWarning, setCollabLeaveWarning] = useState(false);
@@ -300,6 +301,14 @@ export function InvestigationPage() {
           {/* Language selector */}
           <LanguageSwitcher size="sm" />
           <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            title={t('investigation.header.import')}
+          >
+            <Upload size={14} />
+            <span className="hidden sm:inline">{t('investigation.header.import')}</span>
+          </button>
+          <button
             onClick={() => setExportOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('investigation.header.export')}
@@ -375,6 +384,12 @@ export function InvestigationPage() {
       <ExportModal
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
+      />
+
+      {/* Import modal (simplified for current investigation) */}
+      <ImportIntoCurrentModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
       />
 
       {/* Report modal */}

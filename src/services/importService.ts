@@ -76,14 +76,99 @@ export interface CSVImportOptions {
   createMissingElements: boolean;
 }
 
+/** Bounding box of elements for placement preview */
+export interface ImportBoundingBox {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  width: number;
+  height: number;
+  elementCount: number;
+}
+
 class ImportService {
+  /**
+   * Calculate bounding box from export data elements
+   */
+  private calculateBoundingBox(data: ExportData): ImportBoundingBox {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const el of data.elements) {
+      const x = el.position?.x || 0;
+      const y = el.position?.y || 0;
+      // Assume a default element size for bounding calculation
+      const width = 150;
+      const height = 60;
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + width);
+      maxY = Math.max(maxY, y + height);
+    }
+
+    // Handle empty data
+    if (data.elements.length === 0) {
+      return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 };
+    }
+
+    return {
+      minX,
+      minY,
+      maxX,
+      maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      elementCount: data.elements.length,
+    };
+  }
+
+  /**
+   * Parse a ZIP file and return the bounding box without importing
+   * Used for placement preview before importing into existing investigation
+   */
+  async parseZipForPlacement(file: File): Promise<{ boundingBox: ImportBoundingBox; success: boolean; error?: string }> {
+    try {
+      // Security check
+      if (file.size > ZIP_LIMITS.MAX_ZIP_SIZE) {
+        return { boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 }, success: false, error: 'Fichier trop volumineux' };
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      // Read investigation.json
+      const jsonFile = zip.file('investigation.json');
+      if (!jsonFile) {
+        return { boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 }, success: false, error: 'Pas de fichier investigation.json' };
+      }
+
+      const content = await jsonFile.async('string');
+      const data = JSON.parse(content) as ExportData;
+      const boundingBox = this.calculateBoundingBox(data);
+
+      return { boundingBox, success: true };
+    } catch (error) {
+      return {
+        boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 },
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur de lecture'
+      };
+    }
+  }
+
   /**
    * Import from ZIP file (full investigation export with assets)
    * Includes ZIP bomb protection and file validation
+   * @param positionOffset - Optional offset to apply to all element positions (for importing into existing investigation)
    */
   async importFromZip(
     file: File,
-    targetInvestigationId: InvestigationId
+    targetInvestigationId: InvestigationId,
+    positionOffset?: Position
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -223,8 +308,8 @@ class ImportService {
         }
       }
 
-      // Import elements and links
-      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, result);
+      // Import elements and links (with optional position offset)
+      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, result, positionOffset);
 
       result.success = true;
       if (result.linksImported > 0) {
@@ -845,13 +930,15 @@ class ImportService {
 
   /**
    * Import elements and links from export data
+   * @param positionOffset - Optional offset to apply to all element positions
    */
   private async importElementsAndLinks(
     data: ExportData,
     targetInvestigationId: InvestigationId,
     elementIdMap: Map<ElementId, ElementId>,
     assetIdMap: Map<AssetId, AssetId>,
-    result: ImportResult
+    result: ImportResult,
+    positionOffset?: Position
   ): Promise<void> {
     // First pass: create ID mappings for all elements
     for (const importedElement of data.elements) {
@@ -878,10 +965,21 @@ class ImportService {
         .map((oldId: ElementId) => elementIdMap.get(oldId))
         .filter((id): id is ElementId => id !== undefined);
 
+      // Apply position offset if provided, but ONLY to top-level elements
+      // Children of groups have positions relative to their parent, so we don't offset them
+      const shouldApplyOffset = positionOffset && !importedElement.parentGroupId;
+      const position = shouldApplyOffset
+        ? {
+            x: (importedElement.position?.x || 0) + positionOffset.x,
+            y: (importedElement.position?.y || 0) + positionOffset.y,
+          }
+        : importedElement.position;
+
       const element: Element = {
         ...importedElement,
         id: newId,
         investigationId: targetInvestigationId,
+        position,
         assetIds: newAssetIds,
         date: importedElement.date ? new Date(importedElement.date) : null,
         dateRange: importedElement.dateRange

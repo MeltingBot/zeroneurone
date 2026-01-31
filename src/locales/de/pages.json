@@ -154,6 +154,14 @@
       "hint": "Doppelklick zum Erstellen eines Elements",
       "orDrop": "oder Dateien ablegen"
     },
+    "importPlacement": {
+      "instructions": "Klicken Sie, um die importierten Elemente zu platzieren",
+      "importing": "Wird importiert...",
+      "cancel": "Abbrechen (Esc)",
+      "elements": "{{count}} Element(e)",
+      "success": "{{count}} Element(e) importiert",
+      "error": "Import fehlgeschlagen"
+    },
     "layout": {
       "title": "Layout-Algorithmen",
       "button": "Anordnen",

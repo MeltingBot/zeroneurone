@@ -21,6 +21,14 @@
     "renameInvestigation": "Rename investigation",
     "namePlaceholder": "New name"
   },
+  "importIntoCurrent": {
+    "title": "Import into investigation",
+    "description": "Import a ZIP archive into the current investigation. You'll be able to choose where to place the imported elements.",
+    "selectZip": "Select a ZIP file",
+    "zipFormat": ".zip files only",
+    "zipOnly": "Only ZIP files are supported",
+    "emptyZip": "The ZIP file is empty or contains no elements"
+  },
   "import": {
     "title": "Import investigation",
     "dropzone": "Drop a file or click to select",

@@ -1,7 +1,7 @@
 export { useInvestigationStore } from './investigationStore';
 export { useSelectionStore } from './selectionStore';
 export { useViewStore } from './viewStore';
-export { useUIStore, type FontMode, type ThemeMode } from './uiStore';
+export { useUIStore, type FontMode, type ThemeMode, type ImportPlacementData } from './uiStore';
 export { useInsightsStore } from './insightsStore';
 export { useToastStore, toast } from './toastStore';
 export { useHistoryStore } from './historyStore';

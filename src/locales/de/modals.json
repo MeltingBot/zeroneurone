@@ -21,6 +21,14 @@
     "renameInvestigation": "Ermittlung umbenennen",
     "namePlaceholder": "Neuer Name"
   },
+  "importIntoCurrent": {
+    "title": "In Ermittlung importieren",
+    "description": "Ein ZIP-Archiv in die aktuelle Ermittlung importieren. Sie können wählen, wo die importierten Elemente platziert werden.",
+    "selectZip": "ZIP-Datei auswählen",
+    "zipFormat": "Nur .zip-Dateien",
+    "zipOnly": "Nur ZIP-Dateien werden unterstützt",
+    "emptyZip": "Die ZIP-Datei ist leer oder enthält keine Elemente"
+  },
   "import": {
     "title": "Ermittlung importieren",
     "dropzone": "Datei ablegen oder klicken zum Auswählen",

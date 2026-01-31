@@ -33,9 +33,10 @@ import { CustomEdge } from './CustomEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { LayoutDropdown } from './LayoutDropdown';
+import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
-import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
@@ -43,6 +44,8 @@ import { generateUUID } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
+import { importService } from '../../services/importService';
+import { syncService } from '../../services/syncService';
 
 interface ContextMenuState {
   x: number;
@@ -470,6 +473,7 @@ export function Canvas() {
   const removeFromGroup = useInvestigationStore((s) => s.removeFromGroup);
   const dissolveGroup = useInvestigationStore((s) => s.dissolveGroup);
   const pasteElements = useInvestigationStore((s) => s.pasteElements);
+  const loadInvestigation = useInvestigationStore((s) => s.loadInvestigation);
 
   // Wrapper size for viewport culling
   const [wrapperSize, setWrapperSize] = useState({ width: 800, height: 600 });
@@ -603,6 +607,11 @@ export function Canvas() {
   const toggleAlignGuides = useUIStore((state) => state.toggleAlignGuides);
   const showMinimap = useUIStore((state) => state.showMinimap);
   const toggleMinimap = useUIStore((state) => state.toggleMinimap);
+
+  // Import placement mode
+  const importPlacementMode = useUIStore((state) => state.importPlacementMode);
+  const importPlacementData = useUIStore((state) => state.importPlacementData);
+  const exitImportPlacementMode = useUIStore((state) => state.exitImportPlacementMode);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
@@ -1907,10 +1916,62 @@ export function Canvas() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle pane click (deselect)
-  const handlePaneClick = useCallback(() => {
+  // State for import placement in progress
+  const [isImportingPlacement, setIsImportingPlacement] = useState(false);
+
+  // Handle pane click (deselect or placement import)
+  const handlePaneClick = useCallback(async (event: React.MouseEvent) => {
+    // If in import placement mode, handle the placement
+    if (importPlacementMode && importPlacementData && !isImportingPlacement) {
+      setIsImportingPlacement(true);
+
+      try {
+        // Calculate flow position from click
+        if (!reactFlowWrapper.current) return;
+        const bounds = reactFlowWrapper.current.getBoundingClientRect();
+        const flowPosition = {
+          x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
+          y: (event.clientY - bounds.top - viewport.y) / viewport.zoom,
+        };
+
+        // Calculate offset: we want the top-left of the bounding box to be at the click position
+        const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
+        const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
+
+        // Import with offset
+        const result = await importService.importFromZip(
+          importPlacementData.file,
+          importPlacementData.investigationId,
+          { x: offsetX, y: offsetY }
+        );
+
+        if (result.success) {
+          toast.success(tPages('investigation.importPlacement.success', {
+            count: result.elementsImported
+          }));
+
+          // Close Y.Doc, delete its persistence, and reload from Dexie
+          // This forces rebuild of Y.Doc from Dexie which now includes imported elements
+          await syncService.close();
+          await syncService.deleteLocalData(importPlacementData.investigationId);
+          await loadInvestigation(importPlacementData.investigationId);
+
+          // Call completion callback if provided
+          importPlacementData.onComplete?.();
+        } else {
+          toast.error(result.errors[0] || tPages('investigation.importPlacement.error'));
+        }
+      } catch (error) {
+        toast.error(tPages('investigation.importPlacement.error'));
+      } finally {
+        setIsImportingPlacement(false);
+        exitImportPlacementMode();
+      }
+      return;
+    }
+
     clearSelection();
-  }, [clearSelection]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadInvestigation, exitImportPlacementMode, tPages]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -2634,7 +2695,7 @@ export function Canvas() {
         {/* Canvas */}
         <div
           ref={reactFlowWrapper}
-          className="flex-1 relative outline-none"
+          className={`flex-1 relative outline-none ${importPlacementMode ? 'cursor-crosshair' : ''}`}
           data-testid="canvas"
           data-report-capture="canvas"
           onMouseMove={(e) => { lastMousePosRef.current = { x: e.clientX, y: e.clientY }; }}
@@ -2725,6 +2786,7 @@ export function Canvas() {
             <CanvasCaptureHandler />
             <ViewportController />
             <DraggableMinimap />
+            <ImportPlacementOverlay />
           </ReactFlow>
 
           {/* Alignment guides overlay */}

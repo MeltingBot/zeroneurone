@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, MousePointer2 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, type ImportResult } from '../../services/importService';
 import { exportService } from '../../services/exportService';
-import { useInvestigationStore, toast } from '../../stores';
+import { useInvestigationStore, useUIStore, toast } from '../../stores';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -14,13 +14,18 @@ interface ImportModalProps {
 export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const { t, i18n } = useTranslation('modals');
   const navigate = useNavigate();
+  const location = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [createMissingElements, setCreateMissingElements] = useState(true);
   const [targetInvestigationId, setTargetInvestigationId] = useState<string>('new');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { investigations, createInvestigation } = useInvestigationStore();
+  const { investigations, createInvestigation, currentInvestigation } = useInvestigationStore();
+  const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
+
+  // Check if we're currently on an investigation page
+  const isOnInvestigationPage = location.pathname.startsWith('/investigation/');
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -32,12 +37,57 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     try {
       // Determine target investigation
       let investigationId = targetInvestigationId;
+      const isImportingIntoExisting = targetInvestigationId !== 'new';
 
       if (targetInvestigationId === 'new') {
         // Create new investigation with file name (without extension)
         const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|xml)$/i, '');
         const investigation = await createInvestigation(name, '');
         investigationId = investigation.id;
+      }
+
+      // Special case: importing ZIP into existing investigation while on canvas
+      // → Enter placement mode so user can choose where to place elements
+      if (isImportingIntoExisting && file.name.endsWith('.zip') && isOnInvestigationPage && currentInvestigation?.id === targetInvestigationId) {
+        // Parse the ZIP to get bounding box
+        const parseResult = await importService.parseZipForPlacement(file);
+
+        if (parseResult.success && parseResult.boundingBox.elementCount > 0) {
+          // Enter placement mode - the modal will close automatically
+          enterImportPlacementMode({
+            boundingBox: parseResult.boundingBox,
+            file,
+            investigationId,
+            onComplete: () => {
+              // Reset state after successful import
+              setImportResult(null);
+              setTargetInvestigationId('new');
+            }
+          });
+
+          // Clear the file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          setIsProcessing(false);
+          return;
+        } else if (!parseResult.success) {
+          // If parsing failed, show error and don't proceed
+          setImportResult({
+            success: false,
+            elementsImported: 0,
+            linksImported: 0,
+            assetsImported: 0,
+            errors: [parseResult.error || t('import.unknownError')],
+            warnings: [],
+          });
+          setIsProcessing(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          return;
+        }
+        // If bounding box is empty, fall through to regular import
       }
 
       let result: ImportResult;
@@ -101,7 +151,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose, t]);
+  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose, t, isOnInvestigationPage, currentInvestigation, enterImportPlacementMode]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();

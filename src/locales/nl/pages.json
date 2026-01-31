@@ -154,6 +154,14 @@
       "hint": "Dubbelklik om een element aan te maken",
       "orDrop": "of sleep bestanden"
     },
+    "importPlacement": {
+      "instructions": "Klik om de geïmporteerde elementen te plaatsen",
+      "importing": "Importeren...",
+      "cancel": "Annuleren (Esc)",
+      "elements": "{{count}} element(en)",
+      "success": "{{count}} element(en) geïmporteerd",
+      "error": "Import mislukt"
+    },
     "layout": {
       "title": "Indelingsalgoritmen",
       "button": "Indelen",

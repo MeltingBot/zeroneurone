@@ -154,6 +154,14 @@
       "hint": "Double-click to create an element",
       "orDrop": "or drop files"
     },
+    "importPlacement": {
+      "instructions": "Click to place the imported elements",
+      "importing": "Importing...",
+      "cancel": "Cancel (Esc)",
+      "elements": "{{count}} element(s)",
+      "success": "{{count}} element(s) imported",
+      "error": "Import failed"
+    },
     "layout": {
       "title": "Layout algorithms",
       "button": "Arrange",
@@ -192,6 +200,7 @@
     "header": {
       "report": "Report",
       "generateReport": "Generate report",
+      "import": "Import",
       "export": "Export",
       "search": "Search",
       "clearFilters": "Clear filters",
