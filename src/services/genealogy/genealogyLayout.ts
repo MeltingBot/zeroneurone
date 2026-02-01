@@ -21,7 +21,7 @@ const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   nodeHeight: 60,
   levelHeight: 120,
   siblingGap: 20,
-  coupleGap: 15,
+  coupleGap: 60,  // Enough space to see marriage link
   branchGap: 40,
   direction: 'TB',
 };
@@ -32,7 +32,7 @@ const COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
   nodeHeight: 50,
   levelHeight: 100,
   siblingGap: 8,
-  coupleGap: 8,
+  coupleGap: 50,  // Visible marriage link
   branchGap: 20,
   direction: 'TB',
 };
@@ -43,7 +43,7 @@ const VERY_COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
   nodeHeight: 40,
   levelHeight: 80,
   siblingGap: 4,
-  coupleGap: 5,
+  coupleGap: 40,  // Visible marriage link
   branchGap: 12,
   direction: 'TB',
 };
@@ -54,7 +54,7 @@ const ULTRA_COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
   nodeHeight: 35,
   levelHeight: 65,
   siblingGap: 2,
-  coupleGap: 3,
+  coupleGap: 30,  // Minimum visible marriage link
   branchGap: 8,
   direction: 'TB',
 };
