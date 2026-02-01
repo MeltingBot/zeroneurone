@@ -28,23 +28,34 @@ const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
 
 // Compact options for large trees (100+ elements)
 const COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
-  nodeWidth: 140,
+  nodeWidth: 130,
   nodeHeight: 50,
   levelHeight: 100,
-  siblingGap: 10,
-  coupleGap: 10,
-  branchGap: 25,
+  siblingGap: 8,
+  coupleGap: 8,
+  branchGap: 20,
   direction: 'TB',
 };
 
-// Very compact for huge trees (250+ elements)
+// Very compact for huge trees (500+ elements)
 const VERY_COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
-  nodeWidth: 120,
-  nodeHeight: 45,
-  levelHeight: 85,
-  siblingGap: 5,
-  coupleGap: 8,
-  branchGap: 15,
+  nodeWidth: 100,
+  nodeHeight: 40,
+  levelHeight: 80,
+  siblingGap: 4,
+  coupleGap: 5,
+  branchGap: 12,
+  direction: 'TB',
+};
+
+// Ultra compact for massive trees (1500+ elements)
+const ULTRA_COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
+  nodeWidth: 80,
+  nodeHeight: 35,
+  levelHeight: 65,
+  siblingGap: 2,
+  coupleGap: 3,
+  branchGap: 8,
   direction: 'TB',
 };
 
@@ -71,7 +82,9 @@ export function applyGenealogyLayout(
 ): void {
   // Select layout options based on tree size
   let baseOptions: LayoutOptions;
-  if (elements.length >= 250) {
+  if (elements.length >= 1500) {
+    baseOptions = ULTRA_COMPACT_LAYOUT_OPTIONS;
+  } else if (elements.length >= 500) {
     baseOptions = VERY_COMPACT_LAYOUT_OPTIONS;
   } else if (elements.length >= 100) {
     baseOptions = COMPACT_LAYOUT_OPTIONS;
