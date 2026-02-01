@@ -52,21 +52,26 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
     setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
   }, [investigation.id]);
 
-  // Sync from props when fields change from REMOTE (only if not editing)
+  // Sync from props when fields change from REMOTE
+  // Skip if: editing, OR local value already matches props (prevents flash from our own updates)
   useEffect(() => {
     if (isEditingRef.current) return;
+    if (name === investigation.name) return;
     setName(investigation.name);
-  }, [investigation.name]);
+  }, [investigation.name, name]);
 
   useEffect(() => {
     if (isEditingRef.current) return;
+    if (description === investigation.description) return;
     setDescription(investigation.description);
-  }, [investigation.description]);
+  }, [investigation.description, description]);
 
   useEffect(() => {
     if (isEditingRef.current) return;
-    setCreator(investigation.creator || '');
-  }, [investigation.creator]);
+    const creatorValue = investigation.creator || '';
+    if (creator === creatorValue) return;
+    setCreator(creatorValue);
+  }, [investigation.creator, creator]);
 
   // Save debounced name
   useEffect(() => {
