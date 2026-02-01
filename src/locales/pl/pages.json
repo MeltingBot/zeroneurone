@@ -183,6 +183,10 @@
         "random": {
           "name": "Rozproszenie",
           "description": "Losowo rozprasza elementy"
+        },
+        "hierarchy": {
+          "name": "Hierarchia",
+          "description": "Organizuje elementy według poziomów (drzewa, schematy organizacyjne)"
         }
       }
     },

@@ -183,6 +183,10 @@
         "random": {
           "name": "Sakabanaketa",
           "description": "Elementuak ausaz sakabanatu"
+        },
+        "hierarchy": {
+          "name": "Hierarkia",
+          "description": "Elementuak mailaka antolatu (zuhaitzak, organogramak)"
         }
       }
     },

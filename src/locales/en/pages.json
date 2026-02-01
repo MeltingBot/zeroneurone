@@ -183,6 +183,10 @@
         "random": {
           "name": "Scatter",
           "description": "Randomly scatters elements"
+        },
+        "hierarchy": {
+          "name": "Hierarchy",
+          "description": "Organizes elements by levels (trees, org charts)"
         }
       }
     },

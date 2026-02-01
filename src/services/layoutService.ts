@@ -13,7 +13,7 @@ import type { Element, Link, Position } from '../types';
 // TYPES
 // ============================================================================
 
-export type LayoutType = 'force' | 'circular' | 'grid' | 'random';
+export type LayoutType = 'force' | 'circular' | 'grid' | 'random' | 'hierarchy';
 
 export interface LayoutOptions {
   /** Padding around the layout bounds */
@@ -220,6 +220,119 @@ function applyRandomLayout(
   return positions;
 }
 
+/**
+ * Apply hierarchical layout
+ * Arranges nodes in tree-like levels based on connectivity
+ */
+function applyHierarchyLayout(
+  graph: Graph,
+  options: LayoutOptions,
+  nodeCount: number
+): Map<string, Position> {
+  const { center = { x: 0, y: 0 } } = options;
+
+  // Adaptive sizing based on node count
+  let nodeWidth: number, levelHeight: number, siblingGap: number;
+  if (nodeCount >= 1500) {
+    nodeWidth = 80; levelHeight = 65; siblingGap = 2;
+  } else if (nodeCount >= 500) {
+    nodeWidth = 100; levelHeight = 80; siblingGap = 4;
+  } else if (nodeCount >= 100) {
+    nodeWidth = 130; levelHeight = 100; siblingGap = 8;
+  } else {
+    nodeWidth = 160; levelHeight = 120; siblingGap = 20;
+  }
+
+  // Find roots (nodes with no incoming edges)
+  const roots: string[] = [];
+  const hasIncoming = new Set<string>();
+
+  graph.forEachEdge((_edge, _attrs, _source, target) => {
+    hasIncoming.add(target);
+  });
+
+  graph.forEachNode((node) => {
+    if (!hasIncoming.has(node)) {
+      roots.push(node);
+    }
+  });
+
+  // If no roots found, pick nodes with minimum in-degree
+  if (roots.length === 0) {
+    const inDegrees = new Map<string, number>();
+    graph.forEachNode((node) => {
+      inDegrees.set(node, graph.inDegree(node));
+    });
+    const minDegree = Math.min(...inDegrees.values());
+    graph.forEachNode((node) => {
+      if (inDegrees.get(node) === minDegree) {
+        roots.push(node);
+      }
+    });
+  }
+
+  // BFS to assign levels
+  const levels = new Map<string, number>();
+  const queue: string[] = [...roots];
+  const visited = new Set<string>(roots);
+
+  for (const root of roots) {
+    levels.set(root, 0);
+  }
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentLevel = levels.get(current) || 0;
+
+    graph.forEachOutNeighbor(current, (neighbor) => {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        levels.set(neighbor, currentLevel + 1);
+        queue.push(neighbor);
+      }
+    });
+  }
+
+  // Handle unvisited nodes (disconnected components)
+  graph.forEachNode((node) => {
+    if (!levels.has(node)) {
+      levels.set(node, 0);
+    }
+  });
+
+  // Group nodes by level
+  const byLevel = new Map<number, string[]>();
+  let maxLevel = 0;
+
+  for (const [node, level] of levels) {
+    if (!byLevel.has(level)) {
+      byLevel.set(level, []);
+    }
+    byLevel.get(level)!.push(node);
+    maxLevel = Math.max(maxLevel, level);
+  }
+
+  // Position nodes
+  const positions = new Map<string, Position>();
+
+  for (let level = 0; level <= maxLevel; level++) {
+    const nodesAtLevel = byLevel.get(level) || [];
+    const count = nodesAtLevel.length;
+    const totalWidth = count * nodeWidth + (count - 1) * siblingGap;
+    let x = center.x - totalWidth / 2;
+
+    for (const node of nodesAtLevel) {
+      positions.set(node, {
+        x: x + nodeWidth / 2,
+        y: center.y + level * levelHeight,
+      });
+      x += nodeWidth + siblingGap;
+    }
+  }
+
+  return positions;
+}
+
 // ============================================================================
 // MAIN SERVICE
 // ============================================================================
@@ -309,6 +422,9 @@ class LayoutService {
         const randomScale = Math.max(400, Math.sqrt(elements.length) * 100);
         positions = applyRandomLayout(graph, { ...options, center, scale: randomScale });
         break;
+      case 'hierarchy':
+        positions = applyHierarchyLayout(graph, { ...options, center }, elements.length);
+        break;
       default:
         positions = new Map();
     }
@@ -356,7 +472,7 @@ class LayoutService {
    * Get all available layout types
    */
   getAvailableLayouts(): LayoutType[] {
-    return ['force', 'circular', 'grid', 'random'];
+    return ['force', 'hierarchy', 'circular', 'grid', 'random'];
   }
 }
 

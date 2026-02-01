@@ -183,6 +183,10 @@
         "random": {
           "name": "Dispersão",
           "description": "Dispersa os elementos aleatoriamente"
+        },
+        "hierarchy": {
+          "name": "Hierarquia",
+          "description": "Organiza os elementos por níveis (árvores, organogramas)"
         }
       }
     },

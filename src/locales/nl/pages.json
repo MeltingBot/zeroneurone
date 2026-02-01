@@ -183,6 +183,10 @@
         "random": {
           "name": "Verspreiding",
           "description": "Verspreidt elementen willekeurig"
+        },
+        "hierarchy": {
+          "name": "Hiërarchie",
+          "description": "Rangschikt elementen per niveau (bomen, organogrammen)"
         }
       }
     },

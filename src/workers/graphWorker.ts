@@ -36,7 +36,7 @@ interface LayoutOptions {
   padding?: number;
   center?: { x: number; y: number };
   scale?: number;
-  layoutType: 'force' | 'circular' | 'grid' | 'random';
+  layoutType: 'force' | 'circular' | 'grid' | 'random' | 'hierarchy';
 }
 
 interface InsightsData {
@@ -311,6 +311,8 @@ function computeLayout(
       return applyGridLayout(graph, center);
     case 'random':
       return applyRandomLayout(graph, center, filteredElements.length);
+    case 'hierarchy':
+      return applyHierarchyLayout(graph, center, filteredElements.length);
     default:
       return {};
   }
@@ -456,6 +458,118 @@ function applyRandomLayout(graph: Graph, center: { x: number; y: number }, nodeC
       y: (graph.getNodeAttribute(node, 'y') as number) + center.y - scale / 2,
     };
   });
+
+  postProgress(100, 'done');
+  return positions;
+}
+
+function applyHierarchyLayout(graph: Graph, center: { x: number; y: number }, nodeCount: number): Record<string, { x: number; y: number }> {
+  // Adaptive sizing based on node count
+  let nodeWidth: number, levelHeight: number, siblingGap: number;
+  if (nodeCount >= 1500) {
+    nodeWidth = 80; levelHeight = 65; siblingGap = 2;
+  } else if (nodeCount >= 500) {
+    nodeWidth = 100; levelHeight = 80; siblingGap = 4;
+  } else if (nodeCount >= 100) {
+    nodeWidth = 130; levelHeight = 100; siblingGap = 8;
+  } else {
+    nodeWidth = 160; levelHeight = 120; siblingGap = 20;
+  }
+
+  postProgress(20, 'finding roots');
+
+  // Find roots (nodes with no incoming edges)
+  const roots: string[] = [];
+  const hasIncoming = new Set<string>();
+
+  graph.forEachEdge((_edge, _attrs, _source, target) => {
+    hasIncoming.add(target);
+  });
+
+  graph.forEachNode((node) => {
+    if (!hasIncoming.has(node)) {
+      roots.push(node);
+    }
+  });
+
+  // If no roots found, pick nodes with minimum in-degree
+  if (roots.length === 0) {
+    const inDegrees = new Map<string, number>();
+    graph.forEachNode((node) => {
+      inDegrees.set(node, graph.inDegree(node));
+    });
+    const minDegree = Math.min(...inDegrees.values());
+    graph.forEachNode((node) => {
+      if (inDegrees.get(node) === minDegree) {
+        roots.push(node);
+      }
+    });
+  }
+
+  postProgress(40, 'assigning levels');
+
+  // BFS to assign levels
+  const levels = new Map<string, number>();
+  const queue: string[] = [...roots];
+  const visited = new Set<string>(roots);
+
+  for (const root of roots) {
+    levels.set(root, 0);
+  }
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentLevel = levels.get(current) || 0;
+
+    graph.forEachOutNeighbor(current, (neighbor) => {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        levels.set(neighbor, currentLevel + 1);
+        queue.push(neighbor);
+      }
+    });
+  }
+
+  // Handle unvisited nodes (disconnected components)
+  graph.forEachNode((node) => {
+    if (!levels.has(node)) {
+      levels.set(node, 0);
+    }
+  });
+
+  postProgress(60, 'grouping by level');
+
+  // Group nodes by level
+  const byLevel = new Map<number, string[]>();
+  let maxLevel = 0;
+
+  for (const [node, level] of levels) {
+    if (!byLevel.has(level)) {
+      byLevel.set(level, []);
+    }
+    byLevel.get(level)!.push(node);
+    maxLevel = Math.max(maxLevel, level);
+  }
+
+  postProgress(80, 'positioning');
+
+  // Position nodes
+  const positions: Record<string, { x: number; y: number }> = {};
+
+  for (let level = 0; level <= maxLevel; level++) {
+    const nodesAtLevel = byLevel.get(level) || [];
+    const count = nodesAtLevel.length;
+    const totalWidth = count * nodeWidth + (count - 1) * siblingGap;
+    let x = center.x - totalWidth / 2;
+
+    for (const node of nodesAtLevel) {
+      positions[node] = {
+        x: x + nodeWidth / 2,
+        y: center.y + level * levelHeight,
+      };
+      x += nodeWidth + siblingGap;
+    }
+  }
 
   postProgress(100, 'done');
   return positions;
