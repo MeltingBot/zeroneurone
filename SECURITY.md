@@ -58,7 +58,7 @@ When collaboration is enabled:
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do not** open a public GitHub issue for security vulnerabilities
-2. Email security concerns to: **security@zeroneurone.app** (or contact the maintainers directly)
+2. Contact the author directly via **Discord**: [MeltingBot](https://discord.com/users/meltingbot)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
