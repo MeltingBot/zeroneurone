@@ -36,40 +36,69 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
     investigation.startDate ? formatDateForInput(investigation.startDate) : ''
   );
 
-  // Track which investigation we're editing
-  const editingInvestigationIdRef = useRef<string | null>(null);
+  // Refs to track what we last synced to Yjs - used to detect our own echoes
+  const lastSyncedNameRef = useRef(investigation.name);
+  const lastSyncedDescriptionRef = useRef(investigation.description);
+  const lastSyncedCreatorRef = useRef(investigation.creator || '');
 
   // Debounced values
   const debouncedName = useDebounce(name, 500);
   const debouncedDescription = useDebounce(description, 500);
   const debouncedCreator = useDebounce(creator, 500);
 
-  // Sync local state when investigation changes
+  // Reset refs when investigation changes
   useEffect(() => {
-    editingInvestigationIdRef.current = null;
+    lastSyncedNameRef.current = investigation.name;
+    lastSyncedDescriptionRef.current = investigation.description;
+    lastSyncedCreatorRef.current = investigation.creator || '';
     setName(investigation.name);
     setDescription(investigation.description);
     setCreator(investigation.creator || '');
     setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
   }, [investigation.id]);
 
+  // Sync from props when fields change from REMOTE
+  useEffect(() => {
+    // Our own echo - ignore
+    if (investigation.name === lastSyncedNameRef.current) return;
+    // Remote change - accept
+    setName(investigation.name);
+    lastSyncedNameRef.current = investigation.name;
+  }, [investigation.name]);
+
+  useEffect(() => {
+    if (investigation.description === lastSyncedDescriptionRef.current) return;
+    setDescription(investigation.description);
+    lastSyncedDescriptionRef.current = investigation.description;
+  }, [investigation.description]);
+
+  useEffect(() => {
+    const creatorValue = investigation.creator || '';
+    if (creatorValue === lastSyncedCreatorRef.current) return;
+    setCreator(creatorValue);
+    lastSyncedCreatorRef.current = creatorValue;
+  }, [investigation.creator]);
+
   // Save debounced name
   useEffect(() => {
-    if (editingInvestigationIdRef.current === investigation.id && debouncedName !== investigation.name) {
+    if (debouncedName !== investigation.name) {
+      lastSyncedNameRef.current = debouncedName;
       updateInvestigation(investigation.id, { name: debouncedName });
     }
   }, [debouncedName, investigation.id, investigation.name, updateInvestigation]);
 
   // Save debounced description
   useEffect(() => {
-    if (editingInvestigationIdRef.current === investigation.id && debouncedDescription !== investigation.description) {
+    if (debouncedDescription !== investigation.description) {
+      lastSyncedDescriptionRef.current = debouncedDescription;
       updateInvestigation(investigation.id, { description: debouncedDescription });
     }
   }, [debouncedDescription, investigation.id, investigation.description, updateInvestigation]);
 
   // Save debounced creator
   useEffect(() => {
-    if (editingInvestigationIdRef.current === investigation.id && debouncedCreator !== (investigation.creator || '')) {
+    if (debouncedCreator !== (investigation.creator || '')) {
+      lastSyncedCreatorRef.current = debouncedCreator;
       updateInvestigation(investigation.id, { creator: debouncedCreator });
     }
   }, [debouncedCreator, investigation.id, investigation.creator, updateInvestigation]);
@@ -146,10 +175,7 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
             <input
               type="text"
               value={name}
-              onChange={(e) => {
-                editingInvestigationIdRef.current = investigation.id;
-                setName(e.target.value);
-              }}
+              onChange={(e) => setName(e.target.value)}
               placeholder={t('investigation.placeholders.name')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
             />
@@ -160,10 +186,7 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
             <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.description')}</label>
             <MarkdownEditor
               value={description}
-              onChange={(value) => {
-                editingInvestigationIdRef.current = investigation.id;
-                setDescription(value);
-              }}
+              onChange={setDescription}
               placeholder={t('detail.placeholders.markdown')}
               minRows={3}
               maxRows={10}
@@ -176,10 +199,7 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
             <input
               type="text"
               value={creator}
-              onChange={(e) => {
-                editingInvestigationIdRef.current = investigation.id;
-                setCreator(e.target.value);
-              }}
+              onChange={(e) => setCreator(e.target.value)}
               placeholder={t('investigation.placeholders.creator')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
             />

@@ -125,13 +125,25 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setLastSavedGeo(freshElement.geo ?? null);
   }, [element.id]);
 
-  // Sync label when changed externally (e.g., double-click rename on canvas)
+  // Sync fields when changed externally (e.g., by another user via Yjs)
   useEffect(() => {
-    // Only sync if we're not currently editing this field
+    // Only sync if we're not currently editing this element
     if (editingElementIdRef.current !== element.id) {
       setLabel(element.label);
     }
   }, [element.label, element.id]);
+
+  useEffect(() => {
+    if (editingElementIdRef.current !== element.id) {
+      setNotes(element.notes);
+    }
+  }, [element.notes, element.id]);
+
+  useEffect(() => {
+    if (editingElementIdRef.current !== element.id) {
+      setSource(element.source);
+    }
+  }, [element.source, element.id]);
 
   // Note: We intentionally don't sync on element.geo changes
   // The [element.id] effect handles initial load when element changes

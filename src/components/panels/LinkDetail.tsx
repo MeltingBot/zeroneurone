@@ -102,6 +102,25 @@ export function LinkDetail({ link }: LinkDetailProps) {
     }
   }, [link.id]);
 
+  // Sync fields when changed externally (e.g., by another user via Yjs)
+  useEffect(() => {
+    if (editingLinkIdRef.current !== link.id) {
+      setLabel(link.label);
+    }
+  }, [link.label, link.id]);
+
+  useEffect(() => {
+    if (editingLinkIdRef.current !== link.id) {
+      setNotes(link.notes);
+    }
+  }, [link.notes, link.id]);
+
+  useEffect(() => {
+    if (editingLinkIdRef.current !== link.id) {
+      setSource(link.source);
+    }
+  }, [link.source, link.id]);
+
   // Save debounced values only if still editing the same link
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedLabel !== link.label) {
