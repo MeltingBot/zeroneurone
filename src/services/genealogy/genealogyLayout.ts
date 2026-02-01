@@ -17,12 +17,34 @@ interface LayoutOptions {
 }
 
 const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
-  nodeWidth: 180,
+  nodeWidth: 160,
   nodeHeight: 60,
-  levelHeight: 150,
-  siblingGap: 30,
-  coupleGap: 20,
-  branchGap: 80,
+  levelHeight: 120,
+  siblingGap: 20,
+  coupleGap: 15,
+  branchGap: 40,
+  direction: 'TB',
+};
+
+// Compact options for large trees (100+ elements)
+const COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
+  nodeWidth: 140,
+  nodeHeight: 50,
+  levelHeight: 100,
+  siblingGap: 10,
+  coupleGap: 10,
+  branchGap: 25,
+  direction: 'TB',
+};
+
+// Very compact for huge trees (250+ elements)
+const VERY_COMPACT_LAYOUT_OPTIONS: LayoutOptions = {
+  nodeWidth: 120,
+  nodeHeight: 45,
+  levelHeight: 85,
+  siblingGap: 5,
+  coupleGap: 8,
+  branchGap: 15,
   direction: 'TB',
 };
 
@@ -47,8 +69,18 @@ export function applyGenealogyLayout(
   links: Partial<Link>[],
   options: GenealogyImportOptions
 ): void {
+  // Select layout options based on tree size
+  let baseOptions: LayoutOptions;
+  if (elements.length >= 250) {
+    baseOptions = VERY_COMPACT_LAYOUT_OPTIONS;
+  } else if (elements.length >= 100) {
+    baseOptions = COMPACT_LAYOUT_OPTIONS;
+  } else {
+    baseOptions = DEFAULT_LAYOUT_OPTIONS;
+  }
+
   const layoutOptions: LayoutOptions = {
-    ...DEFAULT_LAYOUT_OPTIONS,
+    ...baseOptions,
     direction: options.layoutDirection,
   };
 
