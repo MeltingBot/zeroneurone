@@ -41,7 +41,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetInvestigationId === 'new') {
         // Create new investigation with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|xml)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|xml|ged|gw)$/i, '');
         const investigation = await createInvestigation(name, '');
         investigationId = investigation.id;
       }
@@ -108,6 +108,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, investigationId);
+      } else if (file.name.endsWith('.ged') || file.name.endsWith('.gw')) {
+        result = await importService.importFromGenealogy(file, investigationId);
       } else {
         // Unknown extension: try JSON auto-detection (handles .excalidraw and similar)
         const content = await importService.readFileAsText(file);
@@ -219,7 +221,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,*/*"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"
@@ -241,6 +243,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               </div>
               <div className="text-xs text-text-tertiary mt-0.5">
                 {t('import.jsonFormats')}
+              </div>
+              <div className="text-xs text-text-tertiary mt-0.5">
+                {t('import.genealogyFormats')}
               </div>
             </div>
           </button>

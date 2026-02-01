@@ -223,13 +223,19 @@ export function InsightsPanel() {
     [areAllHidden, hideElements, showElement]
   );
 
-  // Central element actions
+  // Central element actions - toggle highlight on click
   const handleCentralClick = useCallback(
     (elementId: string) => {
-      highlightCentralElement(elementId);
-      selectElement(elementId);
+      // If already highlighted, clear highlight and deselect
+      if (highlightType === 'centrality' && highlightedElementIds.has(elementId)) {
+        clearHighlight();
+        clearSelection();
+      } else {
+        highlightCentralElement(elementId);
+        selectElement(elementId);
+      }
     },
-    [highlightCentralElement, selectElement]
+    [highlightType, highlightedElementIds, highlightCentralElement, selectElement, clearHighlight, clearSelection]
   );
 
   // Bridge actions

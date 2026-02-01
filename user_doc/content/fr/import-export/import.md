@@ -314,6 +314,79 @@ L'import préserve :
 
 ---
 
+### GEDCOM (Généalogie)
+
+**Format standard** pour l'échange de données généalogiques.
+
+Versions supportées : **GEDCOM 5.5.1** et **GEDCOM 7.0** (.ged)
+
+#### Éléments convertis
+
+| Enregistrement GEDCOM | Élément ZeroNeurone |
+|-----------------------|---------------------|
+| INDI (Individu) | Élément avec tag "Personne" |
+| FAM (Famille) | Liens entre personnes |
+
+#### Données importées
+
+| Donnée GEDCOM | Propriété ZeroNeurone |
+|---------------|----------------------|
+| NAME | Label de l'élément |
+| BIRT (naissance) | Événement avec date et lieu |
+| DEAT (décès) | Événement avec date et lieu |
+| RESI (résidence) | Événement avec date et lieu |
+| OCCU (profession) | Propriété "Profession" |
+| SEX | Propriété "Sexe" |
+| NOTE | Notes de l'élément |
+
+#### Liens familiaux
+
+| Relation | Type de lien |
+|----------|--------------|
+| Mariage (MARR) | Lien "Mariage" entre époux |
+| Parent-Enfant (CHIL) | Liens "Père" et "Mère" |
+
+#### Géolocalisation
+
+Les coordonnées GPS (tag MAP dans les lieux) sont importées dans les événements, permettant l'affichage sur la carte.
+
+#### Disposition
+
+Après import, les éléments sont automatiquement disposés en arbre généalogique avec les générations organisées verticalement.
+
+---
+
+### GeneWeb
+
+**Format texte** utilisé par le logiciel GeneWeb (.gw).
+
+#### Structure du fichier
+
+```
+fam Dupont Jean + Martin Marie
+  beg
+    - h Dupont Pierre
+    - f Dupont Marie
+  end
+```
+
+#### Données importées
+
+| Tag GeneWeb | Propriété ZeroNeurone |
+|-------------|----------------------|
+| Prénom Nom | Label de l'élément |
+| Dates (naissance/décès) | Événements |
+| Profession | Propriété "Profession" |
+| Notes | Notes de l'élément |
+
+#### Liens familiaux
+
+- Couples identifiés par `+`
+- Enfants listés entre `beg` et `end`
+- Préfixe `h` = homme, `f` = femme
+
+---
+
 ## Options d'import
 
 ### Mode d'import

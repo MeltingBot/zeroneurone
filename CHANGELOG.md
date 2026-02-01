@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0
+
+### Features
+- GEDCOM 5.5.1 and 7.0 genealogy file import (.ged)
+- GeneWeb genealogy file import (.gw)
+- Automatic family tree layout after import (generations organized vertically)
+- GPS coordinates from places imported into events for map display
+- Support for birth, death, residence events with dates and locations
+- Marriage and parent-child relationship links
+
+### Fixes
+- Historical dates (before year 1000) now display correctly
+- Timeline events no longer appear as infinite ranges
+
 ## 1.3.6
 
 ### Fixes

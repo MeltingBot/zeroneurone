@@ -32,8 +32,9 @@
   "import": {
     "title": "Importa un'indagine",
     "dropzone": "Trascina un file o clicca per selezionare",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
+    "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importa in",
     "newInvestigation": "Nuova indagine",
     "selectFile": "Seleziona un file",

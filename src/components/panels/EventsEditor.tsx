@@ -58,9 +58,10 @@ function EventItem({
   }, [event.id, event.label, event.description, event.source, event.geo?.lat, event.geo?.lng]);
 
   // Format date for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
+  // Pads year to 4 digits for historical dates (e.g., year 938 → "0938")
   const formatDateTimeForInput = (date: Date): string => {
     const d = new Date(date);
-    const year = d.getFullYear();
+    const year = String(d.getFullYear()).padStart(4, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     const hours = String(d.getHours()).padStart(2, '0');

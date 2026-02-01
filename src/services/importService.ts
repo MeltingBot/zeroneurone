@@ -23,6 +23,7 @@ import { importOsintIndustries, isOsintIndustriesFormat } from './importOsintInd
 import { importOIPalette, isOIPaletteFormat } from './importOIPalette';
 import { importExcalidraw, isExcalidrawFormat } from './importExcalidraw';
 import { importSTIX2, isSTIX2Format } from './importSTIX2';
+import { importGenealogyFile, detectGenealogyFormatFromName, type GenealogyImportOptions } from './genealogy';
 
 // ============================================================================
 // SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
@@ -1852,6 +1853,69 @@ class ImportService {
     }
 
     return result;
+  }
+
+  /**
+   * Import from genealogy file (GEDCOM 5.5.1/7.0, GeneWeb .gw)
+   */
+  async importFromGenealogy(
+    file: File,
+    targetInvestigationId: InvestigationId,
+    options?: Partial<GenealogyImportOptions>
+  ): Promise<ImportResult> {
+    const result: ImportResult = {
+      success: false,
+      elementsImported: 0,
+      linksImported: 0,
+      assetsImported: 0,
+      errors: [],
+      warnings: [],
+    };
+
+    try {
+      const importData = await importGenealogyFile(file, targetInvestigationId, options);
+
+      // Save elements to database
+      for (const element of importData.elements) {
+        if (element.id) {
+          await db.elements.add(element as Element);
+          result.elementsImported++;
+        }
+      }
+
+      // Save links to database
+      for (const link of importData.links) {
+        if (link.id && link.fromId && link.toId) {
+          await db.links.add(link as Link);
+          result.linksImported++;
+        }
+      }
+
+      // Update investigation timestamp
+      await db.investigations.update(targetInvestigationId, {
+        updatedAt: new Date(),
+      });
+
+      result.errors = importData.result.errors;
+      result.warnings = importData.result.warnings;
+      result.success = result.elementsImported > 0;
+
+      if (result.linksImported > 0) {
+        await this.applyImportDisplaySettings(targetInvestigationId);
+      }
+    } catch (error) {
+      result.errors.push(`Erreur d'import généalogie: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Check if a file is a genealogy file
+   */
+  isGenealogyFile(file: File): boolean {
+    const format = detectGenealogyFormatFromName(file.name);
+    return format !== null;
   }
 
   /**
