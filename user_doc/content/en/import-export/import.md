@@ -314,6 +314,79 @@ Import preserves:
 
 ---
 
+### GEDCOM (Genealogy)
+
+**Standard format** for genealogical data exchange.
+
+Supported versions: **GEDCOM 5.5.1** and **GEDCOM 7.0** (.ged)
+
+#### Converted Elements
+
+| GEDCOM Record | ZeroNeurone Element |
+|---------------|---------------------|
+| INDI (Individual) | Element with "Person" tag |
+| FAM (Family) | Links between people |
+
+#### Imported Data
+
+| GEDCOM Data | ZeroNeurone Property |
+|-------------|---------------------|
+| NAME | Element label |
+| BIRT (birth) | Event with date and place |
+| DEAT (death) | Event with date and place |
+| RESI (residence) | Event with date and place |
+| OCCU (occupation) | "Occupation" property |
+| SEX | "Sex" property |
+| NOTE | Element notes |
+
+#### Family Links
+
+| Relationship | Link Type |
+|--------------|-----------|
+| Marriage (MARR) | "Marriage" link between spouses |
+| Parent-Child (CHIL) | "Father" and "Mother" links |
+
+#### Geolocation
+
+GPS coordinates (MAP tag in places) are imported into events, enabling map display.
+
+#### Layout
+
+After import, elements are automatically arranged in a family tree with generations organized vertically.
+
+---
+
+### GeneWeb
+
+**Text format** used by GeneWeb software (.gw).
+
+#### File Structure
+
+```
+fam Smith John + Johnson Mary
+  beg
+    - h Smith Peter
+    - f Smith Marie
+  end
+```
+
+#### Imported Data
+
+| GeneWeb Tag | ZeroNeurone Property |
+|-------------|---------------------|
+| FirstName LastName | Element label |
+| Dates (birth/death) | Events |
+| Occupation | "Occupation" property |
+| Notes | Element notes |
+
+#### Family Links
+
+- Couples identified by `+`
+- Children listed between `beg` and `end`
+- Prefix `h` = male, `f` = female
+
+---
+
 ## Import Options
 
 ### Import Mode

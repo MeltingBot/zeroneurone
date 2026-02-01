@@ -936,8 +936,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
 }
 
 // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+// Pads year to 4 digits for historical dates (e.g., year 938 → "0938")
 function formatDateTimeForInput(date: Date): string {
-  const year = date.getFullYear();
+  const year = String(date.getFullYear()).padStart(4, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');

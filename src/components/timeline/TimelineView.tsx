@@ -927,8 +927,8 @@ export function TimelineView() {
         onClick={() => setExpandedItemId(null)}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
-        {/* Time axis */}
-        <div className="absolute top-0 left-0 right-0 h-7 bg-bg-primary border-b border-border-default z-10 overflow-hidden">
+        {/* Time axis - sticky to stay visible when scrolling */}
+        <div className="sticky top-0 left-0 right-0 h-7 bg-bg-primary border-b border-border-default z-10 overflow-hidden">
           {axisLabels.map((label, i) => (
             <div
               key={i}
@@ -948,8 +948,8 @@ export function TimelineView() {
         {/* Content area */}
         <div
           ref={contentRef}
-          className="absolute left-0 right-0 bg-bg-secondary"
-          style={{ top: AXIS_HEIGHT, height: contentHeight }}
+          className="relative bg-bg-secondary"
+          style={{ height: contentHeight }}
         >
           {/* Today marker */}
           <div
