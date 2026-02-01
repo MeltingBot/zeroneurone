@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -82,9 +82,11 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Generation de synthese (rapport automatique avec analyse du graphe)
 
 ### Layouts Automatiques
-- Force-directed (physique)
+- Force-directed (clusters)
+- Hierarchique (arbres, organigrammes)
 - Circulaire
-- Hierarchique
+- Grille
+- Dispersion
 
 ### PWA & Hors-ligne
 - Installation sur mobile et desktop
