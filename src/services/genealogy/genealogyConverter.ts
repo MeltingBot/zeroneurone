@@ -53,7 +53,7 @@ export function convertToZeroNeurone(
   // Convert families to links
   const links: Partial<Link>[] = [];
   for (const family of data.families) {
-    const familyLinks = familyToLinks(family, idMapping, investigationId, data.fileName, options);
+    const familyLinks = familyToLinks(family, idMapping, investigationId, data.fileName, options, data.persons);
     links.push(...familyLinks);
   }
 
@@ -237,7 +237,8 @@ function familyToLinks(
   idMapping: Map<string, ElementId>,
   investigationId: InvestigationId,
   sourceFile: string,
-  options: GenealogyImportOptions
+  options: GenealogyImportOptions,
+  persons: GenealogyPerson[]
 ): Partial<Link>[] {
   const links: Partial<Link>[] = [];
 
@@ -278,6 +279,28 @@ function familyToLinks(
       const tags: string[] = ['Mariage'];
       if (options.addGenealogyTag) tags.push('Généalogie');
 
+      // Calculate marriage end date:
+      // Priority: divorce date > earliest death date of either spouse
+      let marriageEndDate: Date | null = null;
+      if (family.divorceDate) {
+        marriageEndDate = toDate(family.divorceDate);
+      } else {
+        // Find death dates of both spouses
+        const husband = persons.find(p => p.id === family.husbandId);
+        const wife = persons.find(p => p.id === family.wifeId);
+        const husbandDeathDate = husband?.deathDate ? toDate(husband.deathDate) : null;
+        const wifeDeathDate = wife?.deathDate ? toDate(wife.deathDate) : null;
+
+        // Marriage ends at the first spouse's death
+        if (husbandDeathDate && wifeDeathDate) {
+          marriageEndDate = husbandDeathDate < wifeDeathDate ? husbandDeathDate : wifeDeathDate;
+        } else if (husbandDeathDate) {
+          marriageEndDate = husbandDeathDate;
+        } else if (wifeDeathDate) {
+          marriageEndDate = wifeDeathDate;
+        }
+      }
+
       links.push({
         id: uuidv4() as LinkId,
         investigationId,
@@ -294,10 +317,10 @@ function familyToLinks(
         confidence: 80,
         source: sourceFile,
         date: family.marriageDate ? toDate(family.marriageDate) : null,
-        dateRange: (family.marriageDate || family.divorceDate)
+        dateRange: (family.marriageDate || marriageEndDate)
           ? {
               start: family.marriageDate ? toDate(family.marriageDate) : null,
-              end: family.divorceDate ? toDate(family.divorceDate) : null,
+              end: marriageEndDate,
             }
           : null,
         visual: {
