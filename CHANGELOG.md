@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.1
+
+### Fixes
+- Marriage links now end at first spouse's death (no longer infinite on timeline)
+
 ## 1.4.0
 
 ### Features
