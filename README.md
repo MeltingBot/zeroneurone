@@ -75,7 +75,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Import CSV pour donnees tabulaires
 - Import GraphML pour donnees de graphes
 - Import Excalidraw
-- Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques
+- Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques (nom, dates, lieux, profession, surnom, titre, notes)
 - Import ZIP (restauration complete)
 - Import dans investigation courante (merge avec placement visuel)
 - Panel Rapport (redaction Markdown avec references aux elements)
