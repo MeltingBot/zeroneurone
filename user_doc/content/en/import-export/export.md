@@ -59,7 +59,7 @@ Content:
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.3.0",
   "exportedAt": "2024-01-15T10:30:00Z",
   "investigation": { ... },
   "elements": [ ... ],
