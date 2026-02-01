@@ -126,24 +126,24 @@ export function ElementDetail({ element }: ElementDetailProps) {
   }, [element.id]);
 
   // Sync fields when changed externally (e.g., by another user via Yjs)
+  // Skip if: editing this element, OR local value already matches props
   useEffect(() => {
-    // Only sync if we're not currently editing this element
-    if (editingElementIdRef.current !== element.id) {
-      setLabel(element.label);
-    }
-  }, [element.label, element.id]);
+    if (editingElementIdRef.current === element.id) return;
+    if (label === element.label) return;
+    setLabel(element.label);
+  }, [element.label, element.id, label]);
 
   useEffect(() => {
-    if (editingElementIdRef.current !== element.id) {
-      setNotes(element.notes);
-    }
-  }, [element.notes, element.id]);
+    if (editingElementIdRef.current === element.id) return;
+    if (notes === element.notes) return;
+    setNotes(element.notes);
+  }, [element.notes, element.id, notes]);
 
   useEffect(() => {
-    if (editingElementIdRef.current !== element.id) {
-      setSource(element.source);
-    }
-  }, [element.source, element.id]);
+    if (editingElementIdRef.current === element.id) return;
+    if (source === element.source) return;
+    setSource(element.source);
+  }, [element.source, element.id, source]);
 
   // Note: We intentionally don't sync on element.geo changes
   // The [element.id] effect handles initial load when element changes

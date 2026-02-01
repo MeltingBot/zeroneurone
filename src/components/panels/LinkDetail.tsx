@@ -103,23 +103,24 @@ export function LinkDetail({ link }: LinkDetailProps) {
   }, [link.id]);
 
   // Sync fields when changed externally (e.g., by another user via Yjs)
+  // Skip if: editing this link, OR local value already matches props
   useEffect(() => {
-    if (editingLinkIdRef.current !== link.id) {
-      setLabel(link.label);
-    }
-  }, [link.label, link.id]);
+    if (editingLinkIdRef.current === link.id) return;
+    if (label === link.label) return;
+    setLabel(link.label);
+  }, [link.label, link.id, label]);
 
   useEffect(() => {
-    if (editingLinkIdRef.current !== link.id) {
-      setNotes(link.notes);
-    }
-  }, [link.notes, link.id]);
+    if (editingLinkIdRef.current === link.id) return;
+    if (notes === link.notes) return;
+    setNotes(link.notes);
+  }, [link.notes, link.id, notes]);
 
   useEffect(() => {
-    if (editingLinkIdRef.current !== link.id) {
-      setSource(link.source);
-    }
-  }, [link.source, link.id]);
+    if (editingLinkIdRef.current === link.id) return;
+    if (source === link.source) return;
+    setSource(link.source);
+  }, [link.source, link.id, source]);
 
   // Save debounced values only if still editing the same link
   useEffect(() => {
