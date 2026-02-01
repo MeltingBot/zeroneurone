@@ -1,6 +1,6 @@
 /**
  * Genealogy Layout Service
- * Positions genealogy elements in a tree layout
+ * Positions genealogy elements in a tree layout using recursive subtree positioning
  */
 
 import type { Element, Link, ElementId } from '../../types';
@@ -12,22 +12,30 @@ interface LayoutOptions {
   levelHeight: number;
   siblingGap: number;
   coupleGap: number;
+  branchGap: number;
   direction: 'TB' | 'BT';
 }
 
 const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   nodeWidth: 180,
   nodeHeight: 60,
-  levelHeight: 120,
-  siblingGap: 40,
+  levelHeight: 150,
+  siblingGap: 30,
   coupleGap: 20,
+  branchGap: 80,
   direction: 'TB',
 };
 
 interface FamilyUnit {
+  id: string;
   husband?: ElementId;
   wife?: ElementId;
   children: ElementId[];
+}
+
+interface SubtreeInfo {
+  width: number;
+  leftOffset: number; // Where the "anchor point" (center of parents) is within the subtree
 }
 
 /**
@@ -44,31 +52,104 @@ export function applyGenealogyLayout(
     direction: options.layoutDirection,
   };
 
+  // Build element lookup
+  const elementMap = new Map<ElementId, Partial<Element>>();
+  for (const el of elements) {
+    if (el.id) {
+      elementMap.set(el.id as ElementId, el);
+    }
+  }
+
   // Build family units from links
   const familyUnits = buildFamilyUnits(elements, links);
 
-  // Assign generations
-  const generations = assignGenerations(elements, familyUnits);
+  // Build parent-child relationships
+  const childToParents = buildChildToParentsMap(familyUnits);
+  const parentToFamilies = buildParentToFamiliesMap(familyUnits);
 
-  // Position by generation
-  positionByGeneration(elements, generations, familyUnits, layoutOptions);
+  // Assign generations
+  const generations = assignGenerations(elements, childToParents, familyUnits);
+
+  // Find max generation
+  let maxGeneration = 0;
+  for (const gen of generations.values()) {
+    maxGeneration = Math.max(maxGeneration, gen);
+  }
+
+  // Find root families (families where parents have no parents themselves)
+  const rootFamilies = findRootFamilies(familyUnits, childToParents);
+
+  // Find orphan elements (no family connections)
+  const allInFamilies = new Set<ElementId>();
+  for (const unit of familyUnits.values()) {
+    if (unit.husband) allInFamilies.add(unit.husband);
+    if (unit.wife) allInFamilies.add(unit.wife);
+    for (const child of unit.children) {
+      allInFamilies.add(child);
+    }
+  }
+  const orphans: ElementId[] = [];
+  for (const el of elements) {
+    if (el.id && !allInFamilies.has(el.id as ElementId)) {
+      orphans.push(el.id as ElementId);
+    }
+  }
+
+  // Calculate subtree widths recursively for each root family
+  const subtreeWidths = new Map<string, SubtreeInfo>();
+  for (const familyId of rootFamilies) {
+    calculateSubtreeWidth(familyId, familyUnits, parentToFamilies, subtreeWidths, layoutOptions);
+  }
+
+  // Position root families side by side
+  let currentX = 0;
+  for (const familyId of rootFamilies) {
+    const subtreeInfo = subtreeWidths.get(familyId) || { width: layoutOptions.nodeWidth * 2, leftOffset: layoutOptions.nodeWidth };
+
+    positionFamily(
+      familyId,
+      currentX + subtreeInfo.leftOffset,
+      0,
+      familyUnits,
+      parentToFamilies,
+      elementMap,
+      generations,
+      maxGeneration,
+      subtreeWidths,
+      layoutOptions
+    );
+
+    currentX += subtreeInfo.width + layoutOptions.branchGap;
+  }
+
+  // Position orphans at the end
+  if (orphans.length > 0) {
+    let orphanX = currentX;
+    for (const orphanId of orphans) {
+      const el = elementMap.get(orphanId);
+      const gen = generations.get(orphanId) || 0;
+      if (el) {
+        const y = layoutOptions.direction === 'TB'
+          ? gen * layoutOptions.levelHeight
+          : (maxGeneration - gen) * layoutOptions.levelHeight;
+        el.position = { x: orphanX, y };
+        orphanX += layoutOptions.nodeWidth + layoutOptions.siblingGap;
+      }
+    }
+  }
+
+  // Center the entire tree around origin
+  centerAroundOrigin(elements);
 }
 
 /**
  * Build family units from marriage and parent links
  */
 function buildFamilyUnits(
-  elements: Partial<Element>[],
+  _elements: Partial<Element>[],
   links: Partial<Link>[]
 ): Map<string, FamilyUnit> {
   const familyUnits = new Map<string, FamilyUnit>();
-  const elementMap = new Map<ElementId, Partial<Element>>();
-
-  for (const el of elements) {
-    if (el.id) {
-      elementMap.set(el.id as ElementId, el);
-    }
-  }
 
   // Find marriage links to identify couples
   const marriages = links.filter(l => l.label === 'marié(e) à');
@@ -80,6 +161,7 @@ function buildFamilyUnits(
     const familyId = marriage.properties?.find(p => p.key === 'ID famille')?.value as string || `fam_${marriage.id}`;
 
     const unit: FamilyUnit = {
+      id: familyId,
       husband: marriage.fromId as ElementId,
       wife: marriage.toId as ElementId,
       children: [],
@@ -105,17 +187,13 @@ function buildFamilyUnits(
 }
 
 /**
- * Assign generation numbers to elements
- * Generation 0 = oldest ancestors (no parents)
+ * Build child to parents mapping
  */
-function assignGenerations(
-  elements: Partial<Element>[],
+function buildChildToParentsMap(
   familyUnits: Map<string, FamilyUnit>
-): Map<ElementId, number> {
-  const generations = new Map<ElementId, number>();
+): Map<ElementId, Set<ElementId>> {
   const childToParents = new Map<ElementId, Set<ElementId>>();
 
-  // Build child → parents mapping
   for (const unit of familyUnits.values()) {
     for (const childId of unit.children) {
       if (!childToParents.has(childId)) {
@@ -125,6 +203,72 @@ function assignGenerations(
       if (unit.wife) childToParents.get(childId)!.add(unit.wife);
     }
   }
+
+  return childToParents;
+}
+
+/**
+ * Build parent to families mapping (which families is this person a parent in)
+ */
+function buildParentToFamiliesMap(
+  familyUnits: Map<string, FamilyUnit>
+): Map<ElementId, string[]> {
+  const parentToFamilies = new Map<ElementId, string[]>();
+
+  for (const [familyId, unit] of familyUnits) {
+    if (unit.husband) {
+      if (!parentToFamilies.has(unit.husband)) {
+        parentToFamilies.set(unit.husband, []);
+      }
+      parentToFamilies.get(unit.husband)!.push(familyId);
+    }
+    if (unit.wife) {
+      if (!parentToFamilies.has(unit.wife)) {
+        parentToFamilies.set(unit.wife, []);
+      }
+      parentToFamilies.get(unit.wife)!.push(familyId);
+    }
+  }
+
+  return parentToFamilies;
+}
+
+/**
+ * Find root families (where neither parent has parents)
+ */
+function findRootFamilies(
+  familyUnits: Map<string, FamilyUnit>,
+  childToParents: Map<ElementId, Set<ElementId>>
+): string[] {
+  const rootFamilies: string[] = [];
+
+  for (const [familyId, unit] of familyUnits) {
+    const husbandHasParents = unit.husband && childToParents.has(unit.husband);
+    const wifeHasParents = unit.wife && childToParents.has(unit.wife);
+
+    // Root family if neither spouse has parents
+    if (!husbandHasParents && !wifeHasParents) {
+      rootFamilies.push(familyId);
+    }
+  }
+
+  // If no root families found (circular reference?), use all families
+  if (rootFamilies.length === 0) {
+    return Array.from(familyUnits.keys());
+  }
+
+  return rootFamilies;
+}
+
+/**
+ * Assign generation numbers to elements
+ */
+function assignGenerations(
+  elements: Partial<Element>[],
+  childToParents: Map<ElementId, Set<ElementId>>,
+  familyUnits: Map<string, FamilyUnit>
+): Map<ElementId, number> {
+  const generations = new Map<ElementId, number>();
 
   // Find roots (elements with no parents)
   const roots: ElementId[] = [];
@@ -152,7 +296,6 @@ function assignGenerations(
         const existingGen = generations.get(childId);
         const newGen = currentGen + 1;
 
-        // Use the maximum generation (in case of multiple paths)
         if (existingGen === undefined || newGen > existingGen) {
           generations.set(childId, newGen);
         }
@@ -163,11 +306,10 @@ function assignGenerations(
         }
       }
 
-      // Ensure spouse has same generation (update even if already set to lower value)
+      // Ensure spouse has same generation
       if (unit.husband && unit.wife) {
         const spouse = currentId === unit.husband ? unit.wife : unit.husband;
         const existingSpouseGen = generations.get(spouse);
-        // Update if spouse doesn't have a generation or has a lower one
         if (existingSpouseGen === undefined || currentGen > existingSpouseGen) {
           generations.set(spouse, currentGen);
         }
@@ -175,8 +317,7 @@ function assignGenerations(
     }
   }
 
-  // Second pass: sync spouse generations to ensure couples are on same level
-  // This handles cases where spouse was processed before their partner
+  // Sync spouse generations
   for (const unit of familyUnits.values()) {
     if (unit.husband && unit.wife) {
       const husbandGen = generations.get(unit.husband);
@@ -189,7 +330,7 @@ function assignGenerations(
     }
   }
 
-  // Handle unvisited elements (isolated or complex relationships)
+  // Handle unvisited elements
   for (const el of elements) {
     if (el.id && !generations.has(el.id as ElementId)) {
       generations.set(el.id as ElementId, 0);
@@ -200,204 +341,214 @@ function assignGenerations(
 }
 
 /**
- * Position elements by generation
+ * Calculate the width of a family's subtree (recursive)
  */
-function positionByGeneration(
-  elements: Partial<Element>[],
-  generations: Map<ElementId, number>,
+function calculateSubtreeWidth(
+  familyId: string,
   familyUnits: Map<string, FamilyUnit>,
+  parentToFamilies: Map<ElementId, string[]>,
+  subtreeWidths: Map<string, SubtreeInfo>,
+  options: LayoutOptions
+): SubtreeInfo {
+  // Return cached value if already calculated
+  if (subtreeWidths.has(familyId)) {
+    return subtreeWidths.get(familyId)!;
+  }
+
+  const family = familyUnits.get(familyId);
+  if (!family) {
+    const info = { width: options.nodeWidth, leftOffset: options.nodeWidth / 2 };
+    subtreeWidths.set(familyId, info);
+    return info;
+  }
+
+  // Width of the couple
+  const coupleWidth = options.nodeWidth * 2 + options.coupleGap;
+
+  // Find all child families (families where children of this family are parents)
+  const childFamilies: string[] = [];
+  for (const childId of family.children) {
+    const childsFamilies = parentToFamilies.get(childId) || [];
+    for (const cf of childsFamilies) {
+      if (!childFamilies.includes(cf)) {
+        childFamilies.push(cf);
+      }
+    }
+  }
+
+  // Calculate width of all descendant subtrees
+  let descendantsWidth = 0;
+  const childSubtreeInfos: SubtreeInfo[] = [];
+
+  if (childFamilies.length > 0) {
+    for (const childFamilyId of childFamilies) {
+      const childInfo = calculateSubtreeWidth(childFamilyId, familyUnits, parentToFamilies, subtreeWidths, options);
+      childSubtreeInfos.push(childInfo);
+      descendantsWidth += childInfo.width;
+    }
+    descendantsWidth += (childFamilies.length - 1) * options.siblingGap;
+  } else if (family.children.length > 0) {
+    // Leaf children (no families of their own)
+    descendantsWidth = family.children.length * options.nodeWidth + (family.children.length - 1) * options.siblingGap;
+  }
+
+  // Total width is max of couple width and descendants width
+  const totalWidth = Math.max(coupleWidth, descendantsWidth);
+
+  // Left offset is where the center of the couple should be
+  const leftOffset = totalWidth / 2;
+
+  const info = { width: totalWidth, leftOffset };
+  subtreeWidths.set(familyId, info);
+  return info;
+}
+
+/**
+ * Position a family and its descendants
+ */
+function positionFamily(
+  familyId: string,
+  centerX: number,
+  generation: number,
+  familyUnits: Map<string, FamilyUnit>,
+  parentToFamilies: Map<ElementId, string[]>,
+  elementMap: Map<ElementId, Partial<Element>>,
+  generations: Map<ElementId, number>,
+  maxGeneration: number,
+  subtreeWidths: Map<string, SubtreeInfo>,
   options: LayoutOptions
 ): void {
-  // Group elements by generation
-  const byGeneration = new Map<number, ElementId[]>();
-  let maxGeneration = 0;
+  const family = familyUnits.get(familyId);
+  if (!family) return;
 
-  for (const [id, gen] of generations) {
-    if (!byGeneration.has(gen)) {
-      byGeneration.set(gen, []);
-    }
-    byGeneration.get(gen)!.push(id);
-    maxGeneration = Math.max(maxGeneration, gen);
-  }
+  // Calculate Y based on direction
+  const y = options.direction === 'TB'
+    ? generation * options.levelHeight
+    : (maxGeneration - generation) * options.levelHeight;
 
-  // Create element lookup
-  const elementMap = new Map<ElementId, Partial<Element>>();
-  for (const el of elements) {
-    if (el.id) {
-      elementMap.set(el.id as ElementId, el);
+  // Position the couple centered at centerX
+  if (family.husband) {
+    const el = elementMap.get(family.husband);
+    if (el) {
+      el.position = { x: centerX - options.nodeWidth - options.coupleGap / 2, y };
     }
   }
+  if (family.wife) {
+    const el = elementMap.get(family.wife);
+    if (el) {
+      el.position = { x: centerX + options.coupleGap / 2, y };
+    }
+  }
 
-  // Track positioned couples to keep them together
-  const couplePositions = new Map<string, { x: number; width: number }>();
+  // Find child families and leaf children
+  const childFamilies: string[] = [];
+  const leafChildren: ElementId[] = [];
+  const processedChildren = new Set<ElementId>();
 
-  // Position each generation
-  for (let gen = 0; gen <= maxGeneration; gen++) {
-    const genElements = byGeneration.get(gen) || [];
-    if (genElements.length === 0) continue;
-
-    // Calculate Y based on direction
-    const y = options.direction === 'TB'
-      ? gen * options.levelHeight
-      : (maxGeneration - gen) * options.levelHeight;
-
-    // Group by couples and singles
-    const couples: [ElementId, ElementId][] = [];
-    const singles: ElementId[] = [];
-    const processed = new Set<ElementId>();
-
-    for (const id of genElements) {
-      if (processed.has(id)) continue;
-
-      // Check if part of a couple
-      let foundCouple = false;
-      for (const unit of familyUnits.values()) {
-        if ((unit.husband === id || unit.wife === id) && unit.husband && unit.wife) {
-          const gen1 = generations.get(unit.husband);
-          const gen2 = generations.get(unit.wife);
-
-          // Only if both spouses are in same generation
-          if (gen1 === gen && gen2 === gen) {
-            couples.push([unit.husband, unit.wife]);
-            processed.add(unit.husband);
-            processed.add(unit.wife);
-            foundCouple = true;
-            break;
+  for (const childId of family.children) {
+    const childsFamilies = parentToFamilies.get(childId) || [];
+    if (childsFamilies.length > 0) {
+      for (const cf of childsFamilies) {
+        if (!childFamilies.includes(cf)) {
+          childFamilies.push(cf);
+          // Mark both parents as processed
+          const cfUnit = familyUnits.get(cf);
+          if (cfUnit) {
+            if (cfUnit.husband) processedChildren.add(cfUnit.husband);
+            if (cfUnit.wife) processedChildren.add(cfUnit.wife);
           }
         }
       }
-
-      if (!foundCouple) {
-        singles.push(id);
-        processed.add(id);
-      }
-    }
-
-    // Calculate total width needed
-    const coupleWidth = (options.nodeWidth * 2) + options.coupleGap;
-    const singleWidth = options.nodeWidth;
-    const totalWidth =
-      (couples.length * coupleWidth) +
-      (singles.length * singleWidth) +
-      ((couples.length + singles.length - 1) * options.siblingGap);
-
-    // Start X position (centered)
-    let currentX = -totalWidth / 2;
-
-    // Position couples
-    for (const [husband, wife] of couples) {
-      const el1 = elementMap.get(husband);
-      const el2 = elementMap.get(wife);
-
-      if (el1) {
-        el1.position = { x: currentX, y };
-      }
-
-      if (el2) {
-        el2.position = { x: currentX + options.nodeWidth + options.coupleGap, y };
-      }
-
-      // Store couple position for child centering
-      const familyId = findFamilyId(husband, wife, familyUnits);
-      if (familyId) {
-        couplePositions.set(familyId, {
-          x: currentX + (options.nodeWidth + options.coupleGap / 2),
-          width: coupleWidth,
-        });
-      }
-
-      currentX += coupleWidth + options.siblingGap;
-    }
-
-    // Position singles
-    for (const id of singles) {
-      const el = elementMap.get(id);
-      if (el) {
-        el.position = { x: currentX + options.nodeWidth / 2, y };
-      }
-      currentX += singleWidth + options.siblingGap;
+    } else {
+      leafChildren.push(childId);
     }
   }
 
-  // Second pass: center children under parents
-  centerChildrenUnderParents(elements, familyUnits, generations, couplePositions, options);
-}
+  // Calculate total width of children
+  let totalChildWidth = 0;
+  const childInfos: { id: string; info: SubtreeInfo }[] = [];
 
-/**
- * Find family ID for a couple
- */
-function findFamilyId(
-  husband: ElementId,
-  wife: ElementId,
-  familyUnits: Map<string, FamilyUnit>
-): string | null {
-  for (const [id, unit] of familyUnits) {
-    if (unit.husband === husband && unit.wife === wife) {
-      return id;
-    }
+  for (const childFamilyId of childFamilies) {
+    const info = subtreeWidths.get(childFamilyId) || { width: options.nodeWidth * 2, leftOffset: options.nodeWidth };
+    childInfos.push({ id: childFamilyId, info });
+    totalChildWidth += info.width;
   }
-  return null;
+
+  if (leafChildren.length > 0) {
+    totalChildWidth += leafChildren.length * options.nodeWidth;
+    if (childFamilies.length > 0) {
+      totalChildWidth += options.siblingGap;
+    }
+    totalChildWidth += (leafChildren.length - 1) * options.siblingGap;
+  }
+
+  if (childFamilies.length > 1) {
+    totalChildWidth += (childFamilies.length - 1) * options.siblingGap;
+  }
+
+  // Position children centered under parents
+  let childX = centerX - totalChildWidth / 2;
+  const childGeneration = generation + 1;
+
+  // Position child families
+  for (const { id: childFamilyId, info } of childInfos) {
+    positionFamily(
+      childFamilyId,
+      childX + info.leftOffset,
+      childGeneration,
+      familyUnits,
+      parentToFamilies,
+      elementMap,
+      generations,
+      maxGeneration,
+      subtreeWidths,
+      options
+    );
+    childX += info.width + options.siblingGap;
+  }
+
+  // Position leaf children
+  const leafY = options.direction === 'TB'
+    ? childGeneration * options.levelHeight
+    : (maxGeneration - childGeneration) * options.levelHeight;
+
+  for (const leafId of leafChildren) {
+    const el = elementMap.get(leafId);
+    if (el) {
+      el.position = { x: childX + options.nodeWidth / 2, y: leafY };
+    }
+    childX += options.nodeWidth + options.siblingGap;
+  }
 }
 
 /**
- * Center children under their parents
- * Only centers "leaf" children (those who are not parents themselves)
- * This preserves couple positioning for intermediate generations
+ * Center all elements around origin
  */
-function centerChildrenUnderParents(
-  elements: Partial<Element>[],
-  familyUnits: Map<string, FamilyUnit>,
-  _generations: Map<ElementId, number>,
-  couplePositions: Map<string, { x: number; width: number }>,
-  options: LayoutOptions
-): void {
-  const elementMap = new Map<ElementId, Partial<Element>>();
+function centerAroundOrigin(elements: Partial<Element>[]): void {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+
   for (const el of elements) {
-    if (el.id) {
-      elementMap.set(el.id as ElementId, el);
+    if (el.position) {
+      minX = Math.min(minX, el.position.x);
+      maxX = Math.max(maxX, el.position.x);
+      minY = Math.min(minY, el.position.y);
     }
   }
 
-  // Find all elements that are parents (have children)
-  const isParent = new Set<ElementId>();
-  for (const unit of familyUnits.values()) {
-    if (unit.children.length > 0) {
-      if (unit.husband) isParent.add(unit.husband);
-      if (unit.wife) isParent.add(unit.wife);
-    }
-  }
+  if (!isFinite(minX)) return;
 
-  // Group children by family and calculate offsets
-  // Only center children who are NOT parents themselves (leaf nodes)
-  for (const [familyId, unit] of familyUnits) {
-    if (unit.children.length === 0) continue;
+  const centerX = (minX + maxX) / 2;
+  const offsetX = -centerX;
+  const offsetY = -minY + 100; // Start 100px from top
 
-    const couplePos = couplePositions.get(familyId);
-    if (!couplePos) continue;
-
-    // Filter to only leaf children (not parents themselves)
-    const leafChildren = unit.children.filter(childId => !isParent.has(childId));
-    if (leafChildren.length === 0) continue;
-
-    // Calculate children positions centered under parents
-    const childCount = leafChildren.length;
-    const totalChildrenWidth =
-      (childCount * options.nodeWidth) +
-      ((childCount - 1) * options.siblingGap);
-
-    const startX = couplePos.x - totalChildrenWidth / 2;
-
-    for (let i = 0; i < leafChildren.length; i++) {
-      const childId = leafChildren[i];
-      const childEl = elementMap.get(childId);
-
-      if (childEl && childEl.position) {
-        // Update X to center under parents, keep Y
-        childEl.position = {
-          x: startX + (i * (options.nodeWidth + options.siblingGap)) + options.nodeWidth / 2,
-          y: childEl.position.y,
-        };
-      }
+  for (const el of elements) {
+    if (el.position) {
+      el.position = {
+        x: el.position.x + offsetX,
+        y: el.position.y + offsetY,
+      };
     }
   }
 }
@@ -417,8 +568,8 @@ export function calculateBoundingBox(
     if (el.position) {
       minX = Math.min(minX, el.position.x);
       minY = Math.min(minY, el.position.y);
-      maxX = Math.max(maxX, el.position.x + 180); // Approximate node width
-      maxY = Math.max(maxY, el.position.y + 60);  // Approximate node height
+      maxX = Math.max(maxX, el.position.x + 180);
+      maxY = Math.max(maxY, el.position.y + 60);
     }
   }
 
