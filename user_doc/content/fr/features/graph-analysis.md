@@ -130,4 +130,26 @@ Trouvez le **plus court chemin** entre deux éléments.
 
 ---
 
+## Layouts automatiques
+
+Réarrangez automatiquement les éléments selon différents algorithmes via le bouton **Arranger** dans la barre d'outils.
+
+### Types de layout
+
+| Layout | Description | Utilisation |
+|--------|-------------|-------------|
+| **Force (clusters)** | Algorithme physique qui regroupe les éléments connectés | Visualiser les communautés |
+| **Hiérarchie** | Organisation par niveaux (arbres, organigrammes) | Structures hiérarchiques |
+| **Circulaire** | Disposition en cercle | Vue d'ensemble équilibrée |
+| **Grille** | Alignement régulier | Organisation ordonnée |
+| **Dispersion** | Répartition aléatoire | Redistribuer les éléments |
+
+### Conseils
+
+- Utilisez **Ctrl+Z** pour annuler un layout
+- Le layout **Hiérarchie** détecte automatiquement les racines (éléments sans liens entrants)
+- Le layout **Force** s'adapte à la taille du graphe (optimisé pour les grands réseaux)
+
+---
+
 **Voir aussi** : [Vue carte]({{< relref "map-view" >}})

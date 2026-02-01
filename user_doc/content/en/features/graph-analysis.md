@@ -130,4 +130,26 @@ Find the **shortest path** between two elements.
 
 ---
 
+## Automatic Layouts
+
+Automatically rearrange elements using different algorithms via the **Arrange** button in the toolbar.
+
+### Layout Types
+
+| Layout | Description | Use case |
+|--------|-------------|----------|
+| **Force (clusters)** | Physics-based algorithm grouping connected elements | Visualize communities |
+| **Hierarchy** | Level-based organization (trees, org charts) | Hierarchical structures |
+| **Circular** | Circle arrangement | Balanced overview |
+| **Grid** | Regular alignment | Ordered organization |
+| **Scatter** | Random distribution | Redistribute elements |
+
+### Tips
+
+- Use **Ctrl+Z** to undo a layout
+- **Hierarchy** layout auto-detects roots (elements with no incoming links)
+- **Force** layout adapts to graph size (optimized for large networks)
+
+---
+
 **See also**: [Map view]({{< relref "map-view" >}})

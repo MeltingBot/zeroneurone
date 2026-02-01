@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.2
+
+### Features
+- Hierarchy layout available in layout menu (for any investigation, not just genealogy)
+
 ## 1.4.1
 
 ### Fixes
