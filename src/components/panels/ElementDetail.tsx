@@ -74,6 +74,12 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Ref to the container for focus management
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Refs to track what we last SENT to the store - used to detect our own echoes
+  // This is different from current local state: user might type more after debounce fires
+  const lastSyncedLabelRef = useRef(element.label);
+  const lastSyncedNotesRef = useRef(element.notes);
+  const lastSyncedSourceRef = useRef(element.source);
+
 
   // Debounced values
   const debouncedLabel = useDebounce(label, 500);
@@ -123,27 +129,33 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setGeoLat(freshElement.geo?.lat?.toString() ?? '');
     setGeoLng(freshElement.geo?.lng?.toString() ?? '');
     setLastSavedGeo(freshElement.geo ?? null);
+    // Also reset lastSynced refs to prevent false "remote change" detection
+    lastSyncedLabelRef.current = freshElement.label;
+    lastSyncedNotesRef.current = freshElement.notes;
+    lastSyncedSourceRef.current = freshElement.source;
   }, [element.id]);
 
   // Sync fields when changed externally (e.g., by another user via Yjs)
-  // Skip if: editing this element, OR local value already matches props
+  // Only rely on lastSyncedRef for echo detection (no editingRef check - causes timing issues)
   useEffect(() => {
-    if (editingElementIdRef.current === element.id) return;
-    if (label === element.label) return;
+    // Our own echo coming back - ignore
+    if (element.label === lastSyncedLabelRef.current) return;
+    // Remote change - accept and update ref
     setLabel(element.label);
-  }, [element.label, element.id, label]);
+    lastSyncedLabelRef.current = element.label;
+  }, [element.label, element.id]);
 
   useEffect(() => {
-    if (editingElementIdRef.current === element.id) return;
-    if (notes === element.notes) return;
+    if (element.notes === lastSyncedNotesRef.current) return;
     setNotes(element.notes);
-  }, [element.notes, element.id, notes]);
+    lastSyncedNotesRef.current = element.notes;
+  }, [element.notes, element.id]);
 
   useEffect(() => {
-    if (editingElementIdRef.current === element.id) return;
-    if (source === element.source) return;
+    if (element.source === lastSyncedSourceRef.current) return;
     setSource(element.source);
-  }, [element.source, element.id, source]);
+    lastSyncedSourceRef.current = element.source;
+  }, [element.source, element.id]);
 
   // Note: We intentionally don't sync on element.geo changes
   // The [element.id] effect handles initial load when element changes
@@ -156,6 +168,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Save debounced label - only if still editing the same element
   useEffect(() => {
     if (editingElementIdRef.current === element.id && debouncedLabel !== element.label) {
+      // Update ref BEFORE syncing so we recognize our own echo
+      lastSyncedLabelRef.current = debouncedLabel;
       updateElement(element.id, { label: debouncedLabel });
     }
   }, [debouncedLabel, element.id, element.label, updateElement]);
@@ -163,6 +177,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Save debounced notes - only if still editing the same element
   useEffect(() => {
     if (editingElementIdRef.current === element.id && debouncedNotes !== element.notes) {
+      lastSyncedNotesRef.current = debouncedNotes;
       updateElement(element.id, { notes: debouncedNotes });
     }
   }, [debouncedNotes, element.id, element.notes, updateElement]);
@@ -170,6 +185,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Save debounced source - only if still editing the same element
   useEffect(() => {
     if (editingElementIdRef.current === element.id && debouncedSource !== element.source) {
+      lastSyncedSourceRef.current = debouncedSource;
       updateElement(element.id, { source: debouncedSource });
     }
   }, [debouncedSource, element.id, element.source, updateElement]);
@@ -602,6 +618,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
               onBlur={(e) => {
                 // Save immediately on blur (don't wait for debounce)
                 if (e.target.value !== element.label) {
+                  // Update ref BEFORE saving so we recognize our own echo
+                  lastSyncedLabelRef.current = e.target.value;
                   updateElement(element.id, { label: e.target.value });
                 }
                 editingElementIdRef.current = null;

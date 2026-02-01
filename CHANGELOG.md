@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.6
+
+### Fixes
+- Fix flash/flicker when typing in InvestigationDetail fields (name, description, creator, date)
+- Add EditableField component with lock/edit pattern (click to edit, blur to save)
+- Change Y.Doc observer from throttle to pure debounce to prevent sync race conditions
+
 ## 1.2.0
 
 ### Features

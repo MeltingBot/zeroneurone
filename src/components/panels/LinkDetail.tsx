@@ -78,6 +78,12 @@ export function LinkDetail({ link }: LinkDetailProps) {
   // Ref to the container for focus management
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Refs to track what we last SENT to the store - used to detect our own echoes
+  // This is different from current local state: user might type more after debounce fires
+  const lastSyncedLabelRef = useRef(link.label);
+  const lastSyncedNotesRef = useRef(link.notes);
+  const lastSyncedSourceRef = useRef(link.source);
+
   // Debounced values
   const debouncedLabel = useDebounce(label, 500);
   const debouncedNotes = useDebounce(notes, 500);
@@ -87,12 +93,16 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const fromElement = elements.find((el) => el.id === link.fromId);
   const toElement = elements.find((el) => el.id === link.toId);
 
-  // Reset local state when link changes
+  // Reset local state AND refs when link changes
   useEffect(() => {
     editingLinkIdRef.current = null;
     setLabel(link.label);
     setNotes(link.notes);
     setSource(link.source);
+    // Also reset lastSynced refs to prevent false "remote change" detection
+    lastSyncedLabelRef.current = link.label;
+    lastSyncedNotesRef.current = link.notes;
+    lastSyncedSourceRef.current = link.source;
 
     // Blur any focused input inside this panel when switching links
     // This ensures keyboard events (like Delete) go to the canvas, not the input
@@ -103,40 +113,46 @@ export function LinkDetail({ link }: LinkDetailProps) {
   }, [link.id]);
 
   // Sync fields when changed externally (e.g., by another user via Yjs)
-  // Skip if: editing this link, OR local value already matches props
+  // Only rely on lastSyncedRef for echo detection (no editingRef check - causes timing issues)
   useEffect(() => {
-    if (editingLinkIdRef.current === link.id) return;
-    if (label === link.label) return;
+    // Our own echo coming back - ignore
+    if (link.label === lastSyncedLabelRef.current) return;
+    // Remote change - accept and update ref
     setLabel(link.label);
-  }, [link.label, link.id, label]);
+    lastSyncedLabelRef.current = link.label;
+  }, [link.label, link.id]);
 
   useEffect(() => {
-    if (editingLinkIdRef.current === link.id) return;
-    if (notes === link.notes) return;
+    if (link.notes === lastSyncedNotesRef.current) return;
     setNotes(link.notes);
-  }, [link.notes, link.id, notes]);
+    lastSyncedNotesRef.current = link.notes;
+  }, [link.notes, link.id]);
 
   useEffect(() => {
-    if (editingLinkIdRef.current === link.id) return;
-    if (source === link.source) return;
+    if (link.source === lastSyncedSourceRef.current) return;
     setSource(link.source);
-  }, [link.source, link.id, source]);
+    lastSyncedSourceRef.current = link.source;
+  }, [link.source, link.id]);
 
   // Save debounced values only if still editing the same link
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedLabel !== link.label) {
+      // Update ref BEFORE syncing so we recognize our own echo
+      lastSyncedLabelRef.current = debouncedLabel;
       updateLink(link.id, { label: debouncedLabel });
     }
   }, [debouncedLabel, link.id, link.label, updateLink]);
 
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedNotes !== link.notes) {
+      lastSyncedNotesRef.current = debouncedNotes;
       updateLink(link.id, { notes: debouncedNotes });
     }
   }, [debouncedNotes, link.id, link.notes, updateLink]);
 
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedSource !== link.source) {
+      lastSyncedSourceRef.current = debouncedSource;
       updateLink(link.id, { source: debouncedSource });
     }
   }, [debouncedSource, link.id, link.source, updateLink]);

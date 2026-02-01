@@ -5,103 +5,94 @@ import { useInvestigationStore } from '../../stores';
 import type { Investigation, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
-import { AccordionSection, MarkdownEditor } from '../common';
+import { AccordionSection, EditableField, MarkdownEditor } from '../common';
 
 interface InvestigationDetailProps {
   investigation: Investigation;
 }
 
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
+/**
+ * InvestigationDetail with lock/edit pattern (like Report sections)
+ *
+ * Pattern:
+ * - Name/Creator: EditableField - click to edit, blur/Enter to save
+ * - Description: MarkdownEditor - click to edit, blur to save
+ * - No debounce, no continuous sync - saves only on validation
+ * - During editing, external changes are ignored (no flash)
+ */
 export function InvestigationDetail({ investigation }: InvestigationDetailProps) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
   const { updateInvestigation, addExistingTag, addSuggestedProperty } = useInvestigationStore();
 
-  // Local state for inputs
-  const [name, setName] = useState(investigation.name);
+  // Description state - managed separately for MarkdownEditor
   const [description, setDescription] = useState(investigation.description);
-  const [creator, setCreator] = useState(investigation.creator || '');
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const descriptionRef = useRef(investigation.description);
+
+  // Start date local state
   const [startDate, setStartDate] = useState(
     investigation.startDate ? formatDateForInput(investigation.startDate) : ''
   );
-
-  // Track if user is currently editing (blocks remote sync to prevent flash)
-  const isEditingRef = useRef(false);
-
-  // Debounced values
-  const debouncedName = useDebounce(name, 500);
-  const debouncedDescription = useDebounce(description, 500);
-  const debouncedCreator = useDebounce(creator, 500);
+  const [isEditingStartDate, setIsEditingStartDate] = useState(false);
 
   // Reset state when investigation changes
   useEffect(() => {
-    setName(investigation.name);
     setDescription(investigation.description);
-    setCreator(investigation.creator || '');
+    descriptionRef.current = investigation.description;
     setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
   }, [investigation.id]);
 
-  // Sync from props when fields change from REMOTE
-  // Skip if: editing, OR local value already matches props (prevents flash from our own updates)
+  // Sync description from props ONLY when not editing
   useEffect(() => {
-    if (isEditingRef.current) return;
-    if (name === investigation.name) return;
-    setName(investigation.name);
-  }, [investigation.name, name]);
-
-  useEffect(() => {
-    if (isEditingRef.current) return;
-    if (description === investigation.description) return;
-    setDescription(investigation.description);
-  }, [investigation.description, description]);
-
-  useEffect(() => {
-    if (isEditingRef.current) return;
-    const creatorValue = investigation.creator || '';
-    if (creator === creatorValue) return;
-    setCreator(creatorValue);
-  }, [investigation.creator, creator]);
-
-  // Save debounced name
-  useEffect(() => {
-    if (debouncedName !== investigation.name) {
-      updateInvestigation(investigation.id, { name: debouncedName });
+    if (!isEditingDescription) {
+      setDescription(investigation.description);
+      descriptionRef.current = investigation.description;
     }
-  }, [debouncedName, investigation.id, investigation.name, updateInvestigation]);
+  }, [investigation.description, isEditingDescription]);
 
-  // Save debounced description
+  // Sync startDate from props ONLY when not editing
   useEffect(() => {
-    if (debouncedDescription !== investigation.description) {
-      updateInvestigation(investigation.id, { description: debouncedDescription });
+    if (!isEditingStartDate) {
+      setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
     }
-  }, [debouncedDescription, investigation.id, investigation.description, updateInvestigation]);
+  }, [investigation.startDate, isEditingStartDate]);
 
-  // Save debounced creator
-  useEffect(() => {
-    if (debouncedCreator !== (investigation.creator || '')) {
-      updateInvestigation(investigation.id, { creator: debouncedCreator });
-    }
-  }, [debouncedCreator, investigation.id, investigation.creator, updateInvestigation]);
+  // Handle name change (from EditableField)
+  const handleNameChange = useCallback(
+    (value: string) => {
+      updateInvestigation(investigation.id, { name: value });
+    },
+    [investigation.id, updateInvestigation]
+  );
 
-  // Focus/blur handlers to track editing state
-  const handleFocus = useCallback(() => {
-    isEditingRef.current = true;
+  // Handle creator change (from EditableField)
+  const handleCreatorChange = useCallback(
+    (value: string) => {
+      updateInvestigation(investigation.id, { creator: value });
+    },
+    [investigation.id, updateInvestigation]
+  );
+
+  // Handle description change - just update local state
+  const handleDescriptionChange = useCallback((value: string) => {
+    setDescription(value);
   }, []);
 
-  const handleBlur = useCallback(() => {
-    isEditingRef.current = false;
-  }, []);
+  // Handle description focus - mark as editing
+  const handleDescriptionFocus = useCallback(() => {
+    setIsEditingDescription(true);
+    descriptionRef.current = description;
+  }, [description]);
+
+  // Handle description blur - save if changed
+  const handleDescriptionBlur = useCallback(() => {
+    setIsEditingDescription(false);
+    // Only save if value changed
+    if (description !== descriptionRef.current) {
+      updateInvestigation(investigation.id, { description });
+    }
+  }, [description, investigation.id, updateInvestigation]);
 
   // Handle start date change
   const handleStartDateChange = useCallback(
@@ -169,45 +160,38 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
         defaultOpen={true}
       >
         <div className="space-y-4">
-          {/* Name */}
+          {/* Name - EditableField with lock/edit pattern */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.name')}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
+            <EditableField
+              value={investigation.name}
+              onChange={handleNameChange}
               placeholder={t('investigation.placeholders.name')}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
+              allowEmpty={false}
             />
           </div>
 
-          {/* Description */}
+          {/* Description - MarkdownEditor with lock/edit pattern */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.description')}</label>
             <MarkdownEditor
               value={description}
-              onChange={setDescription}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
+              onChange={handleDescriptionChange}
+              onFocus={handleDescriptionFocus}
+              onBlur={handleDescriptionBlur}
               placeholder={t('detail.placeholders.markdown')}
               minRows={3}
               maxRows={10}
             />
           </div>
 
-          {/* Creator */}
+          {/* Creator - EditableField with lock/edit pattern */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.creator')}</label>
-            <input
-              type="text"
-              value={creator}
-              onChange={(e) => setCreator(e.target.value)}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
+            <EditableField
+              value={investigation.creator || ''}
+              onChange={handleCreatorChange}
               placeholder={t('investigation.placeholders.creator')}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
             />
           </div>
 
@@ -239,6 +223,8 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
               type="date"
               value={startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
+              onFocus={() => setIsEditingStartDate(true)}
+              onBlur={() => setIsEditingStartDate(false)}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
             />
           </div>

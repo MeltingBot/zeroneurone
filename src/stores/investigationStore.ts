@@ -133,60 +133,51 @@ function setupYDocObserver(
 ): () => void {
   const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
 
-  // Throttle the sync to avoid excessive re-renders during rapid changes
+  // Debounce the sync to avoid excessive re-renders during rapid changes
+  // IMPORTANT: Always use debounce (never immediate execution) to prevent flash
+  // When updateInvestigation/updateElement/updateLink modify Y.Doc, the observer fires.
+  // If we sync immediately, we read Zustand before the set() completes, causing flash.
+  // By always delaying, we ensure Zustand is updated before _syncFromYDoc runs.
   let syncTimeout: ReturnType<typeof setTimeout> | null = null;
-  let lastSyncTime = 0;
-  const THROTTLE_MS = 50; // Minimum time between syncs
+  const DEBOUNCE_MS = 50;
 
-  const throttledSync = () => {
-    const now = Date.now();
-    const timeSinceLastSync = now - lastSyncTime;
-
+  const debouncedSync = () => {
     if (syncTimeout) {
       clearTimeout(syncTimeout);
     }
-
-    if (timeSinceLastSync >= THROTTLE_MS) {
-      // Sync immediately if enough time has passed
-      lastSyncTime = now;
+    syncTimeout = setTimeout(() => {
       syncToZustand();
-    } else {
-      // Schedule sync for later
-      syncTimeout = setTimeout(() => {
-        lastSyncTime = Date.now();
-        syncToZustand();
-        syncTimeout = null;
-      }, THROTTLE_MS - timeSinceLastSync);
-    }
+      syncTimeout = null;
+    }, DEBOUNCE_MS);
   };
 
   // Observe meta changes (investigation name, description)
   const metaObserver = () => {
-    throttledSync();
+    debouncedSync();
   };
   metaMap.observe(metaObserver);
 
   // Observe elements changes
   const elementsObserver = () => {
-    throttledSync();
+    debouncedSync();
   };
   elementsMap.observeDeep(elementsObserver);
 
   // Observe links changes
   const linksObserver = () => {
-    throttledSync();
+    debouncedSync();
   };
   linksMap.observeDeep(linksObserver);
 
   // Observe comments changes
   const commentsObserver = () => {
-    throttledSync();
+    debouncedSync();
   };
   commentsMap.observeDeep(commentsObserver);
 
   // Observe assets changes
   const assetsObserver = () => {
-    throttledSync();
+    debouncedSync();
   };
   assetsMap.observeDeep(assetsObserver);
 
@@ -465,9 +456,22 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   updateInvestigation: async (id: InvestigationId, changes: Partial<Investigation>) => {
-    await investigationRepository.update(id, changes);
+    // Update Zustand FIRST - this prevents flash when Y.Doc observer triggers _syncFromYDoc
+    // When _syncFromYDoc runs after Y.Doc update, Zustand will already have the new value,
+    // so no "change" will be detected and no spurious re-render will occur
+    set((state) => ({
+      investigations: state.investigations.map((inv) =>
+        inv.id === id ? { ...inv, ...changes, updatedAt: new Date() } : inv
+      ),
+      currentInvestigation:
+        state.currentInvestigation?.id === id
+          ? { ...state.currentInvestigation, ...changes, updatedAt: new Date() }
+          : state.currentInvestigation,
+    }));
 
-    // Also update Y.Doc metaMap for collaborative sync
+    // Then update Y.Doc for collaborative sync
+    // The observer will trigger _syncFromYDoc, but since Zustand already has the new value,
+    // no change will be detected (Y.Doc value == Zustand value)
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { meta: metaMap } = getYMaps(ydoc);
@@ -481,15 +485,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       });
     }
 
-    set((state) => ({
-      investigations: state.investigations.map((inv) =>
-        inv.id === id ? { ...inv, ...changes, updatedAt: new Date() } : inv
-      ),
-      currentInvestigation:
-        state.currentInvestigation?.id === id
-          ? { ...state.currentInvestigation, ...changes, updatedAt: new Date() }
-          : state.currentInvestigation,
-    }));
+    // Persist to IndexedDB (async, can happen after UI is updated)
+    await investigationRepository.update(id, changes);
   },
 
   deleteInvestigation: async (id: InvestigationId) => {
@@ -605,7 +602,15 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Element not found');
     }
 
-    // Update Y.Doc
+    // Update Zustand FIRST (synchronous) to prevent flash during async operations
+    // _syncFromYDoc is throttled, so we need immediate update for UI responsiveness
+    set((state) => ({
+      elements: state.elements.map((el) =>
+        el.id === id ? { ...el, ...changes, updatedAt: new Date() } : el
+      ),
+    }));
+
+    // Update Y.Doc for collaborative sync
     updateElementYMap(ymap, changes, ydoc);
 
     // Also update Dexie for backwards compatibility
@@ -800,7 +805,15 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Link not found');
     }
 
-    // Update Y.Doc
+    // Update Zustand FIRST (synchronous) to prevent flash during async operations
+    // _syncFromYDoc is throttled, so we need immediate update for UI responsiveness
+    set((state) => ({
+      links: state.links.map((lk) =>
+        lk.id === id ? { ...lk, ...changes, updatedAt: new Date() } : lk
+      ),
+    }));
+
+    // Update Y.Doc for collaborative sync
     updateLinkYMap(ymap, changes, ydoc);
 
     // Also update Dexie

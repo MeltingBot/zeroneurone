@@ -11,6 +11,7 @@ export { Accordion, AccordionSection } from './Accordion';
 export { ViewToolbar } from './ViewToolbar';
 export { DropdownPortal } from './DropdownPortal';
 export { MarkdownEditor, MarkdownPreview } from './MarkdownEditor';
+export { EditableField } from './EditableField';
 export { MinResolutionGuard } from './MinResolutionGuard';
 export { IconPicker, IconPickerCompact } from './IconPicker';
 export { LanguageSwitcher } from './LanguageSwitcher';
