@@ -7,6 +7,29 @@
 - Add EditableField component with lock/edit pattern (click to edit, blur to save)
 - Change Y.Doc observer from throttle to pure debounce to prevent sync race conditions
 
+## 1.3.5
+
+### Features
+- Collaborative locking with remote user indicator in Report sections
+- Copy elements with Markdown link format [[Label|id]]
+- Paste from canvas now works correctly without duplicates
+
+### Fixes
+- Optimize typing performance (defer serialization to validation)
+- Fix flash/flicker on content sync between local and remote
+- Add stopPropagation on paste to prevent canvas interference
+
+## 1.3.0
+
+### Features
+- Report panel: new side panel tab for writing investigation reports
+- Markdown editor with sections (add, reorder, delete)
+- Element/link references with [[Label|uuid]] syntax
+- Autocomplete dropdown triggered by [[ for quick insertion
+- Clickable links in preview mode (navigates to element on canvas)
+- Report persistence with Yjs collaborative sync
+- Rename "Report" modal to "Synthesis" for clarity
+
 ## 1.2.0
 
 ### Features
