@@ -11,6 +11,10 @@ interface MarkdownEditorProps {
   className?: string;
   /** If true, show preview by default when there's content */
   previewByDefault?: boolean;
+  /** Called when user starts editing */
+  onFocus?: () => void;
+  /** Called when user stops editing */
+  onBlur?: () => void;
 }
 
 export function MarkdownEditor({
@@ -20,6 +24,8 @@ export function MarkdownEditor({
   minRows = 4,
   className = '',
   previewByDefault: _previewByDefault = true,
+  onFocus,
+  onBlur,
 }: MarkdownEditorProps) {
   // Always start in preview mode, user must click to edit
   const [isEditing, setIsEditing] = useState(false);
@@ -45,13 +51,15 @@ export function MarkdownEditor({
   // Switch to preview when leaving the field
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-  }, []);
+    onBlur?.();
+  }, [onBlur]);
 
   // When clicking on preview, switch to edit mode (explicit user action)
   const handlePreviewClick = useCallback(() => {
     shouldFocusRef.current = true;
     setIsEditing(true);
-  }, []);
+    onFocus?.();
+  }, [onFocus]);
 
   return (
     <div className={className}>

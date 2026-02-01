@@ -36,53 +36,41 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
     investigation.startDate ? formatDateForInput(investigation.startDate) : ''
   );
 
-  // Refs to track what we last synced to Yjs - used to detect our own echoes
-  const lastSyncedNameRef = useRef(investigation.name);
-  const lastSyncedDescriptionRef = useRef(investigation.description);
-  const lastSyncedCreatorRef = useRef(investigation.creator || '');
+  // Track if user is currently editing (blocks remote sync to prevent flash)
+  const isEditingRef = useRef(false);
 
   // Debounced values
   const debouncedName = useDebounce(name, 500);
   const debouncedDescription = useDebounce(description, 500);
   const debouncedCreator = useDebounce(creator, 500);
 
-  // Reset refs when investigation changes
+  // Reset state when investigation changes
   useEffect(() => {
-    lastSyncedNameRef.current = investigation.name;
-    lastSyncedDescriptionRef.current = investigation.description;
-    lastSyncedCreatorRef.current = investigation.creator || '';
     setName(investigation.name);
     setDescription(investigation.description);
     setCreator(investigation.creator || '');
     setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
   }, [investigation.id]);
 
-  // Sync from props when fields change from REMOTE
+  // Sync from props when fields change from REMOTE (only if not editing)
   useEffect(() => {
-    // Our own echo - ignore
-    if (investigation.name === lastSyncedNameRef.current) return;
-    // Remote change - accept
+    if (isEditingRef.current) return;
     setName(investigation.name);
-    lastSyncedNameRef.current = investigation.name;
   }, [investigation.name]);
 
   useEffect(() => {
-    if (investigation.description === lastSyncedDescriptionRef.current) return;
+    if (isEditingRef.current) return;
     setDescription(investigation.description);
-    lastSyncedDescriptionRef.current = investigation.description;
   }, [investigation.description]);
 
   useEffect(() => {
-    const creatorValue = investigation.creator || '';
-    if (creatorValue === lastSyncedCreatorRef.current) return;
-    setCreator(creatorValue);
-    lastSyncedCreatorRef.current = creatorValue;
+    if (isEditingRef.current) return;
+    setCreator(investigation.creator || '');
   }, [investigation.creator]);
 
   // Save debounced name
   useEffect(() => {
     if (debouncedName !== investigation.name) {
-      lastSyncedNameRef.current = debouncedName;
       updateInvestigation(investigation.id, { name: debouncedName });
     }
   }, [debouncedName, investigation.id, investigation.name, updateInvestigation]);
@@ -90,7 +78,6 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
   // Save debounced description
   useEffect(() => {
     if (debouncedDescription !== investigation.description) {
-      lastSyncedDescriptionRef.current = debouncedDescription;
       updateInvestigation(investigation.id, { description: debouncedDescription });
     }
   }, [debouncedDescription, investigation.id, investigation.description, updateInvestigation]);
@@ -98,10 +85,18 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
   // Save debounced creator
   useEffect(() => {
     if (debouncedCreator !== (investigation.creator || '')) {
-      lastSyncedCreatorRef.current = debouncedCreator;
       updateInvestigation(investigation.id, { creator: debouncedCreator });
     }
   }, [debouncedCreator, investigation.id, investigation.creator, updateInvestigation]);
+
+  // Focus/blur handlers to track editing state
+  const handleFocus = useCallback(() => {
+    isEditingRef.current = true;
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    isEditingRef.current = false;
+  }, []);
 
   // Handle start date change
   const handleStartDateChange = useCallback(
@@ -176,6 +171,8 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               placeholder={t('investigation.placeholders.name')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
             />
@@ -187,6 +184,8 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
             <MarkdownEditor
               value={description}
               onChange={setDescription}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               placeholder={t('detail.placeholders.markdown')}
               minRows={3}
               maxRows={10}
@@ -200,6 +199,8 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
               type="text"
               value={creator}
               onChange={(e) => setCreator(e.target.value)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               placeholder={t('investigation.placeholders.creator')}
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
             />
