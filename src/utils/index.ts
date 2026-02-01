@@ -99,3 +99,29 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
+
+/**
+ * Sanitize a label for use in [[Label|uuid]] wiki-style links.
+ * Escapes special characters that would break the link format:
+ * - | (pipe) is replaced with similar Unicode character
+ * - ]] (closing brackets) are replaced with similar Unicode character
+ * Falls back to a short ID if the label is empty.
+ */
+export function sanitizeLinkLabel(label: string, id: string): string {
+  if (!label || label.trim() === '') {
+    return `#${id.slice(-6)}`;
+  }
+  return label
+    .replace(/\|/g, '\u2223') // ∣ (divides)
+    .replace(/\]\]/g, '\u3015'); // 〕 (right tortoise shell bracket)
+}
+
+/**
+ * Restore a sanitized label back to its original characters.
+ * Used when displaying or editing a label that was sanitized.
+ */
+export function unsanitizeLinkLabel(label: string): string {
+  return label
+    .replace(/\u2223/g, '|')
+    .replace(/\u3015/g, ']]');
+}

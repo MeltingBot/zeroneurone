@@ -198,8 +198,8 @@
     },
     "notFound": "Ermittlung nicht gefunden",
     "header": {
-      "report": "Bericht",
-      "generateReport": "Bericht generieren",
+      "report": "Zusammenfassung",
+      "generateReport": "Synthese",
       "export": "Exportieren",
       "search": "Suchen",
       "clearFilters": "Filter löschen",

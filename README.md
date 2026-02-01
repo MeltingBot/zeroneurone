@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -77,7 +77,8 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Import Excalidraw
 - Import ZIP (restauration complete)
 - Import dans investigation courante (merge avec placement visuel)
-- Rapports personnalisables avec sections et captures
+- Panel Rapport (redaction Markdown avec references aux elements)
+- Generation de synthese (rapport automatique avec analyse du graphe)
 
 ### Layouts Automatiques
 - Force-directed (physique)

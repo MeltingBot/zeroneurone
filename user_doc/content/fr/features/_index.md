@@ -16,4 +16,6 @@ Explorez les fonctionnalités principales de ZeroNeurone.
 - [Timeline]({{< relref "timeline" >}}) — Visualisation chronologique
 - [Fichiers joints]({{< relref "attachments" >}}) — Documents et images
 - [Recherche]({{< relref "search" >}}) — Trouver rapidement
+- [Rapport]({{< relref "report" >}}) — Rédaction Markdown avec références
+- [Synthèse]({{< relref "synthesis" >}}) — Génération automatique de rapports
 - [Collaboration]({{< relref "collaboration" >}}) — Travail en temps réel

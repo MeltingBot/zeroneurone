@@ -198,8 +198,8 @@
     },
     "notFound": "Ikerketa ez da aurkitu",
     "header": {
-      "report": "Txostena",
-      "generateReport": "Txostena sortu",
+      "report": "Sintesia",
+      "generateReport": "Sintesia",
       "export": "Esportatu",
       "search": "Bilatu",
       "clearFilters": "Iragazkiak garbitu",

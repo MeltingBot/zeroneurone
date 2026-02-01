@@ -8,14 +8,15 @@ import { InvestigationDetail } from './InvestigationDetail';
 import { FiltersPanel } from './FiltersPanel';
 import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
-import { Info, Filter, Eye, Network, PanelRightClose } from 'lucide-react';
+import { ReportPanel } from './ReportPanel';
+import { Info, Filter, Eye, Network, PanelRightClose, FileText } from 'lucide-react';
 import { IconButton } from '../common';
 
-const MIN_WIDTH = 280;
+const MIN_WIDTH = 360;
 const MAX_WIDTH = 600;
-const DEFAULT_WIDTH = 320;
+const DEFAULT_WIDTH = 400;
 
-type TabId = 'detail' | 'insights' | 'filters' | 'views';
+type TabId = 'detail' | 'insights' | 'filters' | 'views' | 'report';
 
 interface Tab {
   id: TabId;
@@ -101,6 +102,7 @@ export function SidePanel() {
     { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
     { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
     ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
+    { id: 'report', label: t('tabs.report'), icon: FileText },
   ];
 
   if (isCollapsed) {
@@ -208,6 +210,8 @@ export function SidePanel() {
             <ViewsPanel />
           </div>
         );
+      case 'report':
+        return <ReportPanel />;
       default:
         return null;
     }
@@ -232,8 +236,8 @@ export function SidePanel() {
       <header className="border-b border-border-default shrink-0">
         {/* Tab bar */}
         <div className="flex items-center h-10 px-1 overflow-hidden">
-          {/* Tabs - can shrink and hide overflow */}
-          <div className="flex items-center min-w-0 overflow-x-auto">
+          {/* Tabs with labels */}
+          <div className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto scrollbar-none">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -241,7 +245,7 @@ export function SidePanel() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded transition-colors shrink-0 ${
+                  className={`relative flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                     isActive
                       ? 'bg-accent/10 text-accent'
                       : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'

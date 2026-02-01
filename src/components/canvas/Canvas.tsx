@@ -40,7 +40,7 @@ import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStor
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
-import { generateUUID } from '../../utils';
+import { generateUUID, sanitizeLinkLabel } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
@@ -508,6 +508,29 @@ export function Canvas() {
   // Marker to write to system clipboard when copying elements internally
   // This allows detecting if user copied something else externally since then
   const CLIPBOARD_MARKER = '__ZERONEURONE_INTERNAL_COPY__';
+
+  // Build clipboard data with element/link info for cross-component paste
+  const buildClipboardData = useCallback((elementIds: string[], linkIds: string[] = []) => {
+    const copiedElements = elements.filter(el => elementIds.includes(el.id));
+    const copiedLinks = links.filter(l => linkIds.includes(l.id) ||
+      (elementIds.includes(l.fromId) && elementIds.includes(l.toId) && l.label));
+
+    const data = {
+      // Sanitize labels to escape special characters (| and ]]) that would break link format
+      elements: copiedElements.map(el => ({
+        id: el.id,
+        label: sanitizeLinkLabel(el.label, el.id),
+      })),
+      links: copiedLinks
+        .filter(l => l.label)
+        .map(l => ({
+          id: l.id,
+          label: sanitizeLinkLabel(l.label || '', l.id),
+        })),
+    };
+
+    return `${CLIPBOARD_MARKER}:${JSON.stringify(data)}`;
+  }, [elements, links]);
 
   // History store for undo/redo
   const { pushAction, popUndo, popRedo } = useHistoryStore();
@@ -1376,9 +1399,10 @@ export function Canvas() {
     if (elsToCopy.length > 0) {
       copiedElementsRef.current = elsToCopy;
       setHasCopiedElements(true);
-      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+      const clipboardData = buildClipboardData(selectedEls, selectedLinkIds);
+      navigator.clipboard.writeText(clipboardData).catch(() => {});
     }
-  }, [elements, getSelectedElementIds, CLIPBOARD_MARKER]);
+  }, [elements, getSelectedElementIds, selectedLinkIds, buildClipboardData]);
 
   const handleSelectionCut = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
@@ -1387,7 +1411,8 @@ export function Canvas() {
     if (elsToCut.length > 0) {
       copiedElementsRef.current = elsToCut;
       setHasCopiedElements(true);
-      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+      const clipboardData = buildClipboardData(selectedEls, selectedLinkIds);
+      navigator.clipboard.writeText(clipboardData).catch(() => {});
       // Save for undo
       const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
       pushAction({
@@ -1398,7 +1423,7 @@ export function Canvas() {
       await deleteElements(selectedEls);
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, deleteElements, clearSelection, pushAction, CLIPBOARD_MARKER]);
+  }, [elements, links, getSelectedElementIds, selectedLinkIds, deleteElements, clearSelection, pushAction, buildClipboardData]);
 
   const handleSelectionDuplicate = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
@@ -1635,10 +1660,11 @@ export function Canvas() {
     if (elsToCopy.length > 0) {
       copiedElementsRef.current = elsToCopy;
       setHasCopiedElements(true);
-      // Write marker to system clipboard so we can detect external copies later
-      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+      const elementIds = elsToCopy.map(el => el.id);
+      const clipboardData = buildClipboardData(elementIds, [...selectedLinkIds]);
+      navigator.clipboard.writeText(clipboardData).catch(() => {});
     }
-  }, [elements, getSelectedElementIds, contextMenu, CLIPBOARD_MARKER]);
+  }, [elements, getSelectedElementIds, contextMenu, selectedLinkIds, buildClipboardData]);
 
   // Cut handler for context menu
   const handleContextMenuCut = useCallback(async () => {
@@ -1653,8 +1679,9 @@ export function Canvas() {
       // Copy first
       copiedElementsRef.current = elsToCut;
       setHasCopiedElements(true);
-      // Write marker to system clipboard so we can detect external copies later
-      navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+      const elementIds = elsToCut.map(el => el.id);
+      const clipboardData = buildClipboardData(elementIds, [...selectedLinkIds]);
+      navigator.clipboard.writeText(clipboardData).catch(() => {});
 
       // Then delete
       const idsToDelete = elsToCut.map(el => el.id);
@@ -1671,7 +1698,7 @@ export function Canvas() {
       await deleteElements(idsToDelete);
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, contextMenu, deleteElements, clearSelection, pushAction, CLIPBOARD_MARKER]);
+  }, [elements, links, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElements, clearSelection, pushAction, buildClipboardData]);
 
   // Paste handler for context menu (paste at context menu position)
   const handleContextMenuPaste = useCallback(() => {
@@ -2271,8 +2298,8 @@ export function Canvas() {
         if (selectedEls.length > 0) {
           copiedElementsRef.current = elements.filter(el => selectedEls.includes(el.id));
           setHasCopiedElements(true);
-          // Write marker to system clipboard so we can detect external copies later
-          navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+          const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
+          navigator.clipboard.writeText(clipboardData).catch(() => {});
         }
       }
 
@@ -2284,8 +2311,8 @@ export function Canvas() {
           const elsToCut = elements.filter(el => selectedEls.includes(el.id));
           copiedElementsRef.current = elsToCut;
           setHasCopiedElements(true);
-          // Write marker to system clipboard so we can detect external copies later
-          navigator.clipboard.writeText(CLIPBOARD_MARKER).catch(() => {});
+          const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
+          navigator.clipboard.writeText(clipboardData).catch(() => {});
 
           // Delete the cut elements
           const linksToDelete = links.filter(l =>
@@ -2413,6 +2440,7 @@ export function Canvas() {
   }, [
     getSelectedElementIds,
     getSelectedLinkIds,
+    selectedLinkIds,
     deleteElements,
     deleteLinks,
     clearSelection,
@@ -2428,6 +2456,7 @@ export function Canvas() {
     pushAction,
     handleUndo,
     handleRedo,
+    buildClipboardData,
   ]);
 
   // Handle paste (Ctrl+V) for elements or media
@@ -2447,7 +2476,7 @@ export function Canvas() {
 
       // Check clipboard text for our marker (to know if last copy was internal elements)
       const clipboardText = event.clipboardData?.getData('text/plain') || '';
-      const hasInternalCopyMarker = clipboardText === CLIPBOARD_MARKER;
+      const hasInternalCopyMarker = clipboardText.startsWith(CLIPBOARD_MARKER);
 
       // Collect files from clipboard (only if NO internal marker - external copy overwrites marker)
       let files: File[] = [];

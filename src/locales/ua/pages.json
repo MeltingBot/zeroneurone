@@ -198,8 +198,8 @@
     },
     "notFound": "Розслідування не знайдено",
     "header": {
-      "report": "Звіт",
-      "generateReport": "Створити звіт",
+      "report": "Синтез",
+      "generateReport": "Синтез",
       "export": "Експортувати",
       "search": "Пошук",
       "clearFilters": "Очистити фільтри",

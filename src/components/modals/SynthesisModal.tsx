@@ -10,7 +10,7 @@ import {
 import { useInvestigationStore, useViewStore, useUIStore } from '../../stores';
 import type { DisplayMode } from '../../types';
 
-interface ReportModalProps {
+interface SynthesisModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,7 +20,7 @@ interface ScreenshotOptions {
   canvas: boolean;
 }
 
-export function ReportModal({ isOpen, onClose }: ReportModalProps) {
+export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   const { t, i18n } = useTranslation('modals');
   const { currentInvestigation, elements, links, assets } = useInvestigationStore();
   const { displayMode, setDisplayMode } = useViewStore();
@@ -116,33 +116,33 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
       // Force light theme for screenshots
       if (hasScreenshots && themeMode !== 'light') {
-        setCaptureStatus(t('report.capture.switchingLight'));
+        setCaptureStatus(t('synthesis.capture.switchingLight'));
         setThemeMode('light');
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Capture canvas screenshot
       if (screenshotOptions.canvas) {
-        setCaptureStatus(t('report.capture.capturingGraph'));
+        setCaptureStatus(t('synthesis.capture.capturingGraph'));
         finalOptions.canvasScreenshot = await captureViewScreenshot('canvas');
       }
 
       // Restore original view if we switched (use getState for fresh value)
       const currentMode = useViewStore.getState().displayMode;
       if (hasScreenshots && currentMode !== originalState.displayMode) {
-        setCaptureStatus(t('report.capture.restoringView'));
+        setCaptureStatus(t('synthesis.capture.restoringView'));
         setDisplayMode(originalState.displayMode);
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Restore original theme
       if (hasScreenshots && originalState.themeMode !== 'light') {
-        setCaptureStatus(t('report.capture.restoringTheme'));
+        setCaptureStatus(t('synthesis.capture.restoringTheme'));
         setThemeMode(originalState.themeMode);
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      setCaptureStatus(t('report.capture.generating'));
+      setCaptureStatus(t('synthesis.capture.generating'));
 
       const content = reportService.generate(
         format,
@@ -181,10 +181,10 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           <div className="flex flex-col items-center gap-4">
             <Loader size={32} className="animate-spin text-accent" />
             <p className="text-sm text-text-primary font-medium">
-              {captureStatus || t('report.capture.preparing')}
+              {captureStatus || t('synthesis.capture.preparing')}
             </p>
             <p className="text-xs text-text-tertiary">
-              {t('report.capture.viewsAdjusted')}
+              {t('synthesis.capture.viewsAdjusted')}
             </p>
           </div>
         </div>
@@ -202,7 +202,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
           <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <FileText size={16} />
-            {t('report.title')}
+            {t('synthesis.title')}
           </h2>
           <button
             onClick={onClose}
@@ -218,7 +218,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           {/* Title */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-text-secondary mb-1">
-              {t('report.reportTitle')}
+              {t('synthesis.reportTitle')}
             </label>
             <input
               type="text"
@@ -233,7 +233,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           {/* Content options */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-text-secondary mb-2">
-              {t('report.contentToInclude')}
+              {t('synthesis.contentToInclude')}
             </label>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm">
@@ -244,7 +244,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeDescription')}</span>
+                <span className="text-text-primary">{t('synthesis.includeDescription')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -254,7 +254,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeSummary')}</span>
+                <span className="text-text-primary">{t('synthesis.includeSummary')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -264,7 +264,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeInsights')}</span>
+                <span className="text-text-primary">{t('synthesis.includeInsights')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -274,7 +274,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeTimeline')}</span>
+                <span className="text-text-primary">{t('synthesis.includeTimeline')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -284,7 +284,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeElements')} ({elements.length})</span>
+                <span className="text-text-primary">{t('synthesis.includeElements')} ({elements.length})</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -294,7 +294,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeLinks')} ({links.length})</span>
+                <span className="text-text-primary">{t('synthesis.includeLinks')} ({links.length})</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -304,7 +304,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeProperties')}</span>
+                <span className="text-text-primary">{t('synthesis.includeProperties')}</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -314,7 +314,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeFiles')} ({assets.length})</span>
+                <span className="text-text-primary">{t('synthesis.includeFiles')} ({assets.length})</span>
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -324,7 +324,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.includeFiches')}</span>
+                <span className="text-text-primary">{t('synthesis.includeFiches')}</span>
               </label>
             </div>
           </div>
@@ -333,7 +333,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           <div className="mb-4">
             <label className="block text-xs font-medium text-text-secondary mb-2 flex items-center gap-1">
               <Camera size={12} />
-              {t('report.screenshot')}
+              {t('synthesis.screenshot')}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -343,10 +343,10 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                 disabled={isGenerating}
                 className="rounded border-border-default"
               />
-              <span className="text-text-primary">{t('report.includeGraph')}</span>
+              <span className="text-text-primary">{t('synthesis.includeGraph')}</span>
             </label>
             <p className="text-xs text-text-tertiary mt-1">
-              {t('report.screenshotHint')}
+              {t('synthesis.screenshotHint')}
             </p>
           </div>
 
@@ -354,7 +354,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
           {options.includeElements && (
             <div className="mb-4 pl-4 border-l-2 border-border-default">
               <label className="block text-xs font-medium text-text-secondary mb-2">
-                {t('report.elementOptions')}
+                {t('synthesis.elementOptions')}
               </label>
               <label className="flex items-center gap-2 text-sm mb-2">
                 <input
@@ -364,43 +364,24 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   className="rounded border-border-default"
                   disabled={isGenerating}
                 />
-                <span className="text-text-primary">{t('report.groupByTag')}</span>
+                <span className="text-text-primary">{t('synthesis.groupByTag')}</span>
               </label>
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-text-secondary">{t('report.sortBy')}</span>
+                <span className="text-text-secondary">{t('synthesis.sortBy')}</span>
                 <select
                   value={options.sortElementsBy}
                   onChange={(e) => updateOption('sortElementsBy', e.target.value as ReportOptions['sortElementsBy'])}
                   className="px-2 py-1 text-sm border border-border-default rounded bg-bg-primary"
                   disabled={isGenerating}
                 >
-                  <option value="label">{t('report.sortByName')}</option>
-                  <option value="date">{t('report.sortByDate')}</option>
-                  <option value="confidence">{t('report.sortByConfidence')}</option>
+                  <option value="label">{t('synthesis.sortByName')}</option>
+                  <option value="date">{t('synthesis.sortByDate')}</option>
+                  <option value="confidence">{t('synthesis.sortByConfidence')}</option>
                 </select>
               </div>
             </div>
           )}
 
-          {/* Preview info */}
-          <div className="p-3 bg-bg-secondary rounded-lg text-xs text-text-secondary">
-            <p className="font-medium mb-1">{t('report.preview')}</p>
-            <p>
-              {t('report.previewContent')}{' '}
-              {[
-                options.includeDescription && t('report.previewDescription'),
-                options.includeSummary && t('report.previewSummary'),
-                options.includeInsights && t('report.previewInsights'),
-                options.includeTimeline && t('report.previewTimeline'),
-                options.includeElements && t('report.previewElements', { count: elements.length }),
-                options.includeLinks && t('report.previewLinks', { count: links.length }),
-                options.includeProperties && t('report.previewProperties'),
-                options.includeFiles && t('report.previewFiles', { count: assets.length }),
-                options.includeFiches && t('report.previewFiches'),
-                screenshotOptions.canvas && t('report.previewGraphCapture'),
-              ].filter(Boolean).join(', ') || t('report.previewNoContent')}.
-            </p>
-          </div>
         </div>
 
         {/* Actions */}
@@ -426,7 +407,7 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               onClick={() => handleGenerate('extended-json', 'download')}
               disabled={isGenerating}
               className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
-              title={t('report.jsonTooltip')}
+              title={t('synthesis.jsonTooltip')}
             >
               <Braces size={20} className="text-text-secondary" />
               <span className="text-xs font-medium text-text-primary">JSON+</span>
@@ -437,11 +418,11 @@ export function ReportModal({ isOpen, onClose }: ReportModalProps) {
               className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
             >
               <Printer size={20} className="text-text-secondary" />
-              <span className="text-xs font-medium text-text-primary">{t('report.print')}</span>
+              <span className="text-xs font-medium text-text-primary">{t('synthesis.print')}</span>
             </button>
           </div>
           <p className="text-xs text-text-tertiary text-center mt-2">
-            {t('report.jsonDescription')}
+            {t('synthesis.jsonDescription')}
           </p>
         </div>
       </div>

@@ -301,9 +301,9 @@
       "privateMode": "Im privaten Modus werden Daten beim Schließen <strong class=\"text-text-primary\">verloren</strong>"
     }
   },
-  "report": {
-    "title": "Bericht generieren",
-    "reportTitle": "Berichtstitel",
+  "synthesis": {
+    "title": "Synthese generieren",
+    "reportTitle": "Titel der Zusammenfassung",
     "contentToInclude": "Einzuschließender Inhalt",
     "includeDescription": "Ermittlungsbeschreibung",
     "includeSummary": "Statistische Zusammenfassung",

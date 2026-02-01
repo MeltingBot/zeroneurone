@@ -198,8 +198,8 @@
     },
     "notFound": "Investigação não encontrada",
     "header": {
-      "report": "Relatório",
-      "generateReport": "Gerar um relatório",
+      "report": "Síntese",
+      "generateReport": "Síntese",
       "export": "Exportar",
       "search": "Pesquisar",
       "clearFilters": "Limpar filtros",

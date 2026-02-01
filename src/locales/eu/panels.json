@@ -4,6 +4,7 @@
     "insights": "Analisiak",
     "filters": "Iragazkiak",
     "views": "Ikuspegiak",
+    "report": "Txostena",
     "collapsePanel": "Panela tolestu"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} fitxategi",
     "yourName": "Zure izena",
     "clickToEditName": "Zu: {{name}} (klikatu editatzeko)"
+  },
+  "report": {
+    "noInvestigation": "Ez dago ikerketarik kargatuta",
+    "noReport": "Txostenik ez. Sortu bat hasteko.",
+    "createReport": "Txostena sortu",
+    "defaultTitle": "Txostena",
+    "defaultSectionTitle": "Atal berria",
+    "titlePlaceholder": "Txostenaren izenburua...",
+    "addSection": "Atala gehitu",
+    "sectionTitle": "Atalaren izenburua",
+    "contentPlaceholder": "Markdown edukia. Idatzi [[ elementu bati erreferentzia egiteko...",
+    "noSections": "Atalik ez. Gehitu bat hasteko.",
+    "deleteSection": "Atala ezabatu",
+    "noResults": "Ez da elementurik aurkitu",
+    "export": "Esportatu",
+    "exportMd": "Esportatu Markdown gisa",
+    "exportWithLinks": "Esportatu barne-esteekekin",
+    "exportWithoutLinks": "Esportatu barne-esteekarik gabe",
+    "editContent": "Editatu",
+    "validateContent": "Balidatu"
   }
 }

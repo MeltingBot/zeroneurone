@@ -4,6 +4,7 @@
     "insights": "Insights",
     "filters": "Filters",
     "views": "Views",
+    "report": "Report",
     "collapsePanel": "Collapse panel"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} files",
     "yourName": "Your name",
     "clickToEditName": "You: {{name}} (click to edit)"
+  },
+  "report": {
+    "noInvestigation": "No investigation loaded",
+    "noReport": "No report. Create one to get started.",
+    "createReport": "Create report",
+    "defaultTitle": "Report",
+    "defaultSectionTitle": "New section",
+    "titlePlaceholder": "Report title...",
+    "addSection": "Add section",
+    "sectionTitle": "Section title",
+    "contentPlaceholder": "Markdown content. Type [[ to reference an element...",
+    "noSections": "No sections. Add one to get started.",
+    "deleteSection": "Delete section",
+    "noResults": "No elements found",
+    "export": "Export",
+    "exportMd": "Export as Markdown",
+    "exportWithLinks": "Export with internal links",
+    "exportWithoutLinks": "Export without internal links",
+    "editContent": "Edit",
+    "validateContent": "Validate"
   }
 }

@@ -4,6 +4,7 @@
     "insights": "Anàlisis",
     "filters": "Filtres",
     "views": "Vistes",
+    "report": "Informe",
     "collapsePanel": "Contraure el panell"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} fitxers",
     "yourName": "El vostre nom",
     "clickToEditName": "Vós: {{name}} (feu clic per editar)"
+  },
+  "report": {
+    "noInvestigation": "Cap investigació carregada",
+    "noReport": "Sense informe. Creeu-ne un per començar.",
+    "createReport": "Crear informe",
+    "defaultTitle": "Informe",
+    "defaultSectionTitle": "Nova secció",
+    "titlePlaceholder": "Títol de l'informe...",
+    "addSection": "Afegir secció",
+    "sectionTitle": "Títol de secció",
+    "contentPlaceholder": "Contingut Markdown. Escriviu [[ per referenciar un element...",
+    "noSections": "Sense seccions. Afegiu-ne una per començar.",
+    "deleteSection": "Eliminar secció",
+    "noResults": "Cap element trobat",
+    "export": "Exportar",
+    "exportMd": "Exportar com a Markdown",
+    "exportWithLinks": "Exportar amb enllaços interns",
+    "exportWithoutLinks": "Exportar sense enllaços interns",
+    "editContent": "Editar",
+    "validateContent": "Validar"
   }
 }

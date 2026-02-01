@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
-import { SearchModal, ExportModal, ReportModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
+import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
 
 // Lazy load heavy components for better initial load
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
@@ -46,7 +46,7 @@ export function InvestigationPage() {
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [synthesisOpen, setSynthesisOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [collabLeaveWarning, setCollabLeaveWarning] = useState(false);
 
@@ -145,7 +145,7 @@ export function InvestigationPage() {
           case 'Escape':
             setShortcutsOpen(false);
             setExportOpen(false);
-            setReportOpen(false);
+            setSynthesisOpen(false);
             break;
         }
       }
@@ -283,7 +283,7 @@ export function InvestigationPage() {
             </button>
           )}
           <button
-            onClick={() => setReportOpen(true)}
+            onClick={() => setSynthesisOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('investigation.header.generateReport')}
           >
@@ -392,10 +392,10 @@ export function InvestigationPage() {
         onClose={() => setImportOpen(false)}
       />
 
-      {/* Report modal */}
-      <ReportModal
-        isOpen={reportOpen}
-        onClose={() => setReportOpen(false)}
+      {/* Synthesis modal */}
+      <SynthesisModal
+        isOpen={synthesisOpen}
+        onClose={() => setSynthesisOpen(false)}
       />
 
       {/* Shortcuts modal */}

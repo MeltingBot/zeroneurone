@@ -4,6 +4,7 @@
     "insights": "Аналітика",
     "filters": "Фільтри",
     "views": "Види",
+    "report": "Звіт",
     "collapsePanel": "Згорнути панель"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} файлів",
     "yourName": "Ваше ім'я",
     "clickToEditName": "Ви: {{name}} (клацніть для редагування)"
+  },
+  "report": {
+    "noInvestigation": "Розслідування не завантажено",
+    "noReport": "Немає звіту. Створіть один, щоб почати.",
+    "createReport": "Створити звіт",
+    "defaultTitle": "Звіт",
+    "defaultSectionTitle": "Новий розділ",
+    "titlePlaceholder": "Заголовок звіту...",
+    "addSection": "Додати розділ",
+    "sectionTitle": "Заголовок розділу",
+    "contentPlaceholder": "Markdown вміст. Введіть [[ для посилання на елемент...",
+    "noSections": "Немає розділів. Додайте один, щоб почати.",
+    "deleteSection": "Видалити розділ",
+    "noResults": "Елементів не знайдено",
+    "export": "Експорт",
+    "exportMd": "Експорт як Markdown",
+    "exportWithLinks": "Експорт з внутрішніми посиланнями",
+    "exportWithoutLinks": "Експорт без внутрішніх посилань",
+    "editContent": "Редагувати",
+    "validateContent": "Підтвердити"
   }
 }

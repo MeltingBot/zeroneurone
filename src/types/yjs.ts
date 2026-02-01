@@ -8,6 +8,7 @@
  * - comments: Y.Map<Y.Map<any>>   → Comments by ID
  * - views: Y.Map<Y.Map<any>>      → Saved views
  * - assets: Y.Map<Y.Map<any>>     → Asset metadata (binaries stay in OPFS)
+ * - reports: Y.Map<Y.Map<any>>    → Reports by ID (one per investigation)
  */
 
 import type * as Y from 'yjs';
@@ -59,6 +60,7 @@ export interface YInvestigation {
   comments: Y.Map<Y.Map<any>>;
   views: Y.Map<Y.Map<any>>;
   assets: Y.Map<Y.Map<any>>;
+  reports: Y.Map<Y.Map<any>>;
 }
 
 /**
@@ -72,6 +74,7 @@ export function getYMaps(ydoc: Y.Doc): YInvestigation {
     comments: ydoc.getMap('comments'),
     views: ydoc.getMap('views'),
     assets: ydoc.getMap('assets'),
+    reports: ydoc.getMap('reports'),
   };
 }
 

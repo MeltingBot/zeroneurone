@@ -4,6 +4,7 @@
     "insights": "Análises",
     "filters": "Filtros",
     "views": "Vistas",
+    "report": "Relatório",
     "collapsePanel": "Recolher painel"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} ficheiros",
     "yourName": "O seu nome",
     "clickToEditName": "Você: {{name}} (clique para editar)"
+  },
+  "report": {
+    "noInvestigation": "Nenhuma investigação carregada",
+    "noReport": "Sem relatório. Crie um para começar.",
+    "createReport": "Criar relatório",
+    "defaultTitle": "Relatório",
+    "defaultSectionTitle": "Nova secção",
+    "titlePlaceholder": "Título do relatório...",
+    "addSection": "Adicionar secção",
+    "sectionTitle": "Título da secção",
+    "contentPlaceholder": "Conteúdo Markdown. Digite [[ para referenciar um elemento...",
+    "noSections": "Sem secções. Adicione uma para começar.",
+    "deleteSection": "Eliminar secção",
+    "noResults": "Nenhum elemento encontrado",
+    "export": "Exportar",
+    "exportMd": "Exportar como Markdown",
+    "exportWithLinks": "Exportar com links internos",
+    "exportWithoutLinks": "Exportar sem links internos",
+    "editContent": "Editar",
+    "validateContent": "Validar"
   }
 }

@@ -4,6 +4,7 @@
     "insights": "Analyses",
     "filters": "Filters",
     "views": "Weergaven",
+    "report": "Rapport",
     "collapsePanel": "Paneel inklappen"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} bestanden",
     "yourName": "Uw naam",
     "clickToEditName": "U: {{name}} (klik om te bewerken)"
+  },
+  "report": {
+    "noInvestigation": "Geen onderzoek geladen",
+    "noReport": "Geen rapport. Maak er een om te beginnen.",
+    "createReport": "Rapport maken",
+    "defaultTitle": "Rapport",
+    "defaultSectionTitle": "Nieuwe sectie",
+    "titlePlaceholder": "Rapporttitel...",
+    "addSection": "Sectie toevoegen",
+    "sectionTitle": "Sectietitel",
+    "contentPlaceholder": "Markdown-inhoud. Typ [[ om naar een element te verwijzen...",
+    "noSections": "Geen secties. Voeg er een toe om te beginnen.",
+    "deleteSection": "Sectie verwijderen",
+    "noResults": "Geen elementen gevonden",
+    "export": "Exporteren",
+    "exportMd": "Exporteren als Markdown",
+    "exportWithLinks": "Exporteren met interne links",
+    "exportWithoutLinks": "Exporteren zonder interne links",
+    "editContent": "Bewerken",
+    "validateContent": "Bevestigen"
   }
 }

@@ -198,8 +198,8 @@
     },
     "notFound": "Onderzoek niet gevonden",
     "header": {
-      "report": "Rapport",
-      "generateReport": "Rapport genereren",
+      "report": "Samenvatting",
+      "generateReport": "Synthese",
       "export": "Exporteren",
       "search": "Zoeken",
       "clearFilters": "Filters wissen",

@@ -5,7 +5,7 @@ export { SearchModal } from './SearchModal';
 export { ImportExportModal } from './ImportExportModal';
 export { ImportModal } from './ImportModal';
 export { ExportModal } from './ExportModal';
-export { ReportModal } from './ReportModal';
+export { SynthesisModal } from './SynthesisModal';
 export { ShortcutsModal } from './ShortcutsModal';
 export { TagSetManagerModal } from './TagSetManagerModal';
 export { TagSetEditorModal } from './TagSetEditorModal';

@@ -301,9 +301,9 @@
       "privateMode": "En navegació privada, les dades es <strong class=\"text-text-primary\">perdran</strong> en tancar"
     }
   },
-  "report": {
-    "title": "Generar un informe",
-    "reportTitle": "Títol de l'informe",
+  "synthesis": {
+    "title": "Generar síntesi",
+    "reportTitle": "Títol de la síntesi",
     "contentToInclude": "Contingut a incloure",
     "includeDescription": "Descripció de la investigació",
     "includeSummary": "Resum estadístic",

@@ -16,4 +16,6 @@ Explore the main features of ZeroNeurone.
 - [Timeline]({{< relref "timeline" >}}) — Chronological visualization
 - [Attachments]({{< relref "attachments" >}}) — Documents and images
 - [Search]({{< relref "search" >}}) — Find quickly
+- [Report]({{< relref "report" >}}) — Markdown writing with references
+- [Synthesis]({{< relref "synthesis" >}}) — Automatic report generation
 - [Collaboration]({{< relref "collaboration" >}}) — Real-time work

@@ -4,6 +4,7 @@
     "insights": "Analizy",
     "filters": "Filtry",
     "views": "Widoki",
+    "report": "Raport",
     "collapsePanel": "Zwiń panel"
   },
   "investigation": {
@@ -439,5 +440,25 @@
     "filesProgress": "{{completed}}/{{total}} plików",
     "yourName": "Twoje imię",
     "clickToEditName": "Ty: {{name}} (kliknij, aby edytować)"
+  },
+  "report": {
+    "noInvestigation": "Nie załadowano śledztwa",
+    "noReport": "Brak raportu. Utwórz jeden, aby rozpocząć.",
+    "createReport": "Utwórz raport",
+    "defaultTitle": "Raport",
+    "defaultSectionTitle": "Nowa sekcja",
+    "titlePlaceholder": "Tytuł raportu...",
+    "addSection": "Dodaj sekcję",
+    "sectionTitle": "Tytuł sekcji",
+    "contentPlaceholder": "Zawartość Markdown. Wpisz [[ aby odwołać się do elementu...",
+    "noSections": "Brak sekcji. Dodaj jedną, aby rozpocząć.",
+    "deleteSection": "Usuń sekcję",
+    "noResults": "Nie znaleziono elementów",
+    "export": "Eksportuj",
+    "exportMd": "Eksportuj jako Markdown",
+    "exportWithLinks": "Eksportuj z linkami wewnętrznymi",
+    "exportWithoutLinks": "Eksportuj bez linków wewnętrznych",
+    "editContent": "Edytuj",
+    "validateContent": "Zatwierdź"
   }
 }

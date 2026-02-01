@@ -198,8 +198,8 @@
     },
     "notFound": "Nie znaleziono śledztwa",
     "header": {
-      "report": "Raport",
-      "generateReport": "Generuj raport",
+      "report": "Synteza",
+      "generateReport": "Synteza",
       "export": "Eksportuj",
       "search": "Szukaj",
       "clearFilters": "Wyczyść filtry",

@@ -301,9 +301,9 @@
       "privateMode": "In privémodus worden gegevens <strong class=\"text-text-primary\">verloren</strong> bij sluiten"
     }
   },
-  "report": {
-    "title": "Rapport genereren",
-    "reportTitle": "Rapporttitel",
+  "synthesis": {
+    "title": "Synthese genereren",
+    "reportTitle": "Titel van de samenvatting",
     "contentToInclude": "Op te nemen inhoud",
     "includeDescription": "Beschrijving van het onderzoek",
     "includeSummary": "Statistische samenvatting",

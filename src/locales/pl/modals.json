@@ -301,9 +301,9 @@
       "privateMode": "W trybie prywatnym dane zostaną <strong class=\"text-text-primary\">utracone</strong> po zamknięciu"
     }
   },
-  "report": {
-    "title": "Generuj raport",
-    "reportTitle": "Tytuł raportu",
+  "synthesis": {
+    "title": "Generuj syntezę",
+    "reportTitle": "Tytuł syntezy",
     "contentToInclude": "Zawartość do uwzględnienia",
     "includeDescription": "Opis śledztwa",
     "includeSummary": "Podsumowanie statystyczne",

@@ -301,9 +301,9 @@
       "privateMode": "In private browsing, data will be <strong class=\"text-text-primary\">lost</strong> when closed"
     }
   },
-  "report": {
-    "title": "Generate report",
-    "reportTitle": "Report title",
+  "synthesis": {
+    "title": "Generate summary",
+    "reportTitle": "Summary title",
     "contentToInclude": "Content to include",
     "includeDescription": "Investigation description",
     "includeSummary": "Statistical summary",

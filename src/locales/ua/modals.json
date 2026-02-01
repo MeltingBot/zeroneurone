@@ -301,9 +301,9 @@
       "privateMode": "У приватному режимі дані будуть <strong class=\"text-text-primary\">втрачені</strong> після закриття"
     }
   },
-  "report": {
-    "title": "Створити звіт",
-    "reportTitle": "Заголовок звіту",
+  "synthesis": {
+    "title": "Створити синтез",
+    "reportTitle": "Заголовок синтезу",
     "contentToInclude": "Вміст для включення",
     "includeDescription": "Опис розслідування",
     "includeSummary": "Статистичний підсумок",

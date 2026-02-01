@@ -301,9 +301,9 @@
       "privateMode": "Nabigazio pribatuan, datuak <strong class=\"text-text-primary\">galduko dira</strong> ixtean"
     }
   },
-  "report": {
-    "title": "Txostena sortu",
-    "reportTitle": "Txostenaren izenburua",
+  "synthesis": {
+    "title": "Sintesia sortu",
+    "reportTitle": "Sintesiaren izenburua",
     "contentToInclude": "Sartu beharreko edukia",
     "includeDescription": "Ikerketaren deskribapena",
     "includeSummary": "Laburpen estatistikoa",

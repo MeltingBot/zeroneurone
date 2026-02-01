@@ -198,8 +198,8 @@
     },
     "notFound": "Investigation not found",
     "header": {
-      "report": "Report",
-      "generateReport": "Generate report",
+      "report": "Summary",
+      "generateReport": "Summary",
       "import": "Import",
       "export": "Export",
       "search": "Search",
