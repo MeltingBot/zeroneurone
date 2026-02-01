@@ -51,27 +51,49 @@ export function ReportSectionEditor({
   const [content, setContent] = useState(section.content);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync from props when section changes
-  useEffect(() => {
-    setTitle(section.title);
-    setContent(section.content);
-  }, [section.title, section.content]);
+  // Track if user is currently editing content (set by child ReportMarkdownEditor)
+  const [isEditingContent, setIsEditingContent] = useState(false);
 
-  // Debounced updates
+  // Refs to track what we last synced to Yjs - used to detect our own echoes
+  const lastSyncedTitleRef = useRef(section.title);
+  const lastSyncedContentRef = useRef(section.content);
+  // Sync from props when section changes from REMOTE
+  // If the prop matches what we last synced, it's our own echo - ignore it
+  // If the prop is different, it's a remote change - accept it
+  useEffect(() => {
+    // Our own echo - ignore
+    if (section.title === lastSyncedTitleRef.current) {
+      return;
+    }
+    // Remote change - accept and update ref
+    setTitle(section.title);
+    lastSyncedTitleRef.current = section.title;
+  }, [section.title]);
+
+  useEffect(() => {
+    // Ignore if we're actively editing (lock is held)
+    if (isEditingContent) {
+      return;
+    }
+    // Our own echo - ignore
+    if (section.content === lastSyncedContentRef.current) {
+      return;
+    }
+    // Remote change - accept and update ref
+    setContent(section.content);
+    lastSyncedContentRef.current = section.content;
+  }, [section.content, isEditingContent]);
+
+  // Debounced title updates (title changes as user types)
   const debouncedTitle = useDebounce(title, 500);
-  const debouncedContent = useDebounce(content, 500);
 
   useEffect(() => {
     if (debouncedTitle !== section.title) {
+      // Update the ref BEFORE syncing so we know this change is from us
+      lastSyncedTitleRef.current = debouncedTitle;
       onUpdate({ title: debouncedTitle });
     }
   }, [debouncedTitle, section.title, onUpdate]);
-
-  useEffect(() => {
-    if (debouncedContent !== section.content) {
-      onUpdate({ content: debouncedContent });
-    }
-  }, [debouncedContent, section.content, onUpdate]);
 
   const handleToggleExpand = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -85,7 +107,16 @@ export function ReportSectionEditor({
   }, []);
 
   const handleContentChange = useCallback((value: string) => {
+    // Update local state
     setContent(value);
+    // Track what we sent to detect our own echo
+    lastSyncedContentRef.current = value;
+    // Sync to Yjs immediately (no debounce - only called on validation)
+    onUpdate({ content: value });
+  }, [onUpdate]);
+
+  const handleEditingChange = useCallback((editing: boolean) => {
+    setIsEditingContent(editing);
   }, []);
 
   const handleDelete = useCallback(
@@ -169,6 +200,8 @@ export function ReportSectionEditor({
           <ReportMarkdownEditor
             value={content}
             onChange={handleContentChange}
+            onEditingChange={handleEditingChange}
+            sectionId={section.id}
             placeholder={t('report.contentPlaceholder')}
           />
         </div>

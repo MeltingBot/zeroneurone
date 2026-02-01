@@ -459,6 +459,7 @@
     "exportWithLinks": "Exporteren met interne links",
     "exportWithoutLinks": "Exporteren zonder interne links",
     "editContent": "Bewerken",
-    "validateContent": "Bevestigen"
+    "validateContent": "Bevestigen",
+    "lockedBy": "Bewerkt door {{name}}"
   }
 }

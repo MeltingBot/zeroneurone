@@ -459,6 +459,7 @@
     "exportWithLinks": "Експорт з внутрішніми посиланнями",
     "exportWithoutLinks": "Експорт без внутрішніх посилань",
     "editContent": "Редагувати",
-    "validateContent": "Підтвердити"
+    "validateContent": "Підтвердити",
+    "lockedBy": "Редагує {{name}}"
   }
 }

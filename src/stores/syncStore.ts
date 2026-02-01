@@ -85,6 +85,7 @@ interface SyncStoreState extends SyncState {
   updateDragging: (elementIds: string[]) => void;
   updateEditing: (elementId: string | null) => void;
   updateEditingLink: (linkId: string | null) => void;
+  updateEditingReportSection: (sectionId: string | null) => void;
 
   /** Media sync progress updates */
   startMediaSync: (total: number, totalSize: number) => void;
@@ -152,6 +153,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       dragging: [],
       editing: null,
       editingLink: null,
+      editingReportSection: null,
       viewMode: 'canvas',
       lastSeen: Date.now(),
     });
@@ -203,6 +205,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
                 dragging: state.dragging || [],
                 editing: state.editing || null,
                 editingLink: state.editingLink || null,
+                editingReportSection: state.editingReportSection || null,
                 viewMode: state.viewMode || 'canvas',
               });
             }
@@ -368,6 +371,15 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
       const state = awareness.getLocalState() || {};
       awareness.setLocalState({ ...state, editingLink: linkId });
+    },
+
+    // Update report section being edited (for collaborative lock)
+    updateEditingReportSection: (sectionId) => {
+      const awareness = syncService.getAwareness();
+      if (!awareness) return;
+
+      const state = awareness.getLocalState() || {};
+      awareness.setLocalState({ ...state, editingReportSection: sectionId });
     },
 
     // Start tracking media sync progress

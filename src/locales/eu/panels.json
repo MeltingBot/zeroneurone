@@ -459,6 +459,7 @@
     "exportWithLinks": "Esportatu barne-esteekekin",
     "exportWithoutLinks": "Esportatu barne-esteekarik gabe",
     "editContent": "Editatu",
-    "validateContent": "Balidatu"
+    "validateContent": "Balidatu",
+    "lockedBy": "{{name}}(e)k editatzen"
   }
 }

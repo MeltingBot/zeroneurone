@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, MousePointer2 } from 'lucide-react';
+import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, type ImportResult } from '../../services/importService';
 import { exportService } from '../../services/exportService';

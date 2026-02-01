@@ -101,6 +101,8 @@ export interface UserPresence {
   editing: string | null;
   /** Link ID currently being edited */
   editingLink: string | null;
+  /** Report section ID currently being edited */
+  editingReportSection: string | null;
   /** Current view mode */
   viewMode: 'canvas' | 'map' | 'timeline';
 }

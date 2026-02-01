@@ -1399,7 +1399,7 @@ export function Canvas() {
     if (elsToCopy.length > 0) {
       copiedElementsRef.current = elsToCopy;
       setHasCopiedElements(true);
-      const clipboardData = buildClipboardData(selectedEls, selectedLinkIds);
+      const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
       navigator.clipboard.writeText(clipboardData).catch(() => {});
     }
   }, [elements, getSelectedElementIds, selectedLinkIds, buildClipboardData]);
@@ -1411,7 +1411,7 @@ export function Canvas() {
     if (elsToCut.length > 0) {
       copiedElementsRef.current = elsToCut;
       setHasCopiedElements(true);
-      const clipboardData = buildClipboardData(selectedEls, selectedLinkIds);
+      const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
       navigator.clipboard.writeText(clipboardData).catch(() => {});
       // Save for undo
       const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));

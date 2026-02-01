@@ -21,6 +21,7 @@ export interface ImportPlacementData {
     maxY: number;
     width: number;
     height: number;
+    elementCount: number;
   };
   /** The file to import */
   file: File;

@@ -459,6 +459,7 @@
     "exportWithLinks": "Eksportuj z linkami wewnętrznymi",
     "exportWithoutLinks": "Eksportuj bez linków wewnętrznych",
     "editContent": "Edytuj",
-    "validateContent": "Zatwierdź"
+    "validateContent": "Zatwierdź",
+    "lockedBy": "Edytowane przez {{name}}"
   }
 }
