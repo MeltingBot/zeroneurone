@@ -57,7 +57,15 @@ Each section has a pencil/check button:
 | ✓ Check | Write | Text is editable |
 
 - **Read mode**: View the Markdown rendering. Links to elements are clickable and take you to the canvas.
-- **Write mode**: Edit the content. Click ✓ to validate.
+- **Write mode**: Edit the content. Click ✓ to validate and sync changes.
+
+### Collaborative editing
+
+When working with others:
+- A **lock indicator** appears when another user is editing a section
+- The locking user's name and color are displayed below the editor
+- Wait for them to finish (click ✓) before you can edit that section
+- Changes sync automatically after validation
 
 ### Markdown syntax
 
@@ -138,9 +146,18 @@ Links are replaced by the label only. Example:
 
 ---
 
-## Paste from canvas
+## Copy and paste
 
-Copy elements on the canvas (Ctrl+C) then paste in the report (Ctrl+V). References are automatically inserted.
+### Paste from canvas
+
+Copy elements on the canvas (Ctrl+C) then paste in the report (Ctrl+V). References are automatically inserted as `[[Label|uuid]]` links.
+
+### Copy from report
+
+When you select text in the report and copy (Ctrl+C), element links are preserved in `[[Label|uuid]]` format. You can paste them:
+- In another section of the same report
+- In a different report
+- In an external text editor (the format is preserved)
 
 ---
 

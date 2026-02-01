@@ -57,7 +57,15 @@ Chaque section dispose d'un bouton crayon/check :
 | ✓ Check | Écriture | Le texte est modifiable |
 
 - **Mode lecture** : Visualisez le rendu Markdown. Les liens vers les éléments sont cliquables et vous amènent sur le canvas.
-- **Mode écriture** : Éditez le contenu. Cliquez sur ✓ pour valider.
+- **Mode écriture** : Éditez le contenu. Cliquez sur ✓ pour valider et synchroniser.
+
+### Édition collaborative
+
+En travail collaboratif :
+- Un **indicateur de verrouillage** apparaît quand un autre utilisateur édite une section
+- Le nom et la couleur de l'utilisateur sont affichés sous l'éditeur
+- Attendez qu'il termine (clic sur ✓) avant de pouvoir éditer cette section
+- Les modifications se synchronisent automatiquement après validation
 
 ### Syntaxe Markdown
 
@@ -138,9 +146,18 @@ Les liens sont remplacés par le label seul. Exemple :
 
 ---
 
-## Coller depuis le canvas
+## Copier et coller
 
-Copiez des éléments sur le canvas (Ctrl+C) puis collez dans le rapport (Ctrl+V). Les références sont automatiquement insérées.
+### Coller depuis le canvas
+
+Copiez des éléments sur le canvas (Ctrl+C) puis collez dans le rapport (Ctrl+V). Les références sont automatiquement insérées au format `[[Label|uuid]]`.
+
+### Copier depuis le rapport
+
+Quand vous sélectionnez du texte dans le rapport et copiez (Ctrl+C), les liens vers les éléments sont préservés au format `[[Label|uuid]]`. Vous pouvez les coller :
+- Dans une autre section du même rapport
+- Dans un autre rapport
+- Dans un éditeur de texte externe (le format est conservé)
 
 ---
 
