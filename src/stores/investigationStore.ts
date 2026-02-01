@@ -466,6 +466,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateInvestigation: async (id: InvestigationId, changes: Partial<Investigation>) => {
     await investigationRepository.update(id, changes);
+
+    // Also update Y.Doc metaMap for collaborative sync
+    const ydoc = syncService.getYDoc();
+    if (ydoc) {
+      const { meta: metaMap } = getYMaps(ydoc);
+      ydoc.transact(() => {
+        if (changes.name !== undefined) metaMap.set('name', changes.name);
+        if (changes.description !== undefined) metaMap.set('description', changes.description);
+        if (changes.creator !== undefined) metaMap.set('creator', changes.creator);
+        if (changes.startDate !== undefined) metaMap.set('startDate', changes.startDate ? changes.startDate.toISOString() : null);
+        if (changes.tags !== undefined) metaMap.set('tags', changes.tags);
+        if (changes.properties !== undefined) metaMap.set('properties', changes.properties);
+      });
+    }
+
     set((state) => ({
       investigations: state.investigations.map((inv) =>
         inv.id === id ? { ...inv, ...changes, updatedAt: new Date() } : inv
@@ -1592,20 +1607,36 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     // Sync investigation metadata from Y.Doc
     const metaName = metaMap.get('name') as string | undefined;
     const metaDescription = metaMap.get('description') as string | undefined;
+    const metaCreator = metaMap.get('creator') as string | undefined;
+    const metaStartDate = metaMap.get('startDate') as string | null | undefined;
+    const metaTags = metaMap.get('tags') as string[] | undefined;
+    const metaProperties = metaMap.get('properties') as any[] | undefined;
 
     // Update local investigation if meta has changed
     let updatedInvestigation = currentInvestigation;
-    if (metaName && (metaName !== currentInvestigation.name || metaDescription !== currentInvestigation.description)) {
+    const hasMetaChanges =
+      (metaName !== undefined && metaName !== currentInvestigation.name) ||
+      (metaDescription !== undefined && metaDescription !== currentInvestigation.description) ||
+      (metaCreator !== undefined && metaCreator !== (currentInvestigation.creator || '')) ||
+      (metaStartDate !== undefined && metaStartDate !== (currentInvestigation.startDate?.toISOString() || null)) ||
+      (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentInvestigation.tags || [])) ||
+      (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentInvestigation.properties || []));
+
+    if (hasMetaChanges) {
+      const changes: Partial<Investigation> = {};
+      if (metaName !== undefined) changes.name = metaName;
+      if (metaDescription !== undefined) changes.description = metaDescription;
+      if (metaCreator !== undefined) changes.creator = metaCreator;
+      if (metaStartDate !== undefined) changes.startDate = metaStartDate ? new Date(metaStartDate) : null;
+      if (metaTags !== undefined) changes.tags = metaTags;
+      if (metaProperties !== undefined) changes.properties = metaProperties;
+
       updatedInvestigation = {
         ...currentInvestigation,
-        name: metaName,
-        description: metaDescription || '',
+        ...changes,
       };
       // Persist to IndexedDB
-      investigationRepository.update(currentInvestigation.id, {
-        name: metaName,
-        description: metaDescription || '',
-      }).catch(() => {});
+      investigationRepository.update(currentInvestigation.id, changes).catch(() => {});
     }
 
     // Use Map to deduplicate by ID (defensive against any race conditions)
