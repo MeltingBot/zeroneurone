@@ -4,6 +4,7 @@
 
 ### Features
 - Hierarchy layout available in layout menu (for any investigation, not just genealogy)
+- GEDCOM import: NICK (nickname) and TITL (title) fields now imported as properties
 
 ## 1.4.1
 

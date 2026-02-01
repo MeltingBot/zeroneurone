@@ -336,6 +336,8 @@ Versions supportées : **GEDCOM 5.5.1** et **GEDCOM 7.0** (.ged)
 | DEAT (décès) | Événement avec date et lieu |
 | RESI (résidence) | Événement avec date et lieu |
 | OCCU (profession) | Propriété "Profession" |
+| NICK (surnom) | Propriété "Surnom" |
+| TITL (titre) | Propriété "Titre" |
 | SEX | Propriété "Sexe" |
 | NOTE | Notes de l'élément |
 

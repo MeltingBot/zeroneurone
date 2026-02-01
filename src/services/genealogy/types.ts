@@ -67,6 +67,8 @@ export interface GenealogyPerson {
 
   // Additional data
   occupation?: string;
+  nickname?: string;
+  title?: string;
   notes?: string;
 
   // Residences (GEDCOM 7.0)

@@ -214,6 +214,24 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       }
     } catch { /* ignore */ }
 
+    // Parse nickname (NICK)
+    let nickname: string | undefined;
+    try {
+      const nick = nameRecord.get('NICK');
+      if (nick.length > 0) {
+        nickname = nick.value()[0] || undefined;
+      }
+    } catch { /* ignore */ }
+
+    // Parse title (TITL)
+    let title: string | undefined;
+    try {
+      const titl = indi.get('TITL');
+      if (titl.length > 0) {
+        title = titl.value()[0] || undefined;
+      }
+    } catch { /* ignore */ }
+
     // Parse notes
     let notes: string | undefined;
     try {
@@ -256,6 +274,8 @@ function parseIndividual(indi: any): GenealogyPerson | null {
       deathDate,
       deathPlace,
       occupation,
+      nickname,
+      title,
       notes,
       residences,
       familyAsChild,

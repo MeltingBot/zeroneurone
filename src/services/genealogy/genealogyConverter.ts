@@ -135,6 +135,14 @@ function personToElement(
     properties.push({ key: 'Profession', value: person.occupation, type: 'text' });
   }
 
+  if (person.nickname) {
+    properties.push({ key: 'Surnom', value: person.nickname, type: 'text' });
+  }
+
+  if (person.title) {
+    properties.push({ key: 'Titre', value: person.title, type: 'text' });
+  }
+
   // Note: Lieu de naissance/décès are stored in events, not as element properties
 
   // Add source ID for reference
