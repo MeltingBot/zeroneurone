@@ -170,8 +170,11 @@ function generateGraphSVG(elements: Element[], links: Link[]): string {
     const color = resolveColor(group.visual?.color, '#e5e7eb');
     const borderColor = resolveColor(group.visual?.borderColor, '#d1d5db');
 
+    const groupCenterX = bounds.x + bounds.width / 2;
+    const groupCenterY = bounds.y + bounds.height / 2;
+
     svg += `
-      <g class="group" data-element-id="${group.id}">
+      <g class="group" data-element-id="${group.id}" data-x="${groupCenterX}" data-y="${groupCenterY}" style="cursor: pointer;">
         <rect
           x="${bounds.x}" y="${bounds.y}"
           width="${bounds.width}" height="${bounds.height}"
@@ -1320,6 +1323,18 @@ function buildFullHTML(params: HTMLParams): string {
             const center = getNodeCenter(node);
             if (center) {
               focusOnPoint(center.x, center.y, 2);
+            }
+            return;
+          }
+
+          // Then try to find a group with this ID
+          const group = document.querySelector('#graph-svg .group[data-element-id="' + elementId + '"]');
+          if (group) {
+            group.classList.add('highlighted');
+            const dataX = group.dataset.x;
+            const dataY = group.dataset.y;
+            if (dataX && dataY) {
+              focusOnPoint(parseFloat(dataX), parseFloat(dataY), 1.5);
             }
             return;
           }
