@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1
+
+### Fixes
+- Group navigation in interactive HTML export now works (zoom to group center)
+
 ## 1.5.0
 
 ### Features
