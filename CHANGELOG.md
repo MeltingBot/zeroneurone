@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.0
+
+### Features
+- Interactive HTML report export with embedded graph visualization
+- Bidirectional navigation between report and graph (click element refs to zoom, click nodes to scroll)
+- Report info modal with investigation metadata and statistics
+- Collapsible table of contents for long reports
+- Export markdown (without element links) from HTML report
+- Dark/light theme toggle in exported HTML
+- Tags included in SVG node data attributes
+- Click on link reference now selects the link and both connected elements
+
+### Fixes
+- Link selection in report panel now correctly highlights the link (not just target element)
+
 ## 1.4.2
 
 ### Features

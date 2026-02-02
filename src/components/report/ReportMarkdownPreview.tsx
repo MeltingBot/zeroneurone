@@ -141,7 +141,7 @@ function processChildren(
 
 export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdownPreviewProps) {
   const { elements, links } = useInvestigationStore();
-  const { selectElement, clearSelection } = useSelectionStore();
+  const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange, setDisplayMode, displayMode } = useViewStore();
 
   // Build maps for quick lookup
@@ -191,9 +191,10 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
           });
         }, 50);
       } else if (link) {
-        // For links, select both connected elements
-        selectElement(link.fromId);
-        selectElement(link.toId);
+        // For links, select the link itself and both connected elements
+        selectLink(id);
+        selectElement(link.fromId, true);
+        selectElement(link.toId, true);
 
         // Center on midpoint between the two elements
         const fromEl = elementMap.get(link.fromId);
@@ -215,7 +216,7 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
         }
       }
     },
-    [elementMap, linkMap, selectElement, clearSelection, requestViewportChange, setDisplayMode, displayMode]
+    [elementMap, linkMap, selectElement, selectLink, clearSelection, requestViewportChange, setDisplayMode, displayMode]
   );
 
   return (

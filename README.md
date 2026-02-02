@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-1.4.2-blue)
+![Version](https://img.shields.io/badge/version-1.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -72,6 +72,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Export SVG natif (vectoriel)
 - Export PDF du canvas
 - Export CSV (avec positions/groupes)
+- Export HTML interactif (rapport + graphe navigable, theme clair/sombre, TOC, stats)
 - Import CSV pour donnees tabulaires
 - Import GraphML pour donnees de graphes
 - Import Excalidraw
