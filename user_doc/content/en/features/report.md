@@ -133,6 +133,22 @@ At the top of the panel, use:
 |------|----------|
 | 🔗 / 🔗̸ | Toggle between export with/without internal links |
 | ⬇️ | Download as Markdown |
+| 🌐 | Export as interactive HTML |
+
+### Interactive HTML export
+
+Creates a self-contained HTML file with:
+- The report content rendered as HTML
+- An interactive SVG graph with pan & zoom
+- Bidirectional navigation (click references → zoom on element, click nodes → scroll to references)
+- Collapsible table of contents
+- Info modal with investigation metadata and statistics
+- Light/dark theme toggle
+- Markdown export button (without internal links)
+
+{{< hint info >}}
+Ideal for sharing reports with people who don't have ZeroNeurone.
+{{< /hint >}}
 
 ### With internal links
 

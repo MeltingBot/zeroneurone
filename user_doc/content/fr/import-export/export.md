@@ -162,6 +162,31 @@ Format idéal pour l'impression haute qualité et l'édition graphique.
 
 ---
 
+### HTML (Rapport interactif)
+
+**Rapport interactif autonome** avec graphe embarqué.
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.html` |
+| Contenu | Rapport + graphe SVG + JavaScript |
+| Fichiers joints | ❌ Non inclus (miniatures uniquement) |
+| Usage | Partage, présentation, consultation hors-ligne |
+
+Fonctionnalités :
+- **Navigation bidirectionnelle** : Cliquez sur les références dans le rapport pour zoomer sur le graphe, cliquez sur les nœuds pour défiler vers les références
+- **Table des matières** : Sommaire repliable pour les longs rapports
+- **Modale infos** : Métadonnées de l'enquête et statistiques (nombre d'éléments, liens, groupes)
+- **Thème clair/sombre** : Basculer entre les modes
+- **Export Markdown** : Télécharger le rapport en `.md` (sans liens internes)
+- **Pan & zoom** : Naviguer dans le graphe avec la molette et le glisser
+
+{{< hint info >}}
+Accessible depuis le panneau Rapport via l'icône globe.
+{{< /hint >}}
+
+---
+
 ## Nommage des fichiers
 
 Les fichiers exportés suivent le format :

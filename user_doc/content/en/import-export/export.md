@@ -162,6 +162,31 @@ Ideal format for high-quality printing and graphic editing.
 
 ---
 
+### HTML (Interactive Report)
+
+**Self-contained interactive report** with embedded graph.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.html` |
+| Content | Report + SVG graph + JavaScript |
+| Attached files | ❌ Not included (thumbnails only) |
+| Usage | Sharing, presentation, offline viewing |
+
+Features:
+- **Bidirectional navigation**: Click element references in report to zoom on graph, click nodes to scroll to references
+- **Table of contents**: Collapsible summary for long reports
+- **Info modal**: Investigation metadata and statistics (elements, links, groups count)
+- **Theme toggle**: Light/dark mode
+- **Markdown export**: Download report as `.md` file (without internal links)
+- **Pan & zoom**: Navigate the graph with mouse wheel and drag
+
+{{< hint info >}}
+Access from the Report panel via the globe icon.
+{{< /hint >}}
+
+---
+
 ## File Naming
 
 Exported files follow the format:
