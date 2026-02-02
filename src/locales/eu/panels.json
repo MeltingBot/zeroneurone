@@ -456,6 +456,7 @@
     "noResults": "Ez da elementurik aurkitu",
     "export": "Esportatu",
     "exportMd": "Esportatu Markdown gisa",
+    "exportHtml": "Esportatu HTML interaktibo gisa",
     "exportWithLinks": "Esportatu barne-esteekekin",
     "exportWithoutLinks": "Esportatu barne-esteekarik gabe",
     "editContent": "Editatu",

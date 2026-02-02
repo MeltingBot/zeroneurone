@@ -1,13 +1,14 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Plus, Loader2, Download, Link2, Link2Off } from 'lucide-react';
+import { FileText, Plus, Loader2, Download, Link2, Link2Off, Globe } from 'lucide-react';
 import { useInvestigationStore, useReportStore } from '../../stores';
 import { ReportSectionEditor } from '../report/ReportSectionEditor';
 import { Input, IconButton } from '../common';
+import { exportInteractiveReport } from '../../services/exportInteractiveReportService';
 
 export function ReportPanel() {
   const { t } = useTranslation('panels');
-  const { currentInvestigation } = useInvestigationStore();
+  const { currentInvestigation, elements, links, assets } = useInvestigationStore();
   const {
     currentReport,
     isLoading,
@@ -142,6 +143,32 @@ export function ReportPanel() {
     [currentReport]
   );
 
+  // Export report as interactive HTML
+  const handleExportHTML = useCallback(async () => {
+    if (!currentReport || !currentInvestigation) return;
+
+    try {
+      const blob = await exportInteractiveReport(
+        currentInvestigation,
+        currentReport,
+        elements,
+        links,
+        assets
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${currentReport.title || 'report'}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export interactive report:', err);
+    }
+  }, [currentReport, currentInvestigation, elements, links, assets]);
+
   if (!currentInvestigation) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
@@ -193,6 +220,13 @@ export function ReportPanel() {
           className="text-text-secondary hover:text-accent"
         >
           <Download size={14} />
+        </IconButton>
+        <IconButton
+          onClick={handleExportHTML}
+          title={t('report.exportHtml')}
+          className="text-text-secondary hover:text-accent"
+        >
+          <Globe size={14} />
         </IconButton>
       </div>
 

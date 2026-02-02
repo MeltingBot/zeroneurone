@@ -456,6 +456,7 @@
     "noResults": "Cap element trobat",
     "export": "Exportar",
     "exportMd": "Exportar com a Markdown",
+    "exportHtml": "Exportar com a HTML interactiu",
     "exportWithLinks": "Exportar amb enllaços interns",
     "exportWithoutLinks": "Exportar sense enllaços interns",
     "editContent": "Editar",

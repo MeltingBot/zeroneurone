@@ -456,6 +456,7 @@
     "noResults": "Ningún elemento encontrado",
     "export": "Exportar",
     "exportMd": "Exportar como Markdown",
+    "exportHtml": "Exportar como HTML interactivo",
     "exportWithLinks": "Exportar con enlaces internos",
     "exportWithoutLinks": "Exportar sin enlaces internos",
     "editContent": "Editar",

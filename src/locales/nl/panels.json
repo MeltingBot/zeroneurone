@@ -456,6 +456,7 @@
     "noResults": "Geen elementen gevonden",
     "export": "Exporteren",
     "exportMd": "Exporteren als Markdown",
+    "exportHtml": "Exporteren als interactieve HTML",
     "exportWithLinks": "Exporteren met interne links",
     "exportWithoutLinks": "Exporteren zonder interne links",
     "editContent": "Bewerken",

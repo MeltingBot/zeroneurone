@@ -456,6 +456,7 @@
     "noResults": "Елементів не знайдено",
     "export": "Експорт",
     "exportMd": "Експорт як Markdown",
+    "exportHtml": "Експорт як інтерактивний HTML",
     "exportWithLinks": "Експорт з внутрішніми посиланнями",
     "exportWithoutLinks": "Експорт без внутрішніх посилань",
     "editContent": "Редагувати",
