@@ -120,7 +120,9 @@
       "focusNeighbors2": "Sąsiedzi 2 połączenia",
       "focusNeighbors3": "Sąsiedzi 3 połączenia",
       "preview": "Podgląd",
-      "findPaths": "Znajdź ścieżki"
+      "findPaths": "Znajdź ścieżki",
+      "lockPosition": "Zablokuj pozycję",
+      "unlockPosition": "Odblokuj pozycję"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",

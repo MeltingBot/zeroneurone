@@ -175,7 +175,9 @@
       "shape": "Form",
       "size": "Größe",
       "style": "Stil",
-      "thickness": "Stärke"
+      "thickness": "Stärke",
+      "positionLock": "Position gesperrt",
+      "positionUnlocked": "Position entsperrt"
     },
     "files": {
       "title": "Dateien",

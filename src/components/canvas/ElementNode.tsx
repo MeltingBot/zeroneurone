@@ -254,6 +254,12 @@ function ElementNodeComponent({ data }: NodeProps) {
       className={`relative transition-opacity cursor-pointer ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onPointerDown={(e) => {
+        // Prevent canvas panning when element is position-locked
+        if (element.isPositionLocked && e.button === 0) {
+          e.stopPropagation();
+        }
+      }}
       style={{ width, height }}
     >
       {/* Remote user selection/dragging indicators - circles with initials */}

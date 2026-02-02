@@ -549,6 +549,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       date: null,
       dateRange: null,
       position,
+      isPositionLocked: false,
       geo: null,
       events: [],
       visual: {

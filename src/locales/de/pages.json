@@ -120,7 +120,9 @@
       "focusNeighbors2": "Nachbarn in 2 Verbindungen",
       "focusNeighbors3": "Nachbarn in 3 Verbindungen",
       "preview": "Vorschau",
-      "findPaths": "Pfade finden"
+      "findPaths": "Pfade finden",
+      "lockPosition": "Position sperren",
+      "unlockPosition": "Position entsperren"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",

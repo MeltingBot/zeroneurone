@@ -39,6 +39,18 @@ Personnalisez l'apparence de chaque élément :
 | **Forme** | Cercle, carré, losange, hexagone |
 | **Taille** | Petit, moyen, grand |
 
+### Verrouillage de position
+
+Empêchez les déplacements accidentels en verrouillant la position d'un élément.
+
+**Verrouiller/Déverrouiller :**
+- **Menu contextuel** (clic-droit) → Verrouiller/Déverrouiller la position
+- **Panneau Détail** → Section Apparence → Bouton cadenas
+
+**Comportement :**
+- Un élément verrouillé ne peut pas être déplacé
+- En multi-sélection, verrouiller s'applique à tous les éléments sélectionnés
+- Lors d'un déplacement groupé, les éléments verrouillés restent en place
 
 ---
 

@@ -212,6 +212,7 @@ function elementToNode(
       id: element.id,
       type: 'annotation',
       position,
+      draggable: !element.isPositionLocked,
       data: {
         element,
         isSelected,
@@ -233,6 +234,7 @@ function elementToNode(
       id: element.id,
       type: 'groupFrame',
       position,
+      draggable: !element.isPositionLocked,
       data: {
         element,
         isSelected,
@@ -260,6 +262,7 @@ function elementToNode(
     id: element.id,
     type: 'element',
     position,
+    draggable: !element.isPositionLocked,
     data: {
       element,
       isSelected,
@@ -1068,7 +1071,15 @@ export function Canvas() {
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
       // Filter out 'remove' changes - deletion is controlled by Zustand only
-      const safeChanges = changes.filter(c => c.type !== 'remove');
+      // Also filter out position changes for locked elements
+      const safeChanges = changes.filter(c => {
+        if (c.type === 'remove') return false;
+        if (c.type === 'position') {
+          const element = elements.find(el => el.id === c.id);
+          if (element?.isPositionLocked) return false;
+        }
+        return true;
+      });
       if (safeChanges.length === 0) return;
 
       // Apply changes to local nodes for smooth visual updates during drag
@@ -1870,6 +1881,26 @@ export function Canvas() {
     if (!contextMenu) return;
     await removeFromGroup([contextMenu.elementId]);
   }, [contextMenu, removeFromGroup]);
+
+  // Toggle position lock handler - applies to all selected elements
+  const handleToggleLock = useCallback(async () => {
+    if (!contextMenu) return;
+    const clickedElement = elements.find(e => e.id === contextMenu.elementId);
+    if (!clickedElement) return;
+
+    // Determine new lock state based on the clicked element
+    const newLockState = !clickedElement.isPositionLocked;
+
+    // Apply to all selected elements if multiple are selected
+    const targetIds = selectedElementIds.size > 1
+      ? Array.from(selectedElementIds)
+      : [contextMenu.elementId];
+
+    // Update all target elements
+    await Promise.all(
+      targetIds.map(id => updateElement(id, { isPositionLocked: newLockState }))
+    );
+  }, [contextMenu, elements, selectedElementIds, updateElement]);
 
   const handleFindPaths = useCallback(
     (fromId: string, toId: string) => {
@@ -2868,6 +2899,8 @@ export function Canvas() {
               onGroupSelection={handleGroupSelection}
               onDissolveGroup={handleDissolveGroup}
               onRemoveFromGroup={handleRemoveFromGroup}
+              isPositionLocked={!!elements.find(el => el.id === contextMenu.elementId)?.isPositionLocked}
+              onToggleLock={handleToggleLock}
               onClose={closeContextMenu}
             />
           )}

@@ -120,7 +120,9 @@
       "focusNeighbors2": "Vizinhos a 2 ligações",
       "focusNeighbors3": "Vizinhos a 3 ligações",
       "preview": "Pré-visualização",
-      "findPaths": "Encontrar caminhos"
+      "findPaths": "Encontrar caminhos",
+      "lockPosition": "Bloquear posição",
+      "unlockPosition": "Desbloquear posição"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",

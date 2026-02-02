@@ -120,7 +120,9 @@
       "focusNeighbors2": "Buren op 2 verbindingen",
       "focusNeighbors3": "Buren op 3 verbindingen",
       "preview": "Voorbeeld",
-      "findPaths": "Paden zoeken"
+      "findPaths": "Paden zoeken",
+      "lockPosition": "Positie vergrendelen",
+      "unlockPosition": "Positie ontgrendelen"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",

@@ -227,7 +227,14 @@ function AnnotationNodeComponent({ data }: NodeProps) {
   }, [element.notes, anonymousMode]);
 
   return (
-    <>
+    <div
+      onPointerDown={(e) => {
+        // Prevent canvas panning when element is position-locked
+        if (element.isPositionLocked && e.button === 0) {
+          e.stopPropagation();
+        }
+      }}
+    >
       {isSelected && (
         <NodeResizer
           minWidth={MIN_WIDTH}
@@ -270,7 +277,7 @@ function AnnotationNodeComponent({ data }: NodeProps) {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

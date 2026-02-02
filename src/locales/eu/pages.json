@@ -120,7 +120,9 @@
       "focusNeighbors2": "2 loturako auzokideak",
       "focusNeighbors3": "3 loturako auzokideak",
       "preview": "Aurrebista",
-      "findPaths": "Bideak aurkitu"
+      "findPaths": "Bideak aurkitu",
+      "lockPosition": "Posizioa blokeatu",
+      "unlockPosition": "Posizioa desblokeatu"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",

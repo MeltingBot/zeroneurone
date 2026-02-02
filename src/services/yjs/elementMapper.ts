@@ -33,6 +33,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
   map.set('parentGroupId', element.parentGroupId);
   map.set('isGroup', element.isGroup);
   map.set('isAnnotation', element.isAnnotation);
+  map.set('isPositionLocked', element.isPositionLocked ?? false);
 
   // Notes as plain string (will be converted to Y.Text on first update)
   map.set('notes', element.notes || '');
@@ -272,6 +273,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     date: dateFromYjs(ymap.get('date')),
     dateRange,
     position,
+    isPositionLocked: ymap.get('isPositionLocked') ?? false,
     geo,
     events,
     visual,
@@ -380,6 +382,10 @@ export function updateElementYMap(
 
     if (changes.isAnnotation !== undefined) {
       ymap.set('isAnnotation', changes.isAnnotation);
+    }
+
+    if (changes.isPositionLocked !== undefined) {
+      ymap.set('isPositionLocked', changes.isPositionLocked);
     }
 
     if (changes.childIds !== undefined) {

@@ -198,6 +198,8 @@ export interface Element {
   date: Date | null;
   dateRange: DateRange | null;
   position: Position;
+  /** When true, the element cannot be moved on the canvas */
+  isPositionLocked: boolean;
   /** Current/default geo position (for simple cases without history) */
   geo: GeoCoordinates | null;
   /** Event history - all temporal occurrences for this element */

@@ -120,7 +120,9 @@
       "focusNeighbors2": "Voisins à 2 liens",
       "focusNeighbors3": "Voisins à 3 liens",
       "preview": "Aperçu",
-      "findPaths": "Trouver les chemins"
+      "findPaths": "Trouver les chemins",
+      "lockPosition": "Verrouiller la position",
+      "unlockPosition": "Déverrouiller la position"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",

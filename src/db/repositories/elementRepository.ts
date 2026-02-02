@@ -44,6 +44,7 @@ function createDefaultElement(
     date: null,
     dateRange: null,
     position,
+    isPositionLocked: false,
     geo: null,
     events: [],
     visual: { ...defaultVisual },

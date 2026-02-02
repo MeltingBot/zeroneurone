@@ -175,7 +175,9 @@
       "shape": "Форма",
       "size": "Розмір",
       "style": "Стиль",
-      "thickness": "Товщина"
+      "thickness": "Товщина",
+      "positionLock": "Позиція заблокована",
+      "positionUnlocked": "Позиція розблокована"
     },
     "files": {
       "title": "Файли",

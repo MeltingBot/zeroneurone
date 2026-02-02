@@ -120,7 +120,14 @@ function GroupNodeComponent({ data }: NodeProps) {
   }, [tagDisplaySize]);
 
   return (
-    <>
+    <div
+      onPointerDown={(e) => {
+        // Prevent canvas panning when element is position-locked
+        if (element.isPositionLocked && e.button === 0) {
+          e.stopPropagation();
+        }
+      }}
+    >
       {isSelected && (
         <NodeResizer
           minWidth={MIN_WIDTH}
@@ -247,7 +254,7 @@ function GroupNodeComponent({ data }: NodeProps) {
       <Handle type="target" position={Position.Bottom} id="target-bottom" style={{ left: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
       <Handle type="target" position={Position.Left} id="target-left" style={{ top: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
       <Handle type="target" position={Position.Right} id="target-right" style={{ top: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-    </>
+    </div>
   );
 }
 

@@ -502,6 +502,7 @@ async function convertPaletteNode(
     date: null,
     dateRange: null,
     position,
+    isPositionLocked: false,
     geo,
     visual: { ...DEFAULT_ELEMENT_VISUAL, image: visualImageId },
     assetIds,

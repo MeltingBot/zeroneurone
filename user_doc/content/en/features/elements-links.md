@@ -39,6 +39,18 @@ Customize the appearance of each element:
 | **Shape** | Circle, square, diamond, hexagon |
 | **Size** | Small, medium, large |
 
+### Position Lock
+
+Prevent accidental moves by locking an element's position.
+
+**Lock/Unlock:**
+- **Context menu** (right-click) → Lock/Unlock position
+- **Detail panel** → Appearance section → Lock button
+
+**Behavior:**
+- A locked element cannot be moved
+- With multi-selection, lock/unlock applies to all selected elements
+- When moving a group, locked elements stay in place
 
 ---
 

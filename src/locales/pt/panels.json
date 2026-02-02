@@ -175,7 +175,9 @@
       "shape": "Forma",
       "size": "Tamanho",
       "style": "Estilo",
-      "thickness": "Espessura"
+      "thickness": "Espessura",
+      "positionLock": "Posição bloqueada",
+      "positionUnlocked": "Posição desbloqueada"
     },
     "files": {
       "title": "Ficheiros",

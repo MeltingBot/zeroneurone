@@ -120,7 +120,9 @@
       "focusNeighbors2": "Veïns a 2 enllaços",
       "focusNeighbors3": "Veïns a 3 enllaços",
       "preview": "Previsualització",
-      "findPaths": "Trobar camins"
+      "findPaths": "Trobar camins",
+      "lockPosition": "Bloquejar posició",
+      "unlockPosition": "Desbloquejar posició"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",

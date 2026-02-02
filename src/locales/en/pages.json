@@ -120,7 +120,9 @@
       "focusNeighbors2": "2-link neighbors",
       "focusNeighbors3": "3-link neighbors",
       "preview": "Preview",
-      "findPaths": "Find paths"
+      "findPaths": "Find paths",
+      "lockPosition": "Lock position",
+      "unlockPosition": "Unlock position"
     },
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",

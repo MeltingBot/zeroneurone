@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.2
+
+### Features
+- Position lock for elements: prevent accidental moves via context menu or detail panel
+- Lock/unlock applies to all selected elements in multi-selection
+- Locked elements stay in place when dragging multi-selection
+- No canvas panning when attempting to drag locked elements
+
 ## 1.5.1
 
 ### Fixes

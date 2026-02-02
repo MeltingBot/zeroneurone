@@ -175,7 +175,9 @@
       "shape": "Forma",
       "size": "Tamaina",
       "style": "Estiloa",
-      "thickness": "Lodiera"
+      "thickness": "Lodiera",
+      "positionLock": "Posizioa blokeatuta",
+      "positionUnlocked": "Posizioa desblokeatuta"
     },
     "files": {
       "title": "Fitxategiak",

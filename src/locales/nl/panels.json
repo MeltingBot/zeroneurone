@@ -175,7 +175,9 @@
       "shape": "Vorm",
       "size": "Grootte",
       "style": "Stijl",
-      "thickness": "Dikte"
+      "thickness": "Dikte",
+      "positionLock": "Positie vergrendeld",
+      "positionUnlocked": "Positie ontgrendeld"
     },
     "files": {
       "title": "Bestanden",

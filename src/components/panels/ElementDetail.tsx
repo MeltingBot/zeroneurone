@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
+import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen } from 'lucide-react';
 import { useInvestigationStore, useTagSetStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
 import { syncService } from '../../services/syncService';
@@ -355,6 +355,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
     },
     [element.id, element.visual, updateElement]
   );
+
+  // Handle position lock toggle
+  const handleToggleLock = useCallback(() => {
+    updateElement(element.id, { isPositionLocked: !element.isPositionLocked });
+  }, [element.id, element.isPositionLocked, updateElement]);
 
   // Badges for accordion sections
   const tagsBadge = element.tags.length > 0 ? (
@@ -866,10 +871,34 @@ export function ElementDetail({ element }: ElementDetailProps) {
         icon={<Palette size={12} />}
         defaultOpen={false}
       >
-        <VisualEditor
-          visual={element.visual}
-          onChange={handleVisualChange}
-        />
+        <div className="space-y-4">
+          {/* Position Lock */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-text-secondary">
+              {element.isPositionLocked
+                ? t('detail.appearance.positionLock')
+                : t('detail.appearance.positionUnlocked')}
+            </span>
+            <button
+              onClick={handleToggleLock}
+              className={`p-1.5 rounded transition-colors ${
+                element.isPositionLocked
+                  ? 'bg-accent/20 text-accent'
+                  : 'text-text-tertiary hover:bg-bg-tertiary'
+              }`}
+              title={element.isPositionLocked
+                ? t('detail.appearance.positionUnlocked')
+                : t('detail.appearance.positionLock')}
+            >
+              {element.isPositionLocked ? <Lock size={14} /> : <LockOpen size={14} />}
+            </button>
+          </div>
+
+          <VisualEditor
+            visual={element.visual}
+            onChange={handleVisualChange}
+          />
+        </div>
       </AccordionSection>
 
       {/* Comments */}

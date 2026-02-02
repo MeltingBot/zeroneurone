@@ -271,6 +271,7 @@ export async function importPredicaGraph(
         date: null,
         dateRange: null,
         position,
+        isPositionLocked: false,
         geo,
         visual: { ...DEFAULT_ELEMENT_VISUAL, image: visualImageId },
         assetIds,

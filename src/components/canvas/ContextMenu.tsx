@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen } from 'lucide-react';
 
 interface ContextMenuProps {
   x: number;
@@ -32,6 +32,9 @@ interface ContextMenuProps {
   onGroupSelection: () => void;
   onDissolveGroup: () => void;
   onRemoveFromGroup: () => void;
+  // Position lock
+  isPositionLocked: boolean;
+  onToggleLock: () => void;
   onClose: () => void;
 }
 
@@ -69,6 +72,8 @@ function ContextMenuComponent({
   onGroupSelection,
   onDissolveGroup,
   onRemoveFromGroup,
+  isPositionLocked,
+  onToggleLock,
   onClose,
 }: ContextMenuProps) {
   const { t } = useTranslation('pages');
@@ -295,6 +300,22 @@ function ContextMenuComponent({
               ))}
             </>
           )}
+        </div>
+
+        {/* Position Lock */}
+        <div className="py-1 border-t border-border-default">
+          <button
+            onClick={() => {
+              onToggleLock();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+          >
+            {isPositionLocked ? <LockOpen size={14} /> : <Lock size={14} />}
+            {isPositionLocked
+              ? t('investigation.contextMenu.unlockPosition')
+              : t('investigation.contextMenu.lockPosition')}
+          </button>
         </div>
 
         {/* Visibility */}

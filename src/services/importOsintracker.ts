@@ -283,6 +283,7 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
         x: osintEl.position.x,
         y: osintEl.position.y,
       },
+      isPositionLocked: false,
       geo: null,
       events: [],
       visual: {

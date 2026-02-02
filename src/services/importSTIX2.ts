@@ -368,6 +368,7 @@ export async function importSTIX2(
         date: sdo.created ? new Date(sdo.created) : null,
         dateRange,
         position,
+        isPositionLocked: false,
         geo: null,
         visual: {
           ...DEFAULT_ELEMENT_VISUAL,
@@ -483,6 +484,7 @@ export async function importSTIX2(
         date: note.created ? new Date(note.created) : null,
         dateRange: null,
         position,
+        isPositionLocked: false,
         geo: null,
         visual: {
           ...DEFAULT_ELEMENT_VISUAL,
