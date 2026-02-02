@@ -98,6 +98,7 @@ export async function importOsintIndustries(
     elementsImported: 0,
     linksImported: 0,
     assetsImported: 0,
+    reportImported: false,
     errors: [],
     warnings: [],
   };

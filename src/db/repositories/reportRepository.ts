@@ -1,6 +1,10 @@
+import * as Y from 'yjs';
+import { IndexeddbPersistence } from 'y-indexeddb';
 import { db } from '../database';
 import { generateUUID } from '../../utils';
 import type { Report, ReportSection, InvestigationId, UUID, ReportSectionId } from '../../types';
+import { getYMaps } from '../../types/yjs';
+import { yMapToReport } from '../../services/yjs/reportMapper';
 
 // Helper to rehydrate dates from IndexedDB
 function rehydrateReport(report: Report): Report {
@@ -120,5 +124,62 @@ export const reportRepository = {
       sections: updatedSections,
       updatedAt: new Date(),
     });
+  },
+
+  /**
+   * Get report by investigation, checking both Dexie and Y.Doc storage.
+   * This is useful for export from home page where Y.Doc may not be loaded.
+   * If found in Y.Doc but not in Dexie, it will be persisted to Dexie.
+   */
+  async getByInvestigationWithYDoc(investigationId: InvestigationId): Promise<Report | null> {
+    // First try Dexie
+    const dexieReport = await this.getByInvestigation(investigationId);
+    if (dexieReport) {
+      return dexieReport;
+    }
+
+    // Try to load from Y.Doc via y-indexeddb
+    const dbName = `zeroneurone-ydoc-${investigationId}`;
+    let ydoc: Y.Doc | null = null;
+    let provider: IndexeddbPersistence | null = null;
+
+    try {
+      ydoc = new Y.Doc();
+      provider = new IndexeddbPersistence(dbName, ydoc);
+
+      // Wait for data to sync from IndexedDB
+      await provider.whenSynced;
+
+      const { reports: reportsMap } = getYMaps(ydoc);
+
+      // Find report for this investigation
+      let foundReport: Report | null = null;
+      for (const [, ymap] of reportsMap.entries()) {
+        const invId = ymap.get('investigationId');
+        if (invId === investigationId) {
+          foundReport = yMapToReport(ymap);
+          break;
+        }
+      }
+
+      if (foundReport && foundReport.sections.length > 0) {
+        // Persist to Dexie for future use
+        await db.reports.add(foundReport);
+        return rehydrateReport(foundReport);
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[reportRepository] Error loading from Y.Doc:', error);
+      return null;
+    } finally {
+      // Clean up
+      if (provider) {
+        await provider.destroy();
+      }
+      if (ydoc) {
+        ydoc.destroy();
+      }
+    }
   },
 };

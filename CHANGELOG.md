@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.3
+
+### Features
+- Auto fit-to-view after import: graph automatically fits to show all elements
+
+### Fixes
+- Group elements now display correctly (full rectangle instead of line at top)
+- Report export in ZIP now properly includes all sections from Y.Doc storage
+- Element and link references in reports preserved during import (ID remapping)
+
 ## 1.5.2
 
 ### Features

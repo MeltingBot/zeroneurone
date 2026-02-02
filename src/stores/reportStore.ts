@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as Y from 'yjs';
 import type { Report, ReportSection, InvestigationId, ReportSectionId } from '../types';
+import { db } from '../db/database';
 import { reportRepository } from '../db/repositories/reportRepository';
 import { syncService } from '../services/syncService';
 import { getYMaps } from '../types/yjs';
@@ -61,22 +62,40 @@ export const useReportStore = create<ReportState>((set, get) => ({
   loadReport: async (investigationId) => {
     set({ isLoading: true });
     try {
-      // First, try to load from Y.Doc if available
+      // First, check what we have in local database
+      const localReport = await reportRepository.getByInvestigation(investigationId);
+
+      // Then, try to load from Y.Doc if available
       const ydoc = syncService.getYDoc();
       if (ydoc) {
         const { reports: reportsMap } = getYMaps(ydoc);
 
         // Find report for this investigation
-        let report: Report | null = null;
-        reportsMap.forEach((ymap) => {
+        let ydocReport: Report | null = null;
+        for (const [, ymap] of reportsMap.entries()) {
           const invId = ymap.get('investigationId');
           if (invId === investigationId) {
-            report = yMapToReport(ymap);
+            ydocReport = yMapToReport(ymap);
+            break;
           }
-        });
+        }
 
-        if (report) {
-          set({ currentReport: report, isDirty: false, activeSectionId: null });
+        if (ydocReport) {
+          // If report exists in Y.Doc but NOT in local DB, persist it
+          if (!localReport) {
+            // Create report in local DB with same ID
+            const reportToSave: Report = {
+              id: ydocReport.id,
+              investigationId,
+              title: ydocReport.title,
+              sections: ydocReport.sections,
+              createdAt: ydocReport.createdAt,
+              updatedAt: ydocReport.updatedAt,
+            };
+            await db.reports.add(reportToSave);
+          }
+
+          set({ currentReport: ydocReport, isDirty: false, activeSectionId: null });
 
           // Setup observer if not already
           if (ydocObserverCleanup) {
@@ -87,17 +106,16 @@ export const useReportStore = create<ReportState>((set, get) => ({
         }
       }
 
-      // Fallback to local database
-      const report = await reportRepository.getByInvestigation(investigationId);
-      set({ currentReport: report, isDirty: false, activeSectionId: null });
+      // Use local database report
+      set({ currentReport: localReport, isDirty: false, activeSectionId: null });
 
       // If we have a report and Y.Doc, sync it to Y.Doc
-      if (report && ydoc) {
+      if (localReport && ydoc) {
         const { reports: reportsMap } = getYMaps(ydoc);
-        if (!reportsMap.has(report.id)) {
+        if (!reportsMap.has(localReport.id)) {
           ydoc.transact(() => {
-            const ymap = reportToYMap(report);
-            reportsMap.set(report.id, ymap);
+            const ymap = reportToYMap(localReport);
+            reportsMap.set(localReport.id, ymap);
           });
         }
       }
@@ -319,13 +337,21 @@ export const useReportStore = create<ReportState>((set, get) => ({
       });
 
       if (currentJson !== newJson) {
-        set({
-          currentReport: {
-            ...currentReport,
-            title: reportFromYDoc.title,
-            sections: reportFromYDoc.sections,
-            updatedAt: reportFromYDoc.updatedAt,
-          },
+        const updatedReport = {
+          ...currentReport,
+          title: reportFromYDoc.title,
+          sections: reportFromYDoc.sections,
+          updatedAt: reportFromYDoc.updatedAt,
+        };
+        set({ currentReport: updatedReport });
+
+        // Also persist to local database for export consistency
+        db.reports.update(currentReport.id, {
+          title: updatedReport.title,
+          sections: updatedReport.sections,
+          updatedAt: updatedReport.updatedAt,
+        }).catch((err) => {
+          console.error('[reportStore] Error persisting Y.Doc sync to DB:', err);
         });
       }
     } catch (error) {

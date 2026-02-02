@@ -4,7 +4,7 @@ import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet } from '
 import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, type ImportResult } from '../../services/importService';
 import { exportService } from '../../services/exportService';
-import { useInvestigationStore, useUIStore, toast } from '../../stores';
+import { useInvestigationStore, useUIStore, useViewStore, toast } from '../../stores';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
   const { investigations, createInvestigation, currentInvestigation } = useInvestigationStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
+  const requestFitView = useViewStore((state) => state.requestFitView);
 
   // Check if we're currently on an investigation page
   const isOnInvestigationPage = location.pathname.startsWith('/investigation/');
@@ -78,6 +79,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             elementsImported: 0,
             linksImported: 0,
             assetsImported: 0,
+          reportImported: false,
             errors: [parseResult.error || t('import.unknownError')],
             warnings: [],
           });
@@ -122,6 +124,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             elementsImported: 0,
             linksImported: 0,
             assetsImported: 0,
+          reportImported: false,
             errors: [t('import.unknownFormat')],
             warnings: [],
           };
@@ -132,6 +135,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (result.success) {
         toast.success(t('import.success'));
+        // Request fitView to show the entire graph after import
+        requestFitView();
         // Navigate to the investigation
         setTimeout(() => {
           onClose();
@@ -144,6 +149,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         elementsImported: 0,
         linksImported: 0,
         assetsImported: 0,
+          reportImported: false,
         errors: [error instanceof Error ? error.message : t('import.unknownError')],
         warnings: [],
       });
@@ -153,7 +159,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose, t, isOnInvestigationPage, currentInvestigation, enterImportPlacementMode]);
+  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose, t, isOnInvestigationPage, currentInvestigation, enterImportPlacementMode, requestFitView]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();

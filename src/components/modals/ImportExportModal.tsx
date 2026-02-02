@@ -3,7 +3,7 @@ import { X, Download, Upload, FileJson, FileSpreadsheet, FileText, FileArchive, 
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { importService, type ImportResult } from '../../services/importService';
 import { fileService } from '../../services/fileService';
-import { useInvestigationStore, toast } from '../../stores';
+import { useInvestigationStore, useViewStore, toast } from '../../stores';
 
 interface ImportExportModalProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentInvestigation, elements, links, loadInvestigation } = useInvestigationStore();
+  const requestFitView = useViewStore((state) => state.requestFitView);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     if (!currentInvestigation) return;
@@ -78,6 +79,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
           elementsImported: 0,
           linksImported: 0,
           assetsImported: 0,
+          reportImported: false,
           errors: ['Format de fichier non supporte. Utilisez ZIP, JSON, CSV ou GraphML.'],
           warnings: [],
         };
@@ -88,6 +90,8 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
       // Reload investigation to refresh data
       if (result.success) {
         await loadInvestigation(currentInvestigation.id);
+        // Request fitView to show all imported elements
+        requestFitView();
       }
     } catch (error) {
       setImportResult({
@@ -95,6 +99,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
         elementsImported: 0,
         linksImported: 0,
         assetsImported: 0,
+          reportImported: false,
         errors: [error instanceof Error ? error.message : 'Erreur inconnue'],
         warnings: [],
       });

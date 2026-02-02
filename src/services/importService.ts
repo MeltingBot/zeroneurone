@@ -6,6 +6,7 @@ import type {
   Element,
   ElementId,
   Link,
+  LinkId,
   AssetId,
   Position,
   GeoCoordinates,
@@ -13,6 +14,9 @@ import type {
   ElementShape,
   LinkStyle,
   Property,
+  Report,
+  ReportSection,
+  ReportSectionId,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
@@ -67,6 +71,7 @@ export interface ImportResult {
   elementsImported: number;
   linksImported: number;
   assetsImported: number;
+  reportImported: boolean;
   errors: string[];
   warnings: string[];
 }
@@ -176,6 +181,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -248,6 +254,7 @@ class ImportService {
       // Create ID mappings (old ID -> new ID)
       const elementIdMap = new Map<ElementId, ElementId>();
       const assetIdMap = new Map<AssetId, AssetId>();
+      const linkIdMap = new Map<LinkId, LinkId>();
 
       // Track total decompressed size for ZIP bomb detection
       let totalDecompressedSize = jsonContent.length;
@@ -310,7 +317,12 @@ class ImportService {
       }
 
       // Import elements and links (with optional position offset)
-      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, result, positionOffset);
+      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
+
+      // Import report if present (with element and link ID remapping)
+      if (data.report && data.report.sections && data.report.sections.length > 0) {
+        await this.importReport(data.report, targetInvestigationId, result, elementIdMap, linkIdMap);
+      }
 
       result.success = true;
       if (result.linksImported > 0) {
@@ -340,6 +352,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -452,6 +465,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -466,9 +480,15 @@ class ImportService {
       // Create ID mappings
       const elementIdMap = new Map<ElementId, ElementId>();
       const assetIdMap = new Map<AssetId, AssetId>(); // Will be empty for JSON import
+      const linkIdMap = new Map<LinkId, LinkId>();
 
       // Import elements and links (no assets for JSON-only import)
-      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, result);
+      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, linkIdMap, result);
+
+      // Import report if present (with element and link ID remapping)
+      if (data.report && data.report.sections && data.report.sections.length > 0) {
+        await this.importReport(data.report, targetInvestigationId, result, elementIdMap, linkIdMap);
+      }
 
       result.success = true;
     } catch (error) {
@@ -490,6 +510,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -632,6 +653,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -940,6 +962,7 @@ class ImportService {
     targetInvestigationId: InvestigationId,
     elementIdMap: Map<ElementId, ElementId>,
     assetIdMap: Map<AssetId, AssetId>,
+    linkIdMap: Map<LinkId, LinkId>,
     result: ImportResult,
     positionOffset?: Position
   ): Promise<void> {
@@ -1017,9 +1040,13 @@ class ImportService {
         continue;
       }
 
+      const newLinkId = generateUUID();
+      // Store mapping for report content remapping
+      linkIdMap.set(importedLink.id, newLinkId as LinkId);
+
       const link: Link = {
         ...importedLink,
-        id: generateUUID(),
+        id: newLinkId,
         investigationId: targetInvestigationId,
         fromId: newFromId,
         toId: newToId,
@@ -1037,6 +1064,106 @@ class ImportService {
     // Update investigation timestamp
     await db.investigations.update(targetInvestigationId, {
       updatedAt: new Date(),
+    });
+  }
+
+  /**
+   * Import a report with its sections
+   */
+  private async importReport(
+    importedReport: Report,
+    targetInvestigationId: InvestigationId,
+    result: ImportResult,
+    elementIdMap?: Map<ElementId, ElementId>,
+    linkIdMap?: Map<LinkId, LinkId>
+  ): Promise<void> {
+    try {
+      // Check if a report already exists for this investigation
+      const existingReports = await db.reports
+        .where({ investigationId: targetInvestigationId })
+        .toArray();
+
+      if (existingReports.length > 0) {
+        // Report already exists, skip import but add warning
+        result.warnings.push('Un rapport existe déjà pour cette investigation, rapport non importé');
+        return;
+      }
+
+      // Create new report with new IDs and remapped content
+      const newReportId = generateUUID();
+      const newSections: ReportSection[] = importedReport.sections.map((section, index) => ({
+        ...section,
+        id: generateUUID() as ReportSectionId,
+        order: section.order ?? index,
+        // Remap element and link references in content (e.g., [[Label|oldId]] -> [[Label|newId]])
+        content: this.remapElementReferencesInContent(section.content, elementIdMap, linkIdMap),
+        // Remap elementIds array if present
+        elementIds: section.elementIds?.map(id => elementIdMap?.get(id as ElementId) || id) || [],
+      }));
+
+      const report: Report = {
+        id: newReportId,
+        investigationId: targetInvestigationId,
+        title: importedReport.title || 'Rapport importé',
+        sections: newSections,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await db.reports.add(report);
+      result.reportImported = true;
+    } catch (error) {
+      result.warnings.push(
+        `Rapport non importé: ${error instanceof Error ? error.message : 'Erreur'}`
+      );
+    }
+  }
+
+  /**
+   * Remap element and link references in Markdown content from old IDs to new IDs
+   * Format: [[Label|oldId]] -> [[Label|newId]]
+   */
+  private remapElementReferencesInContent(
+    content: string,
+    elementIdMap?: Map<ElementId, ElementId>,
+    linkIdMap?: Map<LinkId, LinkId>
+  ): string {
+    if (!content) {
+      return content;
+    }
+
+    const hasElementMap = elementIdMap && elementIdMap.size > 0;
+    const hasLinkMap = linkIdMap && linkIdMap.size > 0;
+
+    if (!hasElementMap && !hasLinkMap) {
+      return content;
+    }
+
+    // Regex to match [[Label|uuid]] pattern (case-insensitive for UUID)
+    // uuid format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const refRegex = /\[\[([^\]|]+)\|([a-fA-F0-9-]{36})\]\]/g;
+
+    return content.replace(refRegex, (match, label, oldId) => {
+      // Try element map first
+      if (hasElementMap) {
+        const newElementId = elementIdMap!.get(oldId as ElementId)
+          || elementIdMap!.get(oldId.toLowerCase() as ElementId);
+        if (newElementId) {
+          return `[[${label}|${newElementId}]]`;
+        }
+      }
+
+      // Then try link map
+      if (hasLinkMap) {
+        const newLinkId = linkIdMap!.get(oldId as LinkId)
+          || linkIdMap!.get(oldId.toLowerCase() as LinkId);
+        if (newLinkId) {
+          return `[[${label}|${newLinkId}]]`;
+        }
+      }
+
+      // If no mapping found, keep original (will show as deleted)
+      return match;
     });
   }
 
@@ -1079,6 +1206,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -1473,6 +1601,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -1643,6 +1772,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };
@@ -1876,6 +2006,7 @@ class ImportService {
       elementsImported: 0,
       linksImported: 0,
       assetsImported: 0,
+      reportImported: false,
       errors: [],
       warnings: [],
     };

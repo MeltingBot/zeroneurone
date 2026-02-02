@@ -121,6 +121,7 @@ function GroupNodeComponent({ data }: NodeProps) {
 
   return (
     <div
+      style={{ width: '100%', height: '100%' }}
       onPointerDown={(e) => {
         // Prevent canvas panning when element is position-locked
         if (element.isPositionLocked && e.button === 0) {

@@ -175,6 +175,25 @@ function ViewportController() {
   return null;
 }
 
+// FitView controller - watches for pending fitView requests and applies them
+function FitViewController() {
+  const { fitView } = useReactFlow();
+  const { pendingFitView, clearPendingFitView } = useViewStore();
+
+  useEffect(() => {
+    if (pendingFitView) {
+      // Small delay to ensure nodes are rendered before fitting
+      const timeout = setTimeout(() => {
+        fitView({ padding: 0.2, duration: 300 });
+        clearPendingFitView();
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [pendingFitView, fitView, clearPendingFitView]);
+
+  return null;
+}
+
 
 // Convert our Element to React Flow Node
 function elementToNode(
@@ -570,6 +589,7 @@ export function Canvas() {
     hideElement,
     hideElements,
     showElement,
+    requestFitView,
   } = useViewStore();
 
   const {
@@ -2014,6 +2034,9 @@ export function Canvas() {
           await syncService.deleteLocalData(importPlacementData.investigationId);
           await loadInvestigation(importPlacementData.investigationId);
 
+          // Request fitView to show all elements including imported ones
+          requestFitView();
+
           // Call completion callback if provided
           importPlacementData.onComplete?.();
         } else {
@@ -2029,7 +2052,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadInvestigation, exitImportPlacementMode, tPages]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadInvestigation, exitImportPlacementMode, tPages, requestFitView]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -2845,6 +2868,7 @@ export function Canvas() {
             />
             <CanvasCaptureHandler />
             <ViewportController />
+            <FitViewController />
             <DraggableMinimap />
             <ImportPlacementOverlay />
           </ReactFlow>

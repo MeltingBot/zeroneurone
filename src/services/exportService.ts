@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Investigation, Element, Link, Asset } from '../types';
+import type { Investigation, Element, Link, Asset, Report } from '../types';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
 
@@ -23,6 +23,8 @@ export interface ExportData {
   links: Link[];
   /** Asset metadata (files are stored separately in ZIP) */
   assets?: ExportedAssetMeta[];
+  /** Report with sections */
+  report?: Report | null;
 }
 
 class ExportService {
@@ -35,7 +37,8 @@ class ExportService {
     investigation: Investigation,
     elements: Element[],
     links: Link[],
-    assetsMeta?: ExportedAssetMeta[]
+    assetsMeta?: ExportedAssetMeta[],
+    report?: Report | null
   ): string {
     const data: ExportData = {
       version: this.VERSION,
@@ -44,18 +47,20 @@ class ExportService {
       elements,
       links,
       assets: assetsMeta,
+      report: report || null,
     };
     return JSON.stringify(data, null, 2);
   }
 
   /**
-   * Export investigation as ZIP archive with assets
+   * Export investigation as ZIP archive with assets and optional report
    */
   async exportToZip(
     investigation: Investigation,
     elements: Element[],
     links: Link[],
-    assets: Asset[]
+    assets: Asset[],
+    report?: Report | null
   ): Promise<Blob> {
     const zip = new JSZip();
 
@@ -87,12 +92,56 @@ class ExportService {
       }
     }
 
-    // Add JSON metadata
-    const jsonContent = this.exportToJSON(investigation, elements, links, assetsMeta);
+    // Add JSON metadata (includes report data for import)
+    const jsonContent = this.exportToJSON(investigation, elements, links, assetsMeta, report);
     zip.file('investigation.json', jsonContent);
+
+    // Add report Markdown if present (human-readable version)
+    if (report && report.sections.length > 0) {
+      const reportMarkdown = this.reportToMarkdown(report, elements);
+      zip.file('report.md', reportMarkdown);
+    }
 
     // Generate ZIP blob
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  }
+
+  /**
+   * Convert a Report to Markdown format
+   */
+  private reportToMarkdown(report: Report, elements: Element[]): string {
+    // Build element lookup for resolving [[Label|id]] references
+    const elementMap = new Map(elements.map(el => [el.id, el]));
+
+    let md = `# ${report.title || 'Rapport'}\n\n`;
+
+    // Sort sections by order
+    const sortedSections = [...report.sections].sort((a, b) => a.order - b.order);
+
+    for (const section of sortedSections) {
+      if (section.title) {
+        md += `## ${section.title}\n\n`;
+      }
+
+      // Process content: resolve [[Label|id]] references
+      let content = section.content || '';
+      content = content.replace(/\[\[([^\]|]+)\|([a-f0-9-]+)\]\]/g, (_match, label, id) => {
+        const el = elementMap.get(id);
+        if (el) {
+          return `**${label}**`;
+        }
+        // Element was deleted - show strikethrough
+        return `~~${label}~~`;
+      });
+
+      md += content;
+      if (!content.endsWith('\n')) {
+        md += '\n';
+      }
+      md += '\n';
+    }
+
+    return md;
   }
 
   /**
@@ -404,13 +453,15 @@ class ExportService {
   /**
    * Export and download investigation in specified format
    * @param assets - For ZIP format, the raw assets to include
+   * @param report - For ZIP format, the optional report to include
    */
   async exportInvestigation(
     format: ExportFormat,
     investigation: Investigation,
     elements: Element[],
     links: Link[],
-    assets?: Asset[]
+    assets?: Asset[],
+    report?: Report | null
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
@@ -418,7 +469,7 @@ class ExportService {
 
     switch (format) {
       case 'zip': {
-        const zipBlob = await this.exportToZip(investigation, elements, links, assets || []);
+        const zipBlob = await this.exportToZip(investigation, elements, links, assets || [], report);
         this.downloadBlob(zipBlob, `${baseName}.zip`);
         break;
       }
