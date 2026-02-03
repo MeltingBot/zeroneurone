@@ -1010,6 +1010,44 @@ function buildFullHTML(params: HTMLParams): string {
       #graph-panel {
         height: 50%;
       }
+
+      /* Bigger touch targets for zoom controls */
+      #graph-controls {
+        bottom: 12px;
+        right: 12px;
+        gap: 8px;
+      }
+
+      #graph-controls button {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+      }
+
+      /* Prevent text selection during touch */
+      #graph-container {
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      /* Tooltip as bottom sheet on mobile */
+      #element-tooltip {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        max-width: 100%;
+        max-height: 40vh;
+        border-radius: 12px 12px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.2s ease-out;
+      }
+
+      #element-tooltip.visible {
+        transform: translateY(0);
+      }
     }
 
     /* Print */
@@ -1202,6 +1240,91 @@ function buildFullHTML(params: HTMLParams): string {
       window.addEventListener('mouseup', () => {
         isPanning = false;
       });
+
+      // Touch pan (single finger)
+      let touchStartPoint = { x: 0, y: 0 };
+      let touchStartViewBox = { x: 0, y: 0 };
+
+      container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          if (touch.target.closest('.node') || touch.target.closest('.group')) return;
+          isPanning = true;
+          touchStartPoint = { x: touch.clientX, y: touch.clientY };
+          touchStartViewBox = { x: viewBox.x, y: viewBox.y };
+        }
+      }, { passive: true });
+
+      container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && isPanning) {
+          const touch = e.touches[0];
+          const scale = viewBox.width / container.clientWidth;
+          viewBox.x = touchStartViewBox.x - (touch.clientX - touchStartPoint.x) * scale;
+          viewBox.y = touchStartViewBox.y - (touch.clientY - touchStartPoint.y) * scale;
+        }
+      }, { passive: true });
+
+      container.addEventListener('touchend', () => {
+        isPanning = false;
+      }, { passive: true });
+
+      // Pinch-to-zoom (two fingers)
+      let initialPinchDistance = 0;
+      let initialPinchViewBox = { width: 0, height: 0, x: 0, y: 0 };
+
+      function getPinchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function getPinchCenter(touches) {
+        return {
+          x: (touches[0].clientX + touches[1].clientX) / 2,
+          y: (touches[0].clientY + touches[1].clientY) / 2
+        };
+      }
+
+      container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          isPanning = false;
+          initialPinchDistance = getPinchDistance(e.touches);
+          initialPinchViewBox = {
+            width: viewBox.width,
+            height: viewBox.height,
+            x: viewBox.x,
+            y: viewBox.y
+          };
+        }
+      }, { passive: true });
+
+      container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialPinchDistance > 0) {
+          e.preventDefault();
+          const currentDistance = getPinchDistance(e.touches);
+          const scale = initialPinchDistance / currentDistance;
+
+          // Get pinch center in SVG coordinates
+          const center = getPinchCenter(e.touches);
+          const rect = container.getBoundingClientRect();
+          const svgX = initialPinchViewBox.x + (center.x - rect.left) / rect.width * initialPinchViewBox.width;
+          const svgY = initialPinchViewBox.y + (center.y - rect.top) / rect.height * initialPinchViewBox.height;
+
+          // Apply zoom centered on pinch point
+          const newWidth = initialPinchViewBox.width * scale;
+          const newHeight = initialPinchViewBox.height * scale;
+          viewBox.width = newWidth;
+          viewBox.height = newHeight;
+          viewBox.x = svgX - (center.x - rect.left) / rect.width * newWidth;
+          viewBox.y = svgY - (center.y - rect.top) / rect.height * newHeight;
+        }
+      }, { passive: false });
+
+      container.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          initialPinchDistance = 0;
+        }
+      }, { passive: true });
 
       // Zoom around point
       function zoomAt(factor, cx, cy) {
