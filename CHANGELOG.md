@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.2
+
+### Features
+- Mobile-friendly interactive HTML export: tabs (Report/Graph) instead of split, touch pan/pinch-to-zoom, bottom sheet tooltip
+
 ## 1.6.1
 
 ### Fixes

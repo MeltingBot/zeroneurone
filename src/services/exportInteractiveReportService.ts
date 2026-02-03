@@ -990,25 +990,64 @@ function buildFullHTML(params: HTMLParams): string {
       border-radius: 4px;
     }
 
+    /* Mobile tabs - hidden on desktop */
+    #mobile-tabs {
+      display: none;
+    }
+
     /* Mobile */
     @media (max-width: 768px) {
+      /* Show mobile tabs */
+      #mobile-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-default);
+        background: var(--bg-primary);
+      }
+
+      #mobile-tabs .tab {
+        flex: 1;
+        padding: 12px 16px;
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+
+      #mobile-tabs .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      /* Tab content switching */
       main {
         flex-direction: column;
       }
 
-      #report-panel, #graph-panel {
+      main[data-active-tab="report"] #report-panel {
+        display: block;
         width: 100%;
-        height: 50%;
-      }
-
-      #report-panel {
+        height: 100%;
         border-right: none;
-        border-bottom: 1px solid var(--border-default);
+        border-bottom: none;
         padding: 16px;
       }
 
-      #graph-panel {
-        height: 50%;
+      main[data-active-tab="report"] #graph-panel {
+        display: none;
+      }
+
+      main[data-active-tab="graph"] #report-panel {
+        display: none;
+      }
+
+      main[data-active-tab="graph"] #graph-panel {
+        display: block;
+        width: 100%;
+        height: 100%;
       }
 
       /* Bigger touch targets for zoom controls */
@@ -1039,10 +1078,13 @@ function buildFullHTML(params: HTMLParams): string {
         right: 0;
         top: auto;
         max-width: 100%;
-        max-height: 40vh;
+        max-height: 50vh;
         border-radius: 12px 12px 0 0;
         transform: translateY(100%);
         transition: transform 0.2s ease-out;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        overflow-y: auto;
+        z-index: 100;
       }
 
       #element-tooltip.visible {
@@ -1109,7 +1151,13 @@ function buildFullHTML(params: HTMLParams): string {
       </div>
     </div>
 
-    <main>
+    <!-- Mobile tabs -->
+    <nav id="mobile-tabs">
+      <button class="tab active" data-tab="report">Rapport</button>
+      <button class="tab" data-tab="graph">Graphe</button>
+    </nav>
+
+    <main data-active-tab="report">
       <aside id="report-panel">
         ${params.tocItems.length > 1 ? `
         <nav class="toc">
@@ -1171,6 +1219,20 @@ function buildFullHTML(params: HTMLParams): string {
         if (e.key === 'Escape' && infoModal.classList.contains('visible')) {
           infoModal.classList.remove('visible');
         }
+      });
+
+      // Mobile tabs
+      const mobileTabs = document.getElementById('mobile-tabs');
+      const mainElement = document.querySelector('main');
+
+      mobileTabs.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active tab button
+          mobileTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          // Update active panel
+          mainElement.setAttribute('data-active-tab', tab.dataset.tab);
+        });
       });
 
       // Export markdown button
@@ -1431,6 +1493,13 @@ function buildFullHTML(params: HTMLParams): string {
         ref.addEventListener('click', (e) => {
           e.preventDefault();
           const elementId = ref.dataset.elementId;
+
+          // On mobile, switch to graph tab first
+          if (window.innerWidth <= 768) {
+            mobileTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            mobileTabs.querySelector('[data-tab="graph"]').classList.add('active');
+            mainElement.setAttribute('data-active-tab', 'graph');
+          }
 
           // Highlight ref
           document.querySelectorAll('.element-ref').forEach(r => r.classList.remove('highlighted'));
