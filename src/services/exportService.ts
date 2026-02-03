@@ -98,7 +98,7 @@ class ExportService {
 
     // Add report Markdown if present (human-readable version)
     if (report && report.sections.length > 0) {
-      const reportMarkdown = this.reportToMarkdown(report, elements);
+      const reportMarkdown = this.reportToMarkdown(report, elements, links);
       zip.file('report.md', reportMarkdown);
     }
 
@@ -109,9 +109,11 @@ class ExportService {
   /**
    * Convert a Report to Markdown format
    */
-  private reportToMarkdown(report: Report, elements: Element[]): string {
-    // Build element lookup for resolving [[Label|id]] references
-    const elementMap = new Map(elements.map(el => [el.id, el]));
+  private reportToMarkdown(report: Report, elements: Element[], links: Link[]): string {
+    // Build lookup for resolving [[Label|id]] references (includes both elements and links)
+    const referenceMap = new Map<string, { exists: true }>();
+    elements.forEach(el => referenceMap.set(el.id, { exists: true }));
+    links.forEach(link => referenceMap.set(link.id, { exists: true }));
 
     let md = `# ${report.title || 'Rapport'}\n\n`;
 
@@ -126,11 +128,10 @@ class ExportService {
       // Process content: resolve [[Label|id]] references
       let content = section.content || '';
       content = content.replace(/\[\[([^\]|]+)\|([a-f0-9-]+)\]\]/g, (_match, label, id) => {
-        const el = elementMap.get(id);
-        if (el) {
+        if (referenceMap.has(id)) {
           return `**${label}**`;
         }
-        // Element was deleted - show strikethrough
+        // Element/link was deleted - show strikethrough
         return `~~${label}~~`;
       });
 
