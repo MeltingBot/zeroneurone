@@ -19,13 +19,45 @@ An **investigation** in ZeroNeurone is a complete workspace containing your elem
 Click on an investigation card in the list to open it.
 
 
+## Organize Your Investigations
+
+### Search and Filters
+
+The search bar lets you filter investigations by name or description. Combine with tag filters to quickly find your investigations.
+
+### Investigation Tags
+
+Associate tags with your investigations to organize them by theme, client, status, etc.
+
+1. Click the **⋯** menu on a card
+2. Select **Manage tags**
+3. Add existing tags or create new ones
+4. Added tags serve as filters on the home page
+
+Useful tag examples:
+- By status: `In Progress`, `Archived`, `Urgent`
+- By theme: `Cyber`, `Fraud`, `HR`
+- By client: `Client-A`, `Project-X`
+
+### Favorites
+
+Click the star on a card to mark an investigation as favorite. Favorites appear first in the list.
+
+### Sorting
+
+Use the sort selector to order your investigations:
+- **Recent** — By modification date (default)
+- **Created** — By creation date
+- **Name** — Alphabetical
+
+
 ## Investigation Actions
 
 Click the **⋯** menu on a card to:
 
 - **Rename** — Edit the name and description
-- **Duplicate** — Create a complete copy
-- **Export** — Save as ZIP, JSON, or other format
+- **Manage tags** — Add or remove tags
+- **Export ZIP** — Save as ZIP archive
 - **Delete** — Permanently delete (with confirmation)
 
 {{< hint warning >}}
