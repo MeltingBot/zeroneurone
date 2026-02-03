@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1
+
+### Fixes
+- Named links (relations) referenced in reports now render correctly in ZIP export (were showing as strikethrough)
+
 ## 1.6.0
 
 ### Features
