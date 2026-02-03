@@ -15,6 +15,16 @@
     "viewInvestigations": "Ikerketak ikusi",
     "investigationCount": "{{count}} ikerketa",
     "loading": "Kargatzen...",
+    "searchPlaceholder": "Izenaren edo deskribapenen arabera bilatu...",
+    "filterByTag": "Etiketaren arabera iragazi",
+    "sortUpdated": "Azkena",
+    "sortCreated": "Sortua",
+    "sortName": "Izena",
+    "activeFilters": "Iragazki aktiboak",
+    "clearFilters": "Garbitu",
+    "noResults": "Ez da ikerketarik aurkitu",
+    "noResultsHint": "Saiatu beste termino batzuekin edo garbitu iragazkiak",
+    "resultsCount": "{{count}} / {{total}} ikerketa",
     "card": {
       "modified": "Aldatua {{time}}",
       "elementCount": "{{count}} elementu",
@@ -23,7 +33,10 @@
       "exportZip": "ZIP esportatu",
       "delete": "Ezabatu",
       "exportSuccess": "ZIP esportazioa bukatuta",
-      "exportError": "Errorea esportatzean"
+      "exportError": "Errorea esportatzean",
+      "favorite": "Gogokoetara gehitu",
+      "unfavorite": "Gogokoetatik kendu",
+      "editTags": "Etiketak kudeatu"
     },
     "landing": {
       "subtitle": "Arbela analista eta ikertzaileentzat",

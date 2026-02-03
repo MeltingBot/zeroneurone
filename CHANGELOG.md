@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0
+
+### Features
+- Investigation tags: add tags to investigations for organization (Cyber, Client-X, Archive...)
+- Search and filter on home page: search by name/description, filter by tags
+- Favorites: star button to pin important investigations at the top
+- Sort options: by modification date, creation date, or name
+- Modal for editing investigation tags with suggestions from existing tags
+
 ## 1.5.3
 
 ### Features

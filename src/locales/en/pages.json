@@ -15,6 +15,16 @@
     "viewInvestigations": "View investigations",
     "investigationCount": "{{count}} investigation(s)",
     "loading": "Loading...",
+    "searchPlaceholder": "Search by name or description...",
+    "filterByTag": "Filter by tag",
+    "sortUpdated": "Recent",
+    "sortCreated": "Created",
+    "sortName": "Name",
+    "activeFilters": "Active filters",
+    "clearFilters": "Clear",
+    "noResults": "No investigations found",
+    "noResultsHint": "Try other terms or clear the filters",
+    "resultsCount": "{{count}} / {{total}} investigation(s)",
     "card": {
       "modified": "Modified {{time}}",
       "elementCount": "{{count}} element(s)",
@@ -23,7 +33,10 @@
       "exportZip": "Export ZIP",
       "delete": "Delete",
       "exportSuccess": "ZIP export complete",
-      "exportError": "Export error"
+      "exportError": "Export error",
+      "favorite": "Add to favorites",
+      "unfavorite": "Remove from favorites",
+      "editTags": "Manage tags"
     },
     "landing": {
       "subtitle": "Whiteboard for analysts and investigators",

@@ -15,6 +15,16 @@
     "viewInvestigations": "Voir les enquêtes",
     "investigationCount": "{{count}} enquête(s)",
     "loading": "Chargement...",
+    "searchPlaceholder": "Rechercher par nom ou description...",
+    "filterByTag": "Filtrer par tag",
+    "sortUpdated": "Récent",
+    "sortCreated": "Créé",
+    "sortName": "Nom",
+    "activeFilters": "Filtres actifs",
+    "clearFilters": "Effacer",
+    "noResults": "Aucune enquête trouvée",
+    "noResultsHint": "Essayez d'autres termes ou effacez les filtres",
+    "resultsCount": "{{count}} / {{total}} enquête(s)",
     "card": {
       "modified": "Modifié {{time}}",
       "elementCount": "{{count}} élément(s)",
@@ -23,7 +33,10 @@
       "exportZip": "Exporter ZIP",
       "delete": "Supprimer",
       "exportSuccess": "Export ZIP terminé",
-      "exportError": "Erreur lors de l'export"
+      "exportError": "Erreur lors de l'export",
+      "favorite": "Ajouter aux favoris",
+      "unfavorite": "Retirer des favoris",
+      "editTags": "Gérer les tags"
     },
     "landing": {
       "subtitle": "Tableau blanc pour analystes et enquêteurs",

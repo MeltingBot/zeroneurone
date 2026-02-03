@@ -148,6 +148,7 @@ export interface Investigation {
   description: string;
   startDate: Date | null;
   creator: string;
+  /** Tags for organizing investigations (e.g., "Cyber", "Client-X", "2026") */
   tags: string[];
   properties: Property[];
   createdAt: Date;
@@ -158,6 +159,8 @@ export interface Investigation {
     zoom: number;
   };
   settings: InvestigationSettings;
+  /** Whether this investigation is pinned/favorited for quick access */
+  isFavorite?: boolean;
 }
 
 export interface InvestigationSettings {

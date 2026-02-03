@@ -15,6 +15,16 @@
     "viewInvestigations": "Onderzoeken bekijken",
     "investigationCount": "{{count}} onderzoek(en)",
     "loading": "Laden...",
+    "searchPlaceholder": "Zoeken op naam of beschrijving...",
+    "filterByTag": "Filteren op tag",
+    "sortUpdated": "Recent",
+    "sortCreated": "Aangemaakt",
+    "sortName": "Naam",
+    "activeFilters": "Actieve filters",
+    "clearFilters": "Wissen",
+    "noResults": "Geen onderzoeken gevonden",
+    "noResultsHint": "Probeer andere termen of wis de filters",
+    "resultsCount": "{{count}} / {{total}} onderzoek(en)",
     "card": {
       "modified": "Gewijzigd {{time}}",
       "elementCount": "{{count}} element(en)",
@@ -23,7 +33,10 @@
       "exportZip": "ZIP exporteren",
       "delete": "Verwijderen",
       "exportSuccess": "ZIP-export voltooid",
-      "exportError": "Fout tijdens export"
+      "exportError": "Fout tijdens export",
+      "favorite": "Aan favorieten toevoegen",
+      "unfavorite": "Uit favorieten verwijderen",
+      "editTags": "Tags beheren"
     },
     "landing": {
       "subtitle": "Whiteboard voor analisten en onderzoekers",

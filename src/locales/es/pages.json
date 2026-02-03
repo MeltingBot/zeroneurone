@@ -15,6 +15,16 @@
     "viewInvestigations": "Ver investigaciones",
     "investigationCount": "{{count}} investigación(es)",
     "loading": "Cargando...",
+    "searchPlaceholder": "Buscar por nombre o descripción...",
+    "filterByTag": "Filtrar por tag",
+    "sortUpdated": "Reciente",
+    "sortCreated": "Creado",
+    "sortName": "Nombre",
+    "activeFilters": "Filtros activos",
+    "clearFilters": "Borrar",
+    "noResults": "No se encontraron investigaciones",
+    "noResultsHint": "Pruebe otros términos o borre los filtros",
+    "resultsCount": "{{count}} / {{total}} investigación(es)",
     "card": {
       "modified": "Modificado {{time}}",
       "elementCount": "{{count}} elemento(s)",
@@ -23,7 +33,10 @@
       "exportZip": "Exportar ZIP",
       "delete": "Eliminar",
       "exportSuccess": "Exportación ZIP completada",
-      "exportError": "Error durante la exportación"
+      "exportError": "Error durante la exportación",
+      "favorite": "Añadir a favoritos",
+      "unfavorite": "Quitar de favoritos",
+      "editTags": "Gestionar tags"
     },
     "landing": {
       "subtitle": "Pizarra para analistas e investigadores",

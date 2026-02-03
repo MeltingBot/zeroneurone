@@ -427,6 +427,19 @@
     "stopSharing": "Partekatzeari utzi",
     "stopping": "Gelditzen..."
   },
+  "investigationTags": {
+    "title": "Ikerketaren etiketak",
+    "currentTags": "Uneko etiketak",
+    "noTags": "Etiketarik ez",
+    "addTag": "Etiketa gehitu",
+    "placeholder": "Etiketa berria...",
+    "existingTags": "Dauden etiketak",
+    "more": "gehiago"
+  },
+  "common": {
+    "cancel": "Utzi",
+    "save": "Gorde"
+  },
   "tagSets": {
     "title": "Etiketak kudeatu",
     "newTag": "Etiketa berria",

@@ -15,6 +15,16 @@
     "viewInvestigations": "Veure investigacions",
     "investigationCount": "{{count}} investigació/ns",
     "loading": "Carregant...",
+    "searchPlaceholder": "Cercar per nom o descripció...",
+    "filterByTag": "Filtrar per etiqueta",
+    "sortUpdated": "Recent",
+    "sortCreated": "Creat",
+    "sortName": "Nom",
+    "activeFilters": "Filtres actius",
+    "clearFilters": "Esborrar",
+    "noResults": "No s'han trobat investigacions",
+    "noResultsHint": "Proveu altres termes o esborreu els filtres",
+    "resultsCount": "{{count}} / {{total}} investigació/ns",
     "card": {
       "modified": "Modificat {{time}}",
       "elementCount": "{{count}} element(s)",
@@ -23,7 +33,10 @@
       "exportZip": "Exportar ZIP",
       "delete": "Eliminar",
       "exportSuccess": "Exportació ZIP acabada",
-      "exportError": "Error durant l'exportació"
+      "exportError": "Error durant l'exportació",
+      "favorite": "Afegir als preferits",
+      "unfavorite": "Treure dels preferits",
+      "editTags": "Gestionar etiquetes"
     },
     "landing": {
       "subtitle": "Pissarra per a analistes i investigadors",

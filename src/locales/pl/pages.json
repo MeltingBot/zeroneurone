@@ -15,6 +15,16 @@
     "viewInvestigations": "Zobacz śledztwa",
     "investigationCount": "{{count}} śledztw(o/a)",
     "loading": "Ładowanie...",
+    "searchPlaceholder": "Szukaj po nazwie lub opisie...",
+    "filterByTag": "Filtruj według tagu",
+    "sortUpdated": "Ostatnie",
+    "sortCreated": "Utworzono",
+    "sortName": "Nazwa",
+    "activeFilters": "Aktywne filtry",
+    "clearFilters": "Wyczyść",
+    "noResults": "Nie znaleziono śledztw",
+    "noResultsHint": "Spróbuj innych terminów lub wyczyść filtry",
+    "resultsCount": "{{count}} / {{total}} śledztw(o/a)",
     "card": {
       "modified": "Zmodyfikowano {{time}}",
       "elementCount": "{{count}} element(ów)",
@@ -23,7 +33,10 @@
       "exportZip": "Eksportuj ZIP",
       "delete": "Usuń",
       "exportSuccess": "Eksport ZIP zakończony",
-      "exportError": "Błąd podczas eksportu"
+      "exportError": "Błąd podczas eksportu",
+      "favorite": "Dodaj do ulubionych",
+      "unfavorite": "Usuń z ulubionych",
+      "editTags": "Zarządzaj tagami"
     },
     "landing": {
       "subtitle": "Tablica dla analityków i śledczych",

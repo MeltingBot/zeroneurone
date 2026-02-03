@@ -427,6 +427,19 @@
     "stopSharing": "Arrêter le partage",
     "stopping": "Arrêt..."
   },
+  "investigationTags": {
+    "title": "Tags de l'enquête",
+    "currentTags": "Tags actuels",
+    "noTags": "Aucun tag",
+    "addTag": "Ajouter un tag",
+    "placeholder": "Nouveau tag...",
+    "existingTags": "Tags existants",
+    "more": "autres"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
   "tagSets": {
     "title": "Gérer les tags",
     "newTag": "Nouveau tag",

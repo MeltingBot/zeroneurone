@@ -427,6 +427,19 @@
     "stopSharing": "Freigabe beenden",
     "stopping": "Wird beendet..."
   },
+  "investigationTags": {
+    "title": "Ermittlungs-Tags",
+    "currentTags": "Aktuelle Tags",
+    "noTags": "Keine Tags",
+    "addTag": "Tag hinzufügen",
+    "placeholder": "Neuer Tag...",
+    "existingTags": "Vorhandene Tags",
+    "more": "mehr"
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern"
+  },
   "tagSets": {
     "title": "Tags verwalten",
     "newTag": "Neuer Tag",

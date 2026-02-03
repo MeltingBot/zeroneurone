@@ -58,6 +58,17 @@ class InvestigationDatabase extends Dexie {
       reports: 'id, investigationId, createdAt, updatedAt',
       tagSets: 'id, name',
     });
+
+    // Version 4: Add isFavorite and multi-value tags index on investigations for filtering
+    this.version(4).stores({
+      investigations: 'id, name, createdAt, updatedAt, isFavorite, *tags',
+      elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
+      links: 'id, investigationId, fromId, toId, createdAt, updatedAt',
+      assets: 'id, investigationId, hash, createdAt, [investigationId+hash]',
+      views: 'id, investigationId, name, createdAt',
+      reports: 'id, investigationId, createdAt, updatedAt',
+      tagSets: 'id, name',
+    });
   }
 }
 

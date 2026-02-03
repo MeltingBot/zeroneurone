@@ -15,6 +15,16 @@
     "viewInvestigations": "Ermittlungen anzeigen",
     "investigationCount": "{{count}} Ermittlung(en)",
     "loading": "Wird geladen...",
+    "searchPlaceholder": "Nach Name oder Beschreibung suchen...",
+    "filterByTag": "Nach Tag filtern",
+    "sortUpdated": "Aktuell",
+    "sortCreated": "Erstellt",
+    "sortName": "Name",
+    "activeFilters": "Aktive Filter",
+    "clearFilters": "Löschen",
+    "noResults": "Keine Ermittlungen gefunden",
+    "noResultsHint": "Versuchen Sie andere Begriffe oder löschen Sie die Filter",
+    "resultsCount": "{{count}} / {{total}} Ermittlung(en)",
     "card": {
       "modified": "Geändert {{time}}",
       "elementCount": "{{count}} Element(e)",
@@ -23,7 +33,10 @@
       "exportZip": "ZIP exportieren",
       "delete": "Löschen",
       "exportSuccess": "ZIP-Export abgeschlossen",
-      "exportError": "Fehler beim Export"
+      "exportError": "Fehler beim Export",
+      "favorite": "Zu Favoriten hinzufügen",
+      "unfavorite": "Aus Favoriten entfernen",
+      "editTags": "Tags verwalten"
     },
     "landing": {
       "subtitle": "Whiteboard für Analysten und Ermittler",

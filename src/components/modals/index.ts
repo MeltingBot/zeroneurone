@@ -14,3 +14,4 @@ export { StorageModal } from './StorageModal';
 export { LocalStorageDisclaimerModal, hasAcknowledgedLocalStorage } from './LocalStorageDisclaimerModal';
 export { MetadataImportModal } from './MetadataImportModal';
 export { ImportIntoCurrentModal } from './ImportIntoCurrentModal';
+export { InvestigationTagsModal } from './InvestigationTagsModal';

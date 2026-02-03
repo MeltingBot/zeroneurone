@@ -15,6 +15,16 @@
     "viewInvestigations": "Ver investigações",
     "investigationCount": "{{count}} investigação(ões)",
     "loading": "A carregar...",
+    "searchPlaceholder": "Pesquisar por nome ou descrição...",
+    "filterByTag": "Filtrar por tag",
+    "sortUpdated": "Recente",
+    "sortCreated": "Criado",
+    "sortName": "Nome",
+    "activeFilters": "Filtros ativos",
+    "clearFilters": "Limpar",
+    "noResults": "Nenhuma investigação encontrada",
+    "noResultsHint": "Tente outros termos ou limpe os filtros",
+    "resultsCount": "{{count}} / {{total}} investigação(ões)",
     "card": {
       "modified": "Modificado {{time}}",
       "elementCount": "{{count}} elemento(s)",
@@ -23,7 +33,10 @@
       "exportZip": "Exportar ZIP",
       "delete": "Eliminar",
       "exportSuccess": "Exportação ZIP concluída",
-      "exportError": "Erro durante a exportação"
+      "exportError": "Erro durante a exportação",
+      "favorite": "Adicionar aos favoritos",
+      "unfavorite": "Remover dos favoritos",
+      "editTags": "Gerir tags"
     },
     "landing": {
       "subtitle": "Quadro branco para analistas e investigadores",

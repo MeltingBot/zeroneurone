@@ -15,6 +15,16 @@
     "viewInvestigations": "Visualizza indagini",
     "investigationCount": "{{count}} indagine/i",
     "loading": "Caricamento...",
+    "searchPlaceholder": "Cerca per nome o descrizione...",
+    "filterByTag": "Filtra per tag",
+    "sortUpdated": "Recente",
+    "sortCreated": "Creato",
+    "sortName": "Nome",
+    "activeFilters": "Filtri attivi",
+    "clearFilters": "Cancella",
+    "noResults": "Nessuna indagine trovata",
+    "noResultsHint": "Prova altri termini o cancella i filtri",
+    "resultsCount": "{{count}} / {{total}} indagine/i",
     "card": {
       "modified": "Modificato {{time}}",
       "elementCount": "{{count}} elemento/i",
@@ -23,7 +33,10 @@
       "exportZip": "Esporta ZIP",
       "delete": "Elimina",
       "exportSuccess": "Esportazione ZIP completata",
-      "exportError": "Errore durante l'esportazione"
+      "exportError": "Errore durante l'esportazione",
+      "favorite": "Aggiungi ai preferiti",
+      "unfavorite": "Rimuovi dai preferiti",
+      "editTags": "Gestisci tag"
     },
     "landing": {
       "subtitle": "Lavagna per analisti e investigatori",

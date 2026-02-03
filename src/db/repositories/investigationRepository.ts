@@ -45,6 +45,7 @@ function rehydrateInvestigation(investigation: Investigation): Investigation {
     creator: investigation.creator ?? '',
     tags: investigation.tags ?? [],
     properties: investigation.properties ?? [],
+    isFavorite: investigation.isFavorite ?? false,
     settings: {
       ...investigation.settings,
       suggestedProperties: migratePropertyArray(investigation.settings?.suggestedProperties),
@@ -77,6 +78,7 @@ export const investigationRepository = {
         tagDisplayMode: 'icons',
         tagDisplaySize: 'small',
       },
+      isFavorite: false,
     };
 
     await db.investigations.add(investigation);
@@ -116,10 +118,52 @@ export const investigationRepository = {
         tagDisplayMode: 'icons',
         tagDisplaySize: 'small',
       },
+      isFavorite: false,
     };
 
     await db.investigations.add(investigation);
     return investigation;
+  },
+
+  /**
+   * Toggle favorite status of an investigation
+   */
+  async toggleFavorite(id: InvestigationId): Promise<boolean> {
+    const investigation = await db.investigations.get(id);
+    if (!investigation) return false;
+
+    const newValue = !investigation.isFavorite;
+    await db.investigations.update(id, {
+      isFavorite: newValue,
+      updatedAt: new Date(),
+    });
+    return newValue;
+  },
+
+  /**
+   * Update investigation tags
+   */
+  async setTags(id: InvestigationId, tags: string[]): Promise<void> {
+    await db.investigations.update(id, {
+      tags,
+      updatedAt: new Date(),
+    });
+  },
+
+  /**
+   * Get all unique tags used across all investigations
+   */
+  async getAllTags(): Promise<string[]> {
+    const investigations = await db.investigations.toArray();
+    const tagSet = new Set<string>();
+    for (const inv of investigations) {
+      if (inv.tags) {
+        for (const tag of inv.tags) {
+          tagSet.add(tag);
+        }
+      }
+    }
+    return Array.from(tagSet).sort();
   },
 
   async getById(id: InvestigationId): Promise<Investigation | undefined> {

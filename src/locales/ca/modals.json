@@ -427,6 +427,19 @@
     "stopSharing": "Deixar de compartir",
     "stopping": "Aturant..."
   },
+  "investigationTags": {
+    "title": "Etiquetes de la investigació",
+    "currentTags": "Etiquetes actuals",
+    "noTags": "Sense etiquetes",
+    "addTag": "Afegir etiqueta",
+    "placeholder": "Nova etiqueta...",
+    "existingTags": "Etiquetes existents",
+    "more": "més"
+  },
+  "common": {
+    "cancel": "Cancel·lar",
+    "save": "Desar"
+  },
   "tagSets": {
     "title": "Gestionar etiquetes",
     "newTag": "Nova etiqueta",

@@ -427,6 +427,19 @@
     "stopSharing": "Stop sharing",
     "stopping": "Stopping..."
   },
+  "investigationTags": {
+    "title": "Investigation tags",
+    "currentTags": "Current tags",
+    "noTags": "No tags",
+    "addTag": "Add a tag",
+    "placeholder": "New tag...",
+    "existingTags": "Existing tags",
+    "more": "more"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save"
+  },
   "tagSets": {
     "title": "Manage tags",
     "newTag": "New tag",

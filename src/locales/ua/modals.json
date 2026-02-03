@@ -427,6 +427,19 @@
     "stopSharing": "Припинити спільний доступ",
     "stopping": "Зупинка..."
   },
+  "investigationTags": {
+    "title": "Теги розслідування",
+    "currentTags": "Поточні теги",
+    "noTags": "Немає тегів",
+    "addTag": "Додати тег",
+    "placeholder": "Новий тег...",
+    "existingTags": "Існуючі теги",
+    "more": "ще"
+  },
+  "common": {
+    "cancel": "Скасувати",
+    "save": "Зберегти"
+  },
   "tagSets": {
     "title": "Керувати тегами",
     "newTag": "Новий тег",

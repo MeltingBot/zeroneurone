@@ -15,6 +15,16 @@
     "viewInvestigations": "Переглянути розслідування",
     "investigationCount": "{{count}} розслідування",
     "loading": "Завантаження...",
+    "searchPlaceholder": "Шукати за назвою або описом...",
+    "filterByTag": "Фільтрувати за тегом",
+    "sortUpdated": "Останні",
+    "sortCreated": "Створено",
+    "sortName": "Назва",
+    "activeFilters": "Активні фільтри",
+    "clearFilters": "Очистити",
+    "noResults": "Розслідувань не знайдено",
+    "noResultsHint": "Спробуйте інші терміни або очистіть фільтри",
+    "resultsCount": "{{count}} / {{total}} розслідувань",
     "card": {
       "modified": "Змінено {{time}}",
       "elementCount": "{{count}} елементів",
@@ -23,7 +33,10 @@
       "exportZip": "Експортувати ZIP",
       "delete": "Видалити",
       "exportSuccess": "ZIP експорт завершено",
-      "exportError": "Помилка під час експорту"
+      "exportError": "Помилка під час експорту",
+      "favorite": "Додати до обраного",
+      "unfavorite": "Видалити з обраного",
+      "editTags": "Керувати тегами"
     },
     "landing": {
       "subtitle": "Дошка для аналітиків та слідчих",

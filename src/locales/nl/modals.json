@@ -427,6 +427,19 @@
     "stopSharing": "Stoppen met delen",
     "stopping": "Stoppen..."
   },
+  "investigationTags": {
+    "title": "Onderzoek-tags",
+    "currentTags": "Huidige tags",
+    "noTags": "Geen tags",
+    "addTag": "Tag toevoegen",
+    "placeholder": "Nieuwe tag...",
+    "existingTags": "Bestaande tags",
+    "more": "meer"
+  },
+  "common": {
+    "cancel": "Annuleren",
+    "save": "Opslaan"
+  },
   "tagSets": {
     "title": "Tags beheren",
     "newTag": "Nieuwe tag",
