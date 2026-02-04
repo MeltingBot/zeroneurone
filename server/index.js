@@ -42,7 +42,7 @@ const LIMITS = {
 
   // Room ID validation
   MAX_ROOM_ID_LENGTH: 128,               // Max room ID length
-  ROOM_ID_PATTERN: /^[a-zA-Z0-9_-]+$/,   // Allowed characters
+  ROOM_ID_PATTERN: /^[a-zA-Z0-9._-]+$/,  // Allowed characters (includes . for domains)
 };
 
 // Track connections per IP
@@ -206,16 +206,19 @@ function setupWebSocketRelay(wss) {
       return;
     }
 
-    // Extract room from URL path: /roomId or /ws/roomId
-    let roomId = req.url?.slice(1) || 'default';
+    // Extract room from URL path: /roomId or /prefix/roomId
+    // If URL has multiple segments, take the last one (handles proxy rewrites)
+    let urlPath = req.url?.slice(1) || 'default';
+    urlPath = urlPath.split('?')[0] || 'default';
 
-    // Support /ws/ prefix for flexibility
-    if (roomId.startsWith('ws/')) {
-      roomId = roomId.slice(3);
+    // Support /ws/ prefix for flexibility (legacy)
+    if (urlPath.startsWith('ws/')) {
+      urlPath = urlPath.slice(3);
     }
 
-    // Sanitize room ID
-    roomId = roomId.split('?')[0] || 'default';
+    // Take last segment if there are multiple (e.g., /investigation/abc123 -> abc123)
+    const segments = urlPath.split('/').filter(Boolean);
+    let roomId = segments.length > 0 ? segments[segments.length - 1] : 'default';
 
     // ========== ROOM ID VALIDATION ==========
     if (!isValidRoomId(roomId)) {

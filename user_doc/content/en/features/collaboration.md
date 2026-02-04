@@ -209,7 +209,13 @@ To use your own server:
 
 1. Menu **⋯** → **Share**
 2. **Server** section
-3. Enter your server's WSS URL
+3. Enter your server's full URL
+
+{{< hint warning >}}
+**Required format**: The URL must include the WebSocket protocol:
+- `wss://server.example.com` (secure, recommended)
+- `ws://server.example.com` (unencrypted, development only)
+{{< /hint >}}
 
 
 ### Host a Server

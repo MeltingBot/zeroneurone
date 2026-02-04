@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.3
+
+### Fixes
+- Relay server: allow dots in room IDs, extract last URL segment (handles proxy paths)
+- Documentation: clarify WebSocket server URL format (must include wss:// or ws://)
+
 ## 1.6.2
 
 ### Features
