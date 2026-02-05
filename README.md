@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-1.5.2-blue)
+![Version](https://img.shields.io/badge/version-2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -61,10 +61,12 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 ### Collaboration Temps Reel
 - Synchronisation via WebSocket avec chiffrement E2E (AES-256-GCM)
 - Partage par lien avec cle dans le fragment URL (jamais envoyee au serveur)
+- **Mode asynchrone** : collaborateurs travaillent a des moments differents, donnees bufferisees 7 jours
 - Curseurs et selections des collaborateurs visibles
 - Synchronisation des pieces jointes
 - Detection de presence avec heartbeat
 - Sync incrementale optimisee
+- Room ID hashe (le serveur ne peut pas correler les sessions)
 
 ### Export & Import
 - Export ZIP complet (JSON + assets)
@@ -187,13 +189,13 @@ L'application sera accessible sur `http://localhost:5173`
 1. Ouvrir une enquete
 2. Cliquer sur "Partager" dans la barre d'outils
 3. Configurer l'URL du serveur de signalisation (une seule fois)
-4. Copier le lien de partage
-5. Les collaborateurs ouvrent le lien pour rejoindre
+4. Activer le mode asynchrone si besoin (collaborateurs travaillant a des moments differents)
+5. Copier le lien de partage
+6. Les collaborateurs ouvrent le lien pour rejoindre
 
-Le lien contient :
-- L'ID de l'enquete (dans le path)
-- L'URL du serveur (query param)
-- La cle de chiffrement (dans le fragment `#key=...`, jamais envoyee au serveur)
+> **Important** : En mode asynchrone, conservez le lien de partage. C'est le seul moyen de rejoindre la session et dechiffrer les donnees.
+
+Voir la [documentation](https://doc.zeroneurone.com) pour les details.
 
 ## Architecture
 
@@ -364,6 +366,11 @@ Ou deployer votre propre serveur y-websocket.
 ### v1.2 — Integration ✓
 - [x] Import/merge d'investigations dans le canvas courant
 - [ ] Import depuis tableur avec mapping colonnes
+
+### v2.0 — Collaboration asynchrone ✓
+- [x] Mode asynchrone (travail decale, buffer 7 jours)
+- [x] Protection des metadonnees (room ID hashe)
+- [x] Ancrage automatique des connecteurs par defaut
 
 ### Idees futures
 - [ ] Theming personnalisable
