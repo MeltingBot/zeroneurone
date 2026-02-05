@@ -7,6 +7,12 @@
  * Usage: node relay-server.js [port]
  * Default port: 4444
  *
+ * Room ID formats supported:
+ * - Legacy: UUID (e.g., ef2ae2c2-ae85-4a82-bcaf-6435e3a36e15)
+ * - New (v1.7+): SHA-256 hash (32 hex chars, e.g., a1b2c3d4e5f67890...)
+ *   The hash is derived from investigationId + encryptionKey client-side,
+ *   so the server never sees the real investigation UUID.
+ *
  * Includes DoS protection:
  * - Message size limits
  * - Rate limiting per client
@@ -23,7 +29,7 @@ const port = process.argv[2] || 4444;
 // ============================================================================
 const LIMITS = {
   // Message limits
-  MAX_MESSAGE_SIZE: 5 * 1024 * 1024,    // 5 MB max per message
+  MAX_MESSAGE_SIZE: 50 * 1024 * 1024,   // 50 MB max per message (increased for large Y.Doc sync)
 
   // Rate limiting
   RATE_WINDOW_MS: 1000,                  // 1 second window
@@ -36,7 +42,7 @@ const LIMITS = {
 
   // Room ID validation
   MAX_ROOM_ID_LENGTH: 128,               // Max room ID length
-  ROOM_ID_PATTERN: /^[a-zA-Z0-9_-]+$/,   // Allowed characters
+  ROOM_ID_PATTERN: /^[a-zA-Z0-9._-]+$/,  // Allowed characters (added . for UUIDs with dots)
 };
 
 // Track connections per IP
@@ -114,9 +120,13 @@ wss.on('connection', (ws, req) => {
     return;
   }
 
-  // Extract room from URL path: /roomId
-  let roomId = req.url?.slice(1) || 'default';
-  roomId = roomId.split('?')[0] || 'default';
+  // Extract room from URL path: /roomId or /prefix/roomId
+  // If URL has multiple segments, take the last one (handles proxy rewrites)
+  let urlPath = req.url?.slice(1) || 'default';
+  urlPath = urlPath.split('?')[0] || 'default';
+  // Take last segment if there are multiple (e.g., /investigation/abc123 -> abc123)
+  const segments = urlPath.split('/').filter(Boolean);
+  let roomId = segments.length > 0 ? segments[segments.length - 1] : 'default';
 
   // ========== ROOM ID VALIDATION ==========
   if (!isValidRoomId(roomId)) {

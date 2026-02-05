@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0
+
+### Security
+- URL hardening: investigation name moved to URL fragment (never sent to server)
+- URL hardening: room ID is now SHA-256 hash of UUID + encryption key (server cannot correlate sessions)
+- Backwards compatible with pre-1.7 share URLs
+
+### Fixes
+- Relay server: increased max message size to 50 MB for large Y.Doc sync
+
 ## 1.6.3
 
 ### Fixes

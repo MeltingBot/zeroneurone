@@ -94,6 +94,23 @@ export function isValidKeyString(keyString: string): boolean {
   }
 }
 
+/**
+ * Derive a hashed room ID from investigation UUID and encryption key
+ * This prevents the server from seeing the real investigation UUID
+ *
+ * @param investigationId - The investigation UUID
+ * @param encryptionKey - The E2E encryption key (base64url)
+ * @returns 32-character hex string (128 bits, collision-resistant)
+ */
+export async function deriveRoomId(investigationId: string, encryptionKey: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(investigationId + encryptionKey);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  // 32 hex chars = 128 bits, sufficient to avoid collisions
+  return hashArray.slice(0, 16).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // ============================================================================
 // HELPERS
 // ============================================================================

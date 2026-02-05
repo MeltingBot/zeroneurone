@@ -270,8 +270,8 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       // share() now generates an encryption key and uses investigation UUID as roomId
       const encryptionKey = await syncService.share();
 
-      // Build the share URL with encryption key in fragment
-      const shareUrl = syncService.buildShareUrl(investigationId, encryptionKey, investigationName);
+      // Build the share URL with encryption key in fragment (async for hash computation)
+      const shareUrl = await syncService.buildShareUrl(investigationId, encryptionKey, investigationName);
 
       set({ encryptionKey });
 

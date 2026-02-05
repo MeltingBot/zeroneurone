@@ -1,15 +1,20 @@
 /**
- * JoinPage - Page to join a collaborative session via investigation UUID
+ * JoinPage - Page to join a collaborative session
  *
- * URL format: /join/{investigationId}?server=...&name=...#key=xxx
+ * Supports two URL formats for backwards compatibility:
+ *
+ * OLD FORMAT (pre-v1.7):
+ * /join/{uuid}?server=...&name=...#key=xxx
+ *
+ * NEW FORMAT (v1.7+):
+ * /join/{hash}?server=...#key=xxx&name=xxx&id=uuid
  *
  * Flow:
- * 1. Extract investigation UUID from URL path (now used as roomId)
- * 2. Extract encryption key from URL fragment (#key=xxx)
- * 3. Check if signaling server is configured
- * 4. Check if investigation already exists locally, if not create it with the UUID
- * 5. Connect to shared session via syncService with encryption
- * 6. Redirect to investigation page
+ * 1. Parse URL to extract roomId, investigationId, key, name, server
+ * 2. Check if signaling server is configured
+ * 3. Check if investigation already exists locally, if not create it with the UUID
+ * 4. Connect to shared session via syncService with encryption
+ * 5. Redirect to investigation page
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -28,8 +33,8 @@ type JoinState = 'input' | 'connecting' | 'error' | 'server-warning';
 
 export function JoinPage() {
   const { t, i18n } = useTranslation('pages');
-  // The roomId is now the investigation UUID
-  const { roomId: investigationId } = useParams<{ roomId: string }>();
+  // Path segment can be UUID (old format) or hash (new format)
+  const { roomId: pathSegment } = useParams<{ roomId: string }>();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,17 +49,44 @@ export function JoinPage() {
   const [editingUserName, setEditingUserName] = useState(false);
   const [userNameInput, setUserNameInput] = useState(localUser.name);
 
-  // Get params from URL
-  const serverFromUrl = searchParams.get('server');
-  const nameFromUrl = searchParams.get('name');
+  // Parse URL fragment for all formats
+  const urlParams = useRef<{
+    encryptionKey: string | null;
+    investigationId: string | null;
+    nameFromFragment: string | null;
+    roomId: string;
+    isLegacyFormat: boolean;
+  } | null>(null);
 
-  // Extract encryption key from URL fragment (#key=xxx)
-  const encryptionKeyFromUrl = useRef<string | null>(null);
-  if (location.hash && !encryptionKeyFromUrl.current) {
-    const hashParams = new URLSearchParams(location.hash.slice(1));
-    encryptionKeyFromUrl.current = hashParams.get('key');
+  if (!urlParams.current && pathSegment) {
+    const hashParams = location.hash ? new URLSearchParams(location.hash.slice(1)) : null;
+
+    const encryptionKey = hashParams?.get('key') || null;
+    const fragmentId = hashParams?.get('id') || null;
+    const fragmentName = hashParams?.get('name') || null;
+
+    // Determine format:
+    // - NEW FORMAT: id is in fragment, path contains hash
+    // - OLD FORMAT: path contains UUID, name may be in query
+    const isLegacyFormat = !fragmentId;
+
+    urlParams.current = {
+      encryptionKey,
+      investigationId: fragmentId || pathSegment, // UUID from fragment (new) or path (old)
+      nameFromFragment: fragmentName,
+      roomId: pathSegment, // Always the path segment (hash or UUID)
+      isLegacyFormat,
+    };
   }
-  const hasValidEncryptionKey = encryptionKeyFromUrl.current && isValidKeyString(encryptionKeyFromUrl.current);
+
+  // Get params from URL (supports both formats)
+  const serverFromUrl = searchParams.get('server');
+  const nameFromUrl = urlParams.current?.nameFromFragment || searchParams.get('name');
+  const encryptionKeyFromUrl = urlParams.current?.encryptionKey || null;
+  const investigationId = urlParams.current?.investigationId || pathSegment;
+  const roomId = urlParams.current?.roomId || pathSegment;
+
+  const hasValidEncryptionKey = encryptionKeyFromUrl && isValidKeyString(encryptionKeyFromUrl);
 
   // Server configuration - prioritize URL param, then localStorage
   const savedServer = localStorage.getItem(STORAGE_KEY) || '';
@@ -75,6 +107,15 @@ export function JoinPage() {
   const [investigationName, setInvestigationName] = useState(
     nameFromUrl || t('join.defaultSessionName')
   );
+
+  // Log format detection for debugging
+  useEffect(() => {
+    if (urlParams.current) {
+      console.log('[JoinPage] URL format:', urlParams.current.isLegacyFormat ? 'legacy' : 'new');
+      console.log('[JoinPage] Investigation ID:', investigationId);
+      console.log('[JoinPage] Room ID:', roomId);
+    }
+  }, [investigationId, roomId]);
 
   // Show warning if server from URL is different from saved one
   useEffect(() => {
@@ -160,8 +201,15 @@ export function JoinPage() {
       // Close any existing Y.Doc first
       await syncService.close();
 
-      // Open in shared mode with the investigation UUID as roomId and encryption key
-      await syncService.openShared(investigationId, encryptionKeyFromUrl.current || undefined);
+      // Open in shared mode
+      // - investigationId: UUID for local storage
+      // - encryptionKey: for E2E encryption
+      // - roomId: hash (new format) or UUID (legacy) for WebSocket
+      await syncService.openShared(
+        investigationId!,
+        encryptionKeyFromUrl || undefined,
+        roomId  // Pass separate roomId for WebSocket
+      );
 
       // Wait for WebSocket connection and initial sync to complete
       await new Promise<void>((resolve, reject) => {

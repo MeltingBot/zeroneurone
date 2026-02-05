@@ -28,17 +28,20 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   // Rebuild share URL when modal opens if already sharing/connected
   // Works for both host and client (gets key from syncService)
   useEffect(() => {
-    if (isOpen && mode === 'shared' && currentInvestigation && !shareUrl) {
-      const encryptionKey = syncService.getEncryptionKey();
-      if (encryptionKey) {
-        const url = syncService.buildShareUrl(
-          currentInvestigation.id,
-          encryptionKey,
-          currentInvestigation.name
-        );
-        setShareUrl(url);
+    const buildUrl = async () => {
+      if (isOpen && mode === 'shared' && currentInvestigation && !shareUrl) {
+        const encryptionKey = syncService.getEncryptionKey();
+        if (encryptionKey) {
+          const url = await syncService.buildShareUrl(
+            currentInvestigation.id,
+            encryptionKey,
+            currentInvestigation.name
+          );
+          setShareUrl(url);
+        }
       }
-    }
+    };
+    buildUrl();
   }, [isOpen, mode, currentInvestigation, shareUrl]);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);

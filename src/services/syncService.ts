@@ -15,7 +15,7 @@ import { WebsocketProvider } from 'y-websocket';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass } from './encryptedWebSocket';
-import { generateEncryptionKey, isValidKeyString } from './cryptoService';
+import { generateEncryptionKey, isValidKeyString, deriveRoomId } from './cryptoService';
 
 // Storage key for signaling server URL
 const STORAGE_KEY = 'zeroneurone-signaling-server';
@@ -167,10 +167,11 @@ class SyncService {
    * Open an investigation in shared mode (sync with peers via signaling server)
    * If the investigation has local data, it will be synced with peers
    *
-   * @param investigationId - The investigation UUID (also used as roomId)
+   * @param investigationId - The investigation UUID (used for local storage)
    * @param encryptionKey - The AES-256-GCM key for E2E encryption (optional)
+   * @param roomId - The room ID for WebSocket (optional, defaults to investigationId for legacy support)
    */
-  async openShared(investigationId: string, encryptionKey?: string): Promise<Y.Doc> {
+  async openShared(investigationId: string, encryptionKey?: string, roomId?: string): Promise<Y.Doc> {
     if (!this.isServerConfigured()) {
       throw new Error('Serveur de synchronisation non configuré');
     }
@@ -188,21 +189,23 @@ class SyncService {
     this.ydoc = new Y.Doc();
 
     // Set up IndexedDB persistence (for offline support)
+    // Uses investigationId (UUID) for local storage
     const dbName = `zeroneurone-ydoc-${investigationId}`;
     this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
 
     // Wait for local data to be loaded first
     await this.indexeddbProvider.whenSynced;
 
-    // Connect to signaling server using investigationId as roomId
-    this.connectWebSocket(investigationId, encryptionKey);
+    // Connect to signaling server
+    // Uses roomId if provided (hashed), otherwise investigationId (legacy)
+    this.connectWebSocket(roomId || investigationId, encryptionKey);
 
     return this.ydoc;
   }
 
   /**
    * Share the currently open investigation
-   * Generates a new encryption key and uses the investigation UUID as roomId
+   * Generates a new encryption key and derives a hashed roomId
    *
    * @returns The generated encryption key for sharing
    */
@@ -220,6 +223,10 @@ class SyncService {
     const newKey = await generateEncryptionKey();
     this.encryptionKey = newKey;
 
+    // Derive hashed roomId from investigation UUID + key
+    // Server cannot correlate sessions, and re-sharing creates new room
+    const hashedRoomId = await deriveRoomId(this.investigationId, newKey);
+
     // If already shared, disconnect first to reconnect with new key
     if (this.websocketProvider) {
       this.websocketProvider.disconnect();
@@ -227,8 +234,8 @@ class SyncService {
       this.websocketProvider = null;
     }
 
-    // Connect using investigation UUID as roomId
-    this.connectWebSocket(this.investigationId, newKey);
+    // Connect using hashed roomId (not UUID)
+    this.connectWebSocket(hashedRoomId, newKey);
 
     return newKey;
   }
@@ -473,66 +480,115 @@ class SyncService {
 
   /**
    * Build a share URL for the current investigation
-   * URL format: /join/{investigationId}?server=...&name=...#key=xxx
    *
-   * The encryption key is placed in the URL fragment (#key=xxx) which is
-   * never sent to the server - it stays client-side only.
+   * NEW FORMAT (v1.7+):
+   * /join/{hashedRoomId}?server=wss://...#key=xxx&name=xxx&id=uuid
    *
-   * @param investigationId - The investigation UUID (used as roomId)
+   * Security improvements:
+   * - roomId is hashed (server cannot see real UUID)
+   * - name is in fragment (never sent to server)
+   * - id (UUID) is in fragment (never sent to server)
+   * - key is in fragment (never sent to server)
+   *
+   * @param investigationId - The investigation UUID
    * @param encryptionKey - The E2E encryption key
    * @param investigationName - Optional display name
    * @param baseUrl - Optional base URL (defaults to current origin)
    */
-  buildShareUrl(
+  async buildShareUrl(
     investigationId: string,
     encryptionKey: string,
     investigationName?: string,
     baseUrl?: string
-  ): string {
+  ): Promise<string> {
     const base = baseUrl || window.location.origin;
-    const url = new URL(`${base}/join/${investigationId}`);
+
+    // Derive hashed room ID from UUID + key (server cannot correlate)
+    const hashedRoomId = await deriveRoomId(investigationId, encryptionKey);
+
+    const url = new URL(`${base}/join/${hashedRoomId}`);
 
     if (this.serverUrl) {
       url.searchParams.set('server', this.serverUrl);
     }
+
+    // All sensitive data in fragment (never sent to server)
+    const fragmentParams = new URLSearchParams();
+    fragmentParams.set('key', encryptionKey);
+    fragmentParams.set('id', investigationId);
     if (investigationName) {
-      url.searchParams.set('name', investigationName);
+      fragmentParams.set('name', investigationName);
     }
 
-    // Add encryption key as fragment (never sent to server)
-    return `${url.toString()}#key=${encryptionKey}`;
+    return `${url.toString()}#${fragmentParams.toString()}`;
   }
 
   /**
    * Parse a share URL to extract investigation ID and encryption key
    *
+   * Supports both formats for backwards compatibility:
+   *
+   * OLD FORMAT (pre-v1.7):
+   * /join/{uuid}?server=...&name=...#key=xxx
+   *
+   * NEW FORMAT (v1.7+):
+   * /join/{hash}?server=...#key=xxx&name=xxx&id=uuid
+   *
    * @param url - The share URL to parse
-   * @returns Object with investigationId, encryptionKey, serverUrl, and name
+   * @returns Object with investigationId, encryptionKey, serverUrl, name, and roomId
    */
   parseShareUrl(url: string): {
     investigationId: string;
     encryptionKey: string | null;
     serverUrl: string | null;
     name: string | null;
+    roomId: string; // The actual roomId to use for WebSocket (hash or UUID)
+    isLegacyFormat: boolean;
   } {
     const parsed = new URL(url);
 
-    // Extract investigation ID from path: /join/{investigationId}
+    // Extract path segment: /join/{something}
     const pathMatch = parsed.pathname.match(/\/join\/([^/]+)/);
-    const investigationId = pathMatch ? pathMatch[1] : '';
+    const pathSegment = pathMatch ? pathMatch[1] : '';
 
-    // Extract encryption key from fragment: #key=xxx
+    // Parse fragment parameters
     let encryptionKey: string | null = null;
+    let fragmentId: string | null = null;
+    let fragmentName: string | null = null;
+
     if (parsed.hash) {
       const hashParams = new URLSearchParams(parsed.hash.slice(1));
       encryptionKey = hashParams.get('key');
+      fragmentId = hashParams.get('id');
+      fragmentName = hashParams.get('name');
     }
 
     // Extract query params
     const serverUrl = parsed.searchParams.get('server');
-    const name = parsed.searchParams.get('name');
+    const queryName = parsed.searchParams.get('name');
 
-    return { investigationId, encryptionKey, serverUrl, name };
+    // Determine format:
+    // - NEW FORMAT: id is in fragment, path contains hash
+    // - OLD FORMAT: id is in path (UUID format), name may be in query
+    const isLegacyFormat = !fragmentId;
+
+    // Investigation ID: from fragment (new) or path (old)
+    const investigationId = fragmentId || pathSegment;
+
+    // Room ID: path segment (hash in new format, UUID in old format)
+    const roomId = pathSegment;
+
+    // Name: from fragment (new) or query (old)
+    const name = fragmentName || queryName;
+
+    return {
+      investigationId,
+      encryptionKey,
+      serverUrl,
+      name,
+      roomId,
+      isLegacyFormat,
+    };
   }
 
   /**
