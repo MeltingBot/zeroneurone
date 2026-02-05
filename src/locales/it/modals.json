@@ -418,6 +418,8 @@
     "save": "Salva",
     "serverHelp": "Usa un server compatibile con y-websocket. Puoi ospitare il tuo con",
     "shareDescription": "Condividi questa indagine per collaborare in tempo reale. Ogni partecipante vedrà le modifiche istantaneamente.",
+    "asyncMode": "Collaborazione asincrona",
+    "asyncModeHelp": "Permette ai collaboratori di lavorare in momenti diversi. Le modifiche vengono conservate 7 giorni sul server.",
     "serverRequired": "Configura prima un server di sincronizzazione per attivare la condivisione.",
     "share": "Condividi",
     "sharing": "Condivisione...",

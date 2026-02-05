@@ -44,18 +44,20 @@ Once sharing is active:
 ### Link Format
 
 ```
-https://zeroneurone.app/join/{id}?server=wss://...&name=...#key=xxx
+https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&name=...
 ```
 
 | Part | Content |
 |------|---------|
-| `/join/{id}` | Investigation identifier |
+| `/join/{roomId}` | Hashed room identifier (server cannot see original UUID) |
 | `?server=` | Signaling server address |
-| `?name=` | Investigation name |
-| `#key=` | Encryption key (fragment) |
+| `?async=1` | Asynchronous mode flag (optional) |
+| `#key=` | Encryption key |
+| `#id=` | Original investigation UUID |
+| `#name=` | Investigation name |
 
 {{< hint warning >}}
-**Important**: The `#key=...` fragment is never sent to the server (browser standard). This is what guarantees end-to-end encryption.
+**Important**: Everything after `#` (fragment) is never sent to the server (browser standard). The room ID is derived from a hash of the UUID + encryption key, so the server cannot correlate sessions with investigations. This is what guarantees end-to-end encryption and metadata privacy.
 {{< /hint >}}
 
 ---
@@ -193,6 +195,44 @@ If two users modify the same element:
 
 {{< hint warning >}}
 **Note**: Collaborators keep their local copy. To revoke access to future modifications, you must create a new session with a new link.
+{{< /hint >}}
+
+---
+
+## Asynchronous Collaboration
+
+ZeroNeurone supports asynchronous collaboration, allowing collaborators to work at different times without being connected simultaneously.
+
+### How It Works
+
+1. **Enable async mode** when starting to share (checkbox "Asynchronous collaboration")
+2. Changes are stored on the server for **7 days**
+3. Collaborators can join when they want and receive accumulated changes
+
+### Keep Your Share Link
+
+{{< hint danger >}}
+**Critical**: Save and keep the share link carefully. Without this link:
+- You will not be able to rejoin the session
+- The investigation cannot be recreated in disconnected async mode
+- The encryption key in the URL fragment (`#key=...`) is the only way to decrypt the data
+{{< /hint >}}
+
+Recommendations:
+- Save the link in a password manager
+- Keep a copy in a secure note
+- Send the link to yourself by email
+
+### Update After Asynchronous Work
+
+To update your local investigation with remote async changes:
+
+1. **Stop sharing** first (Menu **⋯** → **Share** → **Stop sharing**)
+2. Then rejoin using your saved share link
+3. Changes from other collaborators will be synchronized
+
+{{< hint info >}}
+**Why stop first?** When you stop sharing, your local data becomes the reference. Rejoining then merges the server data with your local copy.
 {{< /hint >}}
 
 ---

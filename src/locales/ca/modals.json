@@ -418,6 +418,8 @@
     "save": "Desar",
     "serverHelp": "Utilitzeu un servidor compatible amb y-websocket. Podeu allotjar el vostre amb",
     "shareDescription": "Compartiu aquesta investigació per col·laborar en temps real. Cada participant veurà les modificacions instantàniament.",
+    "asyncMode": "Col·laboració asíncrona",
+    "asyncModeHelp": "Permet als col·laboradors treballar en moments diferents. Els canvis es conserven 7 dies al servidor.",
     "serverRequired": "Configureu primer un servidor de sincronització per activar la compartició.",
     "share": "Compartir",
     "sharing": "Compartint...",

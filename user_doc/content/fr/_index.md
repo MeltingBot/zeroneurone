@@ -8,7 +8,7 @@ type: docs
 **Tableau d'analyse visuelle pour enquêteurs et analystes**
 
 {{< hint >}}
-Version actuelle : **1.5.2**
+Version actuelle : **2.0**
 {{< /hint >}}
 
 ZeroNeurone est un outil d'amplification cognitive qui combine la simplicité d'un tableau blanc infini avec la puissance de l'analyse de graphes. Conçu pour les analystes, enquêteurs et chercheurs qui ont besoin de visualiser et explorer des relations complexes.

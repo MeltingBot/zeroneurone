@@ -29,7 +29,7 @@ dist-ssr
 # Documentation (generated)
 docs/
 claudedocs/
-
+data/
 # Personal project docs (not versioned)
 doc_perso/
 

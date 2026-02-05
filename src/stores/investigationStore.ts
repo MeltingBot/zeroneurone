@@ -242,6 +242,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       let ydoc = syncService.getYDoc();
       const currentInvestigationId = syncService.getInvestigationId();
 
+      const ydocAlreadyOpen = ydoc && currentInvestigationId === id;
+
       if (!ydoc || currentInvestigationId !== id) {
         // Open Y.Doc in local mode (creates or loads from IndexedDB)
         ydoc = await syncService.openLocal(id);
@@ -407,10 +409,13 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         }
       });
 
+      const loadedElements = Array.from(elementsById.values());
+      const loadedLinks = Array.from(linksById.values());
+
       set({
         currentInvestigation: investigation,
-        elements: Array.from(elementsById.values()),
-        links: Array.from(linksById.values()),
+        elements: loadedElements,
+        links: loadedLinks,
         assets,
         isLoading: false,
         loadingPhase: '',
@@ -418,14 +423,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
       // If in shared mode, schedule additional syncs to catch late-arriving data
       // This handles the case where Y.Doc updates arrive after the initial load
-      // Use longer delays for slow networks (Docker/Cloudflare can add latency)
+      // Server async buffer is flushed 1500ms after connection, so we need re-syncs after that
+      // Use delays that span before and after expected buffer arrival time
       const syncState = syncService.getState();
       if (syncState.mode === 'shared' && syncState.connected) {
-        // Re-sync after delays to catch late data (links often arrive after elements)
+        // Re-sync after delays to catch late data:
+        // - 300ms, 800ms: catch real-time sync from peers
+        // - 1500ms: around buffer arrival time
+        // - 2000ms, 2500ms: after buffer arrival (buffer arrives ~1500ms from connection)
+        // - 4000ms: final safety catch-all
         setTimeout(() => get()._syncFromYDoc(), 300);
         setTimeout(() => get()._syncFromYDoc(), 800);
         setTimeout(() => get()._syncFromYDoc(), 1500);
-        setTimeout(() => get()._syncFromYDoc(), 3000);
+        setTimeout(() => get()._syncFromYDoc(), 2000);
+        setTimeout(() => get()._syncFromYDoc(), 2500);
+        setTimeout(() => get()._syncFromYDoc(), 4000);
       }
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false, loadingPhase: '' });
@@ -1697,6 +1709,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     // DEFENSIVE: Don't wipe state if Y.Doc appears empty due to sync issues
     // But DO allow sync if elementsMap is genuinely empty (user deleted all elements)
     const stateElements = get().elements;
+
     if (newElements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
       // elementsMap has entries but we couldn't parse them - likely a sync issue
       console.warn('[_syncFromYDoc] Y.Doc parsing failed. elementsMap.size:', elementsMap.size, 'but parsed 0 elements. Skipping sync.');
@@ -1853,7 +1866,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Save new assets to OPFS in background - update state progressively with progress tracking
     if (newAssetsToSave.length > 0) {
-      console.log(`[Sync] Saving ${newAssetsToSave.length} new asset(s) from peers...`);
 
       // Calculate total size for progress tracking
       const totalSize = newAssetsToSave.reduce((sum, item) => sum + (item.assetData.size || 0), 0);
@@ -1873,7 +1885,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         fileService.saveAssetFromBase64(assetData, base64Data)
           .then((savedAsset) => {
             if (savedAsset) {
-              console.log(`[Sync] Asset saved: ${savedAsset.filename}`);
               // Update state immediately with this asset
               set((state) => ({
                 assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],

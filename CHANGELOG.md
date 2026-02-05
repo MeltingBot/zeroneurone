@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.0.0
+
+### Features
+- Asynchronous collaboration: work with collaborators at different times, changes buffered on server for 7 days
+- Auto anchor mode for connectors enabled by default on new investigations
+
+### Fixes
+- Sync status no longer stuck on "sync..." when becoming alone in room
+- Sync status no longer stuck on "sync..." when starting to share with no peers connected
+- Removed debug logs from production build
+
+### Documentation
+- Added async collaboration section with link preservation warning
+- Updated URL format documentation for v1.7 security changes
+
 ## 1.7.0
 
 ### Security

@@ -6,11 +6,11 @@
  * OLD FORMAT (pre-v1.7):
  * /join/{uuid}?server=...&name=...#key=xxx
  *
- * NEW FORMAT (v1.7+):
- * /join/{hash}?server=...#key=xxx&name=xxx&id=uuid
+ * NEW FORMAT (v2):
+ * /join/{hash}?server=...&async=1#key=xxx&name=xxx&id=uuid
  *
  * Flow:
- * 1. Parse URL to extract roomId, investigationId, key, name, server
+ * 1. Parse URL to extract roomId, investigationId, key, name, server, async
  * 2. Check if signaling server is configured
  * 3. Check if investigation already exists locally, if not create it with the UUID
  * 4. Connect to shared session via syncService with encryption
@@ -56,6 +56,7 @@ export function JoinPage() {
     nameFromFragment: string | null;
     roomId: string;
     isLegacyFormat: boolean;
+    asyncEnabled: boolean;
   } | null>(null);
 
   if (!urlParams.current && pathSegment) {
@@ -70,12 +71,16 @@ export function JoinPage() {
     // - OLD FORMAT: path contains UUID, name may be in query
     const isLegacyFormat = !fragmentId;
 
+    // Parse async flag from query params
+    const asyncEnabled = searchParams.get('async') === '1';
+
     urlParams.current = {
       encryptionKey,
       investigationId: fragmentId || pathSegment, // UUID from fragment (new) or path (old)
       nameFromFragment: fragmentName,
       roomId: pathSegment, // Always the path segment (hash or UUID)
       isLegacyFormat,
+      asyncEnabled,
     };
   }
 
@@ -107,15 +112,6 @@ export function JoinPage() {
   const [investigationName, setInvestigationName] = useState(
     nameFromUrl || t('join.defaultSessionName')
   );
-
-  // Log format detection for debugging
-  useEffect(() => {
-    if (urlParams.current) {
-      console.log('[JoinPage] URL format:', urlParams.current.isLegacyFormat ? 'legacy' : 'new');
-      console.log('[JoinPage] Investigation ID:', investigationId);
-      console.log('[JoinPage] Room ID:', roomId);
-    }
-  }, [investigationId, roomId]);
 
   // Show warning if server from URL is different from saved one
   useEffect(() => {
@@ -205,10 +201,12 @@ export function JoinPage() {
       // - investigationId: UUID for local storage
       // - encryptionKey: for E2E encryption
       // - roomId: hash (new format) or UUID (legacy) for WebSocket
+      // - asyncEnabled: whether async buffering is enabled
       await syncService.openShared(
         investigationId!,
         encryptionKeyFromUrl || undefined,
-        roomId  // Pass separate roomId for WebSocket
+        roomId,  // Pass separate roomId for WebSocket
+        urlParams.current?.asyncEnabled || false
       );
 
       // Wait for WebSocket connection and initial sync to complete

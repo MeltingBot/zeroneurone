@@ -81,11 +81,13 @@ export class EncryptedWebSocket {
         // Message without encryption prefix when we expect encryption
         // This could be from a client with wrong/no key - drop it silently
         // to avoid y-websocket trying to decode garbage
+        console.warn('[EncryptedWS] Received unencrypted message when encryption expected, dropping');
         return;
       }
-    } catch {
+    } catch (err) {
       // Decryption failed - likely key mismatch
       // Drop the message silently to avoid y-websocket errors
+      console.error('[EncryptedWS] Decryption failed:', err);
       return;
     }
   }

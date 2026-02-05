@@ -12,10 +12,15 @@
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { WebsocketProvider } from 'y-websocket';
+import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass } from './encryptedWebSocket';
-import { generateEncryptionKey, isValidKeyString, deriveRoomId } from './cryptoService';
+import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
+
+// Y.js sync protocol message types (from y-protocols/sync)
+const messageSync = 0;
+const messageYjsUpdate = 2;
 
 // Storage key for signaling server URL
 const STORAGE_KEY = 'zeroneurone-signaling-server';
@@ -170,8 +175,14 @@ class SyncService {
    * @param investigationId - The investigation UUID (used for local storage)
    * @param encryptionKey - The AES-256-GCM key for E2E encryption (optional)
    * @param roomId - The room ID for WebSocket (optional, defaults to investigationId for legacy support)
+   * @param asyncEnabled - Whether async buffering is enabled (default: false)
    */
-  async openShared(investigationId: string, encryptionKey?: string, roomId?: string): Promise<Y.Doc> {
+  async openShared(
+    investigationId: string,
+    encryptionKey?: string,
+    roomId?: string,
+    asyncEnabled: boolean = false
+  ): Promise<Y.Doc> {
     if (!this.isServerConfigured()) {
       throw new Error('Serveur de synchronisation non configuré');
     }
@@ -196,9 +207,19 @@ class SyncService {
     // Wait for local data to be loaded first
     await this.indexeddbProvider.whenSynced;
 
+    // Derive access token if we have encryption key and roomId
+    const effectiveRoomId = roomId || investigationId;
+    let accessToken: string | undefined;
+    if (encryptionKey && roomId) {
+      accessToken = await deriveAccessToken(encryptionKey, roomId);
+    }
+
     // Connect to signaling server
     // Uses roomId if provided (hashed), otherwise investigationId (legacy)
-    this.connectWebSocket(roomId || investigationId, encryptionKey);
+    this.connectWebSocket(effectiveRoomId, encryptionKey, {
+      async: asyncEnabled,
+      token: accessToken,
+    });
 
     return this.ydoc;
   }
@@ -207,9 +228,10 @@ class SyncService {
    * Share the currently open investigation
    * Generates a new encryption key and derives a hashed roomId
    *
+   * @param asyncEnabled - Whether to enable async buffering (default: false)
    * @returns The generated encryption key for sharing
    */
-  async share(): Promise<string> {
+  async share(asyncEnabled: boolean = false): Promise<string> {
     if (!this.isServerConfigured()) {
       throw new Error('Serveur de synchronisation non configuré');
     }
@@ -227,6 +249,9 @@ class SyncService {
     // Server cannot correlate sessions, and re-sharing creates new room
     const hashedRoomId = await deriveRoomId(this.investigationId, newKey);
 
+    // Derive access token for room authentication
+    const accessToken = await deriveAccessToken(newKey, hashedRoomId);
+
     // If already shared, disconnect first to reconnect with new key
     if (this.websocketProvider) {
       this.websocketProvider.disconnect();
@@ -234,8 +259,11 @@ class SyncService {
       this.websocketProvider = null;
     }
 
-    // Connect using hashed roomId (not UUID)
-    this.connectWebSocket(hashedRoomId, newKey);
+    // Connect using hashed roomId (not UUID) with optional async buffering
+    this.connectWebSocket(hashedRoomId, newKey, {
+      async: asyncEnabled,
+      token: accessToken,
+    });
 
     return newKey;
   }
@@ -245,6 +273,30 @@ class SyncService {
    */
   async unshare(): Promise<void> {
     if (this.websocketProvider) {
+      // CRITICAL: Before disconnecting, send a full state snapshot
+      // This enables async collaboration - new clients can sync from buffered state
+      // Y.js sync protocol is bidirectional (sync step 1 <-> sync step 2),
+      // but a full state update can be applied by any client, even with empty Y.Doc
+      if (this.ydoc && this.websocketProvider.ws?.readyState === WebSocket.OPEN) {
+        try {
+          const fullState = Y.encodeStateAsUpdate(this.ydoc);
+
+          // Encode as y-websocket sync update message
+          // Format: [messageSync(0), messageYjsUpdate(2), update data]
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, messageSync);
+          encoding.writeVarUint(encoder, messageYjsUpdate);
+          encoding.writeVarUint8Array(encoder, fullState);
+
+          this.websocketProvider.ws.send(encoding.toUint8Array(encoder));
+
+          // Small delay to ensure the snapshot is sent before disconnecting
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (err) {
+          console.error('[SyncService] Failed to send state snapshot:', err);
+        }
+      }
+
       // Clear awareness state to notify peers immediately of our departure
       if (this.websocketProvider.awareness) {
         this.websocketProvider.awareness.setLocalState(null);
@@ -275,7 +327,11 @@ class SyncService {
   // WEBSOCKET CONNECTION
   // ============================================================================
 
-  private connectWebSocket(roomId: string, encryptionKey?: string): void {
+  private connectWebSocket(
+    roomId: string,
+    encryptionKey?: string,
+    options?: { async?: boolean; token?: string }
+  ): void {
     if (!this.ydoc) {
       throw new Error('No Y.Doc available');
     }
@@ -290,18 +346,34 @@ class SyncService {
     // Create encrypted WebSocket class if encryption key is provided
     const WebSocketClass = createEncryptedWebSocketClass(encryptionKey || null);
 
+    // Build query params for async mode and token
+    const urlParams: string[] = [];
+    if (options?.async) {
+      urlParams.push('async=1');
+    }
+    if (options?.token) {
+      urlParams.push(`token=${encodeURIComponent(options.token)}`);
+    }
+
     // Create WebSocket provider with reconnection options
     // y-websocket handles automatic reconnection with exponential backoff
+    // y-websocket constructs URL as: serverUrl/roomId
+    // So we append params to roomId to get: serverUrl/roomId?params
+    const roomIdWithParams = urlParams.length > 0
+      ? `${roomId}?${urlParams.join('&')}`
+      : roomId;
+
     this.websocketProvider = new WebsocketProvider(
       this.serverUrl,
-      roomId,
+      roomIdWithParams,
       this.ydoc,
       {
         WebSocketPolyfill: WebSocketClass,
         // Max time between reconnection attempts (30 seconds)
         maxBackoffTime: 30000,
-        // Re-sync interval to ensure consistency after reconnection (10 seconds)
-        resyncInterval: 10000,
+        // Disable periodic resync - it causes glitches during drag operations
+        // Y.js CRDT handles consistency without forced resyncs
+        resyncInterval: -1,
       }
     );
 
@@ -319,7 +391,6 @@ class SyncService {
         // Successfully connected or reconnected
         if (wasConnected) {
           // This was a reconnection - clear reconnecting state
-          console.log('[SyncService] Reconnected to server');
         }
         this.setState({
           connected: true,
@@ -330,8 +401,10 @@ class SyncService {
 
         // After connection, check sync state after a short delay
         // This handles the case where 'sync' event isn't emitted (no peers, already synced)
+        // Also mark as synced if we're alone (peerCount === 0)
         setTimeout(() => {
-          if (this.websocketProvider?.synced) {
+          const currentState = this.getState();
+          if (this.websocketProvider?.synced || currentState.peerCount === 0) {
             this.setState({ syncing: false });
           }
         }, 500);
@@ -339,7 +412,6 @@ class SyncService {
         // Disconnected
         if (wasConnected) {
           // We were connected before, now disconnected - entering reconnection mode
-          console.log('[SyncService] Disconnected, attempting to reconnect...');
           this.setState({
             connected: false,
             reconnecting: true,
@@ -355,7 +427,6 @@ class SyncService {
 
     // Listen to sync status
     this.websocketProvider.on('sync', (synced: boolean) => {
-      console.log('[SyncService] Sync event:', synced);
       this.setState({ syncing: !synced });
     });
 
@@ -371,6 +442,12 @@ class SyncService {
         // Subtract 1 for self
         const peerCount = states ? Math.max(0, states.size - 1) : 0;
         this.setState({ peerCount });
+
+        // When peer count drops to 0 (we're alone), mark sync as complete
+        // There's no one to sync with, so we're effectively synced
+        if (peerCount === 0 && previousPeerCount > 0) {
+          this.setState({ syncing: false });
+        }
 
         // When peer count increases (someone joined), re-broadcast our state
         // This helps new clients see existing clients with relay servers
@@ -481,24 +558,27 @@ class SyncService {
   /**
    * Build a share URL for the current investigation
    *
-   * NEW FORMAT (v1.7+):
-   * /join/{hashedRoomId}?server=wss://...#key=xxx&name=xxx&id=uuid
+   * NEW FORMAT (v2):
+   * /join/{hashedRoomId}?server=wss://...&async=1#key=xxx&name=xxx&id=uuid
    *
    * Security improvements:
    * - roomId is hashed (server cannot see real UUID)
    * - name is in fragment (never sent to server)
    * - id (UUID) is in fragment (never sent to server)
    * - key is in fragment (never sent to server)
+   * - async flag enables server-side buffering for asynchronous collaboration
    *
    * @param investigationId - The investigation UUID
    * @param encryptionKey - The E2E encryption key
    * @param investigationName - Optional display name
+   * @param asyncEnabled - Whether async buffering is enabled (default: false)
    * @param baseUrl - Optional base URL (defaults to current origin)
    */
   async buildShareUrl(
     investigationId: string,
     encryptionKey: string,
     investigationName?: string,
+    asyncEnabled?: boolean,
     baseUrl?: string
   ): Promise<string> {
     const base = baseUrl || window.location.origin;
@@ -510,6 +590,11 @@ class SyncService {
 
     if (this.serverUrl) {
       url.searchParams.set('server', this.serverUrl);
+    }
+
+    // Add async flag to query params (visible to server, needed for buffering)
+    if (asyncEnabled) {
+      url.searchParams.set('async', '1');
     }
 
     // All sensitive data in fragment (never sent to server)
@@ -531,11 +616,11 @@ class SyncService {
    * OLD FORMAT (pre-v1.7):
    * /join/{uuid}?server=...&name=...#key=xxx
    *
-   * NEW FORMAT (v1.7+):
-   * /join/{hash}?server=...#key=xxx&name=xxx&id=uuid
+   * NEW FORMAT (v2):
+   * /join/{hash}?server=...&async=1#key=xxx&name=xxx&id=uuid
    *
    * @param url - The share URL to parse
-   * @returns Object with investigationId, encryptionKey, serverUrl, name, and roomId
+   * @returns Object with investigationId, encryptionKey, serverUrl, name, roomId, async flag
    */
   parseShareUrl(url: string): {
     investigationId: string;
@@ -544,6 +629,7 @@ class SyncService {
     name: string | null;
     roomId: string; // The actual roomId to use for WebSocket (hash or UUID)
     isLegacyFormat: boolean;
+    asyncEnabled: boolean; // Whether async buffering is enabled
   } {
     const parsed = new URL(url);
 
@@ -566,6 +652,7 @@ class SyncService {
     // Extract query params
     const serverUrl = parsed.searchParams.get('server');
     const queryName = parsed.searchParams.get('name');
+    const asyncEnabled = parsed.searchParams.get('async') === '1';
 
     // Determine format:
     // - NEW FORMAT: id is in fragment, path contains hash
@@ -588,6 +675,7 @@ class SyncService {
       name,
       roomId,
       isLegacyFormat,
+      asyncEnabled,
     };
   }
 

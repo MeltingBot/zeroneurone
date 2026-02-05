@@ -418,6 +418,8 @@
     "save": "Opslaan",
     "serverHelp": "Gebruik een server die compatibel is met y-websocket. U kunt uw eigen hosten met",
     "shareDescription": "Deel dit onderzoek om in realtime samen te werken. Elke deelnemer ziet wijzigingen direct.",
+    "asyncMode": "Asynchrone samenwerking",
+    "asyncModeHelp": "Laat medewerkers op verschillende tijden werken. Wijzigingen worden 7 dagen op de server bewaard.",
     "serverRequired": "Configureer eerst een synchronisatieserver om delen te activeren.",
     "share": "Delen",
     "sharing": "Delen...",

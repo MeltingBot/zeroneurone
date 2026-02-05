@@ -418,6 +418,8 @@
     "save": "Speichern",
     "serverHelp": "Verwenden Sie einen y-websocket-kompatiblen Server. Sie können Ihren eigenen hosten mit",
     "shareDescription": "Teilen Sie diese Ermittlung für Echtzeit-Zusammenarbeit. Jeder Teilnehmer sieht Änderungen sofort.",
+    "asyncMode": "Asynchrone Zusammenarbeit",
+    "asyncModeHelp": "Ermöglicht Mitarbeitern, zu unterschiedlichen Zeiten zu arbeiten. Änderungen werden 7 Tage auf dem Server gespeichert.",
     "serverRequired": "Konfigurieren Sie zuerst einen Synchronisierungsserver, um das Teilen zu aktivieren.",
     "share": "Teilen",
     "sharing": "Wird geteilt...",

@@ -8,7 +8,7 @@ type: docs
 **Visual analysis board for investigators and analysts**
 
 {{< hint >}}
-Current version: **1.5.2**
+Current version: **2.0**
 {{< /hint >}}
 
 ZeroNeurone is a cognitive amplification tool that combines the simplicity of an infinite whiteboard with the power of graph analysis. Designed for analysts, investigators, and researchers who need to visualize and explore complex relationships.

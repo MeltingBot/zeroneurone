@@ -418,6 +418,8 @@
     "save": "Gorde",
     "serverHelp": "Erabili y-websocket bateragarria den zerbitzari bat. Zurea ostatatu dezakezu honekin",
     "shareDescription": "Partekatu ikerketa hau denbora errealean lankidetzan aritzeko. Partaide bakoitzak aldaketak berehala ikusiko ditu.",
+    "asyncMode": "Lankidetza asinkronoa",
+    "asyncModeHelp": "Lankideei une ezberdinetan lan egitea ahalbidetzen die. Aldaketak zerbitzarian 7 egunez gordetzen dira.",
     "serverRequired": "Lehenik sinkronizazio zerbitzari bat konfiguratu partekatzea aktibatzeko.",
     "share": "Partekatu",
     "sharing": "Partekatzen...",

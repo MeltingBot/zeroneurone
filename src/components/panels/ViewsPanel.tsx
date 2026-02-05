@@ -51,7 +51,7 @@ export function ViewsPanel() {
   const tagDisplaySize = settings?.tagDisplaySize ?? 'small';
   const showConfidence = settings?.showConfidenceIndicator ?? false;
   const displayedProperties = settings?.displayedProperties ?? [];
-  const linkAnchorMode = settings?.linkAnchorMode ?? 'manual';
+  const linkAnchorMode = settings?.linkAnchorMode ?? 'auto';
   const linkCurveMode = settings?.linkCurveMode ?? 'curved';
 
   // Get all unique property keys from elements and links

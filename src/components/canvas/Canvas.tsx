@@ -931,8 +931,15 @@ export function Canvas() {
 
   // Sync from store to local when NOT dragging
   // useLayoutEffect prevents one-frame flash when group structure changes
+  // Skip sync briefly after drag end to let Y.js propagate the final position
+  // This prevents glitches where an older position briefly appears
   useLayoutEffect(() => {
     if (!isDraggingRef.current) {
+      // Skip sync for 100ms after drag end to avoid glitches from Y.js latency
+      const timeSinceDragEnd = Date.now() - lastDragEndRef.current;
+      if (timeSinceDragEnd < 100) {
+        return;
+      }
       setLocalNodes(nodes);
     }
   }, [nodes]);

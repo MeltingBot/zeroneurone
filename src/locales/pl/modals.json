@@ -418,6 +418,8 @@
     "save": "Zapisz",
     "serverHelp": "Użyj serwera kompatybilnego z y-websocket. Możesz hostować własny za pomocą",
     "shareDescription": "Udostępnij to śledztwo, aby współpracować w czasie rzeczywistym. Każdy uczestnik zobaczy zmiany natychmiast.",
+    "asyncMode": "Współpraca asynchroniczna",
+    "asyncModeHelp": "Pozwala współpracownikom pracować w różnych momentach. Zmiany są przechowywane na serwerze przez 7 dni.",
     "serverRequired": "Najpierw skonfiguruj serwer synchronizacji, aby włączyć udostępnianie.",
     "share": "Udostępnij",
     "sharing": "Udostępnianie...",

@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Link2, Link2Off, Users, Server, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import { Copy, Check, Link2, Link2Off, Users, Server, ChevronDown, ChevronUp, Lock, Clock } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -48,6 +48,9 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(localUser.name);
 
+  // Async collaboration option
+  const [asyncEnabled, setAsyncEnabled] = useState(false);
+
   // Server configuration
   const [serverUrl, setServerUrl] = useState(() => {
     return localStorage.getItem(STORAGE_KEY) || DEFAULT_SERVER_URL;
@@ -73,7 +76,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
 
     setIsLoading(true);
     try {
-      const result = await share(currentInvestigation?.name);
+      const result = await share(currentInvestigation?.name, asyncEnabled);
       setShareUrl(result.shareUrl);
     } catch (error) {
       console.error('Failed to share:', error);
@@ -238,6 +241,26 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                   {t('collaboration.shareDescription')}
                 </p>
               </div>
+
+              {/* Async collaboration option */}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={asyncEnabled}
+                  onChange={(e) => setAsyncEnabled(e.target.checked)}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                    <Clock size={14} />
+                    {t('collaboration.asyncMode')}
+                  </div>
+                  <p className="text-xs text-text-tertiary mt-0.5">
+                    {t('collaboration.asyncModeHelp')}
+                  </p>
+                </div>
+              </label>
+
               {!isServerConfigured && (
                 <p className="text-xs text-warning bg-warning/10 px-3 py-2 rounded">
                   {t('collaboration.serverRequired')}

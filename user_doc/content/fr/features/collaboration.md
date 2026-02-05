@@ -44,18 +44,20 @@ Une fois le partage actif :
 ### Format du lien
 
 ```
-https://zeroneurone.app/join/{id}?server=wss://...&name=...#key=xxx
+https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&name=...
 ```
 
 | Partie | Contenu |
 |--------|---------|
-| `/join/{id}` | Identifiant de l'enquête |
+| `/join/{roomId}` | Identifiant de room hashé (le serveur ne voit pas l'UUID original) |
 | `?server=` | Adresse du serveur de signalisation |
-| `?name=` | Nom de l'enquête |
-| `#key=` | Clé de chiffrement (fragment) |
+| `?async=1` | Flag mode asynchrone (optionnel) |
+| `#key=` | Clé de chiffrement |
+| `#id=` | UUID original de l'enquête |
+| `#name=` | Nom de l'enquête |
 
 {{< hint warning >}}
-**Important** : Le fragment `#key=...` n'est jamais envoyé au serveur (standard navigateur). C'est ce qui garantit le chiffrement de bout en bout.
+**Important** : Tout ce qui suit `#` (fragment) n'est jamais envoyé au serveur (standard navigateur). L'identifiant de room est dérivé d'un hash de l'UUID + clé de chiffrement, donc le serveur ne peut pas corréler les sessions avec les enquêtes. C'est ce qui garantit le chiffrement de bout en bout et la confidentialité des métadonnées.
 {{< /hint >}}
 
 ---
@@ -193,6 +195,44 @@ Si deux utilisateurs modifient le même élément :
 
 {{< hint warning >}}
 **Note** : Les collaborateurs conservent leur copie locale. Pour révoquer l'accès à de futures modifications, vous devez créer une nouvelle session avec un nouveau lien.
+{{< /hint >}}
+
+---
+
+## Collaboration asynchrone
+
+ZeroNeurone permet la collaboration asynchrone, permettant aux collaborateurs de travailler à des moments différents sans être connectés simultanément.
+
+### Fonctionnement
+
+1. **Activez le mode asynchrone** lors du partage (case "Collaboration asynchrone")
+2. Les modifications sont stockées sur le serveur pendant **7 jours**
+3. Les collaborateurs peuvent rejoindre quand ils veulent et recevoir les modifications accumulées
+
+### Conservez votre lien de partage
+
+{{< hint danger >}}
+**Critique** : Sauvegardez et conservez précieusement le lien de partage. Sans ce lien :
+- Vous ne pourrez pas rejoindre la session
+- L'enquête ne pourra pas être recréée en mode asynchrone déconnecté
+- La clé de chiffrement dans le fragment URL (`#key=...`) est le seul moyen de déchiffrer les données
+{{< /hint >}}
+
+Recommandations :
+- Sauvegardez le lien dans un gestionnaire de mots de passe
+- Gardez une copie dans une note sécurisée
+- Envoyez-vous le lien par email
+
+### Mettre à jour après un travail asynchrone
+
+Pour mettre à jour votre enquête locale avec les modifications asynchrones distantes :
+
+1. **Arrêtez d'abord le partage** (Menu **⋯** → **Partager** → **Arrêter le partage**)
+2. Puis rejoignez en utilisant votre lien de partage sauvegardé
+3. Les modifications des autres collaborateurs seront synchronisées
+
+{{< hint info >}}
+**Pourquoi arrêter d'abord ?** Quand vous arrêtez le partage, vos données locales deviennent la référence. Rejoindre ensuite fusionne les données du serveur avec votre copie locale.
 {{< /hint >}}
 
 ---

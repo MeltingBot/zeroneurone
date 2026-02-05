@@ -73,7 +73,7 @@ interface SyncStoreState extends SyncState {
   mediaSyncProgress: MediaSyncProgress | null;
 
   /** Actions */
-  share: (investigationName?: string) => Promise<{ shareUrl: string; encryptionKey: string }>;
+  share: (investigationName?: string, asyncEnabled?: boolean) => Promise<{ shareUrl: string; encryptionKey: string }>;
   unshare: () => Promise<void>;
   updateLocalUserName: (name: string) => void;
   updateLocalUserColor: (color: string) => void;
@@ -261,17 +261,17 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
     // Share the current investigation
     // Uses the investigation UUID as room ID and generates a new encryption key
-    share: async (investigationName?: string) => {
+    share: async (investigationName?: string, asyncEnabled: boolean = false) => {
       const investigationId = syncService.getInvestigationId();
       if (!investigationId) {
         throw new Error('No investigation open');
       }
 
       // share() now generates an encryption key and uses investigation UUID as roomId
-      const encryptionKey = await syncService.share();
+      const encryptionKey = await syncService.share(asyncEnabled);
 
       // Build the share URL with encryption key in fragment (async for hash computation)
-      const shareUrl = await syncService.buildShareUrl(investigationId, encryptionKey, investigationName);
+      const shareUrl = await syncService.buildShareUrl(investigationId, encryptionKey, investigationName, asyncEnabled);
 
       set({ encryptionKey });
 

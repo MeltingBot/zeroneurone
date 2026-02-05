@@ -77,6 +77,7 @@ export const investigationRepository = {
         displayedProperties: [],
         tagDisplayMode: 'icons',
         tagDisplaySize: 'small',
+        linkAnchorMode: 'auto',
       },
       isFavorite: false,
     };
@@ -117,6 +118,7 @@ export const investigationRepository = {
         displayedProperties: [],
         tagDisplayMode: 'icons',
         tagDisplaySize: 'small',
+        linkAnchorMode: 'auto',
       },
       isFavorite: false,
     };

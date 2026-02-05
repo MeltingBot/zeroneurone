@@ -111,6 +111,31 @@ export async function deriveRoomId(investigationId: string, encryptionKey: strin
   return hashArray.slice(0, 16).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * Derive an access token for a room using HMAC
+ * This prevents random access to rooms - only clients with the key can generate the token
+ *
+ * @param encryptionKey - The E2E encryption key (base64url)
+ * @param roomId - The hashed room ID
+ * @returns base64url-encoded HMAC token
+ */
+export async function deriveAccessToken(encryptionKey: string, roomId: string): Promise<string> {
+  const keyData = base64UrlToArrayBuffer(encryptionKey);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode('access:' + roomId);
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+
+  return arrayBufferToBase64Url(signature);
+}
+
 // ============================================================================
 // HELPERS
 // ============================================================================
