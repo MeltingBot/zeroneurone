@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ReactFlow,
@@ -30,6 +30,7 @@ import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
 import { AlignmentGuides, computeGuides, type Guide } from './AlignmentGuides';
 import { CustomEdge } from './CustomEdge';
+import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { LayoutDropdown } from './LayoutDropdown';
@@ -63,6 +64,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   custom: CustomEdge,
+  simple: SimpleEdge,
 };
 
 // Capture handler for report screenshots - must be inside ReactFlowProvider
@@ -363,7 +365,8 @@ function linkToEdge(
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
   showConfidenceIndicator?: boolean,
   displayedPropertyValues?: { key: string; value: string }[],
-  remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[]
+  remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[],
+  simplified?: boolean
 ): Edge {
   // Helper to migrate old handle format and fix type mismatches
   const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
@@ -414,6 +417,26 @@ function linkToEdge(
   const direction = link.direction || (link.directed ? 'forward' : 'none');
   const hasStartArrow = direction === 'backward' || direction === 'both';
   const hasEndArrow = direction === 'forward' || direction === 'both';
+
+  // Simplified mode: minimal data for SimpleEdge (1 SVG path instead of 10-15 elements)
+  if (simplified) {
+    return {
+      id: link.id,
+      source: link.fromId,
+      target: link.toId,
+      sourceHandle: sourceHandle ?? 'source-right',
+      targetHandle: targetHandle ?? 'target-left',
+      type: 'simple',
+      data: {
+        color: link.visual.color,
+        thickness: link.visual.thickness,
+        dashArray: strokeDasharray,
+        isDimmed,
+        isSelected,
+      },
+      selected: isSelected,
+    };
+  }
 
   return {
     id: link.id,
@@ -481,6 +504,9 @@ export function Canvas() {
   const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
   const elements = useInvestigationStore((s) => s.elements);
   const links = useInvestigationStore((s) => s.links);
+
+  // O(1) element lookup map — avoids O(n) .find() in hot paths (drag, resize, context menu)
+  const elementMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
   const assets = useInvestigationStore((s) => s.assets);
   const comments = useInvestigationStore((s) => s.comments);
   const createElement = useInvestigationStore((s) => s.createElement);
@@ -502,12 +528,14 @@ export function Canvas() {
 
   useEffect(() => {
     if (!reactFlowWrapper.current) return;
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const observer = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
-      setWrapperSize({ width, height });
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => setWrapperSize({ width, height }), 250);
     });
     observer.observe(reactFlowWrapper.current);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); if (resizeTimer) clearTimeout(resizeTimer); };
   }, []);
 
   // File drag state
@@ -560,22 +588,21 @@ export function Canvas() {
   // State for copied elements indicator
   const [hasCopiedElements, setHasCopiedElements] = useState(false);
 
-  const {
-    selectedElementIds,
-    selectedLinkIds,
-    selectElement,
-    selectElements,
-    selectLink,
-    selectBoth,
-    clearSelection,
-    getSelectedElementIds,
-    getSelectedLinkIds,
-    editingElementId,
-    editingLinkId,
-    startEditingElement,
-    startEditingLink,
-    stopEditing,
-  } = useSelectionStore();
+  // Selection store — individual selectors prevent re-renders when unrelated selection state changes
+  const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
+  const selectedLinkIds = useSelectionStore((s) => s.selectedLinkIds);
+  const editingElementId = useSelectionStore((s) => s.editingElementId);
+  const editingLinkId = useSelectionStore((s) => s.editingLinkId);
+  const selectElement = useSelectionStore((s) => s.selectElement);
+  const selectElements = useSelectionStore((s) => s.selectElements);
+  const selectLink = useSelectionStore((s) => s.selectLink);
+  const selectBoth = useSelectionStore((s) => s.selectBoth);
+  const clearSelection = useSelectionStore((s) => s.clearSelection);
+  const getSelectedElementIds = useSelectionStore((s) => s.getSelectedElementIds);
+  const getSelectedLinkIds = useSelectionStore((s) => s.getSelectedLinkIds);
+  const startEditingElement = useSelectionStore((s) => s.startEditingElement);
+  const startEditingLink = useSelectionStore((s) => s.startEditingLink);
+  const stopEditing = useSelectionStore((s) => s.stopEditing);
 
   const {
     viewport,
@@ -592,6 +619,32 @@ export function Canvas() {
     requestFitView,
   } = useViewStore();
 
+  // Frozen viewport for edge culling — edges are NOT recalculated during pan/zoom.
+  // React Flow already applies CSS transform during movement, so edges scale naturally.
+  // We only recalculate edge visibility when movement stops (onMoveEnd).
+  // Additionally, edges are hidden via CSS during movement to avoid Firefox SVG painting cost.
+  const isViewportMovingRef = useRef(false);
+  const [cullingViewport, setCullingViewport] = useState(viewport);
+  const [isViewportMoving, setIsViewportMoving] = useState(false);
+
+  const handleMoveStart = useCallback(() => {
+    isViewportMovingRef.current = true;
+    setIsViewportMoving(true);
+  }, []);
+
+  const handleMoveEnd = useCallback(() => {
+    isViewportMovingRef.current = false;
+    setIsViewportMoving(false);
+    // Single recalculation when movement stops
+    setCullingViewport(viewportRef.current);
+  }, []);
+
+  // Keep a ref to the latest viewport for handleMoveEnd
+  const viewportRef = useRef(viewport);
+  useEffect(() => {
+    viewportRef.current = viewport;
+  }, [viewport]);
+
   const {
     highlightedElementIds: insightsHighlightedIds,
     findPaths,
@@ -603,8 +656,15 @@ export function Canvas() {
   const remoteUsers = useSyncStore((state) => state.remoteUsers);
 
   // Pre-compute remote user presence per element/link (single subscription instead of n+m)
+  // Structural comparison: returns same Map reference if content hasn't changed,
+  // preventing unnecessary node/edge rebuilds when awareness fires for cursor moves
+  const prevRemoteElementMapRef = useRef(new Map<string, RemoteUserPresence[]>());
   const remoteUsersByElement = useMemo(() => {
-    if (!remoteUsers || remoteUsers.length === 0) return new Map<string, RemoteUserPresence[]>();
+    if (!remoteUsers || remoteUsers.length === 0) {
+      if (prevRemoteElementMapRef.current.size === 0) return prevRemoteElementMapRef.current;
+      prevRemoteElementMapRef.current = new Map();
+      return prevRemoteElementMapRef.current;
+    }
     const map = new Map<string, RemoteUserPresence[]>();
     for (const user of remoteUsers) {
       const dragging = user.dragging || [];
@@ -620,11 +680,33 @@ export function Canvas() {
         map.set(id, list);
       }
     }
+    // Structural equality check: reuse previous reference if content is identical
+    const prev = prevRemoteElementMapRef.current;
+    if (map.size === prev.size) {
+      let identical = true;
+      for (const [id, users] of map) {
+        const prevUsers = prev.get(id);
+        if (!prevUsers || prevUsers.length !== users.length) { identical = false; break; }
+        for (let i = 0; i < users.length; i++) {
+          if (users[i].name !== prevUsers[i].name || users[i].color !== prevUsers[i].color || users[i].isDragging !== prevUsers[i].isDragging) {
+            identical = false; break;
+          }
+        }
+        if (!identical) break;
+      }
+      if (identical) return prev;
+    }
+    prevRemoteElementMapRef.current = map;
     return map;
   }, [remoteUsers]);
 
+  const prevRemoteLinkMapRef = useRef(new Map<string, { name: string; color: string; isEditing?: boolean }[]>());
   const remoteUsersByLink = useMemo(() => {
-    if (!remoteUsers || remoteUsers.length === 0) return new Map<string, { name: string; color: string; isEditing?: boolean }[]>();
+    if (!remoteUsers || remoteUsers.length === 0) {
+      if (prevRemoteLinkMapRef.current.size === 0) return prevRemoteLinkMapRef.current;
+      prevRemoteLinkMapRef.current = new Map();
+      return prevRemoteLinkMapRef.current;
+    }
     const map = new Map<string, { name: string; color: string; isEditing?: boolean }[]>();
     for (const user of remoteUsers) {
       const linkSelections = user.linkSelection || [];
@@ -640,6 +722,23 @@ export function Canvas() {
         map.set(id, list);
       }
     }
+    // Structural equality check
+    const prev = prevRemoteLinkMapRef.current;
+    if (map.size === prev.size) {
+      let identical = true;
+      for (const [id, users] of map) {
+        const prevUsers = prev.get(id);
+        if (!prevUsers || prevUsers.length !== users.length) { identical = false; break; }
+        for (let i = 0; i < users.length; i++) {
+          if (users[i].name !== prevUsers[i].name || users[i].color !== prevUsers[i].color || users[i].isEditing !== prevUsers[i].isEditing) {
+            identical = false; break;
+          }
+        }
+        if (!identical) break;
+      }
+      if (identical) return prev;
+    }
+    prevRemoteLinkMapRef.current = map;
     return map;
   }, [remoteUsers]);
 
@@ -660,32 +759,45 @@ export function Canvas() {
   const exitImportPlacementMode = useUIStore((state) => state.exitImportPlacementMode);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
+  // Stabilized: returns the same Set reference if contents haven't changed,
+  // preventing unnecessary cascading to nodes and edges useMemos.
+  const prevDimmedRef = useRef(new Set<string>());
   const dimmedElementIds = useMemo(() => {
+    let newDimmed: Set<string>;
+
     // If insights highlighting is active, dim everything except highlighted elements
     if (insightsHighlightedIds.size > 0) {
-      const dimmed = new Set<string>();
+      newDimmed = new Set<string>();
       elements.forEach((el) => {
         if (!insightsHighlightedIds.has(el.id)) {
-          dimmed.add(el.id);
+          newDimmed.add(el.id);
         }
       });
-      return dimmed;
-    }
-
-    // If in focus mode, dim everything except focus element and neighbors
-    if (focusElementId) {
+    } else if (focusElementId) {
+      // If in focus mode, dim everything except focus element and neighbors
       const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      const dimmed = new Set<string>();
+      newDimmed = new Set<string>();
       elements.forEach((el) => {
         if (!visibleIds.has(el.id)) {
-          dimmed.add(el.id);
+          newDimmed.add(el.id);
         }
       });
-      return dimmed;
+    } else {
+      // Otherwise use filter-based dimming
+      newDimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
     }
 
-    // Otherwise use filter-based dimming
-    return getDimmedElementIds(elements, filters, hiddenElementIds);
+    // Stabilize reference: return previous Set if contents are identical
+    const prev = prevDimmedRef.current;
+    if (newDimmed.size === prev.size) {
+      let same = true;
+      for (const id of newDimmed) {
+        if (!prev.has(id)) { same = false; break; }
+      }
+      if (same) return prev;
+    }
+    prevDimmedRef.current = newDimmed;
+    return newDimmed;
   }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
 
   // Pre-compute comment counts per element (O(c) instead of O(n*c))
@@ -712,7 +824,7 @@ export function Canvas() {
   // Handle element resize
   const handleElementResize = useCallback(
     (elementId: string, width: number, height: number) => {
-      const element = elements.find((el) => el.id === elementId);
+      const element = elementMap.get(elementId);
       if (element) {
         updateElement(elementId, {
           visual: {
@@ -723,14 +835,14 @@ export function Canvas() {
         });
       }
     },
-    [elements, updateElement]
+    [elementMap, updateElement]
   );
 
   // Handle element label change (inline editing)
   const handleElementLabelChange = useCallback(
     (elementId: string, newLabel: string) => {
       // Get the old label for undo
-      const element = elements.find(el => el.id === elementId);
+      const element = elementMap.get(elementId);
       const oldLabel = element?.label ?? '';
 
       // Only track if label actually changed
@@ -744,7 +856,7 @@ export function Canvas() {
 
       updateElement(elementId, { label: newLabel });
     },
-    [elements, updateElement, pushAction]
+    [elementMap, updateElement, pushAction]
   );
 
   // Handle link label change (inline editing)
@@ -814,76 +926,262 @@ export function Canvas() {
     }
   }, [elements]);
 
+
   // --- Phase A: Node structures (depends on data only) ---
+  // Incremental: only rebuild structures for elements whose reference changed.
+  // When 1 element changes out of 3000, only 1 structure is rebuilt.
+  type NodeStructure = { el: Element; thumbnail: string | null; isLoadingAsset: boolean; unresolvedCommentCount: number; badgeProperty: { value: string; type: string } | null; displayedPropertyValues: { key: string; value: string }[] };
+  const prevElementsByIdRef = useRef(new Map<string, Element>());
+  const nodeStructureCacheRef = useRef(new Map<string, NodeStructure>());
+
   const nodeStructures = useMemo(() => {
-    return elements
-      .filter((el) => !hiddenElementIds.has(el.id))
-      .map((el) => {
-        const firstAssetId = el.assetIds?.[0];
-        const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
-        const isLoadingAsset = Boolean(firstAssetId) && !assetMap.has(firstAssetId);
-        const unresolvedCommentCount = commentCountMap.get(el.id) || 0;
+    const prevElements = prevElementsByIdRef.current;
+    const cache = nodeStructureCacheRef.current;
 
-        let badgeProperty: { value: string; type: string } | null = null;
-        if (filters.badgePropertyKey) {
-          const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
-          if (prop && prop.value != null) {
-            const valueStr = typeof prop.value === 'string'
-              ? prop.value
-              : prop.value instanceof Date
-                ? prop.value.toLocaleDateString('fr-FR')
-                : String(prop.value);
-            badgeProperty = { value: valueStr, type: prop.type || 'text' };
-          }
+    const buildStructure = (el: Element): NodeStructure => {
+      const firstAssetId = el.assetIds?.[0];
+      const thumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
+      const isLoadingAsset = Boolean(firstAssetId) && !assetMap.has(firstAssetId);
+      const unresolvedCommentCount = commentCountMap.get(el.id) || 0;
+
+      let badgeProperty: { value: string; type: string } | null = null;
+      if (filters.badgePropertyKey) {
+        const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
+        if (prop && prop.value != null) {
+          const valueStr = typeof prop.value === 'string'
+            ? prop.value
+            : prop.value instanceof Date
+              ? prop.value.toLocaleDateString('fr-FR')
+              : String(prop.value);
+          badgeProperty = { value: valueStr, type: prop.type || 'text' };
         }
+      }
 
-        const displayedPropertyValues = displayedProperties
-          .map(key => {
-            const prop = el.properties.find(p => p.key === key);
-            if (!prop || prop.value == null) return null;
-            const valueStr = typeof prop.value === 'string'
-              ? prop.value
-              : prop.value instanceof Date
-                ? prop.value.toLocaleDateString('fr-FR')
-                : String(prop.value);
-            return { key, value: valueStr };
-          })
-          .filter((p): p is { key: string; value: string } => p !== null);
+      const displayedPropertyValues = displayedProperties
+        .map(key => {
+          const prop = el.properties.find(p => p.key === key);
+          if (!prop || prop.value == null) return null;
+          const valueStr = typeof prop.value === 'string'
+            ? prop.value
+            : prop.value instanceof Date
+              ? prop.value.toLocaleDateString('fr-FR')
+              : String(prop.value);
+          return { key, value: valueStr };
+        })
+        .filter((p): p is { key: string; value: string } => p !== null);
 
-        return { el, thumbnail, isLoadingAsset, unresolvedCommentCount, badgeProperty, displayedPropertyValues };
-      });
+      return { el, thumbnail, isLoadingAsset, unresolvedCommentCount, badgeProperty, displayedPropertyValues };
+    };
+
+    const visible = elements.filter((el) => !hiddenElementIds.has(el.id));
+
+    const result = visible.map(el => {
+      // Reuse cached structure if element reference is unchanged
+      if (prevElements.get(el.id) === el && cache.has(el.id)) {
+        return cache.get(el.id)!;
+      }
+      const ns = buildStructure(el);
+      cache.set(el.id, ns);
+      return ns;
+    });
+
+    // Update tracking refs
+    const newPrev = new Map<string, Element>();
+    for (const el of visible) newPrev.set(el.id, el);
+    prevElementsByIdRef.current = newPrev;
+
+    // Clean removed elements from cache
+    for (const id of cache.keys()) {
+      if (!newPrev.has(id)) cache.delete(id);
+    }
+
+    return result;
   }, [elements, hiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties]);
 
-  // --- Phase B: Final node assembly (depends on visual state) ---
+  // --- Phase B: Final node assembly (incremental patching for performance) ---
+  // Instead of rebuilding ALL nodes on every visual change (selection, dimming, remote presence),
+  // we only rebuild nodes whose visual state actually changed. Unchanged nodes keep the same
+  // object reference, so React.memo (arePropsEqual) skips re-rendering them entirely.
+  const prevNodesRef = useRef<Node[]>([]);
+  const prevNodeStructuresByIdRef = useRef(new Map<string, typeof nodeStructures[number]>());
+  const prevNodesByIdRef = useRef(new Map<string, Node>());
+  const prevSelectedIdsRef = useRef(selectedElementIds);
+  const prevDimmedIdsRef = useRef(dimmedElementIds);
+  const prevEditingIdRef = useRef(editingElementId);
+  const prevRemoteUsersRef = useRef(remoteUsersByElement);
+  const prevShowConfRef = useRef(showConfidenceIndicator);
+  const prevTagModeRef = useRef(tagDisplayMode);
+  const prevTagSizeRef = useRef(tagDisplaySize);
+  const prevThemeRef = useRef(themeMode);
+
   const nodes = useMemo(() => {
-    return nodeStructures
-      .map(({ el, thumbnail, isLoadingAsset, unresolvedCommentCount, badgeProperty, displayedPropertyValues }) => {
-        const callbacks = getCallbacks(el.id, Boolean(el.isAnnotation));
-        return elementToNode(
-          el,
-          selectedElementIds.has(el.id),
-          dimmedElementIds.has(el.id),
-          thumbnail,
-          callbacks.onResize,
-          editingElementId === el.id,
-          remoteUsersByElement.get(el.id),
-          callbacks.onLabelChange,
-          stopEditing,
-          unresolvedCommentCount,
-          isLoadingAsset,
-          badgeProperty,
-          showConfidenceIndicator,
-          displayedPropertyValues,
-          tagDisplayMode,
-          tagDisplaySize,
-          themeMode,
-        );
-      })
-      .sort((a, b) => {
+    const globalSettingsChanged =
+      prevShowConfRef.current !== showConfidenceIndicator ||
+      prevTagModeRef.current !== tagDisplayMode ||
+      prevTagSizeRef.current !== tagDisplaySize ||
+      prevThemeRef.current !== themeMode;
+
+    // Helper: build a single node from its structure
+    const buildNode = (ns: typeof nodeStructures[number]) => {
+      const callbacks = getCallbacks(ns.el.id, Boolean(ns.el.isAnnotation));
+      return elementToNode(
+        ns.el,
+        selectedElementIds.has(ns.el.id),
+        dimmedElementIds.has(ns.el.id),
+        ns.thumbnail,
+        callbacks.onResize,
+        editingElementId === ns.el.id,
+        remoteUsersByElement.get(ns.el.id),
+        callbacks.onLabelChange,
+        stopEditing,
+        ns.unresolvedCommentCount,
+        ns.isLoadingAsset,
+        ns.badgeProperty,
+        showConfidenceIndicator,
+        ns.displayedPropertyValues,
+        tagDisplayMode,
+        tagDisplaySize,
+        themeMode,
+      );
+    };
+
+    // Full rebuild on first render or global settings change (theme, tag mode, etc.)
+    if (globalSettingsChanged || prevNodesRef.current.length === 0) {
+      const result = nodeStructures.map(buildNode)
+        .sort((a, b) => {
+          if (a.type === 'groupFrame' && b.type !== 'groupFrame') return -1;
+          if (a.type !== 'groupFrame' && b.type === 'groupFrame') return 1;
+          return 0;
+        });
+      prevNodesRef.current = result;
+      const newStructMap = new Map<string, typeof nodeStructures[number]>();
+      const newNodeMap = new Map<string, Node>();
+      for (let i = 0; i < nodeStructures.length; i++) {
+        newStructMap.set(nodeStructures[i].el.id, nodeStructures[i]);
+        newNodeMap.set(result[i].id, result[i]);
+      }
+      prevNodeStructuresByIdRef.current = newStructMap;
+      prevNodesByIdRef.current = newNodeMap;
+      prevSelectedIdsRef.current = selectedElementIds;
+      prevDimmedIdsRef.current = dimmedElementIds;
+      prevEditingIdRef.current = editingElementId;
+      prevRemoteUsersRef.current = remoteUsersByElement;
+      prevShowConfRef.current = showConfidenceIndicator;
+      prevTagModeRef.current = tagDisplayMode;
+      prevTagSizeRef.current = tagDisplaySize;
+      prevThemeRef.current = themeMode;
+      return result;
+    }
+
+    // Incremental: identify which nodes need rebuilding
+    const needsRebuild = new Set<string>();
+    const structMap = prevNodeStructuresByIdRef.current;
+    const nodeMap = prevNodesByIdRef.current;
+
+    // Structure diff + update refs in single pass
+    // Also collect changed structures for lookup during patching
+    const changedStructures = new Map<string, typeof nodeStructures[number]>();
+    for (const ns of nodeStructures) {
+      if (structMap.get(ns.el.id) !== ns) {
+        needsRebuild.add(ns.el.id);
+        changedStructures.set(ns.el.id, ns);
+      }
+      structMap.set(ns.el.id, ns); // Mutate ref in place
+    }
+
+    // Selection diff
+    if (prevSelectedIdsRef.current !== selectedElementIds) {
+      for (const id of selectedElementIds) {
+        if (!prevSelectedIdsRef.current.has(id)) needsRebuild.add(id);
+      }
+      for (const id of prevSelectedIdsRef.current) {
+        if (!selectedElementIds.has(id)) needsRebuild.add(id);
+      }
+    }
+
+    // Dimmed diff (often skipped: dimmedElementIds is now reference-stable)
+    if (prevDimmedIdsRef.current !== dimmedElementIds) {
+      for (const id of dimmedElementIds) {
+        if (!prevDimmedIdsRef.current.has(id)) needsRebuild.add(id);
+      }
+      for (const id of prevDimmedIdsRef.current) {
+        if (!dimmedElementIds.has(id)) needsRebuild.add(id);
+      }
+    }
+
+    // Editing diff
+    if (prevEditingIdRef.current !== editingElementId) {
+      if (prevEditingIdRef.current) needsRebuild.add(prevEditingIdRef.current);
+      if (editingElementId) needsRebuild.add(editingElementId);
+    }
+
+    // Remote presence diff
+    if (prevRemoteUsersRef.current !== remoteUsersByElement) {
+      const allRemoteIds = new Set([
+        ...remoteUsersByElement.keys(),
+        ...prevRemoteUsersRef.current.keys(),
+      ]);
+      for (const id of allRemoteIds) {
+        if (remoteUsersByElement.get(id) !== prevRemoteUsersRef.current.get(id)) {
+          needsRebuild.add(id);
+        }
+      }
+    }
+
+    // Update visual state refs
+    prevSelectedIdsRef.current = selectedElementIds;
+    prevDimmedIdsRef.current = dimmedElementIds;
+    prevEditingIdRef.current = editingElementId;
+    prevRemoteUsersRef.current = remoteUsersByElement;
+
+    // Detect additions/removals by comparing count
+    const hasAdditionsOrRemovals = nodeStructures.length !== prevNodesRef.current.length;
+
+    if (hasAdditionsOrRemovals) {
+      // Rebuild array structure but reuse unchanged node objects
+      const result = nodeStructures.map(ns => {
+        if (!needsRebuild.has(ns.el.id)) {
+          const existing = nodeMap.get(ns.el.id);
+          if (existing) return existing;
+        }
+        const newNode = buildNode(ns);
+        nodeMap.set(ns.el.id, newNode); // Mutate ref in place
+        return newNode;
+      }).sort((a, b) => {
         if (a.type === 'groupFrame' && b.type !== 'groupFrame') return -1;
         if (a.type !== 'groupFrame' && b.type === 'groupFrame') return 1;
         return 0;
       });
+
+      // Clean removed elements from structMap/nodeMap
+      if (nodeStructures.length < prevNodesRef.current.length) {
+        const currentIds = new Set(nodeStructures.map(ns => ns.el.id));
+        for (const id of nodeMap.keys()) {
+          if (!currentIds.has(id)) { nodeMap.delete(id); structMap.delete(id); }
+        }
+      }
+
+      prevNodesRef.current = result;
+      return result;
+    }
+
+    // No additions/removals: early exit when nothing changed
+    if (needsRebuild.size === 0) {
+      return prevNodesRef.current;
+    }
+
+    // Patch only affected nodes — unchanged nodes keep same object reference
+    const result = prevNodesRef.current.map(node => {
+      if (!needsRebuild.has(node.id)) return node; // Same reference = React.memo skip
+      const ns = changedStructures.get(node.id) ?? structMap.get(node.id);
+      if (!ns) return node;
+      const newNode = buildNode(ns);
+      nodeMap.set(node.id, newNode); // Mutate ref in place
+      return newNode;
+    });
+
+    prevNodesRef.current = result;
+    return result;
   }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement]);
 
   // Update awareness when selection changes
@@ -916,10 +1214,53 @@ export function Canvas() {
     [updateLink]
   );
 
+  // --- Stable edge callback refs (eliminates closure recreations per edge recalc) ---
+  const handleLinkLabelChangeRef = useRef(handleLinkLabelChange);
+  const handleCurveOffsetChangeRef = useRef(handleCurveOffsetChange);
+  const selectLinkRef = useRef(selectLink);
+  const startEditingLinkRef = useRef(startEditingLink);
+
+  useEffect(() => {
+    handleLinkLabelChangeRef.current = handleLinkLabelChange;
+    handleCurveOffsetChangeRef.current = handleCurveOffsetChange;
+    selectLinkRef.current = selectLink;
+    startEditingLinkRef.current = startEditingLink;
+  });
+
+  const edgeCallbacksCache = useRef(new Map<string, {
+    onLabelChange: (newLabel: string) => void;
+    onCurveOffsetChange: (offset: { x: number; y: number }) => void;
+    onStartEditing: () => void;
+  }>());
+
+  function getEdgeCallbacks(linkId: string) {
+    let cached = edgeCallbacksCache.current.get(linkId);
+    if (!cached) {
+      cached = {
+        onLabelChange: (newLabel: string) => handleLinkLabelChangeRef.current(linkId, newLabel),
+        onCurveOffsetChange: (offset: { x: number; y: number }) => handleCurveOffsetChangeRef.current(linkId, offset),
+        onStartEditing: () => {
+          selectLinkRef.current(linkId);
+          startEditingLinkRef.current(linkId);
+        },
+      };
+      edgeCallbacksCache.current.set(linkId, cached);
+    }
+    return cached;
+  }
+
+  // Clean stale entries from edge callbacks cache when links change
+  useEffect(() => {
+    const currentIds = new Set(links.map(l => l.id));
+    for (const id of edgeCallbacksCache.current.keys()) {
+      if (!currentIds.has(id)) edgeCallbacksCache.current.delete(id);
+    }
+  }, [links]);
+
   // Dragging state refs (no state to avoid re-renders during drag)
   const isDraggingRef = useRef(false);
   const draggingNodeIdsRef = useRef<Set<string>>(new Set());
-  const lastDragEndRef = useRef<number>(0);
+  // lastDragEndRef removed — no longer needed after eliminating useLayoutEffect double-render
   const isHandlingSelectionRef = useRef(false);
 
   // Ref for sync mode - used inside handleNodesChange without adding it as dependency
@@ -929,20 +1270,9 @@ export function Canvas() {
   // Local nodes state for smooth drag - ReactFlow controls this during drag
   const [localNodes, setLocalNodes] = useState<Node[]>(nodes);
 
-  // Sync from store to local when NOT dragging
-  // useLayoutEffect prevents one-frame flash when group structure changes
-  // Skip sync briefly after drag end to let Y.js propagate the final position
-  // This prevents glitches where an older position briefly appears
-  useLayoutEffect(() => {
-    if (!isDraggingRef.current) {
-      // Skip sync for 100ms after drag end to avoid glitches from Y.js latency
-      const timeSinceDragEnd = Date.now() - lastDragEndRef.current;
-      if (timeSinceDragEnd < 100) {
-        return;
-      }
-      setLocalNodes(nodes);
-    }
-  }, [nodes]);
+  // Ref to access latest nodes from store in handleNodesChange without adding as dep
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
 
   // Alignment guides state
   const [_activeGuides, setActiveGuides] = useState<Guide[]>([]);
@@ -950,13 +1280,15 @@ export function Canvas() {
   const lastGuideUpdateRef = useRef<number>(0);
   const GUIDE_THROTTLE_MS = 100;
 
-  // Use local nodes for display - this allows smooth drag
-  const displayNodes = localNodes;
+  // Use store-derived nodes when not dragging (avoids double render),
+  // local nodes during drag for smooth visual updates
+  const displayNodes = isDraggingRef.current ? localNodes : nodes;
 
   // Track node positions in a ref (updated every frame, but doesn't trigger re-renders)
   const nodePositionsRef = useRef(new Map<string, Position>());
   // Version counter to trigger edge recomputation on drag-end / structural changes
   const [edgeVersion, setEdgeVersion] = useState(0);
+  const edgeVersionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Update positions ref from displayNodes (cheap, no re-render)
   useEffect(() => {
@@ -983,107 +1315,207 @@ export function Canvas() {
     }
     nodePositionsRef.current = positions;
 
-    // Only trigger edge recomputation when not dragging
-    if (!isDraggingRef.current) {
-      setEdgeVersion(v => v + 1);
+    // Debounced edge recomputation: during continuous remote updates, edges
+    // only rebuild ~3/sec instead of on every position change. The positions
+    // ref is always up-to-date, so handles will be correct once edges rebuild.
+    if (!isDraggingRef.current && !isViewportMovingRef.current) {
+      if (edgeVersionTimerRef.current) clearTimeout(edgeVersionTimerRef.current);
+      edgeVersionTimerRef.current = setTimeout(() => {
+        setEdgeVersion(v => v + 1);
+        edgeVersionTimerRef.current = null;
+      }, 300);
     }
   }, [displayNodes]);
 
-  const edges = useMemo(() => {
+  // --- Edge computation: viewport culling → cap → simplification → progressive rendering ---
+  const MAX_RENDERED_EDGES = 800;
+  const SIMPLE_EDGE_THRESHOLD = 200;
+
+  // Cache previous edges by ID for incremental patching (selection/dimming changes)
+  const prevEdgeCacheRef = useRef(new Map<string, Edge>());
+
+  const allEdges = useMemo(() => {
     const nodePositions = nodePositionsRef.current;
+    const edgeCache = prevEdgeCacheRef.current;
 
     // Viewport culling: filter edges whose both endpoints are off-screen
     const bufferPx = 200;
-    const vLeft = (-viewport.x - bufferPx) / viewport.zoom;
-    const vTop = (-viewport.y - bufferPx) / viewport.zoom;
-    const vRight = (-viewport.x + (wrapperSize.width + bufferPx)) / viewport.zoom;
-    const vBottom = (-viewport.y + (wrapperSize.height + bufferPx)) / viewport.zoom;
+    const vLeft = (-cullingViewport.x - bufferPx) / cullingViewport.zoom;
+    const vTop = (-cullingViewport.y - bufferPx) / cullingViewport.zoom;
+    const vRight = (-cullingViewport.x + (wrapperSize.width + bufferPx)) / cullingViewport.zoom;
+    const vBottom = (-cullingViewport.y + (wrapperSize.height + bufferPx)) / cullingViewport.zoom;
 
     const visibleLinks = links.filter(link => {
       const fromPos = nodePositions.get(link.fromId);
       const toPos = nodePositions.get(link.toId);
-      if (!fromPos || !toPos) return true; // keep if unknown position
+      if (!fromPos || !toPos) return true;
       const fromVisible = fromPos.x >= vLeft && fromPos.x <= vRight && fromPos.y >= vTop && fromPos.y <= vBottom;
       const toVisible = toPos.x >= vLeft && toPos.x <= vRight && toPos.y >= vTop && toPos.y <= vBottom;
       return fromVisible || toVisible;
     });
 
-    // Build parallel edges map with pre-computed indices (eliminates indexOf O(n))
-    const parallelEdgesMap = new Map<string, { link: Link; index: number }[]>();
-
-    for (const link of visibleLinks) {
-      const key = link.fromId < link.toId
-        ? `${link.fromId}-${link.toId}`
-        : `${link.toId}-${link.fromId}`;
-
-      if (!parallelEdgesMap.has(key)) {
-        parallelEdgesMap.set(key, []);
+    // Cap edges: prioritize selected, then connected-to-selected, then rest
+    let cappedLinks = visibleLinks;
+    if (visibleLinks.length > MAX_RENDERED_EDGES) {
+      const selected: Link[] = [];
+      const connectedToSelected: Link[] = [];
+      const rest: Link[] = [];
+      for (const link of visibleLinks) {
+        if (selectedLinkIds.has(link.id)) {
+          selected.push(link);
+        } else if (selectedElementIds.has(link.fromId) || selectedElementIds.has(link.toId)) {
+          connectedToSelected.push(link);
+        } else {
+          rest.push(link);
+        }
       }
-      const arr = parallelEdgesMap.get(key)!;
-      arr.push({ link, index: arr.length });
+      const budget = MAX_RENDERED_EDGES - selected.length - connectedToSelected.length;
+      cappedLinks = [...selected, ...connectedToSelected, ...rest.slice(0, Math.max(0, budget))];
     }
 
-    return visibleLinks.map(link => {
-      const onLabelChange = (newLabel: string) => {
-        handleLinkLabelChange(link.id, newLabel);
-      };
-
-      const onCurveOffsetChange = (offset: { x: number; y: number }) => {
-        handleCurveOffsetChange(link.id, offset);
-      };
-
-      const onStartEditing = () => {
-        selectLink(link.id);
-        startEditingLink(link.id);
-      };
-
-      // Get pre-computed parallel index (O(1) instead of indexOf O(n))
-      const key = link.fromId < link.toId
+    // Build parallel edges lookup
+    const pairGroupMap = new Map<string, string[]>();
+    for (const link of cappedLinks) {
+      const pairKey = link.fromId < link.toId
         ? `${link.fromId}-${link.toId}`
         : `${link.toId}-${link.fromId}`;
-      const parallelEntries = parallelEdgesMap.get(key)!;
-      const entry = parallelEntries.find(e => e.link === link)!;
-      const parallelIndex = entry.index;
-      const parallelCount = parallelEntries.length;
+      let group = pairGroupMap.get(pairKey);
+      if (!group) { group = []; pairGroupMap.set(pairKey, group); }
+      group.push(link.id);
+    }
+    const parallelLookup = new Map<string, { index: number; count: number }>();
+    for (const group of pairGroupMap.values()) {
+      for (let i = 0; i < group.length; i++) {
+        parallelLookup.set(group[i], { index: i, count: group.length });
+      }
+    }
 
-      // Link is dimmed if either connected element is dimmed
+    const useSimpleEdges = cappedLinks.length > SIMPLE_EDGE_THRESHOLD;
+
+    const newCache = new Map<string, Edge>();
+    const result = cappedLinks.map(link => {
+      const isSelected = selectedLinkIds.has(link.id);
       const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
+      const simplified = useSimpleEdges && !isSelected;
 
-      // Compute displayed property values for this link
-      const linkDisplayedPropertyValues = displayedProperties
-        .map(key => {
-          const prop = link.properties?.find(p => p.key === key);
-          if (!prop || prop.value == null) return null;
-          const valueStr = typeof prop.value === 'string'
-            ? prop.value
-            : prop.value instanceof Date
-              ? prop.value.toLocaleDateString('fr-FR')
-              : String(prop.value);
-          return { key, value: valueStr };
-        })
-        .filter((p): p is { key: string; value: string } => p !== null);
+      // Reuse cached edge if visual state is unchanged (same reference → memo skip)
+      const cached = edgeCache.get(link.id);
+      if (cached) {
+        const cd = cached.data as any;
+        const sameVisuals = cached.selected === isSelected
+          && cd?.isDimmed === isLinkDimmed
+          && (cached.type === 'simple') === simplified;
+        if (sameVisuals && simplified) {
+          // SimpleEdge: only depends on isSelected + isDimmed + color/thickness
+          newCache.set(link.id, cached);
+          return cached;
+        }
+        if (sameVisuals && !simplified) {
+          // CustomEdge: also check editing, remote users
+          const sameEditing = cd?.isEditing === (editingLinkId === link.id);
+          const sameRemote = remoteUsersByLink.get(link.id) === cd?.remoteLinkSelectors;
+          if (sameEditing && sameRemote) {
+            newCache.set(link.id, cached);
+            return cached;
+          }
+        }
+      }
 
-      return linkToEdge(
-        link,
-        selectedLinkIds.has(link.id),
-        isLinkDimmed,
-        nodePositions,
-        linkAnchorMode,
-        linkCurveMode,
-        editingLinkId === link.id,
-        onLabelChange,
-        stopEditing,
-        onStartEditing,
-        parallelIndex,
-        parallelCount,
-        onCurveOffsetChange,
-        showConfidenceIndicator,
-        linkDisplayedPropertyValues,
-        remoteUsersByLink.get(link.id)
-      );
+      let edge: Edge;
+      if (simplified) {
+        edge = linkToEdge(
+          link, isSelected, isLinkDimmed, nodePositions,
+          linkAnchorMode, linkCurveMode,
+          undefined, undefined, undefined, undefined,
+          undefined, undefined, undefined, undefined, undefined, undefined,
+          true
+        );
+      } else {
+        const edgeCbs = getEdgeCallbacks(link.id);
+        const parallel = parallelLookup.get(link.id)!;
+
+        const linkDisplayedPropertyValues = displayedProperties
+          .map(key => {
+            const prop = link.properties?.find(p => p.key === key);
+            if (!prop || prop.value == null) return null;
+            const valueStr = typeof prop.value === 'string'
+              ? prop.value
+              : prop.value instanceof Date
+                ? prop.value.toLocaleDateString('fr-FR')
+                : String(prop.value);
+            return { key, value: valueStr };
+          })
+          .filter((p): p is { key: string; value: string } => p !== null);
+
+        edge = linkToEdge(
+          link, isSelected, isLinkDimmed, nodePositions,
+          linkAnchorMode, linkCurveMode,
+          editingLinkId === link.id,
+          edgeCbs.onLabelChange, stopEditing, edgeCbs.onStartEditing,
+          parallel.index, parallel.count,
+          edgeCbs.onCurveOffsetChange,
+          showConfidenceIndicator, linkDisplayedPropertyValues,
+          remoteUsersByLink.get(link.id)
+        );
+      }
+
+      newCache.set(link.id, edge);
+      return edge;
     });
+
+    prevEdgeCacheRef.current = newCache;
+    return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, viewport, wrapperSize, selectedLinkIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, handleLinkLabelChange, stopEditing, handleCurveOffsetChange, selectLink, startEditingLink, showConfidenceIndicator, displayedProperties, remoteUsersByLink]);
+  }, [links, edgeVersion, cullingViewport, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink]);
+
+  // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
+  // Start with a small batch and grow to full count over a few frames.
+  // Only reset when the SET of visible edges changes (not on selection/dimming changes).
+  const EDGE_BATCH_SIZE = 250;
+  const [edgeRenderLimit, setEdgeRenderLimit] = useState(EDGE_BATCH_SIZE);
+  const edgeProgressionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevEdgeIdsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const prevIds = prevEdgeIdsRef.current;
+    const currentIds = allEdges.map(e => e.id);
+    prevEdgeIdsRef.current = currentIds;
+
+    // Check if edge set changed structurally (different IDs or order)
+    const structuralChange = prevIds.length !== currentIds.length ||
+      currentIds.some((id, i) => id !== prevIds[i]);
+
+    if (!structuralChange) {
+      // Visual-only change (selection/dimming) — show all immediately, no progressive reset
+      setEdgeRenderLimit(allEdges.length);
+      return;
+    }
+
+    // Structural change — progressive rendering
+    if (allEdges.length <= EDGE_BATCH_SIZE) {
+      setEdgeRenderLimit(allEdges.length);
+      return;
+    }
+
+    setEdgeRenderLimit(EDGE_BATCH_SIZE);
+    if (edgeProgressionRef.current) clearTimeout(edgeProgressionRef.current);
+
+    let current = EDGE_BATCH_SIZE;
+    const step = () => {
+      current = Math.min(current + EDGE_BATCH_SIZE, allEdges.length);
+      setEdgeRenderLimit(current);
+      if (current < allEdges.length) {
+        edgeProgressionRef.current = setTimeout(step, 60);
+      }
+    };
+    edgeProgressionRef.current = setTimeout(step, 60);
+
+    return () => { if (edgeProgressionRef.current) clearTimeout(edgeProgressionRef.current); };
+  }, [allEdges]);
+
+  const edges = edgeRenderLimit >= allEdges.length
+    ? allEdges
+    : allEdges.slice(0, edgeRenderLimit);
 
 
   // Track starting positions for undo
@@ -1097,22 +1529,22 @@ export function Canvas() {
   // HYBRID: Apply position changes locally for smooth drag, sync to Zustand periodically and on drag end
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
-      // Filter out 'remove' changes - deletion is controlled by Zustand only
-      // Also filter out position changes for locked elements
+      // Filter out changes we handle ourselves:
+      // - 'remove': deletion controlled by Zustand
+      // - 'select': selection controlled by selectionStore (avoid double-processing)
+      // - 'position' on locked elements
       const safeChanges = changes.filter(c => {
         if (c.type === 'remove') return false;
+        if (c.type === 'select') return false;
         if (c.type === 'position') {
-          const element = elements.find(el => el.id === c.id);
+          const element = elementMap.get(c.id);
           if (element?.isPositionLocked) return false;
         }
         return true;
       });
       if (safeChanges.length === 0) return;
 
-      // Apply changes to local nodes for smooth visual updates during drag
-      setLocalNodes(nds => applyNodeChanges(safeChanges, nds));
-
-      // Track dragging state
+      // Track dragging state BEFORE applying changes to localNodes
       const positionChanges = changes.filter(
         (c): c is NodeChange & { type: 'position'; id: string; dragging?: boolean; position?: Position } =>
           c.type === 'position'
@@ -1130,7 +1562,7 @@ export function Canvas() {
           }
           // Capture starting position for undo (only on first drag event)
           if (!dragStartPositionsRef.current.has(change.id)) {
-            const element = elements.find(el => el.id === change.id);
+            const element = elementMap.get(change.id);
             if (element) {
               dragStartPositionsRef.current.set(change.id, { ...element.position });
             }
@@ -1138,8 +1570,24 @@ export function Canvas() {
         }
       }
 
-      // Update dragging ref
-      isDraggingRef.current = nowDragging.size > 0;
+      const wasDragging = isDraggingRef.current;
+      const isNowDragging = nowDragging.size > 0;
+
+      // Apply changes to local nodes only during drag (for smooth visual updates).
+      // When not dragging, displayNodes uses `nodes` directly → avoids double render.
+      if (!wasDragging && isNowDragging) {
+        // Drag START: initialize localNodes from current store-derived nodes
+        isDraggingRef.current = true;
+        setLocalNodes(applyNodeChanges(safeChanges, nodesRef.current));
+      } else if (wasDragging && isNowDragging) {
+        // DURING drag: update localNodes incrementally
+        setLocalNodes(nds => applyNodeChanges(safeChanges, nds));
+      } else if (wasDragging && !isNowDragging) {
+        // Drag END: keep isDraggingRef = true for now.
+        // It will be set to false AFTER updateElementPositions updates the store,
+        // so displayNodes = nodes already has the final positions when the switch happens.
+        setLocalNodes(nds => applyNodeChanges(safeChanges, nds));
+      }
 
       // Update alignment guides during drag (throttled to reduce recomputations)
       if (showAlignGuides && nowDragging.size === 1 && draggingChangesWithPosition.length > 0) {
@@ -1193,7 +1641,7 @@ export function Canvas() {
         // Apply alignment guide snapping on drag end (single node only)
         if (showAlignGuides && updates.length === 1) {
           const update = updates[0];
-          const guides = computeGuides(update.id, update.position, localNodes);
+          const guides = computeGuides(update.id, update.position, nodesRef.current);
           if (guides.length > 0) {
             // Find the closest x and y guide to snap to
             const xGuide = guides.find(g => g.type === 'x');
@@ -1240,21 +1688,26 @@ export function Canvas() {
           dragStartPositionsRef.current.delete(update.id);
         }
 
-        // Mark drag end time to skip redundant sync from Zustand
-        lastDragEndRef.current = Date.now();
         draggingNodeIdsRef.current.clear();
 
         // Clear alignment guides
         setDraggedNodeInfo(null);
         setActiveGuides([]);
 
+        // Update store FIRST (synchronous), then release isDraggingRef.
+        // This ensures displayNodes = nodes has the final positions when the switch happens.
         updateElementPositions(updates);
+        isDraggingRef.current = false;
 
-        // Trigger edge recomputation now that drag is done
+        // Trigger edge recomputation now that drag is done (cancel any pending debounce)
+        if (edgeVersionTimerRef.current) {
+          clearTimeout(edgeVersionTimerRef.current);
+          edgeVersionTimerRef.current = null;
+        }
         setEdgeVersion(v => v + 1);
       }
     },
-    [updateElementPositions, updateDragging, elements, pushAction, showAlignGuides, localNodes]
+    [updateElementPositions, updateDragging, elementMap, pushAction, showAlignGuides]
   );
 
   // Handle edge changes - in controlled mode, we don't need to handle edge changes
@@ -1318,7 +1771,7 @@ export function Canvas() {
       // Close canvas context menu if open
       setCanvasContextMenu(null);
 
-      const element = elements.find((el) => el.id === node.id);
+      const element = elementMap.get(node.id);
       if (element) {
         // Find first previewable asset (image or PDF)
         const previewableAsset = element.assetIds
@@ -1334,7 +1787,7 @@ export function Canvas() {
         });
       }
     },
-    [elements, assets]
+    [elementMap, assets]
   );
 
   // Close context menu
@@ -1674,10 +2127,20 @@ export function Canvas() {
 
   const handleContextMenuDelete = useCallback(async () => {
     if (contextMenu) {
-      await deleteElements([contextMenu.elementId]);
+      const elementId = contextMenu.elementId;
+      // Collect data for undo
+      const el = elementMap.get(elementId);
+      const elementsToDelete = el ? [el] : [];
+      const linksToDelete = links.filter(l => l.fromId === elementId || l.toId === elementId);
+      pushAction({
+        type: 'delete-elements',
+        undo: { elements: elementsToDelete, links: linksToDelete },
+        redo: { elementIds: [elementId] },
+      });
+      await deleteElements([elementId]);
       clearSelection();
     }
-  }, [contextMenu, deleteElements, clearSelection]);
+  }, [contextMenu, elementMap, links, deleteElements, clearSelection, pushAction]);
 
   // Preview handler for context menu
   const handleContextMenuPreview = useCallback(() => {
@@ -1897,11 +2360,11 @@ export function Canvas() {
   // Dissolve group handler
   const handleDissolveGroup = useCallback(async () => {
     if (!contextMenu) return;
-    const el = elements.find(e => e.id === contextMenu.elementId);
+    const el = elementMap.get(contextMenu.elementId);
     if (!el?.isGroup) return;
     await dissolveGroup(contextMenu.elementId);
     clearSelection();
-  }, [contextMenu, elements, dissolveGroup, clearSelection]);
+  }, [contextMenu, elementMap, dissolveGroup, clearSelection]);
 
   // Remove from group handler
   const handleRemoveFromGroup = useCallback(async () => {
@@ -1912,7 +2375,7 @@ export function Canvas() {
   // Toggle position lock handler - applies to all selected elements
   const handleToggleLock = useCallback(async () => {
     if (!contextMenu) return;
-    const clickedElement = elements.find(e => e.id === contextMenu.elementId);
+    const clickedElement = elementMap.get(contextMenu.elementId);
     if (!clickedElement) return;
 
     // Determine new lock state based on the clicked element
@@ -1927,7 +2390,7 @@ export function Canvas() {
     await Promise.all(
       targetIds.map(id => updateElement(id, { isPositionLocked: newLockState }))
     );
-  }, [contextMenu, elements, selectedElementIds, updateElement]);
+  }, [contextMenu, elementMap, selectedElementIds, updateElement]);
 
   const handleFindPaths = useCallback(
     (fromId: string, toId: string) => {
@@ -1943,11 +2406,11 @@ export function Canvas() {
         (id) => id !== contextMenu.elementId
       );
       if (otherId) {
-        return elements.find((el) => el.id === otherId);
+        return elementMap.get(otherId);
       }
     }
     return undefined;
-  }, [contextMenu, selectedElementIds, elements]);
+  }, [contextMenu, selectedElementIds, elementMap]);
 
   // Double-click detection for edges (since onEdgeDoubleClick doesn't work reliably)
   const edgeClickCountRef = useRef<{ id: string; count: number; timer: ReturnType<typeof setTimeout> | null }>({
@@ -2133,7 +2596,7 @@ export function Canvas() {
         // Dropped on an element - attach files to it
         const elementId = nodeElement.getAttribute('data-id');
         if (elementId) {
-          const targetElement = elements.find((e) => e.id === elementId);
+          const targetElement = elementMap.get(elementId);
           for (const file of files) {
             await addAsset(elementId, file);
             try {
@@ -2183,7 +2646,7 @@ export function Canvas() {
         }
       }
     },
-    [createElement, addAsset, viewport, elements, pushMetadataImport]
+    [createElement, addAsset, viewport, elementMap, pushMetadataImport]
   );
 
   const handleFileDragOver = useCallback((event: React.DragEvent) => {
@@ -2675,24 +3138,38 @@ export function Canvas() {
     [setViewport]
   );
 
-  // Handle selection change from selection box
+  // Handle selection change from selection box — throttled to avoid 60fps store updates
+  const selectionChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSelectionRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
+  const SELECTION_THROTTLE_MS = 80;
+
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: { nodes: Node[]; edges: Edge[] }) => {
-      // Prevent re-entry to avoid infinite loop
       if (isHandlingSelectionRef.current) return;
 
-      if (selectedNodes.length > 0 || selectedEdges.length > 0) {
-        isHandlingSelectionRef.current = true;
-        selectBoth(
-          selectedNodes.map((n) => n.id),
-          selectedEdges.map((e) => e.id),
-          false
-        );
-        // Reset flag after a microtask to allow React to settle
-        queueMicrotask(() => {
-          isHandlingSelectionRef.current = false;
-        });
-      }
+      // Store the latest selection and throttle the update
+      pendingSelectionRef.current = { nodes: selectedNodes, edges: selectedEdges };
+
+      if (selectionChangeTimerRef.current) return; // already scheduled
+
+      selectionChangeTimerRef.current = setTimeout(() => {
+        selectionChangeTimerRef.current = null;
+        const pending = pendingSelectionRef.current;
+        if (!pending) return;
+        pendingSelectionRef.current = null;
+
+        if (pending.nodes.length > 0 || pending.edges.length > 0) {
+          isHandlingSelectionRef.current = true;
+          selectBoth(
+            pending.nodes.map((n) => n.id),
+            pending.edges.map((e) => e.id),
+            false
+          );
+          queueMicrotask(() => {
+            isHandlingSelectionRef.current = false;
+          });
+        }
+      }, SELECTION_THROTTLE_MS);
     },
     [selectBoth]
   );
@@ -2785,7 +3262,7 @@ export function Canvas() {
         {/* Canvas */}
         <div
           ref={reactFlowWrapper}
-          className={`flex-1 relative outline-none ${importPlacementMode ? 'cursor-crosshair' : ''}`}
+          className={`flex-1 relative outline-none ${importPlacementMode ? 'cursor-crosshair' : ''} ${isViewportMoving && elements.length > 500 ? 'edges-hidden' : ''}`}
           data-testid="canvas"
           data-report-capture="canvas"
           onMouseMove={(e) => { lastMousePosRef.current = { x: e.clientX, y: e.clientY }; }}
@@ -2842,6 +3319,8 @@ export function Canvas() {
             onPaneContextMenu={handlePaneContextMenu}
             onDoubleClick={handlePaneDoubleClick}
             onViewportChange={handleViewportChange}
+            onMoveStart={handleMoveStart}
+            onMoveEnd={handleMoveEnd}
             onSelectionChange={handleSelectionChange}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
@@ -2924,13 +3403,13 @@ export function Canvas() {
               onDuplicate={handleContextMenuDuplicate}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
-              isGroup={!!elements.find(el => el.id === contextMenu.elementId)?.isGroup}
-              isInGroup={!!elements.find(el => el.id === contextMenu.elementId)?.parentGroupId}
+              isGroup={!!elementMap.get(contextMenu.elementId)?.isGroup}
+              isInGroup={!!elementMap.get(contextMenu.elementId)?.parentGroupId}
               hasMultipleSelected={selectedElementIds.size > 1}
               onGroupSelection={handleGroupSelection}
               onDissolveGroup={handleDissolveGroup}
               onRemoveFromGroup={handleRemoveFromGroup}
-              isPositionLocked={!!elements.find(el => el.id === contextMenu.elementId)?.isPositionLocked}
+              isPositionLocked={!!elementMap.get(contextMenu.elementId)?.isPositionLocked}
               onToggleLock={handleToggleLock}
               onClose={closeContextMenu}
             />

@@ -5,7 +5,6 @@ import type {
   InvestigationId,
   Element,
   ElementId,
-  ElementEvent,
   Link,
   LinkId,
   Comment,
@@ -14,7 +13,6 @@ import type {
   Asset,
   Position,
   PropertyDefinition,
-  Property,
 } from '../types';
 import {
   investigationRepository,
@@ -55,6 +53,7 @@ interface InvestigationState {
   // Loading states
   isLoading: boolean;
   loadingPhase: string;
+  loadingProgress: number;
   error: string | null;
 
   // Actions - Investigations
@@ -127,64 +126,112 @@ interface InvestigationState {
 
 let ydocObserverCleanup: (() => void) | null = null;
 
+// Skip mechanism for local operations that already updated Zustand
+// When a local delete/update updates Zustand first, the next _syncFromYDoc
+// can be skipped since state is already correct. A safety re-sync is scheduled
+// to catch any concurrent remote changes that arrived during the same debounce window.
+let localOpPending = false;
+let safetySyncTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Incremental sync: track which elements/links changed between debounced syncs.
+// Instead of parsing ALL 3000+ Y.Maps every time, we only re-parse the ones
+// that actually changed. This reduces collaborative sync from O(n) to O(changed).
+let changedElementIds = new Set<string>();
+let changedLinkIds = new Set<string>();
+let structuralElementChange = false; // element added/removed
+let structuralLinkChange = false;    // link added/removed
+let metaChangedFlag = false;
+let commentsChangedFlag = false;
+let assetsChangedFlag = false;
+
+// Diagnostic timing: track when observer last fired (to measure observer→sync delay)
+let lastObserverFireTime = 0;
+
 function setupYDocObserver(
   ydoc: Y.Doc,
   syncToZustand: () => void
 ): () => void {
   const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
 
-  // Debounce the sync to avoid excessive re-renders during rapid changes
-  // IMPORTANT: Always use debounce (never immediate execution) to prevent flash
-  // When updateInvestigation/updateElement/updateLink modify Y.Doc, the observer fires.
-  // If we sync immediately, we read Zustand before the set() completes, causing flash.
-  // By always delaying, we ensure Zustand is updated before _syncFromYDoc runs.
-  let syncTimeout: ReturnType<typeof setTimeout> | null = null;
-  const DEBOUNCE_MS = 50;
+  // Batch Y.Doc observer events using requestAnimationFrame.
+  // When the main thread is blocked by React rendering (3.5s on Firefox),
+  // multiple Y.js updates accumulate their changedElementIds/changedLinkIds.
+  // On thread release, rAF fires ONE _syncFromYDoc that processes ALL accumulated
+  // changes at once → fewer renders, better batching.
+  // Local operations are protected by localOpPending (set before Y.doc transact).
+  let syncRafId: number | null = null;
 
   const debouncedSync = () => {
-    if (syncTimeout) {
-      clearTimeout(syncTimeout);
-    }
-    syncTimeout = setTimeout(() => {
+    if (syncRafId) return; // Already scheduled — accumulated changes will be included
+    syncRafId = requestAnimationFrame(() => {
+      syncRafId = null;
       syncToZustand();
-      syncTimeout = null;
-    }, DEBOUNCE_MS);
+    });
   };
 
   // Observe meta changes (investigation name, description)
   const metaObserver = () => {
+    metaChangedFlag = true;
     debouncedSync();
   };
   metaMap.observe(metaObserver);
 
-  // Observe elements changes
-  const elementsObserver = () => {
+  // Observe elements changes — extract changed IDs for incremental sync
+  const elementsObserver = (events: Y.YEvent<any>[]) => {
+    lastObserverFireTime = performance.now();
+    for (const event of events) {
+      if (event.path.length === 0) {
+        // Top-level: element added or removed from the map
+        event.changes.keys.forEach((_change: any, key: string) => {
+          changedElementIds.add(key);
+          structuralElementChange = true;
+        });
+      } else {
+        // Deep change: field modified in an element — path[0] is the element key/id
+        const elementKey = event.path[0] as string;
+        if (elementKey) changedElementIds.add(elementKey);
+      }
+    }
     debouncedSync();
   };
   elementsMap.observeDeep(elementsObserver);
 
-  // Observe links changes
-  const linksObserver = () => {
+  // Observe links changes — extract changed IDs for incremental sync
+  const linksObserver = (events: Y.YEvent<any>[]) => {
+    lastObserverFireTime = performance.now();
+    for (const event of events) {
+      if (event.path.length === 0) {
+        event.changes.keys.forEach((_change: any, key: string) => {
+          changedLinkIds.add(key);
+          structuralLinkChange = true;
+        });
+      } else {
+        const linkKey = event.path[0] as string;
+        if (linkKey) changedLinkIds.add(linkKey);
+      }
+    }
     debouncedSync();
   };
   linksMap.observeDeep(linksObserver);
 
   // Observe comments changes
   const commentsObserver = () => {
+    commentsChangedFlag = true;
     debouncedSync();
   };
   commentsMap.observeDeep(commentsObserver);
 
   // Observe assets changes
   const assetsObserver = () => {
+    assetsChangedFlag = true;
     debouncedSync();
   };
   assetsMap.observeDeep(assetsObserver);
 
   // Return cleanup function
   return () => {
-    if (syncTimeout) {
-      clearTimeout(syncTimeout);
+    if (syncRafId) {
+      cancelAnimationFrame(syncRafId);
     }
     metaMap.unobserve(metaObserver);
     elementsMap.unobserveDeep(elementsObserver);
@@ -207,6 +254,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   investigations: [],
   isLoading: false,
   loadingPhase: '',
+  loadingProgress: 0,
   error: null,
 
   // ============================================================================
@@ -224,7 +272,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   loadInvestigation: async (id: InvestigationId) => {
-    set({ isLoading: true, loadingPhase: 'Ouverture...', error: null });
+    set({ isLoading: true, loadingPhase: 'Ouverture...', loadingProgress: 10, error: null });
     try {
       // Load investigation metadata from Dexie
       let [investigation, assets] = await Promise.all([
@@ -236,13 +284,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         throw new Error('Investigation not found');
       }
 
-      set({ loadingPhase: 'Synchronisation...' });
+      set({ loadingPhase: 'Synchronisation...', loadingProgress: 30 });
 
       // Check if Y.Doc is already open for this investigation (e.g., from JoinPage)
       let ydoc = syncService.getYDoc();
       const currentInvestigationId = syncService.getInvestigationId();
-
-      const ydocAlreadyOpen = ydoc && currentInvestigationId === id;
 
       if (!ydoc || currentInvestigationId !== id) {
         // Open Y.Doc in local mode (creates or loads from IndexedDB)
@@ -256,8 +302,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       const metaName = metaMap.get('name') as string | undefined;
       const metaDescription = metaMap.get('description') as string | undefined;
 
+      // Capture joiner status BEFORE updating description (used later for
+      // deciding whether to broadcast meta/assets or receive them)
+      const isJoiner = investigation.description?.startsWith('Session partagée rejointe') ?? false;
+
       // If Y.Doc has meta but local investigation has default values, update local
-      if (metaName && investigation.description?.startsWith('Session partagée rejointe')) {
+      if (metaName && isJoiner) {
         investigation = {
           ...investigation,
           name: metaName,
@@ -291,47 +341,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         });
       }
 
-      set({ loadingPhase: `Fichiers (${assets.length})...` });
-
-      // Always update meta map with investigation metadata (so peers can see it)
-      // Only update if we're the source of truth (not a joiner with default values)
-      if (!investigation.description?.startsWith('Session partagée rejointe')) {
-        ydoc.transact(() => {
-          metaMap.set('name', investigation.name);
-          metaMap.set('description', investigation.description || '');
-        });
-
-        // Also sync existing local assets to Y.Doc (for sharing with peers)
-        const { assets: assetsMap } = getYMaps(ydoc);
-        for (const asset of assets) {
-          if (!assetsMap.has(asset.id)) {
-            try {
-              // Load file from OPFS and convert to base64
-              const file = await fileService.getAssetFile(asset);
-              const arrayBuffer = await file.arrayBuffer();
-              const base64 = btoa(
-                new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-              );
-
-              const assetYMap = new Y.Map();
-              assetYMap.set('id', asset.id);
-              assetYMap.set('investigationId', asset.investigationId);
-              assetYMap.set('filename', asset.filename);
-              assetYMap.set('mimeType', asset.mimeType);
-              assetYMap.set('size', asset.size);
-              assetYMap.set('hash', asset.hash);
-              assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
-              assetYMap.set('extractedText', asset.extractedText);
-              assetYMap.set('createdAt', asset.createdAt.toISOString());
-              assetYMap.set('data', base64);
-              assetsMap.set(asset.id, assetYMap);
-            } catch (error) {
-              console.warn('Failed to sync asset to Y.Doc:', asset.id, error);
-            }
-          }
-        }
-      } else {
-        // Joiner: sync assets from Y.Doc to local storage
+      // Joiner: download assets from Y.Doc before canvas renders.
+      // Source path (meta broadcast + asset upload) deferred to after
+      // initial render to avoid blocking during main thread contention.
+      if (isJoiner) {
+        set({ loadingPhase: `Fichiers...`, loadingProgress: 55 });
+        // Sync assets from Y.Doc to local storage
         const { assets: assetsMap } = getYMaps(ydoc);
         const assetsFromYDoc: Asset[] = [];
 
@@ -382,7 +397,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
       ydocObserverCleanup = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
 
-      set({ loadingPhase: `Elements (${elementsMap.size + linksMap.size})...` });
+      set({ loadingPhase: `Elements (${elementsMap.size + linksMap.size})...`, loadingProgress: 75 });
 
       // Initial sync from Y.Doc to Zustand (with deduplication)
       const elementsById = new Map<string, Element>();
@@ -419,28 +434,63 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         assets,
         isLoading: false,
         loadingPhase: '',
+        loadingProgress: 100,
       });
 
-      // If in shared mode, schedule additional syncs to catch late-arriving data
-      // This handles the case where Y.Doc updates arrive after the initial load
-      // Server async buffer is flushed 1500ms after connection, so we need re-syncs after that
-      // Use delays that span before and after expected buffer arrival time
+      // In shared mode, schedule ONE safety re-sync after the async buffer
+      // arrival window (~1500ms). The observer-based incremental system handles
+      // real-time changes automatically — multiple re-syncs caused cascading
+      // full rebuilds that blocked the main thread for 60+ seconds.
       const syncState = syncService.getState();
       if (syncState.mode === 'shared' && syncState.connected) {
-        // Re-sync after delays to catch late data:
-        // - 300ms, 800ms: catch real-time sync from peers
-        // - 1500ms: around buffer arrival time
-        // - 2000ms, 2500ms: after buffer arrival (buffer arrives ~1500ms from connection)
-        // - 4000ms: final safety catch-all
-        setTimeout(() => get()._syncFromYDoc(), 300);
-        setTimeout(() => get()._syncFromYDoc(), 800);
-        setTimeout(() => get()._syncFromYDoc(), 1500);
-        setTimeout(() => get()._syncFromYDoc(), 2000);
         setTimeout(() => get()._syncFromYDoc(), 2500);
-        setTimeout(() => get()._syncFromYDoc(), 4000);
+      }
+
+      // Source: broadcast meta + upload assets to Y.Doc in background.
+      // Deferred from initial load to let React render first, avoiding
+      // send SLOW caused by main thread contention during rendering.
+      if (!isJoiner) {
+        const srcInvestigation = investigation;
+        const srcAssets = assets;
+        setTimeout(async () => {
+          const deferredYdoc = syncService.getYDoc();
+          if (!deferredYdoc) return;
+          const { meta: deferredMeta, assets: deferredAssetsMap } = getYMaps(deferredYdoc);
+
+          deferredYdoc.transact(() => {
+            deferredMeta.set('name', srcInvestigation.name);
+            deferredMeta.set('description', srcInvestigation.description || '');
+          });
+
+          for (const asset of srcAssets) {
+            if (!deferredAssetsMap.has(asset.id)) {
+              try {
+                const file = await fileService.getAssetFile(asset);
+                const arrayBuffer = await file.arrayBuffer();
+                const base64 = btoa(
+                  new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+                );
+                const assetYMap = new Y.Map();
+                assetYMap.set('id', asset.id);
+                assetYMap.set('investigationId', asset.investigationId);
+                assetYMap.set('filename', asset.filename);
+                assetYMap.set('mimeType', asset.mimeType);
+                assetYMap.set('size', asset.size);
+                assetYMap.set('hash', asset.hash);
+                assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
+                assetYMap.set('extractedText', asset.extractedText);
+                assetYMap.set('createdAt', asset.createdAt.toISOString());
+                assetYMap.set('data', base64);
+                deferredAssetsMap.set(asset.id, assetYMap);
+              } catch (error) {
+                console.warn('Failed to sync asset to Y.Doc:', asset.id, error);
+              }
+            }
+          }
+        }, 200);
       }
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false, loadingPhase: '' });
+      set({ error: (error as Error).message, isLoading: false, loadingPhase: '', loadingProgress: 0 });
     }
   },
 
@@ -468,9 +518,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   updateInvestigation: async (id: InvestigationId, changes: Partial<Investigation>) => {
-    // Update Zustand FIRST - this prevents flash when Y.Doc observer triggers _syncFromYDoc
-    // When _syncFromYDoc runs after Y.Doc update, Zustand will already have the new value,
-    // so no "change" will be detected and no spurious re-render will occur
+    // Update Zustand FIRST (synchronous) for instant UI response
+    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
+    localOpPending = true;
     set((state) => ({
       investigations: state.investigations.map((inv) =>
         inv.id === id ? { ...inv, ...changes, updatedAt: new Date() } : inv
@@ -615,8 +665,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Element not found');
     }
 
-    // Update Zustand FIRST (synchronous) to prevent flash during async operations
-    // _syncFromYDoc is throttled, so we need immediate update for UI responsiveness
+    // Update Zustand FIRST (synchronous) for instant UI response
+    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
+    localOpPending = true;
     set((state) => ({
       elements: state.elements.map((el) =>
         el.id === id ? { ...el, ...changes, updatedAt: new Date() } : el
@@ -640,7 +691,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
 
-    // Find and delete connected links
+    // Find connected links
     const linksToDelete: string[] = [];
     linksMap.forEach((ymap, linkId) => {
       const map = ymap as Y.Map<any>;
@@ -649,12 +700,17 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
     });
 
+    // Update Zustand FIRST (synchronous) for instant UI response
+    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
+    localOpPending = true;
+    const linksToDeleteSet = new Set(linksToDelete);
+    set((state) => ({
+      elements: state.elements.filter(el => el.id !== id),
+      links: state.links.filter(lk => !linksToDeleteSet.has(lk.id)),
+    }));
+
     ydoc.transact(() => {
-      // Delete connected links
-      linksToDelete.forEach(linkId => {
-        linksMap.delete(linkId);
-      });
-      // Delete element
+      linksToDelete.forEach(linkId => linksMap.delete(linkId));
       elementsMap.delete(id);
     });
 
@@ -670,24 +726,30 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
 
-    // Find and delete connected links
+    // Use Set for O(1) lookups
+    const idsSet = new Set(ids);
+
+    // Find connected links
     const linksToDelete: string[] = [];
     linksMap.forEach((ymap, linkId) => {
       const map = ymap as Y.Map<any>;
-      if (ids.includes(map.get('fromId')) || ids.includes(map.get('toId'))) {
+      if (idsSet.has(map.get('fromId')) || idsSet.has(map.get('toId'))) {
         linksToDelete.push(linkId);
       }
     });
 
+    // Update Zustand FIRST (synchronous) for instant UI response
+    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
+    localOpPending = true;
+    const linksToDeleteSet = new Set(linksToDelete);
+    set((state) => ({
+      elements: state.elements.filter(el => !idsSet.has(el.id)),
+      links: state.links.filter(lk => !linksToDeleteSet.has(lk.id)),
+    }));
+
     ydoc.transact(() => {
-      // Delete connected links
-      linksToDelete.forEach(linkId => {
-        linksMap.delete(linkId);
-      });
-      // Delete elements
-      ids.forEach(id => {
-        elementsMap.delete(id);
-      });
+      linksToDelete.forEach(linkId => linksMap.delete(linkId));
+      ids.forEach(id => elementsMap.delete(id));
     });
 
     // Also delete from Dexie for backwards compatibility
@@ -707,6 +769,14 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Element not found');
     }
 
+    // Update Zustand FIRST
+    localOpPending = true;
+    set((state) => ({
+      elements: state.elements.map(el =>
+        el.id === id ? { ...el, position } : el
+      ),
+    }));
+
     updateElementYMap(ymap, { position }, ydoc);
 
     // Also update Dexie
@@ -720,6 +790,17 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }
 
     const { elements: elementsMap } = getYMaps(ydoc);
+
+    // Update Zustand FIRST for instant local response
+    // _syncFromYDoc will skip heavy parsing via localOpPending
+    localOpPending = true;
+    const updatesMap = new Map(updates.map(u => [u.id, u.position]));
+    set((state) => ({
+      elements: state.elements.map(el => {
+        const pos = updatesMap.get(el.id);
+        return pos ? { ...el, position: pos } : el;
+      }),
+    }));
 
     ydoc.transact(() => {
       updates.forEach(({ id, position }) => {
@@ -818,8 +899,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Link not found');
     }
 
-    // Update Zustand FIRST (synchronous) to prevent flash during async operations
-    // _syncFromYDoc is throttled, so we need immediate update for UI responsiveness
+    // Update Zustand FIRST (synchronous) for instant UI response
+    // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
+    localOpPending = true;
     set((state) => ({
       links: state.links.map((lk) =>
         lk.id === id ? { ...lk, ...changes, updatedAt: new Date() } : lk
@@ -839,6 +921,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Y.Doc not available');
     }
 
+    // Update Zustand FIRST (synchronous) for instant UI response
+    set((state) => ({
+      links: state.links.filter(lk => lk.id !== id),
+    }));
+
     const { links: linksMap } = getYMaps(ydoc);
     ydoc.transact(() => {
       linksMap.delete(id);
@@ -854,11 +941,15 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       throw new Error('Y.Doc not available');
     }
 
+    // Update Zustand FIRST (synchronous) for instant UI response
+    const idsSet = new Set(ids);
+    set((state) => ({
+      links: state.links.filter(lk => !idsSet.has(lk.id)),
+    }));
+
     const { links: linksMap } = getYMaps(ydoc);
     ydoc.transact(() => {
-      ids.forEach(id => {
-        linksMap.delete(id);
-      });
+      ids.forEach(id => linksMap.delete(id));
     });
 
     // Also delete from Dexie
@@ -1235,6 +1326,13 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also update Dexie
     await elementRepository.update(elementId, { assetIds }).catch(() => {});
+
+    // Update local Zustand state
+    set((state) => ({
+      elements: state.elements.map((el) =>
+        el.id === elementId ? { ...el, assetIds } : el
+      ),
+    }));
   },
 
   // ============================================================================
@@ -1622,298 +1720,267 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   _syncFromYDoc: () => {
+    const syncStartTime = performance.now();
+    const observerDelay = lastObserverFireTime > 0 ? syncStartTime - lastObserverFireTime : -1;
     const ydoc = syncService.getYDoc();
-    const { currentInvestigation, assets: currentAssets } = get();
+    const { currentInvestigation, elements: stateElements, links: stateLinks, comments: stateComments, assets: currentAssets } = get();
     if (!ydoc || !currentInvestigation) {
       return;
     }
 
+    // Fast path: if a local operation already updated Zustand, skip heavy parsing.
+    // Schedule a safety re-sync to catch any concurrent remote changes.
+    // Don't clear change tracking flags — safety re-sync will process them.
+    if (localOpPending) {
+      localOpPending = false;
+      if (!safetySyncTimer) {
+        safetySyncTimer = setTimeout(() => {
+          safetySyncTimer = null;
+          get()._syncFromYDoc();
+        }, 500);
+      }
+      return;
+    }
+
+    // Capture and reset change tracking flags atomically.
+    // If no flags are set (safety re-sync with no new observer events),
+    // all sections are skipped → function returns early with no state change.
+    const elIdsChanged = changedElementIds;
+    const lkIdsChanged = changedLinkIds;
+    const structuralElChange = structuralElementChange;
+    const structuralLkChange = structuralLinkChange;
+    const metaChanged = metaChangedFlag;
+    const commentsNeedSync = commentsChangedFlag;
+    const assetsNeedSync = assetsChangedFlag;
+
+    changedElementIds = new Set<string>();
+    changedLinkIds = new Set<string>();
+    structuralElementChange = false;
+    structuralLinkChange = false;
+    metaChangedFlag = false;
+    commentsChangedFlag = false;
+    assetsChangedFlag = false;
+
     const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
 
-    // Sync investigation metadata from Y.Doc
-    const metaName = metaMap.get('name') as string | undefined;
-    const metaDescription = metaMap.get('description') as string | undefined;
-    const metaCreator = metaMap.get('creator') as string | undefined;
-    const metaStartDate = metaMap.get('startDate') as string | null | undefined;
-    const metaTags = metaMap.get('tags') as string[] | undefined;
-    const metaProperties = metaMap.get('properties') as any[] | undefined;
-
-    // Update local investigation if meta has changed
+    // --- META: only process when observer detected changes ---
     let updatedInvestigation = currentInvestigation;
-    const hasMetaChanges =
-      (metaName !== undefined && metaName !== currentInvestigation.name) ||
-      (metaDescription !== undefined && metaDescription !== currentInvestigation.description) ||
-      (metaCreator !== undefined && metaCreator !== (currentInvestigation.creator || '')) ||
-      (metaStartDate !== undefined && metaStartDate !== (currentInvestigation.startDate?.toISOString() || null)) ||
-      (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentInvestigation.tags || [])) ||
-      (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentInvestigation.properties || []));
+    if (metaChanged) {
+      const metaName = metaMap.get('name') as string | undefined;
+      const metaDescription = metaMap.get('description') as string | undefined;
+      const metaCreator = metaMap.get('creator') as string | undefined;
+      const metaStartDate = metaMap.get('startDate') as string | null | undefined;
+      const metaTags = metaMap.get('tags') as string[] | undefined;
+      const metaProperties = metaMap.get('properties') as any[] | undefined;
 
-    if (hasMetaChanges) {
-      const changes: Partial<Investigation> = {};
-      if (metaName !== undefined) changes.name = metaName;
-      if (metaDescription !== undefined) changes.description = metaDescription;
-      if (metaCreator !== undefined) changes.creator = metaCreator;
-      if (metaStartDate !== undefined) changes.startDate = metaStartDate ? new Date(metaStartDate) : null;
-      if (metaTags !== undefined) changes.tags = metaTags;
-      if (metaProperties !== undefined) changes.properties = metaProperties;
+      const hasMetaChanges =
+        (metaName !== undefined && metaName !== currentInvestigation.name) ||
+        (metaDescription !== undefined && metaDescription !== currentInvestigation.description) ||
+        (metaCreator !== undefined && metaCreator !== (currentInvestigation.creator || '')) ||
+        (metaStartDate !== undefined && metaStartDate !== (currentInvestigation.startDate?.toISOString() || null)) ||
+        (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentInvestigation.tags || [])) ||
+        (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentInvestigation.properties || []));
 
-      updatedInvestigation = {
-        ...currentInvestigation,
-        ...changes,
-      };
-      // Persist to IndexedDB
-      investigationRepository.update(currentInvestigation.id, changes).catch(() => {});
+      if (hasMetaChanges) {
+        const changes: Partial<Investigation> = {};
+        if (metaName !== undefined) changes.name = metaName;
+        if (metaDescription !== undefined) changes.description = metaDescription;
+        if (metaCreator !== undefined) changes.creator = metaCreator;
+        if (metaStartDate !== undefined) changes.startDate = metaStartDate ? new Date(metaStartDate) : null;
+        if (metaTags !== undefined) changes.tags = metaTags;
+        if (metaProperties !== undefined) changes.properties = metaProperties;
+
+        updatedInvestigation = {
+          ...currentInvestigation,
+          ...changes,
+        };
+        investigationRepository.update(currentInvestigation.id, changes).catch(() => {});
+      }
     }
 
-    // Use Map to deduplicate by ID (defensive against any race conditions)
-    const elementsById = new Map<string, Element>();
-    elementsMap.forEach((ymap) => {
-      try {
-        const element = yMapToElement(ymap as Y.Map<any>);
-        if (element.id) {
-          elementsById.set(element.id, element);
-        }
-      } catch {
-        // Skip invalid elements
-      }
-    });
+    // --- ELEMENTS: incremental sync ---
+    // structuralElChange (add/remove) → full rebuild
+    // elIdsChanged (field updates) → re-parse only changed elements, merge into state
+    // neither → keep existing state (no change)
+    let elements = stateElements;
+    let elementsDidChange = false;
 
-    const linksById = new Map<string, Link>();
-    linksMap.forEach((ymap) => {
-      try {
-        const link = yMapToLink(ymap as Y.Map<any>);
-        if (link.id) {
-          linksById.set(link.id, link);
-        }
-      } catch {
-        // Skip invalid links
-      }
-    });
-
-    const commentsById = new Map<string, Comment>();
-    commentsMap.forEach((ymap) => {
-      try {
-        const comment = yMapToComment(ymap as Y.Map<any>);
-        if (comment.id) {
-          commentsById.set(comment.id, comment);
-        }
-      } catch {
-        // Skip invalid comments
-      }
-    });
-
-    const newElements = Array.from(elementsById.values());
-    const newLinks = Array.from(linksById.values());
-    const newComments = Array.from(commentsById.values());
-
-    // DEFENSIVE: Don't wipe state if Y.Doc appears empty due to sync issues
-    // But DO allow sync if elementsMap is genuinely empty (user deleted all elements)
-    const stateElements = get().elements;
-
-    if (newElements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
-      // elementsMap has entries but we couldn't parse them - likely a sync issue
-      console.warn('[_syncFromYDoc] Y.Doc parsing failed. elementsMap.size:', elementsMap.size, 'but parsed 0 elements. Skipping sync.');
-      return;
-    }
-
-    // Differential sync: only update state if content actually changed
-    const stateLinks = get().links;
-    const stateComments = get().comments;
-
-    // Helper: shallow compare arrays of Property objects
-    const propsEqual = (a: Property[] | undefined, b: Property[] | undefined): boolean => {
-      if (a === b) return true;
-      if (!a || !b || a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (a[i].key !== b[i].key || String(a[i].value) !== String(b[i].value) || a[i].type !== b[i].type) return false;
-      }
-      return true;
-    };
-
-    // Helper: compare events arrays
-    const eventsEqual = (a: ElementEvent[] | undefined, b: ElementEvent[] | undefined): boolean => {
-      if (a === b) return true;
-      if (!a || !b || a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        const ae = a[i], be = b[i];
-        if (ae.id !== be.id || ae.label !== be.label || ae.description !== be.description ||
-            ae.source !== be.source || String(ae.date) !== String(be.date) ||
-            String(ae.dateEnd) !== String(be.dateEnd) ||
-            ae.geo?.lat !== be.geo?.lat || ae.geo?.lng !== be.geo?.lng ||
-            !propsEqual(ae.properties, be.properties)) return false;
-      }
-      return true;
-    };
-
-    // Check if elements changed - use Map for O(1) lookups
-    const elementsChanged = (() => {
-      if (newElements.length !== stateElements.length) return true;
-      const stateMap = new Map(stateElements.map(e => [e.id, e]));
-      for (const newEl of newElements) {
-        const stateEl = stateMap.get(newEl.id);
-        if (!stateEl) return true;
-        // Compare primitive fields first (fast)
-        if (stateEl.label !== newEl.label ||
-            stateEl.notes !== newEl.notes ||
-            stateEl.position.x !== newEl.position.x || stateEl.position.y !== newEl.position.y ||
-            stateEl.geo?.lat !== newEl.geo?.lat || stateEl.geo?.lng !== newEl.geo?.lng ||
-            stateEl.visual.color !== newEl.visual.color ||
-            stateEl.visual.borderColor !== newEl.visual.borderColor ||
-            stateEl.visual.borderWidth !== newEl.visual.borderWidth ||
-            stateEl.visual.borderStyle !== newEl.visual.borderStyle ||
-            stateEl.visual.shape !== newEl.visual.shape ||
-            stateEl.visual.size !== newEl.visual.size ||
-            stateEl.visual.icon !== newEl.visual.icon ||
-            stateEl.visual.image !== newEl.visual.image ||
-            stateEl.visual.customWidth !== newEl.visual.customWidth ||
-            stateEl.visual.customHeight !== newEl.visual.customHeight ||
-            stateEl.confidence !== newEl.confidence ||
-            stateEl.parentGroupId !== newEl.parentGroupId ||
-            stateEl.isGroup !== newEl.isGroup ||
-            stateEl.isAnnotation !== newEl.isAnnotation ||
-            stateEl.source !== newEl.source ||
-            stateEl.date?.getTime() !== newEl.date?.getTime() ||
-            stateEl.dateRange?.start?.getTime() !== newEl.dateRange?.start?.getTime() ||
-            stateEl.dateRange?.end?.getTime() !== newEl.dateRange?.end?.getTime() ||
-            stateEl.tags?.length !== newEl.tags?.length ||
-            stateEl.assetIds?.length !== newEl.assetIds?.length) return true;
-        // Compare arrays (slightly slower)
-        if (!propsEqual(stateEl.properties, newEl.properties)) return true;
-        if (!eventsEqual(stateEl.events, newEl.events)) return true;
-      }
-      return false;
-    })();
-
-    // Check if links changed - use Map for O(1) lookups
-    const linksChanged = (() => {
-      if (newLinks.length !== stateLinks.length) return true;
-      const stateMap = new Map(stateLinks.map(l => [l.id, l]));
-      for (const newLk of newLinks) {
-        const stateLk = stateMap.get(newLk.id);
-        if (!stateLk) return true;
-        if (stateLk.label !== newLk.label ||
-            stateLk.fromId !== newLk.fromId || stateLk.toId !== newLk.toId ||
-            stateLk.sourceHandle !== newLk.sourceHandle ||
-            stateLk.targetHandle !== newLk.targetHandle ||
-            stateLk.direction !== newLk.direction ||
-            stateLk.visual?.color !== newLk.visual?.color ||
-            stateLk.visual?.style !== newLk.visual?.style ||
-            stateLk.visual?.thickness !== newLk.visual?.thickness ||
-            stateLk.curveOffset?.x !== newLk.curveOffset?.x ||
-            stateLk.curveOffset?.y !== newLk.curveOffset?.y ||
-            stateLk.confidence !== newLk.confidence ||
-            stateLk.notes !== newLk.notes ||
-            stateLk.source !== newLk.source ||
-            stateLk.date?.getTime() !== newLk.date?.getTime() ||
-            stateLk.dateRange?.start?.getTime() !== newLk.dateRange?.start?.getTime() ||
-            stateLk.dateRange?.end?.getTime() !== newLk.dateRange?.end?.getTime() ||
-            stateLk.tags?.length !== newLk.tags?.length) return true;
-        if (!propsEqual(stateLk.properties, newLk.properties)) return true;
-      }
-      return false;
-    })();
-
-    const commentsChanged = newComments.length !== stateComments.length ||
-      newComments.some((c) => {
-        const sc = stateComments.find(sc => sc.id === c.id);
-        return !sc || sc.content !== c.content || sc.resolved !== c.resolved;
+    if (structuralElChange) {
+      const elementsById = new Map<string, Element>();
+      elementsMap.forEach((ymap) => {
+        try {
+          const element = yMapToElement(ymap as Y.Map<any>);
+          if (element.id) elementsById.set(element.id, element);
+        } catch {}
       });
+      const newElements = Array.from(elementsById.values());
+      // Defensive: don't wipe state if Y.Doc parsing failed
+      if (newElements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
+        console.warn('[_syncFromYDoc] Y.Doc parsing failed on structural element change. Skipping elements.');
+      } else {
+        elements = newElements;
+        elementsDidChange = true;
+      }
+    } else if (elIdsChanged.size > 0) {
+      // Incremental: only re-parse changed elements, keep all others as-is
+      const stateMap = new Map(stateElements.map(e => [e.id, e]));
+      let changed = false;
+      for (const id of elIdsChanged) {
+        const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
+        if (ymap) {
+          try {
+            const updated = yMapToElement(ymap);
+            if (updated.id) {
+              stateMap.set(updated.id, updated);
+              changed = true;
+            }
+          } catch {}
+        }
+      }
+      if (changed) {
+        elements = Array.from(stateMap.values());
+        elementsDidChange = true;
+      }
+    }
 
-    // Use structural sharing: keep old reference if unchanged
-    const elements = elementsChanged ? newElements : stateElements;
-    const links = linksChanged ? newLinks : stateLinks;
-    const comments = commentsChanged ? newComments : stateComments;
+    // --- LINKS: incremental sync ---
+    let links = stateLinks;
+    let linksDidChange = false;
+
+    if (structuralLkChange) {
+      const linksById = new Map<string, Link>();
+      linksMap.forEach((ymap) => {
+        try {
+          const link = yMapToLink(ymap as Y.Map<any>);
+          if (link.id) linksById.set(link.id, link);
+        } catch {}
+      });
+      links = Array.from(linksById.values());
+      linksDidChange = true;
+    } else if (lkIdsChanged.size > 0) {
+      const stateMap = new Map(stateLinks.map(l => [l.id, l]));
+      let changed = false;
+      for (const id of lkIdsChanged) {
+        const ymap = linksMap.get(id) as Y.Map<any> | undefined;
+        if (ymap) {
+          try {
+            const updated = yMapToLink(ymap);
+            if (updated.id) {
+              stateMap.set(updated.id, updated);
+              changed = true;
+            }
+          } catch {}
+        }
+      }
+      if (changed) {
+        links = Array.from(stateMap.values());
+        linksDidChange = true;
+      }
+    }
+
+    // --- COMMENTS: only process when observer detected changes ---
+    let comments = stateComments;
+    let commentsDidChange = false;
+
+    if (commentsNeedSync) {
+      const commentsById = new Map<string, Comment>();
+      commentsMap.forEach((ymap) => {
+        try {
+          const comment = yMapToComment(ymap as Y.Map<any>);
+          if (comment.id) commentsById.set(comment.id, comment);
+        } catch {}
+      });
+      const newComments = Array.from(commentsById.values());
+      commentsDidChange = newComments.length !== stateComments.length ||
+        newComments.some((c) => {
+          const sc = stateComments.find(sc => sc.id === c.id);
+          return !sc || sc.content !== c.content || sc.resolved !== c.resolved;
+        });
+      if (commentsDidChange) {
+        comments = newComments;
+      }
+    }
 
     // Skip state update entirely if nothing changed
-    if (!elementsChanged && !linksChanged && !commentsChanged && updatedInvestigation === currentInvestigation) {
+    if (!elementsDidChange && !linksDidChange && !commentsDidChange &&
+        updatedInvestigation === currentInvestigation && !assetsNeedSync) {
       return;
     }
 
-    // Sync assets from Y.Doc
-    // Check for new assets from peers and save them locally
-    const currentAssetIds = new Set(currentAssets.map(a => a.id));
-    const newAssetsToSave: Array<{ assetData: any; base64Data: string }> = [];
+    // --- ASSETS: only process when observer detected changes ---
+    if (assetsNeedSync) {
+      const currentAssetIds = new Set(currentAssets.map(a => a.id));
+      const newAssetsToSave: Array<{ assetData: any; base64Data: string }> = [];
 
-    assetsMap.forEach((ymap) => {
-      try {
-        const map = ymap as Y.Map<any>;
-        const assetId = map.get('id') as string;
+      assetsMap.forEach((ymap) => {
+        try {
+          const map = ymap as Y.Map<any>;
+          const assetId = map.get('id') as string;
 
-        // Only process assets we don't have locally
-        if (assetId && !currentAssetIds.has(assetId)) {
-          const base64Data = map.get('data') as string;
-          if (base64Data) {
-            newAssetsToSave.push({
-              assetData: {
-                id: assetId,
-                investigationId: map.get('investigationId') || currentInvestigation.id,
-                filename: map.get('filename') || 'unknown',
-                mimeType: map.get('mimeType') || 'application/octet-stream',
-                size: map.get('size') || 0,
-                hash: map.get('hash') || '',
-                thumbnailDataUrl: map.get('thumbnailDataUrl') || null,
-                extractedText: map.get('extractedText') || null,
-                createdAt: map.get('createdAt') ? new Date(map.get('createdAt')) : new Date(),
-              },
-              base64Data,
-            });
+          if (assetId && !currentAssetIds.has(assetId)) {
+            const base64Data = map.get('data') as string;
+            if (base64Data) {
+              newAssetsToSave.push({
+                assetData: {
+                  id: assetId,
+                  investigationId: map.get('investigationId') || currentInvestigation.id,
+                  filename: map.get('filename') || 'unknown',
+                  mimeType: map.get('mimeType') || 'application/octet-stream',
+                  size: map.get('size') || 0,
+                  hash: map.get('hash') || '',
+                  thumbnailDataUrl: map.get('thumbnailDataUrl') || null,
+                  extractedText: map.get('extractedText') || null,
+                  createdAt: map.get('createdAt') ? new Date(map.get('createdAt')) : new Date(),
+                },
+                base64Data,
+              });
+            }
           }
-        }
-      } catch {
-        // Skip invalid assets
-      }
-    });
+        } catch {}
+      });
 
-    // Save new assets to OPFS in background - update state progressively with progress tracking
-    if (newAssetsToSave.length > 0) {
+      if (newAssetsToSave.length > 0) {
+        const totalSize = newAssetsToSave.reduce((sum, item) => sum + (item.assetData.size || 0), 0);
+        const syncStore = useSyncStore.getState();
+        syncStore.startMediaSync(newAssetsToSave.length, totalSize);
+        let completedCount = 0;
+        let completedSize = 0;
 
-      // Calculate total size for progress tracking
-      const totalSize = newAssetsToSave.reduce((sum, item) => sum + (item.assetData.size || 0), 0);
-
-      // Start progress tracking
-      const syncStore = useSyncStore.getState();
-      syncStore.startMediaSync(newAssetsToSave.length, totalSize);
-
-      let completedCount = 0;
-      let completedSize = 0;
-
-      // Save each asset and update state + progress immediately when done
-      for (const { assetData, base64Data } of newAssetsToSave) {
-        // Update current asset being synced
-        syncStore.updateMediaSyncProgress(completedCount, completedSize, assetData.filename);
-
-        fileService.saveAssetFromBase64(assetData, base64Data)
-          .then((savedAsset) => {
-            if (savedAsset) {
-              // Update state immediately with this asset
-              set((state) => ({
-                assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],
-              }));
-
-              // Update progress
+        for (const { assetData, base64Data } of newAssetsToSave) {
+          syncStore.updateMediaSyncProgress(completedCount, completedSize, assetData.filename);
+          fileService.saveAssetFromBase64(assetData, base64Data)
+            .then((savedAsset) => {
+              if (savedAsset) {
+                set((state) => ({
+                  assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],
+                }));
+                completedCount++;
+                completedSize += assetData.size || 0;
+                syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
+                if (completedCount === newAssetsToSave.length) {
+                  setTimeout(() => syncStore.completeMediaSync(), 500);
+                }
+              }
+            })
+            .catch((error) => {
+              console.warn(`[Sync] Failed to save asset ${assetData.filename}:`, error);
               completedCount++;
-              completedSize += assetData.size || 0;
               syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
-
-              // If all done, clear progress
               if (completedCount === newAssetsToSave.length) {
                 setTimeout(() => syncStore.completeMediaSync(), 500);
               }
-            }
-          })
-          .catch((error) => {
-            console.warn(`[Sync] Failed to save asset ${assetData.filename}:`, error);
-            // Still count as completed for progress (failed)
-            completedCount++;
-            syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
-
-            if (completedCount === newAssetsToSave.length) {
-              setTimeout(() => syncStore.completeMediaSync(), 500);
-            }
-          });
+            });
+        }
       }
     }
 
+    // Diagnostic: log only if slow (> 100ms total pipeline)
+    const syncElapsed = performance.now() - syncStartTime;
+    if ((elementsDidChange || linksDidChange) && (syncElapsed > 500 || observerDelay > 500)) {
+      console.warn(`[_syncFromYDoc] SLOW: ${syncElapsed.toFixed(0)}ms (observer→sync: ${observerDelay.toFixed(0)}ms) | el:${elIdsChanged.size} structural:${structuralElChange} | lk:${lkIdsChanged.size}`);
+    }
+
+    // Update Zustand state
     set({
       currentInvestigation: updatedInvestigation,
       elements,
@@ -1921,15 +1988,33 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       comments,
     });
 
-    // Also persist to IndexedDB so stats work on home page
-    // Only upsert - deletions are handled explicitly in deleteElements/deleteLinks
+    // Persist to IndexedDB — only changed collections
     const investigationId = currentInvestigation.id;
-
-    Promise.all([
-      elementRepository.bulkUpsert(elements.map(el => ({ ...el, investigationId }))),
-      linkRepository.bulkUpsert(links.map(lk => ({ ...lk, investigationId }))),
-    ]).catch(() => {
-      // Silently ignore IndexedDB errors during sync
-    });
+    const dbPromises: Promise<any>[] = [];
+    if (elementsDidChange) {
+      if (structuralElChange) {
+        // Full rebuild — upsert all
+        dbPromises.push(elementRepository.bulkUpsert(elements.map(el => ({ ...el, investigationId }))));
+      } else {
+        // Incremental — only upsert changed elements
+        const changedEls = elements.filter(el => elIdsChanged.has(el.id));
+        if (changedEls.length > 0) {
+          dbPromises.push(elementRepository.bulkUpsert(changedEls.map(el => ({ ...el, investigationId }))));
+        }
+      }
+    }
+    if (linksDidChange) {
+      if (structuralLkChange) {
+        dbPromises.push(linkRepository.bulkUpsert(links.map(lk => ({ ...lk, investigationId }))));
+      } else {
+        const changedLks = links.filter(lk => lkIdsChanged.has(lk.id));
+        if (changedLks.length > 0) {
+          dbPromises.push(linkRepository.bulkUpsert(changedLks.map(lk => ({ ...lk, investigationId }))));
+        }
+      }
+    }
+    if (dbPromises.length > 0) {
+      Promise.all(dbPromises).catch(() => {});
+    }
   },
 }));

@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-2.0-blue)
+![Version](https://img.shields.io/badge/version-2.5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -371,6 +371,15 @@ Ou deployer votre propre serveur y-websocket.
 - [x] Mode asynchrone (travail decale, buffer 7 jours)
 - [x] Protection des metadonnees (room ID hashe)
 - [x] Ancrage automatique des connecteurs par defaut
+
+### v2.5 — Performance collaborative ✓
+- [x] Sync incrementale Y.js optimisee (requestAnimationFrame batching)
+- [x] Elimination du double-render canvas (displayNodes conditionnel)
+- [x] Debounce edgeVersion (300ms, reduction des recalculs edges)
+- [x] Warmup crypto bloquant (fix cold start Firefox 3s)
+- [x] SimpleEdge leger pour les graphes denses
+- [x] Seuil adaptatif masquage edges (500+ elements)
+- [x] Teste avec 1500+ elements/liens en mode collaboratif
 
 ### Idees futures
 - [ ] Theming personnalisable

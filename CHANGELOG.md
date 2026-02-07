@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.5.0
+
+### Performance
+- Incremental Y.js sync with requestAnimationFrame batching (replaces setTimeout 50ms)
+- Double-render elimination: conditional displayNodes (local during drag, store otherwise)
+- Edge version debouncing at 300ms (prevents full edges rebuild on every remote position update)
+- Blocking crypto warmup before processing real messages (fixes Firefox 3s cold start)
+- SimpleEdge component for dense graphs (lighter rendering)
+- Adaptive edge hiding threshold: edges hidden during pan/zoom only above 500 elements
+- Drag-end timing fix: isDraggingRef set to false after store update (prevents position flash)
+- Progressive rendering for large collaborative sync
+- Edge capping for stress test scenarios
+- Incremental nodeStructures and nodes assembly
+
+### Fixes
+- Fix selection loop causing infinite re-renders
+- Fix search zoom to center viewport on found element
+- Fix delete optimization for large selections
+- Fix undo support for collaborative operations
+- Fix localOpPending flag to prevent echo from local Y.js operations
+- Fix 6 cascading re-sync timers reduced to 1
+- Fix joiner logic bug in collaborative sync
+
+### Documentation
+- Updated user documentation with app performance limits
+- Added large investigation FAQ section (FR + EN)
+
 ## 2.0.0
 
 ### Features

@@ -277,6 +277,8 @@ The signaling server is based on `y-websocket`. See technical documentation for 
 - Limit simultaneous collaborators (< 10 recommended)
 - Large files can slow initial synchronization
 - A good internet connection improves the experience
+- Investigations with **500+ elements**: edges are hidden during pan/zoom for fluidity
+- Tested with **1500+ elements and links** in collaborative mode
 
 ### Organization
 

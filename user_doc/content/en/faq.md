@@ -181,6 +181,10 @@ The encryption key is in the URL, after the `#`. This fragment is never sent to 
 
 Technically, no limit. Practically, beyond 10 it can get confusing. But it works.
 
+### What about large investigations?
+
+ZeroNeurone handles investigations with **1500+ elements and links** in collaborative mode. Beyond 500 elements, edges are hidden during pan/zoom for fluidity. Locally, performance is excellent up to several thousand elements.
+
 ### Can I work offline during a shared session?
 
 Yes. Your edits are stored locally. On reconnection and new share, everything syncs.

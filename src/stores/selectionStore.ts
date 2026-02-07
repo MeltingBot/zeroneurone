@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import type { ElementId, LinkId } from '../types';
 
+function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
+  if (a.size !== b.size) return false;
+  for (const item of a) {
+    if (!b.has(item)) return false;
+  }
+  return true;
+}
+
 interface SelectionState {
   selectedElementIds: Set<ElementId>;
   selectedLinkIds: Set<LinkId>;
@@ -129,19 +137,25 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
   },
 
   selectBoth: (elementIds: ElementId[], linkIds: LinkId[], addToSelection = false) => {
-    set((state) => {
-      const newElementSet = addToSelection
-        ? new Set(state.selectedElementIds)
-        : new Set<ElementId>();
-      const newLinkSet = addToSelection
-        ? new Set(state.selectedLinkIds)
-        : new Set<LinkId>();
-      elementIds.forEach((id) => newElementSet.add(id));
-      linkIds.forEach((id) => newLinkSet.add(id));
-      return {
-        selectedElementIds: newElementSet,
-        selectedLinkIds: newLinkSet,
-      };
+    const state = get();
+    const newElementSet = addToSelection
+      ? new Set(state.selectedElementIds)
+      : new Set<ElementId>();
+    const newLinkSet = addToSelection
+      ? new Set(state.selectedLinkIds)
+      : new Set<LinkId>();
+    elementIds.forEach((id) => newElementSet.add(id));
+    linkIds.forEach((id) => newLinkSet.add(id));
+
+    // Skip update if content unchanged (breaks infinite loop with onSelectionChange)
+    if (setsEqual(newElementSet, state.selectedElementIds) &&
+        setsEqual(newLinkSet, state.selectedLinkIds)) {
+      return;
+    }
+
+    set({
+      selectedElementIds: newElementSet,
+      selectedLinkIds: newLinkSet,
     });
   },
 

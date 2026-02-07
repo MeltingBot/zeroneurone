@@ -181,6 +181,10 @@ La clé de chiffrement est dans l'URL, après le `#`. Ce fragment n'est jamais e
 
 Techniquement, pas de limite. Pratiquement, au-delà de 10 ça peut devenir confus. Mais ça marche.
 
+### Et les grosses enquêtes ?
+
+ZeroNeurone gère des enquêtes avec **1500+ éléments et liens** en mode collaboratif. Au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom pour la fluidité. En local, les performances sont excellentes jusqu'à plusieurs milliers d'éléments.
+
 ### Je peux bosser offline pendant une session partagée ?
 
 Oui. Vos modifs sont stockées localement. À la reconnexion et nouveau partage, tout se synchronise.

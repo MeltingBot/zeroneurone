@@ -63,6 +63,7 @@ export class EncryptedWebSocket {
     }
 
     try {
+      const t0 = performance.now();
       const data = event.data as ArrayBuffer;
       const dataArray = new Uint8Array(data);
 
@@ -71,6 +72,11 @@ export class EncryptedWebSocket {
         // Remove prefix and decrypt
         const encrypted = dataArray.slice(ENCRYPTED_PREFIX.length);
         const decrypted = await decrypt(this.key, encrypted);
+
+        const elapsed = performance.now() - t0;
+        if (elapsed > 500) {
+          console.warn(`[EncryptedWS] recv SLOW: ${elapsed.toFixed(0)}ms (${dataArray.byteLength}B)`);
+        }
 
         // Create new MessageEvent with decrypted data
         const decryptedEvent = new MessageEvent('message', {
@@ -97,6 +103,15 @@ export class EncryptedWebSocket {
    */
   async setEncryptionKey(keyString: string): Promise<void> {
     this.key = await importEncryptionKey(keyString);
+
+    // Warm up Web Crypto BEFORE processing any real messages.
+    // First use of a CryptoKey triggers lazy initialization in Firefox (~3s).
+    // By warming up here, all pending and future messages will be fast.
+    // This is async (doesn't block the main thread), just delays keyReady.
+    const dummy = new Uint8Array(16);
+    const enc = await encrypt(this.key, dummy);
+    await decrypt(this.key, enc);
+
     this.keyReady = true;
     // Process any messages that were waiting for the key
     this.processPendingMessages();
@@ -147,6 +162,7 @@ export class EncryptedWebSocket {
       return;
     }
 
+    const t0 = performance.now();
     const dataArray = new Uint8Array(data);
     const encrypted = await encrypt(this.key, dataArray);
 
@@ -156,6 +172,10 @@ export class EncryptedWebSocket {
     withPrefix.set(encrypted, ENCRYPTED_PREFIX.length);
 
     this.ws.send(withPrefix.buffer);
+    const elapsed = performance.now() - t0;
+    if (elapsed > 500) {
+      console.warn(`[EncryptedWS] send SLOW: ${elapsed.toFixed(0)}ms (${data.byteLength}B)`);
+    }
   }
 
   // WebSocket interface methods
@@ -179,10 +199,11 @@ export class EncryptedWebSocket {
     // If not ready, queue the message
     if (!this.keyReady || this.ws.readyState !== WebSocket.OPEN) {
       this.pendingOutgoing.push(buffer);
+      console.warn(`[EncryptedWS] send queued (keyReady=${this.keyReady}, wsState=${this.ws.readyState}) ${buffer.byteLength}B`);
       return;
     }
 
-    // Send encrypted
+    // Send encrypted (fire-and-forget async)
     this.sendEncrypted(buffer);
   }
 

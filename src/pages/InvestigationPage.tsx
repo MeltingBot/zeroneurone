@@ -31,6 +31,7 @@ export function InvestigationPage() {
     links,
     isLoading,
     loadingPhase,
+    loadingProgress,
     error,
     loadInvestigation,
     unloadInvestigation,
@@ -158,9 +159,15 @@ export function InvestigationPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="h-full flex flex-col items-center justify-center gap-2">
+        <div className="h-full flex flex-col items-center justify-center gap-3">
           <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           <span className="text-xs text-text-secondary">{loadingPhase || t('home.loading')}</span>
+          <div className="w-48 h-1 bg-bg-tertiary rounded overflow-hidden">
+            <div
+              className="h-full bg-accent rounded transition-[width] duration-300"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
         </div>
       </Layout>
     );

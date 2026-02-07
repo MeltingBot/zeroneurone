@@ -49,7 +49,14 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export function ElementDetail({ element }: ElementDetailProps) {
   const { t } = useTranslation('panels');
-  const { updateElement, currentInvestigation, addExistingTag, addSuggestedProperty, associatePropertyWithTags, comments, togglePropertyDisplay } = useInvestigationStore();
+  // Individual selectors — prevent re-renders when unrelated store state changes
+  const updateElement = useInvestigationStore((s) => s.updateElement);
+  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
+  const addExistingTag = useInvestigationStore((s) => s.addExistingTag);
+  const addSuggestedProperty = useInvestigationStore((s) => s.addSuggestedProperty);
+  const associatePropertyWithTags = useInvestigationStore((s) => s.associatePropertyWithTags);
+  const comments = useInvestigationStore((s) => s.comments);
+  const togglePropertyDisplay = useInvestigationStore((s) => s.togglePropertyDisplay);
 
   // Count unresolved comments for this element
   const elementComments = comments.filter(c => c.targetId === element.id);
@@ -431,8 +438,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Check if there's anything to clear (values in inputs OR saved geo)
   const hasGeoToClear = !!(geoLat.trim() || geoLng.trim() || hasGeo);
 
-  // Get all elements from the store
-  const elements = useInvestigationStore((state) => state.elements);
+  // NOTE: No subscription to `elements` — reading a snapshot avoids re-rendering
+  // ElementDetail on every element change (3000 elements × 50 props = 150K wasted ops).
+  // propertySuggestions only needs the global set of property keys/types, which changes rarely.
 
   // Get TagSets to retrieve choices for 'choice' type properties
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
@@ -459,8 +467,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
   }, [tagSetsMap, currentInvestigation?.settings.suggestedProperties]);
 
   // Compute property suggestions based on actual usage on elements
-  // The type comes from the actual properties on elements (most recent/explicit wins)
-  const propertySuggestions: PropertyDefinition[] = (() => {
+  // Uses getState() snapshot instead of reactive subscription to avoid
+  // recomputing 150K iterations on every element change.
+  // Only recomputes when selected element changes (id/tags) or settings change.
+  const propertySuggestions: PropertyDefinition[] = useMemo(() => {
+    const elements = useInvestigationStore.getState().elements;
     const tagAssociations = currentInvestigation?.settings.tagPropertyAssociations || {};
 
     // Collect actual property types from all elements (real data is authoritative)
@@ -556,7 +567,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
     }
 
     return allSuggestions;
-  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [element.id, element.tags, currentInvestigation?.settings.tagPropertyAssociations, currentInvestigation?.settings.suggestedProperties, propertyChoicesMap, tagSetsMap]);
 
   // Simplified view for annotations (just notes + border)
   if (element.isAnnotation) {

@@ -489,7 +489,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const edgeOpacity = isDimmed ? 0.3 : 1;
 
   return (
-    <g className="react-flow__edge" style={{ opacity: edgeOpacity, transition: 'opacity 0.2s', cursor: 'pointer' }}>
+    <g className="react-flow__edge" style={{ opacity: edgeOpacity, cursor: 'pointer' }}>
       {/* Selection halo - rendered behind the main line */}
       {isSelected && (
         <path

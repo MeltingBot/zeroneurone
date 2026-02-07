@@ -44,6 +44,12 @@
   --color-node-red: #fca5a5;
   --color-node-cyan: #67e8f9;
   --color-node-lime: #bef264;
+
+  /* Pastel backgrounds for hover states & toasts */
+  --color-pastel-pink: #f9e8e8;
+  --color-pastel-green: #e8f2e8;
+  --color-pastel-blue: #e8eef5;
+  --color-pastel-yellow: #f5f0e0;
 }
 
 /* Light theme colors as CSS custom properties (for inline styles & SVG) */
@@ -115,19 +121,17 @@ html[data-theme="dark"] {
   --color-node-red: #f87171;
   --color-node-cyan: #22d3ee;
   --color-node-lime: #a3e635;
+
+  /* Pastel backgrounds for hover states & toasts (dark mode) */
+  --color-pastel-pink: #3d2828;
+  --color-pastel-green: #283d28;
+  --color-pastel-blue: #282e3d;
+  --color-pastel-yellow: #3d3528;
 }
 
 /* Dark mode specific overrides */
 html[data-theme="dark"] .node-shadow {
-  box-shadow:
-    2px 3px 0 0 rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-html[data-theme="dark"] .node-shadow-hover {
-  box-shadow:
-    3px 4px 0 0 rgba(0, 0, 0, 0.5),
-    0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 2px 3px 0 0 rgba(0, 0, 0, 0.4);
 }
 
 html[data-theme="dark"] .panel-shadow {
@@ -272,18 +276,9 @@ button {
   border-radius: 48% 52% 49% 51% / 52% 48% 51% 49%;
 }
 
-/* Paper/post-it shadow effect */
+/* Paper/post-it shadow — single shadow for performance at scale */
 .node-shadow {
-  box-shadow:
-    2px 3px 0 0 rgba(180, 176, 164, 0.25),
-    0 2px 8px rgba(61, 56, 51, 0.06);
-}
-
-/* Softer shadow for hover states */
-.node-shadow-hover {
-  box-shadow:
-    3px 4px 0 0 rgba(180, 176, 164, 0.3),
-    0 4px 12px rgba(61, 56, 51, 0.08);
+  box-shadow: 2px 3px 0 0 rgba(180, 176, 164, 0.25);
 }
 
 /* Panel shadow - subtle paper stack effect */
@@ -291,6 +286,11 @@ button {
   box-shadow:
     0 1px 3px rgba(61, 56, 51, 0.08),
     0 1px 2px rgba(61, 56, 51, 0.06);
+}
+
+/* Hide edges during pan/zoom for performance — browser skips painting entirely */
+.edges-hidden .react-flow__edges {
+  visibility: hidden;
 }
 
 /* Modal shadow - floating paper */

@@ -251,7 +251,7 @@ function ElementNodeComponent({ data }: NodeProps) {
 
   return (
     <div
-      className={`relative transition-opacity cursor-pointer ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
+      className={`relative cursor-pointer ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onPointerDown={(e) => {
@@ -305,25 +305,25 @@ function ElementNodeComponent({ data }: NodeProps) {
         type="source"
         position={Position.Top}
         id="source-top"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="source-left"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
 
       {/* Target handles on all 4 sides */}
@@ -331,25 +331,25 @@ function ElementNodeComponent({ data }: NodeProps) {
         type="target"
         position={Position.Top}
         id="target-top"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="target-bottom"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="target-left"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Right}
         id="target-right"
-        className={`!w-2 !h-2 !bg-accent !border !border-white transition-opacity ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
       />
 
       {/* Comment indicator - shows when element has unresolved comments */}
@@ -470,9 +470,8 @@ function ElementNodeComponent({ data }: NodeProps) {
         className={`
           w-full h-full
           flex flex-col items-center justify-center overflow-hidden
-          transition-all
           ${hasThumbnail ? 'sketchy-border-soft' : shapeStyles[element.visual.shape]}
-          ${isSelected ? 'selection-ring' : 'node-shadow hover:node-shadow-hover'}
+          ${isSelected ? 'selection-ring' : 'node-shadow'}
         `}
         style={{
           backgroundColor: hasThumbnail

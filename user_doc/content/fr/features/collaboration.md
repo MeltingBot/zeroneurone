@@ -277,6 +277,8 @@ Le serveur de signalisation est basé sur `y-websocket`. Consultez la documentat
 - Limitez le nombre de collaborateurs simultanés (< 10 recommandé)
 - Les gros fichiers peuvent ralentir la synchronisation initiale
 - Une bonne connexion internet améliore l'expérience
+- Enquêtes avec **500+ éléments** : les liens sont masqués pendant le pan/zoom pour la fluidité
+- Testé avec **1500+ éléments et liens** en mode collaboratif
 
 ### Organisation
 

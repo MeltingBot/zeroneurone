@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pencil, Check, Lock } from 'lucide-react';
 import { ElementAutocomplete } from './ElementAutocomplete';
+import { ReportMarkdownPreview } from './ReportMarkdownPreview';
 import { sanitizeLinkLabel } from '../../utils';
 import { useInvestigationStore, useSelectionStore, useViewStore, useSyncStore } from '../../stores';
 
@@ -983,24 +984,38 @@ export function ReportMarkdownEditor({
         {isLockedByOther ? <Lock size={14} /> : isWriteMode ? <Check size={14} /> : <Pencil size={14} />}
       </button>
 
-      {/* Editor */}
-      <div
-        ref={editorRef}
-        contentEditable={isWriteMode}
-        onInput={isWriteMode ? handleInput : undefined}
-        onKeyUp={isWriteMode ? handleKeyUp : undefined}
-        onKeyDown={isWriteMode ? handleKeyDown : undefined}
-        onClick={handleEditorClick}
-        onBlur={isWriteMode ? handleBlur : undefined}
-        onPaste={isWriteMode ? handlePaste : undefined}
-        onCopy={handleCopy}
-        data-placeholder={placeholder}
-        className={`w-full px-3 py-2 pr-8 text-sm bg-bg-secondary border border-border-default rounded text-text-primary whitespace-pre-wrap overflow-auto empty:before:content-[attr(data-placeholder)] empty:before:text-text-tertiary ${
-          isWriteMode ? 'focus:outline-none focus:border-accent resize-y' : 'cursor-default'
-        }`}
-        style={{ minHeight: `${minRows * 24}px` }}
-        suppressContentEditableWarning
-      />
+      {/* Editor (write mode) or Preview (read mode) */}
+      {isWriteMode ? (
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleInput}
+          onKeyUp={handleKeyUp}
+          onKeyDown={handleKeyDown}
+          onClick={handleEditorClick}
+          onBlur={handleBlur}
+          onPaste={handlePaste}
+          onCopy={handleCopy}
+          data-placeholder={placeholder}
+          className="w-full px-3 py-2 pr-8 text-sm bg-bg-secondary border border-border-default rounded text-text-primary whitespace-pre-wrap overflow-auto focus:outline-none focus:border-accent resize-y empty:before:content-[attr(data-placeholder)] empty:before:text-text-tertiary"
+          style={{ minHeight: `${minRows * 24}px` }}
+          suppressContentEditableWarning
+        />
+      ) : (
+        <div
+          onClick={!isLockedByOther ? handleToggleWriteMode : undefined}
+          className={`w-full px-3 py-2 pr-8 text-sm bg-bg-secondary border border-border-default rounded overflow-auto ${
+            isLockedByOther ? 'cursor-not-allowed' : 'cursor-pointer hover:border-text-tertiary'
+          }`}
+          style={{ minHeight: `${minRows * 24}px` }}
+        >
+          {localContent ? (
+            <ReportMarkdownPreview content={localContent} />
+          ) : (
+            <span className="text-text-tertiary">{placeholder}</span>
+          )}
+        </div>
+      )}
 
       {/* Lock indicator below editor */}
       {isLockedByOther && lockingUser && (

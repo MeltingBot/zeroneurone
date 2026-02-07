@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
@@ -28,10 +28,15 @@ interface Tab {
 export function SidePanel() {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
-  const { selectedElementIds, selectedLinkIds } = useSelectionStore();
-  const { elements, links, currentInvestigation } = useInvestigationStore();
-  const { hasActiveFilters, displayMode } = useViewStore();
-  const { highlightedElementIds } = useInsightsStore();
+  // Individual selectors — prevent re-renders when unrelated state changes
+  const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
+  const selectedLinkIds = useSelectionStore((s) => s.selectedLinkIds);
+  const elements = useInvestigationStore((s) => s.elements);
+  const links = useInvestigationStore((s) => s.links);
+  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
+  const hasActiveFilters = useViewStore((s) => s.hasActiveFilters);
+  const displayMode = useViewStore((s) => s.displayMode);
+  const highlightedElementIds = useInsightsStore((s) => s.highlightedElementIds);
 
   const [activeTab, setActiveTab] = useState<TabId>('detail');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -71,8 +76,14 @@ export function SidePanel() {
     };
   }, [isResizing]);
 
-  const selectedElements = elements.filter((el) => selectedElementIds.has(el.id));
-  const selectedLinks = links.filter((link) => selectedLinkIds.has(link.id));
+  const selectedElements = useMemo(
+    () => elements.filter((el) => selectedElementIds.has(el.id)),
+    [elements, selectedElementIds]
+  );
+  const selectedLinks = useMemo(
+    () => links.filter((link) => selectedLinkIds.has(link.id)),
+    [links, selectedLinkIds]
+  );
   const totalSelected = selectedElements.length + selectedLinks.length;
 
   // Blur any focused input in the panel when selection is cleared

@@ -57,7 +57,13 @@ function formatDateTimeForInput(date: Date): string {
 export function LinkDetail({ link }: LinkDetailProps) {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
-  const { updateLink, elements, currentInvestigation, addSuggestedProperty, addExistingTag, comments } = useInvestigationStore();
+  // Individual selectors — prevent re-renders when unrelated state changes
+  const updateLink = useInvestigationStore((s) => s.updateLink);
+  const elements = useInvestigationStore((s) => s.elements);
+  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
+  const addSuggestedProperty = useInvestigationStore((s) => s.addSuggestedProperty);
+  const addExistingTag = useInvestigationStore((s) => s.addExistingTag);
+  const comments = useInvestigationStore((s) => s.comments);
   // Note: currentInvestigation is used for suggestions in PropertiesEditor
 
   // Count unresolved comments for this link

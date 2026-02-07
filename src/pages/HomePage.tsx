@@ -257,7 +257,10 @@ export function HomePage() {
       {/* Content */}
       {isLoading || viewMode === null ? (
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-sm text-text-secondary">{t('home.loading')}</span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-text-secondary">{t('home.loading')}</span>
+          </div>
         </div>
       ) : viewMode === 'landing' ? (
         <LandingSection
