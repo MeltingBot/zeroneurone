@@ -1001,6 +1001,12 @@ export function Canvas() {
     return result;
   }, [elements, hiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties]);
 
+  // --- Measured dimensions cache ---
+  // React Flow (controlled mode) sends dimension changes via onNodesChange after ResizeObserver
+  // measurement. We must persist these on our node objects so the MiniMap's nodeHasDimensions()
+  // check passes. Without this, nodes never get `measured` set and the MiniMap is empty.
+  const measuredDimensionsRef = useRef(new Map<string, { width: number; height: number }>());
+
   // --- Phase B: Final node assembly (incremental patching for performance) ---
   // Instead of rebuilding ALL nodes on every visual change (selection, dimming, remote presence),
   // we only rebuild nodes whose visual state actually changed. Unchanged nodes keep the same
@@ -1027,7 +1033,7 @@ export function Canvas() {
     // Helper: build a single node from its structure
     const buildNode = (ns: typeof nodeStructures[number]) => {
       const callbacks = getCallbacks(ns.el.id, Boolean(ns.el.isAnnotation));
-      return elementToNode(
+      const node = elementToNode(
         ns.el,
         selectedElementIds.has(ns.el.id),
         dimmedElementIds.has(ns.el.id),
@@ -1046,6 +1052,12 @@ export function Canvas() {
         tagDisplaySize,
         themeMode,
       );
+      // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
+      const dims = measuredDimensionsRef.current.get(ns.el.id);
+      if (dims) {
+        (node as any).measured = dims;
+      }
+      return node;
     };
 
     // Full rebuild on first render or global settings change (theme, tag mode, etc.)
@@ -1597,6 +1609,22 @@ export function Canvas() {
         return true;
       });
       if (safeChanges.length === 0) return;
+
+      // Capture dimension changes from React Flow's ResizeObserver measurement.
+      // In controlled mode, React Flow doesn't internally apply these — we must persist
+      // them so the MiniMap (which checks nodeHasDimensions on the user node) can render.
+      // Mutate existing node objects in-place: React 18 batches the zustand set({}) from
+      // updateNodeInternals with our mutation, so the MiniMap sees measured dims on re-render.
+      for (const change of safeChanges) {
+        if (change.type === 'dimensions' && 'dimensions' in change && change.dimensions) {
+          measuredDimensionsRef.current.set(change.id, change.dimensions as { width: number; height: number });
+          // Mutate current node object so the MiniMap picks it up immediately
+          const existing = nodesRef.current.find(n => n.id === change.id);
+          if (existing) {
+            (existing as any).measured = { ...change.dimensions };
+          }
+        }
+      }
 
       // Track dragging state BEFORE applying changes to localNodes
       const positionChanges = changes.filter(

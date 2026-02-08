@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.3
+
+### Fixes
+- Fix minimap not showing nodes: persist React Flow dimension measurements on user nodes so `nodeHasDimensions()` check passes in controlled mode
+- Eliminate edge flicker during zoom on small graphs (cullingViewport ref + referential stability)
+- Fix HD image race condition on first open after refresh (shared inflight promises)
+
+### i18n
+- Localize loading screen phases across 11 languages
+
 ## 2.5.2
 
 ### Performance
