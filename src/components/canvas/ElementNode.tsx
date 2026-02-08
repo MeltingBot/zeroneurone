@@ -517,13 +517,14 @@ function ElementNodeComponent({ data }: NodeProps) {
           </>
         ) : hasThumbnail ? (
           <>
-            {/* Thumbnail preview - using contain to show full image, blur if hideMedia */}
+            {/* Thumbnail preview - using contain to show full image, pixelate+blur if hideMedia */}
             <div
               className="flex-1 w-full bg-contain bg-center bg-no-repeat"
               style={{
                 backgroundImage: `url(${hdImageUrl || thumbnail})`,
                 backgroundColor: 'var(--color-bg-secondary)',
-                filter: hideMedia ? 'blur(12px)' : undefined,
+                filter: hideMedia ? 'blur(16px) grayscale(1)' : undefined,
+                imageRendering: hideMedia ? 'pixelated' : undefined,
               }}
             />
             {/* Filename label */}

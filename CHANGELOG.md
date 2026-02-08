@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.5
+
+### Fixes
+- Improve hide media blur: pixelated rendering + stronger blur (16px) + grayscale for better content anonymization
+
 ## 2.5.4
 
 ### Fixes
