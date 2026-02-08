@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-2.5-blue)
+![Version](https://img.shields.io/badge/version-2.5.1-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -380,6 +380,7 @@ Ou deployer votre propre serveur y-websocket.
 - [x] SimpleEdge leger pour les graphes denses
 - [x] Seuil adaptatif masquage edges (500+ elements)
 - [x] Teste avec 1500+ elements/liens en mode collaboratif
+- [x] HD image LOD (chargement progressif images pleine resolution)
 
 ### Idees futures
 - [ ] Theming personnalisable

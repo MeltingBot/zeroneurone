@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
 import { useUIStore, useTagSetStore } from '../../stores';
+import { useHdImage } from '../../hooks/useHdImage';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -248,6 +249,10 @@ function ElementNodeComponent({ data }: NodeProps) {
   };
 
   const { width, height } = dimensions;
+
+  // HD image LOD: load full-resolution from OPFS when node is large enough on screen
+  const firstAssetId = hasThumbnail ? element.assetIds?.[0] : undefined;
+  const hdImageUrl = useHdImage(firstAssetId, width, height);
 
   return (
     <div
@@ -516,7 +521,7 @@ function ElementNodeComponent({ data }: NodeProps) {
             <div
               className="flex-1 w-full bg-contain bg-center bg-no-repeat"
               style={{
-                backgroundImage: `url(${thumbnail})`,
+                backgroundImage: `url(${hdImageUrl || thumbnail})`,
                 backgroundColor: 'var(--color-bg-secondary)',
                 filter: hideMedia ? 'blur(12px)' : undefined,
               }}

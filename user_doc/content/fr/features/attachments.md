@@ -41,7 +41,7 @@ Attachez des documents, images et fichiers à vos éléments pour enrichir votre
 
 ### Images
 
-Les images s'affichent en miniature avec prévisualisation au clic.
+Les images s'affichent en miniature sur le canvas. Lorsque vous zoomez ou redimensionnez un noeud au-dela de 250px a l'ecran, l'image en pleine resolution se charge automatiquement depuis le stockage local. Un retour au dezoom revient a la miniature legere. Jusqu'a 30 images HD sont mises en cache simultanement.
 
 
 ### PDF

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.1
+
+### Features
+- HD image Level of Detail: full-resolution images load automatically from OPFS when a node is large enough on screen (node size × zoom > 250px), with LRU cache (max 30 blob URLs) and automatic eviction
+
 ## 2.5.0
 
 ### Performance

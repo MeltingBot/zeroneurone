@@ -41,7 +41,7 @@ Attach documents, images, and files to your elements to enrich your documentatio
 
 ### Images
 
-Images display as thumbnails with preview on click.
+Images display as thumbnails on the canvas. When you zoom in or resize a node beyond 250px on screen, the full-resolution image loads automatically from local storage. Zooming back out reverts to the lightweight thumbnail. Up to 30 HD images are cached simultaneously.
 
 
 ### PDF
