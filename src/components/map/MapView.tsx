@@ -53,9 +53,6 @@ export function MapView() {
   // Track clustering state for dynamic link positioning
   const [clusteringVersion, setClusteringVersion] = useState(0);
 
-  // Track if cluster is currently spiderfied (use ref to avoid triggering effect re-runs)
-  const isSpiderfiedRef = useRef(false);
-
   // Track manually dragged positions - these override resolved positions
   // Using state (not ref) to trigger re-renders when positions change
   const [draggedPositions, setDraggedPositions] = useState<Map<string, { lat: number; lng: number }>>(new Map());
@@ -694,6 +691,7 @@ export function MapView() {
     clusterGroupRef.current = L.markerClusterGroup({
       maxClusterRadius: 50, // Cluster markers within 50px
       spiderfyOnMaxZoom: true,
+      spiderfyDistanceMultiplier: 2, // Spread spiderfied markers wider
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       iconCreateFunction: (cluster) => {
@@ -716,6 +714,7 @@ export function MapView() {
         });
       },
     });
+
     mapRef.current.addLayer(clusterGroupRef.current);
 
     // Track clustering changes to update link positions
@@ -724,17 +723,15 @@ export function MapView() {
     });
     clusterGroupRef.current.on('spiderfied', () => {
       setClusteringVersion(v => v + 1);
-      isSpiderfiedRef.current = true;
     });
     clusterGroupRef.current.on('unspiderfied', () => {
       setClusteringVersion(v => v + 1);
-      isSpiderfiedRef.current = false;
     });
 
     // Add zoom control to top-right
     L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-    // Click on map to clear selection
+    // Click on map background to clear selection
     mapRef.current.on('click', () => {
       clearSelection();
     });
@@ -760,9 +757,6 @@ export function MapView() {
 
   // Track drag start position for undo/redo
   const dragStartGeoRef = useRef<{ id: string; geo: { lat: number; lng: number } } | null>(null);
-
-  // Track previous selection to detect selection-only changes
-  const prevSelectionRef = useRef<Set<string>>(new Set());
 
   // Clean up dragged positions when elements are removed
   useEffect(() => {
@@ -807,15 +801,6 @@ export function MapView() {
       }
     });
 
-    // Detect if this is a selection-only change
-    const selectionChanged = (() => {
-      if (prevSelectionRef.current.size !== selectedElementIds.size) return true;
-      for (const id of selectedElementIds) {
-        if (!prevSelectionRef.current.has(id)) return true;
-      }
-      return false;
-    })();
-
     // Add or update markers
     effectiveGeoElements.forEach((element) => {
       const isSelected = selectedElementIds.has(element.id);
@@ -835,27 +820,7 @@ export function MapView() {
           existingMarker.setLatLng([element.geo.lat, element.geo.lng]);
         }
 
-        // When cluster is spiderfied and only selection changed (no position change),
-        // update visual via CSS only to avoid setIcon triggering cluster recalculation
-        const skipSetIcon = isSpiderfiedRef.current && selectionChanged && !positionChanged;
-
-        if (!skipSetIcon) {
-          // Update icon (for selection state, dimming, etc.)
-          existingMarker.setIcon(createIcon(element, isSelected, isDimmed, commentCount));
-        } else {
-          // For selection-only changes in spiderfied state, just update visual with CSS
-          const markerEl = existingMarker.getElement();
-          if (markerEl) {
-            const card = markerEl.querySelector('.map-marker-card, .map-marker-simple');
-            if (card instanceof HTMLElement) {
-              if (isSelected) {
-                card.style.boxShadow = '0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3)';
-              } else {
-                card.style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
-              }
-            }
-          }
-        }
+        existingMarker.setIcon(createIcon(element, isSelected, isDimmed, commentCount));
 
         // Update title (hover tooltip) based on anonymous mode
         const markerElement = existingMarker.getElement();
@@ -877,9 +842,7 @@ export function MapView() {
           draggable: true,
         });
 
-        // Click to select
-        marker.on('click', (e) => {
-          L.DomEvent.stopPropagation(e);
+        marker.on('click', () => {
           selectElement(element.id);
         });
 
@@ -931,8 +894,6 @@ export function MapView() {
       }
     });
 
-    // Update previous selection reference
-    prevSelectionRef.current = new Set(selectedElementIds);
   }, [effectiveGeoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
@@ -1123,6 +1084,7 @@ export function MapView() {
           opacity: 0.9 * linkOpacity,
           lineCap: 'round',
           lineJoin: 'round',
+          bubblingMouseEvents: false,
         });
         outline.addTo(map);
 
@@ -1135,6 +1097,7 @@ export function MapView() {
           lineCap: 'round',
           lineJoin: 'round',
           className: 'link-line',
+          bubblingMouseEvents: false,
         });
 
         // Add permanent tooltip for label
@@ -1146,9 +1109,7 @@ export function MapView() {
           });
         }
 
-        // Click to select link
-        line.on('click', (e) => {
-          L.DomEvent.stopPropagation(e);
+        line.on('click', () => {
           selectLink(link.id);
         });
 
@@ -1254,19 +1215,6 @@ export function MapView() {
     return () => unregisterCaptureHandler('map');
   }, [geoElements, registerCaptureHandler, unregisterCaptureHandler]);
 
-  // No geo elements
-  if (geoElements.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
-        <MapPin size={48} className="text-text-tertiary mb-4" />
-        <p className="text-sm text-text-secondary">{t('map.noGeoElements')}</p>
-        <p className="text-xs text-text-tertiary mt-2">
-          {t('map.addLocation')}
-        </p>
-      </div>
-    );
-  }
-
   // Format date for display
   const formatDate = (date: Date) => {
     return date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', {
@@ -1360,6 +1308,20 @@ export function MapView() {
 
     return () => clearInterval(interval);
   }, [isPlaying, eventDates]);
+
+  // No geo elements — only show empty state if NOT in temporal mode
+  // In temporal mode, keep the map + timeline visible so user can navigate back
+  if (geoElements.length === 0 && !temporalMode) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
+        <MapPin size={48} className="text-text-tertiary mb-4" />
+        <p className="text-sm text-text-secondary">{t('map.noGeoElements')}</p>
+        <p className="text-xs text-text-tertiary mt-2">
+          {t('map.addLocation')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-bg-secondary">

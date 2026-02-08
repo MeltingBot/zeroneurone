@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.5.6
+
+### Fixes
+- Fix map temporal mode hooks crash: move early return after all hooks to respect React rules
+- Fix map temporal mode UX: keep map and timeline visible when temporal filter empties geolocated elements
+- Improve map cluster spiderfy spacing with `spiderfyDistanceMultiplier: 2`
+- Prevent map link click events from bubbling to map container (`bubblingMouseEvents: false`)
+
 ## 2.5.5
 
 ### Fixes

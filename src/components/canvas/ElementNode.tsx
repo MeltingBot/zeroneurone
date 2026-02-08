@@ -251,7 +251,8 @@ function ElementNodeComponent({ data }: NodeProps) {
   const { width, height } = dimensions;
 
   // HD image LOD: load full-resolution from OPFS when node is large enough on screen
-  const firstAssetId = hasThumbnail ? element.assetIds?.[0] : undefined;
+  // Skip HD loading when media is hidden — thumbnail is enough for pixelated display
+  const firstAssetId = (hasThumbnail && !hideMedia) ? element.assetIds?.[0] : undefined;
   const hdImageUrl = useHdImage(firstAssetId, width, height);
 
   return (
@@ -517,11 +518,11 @@ function ElementNodeComponent({ data }: NodeProps) {
           </>
         ) : hasThumbnail ? (
           <>
-            {/* Thumbnail preview - using contain to show full image, pixelate+blur if hideMedia */}
+            {/* Thumbnail preview - using contain to show full image, pixelate+grayscale if hideMedia */}
             <div
               className="flex-1 w-full bg-contain bg-center bg-no-repeat"
               style={{
-                backgroundImage: `url(${hdImageUrl || thumbnail})`,
+                backgroundImage: `url(${hideMedia ? thumbnail : (hdImageUrl || thumbnail)})`,
                 backgroundColor: 'var(--color-bg-secondary)',
                 filter: hideMedia ? 'blur(16px) grayscale(1)' : undefined,
                 imageRendering: hideMedia ? 'pixelated' : undefined,
