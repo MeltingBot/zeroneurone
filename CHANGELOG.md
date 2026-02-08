@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.5.4
+
+### Fixes
+- Fix initial sync race condition: joiner could display stale positions/labels from IndexedDB cache when WebSocket sync hadn't completed yet
+- Add `waitForSync()` to await WebSocket Y.js sync before reading Y.Doc on shared session join
+- Add state-change listener to trigger safety re-sync when WebSocket connection/sync completes after initial load
+
 ## 2.5.3
 
 ### Fixes

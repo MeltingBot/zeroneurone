@@ -298,6 +298,14 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         ydoc = await syncService.openLocal(id);
       }
 
+      // If in shared mode, wait for initial WebSocket sync before reading Y.Doc.
+      // Without this, the joiner may read stale IndexedDB data (old positions/labels)
+      // and never receive a safety re-sync if WebSocket isn't connected yet.
+      const initialSyncState = syncService.getState();
+      if (initialSyncState.mode === 'shared') {
+        await syncService.waitForSync(5000);
+      }
+
       // Check if Y.Doc has existing data
       const { meta: metaMap, elements: elementsMap, links: linksMap } = getYMaps(ydoc);
 
@@ -451,13 +459,31 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         loadingProgress: 100,
       });
 
-      // In shared mode, schedule ONE safety re-sync after the async buffer
-      // arrival window (~1500ms). The observer-based incremental system handles
-      // real-time changes automatically — multiple re-syncs caused cascading
-      // full rebuilds that blocked the main thread for 60+ seconds.
+      // In shared mode, schedule safety re-syncs to catch data that arrives
+      // after the initial Y.Doc read. This covers:
+      // - Async buffer delivery (data arrives after initial connection)
+      // - Reconnection scenarios (stale local data before peer re-syncs)
+      // - Late WebSocket sync (initial read happened before sync completed)
       const syncState = syncService.getState();
-      if (syncState.mode === 'shared' && syncState.connected) {
-        setTimeout(() => get()._syncFromYDoc(), 2500);
+      if (syncState.mode === 'shared') {
+        // Immediate safety re-sync if already connected
+        if (syncState.connected) {
+          setTimeout(() => get()._syncFromYDoc(), 2500);
+        }
+        // Also listen for future connection/sync events to trigger re-sync.
+        // This handles the case where WebSocket connects AFTER initial load.
+        let unsubSyncWatch: (() => void) | null = null;
+        unsubSyncWatch = syncService.onStateChange((state) => {
+          if (state.mode !== 'shared') {
+            unsubSyncWatch?.();
+            return;
+          }
+          if (state.connected && !state.syncing) {
+            // Connection established and sync complete — re-sync from Y.Doc
+            unsubSyncWatch?.();
+            setTimeout(() => get()._syncFromYDoc(), 500);
+          }
+        });
       }
 
       // Source: broadcast meta + upload assets to Y.Doc in background.

@@ -130,6 +130,34 @@ class SyncService {
     return this.ydoc !== null;
   }
 
+  /**
+   * Wait for the WebSocket provider to complete initial Y.js sync.
+   * Resolves immediately if already synced, not connected, or no provider.
+   * Rejects after timeout to avoid blocking forever.
+   */
+  waitForSync(timeoutMs: number = 5000): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.websocketProvider) {
+        resolve();
+        return;
+      }
+      if (this.websocketProvider.synced) {
+        resolve();
+        return;
+      }
+      let resolved = false;
+      const done = () => {
+        if (resolved) return;
+        resolved = true;
+        resolve();
+      };
+      this.websocketProvider.on('sync', (synced: boolean) => {
+        if (synced) done();
+      });
+      setTimeout(done, timeoutMs);
+    });
+  }
+
   // ============================================================================
   // LOCAL MODE
   // ============================================================================
