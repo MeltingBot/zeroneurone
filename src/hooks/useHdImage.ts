@@ -21,7 +21,7 @@ const MAX_CACHE = 30;
 
 const cache = new Map<string, string>(); // assetId → blobUrl
 const lruOrder: string[] = [];
-const pendingLoads = new Set<string>();
+const inflightLoads = new Map<string, Promise<string | null>>();
 
 function touchLru(assetId: string) {
   const idx = lruOrder.indexOf(assetId);
@@ -38,34 +38,41 @@ function evictOldest() {
   }
 }
 
-async function loadHdImage(assetId: string): Promise<string | null> {
+function loadHdImage(assetId: string): Promise<string | null> {
   // Already cached
   if (cache.has(assetId)) {
     touchLru(assetId);
-    return cache.get(assetId)!;
+    return Promise.resolve(cache.get(assetId)!);
   }
 
-  // Already loading
-  if (pendingLoads.has(assetId)) return null;
+  // Already loading — share the same promise instead of returning null.
+  // This prevents the race condition where a needsHd flip (true→false→true)
+  // cancels the first load and the second returns null from pendingLoads guard.
+  const inflight = inflightLoads.get(assetId);
+  if (inflight) return inflight;
 
-  pendingLoads.add(assetId);
-  try {
-    const asset = await db.assets.get(assetId);
-    if (!asset || !asset.mimeType.startsWith('image/')) return null;
+  const promise = (async () => {
+    try {
+      const asset = await db.assets.get(assetId);
+      if (!asset || !asset.mimeType.startsWith('image/')) return null;
 
-    const file = await fileService.getAssetFile(asset);
-    const blobUrl = URL.createObjectURL(file);
+      const file = await fileService.getAssetFile(asset);
+      const blobUrl = URL.createObjectURL(file);
 
-    evictOldest();
-    cache.set(assetId, blobUrl);
-    lruOrder.push(assetId);
-    return blobUrl;
-  } catch (e) {
-    console.warn('[useHdImage] Failed to load HD image:', e);
-    return null;
-  } finally {
-    pendingLoads.delete(assetId);
-  }
+      evictOldest();
+      cache.set(assetId, blobUrl);
+      lruOrder.push(assetId);
+      return blobUrl;
+    } catch (e) {
+      console.warn('[useHdImage] Failed to load HD image:', e);
+      return null;
+    } finally {
+      inflightLoads.delete(assetId);
+    }
+  })();
+
+  inflightLoads.set(assetId, promise);
+  return promise;
 }
 
 // ── Hook ──
@@ -94,8 +101,18 @@ export function useHdImage(
   );
 
   useEffect(() => {
-    if (!needsHd || !assetId) {
+    if (!assetId) {
       setHdUrl(null);
+      return;
+    }
+
+    if (!needsHd) {
+      // Don't downgrade to SD if the blob URL is still in the LRU cache —
+      // the image is already in VRAM, revoking it would just cause a flash.
+      // The LRU eviction handles memory pressure.
+      if (!cache.has(assetId)) {
+        setHdUrl(null);
+      }
       return;
     }
 
