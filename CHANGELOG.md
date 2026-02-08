@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.2
+
+### Performance
+- Fix edge cache invalidation: auto anchor handles, link visual properties, and global settings (curveMode, anchorMode, confidence) now correctly bust the cache
+- Skip edge computation at first render when node positions are uninitialized (eliminates startup freeze with 1000+ elements)
+
+### UI
+- Improved loading screen: phase label + detail counter (element/link counts, file download progress)
+- Event loop yield between loading phases ensures counters are painted before heavy sync
+
 ## 2.5.1
 
 ### Features

@@ -31,6 +31,7 @@ export function InvestigationPage() {
     links,
     isLoading,
     loadingPhase,
+    loadingDetail,
     loadingProgress,
     error,
     loadInvestigation,
@@ -161,7 +162,12 @@ export function InvestigationPage() {
       <Layout>
         <div className="h-full flex flex-col items-center justify-center gap-3">
           <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-text-secondary">{loadingPhase || t('home.loading')}</span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-sm font-medium text-text-primary">{loadingPhase || t('home.loading')}</span>
+            {loadingDetail && (
+              <span className="text-xs text-text-secondary tabular-nums">{loadingDetail}</span>
+            )}
+          </div>
           <div className="w-48 h-1 bg-bg-tertiary rounded overflow-hidden">
             <div
               className="h-full bg-accent rounded transition-[width] duration-300"

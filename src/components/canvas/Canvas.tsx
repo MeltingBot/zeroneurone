@@ -1338,6 +1338,14 @@ export function Canvas() {
     const nodePositions = nodePositionsRef.current;
     const edgeCache = prevEdgeCacheRef.current;
 
+    // Skip edge computation until node positions are initialized.
+    // At first render, nodePositionsRef is empty — computing edges with unknown positions
+    // wastes CPU (all links pass culling) and produces edges with incorrect auto-handles.
+    // Edges will be computed once edgeVersion bumps after positions are populated.
+    if (nodePositions.size === 0 && links.length > 0) {
+      return [];
+    }
+
     // Viewport culling: filter edges whose both endpoints are off-screen
     const bufferPx = 200;
     const vLeft = (-cullingViewport.x - bufferPx) / cullingViewport.zoom;
@@ -1402,21 +1410,42 @@ export function Canvas() {
       const cached = edgeCache.get(link.id);
       if (cached) {
         const cd = cached.data as any;
-        const sameVisuals = cached.selected === isSelected
-          && cd?.isDimmed === isLinkDimmed
-          && (cached.type === 'simple') === simplified;
-        if (sameVisuals && simplified) {
-          // SimpleEdge: only depends on isSelected + isDimmed + color/thickness
-          newCache.set(link.id, cached);
-          return cached;
-        }
-        if (sameVisuals && !simplified) {
-          // CustomEdge: also check editing, remote users
-          const sameEditing = cd?.isEditing === (editingLinkId === link.id);
-          const sameRemote = remoteUsersByLink.get(link.id) === cd?.remoteLinkSelectors;
-          if (sameEditing && sameRemote) {
-            newCache.set(link.id, cached);
-            return cached;
+        // Check that the link data itself hasn't changed (reference equality — Zustand immutability)
+        // AND that global settings affecting edge rendering haven't changed
+        const linkUnchanged = cd?._linkRef === link;
+        const globalsUnchanged = cd?._curveMode === linkCurveMode
+          && cd?._anchorMode === linkAnchorMode
+          && cd?._showConfidence === showConfidenceIndicator;
+        if (linkUnchanged && globalsUnchanged) {
+          const sameVisuals = cached.selected === isSelected
+            && cd?.isDimmed === isLinkDimmed
+            && (cached.type === 'simple') === simplified;
+          if (sameVisuals) {
+            // In auto anchor mode, verify handles are still optimal for current positions
+            let handlesStale = false;
+            if (linkAnchorMode === 'auto') {
+              const sourcePos = nodePositions.get(link.fromId);
+              const targetPos = nodePositions.get(link.toId);
+              if (sourcePos && targetPos) {
+                const best = calculateBestHandles(sourcePos, targetPos);
+                handlesStale = cached.sourceHandle !== best.sourceHandle || cached.targetHandle !== best.targetHandle;
+              }
+            }
+            if (!handlesStale) {
+              if (simplified) {
+                newCache.set(link.id, cached);
+                return cached;
+              }
+              // CustomEdge: also check editing, remote users, parallel layout
+              const sameEditing = cd?.isEditing === (editingLinkId === link.id);
+              const sameRemote = remoteUsersByLink.get(link.id) === cd?.remoteLinkSelectors;
+              const parallel = parallelLookup.get(link.id);
+              const sameParallel = cd?._parallelIndex === parallel?.index && cd?._parallelCount === parallel?.count;
+              if (sameEditing && sameRemote && sameParallel) {
+                newCache.set(link.id, cached);
+                return cached;
+              }
+            }
           }
         }
       }
@@ -1459,6 +1488,17 @@ export function Canvas() {
         );
       }
 
+      // Stamp cache metadata for next comparison
+      const edgeData = edge.data as any;
+      edgeData._linkRef = link;
+      edgeData._curveMode = linkCurveMode;
+      edgeData._anchorMode = linkAnchorMode;
+      edgeData._showConfidence = showConfidenceIndicator;
+      if (!simplified) {
+        const parallel = parallelLookup.get(link.id);
+        edgeData._parallelIndex = parallel?.index;
+        edgeData._parallelCount = parallel?.count;
+      }
       newCache.set(link.id, edge);
       return edge;
     });

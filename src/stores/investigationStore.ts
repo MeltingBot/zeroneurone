@@ -53,6 +53,7 @@ interface InvestigationState {
   // Loading states
   isLoading: boolean;
   loadingPhase: string;
+  loadingDetail: string;
   loadingProgress: number;
   error: string | null;
 
@@ -254,6 +255,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   investigations: [],
   isLoading: false,
   loadingPhase: '',
+  loadingDetail: '',
   loadingProgress: 0,
   error: null,
 
@@ -272,7 +274,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   loadInvestigation: async (id: InvestigationId) => {
-    set({ isLoading: true, loadingPhase: 'Ouverture...', loadingProgress: 10, error: null });
+    set({ isLoading: true, loadingPhase: 'Ouverture', loadingDetail: '', loadingProgress: 10, error: null });
     try {
       // Load investigation metadata from Dexie
       let [investigation, assets] = await Promise.all([
@@ -284,7 +286,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         throw new Error('Investigation not found');
       }
 
-      set({ loadingPhase: 'Synchronisation...', loadingProgress: 30 });
+      set({ loadingPhase: 'Synchronisation', loadingDetail: investigation.name, loadingProgress: 30 });
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       // Check if Y.Doc is already open for this investigation (e.g., from JoinPage)
       let ydoc = syncService.getYDoc();
@@ -345,7 +348,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       // Source path (meta broadcast + asset upload) deferred to after
       // initial render to avoid blocking during main thread contention.
       if (isJoiner) {
-        set({ loadingPhase: `Fichiers...`, loadingProgress: 55 });
         // Sync assets from Y.Doc to local storage
         const { assets: assetsMap } = getYMaps(ydoc);
         const assetsFromYDoc: Asset[] = [];
@@ -356,6 +358,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           assetEntries.push(ymap as Y.Map<any>);
         });
 
+        const totalAssets = assetEntries.length;
+        set({ loadingPhase: 'Fichiers', loadingDetail: totalAssets > 0 ? `0 / ${totalAssets}` : '', loadingProgress: 55 });
+
+        let assetsDone = 0;
         for (const map of assetEntries) {
           try {
             const assetId = map.get('id') as string;
@@ -385,6 +391,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           } catch (error) {
             console.warn('Failed to load asset from Y.Doc:', error);
           }
+          assetsDone++;
+          if (totalAssets > 3) {
+            set({ loadingDetail: `${assetsDone} / ${totalAssets}`, loadingProgress: 55 + Math.round((assetsDone / totalAssets) * 15) });
+          }
         }
 
         // Add synced assets to local assets list
@@ -397,7 +407,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
       ydocObserverCleanup = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
 
-      set({ loadingPhase: `Elements (${elementsMap.size + linksMap.size})...`, loadingProgress: 75 });
+      set({ loadingPhase: 'Chargement', loadingDetail: `${elementsMap.size} elements, ${linksMap.size} liens`, loadingProgress: 75 });
+
+      // Yield to event loop so the browser paints the loading detail before heavy sync
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       // Initial sync from Y.Doc to Zustand (with deduplication)
       const elementsById = new Map<string, Element>();
@@ -434,6 +447,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         assets,
         isLoading: false,
         loadingPhase: '',
+        loadingDetail: '',
         loadingProgress: 100,
       });
 
@@ -490,7 +504,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         }, 200);
       }
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false, loadingPhase: '', loadingProgress: 0 });
+      set({ error: (error as Error).message, isLoading: false, loadingPhase: '', loadingDetail: '', loadingProgress: 0 });
     }
   },
 
