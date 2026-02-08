@@ -389,6 +389,28 @@ fam Smith John + Johnson Mary
 
 ---
 
+## Import into Current Investigation
+
+From an open investigation, the **Import** button in the toolbar lets you add data directly into the current investigation.
+
+**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
+
+### Placement Mode
+
+After selecting a file, a **placement mode** activates:
+
+1. A dashed rectangle follows the cursor, showing the estimated import area with element count
+2. **Click on the canvas** to choose where imported elements are placed
+3. Press **Escape** to cancel
+
+Elements are positioned with the top-left corner at the click location.
+
+{{< hint info >}}
+Placement mode is especially useful when the investigation already contains elements, to avoid overlapping.
+{{< /hint >}}
+
+---
+
 ## Import Options
 
 ### Import Mode
@@ -396,7 +418,7 @@ fam Smith John + Johnson Mary
 | Mode | Behavior |
 |------|----------|
 | **New investigation** | Creates a separate investigation |
-| **Merge** | Adds to current investigation |
+| **Merge** | Adds to current investigation with positioning |
 
 ### Duplicate Handling
 

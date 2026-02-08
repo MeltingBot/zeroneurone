@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.6.0
+
+### Features
+- Import all supported formats into current investigation (CSV, JSON, GraphML, GEDCOM, GeneWeb, OSINTracker, Excalidraw, STIX 2.1) — not just ZIP
+- All imports enter placement mode: click on the canvas to choose where imported elements are positioned
+- Estimated bounding box preview follows cursor with element count badge
+
+### Performance
+- Batch undo/redo for multi-select delete: single Y.Doc transaction via `pasteElements` instead of sequential createElement/createLink calls
+
+### Fixes
+- Restore collaboration session (WebSocket) after import placement (save/restore shared mode state)
+
 ## 2.5.6
 
 ### Fixes

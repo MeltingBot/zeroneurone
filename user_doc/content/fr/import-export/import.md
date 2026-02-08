@@ -389,6 +389,28 @@ fam Dupont Jean + Martin Marie
 
 ---
 
+## Importer dans l'enquête courante
+
+Depuis une enquête ouverte, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans l'enquête en cours.
+
+**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
+
+### Mode placement
+
+Après sélection du fichier, un **mode placement** s'active :
+
+1. Un rectangle en pointillés suit le curseur, montrant la zone estimée d'import avec le nombre d'éléments
+2. **Cliquez sur le canvas** pour choisir l'emplacement des éléments importés
+3. Appuyez sur **Echap** pour annuler
+
+Les éléments sont positionnés avec le coin supérieur gauche à l'endroit du clic.
+
+{{< hint info >}}
+Le mode placement est particulièrement utile quand l'enquête contient déjà des éléments, pour éviter les superpositions.
+{{< /hint >}}
+
+---
+
 ## Options d'import
 
 ### Mode d'import
@@ -396,7 +418,7 @@ fam Dupont Jean + Martin Marie
 | Mode | Comportement |
 |------|--------------|
 | **Nouvelle enquête** | Crée une enquête séparée |
-| **Fusionner** | Ajoute à l'enquête courante |
+| **Fusionner** | Ajoute à l'enquête courante avec positionnement |
 
 ### Gestion des doublons
 
