@@ -623,8 +623,10 @@ export function Canvas() {
   // React Flow already applies CSS transform during movement, so edges scale naturally.
   // We only recalculate edge visibility when movement stops (onMoveEnd).
   // Additionally, edges are hidden via CSS during movement to avoid Firefox SVG painting cost.
+  // cullingViewport is a ref (not state) to avoid triggering a re-render on every move-end.
+  // Edge recomputation is triggered via edgeVersion bump instead.
   const isViewportMovingRef = useRef(false);
-  const [cullingViewport, setCullingViewport] = useState(viewport);
+  const cullingViewportRef = useRef(viewport);
   const [isViewportMoving, setIsViewportMoving] = useState(false);
 
   const handleMoveStart = useCallback(() => {
@@ -635,8 +637,9 @@ export function Canvas() {
   const handleMoveEnd = useCallback(() => {
     isViewportMovingRef.current = false;
     setIsViewportMoving(false);
-    // Single recalculation when movement stops
-    setCullingViewport(viewportRef.current);
+    cullingViewportRef.current = viewportRef.current;
+    // Bump edgeVersion to trigger re-cull with the updated viewport
+    setEdgeVersion(v => v + 1);
   }, []);
 
   // Keep a ref to the latest viewport for handleMoveEnd
@@ -1333,6 +1336,8 @@ export function Canvas() {
 
   // Cache previous edges by ID for incremental patching (selection/dimming changes)
   const prevEdgeCacheRef = useRef(new Map<string, Edge>());
+  // Stable reference: avoid creating a new array when all edges are cache hits
+  const prevEdgesArrayRef = useRef<Edge[]>([]);
 
   const allEdges = useMemo(() => {
     const nodePositions = nodePositionsRef.current;
@@ -1347,11 +1352,12 @@ export function Canvas() {
     }
 
     // Viewport culling: filter edges whose both endpoints are off-screen
+    const cv = cullingViewportRef.current;
     const bufferPx = 200;
-    const vLeft = (-cullingViewport.x - bufferPx) / cullingViewport.zoom;
-    const vTop = (-cullingViewport.y - bufferPx) / cullingViewport.zoom;
-    const vRight = (-cullingViewport.x + (wrapperSize.width + bufferPx)) / cullingViewport.zoom;
-    const vBottom = (-cullingViewport.y + (wrapperSize.height + bufferPx)) / cullingViewport.zoom;
+    const vLeft = (-cv.x - bufferPx) / cv.zoom;
+    const vTop = (-cv.y - bufferPx) / cv.zoom;
+    const vRight = (-cv.x + (wrapperSize.width + bufferPx)) / cv.zoom;
+    const vBottom = (-cv.y + (wrapperSize.height + bufferPx)) / cv.zoom;
 
     const visibleLinks = links.filter(link => {
       const fromPos = nodePositions.get(link.fromId);
@@ -1504,9 +1510,17 @@ export function Canvas() {
     });
 
     prevEdgeCacheRef.current = newCache;
+
+    // Referential stability: if all edges are the same objects as previous array,
+    // return the previous array to avoid triggering downstream re-renders.
+    const prev = prevEdgesArrayRef.current;
+    if (prev.length === result.length && result.every((e, i) => e === prev[i])) {
+      return prev;
+    }
+    prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, cullingViewport, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.
