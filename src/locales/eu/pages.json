@@ -74,10 +74,11 @@
   },
   "investigation": {
     "loading": {
-      "opening": "Irekitzen...",
-      "syncing": "Sinkronizatzen...",
-      "files": "Fitxategiak...",
-      "elements": "Elementuak..."
+      "opening": "Irekitzen",
+      "syncing": "Sinkronizatzen",
+      "files": "Fitxategiak",
+      "elements": "Kargatzen",
+      "elementsLinks": "{{elements}} elementu, {{links}} lotura"
     },
     "toolbar": {
       "select": "Hautapena",

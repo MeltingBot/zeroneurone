@@ -74,10 +74,11 @@
   },
   "investigation": {
     "loading": {
-      "opening": "Otwieranie...",
-      "syncing": "Synchronizacja...",
-      "files": "Pliki...",
-      "elements": "Elementy..."
+      "opening": "Otwieranie",
+      "syncing": "Synchronizacja",
+      "files": "Pliki",
+      "elements": "Ładowanie",
+      "elementsLinks": "{{elements}} elementów, {{links}} połączeń"
     },
     "toolbar": {
       "select": "Zaznaczanie",

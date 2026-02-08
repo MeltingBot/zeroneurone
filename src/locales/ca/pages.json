@@ -74,10 +74,11 @@
   },
   "investigation": {
     "loading": {
-      "opening": "Obrint...",
-      "syncing": "Sincronitzant...",
-      "files": "Fitxers...",
-      "elements": "Elements..."
+      "opening": "Obrint",
+      "syncing": "Sincronitzant",
+      "files": "Fitxers",
+      "elements": "Carregant",
+      "elementsLinks": "{{elements}} elements, {{links}} enllaços"
     },
     "toolbar": {
       "select": "Selecció",

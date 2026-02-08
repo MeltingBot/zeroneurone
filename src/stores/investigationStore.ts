@@ -274,7 +274,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   loadInvestigation: async (id: InvestigationId) => {
-    set({ isLoading: true, loadingPhase: 'Ouverture', loadingDetail: '', loadingProgress: 10, error: null });
+    set({ isLoading: true, loadingPhase: 'opening', loadingDetail: '', loadingProgress: 10, error: null });
     try {
       // Load investigation metadata from Dexie
       let [investigation, assets] = await Promise.all([
@@ -286,7 +286,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         throw new Error('Investigation not found');
       }
 
-      set({ loadingPhase: 'Synchronisation', loadingDetail: investigation.name, loadingProgress: 30 });
+      set({ loadingPhase: 'syncing', loadingDetail: investigation.name, loadingProgress: 30 });
       await new Promise(resolve => setTimeout(resolve, 0));
 
       // Check if Y.Doc is already open for this investigation (e.g., from JoinPage)
@@ -359,7 +359,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         });
 
         const totalAssets = assetEntries.length;
-        set({ loadingPhase: 'Fichiers', loadingDetail: totalAssets > 0 ? `0 / ${totalAssets}` : '', loadingProgress: 55 });
+        set({ loadingPhase: 'files', loadingDetail: totalAssets > 0 ? `0 / ${totalAssets}` : '', loadingProgress: 55 });
 
         let assetsDone = 0;
         for (const map of assetEntries) {
@@ -407,7 +407,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
       ydocObserverCleanup = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
 
-      set({ loadingPhase: 'Chargement', loadingDetail: `${elementsMap.size} elements, ${linksMap.size} liens`, loadingProgress: 75 });
+      set({ loadingPhase: 'elements', loadingDetail: `${elementsMap.size}|${linksMap.size}`, loadingProgress: 75 });
 
       // Yield to event loop so the browser paints the loading detail before heavy sync
       await new Promise(resolve => setTimeout(resolve, 0));

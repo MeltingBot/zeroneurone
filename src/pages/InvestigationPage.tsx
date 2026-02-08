@@ -158,14 +158,26 @@ export function InvestigationPage() {
   }, [toggleSearch, setDisplayMode]);
 
   if (isLoading) {
+    // loadingPhase is an i18n key (opening, syncing, files, elements)
+    const phaseLabel = loadingPhase
+      ? t(`investigation.loading.${loadingPhase}`)
+      : t('home.loading');
+
+    // loadingDetail: for 'elements' phase it's "count|count", otherwise plain text
+    let detailLabel = loadingDetail;
+    if (loadingPhase === 'elements' && loadingDetail.includes('|')) {
+      const [elCount, lkCount] = loadingDetail.split('|');
+      detailLabel = t('investigation.loading.elementsLinks', { elements: elCount, links: lkCount });
+    }
+
     return (
       <Layout>
         <div className="h-full flex flex-col items-center justify-center gap-3">
           <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           <div className="flex flex-col items-center gap-1">
-            <span className="text-sm font-medium text-text-primary">{loadingPhase || t('home.loading')}</span>
-            {loadingDetail && (
-              <span className="text-xs text-text-secondary tabular-nums">{loadingDetail}</span>
+            <span className="text-sm font-medium text-text-primary">{phaseLabel}</span>
+            {detailLabel && (
+              <span className="text-xs text-text-secondary tabular-nums">{detailLabel}</span>
             )}
           </div>
           <div className="w-48 h-1 bg-bg-tertiary rounded overflow-hidden">

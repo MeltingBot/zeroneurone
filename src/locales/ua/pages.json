@@ -74,10 +74,11 @@
   },
   "investigation": {
     "loading": {
-      "opening": "Відкриття...",
-      "syncing": "Синхронізація...",
-      "files": "Файли...",
-      "elements": "Елементи..."
+      "opening": "Відкриття",
+      "syncing": "Синхронізація",
+      "files": "Файли",
+      "elements": "Завантаження",
+      "elementsLinks": "{{elements}} елементів, {{links}} зв'язків"
     },
     "toolbar": {
       "select": "Вибір",

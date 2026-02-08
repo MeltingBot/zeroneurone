@@ -74,10 +74,11 @@
   },
   "investigation": {
     "loading": {
-      "opening": "Apertura...",
-      "syncing": "Sincronizzazione...",
-      "files": "File...",
-      "elements": "Elementi..."
+      "opening": "Apertura",
+      "syncing": "Sincronizzazione",
+      "files": "File",
+      "elements": "Caricamento",
+      "elementsLinks": "{{elements}} elementi, {{links}} collegamenti"
     },
     "toolbar": {
       "select": "Selezione",
