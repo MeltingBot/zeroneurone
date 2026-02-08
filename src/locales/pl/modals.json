@@ -22,12 +22,10 @@
     "namePlaceholder": "Nowa nazwa"
   },
   "importIntoCurrent": {
-    "title": "Importuj do bieżącego śledztwa",
-    "description": "Scal elementy z pliku ZIP z aktualnie otwartym śledztwem. Zaimportowane elementy zostaną umieszczone na tablicy.",
-    "selectZip": "Wybierz plik ZIP",
-    "zipFormat": "Format ZIP ZeroNeurone",
-    "zipOnly": "Tylko pliki ZIP ZeroNeurone są obsługiwane do scalania",
-    "emptyZip": "Plik ZIP nie zawiera elementów"
+    "title": "Importuj do śledztwa",
+    "description": "Importuj dane do bieżącego śledztwa. Pliki ZIP będą importowane w trybie rozmieszczenia.",
+    "selectFile": "Wybierz plik",
+    "emptyZip": "Plik ZIP jest pusty lub nie zawiera elementów"
   },
   "import": {
     "title": "Importuj śledztwo",

@@ -22,12 +22,10 @@
     "namePlaceholder": "Novo nome"
   },
   "importIntoCurrent": {
-    "title": "Importar na investigação atual",
-    "description": "Fundir elementos de um ficheiro ZIP na investigação atualmente aberta. Os elementos importados serão posicionados na tela.",
-    "selectZip": "Selecionar um ficheiro ZIP",
-    "zipFormat": "Formato ZIP ZeroNeurone",
-    "zipOnly": "Apenas ficheiros ZIP ZeroNeurone são suportados para fusão",
-    "emptyZip": "O ficheiro ZIP não contém elementos"
+    "title": "Importar na investigação",
+    "description": "Importar dados na investigação atual. Ficheiros ZIP serão importados em modo de posicionamento.",
+    "selectFile": "Selecionar um ficheiro",
+    "emptyZip": "O ficheiro ZIP está vazio ou não contém elementos"
   },
   "import": {
     "title": "Importar uma investigação",

@@ -29,6 +29,12 @@ export interface ImportPlacementData {
   investigationId: string;
   /** Callback after successful import */
   onComplete?: () => void;
+  /** Pre-read file content for text-based formats (CSV, JSON, GraphML, etc.) */
+  fileContent?: string;
+  /** Import options (e.g. CSV createMissingElements) */
+  importOptions?: {
+    createMissingElements?: boolean;
+  };
 }
 
 export type FontMode = 'readable' | 'handwritten';

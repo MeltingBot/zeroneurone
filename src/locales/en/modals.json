@@ -23,10 +23,8 @@
   },
   "importIntoCurrent": {
     "title": "Import into investigation",
-    "description": "Import a ZIP archive into the current investigation. You'll be able to choose where to place the imported elements.",
-    "selectZip": "Select a ZIP file",
-    "zipFormat": ".zip files only",
-    "zipOnly": "Only ZIP files are supported",
+    "description": "Import data into the current investigation. ZIP files will use placement mode.",
+    "selectFile": "Select a file",
     "emptyZip": "The ZIP file is empty or contains no elements"
   },
   "import": {

@@ -23,10 +23,8 @@
   },
   "importIntoCurrent": {
     "title": "Ikerketara inportatu",
-    "description": "ZIP fitxategi bat uneko ikerketara inportatu. Inportatutako elementuak non kokatu aukeratu ahal izango duzu.",
-    "selectZip": "ZIP fitxategia hautatu",
-    "zipFormat": ".zip fitxategiak soilik",
-    "zipOnly": "ZIP fitxategiak soilik onartzen dira",
+    "description": "Datuak uneko ikerketara inportatu. ZIP fitxategiak kokapen moduan inportatuko dira.",
+    "selectFile": "Fitxategi bat hautatu",
     "emptyZip": "ZIP fitxategia hutsik dago edo ez du elementurik"
   },
   "import": {

@@ -23,10 +23,8 @@
   },
   "importIntoCurrent": {
     "title": "In Ermittlung importieren",
-    "description": "Ein ZIP-Archiv in die aktuelle Ermittlung importieren. Sie können wählen, wo die importierten Elemente platziert werden.",
-    "selectZip": "ZIP-Datei auswählen",
-    "zipFormat": "Nur .zip-Dateien",
-    "zipOnly": "Nur ZIP-Dateien werden unterstützt",
+    "description": "Daten in die aktuelle Ermittlung importieren. ZIP-Dateien werden im Platzierungsmodus importiert.",
+    "selectFile": "Datei auswählen",
     "emptyZip": "Die ZIP-Datei ist leer oder enthält keine Elemente"
   },
   "import": {

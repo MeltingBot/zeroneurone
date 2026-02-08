@@ -99,24 +99,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     switch (action.type) {
       case 'delete-elements':
       case 'delete-element':
-        // Restore deleted elements
-        if (action.undo.elements) {
-          for (const el of action.undo.elements) {
-            await store.createElement(el.label, el.position, {
-              ...el,
-              id: el.id,
-            });
-          }
-        }
-        // Restore deleted links
-        if (action.undo.links) {
-          for (const link of action.undo.links) {
-            await store.createLink(link.fromId, link.toId, {
-              ...link,
-              id: link.id,
-            });
-          }
-        }
+        // Restore deleted elements and links in a single batch (one Y.Doc transaction)
+        store.pasteElements(action.undo.elements || [], action.undo.links || []);
         break;
 
       case 'create-elements':
@@ -177,12 +161,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
       case 'create-elements':
       case 'create-element':
-        // Re-create elements
-        if (action.redo.elements) {
-          for (const el of action.redo.elements) {
-            await store.createElement(el.label, el.position, el);
-          }
-        }
+        // Re-create elements in a single batch (one Y.Doc transaction)
+        store.pasteElements(action.redo.elements || [], action.redo.links || []);
         break;
 
       case 'update-element':

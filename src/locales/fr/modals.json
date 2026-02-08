@@ -23,10 +23,8 @@
   },
   "importIntoCurrent": {
     "title": "Importer dans l'enquête",
-    "description": "Importez une archive ZIP dans l'enquête actuelle. Vous pourrez choisir où placer les éléments importés.",
-    "selectZip": "Sélectionner un fichier ZIP",
-    "zipFormat": "Fichiers .zip uniquement",
-    "zipOnly": "Seuls les fichiers ZIP sont supportés",
+    "description": "Importez des données dans l'enquête actuelle. Les fichiers ZIP seront importés en mode placement.",
+    "selectFile": "Sélectionner un fichier",
     "emptyZip": "Le fichier ZIP est vide ou ne contient aucun élément"
   },
   "import": {
