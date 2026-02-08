@@ -22,12 +22,10 @@
     "namePlaceholder": "Nieuwe naam"
   },
   "importIntoCurrent": {
-    "title": "Importeren in huidig onderzoek",
-    "description": "Elementen uit een ZIP-bestand samenvoegen met het momenteel geopende onderzoek. De geïmporteerde elementen worden op het canvas geplaatst.",
-    "selectZip": "Selecteer een ZIP-bestand",
-    "zipFormat": "ZeroNeurone ZIP-formaat",
-    "zipOnly": "Alleen ZeroNeurone ZIP-bestanden worden ondersteund voor samenvoegen",
-    "emptyZip": "Het ZIP-bestand bevat geen elementen"
+    "title": "Importeren in onderzoek",
+    "description": "Gegevens importeren in het huidige onderzoek. ZIP-bestanden worden in plaatsingsmodus geïmporteerd.",
+    "selectFile": "Bestand selecteren",
+    "emptyZip": "Het ZIP-bestand is leeg of bevat geen elementen"
   },
   "import": {
     "title": "Onderzoek importeren",

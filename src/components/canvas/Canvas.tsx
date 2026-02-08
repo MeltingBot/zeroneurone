@@ -47,6 +47,7 @@ import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
 import { syncService } from '../../services/syncService';
+import { elementRepository } from '../../db/repositories/elementRepository';
 
 interface ContextMenuState {
   x: number;
@@ -2568,23 +2569,103 @@ export function Canvas() {
         const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
         const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
 
-        // Import with offset
-        const result = await importService.importFromZip(
-          importPlacementData.file,
-          importPlacementData.investigationId,
-          { x: offsetX, y: offsetY }
-        );
+        let result: Awaited<ReturnType<typeof importService.importFromZip>>;
+        const fileName = importPlacementData.file.name.toLowerCase();
+
+        if (importPlacementData.fileContent != null) {
+          // ── Non-ZIP format: import then shift new elements ──
+          const content = importPlacementData.fileContent;
+          const invId = importPlacementData.investigationId;
+
+          // Snapshot existing element IDs before import
+          const existingElements = await elementRepository.getByInvestigation(invId);
+          const existingIds = new Set(existingElements.map(e => e.id));
+
+          // Dispatch to the appropriate import function
+          if (fileName.endsWith('.osintracker')) {
+            result = await importService.importFromOsintracker(content, invId);
+          } else if (fileName.endsWith('.csv')) {
+            result = await importService.importFromCSV(content, invId, {
+              createMissingElements: importPlacementData.importOptions?.createMissingElements ?? true,
+            });
+          } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml')) {
+            result = await importService.importFromGraphML(content, invId);
+          } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {
+            result = await importService.importFromGenealogy(importPlacementData.file, invId);
+          } else if (fileName.endsWith('.json') || fileName.endsWith('.excalidraw')) {
+            result = await importService.importFromJSON(content, invId);
+          } else {
+            // Fallback: try JSON
+            try {
+              JSON.parse(content);
+              result = await importService.importFromJSON(content, invId);
+            } catch {
+              result = { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
+            }
+          }
+
+          // Shift newly created elements to the click position
+          if (result.success && result.elementsImported > 0) {
+            const allElements = await elementRepository.getByInvestigation(invId);
+            const newElements = allElements.filter(e => !existingIds.has(e.id));
+
+            if (newElements.length > 0) {
+              // Compute bounding box of new elements
+              let minX = Infinity, minY = Infinity;
+              for (const el of newElements) {
+                if (el.position.x < minX) minX = el.position.x;
+                if (el.position.y < minY) minY = el.position.y;
+              }
+
+              // Shift so top-left of new elements lands at click position
+              const shiftX = flowPosition.x - minX;
+              const shiftY = flowPosition.y - minY;
+
+              const positionUpdates = newElements.map(el => ({
+                id: el.id,
+                position: {
+                  x: el.position.x + shiftX,
+                  y: el.position.y + shiftY,
+                },
+              }));
+
+              await elementRepository.updatePositions(positionUpdates);
+            }
+          }
+        } else {
+          // ── ZIP format: import with built-in offset ──
+          result = await importService.importFromZip(
+            importPlacementData.file,
+            importPlacementData.investigationId,
+            { x: offsetX, y: offsetY }
+          );
+        }
 
         if (result.success) {
           toast.success(tPages('investigation.importPlacement.success', {
             count: result.elementsImported
           }));
 
+          // Save shared-mode state before closing Y.Doc so we can restore it after reload
+          const syncState = syncService.getState();
+          const wasShared = syncState.mode === 'shared';
+          const savedEncryptionKey = syncService.getEncryptionKey();
+          const savedRoomId = syncState.roomId;
+
           // Close Y.Doc, delete its persistence, and reload from Dexie
           // This forces rebuild of Y.Doc from Dexie which now includes imported elements
           await syncService.close();
           await syncService.deleteLocalData(importPlacementData.investigationId);
           await loadInvestigation(importPlacementData.investigationId);
+
+          // Restore shared mode if we were collaborating
+          if (wasShared && savedEncryptionKey && savedRoomId) {
+            await syncService.openShared(
+              importPlacementData.investigationId,
+              savedEncryptionKey,
+              savedRoomId
+            );
+          }
 
           // Request fitView to show all elements including imported ones
           requestFitView();
