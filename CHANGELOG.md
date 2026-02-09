@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.7.2
+
+### Fixes
+- Collab sync status: "Sync..." indicator no longer stays active when only one user remains (ignore sync events when no peers)
+
 ## 2.7.1
 
 ### Fixes

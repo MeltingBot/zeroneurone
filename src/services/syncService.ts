@@ -455,6 +455,8 @@ class SyncService {
 
     // Listen to sync status
     this.websocketProvider.on('sync', (synced: boolean) => {
+      // When alone (no peers), there's no one to sync with — never set syncing to true
+      if (!synced && this.getState().peerCount === 0) return;
       this.setState({ syncing: !synced });
     });
 
