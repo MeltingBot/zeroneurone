@@ -7,7 +7,7 @@
  */
 
 import * as Y from 'yjs';
-import type { Link, Property } from '../../types';
+import type { Link, LinkVisual, Property } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
 
@@ -203,7 +203,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
  */
 export function updateLinkYMap(
   ymap: Y.Map<any>,
-  changes: Partial<Link>,
+  changes: Omit<Partial<Link>, 'visual'> & { visual?: Partial<LinkVisual> },
   ydoc: Y.Doc
 ): void {
   ydoc.transact(() => {

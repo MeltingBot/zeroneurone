@@ -220,21 +220,17 @@ export function MultiSelectionDetail() {
 
   const handleColorChange = useCallback(
     async (color: string) => {
+      // Pass only changed property — store/Y.Map merge with current visual
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
-
       if (elementIds.length > 0) {
-        for (const el of selectedElements) {
-          await updateElements([el.id], { visual: { ...el.visual, color } });
-        }
+        await updateElements(elementIds, { visual: { color } });
       }
       if (linkIds.length > 0) {
-        for (const link of selectedLinks) {
-          await updateLinks([link.id], { visual: { ...link.visual, color } });
-        }
+        await updateLinks(linkIds, { visual: { color } });
       }
     },
-    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks]
+    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
   );
 
   // ============================================================================
@@ -243,18 +239,16 @@ export function MultiSelectionDetail() {
 
   const handleFontSizeChange = useCallback(
     async (fontSize: FontSize) => {
-      if (selectedElements.length > 0) {
-        for (const el of selectedElements) {
-          await updateElements([el.id], { visual: { ...el.visual, fontSize } });
-        }
+      const elementIds = Array.from(selectedElementIds);
+      const linkIds = Array.from(selectedLinkIds);
+      if (elementIds.length > 0) {
+        await updateElements(elementIds, { visual: { fontSize } });
       }
-      if (selectedLinks.length > 0) {
-        for (const link of selectedLinks) {
-          await updateLinks([link.id], { visual: { ...link.visual, fontSize } });
-        }
+      if (linkIds.length > 0) {
+        await updateLinks(linkIds, { visual: { fontSize } });
       }
     },
-    [selectedElements, selectedLinks, updateElements, updateLinks]
+    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
   );
 
   // ============================================================================
@@ -265,12 +259,10 @@ export function MultiSelectionDetail() {
     async (shape: ElementShape) => {
       const elementIds = Array.from(selectedElementIds);
       if (elementIds.length > 0) {
-        for (const el of selectedElements) {
-          await updateElements([el.id], { visual: { ...el.visual, shape } });
-        }
+        await updateElements(elementIds, { visual: { shape, customWidth: undefined, customHeight: undefined } });
       }
     },
-    [selectedElementIds, selectedElements, updateElements]
+    [selectedElementIds, updateElements]
   );
 
 
@@ -278,12 +270,10 @@ export function MultiSelectionDetail() {
     async (borderColor: string) => {
       const elementIds = Array.from(selectedElementIds);
       if (elementIds.length > 0) {
-        for (const el of selectedElements) {
-          await updateElements([el.id], { visual: { ...el.visual, borderColor } });
-        }
+        await updateElements(elementIds, { visual: { borderColor } });
       }
     },
-    [selectedElementIds, selectedElements, updateElements]
+    [selectedElementIds, updateElements]
   );
 
   // ============================================================================
@@ -304,24 +294,20 @@ export function MultiSelectionDetail() {
     async (style: LinkStyle) => {
       const linkIds = Array.from(selectedLinkIds);
       if (linkIds.length > 0) {
-        for (const link of selectedLinks) {
-          await updateLinks([link.id], { visual: { ...link.visual, style } });
-        }
+        await updateLinks(linkIds, { visual: { style } });
       }
     },
-    [selectedLinkIds, selectedLinks, updateLinks]
+    [selectedLinkIds, updateLinks]
   );
 
   const handleThicknessChange = useCallback(
     async (thickness: number) => {
       const linkIds = Array.from(selectedLinkIds);
       if (linkIds.length > 0) {
-        for (const link of selectedLinks) {
-          await updateLinks([link.id], { visual: { ...link.visual, thickness } });
-        }
+        await updateLinks(linkIds, { visual: { thickness } });
       }
     },
-    [selectedLinkIds, selectedLinks, updateLinks]
+    [selectedLinkIds, updateLinks]
   );
 
   return (

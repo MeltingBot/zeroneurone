@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.7.1
+
+### Fixes
+- Collab sync: visual property changes (fontSize, shape, color, etc.) no longer overwrite other visual properties on remote peers (partial visual merge instead of full spread)
+- Minimap dark mode: background, mask, and node colors adapt to dark theme
+- Remove deprecated `apple-mobile-web-app-capable` meta tag (replaced with `mobile-web-app-capable`)
+- Remove noisy `[_syncFromYDoc] SLOW` diagnostic logs from console
+
 ## 2.7.0
 
 ### Features

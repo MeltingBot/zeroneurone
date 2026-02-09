@@ -844,7 +844,6 @@ export function Canvas() {
       if (element) {
         updateElement(elementId, {
           visual: {
-            ...element.visual,
             customWidth: width,
             customHeight: height,
           },

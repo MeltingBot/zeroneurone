@@ -29,6 +29,8 @@ export function DraggableMinimap() {
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const showMinimap = useUIStore((state) => state.showMinimap);
   const toggleMinimap = useUIStore((state) => state.toggleMinimap);
+  const themeMode = useUIStore((state) => state.themeMode);
+  const isDark = themeMode === 'dark';
 
   // Initialize position to bottom-right on mount
   useEffect(() => {
@@ -92,11 +94,12 @@ export function DraggableMinimap() {
 
   const nodeColor = useCallback((node: { data?: { element?: { visual?: { color?: string } } } }) => {
     const color = node.data?.element?.visual?.color;
-    if (!color) return '#94a3b8';
+    const fallback = isDark ? '#64748b' : '#94a3b8';
+    if (!color) return fallback;
     // Detect very light colors (white, near-white) and replace with visible gray
-    if (isLightColor(color)) return '#94a3b8';
+    if (isLightColor(color)) return fallback;
     return color;
-  }, []);
+  }, [isDark]);
 
   if (position === null) {
     // Render invisible to measure parent, will re-render with position
@@ -132,7 +135,8 @@ export function DraggableMinimap() {
       </div>
       <MiniMap
         nodeColor={nodeColor}
-        maskColor="rgba(0,0,0,0.08)"
+        bgColor={isDark ? '#1a1816' : '#faf8f5'}
+        maskColor={isDark ? 'rgba(200,200,200,0.1)' : 'rgba(0,0,0,0.08)'}
         style={{
           width: DEFAULT_WIDTH,
           height: DEFAULT_HEIGHT,

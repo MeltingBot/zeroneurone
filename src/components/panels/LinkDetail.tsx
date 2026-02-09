@@ -188,33 +188,33 @@ export function LinkDetail({ link }: LinkDetailProps) {
     [link.id, updateLink]
   );
 
-  // Handle visual changes
+  // Handle visual changes — pass only changed property, store merges
   const handleColorChange = useCallback(
     (color: string) => {
-      updateLink(link.id, { visual: { ...link.visual, color } });
+      updateLink(link.id, { visual: { color } });
     },
-    [link.id, link.visual, updateLink]
+    [link.id, updateLink]
   );
 
   const handleStyleChange = useCallback(
     (style: LinkStyle) => {
-      updateLink(link.id, { visual: { ...link.visual, style } });
+      updateLink(link.id, { visual: { style } });
     },
-    [link.id, link.visual, updateLink]
+    [link.id, updateLink]
   );
 
   const handleThicknessChange = useCallback(
     (thickness: number) => {
-      updateLink(link.id, { visual: { ...link.visual, thickness } });
+      updateLink(link.id, { visual: { thickness } });
     },
-    [link.id, link.visual, updateLink]
+    [link.id, updateLink]
   );
 
   const handleFontSizeChange = useCallback(
     (fontSize: FontSize) => {
-      updateLink(link.id, { visual: { ...link.visual, fontSize } });
+      updateLink(link.id, { visual: { fontSize } });
     },
-    [link.id, link.visual, updateLink]
+    [link.id, updateLink]
   );
 
   // Handle properties change

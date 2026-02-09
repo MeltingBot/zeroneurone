@@ -361,9 +361,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Handle visual change
   const handleVisualChange = useCallback(
     (visual: Partial<Element['visual']>) => {
-      updateElement(element.id, { visual: { ...element.visual, ...visual } });
+      // Pass only changed properties — store merges with current visual
+      // Avoids overwriting concurrent remote changes with stale local values
+      updateElement(element.id, { visual });
     },
-    [element.id, element.visual, updateElement]
+    [element.id, updateElement]
   );
 
   // Handle position lock toggle

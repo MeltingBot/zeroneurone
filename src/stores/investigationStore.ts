@@ -5,8 +5,10 @@ import type {
   InvestigationId,
   Element,
   ElementId,
+  ElementVisual,
   Link,
   LinkId,
+  LinkVisual,
   Comment,
   CommentId,
   CommentTargetType,
@@ -14,6 +16,11 @@ import type {
   Position,
   PropertyDefinition,
 } from '../types';
+
+/** Element changes with partial visual support for collab-safe updates */
+type ElementChanges = Omit<Partial<Element>, 'visual'> & { visual?: Partial<ElementVisual> };
+/** Link changes with partial visual support for collab-safe updates */
+type LinkChanges = Omit<Partial<Link>, 'visual'> & { visual?: Partial<LinkVisual> };
 import {
   investigationRepository,
   elementRepository,
@@ -68,7 +75,7 @@ interface InvestigationState {
 
   // Actions - Elements
   createElement: (label: string, position: Position, options?: Partial<Element>) => Promise<Element>;
-  updateElement: (id: ElementId, changes: Partial<Element>) => Promise<void>;
+  updateElement: (id: ElementId, changes: ElementChanges) => Promise<void>;
   deleteElement: (id: ElementId) => Promise<void>;
   deleteElements: (ids: ElementId[]) => Promise<void>;
   updateElementPosition: (id: ElementId, position: Position) => Promise<void>;
@@ -76,13 +83,13 @@ interface InvestigationState {
 
   // Actions - Links
   createLink: (fromId: ElementId, toId: ElementId, options?: Partial<Link>) => Promise<Link>;
-  updateLink: (id: LinkId, changes: Partial<Link>) => Promise<void>;
+  updateLink: (id: LinkId, changes: LinkChanges) => Promise<void>;
   deleteLink: (id: LinkId) => Promise<void>;
   deleteLinks: (ids: LinkId[]) => Promise<void>;
 
   // Actions - Bulk updates
-  updateElements: (ids: ElementId[], changes: Partial<Element>) => Promise<void>;
-  updateLinks: (ids: LinkId[], changes: Partial<Link>) => Promise<void>;
+  updateElements: (ids: ElementId[], changes: ElementChanges) => Promise<void>;
+  updateLinks: (ids: LinkId[], changes: LinkChanges) => Promise<void>;
   pasteElements: (elements: Element[], links: Link[]) => void;
 
   // Actions - Groups
@@ -145,9 +152,6 @@ let metaChangedFlag = false;
 let commentsChangedFlag = false;
 let assetsChangedFlag = false;
 
-// Diagnostic timing: track when observer last fired (to measure observer→sync delay)
-let lastObserverFireTime = 0;
-
 function setupYDocObserver(
   ydoc: Y.Doc,
   syncToZustand: () => void
@@ -179,7 +183,6 @@ function setupYDocObserver(
 
   // Observe elements changes — extract changed IDs for incremental sync
   const elementsObserver = (events: Y.YEvent<any>[]) => {
-    lastObserverFireTime = performance.now();
     for (const event of events) {
       if (event.path.length === 0) {
         // Top-level: element added or removed from the map
@@ -199,7 +202,6 @@ function setupYDocObserver(
 
   // Observe links changes — extract changed IDs for incremental sync
   const linksObserver = (events: Y.YEvent<any>[]) => {
-    lastObserverFireTime = performance.now();
     for (const event of events) {
       if (event.path.length === 0) {
         event.changes.keys.forEach((_change: any, key: string) => {
@@ -692,7 +694,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     return element;
   },
 
-  updateElement: async (id: ElementId, changes: Partial<Element>) => {
+  updateElement: async (id: ElementId, changes: ElementChanges) => {
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -709,16 +711,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
     localOpPending = true;
     set((state) => ({
-      elements: state.elements.map((el) =>
-        el.id === id ? { ...el, ...changes, updatedAt: new Date() } : el
-      ),
+      elements: state.elements.map((el) => {
+        if (el.id !== id) return el;
+        // Merge partial visual with existing visual to avoid overwriting concurrent remote changes
+        const mergedVisual = changes.visual !== undefined
+          ? { ...el.visual, ...changes.visual }
+          : el.visual;
+        return { ...el, ...changes, visual: mergedVisual, updatedAt: new Date() };
+      }),
     }));
 
     // Update Y.Doc for collaborative sync
     updateElementYMap(ymap, changes, ydoc);
 
     // Also update Dexie for backwards compatibility
-    await elementRepository.update(id, changes).catch(() => {
+    await elementRepository.update(id, changes as any).catch(() => {
       // Ignore Dexie errors - Y.Doc is source of truth
     });
   },
@@ -926,7 +933,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     return link;
   },
 
-  updateLink: async (id: LinkId, changes: Partial<Link>) => {
+  updateLink: async (id: LinkId, changes: LinkChanges) => {
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -943,16 +950,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
     localOpPending = true;
     set((state) => ({
-      links: state.links.map((lk) =>
-        lk.id === id ? { ...lk, ...changes, updatedAt: new Date() } : lk
-      ),
+      links: state.links.map((lk) => {
+        if (lk.id !== id) return lk;
+        // Merge partial visual with existing visual to avoid overwriting concurrent remote changes
+        const mergedVisual = changes.visual !== undefined
+          ? { ...lk.visual, ...changes.visual }
+          : lk.visual;
+        return { ...lk, ...changes, visual: mergedVisual, updatedAt: new Date() };
+      }),
     }));
 
     // Update Y.Doc for collaborative sync
     updateLinkYMap(ymap, changes, ydoc);
 
     // Also update Dexie
-    await linkRepository.update(id, changes).catch(() => {});
+    await linkRepository.update(id, changes as any).catch(() => {});
   },
 
   deleteLink: async (id: LinkId) => {
@@ -1000,7 +1012,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // BULK UPDATES
   // ============================================================================
 
-  updateElements: async (ids: ElementId[], changes: Partial<Element>) => {
+  updateElements: async (ids: ElementId[], changes: ElementChanges) => {
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1019,11 +1031,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also update Dexie for backwards compatibility
     await Promise.all(
-      ids.map(id => elementRepository.update(id, changes).catch(() => {}))
+      ids.map(id => elementRepository.update(id, changes as any).catch(() => {}))
     );
   },
 
-  updateLinks: async (ids: LinkId[], changes: Partial<Link>) => {
+  updateLinks: async (ids: LinkId[], changes: LinkChanges) => {
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -1042,7 +1054,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also update Dexie
     await Promise.all(
-      ids.map(id => linkRepository.update(id, changes).catch(() => {}))
+      ids.map(id => linkRepository.update(id, changes as any).catch(() => {}))
     );
   },
 
@@ -1761,8 +1773,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   _syncFromYDoc: () => {
-    const syncStartTime = performance.now();
-    const observerDelay = lastObserverFireTime > 0 ? syncStartTime - lastObserverFireTime : -1;
     const ydoc = syncService.getYDoc();
     const { currentInvestigation, elements: stateElements, links: stateLinks, comments: stateComments, assets: currentAssets } = get();
     if (!ydoc || !currentInvestigation) {
@@ -2013,12 +2023,6 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
             });
         }
       }
-    }
-
-    // Diagnostic: log only if slow (> 100ms total pipeline)
-    const syncElapsed = performance.now() - syncStartTime;
-    if ((elementsDidChange || linksDidChange) && (syncElapsed > 500 || observerDelay > 500)) {
-      console.warn(`[_syncFromYDoc] SLOW: ${syncElapsed.toFixed(0)}ms (observer→sync: ${observerDelay.toFixed(0)}ms) | el:${elIdsChanged.size} structural:${structuralElChange} | lk:${lkIdsChanged.size}`);
     }
 
     // Update Zustand state

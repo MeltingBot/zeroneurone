@@ -7,7 +7,7 @@
  */
 
 import * as Y from 'yjs';
-import type { Element, ElementEvent, Property } from '../../types';
+import type { Element, ElementVisual, ElementEvent, Property } from '../../types';
 import { DEFAULT_ELEMENT_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
 
@@ -300,7 +300,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
  */
 export function updateElementYMap(
   ymap: Y.Map<any>,
-  changes: Partial<Element>,
+  changes: Omit<Partial<Element>, 'visual'> & { visual?: Partial<ElementVisual> },
   ydoc: Y.Doc
 ): void {
   ydoc.transact(() => {
