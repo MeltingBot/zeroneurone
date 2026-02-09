@@ -38,6 +38,7 @@ Personnalisez l'apparence de chaque élément :
 | **Couleur** | Palette de 12 couleurs |
 | **Forme** | Cercle, carré, losange, hexagone |
 | **Taille** | Petit, moyen, grand |
+| **Taille du texte** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
 ### Verrouillage de position
 
@@ -88,6 +89,7 @@ Un lien représente une relation entre deux éléments. Les liens sont des **cit
 | **Couleur** | Palette de couleurs |
 | **Style** | Continu, pointillé, tirets |
 | **Épaisseur** | Fine, normale, épaisse |
+| **Taille du texte** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
 
 ---
@@ -108,6 +110,7 @@ Avec plusieurs éléments sélectionnés :
 
 - Appliquer des tags à tous
 - Modifier la couleur/forme de tous
+- Modifier la taille du texte de tous
 - Supprimer tous
 - Déplacer en groupe
 

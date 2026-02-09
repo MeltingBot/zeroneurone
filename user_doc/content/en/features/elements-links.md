@@ -38,6 +38,7 @@ Customize the appearance of each element:
 | **Color** | Palette of 12 colors |
 | **Shape** | Circle, square, diamond, hexagon |
 | **Size** | Small, medium, large |
+| **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
 ### Position Lock
 
@@ -88,6 +89,7 @@ A link represents a relationship between two elements. Links are **first-class c
 | **Color** | Color palette |
 | **Style** | Solid, dotted, dashed |
 | **Thickness** | Thin, normal, thick |
+| **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
 
 ---
@@ -108,6 +110,7 @@ With multiple elements selected:
 
 - Apply tags to all
 - Change color/shape of all
+- Change text size of all
 - Delete all
 - Move as a group
 
