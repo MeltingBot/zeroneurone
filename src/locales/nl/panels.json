@@ -176,6 +176,7 @@
       "size": "Grootte",
       "style": "Stijl",
       "thickness": "Dikte",
+      "textSize": "Tekstgrootte",
       "positionLock": "Positie vergrendeld",
       "positionUnlocked": "Positie ontgrendeld"
     },
@@ -224,6 +225,7 @@
       "addPropertyToAll": "Eigenschap toevoegen aan alle geselecteerde elementen",
       "setConfidenceAll": "Betrouwbaarheidsniveau instellen voor allen",
       "setColorAll": "Kleur instellen voor allen",
+      "setTextSizeAll": "Tekstgrootte voor alles instellen",
       "elementsSection": "Elementen ({{count}})",
       "linksSection": "Verbindingen ({{count}})"
     }

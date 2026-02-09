@@ -4,6 +4,7 @@ import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
+import { FONT_SIZE_PX } from '../../types';
 import { useUIStore, useTagSetStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
 
@@ -34,7 +35,7 @@ export interface ElementNodeData extends Record<string, unknown> {
   isSelected: boolean;
   isDimmed: boolean;
   thumbnail: string | null;
-  onResize?: (width: number, height: number) => void;
+  onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
@@ -91,6 +92,9 @@ function ElementNodeComponent({ data }: NodeProps) {
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
+
+  // Font size from visual properties (default: 'sm' = 12px, same as text-xs)
+  const labelFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
 
   // Get tag data from TagSets
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
@@ -242,9 +246,9 @@ function ElementNodeComponent({ data }: NodeProps) {
   };
 
   // Final resize handler - persists to database
-  const handleResizeEnd = (_event: unknown, params: { width: number; height: number }) => {
+  const handleResizeEnd = (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
     if (onResize) {
-      onResize(params.width, params.height);
+      onResize(params.width, params.height, { x: params.x, y: params.y });
     }
   };
 
@@ -577,8 +581,9 @@ function ElementNodeComponent({ data }: NodeProps) {
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={handleInputKeyDown}
                 onBlur={handleInputBlur}
-                className="w-full text-xs font-medium text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
+                className="w-full font-medium text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
                 style={{
+                  fontSize: labelFontSize,
                   color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
                     ? '#111827'
                     : '#ffffff',
@@ -588,12 +593,14 @@ function ElementNodeComponent({ data }: NodeProps) {
             ) : anonymousMode ? (
               <RedactedText
                 text={element.label || t('empty.unnamed')}
-                className={`text-xs font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                style={{ fontSize: labelFontSize }}
               />
             ) : (
               <span
-                className={`text-xs font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
                 style={{
+                  fontSize: labelFontSize,
                   color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
                     ? '#111827'
                     : '#ffffff',
@@ -726,6 +733,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.visual.image !== nextEl.visual.image) return false;
   if (prevEl.visual.customWidth !== nextEl.visual.customWidth) return false;
   if (prevEl.visual.customHeight !== nextEl.visual.customHeight) return false;
+  if (prevEl.visual.fontSize !== nextEl.visual.fontSize) return false;
   if (prevEl.assetIds?.length !== nextEl.assetIds?.length) return false;
 
   // Compare tags for tag display

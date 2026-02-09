@@ -106,6 +106,14 @@ export interface TagSet {
   updatedAt: Date;
 }
 
+/** Font size presets for elements and links */
+export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+/** Font size preset to pixel mapping */
+export const FONT_SIZE_PX: Record<FontSize, number> = {
+  xs: 8, sm: 12, md: 14, lg: 18, xl: 22,
+};
+
 /** Element visual appearance */
 export interface ElementVisual {
   color: string;
@@ -118,6 +126,7 @@ export interface ElementVisual {
   image: AssetId | null;
   customWidth?: number;
   customHeight?: number;
+  fontSize?: FontSize;
 }
 
 export type ElementShape = 'circle' | 'square' | 'diamond' | 'rectangle';
@@ -128,6 +137,7 @@ export interface LinkVisual {
   color: string;
   style: LinkStyle;
   thickness: number;
+  fontSize?: FontSize;
 }
 
 export type LinkStyle = 'solid' | 'dashed' | 'dotted';

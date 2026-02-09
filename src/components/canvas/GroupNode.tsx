@@ -2,13 +2,14 @@ import { memo, useRef, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
+import { FONT_SIZE_PX } from '../../types';
 import { useUIStore, useTagSetStore } from '../../stores';
 
 // Redacted text component for anonymous mode
-function RedactedText({ text, className }: { text: string; className?: string }) {
+function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
   const charCount = Math.max(3, Math.min(text.length, 15));
   return (
-    <span className={className}>
+    <span className={className} style={style}>
       <span
         className="inline-block bg-text-primary rounded-sm"
         style={{ width: `${charCount * 0.5}em`, height: '0.9em', verticalAlign: 'middle' }}
@@ -21,7 +22,7 @@ export interface GroupNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
   isDimmed: boolean;
-  onResize?: (width: number, height: number) => void;
+  onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
@@ -46,11 +47,12 @@ function GroupNodeComponent({ data }: NodeProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const labelFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
 
   const handleResizeEnd = useCallback(
-    (_event: unknown, params: { width: number; height: number }) => {
-      onResize?.(params.width, params.height);
+    (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
+      onResize?.(params.width, params.height, { x: params.x, y: params.y });
     },
     [onResize]
   );
@@ -149,12 +151,13 @@ function GroupNodeComponent({ data }: NodeProps) {
               defaultValue={element.label}
               onBlur={handleLabelSubmit}
               onKeyDown={handleKeyDown}
-              className="text-xs font-medium bg-transparent border-b border-accent outline-none w-full text-text-primary"
+              className="font-medium bg-transparent border-b border-accent outline-none w-full text-text-primary"
+              style={{ fontSize: labelFontSize }}
             />
           ) : anonymousMode ? (
-            <RedactedText text={element.label || 'Groupe'} className="text-xs font-medium truncate block" />
+            <RedactedText text={element.label || 'Groupe'} className="font-medium truncate block" style={{ fontSize: labelFontSize }} />
           ) : (
-            <span className="text-xs font-medium text-text-secondary truncate block">
+            <span className="font-medium text-text-secondary truncate block" style={{ fontSize: labelFontSize }}>
               {element.label || 'Groupe'}
             </span>
           )}

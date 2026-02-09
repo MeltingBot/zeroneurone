@@ -8,7 +8,7 @@ import { PropertiesEditor } from './PropertiesEditor';
 interface EventsEditorProps {
   events: ElementEvent[];
   onChange: (events: ElementEvent[]) => void;
-  onOpenGeoPicker: (callback: (lat: number, lng: number) => void) => void;
+  onOpenGeoPicker: (callback: (lat: number, lng: number) => void, initialGeo?: { lat: number; lng: number }) => void;
   /** Property suggestions from the investigation */
   suggestions?: PropertyDefinition[];
   /** Callback when a new property is created */
@@ -324,11 +324,12 @@ export function EventsEditor({
   // Pick location on map
   const handlePickLocation = useCallback(
     (eventId: string) => {
+      const event = events.find((e) => e.id === eventId);
       onOpenGeoPicker((lat, lng) => {
         handleUpdate(eventId, { geo: { lat, lng } });
-      });
+      }, event?.geo);
     },
-    [onOpenGeoPicker, handleUpdate]
+    [onOpenGeoPicker, handleUpdate, events]
   );
 
   // Clear geo from event

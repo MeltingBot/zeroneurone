@@ -2,6 +2,7 @@ import { memo, useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import { NodeResizer, type NodeProps } from '@xyflow/react';
 import { StickyNote } from 'lucide-react';
 import type { Element } from '../../types';
+import { FONT_SIZE_PX } from '../../types';
 import { useUIStore } from '../../stores';
 
 // Helper to determine if a color is light (for text contrast)
@@ -23,7 +24,7 @@ export interface AnnotationNodeData extends Record<string, unknown> {
   isEditing?: boolean;
   onLabelChange?: (newContent: string) => void;
   onStopEditing?: () => void;
-  onResize?: (width: number, height: number) => void;
+  onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
 }
 
 const MIN_WIDTH = 80;
@@ -99,6 +100,7 @@ function AnnotationNodeComponent({ data }: NodeProps) {
   const nodeData = data as AnnotationNodeData;
   const { element, isSelected, isDimmed, onLabelChange, onStopEditing, onResize } = nodeData;
   const anonymousMode = useUIStore((state) => state.anonymousMode);
+  const contentFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [localEditing, setLocalEditing] = useState(false);
   const [editValue, setEditValue] = useState(element.notes || '');
@@ -140,8 +142,8 @@ function AnnotationNodeComponent({ data }: NodeProps) {
   }, [isEditing]);
 
   const handleResizeEnd = useCallback(
-    (_event: unknown, params: { width: number; height: number }) => {
-      onResize?.(params.width, params.height);
+    (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
+      onResize?.(params.width, params.height, { x: params.x, y: params.y });
     },
     [onResize]
   );
@@ -265,13 +267,13 @@ function AnnotationNodeComponent({ data }: NodeProps) {
             onChange={handleTextareaChange}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className={`w-full bg-transparent border-none outline-none resize-none text-[13px] nodrag nowheel nopan ${!textColor ? 'text-text-secondary' : ''}`}
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: textColor }}
+            className={`w-full bg-transparent border-none outline-none resize-none nodrag nowheel nopan ${!textColor ? 'text-text-secondary' : ''}`}
+            style={{ fontSize: contentFontSize, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: textColor }}
           />
         ) : (
           <div
-            className={`text-[13px] ${!textColor ? 'text-text-secondary' : ''}`}
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: textColor }}
+            className={!textColor ? 'text-text-secondary' : undefined}
+            style={{ fontSize: contentFontSize, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: textColor }}
           >
             {renderedContent}
           </div>

@@ -2,7 +2,8 @@ import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
-import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition } from '../../types';
+import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition, FontSize } from '../../types';
+import { FONT_SIZE_PX } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
 import { TagsEditor } from './TagsEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
@@ -43,6 +44,13 @@ function useDebounce<T>(value: T, delay: number): T {
 const STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
 
 const THICKNESSES = [1, 2, 3, 4, 5];
+const FONT_SIZES: { value: FontSize; label: string }[] = [
+  { value: 'xs', label: 'XS' },
+  { value: 'sm', label: 'S' },
+  { value: 'md', label: 'M' },
+  { value: 'lg', label: 'L' },
+  { value: 'xl', label: 'XL' },
+];
 
 // Format date for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
 function formatDateTimeForInput(date: Date): string {
@@ -198,6 +206,13 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const handleThicknessChange = useCallback(
     (thickness: number) => {
       updateLink(link.id, { visual: { ...link.visual, thickness } });
+    },
+    [link.id, link.visual, updateLink]
+  );
+
+  const handleFontSizeChange = useCallback(
+    (fontSize: FontSize) => {
+      updateLink(link.id, { visual: { ...link.visual, fontSize } });
     },
     [link.id, link.visual, updateLink]
   );
@@ -577,6 +592,30 @@ export function LinkDetail({ link }: LinkDetailProps) {
                       backgroundColor: link.visual.thickness === thickness ? 'white' : link.visual.color,
                     }}
                   />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Font size */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-text-tertiary">{t('detail.appearance.fontSize', 'Taille du texte')}</label>
+              <span className="text-xs text-text-tertiary">{FONT_SIZE_PX[link.visual.fontSize || 'sm']}px</span>
+            </div>
+            <div className="flex gap-1">
+              {FONT_SIZES.map((fs) => (
+                <button
+                  key={fs.value}
+                  onClick={() => handleFontSizeChange(fs.value)}
+                  className={`flex-1 h-8 rounded border flex items-center justify-center ${
+                    (link.visual.fontSize || 'sm') === fs.value
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+                  }`}
+                  style={{ fontSize: FONT_SIZE_PX[fs.value] }}
+                >
+                  {fs.label}
                 </button>
               ))}
             </div>

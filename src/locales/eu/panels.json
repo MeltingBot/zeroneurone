@@ -176,6 +176,7 @@
       "size": "Tamaina",
       "style": "Estiloa",
       "thickness": "Lodiera",
+      "textSize": "Testuaren tamaina",
       "positionLock": "Posizioa blokeatuta",
       "positionUnlocked": "Posizioa desblokeatuta"
     },
@@ -224,6 +225,7 @@
       "addPropertyToAll": "Propietatea gehitu hautatutako elementu guztiei",
       "setConfidenceAll": "Konfiantza maila ezarri guztientzat",
       "setColorAll": "Kolorea ezarri guztientzat",
+      "setTextSizeAll": "Testuaren tamaina guztientzat ezarri",
       "elementsSection": "Elementuak ({{count}})",
       "linksSection": "Loturak ({{count}})"
     }

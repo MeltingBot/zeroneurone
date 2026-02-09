@@ -176,6 +176,7 @@
       "size": "Mida",
       "style": "Estil",
       "thickness": "Gruix",
+      "textSize": "Mida del text",
       "positionLock": "Posició bloquejada",
       "positionUnlocked": "Posició desbloquejada"
     },
@@ -224,6 +225,7 @@
       "addPropertyToAll": "Afegir una propietat a tots els elements seleccionats",
       "setConfidenceAll": "Definir el nivell de confiança per a tots",
       "setColorAll": "Definir el color per a tots",
+      "setTextSizeAll": "Definir mida del text per a tots",
       "elementsSection": "Elements ({{count}})",
       "linksSection": "Enllaços ({{count}})"
     }

@@ -176,6 +176,7 @@
       "size": "Розмір",
       "style": "Стиль",
       "thickness": "Товщина",
+      "textSize": "Розмір тексту",
       "positionLock": "Позиція заблокована",
       "positionUnlocked": "Позиція розблокована"
     },
@@ -224,6 +225,7 @@
       "addPropertyToAll": "Додати властивість до всіх вибраних елементів",
       "setConfidenceAll": "Встановити рівень достовірності для всіх",
       "setColorAll": "Встановити колір для всіх",
+      "setTextSizeAll": "Встановити розмір тексту для всіх",
       "elementsSection": "Елементи ({{count}})",
       "linksSection": "Зв'язки ({{count}})"
     }

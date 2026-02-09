@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import type { ElementVisual, ElementShape } from '../../types';
-import { DEFAULT_COLORS } from '../../types';
+import type { ElementVisual, ElementShape, FontSize } from '../../types';
+import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
 
 interface VisualEditorProps {
   visual: ElementVisual;
@@ -13,6 +13,14 @@ const SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'square', label: 'Carré' },
   { value: 'diamond', label: 'Losange' },
   { value: 'rectangle', label: 'Rectangle' },
+];
+
+const FONT_SIZES: { value: FontSize; label: string }[] = [
+  { value: 'xs', label: 'XS' },
+  { value: 'sm', label: 'S' },
+  { value: 'md', label: 'M' },
+  { value: 'lg', label: 'L' },
+  { value: 'xl', label: 'XL' },
 ];
 
 const BORDER_WIDTHS = [1, 2, 3, 4, 5];
@@ -47,6 +55,13 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
   const handleBorderStyleChange = useCallback(
     (borderStyle: 'solid' | 'dashed' | 'dotted') => {
       onChange({ borderStyle });
+    },
+    [onChange]
+  );
+
+  const handleFontSizeChange = useCallback(
+    (fontSize: FontSize) => {
+      onChange({ fontSize });
     },
     [onChange]
   );
@@ -188,6 +203,30 @@ export function VisualEditor({ visual, onChange, hideShape }: VisualEditorProps)
                   backgroundColor: (visual.borderWidth ?? 2) === width ? 'white' : visual.borderColor,
                 }}
               />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Font size */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-text-tertiary">Taille du texte</label>
+          <span className="text-xs text-text-tertiary">{FONT_SIZE_PX[visual.fontSize || 'sm']}px</span>
+        </div>
+        <div className="flex gap-1">
+          {FONT_SIZES.map((fs) => (
+            <button
+              key={fs.value}
+              onClick={() => handleFontSizeChange(fs.value)}
+              className={`flex-1 h-8 rounded border flex items-center justify-center ${
+                (visual.fontSize || 'sm') === fs.value
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+              }`}
+              style={{ fontSize: FONT_SIZE_PX[fs.value] }}
+            >
+              {fs.label}
             </button>
           ))}
         </div>

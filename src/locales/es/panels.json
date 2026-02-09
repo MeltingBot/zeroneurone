@@ -176,6 +176,7 @@
       "size": "Tamaño",
       "style": "Estilo",
       "thickness": "Grosor",
+      "textSize": "Tamaño del texto",
       "positionLock": "Posición bloqueada",
       "positionUnlocked": "Posición desbloqueada"
     },
@@ -224,6 +225,7 @@
       "addPropertyToAll": "Añadir una propiedad a todos los elementos seleccionados",
       "setConfidenceAll": "Definir el nivel de confianza para todos",
       "setColorAll": "Definir el color para todos",
+      "setTextSizeAll": "Definir tamaño del texto para todos",
       "elementsSection": "Elementos ({{count}})",
       "linksSection": "Enlaces ({{count}})"
     }

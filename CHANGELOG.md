@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.7.0
+
+### Features
+- Per-element/link font size: XS (8px), S (12px), M (14px), L (18px), XL (22px) presets in Appearance panel
+- Font size applies to elements, annotations, groups, links, and multi-selection
+- Element resize from all corners now preserves position (not just bottom-right)
+
+### Fixes
+- Map temporal mode: day-level comparison for accurate element visibility (no time-of-day drift)
+- GeoPicker centers on event's existing coordinates when editing event location
+- Asset upload: deferred base64 encoding for faster UI response
+
 ## 2.6.0
 
 ### Features

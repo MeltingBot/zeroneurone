@@ -1280,49 +1280,50 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     const asset = await fileService.saveAsset(currentInvestigation.id, file);
 
-    // Update element in Y.Doc
+    // Update element's assetIds in Y.Doc
     const ydoc = syncService.getYDoc();
     if (ydoc) {
-      const { elements: elementsMap, assets: assetsMap } = getYMaps(ydoc);
+      const { elements: elementsMap } = getYMaps(ydoc);
       const ymap = elementsMap.get(elementId) as Y.Map<any> | undefined;
       if (ymap) {
-        // assetIds is stored as plain array, not Y.Array
         const currentAssetIds = ymap.get('assetIds') || [];
         const assetIdsArray = Array.isArray(currentAssetIds) ? currentAssetIds : [];
         if (!assetIdsArray.includes(asset.id)) {
           ymap.set('assetIds', [...assetIdsArray, asset.id]);
         }
       }
-
-      // Store asset data in Y.Doc for sync with peers
-      // Convert file to base64 for transmission
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-
-      const assetYMap = new Y.Map();
-      assetYMap.set('id', asset.id);
-      assetYMap.set('investigationId', asset.investigationId);
-      assetYMap.set('filename', asset.filename);
-      assetYMap.set('mimeType', asset.mimeType);
-      assetYMap.set('size', asset.size);
-      assetYMap.set('hash', asset.hash);
-      assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
-      assetYMap.set('extractedText', asset.extractedText);
-      assetYMap.set('createdAt', asset.createdAt.toISOString());
-      assetYMap.set('data', base64); // Binary data as base64
-      assetsMap.set(asset.id, assetYMap);
     }
 
-    // Also update Dexie
-    await elementRepository.addAsset(elementId, asset.id).catch(() => {});
-
+    // Update Zustand + Dexie immediately so the UI shows the thumbnail
+    localOpPending = true;
     set((state) => ({
       assets: state.assets.some((a) => a.id === asset.id)
         ? state.assets.map((a) => (a.id === asset.id ? asset : a))
         : [...state.assets, asset],
     }));
+    elementRepository.addAsset(elementId, asset.id).catch(() => {});
+
+    // Store asset binary in Y.Doc for peer sync (deferred — base64 conversion is slow)
+    if (ydoc) {
+      const { assets: assetsMap } = getYMaps(ydoc);
+      file.arrayBuffer().then(arrayBuffer => {
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        const assetYMap = new Y.Map();
+        assetYMap.set('id', asset.id);
+        assetYMap.set('investigationId', asset.investigationId);
+        assetYMap.set('filename', asset.filename);
+        assetYMap.set('mimeType', asset.mimeType);
+        assetYMap.set('size', asset.size);
+        assetYMap.set('hash', asset.hash);
+        assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
+        assetYMap.set('extractedText', asset.extractedText);
+        assetYMap.set('createdAt', asset.createdAt.toISOString());
+        assetYMap.set('data', base64);
+        assetsMap.set(asset.id, assetYMap);
+      }).catch(() => {});
+    }
 
     return asset;
   },

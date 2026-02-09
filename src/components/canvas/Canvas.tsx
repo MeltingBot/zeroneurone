@@ -40,6 +40,7 @@ import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } fro
 import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
+import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
@@ -180,19 +181,28 @@ function ViewportController() {
 
 // FitView controller - watches for pending fitView requests and applies them
 function FitViewController() {
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes } = useReactFlow();
   const { pendingFitView, clearPendingFitView } = useViewStore();
 
   useEffect(() => {
-    if (pendingFitView) {
-      // Small delay to ensure nodes are rendered before fitting
-      const timeout = setTimeout(() => {
+    if (!pendingFitView) return;
+
+    // Wait for nodes to be rendered and measured before fitting.
+    // After import/load, nodes may not exist yet when this effect first fires.
+    let attempts = 0;
+    const maxAttempts = 20; // 20 × 100ms = 2s max
+    const interval = setInterval(() => {
+      attempts++;
+      const nodes = getNodes();
+      const hasMeasuredNodes = nodes.length > 0 && nodes.some(n => n.measured?.width);
+      if (hasMeasuredNodes || attempts >= maxAttempts) {
+        clearInterval(interval);
         fitView({ padding: 0.2, duration: 300 });
         clearPendingFitView();
-      }, 100);
-      return () => clearTimeout(timeout);
-    }
-  }, [pendingFitView, fitView, clearPendingFitView]);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [pendingFitView, fitView, clearPendingFitView, getNodes]);
 
   return null;
 }
@@ -204,7 +214,7 @@ function elementToNode(
   isSelected: boolean,
   isDimmed: boolean,
   thumbnail: string | null,
-  onResize?: (width: number, height: number) => void,
+  onResize?: (width: number, height: number, position?: { x: number; y: number }) => void,
   isEditing?: boolean,
   remoteSelectors?: RemoteUserPresence[],
   onLabelChange?: (newLabel: string) => void,
@@ -448,7 +458,7 @@ function linkToEdge(
     type: 'custom',
     label: link.label || undefined,
     labelStyle: {
-      fontSize: 11,
+      fontSize: FONT_SIZE_PX[link.visual.fontSize || 'sm'],
       fontWeight: 500,
       // fill handled by CustomEdge with CSS variables
     },
@@ -490,6 +500,8 @@ function linkToEdge(
       displayedPropertyValues,
       // Remote user presence (passed from Canvas, not subscribed per-edge)
       remoteLinkSelectors,
+      // Font size
+      fontSize: link.visual.fontSize,
     },
     selected: isSelected,
   };
@@ -827,7 +839,7 @@ export function Canvas() {
 
   // Handle element resize
   const handleElementResize = useCallback(
-    (elementId: string, width: number, height: number) => {
+    (elementId: string, width: number, height: number, position?: { x: number; y: number }) => {
       const element = elementMap.get(elementId);
       if (element) {
         updateElement(elementId, {
@@ -837,9 +849,15 @@ export function Canvas() {
             customHeight: height,
           },
         });
+        // When resizing from non-bottom-right corners, NodeResizer changes the position
+        if (position) {
+          updateElementPositions([{ id: elementId, position }]);
+        }
+        // Switch back from localNodes to store-derived nodes
+        isDraggingRef.current = false;
       }
     },
-    [elementMap, updateElement]
+    [elementMap, updateElement, updateElementPositions]
   );
 
   // Handle element label change (inline editing)
@@ -904,7 +922,7 @@ export function Canvas() {
   });
 
   const callbacksCache = useRef(new Map<string, {
-    onResize: (w: number, h: number) => void;
+    onResize: (w: number, h: number, pos?: { x: number; y: number }) => void;
     onLabelChange: (val: string) => void;
   }>());
 
@@ -912,7 +930,7 @@ export function Canvas() {
     let cached = callbacksCache.current.get(elementId);
     if (!cached) {
       cached = {
-        onResize: (w: number, h: number) => handleResizeRef.current(elementId, w, h),
+        onResize: (w: number, h: number, pos?: { x: number; y: number }) => handleResizeRef.current(elementId, w, h, pos),
         onLabelChange: isAnnotation
           ? (val: string) => updateElementRef.current(elementId, { notes: val })
           : (val: string) => handleLabelChangeRef.current(elementId, val),
@@ -980,9 +998,11 @@ export function Canvas() {
     const visible = elements.filter((el) => !hiddenElementIds.has(el.id));
 
     const result = visible.map(el => {
-      // Reuse cached structure if element reference is unchanged
-      if (prevElements.get(el.id) === el && cache.has(el.id)) {
-        return cache.get(el.id)!;
+      // Reuse cached structure if element reference AND comment count are unchanged
+      const cached = cache.get(el.id);
+      if (cached && prevElements.get(el.id) === el &&
+          cached.unresolvedCommentCount === (commentCountMap.get(el.id) || 0)) {
+        return cached;
       }
       const ns = buildStructure(el);
       cache.set(el.id, ns);
@@ -1656,7 +1676,7 @@ export function Canvas() {
       const wasDragging = isDraggingRef.current;
       const isNowDragging = nowDragging.size > 0;
 
-      // Apply changes to local nodes only during drag (for smooth visual updates).
+      // Apply changes to local nodes only during drag/resize (for smooth visual updates).
       // When not dragging, displayNodes uses `nodes` directly → avoids double render.
       if (!wasDragging && isNowDragging) {
         // Drag START: initialize localNodes from current store-derived nodes
@@ -1666,10 +1686,15 @@ export function Canvas() {
         // DURING drag: update localNodes incrementally
         setLocalNodes(nds => applyNodeChanges(safeChanges, nds));
       } else if (wasDragging && !isNowDragging) {
-        // Drag END: keep isDraggingRef = true for now.
+        // Drag END or DURING resize: keep isDraggingRef = true for now.
         // It will be set to false AFTER updateElementPositions updates the store,
         // so displayNodes = nodes already has the final positions when the switch happens.
         setLocalNodes(nds => applyNodeChanges(safeChanges, nds));
+      } else if (!isNowDragging && positionChanges.some(c => c.position)) {
+        // Non-drag position changes (e.g., from NodeResizer on non-bottom-right corners).
+        // Switch to localNodes mode so the node visually moves during resize.
+        isDraggingRef.current = true;
+        setLocalNodes(applyNodeChanges(safeChanges, nodesRef.current));
       }
 
       // Update alignment guides during drag (throttled to reduce recomputations)

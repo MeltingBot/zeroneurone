@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
 import { useUIStore } from '../../stores';
+import { FONT_SIZE_PX, type FontSize } from '../../types';
 
 // Remote user presence info for a link
 interface RemoteLinkPresence {
@@ -36,6 +37,8 @@ interface CustomEdgeData {
   displayedPropertyValues?: { key: string; value: string }[];
   // Remote user presence (passed from Canvas level)
   remoteLinkSelectors?: RemoteLinkPresence[];
+  // Font size for label
+  fontSize?: FontSize;
 }
 
 // Helper to get handle direction vector from handle ID
@@ -100,6 +103,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const showConfidenceIndicator = edgeData?.showConfidenceIndicator ?? false;
   const confidence = edgeData?.confidence;
   const displayedPropertyValues = edgeData?.displayedPropertyValues;
+  const labelFontSize = FONT_SIZE_PX[edgeData?.fontSize || 'sm'];
 
   // Calculate perpendicular offset for parallel edges
   const parallelSpacing = 30;
@@ -566,11 +570,11 @@ function CustomEdgeComponent(props: EdgeProps) {
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyDown={handleInputKeyDown}
                   onBlur={handleInputBlur}
-                  className="w-full h-full text-xs text-center bg-transparent border-none outline-none"
+                  className="w-full h-full text-center bg-transparent border-none outline-none"
                   style={{
                     color: '#3d3833',
                     fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
-                    fontSize: fontMode === 'handwritten' ? '14px' : '11px',
+                    fontSize: fontMode === 'handwritten' ? labelFontSize + 2 : labelFontSize,
                   }}
                 />
               </foreignObject>
@@ -593,7 +597,7 @@ function CustomEdgeComponent(props: EdgeProps) {
                 strokeWidth: 3,
                 paintOrder: 'stroke fill',
                 fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
-                fontSize: fontMode === 'handwritten' ? '16px' : '12px',
+                fontSize: fontMode === 'handwritten' ? labelFontSize + 2 : labelFontSize,
                 fontWeight: 500,
               }}
               textAnchor="middle"
@@ -782,6 +786,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.curveMode !== nextData.curveMode) return false;
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
   if (prevData.confidence !== nextData.confidence) return false;
+  if (prevData.fontSize !== nextData.fontSize) return false;
 
   // Compare displayed properties
   const prevDisplayedProps = prevData.displayedPropertyValues ?? [];

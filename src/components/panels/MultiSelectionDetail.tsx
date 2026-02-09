@@ -20,8 +20,9 @@ import type {
   LinkStyle,
   Confidence,
   Property,
+  FontSize,
 } from '../../types';
-import { DEFAULT_COLORS } from '../../types';
+import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
 import { AccordionSection } from '../common';
 import { TagsEditor } from './TagsEditor';
 
@@ -42,6 +43,14 @@ const LINK_DIRECTION_DEFS: { value: LinkDirection; icon: typeof Minus; labelKey:
 const LINK_STYLE_VALUES: LinkStyle[] = ['solid', 'dashed', 'dotted'];
 
 const LINK_THICKNESSES = [1, 2, 3, 4, 5];
+
+const FONT_SIZES: { value: FontSize; label: string }[] = [
+  { value: 'xs', label: 'XS' },
+  { value: 'sm', label: 'S' },
+  { value: 'md', label: 'M' },
+  { value: 'lg', label: 'L' },
+  { value: 'xl', label: 'XL' },
+];
 
 export function MultiSelectionDetail() {
   const { t } = useTranslation('panels');
@@ -226,6 +235,26 @@ export function MultiSelectionDetail() {
       }
     },
     [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks]
+  );
+
+  // ============================================================================
+  // HANDLERS - Font size (common to both)
+  // ============================================================================
+
+  const handleFontSizeChange = useCallback(
+    async (fontSize: FontSize) => {
+      if (selectedElements.length > 0) {
+        for (const el of selectedElements) {
+          await updateElements([el.id], { visual: { ...el.visual, fontSize } });
+        }
+      }
+      if (selectedLinks.length > 0) {
+        for (const link of selectedLinks) {
+          await updateLinks([link.id], { visual: { ...link.visual, fontSize } });
+        }
+      }
+    },
+    [selectedElements, selectedLinks, updateElements, updateLinks]
   );
 
   // ============================================================================
@@ -466,6 +495,32 @@ export function MultiSelectionDetail() {
               className="w-6 h-6 rounded cursor-pointer border-0 p-0"
               aria-label={t('detail.appearance.customColor')}
             />
+          </div>
+        </div>
+      </AccordionSection>
+
+      {/* Font size - Common */}
+      <AccordionSection
+        id="bulk-fontsize"
+        title={t('detail.appearance.textSize')}
+        icon={<span className="text-[10px] font-bold">A</span>}
+        defaultOpen={false}
+      >
+        <div className="space-y-2">
+          <p className="text-[10px] text-text-tertiary">
+            {t('detail.multi.setTextSizeAll')}
+          </p>
+          <div className="flex gap-1">
+            {FONT_SIZES.map((fs) => (
+              <button
+                key={fs.value}
+                onClick={() => handleFontSizeChange(fs.value)}
+                className="flex-1 h-8 rounded border flex items-center justify-center bg-bg-secondary text-text-secondary border-border-default hover:border-accent transition-colors"
+                style={{ fontSize: FONT_SIZE_PX[fs.value] }}
+              >
+                {fs.label}
+              </button>
+            ))}
           </div>
         </div>
       </AccordionSection>

@@ -122,6 +122,21 @@ export function MapView() {
     return counts;
   }, [comments]);
 
+  // Normalize a date to noon local time for day-level comparison
+  // Uses noon (not midnight) to avoid timezone issues with toISOString() display
+  const toNoonLocal = useCallback((d: Date | string | number): Date => {
+    const date = new Date(d);
+    date.setHours(12, 0, 0, 0);
+    return date;
+  }, []);
+
+  // Compare two dates at day level (ignoring time)
+  const dayStart = useCallback((d: Date | string | number): number => {
+    const date = new Date(d);
+    date.setHours(0, 0, 0, 0);
+    return date.getTime();
+  }, []);
+
   // Calculate time range and collect all unique event dates for discrete slider
   const { timeRange, eventDates } = useMemo(() => {
     const allDates: Date[] = [];
@@ -160,8 +175,9 @@ export function MapView() {
 
     if (allDates.length === 0) return { timeRange: null, eventDates: [] };
 
-    // Get unique dates sorted chronologically
-    const uniqueTimestamps = [...new Set(allDates.map((d) => d.getTime()))].sort((a, b) => a - b);
+    // Normalize to noon local time and deduplicate by day
+    // Noon avoids timezone issues when displaying with toISOString().split('T')[0]
+    const uniqueTimestamps = [...new Set(allDates.map((d) => toNoonLocal(d).getTime()))].sort((a, b) => a - b);
     const sortedDates = uniqueTimestamps.map((t) => new Date(t));
 
     return {
@@ -171,7 +187,7 @@ export function MapView() {
       },
       eventDates: sortedDates,
     };
-  }, [elements, links]);
+  }, [elements, links, toNoonLocal]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
@@ -198,7 +214,7 @@ export function MapView() {
         return null;
       }
 
-      const targetTime = date.getTime();
+      const targetDay = dayStart(date);
       const hasBaseGeo = !!element.geo;
 
       // Get ALL events with dates (sorted by date)
@@ -207,21 +223,18 @@ export function MapView() {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       if (datedEvents.length > 0) {
-        // Element is visible FROM its first event onwards (not before)
-        // Once it appears, it stays visible to maintain timeline coherence
         const firstEvent = datedEvents[0];
-        const firstEventStart = new Date(firstEvent.date).getTime();
+        const firstEventDay = dayStart(firstEvent.date);
 
-        // Before first event: element doesn't exist yet
-        if (targetTime < firstEventStart) {
+        // Before first event's day: element doesn't exist yet
+        if (targetDay < firstEventDay) {
           return null;
         }
 
-        // Find the most recent event that started before or at targetTime
+        // Find the most recent event on or before the target day
         let activeEvent = firstEvent;
         for (const event of datedEvents) {
-          const eventStart = new Date(event.date).getTime();
-          if (eventStart <= targetTime) {
+          if (dayStart(event.date) <= targetDay) {
             activeEvent = event;
           } else {
             break; // Events are sorted, no need to continue
@@ -240,22 +253,20 @@ export function MapView() {
       if (hasBaseGeo) {
         // If element has a dateRange, check if selected date is within it
         if (element.dateRange?.start) {
-          const elStart = new Date(element.dateRange.start).getTime();
-          const elEnd = element.dateRange.end
-            ? new Date(element.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1 // End of day
+          const elStartDay = dayStart(element.dateRange.start);
+          const elEndDay = element.dateRange.end
+            ? dayStart(element.dateRange.end)
             : Infinity;
 
-          if (targetTime < elStart || targetTime > elEnd) {
+          if (targetDay < elStartDay || targetDay > elEndDay) {
             return null; // Element not active at this time
           }
         }
-        // If element has only a single date (no range), check if it matches
+        // If element has only a single date (no range), check if it matches the same day
         else if (element.date) {
-          const elDate = new Date(element.date);
-          const elStart = elDate.getTime();
-          const elEnd = elStart + 24 * 60 * 60 * 1000 - 1; // Same day (end of day)
+          const elDay = dayStart(element.date);
 
-          if (targetTime < elStart || targetTime > elEnd) {
+          if (targetDay !== elDay) {
             return null; // Element not active at this time
           }
         }
@@ -265,7 +276,7 @@ export function MapView() {
 
       return null;
     },
-    [temporalMode]
+    [temporalMode, dayStart]
   );
 
   // Get any geo position for an element (for link-pulled visibility)
@@ -413,14 +424,14 @@ export function MapView() {
       return result;
     }
 
-    const targetTime = selectedDate.getTime();
+    const targetDay = dayStart(selectedDate);
 
-    // In temporal mode: check each element's visibility
+    // In temporal mode: check each element's visibility (day-level comparison)
     elements.forEach((el) => {
       if (hiddenElementIds.has(el.id)) return;
 
       // Check if element is visible via an active link
-      const visibleViaActiveLink = isVisibleViaLink(el.id, targetTime);
+      const visibleViaActiveLink = isVisibleViaLink(el.id, selectedDate.getTime());
 
       // Get element's events
       const datedEvents = (el.events || [])
@@ -431,25 +442,24 @@ export function MapView() {
       let visibleByOwnData = false;
 
       if (datedEvents.length > 0) {
-        // Element has events - visible from first event onwards
-        const firstEventStart = new Date(datedEvents[0].date).getTime();
-        if (targetTime >= firstEventStart) {
+        // Element has events - visible between first and last event's day
+        const firstEventDay = dayStart(datedEvents[0].date);
+        const lastEventDay = dayStart(datedEvents[datedEvents.length - 1].date);
+        if (targetDay >= firstEventDay && targetDay <= lastEventDay) {
           visibleByOwnData = true;
         }
       } else if (el.geo) {
         // Element has no events but has base geo - check date/dateRange
         if (el.dateRange?.start) {
-          const elStart = new Date(el.dateRange.start).getTime();
-          const elEnd = el.dateRange.end
-            ? new Date(el.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1
+          const elStartDay = dayStart(el.dateRange.start);
+          const elEndDay = el.dateRange.end
+            ? dayStart(el.dateRange.end)
             : Infinity;
-          if (targetTime >= elStart && targetTime <= elEnd) {
+          if (targetDay >= elStartDay && targetDay <= elEndDay) {
             visibleByOwnData = true;
           }
         } else if (el.date) {
-          const elStart = new Date(el.date).getTime();
-          const elEnd = elStart + 24 * 60 * 60 * 1000 - 1;
-          if (targetTime >= elStart && targetTime <= elEnd) {
+          if (targetDay === dayStart(el.date)) {
             visibleByOwnData = true;
           }
         }
@@ -472,7 +482,7 @@ export function MapView() {
     });
 
     return result;
-  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink]);
+  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dayStart]);
 
   // Legacy geoElements for compatibility (elements with current geo)
   const geoElements = useMemo(() => {

@@ -82,6 +82,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
     image: element.visual.image,
     customWidth: element.visual.customWidth,
     customHeight: element.visual.customHeight,
+    fontSize: element.visual.fontSize,
   });
 
   // AssetIds as plain array
@@ -224,6 +225,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
       image: visualRaw.get('image') ?? null,
       customWidth: visualRaw.get('customWidth'),
       customHeight: visualRaw.get('customHeight'),
+      fontSize: visualRaw.get('fontSize'),
     };
   } else if (visualRaw && typeof visualRaw === 'object') {
     visual = {
@@ -237,6 +239,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
       image: visualRaw.image ?? null,
       customWidth: visualRaw.customWidth,
       customHeight: visualRaw.customHeight,
+      fontSize: visualRaw.fontSize,
     };
   }
 

@@ -263,6 +263,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
   // Pending geo picker callback (for events editor)
   const pendingGeoPickerCallback = useRef<((lat: number, lng: number) => void) | null>(null);
+  const pendingGeoPickerInitialGeo = useRef<{ lat: number; lng: number } | null>(null);
 
   // Handle geo picker confirmation
   const handleGeoPickerConfirm = useCallback(
@@ -271,6 +272,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
         // Call the pending callback from events editor
         pendingGeoPickerCallback.current(lat, lng);
         pendingGeoPickerCallback.current = null;
+        pendingGeoPickerInitialGeo.current = null;
       } else {
         // Save immediately when selecting from map (user expects instant feedback)
         const newGeo = { lat, lng };
@@ -288,8 +290,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
   // Handle opening geo picker for events editor
   const handleOpenGeoPickerForHistory = useCallback(
-    (callback: (lat: number, lng: number) => void) => {
+    (callback: (lat: number, lng: number) => void, initialGeo?: { lat: number; lng: number }) => {
       pendingGeoPickerCallback.current = callback;
+      pendingGeoPickerInitialGeo.current = initialGeo || null;
       setShowGeoPicker(true);
     },
     []
@@ -947,19 +950,27 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {showGeoPicker && (
         <GeoPicker
           initialLat={(() => {
-            // Use current input value if valid, otherwise fallback to lastSavedGeo
+            // If opened from event, use event's geo
+            if (pendingGeoPickerInitialGeo.current) return pendingGeoPickerInitialGeo.current.lat;
+            // Otherwise use element's geo input value or lastSavedGeo
             const latNum = parseFloat(geoLat);
             if (!isNaN(latNum) && latNum >= -90 && latNum <= 90) return latNum;
             return lastSavedGeo?.lat;
           })()}
           initialLng={(() => {
-            // Use current input value if valid, otherwise fallback to lastSavedGeo
+            // If opened from event, use event's geo
+            if (pendingGeoPickerInitialGeo.current) return pendingGeoPickerInitialGeo.current.lng;
+            // Otherwise use element's geo input value or lastSavedGeo
             const lngNum = parseFloat(geoLng);
             if (!isNaN(lngNum) && lngNum >= -180 && lngNum <= 180) return lngNum;
             return lastSavedGeo?.lng;
           })()}
           onConfirm={handleGeoPickerConfirm}
-          onCancel={() => setShowGeoPicker(false)}
+          onCancel={() => {
+            pendingGeoPickerCallback.current = null;
+            pendingGeoPickerInitialGeo.current = null;
+            setShowGeoPicker(false);
+          }}
         />
       )}
 

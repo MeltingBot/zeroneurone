@@ -60,6 +60,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
     color: link.visual.color,
     style: link.visual.style,
     thickness: link.visual.thickness,
+    fontSize: link.visual.fontSize,
   });
 
   // CurveOffset as plain object
@@ -138,12 +139,14 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
       color: visualRaw.get('color') ?? DEFAULT_LINK_VISUAL.color,
       style: visualRaw.get('style') ?? DEFAULT_LINK_VISUAL.style,
       thickness: visualRaw.get('thickness') ?? DEFAULT_LINK_VISUAL.thickness,
+      fontSize: visualRaw.get('fontSize'),
     };
   } else if (visualRaw && typeof visualRaw === 'object') {
     visual = {
       color: visualRaw.color ?? DEFAULT_LINK_VISUAL.color,
       style: visualRaw.style ?? DEFAULT_LINK_VISUAL.style,
       thickness: visualRaw.thickness ?? DEFAULT_LINK_VISUAL.thickness,
+      fontSize: visualRaw.fontSize,
     };
   }
 
