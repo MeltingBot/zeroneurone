@@ -1,8 +1,8 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen } from 'lucide-react';
-import { useInvestigationStore, useTagSetStore } from '../../stores';
+import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers } from 'lucide-react';
+import { useInvestigationStore, useTagSetStore, useTabStore } from '../../stores';
 import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
 import { syncService } from '../../services/syncService';
 import { getYMaps } from '../../types/yjs';
@@ -57,6 +57,13 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const associatePropertyWithTags = useInvestigationStore((s) => s.associatePropertyWithTags);
   const comments = useInvestigationStore((s) => s.comments);
   const togglePropertyDisplay = useInvestigationStore((s) => s.togglePropertyDisplay);
+  const canvasTabs = useTabStore((s) => s.tabs);
+  const setActiveTab = useTabStore((s) => s.setActiveTab);
+
+  // Element's tab membership
+  const elementTabs = useMemo(() => {
+    return canvasTabs.filter(tab => tab.memberElementIds.includes(element.id));
+  }, [canvasTabs, element.id]);
 
   // Count unresolved comments for this element
   const elementComments = comments.filter(c => c.targetId === element.id);
@@ -680,6 +687,23 @@ export function ElementDetail({ element }: ElementDetailProps) {
               onTagSetTagAdded={handleTagSetTagAdded}
             />
           </div>
+
+          {/* Tab membership */}
+          {elementTabs.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              <Layers size={10} className="text-text-tertiary" />
+              {elementTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="px-1.5 py-0.5 text-[10px] bg-accent/10 text-accent rounded border border-accent/20 hover:bg-accent/20 transition-colors"
+                  title={t('detail.hints.goToTab', { name: tab.name })}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </AccordionSection>
 

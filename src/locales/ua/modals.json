@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Навігація",
       "search": "Пошук",
+      "tabs": "Вкладки",
       "canvas": "Дошка",
       "editing": "Редагування",
       "zoom": "Масштаб",
@@ -148,7 +149,10 @@
       "newElement": "Новий елемент",
       "newGroup": "Нова група",
       "newAnnotation": "Нова анотація",
-      "escape": "Зняти вибір / Закрити"
+      "escape": "Зняти вибір / Закрити",
+      "prevTab": "Попередня вкладка",
+      "nextTab": "Наступна вкладка",
+      "firstTab": "Перша вкладка"
     }
   },
   "tagSetManager": {

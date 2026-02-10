@@ -17,6 +17,8 @@ import type {
   Report,
   ReportSection,
   ReportSectionId,
+  CanvasTab,
+  TabId,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
@@ -1059,6 +1061,34 @@ class ImportService {
 
       await db.links.add(link);
       result.linksImported++;
+    }
+
+    // Import tabs with remapped element IDs (only for new investigation, not merge)
+    // When merging (positionOffset is set), imported elements go to the active tab instead
+    if (data.tabs && data.tabs.length > 0 && !positionOffset) {
+      for (const importedTab of data.tabs) {
+        const newTabId = generateUUID() as TabId;
+        const newMemberIds = (importedTab.memberElementIds || [])
+          .map((oldId: ElementId) => elementIdMap.get(oldId))
+          .filter((id): id is ElementId => id !== undefined);
+        const newExcludedIds = (importedTab.excludedElementIds || [])
+          .map((oldId: ElementId) => elementIdMap.get(oldId))
+          .filter((id): id is ElementId => id !== undefined);
+
+        const tab: CanvasTab = {
+          id: newTabId,
+          investigationId: targetInvestigationId,
+          name: importedTab.name || '',
+          order: importedTab.order ?? 0,
+          memberElementIds: newMemberIds,
+          excludedElementIds: newExcludedIds,
+          viewport: { x: 0, y: 0, zoom: 1 }, // Viewport is local, reset on import
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await db.canvasTabs.add(tab);
+      }
     }
 
     // Update investigation timestamp

@@ -233,6 +233,21 @@
       "leaveMessage": "Beste partaideek partekatzeko esteka erabiltzen jarrai dezakete aldaketak sinkronizatzeko eta lankidetza berriro hasteko.",
       "rejoinMessage": "Zuk ere saiora itzul zaitezke geroago esteka beraren bidez.",
       "leave": "Utzi"
+    },
+    "tabs": {
+      "all": "Denak",
+      "new": "Fitxa berria",
+      "initialName": "Hasierakoa",
+      "defaultName": "{{n}}. fitxa",
+      "rename": "Berrizendatu",
+      "delete": "Fitxa ezabatu",
+      "deleteConfirm": "{{name}} fitxa ezabatu? Elementuak ez dira ezabatuko.",
+      "addToTab": "Fitxara gehitu...",
+      "removeFromTab": "Fitxatik kendu",
+      "emptyState": "Fitxa honetan elementurik ez",
+      "emptyHint": "Egin eskuin-klik elementuetan gehitzeko",
+      "ghostBadge": "{{tabs}}(e)n",
+      "navigateTo": "{{name}} fitxara joan"
     }
   },
   "map": {

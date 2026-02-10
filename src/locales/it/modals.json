@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Navigazione",
       "search": "Ricerca",
+      "tabs": "Schede",
       "canvas": "Lavagna",
       "editing": "Modifica",
       "zoom": "Zoom",
@@ -148,7 +149,10 @@
       "newElement": "Nuovo elemento",
       "newGroup": "Nuovo gruppo",
       "newAnnotation": "Nuova annotazione",
-      "escape": "Deseleziona / Chiudi"
+      "escape": "Deseleziona / Chiudi",
+      "prevTab": "Scheda precedente",
+      "nextTab": "Scheda successiva",
+      "firstTab": "Prima scheda"
     }
   },
   "tagSetManager": {

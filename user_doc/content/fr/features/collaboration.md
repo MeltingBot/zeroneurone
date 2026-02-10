@@ -151,6 +151,7 @@ Quand quelqu'un édite un élément :
 | Éléments | ✅ Position, métadonnées, apparence |
 | Liens | ✅ Toutes les propriétés |
 | Fichiers joints | ✅ Métadonnées + binaires |
+| Onglets du canvas | ✅ Noms, membres, ordre (viewport local) |
 | Vues sauvegardées | ✅ |
 | Commentaires | ✅ |
 | Paramètres d'enquête | ✅ |

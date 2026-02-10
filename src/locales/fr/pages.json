@@ -234,6 +234,21 @@
       "leaveMessage": "Les autres participants pourront toujours utiliser le lien de partage pour synchroniser leurs modifications et reprendre la collaboration.",
       "rejoinMessage": "Vous pourrez également rejoindre la session plus tard via le même lien.",
       "leave": "Quitter"
+    },
+    "tabs": {
+      "all": "Tous",
+      "new": "Nouvel onglet",
+      "initialName": "Initial",
+      "defaultName": "Onglet {{n}}",
+      "rename": "Renommer",
+      "delete": "Supprimer l'onglet",
+      "deleteConfirm": "Supprimer l'onglet {{name}} ? Les éléments ne seront pas supprimés.",
+      "addToTab": "Ajouter à l'onglet...",
+      "removeFromTab": "Retirer de l'onglet",
+      "emptyState": "Aucun élément dans cet onglet",
+      "emptyHint": "Clic droit sur des éléments pour les ajouter",
+      "ghostBadge": "Sur {{tabs}}",
+      "navigateTo": "Aller à l'onglet {{name}}"
     }
   },
   "map": {

@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Navegação",
       "search": "Pesquisa",
+      "tabs": "Abas",
       "canvas": "Tela",
       "editing": "Edição",
       "zoom": "Zoom",
@@ -148,7 +149,10 @@
       "newElement": "Novo elemento",
       "newGroup": "Novo grupo",
       "newAnnotation": "Nova anotação",
-      "escape": "Desselecionar / Fechar"
+      "escape": "Desselecionar / Fechar",
+      "prevTab": "Aba anterior",
+      "nextTab": "Próxima aba",
+      "firstTab": "Primeira aba"
     }
   },
   "tagSetManager": {

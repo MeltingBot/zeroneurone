@@ -22,6 +22,7 @@ export interface GroupNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
   isDimmed: boolean;
+  isGhost?: boolean;
   onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;

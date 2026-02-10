@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Navigatie",
       "search": "Zoeken",
+      "tabs": "Tabbladen",
       "canvas": "Canvas",
       "editing": "Bewerken",
       "zoom": "Zoom",
@@ -148,7 +149,10 @@
       "newElement": "Nieuw element",
       "newGroup": "Nieuwe groep",
       "newAnnotation": "Nieuwe annotatie",
-      "escape": "Selectie opheffen / Sluiten"
+      "escape": "Selectie opheffen / Sluiten",
+      "prevTab": "Vorig tabblad",
+      "nextTab": "Volgend tabblad",
+      "firstTab": "Eerste tabblad"
     }
   },
   "tagSetManager": {

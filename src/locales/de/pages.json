@@ -233,6 +233,21 @@
       "leaveMessage": "Die anderen Teilnehmer können den Freigabelink weiterhin nutzen, um ihre Änderungen zu synchronisieren und die Zusammenarbeit fortzusetzen.",
       "rejoinMessage": "Sie können der Sitzung später über denselben Link wieder beitreten.",
       "leave": "Verlassen"
+    },
+    "tabs": {
+      "all": "Alle",
+      "new": "Neuer Tab",
+      "initialName": "Initial",
+      "defaultName": "Tab {{n}}",
+      "rename": "Umbenennen",
+      "delete": "Tab löschen",
+      "deleteConfirm": "Tab {{name}} löschen? Elemente werden nicht gelöscht.",
+      "addToTab": "Zu Tab hinzufügen...",
+      "removeFromTab": "Aus Tab entfernen",
+      "emptyState": "Keine Elemente in diesem Tab",
+      "emptyHint": "Rechtsklick auf Elemente zum Hinzufügen",
+      "ghostBadge": "In {{tabs}}",
+      "navigateTo": "Zu Tab {{name}} wechseln"
     }
   },
   "map": {

@@ -233,6 +233,21 @@
       "leaveMessage": "Os outros participantes poderão continuar a usar a ligação de partilha para sincronizar as suas modificações e retomar a colaboração.",
       "rejoinMessage": "Poderá também voltar a juntar-se à sessão mais tarde através da mesma ligação.",
       "leave": "Abandonar"
+    },
+    "tabs": {
+      "all": "Todos",
+      "new": "Nova aba",
+      "initialName": "Inicial",
+      "defaultName": "Aba {{n}}",
+      "rename": "Renomear",
+      "delete": "Excluir aba",
+      "deleteConfirm": "Excluir aba {{name}}? Os elementos não serão excluídos.",
+      "addToTab": "Adicionar à aba...",
+      "removeFromTab": "Remover da aba",
+      "emptyState": "Nenhum elemento nesta aba",
+      "emptyHint": "Clique direito nos elementos para adicioná-los",
+      "ghostBadge": "Em {{tabs}}",
+      "navigateTo": "Ir para aba {{name}}"
     }
   },
   "map": {

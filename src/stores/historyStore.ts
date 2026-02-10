@@ -13,6 +13,8 @@ interface HistoryAction {
     // For update-element: the previous values
     elementId?: string;
     changes?: Partial<Element>;
+    // Tab membership to restore on undo (tabId → elementIds[])
+    tabMembership?: Record<string, string[]>;
   };
   // Data for redoing the action
   redo: {
@@ -24,6 +26,8 @@ interface HistoryAction {
     // For update-element: the new values
     elementId?: string;
     changes?: Partial<Element>;
+    // Tab membership to restore on redo (tabId → elementIds[])
+    tabMembership?: Record<string, string[]>;
   };
 }
 
@@ -101,12 +105,32 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       case 'delete-element':
         // Restore deleted elements and links in a single batch (one Y.Doc transaction)
         store.pasteElements(action.undo.elements || [], action.undo.links || []);
+        // Restore tab membership (elements were removed from tabs on delete)
+        if (action.undo.tabMembership) {
+          const { useTabStore } = await import('./tabStore');
+          for (const [tabId, elementIds] of Object.entries(action.undo.tabMembership)) {
+            await useTabStore.getState().addMembers(tabId, elementIds);
+          }
+        }
         break;
 
       case 'create-elements':
       case 'create-element':
-        // Delete created elements
+        // Capture tab membership before deleting (for redo restore)
         if (action.redo.elementIds) {
+          const { useTabStore } = await import('./tabStore');
+          const tabStore = useTabStore.getState();
+          const membership: Record<string, string[]> = {};
+          let hasAny = false;
+          for (const id of action.redo.elementIds) {
+            for (const tab of tabStore.getTabsForElement(id)) {
+              if (!membership[tab.id]) membership[tab.id] = [];
+              membership[tab.id].push(id);
+              hasAny = true;
+            }
+          }
+          if (hasAny) action.redo.tabMembership = membership;
+          // Delete created elements
           await store.deleteElements(action.redo.elementIds);
         }
         // Also delete created links (for paste/duplicate operations)
@@ -163,6 +187,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       case 'create-element':
         // Re-create elements in a single batch (one Y.Doc transaction)
         store.pasteElements(action.redo.elements || [], action.redo.links || []);
+        // Restore tab membership (captured during undo)
+        if (action.redo.tabMembership) {
+          const { useTabStore } = await import('./tabStore');
+          for (const [tabId, elementIds] of Object.entries(action.redo.tabMembership)) {
+            await useTabStore.getState().addMembers(tabId, elementIds);
+          }
+        }
         break;
 
       case 'update-element':

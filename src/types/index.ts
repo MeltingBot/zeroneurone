@@ -13,6 +13,7 @@ export type AssetId = UUID;
 export type ViewId = UUID;
 export type ReportSectionId = UUID;
 export type TagSetId = UUID;
+export type TabId = UUID;
 
 // ============================================================================
 // UTILITY TYPES
@@ -310,6 +311,8 @@ export interface View {
   displayMode: DisplayMode;
   /** Optional saved element positions for layout restoration */
   elementPositions?: { id: ElementId; position: Position }[];
+  /** Optional active tab when view was saved */
+  activeTabId?: TabId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -327,6 +330,23 @@ export interface ViewFilters {
   dateFrom: Date | null;
   dateTo: Date | null;
   hasGeo: boolean | null;
+}
+
+// ============================================================================
+// CANVAS TAB
+// ============================================================================
+
+export interface CanvasTab {
+  id: TabId;
+  investigationId: InvestigationId;
+  name: string;
+  order: number;
+  memberElementIds: ElementId[];
+  /** Ghost element IDs explicitly dismissed by the user (won't reappear as ghosts) */
+  excludedElementIds: ElementId[];
+  viewport: { x: number; y: number; zoom: number };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ============================================================================

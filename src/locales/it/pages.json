@@ -233,6 +233,21 @@
       "leaveMessage": "Gli altri partecipanti potranno continuare a usare il link di condivisione per sincronizzare le loro modifiche e riprendere la collaborazione.",
       "rejoinMessage": "Potrai anche rientrare nella sessione più tardi tramite lo stesso link.",
       "leave": "Abbandona"
+    },
+    "tabs": {
+      "all": "Tutti",
+      "new": "Nuova scheda",
+      "initialName": "Iniziale",
+      "defaultName": "Scheda {{n}}",
+      "rename": "Rinomina",
+      "delete": "Elimina scheda",
+      "deleteConfirm": "Eliminare la scheda {{name}}? Gli elementi non verranno eliminati.",
+      "addToTab": "Aggiungi a scheda...",
+      "removeFromTab": "Rimuovi da scheda",
+      "emptyState": "Nessun elemento in questa scheda",
+      "emptyHint": "Clic destro sugli elementi per aggiungerli",
+      "ghostBadge": "In {{tabs}}",
+      "navigateTo": "Vai alla scheda {{name}}"
     }
   },
   "map": {

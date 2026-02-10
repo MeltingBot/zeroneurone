@@ -34,6 +34,7 @@ export interface ElementNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
   isDimmed: boolean;
+  isGhost?: boolean;
   thumbnail: string | null;
   onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
   isEditing?: boolean;
@@ -81,7 +82,7 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
+  const { element, isSelected, isDimmed, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -261,7 +262,7 @@ function ElementNodeComponent({ data }: NodeProps) {
 
   return (
     <div
-      className={`relative cursor-pointer ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
+      className={`relative ${isGhost ? 'opacity-65 cursor-default pointer-events-auto' : isDimmed ? 'opacity-30 cursor-pointer' : 'opacity-100 cursor-pointer'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onPointerDown={(e) => {
@@ -478,7 +479,7 @@ function ElementNodeComponent({ data }: NodeProps) {
       {/* Node body */}
       <div
         className={`
-          w-full h-full
+          relative w-full h-full
           flex flex-col items-center justify-center overflow-hidden
           ${hasThumbnail ? 'sketchy-border-soft' : shapeStyles[element.visual.shape]}
           ${isSelected ? 'selection-ring' : 'node-shadow'}
@@ -487,9 +488,9 @@ function ElementNodeComponent({ data }: NodeProps) {
           backgroundColor: hasThumbnail
             ? 'var(--color-bg-primary)'
             : getThemeAwareColor(element.visual.color, themeMode === 'dark'),
-          // Border properties
+          // Border properties — ghosts always have dashed border
           borderWidth: element.visual.borderWidth ?? 2,
-          borderStyle: element.visual.borderStyle ?? 'solid',
+          borderStyle: isGhost ? 'dashed' : (element.visual.borderStyle ?? 'solid'),
           borderColor: themeMode === 'dark' && !hasThumbnail
             ? getThemeAwareColor(element.visual.borderColor, true)
             : element.visual.borderColor,
@@ -506,6 +507,15 @@ function ElementNodeComponent({ data }: NodeProps) {
           })(),
         }}
       >
+        {/* Ghost hatch overlay — diagonal stripes clipped by parent shape */}
+        {isGhost && (
+          <div
+            className="absolute inset-0 z-10 pointer-events-none"
+            style={{
+              backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, ${themeMode === 'dark' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.13)'} 4px, ${themeMode === 'dark' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.13)'} 6px)`,
+            }}
+          />
+        )}
         {isLoadingAsset ? (
           /* Loading state - asset expected but not yet loaded */
           <>
@@ -686,6 +696,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   // Compare essential props that affect rendering
   if (prevData.isSelected !== nextData.isSelected) return false;
   if (prevData.isDimmed !== nextData.isDimmed) return false;
+  if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;
   if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;

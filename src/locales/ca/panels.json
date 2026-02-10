@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "L'element no té nom"
     },
+    "hints": {
+      "goToTab": "Anar a la pestanya {{name}}"
+    },
     "link": {
       "linkedElements": "Elements enllaçats",
       "deletedElement": "Element eliminat",

@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Nawigacja",
       "search": "Wyszukiwanie",
+      "tabs": "Karty",
       "canvas": "Tablica",
       "editing": "Edycja",
       "zoom": "Zoom",
@@ -148,7 +149,10 @@
       "newElement": "Nowy element",
       "newGroup": "Nowa grupa",
       "newAnnotation": "Nowa adnotacja",
-      "escape": "Odznacz / Zamknij"
+      "escape": "Odznacz / Zamknij",
+      "prevTab": "Poprzednia karta",
+      "nextTab": "Następna karta",
+      "firstTab": "Pierwsza karta"
     }
   },
   "tagSetManager": {

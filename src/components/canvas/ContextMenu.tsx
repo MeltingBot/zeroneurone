@@ -1,6 +1,7 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight } from 'lucide-react';
+import type { CanvasTab, TabId } from '../../types';
 
 interface ContextMenuProps {
   x: number;
@@ -35,6 +36,14 @@ interface ContextMenuProps {
   // Position lock
   isPositionLocked: boolean;
   onToggleLock: () => void;
+  // Tab assignment
+  tabs: CanvasTab[];
+  activeTabId: TabId | null;
+  onAddToTab: (tabId: TabId) => void;
+  onRemoveFromTab: () => void;
+  isGhostElement: boolean;
+  elementTabIds: TabId[];
+  onGoToTab: (tabId: TabId) => void;
   onClose: () => void;
 }
 
@@ -74,6 +83,13 @@ function ContextMenuComponent({
   onRemoveFromGroup,
   isPositionLocked,
   onToggleLock,
+  tabs,
+  activeTabId,
+  onAddToTab,
+  onRemoveFromTab,
+  isGhostElement,
+  elementTabIds,
+  onGoToTab,
   onClose,
 }: ContextMenuProps) {
   const { t } = useTranslation('pages');
@@ -301,6 +317,73 @@ function ContextMenuComponent({
             </>
           )}
         </div>
+
+        {/* Go to source tab (ghost elements only) */}
+        {isGhostElement && elementTabIds.length > 0 && (
+          <div className="py-1 border-t border-border-default">
+            {elementTabIds
+              .filter((tid) => tid !== activeTabId)
+              .map((tid) => {
+                const tab = tabs.find((t) => t.id === tid);
+                if (!tab) return null;
+                return (
+                  <button
+                    key={tid}
+                    onClick={() => {
+                      onGoToTab(tid);
+                      onClose();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                  >
+                    <ArrowRight size={14} />
+                    <span className="truncate">{t('investigation.tabs.navigateTo', { name: tab.name })}</span>
+                  </button>
+                );
+              })}
+          </div>
+        )}
+
+        {/* Tab assignment */}
+        {tabs.length > 0 && (
+          <div className="py-1 border-t border-border-default">
+            <div className="px-3 py-1 text-xs text-text-tertiary">
+              {t('investigation.tabs.addToTab')}
+            </div>
+            {tabs.map((tab) => {
+              const isInTab = elementTabIds.includes(tab.id);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (!isInTab) onAddToTab(tab.id);
+                    onClose();
+                  }}
+                  disabled={isInTab}
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
+                    isInTab ? 'text-text-tertiary cursor-default' : 'text-text-primary hover:bg-bg-tertiary'
+                  }`}
+                >
+                  <Layers size={14} />
+                  <span className="truncate">{tab.name}</span>
+                  {isInTab && <span className="ml-auto text-[10px] text-text-tertiary">&#10003;</span>}
+                </button>
+              );
+            })}
+            {/* Remove: ghost → dismiss, member in >1 tab → unassign */}
+            {activeTabId && (isGhostElement || (elementTabIds.includes(activeTabId) && elementTabIds.length > 1)) && (
+              <button
+                onClick={() => {
+                  onRemoveFromTab();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <X size={14} />
+                {t('investigation.tabs.removeFromTab')}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Position Lock */}
         <div className="py-1 border-t border-border-default">

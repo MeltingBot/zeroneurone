@@ -44,7 +44,13 @@ import {
   yMapToComment,
   updateCommentYMap,
 } from '../services/yjs/commentMapper';
+import {
+  tabToYMap,
+  yMapToTab,
+} from '../services/yjs/tabMapper';
 import { useSyncStore } from './syncStore';
+import { useTabStore } from './tabStore';
+import { tabRepository } from '../db/repositories/tabRepository';
 import { arrayBufferToBase64 } from '../utils';
 
 interface InvestigationState {
@@ -142,6 +148,9 @@ let ydocObserverCleanup: (() => void) | null = null;
 let localOpPending = false;
 let safetySyncTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** Exported for tabStore to set localOpPending without circular import */
+export function setLocalOpPending() { localOpPending = true; }
+
 // Incremental sync: track which elements/links changed between debounced syncs.
 // Instead of parsing ALL 3000+ Y.Maps every time, we only re-parse the ones
 // that actually changed. This reduces collaborative sync from O(n) to O(changed).
@@ -152,12 +161,15 @@ let structuralLinkChange = false;    // link added/removed
 let metaChangedFlag = false;
 let commentsChangedFlag = false;
 let assetsChangedFlag = false;
+let changedTabIds = new Set<string>();
+let structuralTabChange = false;
+let tabsChangedFlag = false;
 
 function setupYDocObserver(
   ydoc: Y.Doc,
   syncToZustand: () => void
 ): () => void {
-  const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
+  const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap, tabs: tabsMap } = getYMaps(ydoc);
 
   // Batch Y.Doc observer events using requestAnimationFrame.
   // When the main thread is blocked by React rendering (3.5s on Firefox),
@@ -232,6 +244,24 @@ function setupYDocObserver(
   };
   assetsMap.observeDeep(assetsObserver);
 
+  // Observe tabs changes — extract changed IDs for incremental sync
+  const tabsObserver = (events: Y.YEvent<any>[]) => {
+    tabsChangedFlag = true;
+    for (const event of events) {
+      if (event.path.length === 0) {
+        event.changes.keys.forEach((_change: any, key: string) => {
+          changedTabIds.add(key);
+          structuralTabChange = true;
+        });
+      } else {
+        const tabKey = event.path[0] as string;
+        if (tabKey) changedTabIds.add(tabKey);
+      }
+    }
+    debouncedSync();
+  };
+  tabsMap.observeDeep(tabsObserver);
+
   // Return cleanup function
   return () => {
     if (syncRafId) {
@@ -242,6 +272,7 @@ function setupYDocObserver(
     linksMap.unobserveDeep(linksObserver);
     commentsMap.unobserveDeep(commentsObserver);
     assetsMap.unobserveDeep(assetsObserver);
+    tabsMap.unobserveDeep(tabsObserver);
   };
 }
 
@@ -355,6 +386,19 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         });
       }
 
+      // Migrate tabs from Dexie to Y.Doc if Y.Doc tabs map is empty
+      const { tabs: tabsYMap } = getYMaps(ydoc);
+      if (tabsYMap.size === 0) {
+        const dexieTabs = await tabRepository.getByInvestigation(id);
+        if (dexieTabs.length > 0) {
+          ydoc.transact(() => {
+            dexieTabs.forEach(tab => {
+              tabsYMap.set(tab.id, tabToYMap(tab));
+            });
+          });
+        }
+      }
+
       // Joiner: download assets from Y.Doc before canvas renders.
       // Source path (meta broadcast + asset upload) deferred to after
       // initial render to avoid blocking during main thread contention.
@@ -410,6 +454,25 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
         // Add synced assets to local assets list
         assets = [...assets, ...assetsFromYDoc];
+
+        // Sync tabs from Y.Doc to local Dexie (joiner gets shared tabs)
+        const joinerTabsMap = getYMaps(ydoc).tabs;
+        if (joinerTabsMap.size > 0) {
+          const remoteTabs: import('../types').CanvasTab[] = [];
+          joinerTabsMap.forEach((ymap) => {
+            try {
+              const tab = yMapToTab(ymap as Y.Map<any>);
+              if (tab.id) remoteTabs.push(tab);
+            } catch {}
+          });
+          if (remoteTabs.length > 0) {
+            await tabRepository.bulkUpsert(remoteTabs);
+            // Update tab store immediately — loadTabs(id) in InvestigationPage
+            // runs before loadInvestigation completes (not awaited), so Dexie is
+            // still empty when loadTabs reads it. Push directly to store.
+            useTabStore.getState()._syncTabsFromYDoc(remoteTabs);
+          }
+        }
       }
 
       // Setup Y.Doc observer to sync to Zustand
@@ -690,6 +753,14 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       // Ignore Dexie errors - Y.Doc is source of truth
     });
 
+    // Auto-assign to active tab (if any)
+    import('./tabStore').then(({ useTabStore }) => {
+      const { activeTabId, addMembers } = useTabStore.getState();
+      if (activeTabId) {
+        addMembers(activeTabId, [element.id]);
+      }
+    });
+
     return element;
   },
 
@@ -762,6 +833,14 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also delete from Dexie for backwards compatibility
     await elementRepository.delete(id).catch(() => {});
+
+    // Cascade: remove from all canvas tabs
+    const invId = get().currentInvestigation?.id;
+    if (invId) {
+      import('./tabStore').then(({ useTabStore }) => {
+        useTabStore.getState().removeElementFromAllTabs(invId, id);
+      });
+    }
   },
 
   deleteElements: async (ids: ElementId[]) => {
@@ -800,6 +879,15 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also delete from Dexie for backwards compatibility
     await elementRepository.deleteMany(ids).catch(() => {});
+
+    // Cascade: remove from all canvas tabs
+    const invId = get().currentInvestigation?.id;
+    if (invId) {
+      import('./tabStore').then(({ useTabStore }) => {
+        const tabStore = useTabStore.getState();
+        ids.forEach(id => tabStore.removeElementFromAllTabs(invId, id));
+      });
+    }
   },
 
   updateElementPosition: async (id: ElementId, position: Position) => {
@@ -1085,6 +1173,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         linkRepository.create(invId, link.fromId, link.toId, { ...link }).catch(() => {});
       }
     }
+
   },
 
   // ============================================================================
@@ -1800,6 +1889,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const metaChanged = metaChangedFlag;
     const commentsNeedSync = commentsChangedFlag;
     const assetsNeedSync = assetsChangedFlag;
+    const tabIdsChanged = changedTabIds;
+    const structuralTbChange = structuralTabChange;
+    const tabsNeedSync = tabsChangedFlag;
 
     changedElementIds = new Set<string>();
     changedLinkIds = new Set<string>();
@@ -1808,8 +1900,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     metaChangedFlag = false;
     commentsChangedFlag = false;
     assetsChangedFlag = false;
+    changedTabIds = new Set<string>();
+    structuralTabChange = false;
+    tabsChangedFlag = false;
 
-    const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap } = getYMaps(ydoc);
+    const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap, tabs: tabsMap } = getYMaps(ydoc);
 
     // --- META: only process when observer detected changes ---
     let updatedInvestigation = currentInvestigation;
@@ -1946,6 +2041,40 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         });
       if (commentsDidChange) {
         comments = newComments;
+      }
+    }
+
+    // --- TABS: incremental sync ---
+    // Tabs sync goes directly to tabStore (separate Zustand store)
+    if (tabsNeedSync) {
+      const remoteTabs: import('../types').CanvasTab[] = [];
+      if (structuralTbChange) {
+        // Structural change (tab added/removed) → full rebuild
+        tabsMap.forEach((ymap) => {
+          try {
+            const tab = yMapToTab(ymap as Y.Map<any>);
+            if (tab.id) remoteTabs.push(tab);
+          } catch {}
+        });
+      } else if (tabIdsChanged.size > 0) {
+        // Incremental: re-parse only changed tabs, merge with existing
+        const existingTabs = useTabStore.getState().tabs;
+        const tabMap = new Map(existingTabs.map(t => [t.id, t]));
+        for (const id of tabIdsChanged) {
+          const ymap = tabsMap.get(id) as Y.Map<any> | undefined;
+          if (ymap) {
+            try {
+              const updated = yMapToTab(ymap);
+              if (updated.id) tabMap.set(updated.id, updated);
+            } catch {}
+          }
+        }
+        remoteTabs.push(...tabMap.values());
+      }
+      if (remoteTabs.length > 0 || structuralTbChange) {
+        useTabStore.getState()._syncTabsFromYDoc(remoteTabs);
+        // Persist to Dexie
+        tabRepository.bulkUpsert(remoteTabs).catch(() => {});
       }
     }
 

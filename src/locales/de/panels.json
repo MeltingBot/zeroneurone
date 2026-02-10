@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "Das Element hat keinen Namen"
     },
+    "hints": {
+      "goToTab": "Zum Tab {{name}}"
+    },
     "link": {
       "linkedElements": "Verbundene Elemente",
       "deletedElement": "Gelöschtes Element",

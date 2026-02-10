@@ -23,6 +23,14 @@ const shortcutsByCategory = [
     ],
   },
   {
+    categoryKey: 'tabs',
+    items: [
+      { keys: ['Alt', '←'], descKey: 'prevTab' },
+      { keys: ['Alt', '→'], descKey: 'nextTab' },
+      { keys: ['Alt', '0'], descKey: 'firstTab' },
+    ],
+  },
+  {
     categoryKey: 'canvas',
     items: [
       { keys: ['Del'], descKey: 'delete' },

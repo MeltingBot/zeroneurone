@@ -262,6 +262,10 @@ export const useViewStore = create<ViewState>((set, get) => ({
 
   saveView: async (investigationId, name, options) => {
     const state = get();
+    // Capture active tab for restoration
+    const { useTabStore } = await import('./tabStore');
+    const currentActiveTabId = useTabStore.getState().activeTabId;
+
     const view: View = {
       id: generateUUID(),
       investigationId,
@@ -270,6 +274,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
       filters: { ...state.filters },
       hiddenElementIds: Array.from(state.hiddenElementIds),
       displayMode: state.displayMode,
+      activeTabId: currentActiveTabId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -294,6 +299,13 @@ export const useViewStore = create<ViewState>((set, get) => ({
       hiddenElementIds: new Set(view.hiddenElementIds),
       displayMode: view.displayMode,
     });
+
+    // Restore active tab if saved
+    if (view.activeTabId !== undefined) {
+      import('./tabStore').then(({ useTabStore }) => {
+        useTabStore.getState().setActiveTab(view.activeTabId!);
+      });
+    }
 
     // Restore element positions if saved and callback provided
     if (view.elementPositions && view.elementPositions.length > 0 && updatePositions) {

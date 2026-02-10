@@ -14,6 +14,8 @@ import type {
   UUID,
   TagSet,
   TagSetId,
+  CanvasTab,
+  TabId,
 } from '../types';
 
 class InvestigationDatabase extends Dexie {
@@ -24,6 +26,7 @@ class InvestigationDatabase extends Dexie {
   views!: Table<View, ViewId>;
   reports!: Table<Report, UUID>;
   tagSets!: Table<TagSet, TagSetId>;
+  canvasTabs!: Table<CanvasTab, TabId>;
 
   constructor() {
     super('zeroneurone');
@@ -68,6 +71,18 @@ class InvestigationDatabase extends Dexie {
       views: 'id, investigationId, name, createdAt',
       reports: 'id, investigationId, createdAt, updatedAt',
       tagSets: 'id, name',
+    });
+
+    // Version 5: Add canvasTabs for canvas tab feature
+    this.version(5).stores({
+      investigations: 'id, name, createdAt, updatedAt, isFavorite, *tags',
+      elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
+      links: 'id, investigationId, fromId, toId, createdAt, updatedAt',
+      assets: 'id, investigationId, hash, createdAt, [investigationId+hash]',
+      views: 'id, investigationId, name, createdAt',
+      reports: 'id, investigationId, createdAt, updatedAt',
+      tagSets: 'id, name',
+      canvasTabs: 'id, investigationId, order',
     });
   }
 }

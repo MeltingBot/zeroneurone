@@ -233,6 +233,21 @@
       "leaveMessage": "Andere deelnemers kunnen de deellink blijven gebruiken om wijzigingen te synchroniseren en de samenwerking te hervatten.",
       "rejoinMessage": "U kunt later ook weer deelnemen aan de sessie via dezelfde link.",
       "leave": "Verlaten"
+    },
+    "tabs": {
+      "all": "Alles",
+      "new": "Nieuw tabblad",
+      "initialName": "Initieel",
+      "defaultName": "Tabblad {{n}}",
+      "rename": "Hernoemen",
+      "delete": "Tabblad verwijderen",
+      "deleteConfirm": "Tabblad {{name}} verwijderen? Elementen worden niet verwijderd.",
+      "addToTab": "Toevoegen aan tabblad...",
+      "removeFromTab": "Verwijderen uit tabblad",
+      "emptyState": "Geen elementen in dit tabblad",
+      "emptyHint": "Rechts-klik op elementen om toe te voegen",
+      "ghostBadge": "In {{tabs}}",
+      "navigateTo": "Ga naar tabblad {{name}}"
     }
   },
   "map": {
