@@ -183,6 +183,7 @@
     "eu": "Euskara"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
-  }
+    "skipToContent": "Eduki nagusira joan"
+  },
+  "versionUpdate": "{{version}} bertsio berria eskuragarri — birkargatu orria"
 }

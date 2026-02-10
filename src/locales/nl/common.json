@@ -189,6 +189,7 @@
     "nl": "Nederlands"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
-  }
+    "skipToContent": "Ga naar de hoofdinhoud"
+  },
+  "versionUpdate": "Nieuwe versie {{version}} beschikbaar — herlaad de pagina"
 }

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage, InvestigationPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
 import { useTagSetStore } from './stores';
+import { useVersionCheck } from './hooks/useVersionCheck';
 
 /**
  * Global error fallback for unrecoverable errors
@@ -60,6 +61,9 @@ function App() {
   useEffect(() => {
     loadTagSets();
   }, [loadTagSets]);
+
+  // Check for app updates on tab focus
+  useVersionCheck();
 
   return (
     <ErrorBoundary fallback={<GlobalErrorFallback />}>

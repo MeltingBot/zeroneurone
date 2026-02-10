@@ -2,6 +2,7 @@
  * EncryptedWebSocket - WebSocket wrapper with E2E encryption
  *
  * Wraps a native WebSocket to encrypt outgoing messages and decrypt incoming ones.
+ * Uses a serialized send queue to guarantee message ordering despite async encryption.
  * Used with y-websocket's WebSocketPolyfill parameter.
  */
 
@@ -16,6 +17,8 @@ export class EncryptedWebSocket {
   private pendingOutgoing: ArrayBuffer[] = [];
   private pendingIncoming: MessageEvent[] = [];
   private keyReady = false;
+  // Serialized send chain — each send awaits the previous one to preserve ordering
+  private sendChain: Promise<void> = Promise.resolve();
 
   // WebSocket-like interface
   public binaryType: BinaryType = 'arraybuffer';
@@ -143,12 +146,13 @@ export class EncryptedWebSocket {
   /**
    * Process pending outgoing messages (called when key is ready or connection opens)
    */
-  private async processPendingMessages(): Promise<void> {
+  private processPendingMessages(): void {
     if (!this.keyReady || this.ws.readyState !== WebSocket.OPEN) return;
 
     while (this.pendingOutgoing.length > 0) {
       const data = this.pendingOutgoing.shift()!;
-      await this.sendEncrypted(data);
+      // Chain each pending message onto the send queue for ordered delivery
+      this.sendChain = this.sendChain.then(() => this.sendEncrypted(data));
     }
   }
 
@@ -162,19 +166,23 @@ export class EncryptedWebSocket {
       return;
     }
 
-    const t0 = performance.now();
-    const dataArray = new Uint8Array(data);
-    const encrypted = await encrypt(this.key, dataArray);
+    try {
+      const t0 = performance.now();
+      const dataArray = new Uint8Array(data);
+      const encrypted = await encrypt(this.key, dataArray);
 
-    // Add prefix to mark as encrypted
-    const withPrefix = new Uint8Array(ENCRYPTED_PREFIX.length + encrypted.length);
-    withPrefix.set(ENCRYPTED_PREFIX, 0);
-    withPrefix.set(encrypted, ENCRYPTED_PREFIX.length);
+      // Add prefix to mark as encrypted
+      const withPrefix = new Uint8Array(ENCRYPTED_PREFIX.length + encrypted.length);
+      withPrefix.set(ENCRYPTED_PREFIX, 0);
+      withPrefix.set(encrypted, ENCRYPTED_PREFIX.length);
 
-    this.ws.send(withPrefix.buffer);
-    const elapsed = performance.now() - t0;
-    if (elapsed > 500) {
-      console.warn(`[EncryptedWS] send SLOW: ${elapsed.toFixed(0)}ms (${data.byteLength}B)`);
+      this.ws.send(withPrefix.buffer);
+      const elapsed = performance.now() - t0;
+      if (elapsed > 500) {
+        console.warn(`[EncryptedWS] send SLOW: ${elapsed.toFixed(0)}ms (${data.byteLength}B)`);
+      }
+    } catch (err) {
+      console.error('[EncryptedWS] Encryption failed, dropping message:', err);
     }
   }
 
@@ -203,8 +211,16 @@ export class EncryptedWebSocket {
       return;
     }
 
-    // Send encrypted (fire-and-forget async)
-    this.sendEncrypted(buffer);
+    // Chain onto send queue — ensures ordering despite async encryption
+    this.sendChain = this.sendChain.then(() => this.sendEncrypted(buffer));
+  }
+
+  /**
+   * Wait for all queued encrypted sends to complete.
+   * Call before close/disconnect to ensure no messages are lost.
+   */
+  async flush(): Promise<void> {
+    await this.sendChain;
   }
 
   close(code?: number, reason?: string): void {

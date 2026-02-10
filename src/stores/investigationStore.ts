@@ -45,6 +45,7 @@ import {
   updateCommentYMap,
 } from '../services/yjs/commentMapper';
 import { useSyncStore } from './syncStore';
+import { arrayBufferToBase64 } from '../utils';
 
 interface InvestigationState {
   // Current investigation
@@ -509,9 +510,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
               try {
                 const file = await fileService.getAssetFile(asset);
                 const arrayBuffer = await file.arrayBuffer();
-                const base64 = btoa(
-                  new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-                );
+                const base64 = arrayBufferToBase64(arrayBuffer);
                 const assetYMap = new Y.Map();
                 assetYMap.set('id', asset.id);
                 assetYMap.set('investigationId', asset.investigationId);
@@ -1319,9 +1318,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     if (ydoc) {
       const { assets: assetsMap } = getYMaps(ydoc);
       file.arrayBuffer().then(arrayBuffer => {
-        const base64 = btoa(
-          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
+        const base64 = arrayBufferToBase64(arrayBuffer);
         const assetYMap = new Y.Map();
         assetYMap.set('id', asset.id);
         assetYMap.set('investigationId', asset.investigationId);

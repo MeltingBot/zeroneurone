@@ -186,6 +186,7 @@
     "pt": "Português"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
-  }
+    "skipToContent": "Vai al contenuto principale"
+  },
+  "versionUpdate": "Nuova versione {{version}} disponibile — ricarica la pagina"
 }

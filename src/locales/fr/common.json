@@ -179,5 +179,6 @@
   },
   "accessibility": {
     "skipToContent": "Aller au contenu principal"
-  }
+  },
+  "versionUpdate": "Nouvelle version {{version}} disponible — rechargez la page"
 }

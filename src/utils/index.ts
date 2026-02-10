@@ -80,6 +80,21 @@ export function formatRelativeTime(date: Date, locale: string = 'fr'): string {
 }
 
 /**
+ * Convert ArrayBuffer to base64 string efficiently.
+ * Uses 32KB chunks with String.fromCharCode.apply() instead of
+ * byte-by-byte reduce() which creates O(n) intermediate strings.
+ */
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const chunks: string[] = [];
+  const chunkSize = 0x8000; // 32KB — safe for Function.apply() stack limit
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize) as unknown as number[]));
+  }
+  return btoa(chunks.join(''));
+}
+
+/**
  * Debounce a function
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(

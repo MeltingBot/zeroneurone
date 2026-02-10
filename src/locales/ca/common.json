@@ -184,6 +184,7 @@
     "ca": "Català"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
-  }
+    "skipToContent": "Anar al contingut principal"
+  },
+  "versionUpdate": "Nova versió {{version}} disponible — recarrega la pàgina"
 }

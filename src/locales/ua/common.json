@@ -189,6 +189,7 @@
     "nl": "Nederlands"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
-  }
+    "skipToContent": "Перейти до основного вмісту"
+  },
+  "versionUpdate": "Нова версія {{version}} доступна — перезавантажте сторінку"
 }

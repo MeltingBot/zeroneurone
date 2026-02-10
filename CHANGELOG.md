@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.7.3
+
+### Fixes
+- Collab media sync: serialized encrypted send queue (Promise chain) prevents out-of-order messages and data loss for large payloads
+- Collab unshare: `flush()` awaits all pending encrypted messages before disconnect (replaces unreliable 200ms timeout)
+- Base64 encoding: chunked `arrayBufferToBase64()` utility (32KB chunks) replaces O(n) string concatenation
+- Version check: detect stale cached code on tab focus via `/version.json` polling with cache-busting, persistent toast notification
+
 ## 2.7.2
 
 ### Fixes

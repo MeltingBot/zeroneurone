@@ -2,8 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { execSync } from 'child_process'
+import type { Plugin } from 'vite'
 
 // Read version from package.json
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
@@ -17,11 +18,27 @@ const getGitCommit = () => {
   }
 }
 
+// Write version.json to dist/ at build time for runtime version checking
+function writeVersionFile(): Plugin {
+  return {
+    name: 'write-version-file',
+    closeBundle() {
+      const data = JSON.stringify({
+        version: pkg.version,
+        buildTime: new Date().toISOString(),
+      })
+      mkdirSync('dist', { recursive: true })
+      writeFileSync('dist/version.json', data)
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    writeVersionFile(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'logo.png', 'logo-192.png', 'logo-512.png'],
@@ -54,6 +71,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        navigateFallbackDenylist: [/^\/version\.json$/],
+        // Exclude version.json from SW precache so it's always fetched from network
+        globIgnores: ['version.json'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         runtimeCaching: [
           {

@@ -15,7 +15,7 @@ import { WebsocketProvider } from 'y-websocket';
 import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
-import { createEncryptedWebSocketClass } from './encryptedWebSocket';
+import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 
 // Y.js sync protocol message types (from y-protocols/sync)
@@ -318,8 +318,13 @@ class SyncService {
 
           this.websocketProvider.ws.send(encoding.toUint8Array(encoder));
 
-          // Small delay to ensure the snapshot is sent before disconnecting
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // Wait for the encrypted send queue to drain before disconnecting.
+          // Without this, large messages (base64 assets) could be lost if
+          // encryption hasn't completed before the WebSocket is closed.
+          const ws = this.websocketProvider.ws;
+          if (ws instanceof EncryptedWebSocket) {
+            await ws.flush();
+          }
         } catch (err) {
           console.error('[SyncService] Failed to send state snapshot:', err);
         }

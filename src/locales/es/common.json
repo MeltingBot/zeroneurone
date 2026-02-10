@@ -182,6 +182,7 @@
     "de": "Deutsch"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
-  }
+    "skipToContent": "Ir al contenido principal"
+  },
+  "versionUpdate": "Nueva versión {{version}} disponible — recarga la página"
 }
