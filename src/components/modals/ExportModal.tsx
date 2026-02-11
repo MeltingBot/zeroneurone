@@ -100,18 +100,36 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     }
   }, [currentInvestigation, onClose, t]);
 
-  const handleExportSvg = useCallback(() => {
+  const handleExportSvg = useCallback(async () => {
     if (!currentInvestigation) return;
 
-    const settings = currentInvestigation.settings;
-    const svgString = buildSVGExport(elements, links, {
-      linkAnchorMode: settings?.linkAnchorMode ?? 'auto',
-      linkCurveMode: settings?.linkCurveMode ?? 'curved',
-    });
-    const baseName = currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_');
-    exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
-    toast.success(t('export.successFormat', { format: 'SVG' }));
-    onClose();
+    setIsProcessing(true);
+    try {
+      // Fetch assets to embed media thumbnails in SVG nodes
+      const assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
+      const assetDataUrls = new Map<string, string>();
+      for (const asset of assets) {
+        if (asset.thumbnailDataUrl) {
+          assetDataUrls.set(asset.id, asset.thumbnailDataUrl);
+        }
+      }
+
+      const settings = currentInvestigation.settings;
+      const svgString = buildSVGExport(elements, links, {
+        linkAnchorMode: settings?.linkAnchorMode ?? 'auto',
+        linkCurveMode: settings?.linkCurveMode ?? 'curved',
+        assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
+      });
+      const baseName = currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_');
+      exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
+      toast.success(t('export.successFormat', { format: 'SVG' }));
+      onClose();
+    } catch (err) {
+      console.error('SVG export failed:', err);
+      toast.error(t('export.error'));
+    } finally {
+      setIsProcessing(false);
+    }
   }, [currentInvestigation, elements, links, onClose, t]);
 
   if (!isOpen) return null;

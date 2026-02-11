@@ -481,7 +481,7 @@ function ElementNodeComponent({ data }: NodeProps) {
         className={`
           relative w-full h-full
           flex flex-col items-center justify-center overflow-hidden
-          ${hasThumbnail ? 'sketchy-border-soft' : shapeStyles[element.visual.shape]}
+          ${shapeStyles[element.visual.shape]}
           ${isSelected ? 'selection-ring' : 'node-shadow'}
         `}
         style={{
@@ -531,7 +531,8 @@ function ElementNodeComponent({ data }: NodeProps) {
             </div>
           </>
         ) : hasThumbnail ? (
-          <>
+          /* Diamond: counter-rotate + scale √2 so content fills the rotated square */
+          <div className={`flex flex-col w-full h-full ${element.visual.shape === 'diamond' ? '-rotate-45 scale-[1.414]' : ''}`}>
             {/* Thumbnail preview - using contain to show full image, pixelate+grayscale if hideMedia */}
             <div
               className="flex-1 w-full bg-contain bg-center bg-no-repeat"
@@ -574,7 +575,7 @@ function ElementNodeComponent({ data }: NodeProps) {
                 </span>
               )}
             </div>
-          </>
+          </div>
         ) : (
           /* Diamond shape content needs to be counter-rotated */
           <div

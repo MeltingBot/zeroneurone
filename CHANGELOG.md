@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.9.1
+
+### Fixes
+- SVG export now embeds media thumbnails (images clipped to element shape with proper sizing)
+- Canvas: media elements now respect their shape (circle, diamond) instead of always rendering as rectangles
+
 ## 2.9.0
 
 ### Features

@@ -7,6 +7,8 @@ import type { Element, Link, Position, ElementSize } from '../types';
 interface SVGExportSettings {
   linkAnchorMode: 'auto' | 'manual';
   linkCurveMode: 'straight' | 'curved' | 'orthogonal';
+  /** Map of assetId → base64 data URL for embedding media in SVG nodes */
+  assetDataUrls?: Map<string, string>;
 }
 
 interface NodeDimensions {
@@ -372,7 +374,7 @@ function buildArrowPolygon(
   return `${tipX},${tipY} ${leftX},${leftY} ${rightX},${rightY}`;
 }
 
-function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions): string {
+function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions, imageDataUrl?: string): string {
   const color = resolveColor(element.visual.color);
   const borderColor = resolveColor(element.visual.borderColor);
   const borderWidth = element.visual.borderWidth ?? 2;
@@ -386,6 +388,12 @@ function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions): st
 
   const cx = pos.x + dims.width / 2;
   const cy = pos.y + dims.height / 2;
+
+  // If element has an image, render with embedded media
+  if (imageDataUrl) {
+    return buildMediaNodeSVG(element, pos, dims, cx, cy, borderColor, borderWidth, dashArray, imageDataUrl);
+  }
+
   let shapeSvg = '';
 
   switch (element.visual.shape) {
@@ -418,6 +426,76 @@ function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions): st
   const textSvg = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="${textColor}">${escapeXml(displayLabel)}</text>`;
 
   return `  <g id="node-${element.id}">\n    ${shapeSvg}\n    ${textSvg}\n  </g>`;
+}
+
+function buildMediaNodeSVG(
+  element: Element, pos: Position, dims: NodeDimensions,
+  cx: number, cy: number,
+  borderColor: string, borderWidth: number, dashArray: string,
+  imageDataUrl: string
+): string {
+  const label = element.label || 'Sans nom';
+  const clipId = `clip-${element.id}`;
+  const labelBarHeight = 18;
+  const imageHeight = dims.height - labelBarHeight;
+  const parts: string[] = [];
+
+  // clipPath matching the shape (for clipping the image)
+  let clipShape = '';
+  let borderShape = '';
+  switch (element.visual.shape) {
+    case 'circle': {
+      const rx = dims.width / 2;
+      const ry = dims.height / 2;
+      clipShape = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>`;
+      borderShape = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#f7f4ef" stroke="${borderColor}" stroke-width="${borderWidth}"${dashArray}/>`;
+      break;
+    }
+    case 'square':
+    case 'rectangle': {
+      clipShape = `<rect x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${dims.height}" rx="3"/>`;
+      borderShape = `<rect x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${dims.height}" rx="3" fill="#f7f4ef" stroke="${borderColor}" stroke-width="${borderWidth}"${dashArray}/>`;
+      break;
+    }
+    case 'diamond': {
+      const top = `${cx},${pos.y}`;
+      const right = `${pos.x + dims.width},${cy}`;
+      const bottom = `${cx},${pos.y + dims.height}`;
+      const left = `${pos.x},${cy}`;
+      clipShape = `<polygon points="${top} ${right} ${bottom} ${left}"/>`;
+      borderShape = `<polygon points="${top} ${right} ${bottom} ${left}" fill="#f7f4ef" stroke="${borderColor}" stroke-width="${borderWidth}"${dashArray}/>`;
+      break;
+    }
+  }
+
+  // ClipPath definition
+  parts.push(`    <defs><clipPath id="${clipId}">${clipShape}</clipPath></defs>`);
+
+  // Shape background (light fill for letterbox areas)
+  parts.push(`    ${borderShape}`);
+
+  // Embedded image — clipped to shape, preserveAspectRatio for contain
+  parts.push(`    <image href="${imageDataUrl}" x="${pos.x}" y="${pos.y}" width="${dims.width}" height="${imageHeight > 0 ? imageHeight : dims.height}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`);
+
+  // Label bar at bottom (only for rect/square shapes where it looks natural)
+  const shape = element.visual.shape;
+  if (shape === 'square' || shape === 'rectangle') {
+    // Background bar
+    parts.push(`    <rect x="${pos.x}" y="${pos.y + dims.height - labelBarHeight}" width="${dims.width}" height="${labelBarHeight}" fill="#f7f4ef" clip-path="url(#${clipId})"/>`);
+    // Separator line
+    parts.push(`    <line x1="${pos.x}" y1="${pos.y + dims.height - labelBarHeight}" x2="${pos.x + dims.width}" y2="${pos.y + dims.height - labelBarHeight}" stroke="${borderColor}" stroke-width="1"/>`);
+    // Label text
+    const maxChars = Math.floor(dims.width / 6);
+    const displayLabel = label.length > maxChars ? label.slice(0, maxChars - 1) + '\u2026' : label;
+    parts.push(`    <text x="${cx}" y="${pos.y + dims.height - labelBarHeight / 2}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833">${escapeXml(displayLabel)}</text>`);
+  } else {
+    // For circle/diamond: label below the shape with stroke for readability
+    const maxChars = Math.floor(dims.width / 6);
+    const displayLabel = label.length > maxChars ? label.slice(0, maxChars - 1) + '\u2026' : label;
+    parts.push(`    <text x="${cx}" y="${pos.y + dims.height + 14}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833" stroke="#faf8f5" stroke-width="3" paint-order="stroke fill">${escapeXml(displayLabel)}</text>`);
+  }
+
+  return `  <g id="node-${element.id}">\n${parts.join('\n')}\n  </g>`;
 }
 
 function buildGroupSVG(element: Element, pos: Position, dims: NodeDimensions): string {
@@ -618,8 +696,13 @@ export function buildSVGExport(
   }
 
   // Build node SVGs
+  const assetDataUrls = settings.assetDataUrls;
   const groupSvgs = groups.map(g => buildGroupSVG(g, positionsMap.get(g.id)!, dimensionsMap.get(g.id)!));
-  const nodeSvgs = normalElements.map(el => buildNodeSVG(el, positionsMap.get(el.id)!, dimensionsMap.get(el.id)!));
+  const nodeSvgs = normalElements.map(el => {
+    const firstAssetId = el.assetIds?.[0];
+    const imageDataUrl = firstAssetId && assetDataUrls ? assetDataUrls.get(firstAssetId) : undefined;
+    return buildNodeSVG(el, positionsMap.get(el.id)!, dimensionsMap.get(el.id)!, imageDataUrl);
+  });
   const annotationSvgs = annotations.map(a => buildAnnotationSVG(a, positionsMap.get(a.id)!, dimensionsMap.get(a.id)!));
 
   // Compute viewBox
