@@ -234,6 +234,21 @@
       "leaveMessage": "Other participants can still use the sharing link to sync their changes and resume collaboration.",
       "rejoinMessage": "You can also rejoin the session later using the same link.",
       "leave": "Leave"
+    },
+    "tabs": {
+      "all": "All",
+      "new": "New tab",
+      "initialName": "Initial",
+      "defaultName": "Tab {{n}}",
+      "rename": "Rename",
+      "delete": "Delete tab",
+      "deleteConfirm": "Delete tab {{name}}? Elements will not be deleted.",
+      "addToTab": "Add to tab...",
+      "removeFromTab": "Remove from tab",
+      "emptyState": "No elements in this tab",
+      "emptyHint": "Right-click on elements to add them",
+      "ghostBadge": "On {{tabs}}",
+      "navigateTo": "Go to tab {{name}}"
     }
   },
   "map": {

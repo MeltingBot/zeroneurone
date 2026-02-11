@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "Het element heeft geen naam"
     },
+    "hints": {
+      "goToTab": "Ga naar tabblad {{name}}"
+    },
     "link": {
       "linkedElements": "Verbonden elementen",
       "deletedElement": "Verwijderd element",

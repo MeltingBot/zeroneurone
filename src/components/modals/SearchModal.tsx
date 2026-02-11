@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Box, Link2, X, Tag } from 'lucide-react';
-import { useInvestigationStore, useSelectionStore, useViewStore } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useViewStore, useTabStore } from '../../stores';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
@@ -30,6 +30,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const { elements, links } = useInvestigationStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange } = useViewStore();
+  const canvasTabs = useTabStore((s) => s.tabs);
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const setActiveTab = useTabStore((s) => s.setActiveTab);
 
   // Create maps for quick lookup
   const elementsMap = useMemo(
@@ -84,6 +88,17 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       // Approximate canvas size (window minus side panel ~350px)
       const canvasWidth = window.innerWidth - 350;
       const canvasHeight = window.innerHeight;
+
+      // Switch to the right tab if element/link is not visible in current tab
+      if (activeTabId) {
+        const targetId = result.type === 'element'
+          ? result.id
+          : (() => { const lk = linksMap.get(result.id); return lk?.fromId; })();
+        if (targetId && !tabMemberSet.has(targetId)) {
+          const targetTab = canvasTabs.find(t => t.memberElementIds.includes(targetId));
+          if (targetTab) setActiveTab(targetTab.id);
+        }
+      }
 
       if (result.type === 'element') {
         const element = elementsMap.get(result.id);
@@ -140,6 +155,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       clearSelection,
       requestViewportChange,
       onClose,
+      activeTabId,
+      tabMemberSet,
+      canvasTabs,
+      setActiveTab,
     ]
   );
 
@@ -262,6 +281,17 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [elementsMap, linksMap]
   );
 
+  // Get tab names for a result (elements only)
+  const getResultTabNames = useCallback(
+    (result: SearchResult): string[] => {
+      if (result.type !== 'element' || canvasTabs.length === 0) return [];
+      return canvasTabs
+        .filter(tab => tab.memberElementIds.includes(result.id))
+        .map(tab => tab.name);
+    },
+    [canvasTabs]
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -306,6 +336,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             const matchingProp = getMatchingProperty(result);
             const tags = getResultTags(result);
             const notes = getResultNotes(result);
+            const tabNames = getResultTabNames(result);
 
             return (
               <button
@@ -363,6 +394,19 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                           +{tags.length - 4}
                         </span>
                       )}
+                    </div>
+                  )}
+                  {/* Tab badges */}
+                  {tabNames.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {tabNames.map((name) => (
+                        <span
+                          key={name}
+                          className="px-1.5 py-0.5 text-[10px] bg-accent/10 text-accent rounded border border-accent/20"
+                        >
+                          {name}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>

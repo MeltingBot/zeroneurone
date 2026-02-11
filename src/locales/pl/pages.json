@@ -233,6 +233,21 @@
       "leaveMessage": "Inni uczestnicy mogą nadal używać linku udostępniania do synchronizacji zmian i wznowienia współpracy.",
       "rejoinMessage": "Możesz również dołączyć do sesji później przez ten sam link.",
       "leave": "Opuść"
+    },
+    "tabs": {
+      "all": "Wszystko",
+      "new": "Nowa karta",
+      "initialName": "Początkowa",
+      "defaultName": "Karta {{n}}",
+      "rename": "Zmień nazwę",
+      "delete": "Usuń kartę",
+      "deleteConfirm": "Usunąć kartę {{name}}? Elementy nie zostaną usunięte.",
+      "addToTab": "Dodaj do karty...",
+      "removeFromTab": "Usuń z karty",
+      "emptyState": "Brak elementów w tej karcie",
+      "emptyHint": "Kliknij prawym przyciskiem na elementy, aby je dodać",
+      "ghostBadge": "W {{tabs}}",
+      "navigateTo": "Przejdź do karty {{name}}"
     }
   },
   "map": {

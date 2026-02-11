@@ -8,3 +8,4 @@ export { useHistoryStore } from './historyStore';
 export { useTagSetStore } from './tagSetStore';
 export { useSyncStore } from './syncStore';
 export { useReportStore } from './reportStore';
+export { useTabStore } from './tabStore';

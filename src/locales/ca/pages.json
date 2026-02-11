@@ -233,6 +233,21 @@
       "leaveMessage": "Els altres participants podran seguir utilitzant l'enllaç de compartició per sincronitzar les seves modificacions i reprendre la col·laboració.",
       "rejoinMessage": "Podreu tornar a unir-vos a la sessió més tard a través del mateix enllaç.",
       "leave": "Abandonar"
+    },
+    "tabs": {
+      "all": "Tots",
+      "new": "Nova pestanya",
+      "initialName": "Inicial",
+      "defaultName": "Pestanya {{n}}",
+      "rename": "Reanomenar",
+      "delete": "Eliminar pestanya",
+      "deleteConfirm": "Eliminar la pestanya {{name}}? Els elements no seran eliminats.",
+      "addToTab": "Afegir a pestanya...",
+      "removeFromTab": "Treure de pestanya",
+      "emptyState": "Cap element en aquesta pestanya",
+      "emptyHint": "Clic dret als elements per afegir-los",
+      "ghostBadge": "A {{tabs}}",
+      "navigateTo": "Anar a pestanya {{name}}"
     }
   },
   "map": {

@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "Елемент не має назви"
     },
+    "hints": {
+      "goToTab": "Перейти на вкладку {{name}}"
+    },
     "link": {
       "linkedElements": "Пов'язані елементи",
       "deletedElement": "Видалений елемент",

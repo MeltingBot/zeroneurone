@@ -3,6 +3,7 @@ import { X, Download, Upload, FileJson, FileSpreadsheet, FileText, FileArchive, 
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { importService, type ImportResult } from '../../services/importService';
 import { fileService } from '../../services/fileService';
+import { tabRepository } from '../../db/repositories';
 import { useInvestigationStore, useViewStore, toast } from '../../stores';
 
 interface ImportExportModalProps {
@@ -34,13 +35,16 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
 
     setIsProcessing(true);
     try {
-      // Fetch assets for ZIP export
+      // Fetch assets and tabs for ZIP/JSON export
       let assets;
       if (format === 'zip') {
         assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
       }
+      const tabs = (format === 'zip' || format === 'json')
+        ? await tabRepository.getByInvestigation(currentInvestigation.id)
+        : undefined;
 
-      await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets);
+      await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets, undefined, tabs);
       toast.success(`Export ${format.toUpperCase()} termine`);
     } catch {
       toast.error('Erreur lors de l\'export');

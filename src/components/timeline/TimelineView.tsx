@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter } from 'lucide-react';
 import { fileService } from '../../services/fileService';
@@ -61,6 +61,9 @@ export function TimelineView() {
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const tabGhostIds = useTabStore((s) => s.ghostIds);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
@@ -136,6 +139,12 @@ export function TimelineView() {
 
       // Skip if either element is hidden
       if (hiddenElementIds.has(fromElement.id) || hiddenElementIds.has(toElement.id)) return;
+      // Skip if either element is not visible in active tab
+      if (activeTabId !== null) {
+        const fromVisible = tabMemberSet.has(fromElement.id) || tabGhostIds.has(fromElement.id);
+        const toVisible = tabMemberSet.has(toElement.id) || tabGhostIds.has(toElement.id);
+        if (!fromVisible || !toVisible) return;
+      }
 
       const startDate = new Date(link.dateRange.start);
       const endDate = link.dateRange.end ? new Date(link.dateRange.end) : now;
@@ -151,8 +160,9 @@ export function TimelineView() {
       const toLabel = toElement.label || t('timeline.unnamed');
       const linkLabel = link.label || t('timeline.relation');
 
-      // Check if link should be dimmed (either connected element is dimmed)
-      const isLinkDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id);
+      // Check if link should be dimmed (either connected element is dimmed, or ghost in active tab)
+      const isLinkDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id)
+        || (activeTabId !== null && (tabGhostIds.has(fromElement.id) || tabGhostIds.has(toElement.id)));
 
       itemsList.push({
         id: `link-${link.id}`,
@@ -179,11 +189,12 @@ export function TimelineView() {
 
     // 2. Process element events
     elements.forEach((element) => {
-      // Skip hidden elements
+      // Skip hidden elements or elements not in active tab
       if (hiddenElementIds.has(element.id)) return;
+      if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
       if (!element.events || element.events.length === 0) return;
 
-      const isElementDimmed = dimmedElementIds.has(element.id);
+      const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
 
       element.events.forEach((event, index) => {
         if (!event.date) return;
@@ -246,11 +257,12 @@ export function TimelineView() {
 
     // 3. Process element properties with type "date"
     elements.forEach((element) => {
-      // Skip hidden elements
+      // Skip hidden elements or elements not in active tab
       if (hiddenElementIds.has(element.id)) return;
+      if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
       if (!element.properties || element.properties.length === 0) return;
 
-      const isElementDimmed = dimmedElementIds.has(element.id);
+      const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
 
       element.properties.forEach((prop, index) => {
         if (prop.type !== 'date' || !prop.value) return;
@@ -302,7 +314,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, comments, hiddenElementIds, dimmedElementIds]);
+  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});

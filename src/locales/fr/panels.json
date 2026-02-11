@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "L'élément n'a pas de nom"
     },
+    "hints": {
+      "goToTab": "Aller à l'onglet {{name}}"
+    },
     "link": {
       "linkedElements": "Éléments liés",
       "deletedElement": "Élément supprimé",

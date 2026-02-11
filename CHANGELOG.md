@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.8.0
+
+### Features
+- Canvas tabs: organize investigations into thematic workspaces (e.g., per hypothesis, per actor type, per time period)
+- Tab bar with "All" global view, named tabs, and "+" creation button (max 10 per investigation)
+- Ghost elements: elements from other tabs connected to the current tab appear semi-transparent with a badge
+- Right-click context menu: add/remove elements from tabs, navigate to ghost element's source tab
+- Tabs synchronized via Y.js in collaborative mode (names, members, order — viewport remains local per user)
+- Tabs included in ZIP/JSON export and restored on import
+- Search (Ctrl+K) auto-switches to the correct tab when selecting a result
+- Saved views remember and restore the active tab
+- Undo/redo tracks tab membership changes (add/remove elements from tabs)
+
 ## 2.7.3
 
 ### Fixes

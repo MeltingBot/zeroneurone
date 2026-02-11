@@ -4,3 +4,4 @@
 
 export * from './elementMapper';
 export * from './linkMapper';
+export * from './tabMapper';

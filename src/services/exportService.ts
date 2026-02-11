@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Investigation, Element, Link, Asset, Report } from '../types';
+import type { Investigation, Element, Link, Asset, Report, CanvasTab } from '../types';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
 
@@ -25,6 +25,8 @@ export interface ExportData {
   assets?: ExportedAssetMeta[];
   /** Report with sections */
   report?: Report | null;
+  /** Canvas tabs (shared investigation structure) */
+  tabs?: CanvasTab[];
 }
 
 class ExportService {
@@ -38,8 +40,11 @@ class ExportService {
     elements: Element[],
     links: Link[],
     assetsMeta?: ExportedAssetMeta[],
-    report?: Report | null
+    report?: Report | null,
+    tabs?: CanvasTab[]
   ): string {
+    // Strip local-only viewport from tabs before export
+    const exportTabs = tabs?.map(({ viewport: _v, ...rest }) => rest);
     const data: ExportData = {
       version: this.VERSION,
       exportedAt: new Date().toISOString(),
@@ -48,6 +53,7 @@ class ExportService {
       links,
       assets: assetsMeta,
       report: report || null,
+      tabs: exportTabs && exportTabs.length > 0 ? exportTabs as CanvasTab[] : undefined,
     };
     return JSON.stringify(data, null, 2);
   }
@@ -60,7 +66,8 @@ class ExportService {
     elements: Element[],
     links: Link[],
     assets: Asset[],
-    report?: Report | null
+    report?: Report | null,
+    tabs?: CanvasTab[]
   ): Promise<Blob> {
     const zip = new JSZip();
 
@@ -93,7 +100,7 @@ class ExportService {
     }
 
     // Add JSON metadata (includes report data for import)
-    const jsonContent = this.exportToJSON(investigation, elements, links, assetsMeta, report);
+    const jsonContent = this.exportToJSON(investigation, elements, links, assetsMeta, report, tabs);
     zip.file('investigation.json', jsonContent);
 
     // Add report Markdown if present (human-readable version)
@@ -462,7 +469,8 @@ class ExportService {
     elements: Element[],
     links: Link[],
     assets?: Asset[],
-    report?: Report | null
+    report?: Report | null,
+    tabs?: CanvasTab[]
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
@@ -470,12 +478,12 @@ class ExportService {
 
     switch (format) {
       case 'zip': {
-        const zipBlob = await this.exportToZip(investigation, elements, links, assets || [], report);
+        const zipBlob = await this.exportToZip(investigation, elements, links, assets || [], report, tabs);
         this.downloadBlob(zipBlob, `${baseName}.zip`);
         break;
       }
       case 'json': {
-        const json = this.exportToJSON(investigation, elements, links);
+        const json = this.exportToJSON(investigation, elements, links, undefined, undefined, tabs);
         this.download(json, `${baseName}.json`, 'application/json');
         break;
       }

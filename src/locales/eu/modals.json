@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Nabigazioa",
       "search": "Bilaketa",
+      "tabs": "Fitxak",
       "canvas": "Arbela",
       "editing": "Edizioa",
       "zoom": "Zooma",
@@ -148,7 +149,10 @@
       "newElement": "Elementu berria",
       "newGroup": "Talde berria",
       "newAnnotation": "Oharpen berria",
-      "escape": "Deshautatu / Itxi"
+      "escape": "Deshautatu / Itxi",
+      "prevTab": "Aurreko fitxa",
+      "nextTab": "Hurrengo fitxa",
+      "firstTab": "Lehen fitxa"
     }
   },
   "tagSetManager": {

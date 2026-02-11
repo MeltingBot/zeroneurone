@@ -4,7 +4,7 @@ import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
-import { reportRepository } from '../../db/repositories';
+import { reportRepository, tabRepository } from '../../db/repositories';
 import { useInvestigationStore, toast } from '../../stores';
 
 interface ExportModalProps {
@@ -40,7 +40,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
     setIsProcessing(true);
     try {
-      // Fetch assets and report for ZIP export
+      // Fetch assets, report and tabs for ZIP/JSON export
       let assets;
       let report;
       if (format === 'zip') {
@@ -48,8 +48,11 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         // Use getByInvestigationWithYDoc to check both Dexie and Y.Doc storage
         report = await reportRepository.getByInvestigationWithYDoc(currentInvestigation.id);
       }
+      const tabs = (format === 'zip' || format === 'json')
+        ? await tabRepository.getByInvestigation(currentInvestigation.id)
+        : undefined;
 
-      await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets, report);
+      await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets, report, tabs);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {

@@ -10,7 +10,8 @@ import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImpor
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
 const TimelineView = lazy(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
-import { useInvestigationStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore } from '../stores';
+import { useInvestigationStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore } from '../stores';
+import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
@@ -44,6 +45,12 @@ export function InvestigationPage() {
   const syncMode = useSyncStore((state) => state.mode);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
   const clearInsights = useInsightsStore((state) => state.clear);
+  const loadTabs = useTabStore((state) => state.loadTabs);
+  const resetTabState = useTabStore((state) => state.resetInvestigationState);
+  const canvasTabs = useTabStore((state) => state.tabs);
+  const activeTabId = useTabStore((state) => state.activeTabId);
+  const setActiveTab = useTabStore((state) => state.setActiveTab);
+  const addTabMembers = useTabStore((state) => state.addMembers);
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
@@ -73,6 +80,8 @@ export function InvestigationPage() {
       loadInvestigation(id);
       // Load saved viewport for this investigation
       loadViewportForInvestigation(id);
+      // Load canvas tabs
+      loadTabs(id);
     }
     return () => {
       // Save viewport before unloading
@@ -81,13 +90,35 @@ export function InvestigationPage() {
       }
       unloadInvestigation();
       searchService.clear();
-      // Reset investigation-specific state (selection, filters, insights, redaction)
+      // Reset investigation-specific state (selection, filters, insights, redaction, tabs)
       clearSelection();
       clearInsights();
       resetUIState();
       resetViewState();
+      resetTabState();
     };
-  }, [id, loadInvestigation, unloadInvestigation, clearSelection, clearInsights, resetUIState, resetViewState, loadViewportForInvestigation, saveViewportForInvestigation]);
+  }, [id, loadInvestigation, unloadInvestigation, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForInvestigation, saveViewportForInvestigation, loadTabs]);
+
+  // Self-healing: reassign orphaned elements to the first tab
+  const orphanHealedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!currentInvestigation || elements.length === 0 || canvasTabs.length === 0) return;
+    if (orphanHealedRef.current === currentInvestigation.id) return;
+    orphanHealedRef.current = currentInvestigation.id;
+
+    const allMembers = new Set<string>();
+    for (const tab of canvasTabs) {
+      for (const id of tab.memberElementIds) {
+        allMembers.add(id);
+      }
+    }
+    const orphanIds = elements
+      .filter((el) => !allMembers.has(el.id))
+      .map((el) => el.id);
+    if (orphanIds.length > 0) {
+      addTabMembers(canvasTabs[0].id, orphanIds);
+    }
+  }, [currentInvestigation, elements, canvasTabs, addTabMembers]);
 
   // Load search index: full rebuild on investigation load, incremental updates after
   const searchInitializedRef = useRef<string | null>(null);
@@ -129,6 +160,25 @@ export function InvestigationPage() {
         return;
       }
 
+      // Tab cycling: Alt+Left/Right, Alt+0 for first tab
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (canvasTabs.length === 0) return;
+          const tabIds = canvasTabs.map(t => t.id);
+          const currentIndex = activeTabId ? tabIds.indexOf(activeTabId) : 0;
+          const delta = e.key === 'ArrowRight' ? 1 : -1;
+          const nextIndex = (currentIndex + delta + tabIds.length) % tabIds.length;
+          setActiveTab(tabIds[nextIndex]);
+          return;
+        }
+        if (e.key === '0') {
+          e.preventDefault();
+          if (canvasTabs.length > 0) setActiveTab(canvasTabs[0].id);
+          return;
+        }
+      }
+
       // View switching shortcuts (1-3) and help (?)
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
         switch (e.key) {
@@ -155,7 +205,7 @@ export function InvestigationPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSearch, setDisplayMode]);
+  }, [toggleSearch, setDisplayMode, canvasTabs, activeTabId, setActiveTab]);
 
   if (isLoading) {
     // loadingPhase is an i18n key (opening, syncing, files, elements)
@@ -391,8 +441,11 @@ export function InvestigationPage() {
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Main view */}
-        <main className="flex-1 relative bg-bg-secondary">
-          {renderMainView()}
+        <main className="flex-1 relative bg-bg-secondary flex flex-col">
+          <TabBar investigationId={currentInvestigation.id} />
+          <div className="flex-1 relative">
+            {renderMainView()}
+          </div>
         </main>
 
         {/* Side panel */}

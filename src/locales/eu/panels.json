@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "Elementuak ez du izenik"
     },
+    "hints": {
+      "goToTab": "Joan {{name}} fitxara"
+    },
     "link": {
       "linkedElements": "Lotutako elementuak",
       "deletedElement": "Ezabatutako elementua",

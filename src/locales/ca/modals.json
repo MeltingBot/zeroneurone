@@ -116,6 +116,7 @@
     "categories": {
       "navigation": "Navegació",
       "search": "Cerca",
+      "tabs": "Pestanyes",
       "canvas": "Llenç",
       "editing": "Edició",
       "zoom": "Zoom",
@@ -148,7 +149,10 @@
       "newElement": "Nou element",
       "newGroup": "Nou grup",
       "newAnnotation": "Nova anotació",
-      "escape": "Desseleccionar / Tancar"
+      "escape": "Desseleccionar / Tancar",
+      "prevTab": "Pestanya anterior",
+      "nextTab": "Pestanya següent",
+      "firstTab": "Primera pestanya"
     }
   },
   "tagSetManager": {

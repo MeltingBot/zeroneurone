@@ -5,7 +5,7 @@ import { MoreHorizontal, Trash2, Edit2, Download, Star, Tag } from 'lucide-react
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
 import { formatRelativeTime } from '../../utils';
 import type { Investigation } from '../../types';
-import { investigationRepository, elementRepository, linkRepository, reportRepository } from '../../db/repositories';
+import { investigationRepository, elementRepository, linkRepository, reportRepository, tabRepository } from '../../db/repositories';
 import { exportService } from '../../services/exportService';
 import { fileService } from '../../services/fileService';
 import { toast } from '../../stores';
@@ -52,7 +52,8 @@ export function InvestigationCard({
       const links = await linkRepository.getByInvestigation(investigation.id);
       const assets = await fileService.getAssetsByInvestigation(investigation.id);
       const report = await reportRepository.getByInvestigationWithYDoc(investigation.id);
-      await exportService.exportInvestigation('zip', investigation, elements, links, assets, report);
+      const tabs = await tabRepository.getByInvestigation(investigation.id);
+      await exportService.exportInvestigation('zip', investigation, elements, links, assets, report, tabs);
       toast.success(t('home.card.exportSuccess'));
     } catch (error) {
       console.error('[InvestigationCard] Export error:', error);

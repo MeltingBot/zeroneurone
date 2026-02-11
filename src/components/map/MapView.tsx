@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
@@ -72,6 +72,9 @@ export function MapView() {
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const tabGhostIds = useTabStore((s) => s.ghostIds);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
@@ -101,6 +104,14 @@ export function MapView() {
     // Otherwise use filter-based dimming
     return getDimmedElementIds(elements, filters, hiddenElementIds);
   }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
+
+  // Extend dimming: tab ghost elements appear dimmed on map
+  const effectiveDimmedIds = useMemo(() => {
+    if (tabGhostIds.size === 0) return dimmedElementIds;
+    const combined = new Set(dimmedElementIds);
+    tabGhostIds.forEach(id => combined.add(id));
+    return combined;
+  }, [dimmedElementIds, activeTabId, tabGhostIds]);
 
   // Create asset lookup map for thumbnails
   const assetMap = useMemo(() => {
@@ -410,6 +421,7 @@ export function MapView() {
       // No temporal mode: show all elements with geo
       elements.forEach((el) => {
         if (hiddenElementIds.has(el.id)) return;
+        if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
         const position = getPositionAtTime(el, null);
         if (position) {
           result.push({
@@ -429,6 +441,7 @@ export function MapView() {
     // In temporal mode: check each element's visibility (day-level comparison)
     elements.forEach((el) => {
       if (hiddenElementIds.has(el.id)) return;
+      if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
 
       // Check if element is visible via an active link
       const visibleViaActiveLink = isVisibleViaLink(el.id, selectedDate.getTime());
@@ -482,7 +495,7 @@ export function MapView() {
     });
 
     return result;
-  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dayStart]);
+  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dayStart, activeTabId, tabMemberSet, tabGhostIds]);
 
   // Legacy geoElements for compatibility (elements with current geo)
   const geoElements = useMemo(() => {
@@ -814,7 +827,7 @@ export function MapView() {
     // Add or update markers
     effectiveGeoElements.forEach((element) => {
       const isSelected = selectedElementIds.has(element.id);
-      const isDimmed = dimmedElementIds.has(element.id);
+      const isDimmed = effectiveDimmedIds.has(element.id);
       const commentCount = unresolvedCommentCounts.get(element.id);
       const existingMarker = existingMarkers.get(element.id);
 
@@ -904,7 +917,7 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, dimmedElementIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
 
   // Get visible position for a marker (either marker position or cluster position)
   const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {
@@ -979,7 +992,7 @@ export function MapView() {
       if (!fromMarker || !toMarker) return;
 
       // Check if link should be dimmed (either connected element is dimmed)
-      const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
+      const isLinkDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
       const linkOpacity = isLinkDimmed ? 0.3 : 1;
 
       // Skip if both markers are in the same cluster (link would be invisible/redundant)
@@ -1150,7 +1163,7 @@ export function MapView() {
         existingLinkLayers.set(link.id, { outline, line, arrowStart, arrowEnd });
       }
     });
-  }, [geoLinks, selectLink, clusteringVersion, getVisibleLatLng, areInSameCluster, calculateAngle, createArrowIcon, getPointOnLine, anonymousMode, dimmedElementIds]);
+  }, [geoLinks, selectLink, clusteringVersion, getVisibleLatLng, areInSameCluster, calculateAngle, createArrowIcon, getPointOnLine, anonymousMode, effectiveDimmedIds]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {

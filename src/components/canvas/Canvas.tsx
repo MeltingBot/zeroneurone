@@ -37,7 +37,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
-import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, toast } from '../../stores';
+import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
@@ -49,6 +49,21 @@ import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
 import { syncService } from '../../services/syncService';
 import { elementRepository } from '../../db/repositories/elementRepository';
+
+/** Capture tab membership for undo restore (tabId → elementIds[]) */
+function captureTabMembership(elementIds: string[]): Record<string, string[]> | undefined {
+  const { getTabsForElement } = useTabStore.getState();
+  const membership: Record<string, string[]> = {};
+  let hasAny = false;
+  for (const elId of elementIds) {
+    for (const tab of getTabsForElement(elId)) {
+      if (!membership[tab.id]) membership[tab.id] = [];
+      membership[tab.id].push(elId);
+      hasAny = true;
+    }
+  }
+  return hasAny ? membership : undefined;
+}
 
 interface ContextMenuState {
   x: number;
@@ -226,7 +241,8 @@ function elementToNode(
   displayedPropertyValues?: { key: string; value: string }[],
   tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both',
   tagDisplaySize?: 'small' | 'medium' | 'large',
-  themeMode?: 'light' | 'dark'
+  themeMode?: 'light' | 'dark',
+  isGhost?: boolean,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -244,17 +260,18 @@ function elementToNode(
       id: element.id,
       type: 'annotation',
       position,
-      draggable: !element.isPositionLocked,
+      draggable: !element.isPositionLocked && !isGhost,
       data: {
         element,
-        isSelected,
-        isDimmed,
-        isEditing,
-        onLabelChange,
-        onStopEditing,
-        onResize,
+        isSelected: isGhost ? false : isSelected,
+        isDimmed: isGhost || isDimmed,
+        isEditing: isGhost ? false : isEditing,
+        onLabelChange: isGhost ? undefined : onLabelChange,
+        onStopEditing: isGhost ? undefined : onStopEditing,
+        onResize: isGhost ? undefined : onResize,
       } satisfies AnnotationNodeData,
-      selected: isSelected,
+      selected: isGhost ? false : isSelected,
+      selectable: !isGhost,
       style: {
         width: element.visual.customWidth || 200,
       },
@@ -266,15 +283,16 @@ function elementToNode(
       id: element.id,
       type: 'groupFrame',
       position,
-      draggable: !element.isPositionLocked,
+      draggable: !element.isPositionLocked && !isGhost,
       data: {
         element,
-        isSelected,
-        isDimmed,
-        onResize,
-        isEditing,
-        onLabelChange,
-        onStopEditing,
+        isSelected: isGhost ? false : isSelected,
+        isDimmed: isGhost || isDimmed,
+        isGhost,
+        onResize: isGhost ? undefined : onResize,
+        isEditing: isGhost ? false : isEditing,
+        onLabelChange: isGhost ? undefined : onLabelChange,
+        onStopEditing: isGhost ? undefined : onStopEditing,
         themeMode,
         unresolvedCommentCount,
         showConfidenceIndicator,
@@ -282,7 +300,8 @@ function elementToNode(
         tagDisplayMode,
         tagDisplaySize,
       } satisfies GroupNodeData,
-      selected: isSelected,
+      selected: isGhost ? false : isSelected,
+      selectable: !isGhost,
       style: {
         width: element.visual.customWidth || 300,
         height: element.visual.customHeight || 200,
@@ -294,16 +313,18 @@ function elementToNode(
     id: element.id,
     type: 'element',
     position,
-    draggable: !element.isPositionLocked,
+    draggable: !element.isPositionLocked && !isGhost,
+    selectable: !isGhost,
     data: {
       element,
-      isSelected,
-      isDimmed,
+      isSelected: isGhost ? false : isSelected,
+      isDimmed: isGhost || isDimmed,
+      isGhost,
       thumbnail,
-      onResize,
-      isEditing,
-      onLabelChange,
-      onStopEditing,
+      onResize: isGhost ? undefined : onResize,
+      isEditing: isGhost ? false : isEditing,
+      onLabelChange: isGhost ? undefined : onLabelChange,
+      onStopEditing: isGhost ? undefined : onStopEditing,
       remoteSelectors,
       unresolvedCommentCount,
       isLoadingAsset,
@@ -314,7 +335,7 @@ function elementToNode(
       tagDisplaySize,
       themeMode,
     } satisfies ElementNodeData,
-    selected: isSelected,
+    selected: isGhost ? false : isSelected,
   };
 
   if (element.parentGroupId) {
@@ -631,6 +652,32 @@ export function Canvas() {
     showElement,
     requestFitView,
   } = useViewStore();
+
+  // Tab filtering
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const tabExcludedSet = useTabStore((s) => s.excludedSet);
+  const canvasTabs = useTabStore((s) => s.tabs);
+  const addTabMembers = useTabStore((s) => s.addMembers);
+  const removeTabMembers = useTabStore((s) => s.removeMembers);
+  const excludeFromTab = useTabStore((s) => s.excludeFromTab);
+  const getTabsForElement = useTabStore((s) => s.getTabsForElement);
+  const setActiveTab = useTabStore((s) => s.setActiveTab);
+
+  // Synchronous ghost computation — no useEffect delay
+  const localGhostIds = useMemo(() => {
+    if (activeTabId === null || tabMemberSet.size === 0) return new Set<string>();
+    const ghosts = new Set<string>();
+    for (const link of links) {
+      if (tabMemberSet.has(link.fromId) && !tabMemberSet.has(link.toId)) {
+        if (!tabExcludedSet.has(link.toId)) ghosts.add(link.toId);
+      }
+      if (tabMemberSet.has(link.toId) && !tabMemberSet.has(link.fromId)) {
+        if (!tabExcludedSet.has(link.fromId)) ghosts.add(link.fromId);
+      }
+    }
+    return ghosts;
+  }, [links, activeTabId, tabMemberSet, tabExcludedSet]);
 
   // Frozen viewport for edge culling — edges are NOT recalculated during pan/zoom.
   // React Flow already applies CSS transform during movement, so edges scale naturally.
@@ -994,7 +1041,12 @@ export function Canvas() {
       return { el, thumbnail, isLoadingAsset, unresolvedCommentCount, badgeProperty, displayedPropertyValues };
     };
 
-    const visible = elements.filter((el) => !hiddenElementIds.has(el.id));
+    // Tab filtering: on "Tous" all elements pass, on specific tab only members + ghosts
+    const visible = elements.filter((el) => {
+      if (hiddenElementIds.has(el.id)) return false;
+      if (activeTabId !== null && !tabMemberSet.has(el.id) && !localGhostIds.has(el.id)) return false;
+      return true;
+    });
 
     const result = visible.map(el => {
       // Reuse cached structure if element reference AND comment count are unchanged
@@ -1019,7 +1071,7 @@ export function Canvas() {
     }
 
     return result;
-  }, [elements, hiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties]);
+  }, [elements, hiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, activeTabId, tabMemberSet, localGhostIds]);
 
   // --- Measured dimensions cache ---
   // React Flow (controlled mode) sends dimension changes via onNodesChange after ResizeObserver
@@ -1042,6 +1094,7 @@ export function Canvas() {
   const prevTagModeRef = useRef(tagDisplayMode);
   const prevTagSizeRef = useRef(tagDisplaySize);
   const prevThemeRef = useRef(themeMode);
+  const prevTabMemberSetRef = useRef(tabMemberSet);
 
   const nodes = useMemo(() => {
     const globalSettingsChanged =
@@ -1071,6 +1124,7 @@ export function Canvas() {
         tagDisplayMode,
         tagDisplaySize,
         themeMode,
+        activeTabId !== null && !tabMemberSet.has(ns.el.id),
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1163,11 +1217,21 @@ export function Canvas() {
       }
     }
 
+    // Ghost status diff (membership change: member ↔ ghost)
+    if (prevTabMemberSetRef.current !== tabMemberSet) {
+      for (const ns of nodeStructures) {
+        const wasMember = prevTabMemberSetRef.current.has(ns.el.id);
+        const isMember = tabMemberSet.has(ns.el.id);
+        if (wasMember !== isMember) needsRebuild.add(ns.el.id);
+      }
+    }
+
     // Update visual state refs
     prevSelectedIdsRef.current = selectedElementIds;
     prevDimmedIdsRef.current = dimmedElementIds;
     prevEditingIdRef.current = editingElementId;
     prevRemoteUsersRef.current = remoteUsersByElement;
+    prevTabMemberSetRef.current = tabMemberSet;
 
     // Detect additions/removals by comparing count
     const hasAdditionsOrRemovals = nodeStructures.length !== prevNodesRef.current.length;
@@ -1217,7 +1281,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -1942,6 +2006,11 @@ export function Canvas() {
       y: canvasContextMenu.canvasY,
     });
 
+    // Auto-add to active tab
+    if (activeTabId) {
+      addTabMembers(activeTabId, [newElement.id]);
+    }
+
     // Save for undo
     pushAction({
       type: 'create-element',
@@ -1951,7 +2020,7 @@ export function Canvas() {
 
     // Select the new element
     selectElement(newElement.id);
-  }, [canvasContextMenu, createElement, selectElement, pushAction]);
+  }, [canvasContextMenu, createElement, selectElement, pushAction, activeTabId, addTabMembers]);
 
   // Create group from canvas context menu
   const handleCanvasContextMenuCreateGroup = useCallback(async () => {
@@ -1986,8 +2055,13 @@ export function Canvas() {
       },
     });
 
+    // Auto-add to active tab
+    if (activeTabId) {
+      addTabMembers(activeTabId, [annotation.id]);
+    }
+
     selectElement(annotation.id);
-  }, [canvasContextMenu, createElement, selectElement]);
+  }, [canvasContextMenu, createElement, selectElement, activeTabId, addTabMembers]);
 
   // Selection handlers for canvas context menu (work without contextMenu state)
   const handleSelectionCopy = useCallback(() => {
@@ -2013,9 +2087,10 @@ export function Canvas() {
       navigator.clipboard.writeText(clipboardData).catch(() => {});
       // Save for undo
       const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
+      const tabMembership = captureTabMembership(selectedEls);
       pushAction({
         type: 'delete-elements',
-        undo: { elements: elsToCut, links: relevantLinks },
+        undo: { elements: elsToCut, links: relevantLinks, tabMembership },
         redo: { elementIds: selectedEls, linkIds: relevantLinks.map(l => l.id) },
       });
       await deleteElements(selectedEls);
@@ -2061,6 +2136,9 @@ export function Canvas() {
 
     pasteElements(newElements, newLinks);
     const newElementIds = newElements.map(el => el.id);
+    if (activeTabId) {
+      addTabMembers(activeTabId, newElementIds);
+    }
     const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
@@ -2068,16 +2146,17 @@ export function Canvas() {
       redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
-  }, [elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction]);
+  }, [elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   const handleSelectionDelete = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length === 0) return;
     const elsToDelete = elements.filter(el => selectedEls.includes(el.id));
     const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
+    const tabMembership = captureTabMembership(selectedEls);
     pushAction({
       type: 'delete-elements',
-      undo: { elements: elsToDelete, links: relevantLinks },
+      undo: { elements: elsToDelete, links: relevantLinks, tabMembership },
       redo: { elementIds: selectedEls, linkIds: relevantLinks.map(l => l.id) },
     });
     await deleteElements(selectedEls);
@@ -2121,6 +2200,10 @@ export function Canvas() {
         const position = { x: canvasX, y: canvasY };
         const label = imageFile.name.replace(/\.[^/.]+$/, '') || 'Image';
         const newElement = await createElement(label, position);
+        // Auto-add to active tab
+        if (activeTabId) {
+          addTabMembers(activeTabId, [newElement.id]);
+        }
 
         try {
           await addAsset(newElement.id, imageFile);
@@ -2193,6 +2276,9 @@ export function Canvas() {
 
     // Save for undo (include both element and link IDs)
     const newElementIds = newElements.map(el => el.id);
+    if (activeTabId) {
+      addTabMembers(activeTabId, newElementIds);
+    }
     const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
@@ -2202,7 +2288,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [canvasContextMenu, links, currentInvestigation, pasteElements, selectElements, pushAction, addAsset]);
+  }, [canvasContextMenu, links, currentInvestigation, pasteElements, selectElements, pushAction, addAsset, activeTabId, addTabMembers]);
 
   // Context menu actions
   const handleContextMenuFocus = useCallback(
@@ -2239,9 +2325,10 @@ export function Canvas() {
       const el = elementMap.get(elementId);
       const elementsToDelete = el ? [el] : [];
       const linksToDelete = links.filter(l => l.fromId === elementId || l.toId === elementId);
+      const tabMembership = captureTabMembership([elementId]);
       pushAction({
         type: 'delete-elements',
-        undo: { elements: elementsToDelete, links: linksToDelete },
+        undo: { elements: elementsToDelete, links: linksToDelete, tabMembership },
         redo: { elementIds: [elementId] },
       });
       await deleteElements([elementId]);
@@ -2297,9 +2384,10 @@ export function Canvas() {
         idsToDelete.includes(l.fromId) || idsToDelete.includes(l.toId)
       );
 
+      const tabMembership = captureTabMembership(idsToDelete);
       pushAction({
         type: 'delete-elements',
-        undo: { elements: elsToCut, links: linksToDelete },
+        undo: { elements: elsToCut, links: linksToDelete, tabMembership },
         redo: { elementIds: idsToDelete },
       });
 
@@ -2365,6 +2453,9 @@ export function Canvas() {
 
     // Save for undo (include both element and link IDs)
     const newElementIds = newElements.map(el => el.id);
+    if (activeTabId) {
+      addTabMembers(activeTabId, newElementIds);
+    }
     const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
@@ -2374,7 +2465,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [contextMenu, viewport, currentInvestigation, pasteElements, links, selectElements, pushAction]);
+  }, [contextMenu, viewport, currentInvestigation, pasteElements, links, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Duplicate handler for context menu
   const handleContextMenuDuplicate = useCallback(() => {
@@ -2426,6 +2517,9 @@ export function Canvas() {
 
     // Save for undo (include both element and link IDs)
     const newElementIds = newElements.map(el => el.id);
+    if (activeTabId) {
+      addTabMembers(activeTabId, newElementIds);
+    }
     const newLinkIds = newLinks.map(l => l.id);
     pushAction({
       type: 'create-elements',
@@ -2433,7 +2527,7 @@ export function Canvas() {
       redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
-  }, [contextMenu, elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction]);
+  }, [contextMenu, elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Group selection handler for context menu
   const handleGroupSelection = useCallback(async () => {
@@ -2595,6 +2689,8 @@ export function Canvas() {
 
         let result: Awaited<ReturnType<typeof importService.importFromZip>>;
         const fileName = importPlacementData.file.name.toLowerCase();
+        // Snapshot element IDs before import (for tab assignment after reload)
+        const preImportIds = new Set(elements.map(e => e.id));
 
         if (importPlacementData.fileContent != null) {
           // ── Non-ZIP format: import then shift new elements ──
@@ -2694,6 +2790,16 @@ export function Canvas() {
           // Request fitView to show all elements including imported ones
           requestFitView();
 
+          // Add imported elements to active tab
+          if (activeTabId) {
+            const importedIds = useInvestigationStore.getState().elements
+              .filter(el => !preImportIds.has(el.id))
+              .map(el => el.id);
+            if (importedIds.length > 0) {
+              addTabMembers(activeTabId, importedIds);
+            }
+          }
+
           // Call completion callback if provided
           importPlacementData.onComplete?.();
         } else {
@@ -2709,7 +2815,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadInvestigation, exitImportPlacementMode, tPages, requestFitView]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadInvestigation, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -2725,6 +2831,11 @@ export function Canvas() {
 
       const newElement = await createElement(t('labels.newElement'), position);
 
+      // Auto-add to active tab
+      if (activeTabId) {
+        addTabMembers(activeTabId, [newElement.id]);
+      }
+
       // Save for undo
       pushAction({
         type: 'create-element',
@@ -2734,7 +2845,7 @@ export function Canvas() {
 
       selectElement(newElement.id);
     },
-    [createElement, selectElement, viewport, pushAction]
+    [createElement, selectElement, viewport, pushAction, activeTabId, addTabMembers]
   );
 
   // Handle double click on node - start inline label editing
@@ -2816,6 +2927,10 @@ export function Canvas() {
         // Use filename as element label
         const label = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
         const newElement = await createElement(label, position);
+        // Auto-add to active tab
+        if (activeTabId) {
+          addTabMembers(activeTabId, [newElement.id]);
+        }
         await addAsset(newElement.id, file);
         try {
           const buffer = await file.arrayBuffer();
@@ -2833,7 +2948,7 @@ export function Canvas() {
         }
       }
     },
-    [createElement, addAsset, viewport, elementMap, pushMetadataImport]
+    [createElement, addAsset, viewport, elementMap, pushMetadataImport, activeTabId, addTabMembers]
   );
 
   const handleFileDragOver = useCallback((event: React.DragEvent) => {
@@ -2978,9 +3093,10 @@ export function Canvas() {
           const linksToDelete = links.filter(l =>
             selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
           );
+          const tabMembership = captureTabMembership(selectedEls);
           pushAction({
             type: 'delete-elements',
-            undo: { elements: elementsToDelete, links: linksToDelete },
+            undo: { elements: elementsToDelete, links: linksToDelete, tabMembership },
             redo: { elementIds: selectedEls },
           });
           await deleteElements(selectedEls);
@@ -2997,10 +3113,13 @@ export function Canvas() {
         clearSelection();
       }
 
-      // Select all with Ctrl+A
+      // Select all with Ctrl+A (only visible elements in active tab)
       if (event.key === 'a' && isCtrlOrMeta) {
         event.preventDefault();
-        selectElements(elements.map((el) => el.id));
+        const visibleIds = activeTabId !== null
+          ? elements.filter((el) => tabMemberSet.has(el.id)).map((el) => el.id)
+          : elements.map((el) => el.id);
+        selectElements(visibleIds);
       }
 
       // Copy with Ctrl+C
@@ -3030,9 +3149,10 @@ export function Canvas() {
             selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
           );
 
+          const tabMembership = captureTabMembership(selectedEls);
           pushAction({
             type: 'delete-elements',
-            undo: { elements: elsToCut, links: linksToDelete },
+            undo: { elements: elsToCut, links: linksToDelete, tabMembership },
             redo: { elementIds: selectedEls },
           });
 
@@ -3088,6 +3208,9 @@ export function Canvas() {
 
           // Save for undo (include both element and link IDs)
           const newElementIds = newElements.map(el => el.id);
+          if (activeTabId) {
+            addTabMembers(activeTabId, newElementIds);
+          }
           const newLinkIds = newLinks.map(l => l.id);
           pushAction({
             type: 'create-elements',
@@ -3105,6 +3228,7 @@ export function Canvas() {
         const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
         const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
         const el = await createElement('', { x: mx, y: my });
+        if (activeTabId) addTabMembers(activeTabId, [el.id]);
         selectElement(el.id);
       }
 
@@ -3119,6 +3243,7 @@ export function Canvas() {
           notes: '',
           visual: { color: '#ffffff', borderColor: '#e5e7eb', shape: 'rectangle', size: 'medium', icon: null, image: null, customWidth: 200 },
         });
+        if (activeTabId) addTabMembers(activeTabId, [annotation.id]);
         selectElement(annotation.id);
       }
 
@@ -3168,6 +3293,9 @@ export function Canvas() {
     handleUndo,
     handleRedo,
     buildClipboardData,
+    activeTabId,
+    tabMemberSet,
+    addTabMembers,
   ]);
 
   // Handle paste (Ctrl+V) for elements or media
@@ -3229,6 +3357,10 @@ export function Canvas() {
         const label = file.name.replace(/\.[^/.]+$/, '') || 'Image';
 
         const newElement = await createElement(label, position);
+        // Auto-add to active tab
+        if (activeTabId) {
+          addTabMembers(activeTabId, [newElement.id]);
+        }
         try {
           await addAsset(newElement.id, file);
         } catch (err) {
@@ -3298,6 +3430,9 @@ export function Canvas() {
 
         // Save for undo (include both element and link IDs)
         const newElementIds = newElements.map(el => el.id);
+        if (activeTabId) {
+          addTabMembers(activeTabId, newElementIds);
+        }
         const newLinkIds = newLinks.map(l => l.id);
         pushAction({
           type: 'create-elements',
@@ -3315,7 +3450,7 @@ export function Canvas() {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [viewport, pasteElements, currentInvestigation, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds]);
+  }, [viewport, pasteElements, currentInvestigation, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
 
   // Handle viewport change
   const handleViewportChange = useCallback(
@@ -3470,9 +3605,10 @@ export function Canvas() {
                 const linksToDelete = links.filter(l =>
                   selectedEls.includes(l.fromId) || selectedEls.includes(l.toId)
                 );
+                const tabMembership = captureTabMembership(selectedEls);
                 pushAction({
                   type: 'delete-elements',
-                  undo: { elements: elementsToDelete, links: linksToDelete },
+                  undo: { elements: elementsToDelete, links: linksToDelete, tabMembership },
                   redo: { elementIds: selectedEls },
                 });
                 deleteElements(selectedEls);
@@ -3598,6 +3734,31 @@ export function Canvas() {
               onRemoveFromGroup={handleRemoveFromGroup}
               isPositionLocked={!!elementMap.get(contextMenu.elementId)?.isPositionLocked}
               onToggleLock={handleToggleLock}
+              tabs={canvasTabs}
+              activeTabId={activeTabId}
+              onAddToTab={(tabId) => {
+                const ids = selectedElementIds.size > 1
+                  ? Array.from(selectedElementIds)
+                  : [contextMenu.elementId];
+                addTabMembers(tabId, ids);
+              }}
+              onRemoveFromTab={() => {
+                if (!activeTabId) return;
+                const id = contextMenu.elementId;
+                if (!tabMemberSet.has(id)) {
+                  // Ghost → dismiss (exclude from ghost computation)
+                  excludeFromTab(activeTabId, [id]);
+                } else {
+                  // Member → remove from tab membership
+                  removeTabMembers(activeTabId, [id]);
+                }
+              }}
+              isGhostElement={activeTabId !== null && !tabMemberSet.has(contextMenu.elementId)}
+              elementTabIds={getTabsForElement(contextMenu.elementId).map(t => t.id)}
+              onGoToTab={(tabId) => {
+                setActiveTab(tabId);
+                closeContextMenu();
+              }}
               onClose={closeContextMenu}
             />
           )}

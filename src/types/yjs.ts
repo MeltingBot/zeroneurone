@@ -61,6 +61,7 @@ export interface YInvestigation {
   views: Y.Map<Y.Map<any>>;
   assets: Y.Map<Y.Map<any>>;
   reports: Y.Map<Y.Map<any>>;
+  tabs: Y.Map<Y.Map<any>>;
 }
 
 /**
@@ -75,6 +76,7 @@ export function getYMaps(ydoc: Y.Doc): YInvestigation {
     views: ydoc.getMap('views'),
     assets: ydoc.getMap('assets'),
     reports: ydoc.getMap('reports'),
+    tabs: ydoc.getMap('tabs'),
   };
 }
 

@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "O elemento não tem nome"
     },
+    "hints": {
+      "goToTab": "Ir para a aba {{name}}"
+    },
     "link": {
       "linkedElements": "Elementos ligados",
       "deletedElement": "Elemento eliminado",

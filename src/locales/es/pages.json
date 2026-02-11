@@ -233,6 +233,21 @@
       "leaveMessage": "Los demás participantes podrán seguir usando el enlace de compartir para sincronizar sus modificaciones y retomar la colaboración.",
       "rejoinMessage": "También podrá volver a unirse a la sesión más tarde a través del mismo enlace.",
       "leave": "Abandonar"
+    },
+    "tabs": {
+      "all": "Todos",
+      "new": "Nueva pestaña",
+      "initialName": "Inicial",
+      "defaultName": "Pestaña {{n}}",
+      "rename": "Renombrar",
+      "delete": "Eliminar pestaña",
+      "deleteConfirm": "¿Eliminar pestaña {{name}}? Los elementos no serán eliminados.",
+      "addToTab": "Añadir a pestaña...",
+      "removeFromTab": "Quitar de pestaña",
+      "emptyState": "Sin elementos en esta pestaña",
+      "emptyHint": "Clic derecho en elementos para añadirlos",
+      "ghostBadge": "En {{tabs}}",
+      "navigateTo": "Ir a pestaña {{name}}"
     }
   },
   "map": {

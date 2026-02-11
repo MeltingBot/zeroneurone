@@ -151,6 +151,7 @@ When someone is editing an element:
 | Elements | ✅ Position, metadata, appearance |
 | Links | ✅ All properties |
 | Attached files | ✅ Metadata + binaries |
+| Canvas tabs | ✅ Names, members, order (viewport local) |
 | Saved views | ✅ |
 | Comments | ✅ |
 | Investigation settings | ✅ |

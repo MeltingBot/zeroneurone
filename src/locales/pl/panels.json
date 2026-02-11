@@ -87,6 +87,9 @@
     "warnings": {
       "noName": "Element nie ma nazwy"
     },
+    "hints": {
+      "goToTab": "Przejdź do karty {{name}}"
+    },
     "link": {
       "linkedElements": "Połączone elementy",
       "deletedElement": "Usunięty element",
