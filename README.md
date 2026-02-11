@@ -32,7 +32,9 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Personnalisation visuelle (couleurs, formes, tailles, icones)
 - Groupes visuels imbriques
 - Annotations (post-its)
-- Menu contextuel avec actions sur la selection
+- **Onglets canvas** : espaces thematiques par hypothese, type d'acteur, periode (max 10 par enquete)
+- Elements fantomes : elements d'autres onglets connectes a l'onglet courant affiches en transparence
+- Menu contextuel avec actions sur la selection et gestion des onglets
 - Minimap pour navigation rapide
 - Grille d'alignement magnetique
 
@@ -64,6 +66,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - **Mode asynchrone** : collaborateurs travaillent a des moments differents, donnees bufferisees 7 jours
 - Curseurs et selections des collaborateurs visibles
 - Synchronisation des pieces jointes
+- Synchronisation des onglets canvas (noms, membres, ordre — viewport local par utilisateur)
 - Detection de presence avec heartbeat
 - Sync incrementale optimisee
 - Room ID hashe (le serveur ne peut pas correler les sessions)
@@ -79,10 +82,11 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Import GraphML pour donnees de graphes
 - Import Excalidraw
 - Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques (nom, dates, lieux, profession, surnom, titre, notes)
-- Import ZIP (restauration complete)
+- Import ZIP (restauration complete avec onglets)
 - Import dans investigation courante (merge avec placement visuel)
 - Panel Rapport (redaction Markdown avec references aux elements)
 - Generation de synthese (rapport automatique avec analyse du graphe)
+- [Format JSON d'import documente](docs/json-import-format-fr.md) ([EN](docs/json-import-format-en.md))
 
 ### Layouts Automatiques
 - Force-directed (clusters)
@@ -381,6 +385,17 @@ Ou deployer votre propre serveur y-websocket.
 - [x] Seuil adaptatif masquage edges (500+ elements)
 - [x] Teste avec 1500+ elements/liens en mode collaboratif
 - [x] HD image LOD (chargement progressif images pleine resolution)
+
+### v2.8 — Onglets canvas ✓
+- [x] Onglets canvas : espaces thematiques (hypothese, type d'acteur, periode)
+- [x] Barre d'onglets avec vue globale "Tous", onglets nommes, bouton "+" (max 10)
+- [x] Elements fantomes : elements d'autres onglets connectes affiches en transparence
+- [x] Menu contextuel : ajouter/retirer des onglets, naviguer vers l'onglet source
+- [x] Synchronisation Y.js des onglets en mode collaboratif
+- [x] Export/import ZIP et JSON avec onglets
+- [x] Recherche (Ctrl+K) bascule automatiquement sur le bon onglet
+- [x] Vues sauvegardees memorisent l'onglet actif
+- [x] Undo/redo des changements d'appartenance aux onglets
 
 ### Idees futures
 - [ ] Theming personnalisable
