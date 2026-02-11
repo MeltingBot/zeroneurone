@@ -53,6 +53,21 @@ Empêchez les déplacements accidentels en verrouillant la position d'un éléme
 - En multi-sélection, verrouiller s'applique à tous les éléments sélectionnés
 - Lors d'un déplacement groupé, les éléments verrouillés restent en place
 
+### Événements
+
+Les éléments peuvent avoir des **événements** associés, chacun avec une date, une description et éventuellement une géolocalisation.
+
+### Extraire un événement en élément
+
+Transformez un événement en un élément autonome sur le canvas :
+
+1. Survolez l'événement dans le panneau de détail
+2. Cliquez sur l'icône **↗** (Extraire en élément)
+3. Un nouvel élément est créé avec le nom de l'événement, relié à l'élément source
+4. Les dates de l'événement sont portées par le **lien** (la relation temporelle)
+
+Cette opération est réversible avec **Ctrl+Z**.
+
 ---
 
 ## Liens

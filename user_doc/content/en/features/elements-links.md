@@ -53,6 +53,21 @@ Prevent accidental moves by locking an element's position.
 - With multi-selection, lock/unlock applies to all selected elements
 - When moving a group, locked elements stay in place
 
+### Events
+
+Elements can have associated **events**, each with a date, description, and optionally a geolocation.
+
+### Extract an Event to Element
+
+Turn an event into a standalone element on the canvas:
+
+1. Hover over the event in the detail panel
+2. Click the **↗** icon (Extract to element)
+3. A new element is created with the event name, linked to the source element
+4. Event dates are carried by the **link** (the temporal relationship)
+
+This operation is undoable with **Ctrl+Z**.
+
 ---
 
 ## Links

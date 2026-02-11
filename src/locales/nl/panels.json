@@ -115,7 +115,8 @@
       "sourcePlaceholder": "Bron van de informatie...",
       "locationOptional": "Locatie (optioneel)",
       "clearLocation": "Wissen",
-      "pickOnMap": "Kaart"
+      "pickOnMap": "Kaart",
+      "extractToElement": "Extraheren als element"
     },
     "location": {
       "title": "Locatie",
@@ -167,7 +168,8 @@
       },
       "booleanYes": "Ja",
       "booleanNo": "Nee",
-      "selectOption": "Selecteer een optie..."
+      "selectOption": "Selecteer een optie...",
+      "extractToElement": "Extraheren als element"
     },
     "appearance": {
       "title": "Weergave",

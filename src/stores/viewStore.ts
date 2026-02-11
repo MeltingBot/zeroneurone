@@ -81,6 +81,7 @@ interface ViewState {
   saveView: (investigationId: InvestigationId, name: string, options?: { includePositions?: boolean; elements?: Element[] }) => Promise<View>;
   loadView: (view: View, updatePositions?: (positions: { id: ElementId; position: Position }[]) => Promise<void>) => void;
   deleteView: (viewId: string) => Promise<void>;
+  restoreView: (view: View) => void;
 
   // Derived
   hasActiveFilters: () => boolean;
@@ -317,6 +318,15 @@ export const useViewStore = create<ViewState>((set, get) => ({
     await db.views.delete(viewId);
     set((state) => ({
       savedViews: state.savedViews.filter((v) => v.id !== viewId),
+    }));
+  },
+
+  restoreView: (view: View) => {
+    db.views.put(view).catch(() => {});
+    set((state) => ({
+      savedViews: [...state.savedViews, view].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      ),
     }));
   },
 

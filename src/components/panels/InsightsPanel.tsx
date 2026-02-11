@@ -21,14 +21,16 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
-import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore } from '../../stores';
+import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Element } from '../../types';
+import { DEFAULT_FILTERS } from '../../types';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
   const { elements, links, createGroup, dissolveGroup } = useInvestigationStore();
+  const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
   const {
@@ -137,11 +139,18 @@ export function InsightsPanel() {
       clusterElements.forEach((el) => el.tags.forEach((tag) => clusterTags.add(tag)));
 
       if (clusterTags.size > 0) {
+        const vs = useViewStore.getState();
+        const tagsArray = Array.from(clusterTags);
+        pushAction({
+          type: 'clear-filters',
+          undo: { snapshot: { filters: { ...vs.filters }, hiddenElementIds: Array.from(vs.hiddenElementIds) } },
+          redo: { snapshot: { filters: { ...DEFAULT_FILTERS, includeTags: tagsArray }, hiddenElementIds: [] } },
+        });
         clearFilters();
-        setFilters({ includeTags: Array.from(clusterTags) });
+        setFilters({ includeTags: tagsArray });
       }
     },
-    [elements, clearFilters, setFilters]
+    [elements, clearFilters, setFilters, pushAction]
   );
 
   // Create a visual group from cluster elements
@@ -151,6 +160,12 @@ export function InsightsPanel() {
         (el) => elementIds.includes(el.id) && !el.isGroup && !el.parentGroupId
       );
       if (clusterElements.length < 2) return;
+
+      // Snapshot absolute positions for undo
+      const absolutePositions = clusterElements.map(el => ({
+        id: el.id,
+        position: { ...el.position },
+      }));
 
       const padding = 40;
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -169,9 +184,23 @@ export function InsightsPanel() {
         height: maxY - minY + padding * 2,
       };
 
-      await createGroup(t('insights.clusters.name', { id: clusterId + 1 }), groupPos, groupSize, clusterElements.map(el => el.id));
+      const childIds = clusterElements.map(el => el.id);
+      const group = await createGroup(t('insights.clusters.name', { id: clusterId + 1 }), groupPos, groupSize, childIds);
+
+      const relativePositions = clusterElements.map(el => ({
+        id: el.id,
+        position: { x: el.position.x - groupPos.x, y: el.position.y - groupPos.y },
+      }));
+      const groupSnapshot = useInvestigationStore.getState().elements.find(el => el.id === group.id);
+      if (groupSnapshot) {
+        pushAction({
+          type: 'create-group',
+          undo: { positions: absolutePositions },
+          redo: { elements: [groupSnapshot], elementIds: [group.id], positions: relativePositions },
+        });
+      }
     },
-    [elements, createGroup, t]
+    [elements, createGroup, t, pushAction]
   );
 
   // Check if all elements in a list are hidden

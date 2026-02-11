@@ -77,6 +77,16 @@ Create property templates to speed up data entry:
 2. Check the properties to display as badges
 
 
+### Extract a Property to Element
+
+Turn a property into a standalone element on the canvas:
+
+1. Hover over the property in the detail panel
+2. Click the **↗** icon (Extract to element)
+3. A new element is created with the property name, linked to the source element
+
+This operation is undoable with **Ctrl+Z**.
+
 ---
 
 ## Confidence and Source

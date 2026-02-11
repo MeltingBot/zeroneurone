@@ -38,6 +38,7 @@ interface ReportState {
   addSection: (title?: string) => Promise<ReportSection | null>;
   updateSection: (sectionId: ReportSectionId, changes: Partial<Omit<ReportSection, 'id'>>) => Promise<void>;
   removeSection: (sectionId: ReportSectionId) => Promise<void>;
+  restoreSection: (section: ReportSection) => Promise<void>;
   reorderSections: (sectionIds: ReportSectionId[]) => Promise<void>;
 
   // Actions - UI state
@@ -268,6 +269,34 @@ export const useReportStore = create<ReportState>((set, get) => ({
     set({
       currentReport: { ...currentReport, sections: updatedSections, updatedAt: new Date() },
       activeSectionId: activeSectionId === sectionId ? null : activeSectionId,
+    });
+  },
+
+  restoreSection: async (section: ReportSection) => {
+    const { currentReport } = get();
+    if (!currentReport) return;
+
+    // Re-insert at correct position and reorder
+    const updatedSections = [...currentReport.sections, section]
+      .sort((a, b) => a.order - b.order)
+      .map((s, i) => ({ ...s, order: i }));
+
+    // Persist to local database
+    await reportRepository.update(currentReport.id, { sections: updatedSections });
+
+    // Sync to Y.Doc if available
+    const ydoc = syncService.getYDoc();
+    if (ydoc) {
+      const { reports: reportsMap } = getYMaps(ydoc);
+      const ymap = reportsMap.get(currentReport.id) as Y.Map<any> | undefined;
+      if (ymap) {
+        addSectionToYMap(ymap, section, ydoc);
+      }
+    }
+
+    set({
+      currentReport: { ...currentReport, sections: updatedSections, updatedAt: new Date() },
+      activeSectionId: section.id,
     });
   },
 

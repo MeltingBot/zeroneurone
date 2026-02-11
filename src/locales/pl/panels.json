@@ -115,7 +115,8 @@
       "sourcePlaceholder": "Źródło informacji...",
       "locationOptional": "Lokalizacja (opcjonalnie)",
       "clearLocation": "Wyczyść",
-      "pickOnMap": "Mapa"
+      "pickOnMap": "Mapa",
+      "extractToElement": "Wyodrębnij jako element"
     },
     "location": {
       "title": "Lokalizacja",
@@ -167,7 +168,8 @@
       },
       "booleanYes": "Tak",
       "booleanNo": "Nie",
-      "selectOption": "Wybierz opcję..."
+      "selectOption": "Wybierz opcję...",
+      "extractToElement": "Wyodrębnij jako element"
     },
     "appearance": {
       "title": "Wygląd",

@@ -4,7 +4,9 @@ import type { Element, Link } from '../types';
 interface HistoryAction {
   type: 'create-element' | 'delete-element' | 'update-element' | 'move-element' |
         'create-link' | 'delete-link' | 'update-link' |
-        'create-elements' | 'delete-elements' | 'move-elements';
+        'create-elements' | 'delete-elements' | 'move-elements' |
+        'extract-to-element' | 'dissolve-group' | 'remove-from-group' |
+        'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters';
   // Data for undoing the action
   undo: {
     elements?: Element[];
@@ -13,8 +15,14 @@ interface HistoryAction {
     // For update-element: the previous values
     elementId?: string;
     changes?: Partial<Element>;
+    // For update-link: the previous values
+    linkId?: string;
+    linkChanges?: Partial<Link>;
     // Tab membership to restore on undo (tabId → elementIds[])
     tabMembership?: Record<string, string[]>;
+    // Opaque snapshots for non-element operations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    snapshot?: any;
   };
   // Data for redoing the action
   redo: {
@@ -26,8 +34,14 @@ interface HistoryAction {
     // For update-element: the new values
     elementId?: string;
     changes?: Partial<Element>;
+    // For update-link: the new values
+    linkId?: string;
+    linkChanges?: Partial<Link>;
     // Tab membership to restore on redo (tabId → elementIds[])
     tabMembership?: Record<string, string[]>;
+    // Opaque snapshots for non-element operations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    snapshot?: any;
   };
 }
 
@@ -146,11 +160,112 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         }
         break;
 
+      case 'update-link':
+        // Restore previous link values
+        if (action.undo.linkId && action.undo.linkChanges) {
+          await store.updateLink(action.undo.linkId, action.undo.linkChanges);
+        }
+        break;
+
       case 'move-elements':
       case 'move-element':
         // Restore previous positions
         if (action.undo.positions) {
           await store.updateElementPositions(action.undo.positions);
+        }
+        break;
+
+      case 'extract-to-element':
+        // Restore property/event on source element
+        if (action.undo.elementId && action.undo.changes) {
+          await store.updateElement(action.undo.elementId, action.undo.changes);
+        }
+        // Delete created element (cascades to delete connected link)
+        if (action.redo.elementIds) {
+          await store.deleteElements(action.redo.elementIds);
+        }
+        break;
+
+      case 'dissolve-group':
+        // Recreate the group element
+        if (action.undo.elements) {
+          store.pasteElements(action.undo.elements, []);
+        }
+        // Restore children to relative positions with parentGroupId
+        if (action.undo.positions && action.undo.elements?.[0]) {
+          const groupId = action.undo.elements[0].id;
+          for (const child of action.undo.positions) {
+            await store.updateElement(child.id, {
+              parentGroupId: groupId,
+              position: child.position,
+            });
+          }
+        }
+        break;
+
+      case 'remove-from-group':
+        // Restore child to relative position with parentGroupId
+        if (action.undo.elementId && action.undo.changes) {
+          await store.updateElement(action.undo.elementId, action.undo.changes);
+          // Add child back to group's childIds
+          const groupId = action.undo.changes.parentGroupId;
+          if (groupId) {
+            const currentStore = (await import('./investigationStore')).useInvestigationStore.getState();
+            const group = currentStore.elements.find(el => el.id === groupId);
+            if (group && !group.childIds.includes(action.undo.elementId)) {
+              await currentStore.updateElement(groupId, {
+                childIds: [...group.childIds, action.undo.elementId],
+              });
+            }
+          }
+        }
+        break;
+
+      case 'create-group':
+        // Undo group creation: restore children to absolute positions, delete group
+        if (action.undo.positions) {
+          for (const child of action.undo.positions) {
+            await store.updateElement(child.id, { parentGroupId: null, position: child.position });
+          }
+        }
+        if (action.redo.elementIds) {
+          await store.deleteElements(action.redo.elementIds);
+        }
+        break;
+
+      case 'delete-tab':
+        // Restore deleted tab
+        if (action.undo.snapshot) {
+          const { useTabStore } = await import('./tabStore');
+          await useTabStore.getState().restoreTab(action.undo.snapshot);
+        }
+        break;
+
+      case 'delete-view':
+        // Restore deleted view
+        if (action.undo.snapshot) {
+          const { useViewStore } = await import('./viewStore');
+          useViewStore.getState().restoreView(action.undo.snapshot);
+        }
+        break;
+
+      case 'delete-section':
+        // Restore deleted report section
+        if (action.undo.snapshot) {
+          const { useReportStore } = await import('./reportStore');
+          await useReportStore.getState().restoreSection(action.undo.snapshot);
+        }
+        break;
+
+      case 'clear-filters':
+        // Restore previous filter state
+        if (action.undo.snapshot) {
+          const { useViewStore } = await import('./viewStore');
+          const vs = useViewStore.getState();
+          vs.setFilters(action.undo.snapshot.filters);
+          if (action.undo.snapshot.hiddenElementIds?.length > 0) {
+            vs.hideElements(action.undo.snapshot.hiddenElementIds);
+          }
         }
         break;
     }
@@ -203,11 +318,120 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         }
         break;
 
+      case 'update-link':
+        // Re-apply link changes
+        if (action.redo.linkId && action.redo.linkChanges) {
+          await store.updateLink(action.redo.linkId, action.redo.linkChanges);
+        }
+        break;
+
       case 'move-elements':
       case 'move-element':
         // Apply new positions
         if (action.redo.positions) {
           await store.updateElementPositions(action.redo.positions);
+        }
+        break;
+
+      case 'extract-to-element':
+        // Re-create element and link
+        store.pasteElements(action.redo.elements || [], action.redo.links || []);
+        // Remove property/event from source again
+        if (action.redo.elementId && action.redo.changes) {
+          await store.updateElement(action.redo.elementId, action.redo.changes);
+        }
+        break;
+
+      case 'dissolve-group':
+        // Convert children to absolute positions and clear parentGroupId
+        if (action.undo.positions && action.undo.elements?.[0]) {
+          const group = action.undo.elements[0];
+          for (const child of action.undo.positions) {
+            await store.updateElement(child.id, {
+              parentGroupId: null,
+              position: {
+                x: child.position.x + group.position.x,
+                y: child.position.y + group.position.y,
+              },
+            });
+          }
+        }
+        // Delete the group element
+        if (action.redo.elementIds) {
+          await store.deleteElements(action.redo.elementIds);
+        }
+        break;
+
+      case 'remove-from-group':
+        // Remove child from group (set absolute position, clear parentGroupId)
+        if (action.redo.elementId && action.redo.changes) {
+          await store.updateElement(action.redo.elementId, action.redo.changes);
+          // Remove child from group's childIds
+          const groupId = action.undo.changes?.parentGroupId;
+          if (groupId) {
+            const currentStore = (await import('./investigationStore')).useInvestigationStore.getState();
+            const group = currentStore.elements.find(el => el.id === groupId);
+            if (group) {
+              await currentStore.updateElement(groupId, {
+                childIds: group.childIds.filter(id => id !== action.redo.elementId),
+              });
+            }
+          }
+        }
+        break;
+
+      case 'create-group':
+        // Redo group creation: recreate group, move children to relative positions
+        if (action.redo.elements) {
+          store.pasteElements(action.redo.elements, []);
+          const group = action.redo.elements[0];
+          if (action.redo.positions) {
+            for (const child of action.redo.positions) {
+              await store.updateElement(child.id, { parentGroupId: group.id, position: child.position });
+            }
+          }
+        }
+        break;
+
+      case 'delete-tab':
+        // Re-delete tab
+        if (action.redo.snapshot) {
+          const { useTabStore } = await import('./tabStore');
+          await useTabStore.getState().deleteTab(action.redo.snapshot);
+        }
+        break;
+
+      case 'delete-view':
+        // Re-delete view
+        if (action.redo.snapshot) {
+          const { useViewStore } = await import('./viewStore');
+          await useViewStore.getState().deleteView(action.redo.snapshot);
+        }
+        break;
+
+      case 'delete-section':
+        // Re-delete section
+        if (action.redo.snapshot) {
+          const { useReportStore } = await import('./reportStore');
+          await useReportStore.getState().removeSection(action.redo.snapshot);
+        }
+        break;
+
+      case 'clear-filters':
+        // Re-clear filters (restore "after" snapshot if available, else just clear)
+        {
+          const { useViewStore } = await import('./viewStore');
+          const vs = useViewStore.getState();
+          if (action.redo.snapshot) {
+            vs.setFilters(action.redo.snapshot.filters);
+            vs.showAllElements();
+            if (action.redo.snapshot.hiddenElementIds?.length > 0) {
+              vs.hideElements(action.redo.snapshot.hiddenElementIds);
+            }
+          } else {
+            vs.clearFilters();
+            vs.showAllElements();
+          }
         }
         break;
     }

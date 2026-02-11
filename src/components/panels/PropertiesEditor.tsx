@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, ChevronDown, Check, ExternalLink } from 'lucide-react';
+import { X, Plus, ChevronDown, Check, ExternalLink, ArrowUpRight } from 'lucide-react';
 import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
@@ -16,6 +16,8 @@ interface PropertiesEditorProps {
   displayedProperties?: string[];
   /** Callback to toggle a property display on canvas */
   onToggleDisplayProperty?: (propertyKey: string) => void;
+  /** Callback to extract a property as a new element */
+  onExtractToElement?: (property: Property) => void;
 }
 
 const PROPERTY_TYPE_VALUES: PropertyType[] = ['text', 'number', 'date', 'datetime', 'boolean', 'choice', 'country', 'link'];
@@ -45,6 +47,7 @@ export function PropertiesEditor({
   onNewProperty,
   displayedProperties = [],
   onToggleDisplayProperty,
+  onExtractToElement,
 }: PropertiesEditorProps) {
   const { t, i18n } = useTranslation('panels');
   const [isAdding, setIsAdding] = useState(false);
@@ -366,6 +369,7 @@ export function PropertiesEditor({
                 property={prop}
                 onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
                 onRemove={() => handleRemoveProperty(prop.key)}
+                onExtract={onExtractToElement ? () => onExtractToElement(prop) : undefined}
                 isDisplayed={displayedProperties.includes(prop.key)}
                 onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
                 choices={choices}
@@ -389,6 +393,7 @@ interface PropertyRowProps {
   property: Property;
   onUpdate: (value: Property['value']) => void;
   onRemove: () => void;
+  onExtract?: () => void;
   isDisplayed?: boolean;
   onToggleDisplay?: () => void;
   choices?: string[];
@@ -396,7 +401,7 @@ interface PropertyRowProps {
   locale: string;
 }
 
-function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDisplay, choices, t, locale }: PropertyRowProps) {
+function PropertyRow({ property, onUpdate, onRemove, onExtract, isDisplayed, onToggleDisplay, choices, t, locale }: PropertyRowProps) {
   const type = property.type || 'text';
 
   return (
@@ -435,6 +440,15 @@ function PropertyRow({ property, onUpdate, onRemove, isDisplayed, onToggleDispla
           locale={locale}
         />
       </div>
+      {onExtract && (
+        <button
+          onClick={onExtract}
+          className="p-1 text-text-tertiary hover:text-accent focus:outline-none"
+          title={t('detail.properties.extractToElement')}
+        >
+          <ArrowUpRight size={14} />
+        </button>
+      )}
       <button
         onClick={onRemove}
         className="p-1 text-text-tertiary hover:text-error focus:outline-none"

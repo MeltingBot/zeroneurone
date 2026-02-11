@@ -57,6 +57,9 @@ interface TabState {
   isGhost: (elementId: ElementId) => boolean;
   isMember: (elementId: ElementId) => boolean;
 
+  // Restore a previously deleted tab (for undo)
+  restoreTab: (tab: CanvasTab) => Promise<void>;
+
   // Reset
   resetInvestigationState: () => void;
 }
@@ -196,6 +199,35 @@ export const useTabStore = create<TabState>((set, get) => ({
         await addMembers(tabs[0].id, orphanIds);
       }
     }
+  },
+
+  // ── Restore (undo delete) ────────────────────────────
+
+  restoreTab: async (tab: CanvasTab) => {
+    // Re-insert into IndexedDB (bulkUpsert uses put which handles re-insertion with same ID)
+    await tabRepository.bulkUpsert([tab]);
+
+    // Add to local state
+    set((s) => ({
+      tabs: [...s.tabs, tab].sort((a, b) => a.order - b.order),
+    }));
+
+    // Y.js sync: recreate in tabs map
+    import('../services/syncService').then(({ syncService }) => {
+      const ydoc = syncService.getYDoc();
+      if (!ydoc) return;
+      import('../types/yjs').then(({ getYMaps }) => {
+        import('./investigationStore').then(({ setLocalOpPending }) => {
+          import('../services/yjs/tabMapper').then(({ tabToYMap }) => {
+            setLocalOpPending();
+            const { tabs: tabsMap } = getYMaps(ydoc);
+            ydoc.transact(() => {
+              tabsMap.set(tab.id, tabToYMap(tab));
+            });
+          });
+        });
+      });
+    });
   },
 
   // ── Reorder ───────────────────────────────────────────

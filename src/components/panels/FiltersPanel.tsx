@@ -13,7 +13,7 @@ import {
   AlertCircle,
   MessageSquare,
 } from 'lucide-react';
-import { useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
+import { useInvestigationStore, useViewStore, useInsightsStore, useHistoryStore } from '../../stores';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence, Element, Comment, ViewFilters } from '../../types';
 
@@ -304,6 +304,11 @@ export function FiltersPanel() {
           {(isActive || hiddenElementIds.size > 0) && (
             <button
               onClick={() => {
+                useHistoryStore.getState().pushAction({
+                  type: 'clear-filters',
+                  undo: { snapshot: { filters: { ...filters }, hiddenElementIds: Array.from(hiddenElementIds) } },
+                  redo: {},
+                });
                 clearFilters();
                 showAllElements();
               }}

@@ -2031,8 +2031,14 @@ export function Canvas() {
       y: canvasContextMenu.canvasY,
     }, { width: 300, height: 200 });
 
+    pushAction({
+      type: 'create-element',
+      undo: {},
+      redo: { elements: [group], elementIds: [group.id] },
+    });
+
     selectElement(group.id);
-  }, [canvasContextMenu, createGroup, selectElement]);
+  }, [canvasContextMenu, createGroup, selectElement, pushAction]);
 
   // Create annotation from canvas context menu
   const handleCanvasContextMenuCreateAnnotation = useCallback(async () => {
@@ -2536,6 +2542,12 @@ export function Canvas() {
     const selectedElements = elements.filter(el => selectedEls.includes(el.id) && !el.isGroup);
     if (selectedElements.length < 2) return;
 
+    // Snapshot absolute positions for undo
+    const absolutePositions = selectedElements.map(el => ({
+      id: el.id,
+      position: { ...el.position },
+    }));
+
     // Calculate bounding box of selected elements with padding
     const padding = 40;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -2554,24 +2566,88 @@ export function Canvas() {
       height: maxY - minY + padding * 2,
     };
 
-    await createGroup('Groupe', groupPos, groupSize, selectedEls);
+    const group = await createGroup('Groupe', groupPos, groupSize, selectedEls);
+
+    // Compute relative positions for redo
+    const relativePositions = selectedElements.map(el => ({
+      id: el.id,
+      position: { x: el.position.x - groupPos.x, y: el.position.y - groupPos.y },
+    }));
+
+    // Get fresh group snapshot from store (with childIds set)
+    const groupSnapshot = useInvestigationStore.getState().elements.find(el => el.id === group.id);
+    if (groupSnapshot) {
+      pushAction({
+        type: 'create-group',
+        undo: { positions: absolutePositions },
+        redo: { elements: [groupSnapshot], elementIds: [group.id], positions: relativePositions },
+      });
+    }
+
     clearSelection();
-  }, [elements, getSelectedElementIds, createGroup, clearSelection]);
+  }, [elements, getSelectedElementIds, createGroup, clearSelection, pushAction]);
 
   // Dissolve group handler
   const handleDissolveGroup = useCallback(async () => {
     if (!contextMenu) return;
-    const el = elementMap.get(contextMenu.elementId);
-    if (!el?.isGroup) return;
+    const group = elementMap.get(contextMenu.elementId);
+    if (!group?.isGroup) return;
+
+    // Snapshot group element and children's relative positions for undo
+    const groupSnapshot = { ...group };
+    const childPositions = group.childIds
+      .map(childId => {
+        const child = elementMap.get(childId);
+        return child ? { id: childId, position: { ...child.position } } : null;
+      })
+      .filter((p): p is { id: string; position: { x: number; y: number } } => p !== null);
+
     await dissolveGroup(contextMenu.elementId);
+
+    pushAction({
+      type: 'dissolve-group',
+      undo: {
+        elements: [groupSnapshot],
+        positions: childPositions,
+      },
+      redo: {
+        elementIds: [contextMenu.elementId],
+      },
+    });
+
     clearSelection();
-  }, [contextMenu, elementMap, dissolveGroup, clearSelection]);
+  }, [contextMenu, elementMap, dissolveGroup, clearSelection, pushAction]);
 
   // Remove from group handler
   const handleRemoveFromGroup = useCallback(async () => {
     if (!contextMenu) return;
+    const child = elementMap.get(contextMenu.elementId);
+    if (!child?.parentGroupId) return;
+
+    const group = elementMap.get(child.parentGroupId);
+    if (!group) return;
+
+    // Snapshot old state for undo
+    const oldRelativePosition = { ...child.position };
+    const absolutePosition = {
+      x: child.position.x + group.position.x,
+      y: child.position.y + group.position.y,
+    };
+
     await removeFromGroup([contextMenu.elementId]);
-  }, [contextMenu, removeFromGroup]);
+
+    pushAction({
+      type: 'remove-from-group',
+      undo: {
+        elementId: contextMenu.elementId,
+        changes: { parentGroupId: child.parentGroupId, position: oldRelativePosition },
+      },
+      redo: {
+        elementId: contextMenu.elementId,
+        changes: { parentGroupId: null, position: absolutePosition },
+      },
+    });
+  }, [contextMenu, elementMap, removeFromGroup, pushAction]);
 
   // Toggle position lock handler - applies to all selected elements
   const handleToggleLock = useCallback(async () => {
@@ -3011,6 +3087,13 @@ export function Canvas() {
         }
         break;
 
+      case 'update-link':
+        // Restore previous link values
+        if (action.undo.linkId && action.undo.linkChanges) {
+          await updateLink(action.undo.linkId, action.undo.linkChanges);
+        }
+        break;
+
       case 'move-elements':
       case 'move-element':
         // Restore previous positions
@@ -3018,8 +3101,98 @@ export function Canvas() {
           await updateElementPositions(action.undo.positions);
         }
         break;
+
+      case 'extract-to-element':
+        // Restore property/event on source element
+        if (action.undo.elementId && action.undo.changes) {
+          await updateElement(action.undo.elementId, action.undo.changes);
+        }
+        // Delete created element (cascades to delete connected link)
+        if (action.redo.elementIds) {
+          await deleteElements(action.redo.elementIds);
+        }
+        break;
+
+      case 'dissolve-group':
+        // Recreate the group element
+        if (action.undo.elements) {
+          pasteElements(action.undo.elements, []);
+        }
+        // Restore children to relative positions with parentGroupId
+        if (action.undo.positions && action.undo.elements?.[0]) {
+          const groupId = action.undo.elements[0].id;
+          for (const child of action.undo.positions) {
+            await updateElement(child.id, {
+              parentGroupId: groupId,
+              position: child.position,
+            });
+          }
+        }
+        break;
+
+      case 'remove-from-group': {
+        // Restore child to relative position with parentGroupId
+        if (action.undo.elementId && action.undo.changes) {
+          await updateElement(action.undo.elementId, action.undo.changes);
+          // Add child back to group's childIds
+          const groupId = action.undo.changes.parentGroupId;
+          if (groupId) {
+            const group = elementMap.get(groupId);
+            if (group && !group.childIds.includes(action.undo.elementId)) {
+              await updateElement(groupId, {
+                childIds: [...group.childIds, action.undo.elementId],
+              });
+            }
+          }
+        }
+        break;
+      }
+
+      case 'create-group':
+        // Undo: restore children to absolute positions, delete group
+        if (action.undo.positions) {
+          for (const child of action.undo.positions) {
+            await updateElement(child.id, { parentGroupId: null, position: child.position });
+          }
+        }
+        if (action.redo.elementIds) {
+          await deleteElements(action.redo.elementIds);
+        }
+        break;
+
+      case 'delete-tab':
+        if (action.undo.snapshot) {
+          const { useTabStore } = await import('../../stores');
+          await useTabStore.getState().restoreTab(action.undo.snapshot);
+        }
+        break;
+
+      case 'delete-view':
+        if (action.undo.snapshot) {
+          const { useViewStore } = await import('../../stores');
+          useViewStore.getState().restoreView(action.undo.snapshot);
+        }
+        break;
+
+      case 'delete-section':
+        if (action.undo.snapshot) {
+          const { useReportStore } = await import('../../stores');
+          await useReportStore.getState().restoreSection(action.undo.snapshot);
+        }
+        break;
+
+      case 'clear-filters':
+        if (action.undo.snapshot) {
+          const { useViewStore } = await import('../../stores');
+          const vs = useViewStore.getState();
+          vs.setFilters(action.undo.snapshot.filters);
+          if (action.undo.snapshot.hiddenElementIds?.length > 0) {
+            vs.hideElements(action.undo.snapshot.hiddenElementIds);
+          }
+        }
+        break;
     }
-  }, [popUndo, createElement, createLink, deleteElements, updateElement, updateElementPositions]);
+  }, [popUndo, createElement, createLink, deleteElements, updateElement, updateLink, updateElementPositions, pasteElements, elementMap]);
 
   // Handle redo (for keyboard shortcut - uses popRedo to get action then executes)
   const handleRedo = useCallback(async () => {
@@ -3055,6 +3228,13 @@ export function Canvas() {
         }
         break;
 
+      case 'update-link':
+        // Re-apply link changes
+        if (action.redo.linkId && action.redo.linkChanges) {
+          await updateLink(action.redo.linkId, action.redo.linkChanges);
+        }
+        break;
+
       case 'move-elements':
       case 'move-element':
         // Apply new positions
@@ -3062,8 +3242,106 @@ export function Canvas() {
           await updateElementPositions(action.redo.positions);
         }
         break;
+
+      case 'extract-to-element':
+        // Re-create element and link
+        if (action.redo.elements) {
+          for (const el of action.redo.elements) {
+            await createElement(el.label, el.position, el);
+          }
+        }
+        if (action.redo.links) {
+          for (const link of action.redo.links) {
+            await createLink(link.fromId, link.toId, { ...link, id: link.id });
+          }
+        }
+        // Remove property/event from source again
+        if (action.redo.elementId && action.redo.changes) {
+          await updateElement(action.redo.elementId, action.redo.changes);
+        }
+        break;
+
+      case 'dissolve-group':
+        // Convert children to absolute positions and clear parentGroupId
+        if (action.undo.positions && action.undo.elements?.[0]) {
+          const group = action.undo.elements[0];
+          for (const child of action.undo.positions) {
+            await updateElement(child.id, {
+              parentGroupId: null,
+              position: {
+                x: child.position.x + group.position.x,
+                y: child.position.y + group.position.y,
+              },
+            });
+          }
+        }
+        // Delete the group element
+        if (action.redo.elementIds) {
+          await deleteElements(action.redo.elementIds);
+        }
+        break;
+
+      case 'remove-from-group': {
+        // Remove child from group (set absolute position, clear parentGroupId)
+        if (action.redo.elementId && action.redo.changes) {
+          await updateElement(action.redo.elementId, action.redo.changes);
+          // Remove child from group's childIds
+          const groupId = action.undo.changes?.parentGroupId;
+          if (groupId) {
+            const group = elementMap.get(groupId);
+            if (group) {
+              await updateElement(groupId, {
+                childIds: group.childIds.filter(id => id !== action.redo.elementId),
+              });
+            }
+          }
+        }
+        break;
+      }
+
+      case 'create-group':
+        // Redo: recreate group, move children to relative positions
+        if (action.redo.elements) {
+          pasteElements(action.redo.elements, []);
+          const group = action.redo.elements[0];
+          if (action.redo.positions) {
+            for (const child of action.redo.positions) {
+              await updateElement(child.id, { parentGroupId: group.id, position: child.position });
+            }
+          }
+        }
+        break;
+
+      case 'delete-tab':
+        if (action.redo.snapshot) {
+          const { useTabStore } = await import('../../stores');
+          await useTabStore.getState().deleteTab(action.redo.snapshot);
+        }
+        break;
+
+      case 'delete-view':
+        if (action.redo.snapshot) {
+          const { useViewStore } = await import('../../stores');
+          await useViewStore.getState().deleteView(action.redo.snapshot);
+        }
+        break;
+
+      case 'delete-section':
+        if (action.redo.snapshot) {
+          const { useReportStore } = await import('../../stores');
+          await useReportStore.getState().removeSection(action.redo.snapshot);
+        }
+        break;
+
+      case 'clear-filters': {
+        const { useViewStore } = await import('../../stores');
+        const vs = useViewStore.getState();
+        vs.clearFilters();
+        vs.showAllElements();
+        break;
+      }
     }
-  }, [popRedo, deleteElements, deleteLinks, createElement, updateElement, updateElementPositions]);
+  }, [popRedo, deleteElements, deleteLinks, createElement, createLink, updateElement, updateLink, updateElementPositions, elementMap, pasteElements]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -3254,6 +3532,11 @@ export function Canvas() {
         const mx = bounds ? (lastMousePosRef.current.x - bounds.left - viewport.x) / viewport.zoom : 0;
         const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
         const group = await createGroup('Groupe', { x: mx, y: my }, { width: 300, height: 200 });
+        pushAction({
+          type: 'create-element',
+          undo: {},
+          redo: { elements: [group], elementIds: [group.id] },
+        });
         selectElement(group.id);
       }
 

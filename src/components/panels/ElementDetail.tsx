@@ -2,8 +2,8 @@ import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers } from 'lucide-react';
-import { useInvestigationStore, useTagSetStore, useTabStore } from '../../stores';
-import type { Element, Confidence, ElementEvent, PropertyDefinition } from '../../types';
+import { useInvestigationStore, useTagSetStore, useTabStore, useHistoryStore } from '../../stores';
+import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition } from '../../types';
 import { syncService } from '../../services/syncService';
 import { getYMaps } from '../../types/yjs';
 import { yMapToElement } from '../../services/yjs/elementMapper';
@@ -51,12 +51,15 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const { t } = useTranslation('panels');
   // Individual selectors — prevent re-renders when unrelated store state changes
   const updateElement = useInvestigationStore((s) => s.updateElement);
+  const createElement = useInvestigationStore((s) => s.createElement);
+  const createLink = useInvestigationStore((s) => s.createLink);
   const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
   const addExistingTag = useInvestigationStore((s) => s.addExistingTag);
   const addSuggestedProperty = useInvestigationStore((s) => s.addSuggestedProperty);
   const associatePropertyWithTags = useInvestigationStore((s) => s.associatePropertyWithTags);
   const comments = useInvestigationStore((s) => s.comments);
   const togglePropertyDisplay = useInvestigationStore((s) => s.togglePropertyDisplay);
+  const pushAction = useHistoryStore((s) => s.pushAction);
   const canvasTabs = useTabStore((s) => s.tabs);
   const setActiveTab = useTabStore((s) => s.setActiveTab);
 
@@ -182,60 +185,92 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Save debounced label - only if still editing the same element
   useEffect(() => {
     if (editingElementIdRef.current === element.id && debouncedLabel !== element.label) {
-      // Update ref BEFORE syncing so we recognize our own echo
+      const oldLabel = element.label;
       lastSyncedLabelRef.current = debouncedLabel;
       updateElement(element.id, { label: debouncedLabel });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { label: oldLabel } },
+        redo: { elementId: element.id, changes: { label: debouncedLabel } },
+      });
     }
-  }, [debouncedLabel, element.id, element.label, updateElement]);
+  }, [debouncedLabel, element.id, element.label, updateElement, pushAction]);
 
   // Save debounced notes - only if still editing the same element
   useEffect(() => {
     if (editingElementIdRef.current === element.id && debouncedNotes !== element.notes) {
+      const oldNotes = element.notes;
       lastSyncedNotesRef.current = debouncedNotes;
       updateElement(element.id, { notes: debouncedNotes });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { notes: oldNotes } },
+        redo: { elementId: element.id, changes: { notes: debouncedNotes } },
+      });
     }
-  }, [debouncedNotes, element.id, element.notes, updateElement]);
+  }, [debouncedNotes, element.id, element.notes, updateElement, pushAction]);
 
   // Save debounced source - only if still editing the same element
   useEffect(() => {
     if (editingElementIdRef.current === element.id && debouncedSource !== element.source) {
+      const oldSource = element.source;
       lastSyncedSourceRef.current = debouncedSource;
       updateElement(element.id, { source: debouncedSource });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { source: oldSource } },
+        redo: { elementId: element.id, changes: { source: debouncedSource } },
+      });
     }
-  }, [debouncedSource, element.id, element.source, updateElement]);
+  }, [debouncedSource, element.id, element.source, updateElement, pushAction]);
 
-  // Handle confidence change
+  // Handle confidence change (with undo support)
   const handleConfidenceChange = useCallback(
     (value: number) => {
+      const oldConfidence = element.confidence;
       const newConfidence = Math.round(value / 10) * 10 as Confidence;
       setConfidence(newConfidence);
       updateElement(element.id, { confidence: newConfidence });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { confidence: oldConfidence } },
+        redo: { elementId: element.id, changes: { confidence: newConfidence } },
+      });
     },
-    [element.id, updateElement]
+    [element.id, element.confidence, updateElement, pushAction]
   );
 
-  // Handle date change
+  // Handle date change (with undo support)
   const handleDateChange = useCallback(
     (value: string) => {
+      const oldDate = element.date;
       setDate(value);
       const newDate = value ? new Date(value) : null;
       updateElement(element.id, { date: newDate });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { date: oldDate } },
+        redo: { elementId: element.id, changes: { date: newDate } },
+      });
     },
-    [element.id, updateElement]
+    [element.id, element.date, updateElement, pushAction]
   );
 
-  // Clear geo coordinates
+  // Clear geo coordinates (with undo support)
   const handleClearGeo = useCallback(() => {
-    // Use flushSync to force synchronous state updates before any async operations
-    // This prevents React batching from being affected by store updates
+    const oldGeo = element.geo ?? null;
     flushSync(() => {
       setGeoLat('');
       setGeoLng('');
       setLastSavedGeo(null);
     });
-    // Then update store (async, but local state is already committed)
     useInvestigationStore.getState().updateElement(element.id, { geo: null });
-  }, [element.id]);
+    pushAction({
+      type: 'update-element',
+      undo: { elementId: element.id, changes: { geo: oldGeo } },
+      redo: { elementId: element.id, changes: { geo: null } },
+    });
+  }, [element.id, element.geo, pushAction]);
 
   // Validate and save geo coordinates from button click
   const handleValidateGeoClick = useCallback(() => {
@@ -265,8 +300,14 @@ export function ElementDetail({ element }: ElementDetailProps) {
     });
 
     // Then update store (async, but local state is already committed)
+    const oldGeo = element.geo ?? null;
     useInvestigationStore.getState().updateElement(element.id, { geo: newGeo });
-  }, [geoLat, geoLng, element.id]);
+    pushAction({
+      type: 'update-element',
+      undo: { elementId: element.id, changes: { geo: oldGeo } },
+      redo: { elementId: element.id, changes: { geo: newGeo } },
+    });
+  }, [geoLat, geoLng, element.id, element.geo, pushAction]);
 
   // Pending geo picker callback (for events editor)
   const pendingGeoPickerCallback = useRef<((lat: number, lng: number) => void) | null>(null);
@@ -282,6 +323,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
         pendingGeoPickerInitialGeo.current = null;
       } else {
         // Save immediately when selecting from map (user expects instant feedback)
+        const oldGeo = element.geo ?? null;
         const newGeo = { lat, lng };
         flushSync(() => {
           setGeoLat(lat.toString());
@@ -289,10 +331,15 @@ export function ElementDetail({ element }: ElementDetailProps) {
           setLastSavedGeo(newGeo);
         });
         useInvestigationStore.getState().updateElement(element.id, { geo: newGeo });
+        pushAction({
+          type: 'update-element',
+          undo: { elementId: element.id, changes: { geo: oldGeo } },
+          redo: { elementId: element.id, changes: { geo: newGeo } },
+        });
       }
       setShowGeoPicker(false);
     },
-    [element.id]
+    [element.id, element.geo, pushAction]
   );
 
   // Handle opening geo picker for events editor
@@ -305,28 +352,162 @@ export function ElementDetail({ element }: ElementDetailProps) {
     []
   );
 
-  // Handle events change
+  // Handle events change (with undo support)
   const handleEventsChange = useCallback(
     (events: ElementEvent[]) => {
+      const oldEvents = element.events || [];
       updateElement(element.id, { events });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { events: oldEvents } },
+        redo: { elementId: element.id, changes: { events } },
+      });
     },
-    [element.id, updateElement]
+    [element.id, element.events, updateElement, pushAction]
   );
 
-  // Handle tags change
+  // Handle tags change (with undo support)
   const handleTagsChange = useCallback(
     (tags: string[]) => {
+      const oldTags = element.tags || [];
       updateElement(element.id, { tags });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { tags: oldTags } },
+        redo: { elementId: element.id, changes: { tags } },
+      });
     },
-    [element.id, updateElement]
+    [element.id, element.tags, updateElement, pushAction]
   );
 
-  // Handle properties change
+  // Handle properties change (with undo support)
   const handlePropertiesChange = useCallback(
     (properties: Element['properties']) => {
+      const oldProperties = element.properties || [];
       updateElement(element.id, { properties });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { properties: oldProperties } },
+        redo: { elementId: element.id, changes: { properties } },
+      });
     },
-    [element.id, updateElement]
+    [element.id, element.properties, updateElement, pushAction]
+  );
+
+  // Extract a property as a new independent element linked to this one
+  const handleExtractProperty = useCallback(
+    async (property: Property) => {
+      const label = String(property.value ?? '');
+      if (!label) return;
+
+      const position = {
+        x: element.position.x + 200,
+        y: element.position.y,
+      };
+
+      const options: Partial<Element> = {
+        tags: [property.key],
+      };
+
+      // Map specific property types to element fields
+      if (property.type === 'geo' && typeof property.value === 'string') {
+        const parts = property.value.split(',').map((s) => parseFloat(s.trim()));
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          options.geo = { lat: parts[0], lng: parts[1] };
+        }
+      } else if ((property.type === 'date' || property.type === 'datetime') && property.value) {
+        options.date = new Date(property.value as string | number);
+      }
+
+      const newElement = await createElement(label, position, options);
+      const newLink = await createLink(element.id, newElement.id);
+
+      // Remove the extracted property from the source element
+      const remaining = (element.properties || []).filter(
+        (p) => !(p.key === property.key && p.value === property.value)
+      );
+      updateElement(element.id, { properties: remaining });
+
+      // Push undo action (atomic: restore property + delete created element/link)
+      pushAction({
+        type: 'extract-to-element',
+        undo: {
+          elementId: element.id,
+          changes: { properties: element.properties || [] },
+        },
+        redo: {
+          elements: [newElement],
+          links: [newLink],
+          elementIds: [newElement.id],
+          elementId: element.id,
+          changes: { properties: remaining },
+        },
+      });
+    },
+    [element.id, element.position, element.properties, createElement, createLink, updateElement, pushAction]
+  );
+
+  // Extract an event as a new independent element linked to this one
+  const handleExtractEvent = useCallback(
+    async (event: ElementEvent) => {
+      const label = event.label || '';
+      if (!label) return;
+
+      const position = {
+        x: element.position.x + 200,
+        y: element.position.y,
+      };
+
+      // Deep copy properties to avoid mutation
+      const copiedProperties = (event.properties || []).map((p) => ({ ...p }));
+
+      const elementOptions: Partial<Element> = {
+        tags: ['event'],
+        notes: event.description || '',
+        source: event.source || '',
+        properties: copiedProperties,
+      };
+
+      if (event.geo) {
+        elementOptions.geo = { lat: event.geo.lat, lng: event.geo.lng };
+      }
+
+      const newElement = await createElement(label, position, elementOptions);
+
+      // Dates go on the link (the relationship carries the temporal info)
+      const linkOptions: Partial<Link> = {};
+      if (event.date) {
+        linkOptions.date = new Date(event.date);
+      }
+      if (event.dateEnd) {
+        linkOptions.dateRange = {
+          start: event.date ? new Date(event.date) : null,
+          end: new Date(event.dateEnd),
+        };
+      }
+      const newLink = await createLink(element.id, newElement.id, linkOptions);
+
+      // Remove the extracted event from the source element
+      const remaining = (element.events || []).filter((e) => e.id !== event.id);
+      updateElement(element.id, { events: remaining });
+
+      // Push undo action (atomic: restore event + delete created element/link)
+      pushAction({
+        type: 'extract-to-element',
+        undo: {
+          elementId: element.id,
+          changes: { events: element.events || [] },
+        },
+        redo: {
+          elements: [newElement],
+          links: [newLink],
+          elementIds: [newElement.id],
+          elementId: element.id,
+          changes: { events: remaining },
+        },
+      });
+    },
+    [element.id, element.position, element.events, createElement, createLink, updateElement, pushAction]
   );
 
   // Handle new tag (save to investigation settings for reuse)
@@ -345,11 +526,16 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Handle applying suggested properties from popup
   const handleApplySuggestedProperties = useCallback(
     (properties: Element['properties']) => {
-      updateElement(element.id, {
-        properties: [...element.properties, ...properties],
+      const oldProperties = element.properties || [];
+      const newProperties = [...oldProperties, ...properties];
+      updateElement(element.id, { properties: newProperties });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { properties: oldProperties } },
+        redo: { elementId: element.id, changes: { properties: newProperties } },
       });
     },
-    [element.id, element.properties, updateElement]
+    [element.id, element.properties, updateElement, pushAction]
   );
 
   // Handle new property (save to investigation settings for reuse)
@@ -368,17 +554,33 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Handle visual change
   const handleVisualChange = useCallback(
     (visual: Partial<Element['visual']>) => {
+      // Build old values for only the changed keys
+      const oldVisual: Partial<Element['visual']> = {};
+      for (const key of Object.keys(visual) as (keyof Element['visual'])[]) {
+        (oldVisual as any)[key] = element.visual[key];
+      }
       // Pass only changed properties — store merges with current visual
       // Avoids overwriting concurrent remote changes with stale local values
       updateElement(element.id, { visual });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { visual: oldVisual as any } },
+        redo: { elementId: element.id, changes: { visual: visual as any } },
+      });
     },
-    [element.id, updateElement]
+    [element.id, element.visual, updateElement, pushAction]
   );
 
-  // Handle position lock toggle
+  // Handle position lock toggle (with undo support)
   const handleToggleLock = useCallback(() => {
-    updateElement(element.id, { isPositionLocked: !element.isPositionLocked });
-  }, [element.id, element.isPositionLocked, updateElement]);
+    const newLocked = !element.isPositionLocked;
+    updateElement(element.id, { isPositionLocked: newLocked });
+    pushAction({
+      type: 'update-element',
+      undo: { elementId: element.id, changes: { isPositionLocked: element.isPositionLocked } },
+      redo: { elementId: element.id, changes: { isPositionLocked: newLocked } },
+    });
+  }, [element.id, element.isPositionLocked, updateElement, pushAction]);
 
   // Badges for accordion sections
   const tagsBadge = element.tags.length > 0 ? (
@@ -797,6 +999,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
             onOpenGeoPicker={handleOpenGeoPickerForHistory}
             suggestions={propertySuggestions}
             onNewProperty={handleNewProperty}
+            onExtractToElement={handleExtractEvent}
           />
         </div>
       </AccordionSection>
@@ -902,6 +1105,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           onNewProperty={handleNewProperty}
           displayedProperties={currentInvestigation?.settings.displayedProperties}
           onToggleDisplayProperty={togglePropertyDisplay}
+          onExtractToElement={handleExtractProperty}
         />
       </AccordionSection>
 

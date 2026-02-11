@@ -76,12 +76,18 @@ export function LayoutDropdown() {
     } catch (error) {
       console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
       // Fallback to main-thread computation
+      const oldPositions = elements.map((el) => ({ id: el.id, position: { ...el.position } }));
       const result = layoutService.applyLayout(layoutType, elements, links);
       const newPositions: { id: string; position: Position }[] = [];
       for (const [id, position] of result.positions) {
         newPositions.push({ id, position });
       }
       if (newPositions.length > 0) {
+        pushAction({
+          type: 'move-elements',
+          undo: { positions: oldPositions },
+          redo: { positions: newPositions },
+        });
         await updateElementPositions(newPositions);
       }
     } finally {

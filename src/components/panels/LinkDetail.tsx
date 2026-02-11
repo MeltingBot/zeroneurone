@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
-import { useInvestigationStore } from '../../stores';
+import { useInvestigationStore, useHistoryStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition, FontSize } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -71,6 +71,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
   const addSuggestedProperty = useInvestigationStore((s) => s.addSuggestedProperty);
   const addExistingTag = useInvestigationStore((s) => s.addExistingTag);
+  const pushAction = useHistoryStore((s) => s.pushAction);
   const comments = useInvestigationStore((s) => s.comments);
   // Note: currentInvestigation is used for suggestions in PropertiesEditor
 
@@ -151,78 +152,138 @@ export function LinkDetail({ link }: LinkDetailProps) {
   // Save debounced values only if still editing the same link
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedLabel !== link.label) {
-      // Update ref BEFORE syncing so we recognize our own echo
+      const oldLabel = link.label;
       lastSyncedLabelRef.current = debouncedLabel;
       updateLink(link.id, { label: debouncedLabel });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { label: oldLabel } },
+        redo: { linkId: link.id, linkChanges: { label: debouncedLabel } },
+      });
     }
-  }, [debouncedLabel, link.id, link.label, updateLink]);
+  }, [debouncedLabel, link.id, link.label, updateLink, pushAction]);
 
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedNotes !== link.notes) {
+      const oldNotes = link.notes;
       lastSyncedNotesRef.current = debouncedNotes;
       updateLink(link.id, { notes: debouncedNotes });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { notes: oldNotes } },
+        redo: { linkId: link.id, linkChanges: { notes: debouncedNotes } },
+      });
     }
-  }, [debouncedNotes, link.id, link.notes, updateLink]);
+  }, [debouncedNotes, link.id, link.notes, updateLink, pushAction]);
 
   useEffect(() => {
     if (editingLinkIdRef.current === link.id && debouncedSource !== link.source) {
+      const oldSource = link.source;
       lastSyncedSourceRef.current = debouncedSource;
       updateLink(link.id, { source: debouncedSource });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { source: oldSource } },
+        redo: { linkId: link.id, linkChanges: { source: debouncedSource } },
+      });
     }
-  }, [debouncedSource, link.id, link.source, updateLink]);
+  }, [debouncedSource, link.id, link.source, updateLink, pushAction]);
 
-  // Handle direction change
+  // Handle direction change (with undo support)
   const handleDirectionChange = useCallback(
     (direction: LinkDirection) => {
+      const oldDirection = link.direction;
+      const oldDirected = link.directed;
       updateLink(link.id, { direction, directed: direction !== 'none' });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { direction: oldDirection, directed: oldDirected } },
+        redo: { linkId: link.id, linkChanges: { direction, directed: direction !== 'none' } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.direction, link.directed, updateLink, pushAction]
   );
 
-  // Handle confidence change
+  // Handle confidence change (with undo support)
   const handleConfidenceChange = useCallback(
     (value: number) => {
+      const oldConfidence = link.confidence;
       const newConfidence = Math.round(value / 10) * 10 as Confidence;
       updateLink(link.id, { confidence: newConfidence });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { confidence: oldConfidence } },
+        redo: { linkId: link.id, linkChanges: { confidence: newConfidence } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.confidence, updateLink, pushAction]
   );
 
-  // Handle visual changes — pass only changed property, store merges
+  // Handle visual changes — pass only changed property, store merges (with undo support)
   const handleColorChange = useCallback(
     (color: string) => {
+      const oldColor = link.visual.color;
       updateLink(link.id, { visual: { color } });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { visual: { color: oldColor } as any } },
+        redo: { linkId: link.id, linkChanges: { visual: { color } as any } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.visual.color, updateLink, pushAction]
   );
 
   const handleStyleChange = useCallback(
     (style: LinkStyle) => {
+      const oldStyle = link.visual.style;
       updateLink(link.id, { visual: { style } });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { visual: { style: oldStyle } as any } },
+        redo: { linkId: link.id, linkChanges: { visual: { style } as any } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.visual.style, updateLink, pushAction]
   );
 
   const handleThicknessChange = useCallback(
     (thickness: number) => {
+      const oldThickness = link.visual.thickness;
       updateLink(link.id, { visual: { thickness } });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { visual: { thickness: oldThickness } as any } },
+        redo: { linkId: link.id, linkChanges: { visual: { thickness } as any } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.visual.thickness, updateLink, pushAction]
   );
 
   const handleFontSizeChange = useCallback(
     (fontSize: FontSize) => {
+      const oldFontSize = link.visual.fontSize;
       updateLink(link.id, { visual: { fontSize } });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { visual: { fontSize: oldFontSize } as any } },
+        redo: { linkId: link.id, linkChanges: { visual: { fontSize } as any } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.visual.fontSize, updateLink, pushAction]
   );
 
-  // Handle properties change
+  // Handle properties change (with undo support)
   const handlePropertiesChange = useCallback(
     (properties: Link['properties']) => {
+      const oldProperties = link.properties || [];
       updateLink(link.id, { properties });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { properties: oldProperties } },
+        redo: { linkId: link.id, linkChanges: { properties } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.properties, updateLink, pushAction]
   );
 
   // Handle new property (save to investigation settings for reuse)
@@ -233,12 +294,18 @@ export function LinkDetail({ link }: LinkDetailProps) {
     [addSuggestedProperty]
   );
 
-  // Handle tags change
+  // Handle tags change (with undo support)
   const handleTagsChange = useCallback(
     (tags: string[]) => {
+      const oldTags = link.tags || [];
       updateLink(link.id, { tags });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { tags: oldTags } },
+        redo: { linkId: link.id, linkChanges: { tags } },
+      });
     },
-    [link.id, updateLink]
+    [link.id, link.tags, updateLink, pushAction]
   );
 
   // Handle new tag (save to investigation settings for reuse)
@@ -254,14 +321,19 @@ export function LinkDetail({ link }: LinkDetailProps) {
     setSuggestedPropsTagSet(tagSetName);
   }, []);
 
-  // Handle applying suggested properties from TagSet
+  // Handle applying suggested properties from TagSet (with undo support)
   const handleApplySuggestedProperties = useCallback(
     (properties: Property[]) => {
-      updateLink(link.id, {
-        properties: [...link.properties, ...properties],
+      const oldProperties = link.properties || [];
+      const newProperties = [...oldProperties, ...properties];
+      updateLink(link.id, { properties: newProperties });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { properties: oldProperties } },
+        redo: { linkId: link.id, linkChanges: { properties: newProperties } },
       });
     },
-    [link.id, link.properties, updateLink]
+    [link.id, link.properties, updateLink, pushAction]
   );
 
   // Badges for accordion sections

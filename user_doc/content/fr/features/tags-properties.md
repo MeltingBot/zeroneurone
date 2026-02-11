@@ -77,6 +77,16 @@ Créez des modèles de propriétés pour accélérer la saisie :
 2. Cochez les propriétés à afficher comme badges
 
 
+### Extraire une propriete en element
+
+Transformez une propriete en un element autonome sur le canvas :
+
+1. Survolez la propriete dans le panneau de detail
+2. Cliquez sur l'icone **↗** (Extraire en element)
+3. Un nouvel element est cree avec le nom de la propriete, relie a l'element source
+
+L'operation est reversible avec **Ctrl+Z**.
+
 ---
 
 ## Confiance et source

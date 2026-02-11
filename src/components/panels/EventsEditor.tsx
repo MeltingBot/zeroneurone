@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight } from 'lucide-react';
 import type { ElementEvent, PropertyDefinition } from '../../types';
 import { generateUUID } from '../../utils';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -13,6 +13,8 @@ interface EventsEditorProps {
   suggestions?: PropertyDefinition[];
   /** Callback when a new property is created */
   onNewProperty?: (propertyDef: PropertyDefinition) => void;
+  /** Callback to extract an event as a new element */
+  onExtractToElement?: (event: ElementEvent) => void;
 }
 
 // Sub-component for a single event - manages local state for text fields
@@ -22,6 +24,7 @@ interface EventItemProps {
   onToggleExpand: () => void;
   onUpdate: (updates: Partial<ElementEvent>) => void;
   onRemove: () => void;
+  onExtract?: () => void;
   onPickLocation: () => void;
   onClearGeo: () => void;
   suggestions: PropertyDefinition[];
@@ -34,6 +37,7 @@ function EventItem({
   onToggleExpand,
   onUpdate,
   onRemove,
+  onExtract,
   onPickLocation,
   onClearGeo,
   suggestions,
@@ -138,6 +142,16 @@ function EventItem({
           >
             {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
+          {onExtract && (
+            <button
+              type="button"
+              onClick={onExtract}
+              className="p-1 text-text-tertiary hover:text-accent rounded"
+              title={t('detail.events.extractToElement')}
+            >
+              <ArrowUpRight size={12} />
+            </button>
+          )}
           <button
             type="button"
             onClick={onRemove}
@@ -278,6 +292,7 @@ export function EventsEditor({
   onOpenGeoPicker,
   suggestions = [],
   onNewProperty,
+  onExtractToElement,
 }: EventsEditorProps) {
   const { t } = useTranslation('panels');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -375,6 +390,7 @@ export function EventsEditor({
               onToggleExpand={() => toggleEventExpand(event.id)}
               onUpdate={(updates) => handleUpdate(event.id, updates)}
               onRemove={() => handleRemove(event.id)}
+              onExtract={onExtractToElement ? () => onExtractToElement(event) : undefined}
               onPickLocation={() => handlePickLocation(event.id)}
               onClearGeo={() => handleClearGeo(event.id)}
               suggestions={suggestions}

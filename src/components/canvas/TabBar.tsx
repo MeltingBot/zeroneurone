@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
-import { useTabStore, useViewStore, useInvestigationStore } from '../../stores';
+import { useTabStore, useViewStore, useInvestigationStore, useHistoryStore } from '../../stores';
 import type { TabId, InvestigationId } from '../../types';
 
 interface TabBarProps {
@@ -21,6 +21,7 @@ export function TabBar({ investigationId }: TabBarProps) {
   const viewport = useViewStore((s) => s.viewport);
   const requestViewportChange = useViewStore((s) => s.requestViewportChange);
   const elements = useInvestigationStore((s) => s.elements);
+  const pushAction = useHistoryStore((s) => s.pushAction);
 
   const [editingTabId, setEditingTabId] = useState<TabId | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -93,6 +94,14 @@ export function TabBar({ investigationId }: TabBarProps) {
 
   const handleDeleteFromContext = () => {
     if (contextMenu) {
+      const tab = tabs.find((t) => t.id === contextMenu.tabId);
+      if (tab) {
+        pushAction({
+          type: 'delete-tab',
+          undo: { snapshot: { ...tab } },
+          redo: { snapshot: tab.id },
+        });
+      }
       deleteTab(contextMenu.tabId);
     }
     setContextMenu(null);
@@ -157,7 +166,14 @@ export function TabBar({ investigationId }: TabBarProps) {
               onEditChange={setEditValue}
               onEditCommit={commitRename}
               editInputRef={editingTabId === tab.id ? editInputRef : undefined}
-              onClose={tabs.length > 1 ? () => deleteTab(tab.id) : undefined}
+              onClose={tabs.length > 1 ? () => {
+                pushAction({
+                  type: 'delete-tab',
+                  undo: { snapshot: { ...tab } },
+                  redo: { snapshot: tab.id },
+                });
+                deleteTab(tab.id);
+              } : undefined}
             />
           ))}
         </div>

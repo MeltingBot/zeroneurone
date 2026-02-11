@@ -115,7 +115,8 @@
       "sourcePlaceholder": "Fonte da informação...",
       "locationOptional": "Localização (opcional)",
       "clearLocation": "Limpar",
-      "pickOnMap": "Mapa"
+      "pickOnMap": "Mapa",
+      "extractToElement": "Extrair como elemento"
     },
     "location": {
       "title": "Localização",
@@ -167,7 +168,8 @@
       },
       "booleanYes": "Sim",
       "booleanNo": "Não",
-      "selectOption": "Selecionar uma opção..."
+      "selectOption": "Selecionar uma opção...",
+      "extractToElement": "Extrair como elemento"
     },
     "appearance": {
       "title": "Aparência",

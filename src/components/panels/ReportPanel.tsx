@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Plus, Loader2, Download, Link2, Link2Off, Globe } from 'lucide-react';
-import { useInvestigationStore, useReportStore } from '../../stores';
+import { useInvestigationStore, useReportStore, useHistoryStore } from '../../stores';
 import { ReportSectionEditor } from '../report/ReportSectionEditor';
 import { Input, IconButton } from '../common';
 import { exportInteractiveReport } from '../../services/exportInteractiveReportService';
@@ -255,7 +255,14 @@ export function ReportPanel() {
                 isActive={activeSectionId === section.id}
                 onActivate={() => setActiveSection(section.id)}
                 onUpdate={(changes) => updateSection(section.id, changes)}
-                onDelete={() => removeSection(section.id)}
+                onDelete={() => {
+                  useHistoryStore.getState().pushAction({
+                    type: 'delete-section',
+                    undo: { snapshot: { ...section } },
+                    redo: { snapshot: section.id },
+                  });
+                  removeSection(section.id);
+                }}
                 isDragging={draggingSectionId === section.id}
                 isDragOver={dragOverSectionId === section.id}
                 onDragStart={() => handleDragStart(section.id)}

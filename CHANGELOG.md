@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.9.0
+
+### Features
+- Comprehensive undo/redo: all destructive actions are now undoable (Ctrl+Z / Ctrl+Shift+Z)
+  - Element/link metadata: label, notes, source, confidence, dates, geolocation, visual properties
+  - Properties and events: add, edit, delete on elements and links
+  - Groups: create group, dissolve group, remove from group
+  - Canvas tabs: delete tab
+  - Saved views: delete view
+  - Report sections: delete section
+  - Filters: clear all filters
+  - Layout fallback: undo layout when no prior positions exist
+- Extract property to element: promote a property to its own element on the canvas, linked to the source
+- Extract event to element: promote an event to its own element, with temporal data (date, period) carried by the link
+
+### Fixes
+- Event extraction: dates now placed on the link (relationship) instead of the extracted element, matching the semantic model
+
 ## 2.8.0
 
 ### Features

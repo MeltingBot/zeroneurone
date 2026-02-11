@@ -115,7 +115,8 @@
       "sourcePlaceholder": "Font de la informació...",
       "locationOptional": "Localització (opcional)",
       "clearLocation": "Esborrar",
-      "pickOnMap": "Mapa"
+      "pickOnMap": "Mapa",
+      "extractToElement": "Extreure com a element"
     },
     "location": {
       "title": "Localització",
@@ -167,7 +168,8 @@
       },
       "booleanYes": "Sí",
       "booleanNo": "No",
-      "selectOption": "Selecciona una opció..."
+      "selectOption": "Selecciona una opció...",
+      "extractToElement": "Extreure com a element"
     },
     "appearance": {
       "title": "Aparença",

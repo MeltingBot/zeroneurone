@@ -4,7 +4,7 @@ import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
   Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight
 } from 'lucide-react';
-import { useInvestigationStore, useViewStore } from '../../stores';
+import { useInvestigationStore, useViewStore, useHistoryStore } from '../../stores';
 import type { View } from '../../types';
 
 type TagDisplayMode = 'none' | 'icons' | 'labels' | 'both';
@@ -99,15 +99,25 @@ export function ViewsPanel() {
     [loadView, updateElementPositions]
   );
 
+  const pushAction = useHistoryStore((s) => s.pushAction);
+
   const handleDeleteView = useCallback(
     async (viewId: string, e: React.MouseEvent) => {
       e.stopPropagation();
+      const view = savedViews.find((v) => v.id === viewId);
+      if (view) {
+        pushAction({
+          type: 'delete-view',
+          undo: { snapshot: { ...view } },
+          redo: { snapshot: viewId },
+        });
+      }
       await deleteView(viewId);
       if (activeViewId === viewId) {
         setActiveViewId(null);
       }
     },
-    [deleteView, activeViewId]
+    [deleteView, activeViewId, savedViews, pushAction]
   );
 
   const handleKeyDown = useCallback(

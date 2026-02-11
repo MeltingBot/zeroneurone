@@ -115,7 +115,8 @@
       "sourcePlaceholder": "Informazioaren iturria...",
       "locationOptional": "Kokapena (aukerakoa)",
       "clearLocation": "Garbitu",
-      "pickOnMap": "Mapa"
+      "pickOnMap": "Mapa",
+      "extractToElement": "Elementu gisa erauzi"
     },
     "location": {
       "title": "Kokapena",
@@ -167,7 +168,8 @@
       },
       "booleanYes": "Bai",
       "booleanNo": "Ez",
-      "selectOption": "Aukeratu aukera bat..."
+      "selectOption": "Aukeratu aukera bat...",
+      "extractToElement": "Elementu gisa erauzi"
     },
     "appearance": {
       "title": "Itxura",

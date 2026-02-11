@@ -115,7 +115,8 @@
       "sourcePlaceholder": "Джерело інформації...",
       "locationOptional": "Розташування (необов'язково)",
       "clearLocation": "Очистити",
-      "pickOnMap": "Карта"
+      "pickOnMap": "Карта",
+      "extractToElement": "Витягнути як елемент"
     },
     "location": {
       "title": "Розташування",
@@ -167,7 +168,8 @@
       },
       "booleanYes": "Так",
       "booleanNo": "Ні",
-      "selectOption": "Оберіть опцію..."
+      "selectOption": "Оберіть опцію...",
+      "extractToElement": "Витягнути як елемент"
     },
     "appearance": {
       "title": "Вигляд",
