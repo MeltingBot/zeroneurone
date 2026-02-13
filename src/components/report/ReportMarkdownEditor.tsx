@@ -387,6 +387,8 @@ export function ReportMarkdownEditor({
   const justClickedLinkRef = useRef(false);
   const previousEditingLinkIdRef = useRef<string | null>(null);
   const pendingCursorPositionRef = useRef<number | null>(null);
+  // Flag to allow one DOM build when entering write mode
+  const justEnteredWriteModeRef = useRef(false);
   // Track the content we sent to parent to detect our own echoes vs remote updates
   const lastSentContentRef = useRef<string | null>(null);
   // Track localContent in a ref to avoid effect dependencies causing re-triggers
@@ -418,11 +420,10 @@ export function ReportMarkdownEditor({
     }
   }, [value, isWriteMode]);
 
-  // Parse content into segments - only needed for read mode display
-  // In write mode, the DOM is managed by contenteditable directly
+  // Parse content into segments - needed for read mode display and initial write mode build
   const segments = useMemo(() => {
-    // Don't bother parsing in write mode - we won't use it
-    if (isWriteMode) return [];
+    // Allow parsing when entering write mode (for initial DOM build), skip during editing
+    if (isWriteMode && !justEnteredWriteModeRef.current) return [];
     return parseContent(localContent);
   }, [localContent, isWriteMode]);
 
@@ -431,8 +432,11 @@ export function ReportMarkdownEditor({
     if (!editorRef.current || isUpdatingRef.current) return;
 
     // IMPORTANT: Don't rebuild DOM while user is typing (write mode)
-    // This prevents glitches from Yjs sync overwriting user input
-    if (isWriteMode) return;
+    // Exception: allow one initial build when entering write mode
+    if (isWriteMode && !justEnteredWriteModeRef.current) return;
+    if (justEnteredWriteModeRef.current) {
+      justEnteredWriteModeRef.current = false;
+    }
 
     // Don't rebuild if we just clicked a link to edit it
     if (justClickedLinkRef.current) {
@@ -734,6 +738,8 @@ export function ReportMarkdownEditor({
       updateEditingReportSection(sectionId);
       // Notify parent we're starting to edit
       onEditingChange?.(true);
+      // Allow one DOM build in the sync effect to populate the contentEditable
+      justEnteredWriteModeRef.current = true;
       // Copy current value to local buffer
       setLocalContent(value);
       // Focus editor

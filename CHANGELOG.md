@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.10.1
+
+### Fixes
+- Report editor: fix empty content when entering write mode (contentEditable was never populated on initial edit)
+
 ## 2.10.0
 
 ### Features
