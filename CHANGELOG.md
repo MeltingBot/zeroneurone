@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.10.2
+
+### Fixes
+- Canvas: paste now targets mouse cursor position instead of viewport center (fallback to center if cursor outside canvas)
+- Canvas: duplicate (Ctrl+D) preserves parent group membership when the group is also selected
+- Canvas: Escape key deselects all elements and links
+- Canvas: arrow keys move selected elements (1px, Shift+arrow = 10px) with undo/redo support
+
 ## 2.10.1
 
 ### Fixes

@@ -3359,6 +3359,36 @@ export function Canvas() {
 
       const isCtrlOrMeta = event.ctrlKey || event.metaKey;
 
+      // Escape: deselect all
+      if (event.key === 'Escape') {
+        clearSelection();
+        return;
+      }
+
+      // Arrow keys: move selected elements (1px, +Shift = 10px)
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        const selectedEls = getSelectedElementIds();
+        if (selectedEls.length === 0) return;
+        event.preventDefault();
+        const step = event.shiftKey ? 10 : 1;
+        const dx = event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0;
+        const dy = event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0;
+        const movableEls = elements.filter(el => selectedEls.includes(el.id) && !el.isPositionLocked);
+        if (movableEls.length === 0) return;
+        const undoPositions = movableEls.map(el => ({ id: el.id, position: { ...el.position } }));
+        const redoPositions = movableEls.map(el => ({
+          id: el.id,
+          position: { x: el.position.x + dx, y: el.position.y + dy },
+        }));
+        updateElementPositions(redoPositions);
+        pushAction({
+          type: 'move-elements',
+          undo: { positions: undoPositions },
+          redo: { positions: redoPositions },
+        });
+        return;
+      }
+
       // Delete selected elements
       if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault();
@@ -3460,7 +3490,9 @@ export function Canvas() {
                 x: el.position.x + offset,
                 y: el.position.y + offset,
               },
-              parentGroupId: null,
+              parentGroupId: el.parentGroupId && oldToNewIdMap.has(el.parentGroupId)
+                ? oldToNewIdMap.get(el.parentGroupId)!
+                : null,
               createdAt: now,
               updatedAt: now,
             };
@@ -3579,6 +3611,7 @@ export function Canvas() {
     activeTabId,
     tabMemberSet,
     addTabMembers,
+    updateElementPositions,
   ]);
 
   // Handle paste (Ctrl+V) for elements or media
@@ -3592,9 +3625,17 @@ export function Canvas() {
         return;
       }
 
-      // Calculate paste position (center of visible viewport)
-      const centerX = (-viewport.x + (reactFlowWrapper.current?.clientWidth || 800) / 2) / viewport.zoom;
-      const centerY = (-viewport.y + (reactFlowWrapper.current?.clientHeight || 600) / 2) / viewport.zoom;
+      // Calculate paste position: mouse cursor if inside canvas, fallback to viewport center
+      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+      const mouseX = lastMousePosRef.current.x;
+      const mouseY = lastMousePosRef.current.y;
+      const mouseInCanvas = bounds && mouseX >= bounds.left && mouseX <= bounds.right && mouseY >= bounds.top && mouseY <= bounds.bottom;
+      const centerX = mouseInCanvas
+        ? (mouseX - bounds.left - viewport.x) / viewport.zoom
+        : (-viewport.x + (reactFlowWrapper.current?.clientWidth || 800) / 2) / viewport.zoom;
+      const centerY = mouseInCanvas
+        ? (mouseY - bounds.top - viewport.y) / viewport.zoom
+        : (-viewport.y + (reactFlowWrapper.current?.clientHeight || 600) / 2) / viewport.zoom;
 
       // Check clipboard text for our marker (to know if last copy was internal elements)
       const clipboardText = event.clipboardData?.getData('text/plain') || '';
