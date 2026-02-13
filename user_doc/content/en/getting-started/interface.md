@@ -53,13 +53,14 @@ Displays information about the selected element or link:
 
 ## View Modes
 
-ZeroNeurone offers 3 visualization modes:
+ZeroNeurone offers 4 visualization modes:
 
 | Key | Mode | Description |
 |-----|------|-------------|
 | **1** | Canvas | Default graph view |
 | **2** | Map | Geolocated elements on map |
 | **3** | Timeline | Chronological view |
+| **4** | Matrix | Sortable, filterable spreadsheet |
 
 
 ## Keyboard Navigation
@@ -72,7 +73,7 @@ ZeroNeurone offers 3 visualization modes:
 | Ctrl+Shift+Z | Redo |
 | F | Focus mode (neighborhood) |
 | Escape | Deselect / Close |
-| 1-3 | Change view mode |
+| 1-4 | Change view mode |
 
 ---
 

@@ -157,6 +157,7 @@
       "map": "Kaart",
       "split": "Gesplitst",
       "timeline": "Tijdlijn",
+      "matrix": "Matrix",
       "report": "Rapport"
     },
     "panels": {
@@ -311,6 +312,23 @@
     "pauseAnimation": "Pauze",
     "clearFilter": "Filter wissen",
     "dragToMoveRange": "Sleep om de periode te verplaatsen"
+  },
+  "matrix": {
+    "label": "Naam",
+    "type": "Type",
+    "confidence": "Vertr.",
+    "source": "Bron",
+    "count": "{{count}}/{{total}} elementen",
+    "properties": "{{count}} eigenschappen",
+    "search": "Zoeken...",
+    "columns": "Kolommen",
+    "noResults": "Geen resultaten",
+    "empty": "Geen elementen met eigenschappen",
+    "all": "Alles",
+    "none": "Geen",
+    "reset": "Weergave resetten",
+    "exportCsv": "Exporteren als CSV",
+    "filter": "Filteren..."
   },
   "report": {
     "title": "Rapport",

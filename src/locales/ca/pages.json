@@ -157,6 +157,7 @@
       "map": "Mapa",
       "split": "Dividida",
       "timeline": "Línia de temps",
+      "matrix": "Matriu",
       "report": "Informe"
     },
     "panels": {
@@ -311,6 +312,23 @@
     "pauseAnimation": "Pausa",
     "clearFilter": "Esborrar filtre",
     "dragToMoveRange": "Arrossega per moure el període"
+  },
+  "matrix": {
+    "label": "Nom",
+    "type": "Tipus",
+    "confidence": "Conf.",
+    "source": "Font",
+    "count": "{{count}}/{{total}} elements",
+    "properties": "{{count}} propietats",
+    "search": "Cercar...",
+    "columns": "Columnes",
+    "noResults": "Sense resultats",
+    "empty": "Cap element amb propietats",
+    "all": "Tot",
+    "none": "Cap",
+    "reset": "Restablir vista",
+    "exportCsv": "Exportar com a CSV",
+    "filter": "Filtrar..."
   },
   "report": {
     "title": "Informe",

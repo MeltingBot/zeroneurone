@@ -12,6 +12,10 @@ interface ViewToolbarProps {
   rightContent?: ReactNode;
   /** Show font mode toggle (for views with text labels) */
   showFontToggle?: boolean;
+  /** Show hide-media toggle (default true, hide for views without media) */
+  showMediaToggle?: boolean;
+  /** Show comment badges toggle (default true, hide for views without badges) */
+  showCommentBadgesToggle?: boolean;
 }
 
 export function ViewToolbar({
@@ -19,6 +23,8 @@ export function ViewToolbar({
   centerContent,
   rightContent,
   showFontToggle = false,
+  showMediaToggle = true,
+  showCommentBadgesToggle = true,
 }: ViewToolbarProps) {
   const { t } = useTranslation('pages');
   const { fontMode, toggleFontMode, hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
@@ -80,13 +86,15 @@ export function ViewToolbar({
         )}
 
         {/* Hide media toggle */}
-        <button
-          onClick={toggleHideMedia}
-          className={`p-1.5 rounded transition-colors ${hideMedia ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-          title={hideMedia ? t('investigation.viewToolbar.showMedia') : t('investigation.viewToolbar.blurMedia')}
-        >
-          {hideMedia ? <ImageOff size={16} /> : <Image size={16} />}
-        </button>
+        {showMediaToggle && (
+          <button
+            onClick={toggleHideMedia}
+            className={`p-1.5 rounded transition-colors ${hideMedia ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
+            title={hideMedia ? t('investigation.viewToolbar.showMedia') : t('investigation.viewToolbar.blurMedia')}
+          >
+            {hideMedia ? <ImageOff size={16} /> : <Image size={16} />}
+          </button>
+        )}
 
         {/* Anonymous mode toggle */}
         <button
@@ -98,13 +106,15 @@ export function ViewToolbar({
         </button>
 
         {/* Comment badges toggle */}
-        <button
-          onClick={toggleShowCommentBadges}
-          className={`p-1.5 rounded transition-colors ${showCommentBadges ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-          title={showCommentBadges ? t('investigation.viewToolbar.hideCommentBadges') : t('investigation.viewToolbar.showCommentBadges')}
-        >
-          {showCommentBadges ? <MessageCircle size={16} /> : <MessageCircleOff size={16} />}
-        </button>
+        {showCommentBadgesToggle && (
+          <button
+            onClick={toggleShowCommentBadges}
+            className={`p-1.5 rounded transition-colors ${showCommentBadges ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
+            title={showCommentBadges ? t('investigation.viewToolbar.hideCommentBadges') : t('investigation.viewToolbar.showCommentBadges')}
+          >
+            {showCommentBadges ? <MessageCircle size={16} /> : <MessageCircleOff size={16} />}
+          </button>
+        )}
 
       </div>
     </div>

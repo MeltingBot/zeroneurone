@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.10.0
+
+### Features
+- Matrix view: new tabular display mode for investigating data in a spreadsheet-like format
+  - Virtual scroll for large datasets (3000+ elements)
+  - Column sort, resize, reorder (drag & drop), and visibility toggle
+  - Per-column text filter
+  - Inline cell editing (double-click) with undo/redo support
+  - Keyboard navigation between cells (Tab, Shift+Tab, Arrow keys)
+  - Multi-row selection (Ctrl+click, Shift+click)
+  - CSV export with investigation-named file
+  - Copy selected rows as TSV (Ctrl+C)
+  - Anonymous mode, focus mode, and insights highlighting supported
+  - Respects canvas tabs membership
+- ViewToolbar: added `showMediaToggle` and `showCommentBadgesToggle` props for view-specific toolbar customization
+
+### i18n
+- Matrix view labels translated across all 11 locales (fr, en, de, es, it, pt, nl, pl, ca, eu, ua)
+
 ## 2.9.1
 
 ### Fixes

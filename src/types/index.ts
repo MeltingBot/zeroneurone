@@ -317,7 +317,7 @@ export interface View {
   updatedAt: Date;
 }
 
-export type DisplayMode = 'canvas' | 'map' | 'timeline';
+export type DisplayMode = 'canvas' | 'map' | 'timeline' | 'matrix';
 
 export interface ViewFilters {
   includeTags: string[];

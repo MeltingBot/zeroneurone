@@ -15,6 +15,7 @@ Complete list of ZeroNeurone keyboard shortcuts.
 | **1** | Canvas view |
 | **2** | Map view |
 | **3** | Timeline view |
+| **4** | Matrix view |
 | **Escape** | Close modal / Deselect |
 
 ## Selection
@@ -50,6 +51,19 @@ Complete list of ZeroNeurone keyboard shortcuts.
 | **Ctrl+0** | Zoom to fit all |
 | **Ctrl++** | Zoom in |
 | **Ctrl+-** | Zoom out |
+
+## Matrix View
+
+| Shortcut | Action |
+|----------|--------|
+| **Double-click** | Edit cell |
+| **Enter** | Confirm edit |
+| **Escape** | Cancel edit |
+| **Tab** / **Shift+Tab** | Next / previous column |
+| **Arrow Up/Down** | Adjacent row (while editing) |
+| **Ctrl+C** | Copy selected rows as TSV |
+| **Ctrl+click** | Toggle row selection |
+| **Shift+click** | Range selection |
 
 ## Panels
 

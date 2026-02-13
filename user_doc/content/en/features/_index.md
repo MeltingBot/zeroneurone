@@ -15,6 +15,7 @@ Explore the main features of ZeroNeurone.
 - [Graph analysis]({{< relref "graph-analysis" >}}) — Clusters, centrality, paths
 - [Map view]({{< relref "map-view" >}}) — Geolocation
 - [Timeline]({{< relref "timeline" >}}) — Chronological visualization
+- [Matrix view]({{< relref "matrix-view" >}}) — Tabular data view
 - [Attachments]({{< relref "attachments" >}}) — Documents and images
 - [Search]({{< relref "search" >}}) — Find quickly
 - [Report]({{< relref "report" >}}) — Markdown writing with references

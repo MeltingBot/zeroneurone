@@ -157,6 +157,7 @@
       "map": "Карта",
       "split": "Розділений",
       "timeline": "Хронологія",
+      "matrix": "Матриця",
       "report": "Звіт"
     },
     "panels": {
@@ -311,6 +312,23 @@
     "pauseAnimation": "Пауза",
     "clearFilter": "Очистити фільтр",
     "dragToMoveRange": "Перетягніть для переміщення періоду"
+  },
+  "matrix": {
+    "label": "Назва",
+    "type": "Тип",
+    "confidence": "Дов.",
+    "source": "Джерело",
+    "count": "{{count}}/{{total}} елементів",
+    "properties": "{{count}} властивостей",
+    "search": "Пошук...",
+    "columns": "Стовпці",
+    "noResults": "Немає результатів",
+    "empty": "Немає елементів з властивостями",
+    "all": "Усі",
+    "none": "Жодного",
+    "reset": "Скинути вигляд",
+    "exportCsv": "Експортувати як CSV",
+    "filter": "Фільтрувати..."
   },
   "report": {
     "title": "Звіт",

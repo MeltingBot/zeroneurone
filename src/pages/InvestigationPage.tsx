@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
@@ -10,6 +10,7 @@ import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImpor
 const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
 const TimelineView = lazy(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
+const MatrixView = lazy(() => import('../components/matrix').then(m => ({ default: m.MatrixView })));
 import { useInvestigationStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore } from '../stores';
 import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';
@@ -20,6 +21,7 @@ const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; labelKey: strin
   { mode: 'canvas', icon: LayoutGrid, labelKey: 'canvas', shortcut: '1' },
   { mode: 'map', icon: Map, labelKey: 'map', shortcut: '2' },
   { mode: 'timeline', icon: Calendar, labelKey: 'timeline', shortcut: '3' },
+  { mode: 'matrix', icon: Table, labelKey: 'matrix', shortcut: '4' },
 ];
 
 export function InvestigationPage() {
@@ -191,6 +193,9 @@ export function InvestigationPage() {
           case '3':
             setDisplayMode('timeline');
             break;
+          case '4':
+            setDisplayMode('matrix');
+            break;
           case '?':
             setShortcutsOpen(true);
             break;
@@ -294,6 +299,14 @@ export function InvestigationPage() {
           <ErrorBoundary scope="Carte" showHomeButton>
             <Suspense fallback={<ViewLoader />}>
               <MapView />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      case 'matrix':
+        return (
+          <ErrorBoundary scope="Matrix" showHomeButton>
+            <Suspense fallback={<ViewLoader />}>
+              <MatrixView />
             </Suspense>
           </ErrorBoundary>
         );

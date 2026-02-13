@@ -15,6 +15,7 @@ Explorez les fonctionnalités principales de ZeroNeurone.
 - [Analyse de graphe]({{< relref "graph-analysis" >}}) — Clusters, centralité, chemins
 - [Vue carte]({{< relref "map-view" >}}) — Géolocalisation
 - [Timeline]({{< relref "timeline" >}}) — Visualisation chronologique
+- [Vue matrice]({{< relref "matrix-view" >}}) — Vue tabulaire des données
 - [Fichiers joints]({{< relref "attachments" >}}) — Documents et images
 - [Recherche]({{< relref "search" >}}) — Trouver rapidement
 - [Rapport]({{< relref "report" >}}) — Rédaction Markdown avec références

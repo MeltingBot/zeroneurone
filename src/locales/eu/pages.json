@@ -157,6 +157,7 @@
       "map": "Mapa",
       "split": "Zatitua",
       "timeline": "Denbora-lerroa",
+      "matrix": "Matrizea",
       "report": "Txostena"
     },
     "panels": {
@@ -311,6 +312,23 @@
     "pauseAnimation": "Pausa",
     "clearFilter": "Iragazkia garbitu",
     "dragToMoveRange": "Arrastatu aldia mugitzeko"
+  },
+  "matrix": {
+    "label": "Izena",
+    "type": "Mota",
+    "confidence": "Konf.",
+    "source": "Iturria",
+    "count": "{{count}}/{{total}} elementu",
+    "properties": "{{count}} propietate",
+    "search": "Bilatu...",
+    "columns": "Zutabeak",
+    "noResults": "Emaitzarik ez",
+    "empty": "Propietateak dituen elementurik ez",
+    "all": "Denak",
+    "none": "Bat ere ez",
+    "reset": "Berrezarri ikuspegia",
+    "exportCsv": "CSV gisa esportatu",
+    "filter": "Iragazi..."
   },
   "report": {
     "title": "Txostena",

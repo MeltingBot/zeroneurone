@@ -157,6 +157,7 @@
       "map": "Map",
       "split": "Split",
       "timeline": "Timeline",
+      "matrix": "Matrix",
       "report": "Report"
     },
     "panels": {
@@ -312,6 +313,23 @@
     "pauseAnimation": "Pause",
     "clearFilter": "Clear filter",
     "dragToMoveRange": "Drag to move the time range"
+  },
+  "matrix": {
+    "label": "Name",
+    "type": "Type",
+    "confidence": "Conf.",
+    "source": "Source",
+    "count": "{{count}}/{{total}} elements",
+    "properties": "{{count}} properties",
+    "search": "Search...",
+    "columns": "Columns",
+    "noResults": "No results",
+    "empty": "No elements with properties",
+    "all": "All",
+    "none": "None",
+    "reset": "Reset view",
+    "exportCsv": "Export as CSV",
+    "filter": "Filter..."
   },
   "report": {
     "title": "Report",

@@ -157,6 +157,7 @@
       "map": "Karte",
       "split": "Geteilt",
       "timeline": "Zeitleiste",
+      "matrix": "Matrix",
       "report": "Bericht"
     },
     "panels": {
@@ -311,6 +312,23 @@
     "pauseAnimation": "Pause",
     "clearFilter": "Filter löschen",
     "dragToMoveRange": "Ziehen um den Zeitraum zu verschieben"
+  },
+  "matrix": {
+    "label": "Name",
+    "type": "Typ",
+    "confidence": "Konf.",
+    "source": "Quelle",
+    "count": "{{count}}/{{total}} Elemente",
+    "properties": "{{count}} Eigenschaften",
+    "search": "Suchen...",
+    "columns": "Spalten",
+    "noResults": "Keine Ergebnisse",
+    "empty": "Keine Elemente mit Eigenschaften",
+    "all": "Alle",
+    "none": "Keine",
+    "reset": "Ansicht zurücksetzen",
+    "exportCsv": "Als CSV exportieren",
+    "filter": "Filtern..."
   },
   "report": {
     "title": "Bericht",

@@ -53,13 +53,14 @@ Affiche les informations de l'élément ou lien sélectionné :
 
 ## Modes de vue
 
-ZeroNeurone propose 3 modes de visualisation :
+ZeroNeurone propose 4 modes de visualisation :
 
 | Touche | Mode | Description |
 |--------|------|-------------|
 | **1** | Canvas | Vue graphe par défaut |
 | **2** | Carte | Éléments géolocalisés sur carte |
 | **3** | Timeline | Vue chronologique |
+| **4** | Matrice | Tableau triable et filtrable |
 
 
 ## Navigation clavier
@@ -72,7 +73,7 @@ ZeroNeurone propose 3 modes de visualisation :
 | Ctrl+Shift+Z | Rétablir |
 | F | Mode focus (voisinage) |
 | Échap | Désélectionner / Fermer |
-| 1-3 | Changer de mode de vue |
+| 1-4 | Changer de mode de vue |
 
 ---
 

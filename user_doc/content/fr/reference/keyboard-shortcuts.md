@@ -15,6 +15,7 @@ Liste complète des raccourcis clavier de ZeroNeurone.
 | **1** | Vue Canvas |
 | **2** | Vue Carte |
 | **3** | Vue Timeline |
+| **4** | Vue Matrice |
 | **Échap** | Fermer modal / Désélectionner |
 
 ## Sélection
@@ -50,6 +51,19 @@ Liste complète des raccourcis clavier de ZeroNeurone.
 | **Ctrl+0** | Zoom pour tout voir |
 | **Ctrl++** | Zoom avant |
 | **Ctrl+-** | Zoom arrière |
+
+## Vue Matrice
+
+| Raccourci | Action |
+|-----------|--------|
+| **Double-clic** | Editer une cellule |
+| **Entree** | Confirmer l'edition |
+| **Echap** | Annuler l'edition |
+| **Tab** / **Shift+Tab** | Colonne suivante / precedente |
+| **Fleche Haut/Bas** | Ligne adjacente (en edition) |
+| **Ctrl+C** | Copier les lignes selectionnees en TSV |
+| **Ctrl+clic** | Ajouter/retirer de la selection |
+| **Shift+clic** | Selection par plage |
 
 ## Panneaux
 
