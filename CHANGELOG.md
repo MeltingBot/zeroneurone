@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.11.0
+
+### Features
+- Insights: betweenness centrality computed (graphology-metrics) and displayed as percentage next to degree in the centrality ranking
+- Timeline: density heatmap bar below the time axis — adaptive bucket sizing (7/14/30/90/365 days based on zoom), click to set temporal filter, toggleable via toolbar button
+
+### i18n
+- Density bar labels translated across all 11 locales (fr, en, de, es, it, pt, nl, pl, ca, eu, ua)
+- Betweenness centrality label translated across all 11 locales
+
 ## 2.10.2
 
 ### Fixes

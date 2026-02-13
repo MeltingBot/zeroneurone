@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter } from 'lucide-react';
+import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3 } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { toPng } from 'html-to-image';
@@ -38,6 +38,7 @@ const DEFAULT_ZOOM = 5; // pixels per day (better initial view)
 const ROW_HEIGHT = 36;
 const ROW_GAP = 8;
 const AXIS_HEIGHT = 28;
+const DENSITY_HEIGHT = 20;
 
 // Zoom presets (pixels per day) with approximate visible range at 800px width
 const ZOOM_PRESETS = [
@@ -106,6 +107,7 @@ export function TimelineView() {
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartView, setDragStartView] = useState<Date>(new Date());
   const [newestFirst, setNewestFirst] = useState(false); // false = oldest at top (default)
+  const [showDensity, setShowDensity] = useState(true); // Show density heatmap bar
   const [showCausality, setShowCausality] = useState(false); // Show potential causal links
   const [causalityMaxDays, setCausalityMaxDays] = useState(365); // Max days between events for causality
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null); // Show info panel on click
@@ -614,6 +616,57 @@ export function TimelineView() {
   // Today marker position
   const todayX = useMemo(() => dateToX(new Date()), [dateToX]);
 
+  // Density heatmap — adaptive bucket size based on zoom
+  const densityData = useMemo(() => {
+    if (items.length === 0) return { buckets: [] as { start: Date; end: Date; count: number }[], maxCount: 0 };
+
+    // Choose bucket size so each cell is at least 4px wide
+    const minDays = 4 / zoom;
+    let bucketDays: number;
+    if (minDays <= 7) bucketDays = 7;
+    else if (minDays <= 14) bucketDays = 14;
+    else if (minDays <= 30) bucketDays = 30;
+    else if (minDays <= 90) bucketDays = 90;
+    else bucketDays = 365;
+
+    const bucketMs = bucketDays * 24 * 60 * 60 * 1000;
+    const start = timeBounds.min.getTime();
+    const end = timeBounds.max.getTime();
+    const numBuckets = Math.ceil((end - start) / bucketMs);
+
+    const counts = new Array(numBuckets).fill(0);
+    for (const item of items) {
+      const idx = Math.floor((item.start.getTime() - start) / bucketMs);
+      if (idx >= 0 && idx < numBuckets) counts[idx]++;
+    }
+
+    const maxCount = Math.max(1, ...counts);
+    const buckets = counts.map((count, i) => ({
+      start: new Date(start + i * bucketMs),
+      end: new Date(start + (i + 1) * bucketMs),
+      count,
+    }));
+
+    return { buckets, maxCount };
+  }, [items, timeBounds, zoom]);
+
+  // Only render density cells in the visible horizontal range
+  const visibleDensityCells = useMemo(() => {
+    const { buckets } = densityData;
+    if (buckets.length === 0) return [];
+    const buffer = 50;
+    const viewEndMs = viewStart.getTime() + ((containerWidth + buffer) / zoom) * 24 * 60 * 60 * 1000;
+    const viewStartMs = viewStart.getTime() - (buffer / zoom) * 24 * 60 * 60 * 1000;
+    return buckets.filter(b => b.end.getTime() >= viewStartMs && b.start.getTime() <= viewEndMs);
+  }, [densityData, viewStart, zoom, containerWidth]);
+
+  // Click density cell → apply temporal filter to that bucket
+  const handleDensityCellClick = useCallback((bucketStart: Date, bucketEnd: Date) => {
+    setShowTemporalFilter(true);
+    setFilterStartDate(bucketStart);
+    setFilterEndDate(bucketEnd);
+  }, []);
+
   // Handle wheel zoom - use ref to avoid stale closures
   const zoomRef = useRef(zoom);
   const viewStartRef = useRef(viewStart);
@@ -891,6 +944,18 @@ export function TimelineView() {
                 ))}
               </div>
             )}
+            <button
+              onClick={() => setShowDensity(!showDensity)}
+              className={`px-2 h-6 text-[10px] rounded border flex items-center gap-1 ${
+                showDensity
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-text-secondary hover:bg-bg-tertiary border-border-default'
+              }`}
+              title={t('timeline.densityHint')}
+            >
+              <BarChart3 size={10} />
+              {t('timeline.density')}
+            </button>
             <div className="w-px h-4 bg-border-default mx-1" />
             {/* Temporal filter toggle */}
             <button
@@ -939,22 +1004,55 @@ export function TimelineView() {
         onClick={() => setExpandedItemId(null)}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
-        {/* Time axis - sticky to stay visible when scrolling */}
-        <div className="sticky top-0 left-0 right-0 h-7 bg-bg-primary border-b border-border-default z-10 overflow-hidden">
-          {axisLabels.map((label, i) => (
-            <div
-              key={i}
-              className="absolute top-0 h-full flex items-end pb-1 will-change-transform"
-              style={{ transform: `translate3d(${label.x}px, 0, 0)` }}
-            >
-              <span className={`text-[10px] whitespace-nowrap ${label.isMain ? 'text-text-primary font-medium' : 'text-text-tertiary'}`}>
-                {label.label}
-              </span>
+        {/* Time axis + density bar - sticky */}
+        <div className="sticky top-0 left-0 right-0 z-10">
+          {/* Axis */}
+          <div className="h-7 bg-bg-primary border-b border-border-default overflow-hidden relative">
+            {axisLabels.map((label, i) => (
               <div
-                className={`absolute bottom-0 w-px h-2 ${label.isMain ? 'bg-border-strong' : 'bg-border-default'}`}
-              />
+                key={i}
+                className="absolute top-0 h-full flex items-end pb-1 will-change-transform"
+                style={{ transform: `translate3d(${label.x}px, 0, 0)` }}
+              >
+                <span className={`text-[10px] whitespace-nowrap ${label.isMain ? 'text-text-primary font-medium' : 'text-text-tertiary'}`}>
+                  {label.label}
+                </span>
+                <div
+                  className={`absolute bottom-0 w-px h-2 ${label.isMain ? 'bg-border-strong' : 'bg-border-default'}`}
+                />
+              </div>
+            ))}
+          </div>
+          {/* Density heatmap bar */}
+          {showDensity && visibleDensityCells.length > 0 && (
+            <div className="bg-bg-primary border-b border-border-default overflow-hidden relative" style={{ height: DENSITY_HEIGHT }}>
+              {visibleDensityCells.map((bucket, i) => {
+                const x = dateToX(bucket.start);
+                const cellWidth = dateToX(bucket.end) - x;
+                const gap = cellWidth > 3 ? 1 : 0;
+                const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+                const fmt: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+                const label = `${bucket.start.toLocaleDateString(locale, fmt)} – ${bucket.end.toLocaleDateString(locale, fmt)}: ${bucket.count}`;
+                return (
+                  <div
+                    key={i}
+                    className="absolute top-0.5 bottom-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{
+                      transform: `translate3d(${x}px, 0, 0)`,
+                      width: Math.max(1, cellWidth - gap),
+                      backgroundColor: getDensityColor(bucket.count, densityData.maxCount),
+                      borderRadius: 1,
+                    }}
+                    title={label}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDensityCellClick(bucket.start, bucket.end);
+                    }}
+                  />
+                );
+              })}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Content area */}
@@ -1413,4 +1511,14 @@ function formatDateRange(start: Date, end?: Date, locale: string = 'en-US'): str
   if (!end) return startStr;
   const endStr = end.toLocaleDateString(locale, opts);
   return `${startStr} → ${endStr}`;
+}
+
+function getDensityColor(count: number, max: number): string {
+  if (count === 0) return 'rgba(37, 99, 235, 0.04)';
+  const ratio = count / max;
+  if (ratio < 0.2) return 'rgba(37, 99, 235, 0.15)';
+  if (ratio < 0.4) return 'rgba(37, 99, 235, 0.3)';
+  if (ratio < 0.6) return 'rgba(37, 99, 235, 0.5)';
+  if (ratio < 0.8) return 'rgba(37, 99, 235, 0.7)';
+  return 'rgba(37, 99, 235, 0.9)';
 }

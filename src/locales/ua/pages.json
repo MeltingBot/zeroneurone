@@ -295,6 +295,8 @@
     "oldUp": "Старі ↑",
     "causality": "Причинність",
     "causalityHint": "Показати потенційні причинності між подіями пов'язаних елементів",
+    "density": "Щільність",
+    "densityHint": "Смуга щільності активності за період",
     "maxDaysBetweenEvents": "Макс. {{days}} між подіями",
     "unresolvedComments": "{{count}} невирішених коментарів",
     "potentialCausality": "Потенційна причинність",

@@ -115,6 +115,30 @@ En mode timeline, la sélection reste synchronisée avec le canvas :
 
 ---
 
+## Barre de densité
+
+Une barre heatmap sous l'axe temporel montre la concentration des événements d'un coup d'oeil.
+
+### Affichage
+
+Cliquez sur le bouton **Densité** dans la barre d'outils pour afficher ou masquer la barre.
+
+### Lecture
+
+| Visuel | Signification |
+|--------|---------------|
+| **Cellule foncée** | Forte concentration d'événements |
+| **Cellule claire** | Peu d'événements |
+| **Cellule vide** | Aucun événement sur cette période |
+
+La taille des intervalles s'adapte automatiquement au niveau de zoom (7 jours, 14 jours, 1 mois, 3 mois ou 1 an).
+
+### Interaction
+
+**Cliquez** sur une cellule pour activer le filtre temporel sur cette période.
+
+---
+
 ## Filtre temporel
 
 Le filtre temporel permet de restreindre l'affichage à une période spécifique.

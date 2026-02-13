@@ -295,6 +295,8 @@
     "oldUp": "Zaharra ↑",
     "causality": "Kausalitatea",
     "causalityHint": "Lotutako elementuen gertaeren arteko kausalitate potentzialak erakutsi",
+    "density": "Dentsitatea",
+    "densityHint": "Jarduera-dentsitate barra aldiko",
     "maxDaysBetweenEvents": "Gehienez {{days}} gertaeren artean",
     "unresolvedComments": "{{count}} iruzkin ebatzi gabe",
     "potentialCausality": "Kausalitate potentziala",

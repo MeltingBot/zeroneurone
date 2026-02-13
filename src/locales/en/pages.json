@@ -296,6 +296,8 @@
     "oldUp": "Old ↑",
     "causality": "Causality",
     "causalityHint": "Show potential causal links between events of linked elements",
+    "density": "Density",
+    "densityHint": "Activity density bar per period",
     "maxDaysBetweenEvents": "Max {{days}} between events",
     "unresolvedComments": "{{count}} unresolved comment(s)",
     "potentialCausality": "Potential causality",

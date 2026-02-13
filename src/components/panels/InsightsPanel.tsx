@@ -608,8 +608,15 @@ export function InsightsPanel() {
                       <span className="text-sm text-text-primary truncate flex-1">
                         {getElementLabel(item.elementId)}
                       </span>
-                      <span className="text-xs text-text-tertiary ml-2 tabular-nums">
-                        {t('insights.links', { count: item.degree })}
+                      <span className="flex items-center gap-2 ml-2 flex-shrink-0">
+                        <span className="text-xs text-text-tertiary tabular-nums">
+                          {t('insights.links', { count: item.degree })}
+                        </span>
+                        {item.betweenness > 0 && (
+                          <span className="text-[10px] text-text-tertiary tabular-nums" title={t('insights.centrality.betweenness')}>
+                            {t('insights.centrality.betweenness').charAt(0).toUpperCase()} {(item.betweenness * 100).toFixed(0)}%
+                          </span>
+                        )}
                       </span>
                     </div>
                   ))}

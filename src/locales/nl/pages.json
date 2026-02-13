@@ -295,6 +295,8 @@
     "oldUp": "Oud ↑",
     "causality": "Causaliteit",
     "causalityHint": "Potentiële causaliteiten tonen tussen gebeurtenissen van verbonden elementen",
+    "density": "Dichtheid",
+    "densityHint": "Activiteitsdichtheidsbalk per periode",
     "maxDaysBetweenEvents": "Max. {{days}} tussen gebeurtenissen",
     "unresolvedComments": "{{count}} onopgeloste opmerking(en)",
     "potentialCausality": "Potentiële causaliteit",

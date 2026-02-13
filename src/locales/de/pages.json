@@ -295,6 +295,8 @@
     "oldUp": "Alt ↑",
     "causality": "Kausalitäten",
     "causalityHint": "Potenzielle Kausalitäten zwischen Ereignissen verbundener Elemente anzeigen",
+    "density": "Dichte",
+    "densityHint": "Aktivitätsdichte-Balken pro Zeitraum",
     "maxDaysBetweenEvents": "Max. {{days}} zwischen Ereignissen",
     "unresolvedComments": "{{count}} ungelöste(r) Kommentar(e)",
     "potentialCausality": "Potenzielle Kausalität",

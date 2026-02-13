@@ -115,6 +115,30 @@ In timeline mode, selection stays synchronized with the canvas:
 
 ---
 
+## Density Bar
+
+A heatmap bar below the time axis shows event concentration at a glance.
+
+### Toggle
+
+Click the **Density** button in the toolbar to show or hide the bar.
+
+### Reading
+
+| Visual | Meaning |
+|--------|---------|
+| **Dark cell** | High concentration of events |
+| **Light cell** | Few events |
+| **Empty cell** | No events in that period |
+
+Bucket size adapts automatically to the zoom level (7 days, 14 days, 1 month, 3 months, or 1 year).
+
+### Interaction
+
+**Click** a density cell to activate the temporal filter on that period.
+
+---
+
 ## Temporal Filter
 
 The temporal filter allows you to restrict the display to a specific period.

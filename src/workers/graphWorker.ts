@@ -9,6 +9,7 @@
 import Graph from 'graphology';
 import louvain from 'graphology-communities-louvain';
 import { bidirectional } from 'graphology-shortest-path';
+import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { circular, random } from 'graphology-layout';
 
@@ -41,7 +42,7 @@ interface LayoutOptions {
 
 interface InsightsData {
   clusters: { id: number; elementIds: string[]; size: number }[];
-  centrality: { elementId: string; degree: number; score: number }[];
+  centrality: { elementId: string; degree: number; betweenness: number; score: number }[];
   bridges: string[];
   isolated: string[];
   similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
@@ -237,15 +238,28 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
     clusters.sort((a, b) => b.size - a.size);
   } catch { /* empty */ }
 
-  postProgress(30, 'centrality');
+  postProgress(25, 'centrality');
 
-  // Centrality (degree)
+  // Betweenness centrality (normalized)
+  let betweennessMap: Record<string, number> = {};
+  try {
+    betweennessMap = betweennessCentrality(graph, { normalized: true });
+  } catch { /* empty — fails on graphs with <2 nodes */ }
+
+  postProgress(40, 'centrality');
+
+  // Centrality (degree + betweenness)
   const centrality: InsightsData['centrality'] = [];
   const maxDegree = Math.max(1, graph.order - 1);
   graph.forEachNode((nodeId) => {
     const degree = graph.degree(nodeId);
     if (degree > 0) {
-      centrality.push({ elementId: nodeId, degree, score: degree / maxDegree });
+      centrality.push({
+        elementId: nodeId,
+        degree,
+        betweenness: betweennessMap[nodeId] ?? 0,
+        score: degree / maxDegree,
+      });
     }
   });
   centrality.sort((a, b) => b.degree - a.degree);

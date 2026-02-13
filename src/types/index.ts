@@ -412,6 +412,7 @@ export interface Cluster {
 export interface CentralityResult {
   elementId: ElementId;
   degree: number;
+  betweenness: number;
   score: number;
 }
 

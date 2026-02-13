@@ -27,7 +27,7 @@ interface SerializedLink {
 
 export interface WorkerInsightsData {
   clusters: { id: number; elementIds: string[]; size: number }[];
-  centrality: { elementId: string; degree: number; score: number }[];
+  centrality: { elementId: string; degree: number; betweenness: number; score: number }[];
   bridges: string[];
   isolated: string[];
   similarLabels: { elementId1: string; elementId2: string; similarity: number }[];

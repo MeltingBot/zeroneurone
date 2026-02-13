@@ -1,6 +1,7 @@
 import Graph from 'graphology';
 import louvain from 'graphology-communities-louvain';
 import { bidirectional } from 'graphology-shortest-path';
+import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
 
 export interface InsightsResult {
@@ -108,10 +109,15 @@ class InsightsService {
   }
 
   /**
-   * Calculate degree centrality for each node
+   * Calculate degree + betweenness centrality for each node
    */
   getCentrality(): CentralityResult[] {
     if (!this.graph || this.graph.order === 0) return [];
+
+    let betweennessMap: Record<string, number> = {};
+    try {
+      betweennessMap = betweennessCentrality(this.graph, { normalized: true });
+    } catch { /* empty */ }
 
     const results: CentralityResult[] = [];
     const maxDegree = Math.max(1, this.graph.order - 1);
@@ -121,6 +127,7 @@ class InsightsService {
       results.push({
         elementId: nodeId,
         degree,
+        betweenness: betweennessMap[nodeId] ?? 0,
         score: degree / maxDegree,
       });
     });
