@@ -16,6 +16,8 @@ import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import type { DisplayMode } from '../types';
+import { usePlugins } from '../plugins/usePlugins';
+import { getPlugins } from '../plugins/pluginRegistry';
 
 const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; labelKey: string; shortcut: string }[] = [
   { mode: 'canvas', icon: LayoutGrid, labelKey: 'canvas', shortcut: '1' },
@@ -23,6 +25,17 @@ const viewOptions: { mode: DisplayMode; icon: typeof LayoutGrid; labelKey: strin
   { mode: 'timeline', icon: Calendar, labelKey: 'timeline', shortcut: '3' },
   { mode: 'matrix', icon: Table, labelKey: 'matrix', shortcut: '4' },
 ];
+
+/** Match a keyboard shortcut string like "Ctrl+Shift+P" against a KeyboardEvent */
+function matchesShortcutKeys(e: KeyboardEvent, keys: string): boolean {
+  const parts = keys.toLowerCase().split('+');
+  const key = parts.pop() || '';
+  const needCtrl = parts.includes('ctrl') || parts.includes('mod');
+  const needShift = parts.includes('shift');
+  const needAlt = parts.includes('alt');
+  const hasCtrl = e.ctrlKey || e.metaKey;
+  return hasCtrl === needCtrl && e.shiftKey === needShift && e.altKey === needAlt && e.key.toLowerCase() === key;
+}
 
 export function InvestigationPage() {
   const { t } = useTranslation('pages');
@@ -60,6 +73,7 @@ export function InvestigationPage() {
   const [synthesisOpen, setSynthesisOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [collabLeaveWarning, setCollabLeaveWarning] = useState(false);
+  const headerPlugins = usePlugins('header:right');
 
   // Handle navigation back to home - show warning if in collab mode
   const handleGoHome = useCallback(() => {
@@ -204,6 +218,16 @@ export function InvestigationPage() {
             setExportOpen(false);
             setSynthesisOpen(false);
             break;
+        }
+      }
+
+      // Plugin keyboard shortcuts (evaluated after native ones)
+      const pluginShortcuts = getPlugins('keyboard:shortcuts');
+      for (const shortcut of pluginShortcuts) {
+        if (matchesShortcutKeys(e, shortcut.keys)) {
+          e.preventDefault();
+          shortcut.action();
+          return;
         }
       }
     };
@@ -448,6 +472,7 @@ export function InvestigationPage() {
           >
             <Coffee size={14} />
           </a>
+          {headerPlugins.map((PluginComponent, i) => <PluginComponent key={`hp-${i}`} />)}
         </div>
       </header>
 

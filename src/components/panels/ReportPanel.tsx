@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Plus, Loader2, Download, Link2, Link2Off, Globe } from 'lucide-react';
 import { useInvestigationStore, useReportStore, useHistoryStore } from '../../stores';
+import { usePlugins } from '../../plugins/usePlugins';
 import { ReportSectionEditor } from '../report/ReportSectionEditor';
 import { Input, IconButton } from '../common';
 import { exportInteractiveReport } from '../../services/exportInteractiveReportService';
@@ -27,6 +28,8 @@ export function ReportPanel() {
   const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const dragCounter = useRef(0);
+
+  const reportToolbarPlugins = usePlugins('report:toolbar');
 
   // Export options
   const [exportWithLinks, setExportWithLinks] = useState(true);
@@ -228,6 +231,9 @@ export function ReportPanel() {
         >
           <Globe size={14} />
         </IconButton>
+        {reportToolbarPlugins.map((PluginComponent, i) => (
+          <PluginComponent key={`rtp-${i}`} investigationId={currentInvestigation.id} />
+        ))}
       </div>
 
       {/* Report title */}

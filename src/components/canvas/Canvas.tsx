@@ -33,6 +33,7 @@ import { CustomEdge } from './CustomEdge';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
+import { usePlugins } from '../../plugins/usePlugins';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -583,6 +584,10 @@ export function Canvas() {
 
   // Share modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Plugin context menu extensions
+  const canvasPlugins = usePlugins('contextMenu:canvas');
+  const elementPlugins = usePlugins('contextMenu:element');
 
   // Asset preview modal state
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
@@ -4104,6 +4109,17 @@ export function Canvas() {
               onHideSelection={handleSelectionHide}
               onGroupSelection={handleGroupSelection}
               onClose={closeCanvasContextMenu}
+              pluginExtensions={[
+                ...canvasPlugins,
+                ...(selectedElementIds.size > 0 ? elementPlugins : []),
+              ]}
+              menuContext={{
+                elementIds: Array.from(selectedElementIds),
+                linkIds: Array.from(selectedLinkIds),
+                canvasPosition: { x: canvasContextMenu.canvasX, y: canvasContextMenu.canvasY },
+                hasTextAssets: false,
+                investigationId: currentInvestigation?.id || '',
+              }}
             />
           )}
 

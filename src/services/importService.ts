@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { db } from '../db/database';
+import { getPlugins } from '../plugins/pluginRegistry';
 import { generateUUID } from '../utils';
 import type {
   InvestigationId,
@@ -324,6 +325,16 @@ class ImportService {
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0) {
         await this.importReport(data.report, targetInvestigationId, result, elementIdMap, linkIdMap);
+      }
+
+      // Plugin import hooks
+      const importHooks = getPlugins('import:hooks');
+      for (const hook of importHooks) {
+        try {
+          await hook.onImport(zip, targetInvestigationId);
+        } catch (e) {
+          console.warn(`Plugin import hook "${hook.name}" failed:`, e);
+        }
       }
 
       result.success = true;

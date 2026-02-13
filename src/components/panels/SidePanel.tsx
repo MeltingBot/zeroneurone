@@ -9,14 +9,15 @@ import { FiltersPanel } from './FiltersPanel';
 import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
 import { ReportPanel } from './ReportPanel';
-import { Info, Filter, Eye, Network, PanelRightClose, FileText } from 'lucide-react';
+import { Info, Filter, Eye, Network, PanelRightClose, FileText, icons } from 'lucide-react';
 import { IconButton } from '../common';
+import { usePlugins } from '../../plugins/usePlugins';
 
 const MIN_WIDTH = 360;
 const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 400;
 
-type TabId = 'detail' | 'insights' | 'filters' | 'views' | 'report';
+type TabId = 'detail' | 'insights' | 'filters' | 'views' | 'report' | (string & {});
 
 interface Tab {
   id: TabId;
@@ -97,6 +98,7 @@ export function SidePanel() {
     }
   }, [totalSelected]);
 
+  const panelPlugins = usePlugins('panel:right');
   const filtersActive = hasActiveFilters();
   const insightsActive = highlightedElementIds.size > 0;
   const isCanvasMode = displayMode === 'canvas';
@@ -114,6 +116,11 @@ export function SidePanel() {
     { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
     ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
     { id: 'report', label: t('tabs.report'), icon: FileText },
+    ...panelPlugins.map((p) => ({
+      id: p.id as TabId,
+      label: p.label,
+      icon: icons[p.icon as keyof typeof icons] || Info,
+    })),
   ];
 
   if (isCollapsed) {
@@ -223,8 +230,18 @@ export function SidePanel() {
         );
       case 'report':
         return <ReportPanel />;
-      default:
+      default: {
+        const plugin = panelPlugins.find((p) => p.id === activeTab);
+        if (plugin) {
+          const PluginComponent = plugin.component;
+          return (
+            <div className="flex-1 overflow-y-auto">
+              <PluginComponent investigationId={currentInvestigation?.id || ''} />
+            </div>
+          );
+        }
         return null;
+      }
     }
   };
 

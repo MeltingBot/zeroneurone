@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import type { Investigation, Element, Link, Asset, Report, CanvasTab } from '../types';
+import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
 
@@ -107,6 +108,16 @@ class ExportService {
     if (report && report.sections.length > 0) {
       const reportMarkdown = this.reportToMarkdown(report, elements, links);
       zip.file('report.md', reportMarkdown);
+    }
+
+    // Plugin export hooks
+    const exportHooks = getPlugins('export:hooks');
+    for (const hook of exportHooks) {
+      try {
+        await hook.onExport(zip, investigation.id);
+      } catch (e) {
+        console.warn(`Plugin export hook "${hook.name}" failed:`, e);
+      }
     }
 
     // Generate ZIP blob

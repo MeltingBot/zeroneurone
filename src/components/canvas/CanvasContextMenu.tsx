@@ -1,5 +1,6 @@
-import { memo, useRef, useState, useLayoutEffect } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff } from 'lucide-react';
+import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, icons } from 'lucide-react';
+import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 
 interface CanvasContextMenuProps {
   x: number;
@@ -18,6 +19,8 @@ interface CanvasContextMenuProps {
   onHideSelection?: () => void;
   onGroupSelection?: () => void;
   onClose: () => void;
+  pluginExtensions?: ContextMenuExtension[];
+  menuContext?: MenuContext;
 }
 
 function CanvasContextMenuComponent({
@@ -35,10 +38,17 @@ function CanvasContextMenuComponent({
   onHideSelection,
   onGroupSelection,
   onClose,
+  pluginExtensions,
+  menuContext,
 }: CanvasContextMenuProps) {
   const hasSelection = selectedCount > 0;
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
+
+  const visibleExtensions = useMemo(() => {
+    if (!pluginExtensions || !menuContext) return [];
+    return pluginExtensions.filter(ext => !ext.visible || ext.visible(menuContext));
+  }, [pluginExtensions, menuContext]);
 
   // Adjust position to keep menu within viewport
   useLayoutEffect(() => {
@@ -234,6 +244,28 @@ function CanvasContextMenuComponent({
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
           </button>
         </div>
+
+        {/* Plugin extensions */}
+        {visibleExtensions.length > 0 && (
+          <div className="py-1 border-t border-border-default">
+            {visibleExtensions.map((ext) => {
+              const Icon = icons[ext.icon as keyof typeof icons];
+              return (
+                <button
+                  key={ext.id}
+                  onClick={() => {
+                    if (menuContext) ext.action(menuContext);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  {Icon && <Icon size={14} />}
+                  {ext.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </>
   );

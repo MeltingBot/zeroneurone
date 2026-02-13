@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.12.0
+
+### Features
+- Plugin system: slot-based extension architecture with 10 named slots
+  - `header:right` — inject components in the investigation header
+  - `panel:right` — add custom side panel tabs (dynamic icon, label, component)
+  - `contextMenu:element` / `contextMenu:link` / `contextMenu:canvas` — context menu entries with dynamic Lucide icons and visibility conditions
+  - `report:toolbar` / `report:sectionActions` — report panel extensions
+  - `keyboard:shortcuts` — additional keyboard shortcuts (native shortcuts always take priority)
+  - `export:hooks` / `import:hooks` — ZIP export/import lifecycle hooks
+- Plugin registry (`registerPlugin`, `registerPlugins`, `getPlugins`, `clearAllPlugins`)
+- React hook `usePlugins()` using `useSyncExternalStore` for reactive slot consumption
+- Generic `pluginData` Dexie table for plugin persistence (`[pluginId+investigationId+key]` compound index)
+- Plugin errors never crash the app (all hooks wrapped in try/catch with console.warn)
+- Zero runtime impact when no plugins registered (empty arrays iterated, nothing rendered)
+
+### Documentation
+- Plugin developer guide in English (`docs/plugin-development-en.md`)
+- Plugin developer guide in French (`docs/plugin-development-fr.md`)
+
 ## 2.11.0
 
 ### Features

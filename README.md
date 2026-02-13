@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-2.11.0-blue)
+![Version](https://img.shields.io/badge/version-2.12.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -396,6 +396,19 @@ Ou deployer votre propre serveur y-websocket.
 - [x] Recherche (Ctrl+K) bascule automatiquement sur le bon onglet
 - [x] Vues sauvegardees memorisent l'onglet actif
 - [x] Undo/redo des changements d'appartenance aux onglets
+
+### v2.12 — Systeme de plugins ✓
+- [x] Registre de plugins slot-based (10 slots)
+- [x] Hook React reactif (`usePlugins` via `useSyncExternalStore`)
+- [x] Extensions de menu contextuel avec icones Lucide dynamiques
+- [x] Panneaux lateraux plugins (onglets dynamiques)
+- [x] Raccourcis clavier plugins (priorite aux natifs)
+- [x] Hooks d'export/import ZIP pour plugins
+- [x] Extensions rapport (toolbar et actions par section)
+- [x] Composants header plugins
+- [x] Table Dexie generique `pluginData` pour persistence
+- [x] Zero impact si aucun plugin enregistre
+- [x] [Documentation developpeur](docs/plugin-development-en.md) ([FR](docs/plugin-development-fr.md))
 
 ### Idees futures
 - [ ] Theming personnalisable

@@ -18,6 +18,13 @@ import type {
   TabId,
 } from '../types';
 
+export interface PluginDataRow {
+  pluginId: string;
+  investigationId: string;
+  key: string;
+  value: any;
+}
+
 class InvestigationDatabase extends Dexie {
   investigations!: Table<Investigation, InvestigationId>;
   elements!: Table<Element, ElementId>;
@@ -27,6 +34,7 @@ class InvestigationDatabase extends Dexie {
   reports!: Table<Report, UUID>;
   tagSets!: Table<TagSet, TagSetId>;
   canvasTabs!: Table<CanvasTab, TabId>;
+  pluginData!: Table<PluginDataRow, string>;
 
   constructor() {
     super('zeroneurone');
@@ -83,6 +91,19 @@ class InvestigationDatabase extends Dexie {
       reports: 'id, investigationId, createdAt, updatedAt',
       tagSets: 'id, name',
       canvasTabs: 'id, investigationId, order',
+    });
+
+    // Version 6: Add pluginData for generic plugin storage
+    this.version(6).stores({
+      investigations: 'id, name, createdAt, updatedAt, isFavorite, *tags',
+      elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
+      links: 'id, investigationId, fromId, toId, createdAt, updatedAt',
+      assets: 'id, investigationId, hash, createdAt, [investigationId+hash]',
+      views: 'id, investigationId, name, createdAt',
+      reports: 'id, investigationId, createdAt, updatedAt',
+      tagSets: 'id, name',
+      canvasTabs: 'id, investigationId, order',
+      pluginData: '[pluginId+investigationId+key], pluginId, investigationId',
     });
   }
 }
