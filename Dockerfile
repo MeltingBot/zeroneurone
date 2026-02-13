@@ -40,6 +40,8 @@ RUN npx vite build
 # ----------------------------------------------------------------------------
 # Stage 2: Production server
 # ----------------------------------------------------------------------------
+# Only the server needs runtime deps (ws, redis).
+# All client-side code (React, Leaflet, etc.) is bundled in dist/ by Vite.
 FROM node:22-alpine AS production
 
 WORKDIR /app
@@ -47,9 +49,9 @@ WORKDIR /app
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-# Copy package files and install only production dependencies
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# Install server-only dependencies (ws + redis = ~12 MB vs 285 MB before)
+COPY server/package.json ./server/package.json
+RUN cd server && npm install --omit=dev
 
 # Copy built static files from builder stage
 COPY --from=builder /app/dist ./dist
