@@ -1363,6 +1363,7 @@ export function Canvas() {
 
   // Dragging state refs (no state to avoid re-renders during drag)
   const isDraggingRef = useRef(false);
+  const lastElementCreatedAtRef = useRef(0);
   const draggingNodeIdsRef = useRef<Set<string>>(new Set());
   // lastDragEndRef removed — no longer needed after eliminating useLayoutEffect double-render
   const isHandlingSelectionRef = useRef(false);
@@ -1954,11 +1955,18 @@ export function Canvas() {
           .map(id => assets.find(a => a.id === id))
           .find(a => a && (a.mimeType.startsWith('image/') || a.mimeType === 'application/pdf')) || null;
 
+        // For annotations, show a notes excerpt instead of "unnamed"
+        let elementLabel = element.label;
+        if (!elementLabel && element.isAnnotation && element.notes) {
+          const firstLine = element.notes.split('\n')[0].trim();
+          elementLabel = firstLine.length > 40 ? firstLine.slice(0, 40) + '...' : firstLine;
+        }
+
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
           elementId: element.id,
-          elementLabel: element.label || t('empty.unnamed'),
+          elementLabel: elementLabel || t('empty.unnamed'),
           previewAsset: previewableAsset,
         });
       }
@@ -2902,6 +2910,14 @@ export function Canvas() {
   const handlePaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
       if (!reactFlowWrapper.current) return;
+
+      // Guard: skip if dragging or viewport is moving
+      if (isDraggingRef.current || isViewportMovingRef.current) return;
+
+      // Guard: cooldown to prevent rapid successive element creation (500ms)
+      const now = Date.now();
+      if (now - lastElementCreatedAtRef.current < 500) return;
+      lastElementCreatedAtRef.current = now;
 
       // Get position relative to the flow
       const bounds = reactFlowWrapper.current.getBoundingClientRect();

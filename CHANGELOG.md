@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.13.1
+
+### Fixes
+- Canvas: prevent unintentional element creation from rapid double-clicks (500ms cooldown + drag/viewport guards)
+- Context menu: annotations now show a notes excerpt instead of "Sans nom" when label is empty
+- SidePanel: persist width to localStorage so it survives page reloads
+
 ## 2.13.0
 
 ### Features

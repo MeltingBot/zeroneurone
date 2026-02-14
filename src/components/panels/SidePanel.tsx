@@ -15,7 +15,8 @@ import { usePlugins } from '../../plugins/usePlugins';
 
 const MIN_WIDTH = 360;
 const MAX_WIDTH = 600;
-const DEFAULT_WIDTH = 400;
+const DEFAULT_WIDTH = 420;
+const WIDTH_STORAGE_KEY = 'zeroneurone:sidepanel-width';
 
 type TabId = 'detail' | 'insights' | 'filters' | 'views' | 'report' | (string & {});
 
@@ -41,7 +42,14 @@ export function SidePanel() {
 
   const [activeTab, setActiveTab] = useState<TabId>('detail');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
+  const [width, setWidth] = useState(() => {
+    const stored = localStorage.getItem(WIDTH_STORAGE_KEY);
+    if (stored) {
+      const n = parseInt(stored, 10);
+      if (n >= MIN_WIDTH && n <= MAX_WIDTH) return n;
+    }
+    return DEFAULT_WIDTH;
+  });
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
 
@@ -66,6 +74,11 @@ export function SidePanel() {
 
     const handleMouseUp = () => {
       setIsResizing(false);
+      // Persist width after resize
+      setWidth((w) => {
+        localStorage.setItem(WIDTH_STORAGE_KEY, String(w));
+        return w;
+      });
     };
 
     document.addEventListener('mousemove', handleMouseMove);
