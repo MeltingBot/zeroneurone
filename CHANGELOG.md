@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.12.1
+
+### Fixes
+- MarkdownEditor: textarea auto-resizes to fit content (no more manual drag to see full text)
+
 ## 2.12.0
 
 ### Features

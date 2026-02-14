@@ -33,19 +33,29 @@ export function MarkdownEditor({
   // Track if we should focus (only when user explicitly clicked to edit)
   const shouldFocusRef = useRef(false);
 
+  // Auto-resize textarea to fit content
+  const autoResize = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.max(ta.scrollHeight, minRows * 24)}px`;
+  }, [minRows]);
+
   // Focus textarea when switching to edit mode via explicit user action
   useEffect(() => {
     if (isEditing && shouldFocusRef.current && textareaRef.current) {
       textareaRef.current.focus();
       shouldFocusRef.current = false;
     }
-  }, [isEditing]);
+    if (isEditing) autoResize();
+  }, [isEditing, autoResize]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       onChange(e.target.value);
+      autoResize();
     },
-    [onChange]
+    [onChange, autoResize]
   );
 
   // Switch to preview when leaving the field
@@ -71,7 +81,7 @@ export function MarkdownEditor({
           onBlur={handleBlur}
           placeholder={placeholder}
           className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
-          style={{ minHeight: `${minRows * 24}px`, resize: 'vertical' }}
+          style={{ minHeight: `${minRows * 24}px`, resize: 'none', overflow: 'hidden' }}
         />
       ) : (
         <div
