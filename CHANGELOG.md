@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.13.2
+
+### Features
+- Plugin system: new `home:banner` slot for full-width content above home page (landing hero and investigation list)
+- PDF text extraction: increase page limit from 10 to 100 pages
+
 ## 2.13.1
 
 ### Fixes

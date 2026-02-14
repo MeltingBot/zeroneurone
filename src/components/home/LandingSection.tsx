@@ -24,6 +24,7 @@ export function LandingSection({
 }: LandingSectionProps) {
   const { t } = useTranslation('pages');
   const homePlugins = usePlugins('home:actions');
+  const bannerPlugins = usePlugins('home:banner');
 
   const features = [
     { icon: Network, key: 'graph' },
@@ -36,6 +37,11 @@ export function LandingSection({
 
   return (
     <div className="flex-1 overflow-y-auto" data-testid="landing-section">
+      {/* Plugin banners */}
+      {bannerPlugins.map((Banner, i) => (
+        <Banner key={i} />
+      ))}
+
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex flex-col items-center text-center mb-12">

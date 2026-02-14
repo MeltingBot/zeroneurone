@@ -492,7 +492,7 @@ class FileService {
       const pdf = await loadingTask.promise;
 
       const textParts: string[] = [];
-      const maxPages = Math.min(pdf.numPages, 10);
+      const maxPages = Math.min(pdf.numPages, 100);
 
       for (let i = 1; i <= maxPages; i++) {
         const page = await pdf.getPage(i);

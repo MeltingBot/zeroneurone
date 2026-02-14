@@ -37,6 +37,7 @@ export function HomePage() {
 
   const { themeMode, toggleThemeMode } = useUIStore();
   const homePlugins = usePlugins('home:actions');
+  const bannerPlugins = usePlugins('home:banner');
 
   const [viewMode, setViewMode] = useState<ViewMode | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -279,7 +280,12 @@ export function HomePage() {
           onToggleTheme={toggleThemeMode}
         />
       ) : (
-        <main className="flex-1 overflow-y-auto p-6" data-testid="investigation-list">
+        <main className="flex-1 overflow-y-auto" data-testid="investigation-list">
+          {/* Plugin banners */}
+          {bannerPlugins.map((Banner, i) => (
+            <Banner key={i} />
+          ))}
+          <div className="p-6">
           {investigations.length === 0 ? (
             <EmptyState
               icon={FolderOpen}
@@ -446,6 +452,7 @@ export function HomePage() {
               )}
             </div>
           )}
+          </div>
         </main>
       )}
 

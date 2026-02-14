@@ -147,7 +147,7 @@ ZeroNeurone extrait automatiquement le contenu textuel des fichiers PDF et texte
 
 | Format | Extraction |
 |--------|-----------|
-| **PDF** | Texte selectionnable (jusqu'a 10 pages) |
+| **PDF** | Texte selectionnable (jusqu'a 100 pages) |
 | **TXT, MD, CSV** | Contenu integral |
 
 ### Visualisation
