@@ -116,6 +116,28 @@ registerPlugin('home:actions', MyHomeAction);
 
 **Props received:** none
 
+### `home:banner` — Full-Width Banner
+
+Inject React components at the top of the home page, above the hero (landing) or the investigation list. The component spans the full available width — ideal for announcements, alerts, or custom branding.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+function MyBanner() {
+  return (
+    <div className="bg-bg-secondary border-b border-border-default px-6 py-3 text-center text-sm text-text-secondary">
+      Internal instance — Do not distribute
+    </div>
+  );
+}
+
+registerPlugin('home:banner', MyBanner);
+```
+
+**Props received:** none
+
+**Location:** Rendered above the main content in both home page views (landing and list). The component is outside the `max-w-4xl` container, so it spans the full width.
+
 ### `panel:right` — Side Panel Tabs
 
 Add a custom tab to the right side panel (alongside Detail, Insights, Filters, Views, Report).
@@ -595,6 +617,7 @@ src/
 |------|------|-----------------|----------|
 | `header:right` | `ComponentType` | none | Investigation header toolbar |
 | `home:actions` | `ComponentType` | none | Home page (landing footer + list toolbar) |
+| `home:banner` | `ComponentType` | none | Home page (full-width, above hero/list) |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Side panel tabs |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Element right-click |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Link right-click |

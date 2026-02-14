@@ -116,6 +116,28 @@ registerPlugin('home:actions', MyHomeAction);
 
 **Props recues :** aucune
 
+### `home:banner` — Banniere pleine largeur
+
+Injectez des composants React en haut de la page d'accueil, au-dessus du hero (landing) ou de la liste d'investigations. Le composant occupe toute la largeur disponible — ideal pour des annonces, alertes ou branding personnalise.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+function MyBanner() {
+  return (
+    <div className="bg-bg-secondary border-b border-border-default px-6 py-3 text-center text-sm text-text-secondary">
+      Instance interne — Ne pas diffuser
+    </div>
+  );
+}
+
+registerPlugin('home:banner', MyBanner);
+```
+
+**Props recues :** aucune
+
+**Emplacement :** Rendu au-dessus du contenu principal dans les deux vues de la page d'accueil (landing et liste). Le composant est en dehors du conteneur `max-w-4xl`, il occupe donc toute la largeur.
+
 ### `panel:right` — Onglets du panneau lateral
 
 Ajoutez un onglet personnalise au panneau lateral droit (a cote de Detail, Insights, Filtres, Vues, Rapport).
@@ -595,6 +617,7 @@ src/
 |------|------|-----------------|-------------|
 | `header:right` | `ComponentType` | aucune | Toolbar du header |
 | `home:actions` | `ComponentType` | aucune | Page d'accueil (footer landing + toolbar liste) |
+| `home:banner` | `ComponentType` | aucune | Page d'accueil (pleine largeur, au-dessus du hero/liste) |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Onglets du panneau lateral |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Clic droit sur element |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Clic droit sur lien |
