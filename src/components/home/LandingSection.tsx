@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
+import { usePlugins } from '../../plugins/usePlugins';
 
 interface LandingSectionProps {
   onNewInvestigation: () => void;
@@ -22,6 +23,7 @@ export function LandingSection({
   onToggleTheme,
 }: LandingSectionProps) {
   const { t } = useTranslation('pages');
+  const homePlugins = usePlugins('home:actions');
 
   const features = [
     { icon: Network, key: 'graph' },
@@ -95,6 +97,10 @@ export function LandingSection({
 
         {/* Footer Links */}
         <div className="flex items-center justify-center gap-4 border-t border-border-default pt-6">
+          {/* Plugin-provided actions */}
+          {homePlugins.map((Plugin, i) => (
+            <Plugin key={i} />
+          ))}
           <button
             onClick={onToggleTheme}
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
