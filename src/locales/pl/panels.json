@@ -193,7 +193,11 @@
       "download": "Pobierz",
       "preview": "Podgląd",
       "defaultThumbnail": "Domyślna miniatura",
-      "closeEsc": "Zamknij (Esc)"
+      "closeEsc": "Zamknij (Esc)",
+      "clearText": "Wyczyść wyodrębniony tekst",
+      "extractText": "Wyodrebnij tekst",
+      "reExtractText": "Ponownie wyodrebnij tekst",
+      "toggleText": "Pokaz/ukryj tekst"
     },
     "timestamps": {
       "createdAt": "Utworzono",

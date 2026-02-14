@@ -33,10 +33,15 @@ La recherche porte sur :
 
 | Champ | Poids |
 |-------|-------|
-| **Label** | Élevé |
+| **Label** | Eleve |
 | **Notes** | Moyen |
 | **Tags** | Moyen |
-| **Propriétés** | Normal |
+| **Proprietes** | Normal |
+| **Texte extrait** | Normal |
+
+{{< hint info >}}
+**Texte extrait** : Le contenu textuel des PDF et fichiers texte attaches aux elements est automatiquement indexe. Voir [Fichiers joints - Extraction de texte]({{< relref "attachments#extraction-de-texte" >}}).
+{{< /hint >}}
 
 ### Recherche floue
 

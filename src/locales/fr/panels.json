@@ -194,7 +194,11 @@
       "download": "Télécharger",
       "preview": "Aperçu",
       "defaultThumbnail": "Vignette par défaut",
-      "closeEsc": "Fermer (Echap)"
+      "closeEsc": "Fermer (Echap)",
+      "clearText": "Effacer le texte extrait",
+      "extractText": "Extraire le texte",
+      "reExtractText": "Re-extraire le texte",
+      "toggleText": "Afficher/masquer le texte"
     },
     "timestamps": {
       "createdAt": "Créé le",

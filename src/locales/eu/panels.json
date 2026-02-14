@@ -193,7 +193,11 @@
       "download": "Deskargatu",
       "preview": "Aurrebista",
       "defaultThumbnail": "Miniatura lehenetsia",
-      "closeEsc": "Itxi (Esc)"
+      "closeEsc": "Itxi (Esc)",
+      "clearText": "Ezabatu ateratako testua",
+      "extractText": "Testua atera",
+      "reExtractText": "Testua berriro atera",
+      "toggleText": "Testua erakutsi/ezkutatu"
     },
     "timestamps": {
       "createdAt": "Sortze data",

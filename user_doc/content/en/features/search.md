@@ -37,6 +37,11 @@ Search covers:
 | **Notes** | Medium |
 | **Tags** | Medium |
 | **Properties** | Normal |
+| **Extracted text** | Normal |
+
+{{< hint info >}}
+**Extracted text**: Text content from PDF and text files attached to elements is automatically indexed. See [Attachments - Text Extraction]({{< relref "attachments#text-extraction" >}}).
+{{< /hint >}}
 
 ### Fuzzy Search
 

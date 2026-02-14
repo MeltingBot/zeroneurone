@@ -63,6 +63,8 @@ Other formats display an icon and allow download.
 |--------|-------------|
 | **Preview** | Open in viewer |
 | **Download** | Save to your machine |
+| **Extract text** | Run or re-run text content extraction |
+| **Clear text** | Remove extracted text from the index |
 | **Delete** | Remove file from element |
 
 
@@ -133,6 +135,38 @@ If an image contains **GPS coordinates** (EXIF):
 
 {{< hint info >}}
 **Tip**: Smartphone photos often contain GPS coordinates. Import them to automatically place your elements on the map.
+{{< /hint >}}
+
+---
+
+## Text Extraction
+
+ZeroNeurone automatically extracts text content from PDF and text files (TXT, Markdown, CSV...) when added to an element. This text is indexed for global search (Ctrl+K).
+
+### Supported Formats
+
+| Format | Extraction |
+|--------|-----------|
+| **PDF** | Selectable text (up to 10 pages) |
+| **TXT, MD, CSV** | Full content |
+
+### Viewing
+
+Extracted text is indicated below the filename by a character count. Click it to expand a content preview.
+
+### Actions
+
+| Action | Icon | Description |
+|--------|------|-------------|
+| **Extract / Re-extract** | ScanText | Run extraction on demand (or re-run it) |
+| **Clear** | FileX2 | Remove extracted text from the index |
+
+### Search
+
+Extracted text is automatically indexed in the search engine. A Ctrl+K search for a word present in a PDF will find the element the file is attached to.
+
+{{< hint info >}}
+**Tip**: If automatic extraction fails (scanned PDF without selectable text), the ScanText button lets you re-run extraction at any time.
 {{< /hint >}}
 
 ---

@@ -193,7 +193,11 @@
       "download": "Завантажити",
       "preview": "Попередній перегляд",
       "defaultThumbnail": "Мініатюра за замовчуванням",
-      "closeEsc": "Закрити (Esc)"
+      "closeEsc": "Закрити (Esc)",
+      "clearText": "Очистити витягнутий текст",
+      "extractText": "Vytiahnuty tekst",
+      "reExtractText": "Povtorno vytiahnuty tekst",
+      "toggleText": "Pokazaty/skhovaty tekst"
     },
     "timestamps": {
       "createdAt": "Створено",

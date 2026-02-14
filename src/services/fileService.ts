@@ -433,7 +433,9 @@ class FileService {
 
   private async generatePdfThumbnail(arrayBuffer: ArrayBuffer): Promise<string | null> {
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      // Use a copy: getDocument() transfers the ArrayBuffer to the worker,
+      // which would detach the original and break subsequent extractPdfText()
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
       const pdf = await loadingTask.promise;
 
       const page = await pdf.getPage(1);
@@ -501,11 +503,46 @@ class FileService {
         textParts.push(pageText);
       }
 
-      return textParts.join('\n\n');
+      return this.normalizeExtractedText(textParts.join('\n\n'));
     } catch (error) {
       console.warn('Failed to extract PDF text:', error);
       return null;
     }
+  }
+
+  private normalizeExtractedText(text: string): string | null {
+    let result = text;
+    // Remove control characters (keep newlines and tabs)
+    result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    // Normalize common ligatures
+    result = result.replace(/\uFB01/g, 'fi').replace(/\uFB02/g, 'fl');
+    // Normalize unicode quotes and dashes
+    result = result.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
+    result = result.replace(/[\u2013\u2014]/g, '-');
+    // Collapse multiple spaces to one (preserve newlines)
+    result = result.replace(/[^\S\n]+/g, ' ');
+    // Collapse 3+ newlines to 2
+    result = result.replace(/\n{3,}/g, '\n\n');
+    // Trim each line
+    result = result.split('\n').map((l) => l.trim()).join('\n');
+    result = result.trim();
+    return result || null;
+  }
+
+  /**
+   * Extract (or re-extract) text from an existing asset on demand.
+   * Reads the file from OPFS, runs extraction, and updates the DB.
+   */
+  async extractAssetText(asset: Asset): Promise<string | null> {
+    const file = await this.getAssetFile(asset);
+    const arrayBuffer = await file.arrayBuffer();
+    const extractedText = await this.extractText(file, arrayBuffer);
+    await db.assets.update(asset.id, { extractedText });
+    return extractedText;
+  }
+
+  async clearAssetText(assetId: string): Promise<void> {
+    await db.assets.update(assetId, { extractedText: null });
   }
 }
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.13.0
+
+### Features
+- PDF/text file content extraction: text from PDF (up to 10 pages) and text files (TXT, MD, CSV) is automatically extracted and indexed for full-text search (Ctrl+K)
+- Extracted text preview in asset panel: character count indicator, expandable text preview
+- On-demand text extraction: ScanText button to extract or re-extract text at any time
+- Clear extracted text: FileX2 button to remove indexed text from an asset
+
+### Fixes
+- Fix PDF text extraction: `generatePdfThumbnail()` was detaching the ArrayBuffer (transferred to pdf.js worker), causing `extractPdfText()` to silently fail. Fixed by copying the buffer before thumbnail generation.
+- Connect extracted text to MiniSearch index: `searchService.elementToDocument()` now includes concatenated `extractedText` from linked assets (was hardcoded to empty string)
+
+### i18n
+- New keys `extractText`, `reExtractText`, `toggleText` translated across all 11 locales
+
 ## 2.12.3
 
 ### Features

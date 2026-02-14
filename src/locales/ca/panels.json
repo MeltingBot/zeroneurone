@@ -193,7 +193,11 @@
       "download": "Descarregar",
       "preview": "Previsualització",
       "defaultThumbnail": "Miniatura per defecte",
-      "closeEsc": "Tancar (Esc)"
+      "closeEsc": "Tancar (Esc)",
+      "clearText": "Esborrar text extret",
+      "extractText": "Extreure text",
+      "reExtractText": "Re-extreure text",
+      "toggleText": "Mostra/amaga text"
     },
     "timestamps": {
       "createdAt": "Creat el",

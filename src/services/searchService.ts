@@ -1,5 +1,5 @@
 import MiniSearch from 'minisearch';
-import type { Element, Link, SearchDocument, SearchResult, Property } from '../types';
+import type { Asset, Element, Link, SearchDocument, SearchResult, Property } from '../types';
 import { getCountryByCode, getCountryName } from '../data/countries';
 
 class SearchService {
@@ -24,6 +24,8 @@ class SearchService {
 
   // Track indexed document IDs for incremental updates
   private indexedIds = new Set<string>();
+  // Map elementId → concatenated extractedText from its assets
+  private assetTextMap = new Map<string, string>();
 
   /**
    * Load and index all elements and links for an investigation (full rebuild).
@@ -32,7 +34,8 @@ class SearchService {
   loadInvestigation(
     investigationId: string,
     elements: Element[],
-    links: Link[]
+    links: Link[],
+    assets: Asset[] = []
   ): void {
     // Reset if different investigation
     if (this.currentInvestigationId !== investigationId) {
@@ -40,6 +43,8 @@ class SearchService {
       this.indexedIds.clear();
       this.currentInvestigationId = investigationId;
     }
+
+    this.buildAssetTextMap(elements, assets);
 
     // Index elements
     for (const element of elements) {
@@ -58,7 +63,8 @@ class SearchService {
    * Incrementally sync the search index with the current elements/links.
    * Detects adds, removes, and updates.
    */
-  syncIncremental(elements: Element[], links: Link[]): void {
+  syncIncremental(elements: Element[], links: Link[], assets: Asset[] = []): void {
+    this.buildAssetTextMap(elements, assets);
     const currentIds = new Set<string>();
 
     // Process elements: add/update
@@ -191,6 +197,21 @@ class SearchService {
     return `${p.key} ${value}`;
   }
 
+  private buildAssetTextMap(elements: Element[], assets: Asset[]): void {
+    this.assetTextMap.clear();
+    if (assets.length === 0) return;
+    const assetById = new Map(assets.map((a) => [a.id, a]));
+    for (const element of elements) {
+      if (!element.assetIds?.length) continue;
+      const texts: string[] = [];
+      for (const assetId of element.assetIds) {
+        const asset = assetById.get(assetId);
+        if (asset?.extractedText) texts.push(asset.extractedText);
+      }
+      if (texts.length > 0) this.assetTextMap.set(element.id, texts.join(' '));
+    }
+  }
+
   private elementToDocument(element: Element): SearchDocument {
     return {
       id: element.id,
@@ -202,7 +223,7 @@ class SearchService {
       properties: element.properties
         .map((p) => this.formatPropertyForIndex(p))
         .join(' '),
-      extractedText: '', // Will be filled from assets later
+      extractedText: this.assetTextMap.get(element.id) || ''
     };
   }
 

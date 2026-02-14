@@ -109,6 +109,8 @@ interface InvestigationState {
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
   reorderAssets: (elementId: ElementId, assetIds: string[]) => Promise<void>;
+  clearAssetText: (assetId: string) => Promise<void>;
+  extractAssetText: (assetId: string) => Promise<void>;
 
   // Actions - Comments
   createComment: (targetId: ElementId | LinkId, targetType: CommentTargetType, content: string) => Promise<Comment>;
@@ -1449,6 +1451,26 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     // Remove from local state
     set((state) => ({
       assets: state.assets.filter((a) => a.id !== assetId),
+    }));
+  },
+
+  clearAssetText: async (assetId: string) => {
+    await fileService.clearAssetText(assetId);
+    set((state) => ({
+      assets: state.assets.map((a) =>
+        a.id === assetId ? { ...a, extractedText: null } : a
+      ),
+    }));
+  },
+
+  extractAssetText: async (assetId: string) => {
+    const asset = get().assets.find((a) => a.id === assetId);
+    if (!asset) return;
+    const extractedText = await fileService.extractAssetText(asset);
+    set((state) => ({
+      assets: state.assets.map((a) =>
+        a.id === assetId ? { ...a, extractedText } : a
+      ),
     }));
   },
 

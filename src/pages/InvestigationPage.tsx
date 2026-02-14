@@ -45,6 +45,7 @@ export function InvestigationPage() {
     currentInvestigation,
     elements,
     links,
+    assets,
     isLoading,
     loadingPhase,
     loadingDetail,
@@ -143,13 +144,13 @@ export function InvestigationPage() {
 
     if (searchInitializedRef.current !== currentInvestigation.id) {
       // First load or investigation changed: full rebuild
-      searchService.loadInvestigation(currentInvestigation.id, elements, links);
+      searchService.loadInvestigation(currentInvestigation.id, elements, links, assets);
       searchInitializedRef.current = currentInvestigation.id;
     } else {
       // Subsequent changes: incremental sync (only diffs)
-      searchService.syncIncremental(elements, links);
+      searchService.syncIncremental(elements, links, assets);
     }
-  }, [currentInvestigation, elements, links]);
+  }, [currentInvestigation, elements, links, assets]);
 
   // Load saved views for this investigation
   useEffect(() => {

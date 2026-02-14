@@ -193,7 +193,11 @@
       "download": "Download",
       "preview": "Preview",
       "defaultThumbnail": "Default thumbnail",
-      "closeEsc": "Close (Esc)"
+      "closeEsc": "Close (Esc)",
+      "clearText": "Clear extracted text",
+      "extractText": "Extract text",
+      "reExtractText": "Re-extract text",
+      "toggleText": "Show/hide text"
     },
     "timestamps": {
       "createdAt": "Created",

@@ -193,7 +193,11 @@
       "download": "Scarica",
       "preview": "Anteprima",
       "defaultThumbnail": "Miniatura predefinita",
-      "closeEsc": "Chiudi (Esc)"
+      "closeEsc": "Chiudi (Esc)",
+      "clearText": "Cancella testo estratto",
+      "extractText": "Estrai testo",
+      "reExtractText": "Ri-estrai testo",
+      "toggleText": "Mostra/nascondi testo"
     },
     "timestamps": {
       "createdAt": "Creato il",

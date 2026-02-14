@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, File, Image, FileText, X, Download, Eye, GripVertical } from 'lucide-react';
+import { Upload, File, Image, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
@@ -13,7 +13,7 @@ interface AssetsPanelProps {
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
   useTranslation('panels'); // Load namespace for child components
-  const { assets, addAsset, removeAsset, reorderAssets } = useInvestigationStore();
+  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText } = useInvestigationStore();
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
@@ -162,6 +162,26 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
     [element.id, removeAsset]
   );
 
+  const handleClearText = useCallback(
+    async (assetId: string) => {
+      await clearAssetText(assetId);
+    },
+    [clearAssetText]
+  );
+
+  const [extractingAssetId, setExtractingAssetId] = useState<string | null>(null);
+  const handleExtractText = useCallback(
+    async (assetId: string) => {
+      setExtractingAssetId(assetId);
+      try {
+        await extractAssetText(assetId);
+      } finally {
+        setExtractingAssetId(null);
+      }
+    },
+    [extractAssetText]
+  );
+
   // Drag-and-drop reordering handlers
   const handleReorderDragStart = useCallback((assetId: string) => {
     setDraggingAssetId(assetId);
@@ -281,6 +301,13 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
               asset={asset}
               index={index}
               onRemove={() => handleRemove(asset.id)}
+              onClearText={asset.extractedText ? () => handleClearText(asset.id) : undefined}
+              onExtractText={
+                (asset.mimeType === 'application/pdf' || asset.mimeType.startsWith('text/'))
+                  ? () => handleExtractText(asset.id)
+                  : undefined
+              }
+              isExtracting={extractingAssetId === asset.id}
               onDownload={() => handleDownload(asset)}
               onPreview={() => setPreviewAsset(asset)}
               isDragging={draggingAssetId === asset.id}
@@ -316,6 +343,9 @@ interface AssetItemProps {
   asset: Asset;
   index: number;
   onRemove: () => void;
+  onClearText?: () => void;
+  onExtractText?: () => void;
+  isExtracting: boolean;
   onDownload: () => void;
   onPreview: () => void;
   isDragging: boolean;
@@ -331,6 +361,9 @@ function AssetItem({
   asset,
   index,
   onRemove,
+  onClearText,
+  onExtractText,
+  isExtracting,
   onDownload,
   onPreview,
   isDragging,
@@ -343,97 +376,144 @@ function AssetItem({
 }: AssetItemProps) {
   const { t } = useTranslation('common');
   const { t: tPanels } = useTranslation('panels');
+  const [showText, setShowText] = useState(false);
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
+  const hasText = !!asset.extractedText;
 
   const Icon = isImage ? Image : isPdf ? FileText : File;
 
   return (
-    <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', asset.id);
-        onDragStart();
-      }}
-      onDragEnter={(e) => {
-        e.preventDefault();
-        onDragEnter();
-      }}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-      }}
-      onDragLeave={onDragLeave}
-      onDrop={(e) => {
-        e.preventDefault();
-        onDrop();
-      }}
-      onDragEnd={onDragEnd}
-      className={`
-        flex items-center gap-2 p-2 bg-bg-secondary rounded border transition-all group cursor-grab active:cursor-grabbing
-        ${isDragging ? 'opacity-50 border-accent' : 'border-border-default'}
-        ${isDragOver ? 'border-accent bg-accent/5' : ''}
-      `}
-    >
-      {/* Drag handle */}
-      <div className="flex-shrink-0 text-text-tertiary hover:text-text-secondary">
-        <GripVertical size={14} />
-      </div>
+    <div>
+      <div
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', asset.id);
+          onDragStart();
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          onDragEnter();
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDragLeave={onDragLeave}
+        onDrop={(e) => {
+          e.preventDefault();
+          onDrop();
+        }}
+        onDragEnd={onDragEnd}
+        className={`
+          flex items-center gap-2 p-2 bg-bg-secondary rounded border transition-all group cursor-grab active:cursor-grabbing
+          ${isDragging ? 'opacity-50 border-accent' : 'border-border-default'}
+          ${isDragOver ? 'border-accent bg-accent/5' : ''}
+        `}
+      >
+        {/* Drag handle */}
+        <div className="flex-shrink-0 text-text-tertiary hover:text-text-secondary">
+          <GripVertical size={14} />
+        </div>
 
-      {/* Thumbnail or icon */}
-      <div className="w-10 h-10 flex-shrink-0 rounded bg-bg-tertiary flex items-center justify-center overflow-hidden relative">
-        {asset.thumbnailDataUrl ? (
-          <img
-            src={asset.thumbnailDataUrl}
-            alt={asset.filename}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <Icon size={16} className="text-text-tertiary" />
-        )}
-        {/* First asset indicator */}
-        {index === 0 && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" title={tPanels('detail.files.defaultThumbnail')} />
-        )}
-      </div>
+        {/* Thumbnail or icon */}
+        <div className="w-10 h-10 flex-shrink-0 rounded bg-bg-tertiary flex items-center justify-center overflow-hidden relative">
+          {asset.thumbnailDataUrl ? (
+            <img
+              src={asset.thumbnailDataUrl}
+              alt={asset.filename}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Icon size={16} className="text-text-tertiary" />
+          )}
+          {/* First asset indicator */}
+          {index === 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" title={tPanels('detail.files.defaultThumbnail')} />
+          )}
+        </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-text-primary truncate">
-          {asset.filename}
-        </p>
-        <p className="text-xs text-text-tertiary">
-          {formatFileSize(asset.size)}
-        </p>
-      </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-text-primary truncate">
+            {asset.filename}
+          </p>
+          <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
+            <span>{formatFileSize(asset.size)}</span>
+            {hasText && (
+              <button
+                onClick={() => setShowText(!showText)}
+                className="flex items-center gap-0.5 text-text-secondary hover:text-text-primary transition-colors"
+                title={tPanels('detail.files.toggleText')}
+              >
+                <ScanText size={11} />
+                <span>{formatCharCount(asset.extractedText!.length)}</span>
+                {showText ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              </button>
+            )}
+            {isExtracting && (
+              <span className="flex items-center gap-1 text-accent">
+                <div className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />
+              </span>
+            )}
+          </div>
+        </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {(isImage || isPdf) && (
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {(isImage || isPdf) && (
+            <button
+              onClick={onPreview}
+              className="p-1 text-text-tertiary hover:text-text-primary"
+              title={tPanels('detail.files.preview')}
+            >
+              <Eye size={14} />
+            </button>
+          )}
           <button
-            onClick={onPreview}
+            onClick={onDownload}
             className="p-1 text-text-tertiary hover:text-text-primary"
-            title={tPanels('detail.files.preview')}
+            title={t('actions.download')}
           >
-            <Eye size={14} />
+            <Download size={14} />
           </button>
-        )}
-        <button
-          onClick={onDownload}
-          className="p-1 text-text-tertiary hover:text-text-primary"
-          title={t('actions.download')}
-        >
-          <Download size={14} />
-        </button>
-        <button
-          onClick={onRemove}
-          className="p-1 text-text-tertiary hover:text-error"
-          title={t('actions.delete')}
-        >
-          <X size={14} />
-        </button>
+          {onExtractText && !isExtracting && (
+            <button
+              onClick={onExtractText}
+              className="p-1 text-text-tertiary hover:text-accent"
+              title={hasText ? tPanels('detail.files.reExtractText') : tPanels('detail.files.extractText')}
+            >
+              <ScanText size={14} />
+            </button>
+          )}
+          {onClearText && (
+            <button
+              onClick={onClearText}
+              className="p-1 text-text-tertiary hover:text-warning"
+              title={tPanels('detail.files.clearText')}
+            >
+              <FileX2 size={14} />
+            </button>
+          )}
+          <button
+            onClick={onRemove}
+            className="p-1 text-text-tertiary hover:text-error"
+            title={t('actions.delete')}
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
+
+      {/* Extracted text preview */}
+      {showText && hasText && (
+        <div className="mt-1 ml-7 px-2 py-1.5 bg-bg-tertiary rounded text-xs text-text-secondary max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+          {asset.extractedText!.length > 2000
+            ? asset.extractedText!.substring(0, 2000) + '...'
+            : asset.extractedText}
+        </div>
+      )}
     </div>
   );
 }
@@ -572,4 +652,9 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function formatCharCount(count: number): string {
+  if (count < 1000) return `${count}c`;
+  return `${(count / 1000).toFixed(1)}k`;
 }

@@ -193,7 +193,11 @@
       "download": "Downloaden",
       "preview": "Voorbeeld",
       "defaultThumbnail": "Standaard miniatuur",
-      "closeEsc": "Sluiten (Esc)"
+      "closeEsc": "Sluiten (Esc)",
+      "clearText": "Geëxtraheerde tekst wissen",
+      "extractText": "Tekst extraheren",
+      "reExtractText": "Tekst opnieuw extraheren",
+      "toggleText": "Tekst tonen/verbergen"
     },
     "timestamps": {
       "createdAt": "Aangemaakt op",

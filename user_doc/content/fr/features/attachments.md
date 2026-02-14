@@ -63,6 +63,8 @@ Les autres formats affichent une icône et permettent le téléchargement.
 |--------|-------------|
 | **Prévisualiser** | Ouvrir dans la visionneuse |
 | **Télécharger** | Sauvegarder sur votre machine |
+| **Extraire le texte** | Lancer ou relancer l'extraction du contenu textuel |
+| **Effacer le texte** | Supprimer le texte extrait de l'index |
 | **Supprimer** | Retirer le fichier de l'élément |
 
 
@@ -133,6 +135,38 @@ Si une image contient des **coordonnées GPS** (EXIF) :
 
 {{< hint info >}}
 **Astuce** : Les photos de smartphones contiennent souvent des coordonnées GPS. Importez-les pour placer automatiquement vos éléments sur la carte.
+{{< /hint >}}
+
+---
+
+## Extraction de texte
+
+ZeroNeurone extrait automatiquement le contenu textuel des fichiers PDF et texte (TXT, Markdown, CSV...) lors de l'ajout a un element. Ce texte est indexe pour la recherche globale (Ctrl+K).
+
+### Formats supportes
+
+| Format | Extraction |
+|--------|-----------|
+| **PDF** | Texte selectionnable (jusqu'a 10 pages) |
+| **TXT, MD, CSV** | Contenu integral |
+
+### Visualisation
+
+Le texte extrait est indique sous le nom de fichier par un compteur de caracteres. Cliquez dessus pour deplier un apercu du contenu.
+
+### Actions
+
+| Action | Icone | Description |
+|--------|-------|-------------|
+| **Extraire / Re-extraire** | ScanText | Lancer l'extraction a la demande (ou la relancer) |
+| **Effacer** | FileX2 | Supprimer le texte extrait de l'index |
+
+### Recherche
+
+Le texte extrait est automatiquement indexe dans le moteur de recherche. Un Ctrl+K avec un mot present dans un PDF retrouvera l'element auquel le fichier est attache.
+
+{{< hint info >}}
+**Astuce** : Si l'extraction automatique echoue (PDF scanne sans texte selectionnable), le bouton ScanText permet de relancer l'extraction a tout moment.
 {{< /hint >}}
 
 ---
