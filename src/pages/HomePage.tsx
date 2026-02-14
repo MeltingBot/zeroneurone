@@ -18,6 +18,7 @@ import {
 } from '../components/modals';
 import { useInvestigationStore, useUIStore } from '../stores';
 import { investigationRepository } from '../db/repositories';
+import { usePlugins } from '../plugins/usePlugins';
 
 type ViewMode = 'landing' | 'list';
 type SortMode = 'updated' | 'created' | 'name';
@@ -35,6 +36,7 @@ export function HomePage() {
   } = useInvestigationStore();
 
   const { themeMode, toggleThemeMode } = useUIStore();
+  const homePlugins = usePlugins('home:actions');
 
   const [viewMode, setViewMode] = useState<ViewMode | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -190,6 +192,10 @@ export function HomePage() {
             </button>
           </div>
           <div className="flex items-center gap-2">
+            {/* Plugin-provided actions */}
+            {homePlugins.map((Plugin, i) => (
+              <Plugin key={i} />
+            ))}
             <Button
               variant="ghost"
               size="sm"

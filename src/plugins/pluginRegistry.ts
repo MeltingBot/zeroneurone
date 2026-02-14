@@ -12,6 +12,7 @@ import type { PluginSlots } from '../types/plugins';
 
 const slots: PluginSlots = {
   'header:right': [],
+  'home:actions': [],
   'panel:right': [],
   'contextMenu:element': [],
   'contextMenu:link': [],

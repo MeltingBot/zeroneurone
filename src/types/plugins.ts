@@ -72,6 +72,7 @@ export interface PanelPluginRegistration {
 
 export interface PluginSlots {
   'header:right': ComponentType[];
+  'home:actions': ComponentType[];
   'panel:right': PanelPluginRegistration[];
   'contextMenu:element': ContextMenuExtension[];
   'contextMenu:link': ContextMenuExtension[];
