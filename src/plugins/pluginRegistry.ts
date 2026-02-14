@@ -39,7 +39,7 @@ export function registerPlugin<K extends keyof PluginSlots>(
   slot: K,
   extension: PluginSlots[K][number]
 ): void {
-  (slots[slot] as any[]).push(extension);
+  slots[slot] = [...slots[slot], extension] as PluginSlots[K];
   notifyListeners();
 }
 
@@ -47,8 +47,20 @@ export function registerPlugins<K extends keyof PluginSlots>(
   slot: K,
   extensions: PluginSlots[K][number][]
 ): void {
-  (slots[slot] as any[]).push(...extensions);
+  slots[slot] = [...slots[slot], ...extensions] as PluginSlots[K];
   notifyListeners();
+}
+
+export function unregisterPlugin<K extends keyof PluginSlots>(
+  slot: K,
+  predicate: (ext: any) => boolean
+): void {
+  const arr = slots[slot] as any[];
+  const idx = arr.findIndex(predicate);
+  if (idx !== -1) {
+    slots[slot] = arr.filter((_: any, i: number) => i !== idx) as PluginSlots[K];
+    notifyListeners();
+  }
 }
 
 export function getPlugins<K extends keyof PluginSlots>(
@@ -59,7 +71,7 @@ export function getPlugins<K extends keyof PluginSlots>(
 
 export function clearAllPlugins(): void {
   for (const key of Object.keys(slots) as (keyof PluginSlots)[]) {
-    (slots[key] as any[]).length = 0;
+    slots[key] = [] as any;
   }
   notifyListeners();
 }

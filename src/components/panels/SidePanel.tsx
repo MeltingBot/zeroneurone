@@ -110,6 +110,14 @@ export function SidePanel() {
     }
   }, [isCanvasMode, activeTab]);
 
+  // Switch away from removed plugin tabs
+  useEffect(() => {
+    const builtinIds = ['detail', 'insights', 'filters', 'views', 'report'];
+    if (!builtinIds.includes(activeTab) && !panelPlugins.some((p) => p.id === activeTab)) {
+      setActiveTab('detail');
+    }
+  }, [panelPlugins, activeTab]);
+
   const tabs: Tab[] = [
     { id: 'detail', label: t('tabs.detail'), icon: Info },
     { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
