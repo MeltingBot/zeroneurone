@@ -423,6 +423,24 @@ function registerPlugins<K extends keyof PluginSlots>(
 ): void;
 ```
 
+### `unregisterPlugin(slot, predicate)`
+
+Remove the first extension matching the predicate from a slot. Useful for dynamic plugins that need to clean up.
+
+```typescript
+function unregisterPlugin<K extends keyof PluginSlots>(
+  slot: K,
+  predicate: (ext: PluginSlots[K][number]) => boolean
+): void;
+```
+
+**Example:**
+
+```typescript
+// Remove a panel plugin by id
+unregisterPlugin('panel:right', (p) => p.id === 'my-plugin-panel');
+```
+
 ### `getPlugins(slot)`
 
 Get all extensions for a slot (returns readonly array). Use this outside React components.

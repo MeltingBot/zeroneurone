@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.12.3
+
+### Features
+- Plugin registry: `unregisterPlugin(slot, predicate)` to dynamically remove registered plugins
+- Plugin registry: immutable slot updates — `registerPlugin`/`registerPlugins` now create new array references (fixes `useSyncExternalStore` reactivity for dynamic add/remove)
+- SidePanel: auto-switch to "detail" tab when active plugin tab is unregistered
+
 ## 2.12.2
 
 ### Features
