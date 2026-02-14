@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.12.2
+
+### Features
+- Plugin system: new `home:actions` slot for extending the home page (landing and list views)
+  - Rendered in the landing footer (before theme toggle) and in the list view toolbar
+  - Accepts `ComponentType[]` — same pattern as `header:right`
+
 ## 2.12.1
 
 ### Fixes

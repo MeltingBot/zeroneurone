@@ -93,6 +93,29 @@ registerPlugin('header:right', MyHeaderButton);
 
 **Props recues :** aucune
 
+### `home:actions` — Actions de la page d'accueil
+
+Injectez des composants React dans la page d'accueil — a la fois dans le footer de la landing (avant le bouton theme) et dans la toolbar de la vue liste.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+function MyHomeAction() {
+  return (
+    <button
+      onClick={() => console.log('clic depuis la home')}
+      className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+    >
+      Mon Action
+    </button>
+  );
+}
+
+registerPlugin('home:actions', MyHomeAction);
+```
+
+**Props recues :** aucune
+
 ### `panel:right` — Onglets du panneau lateral
 
 Ajoutez un onglet personnalise au panneau lateral droit (a cote de Detail, Insights, Filtres, Vues, Rapport).
@@ -553,6 +576,7 @@ src/
 | Slot | Type | Props/Interface | Emplacement |
 |------|------|-----------------|-------------|
 | `header:right` | `ComponentType` | aucune | Toolbar du header |
+| `home:actions` | `ComponentType` | aucune | Page d'accueil (footer landing + toolbar liste) |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Onglets du panneau lateral |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Clic droit sur element |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Clic droit sur lien |

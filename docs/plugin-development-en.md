@@ -93,6 +93,29 @@ registerPlugin('header:right', MyHeaderButton);
 
 **Props received:** none
 
+### `home:actions` — Home Page Actions
+
+Inject React components in the home page — both in the landing footer (before the theme toggle) and in the list view toolbar.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+function MyHomeAction() {
+  return (
+    <button
+      onClick={() => console.log('clicked from home')}
+      className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+    >
+      My Action
+    </button>
+  );
+}
+
+registerPlugin('home:actions', MyHomeAction);
+```
+
+**Props received:** none
+
 ### `panel:right` — Side Panel Tabs
 
 Add a custom tab to the right side panel (alongside Detail, Insights, Filters, Views, Report).
@@ -553,6 +576,7 @@ src/
 | Slot | Type | Props/Interface | Location |
 |------|------|-----------------|----------|
 | `header:right` | `ComponentType` | none | Investigation header toolbar |
+| `home:actions` | `ComponentType` | none | Home page (landing footer + list toolbar) |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Side panel tabs |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Element right-click |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Link right-click |
