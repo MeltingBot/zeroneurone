@@ -1,12 +1,48 @@
 import { pluginAPI } from '../plugins/pluginAPI';
+import { getPlugins, registerPlugin } from '../plugins/pluginRegistry';
 
 interface PluginManifestEntry {
   id: string;
   file: string;
+  name?: string;
+  description?: string;
 }
 
 interface PluginManifest {
   plugins: PluginManifestEntry[];
+}
+
+// ─── React shim Blob URLs ───────────────────────────────────
+// Plugins loaded via Blob URL can't resolve bare specifiers like
+// `import { useState } from 'react'`. We create Blob URL shims
+// that re-export from the globals ZN sets in pluginAPI.ts, then
+// rewrite the plugin source to use these URLs instead.
+
+function createShimUrl(code: string): string {
+  return URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+}
+
+const reactShimUrl = createShimUrl(
+  'const R=globalThis.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useReducer,useContext,createElement,Fragment,createContext,forwardRef,memo,Suspense,lazy,Children,cloneElement,isValidElement,useId,useSyncExternalStore,useTransition,useDeferredValue,startTransition,use}=R;'
+);
+const reactDomShimUrl = createShimUrl(
+  'const RD=globalThis.ReactDOM;export default RD;export const{createPortal,flushSync,createRoot,hydrateRoot}=RD;'
+);
+const jsxRuntimeShimUrl = createShimUrl(
+  'const JR=globalThis.__ZN_JSX_RUNTIME;export const{jsx,jsxs,Fragment}=JR;'
+);
+
+/**
+ * Rewrite bare React specifiers in plugin source so they resolve
+ * to our shim Blob URLs. Order matters: longer paths first.
+ */
+function rewriteReactImports(source: string): string {
+  return source
+    .replace(/from\s*["']react\/jsx-dev-runtime["']/g, `from "${jsxRuntimeShimUrl}"`)
+    .replace(/from\s*["']react\/jsx-runtime["']/g, `from "${jsxRuntimeShimUrl}"`)
+    .replace(/from\s*["']react-dom\/client["']/g, `from "${reactDomShimUrl}"`)
+    .replace(/from\s*["']react-dom["']/g, `from "${reactDomShimUrl}"`)
+    .replace(/from\s*["']react["']/g, `from "${reactShimUrl}"`);
 }
 
 /**
@@ -15,6 +51,12 @@ interface PluginManifest {
  * Each plugin is an ES module exporting a `register(api)` function.
  * If no manifest exists (404), the app boots normally — zero overhead.
  * Plugin errors are caught individually and never crash the app.
+ *
+ * Bare React imports are automatically rewritten to Blob URL shims,
+ * so plugins work without any special bundler config.
+ *
+ * Plugins that don't register a home:card get an auto-generated one
+ * so they always appear in the Extensions section for enable/disable.
  */
 export async function loadExternalPlugins(): Promise<void> {
   let manifest: PluginManifest;
@@ -40,23 +82,42 @@ export async function loadExternalPlugins(): Promise<void> {
     }
 
     try {
-      // Fetch the plugin source and import it via Blob URL.
-      // This works in both Vite dev mode (where public/ files can't
-      // be imported directly) and production builds.
       const fileRes = await fetch(`/plugins/${entry.file}`);
       if (!fileRes.ok) {
         console.warn(`[ZN] Plugin "${entry.id}": ${entry.file} returned ${fileRes.status}`);
         continue;
       }
       const source = await fileRes.text();
-      const blob = new Blob([source], { type: 'application/javascript' });
+
+      // Rewrite bare React imports → Blob URL shims
+      const rewritten = rewriteReactImports(source);
+
+      const blob = new Blob([rewritten], { type: 'application/javascript' });
       const blobUrl = URL.createObjectURL(blob);
+
+      // Snapshot cards before register() to detect if plugin adds its own
+      const cardsBefore = getPlugins('home:card', { includeDisabled: true }).length;
+
       const mod = await import(/* @vite-ignore */ blobUrl);
       URL.revokeObjectURL(blobUrl);
 
       if (typeof mod.register === 'function') {
-        mod.register(pluginAPI);
+        await mod.register(pluginAPI);
         loaded++;
+        console.log(`[ZN] Plugin "${entry.id}" registered`);
+
+        // Auto-register a basic home:card if the plugin didn't create one.
+        // This ensures every external plugin is visible in the Extensions
+        // section for the user to enable/disable.
+        const cardsAfter = getPlugins('home:card', { includeDisabled: true }).length;
+        if (cardsAfter === cardsBefore) {
+          registerPlugin('home:card', {
+            id: entry.id,
+            name: entry.name || entry.id,
+            description: entry.description || `Plugin: ${entry.id}`,
+            icon: 'Puzzle',
+          }, entry.id);
+        }
       } else {
         console.warn(`[ZN] Plugin "${entry.id}" has no register() export, skipping`);
       }

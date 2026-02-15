@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, Eye, EyeOff, icons } from 'lucide-react';
+import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
@@ -161,11 +161,17 @@ export function LandingSection({
                               <span className="text-[10px] text-text-tertiary">{card.version}</span>
                             )}
                             <button
+                              role="switch"
+                              aria-checked={!disabled}
                               onClick={() => handleTogglePlugin(card.id)}
-                              className="ml-auto shrink-0 p-0.5 text-text-tertiary hover:text-text-secondary"
+                              className="ml-auto shrink-0 relative w-7 h-4 rounded-full transition-colors"
+                              style={{ backgroundColor: disabled ? '#d1d5db' : '#2563eb' }}
                               title={disabled ? t('home.landing.enablePlugin') : t('home.landing.disablePlugin')}
                             >
-                              {disabled ? <EyeOff size={14} /> : <Eye size={14} />}
+                              <span
+                                className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform"
+                                style={{ transform: disabled ? 'translateX(0)' : 'translateX(12px)' }}
+                              />
                             </button>
                           </div>
                           <p className="text-xs text-text-tertiary mb-2">{card.description}</p>

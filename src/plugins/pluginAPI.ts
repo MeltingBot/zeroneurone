@@ -1,16 +1,24 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import * as jsxRuntime from 'react/jsx-runtime';
 import { icons } from 'lucide-react';
 import { registerPlugin, registerPlugins, isPluginDisabled } from './pluginRegistry';
 import { db } from '../db/database';
 import i18n from '../i18n';
 
-// Expose React & ReactDOM globally for pre-compiled external plugins.
+// Expose React, ReactDOM, and JSX runtime globally for pre-compiled external plugins.
 // Plugins loaded via Blob URL can't resolve bare specifiers like
 // `import { useState } from 'react'`. Setting globals lets plugin
 // bundlers use `external: ['react', 'react-dom']` with a globals shim.
 (globalThis as any).React = React;
 (globalThis as any).ReactDOM = ReactDOM;
+(globalThis as any).__ZN_JSX_RUNTIME = jsxRuntime;
+
+// Shim process.env for plugins that reference process.env.NODE_ENV
+// (common in bundles that didn't inline this at build time)
+if (!(globalThis as any).process) {
+  (globalThis as any).process = { env: { NODE_ENV: 'production' } };
+}
 
 // ─── Stores ────────────────────────────────────────────────────
 import { useInvestigationStore } from '../stores/investigationStore';

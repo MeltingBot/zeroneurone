@@ -875,7 +875,7 @@ export function register(api) {
 
 ### Plugins pre-compiles (avec JSX)
 
-Pour des plugins plus complexes, utilisez un bundler (Vite, esbuild, Rollup) avec React marque comme externe. ZN expose `React` et `ReactDOM` en global avant de charger les plugins — les imports nus doivent simplement etre rediriges vers les globales.
+Pour des plugins plus complexes, utilisez un bundler (Vite, esbuild, Rollup) avec React marque comme externe. ZN expose `React`, `ReactDOM` et le JSX runtime en global avant de charger les plugins — les imports nus doivent simplement etre rediriges vers les globales.
 
 **Config Vite pour le plugin :**
 
@@ -893,19 +893,25 @@ export default defineConfig({
       fileName: 'my-plugin',
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
       plugins: [{
         // Remplacer les imports nus par des references globales (requis pour le chargement Blob URL)
         name: 'global-externals',
         resolveId(id) {
           if (id === 'react') return '\0react-global';
           if (id === 'react-dom') return '\0react-dom-global';
+          if (id === 'react/jsx-runtime') return '\0react-jsx-runtime-global';
+          if (id === 'react/jsx-dev-runtime') return '\0react-jsx-dev-runtime-global';
         },
         load(id) {
           if (id === '\0react-global')
             return 'const R = globalThis.React; export default R; export const { useState, useEffect, useCallback, useMemo, useRef, useReducer, useContext, createElement, Fragment, createContext, forwardRef, memo, Suspense, lazy, Children, cloneElement, isValidElement } = R;';
           if (id === '\0react-dom-global')
             return 'const RD = globalThis.ReactDOM; export default RD; export const { createPortal, flushSync } = RD;';
+          if (id === '\0react-jsx-runtime-global')
+            return 'const JR = globalThis.__ZN_JSX_RUNTIME; export const { jsx, jsxs, Fragment } = JR;';
+          if (id === '\0react-jsx-dev-runtime-global')
+            return 'const JR = globalThis.__ZN_JSX_RUNTIME; export const { jsxDEV, Fragment } = JR;';
         },
       }],
     },
@@ -925,7 +931,7 @@ export function register(api: any) {
 }
 ```
 
-**Pourquoi c'est necessaire :** Les plugins sont charges via Blob URL (`fetch` + `import(blobUrl)`). Dans ce contexte, les imports nus comme `import React from 'react'` ne peuvent pas etre resolus par le systeme de modules. Le plugin Rollup ci-dessus les remplace par des references a `globalThis.React`, que ZN definit avant de charger tout plugin.
+**Pourquoi c'est necessaire :** Les plugins sont charges via Blob URL (`fetch` + `import(blobUrl)`). Dans ce contexte, les imports nus comme `import React from 'react'` ou `react/jsx-runtime` (utilise par la transformation JSX automatique) ne peuvent pas etre resolus par le systeme de modules. Le plugin Rollup ci-dessus les remplace par des references a des globales que ZN definit avant de charger tout plugin.
 
 ### Deploiement
 

@@ -47,31 +47,31 @@ function resolvePluginId(ext: any): string | undefined {
   return undefined;
 }
 
-// ─── Disabled plugins ───────────────────────────────────────
+// ─── Enabled plugins (opt-in: disabled by default) ─────────
 
-const DISABLED_KEY = 'zeroneurone:disabled-plugins';
-const disabledIds = new Set<string>(
-  JSON.parse(localStorage.getItem(DISABLED_KEY) || '[]')
+const ENABLED_KEY = 'zeroneurone:enabled-plugins';
+const enabledIds = new Set<string>(
+  JSON.parse(localStorage.getItem(ENABLED_KEY) || '[]')
 );
 
-function persistDisabled() {
-  localStorage.setItem(DISABLED_KEY, JSON.stringify([...disabledIds]));
+function persistEnabled() {
+  localStorage.setItem(ENABLED_KEY, JSON.stringify([...enabledIds]));
 }
 
 export function disablePlugin(id: string): void {
-  disabledIds.add(id);
-  persistDisabled();
+  enabledIds.delete(id);
+  persistEnabled();
   notifyListeners();
 }
 
 export function enablePlugin(id: string): void {
-  disabledIds.delete(id);
-  persistDisabled();
+  enabledIds.add(id);
+  persistEnabled();
   notifyListeners();
 }
 
 export function isPluginDisabled(id: string): boolean {
-  return disabledIds.has(id);
+  return !enabledIds.has(id);
 }
 
 // ─── Listeners for reactivity ───────────────────────────────
@@ -133,7 +133,7 @@ export function getPlugins<K extends keyof PluginSlots>(
   options?: { includeDisabled?: boolean }
 ): Readonly<PluginSlots[K]> {
   const all = slots[slot];
-  if (options?.includeDisabled || disabledIds.size === 0) return all;
+  if (options?.includeDisabled) return all;
   // Return cached filtered result if still valid (same version)
   const cached = filteredCache.get(slot);
   if (cached && cached.version === cacheVersion) {
@@ -141,7 +141,8 @@ export function getPlugins<K extends keyof PluginSlots>(
   }
   const result = all.filter((ext: any) => {
     const pid = resolvePluginId(ext);
-    return !pid || !disabledIds.has(pid);
+    // Extensions without a pluginId are always shown (core ZN)
+    return !pid || enabledIds.has(pid);
   });
   filteredCache.set(slot, { version: cacheVersion, result });
   return result as PluginSlots[K];
