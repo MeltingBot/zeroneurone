@@ -1,8 +1,16 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { icons } from 'lucide-react';
 import { registerPlugin, registerPlugins, isPluginDisabled } from './pluginRegistry';
 import { db } from '../db/database';
 import i18n from '../i18n';
+
+// Expose React & ReactDOM globally for pre-compiled external plugins.
+// Plugins loaded via Blob URL can't resolve bare specifiers like
+// `import { useState } from 'react'`. Setting globals lets plugin
+// bundlers use `external: ['react', 'react-dom']` with a globals shim.
+(globalThis as any).React = React;
+(globalThis as any).ReactDOM = ReactDOM;
 
 // ─── Stores ────────────────────────────────────────────────────
 import { useInvestigationStore } from '../stores/investigationStore';

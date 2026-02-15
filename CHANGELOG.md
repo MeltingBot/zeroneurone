@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.2
+
+### Fixes
+- Expose `React` and `ReactDOM` as globals (`globalThis.React`, `globalThis.ReactDOM`) before loading external plugins — pre-compiled plugins can now resolve bare `import { useState } from 'react'` via Blob URL loading
+- Plugin docs (EN + FR): updated pre-built plugins section with `global-externals` Rollup plugin config, removed manual `(window as any).React = api.React` workaround
+
 ## 2.15.1
 
 ### Fixes

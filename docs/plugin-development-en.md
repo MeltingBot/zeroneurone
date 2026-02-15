@@ -875,10 +875,12 @@ export function register(api) {
 
 ### Pre-Built Plugins (with JSX)
 
-For larger plugins, use a bundler (Vite, esbuild, Rollup) with React marked as external:
+For larger plugins, use a bundler (Vite, esbuild, Rollup) with React marked as external. ZN exposes `React` and `ReactDOM` as globals before loading plugins, so bare `import` specifiers just need to be redirected to the globals.
+
+**Vite config for the plugin:**
 
 ```javascript
-// vite.config.js for plugin
+// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -891,27 +893,39 @@ export default defineConfig({
       fileName: 'my-plugin',
     },
     rollupOptions: {
-      external: ['react'],
-      output: {
-        globals: { react: 'React' },
-      },
+      external: ['react', 'react-dom'],
+      plugins: [{
+        // Replace bare imports with global references (required for Blob URL loading)
+        name: 'global-externals',
+        resolveId(id) {
+          if (id === 'react') return '\0react-global';
+          if (id === 'react-dom') return '\0react-dom-global';
+        },
+        load(id) {
+          if (id === '\0react-global')
+            return 'const R = globalThis.React; export default R; export const { useState, useEffect, useCallback, useMemo, useRef, useReducer, useContext, createElement, Fragment, createContext, forwardRef, memo, Suspense, lazy, Children, cloneElement, isValidElement } = R;';
+          if (id === '\0react-dom-global')
+            return 'const RD = globalThis.ReactDOM; export default RD; export const { createPortal, flushSync } = RD;';
+        },
+      }],
     },
   },
 });
 ```
 
-The built file uses the `React` instance provided by the ZN API:
+**Plugin entry point — no global override needed:**
 
 ```typescript
 // src/index.tsx
-export function register(api: any) {
-  // Override the global React so JSX works with ZN's instance
-  (window as any).React = api.React;
+import { useState } from 'react'; // works — resolved to globalThis.React by the plugin above
 
+export function register(api: any) {
   const { registerPlugin } = api;
-  // ... use JSX normally
+  // ... use JSX and React hooks normally
 }
 ```
+
+**Why this is needed:** Plugins are loaded via Blob URL (`fetch` + `import(blobUrl)`). In this context, bare specifiers like `import React from 'react'` can't resolve through the module system. The Rollup plugin above replaces them with references to `globalThis.React`, which ZN sets before loading any plugin.
 
 ### Deployment
 
