@@ -78,9 +78,14 @@ networks:
 # 4. To include git commit in the build (shows version at bottom of screen):
 #    GIT_COMMIT=$(git rev-parse HEAD) docker compose build
 #
-# 5. For local development without Traefik, uncomment the ports section
+# 5. To include plugins in the image, drop .js files + manifest.json
+#    into the plugins/ directory before building:
+#    cp my-plugin.js plugins/ && cp manifest.json plugins/
+#    docker compose build
+#
+# 6. For local development without Traefik, uncomment the ports section
 #    and comment out the labels and networks sections.
 #
-# 6. WebSocket connections work automatically - Traefik handles the
+# 7. WebSocket connections work automatically - Traefik handles the
 #    HTTP Upgrade to WebSocket protocol.
 #

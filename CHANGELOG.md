@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.5
+
+### Fixes
+- Docker: support baking plugins into the image via `plugins/` directory — copy `.js` + `manifest.json` before `docker build`
+- Added gitignored `plugins/` directory for Docker plugin integration
+
 ## 2.15.4
 
 ### Fixes

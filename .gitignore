@@ -45,6 +45,10 @@ CLAUDE.md
 playwright-report/
 test-results/
 
+# External plugins (drop .js + manifest.json here for Docker builds)
+plugins/*
+!plugins/.gitkeep
+
 # Environment variables
 .env
 .env.local

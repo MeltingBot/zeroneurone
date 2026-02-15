@@ -11,6 +11,10 @@
 # Build: docker build -t zeroneurone .
 # Run:   docker run -p 3000:3000 zeroneurone
 #
+# With plugins:
+#   1. Drop plugin .js files + manifest.json into plugins/
+#   2. docker build -t zeroneurone .
+#
 # ============================================================================
 
 # ----------------------------------------------------------------------------
@@ -36,6 +40,9 @@ COPY . .
 # Skip TypeScript strict checking, use Vite directly
 ENV VITE_APP_VERSION=$GIT_COMMIT
 RUN npx vite build
+
+# Copy external plugins into dist (if any .js or manifest.json in plugins/)
+RUN cp -f plugins/*.json plugins/*.js dist/plugins/ 2>/dev/null || true
 
 # ----------------------------------------------------------------------------
 # Stage 2: Production server
