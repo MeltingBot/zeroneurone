@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.15.0
+
+### Features
+- External plugin loading: standalone JS plugins in `dist/plugins/` loaded dynamically at startup via manifest — no recompilation needed
+- Plugin API (`pluginAPI`): exposes `registerPlugin`, `React`, `icons`, and `pluginData` persistence helpers to external plugins
+- Plugin loader: fetch manifest + Blob URL dynamic import, works in both Vite dev and production
+- Service worker exclusion: plugins always fetched fresh (not precached by PWA)
+
+### Docs
+- Plugin development guides (FR + EN): new "External Plugins" section with manifest format, API surface, React without JSX, pre-built plugins, deployment, security
+
 ## 2.14.0
 
 ### Features

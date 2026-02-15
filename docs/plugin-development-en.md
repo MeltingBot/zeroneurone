@@ -735,3 +735,165 @@ if (isPluginDisabled('my-plugin')) return;
 | `keyboard:shortcuts` | `KeyboardShortcut` | — | Global keydown handler |
 | `export:hooks` | `ExportHook` | `(zip, investigationId)` | ZIP export |
 | `import:hooks` | `ImportHook` | `(zip, investigationId)` | ZIP import |
+
+## External Plugins (Local Loading)
+
+External plugins are standalone JavaScript files placed in the `plugins/` folder alongside the app. They are loaded dynamically at startup — no recompilation needed. No internet access, no download — the admin controls what gets deployed.
+
+### How It Works
+
+1. On startup, ZN fetches `/plugins/manifest.json`
+2. For each plugin entry, ZN dynamically imports the JS file
+3. Each plugin's `register(api)` function is called with the ZN plugin API
+4. React mounts after all plugins are loaded — `usePlugins()` returns correct data from the first render
+
+If `manifest.json` is missing or empty, the app boots normally with zero overhead.
+
+### Manifest Format
+
+```json
+{
+  "plugins": [
+    { "id": "my-plugin", "file": "my-plugin.js" },
+    { "id": "other-plugin", "file": "other-plugin.js" }
+  ]
+}
+```
+
+Place this file at `dist/plugins/manifest.json` (or `public/plugins/manifest.json` during development).
+
+### Plugin File Format
+
+Each plugin is an ES module that exports a `register` function:
+
+```javascript
+// plugins/my-plugin.js
+export function register(api) {
+  const { registerPlugin, React, icons } = api;
+
+  // Register card on home page
+  registerPlugin('home:card', {
+    id: 'my-plugin',
+    name: 'My Plugin',
+    description: 'What this plugin does.',
+    icon: 'Brain',
+    version: '1.0.0',
+  });
+
+  // Register into other slots with pluginId for disable/enable support
+  registerPlugin('contextMenu:element', {
+    id: 'my-plugin-action',
+    label: 'My Action',
+    icon: 'Brain',
+    pluginId: 'my-plugin',
+    action: (ctx) => { console.log('Selected:', ctx.elementIds); },
+  });
+}
+```
+
+### API Surface
+
+The `api` object passed to `register()` provides:
+
+| Property | Description |
+|----------|-------------|
+| `registerPlugin(slot, extension, pluginId?)` | Register an extension into a slot |
+| `registerPlugins(slot, extensions, pluginId?)` | Register multiple extensions at once |
+| `isPluginDisabled(id)` | Check if a plugin is disabled |
+| `React` | The app's React instance (same instance — hooks work) |
+| `icons` | All lucide-react icons |
+| `pluginData.get(pluginId, investigationId, key)` | Read from persistent plugin storage |
+| `pluginData.set(pluginId, investigationId, key, value)` | Write to persistent plugin storage |
+| `pluginData.remove(pluginId, investigationId, key)` | Delete from persistent plugin storage |
+
+### React Components Without JSX
+
+External plugins are plain JavaScript — no JSX transpilation. Use `React.createElement` directly:
+
+```javascript
+export function register(api) {
+  const { registerPlugin, React } = api;
+  const h = React.createElement;
+
+  function MyPanel({ investigationId }) {
+    const [count, setCount] = React.useState(0);
+
+    return h('div', { className: 'p-4 text-sm' },
+      h('p', null, 'Investigation: ' + investigationId),
+      h('button', {
+        className: 'px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded',
+        onClick: () => setCount(c => c + 1),
+      }, 'Clicked: ' + count)
+    );
+  }
+
+  registerPlugin('panel:right', {
+    id: 'my-panel',
+    label: 'My Panel',
+    icon: 'Brain',
+    pluginId: 'my-plugin',
+    component: MyPanel,
+  });
+}
+```
+
+### Pre-Built Plugins (with JSX)
+
+For larger plugins, use a bundler (Vite, esbuild, Rollup) with React marked as external:
+
+```javascript
+// vite.config.js for plugin
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    lib: {
+      entry: 'src/index.tsx',
+      formats: ['es'],
+      fileName: 'my-plugin',
+    },
+    rollupOptions: {
+      external: ['react'],
+      output: {
+        globals: { react: 'React' },
+      },
+    },
+  },
+});
+```
+
+The built file uses the `React` instance provided by the ZN API:
+
+```typescript
+// src/index.tsx
+export function register(api: any) {
+  // Override the global React so JSX works with ZN's instance
+  (window as any).React = api.React;
+
+  const { registerPlugin } = api;
+  // ... use JSX normally
+}
+```
+
+### Deployment
+
+1. Build or write your plugin as a `.js` ES module
+2. Copy it to `dist/plugins/` (next to the ZN app)
+3. Add an entry to `dist/plugins/manifest.json`
+4. Reload the app
+
+### Error Handling
+
+- If `manifest.json` is missing (404): app boots normally, no error
+- If a plugin file fails to load: warning logged, other plugins still load
+- If `register()` throws: warning logged, other plugins still load
+- Plugin errors never crash the app
+
+### Security
+
+- Plugins run in the same JS context as the app (no sandbox)
+- Only the server administrator can place files in `dist/plugins/`
+- No plugin downloading or remote loading — files are served locally
+- Review plugin code before deployment, as plugins have full access to the ZN API and IndexedDB data
