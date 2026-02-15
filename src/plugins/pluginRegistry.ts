@@ -17,6 +17,7 @@ const slots: PluginSlots = {
   'header:right': [],
   'home:actions': [],
   'home:banner': [],
+  'app:global': [],
   'home:card': [],
   'panel:right': [],
   'contextMenu:element': [],

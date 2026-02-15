@@ -213,6 +213,20 @@ export function LandingSection({
                                   <Settings size={10} />
                                 </button>
                               )}
+                              {card.actions && card.actions.map((action) => {
+                                const ActionIcon = (icons as Record<string, any>)[action.icon];
+                                return (
+                                  <button
+                                    key={action.label}
+                                    onClick={action.onClick}
+                                    className="inline-flex items-center gap-1 text-[10px] text-text-tertiary hover:text-text-secondary"
+                                    title={action.label}
+                                  >
+                                    {ActionIcon && <ActionIcon size={10} />}
+                                    <span>{action.label}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -229,7 +243,7 @@ export function LandingSection({
         <div className="flex items-center justify-center gap-4 border-t border-border-default pt-6">
           {/* Plugin-provided actions */}
           {homePlugins.map((Plugin, i) => (
-            <Plugin key={i} />
+            <Plugin key={i} context="landing" />
           ))}
           <button
             onClick={onToggleTheme}

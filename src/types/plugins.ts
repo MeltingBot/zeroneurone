@@ -73,7 +73,19 @@ export interface PanelPluginRegistration {
   pluginId?: string;
 }
 
+// ─── Home actions props ────────────────────────────────────
+
+export interface HomeActionsProps {
+  context: 'landing' | 'investigations';
+}
+
 // ─── Home card registration ────────────────────────────────
+
+export interface CardAction {
+  label: string;
+  icon: string;
+  onClick: () => void;
+}
 
 export interface HomeCardRegistration {
   id: string;
@@ -85,14 +97,16 @@ export interface HomeCardRegistration {
   docUrl?: string;
   features?: string[];
   onConfigure?: () => void;
+  actions?: CardAction[];
 }
 
 // ─── The complete slot registry ─────────────────────────────
 
 export interface PluginSlots {
   'header:right': ComponentType[];
-  'home:actions': ComponentType[];
+  'home:actions': ComponentType<HomeActionsProps>[];
   'home:banner': ComponentType[];
+  'app:global': ComponentType[];
   'home:card': HomeCardRegistration[];
   'panel:right': PanelPluginRegistration[];
   'contextMenu:element': ContextMenuExtension[];

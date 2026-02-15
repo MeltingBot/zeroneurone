@@ -4,6 +4,7 @@ import { HomePage, InvestigationPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
 import { useTagSetStore } from './stores';
 import { useVersionCheck } from './hooks/useVersionCheck';
+import { usePlugins } from './plugins/usePlugins';
 
 /**
  * Global error fallback for unrecoverable errors
@@ -65,6 +66,8 @@ function App() {
   // Check for app updates on tab focus
   useVersionCheck();
 
+  const globalPlugins = usePlugins('app:global');
+
   return (
     <ErrorBoundary fallback={<GlobalErrorFallback />}>
       <MinResolutionGuard>
@@ -75,6 +78,7 @@ function App() {
             <Route path="/join/:roomId" element={<JoinPage />} />
           </Routes>
           <ToastContainer />
+          {globalPlugins.map((Plugin, i) => <Plugin key={`gp-${i}`} />)}
         </BrowserRouter>
       </MinResolutionGuard>
     </ErrorBoundary>

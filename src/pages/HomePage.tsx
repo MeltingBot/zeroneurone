@@ -195,7 +195,7 @@ export function HomePage() {
           <div className="flex items-center gap-2">
             {/* Plugin-provided actions */}
             {homePlugins.map((Plugin, i) => (
-              <Plugin key={i} />
+              <Plugin key={i} context="investigations" />
             ))}
             <Button
               variant="ghost"

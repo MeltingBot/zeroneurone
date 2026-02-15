@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.15.4
+
+### Fixes
+- `home:actions` slot: components now receive `{ context: 'landing' | 'investigations' }` prop — plugins can adapt rendering without querying the DB
+- New `app:global` slot: always mounted at the app root, independent of current page — plugins can mount global overlays/modals without duplicating across `header:right` and `home:banner`
+- `home:card` actions: cards now support an `actions` array (`{ label, icon, onClick }[]`) alongside `onConfigure` for multiple entry points
+- Plugins disabled by default (opt-in via localStorage whitelist)
+- Auto-rewrite bare React/ReactDOM/JSX-runtime imports to Blob URL shims in plugin loader
+- Auto-register `home:card` for plugins that don't provide one
+- Add `process.env` shim for plugins referencing `NODE_ENV`
+- Await async plugin `register()` to prevent race conditions
+- Replace Eye/EyeOff toggle with proper switch component for plugin enable/disable
+
 ## 2.15.2
 
 ### Fixes

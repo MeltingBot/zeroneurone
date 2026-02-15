@@ -95,18 +95,19 @@ registerPlugin('header:right', MyHeaderButton);
 
 ### `home:actions` — Home Page Actions
 
-Inject React components in the home page — both in the landing footer (before the theme toggle) and in the list view toolbar.
+Inject React components in the home page — both in the landing footer (before the theme toggle) and in the list view toolbar. Components receive a `context` prop so they know which page they're on.
 
 ```typescript
 import { registerPlugin } from '../plugins/pluginRegistry';
+import type { HomeActionsProps } from '../types/plugins';
 
-function MyHomeAction() {
+function MyHomeAction({ context }: HomeActionsProps) {
   return (
     <button
-      onClick={() => console.log('clicked from home')}
+      onClick={() => console.log('clicked from', context)}
       className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
     >
-      My Action
+      {context === 'landing' ? 'Get Started' : 'My Action'}
     </button>
   );
 }
@@ -114,7 +115,7 @@ function MyHomeAction() {
 registerPlugin('home:actions', MyHomeAction);
 ```
 
-**Props received:** none
+**Props received:** `{ context: 'landing' | 'investigations' }`
 
 ### `home:banner` — Full-Width Banner
 
@@ -173,10 +174,54 @@ interface HomeCardRegistration {
   docUrl?: string;
   features?: string[];
   onConfigure?: () => void;
+  actions?: CardAction[];
+}
+
+interface CardAction {
+  label: string;
+  icon: string;       // Lucide icon name
+  onClick: () => void;
 }
 ```
 
 **Location:** "Extensions" section on the landing page, between the features grid and the footer. Only displayed when at least one card is registered. Rendering is handled by ZN — consistent style with existing feature tiles.
+
+#### Home Card Actions
+
+Cards can declare an `actions` array alongside `onConfigure`. Each action renders as a small button in the card footer.
+
+```typescript
+registerPlugin('home:card', {
+  id: 'my-plugin',
+  name: 'My Plugin',
+  description: 'Short description of what the plugin does.',
+  icon: 'Brain',
+  onConfigure: () => { /* settings */ },
+  actions: [
+    { label: 'Cross analysis', icon: 'GitCompare', onClick: () => { /* ... */ } },
+    { label: 'Export data', icon: 'Download', onClick: () => { /* ... */ } },
+  ],
+});
+```
+
+### `app:global` — Global Components
+
+Inject React components at the App root level. These are always mounted, independent of the current page — ideal for global modals, overlays, or background services that must remain active across navigation.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+function GlobalOverlay() {
+  // Always mounted, use createPortal for modals
+  return null; // or your overlay component
+}
+
+registerPlugin('app:global', GlobalOverlay, 'my-plugin');
+```
+
+**Props received:** none
+
+Unlike `header:right` or `home:banner`, components in `app:global` are not tied to a specific page. They stay mounted whether the user is on the home page, inside an investigation, or anywhere else.
 
 ### `panel:right` — Side Panel Tabs
 
@@ -669,6 +714,7 @@ registerPlugin('home:card', { id: PLUGIN_ID, ... });
 registerPlugin('home:actions', MyActionComponent, PLUGIN_ID);
 registerPlugin('home:banner', MyBannerComponent, PLUGIN_ID);
 registerPlugin('header:right', MyHeaderButton, PLUGIN_ID);
+registerPlugin('app:global', MyGlobalOverlay, PLUGIN_ID);
 registerPlugin('report:toolbar', MyToolbar, PLUGIN_ID);
 ```
 
@@ -723,9 +769,10 @@ if (isPluginDisabled('my-plugin')) return;
 | Slot | Type | Props/Interface | Location |
 |------|------|-----------------|----------|
 | `header:right` | `ComponentType` | none | Investigation header toolbar |
-| `home:actions` | `ComponentType` | none | Home page (landing footer + list toolbar) |
+| `home:actions` | `ComponentType<HomeActionsProps>` | `{ context: 'landing' \| 'investigations' }` | Home page (landing footer + list toolbar) |
 | `home:banner` | `ComponentType` | none | Home page (full-width, above hero/list) |
 | `home:card` | `HomeCardRegistration` | structured metadata | Landing "Extensions" section |
+| `app:global` | `ComponentType` | none | Always mounted at app root, independent of page |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Side panel tabs |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Element right-click |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Link right-click |
