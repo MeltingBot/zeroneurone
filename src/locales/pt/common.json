@@ -188,5 +188,15 @@
   "accessibility": {
     "skipToContent": "Ir para o conteúdo principal"
   },
-  "versionUpdate": "Nova versão {{version}} disponível — recarregue a página"
+  "versionUpdate": "Nova versão {{version}} disponível — recarregue a página",
+  "resolution": {
+    "title": "Resolução baixa",
+    "message": "Esta aplicação é otimizada para um ecrã de pelo menos <strong>{{minWidth}} x {{minHeight}} pixels</strong>.",
+    "current": "A sua resolução atual: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Continuar mesmo assim",
+    "suggestions": "Sugestões:",
+    "suggestLarger": "Use um ecrã maior ou um tablet",
+    "suggestMaximize": "Maximize a janela do navegador",
+    "suggestZoom": "Reduza o nível de zoom do navegador (Ctrl + -)"
+  }
 }

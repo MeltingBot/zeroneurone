@@ -69,7 +69,11 @@
           "title": "Secure real-time collaboration",
           "description": "Work together on the same investigation"
         }
-      }
+      },
+      "extensions": "Extensions",
+      "extensionsLicense": "License",
+      "enablePlugin": "Enable extension",
+      "disablePlugin": "Disable extension"
     }
   },
   "investigation": {

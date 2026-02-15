@@ -69,7 +69,11 @@
           "title": "Collaboration sécurisé temps réel",
           "description": "Travaillez à plusieurs sur la même enquête"
         }
-      }
+      },
+      "extensions": "Extensions",
+      "extensionsLicense": "Licence",
+      "enablePlugin": "Activer l'extension",
+      "disablePlugin": "Désactiver l'extension"
     }
   },
   "investigation": {

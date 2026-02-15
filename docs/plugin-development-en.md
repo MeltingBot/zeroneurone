@@ -138,6 +138,46 @@ registerPlugin('home:banner', MyBanner);
 
 **Location:** Rendered above the main content in both home page views (landing and list). The component is outside the `max-w-4xl` container, so it spans the full width.
 
+### `home:card` — Structured Extension Card
+
+Register your plugin as a card in the "Extensions" section of the home page. ZN controls the rendering — you declare metadata, not JSX.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+registerPlugin('home:card', {
+  id: 'my-plugin',
+  name: 'My Plugin',
+  description: 'Short description of what the plugin does.',
+  icon: 'Brain',                    // Lucide icon name
+  version: '1.0.0',                 // Optional
+  license: 'MIT',                   // Optional
+  docUrl: 'https://example.com',    // Optional — Documentation link
+  features: ['Analysis', 'Export'], // Optional — feature badges
+  onConfigure: () => {              // Optional — settings button
+    console.log('Open settings');
+  },
+});
+```
+
+**Interface:**
+
+```typescript
+interface HomeCardRegistration {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  version?: string;
+  license?: string;
+  docUrl?: string;
+  features?: string[];
+  onConfigure?: () => void;
+}
+```
+
+**Location:** "Extensions" section on the landing page, between the features grid and the footer. Only displayed when at least one card is registered. Rendering is handled by ZN — consistent style with existing feature tiles.
+
 ### `panel:right` — Side Panel Tabs
 
 Add a custom tab to the right side panel (alongside Detail, Insights, Filters, Views, Report).
@@ -423,14 +463,15 @@ ZN wraps all plugin interactions in try/catch. However, you should still handle 
 
 ## API Reference
 
-### `registerPlugin(slot, extension)`
+### `registerPlugin(slot, extension, pluginId?)`
 
-Register a single extension into a slot.
+Register a single extension into a slot. The optional `pluginId` parameter links this extension to a plugin registered in `home:card`, enabling the disable/enable feature.
 
 ```typescript
 function registerPlugin<K extends keyof PluginSlots>(
   slot: K,
-  extension: PluginSlots[K][number]
+  extension: PluginSlots[K][number],
+  pluginId?: string
 ): void;
 ```
 
@@ -611,6 +652,72 @@ src/
 └── main.tsx                 # Plugin init before React mount
 ```
 
+## Plugin Disable/Enable
+
+Users can disable plugins from the home page "Extensions" section. When disabled, a plugin's contributions to ALL slots are filtered out.
+
+### How It Works
+
+For the disable to work across all slots, ZN must know which extensions belong to which plugin. Three mechanisms, in priority order:
+
+**1. Third argument to `registerPlugin`** (required for `ComponentType` slots):
+
+```typescript
+const PLUGIN_ID = 'my-plugin';
+
+registerPlugin('home:card', { id: PLUGIN_ID, ... });
+registerPlugin('home:actions', MyActionComponent, PLUGIN_ID);
+registerPlugin('home:banner', MyBannerComponent, PLUGIN_ID);
+registerPlugin('header:right', MyHeaderButton, PLUGIN_ID);
+registerPlugin('report:toolbar', MyToolbar, PLUGIN_ID);
+```
+
+**2. `pluginId` field on extension objects**:
+
+```typescript
+registerPlugin('contextMenu:element', {
+  id: 'my-action',
+  label: 'Analyze',
+  icon: 'Brain',
+  pluginId: 'my-plugin',  // ← links to home:card id
+  action: (ctx) => { ... },
+});
+
+registerPlugin('panel:right', {
+  id: 'my-panel',
+  label: 'My Panel',
+  icon: 'Brain',
+  pluginId: 'my-plugin',  // ← links to home:card id
+  component: MyPanelComponent,
+});
+```
+
+**3. Automatic for `home:card`**: The `id` field of `HomeCardRegistration` is the canonical plugin ID. No extra configuration needed.
+
+### Best Practice
+
+Use a shared constant for your plugin ID:
+
+```typescript
+export const PLUGIN_ID = 'my-plugin';
+
+// All registrations reference the same ID
+registerPlugin('home:card', { id: PLUGIN_ID, name: '...', ... });
+registerPlugin('header:right', MyHeaderButton, PLUGIN_ID);
+registerPlugin('contextMenu:element', { ..., pluginId: PLUGIN_ID });
+registerPlugin('keyboard:shortcuts', { ..., pluginId: PLUGIN_ID });
+registerPlugin('export:hooks', { ..., pluginId: PLUGIN_ID });
+```
+
+### API
+
+```typescript
+import { isPluginDisabled } from '../plugins/pluginRegistry';
+
+// Check if your plugin is disabled (useful for conditional logic)
+if (isPluginDisabled('my-plugin')) return;
+```
+
 ## Slots Reference Table
 
 | Slot | Type | Props/Interface | Location |
@@ -618,6 +725,7 @@ src/
 | `header:right` | `ComponentType` | none | Investigation header toolbar |
 | `home:actions` | `ComponentType` | none | Home page (landing footer + list toolbar) |
 | `home:banner` | `ComponentType` | none | Home page (full-width, above hero/list) |
+| `home:card` | `HomeCardRegistration` | structured metadata | Landing "Extensions" section |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Side panel tabs |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Element right-click |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Link right-click |

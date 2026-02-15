@@ -186,5 +186,15 @@
   "accessibility": {
     "skipToContent": "Anar al contingut principal"
   },
-  "versionUpdate": "Nova versió {{version}} disponible — recarrega la pàgina"
+  "versionUpdate": "Nova versió {{version}} disponible — recarrega la pàgina",
+  "resolution": {
+    "title": "Resolució baixa",
+    "message": "Aquesta aplicació està optimitzada per a una pantalla d'almenys <strong>{{minWidth}} x {{minHeight}} píxels</strong>.",
+    "current": "La vostra resolució actual: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Continuar igualment",
+    "suggestions": "Suggeriments:",
+    "suggestLarger": "Utilitzeu una pantalla més gran o una tauleta",
+    "suggestMaximize": "Maximitzeu la finestra del navegador",
+    "suggestZoom": "Reduïu el nivell de zoom del navegador (Ctrl + -)"
+  }
 }

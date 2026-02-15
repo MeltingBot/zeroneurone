@@ -6,6 +6,9 @@ import type { PluginSlots } from '../types/plugins';
  * Plugins register extensions into named slots.
  * ZN components consume slots via getPlugins().
  * Empty slots = nothing rendered, zero overhead.
+ *
+ * Plugins can be disabled by ID — disabled extensions are
+ * filtered out of getPlugins() results (except with includeDisabled).
  */
 
 // ─── Internal registry ──────────────────────────────────────
@@ -14,6 +17,7 @@ const slots: PluginSlots = {
   'header:right': [],
   'home:actions': [],
   'home:banner': [],
+  'home:card': [],
   'panel:right': [],
   'contextMenu:element': [],
   'contextMenu:link': [],
@@ -25,12 +29,62 @@ const slots: PluginSlots = {
   'import:hooks': [],
 };
 
+// ─── Plugin ID tracking ─────────────────────────────────────
+
+// Maps each extension (object or function) to its pluginId
+const extensionPluginId = new Map<any, string>();
+
+function resolvePluginId(ext: any): string | undefined {
+  // 1. Explicit tracking via registerPlugin(slot, ext, pluginId)
+  const tracked = extensionPluginId.get(ext);
+  if (tracked) return tracked;
+  if (ext && typeof ext === 'object') {
+    // 2. pluginId field on the extension object
+    if (ext.pluginId) return ext.pluginId;
+    // 3. home:card entries: id IS the pluginId
+    if ('name' in ext && 'description' in ext && 'icon' in ext && ext.id) return ext.id;
+  }
+  return undefined;
+}
+
+// ─── Disabled plugins ───────────────────────────────────────
+
+const DISABLED_KEY = 'zeroneurone:disabled-plugins';
+const disabledIds = new Set<string>(
+  JSON.parse(localStorage.getItem(DISABLED_KEY) || '[]')
+);
+
+function persistDisabled() {
+  localStorage.setItem(DISABLED_KEY, JSON.stringify([...disabledIds]));
+}
+
+export function disablePlugin(id: string): void {
+  disabledIds.add(id);
+  persistDisabled();
+  notifyListeners();
+}
+
+export function enablePlugin(id: string): void {
+  disabledIds.delete(id);
+  persistDisabled();
+  notifyListeners();
+}
+
+export function isPluginDisabled(id: string): boolean {
+  return disabledIds.has(id);
+}
+
 // ─── Listeners for reactivity ───────────────────────────────
 
 type SlotListener = () => void;
 const listeners = new Set<SlotListener>();
 
+// Cache for filtered results — useSyncExternalStore requires stable references
+let cacheVersion = 0;
+const filteredCache = new Map<string, { version: number; result: any[] }>();
+
 function notifyListeners() {
+  cacheVersion++;
   listeners.forEach((fn) => fn());
 }
 
@@ -38,16 +92,26 @@ function notifyListeners() {
 
 export function registerPlugin<K extends keyof PluginSlots>(
   slot: K,
-  extension: PluginSlots[K][number]
+  extension: PluginSlots[K][number],
+  pluginId?: string
 ): void {
+  if (pluginId) {
+    extensionPluginId.set(extension, pluginId);
+  }
   slots[slot] = [...slots[slot], extension] as PluginSlots[K];
   notifyListeners();
 }
 
 export function registerPlugins<K extends keyof PluginSlots>(
   slot: K,
-  extensions: PluginSlots[K][number][]
+  extensions: PluginSlots[K][number][],
+  pluginId?: string
 ): void {
+  if (pluginId) {
+    for (const ext of extensions) {
+      extensionPluginId.set(ext, pluginId);
+    }
+  }
   slots[slot] = [...slots[slot], ...extensions] as PluginSlots[K];
   notifyListeners();
 }
@@ -65,15 +129,29 @@ export function unregisterPlugin<K extends keyof PluginSlots>(
 }
 
 export function getPlugins<K extends keyof PluginSlots>(
-  slot: K
+  slot: K,
+  options?: { includeDisabled?: boolean }
 ): Readonly<PluginSlots[K]> {
-  return slots[slot];
+  const all = slots[slot];
+  if (options?.includeDisabled || disabledIds.size === 0) return all;
+  // Return cached filtered result if still valid (same version)
+  const cached = filteredCache.get(slot);
+  if (cached && cached.version === cacheVersion) {
+    return cached.result as PluginSlots[K];
+  }
+  const result = all.filter((ext: any) => {
+    const pid = resolvePluginId(ext);
+    return !pid || !disabledIds.has(pid);
+  });
+  filteredCache.set(slot, { version: cacheVersion, result });
+  return result as PluginSlots[K];
 }
 
 export function clearAllPlugins(): void {
   for (const key of Object.keys(slots) as (keyof PluginSlots)[]) {
     slots[key] = [] as any;
   }
+  extensionPluginId.clear();
   notifyListeners();
 }
 

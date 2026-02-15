@@ -184,5 +184,15 @@
   "accessibility": {
     "skipToContent": "Zum Hauptinhalt springen"
   },
-  "versionUpdate": "Neue Version {{version}} verfügbar — Seite neu laden"
+  "versionUpdate": "Neue Version {{version}} verfügbar — Seite neu laden",
+  "resolution": {
+    "title": "Niedrige Auflösung",
+    "message": "Diese Anwendung ist für einen Bildschirm von mindestens <strong>{{minWidth}} x {{minHeight}} Pixel</strong> optimiert.",
+    "current": "Ihre aktuelle Auflösung: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Trotzdem fortfahren",
+    "suggestions": "Vorschläge:",
+    "suggestLarger": "Verwenden Sie einen größeren Bildschirm oder ein Tablet",
+    "suggestMaximize": "Maximieren Sie Ihr Browserfenster",
+    "suggestZoom": "Verringern Sie die Zoomstufe des Browsers (Strg + -)"
+  }
 }

@@ -69,7 +69,11 @@
           "title": "Lankidetza segurua denbora errealean",
           "description": "Lan egin beste batzuekin ikerketa berean"
         }
-      }
+      },
+      "extensions": "Hedapenak",
+      "extensionsLicense": "Lizentzia",
+      "enablePlugin": "Hedapena gaitu",
+      "disablePlugin": "Hedapena desgaitu"
     }
   },
   "investigation": {

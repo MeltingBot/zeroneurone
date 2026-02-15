@@ -185,5 +185,15 @@
   "accessibility": {
     "skipToContent": "Eduki nagusira joan"
   },
-  "versionUpdate": "{{version}} bertsio berria eskuragarri — birkargatu orria"
+  "versionUpdate": "{{version}} bertsio berria eskuragarri — birkargatu orria",
+  "resolution": {
+    "title": "Bereizmen baxua",
+    "message": "Aplikazio hau gutxienez <strong>{{minWidth}} x {{minHeight}} pixel</strong>-eko pantailarako optimizatuta dago.",
+    "current": "Zure uneko bereizmena: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Jarraitu hala ere",
+    "suggestions": "Iradokizunak:",
+    "suggestLarger": "Erabili pantaila handiagoa edo tableta",
+    "suggestMaximize": "Maximizatu nabigatzailearen leihoa",
+    "suggestZoom": "Murriztu nabigatzailearen zoom maila (Ctrl + -)"
+  }
 }

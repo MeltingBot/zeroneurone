@@ -191,5 +191,15 @@
   "accessibility": {
     "skipToContent": "Перейти до основного вмісту"
   },
-  "versionUpdate": "Нова версія {{version}} доступна — перезавантажте сторінку"
+  "versionUpdate": "Нова версія {{version}} доступна — перезавантажте сторінку",
+  "resolution": {
+    "title": "Низька роздільна здатність",
+    "message": "Ця програма оптимізована для екрана щонайменше <strong>{{minWidth}} x {{minHeight}} пікселів</strong>.",
+    "current": "Ваша поточна роздільна здатність: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Продовжити все одно",
+    "suggestions": "Пропозиції:",
+    "suggestLarger": "Використовуйте більший екран або планшет",
+    "suggestMaximize": "Розгорніть вікно браузера",
+    "suggestZoom": "Зменшіть масштаб браузера (Ctrl + -)"
+  }
 }

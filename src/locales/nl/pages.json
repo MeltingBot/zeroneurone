@@ -69,7 +69,11 @@
           "title": "Veilige realtime samenwerking",
           "description": "Werk samen met anderen aan hetzelfde onderzoek"
         }
-      }
+      },
+      "extensions": "Extensies",
+      "extensionsLicense": "Licentie",
+      "enablePlugin": "Extensie inschakelen",
+      "disablePlugin": "Extensie uitschakelen"
     }
   },
   "investigation": {

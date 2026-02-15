@@ -138,6 +138,46 @@ registerPlugin('home:banner', MyBanner);
 
 **Emplacement :** Rendu au-dessus du contenu principal dans les deux vues de la page d'accueil (landing et liste). Le composant est en dehors du conteneur `max-w-4xl`, il occupe donc toute la largeur.
 
+### `home:card` — Carte d'extension structuree
+
+Enregistrez votre plugin comme une carte dans la section "Extensions" de la page d'accueil. ZN controle le rendu — vous declarez des metadonnees, pas du JSX.
+
+```typescript
+import { registerPlugin } from '../plugins/pluginRegistry';
+
+registerPlugin('home:card', {
+  id: 'my-plugin',
+  name: 'Mon Plugin',
+  description: 'Description courte de ce que fait le plugin.',
+  icon: 'Brain',                    // Nom d'icone Lucide
+  version: '1.0.0',                 // Optionnel
+  license: 'MIT',                   // Optionnel
+  docUrl: 'https://example.com',    // Optionnel — lien Documentation
+  features: ['Analyse', 'Export'],  // Optionnel — badges de fonctionnalites
+  onConfigure: () => {              // Optionnel — bouton reglages
+    console.log('Ouvrir les parametres');
+  },
+});
+```
+
+**Interface :**
+
+```typescript
+interface HomeCardRegistration {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  version?: string;
+  license?: string;
+  docUrl?: string;
+  features?: string[];
+  onConfigure?: () => void;
+}
+```
+
+**Emplacement :** Section "Extensions" sur la landing page, entre la grille de fonctionnalites et le footer. Affichee uniquement si au moins une carte est enregistree. Le rendu est gere par ZN — style coherent avec les tuiles existantes.
+
 ### `panel:right` — Onglets du panneau lateral
 
 Ajoutez un onglet personnalise au panneau lateral droit (a cote de Detail, Insights, Filtres, Vues, Rapport).
@@ -423,14 +463,15 @@ ZN encapsule toutes les interactions avec les plugins dans des try/catch. Cepend
 
 ## Reference API
 
-### `registerPlugin(slot, extension)`
+### `registerPlugin(slot, extension, pluginId?)`
 
-Enregistre une extension dans un slot.
+Enregistre une extension dans un slot. Le parametre optionnel `pluginId` lie cette extension a un plugin enregistre dans `home:card`, activant la fonctionnalite de desactivation/activation.
 
 ```typescript
 function registerPlugin<K extends keyof PluginSlots>(
   slot: K,
-  extension: PluginSlots[K][number]
+  extension: PluginSlots[K][number],
+  pluginId?: string
 ): void;
 ```
 
@@ -611,6 +652,72 @@ src/
 └── main.tsx                 # Init plugins avant le montage React
 ```
 
+## Desactivation des plugins
+
+Les utilisateurs peuvent desactiver des plugins depuis la section "Extensions" de la page d'accueil. Quand un plugin est desactive, ses contributions a TOUS les slots sont filtrees.
+
+### Fonctionnement
+
+Pour que la desactivation fonctionne sur tous les slots, ZN doit savoir quelles extensions appartiennent a quel plugin. Trois mecanismes, par ordre de priorite :
+
+**1. Troisieme argument de `registerPlugin`** (requis pour les slots `ComponentType`) :
+
+```typescript
+const PLUGIN_ID = 'my-plugin';
+
+registerPlugin('home:card', { id: PLUGIN_ID, ... });
+registerPlugin('home:actions', MyActionComponent, PLUGIN_ID);
+registerPlugin('home:banner', MyBannerComponent, PLUGIN_ID);
+registerPlugin('header:right', MyHeaderButton, PLUGIN_ID);
+registerPlugin('report:toolbar', MyToolbar, PLUGIN_ID);
+```
+
+**2. Champ `pluginId` sur les objets d'extension** :
+
+```typescript
+registerPlugin('contextMenu:element', {
+  id: 'my-action',
+  label: 'Analyser',
+  icon: 'Brain',
+  pluginId: 'my-plugin',  // ← lie au id de home:card
+  action: (ctx) => { ... },
+});
+
+registerPlugin('panel:right', {
+  id: 'my-panel',
+  label: 'Mon Panneau',
+  icon: 'Brain',
+  pluginId: 'my-plugin',  // ← lie au id de home:card
+  component: MyPanelComponent,
+});
+```
+
+**3. Automatique pour `home:card`** : Le champ `id` de `HomeCardRegistration` est l'identifiant canonique du plugin. Aucune configuration supplementaire necessaire.
+
+### Bonne pratique
+
+Utilisez une constante partagee pour l'ID de votre plugin :
+
+```typescript
+export const PLUGIN_ID = 'my-plugin';
+
+// Toutes les inscriptions referencent le meme ID
+registerPlugin('home:card', { id: PLUGIN_ID, name: '...', ... });
+registerPlugin('header:right', MyHeaderButton, PLUGIN_ID);
+registerPlugin('contextMenu:element', { ..., pluginId: PLUGIN_ID });
+registerPlugin('keyboard:shortcuts', { ..., pluginId: PLUGIN_ID });
+registerPlugin('export:hooks', { ..., pluginId: PLUGIN_ID });
+```
+
+### API
+
+```typescript
+import { isPluginDisabled } from '../plugins/pluginRegistry';
+
+// Verifier si votre plugin est desactive (utile pour la logique conditionnelle)
+if (isPluginDisabled('my-plugin')) return;
+```
+
 ## Tableau de reference des slots
 
 | Slot | Type | Props/Interface | Emplacement |
@@ -618,6 +725,7 @@ src/
 | `header:right` | `ComponentType` | aucune | Toolbar du header |
 | `home:actions` | `ComponentType` | aucune | Page d'accueil (footer landing + toolbar liste) |
 | `home:banner` | `ComponentType` | aucune | Page d'accueil (pleine largeur, au-dessus du hero/liste) |
+| `home:card` | `HomeCardRegistration` | metadonnees structurees | Section "Extensions" de la landing |
 | `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Onglets du panneau lateral |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Clic droit sur element |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Clic droit sur lien |

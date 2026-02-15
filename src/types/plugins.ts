@@ -19,6 +19,7 @@ export interface ContextMenuExtension {
   separator?: boolean;
   action: (context: MenuContext) => void;
   visible?: (context: MenuContext) => boolean;
+  pluginId?: string;
 }
 
 // ─── Keyboard shortcuts ─────────────────────────────────────
@@ -28,6 +29,7 @@ export interface KeyboardShortcut {
   action: () => void;
   description: string;
   scope: 'global' | 'panel';
+  pluginId?: string;
 }
 
 // ─── Export/Import hooks ────────────────────────────────────
@@ -35,11 +37,13 @@ export interface KeyboardShortcut {
 export interface ExportHook {
   name: string;
   onExport: (zip: any, investigationId: string) => Promise<void>;
+  pluginId?: string;
 }
 
 export interface ImportHook {
   name: string;
   onImport: (zip: any, investigationId: string) => Promise<void>;
+  pluginId?: string;
 }
 
 // ─── Panel plugin props ─────────────────────────────────────
@@ -66,6 +70,21 @@ export interface PanelPluginRegistration {
   label: string;
   icon: string;
   component: ComponentType<PanelPluginProps>;
+  pluginId?: string;
+}
+
+// ─── Home card registration ────────────────────────────────
+
+export interface HomeCardRegistration {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  version?: string;
+  license?: string;
+  docUrl?: string;
+  features?: string[];
+  onConfigure?: () => void;
 }
 
 // ─── The complete slot registry ─────────────────────────────
@@ -74,6 +93,7 @@ export interface PluginSlots {
   'header:right': ComponentType[];
   'home:actions': ComponentType[];
   'home:banner': ComponentType[];
+  'home:card': HomeCardRegistration[];
   'panel:right': PanelPluginRegistration[];
   'contextMenu:element': ContextMenuExtension[];
   'contextMenu:link': ContextMenuExtension[];

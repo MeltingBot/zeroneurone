@@ -69,7 +69,11 @@
           "title": "Colaboração segura em tempo real",
           "description": "Trabalhe com outros na mesma investigação"
         }
-      }
+      },
+      "extensions": "Extensões",
+      "extensionsLicense": "Licença",
+      "enablePlugin": "Ativar extensão",
+      "disablePlugin": "Desativar extensão"
     }
   },
   "investigation": {

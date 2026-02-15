@@ -69,7 +69,11 @@
           "title": "Sichere Echtzeit-Zusammenarbeit",
           "description": "Arbeiten Sie gemeinsam an derselben Ermittlung"
         }
-      }
+      },
+      "extensions": "Erweiterungen",
+      "extensionsLicense": "Lizenz",
+      "enablePlugin": "Erweiterung aktivieren",
+      "disablePlugin": "Erweiterung deaktivieren"
     }
   },
   "investigation": {

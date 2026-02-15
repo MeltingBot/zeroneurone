@@ -191,5 +191,15 @@
   "accessibility": {
     "skipToContent": "Ga naar de hoofdinhoud"
   },
-  "versionUpdate": "Nieuwe versie {{version}} beschikbaar — herlaad de pagina"
+  "versionUpdate": "Nieuwe versie {{version}} beschikbaar — herlaad de pagina",
+  "resolution": {
+    "title": "Lage resolutie",
+    "message": "Deze applicatie is geoptimaliseerd voor een scherm van minimaal <strong>{{minWidth}} x {{minHeight}} pixels</strong>.",
+    "current": "Uw huidige resolutie: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Toch doorgaan",
+    "suggestions": "Suggesties:",
+    "suggestLarger": "Gebruik een groter scherm of tablet",
+    "suggestMaximize": "Maximaliseer uw browservenster",
+    "suggestZoom": "Verlaag het zoomniveau van de browser (Ctrl + -)"
+  }
 }

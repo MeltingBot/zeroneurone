@@ -180,5 +180,15 @@
   "accessibility": {
     "skipToContent": "Aller au contenu principal"
   },
-  "versionUpdate": "Nouvelle version {{version}} disponible — rechargez la page"
+  "versionUpdate": "Nouvelle version {{version}} disponible — rechargez la page",
+  "resolution": {
+    "title": "Résolution faible",
+    "message": "Cette application est optimisée pour un écran d'au moins <strong>{{minWidth}} x {{minHeight}} pixels</strong>.",
+    "current": "Votre résolution actuelle : <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Continuer quand même",
+    "suggestions": "Suggestions :",
+    "suggestLarger": "Utilisez un écran plus grand ou une tablette",
+    "suggestMaximize": "Agrandissez la fenêtre de votre navigateur",
+    "suggestZoom": "Réduisez le niveau de zoom (Ctrl + -)"
+  }
 }

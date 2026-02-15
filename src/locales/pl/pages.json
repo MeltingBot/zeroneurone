@@ -69,7 +69,11 @@
           "title": "Bezpieczna współpraca w czasie rzeczywistym",
           "description": "Pracuj z innymi nad tym samym śledztwem"
         }
-      }
+      },
+      "extensions": "Rozszerzenia",
+      "extensionsLicense": "Licencja",
+      "enablePlugin": "Włącz rozszerzenie",
+      "disablePlugin": "Wyłącz rozszerzenie"
     }
   },
   "investigation": {

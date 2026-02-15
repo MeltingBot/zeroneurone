@@ -211,6 +211,7 @@ src/
 | `header:right` | `ComponentType[]` | InvestigationPage header |
 | `home:actions` | `ComponentType[]` | HomePage (landing footer + list toolbar) |
 | `home:banner` | `ComponentType[]` | HomePage (full-width, above hero/list content) |
+| `home:card` | `HomeCardRegistration[]` | LandingSection "Extensions" section |
 | `panel:right` | `PanelPluginRegistration[]` | SidePanel tabs |
 | `contextMenu:element` | `ContextMenuExtension[]` | CanvasContextMenu (when selection) |
 | `contextMenu:link` | `ContextMenuExtension[]` | CanvasContextMenu |

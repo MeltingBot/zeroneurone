@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.14.0
+
+### Features
+- Plugin system: `home:card` slot for structured plugin metadata cards on the home page (name, description, icon, version, license, features, configure callback)
+- Plugin disable/enable: toggle plugins on/off from the home page; disabled plugins are filtered from all slots app-wide (context menus, panels, shortcuts, export/import hooks)
+- Plugin ID tracking: `pluginId` field on all slot interfaces + 3rd argument on `registerPlugin()` for cross-slot association
+- Accordion UI: collapsible Extensions section on home page with count badge, state persisted to localStorage
+
+### Fixes
+- MinResolutionGuard: lowered minimum resolution from 1280x720 to 1024x600, now dismissible per session (sessionStorage), fully localized across 11 languages
+- Plugin registry: fix infinite re-render loop caused by `useSyncExternalStore` receiving new array references on every `getPlugins()` call — added version-based filtered cache
+
+### i18n
+- New keys `enablePlugin`, `disablePlugin` translated across all 11 locales
+- New keys `resolution.title`, `resolution.message`, `resolution.dismiss`, `resolution.current`, `resolution.minimum` translated across all 11 locales
+
+### Docs
+- Plugin development guides (FR + EN): documented `home:card`, `home:banner` slots, plugin disable/enable system, `pluginId` mechanisms
+
 ## 2.13.2
 
 ### Features

@@ -191,5 +191,15 @@
   "accessibility": {
     "skipToContent": "Przejdź do treści głównej"
   },
-  "versionUpdate": "Nowa wersja {{version}} dostępna — przeładuj stronę"
+  "versionUpdate": "Nowa wersja {{version}} dostępna — przeładuj stronę",
+  "resolution": {
+    "title": "Niska rozdzielczość",
+    "message": "Ta aplikacja jest zoptymalizowana dla ekranu o rozdzielczości co najmniej <strong>{{minWidth}} x {{minHeight}} pikseli</strong>.",
+    "current": "Twoja aktualna rozdzielczość: <strong>{{width}} x {{height}}</strong>.",
+    "continueAnyway": "Kontynuuj mimo to",
+    "suggestions": "Sugestie:",
+    "suggestLarger": "Użyj większego ekranu lub tabletu",
+    "suggestMaximize": "Zmaksymalizuj okno przeglądarki",
+    "suggestZoom": "Zmniejsz poziom powiększenia przeglądarki (Ctrl + -)"
+  }
 }
