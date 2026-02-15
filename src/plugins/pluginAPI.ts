@@ -1,18 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as jsxRuntime from 'react/jsx-runtime';
+import Dexie from 'dexie';
 import { icons } from 'lucide-react';
 import { registerPlugin, registerPlugins, isPluginDisabled } from './pluginRegistry';
 import { db } from '../db/database';
 import i18n from '../i18n';
 
-// Expose React, ReactDOM, and JSX runtime globally for pre-compiled external plugins.
-// Plugins loaded via Blob URL can't resolve bare specifiers like
-// `import { useState } from 'react'`. Setting globals lets plugin
-// bundlers use `external: ['react', 'react-dom']` with a globals shim.
+// Expose React, ReactDOM, JSX runtime, and Dexie globally for pre-compiled
+// external plugins. Plugins loaded via Blob URL can't resolve bare specifiers
+// like `import { useState } from 'react'`. Setting globals lets plugin
+// bundlers use `external: ['react', 'react-dom', 'dexie']` with a globals shim.
 (globalThis as any).React = React;
 (globalThis as any).ReactDOM = ReactDOM;
 (globalThis as any).__ZN_JSX_RUNTIME = jsxRuntime;
+(globalThis as any).__ZN_DEXIE = Dexie;
 
 // Shim process.env for plugins that reference process.env.NODE_ENV
 // (common in bundles that didn't inline this at build time)

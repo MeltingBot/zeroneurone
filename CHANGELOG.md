@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.6
+
+### Fixes
+- Fix Dexie version conflict: plugins now use ZN's Dexie instance via Blob URL shim (same pattern as React) — no more "Two different versions of Dexie loaded" error
+- Add `preview:plugins` npm script for local plugin testing with `npm run preview:plugins`
+
 ## 2.15.5
 
 ### Fixes

@@ -31,18 +31,23 @@ const reactDomShimUrl = createShimUrl(
 const jsxRuntimeShimUrl = createShimUrl(
   'const JR=globalThis.__ZN_JSX_RUNTIME;export const{jsx,jsxs,Fragment}=JR;'
 );
+const dexieShimUrl = createShimUrl(
+  'const D=globalThis.__ZN_DEXIE;export default D;export const{liveQuery}=D;'
+);
 
 /**
- * Rewrite bare React specifiers in plugin source so they resolve
- * to our shim Blob URLs. Order matters: longer paths first.
+ * Rewrite bare specifiers in plugin source so they resolve to our
+ * shim Blob URLs. Order matters: longer paths first.
+ * Covers React, ReactDOM, JSX runtime, and Dexie.
  */
-function rewriteReactImports(source: string): string {
+function rewriteBareImports(source: string): string {
   return source
     .replace(/from\s*["']react\/jsx-dev-runtime["']/g, `from "${jsxRuntimeShimUrl}"`)
     .replace(/from\s*["']react\/jsx-runtime["']/g, `from "${jsxRuntimeShimUrl}"`)
     .replace(/from\s*["']react-dom\/client["']/g, `from "${reactDomShimUrl}"`)
     .replace(/from\s*["']react-dom["']/g, `from "${reactDomShimUrl}"`)
-    .replace(/from\s*["']react["']/g, `from "${reactShimUrl}"`);
+    .replace(/from\s*["']react["']/g, `from "${reactShimUrl}"`)
+    .replace(/from\s*["']dexie["']/g, `from "${dexieShimUrl}"`);
 }
 
 /**
@@ -52,8 +57,8 @@ function rewriteReactImports(source: string): string {
  * If no manifest exists (404), the app boots normally — zero overhead.
  * Plugin errors are caught individually and never crash the app.
  *
- * Bare React imports are automatically rewritten to Blob URL shims,
- * so plugins work without any special bundler config.
+ * Bare imports (React, Dexie…) are automatically rewritten to Blob URL
+ * shims, so plugins work without any special bundler config.
  *
  * Plugins that don't register a home:card get an auto-generated one
  * so they always appear in the Extensions section for enable/disable.
@@ -90,7 +95,7 @@ export async function loadExternalPlugins(): Promise<void> {
       const source = await fileRes.text();
 
       // Rewrite bare React imports → Blob URL shims
-      const rewritten = rewriteReactImports(source);
+      const rewritten = rewriteBareImports(source);
 
       const blob = new Blob([rewritten], { type: 'application/javascript' });
       const blobUrl = URL.createObjectURL(blob);

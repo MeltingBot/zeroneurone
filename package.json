@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.15.5",
+  "version": "2.15.6",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "preview:plugins": "cp -f plugins/*.json plugins/*.js dist/plugins/ 2>/dev/null; vite preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
