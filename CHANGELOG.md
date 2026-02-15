@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.15.1
+
+### Fixes
+- Extended plugin API: expose Zustand stores, repositories, db, fileService, generateUUID, i18n to external plugins
+- Added `plugin-api.d.ts` type definitions for external plugin developers
+- Plugin docs (EN + FR): expanded API surface table, createPortal pattern for plugin modals
+
 ## 2.15.0
 
 ### Features

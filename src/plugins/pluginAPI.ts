@@ -2,6 +2,23 @@ import React from 'react';
 import { icons } from 'lucide-react';
 import { registerPlugin, registerPlugins, isPluginDisabled } from './pluginRegistry';
 import { db } from '../db/database';
+import i18n from '../i18n';
+
+// ─── Stores ────────────────────────────────────────────────────
+import { useInvestigationStore } from '../stores/investigationStore';
+import { useSelectionStore } from '../stores/selectionStore';
+import { useViewStore } from '../stores/viewStore';
+import { useReportStore } from '../stores/reportStore';
+import { useInsightsStore } from '../stores/insightsStore';
+
+// ─── Repositories ──────────────────────────────────────────────
+import { elementRepository } from '../db/repositories/elementRepository';
+import { linkRepository } from '../db/repositories/linkRepository';
+import { investigationRepository } from '../db/repositories/investigationRepository';
+
+// ─── Services & utils ──────────────────────────────────────────
+import { fileService } from '../services/fileService';
+import { generateUUID } from '../utils';
 
 /**
  * API surface exposed to external plugins loaded from /plugins/.
@@ -21,6 +38,34 @@ export const pluginAPI = {
 
   // ─── Icons (full lucide-react icon set) ─────────────────────
   icons,
+
+  // ─── i18n (add resource bundles, translate) ─────────────────
+  i18n,
+
+  // ─── Zustand stores ─────────────────────────────────────────
+  stores: {
+    useInvestigationStore,
+    useSelectionStore,
+    useViewStore,
+    useReportStore,
+    useInsightsStore,
+  },
+
+  // ─── Database repositories ──────────────────────────────────
+  repositories: {
+    elementRepository,
+    linkRepository,
+    investigationRepository,
+  },
+
+  // ─── Dexie database instance ────────────────────────────────
+  db,
+
+  // ─── File service (OPFS asset management) ───────────────────
+  fileService,
+
+  // ─── Utilities ──────────────────────────────────────────────
+  generateUUID,
 
   // ─── Plugin data persistence (IndexedDB) ────────────────────
   pluginData: {

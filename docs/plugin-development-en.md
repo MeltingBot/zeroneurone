@@ -795,16 +795,52 @@ export function register(api) {
 
 The `api` object passed to `register()` provides:
 
+**Plugin registration:**
+
 | Property | Description |
 |----------|-------------|
 | `registerPlugin(slot, extension, pluginId?)` | Register an extension into a slot |
 | `registerPlugins(slot, extensions, pluginId?)` | Register multiple extensions at once |
 | `isPluginDisabled(id)` | Check if a plugin is disabled |
+
+**React & UI:**
+
+| Property | Description |
+|----------|-------------|
 | `React` | The app's React instance (same instance — hooks work) |
 | `icons` | All lucide-react icons |
+| `i18n` | i18next instance (`addResourceBundle`, `t()`) |
+
+**Zustand stores (read/write app state):**
+
+| Property | Description |
+|----------|-------------|
+| `stores.useInvestigationStore` | Elements, links, assets, comments, CRUD actions |
+| `stores.useSelectionStore` | Current canvas selection (element/link IDs) |
+| `stores.useViewStore` | Current investigation ID, viewport, filters |
+| `stores.useReportStore` | Report sections, add/update/delete |
+| `stores.useInsightsStore` | Graph analysis: clusters, centrality, bridges |
+
+**Database repositories (direct DB access):**
+
+| Property | Description |
+|----------|-------------|
+| `repositories.elementRepository` | `getByInvestigation(id)`, `getById(id)`, etc. |
+| `repositories.linkRepository` | `getByInvestigation(id)`, `getById(id)`, etc. |
+| `repositories.investigationRepository` | `getAll()`, `getById(id)` |
+
+**Services & utilities:**
+
+| Property | Description |
+|----------|-------------|
+| `db` | Dexie database instance (direct IndexedDB access) |
+| `fileService` | OPFS file management (`getAssetFile`, `getAssetUrl`, `extractAssetText`) |
+| `generateUUID()` | Generate a UUID v4 |
 | `pluginData.get(pluginId, investigationId, key)` | Read from persistent plugin storage |
 | `pluginData.set(pluginId, investigationId, key, value)` | Write to persistent plugin storage |
 | `pluginData.remove(pluginId, investigationId, key)` | Delete from persistent plugin storage |
+
+**TypeScript types:** Copy `src/types/plugin-api.d.ts` into your plugin project for full type definitions (`PluginAPI`, `Element`, `Link`, `ReportSection`, etc.).
 
 ### React Components Without JSX
 
@@ -890,6 +926,37 @@ export function register(api: any) {
 - If a plugin file fails to load: warning logged, other plugins still load
 - If `register()` throws: warning logged, other plugins still load
 - Plugin errors never crash the app
+
+### Plugin Modals (createPortal)
+
+External plugins cannot add components to the React root. To render modals or overlays, use `React.createPortal` to portal into `document.body`:
+
+```javascript
+export function register(api) {
+  const { registerPlugin, React } = api;
+  const { useState, createElement: h } = React;
+  const { createPortal } = await import('react-dom');
+
+  function MyHeaderButton() {
+    const [showModal, setShowModal] = useState(false);
+
+    return h(React.Fragment, null,
+      h('button', { onClick: () => setShowModal(true) }, 'Open'),
+      showModal && createPortal(
+        h('div', { className: 'fixed inset-0 z-50 flex items-center justify-center bg-black/30' },
+          h('div', { className: 'bg-bg-primary border border-border-default rounded shadow-lg p-6 max-w-md' },
+            h('p', null, 'Modal content'),
+            h('button', { onClick: () => setShowModal(false) }, 'Close')
+          )
+        ),
+        document.body
+      )
+    );
+  }
+
+  registerPlugin('header:right', MyHeaderButton, 'my-plugin');
+}
+```
 
 ### Security
 
