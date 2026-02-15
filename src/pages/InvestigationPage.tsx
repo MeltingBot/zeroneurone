@@ -6,11 +6,30 @@ import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } fr
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
 
+// Lazy load with auto-reload on chunk load failure (stale cache after deploy)
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    factory().catch(() => {
+      const key = 'zn_chunk_retry';
+      const last = sessionStorage.getItem(key);
+      // Reload once per session to fetch fresh assets
+      if (!last || Date.now() - Number(last) > 10_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+      // If we already retried, let the ErrorBoundary handle it
+      return factory();
+    }),
+  );
+}
+
 // Lazy load heavy components for better initial load
-const Canvas = lazy(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
-const TimelineView = lazy(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
-const MapView = lazy(() => import('../components/map').then(m => ({ default: m.MapView })));
-const MatrixView = lazy(() => import('../components/matrix').then(m => ({ default: m.MatrixView })));
+const Canvas = lazyWithRetry(() => import('../components/canvas').then(m => ({ default: m.Canvas })));
+const TimelineView = lazyWithRetry(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
+const MapView = lazyWithRetry(() => import('../components/map').then(m => ({ default: m.MapView })));
+const MatrixView = lazyWithRetry(() => import('../components/matrix').then(m => ({ default: m.MatrixView })));
 import { useInvestigationStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore } from '../stores';
 import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';

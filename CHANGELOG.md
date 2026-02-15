@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.15.7
+
+### Fixes
+- Fix stale chunk crash after deploy: lazy-loaded views (Canvas, Map, Timeline, Matrix) now auto-reload the page once on chunk load failure instead of showing an error screen
+
 ## 2.15.6
 
 ### Fixes
