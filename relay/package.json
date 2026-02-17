@@ -1,0 +1,9 @@
+{
+  "name": "zeroneurone-relay",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "redis": "^5.10.0",
+    "ws": "^8.19.0"
+  }
+}

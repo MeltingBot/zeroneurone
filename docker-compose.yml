@@ -2,19 +2,25 @@
 # zeroneurone - Docker Compose configuration
 # ============================================================================
 #
-# Deployment with Traefik reverse proxy integration.
+# Two-service deployment: app (nginx) + relay (WebSocket).
+# Integrated with Traefik reverse proxy.
 #
 # Usage:
 #   docker compose up -d          # Start in background
 #   docker compose logs -f        # View logs
 #   docker compose down           # Stop
 #
-# Configuration:
-#   Set ZERONEURONE_DOMAIN environment variable or edit the labels below.
+# Configuration (.env file or environment):
+#   ZERONEURONE_DOMAIN=zeroneurone.example.com
+#   RELAY_DOMAIN=sync.zeroneurone.example.com
+#   REDIS_URL=redis://redis:6379  (optional, for persistent async buffers)
 #
 # ============================================================================
 
 services:
+  # --------------------------------------------------------------------------
+  # Web application (nginx serving static files)
+  # --------------------------------------------------------------------------
   zeroneurone:
     build:
       context: .
@@ -26,40 +32,81 @@ services:
     # No ports exposed - Traefik handles external access
     # Uncomment below for direct access without Traefik:
     # ports:
-    #   - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - HOST=0.0.0.0
+    #   - "80:80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 10s
+      start_period: 5s
     networks:
       - traefik-net
     labels:
-      # Enable Traefik for this service
       - "traefik.enable=true"
-
-      # HTTP Router - Main application
       - "traefik.http.routers.zeroneurone.rule=Host(`${ZERONEURONE_DOMAIN:-zeroneurone.localhost}`)"
       - "traefik.http.routers.zeroneurone.entrypoints=websecure"
       - "traefik.http.routers.zeroneurone.tls=true"
       - "traefik.http.routers.zeroneurone.tls.certresolver=letsencrypt"
+      - "traefik.http.services.zeroneurone.loadbalancer.server.port=80"
 
-      # Service configuration
-      - "traefik.http.services.zeroneurone.loadbalancer.server.port=3000"
+  # --------------------------------------------------------------------------
+  # WebSocket relay server (collaboration)
+  # --------------------------------------------------------------------------
+  zeroneurone-relay:
+    build:
+      context: ./relay
+      dockerfile: Dockerfile
+    container_name: zeroneurone-relay
+    restart: unless-stopped
+    # Uncomment below for direct access without Traefik:
+    # ports:
+    #   - "4444:4444"
+    environment:
+      - PORT=4444
+      - HOST=0.0.0.0
+      - REDIS_URL=${REDIS_URL:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zeroneurone-relay.rule=Host(`${RELAY_DOMAIN:-sync.zeroneurone.localhost}`)"
+      - "traefik.http.routers.zeroneurone-relay.entrypoints=websecure"
+      - "traefik.http.routers.zeroneurone-relay.tls=true"
+      - "traefik.http.routers.zeroneurone-relay.tls.certresolver=letsencrypt"
+      - "traefik.http.services.zeroneurone-relay.loadbalancer.server.port=4444"
+      # Ensure WebSocket upgrade headers
+      - "traefik.http.middlewares.zeroneurone-relay-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.zeroneurone-relay.middlewares=zeroneurone-relay-headers"
 
-      # WebSocket support - important for collaboration
-      # Traefik automatically handles WebSocket upgrade, but we ensure proper headers
-      - "traefik.http.middlewares.zeroneurone-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.zeroneurone.middlewares=zeroneurone-headers"
+  # --------------------------------------------------------------------------
+  # Redis (optional - uncomment for persistent async buffers)
+  # --------------------------------------------------------------------------
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: zeroneurone-redis
+  #   restart: unless-stopped
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - traefik-net
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
 
 networks:
   traefik-net:
     external: true
+
+# volumes:
+#   redis-data:
 
 # ============================================================================
 # Notes:
@@ -68,24 +115,25 @@ networks:
 # 1. Make sure the traefik-net network exists:
 #    docker network create traefik-net
 #
-# 2. Set your domain:
-#    export ZERONEURONE_DOMAIN=zeroneurone.example.com
-#    docker compose up -d
-#
-# 3. Or create a .env file:
+# 2. Set your domains in .env:
 #    ZERONEURONE_DOMAIN=zeroneurone.example.com
+#    RELAY_DOMAIN=sync.zeroneurone.example.com
 #
-# 4. To include git commit in the build (shows version at bottom of screen):
+# 3. To include git commit in the build:
 #    GIT_COMMIT=$(git rev-parse HEAD) docker compose build
 #
-# 5. To include plugins in the image, drop .js files + manifest.json
-#    into the plugins/ directory before building:
-#    cp my-plugin.js plugins/ && cp manifest.json plugins/
-#    docker compose build
+# 4. To include plugins, drop .js files + manifest.json into plugins/
+#    before building.
 #
-# 6. For local development without Traefik, uncomment the ports section
-#    and comment out the labels and networks sections.
+# 5. For single-container deployment (app + relay combined), use:
+#    docker build -f Dockerfile.combined -t zeroneurone .
 #
-# 7. WebSocket connections work automatically - Traefik handles the
-#    HTTP Upgrade to WebSocket protocol.
+# 6. For Redis persistent buffers, uncomment the redis service
+#    and set REDIS_URL=redis://redis:6379 in .env.
+#
+# 7. The relay can be restarted independently without affecting the app:
+#    docker compose restart zeroneurone-relay
+#
+# 8. The app can be rebuilt and redeployed without interrupting
+#    active collaboration sessions on the relay.
 #

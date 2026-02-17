@@ -1,19 +1,15 @@
 # ============================================================================
-# zeroneurone - Multi-stage Docker build
+# zeroneurone - App-only Docker build (nginx)
 # ============================================================================
 #
-# This Dockerfile creates a production-ready container that serves:
-# - The React web application (static files)
-# - WebSocket relay server for real-time collaboration
-#
-# Single port deployment - everything through one endpoint.
+# Serves the React web application as static files via nginx.
+# The WebSocket relay runs as a separate container (see relay/Dockerfile).
 #
 # Build: docker build -t zeroneurone .
-# Run:   docker run -p 3000:3000 zeroneurone
+# Run:   docker run -p 80:80 zeroneurone
 #
-# With plugins:
-#   1. Drop plugin .js files + manifest.json into plugins/
-#   2. docker build -t zeroneurone .
+# For single-container deployment (app + relay combined),
+# use Dockerfile.combined instead.
 #
 # ============================================================================
 
@@ -37,7 +33,6 @@ RUN npm ci
 COPY . .
 
 # Build the application with version info
-# Skip TypeScript strict checking, use Vite directly
 ENV VITE_APP_VERSION=$GIT_COMMIT
 RUN npx vite build
 
@@ -45,45 +40,24 @@ RUN npx vite build
 RUN cp -f plugins/*.json plugins/*.js dist/plugins/ 2>/dev/null || true
 
 # ----------------------------------------------------------------------------
-# Stage 2: Production server
+# Stage 2: nginx for static file serving
 # ----------------------------------------------------------------------------
-# Only the server needs runtime deps (ws, redis).
-# All client-side code (React, Leaflet, etc.) is bundled in dist/ by Vite.
-FROM node:22-alpine AS production
-
-WORKDIR /app
+FROM nginx:alpine AS production
 
 # Install curl for healthcheck
 RUN apk add --no-cache curl
 
-# Install server-only dependencies (ws + redis = ~12 MB vs 285 MB before)
-COPY server/package.json ./server/package.json
-RUN cd server && npm install --omit=dev
+# Copy built static files
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy built static files from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy production server
-COPY server/index.js ./server/index.js
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S zeroneurone && \
-    adduser -S zeroneurone -u 1001 -G zeroneurone && \
-    chown -R zeroneurone:zeroneurone /app
-
-USER zeroneurone
-
-# Environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOST=0.0.0.0
-
-# Expose the single port
-EXPOSE 3000
+# Expose HTTP port
+EXPOSE 80
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:80/health || exit 1
 
-# Start the server
-CMD ["node", "server/index.js"]
+CMD ["nginx", "-g", "daemon off;"]
