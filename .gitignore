@@ -26,8 +26,7 @@ dist-ssr
 # Project data files
 *.osintracker
 
-# Documentation (generated)
-docs/
+# Internal working docs (not versioned)
 claudedocs/
 data/
 # Personal project docs (not versioned)

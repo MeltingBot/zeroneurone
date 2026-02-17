@@ -922,7 +922,21 @@ export function register(api) {
 
 ### Pre-Built Plugins (with JSX)
 
-For larger plugins, use a bundler (Vite, esbuild, Rollup) with React marked as external. ZN exposes `React`, `ReactDOM`, and the JSX runtime as globals before loading plugins, so bare `import` specifiers just need to be redirected to the globals.
+For larger plugins, use a bundler (Vite, esbuild, Rollup) with shared libraries marked as external. ZN exposes `React`, `ReactDOM`, the JSX runtime, and `Dexie` as globals before loading plugins, so bare `import` specifiers just need to be redirected to the globals.
+
+**Important — Shared dependencies must be externalized:**
+
+ZN and your plugin must share a single instance of these libraries. If your bundler inlines them into the plugin bundle, you will get runtime errors (e.g. "Two different versions of Dexie loaded", broken React hooks).
+
+| Library | ZN auto-rewrites `from "..."` | Must be `external` in bundler |
+|---------|-------------------------------|-------------------------------|
+| `react` | Yes | **Yes** |
+| `react-dom` | Yes | **Yes** |
+| `react/jsx-runtime` | Yes | **Yes** |
+| `react/jsx-dev-runtime` | Yes | **Yes** |
+| `dexie` | Yes | **Yes** |
+
+ZN's plugin loader automatically rewrites bare import specifiers (`from "react"`, `from "dexie"`, etc.) to Blob URL shims that point to the app's instances. But this only works if your bundler **keeps them as bare imports** — if it bundles the library code inline, ZN can't intercept it.
 
 **Vite config for the plugin:**
 
@@ -940,45 +954,31 @@ export default defineConfig({
       fileName: 'my-plugin',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
-      plugins: [{
-        // Replace bare imports with global references (required for Blob URL loading)
-        name: 'global-externals',
-        resolveId(id) {
-          if (id === 'react') return '\0react-global';
-          if (id === 'react-dom') return '\0react-dom-global';
-          if (id === 'react/jsx-runtime') return '\0react-jsx-runtime-global';
-          if (id === 'react/jsx-dev-runtime') return '\0react-jsx-dev-runtime-global';
-        },
-        load(id) {
-          if (id === '\0react-global')
-            return 'const R = globalThis.React; export default R; export const { useState, useEffect, useCallback, useMemo, useRef, useReducer, useContext, createElement, Fragment, createContext, forwardRef, memo, Suspense, lazy, Children, cloneElement, isValidElement } = R;';
-          if (id === '\0react-dom-global')
-            return 'const RD = globalThis.ReactDOM; export default RD; export const { createPortal, flushSync } = RD;';
-          if (id === '\0react-jsx-runtime-global')
-            return 'const JR = globalThis.__ZN_JSX_RUNTIME; export const { jsx, jsxs, Fragment } = JR;';
-          if (id === '\0react-jsx-dev-runtime-global')
-            return 'const JR = globalThis.__ZN_JSX_RUNTIME; export const { jsxDEV, Fragment } = JR;';
-        },
-      }],
+      external: [
+        'react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime',
+        'dexie',
+      ],
     },
   },
 });
 ```
 
-**Plugin entry point — no global override needed:**
+With `external` configured, your bundler keeps `from "react"` and `from "dexie"` as-is in the output. ZN then rewrites them to Blob URL shims at load time.
+
+**Plugin entry point:**
 
 ```typescript
 // src/index.tsx
-import { useState } from 'react'; // works — resolved to globalThis.React by the plugin above
+import { useState } from 'react';  // kept as bare import → ZN rewrites to its React
+import Dexie from 'dexie';          // kept as bare import → ZN rewrites to its Dexie
 
 export function register(api: any) {
   const { registerPlugin } = api;
-  // ... use JSX and React hooks normally
+  // ... use JSX, React hooks, and Dexie normally
 }
 ```
 
-**Why this is needed:** Plugins are loaded via Blob URL (`fetch` + `import(blobUrl)`). In this context, bare specifiers like `import React from 'react'` or `react/jsx-runtime` (used by the automatic JSX transform) can't resolve through the module system. The Rollup plugin above replaces them with references to globals that ZN sets before loading any plugin.
+**Why this is needed:** Plugins are loaded via Blob URL (`fetch` + `import(blobUrl)`). In this context, bare specifiers like `import React from 'react'` or `import Dexie from 'dexie'` can't resolve through the module system. ZN's loader rewrites them to Blob URL shims that re-export from globals set before any plugin loads. If your bundler inlines these libraries instead, you get duplicate instances and runtime errors.
 
 ### Deployment
 
