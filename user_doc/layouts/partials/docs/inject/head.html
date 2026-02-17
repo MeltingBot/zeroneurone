@@ -1,0 +1,66 @@
+<style>
+/* Theme toggle */
+.theme-toggle {
+  all: unset;
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  cursor: pointer;
+  color: var(--gray-500);
+  opacity: 0.6;
+  line-height: 0;
+}
+.theme-toggle:hover { opacity: 1; }
+.theme-toggle svg { width: 18px; height: 18px; display: block; }
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+/* Dark theme via data attribute - overrides media query */
+[data-theme="dark"] {
+  --gray-100: #1a1a1a;
+  --gray-200: #2a2a2a;
+  --gray-500: #6b6b6b;
+  --color-link: #6ba1ff;
+  --color-visited-link: #b398ff;
+  --body-background: #121212;
+  --body-font-color: #cccccc;
+  --icon-filter: brightness(0) invert(1);
+}
+
+/* Light theme via data attribute */
+[data-theme="light"] {
+  --gray-100: #f5f5f5;
+  --gray-200: #eeeeee;
+  --gray-500: #767676;
+  --color-link: #0055bb;
+  --color-visited-link: #8440f0;
+  --body-background: #ffffff;
+  --body-font-color: #343a40;
+  --icon-filter: none;
+}
+
+/* Hint boxes */
+.book-hint {
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 4px 4px 0;
+  border-left: 4px solid;
+}
+.book-hint.info {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+}
+.book-hint.warning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+}
+.book-hint.danger {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+.book-hint p:first-child { margin-top: 0; }
+.book-hint p:last-child { margin-bottom: 0; }
+</style>

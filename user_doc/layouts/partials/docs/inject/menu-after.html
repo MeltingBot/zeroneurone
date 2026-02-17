@@ -1,0 +1,55 @@
+{{/* Theme toggle button for light/dark mode */}}
+<div class="book-theme-toggle" style="padding: 1rem; border-top: 1px solid var(--gray-200);">
+  <button id="theme-toggle" class="book-btn" style="width: 100%; display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <span id="theme-label">Mode sombre</span>
+  </button>
+</div>
+
+<script>
+(function() {
+  const toggle = document.getElementById('theme-toggle');
+  const iconLight = document.getElementById('theme-icon-light');
+  const iconDark = document.getElementById('theme-icon-dark');
+  const label = document.getElementById('theme-label');
+
+  function updateUI(isDark) {
+    if (isDark) {
+      document.body.classList.add('dark');
+      iconLight.style.display = 'block';
+      iconDark.style.display = 'none';
+      label.textContent = 'Mode clair';
+    } else {
+      document.body.classList.remove('dark');
+      iconLight.style.display = 'none';
+      iconDark.style.display = 'block';
+      label.textContent = 'Mode sombre';
+    }
+  }
+
+  // Initialize from localStorage or system preference
+  const stored = localStorage.getItem('book-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = stored === 'dark' || (stored === null && prefersDark);
+  updateUI(isDark);
+
+  toggle.addEventListener('click', function() {
+    const isDark = document.body.classList.toggle('dark');
+    localStorage.setItem('book-theme', isDark ? 'dark' : 'light');
+    updateUI(isDark);
+  });
+})();
+</script>
