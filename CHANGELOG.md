@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.15.8
+
+### Fixes
+- Fix duplicate plugin cards on license change: `unregisterPlugin` now removes all matching entries, not just the first one
+
 ## 2.15.7
 
 ### Fixes

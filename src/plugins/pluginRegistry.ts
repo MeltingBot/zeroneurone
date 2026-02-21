@@ -122,9 +122,9 @@ export function unregisterPlugin<K extends keyof PluginSlots>(
   predicate: (ext: any) => boolean
 ): void {
   const arr = slots[slot] as any[];
-  const idx = arr.findIndex(predicate);
-  if (idx !== -1) {
-    slots[slot] = arr.filter((_: any, i: number) => i !== idx) as PluginSlots[K];
+  const filtered = arr.filter((ext: any) => !predicate(ext));
+  if (filtered.length !== arr.length) {
+    slots[slot] = filtered as PluginSlots[K];
     notifyListeners();
   }
 }
