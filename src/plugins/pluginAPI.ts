@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import * as jsxRuntime from 'react/jsx-runtime';
 import Dexie from 'dexie';
 import { icons } from 'lucide-react';
-import { registerPlugin, registerPlugins, isPluginDisabled } from './pluginRegistry';
+import { registerPlugin, registerPlugins, unregisterPlugin, isPluginDisabled } from './pluginRegistry';
 import { db } from '../db/database';
 import i18n from '../i18n';
 
@@ -49,6 +49,7 @@ export const pluginAPI = {
   // ─── Plugin registration ────────────────────────────────────
   registerPlugin,
   registerPlugins,
+  unregisterPlugin,
   isPluginDisabled,
 
   // ─── React (same instance as the app — hooks work) ──────────

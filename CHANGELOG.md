@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.15.9
+
+### Fixes
+- Expose `unregisterPlugin` in the external plugin API — plugins can now dynamically remove/update their registrations (e.g. refresh `home:card` on license or language change)
+
 ## 2.15.8
 
 ### Fixes
