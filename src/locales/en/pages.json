@@ -139,6 +139,7 @@
       "focusNeighbors3": "3-link neighbors",
       "preview": "Preview",
       "findPaths": "Find paths",
+      "merge": "Merge",
       "lockPosition": "Lock position",
       "unlockPosition": "Unlock position"
     },

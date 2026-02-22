@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Tipos de propriedades",
       "propertyTypesChoiceDesc": "Para escolhas múltiplas:"
     }
+  },
+  "merge": {
+    "title": "Fundir elementos",
+    "description": "Selecione o elemento a manter. Propriedades, eventos, tags e links serão fundidos.",
+    "confirm": "Fundir",
+    "merging": "Fundindo...",
+    "kept": "Mantido",
+    "properties": "propriedades",
+    "events": "eventos",
+    "hint": "O outro elemento será eliminado. Os seus links serão transferidos."
   }
 }

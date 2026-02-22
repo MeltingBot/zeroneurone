@@ -105,6 +105,9 @@ interface InvestigationState {
   removeFromGroup: (elementIds: ElementId[]) => Promise<void>;
   dissolveGroup: (groupId: ElementId) => Promise<void>;
 
+  // Actions - Merge
+  mergeElements: (targetId: ElementId, sourceId: ElementId) => Promise<void>;
+
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
@@ -1357,6 +1360,272 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
     }
     elementRepository.delete(groupId).catch(() => {});
+  },
+
+  // ============================================================================
+  // MERGE ELEMENTS
+  // ============================================================================
+
+  mergeElements: async (targetId: ElementId, sourceId: ElementId) => {
+    const { elements, links } = get();
+    const ydoc = syncService.getYDoc();
+    if (!ydoc) throw new Error('Y.Doc not available');
+
+    const target = elements.find(el => el.id === targetId);
+    const source = elements.find(el => el.id === sourceId);
+    if (!target || !source) throw new Error('Element not found');
+
+    const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
+
+    // --- Compute merged element fields ---
+    const mergedNotes = target.notes && source.notes
+      ? `${target.notes}\n---\n${source.notes}`
+      : target.notes || source.notes;
+
+    const mergedTags = [...new Set([...target.tags, ...source.tags])];
+
+    // Union properties (keep both if same key)
+    const mergedProperties = [...target.properties];
+    for (const prop of source.properties) {
+      const exists = mergedProperties.some(p => p.key === prop.key && p.value === prop.value);
+      if (!exists) mergedProperties.push(prop);
+    }
+
+    // Union events (deduplicate by id)
+    const existingEventIds = new Set(target.events.map(e => e.id));
+    const mergedEvents = [...target.events, ...source.events.filter(e => !existingEventIds.has(e.id))];
+
+    // Union assetIds
+    const mergedAssetIds = [...new Set([...target.assetIds, ...source.assetIds])];
+
+    // Confidence: max
+    const mergedConfidence = target.confidence !== null && source.confidence !== null
+      ? (Math.max(target.confidence, source.confidence) as import('../types').Confidence)
+      : target.confidence ?? source.confidence;
+
+    // Source: combine if different
+    const mergedSource = target.source && source.source && target.source !== source.source
+      ? `${target.source} ; ${source.source}`
+      : target.source || source.source;
+
+    // Geo: target wins, fallback to source
+    const mergedGeo = target.geo ?? source.geo;
+
+    // Date range: expand to cover both
+    let mergedDate = target.date ?? source.date;
+    let mergedDateRange = target.dateRange;
+    if (target.dateRange && source.dateRange) {
+      const start = target.dateRange.start && source.dateRange.start
+        ? new Date(Math.min(target.dateRange.start.getTime(), source.dateRange.start.getTime()))
+        : target.dateRange.start ?? source.dateRange.start;
+      const end = target.dateRange.end && source.dateRange.end
+        ? new Date(Math.max(target.dateRange.end.getTime(), source.dateRange.end.getTime()))
+        : target.dateRange.end ?? source.dateRange.end;
+      mergedDateRange = { start, end };
+    } else {
+      mergedDateRange = target.dateRange ?? source.dateRange;
+    }
+
+    // ChildIds union if groups
+    const mergedChildIds = [...new Set([...target.childIds, ...source.childIds])];
+
+    // CreatedAt: earliest
+    const mergedCreatedAt = target.createdAt < source.createdAt ? target.createdAt : source.createdAt;
+
+    // --- Compute link retargeting ---
+    const linksToRetarget: { id: string; newFromId: string; newToId: string }[] = [];
+    const selfLinkIds: string[] = []; // links between target and source → delete
+    const linkDuplicateMap = new Map<string, string[]>(); // "fromId-toId" → linkIds
+
+    for (const link of links) {
+      let newFromId = link.fromId;
+      let newToId = link.toId;
+
+      if (link.fromId === sourceId) newFromId = targetId;
+      if (link.toId === sourceId) newToId = targetId;
+
+      // Self-link after retarget (was a link between target and source)
+      if (newFromId === targetId && newToId === targetId) {
+        selfLinkIds.push(link.id);
+        continue;
+      }
+
+      if (newFromId !== link.fromId || newToId !== link.toId) {
+        linksToRetarget.push({ id: link.id, newFromId, newToId });
+      }
+
+      // Track for dedup
+      const key = `${newFromId}-${newToId}`;
+      if (!linkDuplicateMap.has(key)) linkDuplicateMap.set(key, []);
+      linkDuplicateMap.get(key)!.push(link.id);
+    }
+
+    // Identify duplicate link pairs to merge
+    const linksToDelete: string[] = [...selfLinkIds];
+    const linksToMergeInto = new Map<string, string[]>(); // keepId → [deleteIds]
+
+    for (const [, ids] of linkDuplicateMap) {
+      if (ids.length > 1) {
+        const keepId = ids[0];
+        const dupeIds = ids.slice(1);
+        linksToMergeInto.set(keepId, dupeIds);
+        linksToDelete.push(...dupeIds);
+      }
+    }
+
+    // --- Apply everything in one Y.Doc transaction ---
+    localOpPending = true;
+
+    // Update Zustand first
+    const linksToDeleteSet = new Set(linksToDelete);
+    const retargetMap = new Map(linksToRetarget.map(r => [r.id, r]));
+
+    set((state) => {
+      // Merge link metadata for duplicates
+      const linkMap = new Map(state.links.map(l => [l.id, l]));
+
+      // For each kept link, merge metadata from duplicates
+      for (const [keepId, dupeIds] of linksToMergeInto) {
+        const keepLink = linkMap.get(keepId);
+        if (!keepLink) continue;
+        for (const dupeId of dupeIds) {
+          const dupeLink = linkMap.get(dupeId);
+          if (!dupeLink) continue;
+          const mergedLabel = keepLink.label && dupeLink.label && keepLink.label !== dupeLink.label
+            ? `${keepLink.label} / ${dupeLink.label}`
+            : keepLink.label || dupeLink.label;
+          const mergedLinkNotes = keepLink.notes && dupeLink.notes
+            ? `${keepLink.notes}\n---\n${dupeLink.notes}`
+            : keepLink.notes || dupeLink.notes;
+          const mergedLinkTags = [...new Set([...keepLink.tags, ...dupeLink.tags])];
+          const mergedLinkProps = [...keepLink.properties];
+          for (const p of dupeLink.properties) {
+            if (!mergedLinkProps.some(mp => mp.key === p.key && mp.value === p.value)) {
+              mergedLinkProps.push(p);
+            }
+          }
+          linkMap.set(keepId, {
+            ...keepLink,
+            label: mergedLabel,
+            notes: mergedLinkNotes,
+            tags: mergedLinkTags,
+            properties: mergedLinkProps,
+          });
+        }
+      }
+
+      return {
+        elements: state.elements
+          .filter(el => el.id !== sourceId)
+          .map(el => el.id === targetId ? {
+            ...el,
+            notes: mergedNotes,
+            tags: mergedTags,
+            properties: mergedProperties,
+            events: mergedEvents,
+            assetIds: mergedAssetIds,
+            confidence: mergedConfidence,
+            source: mergedSource,
+            geo: mergedGeo,
+            date: mergedDate,
+            dateRange: mergedDateRange,
+            childIds: mergedChildIds,
+            createdAt: mergedCreatedAt,
+            updatedAt: new Date(),
+          } : el),
+        links: Array.from(linkMap.values())
+          .filter(lk => !linksToDeleteSet.has(lk.id))
+          .map(lk => {
+            const r = retargetMap.get(lk.id);
+            return r ? { ...lk, fromId: r.newFromId, toId: r.newToId, updatedAt: new Date() } : lk;
+          }),
+      };
+    });
+
+    // Y.Doc transaction
+    ydoc.transact(() => {
+      // Update target element
+      const targetYMap = elementsMap.get(targetId) as Y.Map<any>;
+      if (targetYMap) {
+        updateElementYMap(targetYMap, {
+          notes: mergedNotes,
+          tags: mergedTags,
+          properties: mergedProperties,
+          events: mergedEvents,
+          assetIds: mergedAssetIds,
+          confidence: mergedConfidence,
+          source: mergedSource,
+          geo: mergedGeo,
+          date: mergedDate,
+          dateRange: mergedDateRange,
+          childIds: mergedChildIds,
+        }, ydoc);
+      }
+
+      // Retarget links
+      for (const { id, newFromId, newToId } of linksToRetarget) {
+        const linkYMap = linksMap.get(id) as Y.Map<any> | undefined;
+        if (linkYMap) {
+          updateLinkYMap(linkYMap, { fromId: newFromId, toId: newToId }, ydoc);
+        }
+      }
+
+      // Merge duplicate link metadata in Y.Doc
+      for (const [keepId, dupeIds] of linksToMergeInto) {
+        const keepYMap = linksMap.get(keepId) as Y.Map<any> | undefined;
+        if (!keepYMap) continue;
+        const keepLink = links.find(l => l.id === keepId);
+        if (!keepLink) continue;
+
+        for (const dupeId of dupeIds) {
+          const dupeLink = links.find(l => l.id === dupeId);
+          if (!dupeLink) continue;
+
+          const newLabel = keepLink.label && dupeLink.label && keepLink.label !== dupeLink.label
+            ? `${keepLink.label} / ${dupeLink.label}`
+            : keepLink.label || dupeLink.label;
+          const newNotes = keepLink.notes && dupeLink.notes
+            ? `${keepLink.notes}\n---\n${dupeLink.notes}`
+            : keepLink.notes || dupeLink.notes;
+          const newTags = [...new Set([...keepLink.tags, ...dupeLink.tags])];
+          const newProps = [...keepLink.properties];
+          for (const p of dupeLink.properties) {
+            if (!newProps.some(mp => mp.key === p.key && mp.value === p.value)) {
+              newProps.push(p);
+            }
+          }
+
+          updateLinkYMap(keepYMap, {
+            label: newLabel,
+            notes: newNotes,
+            tags: newTags,
+            properties: newProps,
+          }, ydoc);
+        }
+      }
+
+      // Delete duplicate and self links
+      for (const linkId of linksToDelete) {
+        linksMap.delete(linkId);
+      }
+
+      // Delete source element
+      elementsMap.delete(sourceId);
+    });
+
+    // Dexie cleanup
+    await elementRepository.delete(sourceId).catch(() => {});
+    for (const linkId of linksToDelete) {
+      await linkRepository.delete(linkId).catch(() => {});
+    }
+
+    // Cascade: remove source from all canvas tabs
+    const invId = get().currentInvestigation?.id;
+    if (invId) {
+      import('./tabStore').then(({ useTabStore }) => {
+        useTabStore.getState().removeElementFromAllTabs(invId, sourceId);
+      });
+    }
   },
 
   // ============================================================================

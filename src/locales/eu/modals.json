@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Propietate motak",
       "propertyTypesChoiceDesc": "Aukera anitzetarako:"
     }
+  },
+  "merge": {
+    "title": "Elementuak batu",
+    "description": "Hautatu gordetzeko elementua. Propietateak, gertaerak, etiketak eta estekak batuko dira.",
+    "confirm": "Batu",
+    "merging": "Batzen...",
+    "kept": "Gordeta",
+    "properties": "propietateak",
+    "events": "gertaerak",
+    "hint": "Beste elementua ezabatuko da. Bere estekak transferituko dira."
   }
 }

@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Typy właściwości",
       "propertyTypesChoiceDesc": "Dla wyboru wielokrotnego:"
     }
+  },
+  "merge": {
+    "title": "Połącz elementy",
+    "description": "Wybierz element do zachowania. Właściwości, wydarzenia, tagi i linki zostaną połączone.",
+    "confirm": "Połącz",
+    "merging": "Łączenie...",
+    "kept": "Zachowany",
+    "properties": "właściwości",
+    "events": "wydarzenia",
+    "hint": "Drugi element zostanie usunięty. Jego linki zostaną przeniesione."
   }
 }

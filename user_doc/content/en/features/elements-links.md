@@ -152,4 +152,36 @@ The group appears as a frame containing its members.
 
 ---
 
+## Merge Two Elements
+
+Combine two elements into one when they represent the same concept.
+
+### Procedure
+
+1. Select exactly **2 elements** (Ctrl+click)
+2. Right-click → **Merge**
+3. Choose which element to keep (its label and appearance will be preserved)
+4. Confirm the merge
+
+### What Gets Merged
+
+| Data | Behavior |
+|------|----------|
+| **Tags** | Union (all tags from both elements) |
+| **Properties** | Union (duplicates avoided) |
+| **Events** | Union (deduplicated by identifier) |
+| **Notes** | Concatenated (separated by ---) |
+| **Attachments** | Union |
+| **Confidence** | Maximum of both values |
+| **Source** | Combined if different |
+| **Links** | Transferred to the kept element |
+
+### Duplicate Link Handling
+
+If both elements shared a link to the same third element, the links are merged: labels combined, properties and tags unified.
+
+Direct links between the two merged elements are removed.
+
+---
+
 **See also**: [Tags and properties]({{< relref "tags-properties" >}})

@@ -152,4 +152,36 @@ Le groupe apparaît comme un cadre englobant ses membres.
 
 ---
 
+## Fusionner deux éléments
+
+Combinez deux éléments en un seul lorsqu'ils représentent le même concept.
+
+### Procédure
+
+1. Sélectionnez exactement **2 éléments** (Ctrl+clic)
+2. Clic-droit → **Fusionner**
+3. Choisissez quel élément conserver (son label et son apparence seront gardés)
+4. Confirmez la fusion
+
+### Ce qui est fusionné
+
+| Donnée | Comportement |
+|--------|-------------|
+| **Tags** | Union (tous les tags des deux éléments) |
+| **Propriétés** | Union (doublons évités) |
+| **Événements** | Union (dédupliqués par identifiant) |
+| **Notes** | Concaténées (séparées par ---) |
+| **Fichiers joints** | Union |
+| **Confiance** | Maximum des deux valeurs |
+| **Source** | Combinées si différentes |
+| **Liens** | Transférés vers l'élément conservé |
+
+### Gestion des liens en doublon
+
+Si les deux éléments partageaient un lien vers le même tiers, les liens sont fusionnés : labels combinés, propriétés et tags unis.
+
+Les liens directs entre les deux éléments fusionnés sont supprimés.
+
+---
+
 **Voir aussi** : [Tags et propriétés]({{< relref "tags-properties" >}})

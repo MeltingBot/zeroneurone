@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.16.0
+
+### Features
+- Merge two elements: select 2 elements → right-click → Merge. Choose which label to keep; properties, events, tags, assets and links are merged. Duplicate links (same target) are combined, self-links are removed.
+
 ## 2.15.9
 
 ### Fixes

@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Tipus de propietats",
       "propertyTypesChoiceDesc": "Per a eleccions múltiples:"
     }
+  },
+  "merge": {
+    "title": "Fusionar elements",
+    "description": "Seleccioneu l'element a conservar. Les propietats, esdeveniments, etiquetes i enllaços es fusionaran.",
+    "confirm": "Fusionar",
+    "merging": "Fusionant...",
+    "kept": "Conservat",
+    "properties": "propietats",
+    "events": "esdeveniments",
+    "hint": "L'altre element serà eliminat. Els seus enllaços seran transferits."
   }
 }

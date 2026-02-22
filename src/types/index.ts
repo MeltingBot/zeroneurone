@@ -437,7 +437,8 @@ export type ModalType =
   | 'create-view'
   | 'create-group'
   | 'confirm-delete'
-  | 'tagset-manager';
+  | 'tagset-manager'
+  | 'merge-elements';
 
 export interface Toast {
   id: string;

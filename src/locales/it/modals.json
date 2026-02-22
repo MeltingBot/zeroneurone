@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Tipi di proprietà",
       "propertyTypesChoiceDesc": "Per scelte multiple:"
     }
+  },
+  "merge": {
+    "title": "Unire elementi",
+    "description": "Selezionare l'elemento da conservare. Proprietà, eventi, tag e link verranno uniti.",
+    "confirm": "Unire",
+    "merging": "Unione...",
+    "kept": "Conservato",
+    "properties": "proprietà",
+    "events": "eventi",
+    "hint": "L'altro elemento verrà eliminato. I suoi link verranno trasferiti."
   }
 }

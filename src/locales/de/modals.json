@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Eigenschaftstypen",
       "propertyTypesChoiceDesc": "Für Mehrfachauswahl:"
     }
+  },
+  "merge": {
+    "title": "Elemente zusammenführen",
+    "description": "Wählen Sie das Element, das beibehalten werden soll. Eigenschaften, Ereignisse, Tags und Links werden zusammengeführt.",
+    "confirm": "Zusammenführen",
+    "merging": "Zusammenführen...",
+    "kept": "Beibehalten",
+    "properties": "Eigenschaften",
+    "events": "Ereignisse",
+    "hint": "Das andere Element wird gelöscht. Seine Links werden übertragen."
   }
 }

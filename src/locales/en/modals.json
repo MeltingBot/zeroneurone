@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Property types",
       "propertyTypesChoiceDesc": "For multiple choices:"
     }
+  },
+  "merge": {
+    "title": "Merge elements",
+    "description": "Select which element to keep. Properties, events, tags and links will be merged.",
+    "confirm": "Merge",
+    "merging": "Merging...",
+    "kept": "Kept",
+    "properties": "properties",
+    "events": "events",
+    "hint": "The other element will be deleted. Its links will be transferred."
   }
 }

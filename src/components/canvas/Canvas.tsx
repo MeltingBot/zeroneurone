@@ -33,6 +33,7 @@ import { CustomEdge } from './CustomEdge';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
+import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { usePlugins } from '../../plugins/usePlugins';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
@@ -555,6 +556,7 @@ export function Canvas() {
   const createGroup = useInvestigationStore((s) => s.createGroup);
   const removeFromGroup = useInvestigationStore((s) => s.removeFromGroup);
   const dissolveGroup = useInvestigationStore((s) => s.dissolveGroup);
+  const mergeElementsAction = useInvestigationStore((s) => s.mergeElements);
   const pasteElements = useInvestigationStore((s) => s.pasteElements);
   const loadInvestigation = useInvestigationStore((s) => s.loadInvestigation);
 
@@ -584,6 +586,9 @@ export function Canvas() {
 
   // Share modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Merge modal state
+  const [mergeElements, setMergeElements] = useState<{ el1: Element; el2: Element } | null>(null);
 
   // Plugin context menu extensions
   const canvasPlugins = usePlugins('contextMenu:canvas');
@@ -2689,6 +2694,17 @@ export function Canvas() {
     [findPaths]
   );
 
+  const handleMergeElements = useCallback(() => {
+    if (!contextMenu || selectedElementIds.size !== 2) return;
+    const ids = Array.from(selectedElementIds);
+    const el1 = elementMap.get(ids[0]);
+    const el2 = elementMap.get(ids[1]);
+    if (el1 && el2) {
+      setMergeElements({ el1, el2 });
+      setContextMenu(null);
+    }
+  }, [contextMenu, selectedElementIds, elementMap]);
+
   // Get the "other" selected element when exactly 2 are selected
   const otherSelectedElement = useMemo(() => {
     if (contextMenu && selectedElementIds.size === 2) {
@@ -4071,6 +4087,7 @@ export function Canvas() {
               onDuplicate={handleContextMenuDuplicate}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
+              onMerge={selectedElementIds.size === 2 ? handleMergeElements : undefined}
               isGroup={!!elementMap.get(contextMenu.elementId)?.isGroup}
               isInGroup={!!elementMap.get(contextMenu.elementId)?.parentGroupId}
               hasMultipleSelected={selectedElementIds.size > 1}
@@ -4159,6 +4176,20 @@ export function Canvas() {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
         />
+
+        {/* Merge Elements Modal */}
+        {mergeElements && (
+          <MergeElementsModal
+            isOpen={true}
+            onClose={() => setMergeElements(null)}
+            element1={mergeElements.el1}
+            element2={mergeElements.el2}
+            onMerge={async (targetId, sourceId) => {
+              await mergeElementsAction(targetId, sourceId);
+              clearSelection();
+            }}
+          />
+        )}
 
         {/* Asset Preview Modal */}
         {previewAsset && (

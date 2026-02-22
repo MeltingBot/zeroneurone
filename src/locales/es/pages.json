@@ -139,6 +139,7 @@
       "focusNeighbors3": "Vecinos a 3 enlaces",
       "preview": "Vista previa",
       "findPaths": "Encontrar caminos",
+      "merge": "Fusionar",
       "lockPosition": "Bloquear posición",
       "unlockPosition": "Desbloquear posición"
     },

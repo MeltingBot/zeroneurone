@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Tipos de propiedades",
       "propertyTypesChoiceDesc": "Para elecciones múltiples:"
     }
+  },
+  "merge": {
+    "title": "Fusionar elementos",
+    "description": "Seleccione el elemento a conservar. Las propiedades, eventos, etiquetas y enlaces se fusionarán.",
+    "confirm": "Fusionar",
+    "merging": "Fusionando...",
+    "kept": "Conservado",
+    "properties": "propiedades",
+    "events": "eventos",
+    "hint": "El otro elemento será eliminado. Sus enlaces serán transferidos."
   }
 }

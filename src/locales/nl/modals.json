@@ -481,5 +481,15 @@
       "propertyTypesTitle": "Eigendomstypen",
       "propertyTypesChoiceDesc": "Voor meerkeuze:"
     }
+  },
+  "merge": {
+    "title": "Elementen samenvoegen",
+    "description": "Selecteer het element om te behouden. Eigenschappen, gebeurtenissen, tags en links worden samengevoegd.",
+    "confirm": "Samenvoegen",
+    "merging": "Samenvoegen...",
+    "kept": "Behouden",
+    "properties": "eigenschappen",
+    "events": "gebeurtenissen",
+    "hint": "Het andere element wordt verwijderd. De links worden overgedragen."
   }
 }

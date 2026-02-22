@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 
 interface ContextMenuProps {
@@ -26,6 +26,7 @@ interface ContextMenuProps {
   onDuplicate: () => void;
   onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
+  onMerge?: () => void;
   // Group actions
   isGroup: boolean;
   isInGroup: boolean;
@@ -75,6 +76,7 @@ function ContextMenuComponent({
   onDuplicate,
   onPreview,
   onFindPaths,
+  onMerge,
   isGroup,
   isInGroup,
   hasMultipleSelected,
@@ -225,19 +227,33 @@ function ContextMenuComponent({
           </button>
         </div>
 
-        {/* Path finding (when 2 elements selected) */}
-        {hasTwoSelected && onFindPaths && (
+        {/* Path finding & merge (when 2 elements selected) */}
+        {hasTwoSelected && (onFindPaths || onMerge) && (
           <div className="py-1 border-b border-border-default">
-            <button
-              onClick={() => {
-                onFindPaths(elementId, otherSelectedId);
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-            >
-              <Route size={14} />
-              {t('investigation.contextMenu.findPaths')}
-            </button>
+            {onFindPaths && (
+              <button
+                onClick={() => {
+                  onFindPaths(elementId, otherSelectedId);
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Route size={14} />
+                {t('investigation.contextMenu.findPaths')}
+              </button>
+            )}
+            {onMerge && (
+              <button
+                onClick={() => {
+                  onMerge();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Combine size={14} />
+                {t('investigation.contextMenu.merge')}
+              </button>
+            )}
           </div>
         )}
 
