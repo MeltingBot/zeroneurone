@@ -24,12 +24,13 @@ import {
 import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
+import { MergeElementsModal } from '../modals/MergeElementsModal';
 import type { Element } from '../../types';
 import { DEFAULT_FILTERS } from '../../types';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
-  const { elements, links, createGroup, dissolveGroup } = useInvestigationStore();
+  const { elements, links, createGroup, dissolveGroup, mergeElements: mergeElementsAction } = useInvestigationStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
@@ -64,6 +65,8 @@ export function InsightsPanel() {
   );
 
   // Path finding state
+  const [mergePair, setMergePair] = useState<{ el1: Element; el2: Element } | null>(null);
+  const elementMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
   const [pathMode, setPathMode] = useState(false);
   const [pathFrom, setPathFrom] = useState<string | null>(null);
   const [pathTo, setPathTo] = useState<string | null>(null);
@@ -785,9 +788,10 @@ export function InsightsPanel() {
                           icon={<Merge size={10} />}
                           label={t('insights.similar.merge')}
                           onClick={() => {
-                            selectElements([pair.elementId1, pair.elementId2]);
+                            const el1 = elementMap.get(pair.elementId1);
+                            const el2 = elementMap.get(pair.elementId2);
+                            if (el1 && el2) setMergePair({ el1, el2 });
                           }}
-                          disabled
                         />
                       </div>
                     </div>
@@ -822,6 +826,20 @@ export function InsightsPanel() {
           </div>
         )}
       </div>
+
+      {/* Merge modal for similar pairs */}
+      {mergePair && (
+        <MergeElementsModal
+          isOpen={true}
+          onClose={() => setMergePair(null)}
+          element1={mergePair.el1}
+          element2={mergePair.el2}
+          onMerge={async (targetId, sourceId) => {
+            await mergeElementsAction(targetId, sourceId);
+            clearSelection();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.16.1
+
+### Fixes
+- Enable merge button in Insights panel duplicate detection — similar pairs can now be merged directly from the analysis view
+
 ## 2.16.0
 
 ### Features
