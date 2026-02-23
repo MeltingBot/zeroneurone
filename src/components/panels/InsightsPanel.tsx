@@ -307,10 +307,16 @@ export function InsightsPanel() {
   // Similar labels actions
   const handleSimilarClick = useCallback(
     (elementId1: string, elementId2: string) => {
+      // Toggle: if this pair is already selected, deselect
+      if (selectedElementIds.has(elementId1) && selectedElementIds.has(elementId2) && selectedElementIds.size === 2) {
+        clearSelection();
+        clearHighlight();
+        return;
+      }
       highlightSimilarPair(elementId1, elementId2);
       selectElements([elementId1, elementId2]);
     },
-    [highlightSimilarPair, selectElements]
+    [highlightSimilarPair, selectElements, selectedElementIds, clearSelection, clearHighlight]
   );
 
   // Path finding

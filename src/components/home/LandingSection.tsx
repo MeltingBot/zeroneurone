@@ -190,7 +190,7 @@ export function LandingSection({
                           {!disabled && (
                             <div className="flex items-center gap-3">
                               {card.license && (
-                                <span className="text-[10px] text-text-tertiary">
+                                <span className="text-xs text-text-tertiary">
                                   {t('home.landing.extensionsLicense')}: {card.license}
                                 </span>
                               )}
@@ -199,18 +199,18 @@ export function LandingSection({
                                   href={card.docUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[10px] text-text-tertiary hover:text-text-secondary"
+                                  className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-secondary"
                                 >
-                                  <ExternalLink size={10} />
+                                  <ExternalLink size={12} />
                                   Documentation
                                 </a>
                               )}
                               {card.onConfigure && (
                                 <button
                                   onClick={card.onConfigure}
-                                  className="inline-flex items-center gap-1 text-[10px] text-text-tertiary hover:text-text-secondary"
+                                  className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-secondary"
                                 >
-                                  <Settings size={10} />
+                                  <Settings size={12} />
                                 </button>
                               )}
                               {card.actions && card.actions.map((action) => {
@@ -219,10 +219,10 @@ export function LandingSection({
                                   <button
                                     key={action.label}
                                     onClick={action.onClick}
-                                    className="inline-flex items-center gap-1 text-[10px] text-text-tertiary hover:text-text-secondary"
+                                    className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-secondary"
                                     title={action.label}
                                   >
-                                    {ActionIcon && <ActionIcon size={10} />}
+                                    {ActionIcon && <ActionIcon size={12} />}
                                     <span>{action.label}</span>
                                   </button>
                                 );

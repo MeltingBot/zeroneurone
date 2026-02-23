@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.16.2
+
+### Fixes
+- Increase font size for plugin card footer lines (license, documentation, settings, about)
+- Fix deselection toggle for similar pairs in Insights duplicate detection panel
+
 ## 2.16.1
 
 ### Fixes
