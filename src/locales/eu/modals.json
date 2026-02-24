@@ -51,6 +51,7 @@
       "format": "<strong>Formatu bateratua:</strong> mota (elementua/lotura), etiketa, nondik, nora, oharrak, etiketak, konfiantza...",
       "description": "Loturek elementuak erreferentziatzen dituzte haien etiketaren bidez \"nondik\" eta \"nora\" zutabeetan"
     },
+    "retentionExpired": "Iturburu-dokumentua iraungita (atxikipena {{days}} egunez gainditua)",
     "warnings": "Abisuak:",
     "andMore": "... eta beste {{count}}"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Enkriptatzea gaitu",
     "changePasswordButton": "Pasahitza aldatu",
     "disableButton": "Enkriptatzea desgaitu",
+    "autoLockLabel": "Blokeo automatikoa",
+    "autoLockDisabled": "Desgaituta",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Saioa blokeatu",
     "securityNote": "Enkriptatzeak zure datuak nabigatzailearen fitxategietarako sarbideetik babesten ditu. Pasahitza berreskuraezinak da — gaitu aurretik zure datuak esportatu.",
     "successEnabled": "Enkriptatzea gaituta. Zure datuak orain enkriptatuta daude.",
@@ -545,6 +549,23 @@
       "cancel": "Utzi",
       "submit": "Aldatu",
       "busy": "Eguneratzen…"
+    },
+    "webauthn": {
+      "title": "Segurtasun-gakoak",
+      "description": "Desblokeatu gako fisiko batekin (YubiKey) pasahitzaren ordez",
+      "addKey": "Gakoa gehitu",
+      "noKeys": "Ez dago gakorik erregistratuta",
+      "label": "Gakoaren izena",
+      "labelPlaceholder": "Adib. YubiKey 5",
+      "registering": "Ukitu zure gakoa…",
+      "unlocking": "Ukitu zure gakoa…",
+      "deleteConfirm": "Segurtasun-gako hau kendu?",
+      "successAdded": "Segurtasun-gakoa gehituta",
+      "successRemoved": "Segurtasun-gakoa kenduta",
+      "errorPrfNotSupported": "Gako honek ez du pasahitz gabeko desblokeoa onartzen (PRF)",
+      "errorRegistration": "Errorea gakoa erregistratzean",
+      "errorUnlock": "Segurtasun-gakoarekin desblokeatzeak huts egin du",
+      "addedOn": "Gehituta"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Utzi",
     "resetConfirm": "Berrezarri",
     "resetBusy": "Berrezartzen…",
-    "storageReminder": "Datuak gailu honetan soilik gordetuta · Inoiz ez transmititu"
+    "storageReminder": "Datuak gailu honetan soilik gordetuta · Inoiz ez transmititu",
+    "useSecurityKey": "Erabili segurtasun-gako bat"
   }
 }

@@ -64,6 +64,10 @@ interface InvestigationState {
   // All investigations (for home page)
   investigations: Investigation[];
 
+  // Retention
+  isReadOnly: boolean;
+  setReadOnly: (readOnly: boolean) => void;
+
   // Loading states
   isLoading: boolean;
   loadingPhase: string;
@@ -281,6 +285,13 @@ function setupYDocObserver(
   };
 }
 
+/** Throws if the investigation is in read-only mode (retention expired) */
+function assertWritable(get: () => InvestigationState) {
+  if (get().isReadOnly) {
+    throw new Error('Investigation is read-only (retention expired)');
+  }
+}
+
 // ============================================================================
 // STORE IMPLEMENTATION
 // ============================================================================
@@ -292,6 +303,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   comments: [],
   assets: [],
   investigations: [],
+  isReadOnly: false,
+  setReadOnly: (readOnly: boolean) => set({ isReadOnly: readOnly }),
   isLoading: false,
   loadingPhase: '',
   loadingDetail: '',
@@ -358,16 +371,16 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
       // If Y.Doc has meta but local investigation has default values, update local
       if (metaName && isJoiner) {
-        investigation = {
-          ...investigation,
+        const metaRetDays = metaMap.get('retentionDays') as number | null | undefined;
+        const metaRetPolicy = metaMap.get('retentionPolicy') as string | undefined;
+        const joinerChanges: Partial<Investigation> = {
           name: metaName,
           description: metaDescription || '',
         };
-        // Persist to IndexedDB
-        await investigationRepository.update(id, {
-          name: metaName,
-          description: metaDescription || '',
-        });
+        if (metaRetDays !== undefined) joinerChanges.retentionDays = metaRetDays;
+        if (metaRetPolicy !== undefined) joinerChanges.retentionPolicy = metaRetPolicy as Investigation['retentionPolicy'];
+        investigation = { ...investigation, ...joinerChanges };
+        await investigationRepository.update(id, joinerChanges);
       }
 
       // Migrate data from Dexie if Y.Doc is empty
@@ -653,6 +666,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         if (changes.startDate !== undefined) metaMap.set('startDate', changes.startDate ? changes.startDate.toISOString() : null);
         if (changes.tags !== undefined) metaMap.set('tags', changes.tags);
         if (changes.properties !== undefined) metaMap.set('properties', changes.properties);
+        if (changes.retentionDays !== undefined) metaMap.set('retentionDays', changes.retentionDays);
+        if (changes.retentionPolicy !== undefined) metaMap.set('retentionPolicy', changes.retentionPolicy);
       });
     }
 
@@ -689,6 +704,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       links: [],
       comments: [],
       assets: [],
+      isReadOnly: false,
     });
   },
 
@@ -698,6 +714,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   createElement: async (label: string, position: Position, options?: Partial<Element>) => {
     const { currentInvestigation } = get();
+    assertWritable(get);
     if (!currentInvestigation) {
       throw new Error('No investigation loaded');
     }
@@ -771,6 +788,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateElement: async (id: ElementId, changes: ElementChanges) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -807,6 +825,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   deleteElement: async (id: ElementId) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -850,6 +869,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   deleteElements: async (ids: ElementId[]) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -897,6 +917,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateElementPosition: async (id: ElementId, position: Position) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -924,6 +945,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateElementPositions: async (updates: { id: ElementId; position: Position }[]) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -969,6 +991,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   createLink: async (fromId: ElementId, toId: ElementId, options?: Partial<Link>) => {
     const { currentInvestigation } = get();
+    assertWritable(get);
     if (!currentInvestigation) {
       throw new Error('No investigation loaded');
     }
@@ -1027,6 +1050,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateLink: async (id: LinkId, changes: LinkChanges) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -1061,6 +1085,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   deleteLink: async (id: LinkId) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -1081,6 +1106,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   deleteLinks: async (ids: LinkId[]) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -1106,6 +1132,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateElements: async (ids: ElementId[], changes: ElementChanges) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -1129,6 +1156,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   updateLinks: async (ids: LinkId[], changes: LinkChanges) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) {
       throw new Error('Y.Doc not available');
     }
@@ -1153,6 +1181,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // Batch paste: create all elements and links in a single Y.js transaction
   pasteElements: (newElements: Element[], newLinks: Link[]) => {
     const ydoc = syncService.getYDoc();
+    assertWritable(get);
     if (!ydoc) return;
 
     const { elements: elementsMap, links: linksMap } = getYMaps(ydoc);
@@ -1187,6 +1216,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   createGroup: async (label: string, position: Position, size: { width: number; height: number }, childIds?: ElementId[]) => {
     const { createElement, elements } = get();
+    assertWritable(get);
 
     const group = await createElement(label, position, {
       isGroup: true,
@@ -1248,6 +1278,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   addToGroup: async (elementIds: ElementId[], groupId: ElementId) => {
     const { elements, updateElement } = get();
+    assertWritable(get);
     const group = elements.find(el => el.id === groupId);
     if (!group || !group.isGroup) return;
 
@@ -1287,6 +1318,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   removeFromGroup: async (elementIds: ElementId[]) => {
     const { elements, updateElement } = get();
+    assertWritable(get);
 
     for (const elementId of elementIds) {
       const child = elements.find(el => el.id === elementId);
@@ -1316,6 +1348,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   dissolveGroup: async (groupId: ElementId) => {
     const { elements } = get();
+    assertWritable(get);
     const group = elements.find(el => el.id === groupId);
     if (!group || !group.isGroup) return;
 
@@ -1368,6 +1401,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   mergeElements: async (targetId: ElementId, sourceId: ElementId) => {
     const { elements, links } = get();
+    assertWritable(get);
     const ydoc = syncService.getYDoc();
     if (!ydoc) throw new Error('Y.Doc not available');
 
@@ -1634,6 +1668,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   addAsset: async (elementId: ElementId, file: File) => {
     const { currentInvestigation } = get();
+    assertWritable(get);
     if (!currentInvestigation) {
       throw new Error('No investigation loaded');
     }
@@ -1699,6 +1734,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   removeAsset: async (elementId: ElementId, assetId: string) => {
     // Update element in Y.Doc
+    assertWritable(get);
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { elements: elementsMap, assets: assetsMap } = getYMaps(ydoc);
@@ -1725,6 +1761,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   clearAssetText: async (assetId: string) => {
     await fileService.clearAssetText(assetId);
+    assertWritable(get);
     set((state) => ({
       assets: state.assets.map((a) =>
         a.id === assetId ? { ...a, extractedText: null } : a
@@ -1745,6 +1782,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   reorderAssets: async (elementId: ElementId, assetIds: string[]) => {
     // Update element in Y.Doc
+    assertWritable(get);
     const ydoc = syncService.getYDoc();
     if (ydoc) {
       const { elements: elementsMap } = getYMaps(ydoc);
@@ -2206,6 +2244,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       const metaStartDate = metaMap.get('startDate') as string | null | undefined;
       const metaTags = metaMap.get('tags') as string[] | undefined;
       const metaProperties = metaMap.get('properties') as any[] | undefined;
+      const metaRetentionDays = metaMap.get('retentionDays') as number | null | undefined;
+      const metaRetentionPolicy = metaMap.get('retentionPolicy') as string | undefined;
 
       const hasMetaChanges =
         (metaName !== undefined && metaName !== currentInvestigation.name) ||
@@ -2213,7 +2253,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         (metaCreator !== undefined && metaCreator !== (currentInvestigation.creator || '')) ||
         (metaStartDate !== undefined && metaStartDate !== (currentInvestigation.startDate?.toISOString() || null)) ||
         (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentInvestigation.tags || [])) ||
-        (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentInvestigation.properties || []));
+        (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentInvestigation.properties || [])) ||
+        (metaRetentionDays !== undefined && metaRetentionDays !== (currentInvestigation.retentionDays ?? null)) ||
+        (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentInvestigation.retentionPolicy || 'warn'));
 
       if (hasMetaChanges) {
         const changes: Partial<Investigation> = {};
@@ -2223,6 +2265,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         if (metaStartDate !== undefined) changes.startDate = metaStartDate ? new Date(metaStartDate) : null;
         if (metaTags !== undefined) changes.tags = metaTags;
         if (metaProperties !== undefined) changes.properties = metaProperties;
+        if (metaRetentionDays !== undefined) changes.retentionDays = metaRetentionDays;
+        if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Investigation['retentionPolicy'];
 
         updatedInvestigation = {
           ...currentInvestigation,

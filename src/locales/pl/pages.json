@@ -254,7 +254,13 @@
       "emptyHint": "Kliknij prawym przyciskiem na elementy, aby je dodać",
       "ghostBadge": "W {{tabs}}",
       "navigateTo": "Przejdź do karty {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Retencja wygasła {{days}} dni temu",
+    "retentionDeleteConfirm": "To dochodzenie zostanie trwale usunięte. Tej czynności nie można cofnąć.",
+    "retentionDeleteAction": "Usuń na stałe",
+    "retentionReadonly": "Dochodzenie tylko do odczytu (retencja wygasła)",
+    "retentionRedactConfirm": "Redakcja trwale usunie całą zawartość tekstową (nazwy, notatki, właściwości). Struktura grafu zostanie zachowana. Ta akcja jest nieodwracalna.",
+    "retentionRedactAction": "Zredagować na stałe"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

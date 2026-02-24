@@ -51,6 +51,7 @@
       "format": "<strong>Formato unificado:</strong> tipo (elemento/enlace), etiqueta, de, a, notas, tags, confianza...",
       "description": "Los enlaces referencian los elementos por su etiqueta en las columnas \"de\" y \"a\""
     },
+    "retentionExpired": "Documento fuente expirado (retención superada en {{days}} día(s))",
     "warnings": "Advertencias:",
     "andMore": "... y {{count}} más"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Activar cifrado",
     "changePasswordButton": "Cambiar contraseña",
     "disableButton": "Desactivar cifrado",
+    "autoLockLabel": "Bloqueo automático",
+    "autoLockDisabled": "Desactivado",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Bloquear sesión",
     "securityNote": "El cifrado protege sus datos contra el acceso a los archivos del navegador. La contraseña es irrecuperable — exporte sus datos antes de activar.",
     "successEnabled": "Cifrado activado. Sus datos ahora están cifrados.",
@@ -545,6 +549,23 @@
       "cancel": "Cancelar",
       "submit": "Cambiar",
       "busy": "Actualizando…"
+    },
+    "webauthn": {
+      "title": "Llaves de seguridad",
+      "description": "Desbloquear con una llave física (YubiKey) en lugar de la contraseña",
+      "addKey": "Añadir una llave",
+      "noKeys": "Ninguna llave registrada",
+      "label": "Nombre de la llave",
+      "labelPlaceholder": "Ej: YubiKey 5",
+      "registering": "Toque su llave…",
+      "unlocking": "Toque su llave…",
+      "deleteConfirm": "¿Eliminar esta llave de seguridad?",
+      "successAdded": "Llave de seguridad añadida",
+      "successRemoved": "Llave de seguridad eliminada",
+      "errorPrfNotSupported": "Esta llave no soporta desbloqueo sin contraseña (PRF)",
+      "errorRegistration": "Error al registrar la llave",
+      "errorUnlock": "Fallo al desbloquear con llave de seguridad",
+      "addedOn": "Añadida el"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Cancelar",
     "resetConfirm": "Restablecer",
     "resetBusy": "Restableciendo…",
-    "storageReminder": "Datos almacenados solo en este dispositivo · Nunca transmitidos"
+    "storageReminder": "Datos almacenados solo en este dispositivo · Nunca transmitidos",
+    "useSecurityKey": "Usar una llave de seguridad"
   }
 }

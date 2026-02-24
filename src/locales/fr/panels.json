@@ -11,7 +11,8 @@
     "sections": {
       "information": "Informations",
       "dates": "Dates",
-      "properties": "Propriétés"
+      "properties": "Propriétés",
+      "retention": "Rétention"
     },
     "labels": {
       "name": "Nom",
@@ -20,7 +21,18 @@
       "tags": "Tags",
       "startDate": "Date de début",
       "createdAt": "Créée le",
-      "updatedAt": "Modifiée le"
+      "updatedAt": "Modifiée le",
+      "retentionDays": "Durée (jours)",
+      "retentionPolicy": "À l'expiration",
+      "retentionUnlimited": "Illimité",
+      "retentionExpires": "Expire le",
+      "retentionPolicyWarn": "Avertissement",
+      "retentionPolicyReadonly": "Lecture seule",
+      "retentionPolicyDelete": "Suppression proposée",
+      "retentionExpiredSince": "Expirée depuis {{days}} jour(s)",
+      "retentionPolicyRedact": "Caviardage définitif",
+      "retentionApply": "Appliquer",
+      "retentionReset": "Réinitialiser"
     },
     "placeholders": {
       "name": "Nom de l'enquête",
@@ -31,7 +43,13 @@
     "noSelection": "Aucun élément sélectionné",
     "multipleSelection": "{{count}} éléments sélectionnés",
     "element": "Élément",
-    "link": "Lien",
+    "link": {
+      "linkedElements": "Éléments liés",
+      "deletedElement": "Élément supprimé",
+      "relationPeriod": "Période de la relation",
+      "periodStart": "Début",
+      "periodEnd": "Fin (laisser vide si en cours)"
+    },
     "group": "Groupe",
     "annotation": "Annotation",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Aller à l'onglet {{name}}"
-    },
-    "link": {
-      "linkedElements": "Éléments liés",
-      "deletedElement": "Élément supprimé",
-      "relationPeriod": "Période de la relation",
-      "periodStart": "Début",
-      "periodEnd": "Fin (laisser vide si en cours)"
     },
     "events": {
       "title": "Événements",
@@ -182,7 +193,6 @@
       "style": "Style",
       "thickness": "Épaisseur",
       "textSize": "Taille du texte",
-      "textSize": "Taille du texte",
       "positionLock": "Position verrouillée",
       "positionUnlocked": "Position déverrouillée"
     },
@@ -235,7 +245,6 @@
       "addPropertyToAll": "Ajouter une propriété à tous les éléments sélectionnés",
       "setConfidenceAll": "Définir le niveau de confiance pour tous",
       "setColorAll": "Définir la couleur pour tous",
-      "setTextSizeAll": "Définir la taille du texte pour tous",
       "setTextSizeAll": "Définir la taille du texte pour tous",
       "elementsSection": "Éléments ({{count}})",
       "linksSection": "Liens ({{count}})"

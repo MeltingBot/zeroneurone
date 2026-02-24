@@ -254,7 +254,13 @@
       "emptyHint": "Rechtsklick auf Elemente zum Hinzufügen",
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Zu Tab {{name}} wechseln"
-    }
+    },
+    "retentionExpiredBanner": "Aufbewahrung abgelaufen seit {{days}} Tag(en)",
+    "retentionDeleteConfirm": "Diese Ermittlung wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "retentionDeleteAction": "Endgültig löschen",
+    "retentionReadonly": "Ermittlung ist schreibgeschützt (Aufbewahrung abgelaufen)",
+    "retentionRedactConfirm": "Die Schwärzung löscht dauerhaft alle Textinhalte (Namen, Notizen, Eigenschaften). Die Graphstruktur bleibt erhalten. Diese Aktion ist unwiderruflich.",
+    "retentionRedactAction": "Endgültig schwärzen"
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",

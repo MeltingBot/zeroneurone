@@ -51,6 +51,7 @@
       "format": "<strong>Formato unificado:</strong> tipo (elemento/ligação), etiqueta, de, para, notas, tags, confiança...",
       "description": "As ligações referenciam os elementos pela sua etiqueta nas colunas \"de\" e \"para\""
     },
+    "retentionExpired": "Documento fonte expirado (retenção ultrapassada em {{days}} dia(s))",
     "warnings": "Avisos:",
     "andMore": "... e mais {{count}}"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Ativar encriptação",
     "changePasswordButton": "Alterar senha",
     "disableButton": "Desativar encriptação",
+    "autoLockLabel": "Bloqueio automático",
+    "autoLockDisabled": "Desativado",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Bloquear sessão",
     "securityNote": "A encriptação protege os seus dados contra o acesso aos ficheiros do navegador. A senha é irrecuperável — exporte os seus dados antes de ativar.",
     "successEnabled": "Encriptação ativada. Os seus dados estão agora encriptados.",
@@ -545,6 +549,23 @@
       "cancel": "Cancelar",
       "submit": "Alterar",
       "busy": "A atualizar…"
+    },
+    "webauthn": {
+      "title": "Chaves de segurança",
+      "description": "Desbloquear com uma chave física (YubiKey) em vez da senha",
+      "addKey": "Adicionar uma chave",
+      "noKeys": "Nenhuma chave registrada",
+      "label": "Nome da chave",
+      "labelPlaceholder": "Ex: YubiKey 5",
+      "registering": "Toque na sua chave…",
+      "unlocking": "Toque na sua chave…",
+      "deleteConfirm": "Remover esta chave de segurança?",
+      "successAdded": "Chave de segurança adicionada",
+      "successRemoved": "Chave de segurança removida",
+      "errorPrfNotSupported": "Esta chave não suporta desbloqueio sem senha (PRF)",
+      "errorRegistration": "Erro ao registrar a chave",
+      "errorUnlock": "Falha ao desbloquear com chave de segurança",
+      "addedOn": "Adicionada em"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Cancelar",
     "resetConfirm": "Redefinir",
     "resetBusy": "A redefinir…",
-    "storageReminder": "Dados armazenados apenas neste dispositivo · Nunca transmitidos"
+    "storageReminder": "Dados armazenados apenas neste dispositivo · Nunca transmitidos",
+    "useSecurityKey": "Usar uma chave de segurança"
   }
 }

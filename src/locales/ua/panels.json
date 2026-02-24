@@ -11,7 +11,8 @@
     "sections": {
       "information": "Інформація",
       "dates": "Дати",
-      "properties": "Властивості"
+      "properties": "Властивості",
+      "retention": "Зберігання"
     },
     "labels": {
       "name": "Назва",
@@ -20,7 +21,18 @@
       "tags": "Теги",
       "startDate": "Дата початку",
       "createdAt": "Створено",
-      "updatedAt": "Змінено"
+      "updatedAt": "Змінено",
+      "retentionDays": "Тривалість (днів)",
+      "retentionPolicy": "Після закінчення",
+      "retentionUnlimited": "Необмежено",
+      "retentionExpires": "Закінчується",
+      "retentionPolicyWarn": "Попередження",
+      "retentionPolicyReadonly": "Лише читання",
+      "retentionPolicyDelete": "Запропонувати видалення",
+      "retentionExpiredSince": "Закінчилось {{days}} днів тому",
+      "retentionPolicyRedact": "Остаточне редагування",
+      "retentionApply": "Застосувати",
+      "retentionReset": "Скинути"
     },
     "placeholders": {
       "name": "Назва розслідування",
@@ -31,7 +43,13 @@
     "noSelection": "Елемент не вибрано",
     "multipleSelection": "{{count}} елементів вибрано",
     "element": "Елемент",
-    "link": "Зв'язок",
+    "link": {
+      "linkedElements": "Пов'язані елементи",
+      "deletedElement": "Видалений елемент",
+      "relationPeriod": "Період зв'язку",
+      "periodStart": "Початок",
+      "periodEnd": "Кінець (порожнє, якщо триває)"
+    },
     "group": "Група",
     "annotation": "Анотація",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Перейти на вкладку {{name}}"
-    },
-    "link": {
-      "linkedElements": "Пов'язані елементи",
-      "deletedElement": "Видалений елемент",
-      "relationPeriod": "Період зв'язку",
-      "periodStart": "Початок",
-      "periodEnd": "Кінець (порожнє, якщо триває)"
     },
     "events": {
       "title": "Події",

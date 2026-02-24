@@ -254,7 +254,13 @@
       "emptyHint": "Clique direito nos elementos para adicioná-los",
       "ghostBadge": "Em {{tabs}}",
       "navigateTo": "Ir para aba {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Retenção expirada há {{days}} dia(s)",
+    "retentionDeleteConfirm": "Esta investigação será excluída permanentemente, sem possibilidade de anulação.",
+    "retentionDeleteAction": "Excluir permanentemente",
+    "retentionReadonly": "Investigação em somente leitura (retenção expirada)",
+    "retentionRedactConfirm": "A redação apagará permanentemente todo o conteúdo textual (nomes, notas, propriedades). A estrutura do grafo será preservada. Esta ação é irreversível.",
+    "retentionRedactAction": "Redatar definitivamente"
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",

@@ -51,6 +51,7 @@
       "format": "<strong>Format unificat:</strong> tipus (element/enllaç), etiqueta, de, a, notes, etiquetes, confiança...",
       "description": "Els enllaços referencien els elements per la seva etiqueta a les columnes \"de\" i \"a\""
     },
+    "retentionExpired": "Document font expirat (retenció superada en {{days}} dia/es)",
     "warnings": "Advertències:",
     "andMore": "... i {{count}} més"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Activar el xifrat",
     "changePasswordButton": "Canviar la contrasenya",
     "disableButton": "Desactivar el xifrat",
+    "autoLockLabel": "Bloqueig automàtic",
+    "autoLockDisabled": "Desactivat",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Bloquejar la sessió",
     "securityNote": "El xifrat protegeix les vostres dades contra l'accés als fitxers del navegador. La contrasenya és irrecuperable — exporteu les vostres dades abans d'activar.",
     "successEnabled": "Xifrat activat. Les vostres dades ara estan xifrades.",
@@ -545,6 +549,23 @@
       "cancel": "Cancel·lar",
       "submit": "Canviar",
       "busy": "Actualitzant…"
+    },
+    "webauthn": {
+      "title": "Claus de seguretat",
+      "description": "Desbloquegeu amb una clau física (YubiKey) en lloc de la contrasenya",
+      "addKey": "Afegir una clau",
+      "noKeys": "Cap clau registrada",
+      "label": "Nom de la clau",
+      "labelPlaceholder": "Ex: YubiKey 5",
+      "registering": "Toqueu la vostra clau…",
+      "unlocking": "Toqueu la vostra clau…",
+      "deleteConfirm": "Eliminar aquesta clau de seguretat?",
+      "successAdded": "Clau de seguretat afegida",
+      "successRemoved": "Clau de seguretat eliminada",
+      "errorPrfNotSupported": "Aquesta clau no suporta el desbloqueig sense contrasenya (PRF)",
+      "errorRegistration": "Error en registrar la clau",
+      "errorUnlock": "Error en desbloquejar amb clau de seguretat",
+      "addedOn": "Afegida el"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Cancel·lar",
     "resetConfirm": "Restablir",
     "resetBusy": "Restablint…",
-    "storageReminder": "Dades emmagatzemades només en aquest dispositiu · Mai transmeses"
+    "storageReminder": "Dades emmagatzemades només en aquest dispositiu · Mai transmeses",
+    "useSecurityKey": "Utilitzar una clau de seguretat"
   }
 }

@@ -11,7 +11,8 @@
     "sections": {
       "information": "Informazioa",
       "dates": "Datak",
-      "properties": "Propietateak"
+      "properties": "Propietateak",
+      "retention": "Atxikipena"
     },
     "labels": {
       "name": "Izena",
@@ -20,7 +21,18 @@
       "tags": "Etiketak",
       "startDate": "Hasiera data",
       "createdAt": "Sortze data",
-      "updatedAt": "Aldaketa data"
+      "updatedAt": "Aldaketa data",
+      "retentionDays": "Iraupena (egunak)",
+      "retentionPolicy": "Iraungi ondoren",
+      "retentionUnlimited": "Mugagabea",
+      "retentionExpires": "Iraungitze-data",
+      "retentionPolicyWarn": "Abisua",
+      "retentionPolicyReadonly": "Irakurtzeko soilik",
+      "retentionPolicyDelete": "Ezabatzea proposatu",
+      "retentionExpiredSince": "Iraungita duela {{days}} egun",
+      "retentionPolicyRedact": "Behin betiko zentsura",
+      "retentionApply": "Aplikatu",
+      "retentionReset": "Berrezarri"
     },
     "placeholders": {
       "name": "Ikerketaren izena",
@@ -31,7 +43,13 @@
     "noSelection": "Ez dago elementurik hautatuta",
     "multipleSelection": "{{count}} elementu hautatuta",
     "element": "Elementua",
-    "link": "Lotura",
+    "link": {
+      "linkedElements": "Lotutako elementuak",
+      "deletedElement": "Ezabatutako elementua",
+      "relationPeriod": "Erlazioaren epealdia",
+      "periodStart": "Hasiera",
+      "periodEnd": "Amaiera (hutsik utzi oraindik aktibo bada)"
+    },
     "group": "Taldea",
     "annotation": "Oharpena",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Joan {{name}} fitxara"
-    },
-    "link": {
-      "linkedElements": "Lotutako elementuak",
-      "deletedElement": "Ezabatutako elementua",
-      "relationPeriod": "Erlazioaren epealdia",
-      "periodStart": "Hasiera",
-      "periodEnd": "Amaiera (hutsik utzi oraindik aktibo bada)"
     },
     "events": {
       "title": "Gertaerak",

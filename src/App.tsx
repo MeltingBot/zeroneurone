@@ -9,6 +9,7 @@ import { PasswordModal } from './components/modals/PasswordModal';
 import { useEncryptionStore } from './stores/encryptionStore';
 import { unlockEncryption } from './services/encryption/encryptionService';
 import type { EncryptionMeta } from './services/encryption/encryptionService';
+import { isWebAuthnAvailable, unlockWithWebAuthn } from './services/encryption/webauthnService';
 import { db } from './db/database';
 import { syncService } from './services/syncService';
 
@@ -107,7 +108,7 @@ function GlobalErrorFallback() {
  * Si non, laisse passer directement.
  */
 function EncryptionGate({ children }: { children: React.ReactNode }) {
-  const { isLocked, setDek, setEnabled, setError, setReady, error, isEnabled } = useEncryptionStore();
+  const { isLocked, setDek, setEnabled, setError, setReady, error, isEnabled, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore();
   const [isVerifying, setIsVerifying] = useState(false);
   const [encryptionChecked, setEncryptionChecked] = useState(false);
   // Conserve les métadonnées lues en raw IDB pour le déverrouillage
@@ -125,6 +126,7 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
       if (meta) {
         setRawMeta(meta);
         setEnabled(true);
+        if (meta.autoLockMinutes != null) setAutoLockMinutes(meta.autoLockMinutes);
         useEncryptionStore.getState().setLocked(true);
         // isReady reste false : Dexie ne doit pas être ouverte avant le déverrouillage
       } else {
@@ -148,6 +150,50 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEnabled, isLocked]);
+
+  // Auto-lock sur inactivité
+  useEffect(() => {
+    if (!autoLockMinutes || !isEnabled || isLocked) return;
+
+    const ms = autoLockMinutes * 60_000;
+    let timer: ReturnType<typeof setTimeout>;
+    let lastActivity = Date.now();
+
+    const resetTimer = () => {
+      const now = Date.now();
+      // Throttle : ignorer si < 10s depuis le dernier reset
+      if (now - lastActivity < 10_000) return;
+      lastActivity = now;
+      clearTimeout(timer);
+      timer = setTimeout(() => useEncryptionStore.getState().lock(), ms);
+    };
+
+    // Timer initial
+    timer = setTimeout(() => useEncryptionStore.getState().lock(), ms);
+
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'] as const;
+    events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+
+    // Vérifier au retour d'onglet masqué
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        const elapsed = Date.now() - lastActivity;
+        if (elapsed >= ms) {
+          useEncryptionStore.getState().lock();
+        } else {
+          clearTimeout(timer);
+          timer = setTimeout(() => useEncryptionStore.getState().lock(), ms - elapsed);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearTimeout(timer);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [autoLockMinutes, isEnabled, isLocked]);
 
   const handleUnlock = async (password: string) => {
     setIsVerifying(true);
@@ -196,12 +242,41 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
     return null;
   }
 
+  const hasWebAuthn = isWebAuthnAvailable()
+    && !!rawMeta?.webauthnCredentials
+    && rawMeta.webauthnCredentials.length > 0;
+
+  const handleUnlockWebAuthn = async () => {
+    setError(null);
+    try {
+      const meta = rawMeta;
+      if (!meta?.webauthnCredentials?.length) return;
+
+      const { dek } = await unlockWithWebAuthn(meta.webauthnCredentials);
+
+      if (!middlewareInstalled.current) {
+        db.applyEncryption(dek);
+        middlewareInstalled.current = true;
+      }
+      syncService.setAtRestDek(dek);
+      setDek(dek);
+      setReady();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg !== 'Authentication cancelled') {
+        setError(msg);
+      }
+    }
+  };
+
   if (isLocked) {
     return (
       <PasswordModal
         onUnlock={handleUnlock}
         error={error}
         isVerifying={isVerifying}
+        hasWebAuthn={hasWebAuthn}
+        onUnlockWebAuthn={handleUnlockWebAuthn}
       />
     );
   }

@@ -255,7 +255,13 @@
       "emptyHint": "Clic droit sur des éléments pour les ajouter",
       "ghostBadge": "Sur {{tabs}}",
       "navigateTo": "Aller à l'onglet {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Rétention expirée depuis {{days}} jour(s)",
+    "retentionDeleteConfirm": "Cette enquête sera définitivement supprimée, sans annulation possible.",
+    "retentionDeleteAction": "Supprimer définitivement",
+    "retentionReadonly": "Enquête en lecture seule (rétention expirée)",
+    "retentionRedactConfirm": "Le caviardage va effacer définitivement tous les contenus textuels (noms, notes, propriétés). La structure du graphe sera conservée. Cette action est irréversible.",
+    "retentionRedactAction": "Caviarder définitivement"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

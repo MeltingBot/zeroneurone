@@ -254,7 +254,13 @@
       "emptyHint": "Clic dret als elements per afegir-los",
       "ghostBadge": "A {{tabs}}",
       "navigateTo": "Anar a pestanya {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Retenció expirada des de fa {{days}} dia/es",
+    "retentionDeleteConfirm": "Aquesta investigació s'eliminarà definitivament, sense possibilitat d'anul·lació.",
+    "retentionDeleteAction": "Eliminar definitivament",
+    "retentionReadonly": "Investigació en només lectura (retenció expirada)",
+    "retentionRedactConfirm": "La redacció eliminarà permanentment tot el contingut textual (noms, notes, propietats). L'estructura del graf es conservarà. Aquesta acció és irreversible.",
+    "retentionRedactAction": "Redactar definitivament"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

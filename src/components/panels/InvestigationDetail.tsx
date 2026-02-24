@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Settings, Calendar } from 'lucide-react';
+import { FileText, Settings, Calendar, Timer } from 'lucide-react';
 import { useInvestigationStore } from '../../stores';
 import type { Investigation, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
@@ -247,6 +247,9 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
         </div>
       </AccordionSection>
 
+      {/* Rétention */}
+      <RetentionSection investigation={investigation} />
+
       {/* Propriétés */}
       <AccordionSection
         id="properties"
@@ -263,6 +266,130 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
         />
       </AccordionSection>
     </div>
+  );
+}
+
+type RetentionPolicy = 'warn' | 'readonly' | 'delete' | 'redact';
+
+function RetentionSection({ investigation }: { investigation: Investigation }) {
+  const { t } = useTranslation('panels');
+  const { i18n } = useTranslation();
+  const { updateInvestigation } = useInvestigationStore();
+
+  const [localDays, setLocalDays] = useState<string>(
+    investigation.retentionDays != null ? String(investigation.retentionDays) : ''
+  );
+  const [localPolicy, setLocalPolicy] = useState<RetentionPolicy>(
+    investigation.retentionPolicy || 'warn'
+  );
+
+  // Sync from props when investigation changes
+  useEffect(() => {
+    setLocalDays(investigation.retentionDays != null ? String(investigation.retentionDays) : '');
+    setLocalPolicy(investigation.retentionPolicy || 'warn');
+  }, [investigation.id, investigation.retentionDays, investigation.retentionPolicy]);
+
+  const savedDays = investigation.retentionDays ?? null;
+  const savedPolicy = investigation.retentionPolicy || 'warn';
+  const pendingDays = localDays === '' ? null : Math.max(1, parseInt(localDays, 10) || 1);
+  const hasChanges = pendingDays !== savedDays || localPolicy !== savedPolicy;
+
+  const handleApply = () => {
+    updateInvestigation(investigation.id, {
+      retentionDays: pendingDays,
+      retentionPolicy: localPolicy,
+    });
+  };
+
+  // Compute expiration info based on pending values
+  const expirationInfo = pendingDays != null ? (() => {
+    const expiresAt = new Date(new Date(investigation.createdAt).getTime() + pendingDays * 86400000);
+    const expiredDays = Math.ceil((Date.now() - expiresAt.getTime()) / 86400000);
+    return { expiresAt, expiredDays, isExpired: expiredDays > 0 };
+  })() : null;
+
+  return (
+    <AccordionSection
+      id="retention"
+      title={t('investigation.sections.retention')}
+      icon={<Timer size={12} />}
+      defaultOpen={false}
+    >
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.retentionDays')}</label>
+          <input
+            type="number"
+            min={1}
+            value={localDays}
+            onChange={(e) => setLocalDays(e.target.value)}
+            placeholder={t('investigation.labels.retentionUnlimited')}
+            className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
+          />
+        </div>
+
+        {pendingDays != null && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.retentionPolicy')}</label>
+              <select
+                value={localPolicy}
+                onChange={(e) => setLocalPolicy(e.target.value as RetentionPolicy)}
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
+              >
+                <option value="warn">{t('investigation.labels.retentionPolicyWarn')}</option>
+                <option value="readonly">{t('investigation.labels.retentionPolicyReadonly')}</option>
+                <option value="delete">{t('investigation.labels.retentionPolicyDelete')}</option>
+                <option value="redact">{t('investigation.labels.retentionPolicyRedact')}</option>
+              </select>
+            </div>
+
+            {expirationInfo && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.retentionExpires')}</label>
+                {expirationInfo.isExpired ? (
+                  <p className="text-sm font-medium text-error">
+                    {t('investigation.labels.retentionExpiredSince', { days: expirationInfo.expiredDays })}
+                  </p>
+                ) : (
+                  <p className="text-sm text-text-primary">
+                    {formatDateDisplay(expirationInfo.expiresAt, i18n.language)}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {(hasChanges || savedDays != null) && (
+          <div className="flex gap-2">
+            {hasChanges && (
+              <button
+                onClick={handleApply}
+                className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded transition-colors"
+              >
+                {t('investigation.labels.retentionApply')}
+              </button>
+            )}
+            {savedDays != null && (
+              <button
+                onClick={() => {
+                  setLocalDays('');
+                  setLocalPolicy('warn');
+                  updateInvestigation(investigation.id, {
+                    retentionDays: null,
+                    retentionPolicy: 'warn',
+                  });
+                }}
+                className="flex-1 px-3 py-1.5 text-sm font-medium text-text-secondary bg-bg-secondary border border-border-default hover:bg-bg-tertiary rounded transition-colors"
+              >
+                {t('investigation.labels.retentionReset')}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </AccordionSection>
   );
 }
 
