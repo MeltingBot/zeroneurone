@@ -160,7 +160,7 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const dek = await unlockEncryption(meta, password);
+      const { dek, upgradedMeta } = await unlockEncryption(meta, password);
 
       // Installer le middleware AVANT la première opération Dexie.
       // Si le middleware est déjà installé (re-unlock après lock session),
@@ -176,6 +176,15 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
       // Stocker la DEK en mémoire et débloquer Dexie
       setDek(dek);
       setReady();
+
+      // Upgrade PBKDF2 silencieux (v1 → v2) : persister le nouveau meta
+      // après ouverture de Dexie (setReady() autorise les opérations DB).
+      if (upgradedMeta) {
+        setRawMeta(upgradedMeta);
+        db._encryptionMeta.put(upgradedMeta).catch((err) =>
+          console.warn('[EncryptionGate] Échec upgrade meta PBKDF2:', err)
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Mot de passe incorrect');
     } finally {

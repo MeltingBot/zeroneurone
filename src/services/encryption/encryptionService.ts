@@ -7,6 +7,11 @@
  * La DEK (Data Encryption Key) est générée une seule fois, stockée chiffrée
  * dans la table `_encryptionMeta` de Dexie. Changer le mot de passe = re-chiffrer
  * la DEK uniquement, pas toute la base.
+ *
+ * Versions du schéma :
+ *   v1 — PBKDF2-SHA256 100 000 itérations (legacy)
+ *   v2 — PBKDF2-SHA256 600 000 itérations (NIST SP 800-132 recommandation 2023+)
+ *        Upgrade automatique au premier déverrouillage d'un meta v1.
  */
 
 // ============================================================================
@@ -36,7 +41,12 @@ export interface EncryptionState {
 // CONSTANTES
 // ============================================================================
 
-const PBKDF2_ITERATIONS = 100_000;
+/** Itérations PBKDF2 par version de schéma */
+const PBKDF2_ITERATIONS: Record<number, number> = {
+  1: 100_000,  // legacy
+  2: 600_000,  // NIST SP 800-132 (2023)
+};
+const PBKDF2_CURRENT_VERSION = 2;
 const PBKDF2_HASH = 'SHA-256';
 const DEK_LENGTH = 32; // bytes (256 bits)
 const SALT_LENGTH = 16; // bytes
@@ -62,7 +72,7 @@ function randomBytes(length: number): Uint8Array<ArrayBuffer> {
  * Dérive une KEK (Key Encryption Key) depuis un mot de passe et un sel
  * via PBKDF2. La KEK est utilisée uniquement pour chiffrer/déchiffrer la DEK.
  */
-async function deriveKEK(password: string, salt: ArrayBuffer): Promise<CryptoKey> {
+async function deriveKEK(password: string, salt: ArrayBuffer, iterations: number): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -76,7 +86,7 @@ async function deriveKEK(password: string, salt: ArrayBuffer): Promise<CryptoKey
     {
       name: 'PBKDF2',
       salt,
-      iterations: PBKDF2_ITERATIONS,
+      iterations,
       hash: PBKDF2_HASH,
     },
     keyMaterial,
@@ -135,7 +145,8 @@ export async function initializeEncryption(password: string): Promise<{
   const salt = randomBytes(SALT_LENGTH);
   const dekBytes = randomBytes(DEK_LENGTH);
 
-  const kek = await deriveKEK(password, salt.buffer);
+  const iterations = PBKDF2_ITERATIONS[PBKDF2_CURRENT_VERSION];
+  const kek = await deriveKEK(password, salt.buffer, iterations);
   const { encryptedDEK, dekIV } = await encryptDEK(dekBytes.buffer, kek);
 
   const meta: EncryptionMeta = {
@@ -143,7 +154,7 @@ export async function initializeEncryption(password: string): Promise<{
     salt: salt.buffer,
     encryptedDEK,
     dekIV,
-    version: 1,
+    version: PBKDF2_CURRENT_VERSION,
     createdAt: new Date().toISOString(),
   };
 
@@ -153,29 +164,58 @@ export async function initializeEncryption(password: string): Promise<{
 /**
  * Déchiffre la DEK depuis les métadonnées stockées et le mot de passe fourni.
  * Retourne la DEK (Uint8Array 32 bytes) ou lance une erreur si mot de passe incorrect.
+ *
+ * Si le meta est en version legacy (v1), re-chiffre la DEK avec les paramètres
+ * courants (v2) et retourne le meta mis à jour dans `upgradedMeta`.
+ * L'appelant est responsable de persister `upgradedMeta` dans `_encryptionMeta`.
  */
 export async function unlockEncryption(
   meta: EncryptionMeta,
   password: string
-): Promise<Uint8Array> {
-  const kek = await deriveKEK(password, meta.salt);
+): Promise<{ dek: Uint8Array; upgradedMeta: EncryptionMeta | null }> {
+  const version = meta.version ?? 1;
+  const iterations = PBKDF2_ITERATIONS[version] ?? PBKDF2_ITERATIONS[1];
+
+  const kek = await deriveKEK(password, meta.salt, iterations);
   const dekBuffer = await decryptDEK(meta.encryptedDEK, meta.dekIV, kek);
-  return new Uint8Array(dekBuffer);
+  const dek = new Uint8Array(dekBuffer);
+
+  // Upgrade automatique vers la version courante
+  if (version < PBKDF2_CURRENT_VERSION) {
+    const newIterations = PBKDF2_ITERATIONS[PBKDF2_CURRENT_VERSION];
+    const newSalt = randomBytes(SALT_LENGTH);
+    const newKek = await deriveKEK(password, newSalt.buffer, newIterations);
+    const { encryptedDEK, dekIV } = await encryptDEK(dek.buffer as ArrayBuffer, newKek);
+
+    const upgradedMeta: EncryptionMeta = {
+      ...meta,
+      salt: newSalt.buffer,
+      encryptedDEK,
+      dekIV,
+      version: PBKDF2_CURRENT_VERSION,
+    };
+
+    return { dek, upgradedMeta };
+  }
+
+  return { dek, upgradedMeta: null };
 }
 
 /**
  * Change le mot de passe en re-chiffrant la DEK avec la nouvelle KEK.
  * Opération quasi-instantanée (seule la DEK ~32 octets est re-chiffrée).
+ * Toujours écrit en version courante.
  */
 export async function changePassword(
   meta: EncryptionMeta,
   oldPassword: string,
   newPassword: string
 ): Promise<EncryptionMeta> {
-  const dek = await unlockEncryption(meta, oldPassword);
+  const { dek } = await unlockEncryption(meta, oldPassword);
 
+  const newIterations = PBKDF2_ITERATIONS[PBKDF2_CURRENT_VERSION];
   const newSalt = randomBytes(SALT_LENGTH);
-  const newKek = await deriveKEK(newPassword, newSalt.buffer);
+  const newKek = await deriveKEK(newPassword, newSalt.buffer, newIterations);
   const { encryptedDEK, dekIV } = await encryptDEK(dek.buffer as ArrayBuffer, newKek);
 
   return {
@@ -183,5 +223,6 @@ export async function changePassword(
     salt: newSalt.buffer,
     encryptedDEK,
     dekIV,
+    version: PBKDF2_CURRENT_VERSION,
   };
 }

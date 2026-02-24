@@ -491,5 +491,77 @@
     "properties": "eigenschappen",
     "events": "gebeurtenissen",
     "hint": "Het andere element wordt verwijderd. De links worden overgedragen."
+  },
+  "encryption": {
+    "title": "Versleuteling",
+    "statusActive": "Versleuteling actief",
+    "statusInactive": "Versleuteling inactief",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Gegevens opgeslagen in leesbare tekst",
+    "on": "AAN",
+    "off": "UIT",
+    "sessionLocked": "Sessie vergrendeld — herlaad de app om uw wachtwoord in te voeren",
+    "enableButton": "Versleuteling inschakelen",
+    "changePasswordButton": "Wachtwoord wijzigen",
+    "disableButton": "Versleuteling uitschakelen",
+    "lockSessionButton": "Sessie vergrendelen",
+    "securityNote": "Versleuteling beschermt uw gegevens tegen toegang tot browserbestanden. Het wachtwoord is niet herstelbaar — exporteer uw gegevens voordat u activeert.",
+    "successEnabled": "Versleuteling ingeschakeld. Uw gegevens zijn nu versleuteld.",
+    "successDisabled": "Versleuteling uitgeschakeld. Herladen vereist.",
+    "successPasswordChanged": "Wachtwoord gewijzigd.",
+    "errorMissingKey": "Versleutelingssleutel ontbreekt",
+    "errorMetaNotFound": "Metadata niet gevonden",
+    "errorActivation": "Fout tijdens activering",
+    "errorDeactivation": "Fout tijdens deactivering",
+    "errorPasswordChange": "Fout bij wachtwoordwijziging",
+    "enable": {
+      "warning": "Zonder dit wachtwoord zijn uw gegevens onherstelbaar verloren. Exporteer een back-up voordat u doorgaat.",
+      "passwordLabel": "Wachtwoord (minimaal 8 tekens)",
+      "confirmLabel": "Wachtwoord bevestigen",
+      "mismatch": "Wachtwoorden komen niet overeen",
+      "cancel": "Annuleren",
+      "submit": "Inschakelen",
+      "busy": "Migreren…",
+      "riskTitle": "Lees dit voor u doorgaat",
+      "risks": [
+        "Vergeten wachtwoord = gegevens permanent ontoegankelijk, geen uitzonderingen",
+        "Geen herstel mogelijk — niet door ons, niet door uw browser",
+        "Exporteer uw onderzoeken als ZIP voordat u activeert",
+        "Versleuteling is van toepassing op IndexedDB en bijgevoegde bestanden (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Gegevens worden ontsleuteld en opgeslagen in leesbare tekst. De applicatie wordt opnieuw geladen na de migratie.",
+      "passwordLabel": "Bevestig met uw huidige wachtwoord",
+      "cancel": "Annuleren",
+      "submit": "Uitschakelen",
+      "busy": "Migreren…"
+    },
+    "changePassword": {
+      "oldLabel": "Huidig wachtwoord",
+      "newLabel": "Nieuw wachtwoord",
+      "confirmLabel": "Nieuw wachtwoord bevestigen",
+      "mismatch": "Wachtwoorden komen niet overeen",
+      "cancel": "Annuleren",
+      "submit": "Wijzigen",
+      "busy": "Bijwerken…"
+    }
+  },
+  "passwordModal": {
+    "title": "Versleutelde database",
+    "subtitle": "Voer uw wachtwoord in om uw gegevens te ontgrendelen",
+    "passwordLabel": "Wachtwoord",
+    "placeholder": "Voer uw wachtwoord in",
+    "showPassword": "Wachtwoord tonen",
+    "hidePassword": "Wachtwoord verbergen",
+    "unlock": "Ontgrendelen",
+    "verifying": "Controleren…",
+    "forgotHint": "Zonder dit wachtwoord zijn uw gegevens niet herstelbaar.",
+    "forgotLink": "Wachtwoord vergeten?",
+    "resetWarning": "Versleutelingsmetadata verwijderen. Als de gegevens versleuteld zijn, zijn ze permanent ontoegankelijk.",
+    "resetCancel": "Annuleren",
+    "resetConfirm": "Opnieuw instellen",
+    "resetBusy": "Bezig met opnieuw instellen…",
+    "storageReminder": "Gegevens opgeslagen op dit apparaat · Nooit verzonden"
   }
 }

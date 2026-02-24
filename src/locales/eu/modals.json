@@ -491,5 +491,77 @@
     "properties": "propietateak",
     "events": "gertaerak",
     "hint": "Beste elementua ezabatuko da. Bere estekak transferituko dira."
+  },
+  "encryption": {
+    "title": "Enkriptatzea",
+    "statusActive": "Enkriptatzea aktibo",
+    "statusInactive": "Enkriptatzea inaktibo",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Datuak testu arruntean gordetak",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Saioa blokeatuta — pasahitza sartzeko aplikazioa birkargatu",
+    "enableButton": "Enkriptatzea gaitu",
+    "changePasswordButton": "Pasahitza aldatu",
+    "disableButton": "Enkriptatzea desgaitu",
+    "lockSessionButton": "Saioa blokeatu",
+    "securityNote": "Enkriptatzeak zure datuak nabigatzailearen fitxategietarako sarbideetik babesten ditu. Pasahitza berreskuraezinak da — gaitu aurretik zure datuak esportatu.",
+    "successEnabled": "Enkriptatzea gaituta. Zure datuak orain enkriptatuta daude.",
+    "successDisabled": "Enkriptatzea desgaituta. Birkargatze beharrezkoa.",
+    "successPasswordChanged": "Pasahitza aldatuta.",
+    "errorMissingKey": "Enkriptatze gakoa falta da",
+    "errorMetaNotFound": "Metadatuak ez dira aurkitu",
+    "errorActivation": "Errorea aktibatzean",
+    "errorDeactivation": "Errorea desaktibatzean",
+    "errorPasswordChange": "Errorea pasahitza aldatzean",
+    "enable": {
+      "warning": "Pasahitz hau gabe, zure datuak berreskuraezinak izango dira. Segurtasun kopia bat esportatu jarraitu aurretik.",
+      "passwordLabel": "Pasahitza (gutxienez 8 karaktere)",
+      "confirmLabel": "Pasahitza berretsi",
+      "mismatch": "Pasahitzak ez datoz bat",
+      "cancel": "Utzi",
+      "submit": "Gaitu",
+      "busy": "Migratzen…",
+      "riskTitle": "Irakurri jarraitu aurretik",
+      "risks": [
+        "Pasahitz ahaztu = datuak betiko eskuraezin, salbuespen gabe",
+        "Ezinezkoa da berreskuratzea — ez guk, ez nabigatzaileak",
+        "Esportatu zure ikerketak ZIP gisa gaitu aurretik",
+        "Enkriptatzea IndexedDB eta erantsitako fitxategiei (OPFS) aplikatzen zaie"
+      ]
+    },
+    "disable": {
+      "warning": "Datuak desenkriptatuko dira eta testu arruntean gordeko dira. Aplikazioa berkargatuko da migrazioa ondoren.",
+      "passwordLabel": "Berretsi zure oraingo pasahitzarekin",
+      "cancel": "Utzi",
+      "submit": "Desgaitu",
+      "busy": "Migratzen…"
+    },
+    "changePassword": {
+      "oldLabel": "Oraingo pasahitza",
+      "newLabel": "Pasahitz berria",
+      "confirmLabel": "Pasahitz berria berretsi",
+      "mismatch": "Pasahitzak ez datoz bat",
+      "cancel": "Utzi",
+      "submit": "Aldatu",
+      "busy": "Eguneratzen…"
+    }
+  },
+  "passwordModal": {
+    "title": "Datu base enkriptatua",
+    "subtitle": "Sartu pasahitza zure datuak desblokeatzeko",
+    "passwordLabel": "Pasahitza",
+    "placeholder": "Sartu zure pasahitza",
+    "showPassword": "Pasahitza erakutsi",
+    "hidePassword": "Pasahitza ezkutatu",
+    "unlock": "Desblokeatu",
+    "verifying": "Egiaztatzen…",
+    "forgotHint": "Pasahitz hau gabe, datuak berreskuraezinak dira.",
+    "forgotLink": "Pasahitza ahaztu duzu?",
+    "resetWarning": "Enkriptatze metadatuak ezabatu. Datuak enkriptatuta badaude, betiko eskuraezin bihurtuko dira.",
+    "resetCancel": "Utzi",
+    "resetConfirm": "Berrezarri",
+    "resetBusy": "Berrezartzen…",
+    "storageReminder": "Datuak gailu honetan soilik gordetuta · Inoiz ez transmititu"
   }
 }

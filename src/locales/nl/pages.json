@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "100% lokale gegevens",
-          "description": "Uw gegevens blijven op uw computer, worden nooit verzonden"
+          "description": "Uw gegevens blijven op uw computer, worden nooit verzonden en zijn versleuteld in rust"
         },
         "collab": {
           "title": "Veilige realtime samenwerking",

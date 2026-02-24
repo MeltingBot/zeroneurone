@@ -453,6 +453,73 @@ const allRows = await db.pluginData
 await db.pluginData.delete(['my-plugin', 'inv-123', 'settings']);
 ```
 
+## At-Rest Encryption
+
+If ZeroNeurone has at-rest encryption enabled, plugins that store their own sensitive data in a Dexie database can participate in the same encryption. The DEK (Data Encryption Key) is never handed to them raw — the API exposes an opaque middleware to apply to their Dexie instance.
+
+### Available API
+
+The `api.encryption` object (available in external plugins via `register(api)`) provides:
+
+| Method | Description |
+|--------|-------------|
+| `applyToDatabase(dexieInstance, tables)` | Applies the ZN encryption middleware to an external Dexie instance. No-op if encryption is inactive or session is locked. |
+| `onReady(cb)` | Callback fired when the DEK is available (after unlock or startup without encryption). Called immediately if already ready. Returns an unlisten function. |
+| `onLock(cb)` | Callback fired when the session is locked (DEK erased). Returns an unlisten function. |
+| `isEnabled()` | `true` if encryption is enabled in ZeroNeurone. |
+| `onBeforeDisable(cb)` | Callback called (and awaited) just before ZN disables encryption and reloads the page. Lets the plugin decrypt its data before restart. |
+
+### Recommended Lifecycle
+
+```javascript
+export function register(api) {
+  const { db: myDb } = initMyPluginDb();
+  const ENCRYPTED_TABLES = ['conversations', 'results'];
+  let middlewareInstalled = false;
+
+  // 1. Apply middleware when DEK is available
+  const unlistenReady = api.encryption.onReady(() => {
+    if (middlewareInstalled) return;
+    api.encryption.applyToDatabase(myDb, ENCRYPTED_TABLES);
+    middlewareInstalled = true;
+    // Migrate existing unencrypted data (idempotent)
+    migrateExistingData(myDb, ENCRYPTED_TABLES);
+  });
+
+  // 2. Close DB when session is locked (data inaccessible)
+  const unlistenLock = api.encryption.onLock(() => {
+    myDb.close();
+    middlewareInstalled = false;
+  });
+
+  // 3. Decrypt data when ZN disables encryption
+  const unlistenDisable = api.encryption.onBeforeDisable(async (decryptRecord) => {
+    for (const tableName of ENCRYPTED_TABLES) {
+      const records = await myDb[tableName].toArray();
+      const plainRecords = records.map(decryptRecord);
+      await writeViaRawIDB(myDb.name, tableName, plainRecords);
+    }
+  });
+
+  // Cleanup if plugin is unregistered
+  return () => {
+    unlistenReady();
+    unlistenLock();
+    unlistenDisable();
+  };
+}
+```
+
+### Migration Idempotence
+
+The ZN encryption middleware detects already-encrypted fields (prefix `__zn_enc__:`) and skips them. It is safe to call `bulkPut` on partially encrypted data — for example when first enabling encryption on pre-existing data.
+
+### Data Stored via `api.pluginData`
+
+If your plugin stores data in `api.pluginData` (ZN's generic table), it is automatically encrypted by the ZN middleware — no action needed. Only Dexie databases **managed by the plugin itself** require explicit integration.
+
+For the full cryptographic architecture, see [encryption-en.md](encryption-en.md).
+
 ## Internationalization (i18n)
 
 Plugins manage their own translations. Use `i18next.addResourceBundle()` in your init function:
@@ -886,6 +953,16 @@ The `api` object passed to `register()` provides:
 | `pluginData.get(pluginId, investigationId, key)` | Read from persistent plugin storage |
 | `pluginData.set(pluginId, investigationId, key, value)` | Write to persistent plugin storage |
 | `pluginData.remove(pluginId, investigationId, key)` | Delete from persistent plugin storage |
+
+**At-rest encryption:**
+
+| Property | Description |
+|----------|-------------|
+| `encryption.applyToDatabase(dexieInstance, tables)` | Apply ZN encryption middleware to an external Dexie instance |
+| `encryption.onReady(cb)` | Callback when DEK is available. Returns unlisten |
+| `encryption.onLock(cb)` | Callback when session is locked. Returns unlisten |
+| `encryption.isEnabled()` | True if encryption is active |
+| `encryption.onBeforeDisable(cb)` | Callback before encryption is disabled (to decrypt plugin data) |
 
 **TypeScript types:** Copy `src/types/plugin-api.d.ts` into your plugin project for full type definitions (`PluginAPI`, `Element`, `Link`, `ReportSection`, etc.).
 

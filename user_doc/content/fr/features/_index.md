@@ -21,3 +21,4 @@ Explorez les fonctionnalités principales de ZeroNeurone.
 - [Rapport]({{< relref "report" >}}) — Rédaction Markdown avec références
 - [Synthèse]({{< relref "synthesis" >}}) — Génération automatique de rapports
 - [Collaboration]({{< relref "collaboration" >}}) — Travail en temps réel
+- [Chiffrement at-rest]({{< relref "encryption" >}}) — Protéger vos données par mot de passe

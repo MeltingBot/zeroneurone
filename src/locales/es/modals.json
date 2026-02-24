@@ -491,5 +491,77 @@
     "properties": "propiedades",
     "events": "eventos",
     "hint": "El otro elemento será eliminado. Sus enlaces serán transferidos."
+  },
+  "encryption": {
+    "title": "Cifrado",
+    "statusActive": "Cifrado activo",
+    "statusInactive": "Cifrado inactivo",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Datos almacenados en texto claro",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Sesión bloqueada — recargue la app para introducir la contraseña",
+    "enableButton": "Activar cifrado",
+    "changePasswordButton": "Cambiar contraseña",
+    "disableButton": "Desactivar cifrado",
+    "lockSessionButton": "Bloquear sesión",
+    "securityNote": "El cifrado protege sus datos contra el acceso a los archivos del navegador. La contraseña es irrecuperable — exporte sus datos antes de activar.",
+    "successEnabled": "Cifrado activado. Sus datos ahora están cifrados.",
+    "successDisabled": "Cifrado desactivado. Se requiere recarga.",
+    "successPasswordChanged": "Contraseña cambiada.",
+    "errorMissingKey": "Clave de cifrado ausente",
+    "errorMetaNotFound": "Metadatos no encontrados",
+    "errorActivation": "Error durante la activación",
+    "errorDeactivation": "Error durante la desactivación",
+    "errorPasswordChange": "Error al cambiar la contraseña",
+    "enable": {
+      "warning": "Sin esta contraseña, sus datos serán irrecuperables. Exporte una copia de seguridad antes de continuar.",
+      "passwordLabel": "Contraseña (mínimo 8 caracteres)",
+      "confirmLabel": "Confirmar contraseña",
+      "mismatch": "Las contraseñas no coinciden",
+      "cancel": "Cancelar",
+      "submit": "Activar",
+      "busy": "Migrando…",
+      "riskTitle": "Lea antes de continuar",
+      "risks": [
+        "Contraseña olvidada = datos permanentemente inaccesibles, sin excepciones",
+        "Sin recuperación posible — ni por nosotros, ni por su navegador",
+        "Exporte sus investigaciones como ZIP antes de activar",
+        "El cifrado se aplica a IndexedDB y archivos adjuntos (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Los datos serán descifrados y almacenados en texto claro. La aplicación se recargará después de la migración.",
+      "passwordLabel": "Confirme con su contraseña actual",
+      "cancel": "Cancelar",
+      "submit": "Desactivar",
+      "busy": "Migrando…"
+    },
+    "changePassword": {
+      "oldLabel": "Contraseña actual",
+      "newLabel": "Nueva contraseña",
+      "confirmLabel": "Confirmar nueva contraseña",
+      "mismatch": "Las contraseñas no coinciden",
+      "cancel": "Cancelar",
+      "submit": "Cambiar",
+      "busy": "Actualizando…"
+    }
+  },
+  "passwordModal": {
+    "title": "Base de datos cifrada",
+    "subtitle": "Introduzca la contraseña para desbloquear sus datos",
+    "passwordLabel": "Contraseña",
+    "placeholder": "Introduzca su contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "unlock": "Desbloquear",
+    "verifying": "Verificando…",
+    "forgotHint": "Sin esta contraseña, los datos son irrecuperables.",
+    "forgotLink": "¿Contraseña olvidada?",
+    "resetWarning": "Eliminar los metadatos de cifrado. Si los datos están cifrados, serán permanentemente inaccesibles.",
+    "resetCancel": "Cancelar",
+    "resetConfirm": "Restablecer",
+    "resetBusy": "Restableciendo…",
+    "storageReminder": "Datos almacenados solo en este dispositivo · Nunca transmitidos"
   }
 }

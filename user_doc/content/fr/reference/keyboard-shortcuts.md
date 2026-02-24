@@ -65,6 +65,12 @@ Liste complète des raccourcis clavier de ZeroNeurone.
 | **Ctrl+clic** | Ajouter/retirer de la selection |
 | **Shift+clic** | Selection par plage |
 
+## Chiffrement
+
+| Raccourci | Action |
+|-----------|--------|
+| **Alt+L** | Verrouiller la session (si chiffrement actif) |
+
 ## Panneaux
 
 | Raccourci | Action |

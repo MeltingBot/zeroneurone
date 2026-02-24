@@ -15,7 +15,7 @@ const IV_LEN = 12;
 const HEADER_LEN = MAGIC_LEN + IV_LEN; // 14 bytes
 
 function dekToKey(dek: Uint8Array): Promise<CryptoKey> {
-  return crypto.subtle.importKey('raw', dek, { name: 'AES-GCM' }, false, [
+  return crypto.subtle.importKey('raw', dek as unknown as ArrayBuffer, { name: 'AES-GCM' }, false, [
     'encrypt',
     'decrypt',
   ]);

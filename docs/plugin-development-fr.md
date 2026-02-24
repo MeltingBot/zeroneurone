@@ -453,6 +453,73 @@ const allRows = await db.pluginData
 await db.pluginData.delete(['my-plugin', 'inv-123', 'settings']);
 ```
 
+## Chiffrement at-rest
+
+Si ZeroNeurone a le chiffrement at-rest activé, les plugins qui stockent leurs propres données sensibles dans une base Dexie peuvent participer au même chiffrement. La DEK (Data Encryption Key) ne leur est jamais transmise brute — l'API expose un middleware opaque à appliquer sur leur instance Dexie.
+
+### API disponible
+
+L'objet `api.encryption` (disponible dans les plugins externes via `register(api)`) fournit :
+
+| Méthode | Description |
+|---------|-------------|
+| `applyToDatabase(dexieInstance, tables)` | Applique le middleware de chiffrement ZN sur une instance Dexie externe. No-op si chiffrement inactif ou session verrouillée. |
+| `onReady(cb)` | Callback appelé quand la DEK est disponible (après unlock ou démarrage sans chiffrement). Appelé immédiatement si déjà prêt. Retourne une fonction de désinscription. |
+| `onLock(cb)` | Callback appelé quand la session est verrouillée (DEK effacée). Retourne une fonction de désinscription. |
+| `isEnabled()` | `true` si le chiffrement est activé dans ZeroNeurone. |
+| `onBeforeDisable(cb)` | Callback appelé (et awaité) juste avant que ZN désactive le chiffrement et recharge la page. Permet de déchiffrer les données du plugin avant redémarrage. |
+
+### Cycle de vie recommandé
+
+```javascript
+export function register(api) {
+  const { db: myDb } = initMyPluginDb();
+  const ENCRYPTED_TABLES = ['conversations', 'results'];
+  let middlewareInstalled = false;
+
+  // 1. Appliquer le middleware quand la DEK est disponible
+  const unlistenReady = api.encryption.onReady(() => {
+    if (middlewareInstalled) return;
+    api.encryption.applyToDatabase(myDb, ENCRYPTED_TABLES);
+    middlewareInstalled = true;
+    // Migrer les données existantes non chiffrées (idempotent)
+    migrateExistingData(myDb, ENCRYPTED_TABLES);
+  });
+
+  // 2. Fermer la DB à la session verrouillée (données inaccessibles)
+  const unlistenLock = api.encryption.onLock(() => {
+    myDb.close();
+    middlewareInstalled = false;
+  });
+
+  // 3. Déchiffrer les données quand ZN désactive le chiffrement
+  const unlistenDisable = api.encryption.onBeforeDisable(async (decryptRecord) => {
+    for (const tableName of ENCRYPTED_TABLES) {
+      const records = await myDb[tableName].toArray();
+      const plainRecords = records.map(decryptRecord);
+      await writeViaRawIDB(myDb.name, tableName, plainRecords);
+    }
+  });
+
+  // Cleanup si le plugin est désinscrit
+  return () => {
+    unlistenReady();
+    unlistenLock();
+    unlistenDisable();
+  };
+}
+```
+
+### Idempotence de la migration
+
+Le middleware de chiffrement ZN détecte les champs déjà chiffrés (préfixe `__zn_enc__:`) et ne les re-chiffre pas. Il est donc sûr d'appeler `bulkPut` sur des données partiellement chiffrées — par exemple lors de la première activation du chiffrement sur des données préexistantes.
+
+### Données non chiffrées
+
+Si votre plugin stocke des données dans `api.pluginData` (la table générique de ZN), celles-ci sont chiffrées automatiquement par le middleware ZN — aucune action nécessaire. Seules les bases Dexie **gérées par le plugin lui-même** nécessitent une intégration explicite.
+
+Pour l'architecture cryptographique complète, voir [encryption-fr.md](encryption-fr.md).
+
 ## Internationalisation (i18n)
 
 Les plugins gerent leurs propres traductions. Utilisez `i18next.addResourceBundle()` dans votre fonction d'init :
@@ -886,6 +953,16 @@ L'objet `api` passe a `register()` fournit :
 | `pluginData.get(pluginId, investigationId, key)` | Lire depuis le stockage persistant |
 | `pluginData.set(pluginId, investigationId, key, value)` | Ecrire dans le stockage persistant |
 | `pluginData.remove(pluginId, investigationId, key)` | Supprimer du stockage persistant |
+
+**Chiffrement at-rest :**
+
+| Propriete | Description |
+|-----------|-------------|
+| `encryption.applyToDatabase(dexieInstance, tables)` | Appliquer le middleware de chiffrement ZN sur une Dexie externe |
+| `encryption.onReady(cb)` | Callback quand la DEK est disponible. Retourne unlisten |
+| `encryption.onLock(cb)` | Callback quand la session est verrouillée. Retourne unlisten |
+| `encryption.isEnabled()` | Vrai si le chiffrement est actif |
+| `encryption.onBeforeDisable(cb)` | Callback avant désactivation du chiffrement (pour déchiffrer les données du plugin) |
 
 **Types TypeScript :** Copiez `src/types/plugin-api.d.ts` dans votre projet plugin pour les definitions de types completes (`PluginAPI`, `Element`, `Link`, `ReportSection`, etc.).
 

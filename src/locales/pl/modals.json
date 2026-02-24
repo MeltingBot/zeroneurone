@@ -491,5 +491,77 @@
     "properties": "właściwości",
     "events": "wydarzenia",
     "hint": "Drugi element zostanie usunięty. Jego linki zostaną przeniesione."
+  },
+  "encryption": {
+    "title": "Szyfrowanie",
+    "statusActive": "Szyfrowanie aktywne",
+    "statusInactive": "Szyfrowanie nieaktywne",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Dane przechowywane w postaci jawnej",
+    "on": "WŁ",
+    "off": "WYŁ",
+    "sessionLocked": "Sesja zablokowana — przeładuj aplikację, aby wprowadzić hasło",
+    "enableButton": "Włącz szyfrowanie",
+    "changePasswordButton": "Zmień hasło",
+    "disableButton": "Wyłącz szyfrowanie",
+    "lockSessionButton": "Zablokuj sesję",
+    "securityNote": "Szyfrowanie chroni Twoje dane przed dostępem do plików przeglądarki. Hasło jest nieodwracalne — wyeksportuj dane przed aktywacją.",
+    "successEnabled": "Szyfrowanie włączone. Twoje dane są teraz zaszyfrowane.",
+    "successDisabled": "Szyfrowanie wyłączone. Wymagane przeładowanie.",
+    "successPasswordChanged": "Hasło zmienione.",
+    "errorMissingKey": "Brak klucza szyfrowania",
+    "errorMetaNotFound": "Metadane nie znalezione",
+    "errorActivation": "Błąd podczas aktywacji",
+    "errorDeactivation": "Błąd podczas dezaktywacji",
+    "errorPasswordChange": "Błąd podczas zmiany hasła",
+    "enable": {
+      "warning": "Bez tego hasła Twoje dane będą nie do odzyskania. Wyeksportuj kopię zapasową przed kontynuowaniem.",
+      "passwordLabel": "Hasło (minimum 8 znaków)",
+      "confirmLabel": "Potwierdź hasło",
+      "mismatch": "Hasła nie są zgodne",
+      "cancel": "Anuluj",
+      "submit": "Włącz",
+      "busy": "Migracja…",
+      "riskTitle": "Przeczytaj przed kontynuowaniem",
+      "risks": [
+        "Zapomniane hasło = dane trwale niedostępne, bez wyjątków",
+        "Brak możliwości odzyskania — ani przez nas, ani przez przeglądarkę",
+        "Wyeksportuj swoje dochodzenia jako ZIP przed aktywacją",
+        "Szyfrowanie dotyczy IndexedDB i załączonych plików (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Dane zostaną odszyfrowane i przechowywane w postaci jawnej. Aplikacja zostanie przeładowana po migracji.",
+      "passwordLabel": "Potwierdź aktualnym hasłem",
+      "cancel": "Anuluj",
+      "submit": "Wyłącz",
+      "busy": "Migracja…"
+    },
+    "changePassword": {
+      "oldLabel": "Aktualne hasło",
+      "newLabel": "Nowe hasło",
+      "confirmLabel": "Potwierdź nowe hasło",
+      "mismatch": "Hasła nie są zgodne",
+      "cancel": "Anuluj",
+      "submit": "Zmień",
+      "busy": "Aktualizacja…"
+    }
+  },
+  "passwordModal": {
+    "title": "Zaszyfrowana baza danych",
+    "subtitle": "Wprowadź hasło, aby odblokować swoje dane",
+    "passwordLabel": "Hasło",
+    "placeholder": "Wprowadź hasło",
+    "showPassword": "Pokaż hasło",
+    "hidePassword": "Ukryj hasło",
+    "unlock": "Odblokuj",
+    "verifying": "Weryfikacja…",
+    "forgotHint": "Bez tego hasła dane są nie do odzyskania.",
+    "forgotLink": "Zapomniałeś hasła?",
+    "resetWarning": "Usuń metadane szyfrowania. Jeśli dane są zaszyfrowane, staną się trwale niedostępne.",
+    "resetCancel": "Anuluj",
+    "resetConfirm": "Zresetuj",
+    "resetBusy": "Resetowanie…",
+    "storageReminder": "Dane przechowywane tylko na tym urządzeniu · Nigdy nie przesyłane"
   }
 }

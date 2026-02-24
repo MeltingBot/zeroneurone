@@ -370,15 +370,21 @@ export async function migrateToPlaintext(
 
       const clearReq = store.clear();
       clearReq.onsuccess = () => {
+        let lost = 0;
         for (const update of updates) {
           if (isEncryptedUpdate(update)) {
             const decrypted = decryptUpdate(unwrapEncryptedUpdate(update), encryptionKey);
             if (decrypted) {
               store.add(decrypted);
+            } else {
+              lost++;
             }
           } else {
             store.add(update);
           }
+        }
+        if (lost > 0) {
+          console.warn(`[encryptedIndexeddbPersistence] migrateToPlaintext: ${lost}/${updates.length} updates non déchiffrables — données perdues.`);
         }
       };
     };

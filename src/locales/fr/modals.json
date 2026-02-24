@@ -491,5 +491,77 @@
     "properties": "propriétés",
     "events": "événements",
     "hint": "L'autre élément sera supprimé. Ses liens seront transférés."
+  },
+  "encryption": {
+    "title": "Chiffrement",
+    "statusActive": "Chiffrement actif",
+    "statusInactive": "Chiffrement inactif",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Données stockées en clair",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Session verrouillée — rechargez l'app pour saisir le mot de passe",
+    "enableButton": "Activer le chiffrement",
+    "changePasswordButton": "Changer le mot de passe",
+    "disableButton": "Désactiver le chiffrement",
+    "lockSessionButton": "Verrouiller la session",
+    "securityNote": "Le chiffrement protège vos données contre l'accès aux fichiers du navigateur. Le mot de passe est irrécupérable — exportez vos données avant d'activer.",
+    "successEnabled": "Chiffrement activé. Vos données sont maintenant chiffrées.",
+    "successDisabled": "Chiffrement désactivé. Rechargement requis.",
+    "successPasswordChanged": "Mot de passe modifié.",
+    "errorMissingKey": "Clé de chiffrement absente",
+    "errorMetaNotFound": "Métadonnées introuvables",
+    "errorActivation": "Erreur lors de l'activation",
+    "errorDeactivation": "Erreur lors de la désactivation",
+    "errorPasswordChange": "Erreur lors du changement",
+    "enable": {
+      "warning": "Sans ce mot de passe, vos données seront irrécupérables. Exportez une sauvegarde avant de continuer.",
+      "passwordLabel": "Mot de passe (8 caractères minimum)",
+      "confirmLabel": "Confirmer le mot de passe",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "cancel": "Annuler",
+      "submit": "Activer",
+      "busy": "Migration…",
+      "riskTitle": "Lisez avant de continuer",
+      "risks": [
+        "Mot de passe oublié = données définitivement inaccessibles, sans exception",
+        "Aucune récupération possible — ni par nous, ni par votre navigateur",
+        "Exportez vos enquêtes en ZIP avant d'activer",
+        "Le chiffrement s'applique à IndexedDB et aux fichiers joints (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Les données seront déchiffrées et stockées en clair. L'application se rechargera après la migration.",
+      "passwordLabel": "Confirmez avec votre mot de passe actuel",
+      "cancel": "Annuler",
+      "submit": "Désactiver",
+      "busy": "Migration…"
+    },
+    "changePassword": {
+      "oldLabel": "Mot de passe actuel",
+      "newLabel": "Nouveau mot de passe",
+      "confirmLabel": "Confirmer le nouveau mot de passe",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "cancel": "Annuler",
+      "submit": "Changer",
+      "busy": "Modification…"
+    }
+  },
+  "passwordModal": {
+    "title": "Base chiffrée",
+    "subtitle": "Entrez le mot de passe pour déverrouiller vos données",
+    "passwordLabel": "Mot de passe",
+    "placeholder": "Entrez votre mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "unlock": "Déverrouiller",
+    "verifying": "Vérification…",
+    "forgotHint": "Sans ce mot de passe, les données sont irrécupérables.",
+    "forgotLink": "Mot de passe oublié ?",
+    "resetWarning": "Supprimer les métadonnées de chiffrement. Si les données sont chiffrées, elles seront définitivement inaccessibles.",
+    "resetCancel": "Annuler",
+    "resetConfirm": "Réinitialiser",
+    "resetBusy": "Réinitialisation…",
+    "storageReminder": "Données stockées uniquement sur cet appareil · Jamais transmises"
   }
 }

@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "Datuak %100 lokalak",
-          "description": "Zure datuak zure makinan geratzen dira, inoiz ez dira transmititzen"
+          "description": "Zure datuak zure makinan geratzen dira, inoiz ez dira transmititzen eta atsedenean enkriptatzen dira"
         },
         "collab": {
           "title": "Lankidetza segurua denbora errealean",

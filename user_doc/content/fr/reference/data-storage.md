@@ -141,6 +141,30 @@ Les données ne quittent votre machine que par :
 
 ---
 
+---
+
+## Chiffrement at-rest
+
+ZeroNeurone peut chiffrer l'intégralité des données IndexedDB et OPFS avec un mot de passe.
+
+### Activation
+
+Cliquez sur l'icône cadenas (page d'accueil) pour activer, changer ou désactiver le chiffrement.
+
+### Ce qui est chiffré
+
+Quand le chiffrement est actif, toutes les tables de la base `zeroneurone` contenant des données d'enquête sont chiffrées, ainsi que les fichiers joints dans OPFS. Les données ne sont lisibles qu'après saisie du mot de passe au démarrage.
+
+### Consultation DevTools
+
+Quand le chiffrement est actif, les champs des enregistrements IndexedDB apparaissent sous la forme `__zn_enc__:...` dans les DevTools — c'est normal.
+
+### Verrouillage de session
+
+Le raccourci `Alt+L` verrouille la session sans fermer le navigateur. Les données redeviennent illisibles jusqu'au prochain déverrouillage.
+
+**Voir aussi** : [Chiffrement at-rest]({{< relref "../features/encryption" >}})
+
 ## Dépannage
 
 ### Données corrompues

@@ -232,6 +232,7 @@ export function HomePage() {
               size="sm"
               onClick={() => setIsEncryptionModalOpen(true)}
               title={isEncryptionEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
+              data-testid="encryption-settings-button"
             >
               <Lock size={16} className={isEncryptionEnabled ? 'text-success' : undefined} />
             </Button>
@@ -518,6 +519,18 @@ export function HomePage() {
         isOpen={isStorageModalOpen}
         onClose={() => setIsStorageModalOpen(false)}
       />
+
+      {/* Encryption button accessible from landing view (list view has it in the header) */}
+      {viewMode === 'landing' && (
+        <button
+          data-testid="encryption-settings-button"
+          onClick={() => setIsEncryptionModalOpen(true)}
+          title={isEncryptionEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
+          className="fixed bottom-4 right-4 p-2 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors z-10"
+        >
+          <Lock size={14} className={isEncryptionEnabled ? 'text-success' : undefined} />
+        </button>
+      )}
 
       <EncryptionModal
         isOpen={isEncryptionModalOpen}

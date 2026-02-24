@@ -491,5 +491,77 @@
     "properties": "propriedades",
     "events": "eventos",
     "hint": "O outro elemento será eliminado. Os seus links serão transferidos."
+  },
+  "encryption": {
+    "title": "Encriptação",
+    "statusActive": "Encriptação ativa",
+    "statusInactive": "Encriptação inativa",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Dados armazenados em texto claro",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Sessão bloqueada — recarregue o app para inserir a senha",
+    "enableButton": "Ativar encriptação",
+    "changePasswordButton": "Alterar senha",
+    "disableButton": "Desativar encriptação",
+    "lockSessionButton": "Bloquear sessão",
+    "securityNote": "A encriptação protege os seus dados contra o acesso aos ficheiros do navegador. A senha é irrecuperável — exporte os seus dados antes de ativar.",
+    "successEnabled": "Encriptação ativada. Os seus dados estão agora encriptados.",
+    "successDisabled": "Encriptação desativada. Recarregamento necessário.",
+    "successPasswordChanged": "Senha alterada.",
+    "errorMissingKey": "Chave de encriptação ausente",
+    "errorMetaNotFound": "Metadados não encontrados",
+    "errorActivation": "Erro durante a ativação",
+    "errorDeactivation": "Erro durante a desativação",
+    "errorPasswordChange": "Erro ao alterar a senha",
+    "enable": {
+      "warning": "Sem esta senha, os seus dados serão irrecuperáveis. Exporte um backup antes de continuar.",
+      "passwordLabel": "Senha (mínimo 8 caracteres)",
+      "confirmLabel": "Confirmar senha",
+      "mismatch": "As senhas não coincidem",
+      "cancel": "Cancelar",
+      "submit": "Ativar",
+      "busy": "A migrar…",
+      "riskTitle": "Leia antes de continuar",
+      "risks": [
+        "Senha esquecida = dados permanentemente inacessíveis, sem exceções",
+        "Sem recuperação possível — nem por nós, nem pelo navegador",
+        "Exporte as suas investigações como ZIP antes de ativar",
+        "A encriptação aplica-se ao IndexedDB e aos ficheiros anexados (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Os dados serão desencriptados e armazenados em texto claro. A aplicação será recarregada após a migração.",
+      "passwordLabel": "Confirme com a sua senha atual",
+      "cancel": "Cancelar",
+      "submit": "Desativar",
+      "busy": "A migrar…"
+    },
+    "changePassword": {
+      "oldLabel": "Senha atual",
+      "newLabel": "Nova senha",
+      "confirmLabel": "Confirmar nova senha",
+      "mismatch": "As senhas não coincidem",
+      "cancel": "Cancelar",
+      "submit": "Alterar",
+      "busy": "A atualizar…"
+    }
+  },
+  "passwordModal": {
+    "title": "Base de dados encriptada",
+    "subtitle": "Insira a senha para desbloquear os seus dados",
+    "passwordLabel": "Senha",
+    "placeholder": "Insira a sua senha",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
+    "unlock": "Desbloquear",
+    "verifying": "A verificar…",
+    "forgotHint": "Sem esta senha, os dados são irrecuperáveis.",
+    "forgotLink": "Esqueceu a senha?",
+    "resetWarning": "Eliminar os metadados de encriptação. Se os dados estiverem encriptados, ficarão permanentemente inacessíveis.",
+    "resetCancel": "Cancelar",
+    "resetConfirm": "Redefinir",
+    "resetBusy": "A redefinir…",
+    "storageReminder": "Dados armazenados apenas neste dispositivo · Nunca transmitidos"
   }
 }

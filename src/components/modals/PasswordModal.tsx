@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Lock, Eye, EyeOff, AlertTriangle, TriangleAlert } from 'lucide-react';
 
 interface PasswordModalProps {
@@ -18,6 +19,7 @@ interface PasswordModalProps {
 }
 
 export function PasswordModal({ onUnlock, error, isVerifying = false }: PasswordModalProps) {
+  const { t } = useTranslation('modals');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showReset, setShowReset] = useState(false);
@@ -78,10 +80,10 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
           <Lock size={16} className="text-text-secondary shrink-0" />
           <div>
             <h2 id="password-modal-title" className="text-sm font-semibold text-text-primary">
-              Base chiffrée
+              {t('passwordModal.title')}
             </h2>
             <p className="text-xs text-text-secondary mt-0.5">
-              Entrez le mot de passe pour déverrouiller vos données
+              {t('passwordModal.subtitle')}
             </p>
           </div>
         </div>
@@ -92,17 +94,18 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
             htmlFor="encryption-password"
             className="block text-xs font-medium text-text-primary mb-1.5"
           >
-            Mot de passe
+            {t('passwordModal.passwordLabel')}
           </label>
           <div className="relative">
             <input
               ref={inputRef}
               id="encryption-password"
+              data-testid="unlock-password-input"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Entrez votre mot de passe"
+              placeholder={t('passwordModal.placeholder')}
               disabled={isVerifying}
               className="w-full text-sm border border-border-default rounded px-3 py-2 pr-9 bg-bg-primary text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent disabled:bg-bg-secondary disabled:text-text-tertiary"
               autoComplete="current-password"
@@ -111,7 +114,7 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
               type="button"
               onClick={() => setShowPassword(v => !v)}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
-              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              aria-label={showPassword ? t('passwordModal.hidePassword') : t('passwordModal.showPassword')}
             >
               {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
@@ -128,23 +131,29 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
 
         {/* Bouton */}
         <button
+          data-testid="unlock-submit-button"
           onClick={handleSubmit}
           disabled={!password || isVerifying}
           className="w-full text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isVerifying ? 'Vérification…' : 'Déverrouiller'}
+          {isVerifying ? t('passwordModal.verifying') : t('passwordModal.unlock')}
         </button>
+
+        {/* Reminder stockage local */}
+        <p className="text-[11px] text-text-tertiary mt-3 text-center border-t border-border-default pt-3">
+          {t('passwordModal.storageReminder')}
+        </p>
 
         {/* Mot de passe oublié */}
         {!showReset ? (
           <p className="text-xs text-text-tertiary mt-3 text-center">
-            Sans ce mot de passe, les données sont irrécupérables.{' '}
+            {t('passwordModal.forgotHint')}{' '}
             <button
               type="button"
               onClick={() => setShowReset(true)}
               className="underline hover:text-text-secondary"
             >
-              Mot de passe oublié ?
+              {t('passwordModal.forgotLink')}
             </button>
           </p>
         ) : (
@@ -152,8 +161,7 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
             <div className="flex items-start gap-2 mb-2">
               <TriangleAlert size={13} className="text-error shrink-0 mt-0.5" />
               <p className="text-xs text-text-secondary">
-                Supprimer les métadonnées de chiffrement. Si les données sont chiffrées,{' '}
-                <span className="font-medium text-text-primary">elles seront définitivement inaccessibles.</span>
+                {t('passwordModal.resetWarning')}
               </p>
             </div>
             <div className="flex gap-2">
@@ -163,7 +171,7 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
                 disabled={isResetting}
                 className="flex-1 text-xs py-1.5 border border-border-default rounded text-text-secondary hover:text-text-primary disabled:opacity-40"
               >
-                Annuler
+                {t('passwordModal.resetCancel')}
               </button>
               <button
                 type="button"
@@ -171,7 +179,7 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
                 disabled={isResetting}
                 className="flex-1 text-xs py-1.5 border border-error/40 rounded text-error hover:bg-error/5 disabled:opacity-40"
               >
-                {isResetting ? 'Réinitialisation…' : 'Réinitialiser'}
+                {isResetting ? t('passwordModal.resetBusy') : t('passwordModal.resetConfirm')}
               </button>
             </div>
           </div>

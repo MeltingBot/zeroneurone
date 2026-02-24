@@ -273,11 +273,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             {/* ZIP export (standard + chiffré) */}
             <div className="rounded-lg border border-border-default overflow-hidden">
               <button
-                onClick={() => {
-                  if (showZipOptions) { setShowZipOptions(false); return; }
-                  handleExport('zip');
-                }}
-                onContextMenu={(e) => { e.preventDefault(); setShowZipOptions(v => !v); }}
+                onClick={() => setShowZipOptions(v => !v)}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
               >
@@ -290,67 +286,92 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                     {t(`export.formats.zipDesc`)}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setShowZipOptions(v => !v); }}
-                  className="p-1 rounded hover:bg-bg-tertiary"
-                  title="Exporter avec mot de passe"
-                >
-                  <Lock size={14} className="text-text-tertiary" />
-                </button>
+                <ChevronDown
+                  size={16}
+                  className={`text-text-tertiary transition-transform ${showZipOptions ? 'rotate-180' : ''}`}
+                />
               </button>
 
-              {/* Options chiffrement ZIP */}
               {showZipOptions && (
-                <div className="border-t border-border-default bg-bg-secondary p-3 space-y-2">
-                  <p className="text-xs text-text-secondary">
-                    Protéger l'export par un mot de passe — format <span className="font-mono">.znzip</span>
-                  </p>
-                  <div className="relative">
-                    <input
-                      ref={zipPasswordRef}
-                      type={showZipPassword ? 'text' : 'password'}
-                      value={zipPassword}
-                      onChange={e => setZipPassword(e.target.value)}
-                      placeholder="Mot de passe"
-                      className="w-full text-sm border border-border-default rounded px-3 py-1.5 pr-8 focus:outline-none focus:border-accent bg-bg-primary"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowZipPassword(v => !v)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
-                    >
-                      {showZipPassword ? <EyeOff size={13} /> : <Eye size={13} />}
-                    </button>
-                  </div>
-                  <input
-                    type={showZipPassword ? 'text' : 'password'}
-                    value={zipPasswordConfirm}
-                    onChange={e => setZipPasswordConfirm(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && zipPassword && zipPassword === zipPasswordConfirm) {
-                        handleExportEncryptedZip();
-                      }
-                    }}
-                    placeholder="Confirmer le mot de passe"
-                    className={`w-full text-sm border rounded px-3 py-1.5 focus:outline-none bg-bg-primary ${
-                      zipPasswordConfirm && zipPassword !== zipPasswordConfirm
-                        ? 'border-error'
-                        : 'border-border-default focus:border-accent'
-                    }`}
-                    autoComplete="new-password"
-                  />
-                  {zipPasswordConfirm && zipPassword !== zipPasswordConfirm && (
-                    <p className="text-xs text-error">Les mots de passe ne correspondent pas</p>
-                  )}
+                <div className="border-t border-border-default bg-bg-secondary p-2 space-y-1">
+                  {/* Standard ZIP */}
                   <button
-                    onClick={handleExportEncryptedZip}
-                    disabled={!zipPassword || zipPassword !== zipPasswordConfirm || isProcessing}
-                    className="w-full text-xs font-medium bg-accent text-white rounded px-3 py-1.5 hover:bg-blue-700 disabled:opacity-40"
+                    onClick={() => handleExport('zip')}
+                    disabled={isProcessing}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-bg-tertiary transition-colors disabled:opacity-50 text-left"
                   >
-                    {isProcessing ? 'Chiffrement…' : 'Exporter en .znzip'}
+                    <FileArchive size={14} className="text-text-secondary shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-text-primary">Standard</div>
+                      <div className="text-xs text-text-tertiary font-mono">.zip</div>
+                    </div>
                   </button>
+
+                  {/* Chiffré .znzip */}
+                  <div className="rounded border border-border-default overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setZipPassword('');
+                        setZipPasswordConfirm('');
+                        setTimeout(() => zipPasswordRef.current?.focus(), 50);
+                      }}
+                      disabled={isProcessing}
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-bg-tertiary transition-colors disabled:opacity-50 text-left"
+                    >
+                      <Lock size={14} className="text-text-secondary shrink-0" />
+                      <div>
+                        <div className="text-sm font-medium text-text-primary">Chiffré avec mot de passe</div>
+                        <div className="text-xs text-text-tertiary font-mono">.znzip</div>
+                      </div>
+                    </button>
+                    <div className="border-t border-border-default bg-bg-primary p-2 space-y-2">
+                      <div className="relative">
+                        <input
+                          ref={zipPasswordRef}
+                          type={showZipPassword ? 'text' : 'password'}
+                          value={zipPassword}
+                          onChange={e => setZipPassword(e.target.value)}
+                          placeholder="Mot de passe"
+                          className="w-full text-sm border border-border-default rounded px-3 py-1.5 pr-8 focus:outline-none focus:border-accent bg-bg-primary"
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowZipPassword(v => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
+                        >
+                          {showZipPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+                      </div>
+                      <input
+                        type={showZipPassword ? 'text' : 'password'}
+                        value={zipPasswordConfirm}
+                        onChange={e => setZipPasswordConfirm(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && zipPassword && zipPassword === zipPasswordConfirm) {
+                            handleExportEncryptedZip();
+                          }
+                        }}
+                        placeholder="Confirmer le mot de passe"
+                        className={`w-full text-sm border rounded px-3 py-1.5 focus:outline-none bg-bg-primary ${
+                          zipPasswordConfirm && zipPassword !== zipPasswordConfirm
+                            ? 'border-error'
+                            : 'border-border-default focus:border-accent'
+                        }`}
+                        autoComplete="new-password"
+                      />
+                      {zipPasswordConfirm && zipPassword !== zipPasswordConfirm && (
+                        <p className="text-xs text-error">Les mots de passe ne correspondent pas</p>
+                      )}
+                      <button
+                        onClick={handleExportEncryptedZip}
+                        disabled={!zipPassword || zipPassword !== zipPasswordConfirm || isProcessing}
+                        className="w-full text-xs font-medium bg-accent text-white rounded px-3 py-1.5 hover:bg-blue-700 disabled:opacity-40"
+                      >
+                        {isProcessing ? 'Chiffrement…' : 'Exporter en .znzip'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

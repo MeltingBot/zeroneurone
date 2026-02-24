@@ -8,6 +8,7 @@
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw, LockKeyhole } from 'lucide-react';
 import { Modal } from '../common';
 import { useEncryptionStore } from '../../stores/encryptionStore';
@@ -33,6 +34,7 @@ interface MigrationState {
 // ============================================================================
 
 export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
+  const { t } = useTranslation('modals');
   const { isEnabled, dek, setDek, setEnabled, lock: lockStore } = useEncryptionStore();
   const [view, setView] = useState<View>('main');
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Chiffrement"
+      title={t('encryption.title')}
       width="sm"
     >
       {view === 'main' && (
@@ -87,10 +89,10 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
               const newDek = await enableEncryption(password, (p) => setMigration(p));
               setDek(newDek);
               setEnabled(true);
-              setSuccess('Chiffrement activé. Vos données sont maintenant chiffrées.');
+              setSuccess(t('encryption.successEnabled'));
               setView('main');
             } catch (err) {
-              setError(err instanceof Error ? err.message : 'Erreur lors de l\'activation');
+              setError(err instanceof Error ? err.message : t('encryption.errorActivation'));
             } finally {
               setIsBusy(false);
               setMigration(null);
@@ -106,25 +108,25 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
           migration={migration}
           error={error}
           onConfirm={async (password) => {
-            if (!dek) { setError('Clé de chiffrement absente'); return; }
+            if (!dek) { setError(t('encryption.errorMissingKey')); return; }
             setIsBusy(true);
             setError(null);
             try {
               // Vérifier le mot de passe avant de désactiver
               const meta = await db._encryptionMeta.get('main');
-              if (!meta) throw new Error('Métadonnées introuvables');
+              if (!meta) throw new Error(t('encryption.errorMetaNotFound'));
               const { unlockEncryption } = await import('../../services/encryption/encryptionService');
               await unlockEncryption(meta, password); // lance si incorrect
 
               await disableEncryption(dek, (p) => setMigration(p));
               setEnabled(false);
-              lock();
-              setSuccess('Chiffrement désactivé. Rechargement requis.');
+              lockStore();
+              setSuccess(t('encryption.successDisabled'));
               setView('main');
               // Recharger pour rouvrir Dexie sans middleware
               setTimeout(() => window.location.reload(), 1500);
             } catch (err) {
-              setError(err instanceof Error ? err.message : 'Erreur lors de la désactivation');
+              setError(err instanceof Error ? err.message : t('encryption.errorDeactivation'));
             } finally {
               setIsBusy(false);
               setMigration(null);
@@ -143,13 +145,13 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
             setError(null);
             try {
               const meta = await db._encryptionMeta.get('main');
-              if (!meta) throw new Error('Métadonnées introuvables');
+              if (!meta) throw new Error(t('encryption.errorMetaNotFound'));
               const newMeta = await changePassword(meta, oldPassword, newPassword);
               await db._encryptionMeta.put(newMeta);
-              setSuccess('Mot de passe modifié.');
+              setSuccess(t('encryption.successPasswordChanged'));
               setView('main');
             } catch (err) {
-              setError(err instanceof Error ? err.message : 'Erreur lors du changement');
+              setError(err instanceof Error ? err.message : t('encryption.errorPasswordChange'));
             } finally {
               setIsBusy(false);
             }
@@ -184,10 +186,16 @@ function MainView({
   onChangePassword: () => void;
   onLockSession: () => void;
 }) {
+  const { t } = useTranslation('modals');
+
   return (
     <div className="space-y-4">
       {/* Status */}
-      <div className="flex items-center justify-between p-3 bg-bg-secondary rounded border border-border-default">
+      <div
+        data-testid="encryption-status"
+        data-encryption-enabled={isEnabled ? 'true' : 'false'}
+        className="flex items-center justify-between p-3 bg-bg-secondary rounded border border-border-default"
+      >
         <div className="flex items-center gap-2.5">
           {isEnabled
             ? <Shield size={16} className="text-success shrink-0" />
@@ -195,19 +203,19 @@ function MainView({
           }
           <div>
             <p className="text-sm font-medium text-text-primary">
-              {isEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
+              {isEnabled ? t('encryption.statusActive') : t('encryption.statusInactive')}
             </p>
             <p className="text-xs text-text-secondary">
               {isEnabled
-                ? 'AES-256-GCM · IndexedDB + OPFS'
-                : 'Données stockées en clair'}
+                ? t('encryption.statusDetail')
+                : t('encryption.statusClear')}
             </p>
           </div>
         </div>
         <span className={`text-xs font-medium px-2 py-0.5 rounded ${
           isEnabled ? 'bg-success/10 text-success' : 'bg-bg-tertiary text-text-tertiary'
         }`}>
-          {isEnabled ? 'ON' : 'OFF'}
+          {isEnabled ? t('encryption.on') : t('encryption.off')}
         </span>
       </div>
 
@@ -215,7 +223,7 @@ function MainView({
       {isEnabled && !hasDek && (
         <p className="text-xs text-warning flex items-center gap-1.5">
           <AlertTriangle size={12} />
-          Session verrouillée — rechargez l'app pour saisir le mot de passe
+          {t('encryption.sessionLocked')}
         </p>
       )}
 
@@ -237,29 +245,32 @@ function MainView({
       <div className="space-y-2">
         {!isEnabled ? (
           <button
+            data-testid="enable-encryption-button"
             onClick={onEnable}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary"
           >
             <Lock size={14} />
-            Activer le chiffrement
+            {t('encryption.enableButton')}
           </button>
         ) : (
           <>
             <button
+              data-testid="change-password-button"
               onClick={onChangePassword}
               disabled={!hasDek}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary disabled:opacity-40"
             >
               <RefreshCw size={14} />
-              Changer le mot de passe
+              {t('encryption.changePasswordButton')}
             </button>
             <button
+              data-testid="disable-encryption-button"
               onClick={onDisable}
               disabled={!hasDek}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-error border border-error/20 rounded hover:bg-error/5 disabled:opacity-40"
             >
               <Unlock size={14} />
-              Désactiver le chiffrement
+              {t('encryption.disableButton')}
             </button>
           </>
         )}
@@ -267,11 +278,12 @@ function MainView({
         {/* Lock session — distinct du disable chiffrement */}
         {isEnabled && hasDek && (
           <button
+            data-testid="lock-session-button"
             onClick={onLockSession}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary border border-border-default rounded hover:bg-bg-secondary mt-1"
           >
             <LockKeyhole size={14} />
-            Verrouiller la session
+            {t('encryption.lockSessionButton')}
             <span className="ml-auto text-xs text-text-tertiary">Alt+L</span>
           </button>
         )}
@@ -280,8 +292,7 @@ function MainView({
       {/* Note sécurité */}
       {!isEnabled && (
         <p className="text-xs text-text-tertiary border-t border-border-default pt-3">
-          Le chiffrement protège vos données contre l'accès aux fichiers du navigateur.
-          Le mot de passe est irrécupérable — exportez vos données avant d'activer.
+          {t('encryption.securityNote')}
         </p>
       )}
     </div>
@@ -301,6 +312,7 @@ function EnableView({
   onConfirm: (password: string) => Promise<void>;
   onBack: () => void;
 }) {
+  const { t } = useTranslation('modals');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -317,19 +329,30 @@ function EnableView({
 
   return (
     <div className="space-y-4">
-      <div className="p-3 bg-warning/5 border border-warning/20 rounded text-xs text-warning flex items-start gap-2">
-        <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-        <span>Sans ce mot de passe, vos données seront <strong>irrécupérables</strong>. Exportez une sauvegarde avant de continuer.</span>
+      <div className="p-3 bg-error/8 border border-error/25 rounded text-xs space-y-2">
+        <p className="font-semibold text-error flex items-center gap-1.5">
+          <AlertTriangle size={13} className="shrink-0" />
+          {t('encryption.enable.riskTitle')}
+        </p>
+        <ul className="space-y-1 pl-1">
+          {(t('encryption.enable.risks', { returnObjects: true }) as string[]).map((risk, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-text-secondary">
+              <span className="shrink-0 mt-0.5 text-error">·</span>
+              {risk}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="space-y-3">
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1.5">
-            Mot de passe (8 caractères minimum)
+            {t('encryption.enable.passwordLabel')}
           </label>
           <div className="relative">
             <input
               ref={inputRef}
+              data-testid="enable-password-input"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -350,9 +373,10 @@ function EnableView({
 
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1.5">
-            Confirmer le mot de passe
+            {t('encryption.enable.confirmLabel')}
           </label>
           <input
+            data-testid="enable-password-confirm-input"
             type={showPassword ? 'text' : 'password'}
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
@@ -363,7 +387,7 @@ function EnableView({
             }`}
             autoComplete="new-password"
           />
-          {mismatch && <p className="text-xs text-error mt-1">Les mots de passe ne correspondent pas</p>}
+          {mismatch && <p className="text-xs text-error mt-1">{t('encryption.enable.mismatch')}</p>}
         </div>
       </div>
 
@@ -396,14 +420,15 @@ function EnableView({
           disabled={isBusy}
           className="flex-1 text-sm text-text-secondary border border-border-default rounded px-4 py-2 hover:bg-bg-secondary disabled:opacity-40"
         >
-          Annuler
+          {t('encryption.enable.cancel')}
         </button>
         <button
+          data-testid="enable-confirm-button"
           onClick={() => onConfirm(password)}
           disabled={!canSubmit}
           className="flex-1 text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
         >
-          {isBusy ? 'Migration…' : 'Activer'}
+          {isBusy ? t('encryption.enable.busy') : t('encryption.enable.submit')}
         </button>
       </div>
     </div>
@@ -423,6 +448,7 @@ function DisableView({
   onConfirm: (password: string) => Promise<void>;
   onBack: () => void;
 }) {
+  const { t } = useTranslation('modals');
   const [password, setPassword] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -432,15 +458,16 @@ function DisableView({
     <div className="space-y-4">
       <div className="p-3 bg-error/5 border border-error/20 rounded text-xs text-error flex items-start gap-2">
         <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-        <span>Les données seront déchiffrées et stockées en clair. L'application se rechargera après la migration.</span>
+        <span>{t('encryption.disable.warning')}</span>
       </div>
 
       <div>
         <label className="block text-xs font-medium text-text-primary mb-1.5">
-          Confirmez avec votre mot de passe actuel
+          {t('encryption.disable.passwordLabel')}
         </label>
         <input
           ref={inputRef}
+          data-testid="disable-password-input"
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
@@ -479,14 +506,15 @@ function DisableView({
           disabled={isBusy}
           className="flex-1 text-sm text-text-secondary border border-border-default rounded px-4 py-2 hover:bg-bg-secondary disabled:opacity-40"
         >
-          Annuler
+          {t('encryption.disable.cancel')}
         </button>
         <button
+          data-testid="disable-confirm-button"
           onClick={() => onConfirm(password)}
           disabled={!password || isBusy}
           className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-red-700 disabled:opacity-50"
         >
-          {isBusy ? 'Migration…' : 'Désactiver'}
+          {isBusy ? t('encryption.disable.busy') : t('encryption.disable.submit')}
         </button>
       </div>
     </div>
@@ -504,6 +532,7 @@ function ChangePasswordView({
   onConfirm: (oldPassword: string, newPassword: string) => Promise<void>;
   onBack: () => void;
 }) {
+  const { t } = useTranslation('modals');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNew, setConfirmNew] = useState('');
@@ -520,10 +549,11 @@ function ChangePasswordView({
       <div className="space-y-3">
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1.5">
-            Mot de passe actuel
+            {t('encryption.changePassword.oldLabel')}
           </label>
           <input
             ref={inputRef}
+            data-testid="change-old-password-input"
             type={showPassword ? 'text' : 'password'}
             value={oldPassword}
             onChange={e => setOldPassword(e.target.value)}
@@ -535,10 +565,11 @@ function ChangePasswordView({
 
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1.5">
-            Nouveau mot de passe
+            {t('encryption.changePassword.newLabel')}
           </label>
           <div className="relative">
             <input
+              data-testid="change-new-password-input"
               type={showPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
@@ -558,9 +589,10 @@ function ChangePasswordView({
 
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1.5">
-            Confirmer le nouveau mot de passe
+            {t('encryption.changePassword.confirmLabel')}
           </label>
           <input
+            data-testid="change-new-password-confirm-input"
             type={showPassword ? 'text' : 'password'}
             value={confirmNew}
             onChange={e => setConfirmNew(e.target.value)}
@@ -571,7 +603,7 @@ function ChangePasswordView({
             }`}
             autoComplete="new-password"
           />
-          {mismatch && <p className="text-xs text-error mt-1">Les mots de passe ne correspondent pas</p>}
+          {mismatch && <p className="text-xs text-error mt-1">{t('encryption.changePassword.mismatch')}</p>}
         </div>
       </div>
 
@@ -588,14 +620,15 @@ function ChangePasswordView({
           disabled={isBusy}
           className="flex-1 text-sm text-text-secondary border border-border-default rounded px-4 py-2 hover:bg-bg-secondary disabled:opacity-40"
         >
-          Annuler
+          {t('encryption.changePassword.cancel')}
         </button>
         <button
+          data-testid="change-password-confirm-button"
           onClick={() => onConfirm(oldPassword, newPassword)}
           disabled={!canSubmit}
           className="flex-1 text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
         >
-          {isBusy ? 'Modification…' : 'Changer'}
+          {isBusy ? t('encryption.changePassword.busy') : t('encryption.changePassword.submit')}
         </button>
       </div>
     </div>

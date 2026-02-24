@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "Dades 100% locals",
-          "description": "Les vostres dades romanen a la vostra màquina, mai es transmeten"
+          "description": "Les vostres dades romanen a la vostra màquina, mai es transmeten i s'encripten en repòs"
         },
         "collab": {
           "title": "Col·laboració segura en temps real",

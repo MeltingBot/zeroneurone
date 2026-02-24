@@ -21,3 +21,4 @@ Explore the main features of ZeroNeurone.
 - [Report]({{< relref "report" >}}) — Markdown writing with references
 - [Synthesis]({{< relref "synthesis" >}}) — Automatic report generation
 - [Collaboration]({{< relref "collaboration" >}}) — Real-time work
+- [At-Rest Encryption]({{< relref "encryption" >}}) — Protect your data with a password

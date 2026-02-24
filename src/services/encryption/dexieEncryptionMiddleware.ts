@@ -35,7 +35,10 @@ function encryptValue(value: unknown, key: Uint8Array): string {
   combined.set(encrypted, nonce.length);
 
   // Encoder en base64 pour le stockage IndexedDB
-  return btoa(String.fromCharCode(...combined));
+  // Note : String.fromCharCode(...combined) planterait (stack overflow) sur de grands payloads.
+  let binary = '';
+  for (let i = 0; i < combined.length; i++) binary += String.fromCharCode(combined[i]);
+  return btoa(binary);
 }
 
 /**
@@ -118,7 +121,7 @@ function encryptObject(
   return result;
 }
 
-function decryptObject(
+export function decryptObject(
   obj: Record<string, unknown>,
   key: Uint8Array,
 ): Record<string, unknown> {
@@ -271,6 +274,16 @@ export function createEncryptionMiddleware(
 // ============================================================================
 // TABLES À CHIFFRER (configuration par défaut)
 // ============================================================================
+
+/**
+ * Crée un middleware de chiffrement destiné à être appliqué sur une instance
+ * Dexie externe (ex. un plugin). Même algorithme que createEncryptionMiddleware,
+ * avec une liste de tables explicite.
+ *
+ * La DEK ne transite pas en clair — elle est encapsulée dans la closure du
+ * middleware retourné.
+ */
+export { createEncryptionMiddleware as createEncryptionMiddlewareForDexie };
 
 /**
  * Tables qui contiennent des données à caractère personnel.

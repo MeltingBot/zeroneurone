@@ -22,6 +22,7 @@ import { initializeEncryption } from './encryptionService';
 import { migrateToEncrypted, migrateToPlaintext } from './encryptedIndexeddbPersistence';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './opfsEncryption';
 import { syncService } from '../syncService';
+import { runBeforeDisableHooks } from '../../plugins/pluginAPI';
 
 export interface MigrationProgress {
   phase: string;
@@ -314,7 +315,12 @@ export async function disableEncryption(
 
   onProgress({ phase: 'Terminé — redémarrage', current: 5, total: 5 });
 
-  // 5. Recharger : au prochain démarrage, _encryptionMeta absent →
-  //    isReady = true immédiatement → Dexie ouvre sans middleware ✅
+  // Donner aux plugins la chance de déchiffrer leurs propres données avant reload.
+  // Promise.allSettled dans runBeforeDisableHooks garantit qu'un plugin qui plante
+  // ne bloque pas le redémarrage.
+  await runBeforeDisableHooks(dek);
+
+  // Recharger : au prochain démarrage, _encryptionMeta absent →
+  // isReady = true immédiatement → Dexie ouvre sans middleware ✅
   window.location.reload();
 }
