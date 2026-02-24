@@ -95,6 +95,15 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Grille
 - Dispersion
 
+### Chiffrement at-rest
+- Chiffrement de toutes les donnees locales (IndexedDB + fichiers OPFS)
+- AES-256-GCM pour les fichiers, XSalsa20-Poly1305 pour les enregistrements
+- Architecture DEK/KEK avec derivation PBKDF2-SHA256 (600k iterations)
+- Verrouillage de session (`Alt+L`) sans fermer le navigateur
+- Export ZIP chiffre avec mot de passe optionnel
+- Mot de passe irrecuperable — aucune porte derobee
+- [Documentation technique](docs/encryption-fr.md) ([EN](docs/encryption-en.md))
+
 ### PWA & Hors-ligne
 - Installation sur mobile et desktop
 - Fonctionne 100% hors-ligne
@@ -134,7 +143,8 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 | Analyse | Graphology |
 | Recherche | MiniSearch |
 | Sync | Yjs + y-websocket + y-indexeddb |
-| Crypto | Web Crypto API (AES-256-GCM) |
+| Crypto collab | Web Crypto API (AES-256-GCM) |
+| Crypto at-rest | tweetnacl (XSalsa20-Poly1305) + Web Crypto (AES-256-GCM) |
 | PWA | vite-plugin-pwa |
 | Style | Tailwind CSS |
 | Tests E2E | Playwright |
@@ -225,7 +235,8 @@ src/
 │   └── repositories/           # CRUD par entite
 ├── services/
 │   ├── syncService.ts          # Gestion Y.Doc et providers
-│   ├── cryptoService.ts        # Chiffrement E2E
+│   ├── cryptoService.ts        # Chiffrement E2E (collaboration)
+│   ├── encryption/             # Chiffrement at-rest (DEK/KEK, middleware Dexie, OPFS)
 │   ├── searchService.ts        # Integration MiniSearch
 │   ├── insightsService.ts      # Analyse Graphology (Web Worker)
 │   ├── fileService.ts          # Gestion OPFS
@@ -242,6 +253,7 @@ src/
 - **Metadonnees** (elements, liens, vues) : IndexedDB via Dexie
 - **Fichiers binaires** (assets) : OPFS avec deduplication SHA-256
 - **Synchronisation** : Y.Doc avec persistence IndexedDB locale
+- **Chiffrement at-rest** : Middleware Dexie (XSalsa20-Poly1305) + OPFS (AES-256-GCM), opt-in par mot de passe
 - **Index de recherche** : MiniSearch, reconstruit au chargement
 
 ### Securite Collaboration
@@ -409,6 +421,16 @@ Ou deployer votre propre serveur y-websocket.
 - [x] Table Dexie generique `pluginData` pour persistence
 - [x] Zero impact si aucun plugin enregistre
 - [x] [Documentation developpeur](docs/plugin-development-en.md) ([FR](docs/plugin-development-fr.md))
+
+### v2.17 — Chiffrement at-rest ✓
+- [x] Chiffrement IndexedDB via middleware Dexie DBCore (XSalsa20-Poly1305)
+- [x] Chiffrement OPFS des fichiers joints (AES-256-GCM)
+- [x] Architecture DEK/KEK avec PBKDF2-SHA256 (600k iterations)
+- [x] Verrouillage de session (Alt+L)
+- [x] Changement de mot de passe sans re-chiffrer les donnees
+- [x] Export ZIP chiffre (.znzip)
+- [x] API de chiffrement pour plugins externes
+- [x] i18n complet (11 langues) avec avertissements de risque
 
 ### Idees futures
 - [ ] Theming personnalisable
