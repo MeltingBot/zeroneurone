@@ -8,7 +8,7 @@
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
-import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw } from 'lucide-react';
+import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw, LockKeyhole } from 'lucide-react';
 import { Modal } from '../common';
 import { useEncryptionStore } from '../../stores/encryptionStore';
 import { enableEncryption, disableEncryption } from '../../services/encryption/migrationService';
@@ -33,7 +33,7 @@ interface MigrationState {
 // ============================================================================
 
 export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
-  const { isEnabled, dek, setDek, setEnabled, lock } = useEncryptionStore();
+  const { isEnabled, dek, setDek, setEnabled, lock: lockStore } = useEncryptionStore();
   const [view, setView] = useState<View>('main');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -71,6 +71,7 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
           onEnable={() => { setError(null); setSuccess(null); setView('enable'); }}
           onDisable={() => { setError(null); setSuccess(null); setView('disable'); }}
           onChangePassword={() => { setError(null); setSuccess(null); setView('change-password'); }}
+          onLockSession={() => { lockStore(); onClose(); }}
         />
       )}
 
@@ -172,6 +173,7 @@ function MainView({
   onEnable,
   onDisable,
   onChangePassword,
+  onLockSession,
 }: {
   isEnabled: boolean;
   hasDek: boolean;
@@ -180,6 +182,7 @@ function MainView({
   onEnable: () => void;
   onDisable: () => void;
   onChangePassword: () => void;
+  onLockSession: () => void;
 }) {
   return (
     <div className="space-y-4">
@@ -268,6 +271,20 @@ function MainView({
               <span className="text-xs text-error/60">→</span>
             </button>
           </>
+        )}
+
+        {/* Lock session — distinct du disable chiffrement */}
+        {isEnabled && hasDek && (
+          <button
+            onClick={onLockSession}
+            className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-text-secondary border border-border-default rounded hover:bg-bg-secondary mt-1"
+          >
+            <span className="flex items-center gap-2">
+              <LockKeyhole size={14} />
+              Verrouiller la session
+            </span>
+            <span className="text-xs text-text-tertiary">Alt+L</span>
+          </button>
         )}
       </div>
 

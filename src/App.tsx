@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage, InvestigationPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
@@ -107,11 +107,14 @@ function GlobalErrorFallback() {
  * Si non, laisse passer directement.
  */
 function EncryptionGate({ children }: { children: React.ReactNode }) {
-  const { isLocked, setDek, setEnabled, setError, setReady, error } = useEncryptionStore();
+  const { isLocked, setDek, setEnabled, setError, setReady, error, isEnabled } = useEncryptionStore();
   const [isVerifying, setIsVerifying] = useState(false);
   const [encryptionChecked, setEncryptionChecked] = useState(false);
   // Conserve les métadonnées lues en raw IDB pour le déverrouillage
   const [rawMeta, setRawMeta] = useState<EncryptionMeta | null>(null);
+  // Vrai si le middleware Dexie a déjà été installé (évite le double-stack
+  // au re-unlock après un lock session).
+  const middlewareInstalled = useRef(false);
 
   useEffect(() => {
     // Lire _encryptionMeta via raw IndexedDB — Dexie n'est PAS encore ouverte.
@@ -135,6 +138,17 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
     });
   }, [setEnabled, setReady]);
 
+  // Raccourci Alt+L : verrouille la session si chiffrement actif et déverrouillé
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'l' && isEnabled && !isLocked) {
+        useEncryptionStore.getState().lock();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEnabled, isLocked]);
+
   const handleUnlock = async (password: string) => {
     setIsVerifying(true);
     setError(null);
@@ -149,9 +163,12 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
       const dek = await unlockEncryption(meta, password);
 
       // Installer le middleware AVANT la première opération Dexie.
-      // db.close() dans applyEncryption est un no-op ici car Dexie n'a pas
-      // encore été ouverte (aucune opération n'a eu lieu depuis le démarrage).
-      db.applyEncryption(dek);
+      // Si le middleware est déjà installé (re-unlock après lock session),
+      // on ne rappelle PAS applyEncryption pour éviter le double-stack.
+      if (!middlewareInstalled.current) {
+        db.applyEncryption(dek);
+        middlewareInstalled.current = true;
+      }
 
       // Configurer syncService pour les futures bases y-indexeddb
       syncService.setAtRestDek(dek);
