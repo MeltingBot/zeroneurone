@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
+import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { importService, type ImportResult } from '../../services/importService';
+import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { exportService } from '../../services/exportService';
 import { useInvestigationStore, useUIStore, useViewStore, toast } from '../../stores';
 
@@ -20,6 +20,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [createMissingElements, setCreateMissingElements] = useState(true);
   const [targetInvestigationId, setTargetInvestigationId] = useState<string>('new');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Déchiffrement .znzip
+  const [pendingEncryptedFile, setPendingEncryptedFile] = useState<File | null>(null);
+  const [znzipPassword, setZnzipPassword] = useState('');
+  const [znzipError, setZnzipError] = useState<string | null>(null);
+  const [showZnzipPassword, setShowZnzipPassword] = useState(false);
 
   const { investigations, createInvestigation, currentInvestigation } = useInvestigationStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
@@ -28,10 +33,45 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   // Check if we're currently on an investigation page
   const isOnInvestigationPage = location.pathname.startsWith('/investigation/');
 
+  const handleDecryptAndImport = useCallback(async (encFile: File, password: string) => {
+    setZnzipError(null);
+    setIsProcessing(true);
+    try {
+      const decryptedFile = await decryptZipFile(encFile, password);
+      setPendingEncryptedFile(null);
+      setZnzipPassword('');
+      // Simuler un FileList pour réutiliser handleFileSelect
+      await processFile(decryptedFile);
+    } catch (err) {
+      setZnzipError(err instanceof Error ? err.message : 'Mot de passe incorrect');
+    } finally {
+      setIsProcessing(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetInvestigationId]);
+
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Détection .znzip avant tout traitement
+    if (file.name.endsWith('.znzip') || await isEncryptedZipFile(file)) {
+      setPendingEncryptedFile(file);
+      setZnzipPassword('');
+      setZnzipError(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setIsProcessing(true);
+    setImportResult(null);
+    await processFile(file);
+    setIsProcessing(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetInvestigationId]);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const processFile = useCallback(async (file: File) => {
     setIsProcessing(true);
     setImportResult(null);
 
@@ -227,11 +267,61 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"
           />
+
+          {/* Déchiffrement .znzip */}
+          {pendingEncryptedFile && (
+            <div className="p-3 border border-border-default rounded bg-bg-secondary space-y-2">
+              <p className="text-xs text-text-secondary">
+                <span className="font-mono">{pendingEncryptedFile.name}</span> est chiffré. Entrez le mot de passe pour importer.
+              </p>
+              <div className="relative">
+                <input
+                  type={showZnzipPassword ? 'text' : 'password'}
+                  value={znzipPassword}
+                  onChange={e => setZnzipPassword(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && znzipPassword && pendingEncryptedFile) {
+                      handleDecryptAndImport(pendingEncryptedFile, znzipPassword);
+                    }
+                  }}
+                  placeholder="Mot de passe"
+                  autoFocus
+                  className="w-full text-sm border border-border-default rounded px-3 py-1.5 pr-8 focus:outline-none focus:border-accent bg-bg-primary"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowZnzipPassword(v => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
+                >
+                  {showZnzipPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+              {znzipError && (
+                <p className="text-xs text-error">{znzipError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setPendingEncryptedFile(null); setZnzipPassword(''); setZnzipError(null); }}
+                  className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => pendingEncryptedFile && handleDecryptAndImport(pendingEncryptedFile, znzipPassword)}
+                  disabled={!znzipPassword || isProcessing}
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-blue-700 disabled:opacity-40"
+                >
+                  {isProcessing ? 'Déchiffrement…' : 'Importer'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Import button */}
           <button

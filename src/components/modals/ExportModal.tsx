@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
@@ -32,6 +32,11 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPngScale, _setSelectedPngScale] = useState(2);
   const [showPngOptions, setShowPngOptions] = useState(false);
+  const [showZipOptions, setShowZipOptions] = useState(false);
+  const [zipPassword, setZipPassword] = useState('');
+  const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
+  const [showZipPassword, setShowZipPassword] = useState(false);
+  const zipPasswordRef = useRef<HTMLInputElement>(null);
 
   const { currentInvestigation, elements, links } = useInvestigationStore();
 
@@ -61,6 +66,41 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       setIsProcessing(false);
     }
   }, [currentInvestigation, elements, links, onClose, t]);
+
+  const handleExportEncryptedZip = useCallback(async () => {
+    if (!currentInvestigation || zipPassword.length < 1) return;
+    setIsProcessing(true);
+    try {
+      const assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
+      const report = await reportRepository.getByInvestigationWithYDoc(currentInvestigation.id);
+      const tabs = await tabRepository.getByInvestigation(currentInvestigation.id);
+
+      const encBlob = await exportService.exportToEncryptedZip(
+        zipPassword,
+        currentInvestigation,
+        elements,
+        links,
+        assets,
+        report,
+        tabs
+      );
+
+      const now = new Date();
+      const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
+      const baseName = `${currentInvestigation.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+      exportService.downloadBlob(encBlob, `${baseName}.znzip`);
+
+      toast.success('Export chiffré téléchargé (.znzip)');
+      setZipPassword('');
+      setZipPasswordConfirm('');
+      setShowZipOptions(false);
+      onClose();
+    } catch {
+      toast.error(t('export.error'));
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [currentInvestigation, elements, links, zipPassword, onClose, t]);
 
   const handleExportPng = useCallback(async (scale: number) => {
     if (!currentInvestigation) return;
@@ -230,8 +270,93 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
               </div>
             </button>
 
-            {/* Other export formats */}
-            {exportFormats.map((format) => {
+            {/* ZIP export (standard + chiffré) */}
+            <div className="rounded-lg border border-border-default overflow-hidden">
+              <button
+                onClick={() => {
+                  if (showZipOptions) { setShowZipOptions(false); return; }
+                  handleExport('zip');
+                }}
+                onContextMenu={(e) => { e.preventDefault(); setShowZipOptions(v => !v); }}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
+              >
+                <FileArchive size={20} className="text-text-secondary" />
+                <div className="text-left flex-1">
+                  <div className="text-sm font-medium text-text-primary">
+                    {t(`export.formats.zip`)}
+                  </div>
+                  <div className="text-xs text-text-tertiary">
+                    {t(`export.formats.zipDesc`)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setShowZipOptions(v => !v); }}
+                  className="p-1 rounded hover:bg-bg-tertiary"
+                  title="Exporter avec mot de passe"
+                >
+                  <Lock size={14} className="text-text-tertiary" />
+                </button>
+              </button>
+
+              {/* Options chiffrement ZIP */}
+              {showZipOptions && (
+                <div className="border-t border-border-default bg-bg-secondary p-3 space-y-2">
+                  <p className="text-xs text-text-secondary">
+                    Protéger l'export par un mot de passe — format <span className="font-mono">.znzip</span>
+                  </p>
+                  <div className="relative">
+                    <input
+                      ref={zipPasswordRef}
+                      type={showZipPassword ? 'text' : 'password'}
+                      value={zipPassword}
+                      onChange={e => setZipPassword(e.target.value)}
+                      placeholder="Mot de passe"
+                      className="w-full text-sm border border-border-default rounded px-3 py-1.5 pr-8 focus:outline-none focus:border-accent bg-bg-primary"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowZipPassword(v => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
+                    >
+                      {showZipPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                  </div>
+                  <input
+                    type={showZipPassword ? 'text' : 'password'}
+                    value={zipPasswordConfirm}
+                    onChange={e => setZipPasswordConfirm(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && zipPassword && zipPassword === zipPasswordConfirm) {
+                        handleExportEncryptedZip();
+                      }
+                    }}
+                    placeholder="Confirmer le mot de passe"
+                    className={`w-full text-sm border rounded px-3 py-1.5 focus:outline-none bg-bg-primary ${
+                      zipPasswordConfirm && zipPassword !== zipPasswordConfirm
+                        ? 'border-error'
+                        : 'border-border-default focus:border-accent'
+                    }`}
+                    autoComplete="new-password"
+                  />
+                  {zipPasswordConfirm && zipPassword !== zipPasswordConfirm && (
+                    <p className="text-xs text-error">Les mots de passe ne correspondent pas</p>
+                  )}
+                  <button
+                    onClick={handleExportEncryptedZip}
+                    disabled={!zipPassword || zipPassword !== zipPasswordConfirm || isProcessing}
+                    className="w-full text-xs font-medium bg-accent text-white rounded px-3 py-1.5 hover:bg-blue-700 disabled:opacity-40"
+                  >
+                    {isProcessing ? 'Chiffrement…' : 'Exporter en .znzip'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Other export formats (sans ZIP) */}
+            {exportFormats.filter(f => f.format !== 'zip').map((format) => {
               const Icon = format.icon;
               return (
                 <button

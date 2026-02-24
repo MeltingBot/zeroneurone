@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { db } from '../db/database';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { generateUUID } from '../utils';
+import { decryptZip, isEncryptedZipBuffer } from './encryption/zipEncryption';
 import type {
   InvestigationId,
   Element,
@@ -2149,3 +2150,21 @@ class ImportService {
 }
 
 export const importService = new ImportService();
+
+/** Retourne true si le File est un .znzip (archive chiffrée) */
+export async function isEncryptedZipFile(file: File): Promise<boolean> {
+  const slice = await file.slice(0, 4).arrayBuffer();
+  return isEncryptedZipBuffer(slice);
+}
+
+/**
+ * Déchiffre un fichier .znzip avec le mot de passe fourni.
+ * Retourne un File .zip standard prêt à être passé à importService.importFromZip().
+ * Lance si le mot de passe est incorrect.
+ */
+export async function decryptZipFile(file: File, password: string): Promise<File> {
+  const buf = await file.arrayBuffer();
+  const plainBuf = await decryptZip(buf, password);
+  const zipName = file.name.replace(/\.znzip$/i, '.zip');
+  return new File([plainBuf], zipName, { type: 'application/zip' });
+}
