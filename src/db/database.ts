@@ -17,6 +17,8 @@ import type {
   CanvasTab,
   TabId,
 } from '../types';
+import type { EncryptionMeta } from '../services/encryption/encryptionService';
+import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../services/encryption/dexieEncryptionMiddleware';
 
 export interface PluginDataRow {
   pluginId: string;
@@ -35,6 +37,7 @@ class InvestigationDatabase extends Dexie {
   tagSets!: Table<TagSet, TagSetId>;
   canvasTabs!: Table<CanvasTab, TabId>;
   pluginData!: Table<PluginDataRow, string>;
+  _encryptionMeta!: Table<EncryptionMeta, 'main'>;
 
   constructor() {
     super('zeroneurone');
@@ -105,6 +108,32 @@ class InvestigationDatabase extends Dexie {
       canvasTabs: 'id, investigationId, order',
       pluginData: '[pluginId+investigationId+key], pluginId, investigationId',
     });
+
+    // Version 7: Add _encryptionMeta table for at-rest encryption support
+    // Also remove 'name' from investigations index (will be encrypted)
+    this.version(7).stores({
+      investigations: 'id, createdAt, updatedAt, isFavorite',
+      elements: 'id, investigationId, parentGroupId, createdAt, updatedAt',
+      links: 'id, investigationId, fromId, toId, createdAt, updatedAt',
+      assets: 'id, investigationId, hash, createdAt, [investigationId+hash]',
+      views: 'id, investigationId, createdAt',
+      reports: 'id, investigationId, createdAt, updatedAt',
+      tagSets: 'id',
+      canvasTabs: 'id, investigationId, order',
+      pluginData: '[pluginId+investigationId+key], pluginId, investigationId',
+      _encryptionMeta: 'id',
+    });
+  }
+
+  /**
+   * Active le chiffrement at-rest avec la DEK fournie.
+   * Doit être appelé avant toute opération sur la base.
+   * Si la DEK est null, le middleware n'est pas installé (mode non chiffré).
+   */
+  applyEncryption(dek: Uint8Array | null): void {
+    if (dek) {
+      this.use(createEncryptionMiddleware(dek, DEFAULT_ENCRYPTED_TABLES));
+    }
   }
 }
 

@@ -55,6 +55,7 @@
     "react-router-dom": "^7.12.0",
     "read-gedcom": "^0.3.2",
     "remark-gfm": "^4.0.1",
+    "tweetnacl": "^1.0.3",
     "vis-data": "^8.0.3",
     "y-indexeddb": "^9.0.12",
     "y-websocket": "^3.0.0",
