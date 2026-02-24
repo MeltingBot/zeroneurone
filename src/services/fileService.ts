@@ -3,6 +3,8 @@ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { db } from '../db/database';
 import { generateUUID, bufferToHex, getExtension } from '../utils';
 import type { Asset, AssetId, InvestigationId } from '../types';
+import { useEncryptionStore } from '../stores/encryptionStore';
+import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
 
 // Configure pdf.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -98,6 +100,11 @@ export class FileValidationError extends Error {
 class FileService {
   private root: FileSystemDirectoryHandle | null = null;
   private initialized = false;
+
+  /** Retourne la DEK si le chiffrement est actif, null sinon */
+  private getDek(): Uint8Array | null {
+    return useEncryptionStore.getState().dek;
+  }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -210,10 +217,14 @@ class FileService {
     const extension = getExtension(file.name);
     const filename = `${hash}.${extension}`;
 
-    // 4. Write file
+    // 4. Write file (chiffré si DEK disponible)
+    const dek = this.getDek();
+    const bufferToWrite = dek
+      ? await encryptOpfsBuffer(dek, arrayBuffer)
+      : arrayBuffer;
     const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
     const writable = await fileHandle.createWritable();
-    await writable.write(arrayBuffer);
+    await writable.write(bufferToWrite);
     await writable.close();
 
     // 5. Generate thumbnail if image or PDF
@@ -251,7 +262,19 @@ class FileService {
     }
 
     const fileHandle = await handle.getFileHandle(pathParts.at(-1)!);
-    return fileHandle.getFile();
+    const rawFile = await fileHandle.getFile();
+
+    // Déchiffrer si le fichier est chiffré (magic header présent)
+    const dek = this.getDek();
+    if (dek) {
+      const rawBuf = await rawFile.arrayBuffer();
+      if (isOpfsEncrypted(rawBuf)) {
+        const plainBuf = await decryptOpfsBuffer(dek, rawBuf);
+        return new File([plainBuf], rawFile.name, { type: asset.mimeType });
+      }
+    }
+
+    return rawFile;
   }
 
   async getAssetUrl(asset: Asset): Promise<string> {
@@ -341,14 +364,18 @@ class FileService {
     }
     const arrayBuffer = bytes.buffer;
 
-    // Create OPFS path and write file
+    // Create OPFS path and write file (chiffré si DEK disponible)
     const dirHandle = await this.getAssetDirectory(assetData.investigationId);
     const extension = getExtension(assetData.filename);
     const filename = `${assetData.hash}.${extension}`;
 
+    const dek2 = this.getDek();
+    const bufToWrite = dek2
+      ? await encryptOpfsBuffer(dek2, arrayBuffer)
+      : arrayBuffer;
     const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
     const writable = await fileHandle.createWritable();
-    await writable.write(arrayBuffer);
+    await writable.write(bufToWrite);
     await writable.close();
 
     // Create Asset entry

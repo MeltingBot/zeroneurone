@@ -20,6 +20,7 @@ import { db } from '../../db/database';
 import { DEFAULT_ENCRYPTED_TABLES } from './dexieEncryptionMiddleware';
 import { initializeEncryption } from './encryptionService';
 import { migrateToEncrypted, migrateToPlaintext } from './encryptedIndexeddbPersistence';
+import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './opfsEncryption';
 import { syncService } from '../syncService';
 
 export interface MigrationProgress {
@@ -64,6 +65,83 @@ async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<vo
 }
 
 // ============================================================================
+// MIGRATION OPFS : chiffrement/déchiffrement des fichiers assets
+// ============================================================================
+
+/**
+ * Chiffre tous les fichiers OPFS des assets Dexie.
+ * Lit chaque fichier, le chiffre si ce n'est pas déjà fait, réécrit.
+ */
+async function migrateOpfsToEncrypted(
+  dek: Uint8Array,
+  onProgress: ProgressCallback
+): Promise<void> {
+  const assets = await db.assets.toArray();
+  if (assets.length === 0) return;
+
+  const root = await navigator.storage.getDirectory();
+
+  for (let i = 0; i < assets.length; i++) {
+    const asset = assets[i];
+    onProgress({ phase: `OPFS asset ${i + 1}/${assets.length}`, current: i, total: assets.length });
+    try {
+      const pathParts = asset.opfsPath.split('/');
+      let dir: FileSystemDirectoryHandle = root;
+      for (const part of pathParts.slice(0, -1)) {
+        dir = await dir.getDirectoryHandle(part);
+      }
+      const fileHandle = await dir.getFileHandle(pathParts.at(-1)!);
+      const rawBuf = await (await fileHandle.getFile()).arrayBuffer();
+
+      if (isOpfsEncrypted(rawBuf)) continue; // déjà chiffré
+
+      const encrypted = await encryptOpfsBuffer(dek, rawBuf);
+      const writable = await fileHandle.createWritable();
+      await writable.write(encrypted);
+      await writable.close();
+    } catch (err) {
+      console.warn(`[migrationService] Erreur OPFS ${asset.opfsPath}:`, err);
+    }
+  }
+}
+
+/**
+ * Déchiffre tous les fichiers OPFS des assets Dexie.
+ */
+async function migrateOpfsToPlaintext(
+  dek: Uint8Array,
+  onProgress: ProgressCallback
+): Promise<void> {
+  const assets = await db.assets.toArray();
+  if (assets.length === 0) return;
+
+  const root = await navigator.storage.getDirectory();
+
+  for (let i = 0; i < assets.length; i++) {
+    const asset = assets[i];
+    onProgress({ phase: `OPFS asset ${i + 1}/${assets.length}`, current: i, total: assets.length });
+    try {
+      const pathParts = asset.opfsPath.split('/');
+      let dir: FileSystemDirectoryHandle = root;
+      for (const part of pathParts.slice(0, -1)) {
+        dir = await dir.getDirectoryHandle(part);
+      }
+      const fileHandle = await dir.getFileHandle(pathParts.at(-1)!);
+      const rawBuf = await (await fileHandle.getFile()).arrayBuffer();
+
+      if (!isOpfsEncrypted(rawBuf)) continue; // déjà en clair
+
+      const plainBuf = await decryptOpfsBuffer(dek, rawBuf);
+      const writable = await fileHandle.createWritable();
+      await writable.write(plainBuf);
+      await writable.close();
+    } catch (err) {
+      console.warn(`[migrationService] Erreur OPFS ${asset.opfsPath}:`, err);
+    }
+  }
+}
+
+// ============================================================================
 // API PUBLIQUE
 // ============================================================================
 
@@ -81,7 +159,7 @@ export async function enableEncryption(
   password: string,
   onProgress: ProgressCallback = () => {}
 ): Promise<Uint8Array> {
-  onProgress({ phase: 'Génération des clés', current: 0, total: 4 });
+  onProgress({ phase: 'Génération des clés', current: 0, total: 5 });
 
   // 1. Générer DEK + stocker _encryptionMeta
   const { meta, dek } = await initializeEncryption(password);
@@ -89,24 +167,24 @@ export async function enableEncryption(
 
   // 2. Appliquer le middleware Dexie (chiffre les futures écritures)
   db.applyEncryption(dek);
-  onProgress({ phase: 'Middleware Dexie activé', current: 1, total: 4 });
+  onProgress({ phase: 'Middleware Dexie activé', current: 1, total: 5 });
 
   // 3. Re-écrire tous les enregistrements Dexie existants
-  onProgress({ phase: 'Migration données Dexie', current: 2, total: 4 });
+  onProgress({ phase: 'Migration données Dexie', current: 2, total: 5 });
   await migrateDexieToEncrypted((p) =>
-    onProgress({ phase: p.phase, current: 2, total: 4 })
+    onProgress({ phase: p.phase, current: 2, total: 5 })
   );
 
   // 4. Migrer les bases y-indexeddb de chaque investigation
   const investigations = await db.investigations.toArray();
-  onProgress({ phase: 'Migration bases Yjs', current: 3, total: 4 });
+  onProgress({ phase: 'Migration bases Yjs', current: 3, total: 5 });
 
   for (let i = 0; i < investigations.length; i++) {
     const inv = investigations[i];
     onProgress({
       phase: `Migration investigation ${i + 1}/${investigations.length}`,
       current: 3,
-      total: 4,
+      total: 5,
     });
     try {
       await migrateToEncrypted(`zeroneurone-ydoc-${inv.id}`, dek);
@@ -115,10 +193,16 @@ export async function enableEncryption(
     }
   }
 
-  // 5. Configurer syncService
+  // 5. Migrer les fichiers OPFS
+  onProgress({ phase: 'Migration fichiers OPFS', current: 4, total: 5 });
+  await migrateOpfsToEncrypted(dek, (p) =>
+    onProgress({ phase: p.phase, current: 4, total: 5 })
+  );
+
+  // 6. Configurer syncService
   syncService.setAtRestDek(dek);
 
-  onProgress({ phase: 'Chiffrement activé — redémarrage', current: 4, total: 4 });
+  onProgress({ phase: 'Chiffrement activé — redémarrage', current: 5, total: 5 });
 
   // La base était déjà ouverte quand applyEncryption a été appelé.
   // Le rechargement garantit que Dexie réouvre avec le middleware compilé
@@ -178,7 +262,7 @@ export async function disableEncryption(
   dek: Uint8Array,
   onProgress: ProgressCallback = () => {}
 ): Promise<void> {
-  onProgress({ phase: 'Lecture des données déchiffrées', current: 0, total: 4 });
+  onProgress({ phase: 'Lecture des données déchiffrées', current: 0, total: 5 });
 
   // 1. Lire toutes les données en clair (le middleware déchiffre à la lecture)
   const data: Record<string, unknown[]> = {};
@@ -192,14 +276,14 @@ export async function disableEncryption(
 
   const investigations = (data['investigations'] || []) as Array<{ id: string }>;
 
-  onProgress({ phase: 'Écriture en clair', current: 1, total: 4 });
+  onProgress({ phase: 'Écriture en clair', current: 1, total: 5 });
 
   // 2. Réécrire via raw IndexedDB pour bypasser le middleware Dexie
   //    (un bulkPut via Dexie rechiffrerait les données car le middleware
   //    est toujours dans la chaîne — Dexie v4 n'a pas de unuse())
   await writePlaintextViaRawIDB(data);
 
-  onProgress({ phase: 'Déchiffrement bases Yjs', current: 2, total: 4 });
+  onProgress({ phase: 'Déchiffrement bases Yjs', current: 2, total: 5 });
 
   // 3. Migrer les bases y-indexeddb vers le clair
   for (let i = 0; i < investigations.length; i++) {
@@ -207,7 +291,7 @@ export async function disableEncryption(
     onProgress({
       phase: `Déchiffrement investigation ${i + 1}/${investigations.length}`,
       current: 2,
-      total: 4,
+      total: 5,
     });
     try {
       await migrateToPlaintext(`zeroneurone-ydoc-${inv.id}`, dek);
@@ -216,13 +300,19 @@ export async function disableEncryption(
     }
   }
 
-  onProgress({ phase: 'Suppression métadonnées', current: 3, total: 4 });
+  // 4. Déchiffrer les fichiers OPFS
+  onProgress({ phase: 'Déchiffrement fichiers OPFS', current: 3, total: 5 });
+  await migrateOpfsToPlaintext(dek, (p) =>
+    onProgress({ phase: p.phase, current: 3, total: 5 })
+  );
 
-  // 4. Supprimer _encryptionMeta + retirer DEK du syncService
+  onProgress({ phase: 'Suppression métadonnées', current: 4, total: 5 });
+
+  // 5. Supprimer _encryptionMeta + retirer DEK du syncService
   await db._encryptionMeta.delete('main');
   syncService.setAtRestDek(null);
 
-  onProgress({ phase: 'Terminé — redémarrage', current: 4, total: 4 });
+  onProgress({ phase: 'Terminé — redémarrage', current: 5, total: 5 });
 
   // 5. Recharger : au prochain démarrage, _encryptionMeta absent →
   //    isReady = true immédiatement → Dexie ouvre sans middleware ✅
