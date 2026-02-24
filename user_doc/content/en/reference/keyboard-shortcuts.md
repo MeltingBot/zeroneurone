@@ -65,6 +65,12 @@ Complete list of ZeroNeurone keyboard shortcuts.
 | **Ctrl+click** | Toggle row selection |
 | **Shift+click** | Range selection |
 
+## Encryption
+
+| Shortcut | Action |
+|----------|--------|
+| **Alt+L** | Lock session (when encryption is active) |
+
 ## Panels
 
 | Shortcut | Action |

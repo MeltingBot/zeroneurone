@@ -1,33 +1,32 @@
 import { Page, expect } from '@playwright/test';
 
 /**
- * Clear all IndexedDB databases for a clean test state
- * Note: This must be called AFTER navigating to the page
+ * Clear all IndexedDB databases for a clean test state.
+ * Properly awaits each deletion request before returning.
+ * Note: This must be called AFTER navigating to the page.
  */
 export async function clearIndexedDB(page: Page) {
   await page.evaluate(async () => {
-    // Delete known database(s) used by zeroneurone
-    const dbNames = ['zeroneurone', 'zeroneurone-db'];
-    for (const name of dbNames) {
-      try {
-        indexedDB.deleteDatabase(name);
-      } catch {
-        // Ignore errors if database doesn't exist
-      }
+    function deleteDB(name: string): Promise<void> {
+      return new Promise((resolve) => {
+        const req = indexedDB.deleteDatabase(name);
+        req.onsuccess = () => resolve();
+        req.onerror = () => resolve();
+        req.onblocked = () => resolve();
+      });
     }
-    // Also try to get the list of databases if the API is available
+
+    // Enumerate and delete all databases (Chrome 73+)
     if ('databases' in indexedDB) {
       try {
-        const databases = await indexedDB.databases();
-        for (const db of databases) {
-          if (db.name) {
-            indexedDB.deleteDatabase(db.name);
-          }
-        }
+        const dbs = await indexedDB.databases();
+        await Promise.all(dbs.map(db => db.name ? deleteDB(db.name) : Promise.resolve()));
+        return;
       } catch {
-        // Ignore if not supported
+        // fall through to known names
       }
     }
+    await Promise.all(['zeroneurone', 'zeroneurone-db'].map(deleteDB));
   });
 }
 
@@ -104,13 +103,28 @@ export async function closeSearch(page: Page) {
 }
 
 /**
- * Double-click on canvas to create an element at specific position
+ * Create an element on the canvas using the 'E' keyboard shortcut.
+ * More reliable than double-click in headless mode.
+ * Moves the mouse to the target position first so the element lands there.
  */
 export async function createElementOnCanvas(page: Page, x: number, y: number) {
-  const canvas = page.locator('[data-testid="canvas"]');
-  await canvas.dblclick({ position: { x, y } });
-  // Wait for element to be created and selected
-  await page.waitForSelector('[data-testid="detail-panel"]');
+  // Wait for React Flow pane to be ready
+  const pane = page.locator('.react-flow__pane');
+  await pane.waitFor({ state: 'visible', timeout: 10_000 });
+
+  // Move mouse to the desired canvas position so the 'E' handler uses it
+  const paneBounds = await pane.boundingBox();
+  if (paneBounds) {
+    await page.mouse.move(paneBounds.x + x, paneBounds.y + y);
+  }
+
+  // Press 'E' — window-level keydown handler creates an element at cursor position
+  // The handler skips inputs/textareas, so make sure no input is focused first
+  await page.keyboard.press('Escape'); // deselect / blur any active input
+  await page.keyboard.press('e');
+
+  // Wait for the label input to appear (element created and selected)
+  await page.waitForSelector('[data-testid="element-label-input"]', { timeout: 10_000 });
 }
 
 /**
@@ -129,18 +143,13 @@ export async function getLinkCount(page: Page): Promise<number> {
 
 /**
  * Set up a clean test environment
- * Note: Each Playwright test runs in a fresh browser context with empty IndexedDB
  */
 export async function setupCleanEnvironment(page: Page) {
   // Navigate to the app
   await page.goto('/');
 
-  // Try to clear any existing data (in case context is reused)
-  try {
-    await clearIndexedDB(page);
-  } catch {
-    // Ignore errors - context might be fresh
-  }
+  // Clear any existing data
+  await clearIndexedDB(page);
 
   // Reload to ensure clean state
   await page.reload();

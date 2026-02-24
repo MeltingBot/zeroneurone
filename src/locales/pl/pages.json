@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "Dane 100% lokalne",
-          "description": "Twoje dane pozostają na Twoim komputerze, nigdy nie są przesyłane"
+          "description": "Twoje dane pozostają na Twoim komputerze, nigdy nie są przesyłane i są szyfrowane w spoczynku"
         },
         "collab": {
           "title": "Bezpieczna współpraca w czasie rzeczywistym",

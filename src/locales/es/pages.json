@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "Datos 100% locales",
-          "description": "Sus datos permanecen en su máquina, nunca se transmiten"
+          "description": "Sus datos permanecen en su máquina, nunca se transmiten y están cifrados en reposo"
         },
         "collab": {
           "title": "Colaboración segura en tiempo real",

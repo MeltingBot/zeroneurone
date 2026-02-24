@@ -12,6 +12,7 @@
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { WebsocketProvider } from 'y-websocket';
+import { EncryptedIndexeddbPersistence } from './encryption/encryptedIndexeddbPersistence';
 import * as encoding from 'lib0/encoding';
 import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
@@ -29,7 +30,9 @@ type StateListener = (state: SyncState) => void;
 
 class SyncService {
   private ydoc: Y.Doc | null = null;
-  private indexeddbProvider: IndexeddbPersistence | null = null;
+  private indexeddbProvider: IndexeddbPersistence | EncryptedIndexeddbPersistence | null = null;
+  /** DEK pour le chiffrement at-rest des bases y-indexeddb. Null = mode non chiffré. */
+  private atRestDek: Uint8Array | null = null;
   private websocketProvider: WebsocketProvider | null = null;
   private investigationId: string | null = null;
   private encryptionKey: string | null = null;
@@ -163,8 +166,16 @@ class SyncService {
   // ============================================================================
 
   /**
+   * Définit la DEK pour le chiffrement at-rest des bases y-indexeddb.
+   * Doit être appelé avant openLocal/openShared si le chiffrement est activé.
+   */
+  setAtRestDek(dek: Uint8Array | null): void {
+    this.atRestDek = dek;
+  }
+
+  /**
    * Open an investigation in local mode (no sync)
-   * Creates/loads Y.Doc with IndexedDB persistence
+   * Creates/loads Y.Doc with IndexedDB persistence (chiffré si DEK disponible)
    */
   async openLocal(investigationId: string): Promise<Y.Doc> {
     // Close any existing investigation
@@ -173,9 +184,13 @@ class SyncService {
     this.investigationId = investigationId;
     this.ydoc = new Y.Doc();
 
-    // Set up IndexedDB persistence
+    // Set up IndexedDB persistence (chiffré ou non selon la DEK)
     const dbName = `zeroneurone-ydoc-${investigationId}`;
-    this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
+    if (this.atRestDek) {
+      this.indexeddbProvider = new EncryptedIndexeddbPersistence(dbName, this.ydoc, this.atRestDek);
+    } else {
+      this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
+    }
 
     // Wait for local data to be loaded
     await this.indexeddbProvider.whenSynced;
@@ -227,10 +242,14 @@ class SyncService {
     this.encryptionKey = encryptionKey || null;
     this.ydoc = new Y.Doc();
 
-    // Set up IndexedDB persistence (for offline support)
+    // Set up IndexedDB persistence (for offline support, chiffré si DEK disponible)
     // Uses investigationId (UUID) for local storage
     const dbName = `zeroneurone-ydoc-${investigationId}`;
-    this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
+    if (this.atRestDek) {
+      this.indexeddbProvider = new EncryptedIndexeddbPersistence(dbName, this.ydoc, this.atRestDek);
+    } else {
+      this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
+    }
 
     // Wait for local data to be loaded first
     await this.indexeddbProvider.whenSynced;

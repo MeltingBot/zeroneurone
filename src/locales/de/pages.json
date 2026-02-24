@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "100% lokale Daten",
-          "description": "Ihre Daten bleiben auf Ihrem Gerät, werden nie übertragen"
+          "description": "Ihre Daten bleiben auf Ihrem Gerät, werden nie übertragen und sind im Ruhezustand verschlüsselt"
         },
         "collab": {
           "title": "Sichere Echtzeit-Zusammenarbeit",

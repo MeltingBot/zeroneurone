@@ -3,6 +3,7 @@ import type { Investigation, Element, Link, Asset, Report, CanvasTab } from '../
 import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
+import { encryptZip } from './encryption/zipEncryption';
 
 export type ExportFormat = 'json' | 'csv' | 'graphml' | 'geojson' | 'zip';
 
@@ -122,6 +123,24 @@ class ExportService {
 
     // Generate ZIP blob
     return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  }
+
+  /**
+   * Export investigation as encrypted ZIP (.znzip) with a user password.
+   * Generates a standard ZIP then encrypts the whole blob with PBKDF2+AES-256-GCM.
+   */
+  async exportToEncryptedZip(
+    password: string,
+    investigation: Investigation,
+    elements: Element[],
+    links: Link[],
+    assets: Asset[],
+    report?: Report | null,
+    tabs?: CanvasTab[]
+  ): Promise<Blob> {
+    const zipBlob = await this.exportToZip(investigation, elements, links, assets, report, tabs);
+    const encBuf = await encryptZip(zipBlob, password);
+    return new Blob([encBuf], { type: 'application/octet-stream' });
   }
 
   /**

@@ -102,6 +102,7 @@ export function LandingSection({
           {/* Existing investigations link */}
           {investigationCount > 0 && (
             <button
+              data-testid="view-investigations-link"
               onClick={onViewInvestigations}
               className="mt-4 text-sm text-accent hover:underline"
             >

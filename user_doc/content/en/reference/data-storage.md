@@ -141,6 +141,30 @@ Data only leaves your machine through:
 
 ---
 
+---
+
+## At-Rest Encryption
+
+ZeroNeurone can encrypt all IndexedDB and OPFS data with a password.
+
+### Activation
+
+Click the lock icon (home page) to enable, change, or disable encryption.
+
+### What Is Encrypted
+
+When encryption is active, all tables in the `zeroneurone` database containing investigation data are encrypted, as well as OPFS attached files. Data is only readable after entering the password at startup.
+
+### DevTools Inspection
+
+When encryption is active, record fields in IndexedDB appear as `__zn_enc__:...` in DevTools — this is normal.
+
+### Session Lock
+
+The `Alt+L` shortcut locks the session without closing the browser. Data becomes unreadable until the next unlock.
+
+**See also**: [At-Rest Encryption]({{< relref "../features/encryption" >}})
+
 ## Troubleshooting
 
 ### Corrupted Data

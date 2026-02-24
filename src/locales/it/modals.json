@@ -491,5 +491,77 @@
     "properties": "proprietà",
     "events": "eventi",
     "hint": "L'altro elemento verrà eliminato. I suoi link verranno trasferiti."
+  },
+  "encryption": {
+    "title": "Crittografia",
+    "statusActive": "Crittografia attiva",
+    "statusInactive": "Crittografia inattiva",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Dati archiviati in chiaro",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Sessione bloccata — ricaricare l'app per inserire la password",
+    "enableButton": "Attiva crittografia",
+    "changePasswordButton": "Cambia password",
+    "disableButton": "Disattiva crittografia",
+    "lockSessionButton": "Blocca sessione",
+    "securityNote": "La crittografia protegge i tuoi dati dall'accesso ai file del browser. La password è irrecuperabile — esporta i tuoi dati prima di attivare.",
+    "successEnabled": "Crittografia attivata. I tuoi dati sono ora crittografati.",
+    "successDisabled": "Crittografia disattivata. Ricaricamento necessario.",
+    "successPasswordChanged": "Password modificata.",
+    "errorMissingKey": "Chiave di crittografia assente",
+    "errorMetaNotFound": "Metadati non trovati",
+    "errorActivation": "Errore durante l'attivazione",
+    "errorDeactivation": "Errore durante la disattivazione",
+    "errorPasswordChange": "Errore durante il cambio password",
+    "enable": {
+      "warning": "Senza questa password, i tuoi dati saranno irrecuperabili. Esporta un backup prima di continuare.",
+      "passwordLabel": "Password (minimo 8 caratteri)",
+      "confirmLabel": "Conferma password",
+      "mismatch": "Le password non corrispondono",
+      "cancel": "Annulla",
+      "submit": "Attiva",
+      "busy": "Migrazione…",
+      "riskTitle": "Leggere prima di continuare",
+      "risks": [
+        "Password dimenticata = dati permanentemente inaccessibili, senza eccezioni",
+        "Nessun recupero possibile — né da noi, né dal browser",
+        "Esporta le tue indagini come ZIP prima di attivare",
+        "La crittografia si applica a IndexedDB e ai file allegati (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "I dati verranno decrittografati e archiviati in chiaro. L'applicazione si ricaricherà dopo la migrazione.",
+      "passwordLabel": "Conferma con la tua password attuale",
+      "cancel": "Annulla",
+      "submit": "Disattiva",
+      "busy": "Migrazione…"
+    },
+    "changePassword": {
+      "oldLabel": "Password attuale",
+      "newLabel": "Nuova password",
+      "confirmLabel": "Conferma nuova password",
+      "mismatch": "Le password non corrispondono",
+      "cancel": "Annulla",
+      "submit": "Cambia",
+      "busy": "Aggiornamento…"
+    }
+  },
+  "passwordModal": {
+    "title": "Database crittografato",
+    "subtitle": "Inserisci la password per sbloccare i tuoi dati",
+    "passwordLabel": "Password",
+    "placeholder": "Inserisci la tua password",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password",
+    "unlock": "Sblocca",
+    "verifying": "Verifica…",
+    "forgotHint": "Senza questa password, i dati sono irrecuperabili.",
+    "forgotLink": "Password dimenticata?",
+    "resetWarning": "Eliminare i metadati di crittografia. Se i dati sono crittografati, saranno permanentemente inaccessibili.",
+    "resetCancel": "Annulla",
+    "resetConfirm": "Ripristina",
+    "resetBusy": "Ripristino…",
+    "storageReminder": "Dati archiviati solo su questo dispositivo · Mai trasmessi"
   }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
 import { InvestigationCard, LandingSection } from '../components/home';
@@ -15,7 +15,9 @@ import {
   LocalStorageDisclaimerModal,
   hasAcknowledgedLocalStorage,
   InvestigationTagsModal,
+  EncryptionModal,
 } from '../components/modals';
+import { useEncryptionStore } from '../stores/encryptionStore';
 import { useInvestigationStore, useUIStore } from '../stores';
 import { investigationRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
@@ -45,6 +47,8 @@ export function HomePage() {
   const [isTagSetModalOpen, setIsTagSetModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
+  const [isEncryptionModalOpen, setIsEncryptionModalOpen] = useState(false);
+  const { isEnabled: isEncryptionEnabled } = useEncryptionStore();
   const [isDisclaimerModalOpen, setIsDisclaimerModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<string | null>(null);
@@ -223,6 +227,15 @@ export function HomePage() {
             >
               <BookOpen size={16} />
             </a>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEncryptionModalOpen(true)}
+              title={isEncryptionEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
+              data-testid="encryption-settings-button"
+            >
+              <Lock size={16} className={isEncryptionEnabled ? 'text-success' : undefined} />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -505,6 +518,23 @@ export function HomePage() {
       <StorageModal
         isOpen={isStorageModalOpen}
         onClose={() => setIsStorageModalOpen(false)}
+      />
+
+      {/* Encryption button accessible from landing view (list view has it in the header) */}
+      {viewMode === 'landing' && (
+        <button
+          data-testid="encryption-settings-button"
+          onClick={() => setIsEncryptionModalOpen(true)}
+          title={isEncryptionEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
+          className="fixed bottom-4 right-4 p-2 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors z-10"
+        >
+          <Lock size={14} className={isEncryptionEnabled ? 'text-success' : undefined} />
+        </button>
+      )}
+
+      <EncryptionModal
+        isOpen={isEncryptionModalOpen}
+        onClose={() => setIsEncryptionModalOpen(false)}
       />
 
       <LocalStorageDisclaimerModal

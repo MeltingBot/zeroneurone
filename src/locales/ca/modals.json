@@ -491,5 +491,77 @@
     "properties": "propietats",
     "events": "esdeveniments",
     "hint": "L'altre element serà eliminat. Els seus enllaços seran transferits."
+  },
+  "encryption": {
+    "title": "Xifrat",
+    "statusActive": "Xifrat actiu",
+    "statusInactive": "Xifrat inactiu",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Dades emmagatzemades en text clar",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Sessió bloquejada — torneu a carregar l'app per introduir la contrasenya",
+    "enableButton": "Activar el xifrat",
+    "changePasswordButton": "Canviar la contrasenya",
+    "disableButton": "Desactivar el xifrat",
+    "lockSessionButton": "Bloquejar la sessió",
+    "securityNote": "El xifrat protegeix les vostres dades contra l'accés als fitxers del navegador. La contrasenya és irrecuperable — exporteu les vostres dades abans d'activar.",
+    "successEnabled": "Xifrat activat. Les vostres dades ara estan xifrades.",
+    "successDisabled": "Xifrat desactivat. Cal recarregar.",
+    "successPasswordChanged": "Contrasenya canviada.",
+    "errorMissingKey": "Clau de xifrat absent",
+    "errorMetaNotFound": "Metadades no trobades",
+    "errorActivation": "Error durant l'activació",
+    "errorDeactivation": "Error durant la desactivació",
+    "errorPasswordChange": "Error en canviar la contrasenya",
+    "enable": {
+      "warning": "Sense aquesta contrasenya, les vostres dades seran irrecuperables. Exporteu una còpia de seguretat abans de continuar.",
+      "passwordLabel": "Contrasenya (mínim 8 caràcters)",
+      "confirmLabel": "Confirmar la contrasenya",
+      "mismatch": "Les contrasenyes no coincideixen",
+      "cancel": "Cancel·lar",
+      "submit": "Activar",
+      "busy": "Migrant…",
+      "riskTitle": "Llegiu abans de continuar",
+      "risks": [
+        "Contrasenya oblidada = dades permanentment inaccessibles, sense excepcions",
+        "Cap recuperació possible — ni per nosaltres, ni pel navegador",
+        "Exporteu les vostres investigacions com a ZIP abans d'activar",
+        "El xifrat s'aplica a IndexedDB i als fitxers adjunts (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Les dades es desxifraran i s'emmagatzemaran en text clar. L'aplicació es recarregarà després de la migració.",
+      "passwordLabel": "Confirmeu amb la vostra contrasenya actual",
+      "cancel": "Cancel·lar",
+      "submit": "Desactivar",
+      "busy": "Migrant…"
+    },
+    "changePassword": {
+      "oldLabel": "Contrasenya actual",
+      "newLabel": "Nova contrasenya",
+      "confirmLabel": "Confirmar la nova contrasenya",
+      "mismatch": "Les contrasenyes no coincideixen",
+      "cancel": "Cancel·lar",
+      "submit": "Canviar",
+      "busy": "Actualitzant…"
+    }
+  },
+  "passwordModal": {
+    "title": "Base de dades xifrada",
+    "subtitle": "Introduïu la contrasenya per desbloquejar les vostres dades",
+    "passwordLabel": "Contrasenya",
+    "placeholder": "Introduïu la vostra contrasenya",
+    "showPassword": "Mostrar contrasenya",
+    "hidePassword": "Ocultar contrasenya",
+    "unlock": "Desbloquejar",
+    "verifying": "Verificant…",
+    "forgotHint": "Sense aquesta contrasenya, les dades són irrecuperables.",
+    "forgotLink": "Heu oblidat la contrasenya?",
+    "resetWarning": "Suprimir les metadades de xifrat. Si les dades estan xifrades, seran permanentment inaccessibles.",
+    "resetCancel": "Cancel·lar",
+    "resetConfirm": "Restablir",
+    "resetBusy": "Restablint…",
+    "storageReminder": "Dades emmagatzemades només en aquest dispositiu · Mai transmeses"
   }
 }

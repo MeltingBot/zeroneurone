@@ -221,4 +221,44 @@ export interface PluginAPI {
 
   // Plugin data persistence
   pluginData: PluginDataAPI;
+
+  // At-rest encryption sharing
+  encryption: EncryptionPluginAPI;
+}
+
+/**
+ * API de chiffrement exposée aux plugins.
+ * Permet à un plugin d'appliquer le même chiffrement at-rest que ZeroNeurone
+ * sur sa propre base Dexie, sans accéder à la DEK brute.
+ */
+export interface EncryptionPluginAPI {
+  /**
+   * Applique le middleware de chiffrement ZN sur une instance Dexie externe.
+   * No-op si le chiffrement est inactif ou la session verrouillée.
+   */
+  applyToDatabase(dexieInstance: any, tables: string[]): void;
+
+  /**
+   * S'abonne à l'événement "prêt" (DEK disponible ou chiffrement absent).
+   * Appelé immédiatement si déjà prêt.
+   * @returns Fonction de désinscription
+   */
+  onReady(cb: () => void): () => void;
+
+  /**
+   * S'abonne à l'événement "verrouillé" (DEK effacée).
+   * @returns Fonction de désinscription
+   */
+  onLock(cb: () => void): () => void;
+
+  /** Vrai si le chiffrement at-rest est activé dans ZeroNeurone. */
+  isEnabled(): boolean;
+
+  /**
+   * S'abonne à l'événement "désactivation imminente du chiffrement".
+   * Appelé (et awaité) par ZN avant window.location.reload().
+   * Le plugin doit déchiffrer ses données dans ce callback.
+   * @returns Fonction de désinscription
+   */
+  onBeforeDisable(cb: (decryptRecord: (record: unknown) => unknown) => Promise<void>): () => void;
 }

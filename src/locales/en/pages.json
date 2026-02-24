@@ -63,7 +63,7 @@
         },
         "local": {
           "title": "100% local data",
-          "description": "Your data stays on your machine, never transmitted"
+          "description": "Your data stays on your machine, never transmitted and encrypted at rest"
         },
         "collab": {
           "title": "Secure real-time collaboration",

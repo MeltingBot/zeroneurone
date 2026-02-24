@@ -491,5 +491,77 @@
     "properties": "Eigenschaften",
     "events": "Ereignisse",
     "hint": "Das andere Element wird gelöscht. Seine Links werden übertragen."
+  },
+  "encryption": {
+    "title": "Verschlüsselung",
+    "statusActive": "Verschlüsselung aktiv",
+    "statusInactive": "Verschlüsselung inaktiv",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Daten im Klartext gespeichert",
+    "on": "AN",
+    "off": "AUS",
+    "sessionLocked": "Sitzung gesperrt — App neu laden, um das Passwort einzugeben",
+    "enableButton": "Verschlüsselung aktivieren",
+    "changePasswordButton": "Passwort ändern",
+    "disableButton": "Verschlüsselung deaktivieren",
+    "lockSessionButton": "Sitzung sperren",
+    "securityNote": "Die Verschlüsselung schützt Ihre Daten vor dem Zugriff auf Browser-Dateien. Das Passwort ist nicht wiederherstellbar — exportieren Sie Ihre Daten, bevor Sie aktivieren.",
+    "successEnabled": "Verschlüsselung aktiviert. Ihre Daten sind jetzt verschlüsselt.",
+    "successDisabled": "Verschlüsselung deaktiviert. Neu laden erforderlich.",
+    "successPasswordChanged": "Passwort geändert.",
+    "errorMissingKey": "Verschlüsselungsschlüssel fehlt",
+    "errorMetaNotFound": "Metadaten nicht gefunden",
+    "errorActivation": "Fehler bei der Aktivierung",
+    "errorDeactivation": "Fehler bei der Deaktivierung",
+    "errorPasswordChange": "Fehler beim Passwortwechsel",
+    "enable": {
+      "warning": "Ohne dieses Passwort sind Ihre Daten unwiederbringlich verloren. Exportieren Sie ein Backup, bevor Sie fortfahren.",
+      "passwordLabel": "Passwort (mindestens 8 Zeichen)",
+      "confirmLabel": "Passwort bestätigen",
+      "mismatch": "Passwörter stimmen nicht überein",
+      "cancel": "Abbrechen",
+      "submit": "Aktivieren",
+      "busy": "Migriere…",
+      "riskTitle": "Lesen Sie vor dem Fortfahren",
+      "risks": [
+        "Vergessenes Passwort = Daten dauerhaft unzugänglich, keine Ausnahmen",
+        "Keine Wiederherstellung möglich — nicht von uns, nicht vom Browser",
+        "Exportieren Sie Ihre Untersuchungen als ZIP, bevor Sie aktivieren",
+        "Verschlüsselung gilt für IndexedDB und angehängte Dateien (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Daten werden entschlüsselt und im Klartext gespeichert. Die Anwendung wird nach der Migration neu geladen.",
+      "passwordLabel": "Mit Ihrem aktuellen Passwort bestätigen",
+      "cancel": "Abbrechen",
+      "submit": "Deaktivieren",
+      "busy": "Migriere…"
+    },
+    "changePassword": {
+      "oldLabel": "Aktuelles Passwort",
+      "newLabel": "Neues Passwort",
+      "confirmLabel": "Neues Passwort bestätigen",
+      "mismatch": "Passwörter stimmen nicht überein",
+      "cancel": "Abbrechen",
+      "submit": "Ändern",
+      "busy": "Wird geändert…"
+    }
+  },
+  "passwordModal": {
+    "title": "Verschlüsselte Datenbank",
+    "subtitle": "Geben Sie Ihr Passwort ein, um Ihre Daten zu entsperren",
+    "passwordLabel": "Passwort",
+    "placeholder": "Passwort eingeben",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "unlock": "Entsperren",
+    "verifying": "Prüfe…",
+    "forgotHint": "Ohne dieses Passwort sind Ihre Daten nicht wiederherstellbar.",
+    "forgotLink": "Passwort vergessen?",
+    "resetWarning": "Verschlüsselungsmetadaten löschen. Wenn die Daten verschlüsselt sind, sind sie dauerhaft nicht zugänglich.",
+    "resetCancel": "Abbrechen",
+    "resetConfirm": "Zurücksetzen",
+    "resetBusy": "Wird zurückgesetzt…",
+    "storageReminder": "Daten nur auf diesem Gerät gespeichert · Nie übertragen"
   }
 }

@@ -491,5 +491,77 @@
     "properties": "properties",
     "events": "events",
     "hint": "The other element will be deleted. Its links will be transferred."
+  },
+  "encryption": {
+    "title": "Encryption",
+    "statusActive": "Encryption active",
+    "statusInactive": "Encryption inactive",
+    "statusDetail": "AES-256-GCM · IndexedDB + OPFS",
+    "statusClear": "Data stored in plaintext",
+    "on": "ON",
+    "off": "OFF",
+    "sessionLocked": "Session locked — reload the app to enter your password",
+    "enableButton": "Enable encryption",
+    "changePasswordButton": "Change password",
+    "disableButton": "Disable encryption",
+    "lockSessionButton": "Lock session",
+    "securityNote": "Encryption protects your data against access to browser files. The password is unrecoverable — export your data before enabling.",
+    "successEnabled": "Encryption enabled. Your data is now encrypted.",
+    "successDisabled": "Encryption disabled. Reload required.",
+    "successPasswordChanged": "Password changed.",
+    "errorMissingKey": "Encryption key missing",
+    "errorMetaNotFound": "Metadata not found",
+    "errorActivation": "Error during activation",
+    "errorDeactivation": "Error during deactivation",
+    "errorPasswordChange": "Error during password change",
+    "enable": {
+      "warning": "Without this password, your data will be unrecoverable. Export a backup before continuing.",
+      "passwordLabel": "Password (8 characters minimum)",
+      "confirmLabel": "Confirm password",
+      "mismatch": "Passwords do not match",
+      "cancel": "Cancel",
+      "submit": "Enable",
+      "busy": "Migrating…",
+      "riskTitle": "Read before continuing",
+      "risks": [
+        "Forgotten password = data permanently inaccessible, no exceptions",
+        "No recovery possible — not by us, not by your browser",
+        "Export your investigations as ZIP before enabling",
+        "Encryption applies to IndexedDB and attached files (OPFS)"
+      ]
+    },
+    "disable": {
+      "warning": "Data will be decrypted and stored in plaintext. The application will reload after migration.",
+      "passwordLabel": "Confirm with your current password",
+      "cancel": "Cancel",
+      "submit": "Disable",
+      "busy": "Migrating…"
+    },
+    "changePassword": {
+      "oldLabel": "Current password",
+      "newLabel": "New password",
+      "confirmLabel": "Confirm new password",
+      "mismatch": "Passwords do not match",
+      "cancel": "Cancel",
+      "submit": "Change",
+      "busy": "Updating…"
+    }
+  },
+  "passwordModal": {
+    "title": "Encrypted database",
+    "subtitle": "Enter your password to unlock your data",
+    "passwordLabel": "Password",
+    "placeholder": "Enter your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "unlock": "Unlock",
+    "verifying": "Verifying…",
+    "forgotHint": "Without this password, your data is unrecoverable.",
+    "forgotLink": "Forgot password?",
+    "resetWarning": "Delete encryption metadata. If the data is encrypted, it will be permanently inaccessible.",
+    "resetCancel": "Cancel",
+    "resetConfirm": "Reset",
+    "resetBusy": "Resetting…",
+    "storageReminder": "Data stored on this device only · Never transmitted"
   }
 }
