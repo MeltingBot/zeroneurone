@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.17.0
+
+### Features
+- At-rest encryption: all IndexedDB data and OPFS attached files can be encrypted with a password (AES-256-GCM / XSalsa20-Poly1305 via tweetnacl). DEK/KEK architecture with PBKDF2-SHA256 (600k iterations). Activation, deactivation, and password change via the lock icon on the home page.
+- Session lock (Alt+L): lock the session without closing the browser. Data becomes unreadable until the next password entry.
+- Encrypted ZIP export: optional password protection for exported archives (.znzip).
+- Plugin encryption API: `api.encryption.applyToDatabase()`, `onReady()`, `onLock()`, `onBeforeDisable()`, `isEnabled()` — external plugins can encrypt their own Dexie instances using the same key.
+- i18n: EncryptionModal and PasswordModal fully translated into 11 languages, including structured risk warnings on activation.
+
 ## 2.16.2
 
 ### Fixes
