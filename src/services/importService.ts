@@ -26,6 +26,7 @@ import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
 import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
+import i18next from 'i18next';
 import { importPredicaGraph, isPredicaGraphFormat } from './importPredictagraph';
 import { importOsintIndustries, isOsintIndustriesFormat } from './importOsintIndustries';
 import { importOIPalette, isOIPaletteFormat } from './importOIPalette';
@@ -239,6 +240,18 @@ class ImportService {
       if (!data.version || !data.elements || !data.links) {
         result.errors.push('Format JSON invalide: champs manquants');
         return result;
+      }
+
+      // Check retention expiration on imported investigation
+      if (data.investigation?.retentionDays && data.investigation.createdAt) {
+        const createdAt = new Date(data.investigation.createdAt).getTime();
+        const expiresAt = createdAt + data.investigation.retentionDays * 86400000;
+        if (Date.now() > expiresAt) {
+          const expiredDays = Math.ceil((Date.now() - expiresAt) / 86400000);
+          result.warnings.push(
+            i18next.t('import.retentionExpired', { ns: 'modals', days: expiredDays })
+          );
+        }
       }
 
       // ========== SECURITY CHECK: Element/Link/Asset counts ==========

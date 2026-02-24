@@ -11,7 +11,8 @@
     "sections": {
       "information": "Información",
       "dates": "Fechas",
-      "properties": "Propiedades"
+      "properties": "Propiedades",
+      "retention": "Retención"
     },
     "labels": {
       "name": "Nombre",
@@ -20,7 +21,18 @@
       "tags": "Tags",
       "startDate": "Fecha de inicio",
       "createdAt": "Creado el",
-      "updatedAt": "Modificado el"
+      "updatedAt": "Modificado el",
+      "retentionDays": "Duración (días)",
+      "retentionPolicy": "Al vencer",
+      "retentionUnlimited": "Ilimitado",
+      "retentionExpires": "Vence el",
+      "retentionPolicyWarn": "Advertencia",
+      "retentionPolicyReadonly": "Solo lectura",
+      "retentionPolicyDelete": "Proponer eliminación",
+      "retentionExpiredSince": "Vencida hace {{days}} día(s)",
+      "retentionPolicyRedact": "Redacción definitiva",
+      "retentionApply": "Aplicar",
+      "retentionReset": "Restablecer"
     },
     "placeholders": {
       "name": "Nombre de la investigación",
@@ -31,7 +43,13 @@
     "noSelection": "Ningún elemento seleccionado",
     "multipleSelection": "{{count}} elementos seleccionados",
     "element": "Elemento",
-    "link": "Enlace",
+    "link": {
+      "linkedElements": "Elementos enlazados",
+      "deletedElement": "Elemento eliminado",
+      "relationPeriod": "Período de la relación",
+      "periodStart": "Inicio",
+      "periodEnd": "Fin (dejar vacío si en curso)"
+    },
     "group": "Grupo",
     "annotation": "Anotación",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Ir a la pestaña {{name}}"
-    },
-    "link": {
-      "linkedElements": "Elementos enlazados",
-      "deletedElement": "Elemento eliminado",
-      "relationPeriod": "Período de la relación",
-      "periodStart": "Inicio",
-      "periodEnd": "Fin (dejar vacío si en curso)"
     },
     "events": {
       "title": "Eventos",

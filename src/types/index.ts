@@ -172,6 +172,10 @@ export interface Investigation {
   settings: InvestigationSettings;
   /** Whether this investigation is pinned/favorited for quick access */
   isFavorite?: boolean;
+  /** Data retention duration in days (null = unlimited) */
+  retentionDays?: number | null;
+  /** Behavior when retention expires */
+  retentionPolicy?: 'warn' | 'readonly' | 'delete' | 'redact';
 }
 
 export interface InvestigationSettings {

@@ -254,7 +254,13 @@
       "emptyHint": "Egin eskuin-klik elementuetan gehitzeko",
       "ghostBadge": "{{tabs}}(e)n",
       "navigateTo": "{{name}} fitxara joan"
-    }
+    },
+    "retentionExpiredBanner": "Atxikipena iraungita duela {{days}} egun",
+    "retentionDeleteConfirm": "Ikerketa hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",
+    "retentionDeleteAction": "Ezabatu behin betiko",
+    "retentionReadonly": "Ikerketa irakurtzeko soilik (atxikipena iraungita)",
+    "retentionRedactConfirm": "Zentzurak testu-eduki guztiak betiko ezabatuko ditu (izenak, oharrak, propietateak). Grafoaren egitura mantenduko da. Ekintza hau itzulezina da.",
+    "retentionRedactAction": "Behin betiko zentzuratu"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

@@ -11,7 +11,8 @@
     "sections": {
       "information": "Informacje",
       "dates": "Daty",
-      "properties": "Właściwości"
+      "properties": "Właściwości",
+      "retention": "Retencja"
     },
     "labels": {
       "name": "Nazwa",
@@ -20,7 +21,18 @@
       "tags": "Tagi",
       "startDate": "Data rozpoczęcia",
       "createdAt": "Utworzono",
-      "updatedAt": "Zmodyfikowano"
+      "updatedAt": "Zmodyfikowano",
+      "retentionDays": "Czas (dni)",
+      "retentionPolicy": "Po wygaśnięciu",
+      "retentionUnlimited": "Bez limitu",
+      "retentionExpires": "Wygasa",
+      "retentionPolicyWarn": "Ostrzeżenie",
+      "retentionPolicyReadonly": "Tylko odczyt",
+      "retentionPolicyDelete": "Zaproponuj usunięcie",
+      "retentionExpiredSince": "Wygasła {{days}} dni temu",
+      "retentionPolicyRedact": "Trwała redakcja",
+      "retentionApply": "Zastosuj",
+      "retentionReset": "Resetuj"
     },
     "placeholders": {
       "name": "Nazwa śledztwa",
@@ -31,7 +43,13 @@
     "noSelection": "Nie wybrano elementu",
     "multipleSelection": "{{count}} elementów zaznaczonych",
     "element": "Element",
-    "link": "Połączenie",
+    "link": {
+      "linkedElements": "Połączone elementy",
+      "deletedElement": "Usunięty element",
+      "relationPeriod": "Okres relacji",
+      "periodStart": "Początek",
+      "periodEnd": "Koniec (puste jeśli trwa)"
+    },
     "group": "Grupa",
     "annotation": "Adnotacja",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Przejdź do karty {{name}}"
-    },
-    "link": {
-      "linkedElements": "Połączone elementy",
-      "deletedElement": "Usunięty element",
-      "relationPeriod": "Okres relacji",
-      "periodStart": "Początek",
-      "periodEnd": "Koniec (puste jeśli trwa)"
     },
     "events": {
       "title": "Zdarzenia",

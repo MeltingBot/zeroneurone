@@ -18,6 +18,18 @@
 // TYPES
 // ============================================================================
 
+export interface WebAuthnCredentialEntry {
+  credentialId: ArrayBuffer;
+  /** 32 bytes random, unique par credential */
+  prfSalt: ArrayBuffer;
+  /** DEK chiffré avec KEK dérivée du PRF (AES-256-GCM) */
+  encryptedDEK: ArrayBuffer;
+  /** IV AES-GCM 12 bytes */
+  dekIV: ArrayBuffer;
+  label: string;
+  createdAt: string;
+}
+
 export interface EncryptionMeta {
   id: 'main';
   /** Sel PBKDF2, 16 bytes, généré une seule fois */
@@ -29,6 +41,10 @@ export interface EncryptionMeta {
   /** Version du schéma de chiffrement (pour migrations futures) */
   version: number;
   createdAt: string;
+  /** Credentials WebAuthn PRF pour déverrouillage par clé physique */
+  webauthnCredentials?: WebAuthnCredentialEntry[];
+  /** Délai d'auto-verrouillage en minutes (null = désactivé) */
+  autoLockMinutes?: number | null;
 }
 
 export interface EncryptionState {

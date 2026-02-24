@@ -255,7 +255,13 @@
       "emptyHint": "Right-click on elements to add them",
       "ghostBadge": "On {{tabs}}",
       "navigateTo": "Go to tab {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Retention expired {{days}} day(s) ago",
+    "retentionDeleteConfirm": "This investigation will be permanently deleted. This action cannot be undone.",
+    "retentionDeleteAction": "Delete permanently",
+    "retentionReadonly": "Investigation is read-only (retention expired)",
+    "retentionRedactConfirm": "Redaction will permanently erase all text content (names, notes, properties). The graph structure will be preserved. This action is irreversible.",
+    "retentionRedactAction": "Redact permanently"
   },
   "map": {
     "noGeoElements": "No geolocated elements",

@@ -51,6 +51,7 @@
       "format": "<strong>Format unifié:</strong> type (element/lien), label, de, vers, notes, tags, confiance...",
       "description": "Les liens référencent les éléments par leur label dans les colonnes \"de\" et \"vers\""
     },
+    "retentionExpired": "Document source expiré (rétention dépassée de {{days}} jour(s))",
     "warnings": "Avertissements:",
     "andMore": "... et {{count}} autres"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Activer le chiffrement",
     "changePasswordButton": "Changer le mot de passe",
     "disableButton": "Désactiver le chiffrement",
+    "autoLockLabel": "Verrouillage automatique",
+    "autoLockDisabled": "Désactivé",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Verrouiller la session",
     "securityNote": "Le chiffrement protège vos données contre l'accès aux fichiers du navigateur. Le mot de passe est irrécupérable — exportez vos données avant d'activer.",
     "successEnabled": "Chiffrement activé. Vos données sont maintenant chiffrées.",
@@ -545,6 +549,23 @@
       "cancel": "Annuler",
       "submit": "Changer",
       "busy": "Modification…"
+    },
+    "webauthn": {
+      "title": "Clés de sécurité",
+      "description": "Déverrouillez avec une clé physique (YubiKey) au lieu du mot de passe",
+      "addKey": "Ajouter une clé",
+      "noKeys": "Aucune clé enregistrée",
+      "label": "Nom de la clé",
+      "labelPlaceholder": "Ex: YubiKey 5",
+      "registering": "Touchez votre clé…",
+      "unlocking": "Touchez votre clé…",
+      "deleteConfirm": "Supprimer cette clé de sécurité ?",
+      "successAdded": "Clé de sécurité ajoutée",
+      "successRemoved": "Clé de sécurité supprimée",
+      "errorPrfNotSupported": "Cette clé ne supporte pas le déverrouillage sans mot de passe (PRF)",
+      "errorRegistration": "Erreur lors de l’enregistrement de la clé",
+      "errorUnlock": "Échec du déverrouillage par clé de sécurité",
+      "addedOn": "Ajoutée le"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Annuler",
     "resetConfirm": "Réinitialiser",
     "resetBusy": "Réinitialisation…",
-    "storageReminder": "Données stockées uniquement sur cet appareil · Jamais transmises"
+    "storageReminder": "Données stockées uniquement sur cet appareil · Jamais transmises",
+    "useSecurityKey": "Utiliser une clé de sécurité"
   }
 }

@@ -74,7 +74,7 @@ export function InvestigationPage() {
     unloadInvestigation,
   } = useInvestigationStore();
 
-  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState, themeMode, toggleThemeMode } = useUIStore();
+  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState, themeMode, toggleThemeMode, showToast } = useUIStore();
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
@@ -87,8 +87,16 @@ export function InvestigationPage() {
   const setActiveTab = useTabStore((state) => state.setActiveTab);
   const addTabMembers = useTabStore((state) => state.addMembers);
 
+  const setReadOnly = useInvestigationStore((s) => s.setReadOnly);
+  const deleteInvestigation = useInvestigationStore((s) => s.deleteInvestigation);
+  const updateElement = useInvestigationStore((s) => s.updateElement);
+  const updateLink = useInvestigationStore((s) => s.updateLink);
+  const updateInvestigation = useInvestigationStore((s) => s.updateInvestigation);
+
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [redactConfirmOpen, setRedactConfirmOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -134,6 +142,33 @@ export function InvestigationPage() {
       resetTabState();
     };
   }, [id, loadInvestigation, unloadInvestigation, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForInvestigation, saveViewportForInvestigation, loadTabs]);
+
+  // Retention expiration check
+  const retentionExpiredDays = (() => {
+    if (!currentInvestigation?.retentionDays) return null;
+    const expiresAt = new Date(currentInvestigation.createdAt).getTime() + currentInvestigation.retentionDays * 86400000;
+    const diff = Date.now() - expiresAt;
+    return diff > 0 ? Math.ceil(diff / 86400000) : null;
+  })();
+
+  useEffect(() => {
+    if (!currentInvestigation || retentionExpiredDays === null) {
+      setReadOnly(false);
+      return;
+    }
+    const policy = currentInvestigation.retentionPolicy || 'warn';
+    if (policy === 'warn') {
+      showToast('warning', t('investigation.retentionExpiredBanner', { days: retentionExpiredDays }));
+    } else if (policy === 'readonly') {
+      setReadOnly(true);
+    } else if (policy === 'delete') {
+      setReadOnly(true);
+      setDeleteConfirmOpen(true);
+    } else if (policy === 'redact') {
+      setReadOnly(true);
+      setRedactConfirmOpen(true);
+    }
+  }, [currentInvestigation?.id, retentionExpiredDays]);
 
   // Self-healing: reassign orphaned elements to the first tab
   const orphanHealedRef = useRef<string | null>(null);
@@ -367,6 +402,78 @@ export function InvestigationPage() {
 
   return (
     <Layout>
+      {/* Delete confirmation modal (retention policy=delete) */}
+      <Modal isOpen={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} title={t('investigation.retentionDeleteAction')}>
+        <div className="space-y-4">
+          <p className="text-sm text-text-primary">
+            {t('investigation.retentionDeleteConfirm')}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setDeleteConfirmOpen(false)}>
+              {t('actions.cancel', { ns: 'common' })}
+            </Button>
+            <button
+              className="px-3 py-1.5 text-sm text-white bg-error hover:bg-error/90 rounded"
+              onClick={async () => {
+                if (currentInvestigation) {
+                  await deleteInvestigation(currentInvestigation.id);
+                  navigate('/');
+                }
+              }}
+            >
+              {t('investigation.retentionDeleteAction')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Redact confirmation modal (retention policy=redact) */}
+      <Modal isOpen={redactConfirmOpen} onClose={() => setRedactConfirmOpen(false)} title={t('investigation.retentionRedactAction')}>
+        <div className="space-y-4">
+          <p className="text-sm text-text-primary">
+            {t('investigation.retentionRedactConfirm')}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setRedactConfirmOpen(false)}>
+              {t('actions.cancel', { ns: 'common' })}
+            </Button>
+            <button
+              className="px-3 py-1.5 text-sm text-white bg-error hover:bg-error/90 rounded"
+              onClick={async () => {
+                if (!currentInvestigation) return;
+                const redacted = '\u2588\u2588\u2588';
+                for (const el of elements) {
+                  await updateElement(el.id, {
+                    label: redacted,
+                    notes: '',
+                    source: '',
+                    tags: [],
+                    properties: [],
+                  });
+                }
+                for (const lk of links) {
+                  await updateLink(lk.id, {
+                    label: redacted,
+                    notes: '',
+                    source: '',
+                    tags: [],
+                    properties: [],
+                  });
+                }
+                await updateInvestigation(currentInvestigation.id, {
+                  description: '',
+                  creator: '',
+                  retentionPolicy: 'readonly',
+                });
+                setRedactConfirmOpen(false);
+              }}
+            >
+              {t('investigation.retentionRedactAction')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary">
         <div className="flex items-center gap-3">

@@ -254,7 +254,13 @@
       "emptyHint": "Rechts-klik op elementen om toe te voegen",
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Ga naar tabblad {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Bewaring verlopen sinds {{days}} dag(en)",
+    "retentionDeleteConfirm": "Dit onderzoek wordt definitief verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "retentionDeleteAction": "Definitief verwijderen",
+    "retentionReadonly": "Onderzoek is alleen-lezen (bewaring verlopen)",
+    "retentionRedactConfirm": "Censuur zal alle tekstinhoud permanent wissen (namen, notities, eigenschappen). De grafiekstructuur blijft behouden. Deze actie is onomkeerbaar.",
+    "retentionRedactAction": "Definitief censureren"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

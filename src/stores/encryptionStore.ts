@@ -37,6 +37,9 @@ interface EncryptionStoreState {
   setMigrating: (migrating: boolean) => void;
   setError: (error: string | null) => void;
   setReady: () => void;
+  /** Délai d'auto-verrouillage en minutes (null = désactivé) */
+  autoLockMinutes: number | null;
+  setAutoLockMinutes: (minutes: number | null) => void;
   /** Efface la DEK de la mémoire (verrouillage de session) */
   lock: () => void;
 }
@@ -48,6 +51,7 @@ export const useEncryptionStore = create<EncryptionStoreState>((set) => ({
   isMigrating: false,
   error: null,
   isReady: false,
+  autoLockMinutes: null,
 
   setDek: (dek) => set({ dek, isLocked: false, error: null }),
   setEnabled: (enabled) => set({ isEnabled: enabled }),
@@ -56,5 +60,6 @@ export const useEncryptionStore = create<EncryptionStoreState>((set) => ({
   setError: (error) => set({ error }),
   setReady: () => set({ isReady: true }),
 
+  setAutoLockMinutes: (minutes) => set({ autoLockMinutes: minutes }),
   lock: () => set({ dek: null, isLocked: true }),
 }));

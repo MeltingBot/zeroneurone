@@ -11,7 +11,8 @@
     "sections": {
       "information": "Informació",
       "dates": "Dates",
-      "properties": "Propietats"
+      "properties": "Propietats",
+      "retention": "Retenció"
     },
     "labels": {
       "name": "Nom",
@@ -20,7 +21,18 @@
       "tags": "Etiquetes",
       "startDate": "Data d'inici",
       "createdAt": "Creat el",
-      "updatedAt": "Modificat el"
+      "updatedAt": "Modificat el",
+      "retentionDays": "Durada (dies)",
+      "retentionPolicy": "En expirar",
+      "retentionUnlimited": "Il·limitat",
+      "retentionExpires": "Expira el",
+      "retentionPolicyWarn": "Avís",
+      "retentionPolicyReadonly": "Només lectura",
+      "retentionPolicyDelete": "Proposar eliminació",
+      "retentionExpiredSince": "Expirada des de fa {{days}} dia/es",
+      "retentionPolicyRedact": "Redacció definitiva",
+      "retentionApply": "Aplicar",
+      "retentionReset": "Reiniciar"
     },
     "placeholders": {
       "name": "Nom de la investigació",
@@ -31,7 +43,13 @@
     "noSelection": "Cap element seleccionat",
     "multipleSelection": "{{count}} elements seleccionats",
     "element": "Element",
-    "link": "Enllaç",
+    "link": {
+      "linkedElements": "Elements enllaçats",
+      "deletedElement": "Element eliminat",
+      "relationPeriod": "Període de la relació",
+      "periodStart": "Inici",
+      "periodEnd": "Fi (deixar buit si en curs)"
+    },
     "group": "Grup",
     "annotation": "Anotació",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Anar a la pestanya {{name}}"
-    },
-    "link": {
-      "linkedElements": "Elements enllaçats",
-      "deletedElement": "Element eliminat",
-      "relationPeriod": "Període de la relació",
-      "periodStart": "Inici",
-      "periodEnd": "Fi (deixar buit si en curs)"
     },
     "events": {
       "title": "Esdeveniments",

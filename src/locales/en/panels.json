@@ -11,7 +11,8 @@
     "sections": {
       "information": "Information",
       "dates": "Dates",
-      "properties": "Properties"
+      "properties": "Properties",
+      "retention": "Retention"
     },
     "labels": {
       "name": "Name",
@@ -20,7 +21,18 @@
       "tags": "Tags",
       "startDate": "Start date",
       "createdAt": "Created",
-      "updatedAt": "Updated"
+      "updatedAt": "Updated",
+      "retentionDays": "Duration (days)",
+      "retentionPolicy": "On expiration",
+      "retentionUnlimited": "Unlimited",
+      "retentionExpires": "Expires on",
+      "retentionPolicyWarn": "Warning",
+      "retentionPolicyReadonly": "Read-only",
+      "retentionPolicyDelete": "Propose deletion",
+      "retentionExpiredSince": "Expired since {{days}} day(s)",
+      "retentionPolicyRedact": "Permanent redaction",
+      "retentionApply": "Apply",
+      "retentionReset": "Reset"
     },
     "placeholders": {
       "name": "Investigation name",
@@ -31,7 +43,13 @@
     "noSelection": "No element selected",
     "multipleSelection": "{{count}} elements selected",
     "element": "Element",
-    "link": "Link",
+    "link": {
+      "linkedElements": "Linked elements",
+      "deletedElement": "Deleted element",
+      "relationPeriod": "Relationship period",
+      "periodStart": "Start",
+      "periodEnd": "End (leave empty if ongoing)"
+    },
     "group": "Group",
     "annotation": "Annotation",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Go to tab {{name}}"
-    },
-    "link": {
-      "linkedElements": "Linked elements",
-      "deletedElement": "Deleted element",
-      "relationPeriod": "Relationship period",
-      "periodStart": "Start",
-      "periodEnd": "End (leave empty if ongoing)"
     },
     "events": {
       "title": "Events",

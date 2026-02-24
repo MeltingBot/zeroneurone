@@ -254,7 +254,13 @@
       "emptyHint": "Clic destro sugli elementi per aggiungerli",
       "ghostBadge": "In {{tabs}}",
       "navigateTo": "Vai alla scheda {{name}}"
-    }
+    },
+    "retentionExpiredBanner": "Conservazione scaduta da {{days}} giorno/i",
+    "retentionDeleteConfirm": "Questa indagine verrà eliminata definitivamente, senza possibilità di annullamento.",
+    "retentionDeleteAction": "Elimina definitivamente",
+    "retentionReadonly": "Indagine in sola lettura (conservazione scaduta)",
+    "retentionRedactConfirm": "L'oscuramento cancellerà definitivamente tutti i contenuti testuali (nomi, note, proprietà). La struttura del grafo sarà conservata. Questa azione è irreversibile.",
+    "retentionRedactAction": "Oscurare definitivamente"
   },
   "map": {
     "noGeoElements": "Nessun elemento geolocalizzato",

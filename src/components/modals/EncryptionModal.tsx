@@ -9,11 +9,13 @@
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw, LockKeyhole } from 'lucide-react';
+import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw, LockKeyhole, KeyRound, Trash2, Timer } from 'lucide-react';
 import { Modal } from '../common';
 import { useEncryptionStore } from '../../stores/encryptionStore';
 import { enableEncryption, disableEncryption } from '../../services/encryption/migrationService';
 import { changePassword } from '../../services/encryption/encryptionService';
+import type { WebAuthnCredentialEntry } from '../../services/encryption/encryptionService';
+import { isWebAuthnAvailable, registerWebAuthnCredential } from '../../services/encryption/webauthnService';
 import { db } from '../../db/database';
 
 interface EncryptionModalProps {
@@ -21,7 +23,7 @@ interface EncryptionModalProps {
   onClose: () => void;
 }
 
-type View = 'main' | 'enable' | 'disable' | 'change-password';
+type View = 'main' | 'enable' | 'disable' | 'change-password' | 'webauthn';
 
 interface MigrationState {
   phase: string;
@@ -35,7 +37,7 @@ interface MigrationState {
 
 export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
   const { t } = useTranslation('modals');
-  const { isEnabled, dek, setDek, setEnabled, lock: lockStore } = useEncryptionStore();
+  const { isEnabled, dek, setDek, setEnabled, lock: lockStore, autoLockMinutes, setAutoLockMinutes } = useEncryptionStore();
   const [view, setView] = useState<View>('main');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -70,9 +72,15 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
           hasDek={!!dek}
           error={error}
           success={success}
+          autoLockMinutes={autoLockMinutes}
+          onAutoLockChange={async (minutes) => {
+            setAutoLockMinutes(minutes);
+            await db._encryptionMeta.update('main', { autoLockMinutes: minutes });
+          }}
           onEnable={() => { setError(null); setSuccess(null); setView('enable'); }}
           onDisable={() => { setError(null); setSuccess(null); setView('disable'); }}
           onChangePassword={() => { setError(null); setSuccess(null); setView('change-password'); }}
+          onWebAuthn={() => { setError(null); setSuccess(null); setView('webauthn'); }}
           onLockSession={() => { lockStore(); onClose(); }}
         />
       )}
@@ -136,6 +144,17 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
         />
       )}
 
+      {view === 'webauthn' && (
+        <WebAuthnView
+          dek={dek}
+          isBusy={isBusy}
+          error={error}
+          onSuccess={(msg) => { setSuccess(msg); setView('main'); }}
+          onError={(msg) => setError(msg)}
+          onBack={() => { setError(null); setView('main'); }}
+        />
+      )}
+
       {view === 'change-password' && (
         <ChangePasswordView
           isBusy={isBusy}
@@ -172,18 +191,24 @@ function MainView({
   hasDek,
   error,
   success,
+  autoLockMinutes,
+  onAutoLockChange,
   onEnable,
   onDisable,
   onChangePassword,
+  onWebAuthn,
   onLockSession,
 }: {
   isEnabled: boolean;
   hasDek: boolean;
   error: string | null;
   success: string | null;
+  autoLockMinutes: number | null;
+  onAutoLockChange: (minutes: number | null) => void;
   onEnable: () => void;
   onDisable: () => void;
   onChangePassword: () => void;
+  onWebAuthn: () => void;
   onLockSession: () => void;
 }) {
   const { t } = useTranslation('modals');
@@ -263,6 +288,33 @@ function MainView({
               <RefreshCw size={14} />
               {t('encryption.changePasswordButton')}
             </button>
+            {isWebAuthnAvailable() && (
+              <button
+                onClick={onWebAuthn}
+                disabled={!hasDek}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary disabled:opacity-40"
+              >
+                <KeyRound size={14} />
+                {t('encryption.webauthn.title')}
+              </button>
+            )}
+            {/* Auto-lock */}
+            <div className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-primary border border-border-default rounded">
+              <Timer size={14} className="shrink-0" />
+              <span className="flex-1">{t('encryption.autoLockLabel')}</span>
+              <select
+                value={autoLockMinutes ?? ''}
+                onChange={(e) => onAutoLockChange(e.target.value ? Number(e.target.value) : null)}
+                disabled={!hasDek}
+                className="text-xs bg-bg-secondary border border-border-default rounded px-1.5 py-0.5 text-text-primary disabled:opacity-40"
+              >
+                <option value="">{t('encryption.autoLockDisabled')}</option>
+                <option value="5">{t('encryption.autoLockMinutes', { minutes: 5 })}</option>
+                <option value="15">{t('encryption.autoLockMinutes', { minutes: 15 })}</option>
+                <option value="30">{t('encryption.autoLockMinutes', { minutes: 30 })}</option>
+                <option value="60">{t('encryption.autoLockMinutes', { minutes: 60 })}</option>
+              </select>
+            </div>
             <button
               data-testid="disable-encryption-button"
               onClick={onDisable}
@@ -517,6 +569,160 @@ function DisableView({
           {isBusy ? t('encryption.disable.busy') : t('encryption.disable.submit')}
         </button>
       </div>
+    </div>
+  );
+}
+
+function WebAuthnView({
+  dek,
+  isBusy: _isBusy,
+  error,
+  onSuccess,
+  onError,
+  onBack,
+}: {
+  dek: Uint8Array | null;
+  isBusy: boolean;
+  error: string | null;
+  onSuccess: (msg: string) => void;
+  onError: (msg: string) => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation('modals');
+  const [credentials, setCredentials] = useState<WebAuthnCredentialEntry[]>([]);
+  const [label, setLabel] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Charger les credentials existants
+  useEffect(() => {
+    db._encryptionMeta.get('main').then(meta => {
+      if (meta?.webauthnCredentials) {
+        setCredentials(meta.webauthnCredentials);
+      }
+    });
+  }, []);
+
+  const handleAdd = async () => {
+    if (!dek || !label.trim()) return;
+    setIsRegistering(true);
+    onError(''); // clear
+    try {
+      const existingIds = credentials.map(c => c.credentialId);
+      const entry = await registerWebAuthnCredential(dek, label.trim(), existingIds);
+      const updated = [...credentials, entry];
+
+      // Persister dans _encryptionMeta
+      const meta = await db._encryptionMeta.get('main');
+      if (meta) {
+        await db._encryptionMeta.put({ ...meta, webauthnCredentials: updated });
+      }
+
+      setCredentials(updated);
+      setLabel('');
+      onSuccess(t('encryption.webauthn.successAdded'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('[WebAuthn] Registration error:', msg, err);
+      if (msg === 'PRF_NOT_SUPPORTED') {
+        onError(t('encryption.webauthn.errorPrfNotSupported'));
+      } else if (msg !== 'Registration cancelled') {
+        onError(`${t('encryption.webauthn.errorRegistration')} (${msg})`);
+      }
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleRemove = async (index: number) => {
+    if (!confirm(t('encryption.webauthn.deleteConfirm'))) return;
+    const updated = credentials.filter((_, i) => i !== index);
+
+    const meta = await db._encryptionMeta.get('main');
+    if (meta) {
+      await db._encryptionMeta.put({
+        ...meta,
+        webauthnCredentials: updated.length > 0 ? updated : undefined,
+      });
+    }
+
+    setCredentials(updated);
+    onSuccess(t('encryption.webauthn.successRemoved'));
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-text-secondary">
+        {t('encryption.webauthn.description')}
+      </p>
+
+      {/* Liste des clés existantes */}
+      {credentials.length > 0 ? (
+        <div className="space-y-2">
+          {credentials.map((cred, i) => (
+            <div key={i} className="flex items-center gap-2 p-2.5 bg-bg-secondary border border-border-default rounded">
+              <KeyRound size={14} className="text-text-secondary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary truncate">{cred.label}</p>
+                <p className="text-xs text-text-tertiary">
+                  {t('encryption.webauthn.addedOn')} {new Date(cred.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <button
+                onClick={() => handleRemove(i)}
+                className="shrink-0 p-1 text-text-tertiary hover:text-error"
+                title={t('encryption.webauthn.deleteConfirm')}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-text-tertiary text-center py-3">
+          {t('encryption.webauthn.noKeys')}
+        </p>
+      )}
+
+      {/* Ajouter une clé */}
+      <div className="space-y-2">
+        <label className="block text-xs font-medium text-text-primary">
+          {t('encryption.webauthn.label')}
+        </label>
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && label.trim() && !isRegistering && handleAdd()}
+            placeholder={t('encryption.webauthn.labelPlaceholder')}
+            disabled={isRegistering || !dek}
+            className="flex-1 text-sm border border-border-default rounded px-3 py-2 focus:outline-none focus:border-accent disabled:bg-bg-secondary"
+          />
+          <button
+            onClick={handleAdd}
+            disabled={!label.trim() || isRegistering || !dek}
+            className="text-sm font-medium bg-accent text-white rounded px-3 py-2 hover:bg-accent/90 disabled:opacity-40 whitespace-nowrap"
+          >
+            {isRegistering ? t('encryption.webauthn.registering') : t('encryption.webauthn.addKey')}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-error/5 border border-error/20 rounded text-xs text-error">
+          <AlertTriangle size={13} className="shrink-0" />
+          {error}
+        </div>
+      )}
+
+      <button
+        onClick={onBack}
+        className="w-full text-sm text-text-secondary border border-border-default rounded px-4 py-2 hover:bg-bg-secondary"
+      >
+        {t('encryption.enable.cancel')}
+      </button>
     </div>
   );
 }

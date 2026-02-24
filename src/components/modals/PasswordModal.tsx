@@ -7,7 +7,7 @@
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lock, Eye, EyeOff, AlertTriangle, TriangleAlert } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertTriangle, TriangleAlert, KeyRound } from 'lucide-react';
 
 interface PasswordModalProps {
   /** Appelé avec le mot de passe quand l'utilisateur soumet */
@@ -16,14 +16,19 @@ interface PasswordModalProps {
   error?: string | null;
   /** Vrai pendant la vérification du mot de passe */
   isVerifying?: boolean;
+  /** Vrai si au moins un credential WebAuthn est enregistré */
+  hasWebAuthn?: boolean;
+  /** Appelé quand l'utilisateur clique sur "clé de sécurité" */
+  onUnlockWebAuthn?: () => Promise<void>;
 }
 
-export function PasswordModal({ onUnlock, error, isVerifying = false }: PasswordModalProps) {
+export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuthn = false, onUnlockWebAuthn }: PasswordModalProps) {
   const { t } = useTranslation('modals');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isWebAuthnBusy, setIsWebAuthnBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -133,11 +138,28 @@ export function PasswordModal({ onUnlock, error, isVerifying = false }: Password
         <button
           data-testid="unlock-submit-button"
           onClick={handleSubmit}
-          disabled={!password || isVerifying}
+          disabled={!password || isVerifying || isWebAuthnBusy}
           className="w-full text-sm font-medium bg-accent text-white rounded px-4 py-2 hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isVerifying ? t('passwordModal.verifying') : t('passwordModal.unlock')}
         </button>
+
+        {/* WebAuthn */}
+        {hasWebAuthn && onUnlockWebAuthn && (
+          <button
+            type="button"
+            onClick={async () => {
+              setIsWebAuthnBusy(true);
+              try { await onUnlockWebAuthn(); }
+              finally { setIsWebAuthnBusy(false); }
+            }}
+            disabled={isVerifying || isWebAuthnBusy}
+            className="w-full mt-2 text-sm font-medium border border-border-default rounded px-4 py-2 text-text-primary hover:bg-bg-secondary disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <KeyRound size={14} />
+            {isWebAuthnBusy ? t('encryption.webauthn.unlocking') : t('passwordModal.useSecurityKey')}
+          </button>
+        )}
 
         {/* Reminder stockage local */}
         <p className="text-[11px] text-text-tertiary mt-3 text-center border-t border-border-default pt-3">

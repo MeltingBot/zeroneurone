@@ -51,6 +51,7 @@
       "format": "<strong>Unified format:</strong> type (element/link), label, from, to, notes, tags, confidence...",
       "description": "Links reference elements by their label in the \"from\" and \"to\" columns"
     },
+    "retentionExpired": "Source document expired (retention exceeded by {{days}} day(s))",
     "warnings": "Warnings:",
     "andMore": "... and {{count}} more"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Enable encryption",
     "changePasswordButton": "Change password",
     "disableButton": "Disable encryption",
+    "autoLockLabel": "Auto-lock",
+    "autoLockDisabled": "Disabled",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Lock session",
     "securityNote": "Encryption protects your data against access to browser files. The password is unrecoverable — export your data before enabling.",
     "successEnabled": "Encryption enabled. Your data is now encrypted.",
@@ -545,6 +549,23 @@
       "cancel": "Cancel",
       "submit": "Change",
       "busy": "Updating…"
+    },
+    "webauthn": {
+      "title": "Security keys",
+      "description": "Unlock with a physical key (YubiKey) instead of your password",
+      "addKey": "Add a key",
+      "noKeys": "No keys registered",
+      "label": "Key name",
+      "labelPlaceholder": "E.g. YubiKey 5",
+      "registering": "Touch your key…",
+      "unlocking": "Touch your key…",
+      "deleteConfirm": "Remove this security key?",
+      "successAdded": "Security key added",
+      "successRemoved": "Security key removed",
+      "errorPrfNotSupported": "This key does not support passwordless unlock (PRF)",
+      "errorRegistration": "Error registering the key",
+      "errorUnlock": "Security key unlock failed",
+      "addedOn": "Added on"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Cancel",
     "resetConfirm": "Reset",
     "resetBusy": "Resetting…",
-    "storageReminder": "Data stored on this device only · Never transmitted"
+    "storageReminder": "Data stored on this device only · Never transmitted",
+    "useSecurityKey": "Use a security key"
   }
 }

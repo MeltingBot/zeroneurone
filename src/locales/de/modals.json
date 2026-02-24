@@ -51,6 +51,7 @@
       "format": "<strong>Einheitliches Format:</strong> Typ (Element/Verbindung), Bezeichnung, von, nach, Notizen, Tags, Vertrauen...",
       "description": "Verbindungen referenzieren Elemente über ihre Bezeichnung in den Spalten \"von\" und \"nach\""
     },
+    "retentionExpired": "Quelldokument abgelaufen (Aufbewahrung um {{days}} Tag(e) überschritten)",
     "warnings": "Warnungen:",
     "andMore": "... und {{count}} weitere"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Verschlüsselung aktivieren",
     "changePasswordButton": "Passwort ändern",
     "disableButton": "Verschlüsselung deaktivieren",
+    "autoLockLabel": "Automatische Sperrung",
+    "autoLockDisabled": "Deaktiviert",
+    "autoLockMinutes": "{{minutes}} Min.",
     "lockSessionButton": "Sitzung sperren",
     "securityNote": "Die Verschlüsselung schützt Ihre Daten vor dem Zugriff auf Browser-Dateien. Das Passwort ist nicht wiederherstellbar — exportieren Sie Ihre Daten, bevor Sie aktivieren.",
     "successEnabled": "Verschlüsselung aktiviert. Ihre Daten sind jetzt verschlüsselt.",
@@ -545,6 +549,23 @@
       "cancel": "Abbrechen",
       "submit": "Ändern",
       "busy": "Wird geändert…"
+    },
+    "webauthn": {
+      "title": "Sicherheitsschlüssel",
+      "description": "Mit einem physischen Schlüssel (YubiKey) statt Passwort entsperren",
+      "addKey": "Schlüssel hinzufügen",
+      "noKeys": "Keine Schlüssel registriert",
+      "label": "Schlüsselname",
+      "labelPlaceholder": "Z.B. YubiKey 5",
+      "registering": "Berühren Sie Ihren Schlüssel…",
+      "unlocking": "Berühren Sie Ihren Schlüssel…",
+      "deleteConfirm": "Diesen Sicherheitsschlüssel entfernen?",
+      "successAdded": "Sicherheitsschlüssel hinzugefügt",
+      "successRemoved": "Sicherheitsschlüssel entfernt",
+      "errorPrfNotSupported": "Dieser Schlüssel unterstützt kein passwortloses Entsperren (PRF)",
+      "errorRegistration": "Fehler beim Registrieren des Schlüssels",
+      "errorUnlock": "Entsperrung per Sicherheitsschlüssel fehlgeschlagen",
+      "addedOn": "Hinzugefügt am"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Abbrechen",
     "resetConfirm": "Zurücksetzen",
     "resetBusy": "Wird zurückgesetzt…",
-    "storageReminder": "Daten nur auf diesem Gerät gespeichert · Nie übertragen"
+    "storageReminder": "Daten nur auf diesem Gerät gespeichert · Nie übertragen",
+    "useSecurityKey": "Sicherheitsschlüssel verwenden"
   }
 }

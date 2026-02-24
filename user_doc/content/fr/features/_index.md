@@ -22,3 +22,4 @@ Explorez les fonctionnalités principales de ZeroNeurone.
 - [Synthèse]({{< relref "synthesis" >}}) — Génération automatique de rapports
 - [Collaboration]({{< relref "collaboration" >}}) — Travail en temps réel
 - [Chiffrement at-rest]({{< relref "encryption" >}}) — Protéger vos données par mot de passe
+- [Rétention]({{< relref "retention" >}}) — Durée de vie et politique d'expiration des enquêtes

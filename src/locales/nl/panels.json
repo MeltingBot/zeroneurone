@@ -11,7 +11,8 @@
     "sections": {
       "information": "Informatie",
       "dates": "Datums",
-      "properties": "Eigenschappen"
+      "properties": "Eigenschappen",
+      "retention": "Bewaring"
     },
     "labels": {
       "name": "Naam",
@@ -20,7 +21,18 @@
       "tags": "Tags",
       "startDate": "Startdatum",
       "createdAt": "Aangemaakt op",
-      "updatedAt": "Gewijzigd op"
+      "updatedAt": "Gewijzigd op",
+      "retentionDays": "Duur (dagen)",
+      "retentionPolicy": "Bij verlopen",
+      "retentionUnlimited": "Onbeperkt",
+      "retentionExpires": "Verloopt op",
+      "retentionPolicyWarn": "Waarschuwing",
+      "retentionPolicyReadonly": "Alleen-lezen",
+      "retentionPolicyDelete": "Verwijdering voorstellen",
+      "retentionExpiredSince": "Verlopen sinds {{days}} dag(en)",
+      "retentionPolicyRedact": "Definitieve censuur",
+      "retentionApply": "Toepassen",
+      "retentionReset": "Resetten"
     },
     "placeholders": {
       "name": "Naam van het onderzoek",
@@ -31,7 +43,13 @@
     "noSelection": "Geen element geselecteerd",
     "multipleSelection": "{{count}} elementen geselecteerd",
     "element": "Element",
-    "link": "Verbinding",
+    "link": {
+      "linkedElements": "Verbonden elementen",
+      "deletedElement": "Verwijderd element",
+      "relationPeriod": "Relatieperiode",
+      "periodStart": "Start",
+      "periodEnd": "Einde (leeg laten indien lopend)"
+    },
     "group": "Groep",
     "annotation": "Annotatie",
     "sections": {
@@ -89,13 +107,6 @@
     },
     "hints": {
       "goToTab": "Ga naar tabblad {{name}}"
-    },
-    "link": {
-      "linkedElements": "Verbonden elementen",
-      "deletedElement": "Verwijderd element",
-      "relationPeriod": "Relatieperiode",
-      "periodStart": "Start",
-      "periodEnd": "Einde (leeg laten indien lopend)"
     },
     "events": {
       "title": "Gebeurtenissen",

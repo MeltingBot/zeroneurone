@@ -51,6 +51,7 @@
       "format": "<strong>Formato unificato:</strong> tipo (elemento/collegamento), etichetta, da, a, note, tag, affidabilità...",
       "description": "I collegamenti fanno riferimento agli elementi per etichetta nelle colonne \"da\" e \"a\""
     },
+    "retentionExpired": "Documento sorgente scaduto (conservazione superata di {{days}} giorno/i)",
     "warnings": "Avvisi:",
     "andMore": "... e altri {{count}}"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Attiva crittografia",
     "changePasswordButton": "Cambia password",
     "disableButton": "Disattiva crittografia",
+    "autoLockLabel": "Blocco automatico",
+    "autoLockDisabled": "Disattivato",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Blocca sessione",
     "securityNote": "La crittografia protegge i tuoi dati dall'accesso ai file del browser. La password è irrecuperabile — esporta i tuoi dati prima di attivare.",
     "successEnabled": "Crittografia attivata. I tuoi dati sono ora crittografati.",
@@ -545,6 +549,23 @@
       "cancel": "Annulla",
       "submit": "Cambia",
       "busy": "Aggiornamento…"
+    },
+    "webauthn": {
+      "title": "Chiavi di sicurezza",
+      "description": "Sblocca con una chiave fisica (YubiKey) invece della password",
+      "addKey": "Aggiungi una chiave",
+      "noKeys": "Nessuna chiave registrata",
+      "label": "Nome della chiave",
+      "labelPlaceholder": "Es: YubiKey 5",
+      "registering": "Tocca la tua chiave…",
+      "unlocking": "Tocca la tua chiave…",
+      "deleteConfirm": "Rimuovere questa chiave di sicurezza?",
+      "successAdded": "Chiave di sicurezza aggiunta",
+      "successRemoved": "Chiave di sicurezza rimossa",
+      "errorPrfNotSupported": "Questa chiave non supporta lo sblocco senza password (PRF)",
+      "errorRegistration": "Errore durante la registrazione della chiave",
+      "errorUnlock": "Sblocco con chiave di sicurezza fallito",
+      "addedOn": "Aggiunta il"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Annulla",
     "resetConfirm": "Ripristina",
     "resetBusy": "Ripristino…",
-    "storageReminder": "Dati archiviati solo su questo dispositivo · Mai trasmessi"
+    "storageReminder": "Dati archiviati solo su questo dispositivo · Mai trasmessi",
+    "useSecurityKey": "Usa una chiave di sicurezza"
   }
 }

@@ -51,6 +51,7 @@
       "format": "<strong>Uniform formaat:</strong> type (element/verbinding), label, van, naar, notities, tags, betrouwbaarheid...",
       "description": "Verbindingen verwijzen naar elementen via hun label in de kolommen \"van\" en \"naar\""
     },
+    "retentionExpired": "Brondocument verlopen (bewaring overschreden met {{days}} dag(en))",
     "warnings": "Waarschuwingen:",
     "andMore": "... en nog {{count}}"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Versleuteling inschakelen",
     "changePasswordButton": "Wachtwoord wijzigen",
     "disableButton": "Versleuteling uitschakelen",
+    "autoLockLabel": "Automatisch vergrendelen",
+    "autoLockDisabled": "Uitgeschakeld",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Sessie vergrendelen",
     "securityNote": "Versleuteling beschermt uw gegevens tegen toegang tot browserbestanden. Het wachtwoord is niet herstelbaar — exporteer uw gegevens voordat u activeert.",
     "successEnabled": "Versleuteling ingeschakeld. Uw gegevens zijn nu versleuteld.",
@@ -545,6 +549,23 @@
       "cancel": "Annuleren",
       "submit": "Wijzigen",
       "busy": "Bijwerken…"
+    },
+    "webauthn": {
+      "title": "Beveiligingssleutels",
+      "description": "Ontgrendel met een fysieke sleutel (YubiKey) in plaats van wachtwoord",
+      "addKey": "Sleutel toevoegen",
+      "noKeys": "Geen sleutels geregistreerd",
+      "label": "Sleutelnaam",
+      "labelPlaceholder": "Bijv. YubiKey 5",
+      "registering": "Raak uw sleutel aan…",
+      "unlocking": "Raak uw sleutel aan…",
+      "deleteConfirm": "Deze beveiligingssleutel verwijderen?",
+      "successAdded": "Beveiligingssleutel toegevoegd",
+      "successRemoved": "Beveiligingssleutel verwijderd",
+      "errorPrfNotSupported": "Deze sleutel ondersteunt geen wachtwoordloze ontgrendeling (PRF)",
+      "errorRegistration": "Fout bij het registreren van de sleutel",
+      "errorUnlock": "Ontgrendeling met beveiligingssleutel mislukt",
+      "addedOn": "Toegevoegd op"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Annuleren",
     "resetConfirm": "Opnieuw instellen",
     "resetBusy": "Bezig met opnieuw instellen…",
-    "storageReminder": "Gegevens opgeslagen op dit apparaat · Nooit verzonden"
+    "storageReminder": "Gegevens opgeslagen op dit apparaat · Nooit verzonden",
+    "useSecurityKey": "Gebruik een beveiligingssleutel"
   }
 }

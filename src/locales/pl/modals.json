@@ -51,6 +51,7 @@
       "format": "<strong>Format zunifikowany:</strong> typ (element/połączenie), etykieta, od, do, notatki, tagi, pewność...",
       "description": "Połączenia odwołują się do elementów po etykiecie w kolumnach \"od\" i \"do\""
     },
+    "retentionExpired": "Dokument źródłowy wygasł (retencja przekroczona o {{days}} dni)",
     "warnings": "Ostrzeżenia:",
     "andMore": "... i jeszcze {{count}}"
   },
@@ -504,6 +505,9 @@
     "enableButton": "Włącz szyfrowanie",
     "changePasswordButton": "Zmień hasło",
     "disableButton": "Wyłącz szyfrowanie",
+    "autoLockLabel": "Automatyczna blokada",
+    "autoLockDisabled": "Wyłączone",
+    "autoLockMinutes": "{{minutes}} min",
     "lockSessionButton": "Zablokuj sesję",
     "securityNote": "Szyfrowanie chroni Twoje dane przed dostępem do plików przeglądarki. Hasło jest nieodwracalne — wyeksportuj dane przed aktywacją.",
     "successEnabled": "Szyfrowanie włączone. Twoje dane są teraz zaszyfrowane.",
@@ -545,6 +549,23 @@
       "cancel": "Anuluj",
       "submit": "Zmień",
       "busy": "Aktualizacja…"
+    },
+    "webauthn": {
+      "title": "Klucze bezpieczeństwa",
+      "description": "Odblokuj kluczem fizycznym (YubiKey) zamiast hasła",
+      "addKey": "Dodaj klucz",
+      "noKeys": "Brak zarejestrowanych kluczy",
+      "label": "Nazwa klucza",
+      "labelPlaceholder": "Np. YubiKey 5",
+      "registering": "Dotknij klucza…",
+      "unlocking": "Dotknij klucza…",
+      "deleteConfirm": "Usunąć ten klucz bezpieczeństwa?",
+      "successAdded": "Klucz bezpieczeństwa dodany",
+      "successRemoved": "Klucz bezpieczeństwa usunięty",
+      "errorPrfNotSupported": "Ten klucz nie obsługuje odblokowywania bez hasła (PRF)",
+      "errorRegistration": "Błąd podczas rejestracji klucza",
+      "errorUnlock": "Odblokowanie kluczem bezpieczeństwa nie powiodło się",
+      "addedOn": "Dodano"
     }
   },
   "passwordModal": {
@@ -562,6 +583,7 @@
     "resetCancel": "Anuluj",
     "resetConfirm": "Zresetuj",
     "resetBusy": "Resetowanie…",
-    "storageReminder": "Dane przechowywane tylko na tym urządzeniu · Nigdy nie przesyłane"
+    "storageReminder": "Dane przechowywane tylko na tym urządzeniu · Nigdy nie przesyłane",
+    "useSecurityKey": "Użyj klucza bezpieczeństwa"
   }
 }
