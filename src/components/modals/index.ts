@@ -15,3 +15,5 @@ export { LocalStorageDisclaimerModal, hasAcknowledgedLocalStorage } from './Loca
 export { MetadataImportModal } from './MetadataImportModal';
 export { ImportIntoCurrentModal } from './ImportIntoCurrentModal';
 export { InvestigationTagsModal } from './InvestigationTagsModal';
+export { EncryptionModal } from './EncryptionModal';
+export { PasswordModal } from './PasswordModal';
