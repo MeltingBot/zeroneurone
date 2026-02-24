@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.18.0
+
+### Features
+- WebAuthn PRF (FIDO2 Level 3): unlock with a hardware security key (YubiKey) as an alternative to the passphrase. Register, list, and delete credentials from the encryption settings.
+- Investigation retention: configurable retention period per investigation (days). Four expiration policies: warning, read-only, proposed deletion, permanent redaction.
+- Read-only enforcement: `assertWritable` guards on all 22 mutation actions in investigationStore. Expiration with read-only or redact policy locks the investigation.
+- Permanent redaction: irreversibly replaces all text content (labels, notes, properties, tags) with masking characters while preserving graph structure.
+- Auto-lock on inactivity: configurable idle timeout (5/15/30/60 min) with activity detection (mouse, keyboard, touch, scroll) and visibility change handling. Setting persisted in `_encryptionMeta`.
+- Retention collaboration sync: retentionDays and retentionPolicy synchronized via Y.Doc in collaborative sessions.
+- Import expiration warning: ZIP import shows a warning if the source document's retention period has expired.
+- SECURITY.md: updated with WebAuthn PRF, PBKDF2 600k iterations, 4 retention policies.
+- RGPD.md: GDPR applicability analysis for ZeroNeurone usage.
+- User documentation: encryption page updated (auto-lock, WebAuthn), new retention page.
+- i18n: all new features translated into 11 languages.
+
 ## 2.17.0
 
 ### Features
