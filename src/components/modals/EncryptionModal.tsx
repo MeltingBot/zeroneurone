@@ -199,8 +199,8 @@ function MainView({
             </p>
             <p className="text-xs text-text-secondary">
               {isEnabled
-                ? 'Données chiffrées (AES-256-GCM)'
-                : 'Données stockées en clair dans IndexedDB'}
+                ? 'AES-256-GCM · IndexedDB + OPFS'
+                : 'Données stockées en clair'}
             </p>
           </div>
         </div>
