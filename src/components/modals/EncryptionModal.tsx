@@ -199,7 +199,7 @@ function MainView({
             </p>
             <p className="text-xs text-text-secondary">
               {isEnabled
-                ? 'Données chiffrées (AES-256-GCM + XSalsa20-Poly1305)'
+                ? 'Données chiffrées (AES-256-GCM)'
                 : 'Données stockées en clair dans IndexedDB'}
             </p>
           </div>
@@ -238,37 +238,28 @@ function MainView({
         {!isEnabled ? (
           <button
             onClick={onEnable}
-            className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary"
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary"
           >
-            <span className="flex items-center gap-2">
-              <Lock size={14} />
-              Activer le chiffrement
-            </span>
-            <span className="text-xs text-text-tertiary">→</span>
+            <Lock size={14} />
+            Activer le chiffrement
           </button>
         ) : (
           <>
             <button
               onClick={onChangePassword}
               disabled={!hasDek}
-              className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary disabled:opacity-40"
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-primary border border-border-default rounded hover:bg-bg-secondary disabled:opacity-40"
             >
-              <span className="flex items-center gap-2">
-                <RefreshCw size={14} />
-                Changer le mot de passe
-              </span>
-              <span className="text-xs text-text-tertiary">→</span>
+              <RefreshCw size={14} />
+              Changer le mot de passe
             </button>
             <button
               onClick={onDisable}
               disabled={!hasDek}
-              className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-error border border-error/20 rounded hover:bg-error/5 disabled:opacity-40"
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-error border border-error/20 rounded hover:bg-error/5 disabled:opacity-40"
             >
-              <span className="flex items-center gap-2">
-                <Unlock size={14} />
-                Désactiver le chiffrement
-              </span>
-              <span className="text-xs text-error/60">→</span>
+              <Unlock size={14} />
+              Désactiver le chiffrement
             </button>
           </>
         )}
@@ -277,13 +268,11 @@ function MainView({
         {isEnabled && hasDek && (
           <button
             onClick={onLockSession}
-            className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-text-secondary border border-border-default rounded hover:bg-bg-secondary mt-1"
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary border border-border-default rounded hover:bg-bg-secondary mt-1"
           >
-            <span className="flex items-center gap-2">
-              <LockKeyhole size={14} />
-              Verrouiller la session
-            </span>
-            <span className="text-xs text-text-tertiary">Alt+L</span>
+            <LockKeyhole size={14} />
+            Verrouiller la session
+            <span className="ml-auto text-xs text-text-tertiary">Alt+L</span>
           </button>
         )}
       </div>
