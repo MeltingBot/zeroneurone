@@ -21,6 +21,14 @@ interface EncryptionStoreState {
   isMigrating: boolean;
   /** Message d'erreur (mot de passe incorrect, etc.) */
   error: string | null;
+  /**
+   * Vrai quand il est sûr d'ouvrir Dexie :
+   * - pas de chiffrement → true dès la vérification initiale
+   * - chiffrement activé → true uniquement après déverrouillage (DEK chargée)
+   * Permet de gater toute opération Dexie jusqu'à ce que le middleware
+   * soit installé (ou confirmé absent).
+   */
+  isReady: boolean;
 
   // Actions
   setDek: (dek: Uint8Array) => void;
@@ -28,6 +36,7 @@ interface EncryptionStoreState {
   setLocked: (locked: boolean) => void;
   setMigrating: (migrating: boolean) => void;
   setError: (error: string | null) => void;
+  setReady: () => void;
   /** Efface la DEK de la mémoire (verrouillage de session) */
   lock: () => void;
 }
@@ -38,12 +47,14 @@ export const useEncryptionStore = create<EncryptionStoreState>((set) => ({
   isLocked: false,
   isMigrating: false,
   error: null,
+  isReady: false,
 
   setDek: (dek) => set({ dek, isLocked: false, error: null }),
   setEnabled: (enabled) => set({ isEnabled: enabled }),
   setLocked: (locked) => set({ isLocked: locked }),
   setMigrating: (migrating) => set({ isMigrating: migrating }),
   setError: (error) => set({ error }),
+  setReady: () => set({ isReady: true }),
 
   lock: () => set({ dek: null, isLocked: true }),
 }));

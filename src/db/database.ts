@@ -127,11 +127,19 @@ class InvestigationDatabase extends Dexie {
 
   /**
    * Active le chiffrement at-rest avec la DEK fournie.
-   * Doit être appelé avant toute opération sur la base.
-   * Si la DEK est null, le middleware n'est pas installé (mode non chiffré).
+   *
+   * Dexie compile la chaîne de middlewares au moment de open(). Si la DB est
+   * déjà ouverte, un simple db.use() n'a aucun effet sur les transactions
+   * suivantes. On ferme donc explicitement la connexion avant d'enregistrer le
+   * middleware : le prochain accès à une table rouvre la DB et recompile la
+   * chaîne avec le middleware de chiffrement inclus.
    */
   applyEncryption(dek: Uint8Array | null): void {
     if (dek) {
+      // disableAutoOpen: false → ferme la connexion IDB mais conserve autoOpen=true.
+      // La prochaine opération sur une table rouvre la DB et recompile la chaîne
+      // DBCore avec le middleware fraîchement ajouté via db.use().
+      this.close({ disableAutoOpen: false });
       this.use(createEncryptionMiddleware(dek, DEFAULT_ENCRYPTED_TABLES));
     }
   }

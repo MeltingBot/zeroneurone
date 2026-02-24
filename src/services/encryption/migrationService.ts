@@ -118,51 +118,96 @@ export async function enableEncryption(
   // 5. Configurer syncService
   syncService.setAtRestDek(dek);
 
-  onProgress({ phase: 'Chiffrement activé', current: 4, total: 4 });
+  onProgress({ phase: 'Chiffrement activé — redémarrage', current: 4, total: 4 });
+
+  // La base était déjà ouverte quand applyEncryption a été appelé.
+  // Le rechargement garantit que Dexie réouvre avec le middleware compilé
+  // depuis le début (flow App.tsx → raw IDB check → db.use() → db.open()).
+  window.location.reload();
+
   return dek;
+}
+
+/**
+ * Réécrit les données déchiffrées directement via l'API IndexedDB native,
+ * sans passer par Dexie. Nécessaire car le middleware Dexie v4 ne peut pas
+ * être désinstallé (pas de unuse()) : tout bulkPut via Dexie rechiffrerait
+ * les données. On bypasse donc complètement la couche Dexie pour cette étape.
+ */
+async function writePlaintextViaRawIDB(data: Record<string, unknown[]>): Promise<void> {
+  const tableNames = Object.keys(data).filter(t => data[t].length > 0);
+  if (tableNames.length === 0) return;
+
+  return new Promise((resolve, reject) => {
+    const openReq = indexedDB.open('zeroneurone');
+    openReq.onsuccess = () => {
+      const idb = openReq.result;
+      try {
+        const tx = idb.transaction(tableNames, 'readwrite');
+        for (const tableName of tableNames) {
+          const store = tx.objectStore(tableName);
+          for (const record of data[tableName]) {
+            store.put(record);
+          }
+        }
+        tx.oncomplete = () => { idb.close(); resolve(); };
+        tx.onerror = () => { idb.close(); reject(tx.error); };
+      } catch (err) {
+        idb.close();
+        reject(err);
+      }
+    };
+    openReq.onerror = () => reject(openReq.error);
+  });
 }
 
 /**
  * Désactive le chiffrement.
  *
  * Flow :
- * 1. Lire toutes les données déchiffrées en RAM
- * 2. Supprimer les bases IndexedDB (Dexie + y-indexeddb)
- * 3. Recréer les bases sans middleware avec les données en clair
+ * 1. Lire toutes les données déchiffrées en RAM (via Dexie + middleware)
+ * 2. Réécrire les données en clair via raw IndexedDB (bypass du middleware)
+ * 3. Migrer les bases y-indexeddb vers le clair
  * 4. Supprimer _encryptionMeta
+ * 5. Recharger l'app (Dexie réouvrira sans middleware)
  *
- * Note : nécessite un rechargement de l'app pour que Dexie reparte sans middleware.
+ * Note : le middleware Dexie v4 ne supporte pas unuse(). On contourne en
+ * écrivant via raw IDB pour la déchiffrement, puis on recharge.
  */
 export async function disableEncryption(
   dek: Uint8Array,
   onProgress: ProgressCallback = () => {}
 ): Promise<void> {
-  onProgress({ phase: 'Lecture des données déchiffrées', current: 0, total: 3 });
+  onProgress({ phase: 'Lecture des données déchiffrées', current: 0, total: 4 });
 
-  // 1. Lire toutes les données en clair depuis la DB avec middleware actif
+  // 1. Lire toutes les données en clair (le middleware déchiffre à la lecture)
   const data: Record<string, unknown[]> = {};
   for (const tableName of DEFAULT_ENCRYPTED_TABLES) {
     try {
-      // @ts-expect-error
+      // @ts-expect-error - accès dynamique
       const table = db[tableName];
-      if (table) {
-        data[tableName] = await table.toArray();
-      }
+      if (table) data[tableName] = await table.toArray();
     } catch { data[tableName] = []; }
   }
 
-  // Lire les investigations pour la migration y-indexeddb
   const investigations = (data['investigations'] || []) as Array<{ id: string }>;
 
-  onProgress({ phase: 'Migration bases Yjs vers clair', current: 1, total: 3 });
+  onProgress({ phase: 'Écriture en clair', current: 1, total: 4 });
 
-  // 2. Migrer les bases y-indexeddb vers le clair
+  // 2. Réécrire via raw IndexedDB pour bypasser le middleware Dexie
+  //    (un bulkPut via Dexie rechiffrerait les données car le middleware
+  //    est toujours dans la chaîne — Dexie v4 n'a pas de unuse())
+  await writePlaintextViaRawIDB(data);
+
+  onProgress({ phase: 'Déchiffrement bases Yjs', current: 2, total: 4 });
+
+  // 3. Migrer les bases y-indexeddb vers le clair
   for (let i = 0; i < investigations.length; i++) {
     const inv = investigations[i];
     onProgress({
       phase: `Déchiffrement investigation ${i + 1}/${investigations.length}`,
-      current: 1,
-      total: 3,
+      current: 2,
+      total: 4,
     });
     try {
       await migrateToPlaintext(`zeroneurone-ydoc-${inv.id}`, dek);
@@ -171,17 +216,15 @@ export async function disableEncryption(
     }
   }
 
-  onProgress({ phase: 'Suppression métadonnées', current: 2, total: 3 });
+  onProgress({ phase: 'Suppression métadonnées', current: 3, total: 4 });
 
-  // 3. Supprimer _encryptionMeta
+  // 4. Supprimer _encryptionMeta + retirer DEK du syncService
   await db._encryptionMeta.delete('main');
-
-  // 4. Retirer la DEK du syncService
   syncService.setAtRestDek(null);
 
-  onProgress({ phase: 'Terminé — redémarrage requis', current: 3, total: 3 });
+  onProgress({ phase: 'Terminé — redémarrage', current: 4, total: 4 });
 
-  // Note : Dexie doit être rechargée sans middleware.
-  // Le moyen le plus simple est de recharger l'app — au prochain démarrage,
-  // _encryptionMeta n'existe plus → db est ouverte sans middleware.
+  // 5. Recharger : au prochain démarrage, _encryptionMeta absent →
+  //    isReady = true immédiatement → Dexie ouvre sans middleware ✅
+  window.location.reload();
 }

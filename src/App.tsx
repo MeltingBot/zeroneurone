@@ -8,8 +8,49 @@ import { usePlugins } from './plugins/usePlugins';
 import { PasswordModal } from './components/modals/PasswordModal';
 import { useEncryptionStore } from './stores/encryptionStore';
 import { unlockEncryption } from './services/encryption/encryptionService';
+import type { EncryptionMeta } from './services/encryption/encryptionService';
 import { db } from './db/database';
 import { syncService } from './services/syncService';
+
+/**
+ * Lit _encryptionMeta directement via l'API IndexedDB native, sans passer par
+ * Dexie. Permet de savoir si le chiffrement est activé AVANT d'ouvrir Dexie,
+ * afin d'installer le middleware avant la première transaction.
+ */
+async function readEncryptionMetaRaw(): Promise<EncryptionMeta | null> {
+  try {
+    // Vérifier que la base existe déjà (évite de la créer avec onupgradeneeded)
+    const databases = await indexedDB.databases();
+    if (!databases.some(d => d.name === 'zeroneurone')) return null;
+  } catch {
+    // indexedDB.databases() non supporté (rare) → on tente quand même
+  }
+
+  return new Promise((resolve) => {
+    const openReq = indexedDB.open('zeroneurone');
+
+    openReq.onupgradeneeded = () => {
+      // La base n'existait pas (ou ancienne version sans _encryptionMeta)
+      openReq.result.close();
+      resolve(null);
+    };
+
+    openReq.onsuccess = () => {
+      const idb = openReq.result;
+      if (!idb.objectStoreNames.contains('_encryptionMeta')) {
+        idb.close();
+        resolve(null);
+        return;
+      }
+      const tx = idb.transaction('_encryptionMeta', 'readonly');
+      const req = tx.objectStore('_encryptionMeta').get('main');
+      req.onsuccess = () => { idb.close(); resolve((req.result as EncryptionMeta) ?? null); };
+      req.onerror = () => { idb.close(); resolve(null); };
+    };
+
+    openReq.onerror = () => resolve(null);
+  });
+}
 
 /**
  * Global error fallback for unrecoverable errors
@@ -66,31 +107,40 @@ function GlobalErrorFallback() {
  * Si non, laisse passer directement.
  */
 function EncryptionGate({ children }: { children: React.ReactNode }) {
-  const { isLocked, setDek, setEnabled, setError, error } = useEncryptionStore();
+  const { isLocked, setDek, setEnabled, setError, setReady, error } = useEncryptionStore();
   const [isVerifying, setIsVerifying] = useState(false);
   const [encryptionChecked, setEncryptionChecked] = useState(false);
+  // Conserve les métadonnées lues en raw IDB pour le déverrouillage
+  const [rawMeta, setRawMeta] = useState<EncryptionMeta | null>(null);
 
   useEffect(() => {
-    // Vérifier au démarrage si un _encryptionMeta existe
-    db._encryptionMeta.get('main').then(meta => {
+    // Lire _encryptionMeta via raw IndexedDB — Dexie n'est PAS encore ouverte.
+    // Si on passait par db._encryptionMeta.get('main'), Dexie ouvrirait la
+    // connexion sans middleware, et le db.close() ultérieur causerait des
+    // DatabaseClosedError sur toutes les transactions en cours.
+    readEncryptionMetaRaw().then(meta => {
       if (meta) {
-        // Chiffrement activé : bloquer jusqu'à saisie du mot de passe
+        setRawMeta(meta);
         setEnabled(true);
         useEncryptionStore.getState().setLocked(true);
+        // isReady reste false : Dexie ne doit pas être ouverte avant le déverrouillage
+      } else {
+        // Pas de chiffrement : Dexie peut être ouverte librement
+        setReady();
       }
       setEncryptionChecked(true);
     }).catch(() => {
-      // Erreur DB : continuer sans chiffrement
+      setReady();
       setEncryptionChecked(true);
     });
-  }, [setEnabled]);
+  }, [setEnabled, setReady]);
 
   const handleUnlock = async (password: string) => {
     setIsVerifying(true);
     setError(null);
 
     try {
-      const meta = await db._encryptionMeta.get('main');
+      const meta = rawMeta;
       if (!meta) {
         setError('Métadonnées de chiffrement introuvables');
         return;
@@ -98,14 +148,17 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
 
       const dek = await unlockEncryption(meta, password);
 
-      // Appliquer le middleware Dexie
+      // Installer le middleware AVANT la première opération Dexie.
+      // db.close() dans applyEncryption est un no-op ici car Dexie n'a pas
+      // encore été ouverte (aucune opération n'a eu lieu depuis le démarrage).
       db.applyEncryption(dek);
 
       // Configurer syncService pour les futures bases y-indexeddb
       syncService.setAtRestDek(dek);
 
-      // Stocker la DEK en mémoire
+      // Stocker la DEK en mémoire et débloquer Dexie
       setDek(dek);
+      setReady();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Mot de passe incorrect');
     } finally {
@@ -114,7 +167,6 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
   };
 
   if (!encryptionChecked) {
-    // Attendre la vérification initiale (très rapide, ~1 query IndexedDB)
     return null;
   }
 
@@ -133,11 +185,15 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
 
 function App() {
   const loadTagSets = useTagSetStore((state) => state.load);
+  const isReady = useEncryptionStore((state) => state.isReady);
 
-  // Initialize TagSets on app startup
+  // Initialize TagSets uniquement quand Dexie est prête (middleware installé
+  // ou chiffrement absent). Évite d'ouvrir Dexie avant que le mot de passe
+  // soit saisi et le middleware installé.
   useEffect(() => {
+    if (!isReady) return;
     loadTagSets();
-  }, [loadTagSets]);
+  }, [loadTagSets, isReady]);
 
   // Check for app updates on tab focus
   useVersionCheck();
