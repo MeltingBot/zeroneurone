@@ -8,11 +8,19 @@
  * Usage: node index.js
  *
  * Environment variables:
- * - PORT:      WebSocket + health port (default: 4444)
- * - HOST:      Bind address (default: 0.0.0.0)
- * - REDIS_URL: Redis connection URL for persistent buffer storage (optional)
- *              Example: redis://localhost:6379
- *              If not set, uses in-memory storage (lost on restart)
+ * - PORT:                   WebSocket + health port (default: 4444)
+ * - HOST:                   Bind address (default: 0.0.0.0)
+ * - REDIS_URL:              Redis connection URL (optional, default: in-memory)
+ * - MAX_MESSAGE_SIZE_MB:    Max message size in MB (default: 100)
+ * - RATE_LIMIT:             Max messages per second per client (default: 500)
+ * - MAX_CONNECTIONS_PER_IP: Max WS connections per IP (default: 10)
+ * - MAX_CLIENTS_PER_ROOM:   Max clients per room (default: 50)
+ * - MAX_ROOMS:              Max concurrent rooms (default: 1000)
+ * - PING_INTERVAL_S:        Keepalive ping interval in seconds (default: 30)
+ * - BUFFER_SIZE_MB:         Max buffer size per room in MB (default: 50)
+ * - BUFFER_MAX_MSGS:        Max buffered messages per room (default: 100000)
+ * - BUFFER_AGE_HOURS:       Max buffer message age in hours (default: 48)
+ * - BUFFER_TOTAL_GB:        Max total buffer size in GB (default: 10)
  *
  * URL parameters:
  * - async=1:   Enable async buffering (messages stored when alone in room)
@@ -46,28 +54,39 @@ const PORT = process.env.PORT || 4444;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // ============================================================================
+// CONFIGURATION (env vars override defaults)
+// ============================================================================
+
+const env = (key, fallback) => {
+  const v = process.env[key];
+  return v !== undefined ? Number(v) : fallback;
+};
+
+// ============================================================================
 // SECURITY LIMITS (DoS Protection)
 // ============================================================================
 const LIMITS = {
-  MAX_MESSAGE_SIZE: 100 * 1024 * 1024,   // 100 MB max per message
+  MAX_MESSAGE_SIZE: env('MAX_MESSAGE_SIZE_MB', 100) * 1024 * 1024,
   RATE_WINDOW_MS: 1000,
-  MAX_MESSAGES_PER_WINDOW: 500,
-  MAX_CONNECTIONS_PER_IP: 10,
-  MAX_CLIENTS_PER_ROOM: 50,
-  MAX_ROOMS: 1000,
+  MAX_MESSAGES_PER_WINDOW: env('RATE_LIMIT', 500),
+  MAX_CONNECTIONS_PER_IP: env('MAX_CONNECTIONS_PER_IP', 10),
+  MAX_CLIENTS_PER_ROOM: env('MAX_CLIENTS_PER_ROOM', 50),
+  MAX_ROOMS: env('MAX_ROOMS', 1000),
   MAX_ROOM_ID_LENGTH: 128,
   ROOM_ID_PATTERN: /^[a-zA-Z0-9._-]+$/,
+  PING_INTERVAL_MS: env('PING_INTERVAL_S', 30) * 1000,
+  PONG_TIMEOUT_MS: 10_000,
 };
 
 // ============================================================================
 // BUFFER LIMITS (Async mode)
 // ============================================================================
 const BUFFER_LIMITS = {
-  MAX_BUFFER_SIZE_PER_ROOM: 50 * 1024 * 1024,    // 50 MB per room
-  MAX_MESSAGES_PER_ROOM: 10000,
-  MAX_MESSAGE_AGE_MS: 7 * 24 * 60 * 60 * 1000,   // 7 days
-  MAX_ROOMS_WITH_BUFFER: 1000,
-  MAX_TOTAL_BUFFER_SIZE: 10 * 1024 * 1024 * 1024, // 10 GB total
+  MAX_BUFFER_SIZE_PER_ROOM: env('BUFFER_SIZE_MB', 50) * 1024 * 1024,
+  MAX_MESSAGES_PER_ROOM: env('BUFFER_MAX_MSGS', 100_000),
+  MAX_MESSAGE_AGE_MS: env('BUFFER_AGE_HOURS', 48) * 60 * 60 * 1000,
+  MAX_ROOMS_WITH_BUFFER: env('MAX_ROOMS', 1000),
+  MAX_TOTAL_BUFFER_SIZE: env('BUFFER_TOTAL_GB', 10) * 1024 * 1024 * 1024,
 };
 
 // ============================================================================
@@ -80,6 +99,7 @@ const roomTokens = new Map();
 const buffers = new Map();
 const bufferStats = new Map();
 const bufferQuotaWarned = new Set();
+const roomReconnects = new Map();   // roomId → { count, lastLog }
 let totalBufferSize = 0;
 
 // ============================================================================
@@ -382,7 +402,29 @@ wss.on('connection', (ws, req) => {
 
   const rateLimiter = createRateLimiter();
   const roomIdShort = roomId.slice(0, 8) + '...';
-  console.log(`[WS] Client from ${clientIP} joined room "${roomIdShort}" (${room.size} client${room.size > 1 ? 's' : ''}${asyncRooms.has(roomId) ? ', async' : ''})`);
+
+  // Throttled join logging: log first join, then summarize reconnections
+  if (room.size >= 2) {
+    // 2nd+ client is always interesting
+    console.log(`[WS] Client from ${clientIP} joined room "${roomIdShort}" (${room.size} clients${asyncRooms.has(roomId) ? ', async' : ''})`);
+    roomReconnects.delete(roomId);
+  } else {
+    const rc = roomReconnects.get(roomId) || { count: 0, lastLog: 0 };
+    rc.count++;
+    if (rc.count === 1) {
+      console.log(`[WS] Client from ${clientIP} joined room "${roomIdShort}" (1 client${asyncRooms.has(roomId) ? ', async' : ''})`);
+      rc.lastLog = Date.now();
+    } else if (Date.now() - rc.lastLog > 5 * 60_000) {
+      // Summary every 5 minutes
+      console.log(`[WS] Client from ${clientIP} reconnected to room "${roomIdShort}" (${rc.count} reconnections)`);
+      rc.lastLog = Date.now();
+    }
+    roomReconnects.set(roomId, rc);
+  }
+
+  // Keepalive ping/pong
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
 
   // Message handling
   ws.on('message', (data) => {
@@ -408,10 +450,22 @@ wss.on('connection', (ws, req) => {
       }
     });
 
-    if (relayed === 0 && asyncRooms.has(roomId)) {
-      addToBuffer(roomId, data).catch(err => {
-        console.error(`[Buffer] Error adding message:`, err.message);
-      });
+    if (relayed === 0) {
+      // Solo client: echo message back periodically to keep y-websocket's
+      // wsLastMessageReceived fresh (prevents 30s reconnect timeout).
+      // Messages may be encrypted so we can't inspect type — throttle to
+      // one echo every 10s to avoid bandwidth waste.
+      const now = Date.now();
+      if (ws.readyState === WebSocket.OPEN && (!ws._lastEcho || now - ws._lastEcho > 10_000)) {
+        ws.send(data);
+        ws._lastEcho = now;
+      }
+      // Buffer for async rooms
+      if (asyncRooms.has(roomId)) {
+        addToBuffer(roomId, data).catch(err => {
+          console.error(`[Buffer] Error adding message:`, err.message);
+        });
+      }
     }
   });
 
@@ -424,7 +478,10 @@ wss.on('connection', (ws, req) => {
     const currentRoom = rooms.get(roomId);
     if (currentRoom) {
       currentRoom.delete(ws);
-      console.log(`[WS] Client from ${clientIP} left room "${roomIdShort}" (${currentRoom.size} remaining)`);
+      // Only log leave when room had multiple clients (interesting event)
+      if (currentRoom.size > 0) {
+        console.log(`[WS] Client from ${clientIP} left room "${roomIdShort}" (${currentRoom.size} remaining)`);
+      }
       if (currentRoom.size === 0) rooms.delete(roomId);
     }
   });
@@ -433,6 +490,23 @@ wss.on('connection', (ws, req) => {
     console.error(`[WS] Error in room "${roomIdShort}" from ${clientIP}:`, err.message);
   });
 });
+
+// ============================================================================
+// KEEPALIVE
+// ============================================================================
+
+const pingInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      ws.terminate();
+      return;
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, LIMITS.PING_INTERVAL_MS);
+
+wss.on('close', () => clearInterval(pingInterval));
 
 // ============================================================================
 // START
@@ -453,7 +527,9 @@ server.listen(PORT, HOST, () => {
   console.log('║  Limits:                                                   ║');
   console.log(`║  • Max message:  ${(LIMITS.MAX_MESSAGE_SIZE / 1024 / 1024).toFixed(0)} MB`.padEnd(63) + '║');
   console.log(`║  • Rate limit:   ${LIMITS.MAX_MESSAGES_PER_WINDOW}/sec`.padEnd(63) + '║');
-  console.log(`║  • Buffer/room:  ${(BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM / 1024 / 1024).toFixed(0)} MB, ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} msgs, 7 days`.padEnd(63) + '║');
+  const ageHours = BUFFER_LIMITS.MAX_MESSAGE_AGE_MS / 3_600_000;
+  const ageLabel = ageHours >= 24 ? `${(ageHours / 24).toFixed(0)}d` : `${ageHours}h`;
+  console.log(`║  • Buffer/room:  ${(BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM / 1024 / 1024).toFixed(0)} MB, ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} msgs, ${ageLabel}`.padEnd(63) + '║');
   console.log(`║  • Storage:      ${redisClient ? 'Redis (persistent)' : 'Memory (ephemeral)'}`.padEnd(63) + '║');
   console.log('╚════════════════════════════════════════════════════════════╝');
   console.log('');
@@ -474,6 +550,7 @@ process.on('SIGTERM', () => {
   buffers.clear();
   bufferStats.clear();
   bufferQuotaWarned.clear();
+  roomReconnects.clear();
   asyncRooms.clear();
   roomTokens.clear();
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.18.2
+
+### Fixes
+- Relay: keepalive ping/pong (30s) to prevent zombie connections and NAT timeout
+- Relay: solo echo to keep y-websocket alive (prevents 30s reconnection loop for solo clients)
+- Relay: throttled join/leave logs (solo reconnections summarized every 5 min)
+- Relay: all limits configurable via environment variables (13 env vars documented)
+- Relay: buffer retention changed to 48h / 100K messages (from 7d / 10K)
+
 ## 2.18.1
 
 ### Fixes
