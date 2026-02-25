@@ -79,6 +79,7 @@ const asyncRooms = new Set();
 const roomTokens = new Map();
 const buffers = new Map();
 const bufferStats = new Map();
+const bufferQuotaWarned = new Set();
 let totalBufferSize = 0;
 
 // ============================================================================
@@ -152,7 +153,11 @@ async function addToBuffer(roomId, data) {
   }
 
   if (!canAddToBufferMemory(roomId, messageSize)) {
-    console.log(`[Buffer] Quota exceeded for room "${roomIdShort}"`);
+    if (!bufferQuotaWarned.has(roomId)) {
+      const stats = bufferStats.get(roomId) || { size: 0, count: 0 };
+      console.log(`[Buffer] Quota exceeded for room "${roomIdShort}" (${(stats.size / 1024 / 1024).toFixed(1)} MB, ${stats.count} msgs) — further drops silenced`);
+      bufferQuotaWarned.add(roomId);
+    }
     return false;
   }
 
@@ -209,6 +214,7 @@ async function flushBuffer(roomId, ws) {
   if (stats) totalBufferSize -= stats.size;
   buffers.delete(roomId);
   bufferStats.delete(roomId);
+  bufferQuotaWarned.delete(roomId);
   return sent;
 }
 
@@ -239,6 +245,7 @@ async function cleanupBuffers() {
       if (stats) totalBufferSize -= stats.size;
       buffers.delete(roomId);
       bufferStats.delete(roomId);
+      bufferQuotaWarned.delete(roomId);
       asyncRooms.delete(roomId);
       roomTokens.delete(roomId);
       cleanedRooms++;
@@ -359,8 +366,9 @@ wss.on('connection', (ws, req) => {
   if (asyncEnabled) asyncRooms.add(roomId);
   room.add(ws);
 
-  // Send buffered messages (delayed for client initialization)
-  if (asyncRooms.has(roomId)) {
+  // Send buffered messages only when a 2nd client joins (avoids echo loop
+  // when a solo client reconnects and re-receives its own buffered messages)
+  if (asyncRooms.has(roomId) && room.size >= 2) {
     setTimeout(async () => {
       if (ws.readyState !== WebSocket.OPEN) return;
       if (await hasBuffer(roomId)) {
@@ -465,6 +473,7 @@ process.on('SIGTERM', () => {
   connectionsPerIP.clear();
   buffers.clear();
   bufferStats.clear();
+  bufferQuotaWarned.clear();
   asyncRooms.clear();
   roomTokens.clear();
 

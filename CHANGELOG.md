@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.18.1
+
+### Fixes
+- Relay: throttle "Quota exceeded" log to one message per room (avoids log spam when buffer is full)
+- Relay: flush buffered messages only when a 2nd client joins the room (prevents echo loop when a solo client reconnects and re-receives its own messages)
+
 ## 2.18.0
 
 ### Features
