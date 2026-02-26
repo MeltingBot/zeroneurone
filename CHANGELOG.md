@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.18.3
+
+### Fixes
+- Canvas: displayed properties not updating on toggle (incremental cache invalidation)
+- Canvas: auto-set reference date on paste/drop of images and files
+- Dates: split datetime-local into date + time inputs (date-only input now works, defaults to 00:00)
+- Handles: enlarged invisible hitbox (24px) for easier link creation without visual change
+- Canvas: increased connectionRadius to 40px for easier target snapping
+
 ## 2.18.2
 
 ### Fixes

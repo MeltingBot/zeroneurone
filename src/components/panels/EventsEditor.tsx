@@ -61,16 +61,19 @@ function EventItem({
     setLngStr(event.geo?.lng?.toFixed(6) ?? '');
   }, [event.id, event.label, event.description, event.source, event.geo?.lat, event.geo?.lng]);
 
-  // Format date for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
-  // Pads year to 4 digits for historical dates (e.g., year 938 → "0938")
-  const formatDateTimeForInput = (date: Date): string => {
+  const formatDateForInput = (date: Date): string => {
     const d = new Date(date);
     const year = String(d.getFullYear()).padStart(4, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTimeForInput = (date: Date): string => {
+    const d = new Date(date);
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${hours}:${minutes}`;
   };
 
   // Blur handlers - sync to parent
@@ -163,34 +166,56 @@ function EventItem({
         </div>
       </div>
 
-      {/* Dates - always visible (datetime pickers sync immediately, no typing lag) */}
+      {/* Dates - always visible */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Calendar size={12} className="text-text-tertiary shrink-0" />
           <span className="text-[10px] text-text-tertiary w-8">{t('detail.events.dateFrom')}</span>
           <input
-            type="datetime-local"
-            value={formatDateTimeForInput(new Date(event.date))}
+            type="date"
+            value={formatDateForInput(new Date(event.date))}
             onChange={(e) => {
-              if (e.target.value) {
-                onUpdate({ date: new Date(e.target.value) });
-              }
+              if (!e.target.value) return;
+              const existingTime = formatTimeForInput(new Date(event.date));
+              onUpdate({ date: new Date(`${e.target.value}T${existingTime}`) });
             }}
             className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+          />
+          <input
+            type="time"
+            value={formatTimeForInput(new Date(event.date))}
+            onChange={(e) => {
+              const existingDate = formatDateForInput(new Date(event.date));
+              onUpdate({ date: new Date(`${existingDate}T${e.target.value || '00:00'}`) });
+            }}
+            className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3" /> {/* Spacer to align with calendar icon */}
           <span className="text-[10px] text-text-tertiary w-8">{t('detail.events.dateTo')}</span>
           <input
-            type="datetime-local"
-            value={event.dateEnd ? formatDateTimeForInput(new Date(event.dateEnd)) : ''}
+            type="date"
+            value={event.dateEnd ? formatDateForInput(new Date(event.dateEnd)) : ''}
             onChange={(e) => {
-              onUpdate({
-                dateEnd: e.target.value ? new Date(e.target.value) : undefined,
-              });
+              if (!e.target.value) {
+                onUpdate({ dateEnd: undefined });
+                return;
+              }
+              const existingTime = event.dateEnd ? formatTimeForInput(new Date(event.dateEnd)) : '00:00';
+              onUpdate({ dateEnd: new Date(`${e.target.value}T${existingTime}`) });
             }}
             className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+          />
+          <input
+            type="time"
+            value={event.dateEnd ? formatTimeForInput(new Date(event.dateEnd)) : ''}
+            onChange={(e) => {
+              const existingDate = event.dateEnd ? formatDateForInput(new Date(event.dateEnd)) : '';
+              if (!existingDate) return;
+              onUpdate({ dateEnd: new Date(`${existingDate}T${e.target.value || '00:00'}`) });
+            }}
+            className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
         </div>
       </div>

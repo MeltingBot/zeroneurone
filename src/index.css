@@ -257,6 +257,21 @@ button {
   border-color: transparent !important;
 }
 
+/* Connection handle hitbox — visually small dot, large clickable area via ::before */
+.handle-hitbox {
+  position: relative;
+}
+.handle-hitbox::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
 /* ============================================
    SKETCHY / HAND-DRAWN EFFECT CLASSES
    ============================================ */

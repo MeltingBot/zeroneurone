@@ -52,15 +52,20 @@ const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xl', label: 'XL' },
 ];
 
-// Format date for datetime-local input (YYYY-MM-DDTHH:mm) in LOCAL timezone
-function formatDateTimeForInput(date: Date): string {
-  const year = date.getFullYear();
+function formatDateForInput(date: Date): string {
+  const year = String(date.getFullYear()).padStart(4, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatTimeForInput(date: Date): string {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${hours}:${minutes}`;
 }
+
+
 
 export function LinkDetail({ link }: LinkDetailProps) {
   const { t } = useTranslation('panels');
@@ -520,37 +525,65 @@ export function LinkDetail({ link }: LinkDetailProps) {
             <div className="space-y-2">
               <div>
                 <span className="text-[10px] text-text-tertiary">{t('detail.link.periodStart')}</span>
-                <input
-                  type="datetime-local"
-                  value={link.dateRange?.start ? formatDateTimeForInput(new Date(link.dateRange.start)) : ''}
-                  onChange={(e) => {
-                    const newDate = e.target.value ? new Date(e.target.value) : null;
-                    updateLink(link.id, {
-                      dateRange: {
-                        start: newDate,
-                        end: link.dateRange?.end ?? null,
-                      },
-                    });
-                  }}
-                  className="w-full px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={link.dateRange?.start ? formatDateForInput(new Date(link.dateRange.start)) : ''}
+                    onChange={(e) => {
+                      const dateStr = e.target.value;
+                      const existingTime = link.dateRange?.start ? formatTimeForInput(new Date(link.dateRange.start)) : '00:00';
+                      const newDate = dateStr ? new Date(`${dateStr}T${existingTime}`) : null;
+                      updateLink(link.id, {
+                        dateRange: { start: newDate, end: link.dateRange?.end ?? null },
+                      });
+                    }}
+                    className="flex-1 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                  />
+                  <input
+                    type="time"
+                    value={link.dateRange?.start ? formatTimeForInput(new Date(link.dateRange.start)) : ''}
+                    onChange={(e) => {
+                      const existingDate = link.dateRange?.start ? formatDateForInput(new Date(link.dateRange.start)) : '';
+                      if (!existingDate) return;
+                      const newDate = new Date(`${existingDate}T${e.target.value || '00:00'}`);
+                      updateLink(link.id, {
+                        dateRange: { start: newDate, end: link.dateRange?.end ?? null },
+                      });
+                    }}
+                    className="w-24 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                  />
+                </div>
               </div>
               <div>
                 <span className="text-[10px] text-text-tertiary">{t('detail.link.periodEnd')}</span>
-                <input
-                  type="datetime-local"
-                  value={link.dateRange?.end ? formatDateTimeForInput(new Date(link.dateRange.end)) : ''}
-                  onChange={(e) => {
-                    const newDate = e.target.value ? new Date(e.target.value) : null;
-                    updateLink(link.id, {
-                      dateRange: {
-                        start: link.dateRange?.start ?? null,
-                        end: newDate,
-                      },
-                    });
-                  }}
-                  className="w-full px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={link.dateRange?.end ? formatDateForInput(new Date(link.dateRange.end)) : ''}
+                    onChange={(e) => {
+                      const dateStr = e.target.value;
+                      const existingTime = link.dateRange?.end ? formatTimeForInput(new Date(link.dateRange.end)) : '00:00';
+                      const newDate = dateStr ? new Date(`${dateStr}T${existingTime}`) : null;
+                      updateLink(link.id, {
+                        dateRange: { start: link.dateRange?.start ?? null, end: newDate },
+                      });
+                    }}
+                    className="flex-1 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                  />
+                  <input
+                    type="time"
+                    value={link.dateRange?.end ? formatTimeForInput(new Date(link.dateRange.end)) : ''}
+                    onChange={(e) => {
+                      const existingDate = link.dateRange?.end ? formatDateForInput(new Date(link.dateRange.end)) : '';
+                      if (!existingDate) return;
+                      const newDate = new Date(`${existingDate}T${e.target.value || '00:00'}`);
+                      updateLink(link.id, {
+                        dateRange: { start: link.dateRange?.start ?? null, end: newDate },
+                      });
+                    }}
+                    className="w-24 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                  />
+                </div>
               </div>
             </div>
           </div>

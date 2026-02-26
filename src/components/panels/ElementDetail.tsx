@@ -77,7 +77,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const [notes, setNotes] = useState(element.notes);
   const [source, setSource] = useState(element.source);
   const [confidence, setConfidence] = useState<Confidence | null>(element.confidence);
-  const [date, setDate] = useState(element.date ? formatDateTimeForInput(element.date) : '');
+  const [dateDate, setDateDate] = useState(element.date ? formatDateForInput(element.date) : '');
+  const [dateTime, setDateTime] = useState(element.date ? formatTimeForInput(element.date) : '');
   const [geoLat, setGeoLat] = useState(element.geo?.lat?.toString() ?? '');
   const [geoLng, setGeoLng] = useState(element.geo?.lng?.toString() ?? '');
   // Track what was last saved locally (independent of prop update timing)
@@ -142,7 +143,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setNotes(freshElement.notes);
     setSource(freshElement.source);
     setConfidence(freshElement.confidence);
-    setDate(freshElement.date ? formatDateTimeForInput(freshElement.date) : '');
+    setDateDate(freshElement.date ? formatDateForInput(freshElement.date) : '');
+    setDateTime(freshElement.date ? formatTimeForInput(freshElement.date) : '');
     setGeoLat(freshElement.geo?.lat?.toString() ?? '');
     setGeoLng(freshElement.geo?.lng?.toString() ?? '');
     setLastSavedGeo(freshElement.geo ?? null);
@@ -240,12 +242,24 @@ export function ElementDetail({ element }: ElementDetailProps) {
     [element.id, element.confidence, updateElement, pushAction]
   );
 
-  // Handle date change (with undo support)
-  const handleDateChange = useCallback(
-    (value: string) => {
+  // Handle date/time change (with undo support)
+  const commitDate = useCallback(
+    (newDateStr: string, newTimeStr: string) => {
+      if (!newDateStr) {
+        // Clear the date
+        const oldDate = element.date;
+        updateElement(element.id, { date: null });
+        pushAction({
+          type: 'update-element',
+          undo: { elementId: element.id, changes: { date: oldDate } },
+          redo: { elementId: element.id, changes: { date: null } },
+        });
+        return;
+      }
+      const time = newTimeStr || '00:00';
+      const newDate = new Date(`${newDateStr}T${time}`);
+      if (isNaN(newDate.getTime())) return;
       const oldDate = element.date;
-      setDate(value);
-      const newDate = value ? new Date(value) : null;
       updateElement(element.id, { date: newDate });
       pushAction({
         type: 'update-element',
@@ -254,6 +268,24 @@ export function ElementDetail({ element }: ElementDetailProps) {
       });
     },
     [element.id, element.date, updateElement, pushAction]
+  );
+
+  const handleDateDateChange = useCallback(
+    (value: string) => {
+      setDateDate(value);
+      commitDate(value, dateTime);
+    },
+    [dateTime, commitDate]
+  );
+
+  const handleDateTimeChange = useCallback(
+    (value: string) => {
+      setDateTime(value);
+      if (dateDate) {
+        commitDate(dateDate, value);
+      }
+    },
+    [dateDate, commitDate]
   );
 
   // Clear geo coordinates (with undo support)
@@ -968,12 +1000,21 @@ export function ElementDetail({ element }: ElementDetailProps) {
           {/* Date */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">{t('detail.labels.referenceDate')}</label>
-            <input
-              type="datetime-local"
-              value={date}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={dateDate}
+                onChange={(e) => handleDateDateChange(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
+              />
+              <input
+                type="time"
+                value={dateTime}
+                onChange={(e) => handleDateTimeChange(e.target.value)}
+                placeholder="00:00"
+                className="w-24 px-2 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
+              />
+            </div>
             <p className="text-[10px] text-text-tertiary">
               {t('detail.labels.dateCollectedHelp')}. {t('detail.labels.useEventsForDates')}
             </p>
@@ -1217,15 +1258,19 @@ export function ElementDetail({ element }: ElementDetailProps) {
   );
 }
 
-// Format date for datetime-local input (YYYY-MM-DDTHH:mm)
-// Pads year to 4 digits for historical dates (e.g., year 938 → "0938")
-function formatDateTimeForInput(date: Date): string {
+// Format date for date input (YYYY-MM-DD)
+function formatDateForInput(date: Date): string {
   const year = String(date.getFullYear()).padStart(4, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Format time for time input (HH:mm)
+function formatTimeForInput(date: Date): string {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${hours}:${minutes}`;
 }
 
 // Format date for display (DD/MM/YYYY HH:mm)

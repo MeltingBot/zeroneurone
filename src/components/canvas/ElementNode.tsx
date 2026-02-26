@@ -316,25 +316,25 @@ function ElementNodeComponent({ data }: NodeProps) {
         type="source"
         position={Position.Top}
         id="source-top"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="source-left"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
 
       {/* Target handles on all 4 sides */}
@@ -342,25 +342,25 @@ function ElementNodeComponent({ data }: NodeProps) {
         type="target"
         position={Position.Top}
         id="target-top"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="target-bottom"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="target-left"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Right}
         id="target-right"
-        className={`!w-2 !h-2 !bg-accent !border !border-white ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
       />
 
       {/* Comment indicator - shows when element has unresolved comments */}

@@ -22,15 +22,6 @@ interface PropertiesEditorProps {
 
 const PROPERTY_TYPE_VALUES: PropertyType[] = ['text', 'number', 'date', 'datetime', 'boolean', 'choice', 'country', 'link'];
 
-/** Format Date for datetime-local input (YYYY-MM-DDTHH:mm) using LOCAL timezone */
-function formatDateTimeForInput(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
 
 /** Format Date for date input (YYYY-MM-DD) using LOCAL timezone */
 function formatDateForInput(date: Date): string {
@@ -38,6 +29,13 @@ function formatDateForInput(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/** Format Date for time input (HH:mm) using LOCAL timezone */
+function formatTimeForInput(date: Date): string {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 }
 
 export function PropertiesEditor({
@@ -491,8 +489,11 @@ function PropertyValueInput({
   const [localDate, setLocalDate] = useState(() =>
     value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : ''
   );
-  const [localDateTime, setLocalDateTime] = useState(() =>
-    value instanceof Date ? formatDateTimeForInput(value) : value ? String(value).slice(0, 16) : ''
+  const [localDateTimeDate, setLocalDateTimeDate] = useState(() =>
+    value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : ''
+  );
+  const [localDateTimeTime, setLocalDateTimeTime] = useState(() =>
+    value instanceof Date ? formatTimeForInput(value) : value ? String(value).slice(11, 16) : ''
   );
 
   // Sync local state when prop value changes externally (undo/redo, collab)
@@ -500,7 +501,8 @@ function PropertyValueInput({
     setLocalText(String(value ?? ''));
     setLocalNumber(value !== null && value !== undefined ? String(value) : '');
     setLocalDate(value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : '');
-    setLocalDateTime(value instanceof Date ? formatDateTimeForInput(value) : value ? String(value).slice(0, 16) : '');
+    setLocalDateTimeDate(value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : '');
+    setLocalDateTimeTime(value instanceof Date ? formatTimeForInput(value) : value ? String(value).slice(11, 16) : '');
   }, [value]);
 
   const baseInputClass = compact
@@ -573,24 +575,37 @@ function PropertyValueInput({
 
     case 'datetime':
       return (
-        <input
-          type="datetime-local"
-          value={localDateTime}
-          onChange={(e) => setLocalDateTime(e.target.value)}
-          onBlur={() => {
-            // Sync to parent on blur with valid datetime or null
-            if (!localDateTime) {
-              if (value !== null) onChange(null);
-            } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(localDateTime)) {
-              const parsed = new Date(localDateTime);
-              if (!isNaN(parsed.getTime())) {
-                onChange(parsed);
+        <div className="flex gap-1">
+          <input
+            type="date"
+            value={localDateTimeDate}
+            onChange={(e) => {
+              setLocalDateTimeDate(e.target.value);
+              if (!e.target.value) {
+                if (value !== null) onChange(null);
+              } else {
+                const time = localDateTimeTime || '00:00';
+                const parsed = new Date(`${e.target.value}T${time}`);
+                if (!isNaN(parsed.getTime())) onChange(parsed);
               }
-            }
-          }}
-          onKeyDown={onKeyDown}
-          className={baseInputClass}
-        />
+            }}
+            onKeyDown={onKeyDown}
+            className={baseInputClass}
+          />
+          <input
+            type="time"
+            value={localDateTimeTime}
+            onChange={(e) => {
+              setLocalDateTimeTime(e.target.value);
+              if (localDateTimeDate) {
+                const parsed = new Date(`${localDateTimeDate}T${e.target.value || '00:00'}`);
+                if (!isNaN(parsed.getTime())) onChange(parsed);
+              }
+            }}
+            onKeyDown={onKeyDown}
+            className={`w-20 ${baseInputClass}`}
+          />
+        </div>
       );
 
     case 'choice':

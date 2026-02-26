@@ -251,14 +251,14 @@ function GroupNodeComponent({ data }: NodeProps) {
       </div>
 
       {/* Handles for connections - offset from center to avoid NodeResizer handles */}
-      <Handle type="source" position={Position.Top} id="source-top" style={{ left: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="source" position={Position.Bottom} id="source-bottom" style={{ left: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="source" position={Position.Left} id="source-left" style={{ top: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="source" position={Position.Right} id="source-right" style={{ top: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="target" position={Position.Top} id="target-top" style={{ left: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="target" position={Position.Bottom} id="target-bottom" style={{ left: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="target" position={Position.Left} id="target-left" style={{ top: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
-      <Handle type="target" position={Position.Right} id="target-right" style={{ top: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="source" position={Position.Top} id="source-top" style={{ left: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" style={{ left: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="source" position={Position.Left} id="source-left" style={{ top: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="source" position={Position.Right} id="source-right" style={{ top: '30%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="target" position={Position.Top} id="target-top" style={{ left: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="target" position={Position.Bottom} id="target-bottom" style={{ left: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="target" position={Position.Left} id="target-left" style={{ top: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
+      <Handle type="target" position={Position.Right} id="target-right" style={{ top: '70%' }} className="!w-2 !h-2 !bg-border-default !border-0 handle-hitbox opacity-0 hover:opacity-100 !z-10" />
     </div>
   );
 }

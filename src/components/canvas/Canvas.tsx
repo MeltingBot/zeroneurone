@@ -1012,9 +1012,21 @@ export function Canvas() {
   const prevElementsByIdRef = useRef(new Map<string, Element>());
   const nodeStructureCacheRef = useRef(new Map<string, NodeStructure>());
 
+  // Track property display settings to invalidate cache when they change
+  const prevBadgeKeyRef = useRef(filters.badgePropertyKey);
+  const prevDisplayedPropsRef = useRef(displayedProperties);
+
   const nodeStructures = useMemo(() => {
     const prevElements = prevElementsByIdRef.current;
     const cache = nodeStructureCacheRef.current;
+
+    // Invalidate entire cache when property display settings change
+    if (prevBadgeKeyRef.current !== filters.badgePropertyKey ||
+        prevDisplayedPropsRef.current !== displayedProperties) {
+      cache.clear();
+      prevBadgeKeyRef.current = filters.badgePropertyKey;
+      prevDisplayedPropsRef.current = displayedProperties;
+    }
 
     const buildStructure = (el: Element): NodeStructure => {
       const firstAssetId = el.assetIds?.[0];
@@ -2223,7 +2235,7 @@ export function Canvas() {
         pastedFromClipboard = true;
         const position = { x: canvasX, y: canvasY };
         const label = imageFile.name.replace(/\.[^/.]+$/, '') || 'Image';
-        const newElement = await createElement(label, position);
+        const newElement = await createElement(label, position, { date: new Date() });
         // Auto-add to active tab
         if (activeTabId) {
           addTabMembers(activeTabId, [newElement.id]);
@@ -2312,7 +2324,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [canvasContextMenu, links, currentInvestigation, pasteElements, selectElements, pushAction, addAsset, activeTabId, addTabMembers]);
+  }, [canvasContextMenu, links, currentInvestigation, pasteElements, selectElements, pushAction, addAsset, createElement, activeTabId, addTabMembers]);
 
   // Context menu actions
   const handleContextMenuFocus = useCallback(
@@ -3039,7 +3051,7 @@ export function Canvas() {
 
         // Use filename as element label
         const label = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
-        const newElement = await createElement(label, position);
+        const newElement = await createElement(label, position, { date: new Date() });
         // Auto-add to active tab
         if (activeTabId) {
           addTabMembers(activeTabId, [newElement.id]);
@@ -3717,7 +3729,7 @@ export function Canvas() {
         const position = { x: centerX, y: centerY };
         const label = file.name.replace(/\.[^/.]+$/, '') || 'Image';
 
-        const newElement = await createElement(label, position);
+        const newElement = await createElement(label, position, { date: new Date() });
         // Auto-add to active tab
         if (activeTabId) {
           addTabMembers(activeTabId, [newElement.id]);
@@ -3811,7 +3823,7 @@ export function Canvas() {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [viewport, pasteElements, currentInvestigation, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
+  }, [viewport, pasteElements, currentInvestigation, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
 
   // Handle viewport change
   const handleViewportChange = useCallback(
@@ -4015,6 +4027,7 @@ export function Canvas() {
             maxZoom={4}
             selectionMode={SelectionMode.Partial}
             connectionMode={ConnectionMode.Loose}
+            connectionRadius={40}
             edgesReconnectable
             selectNodesOnDrag={false}
             selectionOnDrag
