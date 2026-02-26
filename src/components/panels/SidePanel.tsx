@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore } from '../../stores';
+import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore, useUIStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
 import { LinkDetail } from './LinkDetail';
 import { MultiSelectionDetail } from './MultiSelectionDetail';
@@ -39,6 +39,7 @@ export function SidePanel() {
   const hasActiveFilters = useViewStore((s) => s.hasActiveFilters);
   const displayMode = useViewStore((s) => s.displayMode);
   const highlightedElementIds = useInsightsStore((s) => s.highlightedElementIds);
+  const panelSide = useUIStore((s) => s.panelSide);
 
   const [activeTab, setActiveTab] = useState<TabId>('detail');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -67,8 +68,10 @@ export function SidePanel() {
       const containerRect = panelRef.current.parentElement?.getBoundingClientRect();
       if (!containerRect) return;
 
-      // Calculate new width from the right edge
-      const newWidth = containerRect.right - e.clientX;
+      const side = useUIStore.getState().panelSide;
+      const newWidth = side === 'left'
+        ? e.clientX - containerRect.left
+        : containerRect.right - e.clientX;
       setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, newWidth)));
     };
 
@@ -146,7 +149,7 @@ export function SidePanel() {
 
   if (isCollapsed) {
     return (
-      <aside className="w-12 border-l border-border-default bg-bg-primary flex flex-col">
+      <aside className={`w-12 ${panelSide === 'left' ? 'border-r' : 'border-l'} border-border-default bg-bg-primary flex flex-col`}>
         <div className="flex flex-col items-center py-2 gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -269,14 +272,14 @@ export function SidePanel() {
   return (
     <aside
       ref={panelRef}
-      className="border-l border-border-default bg-bg-primary flex flex-col overflow-hidden relative"
+      className={`${panelSide === 'left' ? 'border-r' : 'border-l'} border-border-default bg-bg-primary flex flex-col overflow-hidden relative`}
       style={{ width: `${width}px` }}
       data-testid="detail-panel"
     >
       {/* Resize handle */}
       <div
         onMouseDown={handleMouseDown}
-        className={`absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-accent/30 transition-colors z-10 ${
+        className={`absolute ${panelSide === 'left' ? 'right-0' : 'left-0'} top-0 bottom-0 w-1 cursor-ew-resize hover:bg-accent/30 transition-colors z-10 ${
           isResizing ? 'bg-accent/50' : ''
         }`}
       />

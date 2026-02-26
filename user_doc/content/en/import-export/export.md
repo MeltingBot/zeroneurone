@@ -180,6 +180,11 @@ Features:
 - **Theme toggle**: Light/dark mode
 - **Markdown export**: Download report as `.md` file (without internal links)
 - **Pan & zoom**: Navigate the graph with mouse wheel and drag
+- **Search** (Ctrl+K): Search by label and tags with keyboard navigation (arrows + Enter)
+- **Tag filtering**: Header popover to show/hide nodes and links by tag
+- **Embedded images**: Attached file thumbnails displayed in SVG graph shapes
+- **Layout toggle**: Swap report and graph left-right (saved in localStorage)
+- **Resizable columns**: Drag handle between report panel and graph (15%-85%)
 
 {{< hint info >}}
 Access from the Report panel via the globe icon.

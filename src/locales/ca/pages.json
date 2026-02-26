@@ -232,7 +232,9 @@
       "activeFilters": "Filtres actius",
       "shortcuts": "Dreceres de teclat",
       "documentation": "Documentació",
-      "supportKofi": "Donar suport a Ko-fi"
+      "supportKofi": "Donar suport a Ko-fi",
+      "panelToLeft": "Panell a l'esquerra",
+      "panelToRight": "Panell a la dreta"
     },
     "collab": {
       "leaveTitle": "Abandonar la sessió col·laborativa",

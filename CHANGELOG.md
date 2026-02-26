@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.19.0
+
+### Features
+- Interactive HTML report: search overlay (Ctrl+K) with keyboard navigation
+- Interactive HTML report: tag filtering via popover dropdown
+- Interactive HTML report: thumbnail images embedded in SVG node shapes
+- Interactive HTML report: layout toggle (report left/right) with persistence
+- Interactive HTML report: resizable columns between report and graph panels
+- Interactive HTML report: ultracompact code generation (86% size reduction)
+- Side panel: toggle panel position (left/right) with persistent preference
+
 ## 2.18.3
 
 ### Fixes

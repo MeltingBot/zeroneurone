@@ -145,6 +145,11 @@ Creates a self-contained HTML file with:
 - Info modal with investigation metadata and statistics
 - Light/dark theme toggle
 - Markdown export button (without internal links)
+- **Search** (Ctrl+K): search by label and tags with keyboard navigation
+- **Tag filtering**: header popover to filter nodes and links by tag
+- **Embedded images**: thumbnails displayed directly in SVG graph shapes
+- **Layout toggle**: button to swap report/graph left-right (persisted)
+- **Resizable columns**: drag handle between the report and graph panels
 
 {{< hint info >}}
 Ideal for sharing reports with people who don't have ZeroNeurone.

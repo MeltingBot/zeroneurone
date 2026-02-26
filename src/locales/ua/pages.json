@@ -232,7 +232,9 @@
       "activeFilters": "Активні фільтри",
       "shortcuts": "Клавіатурні скорочення",
       "documentation": "Документація",
-      "supportKofi": "Підтримати на Ko-fi"
+      "supportKofi": "Підтримати на Ko-fi",
+      "panelToLeft": "Панель ліворуч",
+      "panelToRight": "Панель праворуч"
     },
     "collab": {
       "leaveTitle": "Покинути сеанс співпраці",

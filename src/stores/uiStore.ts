@@ -51,6 +51,7 @@ interface UIState {
   // Side panel
   sidePanelOpen: boolean;
   sidePanelTab: SidePanelTab;
+  panelSide: 'left' | 'right';
 
   // Tool
   activeTool: ToolType;
@@ -108,6 +109,7 @@ interface UIState {
   openSidePanel: (tab?: SidePanelTab) => void;
   closeSidePanel: () => void;
   setSidePanelTab: (tab: SidePanelTab) => void;
+  togglePanelSide: () => void;
 
   // Actions - Tool
   setActiveTool: (tool: ToolType) => void;
@@ -169,6 +171,7 @@ export const useUIStore = create<UIState>()(
   modalData: null,
   sidePanelOpen: true,
   sidePanelTab: 'detail',
+  panelSide: 'right' as 'left' | 'right',
   activeTool: 'select',
   toasts: [],
   searchOpen: false,
@@ -238,6 +241,10 @@ export const useUIStore = create<UIState>()(
 
   setSidePanelTab: (tab) => {
     set({ sidePanelTab: tab, sidePanelOpen: true });
+  },
+
+  togglePanelSide: () => {
+    set((state) => ({ panelSide: state.panelSide === 'right' ? 'left' : 'right' }));
   },
 
   // Tool
@@ -382,7 +389,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT investigation-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize }),
+      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

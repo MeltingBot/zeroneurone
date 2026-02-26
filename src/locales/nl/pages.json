@@ -232,7 +232,9 @@
       "activeFilters": "Actieve filters",
       "shortcuts": "Sneltoetsen",
       "documentation": "Documentatie",
-      "supportKofi": "Steun op Ko-fi"
+      "supportKofi": "Steun op Ko-fi",
+      "panelToLeft": "Paneel naar links",
+      "panelToRight": "Paneel naar rechts"
     },
     "collab": {
       "leaveTitle": "Samenwerkingssessie verlaten",

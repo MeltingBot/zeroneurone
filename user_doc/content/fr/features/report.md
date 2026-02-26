@@ -145,6 +145,11 @@ Crée un fichier HTML autonome contenant :
 - Modale infos avec métadonnées de l'enquête et statistiques
 - Basculement thème clair/sombre
 - Bouton export Markdown (sans liens internes)
+- **Recherche** (Ctrl+K) : recherche par label et tags avec navigation clavier
+- **Filtrage par tags** : popover dans l'en-tête pour filtrer les nœuds et liens par tag
+- **Images embarquées** : miniatures affichées directement dans les formes du graphe SVG
+- **Inversion du layout** : bouton pour permuter rapport/graphe gauche-droite (persisté)
+- **Colonnes redimensionnables** : poignée de redimensionnement entre le rapport et le graphe
 
 {{< hint info >}}
 Idéal pour partager des rapports avec des personnes n'ayant pas ZeroNeurone.

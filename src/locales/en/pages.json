@@ -233,7 +233,9 @@
       "activeFilters": "Active filters",
       "shortcuts": "Keyboard shortcuts",
       "documentation": "Documentation",
-      "supportKofi": "Support on Ko-fi"
+      "supportKofi": "Support on Ko-fi",
+      "panelToLeft": "Panel to left",
+      "panelToRight": "Panel to right"
     },
     "collab": {
       "leaveTitle": "Leave collaborative session",

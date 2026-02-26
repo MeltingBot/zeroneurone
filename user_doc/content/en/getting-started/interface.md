@@ -19,6 +19,7 @@ ZeroNeurone's interface is organized around the central canvas, with contextual 
 | Name | Investigation name (click to rename) |
 | 🔍 | Quick search (Ctrl+K) |
 | Views | Toggle Canvas / Map / Timeline |
+| ⇄ | Toggle side panel left/right |
 | ⋯ | Menu: Export, Import, Settings |
 
 ### 2. Central Canvas

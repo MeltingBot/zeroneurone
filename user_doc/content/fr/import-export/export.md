@@ -180,6 +180,11 @@ Fonctionnalités :
 - **Thème clair/sombre** : Basculer entre les modes
 - **Export Markdown** : Télécharger le rapport en `.md` (sans liens internes)
 - **Pan & zoom** : Naviguer dans le graphe avec la molette et le glisser
+- **Recherche** (Ctrl+K) : Recherche par label et tags avec navigation clavier (flèches + Entrée)
+- **Filtrage par tags** : Popover dans l'en-tête pour afficher/masquer les nœuds et liens par tag
+- **Images embarquées** : Miniatures des fichiers joints affichées dans les formes SVG du graphe
+- **Inversion du layout** : Permuter rapport et graphe gauche-droite (mémorisé dans localStorage)
+- **Colonnes redimensionnables** : Poignée de glisser entre le panneau rapport et le graphe (15%-85%)
 
 {{< hint info >}}
 Accessible depuis le panneau Rapport via l'icône globe.

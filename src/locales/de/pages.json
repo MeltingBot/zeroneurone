@@ -232,7 +232,9 @@
       "activeFilters": "Aktive Filter",
       "shortcuts": "Tastenkürzel",
       "documentation": "Dokumentation",
-      "supportKofi": "Auf Ko-fi unterstützen"
+      "supportKofi": "Auf Ko-fi unterstützen",
+      "panelToLeft": "Panel nach links",
+      "panelToRight": "Panel nach rechts"
     },
     "collab": {
       "leaveTitle": "Kollaborative Sitzung verlassen",

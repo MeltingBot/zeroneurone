@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
@@ -74,7 +74,7 @@ export function InvestigationPage() {
     unloadInvestigation,
   } = useInvestigationStore();
 
-  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState, themeMode, toggleThemeMode, showToast } = useUIStore();
+  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide, togglePanelSide } = useUIStore();
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
@@ -529,6 +529,14 @@ export function InvestigationPage() {
             <FileText size={14} />
             <span className="hidden sm:inline">{t('investigation.header.report')}</span>
           </button>
+          {/* Panel side toggle */}
+          <button
+            onClick={togglePanelSide}
+            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
+            title={panelSide === 'right' ? t('investigation.header.panelToLeft', 'Panneau a gauche') : t('investigation.header.panelToRight', 'Panneau a droite')}
+          >
+            {panelSide === 'right' ? <PanelLeft size={14} /> : <PanelRight size={14} />}
+          </button>
           {/* Dark mode toggle */}
           <button
             onClick={toggleThemeMode}
@@ -604,7 +612,7 @@ export function InvestigationPage() {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className={`flex-1 flex overflow-hidden${panelSide === 'left' ? ' flex-row-reverse' : ''}`}>
         {/* Main view */}
         <main className="flex-1 relative bg-bg-secondary flex flex-col">
           <TabBar investigationId={currentInvestigation.id} />

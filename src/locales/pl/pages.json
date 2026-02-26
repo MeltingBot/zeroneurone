@@ -232,7 +232,9 @@
       "activeFilters": "Aktywne filtry",
       "shortcuts": "Skróty klawiszowe",
       "documentation": "Dokumentacja",
-      "supportKofi": "Wesprzyj na Ko-fi"
+      "supportKofi": "Wesprzyj na Ko-fi",
+      "panelToLeft": "Panel na lewo",
+      "panelToRight": "Panel na prawo"
     },
     "collab": {
       "leaveTitle": "Opuść sesję współpracy",
