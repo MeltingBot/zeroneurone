@@ -23,6 +23,10 @@ Encryption is **optional**. ZeroNeurone works normally without it. Enable it if 
 
 ZeroNeurone migrates all your existing data, then **automatically reloads the page**. On reload, a window asks for your password to unlock access.
 
+{{< hint danger >}}
+**Never refresh the page during activation.** The operation encrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish — it may take a while on large investigations.
+{{< /hint >}}
+
 {{< hint warning >}}
 **Keep your password safe.** ZeroNeurone cannot recover your data if you forget it. No reset is possible.
 {{< /hint >}}
@@ -49,6 +53,38 @@ Locking clears the password from memory without closing the browser. Useful if y
 
 On next access, the unlock window reappears.
 
+### Auto-lock
+
+ZeroNeurone can automatically lock the session after a configurable inactivity period.
+
+1. Lock icon → in the **Auto-lock** section
+2. Choose a delay: 5, 15, 30, or 60 minutes (or Disabled)
+
+Inactivity is detected on mouse movements, keyboard, clicks, and scroll. If the tab is hidden (tab switch, minimization) for longer than the configured delay, the session is locked when you return.
+
+The setting persists in the browser and applies to every session.
+
+{{< hint info >}}
+Auto-lock is only available when encryption is enabled.
+{{< /hint >}}
+
+---
+
+## Unlock with Security Key (WebAuthn)
+
+If your browser and security key support WebAuthn PRF (FIDO2 Level 3), you can register a hardware key (YubiKey, etc.) as an alternative unlock method.
+
+1. Lock icon → **WebAuthn Security Keys**
+2. Click **Register a key**
+3. Name the key, then touch your hardware key
+4. The key is registered — a button appears on the unlock screen
+
+At unlock, you can choose between the password or the hardware key.
+
+{{< hint warning >}}
+The hardware key is a **complement** to the password. The password remains necessary to enable encryption, change the password, or register new keys.
+{{< /hint >}}
+
 ---
 
 ## Change Password
@@ -60,6 +96,10 @@ On next access, the unlock window reappears.
 
 The password change is instant. Your data is not re-encrypted — only the protection key changes.
 
+{{< hint danger >}}
+**Never refresh the page during a password change.** The operation updates the protection key for all your data. Interrupting it can permanently corrupt your data.
+{{< /hint >}}
+
 ---
 
 ## Disable Encryption
@@ -69,6 +109,10 @@ The password change is instant. Your data is not re-encrypted — only the prote
 3. Click **Confirm**
 
 ZeroNeurone decrypts all data, then reloads the page. The application returns to password-free operation.
+
+{{< hint danger >}}
+**Never refresh the page during deactivation.** The operation decrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish.
+{{< /hint >}}
 
 ---
 
@@ -107,6 +151,14 @@ Yes, if the session is locked or the browser closed. Data stored in the browser 
 
 **Can I use the same password across multiple machines?**
 Yes. Data is encrypted per machine — each installation has its own key. Exporting/importing an investigation from an encrypted machine to another produces plaintext data in the ZIP (decrypted for export).
+
+---
+
+**Does auto-lock work if I switch tabs?**
+Yes. If the tab is hidden for longer than the configured delay, the session is locked as soon as you return to the tab.
+
+**Does the hardware key replace the password?**
+No. The hardware key is an alternative unlock method. The password remains essential for administrative operations (activation, password change, key registration).
 
 ---
 

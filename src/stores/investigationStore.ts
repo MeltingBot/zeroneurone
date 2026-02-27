@@ -1320,29 +1320,46 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const { elements, updateElement } = get();
     assertWritable(get);
 
+    // Group children by their parent group to batch childIds updates
+    const byGroup = new Map<string, { childUpdates: { id: string; absPos: Position }[]; group: Element }>();
+
     for (const elementId of elementIds) {
       const child = elements.find(el => el.id === elementId);
       if (!child || !child.parentGroupId) continue;
 
       const group = elements.find(el => el.id === child.parentGroupId);
       if (group) {
-        // Convert position back to absolute (add group position)
-        await updateElement(elementId, {
-          parentGroupId: null,
-          position: {
+        if (!byGroup.has(group.id)) {
+          byGroup.set(group.id, { childUpdates: [], group });
+        }
+        byGroup.get(group.id)!.childUpdates.push({
+          id: elementId,
+          absPos: {
             x: child.position.x + group.position.x,
             y: child.position.y + group.position.y,
           },
-        });
-
-        // Remove from group's childIds
-        await updateElement(group.id, {
-          childIds: group.childIds.filter(id => id !== elementId),
         });
       } else {
         // Group not found, just clear parentGroupId
         await updateElement(elementId, { parentGroupId: null });
       }
+    }
+
+    // Process each group: update all children, then update group's childIds once
+    for (const [groupId, { childUpdates, group }] of byGroup) {
+      const removedIds = new Set(childUpdates.map(c => c.id));
+
+      for (const { id, absPos } of childUpdates) {
+        await updateElement(id, {
+          parentGroupId: null,
+          position: absPos,
+        });
+      }
+
+      // Update group's childIds once with all removals
+      await updateElement(groupId, {
+        childIds: group.childIds.filter(id => !removedIds.has(id)),
+      });
     }
   },
 
@@ -1357,40 +1374,53 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     const { elements: elementsMap } = getYMaps(ydoc);
 
-    // Batch all updates in a single transaction for instant visual update
-    ydoc.transact(() => {
-      // Convert all children to absolute positions
-      for (const childId of group.childIds) {
-        const child = elements.find(el => el.id === childId);
-        if (child) {
-          const ymap = elementsMap.get(childId) as any;
-          if (ymap) {
-            const absX = child.position.x + group.position.x;
-            const absY = child.position.y + group.position.y;
-            ymap.set('parentGroupId', null);
-            ymap.set('positionX', absX);
-            ymap.set('positionY', absY);
-            ymap.set('position', { x: absX, y: absY });
+    // Precompute absolute positions for all children
+    const childAbsPositions = new Map<string, Position>();
+    for (const childId of group.childIds) {
+      const child = elements.find(el => el.id === childId);
+      if (child) {
+        childAbsPositions.set(childId, {
+          x: child.position.x + group.position.x,
+          y: child.position.y + group.position.y,
+        });
+      }
+    }
+
+    // Update Zustand FIRST for instant visual update (prevents frame gap
+    // where children still have parentId pointing to a deleted group)
+    localOpPending = true;
+    set((state) => ({
+      elements: state.elements
+        .filter(el => el.id !== groupId)
+        .map(el => {
+          const absPos = childAbsPositions.get(el.id);
+          if (absPos) {
+            return { ...el, parentGroupId: null, position: absPos };
           }
+          return el;
+        }),
+    }));
+
+    // Then update Y.Doc
+    ydoc.transact(() => {
+      for (const [childId, absPos] of childAbsPositions) {
+        const ymap = elementsMap.get(childId) as any;
+        if (ymap) {
+          ymap.set('parentGroupId', null);
+          ymap.set('positionX', absPos.x);
+          ymap.set('positionY', absPos.y);
+          ymap.set('position', { x: absPos.x, y: absPos.y });
         }
       }
-
-      // Delete the group element
       elementsMap.delete(groupId);
     });
 
     // Persist to Dexie in background
-    for (const childId of group.childIds) {
-      const child = elements.find(el => el.id === childId);
-      if (child) {
-        elementRepository.update(childId, {
-          parentGroupId: null,
-          position: {
-            x: child.position.x + group.position.x,
-            y: child.position.y + group.position.y,
-          },
-        }).catch(() => {});
-      }
+    for (const [childId, absPos] of childAbsPositions) {
+      elementRepository.update(childId, {
+        parentGroupId: null,
+        position: absPos,
+      }).catch(() => {});
     }
     elementRepository.delete(groupId).catch(() => {});
   },

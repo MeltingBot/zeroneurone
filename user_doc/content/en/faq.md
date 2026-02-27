@@ -27,19 +27,9 @@ Yes. Open-source, free, no account, no tracking, no "14-day trial period". Actua
 | Firefox | ✅ Perfect |
 | Safari | ⚠️ Works, but Apple has opinions about local storage |
 
-### I've heard about OneNeurone?
-
-That's the AI plugin for ZeroNeurone. **OneNeurone** adds an intelligent assistant to your investigation: chat with the graph in context, entity and relationship extraction (NER), report generation in 5 registers (judicial, intelligence, corporate, journalistic, CERT), pattern and anomaly detection, and cross-investigation analysis.
-
-Philosophy: **"The Neurone suggests, the analyst decides."** It never modifies the graph directly, no data is sent without your explicit action, and it works 100% offline with Ollama or LM Studio. Multi-provider: Ollama, LM Studio, Anthropic, OpenAI, or custom endpoint.
-
-Remove it, and ZeroNeurone works exactly the same. It's a plugin, not a dependency.
-
-OneNeurone is paid — because the open-source project has to eat too.
-
 ### And without internet?
 
-Once loaded, ZeroNeurone couldn't care less about internet. Cut the cable, it keeps working.
+Once loaded, ZeroNeurone couldn't care less about internet. Cut the cable, it keeps working. Only exception: the **map view** needs internet to load OpenStreetMap or satellite tiles.
 
 ---
 
@@ -76,6 +66,8 @@ Since v2.17, yes. ZeroNeurone offers **at-rest encryption** for all your local d
 - **PBKDF2-SHA256** with 600,000 iterations to derive the key from your password
 
 Enable it from the lock icon on the home page. Once activated, your data is unreadable without the password.
+
+**Never refresh the page during activation, deactivation, or password change.** The operation encrypts/decrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish — it may take a while on large investigations.
 
 ### What if I lose my encryption password?
 
@@ -219,6 +211,16 @@ Drop the `.js` file and its `manifest.json` in the `dist/plugins/` folder. For D
 ### Is it secure?
 
 Plugin errors never crash the application. But a plugin has access to your investigation data. Only install plugins you trust.
+
+### I've heard about OneNeurone?
+
+That's the AI plugin for ZeroNeurone. **OneNeurone** adds an intelligent assistant to your investigation: chat with the graph in context, entity and relationship extraction (NER), report generation in 5 registers (judicial, intelligence, corporate, journalistic, CERT), pattern and anomaly detection, and cross-investigation analysis.
+
+Philosophy: **"The Neurone suggests, the analyst decides."** It never modifies the graph directly, no data is sent without your explicit action, and it works 100% offline with Ollama or LM Studio. Multi-provider: Ollama, LM Studio, Anthropic, OpenAI, or custom endpoint.
+
+Remove it, and ZeroNeurone works exactly the same. It's a plugin, not a dependency.
+
+OneNeurone is paid — because the open-source project has to eat too.
 
 ---
 

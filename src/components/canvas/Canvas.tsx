@@ -340,7 +340,10 @@ function elementToNode(
     selected: isGhost ? false : isSelected,
   };
 
-  if (element.parentGroupId) {
+  // Only set parentId for non-ghost nodes — ghost elements may have a parent group
+  // that isn't visible on the current tab, causing React Flow to misposition them
+  // (relative position interpreted as absolute → elements appear near top-left)
+  if (element.parentGroupId && !isGhost) {
     (node as any).parentId = element.parentGroupId;
   }
 
@@ -1128,8 +1131,18 @@ export function Canvas() {
     // Helper: build a single node from its structure
     const buildNode = (ns: typeof nodeStructures[number]) => {
       const callbacks = getCallbacks(ns.el.id, Boolean(ns.el.isAnnotation));
+      const isGhostNode = activeTabId !== null && !tabMemberSet.has(ns.el.id);
+      // Ghost elements that are children of a group have relative positions
+      // but their parent group may not be visible on this tab. Convert to absolute.
+      let el = ns.el;
+      if (isGhostNode && el.parentGroupId) {
+        const parentGroup = elementMap.get(el.parentGroupId);
+        if (parentGroup) {
+          el = { ...el, position: { x: el.position.x + parentGroup.position.x, y: el.position.y + parentGroup.position.y } };
+        }
+      }
       const node = elementToNode(
-        ns.el,
+        el,
         selectedElementIds.has(ns.el.id),
         dimmedElementIds.has(ns.el.id),
         ns.thumbnail,
@@ -1146,7 +1159,7 @@ export function Canvas() {
         tagDisplayMode,
         tagDisplaySize,
         themeMode,
-        activeTabId !== null && !tabMemberSet.has(ns.el.id),
+        isGhostNode,
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);

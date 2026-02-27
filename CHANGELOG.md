@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.19.1
+
+### Fixes
+- Canvas: ghost elements (group children) appearing at top-left on other tabs (relative position without parent)
+- Canvas: element positions incorrect after group dissolve/ungroup (Zustand update delay via rAF)
+- Canvas: removeFromGroup stale childIds when removing multiple children in loop
+- Assets: added confirmation modal before deleting attachments
+- Docs: encryption warning (never refresh during operations), WebAuthn/auto-lock sections in EN
+
 ## 2.19.0
 
 ### Features

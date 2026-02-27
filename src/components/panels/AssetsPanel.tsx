@@ -6,18 +6,22 @@ import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
+import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 
 interface AssetsPanelProps {
   element: Element;
 }
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
-  useTranslation('panels'); // Load namespace for child components
+  const { t } = useTranslation(['panels', 'modals']);
   const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText } = useInvestigationStore();
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Delete confirmation state
+  const [deleteAssetId, setDeleteAssetId] = useState<string | null>(null);
 
   // Drag-and-drop reordering state
   const [draggingAssetId, setDraggingAssetId] = useState<string | null>(null);
@@ -156,10 +160,19 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
   );
 
   const handleRemove = useCallback(
-    async (assetId: string) => {
-      await removeAsset(element.id, assetId);
+    (assetId: string) => {
+      setDeleteAssetId(assetId);
     },
-    [element.id, removeAsset]
+    []
+  );
+
+  const handleConfirmRemove = useCallback(
+    async () => {
+      if (deleteAssetId) {
+        await removeAsset(element.id, deleteAssetId);
+      }
+    },
+    [element.id, deleteAssetId, removeAsset]
   );
 
   const handleClearText = useCallback(
@@ -335,6 +348,15 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
           onClose={() => setPreviewAsset(null)}
         />
       )}
+
+      {/* Delete confirmation modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteAssetId !== null}
+        onClose={() => setDeleteAssetId(null)}
+        onConfirm={handleConfirmRemove}
+        title={t('modals:confirmDelete.title')}
+        message={t('panels:assets.deleteConfirm')}
+      />
     </div>
   );
 }

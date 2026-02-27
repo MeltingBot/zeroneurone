@@ -27,19 +27,9 @@ Oui. Open-source, gratuit, sans compte, sans tracking, sans "période d'essai de
 | Firefox | ✅ Parfait |
 | Safari | ⚠️ Ça passe, mais Apple a des opinions sur le stockage local |
 
-### On m'a parlé de OneNeurone ?
-
-C'est le plugin IA de ZeroNeurone. **OneNeurone** ajoute un assistant intelligent à votre enquête : dialogue avec le graphe en contexte, extraction d'entités et relations (NER), génération de rapports selon 5 registres (judiciaire, renseignement, corporate, journalistique, CERT), détection de patterns et anomalies, et analyse croisée inter-enquêtes.
-
-Philosophie : **"Le Neurone propose, l'analyste dispose."** Il ne modifie jamais le graphe directement, aucune donnée n'est envoyée sans votre action explicite, et il fonctionne 100% hors-ligne avec Ollama ou LM Studio. Multi-provider : Ollama, LM Studio, Anthropic, OpenAI, ou endpoint custom.
-
-Si vous le retirez, ZeroNeurone fonctionne à l'identique. C'est un plugin, pas une dépendance.
-
-OneNeurone est payant — parce qu'il faut bien faire vivre le projet open-source.
-
 ### Et sans internet ?
 
-Une fois chargé, ZeroNeurone se fiche complètement d'internet. Coupez le câble, ça continue de marcher.
+Une fois chargé, ZeroNeurone se fiche complètement d'internet. Coupez le câble, ça continue de marcher. Seule exception : la **vue carte** a besoin d'internet pour charger les tuiles OpenStreetMap ou satellite.
 
 ---
 
@@ -76,6 +66,8 @@ Depuis la v2.17, oui. ZeroNeurone propose un **chiffrement au repos** de toutes 
 - **PBKDF2-SHA256** avec 600 000 itérations pour dériver la clé depuis votre mot de passe
 
 Activez-le depuis l'icône cadenas sur la page d'accueil. Une fois activé, vos données sont illisibles sans le mot de passe.
+
+**Ne rafraîchissez jamais la page pendant l'activation, la désactivation ou le changement de mot de passe.** L'opération chiffre/déchiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine — ça peut prendre un moment sur les grosses enquêtes.
 
 ### Et si je perds mon mot de passe de chiffrement ?
 
@@ -198,7 +190,7 @@ Un **fichier HTML autonome** avec votre rapport et un graphe SVG interactif. Pas
 - Colonnes redimensionnables entre rapport et graphe
 - Table des matières, thème clair/sombre, export Markdown
 
-Le tout dans un seul fichier. Envoyez-le par email, et ça fonctione.
+Le tout dans un seul fichier. Envoyez-le par email, et c'est immédiatement lisible.
 
 ### L'export ZIP peut être chiffré ?
 
@@ -219,6 +211,16 @@ Déposez le fichier `.js` et son `manifest.json` dans le dossier `dist/plugins/`
 ### C'est sécurisé ?
 
 Les erreurs de plugins ne plantent jamais l'application. Mais un plugin a accès à vos données d'enquête. N'installez que des plugins de confiance.
+
+### On m'a parlé de OneNeurone ?
+
+C'est le plugin IA de ZeroNeurone. **OneNeurone** ajoute un assistant intelligent à votre enquête : dialogue avec le graphe en contexte, extraction d'entités et relations (NER), génération de rapports selon 5 registres (judiciaire, renseignement, corporate, journalistique, CERT), détection de patterns et anomalies, et analyse croisée inter-enquêtes.
+
+Philosophie : **"Le Neurone propose, l'analyste dispose."** Il ne modifie jamais le graphe directement, aucune donnée n'est envoyée sans votre action explicite, et il fonctionne 100% hors-ligne avec Ollama ou LM Studio. Multi-provider : Ollama, LM Studio, Anthropic, OpenAI, ou endpoint custom.
+
+Si vous le retirez, ZeroNeurone fonctionne à l'identique. C'est un plugin, pas une dépendance.
+
+OneNeurone est payant — parce qu'il faut bien faire vivre le projet open-source.
 
 ---
 

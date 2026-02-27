@@ -23,6 +23,10 @@ Le chiffrement est **optionnel**. ZeroNeurone fonctionne normalement sans lui. A
 
 ZeroNeurone migre toutes vos données existantes, puis **recharge automatiquement la page**. À ce rechargement, une fenêtre vous demande votre mot de passe pour déverrouiller l'accès.
 
+{{< hint danger >}}
+**Ne rafraîchissez jamais la page pendant l'activation.** L'opération chiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine — cela peut prendre un moment sur les grosses enquêtes.
+{{< /hint >}}
+
 {{< hint warning >}}
 **Conservez votre mot de passe précieusement.** ZeroNeurone ne peut pas récupérer vos données si vous l'oubliez. Aucune réinitialisation n'est possible.
 {{< /hint >}}
@@ -92,6 +96,10 @@ La clé physique est un **complément** du mot de passe. Le mot de passe reste n
 
 Le changement de mot de passe est instantané. Vos données ne sont pas re-chiffrées — seule la clé de protection change.
 
+{{< hint danger >}}
+**Ne rafraîchissez jamais la page pendant le changement de mot de passe.** L'opération met à jour la clé de protection de toutes vos données. L'interrompre peut les corrompre définitivement.
+{{< /hint >}}
+
 ---
 
 ## Désactiver le chiffrement
@@ -101,6 +109,10 @@ Le changement de mot de passe est instantané. Vos données ne sont pas re-chiff
 3. Cliquez sur **Confirmer**
 
 ZeroNeurone déchiffre toutes les données, puis recharge la page. L'application retrouve son fonctionnement sans mot de passe.
+
+{{< hint danger >}}
+**Ne rafraîchissez jamais la page pendant la désactivation.** L'opération déchiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine.
+{{< /hint >}}
 
 ---
 
