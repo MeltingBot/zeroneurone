@@ -27,6 +27,16 @@ Oui. Open-source, gratuit, sans compte, sans tracking, sans "période d'essai de
 | Firefox | ✅ Parfait |
 | Safari | ⚠️ Ça passe, mais Apple a des opinions sur le stockage local |
 
+### On m'a parlé de OneNeurone ?
+
+C'est le plugin IA de ZeroNeurone. **OneNeurone** ajoute un assistant intelligent à votre enquête : dialogue avec le graphe en contexte, extraction d'entités et relations (NER), génération de rapports selon 5 registres (judiciaire, renseignement, corporate, journalistique, CERT), détection de patterns et anomalies, et analyse croisée inter-enquêtes.
+
+Philosophie : **"Le Neurone propose, l'analyste dispose."** Il ne modifie jamais le graphe directement, aucune donnée n'est envoyée sans votre action explicite, et il fonctionne 100% hors-ligne avec Ollama ou LM Studio. Multi-provider : Ollama, LM Studio, Anthropic, OpenAI, ou endpoint custom.
+
+Si vous le retirez, ZeroNeurone fonctionne à l'identique. C'est un plugin, pas une dépendance.
+
+OneNeurone est payant — parce qu'il faut bien faire vivre le projet open-source.
+
 ### Et sans internet ?
 
 Une fois chargé, ZeroNeurone se fiche complètement d'internet. Coupez le câble, ça continue de marcher.
@@ -45,7 +55,7 @@ Techniquement :
 
 ### Comment je sauvegarde alors ?
 
-**Export ZIP** via le menu. C'est votre bouée de sauvetage. Faites-le régulièrement. On ne le répétera jamais assez.
+**Export ZIP** via le menu. C'est votre bouée de sauvetage. Faites-le régulièrement. On ne le répétera jamais assez. 
 
 ### Je peux synchroniser entre mon PC et mon laptop ?
 
@@ -59,12 +69,42 @@ Ou utilisez la [collaboration]({{< relref "features/collaboration" >}}) pour tra
 
 ### C'est chiffré ?
 
-Le stockage navigateur n'est pas chiffré par défaut. Si vous travaillez sur des données sensibles :
+Depuis la v2.17, oui. ZeroNeurone propose un **chiffrement au repos** de toutes vos données locales :
 
-- Activez le chiffrement disque de votre OS (FileVault, BitLocker, LUKS)
-- Exportez en ZIP et chiffrez l'archive avec un mot de passe
+- **AES-256-GCM** pour les métadonnées (IndexedDB)
+- **XSalsa20-Poly1305** pour les fichiers joints (OPFS)
+- **PBKDF2-SHA256** avec 600 000 itérations pour dériver la clé depuis votre mot de passe
 
-Pour la collaboration temps réel, là oui : chiffrement AES-256-GCM de bout en bout.
+Activez-le depuis l'icône cadenas sur la page d'accueil. Une fois activé, vos données sont illisibles sans le mot de passe.
+
+### Et si je perds mon mot de passe de chiffrement ?
+
+Vos données sont perdues. Pas de "mot de passe oublié", pas de backdoor, pas de "contactez le support". C'est le prix de la vraie sécurité. Faites un export ZIP **avant** d'activer le chiffrement, et gardez-le précieusement.
+
+### C'est quoi WebAuthn PRF ?
+
+Depuis la v2.18, vous pouvez déverrouiller vos enquêtes chiffrées avec une **clé de sécurité matérielle** (YubiKey, par exemple) au lieu de taper votre mot de passe. C'est FIDO2 Level 3 pour les connaisseurs.
+
+Vous pouvez enregistrer plusieurs clés et les gérer depuis les paramètres de chiffrement. Le mot de passe reste toujours disponible en secours.
+
+### Le verrouillage automatique, ça marche comment ?
+
+Vous pouvez configurer un **délai d'inactivité** (5, 15, 30 ou 60 minutes). Si vous ne touchez plus à rien pendant ce délai, l'enquête se verrouille automatiquement. Il faut re-saisir le mot de passe (ou utiliser votre clé de sécurité) pour continuer.
+
+Vous pouvez aussi verrouiller manuellement avec **Alt+L**. Pratique quand vous allez chercher un café et que vous ne faites pas confiance à vos collègues.
+
+### C'est quoi la rétention des données ?
+
+Depuis la v2.18, vous pouvez définir une **durée de rétention** par enquête (en jours). À l'expiration, quatre politiques possibles :
+
+| Politique | Effet |
+|-----------|-------|
+| Avertissement | Un rappel s'affiche, c'est tout |
+| Lecture seule | L'enquête est verrouillée en consultation |
+| Suppression proposée | On vous suggère de supprimer |
+| Rédaction permanente | Tout le texte est **irréversiblement** remplacé par des caractères de masquage |
+
+La rédaction permanente ne plaisante pas. La structure du graphe survit, mais plus aucun contenu lisible. C'est fait pour ça.
 
 ---
 
@@ -84,7 +124,7 @@ Sélectionnez, puis **Suppr** ou **Retour arrière**. Classique.
 
 ### J'ai fait une bêtise, je peux annuler ?
 
-**Ctrl+Z** annule. **Ctrl+Shift+Z** rétablit. Comme partout, mais ça marche.
+**Ctrl+Z** annule. **Ctrl+Shift+Z** rétablit. Ça couvre tout : créations, suppressions, modifications de propriétés, groupes, filtres, sections de rapport.
 
 ### Comment je groupe des éléments ?
 
@@ -93,11 +133,35 @@ Sélectionnez, puis **Suppr** ou **Retour arrière**. Classique.
 
 Ils bougent ensemble maintenant. C'est beau.
 
+### Je peux fusionner deux éléments ?
+
+Oui. Sélectionnez 2 éléments → clic-droit → **Fusionner**. Choisissez le label à garder, le reste (propriétés, tags, fichiers, liens) est fusionné intelligemment. Les liens en double sont combinés, les auto-liens supprimés.
+
+### C'est quoi les onglets canvas ?
+
+Des **espaces de travail thématiques** au sein d'une même enquête. Un onglet par hypothèse, par acteur, par période... Les éléments d'autres onglets connectés au vôtre apparaissent en transparence. Pratique pour ne pas tout mélanger.
+
 ### Je mets des coordonnées GPS comment ?
 
 1. Sélectionnez l'élément
 2. Panneau de détail → **Localisation**
 3. Tapez les coordonnées ou cliquez directement sur la carte
+
+### Je peux mettre le panneau latéral à gauche ?
+
+Oui. Bouton **⇄** dans la barre d'outils. Le choix est mémorisé.
+
+---
+
+## Vues
+
+### C'est quoi la vue Matrice ?
+
+Un **tableur** de vos éléments. Touche **4** pour y accéder. Tri, filtrage par colonne, édition en ligne, sélection multiple, export CSV. Comme Excel, mais avec vos données d'enquête.
+
+### Et la Timeline ?
+
+Vue chronologique de tous les éléments datés. Avec une **barre de densité** qui montre les périodes les plus chargées. Cliquez dessus pour filtrer par période.
 
 ---
 
@@ -122,6 +186,39 @@ Export **GeoJSON** → Import dans QGIS. Vos points et lignes arrivent avec tout
 ### Le format STIX ça passe ?
 
 Oui, bundles STIX 2.1 supportés. Pour les amateurs de cyber threat intelligence.
+
+### Le rapport HTML, ça fait quoi exactement ?
+
+Un **fichier HTML autonome** avec votre rapport et un graphe SVG interactif. Pas besoin de ZeroNeurone pour le consulter. Depuis la v2.19 :
+
+- Recherche (Ctrl+K) avec navigation clavier
+- Filtrage par tags via un popover
+- Images embarquées dans les formes du graphe
+- Layout réversible (rapport à gauche ou à droite)
+- Colonnes redimensionnables entre rapport et graphe
+- Table des matières, thème clair/sombre, export Markdown
+
+Le tout dans un seul fichier. Envoyez-le par email, et ça fonctione.
+
+### L'export ZIP peut être chiffré ?
+
+Oui. Quand le chiffrement au repos est activé, l'export ZIP peut être protégé par mot de passe (format `.znzip`). Le destinataire devra connaître le mot de passe pour l'ouvrir.
+
+---
+
+## Plugins
+
+### ZeroNeurone a des plugins ?
+
+Oui. Un système d'extensions par slots. Les plugins peuvent ajouter des onglets, des entrées de menu contextuel, des raccourcis clavier, des hooks d'export/import, et plus encore. Zéro impact quand aucun plugin n'est installé.
+
+### Comment j'installe un plugin ?
+
+Déposez le fichier `.js` et son `manifest.json` dans le dossier `dist/plugins/`. Pour Docker, copiez-les dans `plugins/` avant le build. Pas de marketplace, pas de store — c'est un fichier, on le pose, ça marche.
+
+### C'est sécurisé ?
+
+Les erreurs de plugins ne plantent jamais l'application. Mais un plugin a accès à vos données d'enquête. N'installez que des plugins de confiance.
 
 ---
 
@@ -189,6 +286,10 @@ ZeroNeurone gère des enquêtes avec **1500+ éléments et liens** en mode colla
 
 Oui. Vos modifs sont stockées localement. À la reconnexion et nouveau partage, tout se synchronise.
 
+### La rétention se synchronise en collab ?
+
+Oui. La durée et la politique de rétention sont synchronisées entre tous les participants via Y.Doc.
+
 ---
 
 ## Le futur
@@ -222,7 +323,7 @@ Le code est sur GitHub, les PR sont bienvenues. Lisez le CONTRIBUTING.md d'abord
 - Cette doc (vous y êtes)
 - Les issues GitHub (souvent quelqu'un a déjà demandé)
 - Les discussions GitHub (pour les questions ouvertes)
-- [Le Discord *Oscar Zulu*](https://discord.gg/WrWZq9QY6d) 
+- [Le Discord *Oscar Zulu*](https://discord.gg/WrWZq9QY6d)
 
 
 On fait de notre mieux pour répondre. Pas en temps réel, mais on répond.

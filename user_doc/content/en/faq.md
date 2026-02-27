@@ -27,6 +27,16 @@ Yes. Open-source, free, no account, no tracking, no "14-day trial period". Actua
 | Firefox | ✅ Perfect |
 | Safari | ⚠️ Works, but Apple has opinions about local storage |
 
+### I've heard about OneNeurone?
+
+That's the AI plugin for ZeroNeurone. **OneNeurone** adds an intelligent assistant to your investigation: chat with the graph in context, entity and relationship extraction (NER), report generation in 5 registers (judicial, intelligence, corporate, journalistic, CERT), pattern and anomaly detection, and cross-investigation analysis.
+
+Philosophy: **"The Neurone suggests, the analyst decides."** It never modifies the graph directly, no data is sent without your explicit action, and it works 100% offline with Ollama or LM Studio. Multi-provider: Ollama, LM Studio, Anthropic, OpenAI, or custom endpoint.
+
+Remove it, and ZeroNeurone works exactly the same. It's a plugin, not a dependency.
+
+OneNeurone is paid — because the open-source project has to eat too.
+
 ### And without internet?
 
 Once loaded, ZeroNeurone couldn't care less about internet. Cut the cable, it keeps working.
@@ -59,12 +69,42 @@ Or use [collaboration]({{< relref "features/collaboration" >}}) to work together
 
 ### Is it encrypted?
 
-Browser storage isn't encrypted by default. If you work with sensitive data:
+Since v2.17, yes. ZeroNeurone offers **at-rest encryption** for all your local data:
 
-- Enable your OS disk encryption (FileVault, BitLocker, LUKS)
-- Export as ZIP and encrypt the archive with a password
+- **AES-256-GCM** for metadata (IndexedDB)
+- **XSalsa20-Poly1305** for attached files (OPFS)
+- **PBKDF2-SHA256** with 600,000 iterations to derive the key from your password
 
-For real-time collaboration, yes: end-to-end AES-256-GCM encryption.
+Enable it from the lock icon on the home page. Once activated, your data is unreadable without the password.
+
+### What if I lose my encryption password?
+
+Your data is gone. No "forgot password", no backdoor, no "contact support". That's the price of real security. Make a ZIP export **before** enabling encryption, and keep it safe.
+
+### What's WebAuthn PRF?
+
+Since v2.18, you can unlock your encrypted investigations with a **hardware security key** (YubiKey, for example) instead of typing your password. That's FIDO2 Level 3 for the connoisseurs.
+
+You can register multiple keys and manage them from the encryption settings. The password always remains available as a fallback.
+
+### How does auto-lock work?
+
+You can configure an **inactivity timeout** (5, 15, 30, or 60 minutes). If you don't touch anything for that long, the investigation locks automatically. You'll need to re-enter the password (or use your security key) to continue.
+
+You can also lock manually with **Alt+L**. Handy when you're getting coffee and don't trust your colleagues.
+
+### What's data retention?
+
+Since v2.18, you can set a **retention period** per investigation (in days). On expiration, four policies are available:
+
+| Policy | Effect |
+|--------|--------|
+| Warning | A reminder is shown, that's it |
+| Read-only | The investigation is locked for viewing only |
+| Proposed deletion | You're prompted to delete |
+| Permanent redaction | All text content is **irreversibly** replaced with masking characters |
+
+Permanent redaction means business. The graph structure survives, but no readable content remains. That's the point.
 
 ---
 
@@ -84,7 +124,7 @@ Select, then **Delete** or **Backspace**. Classic.
 
 ### I made a mistake, can I undo?
 
-**Ctrl+Z** undoes. **Ctrl+Shift+Z** redoes. Like everywhere, but it works.
+**Ctrl+Z** undoes. **Ctrl+Shift+Z** redoes. It covers everything: creations, deletions, property changes, groups, filters, report sections.
 
 ### How do I group elements?
 
@@ -93,11 +133,35 @@ Select, then **Delete** or **Backspace**. Classic.
 
 They move together now. Beautiful.
 
+### Can I merge two elements?
+
+Yes. Select 2 elements → right-click → **Merge**. Choose which label to keep, the rest (properties, tags, files, links) is merged intelligently. Duplicate links are combined, self-links removed.
+
+### What are canvas tabs?
+
+**Thematic workspaces** within a single investigation. One tab per hypothesis, per actor type, per time period... Elements from other tabs connected to yours appear semi-transparent. Handy for keeping things organized.
+
 ### How do I add GPS coordinates?
 
 1. Select the element
 2. Detail panel → **Location**
 3. Type the coordinates or click directly on the map
+
+### Can I put the side panel on the left?
+
+Yes. **⇄** button in the toolbar. The choice is remembered.
+
+---
+
+## Views
+
+### What's the Matrix view?
+
+A **spreadsheet** of your elements. Press **4** to access it. Sort, per-column filter, inline editing, multi-row selection, CSV export. Like Excel, but with your investigation data.
+
+### And the Timeline?
+
+Chronological view of all dated elements. With a **density heatmap** showing the busiest periods. Click on it to filter by time range.
 
 ---
 
@@ -122,6 +186,39 @@ Yes. **GraphML** export → Import in Gephi. Your network analyses await.
 ### Does STIX format work?
 
 Yes, STIX 2.1 bundles supported. For cyber threat intelligence enthusiasts.
+
+### What does the HTML report do exactly?
+
+A **self-contained HTML file** with your report and an interactive SVG graph. No need for ZeroNeurone to view it. Since v2.19:
+
+- Search (Ctrl+K) with keyboard navigation
+- Tag filtering via popover
+- Images embedded in graph shapes
+- Reversible layout (report on left or right)
+- Resizable columns between report and graph
+- Table of contents, light/dark theme, Markdown export
+
+All in a single file. Email it, it just works.
+
+### Can ZIP export be encrypted?
+
+Yes. When at-rest encryption is enabled, ZIP exports can be password-protected (`.znzip` format). The recipient will need the password to open it.
+
+---
+
+## Plugins
+
+### Does ZeroNeurone have plugins?
+
+Yes. A slot-based extension system. Plugins can add tabs, context menu entries, keyboard shortcuts, export/import hooks, and more. Zero overhead when no plugins are installed.
+
+### How do I install a plugin?
+
+Drop the `.js` file and its `manifest.json` in the `dist/plugins/` folder. For Docker, copy them to `plugins/` before building. No marketplace, no store — it's a file, you drop it, it works.
+
+### Is it secure?
+
+Plugin errors never crash the application. But a plugin has access to your investigation data. Only install plugins you trust.
 
 ---
 
@@ -188,6 +285,10 @@ ZeroNeurone handles investigations with **1500+ elements and links** in collabor
 ### Can I work offline during a shared session?
 
 Yes. Your edits are stored locally. On reconnection and new share, everything syncs.
+
+### Does retention sync in collab?
+
+Yes. Retention duration and policy are synchronized between all participants via Y.Doc.
 
 ---
 
