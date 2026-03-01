@@ -130,11 +130,16 @@ export function decryptObject(
   const result = { ...obj };
 
   for (const field of Object.keys(obj)) {
-    const value = obj[field];
-    if (isEncrypted(value)) {
+    let value = obj[field];
+    // Boucle pour gérer le double-chiffrement (artefact migration v8 :
+    // investigations pas dans DEFAULT_ENCRYPTED_TABLES → lecture brute,
+    // écriture vers dossiers → re-chiffrement par le middleware)
+    while (isEncrypted(value)) {
       const decrypted = decryptValue(unwrapEncrypted(value as string), key);
-      result[field] = decrypted !== null ? decrypted : value; // garder chiffré si échec
+      if (decrypted === null) break; // garder chiffré si échec
+      value = decrypted;
     }
+    result[field] = value;
   }
 
   return result;

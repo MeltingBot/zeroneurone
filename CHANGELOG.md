@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.20.2
+
+### Fixes
+- Encryption: fix double-encryption of dossier data during v8 migration (recursive `decryptObject` unwraps all layers)
+
 ## 2.20.1
 
 ### Fixes
