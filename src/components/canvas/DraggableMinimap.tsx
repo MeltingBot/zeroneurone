@@ -128,7 +128,7 @@ export function DraggableMinimap() {
           onClick={(e) => { e.stopPropagation(); toggleMinimap(); }}
           onMouseDown={(e) => e.stopPropagation()}
           className="p-0.5 text-text-tertiary hover:text-text-secondary rounded"
-          title={t('investigation.toolbar.hideMinimap')}
+          title={t('dossier.toolbar.hideMinimap')}
         >
           <X size={10} />
         </button>

@@ -1,7 +1,7 @@
 import { generateUUID } from '../utils';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type {
-  InvestigationId,
+  DossierId,
   Element,
   ElementId,
   Link,
@@ -168,7 +168,7 @@ export function isExcalidrawFormat(data: unknown): boolean {
 
 export async function importExcalidraw(
   content: string,
-  targetInvestigationId: InvestigationId
+  targetDossierId: DossierId
 ): Promise<ImportResult> {
   const result: ImportResult = {
     success: false,
@@ -257,7 +257,7 @@ export async function importExcalidraw(
 
       const element: Element = {
         id: elementId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label: label || 'Sans titre',
         notes: '',
         tags: [],
@@ -324,7 +324,7 @@ export async function importExcalidraw(
           const filename = `excalidraw_image_${imageDownloadCount + 1}.${ext}`;
           const file = new File([blob], filename, { type: mimeType });
 
-          const asset = await fileService.saveAsset(targetInvestigationId, file);
+          const asset = await fileService.saveAsset(targetDossierId, file);
           assetIds.push(asset.id);
           visualImageId = asset.id;
           imageDownloadCount++;
@@ -347,7 +347,7 @@ export async function importExcalidraw(
 
       const element: Element = {
         id: elementId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label,
         notes: '',
         tags: [],
@@ -397,7 +397,7 @@ export async function importExcalidraw(
 
       const element: Element = {
         id: elementId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label,
         notes: '',
         tags: [],
@@ -460,7 +460,7 @@ export async function importExcalidraw(
 
       const link: Link = {
         id: linkId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         fromId,
         toId,
         sourceHandle: null,

@@ -1,3 +1,3 @@
 export { HomePage } from './HomePage';
-export { InvestigationPage } from './InvestigationPage';
+export { DossierPage } from './DossierPage';
 export { JoinPage } from './JoinPage';

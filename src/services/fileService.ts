@@ -2,7 +2,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { db } from '../db/database';
 import { generateUUID, bufferToHex, getExtension } from '../utils';
-import type { Asset, AssetId, InvestigationId } from '../types';
+import type { Asset, AssetId, DossierId } from '../types';
 import { useEncryptionStore } from '../stores/encryptionStore';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
 
@@ -52,7 +52,7 @@ const FILE_LIMITS = {
     'application/json',
     'application/xml',
 
-    // Archives (for investigation export/import)
+    // Archives (for dossier export/import)
     'application/zip',
     'application/x-zip-compressed',
 
@@ -184,7 +184,7 @@ class FileService {
     }
   }
 
-  async saveAsset(investigationId: InvestigationId, file: File): Promise<Asset> {
+  async saveAsset(dossierId: DossierId, file: File): Promise<Asset> {
     await this.ensureInitialized();
 
     // Validate file before processing
@@ -197,7 +197,7 @@ class FileService {
 
     // 2. Check if already exists (deduplication)
     const existing = await db.assets
-      .where({ investigationId, hash })
+      .where({ dossierId, hash })
       .first();
 
     if (existing) {
@@ -213,7 +213,7 @@ class FileService {
     }
 
     // 3. Create OPFS path
-    const dirHandle = await this.getAssetDirectory(investigationId);
+    const dirHandle = await this.getAssetDirectory(dossierId);
     const extension = getExtension(file.name);
     const filename = `${hash}.${extension}`;
 
@@ -236,12 +236,12 @@ class FileService {
     // 7. Create Asset entry
     const asset: Asset = {
       id: generateUUID(),
-      investigationId,
+      dossierId,
       filename: file.name,
       mimeType: file.type,
       size: file.size,
       hash,
-      opfsPath: `investigations/${investigationId}/assets/${filename}`,
+      opfsPath: `dossiers/${dossierId}/assets/${filename}`,
       thumbnailDataUrl,
       extractedText,
       createdAt: new Date(),
@@ -303,21 +303,21 @@ class FileService {
     await db.assets.delete(asset.id);
   }
 
-  async deleteInvestigationAssets(investigationId: InvestigationId): Promise<void> {
+  async deleteDossierAssets(dossierId: DossierId): Promise<void> {
     await this.ensureInitialized();
 
     try {
-      const investigations = await this.root!.getDirectoryHandle('investigations');
-      await investigations.removeEntry(investigationId, { recursive: true });
+      const dossiers = await this.root!.getDirectoryHandle('dossiers');
+      await dossiers.removeEntry(dossierId, { recursive: true });
     } catch (error) {
-      console.warn('Failed to delete investigation directory:', error);
+      console.warn('Failed to delete dossier directory:', error);
     }
 
-    await db.assets.where({ investigationId }).delete();
+    await db.assets.where({ dossierId }).delete();
   }
 
-  async getAssetsByInvestigation(investigationId: InvestigationId): Promise<Asset[]> {
-    return db.assets.where({ investigationId }).toArray();
+  async getAssetsByDossier(dossierId: DossierId): Promise<Asset[]> {
+    return db.assets.where({ dossierId }).toArray();
   }
 
   async getAssetById(id: AssetId): Promise<Asset | undefined> {
@@ -331,7 +331,7 @@ class FileService {
   async saveAssetFromBase64(
     assetData: {
       id: string;
-      investigationId: InvestigationId;
+      dossierId: DossierId;
       filename: string;
       mimeType: string;
       size: number;
@@ -349,7 +349,7 @@ class FileService {
 
     // Check if already exists locally (by hash for deduplication)
     const existing = await db.assets
-      .where({ investigationId: assetData.investigationId, hash: assetData.hash })
+      .where({ dossierId: assetData.dossierId, hash: assetData.hash })
       .first();
 
     if (existing) {
@@ -365,7 +365,7 @@ class FileService {
     const arrayBuffer = bytes.buffer;
 
     // Create OPFS path and write file (chiffré si DEK disponible)
-    const dirHandle = await this.getAssetDirectory(assetData.investigationId);
+    const dirHandle = await this.getAssetDirectory(assetData.dossierId);
     const extension = getExtension(assetData.filename);
     const filename = `${assetData.hash}.${extension}`;
 
@@ -381,12 +381,12 @@ class FileService {
     // Create Asset entry
     const asset: Asset = {
       id: assetData.id,
-      investigationId: assetData.investigationId,
+      dossierId: assetData.dossierId,
       filename: assetData.filename,
       mimeType: assetData.mimeType,
       size: assetData.size,
       hash: assetData.hash,
-      opfsPath: `investigations/${assetData.investigationId}/assets/${filename}`,
+      opfsPath: `dossiers/${assetData.dossierId}/assets/${filename}`,
       thumbnailDataUrl: assetData.thumbnailDataUrl,
       extractedText: assetData.extractedText,
       createdAt: assetData.createdAt,
@@ -398,15 +398,15 @@ class FileService {
   }
 
   private async getAssetDirectory(
-    investigationId: InvestigationId
+    dossierId: DossierId
   ): Promise<FileSystemDirectoryHandle> {
-    const investigations = await this.root!.getDirectoryHandle('investigations', {
+    const dossiers = await this.root!.getDirectoryHandle('dossiers', {
       create: true,
     });
-    const investigation = await investigations.getDirectoryHandle(investigationId, {
+    const dossier = await dossiers.getDirectoryHandle(dossierId, {
       create: true,
     });
-    return investigation.getDirectoryHandle('assets', { create: true });
+    return dossier.getDirectoryHandle('assets', { create: true });
   }
 
   private async generateThumbnail(file: File, arrayBuffer: ArrayBuffer): Promise<string | null> {

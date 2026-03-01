@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Investigation, Element, Link, Asset, Report, CanvasTab } from '../types';
+import type { Dossier, Element, Link, Asset, Report, CanvasTab } from '../types';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
@@ -20,14 +20,14 @@ export interface ExportedAssetMeta {
 export interface ExportData {
   version: string;
   exportedAt: string;
-  investigation: Investigation;
+  dossier: Dossier;
   elements: Element[];
   links: Link[];
   /** Asset metadata (files are stored separately in ZIP) */
   assets?: ExportedAssetMeta[];
   /** Report with sections */
   report?: Report | null;
-  /** Canvas tabs (shared investigation structure) */
+  /** Canvas tabs (shared dossier structure) */
   tabs?: CanvasTab[];
 }
 
@@ -35,10 +35,10 @@ class ExportService {
   private readonly VERSION = '1.1.0'; // Updated for ZIP assets support
 
   /**
-   * Export investigation data to JSON string
+   * Export dossier data to JSON string
    */
   exportToJSON(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assetsMeta?: ExportedAssetMeta[],
@@ -50,7 +50,7 @@ class ExportService {
     const data: ExportData = {
       version: this.VERSION,
       exportedAt: new Date().toISOString(),
-      investigation,
+      dossier,
       elements,
       links,
       assets: assetsMeta,
@@ -61,10 +61,10 @@ class ExportService {
   }
 
   /**
-   * Export investigation as ZIP archive with assets and optional report
+   * Export dossier as ZIP archive with assets and optional report
    */
   async exportToZip(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assets: Asset[],
@@ -102,8 +102,8 @@ class ExportService {
     }
 
     // Add JSON metadata (includes report data for import)
-    const jsonContent = this.exportToJSON(investigation, elements, links, assetsMeta, report, tabs);
-    zip.file('investigation.json', jsonContent);
+    const jsonContent = this.exportToJSON(dossier, elements, links, assetsMeta, report, tabs);
+    zip.file('dossier.json', jsonContent);
 
     // Add report Markdown if present (human-readable version)
     if (report && report.sections.length > 0) {
@@ -115,7 +115,7 @@ class ExportService {
     const exportHooks = getPlugins('export:hooks');
     for (const hook of exportHooks) {
       try {
-        await hook.onExport(zip, investigation.id);
+        await hook.onExport(zip, dossier.id);
       } catch (e) {
         console.warn(`Plugin export hook "${hook.name}" failed:`, e);
       }
@@ -126,19 +126,19 @@ class ExportService {
   }
 
   /**
-   * Export investigation as encrypted ZIP (.znzip) with a user password.
+   * Export dossier as encrypted ZIP (.znzip) with a user password.
    * Generates a standard ZIP then encrypts the whole blob with PBKDF2+AES-256-GCM.
    */
   async exportToEncryptedZip(
     password: string,
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assets: Asset[],
     report?: Report | null,
     tabs?: CanvasTab[]
   ): Promise<Blob> {
-    const zipBlob = await this.exportToZip(investigation, elements, links, assets, report, tabs);
+    const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs);
     const encBuf = await encryptZip(zipBlob, password);
     return new Blob([encBuf], { type: 'application/octet-stream' });
   }
@@ -313,7 +313,7 @@ class ExportService {
    * Export to GraphML format for use in other graph tools
    */
   exportToGraphML(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[]
   ): string {
@@ -328,7 +328,7 @@ class ExportService {
   <key id="edgeLabel" for="edge" attr.name="label" attr.type="string"/>
   <key id="edgeColor" for="edge" attr.name="color" attr.type="string"/>`;
 
-    const graphOpen = `  <graph id="${investigation.id}" edgedefault="undirected">`;
+    const graphOpen = `  <graph id="${dossier.id}" edgedefault="undirected">`;
 
     // Nodes
     const nodes = elements.map((el) => `
@@ -358,7 +358,7 @@ class ExportService {
    * Links are exported as LineStrings if both endpoints have geo
    */
   exportToGeoJSON(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[]
   ): string {
@@ -443,15 +443,15 @@ class ExportService {
 
     const geojson = {
       type: 'FeatureCollection' as const,
-      name: investigation.name,
+      name: dossier.name,
       metadata: {
         exportedAt: new Date().toISOString(),
         source: 'zeroneurone',
         version: this.VERSION,
-        investigation: {
-          id: investigation.id,
-          name: investigation.name,
-          description: investigation.description,
+        dossier: {
+          id: dossier.id,
+          name: dossier.name,
+          description: dossier.description,
         },
         stats: {
           totalElements: elements.length,
@@ -489,13 +489,13 @@ class ExportService {
   }
 
   /**
-   * Export and download investigation in specified format
+   * Export and download dossier in specified format
    * @param assets - For ZIP format, the raw assets to include
    * @param report - For ZIP format, the optional report to include
    */
-  async exportInvestigation(
+  async exportDossier(
     format: ExportFormat,
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assets?: Asset[],
@@ -504,16 +504,16 @@ class ExportService {
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
-    const baseName = `${investigation.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+    const baseName = `${dossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
 
     switch (format) {
       case 'zip': {
-        const zipBlob = await this.exportToZip(investigation, elements, links, assets || [], report, tabs);
+        const zipBlob = await this.exportToZip(dossier, elements, links, assets || [], report, tabs);
         this.downloadBlob(zipBlob, `${baseName}.zip`);
         break;
       }
       case 'json': {
-        const json = this.exportToJSON(investigation, elements, links, undefined, undefined, tabs);
+        const json = this.exportToJSON(dossier, elements, links, undefined, undefined, tabs);
         this.download(json, `${baseName}.json`, 'application/json');
         break;
       }
@@ -524,12 +524,12 @@ class ExportService {
         break;
       }
       case 'graphml': {
-        const graphml = this.exportToGraphML(investigation, elements, links);
+        const graphml = this.exportToGraphML(dossier, elements, links);
         this.download(graphml, `${baseName}.graphml`, 'application/xml');
         break;
       }
       case 'geojson': {
-        const geojson = this.exportToGeoJSON(investigation, elements, links);
+        const geojson = this.exportToGeoJSON(dossier, elements, links);
         this.download(geojson, `${baseName}.geojson`, 'application/geo+json');
         break;
       }

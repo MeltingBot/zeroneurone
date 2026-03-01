@@ -7,7 +7,7 @@
     "report": "Rapport",
     "collapsePanel": "Paneel inklappen"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informatie",
       "dates": "Datums",
@@ -35,7 +35,7 @@
       "retentionReset": "Resetten"
     },
     "placeholders": {
-      "name": "Naam van het onderzoek",
+      "name": "Naam van het dossier",
       "creator": "Naam van de maker..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "U: {{name}} (klik om te bewerken)"
   },
   "report": {
-    "noInvestigation": "Geen onderzoek geladen",
+    "noDossier": "Geen dossier geladen",
     "noReport": "Geen rapport. Maak er een om te beginnen.",
     "createReport": "Rapport maken",
     "defaultTitle": "Rapport",

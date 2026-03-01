@@ -5,7 +5,7 @@ weight: 9
 
 # Report Panel
 
-Write structured reports with references to elements in your investigation.
+Write structured reports with references to elements in your dossier.
 
 ---
 
@@ -142,7 +142,7 @@ Creates a self-contained HTML file with:
 - An interactive SVG graph with pan & zoom
 - Bidirectional navigation (click references → zoom on element, click nodes → scroll to references)
 - Collapsible table of contents
-- Info modal with investigation metadata and statistics
+- Info modal with dossier metadata and statistics
 - Light/dark theme toggle
 - Markdown export button (without internal links)
 - **Search** (Ctrl+K): search by label and tags with keyboard navigation

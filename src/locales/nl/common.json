@@ -61,7 +61,7 @@
     "files": "Bestanden",
     "links": "Verbindingen",
     "elements": "Elementen",
-    "investigations": "Onderzoeken",
+    "dossiers": "Dossiers",
     "views": "Weergaven",
     "filters": "Filters",
     "insights": "Analyses",
@@ -100,7 +100,7 @@
     "noData": "Geen gegevens",
     "noSelection": "Geen selectie",
     "noItems": "Geen elementen",
-    "noInvestigationLoaded": "Geen onderzoek geladen.",
+    "noDossierLoaded": "Geen dossier geladen.",
     "unnamed": "Naamloos"
   },
   "errors": {

@@ -61,7 +61,7 @@
     "files": "Fitxers",
     "links": "Enllaços",
     "elements": "Elements",
-    "investigations": "Investigacions",
+    "dossiers": "Expedients",
     "views": "Vistes",
     "filters": "Filtres",
     "insights": "Anàlisis",
@@ -100,7 +100,7 @@
     "noData": "Sense dades",
     "noSelection": "Sense selecció",
     "noItems": "Sense elements",
-    "noInvestigationLoaded": "Cap investigació carregada.",
+    "noDossierLoaded": "Cap expedient carregada.",
     "unnamed": "Sense nom"
   },
   "errors": {

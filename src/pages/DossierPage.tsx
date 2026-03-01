@@ -30,7 +30,7 @@ const Canvas = lazyWithRetry(() => import('../components/canvas').then(m => ({ d
 const TimelineView = lazyWithRetry(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazyWithRetry(() => import('../components/map').then(m => ({ default: m.MapView })));
 const MatrixView = lazyWithRetry(() => import('../components/matrix').then(m => ({ default: m.MatrixView })));
-import { useInvestigationStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore } from '../stores';
+import { useDossierStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore } from '../stores';
 import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
@@ -56,12 +56,12 @@ function matchesShortcutKeys(e: KeyboardEvent, keys: string): boolean {
   return hasCtrl === needCtrl && e.shiftKey === needShift && e.altKey === needAlt && e.key.toLowerCase() === key;
 }
 
-export function InvestigationPage() {
+export function DossierPage() {
   const { t } = useTranslation('pages');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const {
-    currentInvestigation,
+    currentDossier,
     elements,
     links,
     assets,
@@ -70,28 +70,28 @@ export function InvestigationPage() {
     loadingDetail,
     loadingProgress,
     error,
-    loadInvestigation,
-    unloadInvestigation,
-  } = useInvestigationStore();
+    loadDossier,
+    unloadDossier,
+  } = useDossierStore();
 
-  const { searchOpen, toggleSearch, closeSearch, resetInvestigationState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide, togglePanelSide } = useUIStore();
-  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetInvestigationState: resetViewState, loadViewportForInvestigation, saveViewportForInvestigation } = useViewStore();
+  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide, togglePanelSide } = useUIStore();
+  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetDossierState: resetViewState, loadViewportForDossier, saveViewportForDossier } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
   const clearInsights = useInsightsStore((state) => state.clear);
   const loadTabs = useTabStore((state) => state.loadTabs);
-  const resetTabState = useTabStore((state) => state.resetInvestigationState);
+  const resetTabState = useTabStore((state) => state.resetDossierState);
   const canvasTabs = useTabStore((state) => state.tabs);
   const activeTabId = useTabStore((state) => state.activeTabId);
   const setActiveTab = useTabStore((state) => state.setActiveTab);
   const addTabMembers = useTabStore((state) => state.addMembers);
 
-  const setReadOnly = useInvestigationStore((s) => s.setReadOnly);
-  const deleteInvestigation = useInvestigationStore((s) => s.deleteInvestigation);
-  const updateElement = useInvestigationStore((s) => s.updateElement);
-  const updateLink = useInvestigationStore((s) => s.updateLink);
-  const updateInvestigation = useInvestigationStore((s) => s.updateInvestigation);
+  const setReadOnly = useDossierStore((s) => s.setReadOnly);
+  const deleteDossier = useDossierStore((s) => s.deleteDossier);
+  const updateElement = useDossierStore((s) => s.updateElement);
+  const updateLink = useDossierStore((s) => s.updateLink);
+  const updateDossier = useDossierStore((s) => s.updateDossier);
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
@@ -121,44 +121,44 @@ export function InvestigationPage() {
 
   useEffect(() => {
     if (id) {
-      loadInvestigation(id);
-      // Load saved viewport for this investigation
-      loadViewportForInvestigation(id);
+      loadDossier(id);
+      // Load saved viewport for this dossier
+      loadViewportForDossier(id);
       // Load canvas tabs
       loadTabs(id);
     }
     return () => {
       // Save viewport before unloading
       if (id) {
-        saveViewportForInvestigation(id);
+        saveViewportForDossier(id);
       }
-      unloadInvestigation();
+      unloadDossier();
       searchService.clear();
-      // Reset investigation-specific state (selection, filters, insights, redaction, tabs)
+      // Reset dossier-specific state (selection, filters, insights, redaction, tabs)
       clearSelection();
       clearInsights();
       resetUIState();
       resetViewState();
       resetTabState();
     };
-  }, [id, loadInvestigation, unloadInvestigation, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForInvestigation, saveViewportForInvestigation, loadTabs]);
+  }, [id, loadDossier, unloadDossier, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForDossier, saveViewportForDossier, loadTabs]);
 
   // Retention expiration check
   const retentionExpiredDays = (() => {
-    if (!currentInvestigation?.retentionDays) return null;
-    const expiresAt = new Date(currentInvestigation.createdAt).getTime() + currentInvestigation.retentionDays * 86400000;
+    if (!currentDossier?.retentionDays) return null;
+    const expiresAt = new Date(currentDossier.createdAt).getTime() + currentDossier.retentionDays * 86400000;
     const diff = Date.now() - expiresAt;
     return diff > 0 ? Math.ceil(diff / 86400000) : null;
   })();
 
   useEffect(() => {
-    if (!currentInvestigation || retentionExpiredDays === null) {
+    if (!currentDossier || retentionExpiredDays === null) {
       setReadOnly(false);
       return;
     }
-    const policy = currentInvestigation.retentionPolicy || 'warn';
+    const policy = currentDossier.retentionPolicy || 'warn';
     if (policy === 'warn') {
-      showToast('warning', t('investigation.retentionExpiredBanner', { days: retentionExpiredDays }));
+      showToast('warning', t('dossier.retentionExpiredBanner', { days: retentionExpiredDays }));
     } else if (policy === 'readonly') {
       setReadOnly(true);
     } else if (policy === 'delete') {
@@ -168,14 +168,14 @@ export function InvestigationPage() {
       setReadOnly(true);
       setRedactConfirmOpen(true);
     }
-  }, [currentInvestigation?.id, retentionExpiredDays]);
+  }, [currentDossier?.id, retentionExpiredDays]);
 
   // Self-healing: reassign orphaned elements to the first tab
   const orphanHealedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!currentInvestigation || elements.length === 0 || canvasTabs.length === 0) return;
-    if (orphanHealedRef.current === currentInvestigation.id) return;
-    orphanHealedRef.current = currentInvestigation.id;
+    if (!currentDossier || elements.length === 0 || canvasTabs.length === 0) return;
+    if (orphanHealedRef.current === currentDossier.id) return;
+    orphanHealedRef.current = currentDossier.id;
 
     const allMembers = new Set<string>();
     for (const tab of canvasTabs) {
@@ -189,29 +189,29 @@ export function InvestigationPage() {
     if (orphanIds.length > 0) {
       addTabMembers(canvasTabs[0].id, orphanIds);
     }
-  }, [currentInvestigation, elements, canvasTabs, addTabMembers]);
+  }, [currentDossier, elements, canvasTabs, addTabMembers]);
 
-  // Load search index: full rebuild on investigation load, incremental updates after
+  // Load search index: full rebuild on dossier load, incremental updates after
   const searchInitializedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
-    if (searchInitializedRef.current !== currentInvestigation.id) {
-      // First load or investigation changed: full rebuild
-      searchService.loadInvestigation(currentInvestigation.id, elements, links, assets);
-      searchInitializedRef.current = currentInvestigation.id;
+    if (searchInitializedRef.current !== currentDossier.id) {
+      // First load or dossier changed: full rebuild
+      searchService.loadDossier(currentDossier.id, elements, links, assets);
+      searchInitializedRef.current = currentDossier.id;
     } else {
       // Subsequent changes: incremental sync (only diffs)
       searchService.syncIncremental(elements, links, assets);
     }
-  }, [currentInvestigation, elements, links, assets]);
+  }, [currentDossier, elements, links, assets]);
 
-  // Load saved views for this investigation
+  // Load saved views for this dossier
   useEffect(() => {
-    if (currentInvestigation) {
-      loadViews(currentInvestigation.id);
+    if (currentDossier) {
+      loadViews(currentDossier.id);
     }
-  }, [currentInvestigation, loadViews]);
+  }, [currentDossier, loadViews]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -294,14 +294,14 @@ export function InvestigationPage() {
   if (isLoading) {
     // loadingPhase is an i18n key (opening, syncing, files, elements)
     const phaseLabel = loadingPhase
-      ? t(`investigation.loading.${loadingPhase}`)
+      ? t(`dossier.loading.${loadingPhase}`)
       : t('home.loading');
 
     // loadingDetail: for 'elements' phase it's "count|count", otherwise plain text
     let detailLabel = loadingDetail;
     if (loadingPhase === 'elements' && loadingDetail.includes('|')) {
       const [elCount, lkCount] = loadingDetail.split('|');
-      detailLabel = t('investigation.loading.elementsLinks', { elements: elCount, links: lkCount });
+      detailLabel = t('dossier.loading.elementsLinks', { elements: elCount, links: lkCount });
     }
 
     return (
@@ -325,12 +325,12 @@ export function InvestigationPage() {
     );
   }
 
-  if (error || !currentInvestigation) {
+  if (error || !currentDossier) {
     return (
       <Layout>
         <div className="h-full flex flex-col items-center justify-center gap-4">
           <span className="text-sm text-error">
-            {error || t('investigation.notFound')}
+            {error || t('dossier.notFound')}
           </span>
           <button
             onClick={handleGoHome}
@@ -403,10 +403,10 @@ export function InvestigationPage() {
   return (
     <Layout>
       {/* Delete confirmation modal (retention policy=delete) */}
-      <Modal isOpen={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} title={t('investigation.retentionDeleteAction')}>
+      <Modal isOpen={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} title={t('dossier.retentionDeleteAction')}>
         <div className="space-y-4">
           <p className="text-sm text-text-primary">
-            {t('investigation.retentionDeleteConfirm')}
+            {t('dossier.retentionDeleteConfirm')}
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setDeleteConfirmOpen(false)}>
@@ -415,23 +415,23 @@ export function InvestigationPage() {
             <button
               className="px-3 py-1.5 text-sm text-white bg-error hover:bg-error/90 rounded"
               onClick={async () => {
-                if (currentInvestigation) {
-                  await deleteInvestigation(currentInvestigation.id);
+                if (currentDossier) {
+                  await deleteDossier(currentDossier.id);
                   navigate('/');
                 }
               }}
             >
-              {t('investigation.retentionDeleteAction')}
+              {t('dossier.retentionDeleteAction')}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* Redact confirmation modal (retention policy=redact) */}
-      <Modal isOpen={redactConfirmOpen} onClose={() => setRedactConfirmOpen(false)} title={t('investigation.retentionRedactAction')}>
+      <Modal isOpen={redactConfirmOpen} onClose={() => setRedactConfirmOpen(false)} title={t('dossier.retentionRedactAction')}>
         <div className="space-y-4">
           <p className="text-sm text-text-primary">
-            {t('investigation.retentionRedactConfirm')}
+            {t('dossier.retentionRedactConfirm')}
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setRedactConfirmOpen(false)}>
@@ -440,7 +440,7 @@ export function InvestigationPage() {
             <button
               className="px-3 py-1.5 text-sm text-white bg-error hover:bg-error/90 rounded"
               onClick={async () => {
-                if (!currentInvestigation) return;
+                if (!currentDossier) return;
                 const redacted = '\u2588\u2588\u2588';
                 for (const el of elements) {
                   await updateElement(el.id, {
@@ -460,7 +460,7 @@ export function InvestigationPage() {
                     properties: [],
                   });
                 }
-                await updateInvestigation(currentInvestigation.id, {
+                await updateDossier(currentDossier.id, {
                   description: '',
                   creator: '',
                   retentionPolicy: 'readonly',
@@ -468,7 +468,7 @@ export function InvestigationPage() {
                 setRedactConfirmOpen(false);
               }}
             >
-              {t('investigation.retentionRedactAction')}
+              {t('dossier.retentionRedactAction')}
             </button>
           </div>
         </div>
@@ -481,7 +481,7 @@ export function InvestigationPage() {
             <ArrowLeft size={16} />
           </IconButton>
           <h1 className="text-sm font-semibold text-text-primary">
-            {currentInvestigation.name}
+            {currentDossier.name}
           </h1>
         </div>
 
@@ -490,7 +490,7 @@ export function InvestigationPage() {
           {viewOptions.map((option) => {
             const Icon = option.icon;
             const isActive = displayMode === option.mode;
-            const label = t(`investigation.views.${option.labelKey}`);
+            const label = t(`dossier.views.${option.labelKey}`);
             return (
               <button
                 key={option.mode}
@@ -515,25 +515,25 @@ export function InvestigationPage() {
             <button
               onClick={clearFilters}
               className="flex items-center gap-1.5 px-2 py-1 text-xs bg-accent/10 text-accent rounded hover:bg-accent/20 transition-colors"
-              title={t('investigation.header.clearFilters')}
+              title={t('dossier.header.clearFilters')}
             >
               <Filter size={14} />
-              <span>{t('investigation.header.activeFilters')}</span>
+              <span>{t('dossier.header.activeFilters')}</span>
             </button>
           )}
           <button
             onClick={() => setSynthesisOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('investigation.header.generateReport')}
+            title={t('dossier.header.generateReport')}
           >
             <FileText size={14} />
-            <span className="hidden sm:inline">{t('investigation.header.report')}</span>
+            <span className="hidden sm:inline">{t('dossier.header.report')}</span>
           </button>
           {/* Panel side toggle */}
           <button
             onClick={togglePanelSide}
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-            title={panelSide === 'right' ? t('investigation.header.panelToLeft', 'Panneau a gauche') : t('investigation.header.panelToRight', 'Panneau a droite')}
+            title={panelSide === 'right' ? t('dossier.header.panelToLeft', 'Panneau a gauche') : t('dossier.header.panelToRight', 'Panneau a droite')}
           >
             {panelSide === 'right' ? <PanelLeft size={14} /> : <PanelRight size={14} />}
           </button>
@@ -541,7 +541,7 @@ export function InvestigationPage() {
           <button
             onClick={toggleThemeMode}
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-            title={themeMode === 'light' ? t('investigation.viewToolbar.darkMode') : t('investigation.viewToolbar.lightMode')}
+            title={themeMode === 'light' ? t('dossier.viewToolbar.darkMode') : t('dossier.viewToolbar.lightMode')}
           >
             {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
           </button>
@@ -550,25 +550,25 @@ export function InvestigationPage() {
           <button
             onClick={() => setImportOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('investigation.header.import')}
+            title={t('dossier.header.import')}
           >
             <Upload size={14} />
-            <span className="hidden sm:inline">{t('investigation.header.import')}</span>
+            <span className="hidden sm:inline">{t('dossier.header.import')}</span>
           </button>
           <button
             onClick={() => setExportOpen(true)}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('investigation.header.export')}
+            title={t('dossier.header.export')}
           >
             <Download size={14} />
-            <span className="hidden sm:inline">{t('investigation.header.export')}</span>
+            <span className="hidden sm:inline">{t('dossier.header.export')}</span>
           </button>
           <button
             onClick={toggleSearch}
             className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
           >
             <Search size={14} />
-            <span className="hidden sm:inline">{t('investigation.header.search')}</span>
+            <span className="hidden sm:inline">{t('dossier.header.search')}</span>
             <kbd className="hidden sm:inline px-1 py-0.5 bg-bg-tertiary rounded text-text-tertiary text-[10px]">
               Ctrl+K
             </kbd>
@@ -576,7 +576,7 @@ export function InvestigationPage() {
           <button
             onClick={() => setShortcutsOpen(true)}
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={`${t('investigation.header.shortcuts')} (?)`}
+            title={`${t('dossier.header.shortcuts')} (?)`}
           >
             <Keyboard size={14} />
           </button>
@@ -585,7 +585,7 @@ export function InvestigationPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('investigation.header.documentation')}
+            title={t('dossier.header.documentation')}
           >
             <BookOpen size={14} />
           </a>
@@ -603,7 +603,7 @@ export function InvestigationPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('investigation.header.supportKofi')}
+            title={t('dossier.header.supportKofi')}
           >
             <Coffee size={14} />
           </a>
@@ -615,7 +615,7 @@ export function InvestigationPage() {
       <div className={`flex-1 flex overflow-hidden${panelSide === 'left' ? ' flex-row-reverse' : ''}`}>
         {/* Main view */}
         <main className="flex-1 relative bg-bg-secondary flex flex-col">
-          <TabBar investigationId={currentInvestigation.id} />
+          <TabBar dossierId={currentDossier.id} />
           <div className="flex-1 relative">
             {renderMainView()}
           </div>
@@ -637,7 +637,7 @@ export function InvestigationPage() {
         onClose={() => setExportOpen(false)}
       />
 
-      {/* Import modal (simplified for current investigation) */}
+      {/* Import modal (simplified for current dossier) */}
       <ImportIntoCurrentModal
         isOpen={importOpen}
         onClose={() => setImportOpen(false)}
@@ -662,7 +662,7 @@ export function InvestigationPage() {
       <Modal
         isOpen={collabLeaveWarning}
         onClose={() => setCollabLeaveWarning(false)}
-        title={t('investigation.collab.leaveTitle')}
+        title={t('dossier.collab.leaveTitle')}
         width="sm"
         footer={
           <>
@@ -670,16 +670,16 @@ export function InvestigationPage() {
               {t('common:actions.cancel')}
             </Button>
             <Button variant="primary" onClick={handleConfirmLeave}>
-              {t('investigation.collab.leave')}
+              {t('dossier.collab.leave')}
             </Button>
           </>
         }
       >
         <p className="text-sm text-text-secondary">
-          {t('investigation.collab.leaveMessage')}
+          {t('dossier.collab.leaveMessage')}
         </p>
         <p className="text-sm text-text-secondary mt-2">
-          {t('investigation.collab.rejoinMessage')}
+          {t('dossier.collab.rejoinMessage')}
         </p>
       </Modal>
     </Layout>

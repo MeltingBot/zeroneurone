@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { graphWorkerService } from '../../services/graphWorkerService';
-import { useInvestigationStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useHistoryStore } from '../../stores';
 import type { Position } from '../../types';
 
 export function LayoutDropdown() {
@@ -12,7 +12,7 @@ export function LayoutDropdown() {
   const [isApplying, setIsApplying] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links, updateElementPositions } = useInvestigationStore();
+  const { elements, links, updateElementPositions } = useDossierStore();
   const { pushAction } = useHistoryStore();
 
   // Close dropdown when clicking outside
@@ -103,14 +103,14 @@ export function LayoutDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         disabled={isApplying || elements.length === 0}
         className="flex items-center gap-1 px-2 h-7 text-xs text-text-secondary hover:bg-bg-tertiary rounded border border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
-        title={t('investigation.layout.buttonTitle')}
+        title={t('dossier.layout.buttonTitle')}
       >
         {isApplying ? (
           <Loader2 size={14} className="animate-spin" />
         ) : (
           <LayoutGrid size={14} />
         )}
-        <span className="hidden sm:inline">{t('investigation.layout.button')}</span>
+        <span className="hidden sm:inline">{t('dossier.layout.button')}</span>
         <ChevronDown size={12} />
       </button>
 
@@ -118,7 +118,7 @@ export function LayoutDropdown() {
         <div className="absolute top-full left-0 mt-1 w-56 bg-bg-primary border border-border-default rounded shadow-lg z-50">
           <div className="py-1">
             <div className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
-              {t('investigation.layout.title')}
+              {t('dossier.layout.title')}
             </div>
             {layouts.map((layoutType) => (
               <button
@@ -127,17 +127,17 @@ export function LayoutDropdown() {
                 className="w-full px-3 py-2 text-left hover:bg-bg-secondary flex flex-col gap-0.5"
               >
                 <span className="text-sm text-text-primary">
-                  {t(`investigation.layout.types.${layoutType}.name`)}
+                  {t(`dossier.layout.types.${layoutType}.name`)}
                 </span>
                 <span className="text-[10px] text-text-tertiary">
-                  {t(`investigation.layout.types.${layoutType}.description`)}
+                  {t(`dossier.layout.types.${layoutType}.description`)}
                 </span>
               </button>
             ))}
           </div>
           <div className="border-t border-border-default px-3 py-2">
             <p className="text-[10px] text-text-tertiary">
-              {t('investigation.layout.undoHint')}
+              {t('dossier.layout.undoHint')}
             </p>
           </div>
         </div>

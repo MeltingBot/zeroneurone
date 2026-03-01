@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3 } from 'lucide-react';
 import { fileService } from '../../services/fileService';
@@ -53,7 +53,7 @@ export function TimelineView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links, comments } = useInvestigationStore();
+  const { elements, links, comments } = useDossierStore();
   const { selectElement, selectLink, selectedElementIds, selectedLinkIds } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);

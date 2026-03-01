@@ -13,7 +13,7 @@ ZeroNeurone utilise deux technologies de stockage navigateur :
 
 | Technologie | Usage | Données |
 |-------------|-------|---------|
-| **IndexedDB** | Base de données | Métadonnées (éléments, liens, enquêtes) |
+| **IndexedDB** | Base de données | Métadonnées (éléments, liens, dossiers) |
 | **OPFS** | Système de fichiers | Fichiers joints (images, PDF) |
 
 
@@ -25,7 +25,7 @@ ZeroNeurone utilise deux technologies de stockage navigateur :
 
 | Table | Contenu |
 |-------|---------|
-| `investigations` | Enquêtes et paramètres |
+| `investigations` | Dossiers et paramètres |
 | `elements` | Éléments du graphe |
 | `links` | Liens entre éléments |
 | `views` | Vues sauvegardées |
@@ -108,7 +108,7 @@ navigator.storage.persisted().then(console.log)
 ### Export régulier
 
 {{< hint warning >}}
-**Important** : Exportez régulièrement vos enquêtes en ZIP pour avoir une sauvegarde externe.
+**Important** : Exportez régulièrement vos dossiers en ZIP pour avoir une sauvegarde externe.
 {{< /hint >}}
 
 ### Risques de perte
@@ -153,7 +153,7 @@ Cliquez sur l'icône cadenas (page d'accueil) pour activer, changer ou désactiv
 
 ### Ce qui est chiffré
 
-Quand le chiffrement est actif, toutes les tables de la base `zeroneurone` contenant des données d'enquête sont chiffrées, ainsi que les fichiers joints dans OPFS. Les données ne sont lisibles qu'après saisie du mot de passe au démarrage.
+Quand le chiffrement est actif, toutes les tables de la base `zeroneurone` contenant des données de dossier sont chiffrées, ainsi que les fichiers joints dans OPFS. Les données ne sont lisibles qu'après saisie du mot de passe au démarrage.
 
 ### Consultation DevTools
 
@@ -176,15 +176,15 @@ Si l'application ne charge pas :
 
 ### Espace insuffisant
 
-1. Supprimer les enquêtes inutiles
+1. Supprimer les dossiers inutiles
 2. Supprimer les fichiers joints volumineux
-3. Exporter en ZIP puis supprimer l'enquête
+3. Exporter en ZIP puis supprimer le dossier
 
 ### Migration
 
 Pour changer de navigateur ou machine :
 
-1. Exporter toutes les enquêtes en ZIP
+1. Exporter tous les dossiers en ZIP
 2. Installer sur le nouveau navigateur
 3. Importer les ZIP
 

@@ -476,14 +476,14 @@ className="opacity-50 cursor-not-allowed pointer-events-none"
 
 | Mauvais | Bon |
 |---------|-----|
-| "Create a new investigation" | "Nouvelle enquête" |
+| "Create a new dossier" | "Nouvelle dossier" |
 | "Are you sure you want to delete this element? This action cannot be undone." | "Supprimer cet élément ?" |
 | "No elements found. Try creating one!" | "Aucun élément" |
 | "Welcome back! 👋" | (rien, ou juste le nom) |
 | "Great! Your element has been created successfully." | "Élément créé" |
 | "Oops! Something went wrong." | "Erreur : [message précis]" |
 | "Loading your data, please wait..." | "Chargement..." |
-| "Enter a name for your investigation" | "Nom" |
+| "Enter a name for your dossier" | "Nom" |
 
 ### Labels
 
@@ -500,7 +500,7 @@ className="opacity-50 cursor-not-allowed pointer-events-none"
 
 ```
 // Mauvais
-"Oops! Something went wrong while trying to save your investigation. Please try again later."
+"Oops! Something went wrong while trying to save your dossier. Please try again later."
 
 // Bon
 "Échec de la sauvegarde. Réessayer."
@@ -527,7 +527,7 @@ placeholder="Jean Dupont"
 ```jsx
 <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-b-2xl shadow-xl">
   <h1 className="text-3xl font-bold">🔍 Welcome to zeroneurone!</h1>
-  <p className="text-blue-100 mt-2">Your powerful investigation companion</p>
+  <p className="text-blue-100 mt-2">Your powerful dossier companion</p>
 </header>
 ```
 
@@ -556,13 +556,13 @@ placeholder="Jean Dupont"
       📁
     </div>
     <div>
-      <h3 className="text-xl font-bold text-gray-800">My Investigation</h3>
+      <h3 className="text-xl font-bold text-gray-800">My Dossier</h3>
       <p className="text-gray-500">Created 2 days ago</p>
     </div>
   </div>
-  <p className="text-gray-600 mb-4">This is a great investigation about something really important!</p>
+  <p className="text-gray-600 mb-4">This is a great dossier about something really important!</p>
   <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700">
-    Open Investigation →
+    Open Dossier →
   </button>
 </div>
 ```
@@ -591,12 +591,12 @@ placeholder="Jean Dupont"
 <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-lg">
   <div className="text-center mb-6">
     <div className="text-6xl mb-4">🎉</div>
-    <h2 className="text-2xl font-bold text-gray-800">Create New Investigation</h2>
+    <h2 className="text-2xl font-bold text-gray-800">Create New Dossier</h2>
     <p className="text-gray-500 mt-2">Let's get started on your next big case!</p>
   </div>
-  <input className="w-full p-4 rounded-xl border-2 border-gray-200 text-lg" placeholder="Enter investigation name..." />
+  <input className="w-full p-4 rounded-xl border-2 border-gray-200 text-lg" placeholder="Enter dossier name..." />
   <button className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl text-lg font-bold">
-    🚀 Create Investigation
+    🚀 Create Dossier
   </button>
 </div>
 ```
@@ -606,7 +606,7 @@ placeholder="Jean Dupont"
 ```jsx
 <div className="bg-primary rounded shadow-lg w-[400px]">
   <div className="flex items-center justify-between px-4 py-3 border-b border-default">
-    <h2 className="text-sm font-semibold">Nouvelle enquête</h2>
+    <h2 className="text-sm font-semibold">Nouvelle dossier</h2>
     <button className="p-1 hover:bg-tertiary rounded">
       <X size={16} />
     </button>

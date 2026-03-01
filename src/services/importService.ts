@@ -4,7 +4,7 @@ import { getPlugins } from '../plugins/pluginRegistry';
 import { generateUUID } from '../utils';
 import { decryptZip, isEncryptedZipBuffer } from './encryption/zipEncryption';
 import type {
-  InvestigationId,
+  DossierId,
   Element,
   ElementId,
   Link,
@@ -139,7 +139,7 @@ class ImportService {
 
   /**
    * Parse a ZIP file and return the bounding box without importing
-   * Used for placement preview before importing into existing investigation
+   * Used for placement preview before importing into existing dossier
    */
   async parseZipForPlacement(file: File): Promise<{ boundingBox: ImportBoundingBox; success: boolean; error?: string }> {
     try {
@@ -151,10 +151,10 @@ class ImportService {
       const arrayBuffer = await file.arrayBuffer();
       const zip = await JSZip.loadAsync(arrayBuffer);
 
-      // Read investigation.json
-      const jsonFile = zip.file('investigation.json');
+      // Read dossier.json (or legacy investigation.json)
+      const jsonFile = zip.file('dossier.json') || zip.file('investigation.json');
       if (!jsonFile) {
-        return { boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 }, success: false, error: 'Pas de fichier investigation.json' };
+        return { boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 }, success: false, error: 'Pas de fichier dossier.json' };
       }
 
       const content = await jsonFile.async('string');
@@ -172,13 +172,13 @@ class ImportService {
   }
 
   /**
-   * Import from ZIP file (full investigation export with assets)
+   * Import from ZIP file (full dossier export with assets)
    * Includes ZIP bomb protection and file validation
-   * @param positionOffset - Optional offset to apply to all element positions (for importing into existing investigation)
+   * @param positionOffset - Optional offset to apply to all element positions (for importing into existing dossier)
    */
   async importFromZip(
     file: File,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     positionOffset?: Position
   ): Promise<ImportResult> {
     const result: ImportResult = {
@@ -218,10 +218,10 @@ class ImportService {
         }
       }
 
-      // Read the JSON metadata
-      const jsonFile = zip.file('investigation.json');
+      // Read the JSON metadata (or legacy investigation.json)
+      const jsonFile = zip.file('dossier.json') || zip.file('investigation.json');
       if (!jsonFile) {
-        result.errors.push('Archive invalide: investigation.json manquant');
+        result.errors.push('Archive invalide: dossier.json manquant');
         return result;
       }
 
@@ -234,7 +234,15 @@ class ImportService {
         return result;
       }
 
-      const data = JSON.parse(jsonContent) as ExportData;
+      const rawData = JSON.parse(jsonContent);
+
+      // Legacy compat: normalize 'investigation' key → 'dossier'
+      if (rawData.investigation && !rawData.dossier) {
+        rawData.dossier = rawData.investigation;
+        delete rawData.investigation;
+      }
+
+      const data = rawData as ExportData;
 
       // Validate structure
       if (!data.version || !data.elements || !data.links) {
@@ -242,10 +250,10 @@ class ImportService {
         return result;
       }
 
-      // Check retention expiration on imported investigation
-      if (data.investigation?.retentionDays && data.investigation.createdAt) {
-        const createdAt = new Date(data.investigation.createdAt).getTime();
-        const expiresAt = createdAt + data.investigation.retentionDays * 86400000;
+      // Check retention expiration on imported dossier
+      if (data.dossier?.retentionDays && data.dossier.createdAt) {
+        const createdAt = new Date(data.dossier.createdAt).getTime();
+        const expiresAt = createdAt + data.dossier.retentionDays * 86400000;
         if (Date.now() > expiresAt) {
           const expiredDays = Math.ceil((Date.now() - expiresAt) / 86400000);
           result.warnings.push(
@@ -316,7 +324,7 @@ class ImportService {
             const newAssetId = await this.importAssetFromBuffer(
               arrayBuffer,
               assetMeta,
-              targetInvestigationId
+              targetDossierId
             );
             assetIdMap.set(assetMeta.id, newAssetId);
             result.assetsImported++;
@@ -334,18 +342,18 @@ class ImportService {
       }
 
       // Import elements and links (with optional position offset)
-      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
+      await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
 
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0) {
-        await this.importReport(data.report, targetInvestigationId, result, elementIdMap, linkIdMap);
+        await this.importReport(data.report, targetDossierId, result, elementIdMap, linkIdMap);
       }
 
       // Plugin import hooks
       const importHooks = getPlugins('import:hooks');
       for (const hook of importHooks) {
         try {
-          await hook.onImport(zip, targetInvestigationId);
+          await hook.onImport(zip, targetDossierId);
         } catch (e) {
           console.warn(`Plugin import hook "${hook.name}" failed:`, e);
         }
@@ -353,7 +361,7 @@ class ImportService {
 
       result.success = true;
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       if (error instanceof ImportValidationError) {
@@ -372,7 +380,7 @@ class ImportService {
    */
   async importFromJSON(
     content: string,
-    targetInvestigationId: InvestigationId
+    targetDossierId: DossierId
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -391,22 +399,22 @@ class ImportService {
       let importResult: ImportResult;
       switch (format) {
         case 'zeroneurone':
-          importResult = await this.importNativeJSON(data, targetInvestigationId);
+          importResult = await this.importNativeJSON(data, targetDossierId);
           break;
         case 'osint-industries':
-          importResult = await importOsintIndustries(content, targetInvestigationId);
+          importResult = await importOsintIndustries(content, targetDossierId);
           break;
         case 'oi-palette':
-          importResult = await importOIPalette(content, targetInvestigationId);
+          importResult = await importOIPalette(content, targetDossierId);
           break;
         case 'predicagraph':
-          importResult = await importPredicaGraph(content, targetInvestigationId);
+          importResult = await importPredicaGraph(content, targetDossierId);
           break;
         case 'excalidraw':
-          importResult = await importExcalidraw(content, targetInvestigationId);
+          importResult = await importExcalidraw(content, targetDossierId);
           break;
         case 'stix2':
-          importResult = await importSTIX2(content, targetInvestigationId);
+          importResult = await importSTIX2(content, targetDossierId);
           break;
         default:
           result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1');
@@ -414,7 +422,7 @@ class ImportService {
       }
 
       if (importResult.success && importResult.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
       return importResult;
     } catch (error) {
@@ -465,15 +473,15 @@ class ImportService {
   }
 
   /**
-   * Apply default display settings for imported investigations
+   * Apply default display settings for imported dossiers
    * Sets curved links with auto anchoring for better readability
    */
-  private async applyImportDisplaySettings(investigationId: InvestigationId): Promise<void> {
-    const investigation = await db.investigations.get(investigationId);
-    if (!investigation) return;
-    await db.investigations.update(investigationId, {
+  private async applyImportDisplaySettings(dossierId: DossierId): Promise<void> {
+    const dossier = await db.dossiers.get(dossierId);
+    if (!dossier) return;
+    await db.dossiers.update(dossierId, {
       settings: {
-        ...investigation.settings,
+        ...dossier.settings,
         linkAnchorMode: 'auto',
         linkCurveMode: 'curved',
       },
@@ -485,7 +493,7 @@ class ImportService {
    */
   private async importNativeJSON(
     data: ExportData,
-    targetInvestigationId: InvestigationId
+    targetDossierId: DossierId
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -510,11 +518,11 @@ class ImportService {
       const linkIdMap = new Map<LinkId, LinkId>();
 
       // Import elements and links (no assets for JSON-only import)
-      await this.importElementsAndLinks(data, targetInvestigationId, elementIdMap, assetIdMap, linkIdMap, result);
+      await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result);
 
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0) {
-        await this.importReport(data.report, targetInvestigationId, result, elementIdMap, linkIdMap);
+        await this.importReport(data.report, targetDossierId, result, elementIdMap, linkIdMap);
       }
 
       result.success = true;
@@ -530,7 +538,7 @@ class ImportService {
    */
   async importFromOsintracker(
     content: string,
-    targetInvestigationId: InvestigationId
+    targetDossierId: DossierId
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -554,7 +562,7 @@ class ImportService {
       for (const assetData of parsed.assets) {
         try {
           const file = dataUrlToFile(assetData.dataUrl, assetData.filename);
-          const asset = await fileService.saveAsset(targetInvestigationId, file);
+          const asset = await fileService.saveAsset(targetDossierId, file);
           assetIdMap.set(assetData.originalElementId, asset.id);
           result.assetsImported++;
         } catch (error) {
@@ -574,7 +582,7 @@ class ImportService {
 
         const element: Element = {
           id: newId,
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           label: parsedElement.label,
           notes: parsedElement.notes,
           tags: parsedElement.tags,
@@ -615,7 +623,7 @@ class ImportService {
 
         const link: Link = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           fromId,
           toId,
           sourceHandle: parsedLink.sourceHandle,
@@ -640,10 +648,10 @@ class ImportService {
         result.linksImported++;
       }
 
-      // Update investigation with OSINTracker name and description
-      await db.investigations.update(targetInvestigationId, {
-        name: parsed.investigation.name,
-        description: parsed.investigation.description,
+      // Update dossier with OSINTracker name and description
+      await db.dossiers.update(targetDossierId, {
+        name: parsed.dossier.name,
+        description: parsed.dossier.description,
         updatedAt: new Date(),
       });
 
@@ -657,7 +665,7 @@ class ImportService {
 
       result.success = true;
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       result.errors.push(
@@ -673,7 +681,7 @@ class ImportService {
    */
   async importFromGraphML(
     content: string,
-    targetInvestigationId: InvestigationId
+    targetDossierId: DossierId
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -795,7 +803,7 @@ class ImportService {
 
         const element: Element = {
           id: newId,
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           label: String(nodeLabel),
           notes: String(nodeNotes),
           tags: nodeData.tags ? String(nodeData.tags).split(';').map((t: string) => t.trim()).filter(Boolean) : [],
@@ -902,7 +910,7 @@ class ImportService {
 
         const link: Link = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           fromId,
           toId,
           sourceHandle: null,
@@ -931,14 +939,14 @@ class ImportService {
         result.linksImported++;
       }
 
-      // Update investigation timestamp
-      await db.investigations.update(targetInvestigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
 
       result.success = result.elementsImported > 0;
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       result.errors.push(`Erreur d'import GraphML: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -986,7 +994,7 @@ class ImportService {
    */
   private async importElementsAndLinks(
     data: ExportData,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     elementIdMap: Map<ElementId, ElementId>,
     assetIdMap: Map<AssetId, AssetId>,
     linkIdMap: Map<LinkId, LinkId>,
@@ -1031,7 +1039,7 @@ class ImportService {
       const element: Element = {
         ...importedElement,
         id: newId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         position,
         assetIds: newAssetIds,
         date: importedElement.date ? new Date(importedElement.date) : null,
@@ -1074,7 +1082,7 @@ class ImportService {
       const link: Link = {
         ...importedLink,
         id: newLinkId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         fromId: newFromId,
         toId: newToId,
         date: importedLink.date ? new Date(importedLink.date) : null,
@@ -1088,7 +1096,7 @@ class ImportService {
       result.linksImported++;
     }
 
-    // Import tabs with remapped element IDs (only for new investigation, not merge)
+    // Import tabs with remapped element IDs (only for new dossier, not merge)
     // When merging (positionOffset is set), imported elements go to the active tab instead
     if (data.tabs && data.tabs.length > 0 && !positionOffset) {
       for (const importedTab of data.tabs) {
@@ -1102,7 +1110,7 @@ class ImportService {
 
         const tab: CanvasTab = {
           id: newTabId,
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           name: importedTab.name || '',
           order: importedTab.order ?? 0,
           memberElementIds: newMemberIds,
@@ -1116,8 +1124,8 @@ class ImportService {
       }
     }
 
-    // Update investigation timestamp
-    await db.investigations.update(targetInvestigationId, {
+    // Update dossier timestamp
+    await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
   }
@@ -1127,20 +1135,20 @@ class ImportService {
    */
   private async importReport(
     importedReport: Report,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     result: ImportResult,
     elementIdMap?: Map<ElementId, ElementId>,
     linkIdMap?: Map<LinkId, LinkId>
   ): Promise<void> {
     try {
-      // Check if a report already exists for this investigation
+      // Check if a report already exists for this dossier
       const existingReports = await db.reports
-        .where({ investigationId: targetInvestigationId })
+        .where({ dossierId: targetDossierId })
         .toArray();
 
       if (existingReports.length > 0) {
         // Report already exists, skip import but add warning
-        result.warnings.push('Un rapport existe déjà pour cette investigation, rapport non importé');
+        result.warnings.push('Un rapport existe déjà pour cette dossier, rapport non importé');
         return;
       }
 
@@ -1158,7 +1166,7 @@ class ImportService {
 
       const report: Report = {
         id: newReportId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         title: importedReport.title || 'Rapport importé',
         sections: newSections,
         createdAt: new Date(),
@@ -1228,7 +1236,7 @@ class ImportService {
   private async importAssetFromBuffer(
     arrayBuffer: ArrayBuffer,
     assetMeta: ExportedAssetMeta,
-    targetInvestigationId: InvestigationId
+    targetDossierId: DossierId
   ): Promise<AssetId> {
     // Create a File object from the buffer
     const file = new File([arrayBuffer], assetMeta.filename, {
@@ -1236,7 +1244,7 @@ class ImportService {
     });
 
     // Use fileService to save the asset (handles deduplication, thumbnails, etc.)
-    const asset = await fileService.saveAsset(targetInvestigationId, file);
+    const asset = await fileService.saveAsset(targetDossierId, file);
 
     return asset.id;
   }
@@ -1246,7 +1254,7 @@ class ImportService {
    */
   async importFromCSV(
     content: string,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
     const opts: CSVImportOptions = {
@@ -1285,9 +1293,9 @@ class ImportService {
           headers.includes('from') || headers.includes('to') || headers.includes('source') || headers.includes('target');
 
         if (isLinksCSV) {
-          return this.importLinksFromCSV(content, targetInvestigationId, opts);
+          return this.importLinksFromCSV(content, targetDossierId, opts);
         } else {
-          return this.importElementsFromCSV(content, targetInvestigationId, opts);
+          return this.importElementsFromCSV(content, targetDossierId, opts);
         }
       }
 
@@ -1337,7 +1345,7 @@ class ImportService {
 
       // First, get existing elements
       const existingElements = await db.elements
-        .where({ investigationId: targetInvestigationId })
+        .where({ dossierId: targetDossierId })
         .toArray();
       existingElements.forEach((el) => {
         elementsByLabel.set(el.label.toLowerCase(), el);
@@ -1426,7 +1434,7 @@ class ImportService {
 
         const element: Element = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           label,
           notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
           tags: tagsIdx >= 0 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
@@ -1490,7 +1498,7 @@ class ImportService {
         if (!fromElement && opts.createMissingElements) {
           fromElement = {
             id: generateUUID(),
-            investigationId: targetInvestigationId,
+            dossierId: targetDossierId,
             label: values[deIdx].trim(),
             notes: '',
             tags: [],
@@ -1520,7 +1528,7 @@ class ImportService {
         if (!toElement && opts.createMissingElements) {
           toElement = {
             id: generateUUID(),
-            investigationId: targetInvestigationId,
+            dossierId: targetDossierId,
             label: values[versIdx].trim(),
             notes: '',
             tags: [],
@@ -1590,7 +1598,7 @@ class ImportService {
 
         const link: Link = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           fromId: fromElement.id,
           toId: toElement.id,
           sourceHandle: null,
@@ -1620,14 +1628,14 @@ class ImportService {
         rowNum++;
       }
 
-      // Update investigation timestamp
-      await db.investigations.update(targetInvestigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
 
       result.success = result.elementsImported > 0 || result.linksImported > 0;
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -1641,7 +1649,7 @@ class ImportService {
    */
   async importElementsFromCSV(
     content: string,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
     const opts: CSVImportOptions = {
@@ -1754,7 +1762,7 @@ class ImportService {
 
           const element: Element = {
             id: generateUUID(),
-            investigationId: targetInvestigationId,
+            dossierId: targetDossierId,
             label,
             notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
             tags,
@@ -1791,14 +1799,14 @@ class ImportService {
         rowNum++;
       }
 
-      // Update investigation timestamp
-      await db.investigations.update(targetInvestigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
 
       result.success = result.elementsImported > 0;
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -1812,7 +1820,7 @@ class ImportService {
    */
   async importLinksFromCSV(
     content: string,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
     const opts: CSVImportOptions = {
@@ -1841,7 +1849,7 @@ class ImportService {
 
       // Get existing elements to map by label
       const existingElements = await db.elements
-        .where({ investigationId: targetInvestigationId })
+        .where({ dossierId: targetDossierId })
         .toArray();
       const elementsByLabel = new Map<string, Element>();
       existingElements.forEach((el) => {
@@ -1904,7 +1912,7 @@ class ImportService {
           if (!fromElement && opts.createMissingElements) {
             fromElement = {
               id: generateUUID(),
-              investigationId: targetInvestigationId,
+              dossierId: targetDossierId,
               label: values[fromIdx].trim(),
               notes: '',
               tags: [],
@@ -1934,7 +1942,7 @@ class ImportService {
           if (!toElement && opts.createMissingElements) {
             toElement = {
               id: generateUUID(),
-              investigationId: targetInvestigationId,
+              dossierId: targetDossierId,
               label: values[toIdx].trim(),
               notes: '',
               tags: [],
@@ -1997,7 +2005,7 @@ class ImportService {
 
           const link: Link = {
             id: generateUUID(),
-            investigationId: targetInvestigationId,
+            dossierId: targetDossierId,
             fromId: fromElement.id,
             toId: toElement.id,
             sourceHandle: null,
@@ -2032,14 +2040,14 @@ class ImportService {
         rowNum++;
       }
 
-      // Update investigation timestamp
-      await db.investigations.update(targetInvestigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
 
       result.success = result.linksImported > 0 || result.elementsImported > 0;
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       result.errors.push(`Erreur d'import: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -2053,7 +2061,7 @@ class ImportService {
    */
   async importFromGenealogy(
     file: File,
-    targetInvestigationId: InvestigationId,
+    targetDossierId: DossierId,
     options?: Partial<GenealogyImportOptions>
   ): Promise<ImportResult> {
     const result: ImportResult = {
@@ -2067,7 +2075,7 @@ class ImportService {
     };
 
     try {
-      const importData = await importGenealogyFile(file, targetInvestigationId, options);
+      const importData = await importGenealogyFile(file, targetDossierId, options);
 
       // Save elements to database
       for (const element of importData.elements) {
@@ -2085,8 +2093,8 @@ class ImportService {
         }
       }
 
-      // Update investigation timestamp
-      await db.investigations.update(targetInvestigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
 
@@ -2095,7 +2103,7 @@ class ImportService {
       result.success = result.elementsImported > 0;
 
       if (result.linksImported > 0) {
-        await this.applyImportDisplaySettings(targetInvestigationId);
+        await this.applyImportDisplaySettings(targetDossierId);
       }
     } catch (error) {
       result.errors.push(`Erreur d'import généalogie: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);

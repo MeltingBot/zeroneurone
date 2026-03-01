@@ -9,7 +9,7 @@ interface EventsEditorProps {
   events: ElementEvent[];
   onChange: (events: ElementEvent[]) => void;
   onOpenGeoPicker: (callback: (lat: number, lng: number) => void, initialGeo?: { lat: number; lng: number }) => void;
-  /** Property suggestions from the investigation */
+  /** Property suggestions from the dossier */
   suggestions?: PropertyDefinition[];
   /** Callback when a new property is created */
   onNewProperty?: (propertyDef: PropertyDefinition) => void;

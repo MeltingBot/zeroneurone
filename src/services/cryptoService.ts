@@ -95,16 +95,16 @@ export function isValidKeyString(keyString: string): boolean {
 }
 
 /**
- * Derive a hashed room ID from investigation UUID and encryption key
- * This prevents the server from seeing the real investigation UUID
+ * Derive a hashed room ID from dossier UUID and encryption key
+ * This prevents the server from seeing the real dossier UUID
  *
- * @param investigationId - The investigation UUID
+ * @param dossierId - The dossier UUID
  * @param encryptionKey - The E2E encryption key (base64url)
  * @returns 32-character hex string (128 bits, collision-resistant)
  */
-export async function deriveRoomId(investigationId: string, encryptionKey: string): Promise<string> {
+export async function deriveRoomId(dossierId: string, encryptionKey: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(investigationId + encryptionKey);
+  const data = encoder.encode(dossierId + encryptionKey);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   // 32 hex chars = 128 bits, sufficient to avoid collisions

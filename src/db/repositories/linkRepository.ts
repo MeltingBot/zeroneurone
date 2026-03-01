@@ -1,6 +1,6 @@
 import { db } from '../database';
 import { generateUUID } from '../../utils';
-import type { Link, LinkId, ElementId, InvestigationId } from '../../types';
+import type { Link, LinkId, ElementId, DossierId } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
 
 // Helper to rehydrate dates from IndexedDB (they come back as strings)
@@ -30,13 +30,13 @@ function rehydrateLink(link: Link): Link {
 }
 
 function createDefaultLink(
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   fromId: ElementId,
   toId: ElementId
 ): Link {
   return {
     id: generateUUID(),
-    investigationId,
+    dossierId,
     fromId,
     toId,
     sourceHandle: null,
@@ -60,7 +60,7 @@ function createDefaultLink(
 
 export const linkRepository = {
   async create(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     fromId: ElementId,
     toId: ElementId,
     options: Partial<Link> = {}
@@ -70,11 +70,11 @@ export const linkRepository = {
       throw new Error('Self-loops are not allowed');
     }
 
-    const link = createDefaultLink(investigationId, fromId, toId);
+    const link = createDefaultLink(dossierId, fromId, toId);
     Object.assign(link, options);
 
     await db.links.add(link);
-    await db.investigations.update(investigationId, { updatedAt: new Date() });
+    await db.dossiers.update(dossierId, { updatedAt: new Date() });
 
     return link;
   },
@@ -84,8 +84,8 @@ export const linkRepository = {
     return link ? rehydrateLink(link) : undefined;
   },
 
-  async getByInvestigation(investigationId: InvestigationId): Promise<Link[]> {
-    const links = await db.links.where({ investigationId }).toArray();
+  async getByDossier(dossierId: DossierId): Promise<Link[]> {
+    const links = await db.links.where({ dossierId }).toArray();
     return links.map(rehydrateLink);
   },
 
@@ -117,7 +117,7 @@ export const linkRepository = {
 
   async update(
     id: LinkId,
-    changes: Partial<Omit<Link, 'id' | 'investigationId' | 'createdAt'>>
+    changes: Partial<Omit<Link, 'id' | 'dossierId' | 'createdAt'>>
   ): Promise<void> {
     const link = await db.links.get(id);
     if (!link) return;
@@ -127,7 +127,7 @@ export const linkRepository = {
       updatedAt: new Date(),
     });
 
-    await db.investigations.update(link.investigationId, {
+    await db.dossiers.update(link.dossierId, {
       updatedAt: new Date(),
     });
   },
@@ -137,7 +137,7 @@ export const linkRepository = {
     if (!link) return;
 
     await db.links.delete(id);
-    await db.investigations.update(link.investigationId, {
+    await db.dossiers.update(link.dossierId, {
       updatedAt: new Date(),
     });
   },
@@ -148,11 +148,11 @@ export const linkRepository = {
     const links = await db.links.where('id').anyOf(ids).toArray();
     if (links.length === 0) return;
 
-    const investigationId = links[0].investigationId;
+    const dossierId = links[0].dossierId;
 
-    await db.transaction('rw', [db.links, db.investigations], async () => {
+    await db.transaction('rw', [db.links, db.dossiers], async () => {
       await db.links.where('id').anyOf(ids).delete();
-      await db.investigations.update(investigationId, {
+      await db.dossiers.update(dossierId, {
         updatedAt: new Date(),
       });
     });
@@ -180,9 +180,9 @@ export const linkRepository = {
    * Delete links not in the given list of IDs
    * Used for syncing deletions from Y.Doc to IndexedDB
    */
-  async deleteNotIn(investigationId: InvestigationId, keepIds: LinkId[]): Promise<void> {
+  async deleteNotIn(dossierId: DossierId, keepIds: LinkId[]): Promise<void> {
     const keepSet = new Set(keepIds);
-    const allLinks = await db.links.where({ investigationId }).toArray();
+    const allLinks = await db.links.where({ dossierId }).toArray();
     const toDelete = allLinks.filter(lk => !keepSet.has(lk.id)).map(lk => lk.id);
 
     if (toDelete.length > 0) {

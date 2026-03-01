@@ -5,7 +5,7 @@
 /** All IDs are UUID v4 */
 export type UUID = string;
 
-export type InvestigationId = UUID;
+export type DossierId = UUID;
 export type ElementId = UUID;
 export type LinkId = UUID;
 export type CommentId = UUID;
@@ -150,16 +150,16 @@ export type LinkDirection = 'none' | 'forward' | 'backward' | 'both';
 export type Confidence = 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100;
 
 // ============================================================================
-// INVESTIGATION
+// DOSSIER
 // ============================================================================
 
-export interface Investigation {
-  id: InvestigationId;
+export interface Dossier {
+  id: DossierId;
   name: string;
   description: string;
   startDate: Date | null;
   creator: string;
-  /** Tags for organizing investigations (e.g., "Cyber", "Client-X", "2026") */
+  /** Tags for organizing dossiers (e.g., "Cyber", "Client-X", "2026") */
   tags: string[];
   properties: Property[];
   createdAt: Date;
@@ -169,8 +169,8 @@ export interface Investigation {
     y: number;
     zoom: number;
   };
-  settings: InvestigationSettings;
-  /** Whether this investigation is pinned/favorited for quick access */
+  settings: DossierSettings;
+  /** Whether this dossier is pinned/favorited for quick access */
   isFavorite?: boolean;
   /** Data retention duration in days (null = unlimited) */
   retentionDays?: number | null;
@@ -178,7 +178,7 @@ export interface Investigation {
   retentionPolicy?: 'warn' | 'readonly' | 'delete' | 'redact';
 }
 
-export interface InvestigationSettings {
+export interface DossierSettings {
   defaultElementVisual: Partial<ElementVisual>;
   defaultLinkVisual: Partial<LinkVisual>;
   /** Property definitions with types for suggestions */
@@ -206,7 +206,7 @@ export interface InvestigationSettings {
 
 export interface Element {
   id: ElementId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   label: string;
   notes: string;
   tags: string[];
@@ -238,7 +238,7 @@ export interface Element {
 
 export interface Link {
   id: LinkId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   fromId: ElementId;
   toId: ElementId;
   sourceHandle: string | null;
@@ -268,7 +268,7 @@ export type CommentTargetType = 'element' | 'link';
 
 export interface Comment {
   id: CommentId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   targetId: ElementId | LinkId;
   targetType: CommentTargetType;
   authorName: string;
@@ -286,7 +286,7 @@ export interface Comment {
 
 export interface Asset {
   id: AssetId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   filename: string;
   mimeType: string;
   size: number;
@@ -303,7 +303,7 @@ export interface Asset {
 
 export interface View {
   id: ViewId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   name: string;
   viewport: {
     x: number;
@@ -342,7 +342,7 @@ export interface ViewFilters {
 
 export interface CanvasTab {
   id: TabId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   name: string;
   order: number;
   memberElementIds: ElementId[];
@@ -359,7 +359,7 @@ export interface CanvasTab {
 
 export interface Report {
   id: UUID;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   title: string;
   sections: ReportSection[];
   createdAt: Date;
@@ -388,7 +388,7 @@ export interface GraphSnapshot {
 export interface SearchDocument {
   id: string;
   type: 'element' | 'link';
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   label: string;
   notes: string;
   tags: string;
@@ -431,8 +431,8 @@ export interface SimilarPair {
 // ============================================================================
 
 export type ModalType =
-  | 'create-investigation'
-  | 'import-investigation'
+  | 'create-dossier'
+  | 'import-dossier'
   | 'import-csv'
   | 'export'
   | 'report'

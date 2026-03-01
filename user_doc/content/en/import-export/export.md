@@ -3,9 +3,9 @@ title: "Export"
 weight: 1
 ---
 
-# Export an Investigation
+# Export a Dossier
 
-Save and share your investigations in various formats.
+Save and share your dossiers in various formats.
 
 
 ## Open Export
@@ -30,8 +30,8 @@ Menu **⋯** → **Export**
 Archive structure:
 
 ```
-investigation_2024-01-15.zip
-├── investigation.json    # Complete metadata
+dossier_2024-01-15.zip
+├── dossier.json          # Complete metadata
 └── assets/               # Attached files
     ├── a1b2c3.pdf
     ├── d4e5f6.png
@@ -176,7 +176,7 @@ Ideal format for high-quality printing and graphic editing.
 Features:
 - **Bidirectional navigation**: Click element references in report to zoom on graph, click nodes to scroll to references
 - **Table of contents**: Collapsible summary for long reports
-- **Info modal**: Investigation metadata and statistics (elements, links, groups count)
+- **Info modal**: Dossier metadata and statistics (elements, links, groups count)
 - **Theme toggle**: Light/dark mode
 - **Markdown export**: Download report as `.md` file (without internal links)
 - **Pan & zoom**: Navigate the graph with mouse wheel and drag
@@ -197,7 +197,7 @@ Access from the Report panel via the globe icon.
 Exported files follow the format:
 
 ```
-{investigation_name}_{date}_{time}.{extension}
+{dossier_name}_{date}_{time}.{extension}
 ```
 
 Example: `Smith_Case_2024-01-15_10-30-00.zip`

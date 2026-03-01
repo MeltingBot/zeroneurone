@@ -10,11 +10,11 @@
  * /join/{hash}?server=...&async=1#key=xxx&name=xxx&id=uuid
  *
  * Flow:
- * 1. Parse URL to extract roomId, investigationId, key, name, server, async
+ * 1. Parse URL to extract roomId, dossierId, key, name, server, async
  * 2. Check if signaling server is configured
- * 3. Check if investigation already exists locally, if not create it with the UUID
+ * 3. Check if dossier already exists locally, if not create it with the UUID
  * 4. Connect to shared session via syncService with encryption
- * 5. Redirect to investigation page
+ * 5. Redirect to dossier page
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -22,10 +22,10 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Users, AlertCircle, Loader2, Server, Lock, ShieldAlert } from 'lucide-react';
 import { Layout, Button, Input } from '../components/common';
-import { useInvestigationStore, useSyncStore } from '../stores';
+import { useDossierStore, useSyncStore } from '../stores';
 import { syncService } from '../services/syncService';
 import { isValidKeyString } from '../services/cryptoService';
-import { investigationRepository } from '../db/repositories';
+import { dossierRepository } from '../db/repositories';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
@@ -39,7 +39,7 @@ export function JoinPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { createInvestigationWithId } = useInvestigationStore();
+  const { createDossierWithId } = useDossierStore();
   const { localUser, updateLocalUserName } = useSyncStore();
 
   const [state, setState] = useState<JoinState>('input');
@@ -52,7 +52,7 @@ export function JoinPage() {
   // Parse URL fragment for all formats
   const urlParams = useRef<{
     encryptionKey: string | null;
-    investigationId: string | null;
+    dossierId: string | null;
     nameFromFragment: string | null;
     roomId: string;
     isLegacyFormat: boolean;
@@ -76,7 +76,7 @@ export function JoinPage() {
 
     urlParams.current = {
       encryptionKey,
-      investigationId: fragmentId || pathSegment, // UUID from fragment (new) or path (old)
+      dossierId: fragmentId || pathSegment, // UUID from fragment (new) or path (old)
       nameFromFragment: fragmentName,
       roomId: pathSegment, // Always the path segment (hash or UUID)
       isLegacyFormat,
@@ -88,7 +88,7 @@ export function JoinPage() {
   const serverFromUrl = searchParams.get('server');
   const nameFromUrl = urlParams.current?.nameFromFragment || searchParams.get('name');
   const encryptionKeyFromUrl = urlParams.current?.encryptionKey || null;
-  const investigationId = urlParams.current?.investigationId || pathSegment;
+  const dossierId = urlParams.current?.dossierId || pathSegment;
   const roomId = urlParams.current?.roomId || pathSegment;
 
   const hasValidEncryptionKey = encryptionKeyFromUrl && isValidKeyString(encryptionKeyFromUrl);
@@ -108,8 +108,8 @@ export function JoinPage() {
   // Server is new if URL has one but we have nothing saved
   const serverIsNew = serverFromUrl && !savedServer;
 
-  // Investigation name - use name from URL or default
-  const [investigationName, setInvestigationName] = useState(
+  // Dossier name - use name from URL or default
+  const [dossierName, setDossierName] = useState(
     nameFromUrl || t('join.defaultSessionName')
   );
 
@@ -140,13 +140,13 @@ export function JoinPage() {
     setState('input');
   };
 
-  // Validate investigation ID and encryption key
+  // Validate dossier ID and encryption key
   useEffect(() => {
-    if (!investigationId) {
+    if (!dossierId) {
       setError(t('join.errors.invalidSessionId'));
       setState('error');
     }
-  }, [investigationId, t]);
+  }, [dossierId, t]);
 
   const handleSaveServer = () => {
     const url = serverInput.trim();
@@ -160,7 +160,7 @@ export function JoinPage() {
   };
 
   const handleJoin = async () => {
-    if (!investigationId) return;
+    if (!dossierId) return;
 
     if (!isServerConfigured) {
       setError(t('join.errors.configureServerFirst'));
@@ -181,15 +181,15 @@ export function JoinPage() {
       // Ensure syncService has the correct server URL before connecting
       syncService.setServerUrl(trimmedUrl);
 
-      // Check if investigation already exists locally
-      let existingInvestigation = await investigationRepository.getById(investigationId);
+      // Check if dossier already exists locally
+      let existingDossier = await dossierRepository.getById(dossierId);
 
-      if (!existingInvestigation) {
+      if (!existingDossier) {
         const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-        // Create investigation with the specific UUID from the share link
-        existingInvestigation = await createInvestigationWithId(
-          investigationId,
-          investigationName || t('join.defaultSessionName'),
+        // Create dossier with the specific UUID from the share link
+        existingDossier = await createDossierWithId(
+          dossierId,
+          dossierName || t('join.defaultSessionName'),
           t('join.sharedSessionJoined', { date: new Date().toLocaleDateString(locale) })
         );
       }
@@ -198,12 +198,12 @@ export function JoinPage() {
       await syncService.close();
 
       // Open in shared mode
-      // - investigationId: UUID for local storage
+      // - dossierId: UUID for local storage
       // - encryptionKey: for E2E encryption
       // - roomId: hash (new format) or UUID (legacy) for WebSocket
       // - asyncEnabled: whether async buffering is enabled
       await syncService.openShared(
-        investigationId!,
+        dossierId!,
         encryptionKeyFromUrl || undefined,
         roomId,  // Pass separate roomId for WebSocket
         urlParams.current?.asyncEnabled || false
@@ -257,8 +257,8 @@ export function JoinPage() {
         setTimeout(checkConnection, 100);
       });
 
-      // Navigate to the investigation
-      navigate(`/investigation/${existingInvestigation.id}`, { replace: true });
+      // Navigate to the dossier
+      navigate(`/dossier/${existingDossier.id}`, { replace: true });
     } catch (err) {
       setError((err as Error).message || t('join.errors.connectionError'));
       setState('error');
@@ -279,7 +279,7 @@ export function JoinPage() {
             <span className="text-lg font-medium">{t('join.connecting')}</span>
           </div>
           <p className="text-sm text-text-secondary flex items-center gap-1">
-            {t('join.syncing', { id: investigationId?.slice(0, 8) })}
+            {t('join.syncing', { id: dossierId?.slice(0, 8) })}
             {hasValidEncryptionKey && <Lock size={12} className="text-success" />}
           </p>
         </div>
@@ -395,7 +395,7 @@ export function JoinPage() {
                 {t('join.title')}
               </h1>
               <p className="text-xs text-text-secondary flex items-center gap-1">
-                {t('join.sessionId', { id: investigationId?.slice(0, 8) })}
+                {t('join.sessionId', { id: dossierId?.slice(0, 8) })}
                 {hasValidEncryptionKey && <Lock size={10} className="text-success" />}
               </p>
             </div>
@@ -514,14 +514,14 @@ export function JoinPage() {
             </div>
           </div>
 
-          {/* Investigation name input */}
+          {/* Dossier name input */}
           <div className="mb-6">
             <label className="block text-xs font-medium text-text-secondary mb-1.5">
               {t('join.localCopy.label')}
             </label>
             <Input
-              value={investigationName}
-              onChange={(e) => setInvestigationName(e.target.value)}
+              value={dossierName}
+              onChange={(e) => setDossierName(e.target.value)}
               placeholder={t('join.defaultSessionName')}
             />
             <p className="mt-1 text-xs text-text-tertiary">

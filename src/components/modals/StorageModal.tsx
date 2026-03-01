@@ -116,7 +116,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
       if (result.success) {
         setBackupMessage(
           t('storage.backup.importSuccess', {
-            investigations: result.investigations,
+            dossiers: result.dossiers,
             elements: result.elements,
             links: result.links,
           })
@@ -350,9 +350,9 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center gap-2 text-xs">
                   <FolderOpen size={12} className="text-text-tertiary" />
-                  <span className="text-text-secondary">{t('storage.content.investigations')}</span>
+                  <span className="text-text-secondary">{t('storage.content.dossiers')}</span>
                   <span className="ml-auto text-text-primary tabular-nums">
-                    {storageInfo.investigationCount}
+                    {storageInfo.dossierCount}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">

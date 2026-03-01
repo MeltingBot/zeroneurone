@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 import type {
-  Investigation,
-  InvestigationId,
+  Dossier,
+  DossierId,
   Element,
   ElementId,
   Link,
@@ -22,13 +22,15 @@ import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../service
 
 export interface PluginDataRow {
   pluginId: string;
-  investigationId: string;
+  dossierId: string;
+  /** @deprecated Kept for compound PK compatibility — always equals dossierId */
+  investigationId?: string;
   key: string;
   value: any;
 }
 
-class InvestigationDatabase extends Dexie {
-  investigations!: Table<Investigation, InvestigationId>;
+class DossierDatabase extends Dexie {
+  dossiers!: Table<Dossier, DossierId>;
   elements!: Table<Element, ElementId>;
   links!: Table<Link, LinkId>;
   assets!: Table<Asset, AssetId>;
@@ -42,6 +44,10 @@ class InvestigationDatabase extends Dexie {
   constructor() {
     super('zeroneurone');
 
+    // ─── Legacy versions (1-7): use original table/index names ───────────
+    // These MUST keep the original IndexedDB names for backward compatibility
+    // with existing databases.
+
     this.version(1).stores({
       investigations: 'id, name, createdAt, updatedAt',
       elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
@@ -51,7 +57,6 @@ class InvestigationDatabase extends Dexie {
       reports: 'id, investigationId, createdAt, updatedAt',
     });
 
-    // Version 2: Add tagSets store (global, not per-investigation)
     this.version(2).stores({
       investigations: 'id, name, createdAt, updatedAt',
       elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
@@ -62,7 +67,6 @@ class InvestigationDatabase extends Dexie {
       tagSets: 'id, name',
     });
 
-    // Version 3: Add compound index [investigationId+hash] on assets for faster deduplication
     this.version(3).stores({
       investigations: 'id, name, createdAt, updatedAt',
       elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
@@ -73,7 +77,6 @@ class InvestigationDatabase extends Dexie {
       tagSets: 'id, name',
     });
 
-    // Version 4: Add isFavorite and multi-value tags index on investigations for filtering
     this.version(4).stores({
       investigations: 'id, name, createdAt, updatedAt, isFavorite, *tags',
       elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
@@ -84,7 +87,6 @@ class InvestigationDatabase extends Dexie {
       tagSets: 'id, name',
     });
 
-    // Version 5: Add canvasTabs for canvas tab feature
     this.version(5).stores({
       investigations: 'id, name, createdAt, updatedAt, isFavorite, *tags',
       elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
@@ -96,7 +98,6 @@ class InvestigationDatabase extends Dexie {
       canvasTabs: 'id, investigationId, order',
     });
 
-    // Version 6: Add pluginData for generic plugin storage
     this.version(6).stores({
       investigations: 'id, name, createdAt, updatedAt, isFavorite, *tags',
       elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
@@ -109,8 +110,6 @@ class InvestigationDatabase extends Dexie {
       pluginData: '[pluginId+investigationId+key], pluginId, investigationId',
     });
 
-    // Version 7: Add _encryptionMeta table for at-rest encryption support
-    // Also remove 'name' from investigations index (will be encrypted)
     this.version(7).stores({
       investigations: 'id, createdAt, updatedAt, isFavorite',
       elements: 'id, investigationId, parentGroupId, createdAt, updatedAt',
@@ -123,6 +122,150 @@ class InvestigationDatabase extends Dexie {
       pluginData: '[pluginId+investigationId+key], pluginId, investigationId',
       _encryptionMeta: 'id',
     });
+
+    // ─── Version 8: Copy investigations → dossiers + remap IDs ──────────
+    // IMPORTANT: pluginData keeps its ORIGINAL primary key because IndexedDB
+    // does NOT support changing primary keys. The compound key still uses
+    // 'investigationId' internally. We add a 'dossierId' index for new queries.
+    // The recovery migration copies investigationId → dossierId in the DATA.
+    this.version(8).stores({
+      investigations: 'id, createdAt, updatedAt, isFavorite', // keep for reading
+      dossiers: 'id, createdAt, updatedAt, isFavorite',
+      elements: 'id, dossierId, parentGroupId, createdAt, updatedAt',
+      links: 'id, dossierId, fromId, toId, createdAt, updatedAt',
+      assets: 'id, dossierId, hash, createdAt, [dossierId+hash]',
+      views: 'id, dossierId, createdAt',
+      reports: 'id, dossierId, createdAt, updatedAt',
+      tagSets: 'id',
+      canvasTabs: 'id, dossierId, order',
+      // Keep original PK! Just add dossierId as secondary index
+      pluginData: '[pluginId+investigationId+key], pluginId, investigationId, dossierId',
+      _encryptionMeta: 'id',
+    }).upgrade(async tx => {
+      // Migrate investigations → dossiers (table rename)
+      const oldInvestigations = tx.table('investigations');
+      const newDossiers = tx.table('dossiers');
+      const allInvestigations = await oldInvestigations.toArray();
+      if (allInvestigations.length > 0) {
+        await newDossiers.bulkAdd(allInvestigations);
+      }
+
+      // Remap investigationId → dossierId in all child tables
+      const tablesToMigrate = ['elements', 'links', 'assets', 'views', 'reports', 'canvasTabs'];
+      for (const tableName of tablesToMigrate) {
+        const table = tx.table(tableName);
+        const records = await table.toArray();
+        const needsMigration = records.some((r: any) => r.investigationId !== undefined);
+        if (needsMigration) {
+          const migrated = records.map((record: any) => {
+            if (record.investigationId !== undefined) {
+              record.dossierId = record.investigationId;
+              delete record.investigationId;
+            }
+            return record;
+          });
+          await table.clear();
+          if (migrated.length > 0) {
+            await table.bulkAdd(migrated);
+          }
+        }
+      }
+
+      // pluginData: keep investigationId (part of PK) but ADD dossierId
+      const pluginTable = tx.table('pluginData');
+      const pluginRecords = await pluginTable.toArray();
+      if (pluginRecords.some((r: any) => r.investigationId && !r.dossierId)) {
+        const migrated = pluginRecords.map((r: any) => {
+          if (r.investigationId && !r.dossierId) {
+            r.dossierId = r.investigationId;
+            // DON'T delete investigationId — it's part of the compound PK
+          }
+          return r;
+        });
+        await pluginTable.clear();
+        if (migrated.length > 0) {
+          await pluginTable.bulkAdd(migrated);
+        }
+      }
+    });
+
+    // ─── Version 9: Drop legacy investigations table ──────────────────────
+    this.version(9).stores({
+      investigations: null, // Safe to delete after v8 upgrade copied data
+    });
+  }
+
+  /**
+   * Recovery migration: if the DB was upgraded to v8/v9 but the data
+   * wasn't actually copied (bug: investigations:null deleted the table
+   * before upgrade() could read it), detect and fix the situation.
+   *
+   * Call this ONCE after db.open() succeeds.
+   */
+  async runRecoveryMigration(): Promise<void> {
+    try {
+      // Check if dossiers table is empty but investigations has data
+      const dossierCount = await this.dossiers.count();
+      if (dossierCount > 0) return; // Already migrated, nothing to do
+
+      // Check if investigations table still exists and has data
+      if (!this.table('investigations')) return;
+      const investigations = await this.table('investigations').toArray();
+      if (investigations.length === 0) return;
+
+      console.info(`[Recovery] Found ${investigations.length} investigations to migrate to dossiers`);
+
+      await this.transaction('rw',
+        [this.dossiers, this.elements, this.links, this.assets,
+         this.views, this.reports, this.canvasTabs, this.pluginData],
+        async () => {
+          // Copy investigations → dossiers
+          await this.dossiers.bulkAdd(investigations);
+
+          // Remap investigationId → dossierId in child tables (except pluginData)
+          const remapId = (record: any) => {
+            if (record.investigationId !== undefined) {
+              record.dossierId = record.investigationId;
+              delete record.investigationId;
+            }
+            return record;
+          };
+
+          const tables = ['elements', 'links', 'assets', 'views', 'reports', 'canvasTabs'];
+          for (const tableName of tables) {
+            const table = this.table(tableName);
+            const records = await table.toArray();
+            const needsMigration = records.some((r: any) => r.investigationId !== undefined);
+            if (needsMigration) {
+              const migrated = records.map(remapId);
+              await table.clear();
+              if (migrated.length > 0) {
+                await table.bulkAdd(migrated);
+              }
+            }
+          }
+
+          // pluginData: keep investigationId (PK) but add dossierId
+          const pluginRecords = await this.pluginData.toArray();
+          if (pluginRecords.some((r: any) => r.investigationId && !r.dossierId)) {
+            const migrated = pluginRecords.map((r: any) => {
+              if (r.investigationId && !r.dossierId) {
+                r.dossierId = r.investigationId;
+              }
+              return r;
+            });
+            await this.pluginData.clear();
+            if (migrated.length > 0) {
+              await this.pluginData.bulkAdd(migrated);
+            }
+          }
+        }
+      );
+
+      console.info('[Recovery] Migration complete');
+    } catch (error) {
+      console.error('[Recovery] Migration failed:', error);
+    }
   }
 
   /**
@@ -145,7 +288,7 @@ class InvestigationDatabase extends Dexie {
   }
 }
 
-export const db = new InvestigationDatabase();
+export const db = new DossierDatabase();
 
 /**
  * Check if IndexedDB is supported
@@ -235,7 +378,7 @@ export interface StorageInfo {
 
   // IndexedDB details
   indexedDBSupported: boolean;
-  investigationCount: number;
+  dossierCount: number;
   elementCount: number;
   linkCount: number;
   assetCount: number;
@@ -256,13 +399,13 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
   ]);
 
   // Count records in our database
-  let investigationCount = 0;
+  let dossierCount = 0;
   let elementCount = 0;
   let linkCount = 0;
   let assetCount = 0;
 
   try {
-    investigationCount = await db.investigations.count();
+    dossierCount = await db.dossiers.count();
     elementCount = await db.elements.count();
     linkCount = await db.links.count();
     assetCount = await db.assets.count();
@@ -317,7 +460,7 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
     percentUsed: quota?.percentUsed || 0,
     isPersistent,
     indexedDBSupported: isIndexedDBSupported(),
-    investigationCount,
+    dossierCount,
     elementCount,
     linkCount,
     assetCount,
@@ -329,7 +472,7 @@ export async function getDetailedStorageInfo(): Promise<StorageInfo> {
 
 /**
  * Purge all Y.js databases to free up space
- * The databases will be recreated from IndexedDB data on next investigation load
+ * The databases will be recreated from IndexedDB data on next dossier load
  * WARNING: This will lose undo/redo history
  */
 export async function purgeYjsDatabases(): Promise<{ deleted: number; errors: string[] }> {

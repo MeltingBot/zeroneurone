@@ -5,7 +5,7 @@ weight: 4
 
 # Canvas Tabs
 
-Organize your investigation into **thematic workspaces**. Each tab contains a subset of elements, letting you split complex cases into focused views (e.g., "Financial flows", "Persons of interest", "Locations").
+Organize your dossier into **thematic workspaces**. Each tab contains a subset of elements, letting you split complex cases into focused views (e.g., "Financial flows", "Persons of interest", "Locations").
 
 ---
 
@@ -15,7 +15,7 @@ The tab bar appears below the toolbar as soon as at least one tab exists. It alw
 
 | Item | Description |
 |------|-------------|
-| **All** | Shows all elements in the investigation |
+| **All** | Shows all elements in the dossier |
 | **Named tabs** | User-created tabs, each with its own subset of elements |
 | **+** | Creates a new tab |
 
@@ -25,7 +25,7 @@ The tab bar appears below the toolbar as soon as at least one tab exists. It alw
 
 ### Create a Tab
 
-Click **+** in the tab bar. A new named tab is added. The maximum is **10** tabs per investigation.
+Click **+** in the tab bar. A new named tab is added. The maximum is **10** tabs per dossier.
 
 ### Rename a Tab
 
@@ -113,14 +113,14 @@ Each collaborator navigates tabs independently. Creating, renaming, deleting, or
 | Scenario | Behavior |
 |----------|----------|
 | **ZIP / JSON export** | Tabs are included |
-| **Import new investigation** | Tabs are restored |
-| **Import into existing investigation (merge)** | Imported elements go to the active tab; source tabs are not imported |
+| **Import new dossier** | Tabs are restored |
+| **Import into existing dossier (merge)** | Imported elements go to the active tab; source tabs are not imported |
 
 ---
 
 ## Tips
 
-- Use tabs to split a complex investigation by theme, hypothesis, or timeline period.
+- Use tabs to split a complex dossier by theme, hypothesis, or timeline period.
 - The **All** view is always available and shows every element, regardless of tab assignment.
 - Ghost elements let you see cross-tab connections without switching context.
 - Combine tabs with saved views: each view remembers its tab, filters, and viewport.

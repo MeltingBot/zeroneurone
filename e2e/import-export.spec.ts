@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import {
   setupCleanEnvironment,
-  createTestInvestigation,
+  createTestDossier,
   createElementOnCanvas,
   getElementCount,
   goToHomePage,
@@ -15,7 +15,7 @@ import {
 } from './fixtures/test-utils';
 
 /**
- * Helper to navigate home using the back button and wait for investigation list
+ * Helper to navigate home using the back button and wait for dossier list
  * Uses client-side navigation which preserves IndexedDB state
  */
 async function goHomeAndWaitForList(page: import('@playwright/test').Page) {
@@ -23,7 +23,7 @@ async function goHomeAndWaitForList(page: import('@playwright/test').Page) {
   await navigateHomeViaBackButton(page);
 
   // Wait for the list to appear (not the landing page)
-  await page.waitForSelector('[data-testid="investigation-list"]', { timeout: 10000 });
+  await page.waitForSelector('[data-testid="dossier-list"]', { timeout: 10000 });
 }
 
 test.describe('Import/Export Operations', () => {
@@ -31,9 +31,9 @@ test.describe('Import/Export Operations', () => {
     await setupCleanEnvironment(page);
   });
 
-  test('should export investigation as ZIP', async ({ page }) => {
-    // Create an investigation with some content
-    await createTestInvestigation(page, 'Export Test');
+  test('should export dossier as ZIP', async ({ page }) => {
+    // Create an dossier with some content
+    await createTestDossier(page, 'Export Test');
 
     // Create an element
     await createElementOnCanvas(page, 400, 300);
@@ -45,7 +45,7 @@ test.describe('Import/Export Operations', () => {
     await goHomeAndWaitForList(page);
 
     // Open menu on the card
-    const menuButton = page.locator('[data-testid^="investigation-card-"] [data-testid="card-menu"]');
+    const menuButton = page.locator('[data-testid^="dossier-card-"] [data-testid="card-menu"]');
     await menuButton.click();
 
     // Start waiting for download before clicking export
@@ -70,8 +70,8 @@ test.describe('Import/Export Operations', () => {
   });
 
   test('should import ZIP file', async ({ page, context }) => {
-    // First, create an investigation and export it to get a valid ZIP
-    await createTestInvestigation(page, 'Original Investigation');
+    // First, create an dossier and export it to get a valid ZIP
+    await createTestDossier(page, 'Original Dossier');
     await createElementOnCanvas(page, 400, 300);
     const labelInput = page.locator('[data-testid="element-label-input"]');
     await labelInput.fill('Original Element');
@@ -80,7 +80,7 @@ test.describe('Import/Export Operations', () => {
     // Go home and export
     await goHomeAndWaitForList(page);
 
-    const menuButton = page.locator('[data-testid^="investigation-card-"] [data-testid="card-menu"]');
+    const menuButton = page.locator('[data-testid^="dossier-card-"] [data-testid="card-menu"]');
     await menuButton.click();
 
     const downloadPromise = page.waitForEvent('download');
@@ -94,7 +94,7 @@ test.describe('Import/Export Operations', () => {
     // Clear database and reload
     await setupCleanEnvironment(page);
 
-    // Verify we're at landing (no investigations)
+    // Verify we're at landing (no dossiers)
     await expect(page.locator('[data-testid="landing-section"]')).toBeVisible();
 
     // Click import button
@@ -108,11 +108,11 @@ test.describe('Import/Export Operations', () => {
     // Wait for import to complete
     await page.waitForTimeout(2000);
 
-    // Go back to home and wait for investigation list
+    // Go back to home and wait for dossier list
     await goHomeAndWaitForList(page);
 
-    // Verify investigation was imported
-    const card = page.locator(`[data-testid^="investigation-card-"]`);
+    // Verify dossier was imported
+    const card = page.locator(`[data-testid^="dossier-card-"]`);
     await expect(card).toBeVisible();
 
     // Clean up test file

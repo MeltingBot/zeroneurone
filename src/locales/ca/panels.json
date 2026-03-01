@@ -7,7 +7,7 @@
     "report": "Informe",
     "collapsePanel": "Contraure el panell"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informació",
       "dates": "Dates",
@@ -35,7 +35,7 @@
       "retentionReset": "Reiniciar"
     },
     "placeholders": {
-      "name": "Nom de la investigació",
+      "name": "Nom de l'expedient",
       "creator": "Nom del creador..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Vós: {{name}} (feu clic per editar)"
   },
   "report": {
-    "noInvestigation": "Cap investigació carregada",
+    "noDossier": "Cap expedient carregada",
     "noReport": "Sense informe. Creeu-ne un per començar.",
     "createReport": "Crear informe",
     "defaultTitle": "Informe",

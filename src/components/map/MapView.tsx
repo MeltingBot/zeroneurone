@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { useInvestigationStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
@@ -62,7 +62,7 @@ export function MapView() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { elements, links, assets, comments, updateElement } = useInvestigationStore();
+  const { elements, links, assets, comments, updateElement } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);

@@ -5,7 +5,7 @@ weight: 14
 
 # At-Rest Encryption
 
-ZeroNeurone can encrypt all your local data (investigations, elements, links, attachments) with a password. Without this password, the data stored in the browser is unreadable.
+ZeroNeurone can encrypt all your local data (dossiers, elements, links, attachments) with a password. Without this password, the data stored in the browser is unreadable.
 
 {{< hint info >}}
 Encryption is **optional**. ZeroNeurone works normally without it. Enable it if you work on sensitive subjects or on a shared computer.
@@ -15,7 +15,7 @@ Encryption is **optional**. ZeroNeurone works normally without it. Enable it if 
 
 ## Enable Encryption
 
-1. From the home page, click the **lock icon** (bottom-right if no investigations, in the title bar otherwise)
+1. From the home page, click the **lock icon** (bottom-right if no dossiers, in the title bar otherwise)
 2. In the window that opens, click **Enable Encryption**
 3. Choose a password (8 characters minimum)
 4. Confirm the password
@@ -24,7 +24,7 @@ Encryption is **optional**. ZeroNeurone works normally without it. Enable it if 
 ZeroNeurone migrates all your existing data, then **automatically reloads the page**. On reload, a window asks for your password to unlock access.
 
 {{< hint danger >}}
-**Never refresh the page during activation.** The operation encrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish — it may take a while on large investigations.
+**Never refresh the page during activation.** The operation encrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish — it may take a while on large dossiers.
 {{< /hint >}}
 
 {{< hint warning >}}
@@ -120,7 +120,7 @@ ZeroNeurone decrypts all data, then reloads the page. The application returns to
 
 | Data | Encrypted |
 |------|-----------|
-| Investigations, elements, links | Yes |
+| Dossiers, elements, links | Yes |
 | Attached files (images, PDFs…) | Yes |
 | Reports and views | Yes |
 | Extension data | Yes |
@@ -141,16 +141,16 @@ These two protections are complementary:
 ## Frequently Asked Questions
 
 **What happens if I forget my password?**
-The data is unrecoverable. ZeroNeurone has no recovery mechanism — this is a fundamental property of encryption. Export your investigations as ZIP regularly.
+The data is unrecoverable. ZeroNeurone has no recovery mechanism — this is a fundamental property of encryption. Export your dossiers as ZIP regularly.
 
 **Does encryption slow down the application?**
-Imperceptibly. Encryption uses algorithms optimized for the browser. On a normally-sized investigation, no latency is noticeable.
+Imperceptibly. Encryption uses algorithms optimized for the browser. On a normally-sized dossier, no latency is noticeable.
 
 **Is my data protected if someone steals my computer?**
 Yes, if the session is locked or the browser closed. Data stored in the browser is unreadable without the password. However, if your session is unlocked at the time of theft, the data is accessible.
 
 **Can I use the same password across multiple machines?**
-Yes. Data is encrypted per machine — each installation has its own key. Exporting/importing an investigation from an encrypted machine to another produces plaintext data in the ZIP (decrypted for export).
+Yes. Data is encrypted per machine — each installation has its own key. Exporting/importing a dossier from an encrypted machine to another produces plaintext data in the ZIP (decrypted for export).
 
 ---
 

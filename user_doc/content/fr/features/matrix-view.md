@@ -5,7 +5,7 @@ weight: 8
 
 # Vue matrice
 
-Affichez tous les elements de l'enquete dans un tableau triable et filtrable.
+Affichez tous les elements du dossier dans un tableau triable et filtrable.
 
 ---
 
@@ -74,7 +74,7 @@ Les lignes selectionnees sont surlignees. Utilisez **Ctrl+C** pour copier les li
 Cliquez sur l'**icone de telechargement** dans la barre d'outils pour exporter la vue courante en CSV.
 
 - Respecte la visibilite des colonnes, le tri et les filtres actifs
-- Nom du fichier : `nom-enquete_matrice_jjMMaaaHHmmss.csv`
+- Nom du fichier : `nom-dossier_matrice_jjMMaaaHHmmss.csv`
 - Encodage UTF-8 avec BOM pour compatibilite Excel
 
 ---

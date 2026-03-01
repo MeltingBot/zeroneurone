@@ -5,7 +5,7 @@ type: docs
 
 # ZeroNeurone
 
-**Tableau d'analyse visuelle pour enquêteurs et analystes**
+**Tableau d'analyse visuelle pour analystes et enquêteurs**
 
 {{< hint >}}
 Version actuelle : **2.19.0**
@@ -23,7 +23,7 @@ ZeroNeurone est un outil d'amplification cognitive qui combine la simplicité d'
 
 ## Démarrage rapide
 
-1. [Créer votre première enquête]({{< relref "getting-started/first-investigation" >}})
+1. [Créer votre premier dossier]({{< relref "getting-started/first-investigation" >}})
 2. [Comprendre l'interface]({{< relref "getting-started/interface" >}})
 3. [Ajouter des éléments et des liens]({{< relref "features/elements-links" >}})
 

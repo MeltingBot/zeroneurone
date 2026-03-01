@@ -7,7 +7,7 @@
     "report": "Informe",
     "collapsePanel": "Contraer panel"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Información",
       "dates": "Fechas",
@@ -35,7 +35,7 @@
       "retentionReset": "Restablecer"
     },
     "placeholders": {
-      "name": "Nombre de la investigación",
+      "name": "Nombre de el expediente",
       "creator": "Nombre del creador..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Usted: {{name}} (clic para editar)"
   },
   "report": {
-    "noInvestigation": "Ninguna investigación cargada",
+    "noDossier": "Ningun expediente cargada",
     "noReport": "Sin informe. Cree uno para comenzar.",
     "createReport": "Crear informe",
     "defaultTitle": "Informe",

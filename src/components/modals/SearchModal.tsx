@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Box, Link2, X, Tag } from 'lucide-react';
-import { useInvestigationStore, useSelectionStore, useViewStore, useTabStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useTabStore } from '../../stores';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
@@ -27,7 +27,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links } = useInvestigationStore();
+  const { elements, links } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange } = useViewStore();
   const canvasTabs = useTabStore((s) => s.tabs);

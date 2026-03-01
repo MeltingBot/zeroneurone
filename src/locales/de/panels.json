@@ -7,7 +7,7 @@
     "report": "Bericht",
     "collapsePanel": "Panel einklappen"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informationen",
       "dates": "Daten",
@@ -35,7 +35,7 @@
       "retentionReset": "Zurücksetzen"
     },
     "placeholders": {
-      "name": "Name der Ermittlung",
+      "name": "Name der Akte",
       "creator": "Name des Erstellers..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Sie: {{name}} (klicken zum Bearbeiten)"
   },
   "report": {
-    "noInvestigation": "Keine Ermittlung geladen",
+    "noDossier": "Keine Akte geladen",
     "noReport": "Kein Bericht. Erstellen Sie einen, um zu beginnen.",
     "createReport": "Bericht erstellen",
     "defaultTitle": "Bericht",

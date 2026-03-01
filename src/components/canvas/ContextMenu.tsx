@@ -49,9 +49,9 @@ interface ContextMenuProps {
 }
 
 const focusDepthOptions = [
-  { depth: 1, labelKey: 'investigation.contextMenu.focusNeighbors1' },
-  { depth: 2, labelKey: 'investigation.contextMenu.focusNeighbors2' },
-  { depth: 3, labelKey: 'investigation.contextMenu.focusNeighbors3' },
+  { depth: 1, labelKey: 'dossier.contextMenu.focusNeighbors1' },
+  { depth: 2, labelKey: 'dossier.contextMenu.focusNeighbors2' },
+  { depth: 3, labelKey: 'dossier.contextMenu.focusNeighbors3' },
 ] as const;
 
 function ContextMenuComponent({
@@ -169,7 +169,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <Image size={14} />
-              {t('investigation.contextMenu.preview')}
+              {t('dossier.contextMenu.preview')}
             </button>
           </div>
         )}
@@ -184,7 +184,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Copy size={14} />
-            {t('investigation.contextMenu.copy')}
+            {t('dossier.contextMenu.copy')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+C</span>
           </button>
           <button
@@ -195,7 +195,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Scissors size={14} />
-            {t('investigation.contextMenu.cut')}
+            {t('dossier.contextMenu.cut')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+X</span>
           </button>
           <button
@@ -211,7 +211,7 @@ function ContextMenuComponent({
             }`}
           >
             <Clipboard size={14} />
-            {t('investigation.contextMenu.paste')}
+            {t('dossier.contextMenu.paste')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
           </button>
           <button
@@ -222,7 +222,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <CopyPlus size={14} />
-            {t('investigation.contextMenu.duplicate')}
+            {t('dossier.contextMenu.duplicate')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
           </button>
         </div>
@@ -239,7 +239,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Route size={14} />
-                {t('investigation.contextMenu.findPaths')}
+                {t('dossier.contextMenu.findPaths')}
               </button>
             )}
             {onMerge && (
@@ -251,7 +251,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Combine size={14} />
-                {t('investigation.contextMenu.merge')}
+                {t('dossier.contextMenu.merge')}
               </button>
             )}
           </div>
@@ -269,7 +269,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Group size={14} />
-                {t('investigation.contextMenu.groupSelection')}
+                {t('dossier.contextMenu.groupSelection')}
               </button>
             )}
             {isGroup && (
@@ -281,7 +281,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <Ungroup size={14} />
-                {t('investigation.contextMenu.dissolveGroup')}
+                {t('dossier.contextMenu.dissolveGroup')}
               </button>
             )}
             {isInGroup && (
@@ -293,7 +293,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <BoxSelect size={14} />
-                {t('investigation.contextMenu.removeFromGroup')}
+                {t('dossier.contextMenu.removeFromGroup')}
               </button>
             )}
           </div>
@@ -310,12 +310,12 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <X size={14} />
-              {t('investigation.contextMenu.exitFocus')}
+              {t('dossier.contextMenu.exitFocus')}
             </button>
           ) : (
             <>
               <div className="px-3 py-1 text-xs text-text-tertiary">
-                {t('investigation.contextMenu.focusMode')}
+                {t('dossier.contextMenu.focusMode')}
               </div>
               {focusDepthOptions.map((option) => (
                 <button
@@ -352,7 +352,7 @@ function ContextMenuComponent({
                     className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                   >
                     <ArrowRight size={14} />
-                    <span className="truncate">{t('investigation.tabs.navigateTo', { name: tab.name })}</span>
+                    <span className="truncate">{t('dossier.tabs.navigateTo', { name: tab.name })}</span>
                   </button>
                 );
               })}
@@ -363,7 +363,7 @@ function ContextMenuComponent({
         {tabs.length > 0 && (
           <div className="py-1 border-t border-border-default">
             <div className="px-3 py-1 text-xs text-text-tertiary">
-              {t('investigation.tabs.addToTab')}
+              {t('dossier.tabs.addToTab')}
             </div>
             {tabs.map((tab) => {
               const isInTab = elementTabIds.includes(tab.id);
@@ -395,7 +395,7 @@ function ContextMenuComponent({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
               >
                 <X size={14} />
-                {t('investigation.tabs.removeFromTab')}
+                {t('dossier.tabs.removeFromTab')}
               </button>
             )}
           </div>
@@ -412,8 +412,8 @@ function ContextMenuComponent({
           >
             {isPositionLocked ? <LockOpen size={14} /> : <Lock size={14} />}
             {isPositionLocked
-              ? t('investigation.contextMenu.unlockPosition')
-              : t('investigation.contextMenu.lockPosition')}
+              ? t('dossier.contextMenu.unlockPosition')
+              : t('dossier.contextMenu.lockPosition')}
           </button>
         </div>
 
@@ -428,7 +428,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <Eye size={14} />
-              {t('investigation.contextMenu.showElement')}
+              {t('dossier.contextMenu.showElement')}
             </button>
           ) : (
             <button
@@ -439,7 +439,7 @@ function ContextMenuComponent({
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
             >
               <EyeOff size={14} />
-              {hasMultipleSelected ? t('investigation.contextMenu.hideSelection') : t('investigation.contextMenu.hideElement')}
+              {hasMultipleSelected ? t('dossier.contextMenu.hideSelection') : t('dossier.contextMenu.hideElement')}
             </button>
           )}
         </div>
@@ -454,7 +454,7 @@ function ContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-error hover:bg-pastel-pink transition-colors"
           >
             <Trash2 size={14} />
-            {t('investigation.contextMenu.delete')}
+            {t('dossier.contextMenu.delete')}
           </button>
         </div>
       </div>

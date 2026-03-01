@@ -4,7 +4,7 @@ import type {
   CanvasTab,
   TabId,
   ElementId,
-  InvestigationId,
+  DossierId,
   Link,
 } from '../types';
 import { tabRepository } from '../db/repositories/tabRepository';
@@ -24,8 +24,8 @@ interface TabState {
   excludedSet: Set<ElementId>;
 
   // Actions - CRUD
-  loadTabs: (investigationId: InvestigationId) => Promise<void>;
-  createTab: (investigationId: InvestigationId, name: string) => Promise<CanvasTab>;
+  loadTabs: (dossierId: DossierId) => Promise<void>;
+  createTab: (dossierId: DossierId, name: string) => Promise<CanvasTab>;
   renameTab: (tabId: TabId, name: string) => Promise<void>;
   deleteTab: (tabId: TabId) => Promise<void>;
   reorderTab: (tabId: TabId, newOrder: number) => Promise<void>;
@@ -47,9 +47,9 @@ interface TabState {
   recomputeGhosts: (links: Link[]) => void;
 
   // Actions - Cascade (element deleted)
-  removeElementFromAllTabs: (investigationId: InvestigationId, elementId: ElementId) => Promise<void>;
+  removeElementFromAllTabs: (dossierId: DossierId, elementId: ElementId) => Promise<void>;
 
-  // Actions - Y.js sync (called by investigationStore._syncFromYDoc)
+  // Actions - Y.js sync (called by dossierStore._syncFromYDoc)
   _syncTabsFromYDoc: (remoteTabs: CanvasTab[]) => void;
 
   // Queries
@@ -61,7 +61,7 @@ interface TabState {
   restoreTab: (tab: CanvasTab) => Promise<void>;
 
   // Reset
-  resetInvestigationState: () => void;
+  resetDossierState: () => void;
 }
 
 // Helper: write tab changes to Y.Doc (fire-and-forget, non-blocking)
@@ -73,7 +73,7 @@ async function syncTabToYDoc(
   const ydoc = syncService.getYDoc();
   if (!ydoc) return;
   const { getYMaps } = await import('../types/yjs');
-  const { setLocalOpPending } = await import('./investigationStore');
+  const { setLocalOpPending } = await import('./dossierStore');
   setLocalOpPending();
   const { tabs: tabsMap } = getYMaps(ydoc);
   ydoc.transact(() => {
@@ -96,8 +96,8 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   // ── Load ──────────────────────────────────────────────
 
-  loadTabs: async (investigationId) => {
-    const tabs = await tabRepository.getByInvestigation(investigationId);
+  loadTabs: async (dossierId) => {
+    const tabs = await tabRepository.getByDossier(dossierId);
     const firstTab = tabs.length > 0 ? tabs[0] : null;
     set({
       tabs,
@@ -110,10 +110,10 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   // ── Create ────────────────────────────────────────────
 
-  createTab: async (investigationId, name) => {
+  createTab: async (dossierId, name) => {
     const { tabs } = get();
     const maxOrder = tabs.reduce((max, t) => Math.max(max, t.order), 0);
-    const tab = await tabRepository.create(investigationId, name, maxOrder + 1);
+    const tab = await tabRepository.create(dossierId, name, maxOrder + 1);
     set((s) => ({ tabs: [...s.tabs, tab] }));
 
     // Y.js sync: create new Y.Map in tabs map
@@ -121,7 +121,7 @@ export const useTabStore = create<TabState>((set, get) => ({
       const ydoc = syncService.getYDoc();
       if (!ydoc) return;
       import('../types/yjs').then(({ getYMaps }) => {
-        import('./investigationStore').then(({ setLocalOpPending }) => {
+        import('./dossierStore').then(({ setLocalOpPending }) => {
           import('../services/yjs/tabMapper').then(({ tabToYMap }) => {
             setLocalOpPending();
             const { tabs: tabsMap } = getYMaps(ydoc);
@@ -171,7 +171,7 @@ export const useTabStore = create<TabState>((set, get) => ({
       const ydoc = syncService.getYDoc();
       if (!ydoc) return;
       import('../types/yjs').then(({ getYMaps }) => {
-        import('./investigationStore').then(({ setLocalOpPending }) => {
+        import('./dossierStore').then(({ setLocalOpPending }) => {
           setLocalOpPending();
           const { tabs: tabsMap } = getYMaps(ydoc);
           ydoc.transact(() => {
@@ -184,8 +184,8 @@ export const useTabStore = create<TabState>((set, get) => ({
     // Reassign orphaned elements to the first remaining tab
     const { tabs, addMembers } = get();
     if (tabs.length > 0) {
-      const { useInvestigationStore } = await import('./investigationStore');
-      const elements = useInvestigationStore.getState().elements;
+      const { useDossierStore } = await import('./dossierStore');
+      const elements = useDossierStore.getState().elements;
       const allMembers = new Set<ElementId>();
       for (const tab of tabs) {
         for (const id of tab.memberElementIds) {
@@ -217,7 +217,7 @@ export const useTabStore = create<TabState>((set, get) => ({
       const ydoc = syncService.getYDoc();
       if (!ydoc) return;
       import('../types/yjs').then(({ getYMaps }) => {
-        import('./investigationStore').then(({ setLocalOpPending }) => {
+        import('./dossierStore').then(({ setLocalOpPending }) => {
           import('../services/yjs/tabMapper').then(({ tabToYMap }) => {
             setLocalOpPending();
             const { tabs: tabsMap } = getYMaps(ydoc);
@@ -394,13 +394,13 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   // ── Cascade ───────────────────────────────────────────
 
-  removeElementFromAllTabs: async (investigationId, elementId) => {
+  removeElementFromAllTabs: async (dossierId, elementId) => {
     // Collect affected tabs before mutating
     const affectedTabs = get().tabs.filter(
       (t) => t.memberElementIds.includes(elementId) || t.excludedElementIds.includes(elementId),
     );
 
-    await tabRepository.removeElementFromAllTabs(investigationId, elementId);
+    await tabRepository.removeElementFromAllTabs(dossierId, elementId);
     set((s) => ({
       tabs: s.tabs.map((t) => ({
         ...t,
@@ -430,7 +430,7 @@ export const useTabStore = create<TabState>((set, get) => ({
       const ydoc = syncService.getYDoc();
       if (ydoc) {
         const { getYMaps } = await import('../types/yjs');
-        const { setLocalOpPending } = await import('./investigationStore');
+        const { setLocalOpPending } = await import('./dossierStore');
         setLocalOpPending();
         const { tabs: tabsMap } = getYMaps(ydoc);
         ydoc.transact(() => {
@@ -447,7 +447,7 @@ export const useTabStore = create<TabState>((set, get) => ({
     }
   },
 
-  // ── Y.js sync (called by investigationStore._syncFromYDoc) ───
+  // ── Y.js sync (called by dossierStore._syncFromYDoc) ───
 
   _syncTabsFromYDoc: (remoteTabs) => {
     const { activeTabId } = get();
@@ -492,7 +492,7 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   // ── Reset ─────────────────────────────────────────────
 
-  resetInvestigationState: () => {
+  resetDossierState: () => {
     set({
       tabs: [],
       activeTabId: null,

@@ -24,7 +24,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
 
   // Simple fields (primitives)
   map.set('id', link.id);
-  map.set('investigationId', link.investigationId);
+  map.set('dossierId', link.dossierId);
   map.set('fromId', link.fromId);
   map.set('toId', link.toId);
   map.set('sourceHandle', link.sourceHandle);
@@ -171,7 +171,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
 
   return {
     id: ymap.get('id') || '',
-    investigationId: ymap.get('investigationId') || '',
+    dossierId: ymap.get('dossierId') || '',
     fromId: ymap.get('fromId') || '',
     toId: ymap.get('toId') || '',
     sourceHandle: ymap.get('sourceHandle') ?? null,

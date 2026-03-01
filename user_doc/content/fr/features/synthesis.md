@@ -5,7 +5,7 @@ weight: 10
 
 # Génération de Synthèse
 
-Générez des rapports structurés automatiques à partir de votre enquête.
+Générez des rapports structurés automatiques à partir de votre dossier.
 
 ---
 
@@ -19,7 +19,7 @@ Barre d'outils → Bouton **Synthèse** (icône document)
 
 ### Titre
 
-Personnalisez le titre du document généré. Par défaut, le nom de l'enquête est utilisé.
+Personnalisez le titre du document généré. Par défaut, le nom du dossier est utilisé.
 
 ### Contenu à inclure
 
@@ -27,7 +27,7 @@ Sélectionnez les sections à inclure dans la synthèse :
 
 | Option | Description |
 |--------|-------------|
-| Description de l'enquête | Texte descriptif de l'enquête |
+| Description du dossier | Texte descriptif du dossier |
 | Résumé statistique | Nombre d'éléments, liens, tags, etc. |
 | Analyse du graphe | Clusters, centralité, ponts, éléments isolés |
 | Chronologie | Événements datés triés chronologiquement |

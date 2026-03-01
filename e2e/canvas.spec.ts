@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   setupCleanEnvironment,
-  createTestInvestigation,
+  createTestDossier,
   createElementOnCanvas,
   getElementCount,
   getLinkCount,
@@ -11,7 +11,7 @@ import {
 test.describe('Canvas Element Operations', () => {
   test.beforeEach(async ({ page }) => {
     await setupCleanEnvironment(page);
-    await createTestInvestigation(page, 'Canvas Test');
+    await createTestDossier(page, 'Canvas Test');
   });
 
   test('should create an element by double-clicking on canvas', async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe('Canvas Element Operations', () => {
 test.describe('Search (Ctrl+K)', () => {
   test.beforeEach(async ({ page }) => {
     await setupCleanEnvironment(page);
-    await createTestInvestigation(page, 'Search Test');
+    await createTestDossier(page, 'Search Test');
   });
 
   test('should open search modal with Ctrl+K', async ({ page }) => {

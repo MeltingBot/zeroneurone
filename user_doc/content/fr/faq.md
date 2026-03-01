@@ -37,7 +37,7 @@ Une fois chargé, ZeroNeurone se fiche complètement d'internet. Coupez le câbl
 
 ### Mes données, elles vont où ?
 
-Nulle part. Elles restent dans votre navigateur. Pas de serveur, pas de cloud, pas de "on analyse vos données pour améliorer nos services". Vos enquêtes ne regardent que vous.
+Nulle part. Elles restent dans votre navigateur. Pas de serveur, pas de cloud, pas de "on analyse vos données pour améliorer nos services". Vos dossiers ne regardent que vous.
 
 Techniquement :
 - Métadonnées → IndexedDB (une base de données dans votre navigateur)
@@ -67,7 +67,7 @@ Depuis la v2.17, oui. ZeroNeurone propose un **chiffrement au repos** de toutes 
 
 Activez-le depuis l'icône cadenas sur la page d'accueil. Une fois activé, vos données sont illisibles sans le mot de passe.
 
-**Ne rafraîchissez jamais la page pendant l'activation, la désactivation ou le changement de mot de passe.** L'opération chiffre/déchiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine — ça peut prendre un moment sur les grosses enquêtes.
+**Ne rafraîchissez jamais la page pendant l'activation, la désactivation ou le changement de mot de passe.** L'opération chiffre/déchiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine — ça peut prendre un moment sur les gros dossiers.
 
 ### Et si je perds mon mot de passe de chiffrement ?
 
@@ -75,24 +75,24 @@ Vos données sont perdues. Pas de "mot de passe oublié", pas de backdoor, pas d
 
 ### C'est quoi WebAuthn PRF ?
 
-Depuis la v2.18, vous pouvez déverrouiller vos enquêtes chiffrées avec une **clé de sécurité matérielle** (YubiKey, par exemple) au lieu de taper votre mot de passe. C'est FIDO2 Level 3 pour les connaisseurs.
+Depuis la v2.18, vous pouvez déverrouiller vos dossiers chiffrés avec une **clé de sécurité matérielle** (YubiKey, par exemple) au lieu de taper votre mot de passe. C'est FIDO2 Level 3 pour les connaisseurs.
 
 Vous pouvez enregistrer plusieurs clés et les gérer depuis les paramètres de chiffrement. Le mot de passe reste toujours disponible en secours.
 
 ### Le verrouillage automatique, ça marche comment ?
 
-Vous pouvez configurer un **délai d'inactivité** (5, 15, 30 ou 60 minutes). Si vous ne touchez plus à rien pendant ce délai, l'enquête se verrouille automatiquement. Il faut re-saisir le mot de passe (ou utiliser votre clé de sécurité) pour continuer.
+Vous pouvez configurer un **délai d'inactivité** (5, 15, 30 ou 60 minutes). Si vous ne touchez plus à rien pendant ce délai, le dossier se verrouille automatiquement. Il faut re-saisir le mot de passe (ou utiliser votre clé de sécurité) pour continuer.
 
 Vous pouvez aussi verrouiller manuellement avec **Alt+L**. Pratique quand vous allez chercher un café et que vous ne faites pas confiance à vos collègues.
 
 ### C'est quoi la rétention des données ?
 
-Depuis la v2.18, vous pouvez définir une **durée de rétention** par enquête (en jours). À l'expiration, quatre politiques possibles :
+Depuis la v2.18, vous pouvez définir une **durée de rétention** par dossier (en jours). À l'expiration, quatre politiques possibles :
 
 | Politique | Effet |
 |-----------|-------|
 | Avertissement | Un rappel s'affiche, c'est tout |
-| Lecture seule | L'enquête est verrouillée en consultation |
+| Lecture seule | Le dossier est verrouillé en consultation |
 | Suppression proposée | On vous suggère de supprimer |
 | Rédaction permanente | Tout le texte est **irréversiblement** remplacé par des caractères de masquage |
 
@@ -131,7 +131,7 @@ Oui. Sélectionnez 2 éléments → clic-droit → **Fusionner**. Choisissez le 
 
 ### C'est quoi les onglets canvas ?
 
-Des **espaces de travail thématiques** au sein d'une même enquête. Un onglet par hypothèse, par acteur, par période... Les éléments d'autres onglets connectés au vôtre apparaissent en transparence. Pratique pour ne pas tout mélanger.
+Des **espaces de travail thématiques** au sein d'un même dossier. Un onglet par hypothèse, par acteur, par période... Les éléments d'autres onglets connectés au vôtre apparaissent en transparence. Pratique pour ne pas tout mélanger.
 
 ### Je mets des coordonnées GPS comment ?
 
@@ -149,7 +149,7 @@ Oui. Bouton **⇄** dans la barre d'outils. Le choix est mémorisé.
 
 ### C'est quoi la vue Matrice ?
 
-Un **tableur** de vos éléments. Touche **4** pour y accéder. Tri, filtrage par colonne, édition en ligne, sélection multiple, export CSV. Comme Excel, mais avec vos données d'enquête.
+Un **tableur** de vos éléments. Touche **4** pour y accéder. Tri, filtrage par colonne, édition en ligne, sélection multiple, export CSV. Comme Excel, mais avec vos données de dossier.
 
 ### Et la Timeline ?
 
@@ -210,11 +210,11 @@ Déposez le fichier `.js` et son `manifest.json` dans le dossier `dist/plugins/`
 
 ### C'est sécurisé ?
 
-Les erreurs de plugins ne plantent jamais l'application. Mais un plugin a accès à vos données d'enquête. N'installez que des plugins de confiance.
+Les erreurs de plugins ne plantent jamais l'application. Mais un plugin a accès à vos données de dossier. N'installez que des plugins de confiance.
 
 ### On m'a parlé de OneNeurone ?
 
-C'est le plugin IA de ZeroNeurone. **OneNeurone** ajoute un assistant intelligent à votre enquête : dialogue avec le graphe en contexte, extraction d'entités et relations (NER), génération de rapports selon 5 registres (judiciaire, renseignement, corporate, journalistique, CERT), détection de patterns et anomalies, et analyse croisée inter-enquêtes.
+C'est le plugin IA de ZeroNeurone. **OneNeurone** ajoute un assistant intelligent à votre dossier : dialogue avec le graphe en contexte, extraction d'entités et relations (NER), génération de rapports selon 5 registres (judiciaire, renseignement, corporate, journalistique, CERT), détection de patterns et anomalies, et analyse croisée inter-dossiers.
 
 Philosophie : **"Le Neurone propose, l'analyste dispose."** Il ne modifie jamais le graphe directement, aucune donnée n'est envoyée sans votre action explicite, et il fonctionne 100% hors-ligne avec Ollama ou LM Studio. Multi-provider : Ollama, LM Studio, Anthropic, OpenAI, ou endpoint custom.
 
@@ -280,9 +280,9 @@ La clé de chiffrement est dans l'URL, après le `#`. Ce fragment n'est jamais e
 
 Techniquement, pas de limite. Pratiquement, au-delà de 10 ça peut devenir confus. Mais ça marche.
 
-### Et les grosses enquêtes ?
+### Et les gros dossiers ?
 
-ZeroNeurone gère des enquêtes avec **1500+ éléments et liens** en mode collaboratif. Au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom pour la fluidité. En local, les performances sont excellentes jusqu'à plusieurs milliers d'éléments.
+ZeroNeurone gère des dossiers avec **1500+ éléments et liens** en mode collaboratif. Au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom pour la fluidité. En local, les performances sont excellentes jusqu'à plusieurs milliers d'éléments.
 
 ### Je peux bosser offline pendant une session partagée ?
 

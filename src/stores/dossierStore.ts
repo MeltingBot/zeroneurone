@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import * as Y from 'yjs';
 import type {
-  Investigation,
-  InvestigationId,
+  Dossier,
+  DossierId,
   Element,
   ElementId,
   ElementVisual,
@@ -22,7 +22,7 @@ type ElementChanges = Omit<Partial<Element>, 'visual'> & { visual?: Partial<Elem
 /** Link changes with partial visual support for collab-safe updates */
 type LinkChanges = Omit<Partial<Link>, 'visual'> & { visual?: Partial<LinkVisual> };
 import {
-  investigationRepository,
+  dossierRepository,
   elementRepository,
   linkRepository,
 } from '../db/repositories';
@@ -51,18 +51,19 @@ import {
 import { useSyncStore } from './syncStore';
 import { useTabStore } from './tabStore';
 import { tabRepository } from '../db/repositories/tabRepository';
+import { db } from '../db/database';
 import { arrayBufferToBase64 } from '../utils';
 
-interface InvestigationState {
-  // Current investigation
-  currentInvestigation: Investigation | null;
+interface DossierState {
+  // Current dossier
+  currentDossier: Dossier | null;
   elements: Element[];
   links: Link[];
   comments: Comment[];
   assets: Asset[];
 
-  // All investigations (for home page)
-  investigations: Investigation[];
+  // All dossiers (for home page)
+  dossiers: Dossier[];
 
   // Retention
   isReadOnly: boolean;
@@ -75,14 +76,14 @@ interface InvestigationState {
   loadingProgress: number;
   error: string | null;
 
-  // Actions - Investigations
-  loadInvestigations: () => Promise<void>;
-  loadInvestigation: (id: InvestigationId) => Promise<void>;
-  createInvestigation: (name: string, description?: string) => Promise<Investigation>;
-  createInvestigationWithId: (id: InvestigationId, name: string, description?: string) => Promise<Investigation>;
-  updateInvestigation: (id: InvestigationId, changes: Partial<Investigation>) => Promise<void>;
-  deleteInvestigation: (id: InvestigationId) => Promise<void>;
-  unloadInvestigation: () => void;
+  // Actions - Dossiers
+  loadDossiers: () => Promise<void>;
+  loadDossier: (id: DossierId) => Promise<void>;
+  createDossier: (name: string, description?: string) => Promise<Dossier>;
+  createDossierWithId: (id: DossierId, name: string, description?: string) => Promise<Dossier>;
+  updateDossier: (id: DossierId, changes: Partial<Dossier>) => Promise<void>;
+  deleteDossier: (id: DossierId) => Promise<void>;
+  unloadDossier: () => void;
 
   // Actions - Elements
   createElement: (label: string, position: Position, options?: Partial<Element>) => Promise<Element>;
@@ -196,7 +197,7 @@ function setupYDocObserver(
     });
   };
 
-  // Observe meta changes (investigation name, description)
+  // Observe meta changes (dossier name, description)
   const metaObserver = () => {
     metaChangedFlag = true;
     debouncedSync();
@@ -285,10 +286,10 @@ function setupYDocObserver(
   };
 }
 
-/** Throws if the investigation is in read-only mode (retention expired) */
-function assertWritable(get: () => InvestigationState) {
+/** Throws if the dossier is in read-only mode (retention expired) */
+function assertWritable(get: () => DossierState) {
   if (get().isReadOnly) {
-    throw new Error('Investigation is read-only (retention expired)');
+    throw new Error('Dossier is read-only (retention expired)');
   }
 }
 
@@ -296,13 +297,13 @@ function assertWritable(get: () => InvestigationState) {
 // STORE IMPLEMENTATION
 // ============================================================================
 
-export const useInvestigationStore = create<InvestigationState>((set, get) => ({
-  currentInvestigation: null,
+export const useDossierStore = create<DossierState>((set, get) => ({
+  currentDossier: null,
   elements: [],
   links: [],
   comments: [],
   assets: [],
-  investigations: [],
+  dossiers: [],
   isReadOnly: false,
   setReadOnly: (readOnly: boolean) => set({ isReadOnly: readOnly }),
   isLoading: false,
@@ -312,40 +313,42 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   error: null,
 
   // ============================================================================
-  // INVESTIGATION LIFECYCLE
+  // DOSSIER LIFECYCLE
   // ============================================================================
 
-  loadInvestigations: async () => {
+  loadDossiers: async () => {
     set({ isLoading: true, error: null });
     try {
-      const investigations = await investigationRepository.getAll();
-      set({ investigations, isLoading: false });
+      // Recovery: migrate data from legacy 'investigations' table if needed
+      await db.runRecoveryMigration();
+      const dossiers = await dossierRepository.getAll();
+      set({ dossiers, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
     }
   },
 
-  loadInvestigation: async (id: InvestigationId) => {
+  loadDossier: async (id: DossierId) => {
     set({ isLoading: true, loadingPhase: 'opening', loadingDetail: '', loadingProgress: 10, error: null });
     try {
-      // Load investigation metadata from Dexie
-      let [investigation, assets] = await Promise.all([
-        investigationRepository.getById(id),
-        fileService.getAssetsByInvestigation(id),
+      // Load dossier metadata from Dexie
+      let [dossier, assets] = await Promise.all([
+        dossierRepository.getById(id),
+        fileService.getAssetsByDossier(id),
       ]);
 
-      if (!investigation) {
-        throw new Error('Investigation not found');
+      if (!dossier) {
+        throw new Error('Dossier not found');
       }
 
-      set({ loadingPhase: 'syncing', loadingDetail: investigation.name, loadingProgress: 30 });
+      set({ loadingPhase: 'syncing', loadingDetail: dossier.name, loadingProgress: 30 });
       await new Promise(resolve => setTimeout(resolve, 0));
 
-      // Check if Y.Doc is already open for this investigation (e.g., from JoinPage)
+      // Check if Y.Doc is already open for this dossier (e.g., from JoinPage)
       let ydoc = syncService.getYDoc();
-      const currentInvestigationId = syncService.getInvestigationId();
+      const currentDossierId = syncService.getDossierId();
 
-      if (!ydoc || currentInvestigationId !== id) {
+      if (!ydoc || currentDossierId !== id) {
         // Open Y.Doc in local mode (creates or loads from IndexedDB)
         ydoc = await syncService.openLocal(id);
       }
@@ -367,27 +370,27 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
       // Capture joiner status BEFORE updating description (used later for
       // deciding whether to broadcast meta/assets or receive them)
-      const isJoiner = investigation.description?.startsWith('Session partagée rejointe') ?? false;
+      const isJoiner = dossier.description?.startsWith('Session partagée rejointe') ?? false;
 
-      // If Y.Doc has meta but local investigation has default values, update local
+      // If Y.Doc has meta but local dossier has default values, update local
       if (metaName && isJoiner) {
         const metaRetDays = metaMap.get('retentionDays') as number | null | undefined;
         const metaRetPolicy = metaMap.get('retentionPolicy') as string | undefined;
-        const joinerChanges: Partial<Investigation> = {
+        const joinerChanges: Partial<Dossier> = {
           name: metaName,
           description: metaDescription || '',
         };
         if (metaRetDays !== undefined) joinerChanges.retentionDays = metaRetDays;
-        if (metaRetPolicy !== undefined) joinerChanges.retentionPolicy = metaRetPolicy as Investigation['retentionPolicy'];
-        investigation = { ...investigation, ...joinerChanges };
-        await investigationRepository.update(id, joinerChanges);
+        if (metaRetPolicy !== undefined) joinerChanges.retentionPolicy = metaRetPolicy as Dossier['retentionPolicy'];
+        dossier = { ...dossier, ...joinerChanges };
+        await dossierRepository.update(id, joinerChanges);
       }
 
       // Migrate data from Dexie if Y.Doc is empty
       if (elementsMap.size === 0) {
         const [dexieElements, dexieLinks] = await Promise.all([
-          elementRepository.getByInvestigation(id),
-          linkRepository.getByInvestigation(id),
+          elementRepository.getByDossier(id),
+          linkRepository.getByDossier(id),
         ]);
 
         // Migrate elements to Y.Doc
@@ -407,7 +410,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       // Migrate tabs from Dexie to Y.Doc if Y.Doc tabs map is empty
       const { tabs: tabsYMap } = getYMaps(ydoc);
       if (tabsYMap.size === 0) {
-        const dexieTabs = await tabRepository.getByInvestigation(id);
+        const dexieTabs = await tabRepository.getByDossier(id);
         if (dexieTabs.length > 0) {
           ydoc.transact(() => {
             dexieTabs.forEach(tab => {
@@ -446,7 +449,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
               if (!existingAsset) {
                 const savedAsset = await fileService.saveAssetFromBase64({
                   id: assetId,
-                  investigationId: map.get('investigationId') || investigation.id,
+                  dossierId: map.get('dossierId') || dossier.id,
                   filename: map.get('filename') || 'unknown',
                   mimeType: map.get('mimeType') || 'application/octet-stream',
                   size: map.get('size') || 0,
@@ -485,8 +488,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           });
           if (remoteTabs.length > 0) {
             await tabRepository.bulkUpsert(remoteTabs);
-            // Update tab store immediately — loadTabs(id) in InvestigationPage
-            // runs before loadInvestigation completes (not awaited), so Dexie is
+            // Update tab store immediately — loadTabs(id) in DossierPage
+            // runs before loadDossier completes (not awaited), so Dexie is
             // still empty when loadTabs reads it. Push directly to store.
             useTabStore.getState()._syncTabsFromYDoc(remoteTabs);
           }
@@ -533,7 +536,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       const loadedLinks = Array.from(linksById.values());
 
       set({
-        currentInvestigation: investigation,
+        currentDossier: dossier,
         elements: loadedElements,
         links: loadedLinks,
         assets,
@@ -574,7 +577,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       // Deferred from initial load to let React render first, avoiding
       // send SLOW caused by main thread contention during rendering.
       if (!isJoiner) {
-        const srcInvestigation = investigation;
+        const srcDossier = dossier;
         const srcAssets = assets;
         setTimeout(async () => {
           const deferredYdoc = syncService.getYDoc();
@@ -582,8 +585,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
           const { meta: deferredMeta, assets: deferredAssetsMap } = getYMaps(deferredYdoc);
 
           deferredYdoc.transact(() => {
-            deferredMeta.set('name', srcInvestigation.name);
-            deferredMeta.set('description', srcInvestigation.description || '');
+            deferredMeta.set('name', srcDossier.name);
+            deferredMeta.set('description', srcDossier.description || '');
           });
 
           for (const asset of srcAssets) {
@@ -594,7 +597,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
                 const base64 = arrayBufferToBase64(arrayBuffer);
                 const assetYMap = new Y.Map();
                 assetYMap.set('id', asset.id);
-                assetYMap.set('investigationId', asset.investigationId);
+                assetYMap.set('dossierId', asset.dossierId);
                 assetYMap.set('filename', asset.filename);
                 assetYMap.set('mimeType', asset.mimeType);
                 assetYMap.set('size', asset.size);
@@ -616,41 +619,41 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }
   },
 
-  createInvestigation: async (name: string, description?: string) => {
-    const investigation = await investigationRepository.create(name, description);
+  createDossier: async (name: string, description?: string) => {
+    const dossier = await dossierRepository.create(name, description);
     set((state) => ({
-      investigations: [investigation, ...state.investigations],
+      dossiers: [dossier, ...state.dossiers],
     }));
-    return investigation;
+    return dossier;
   },
 
-  createInvestigationWithId: async (id: InvestigationId, name: string, description?: string) => {
-    const investigation = await investigationRepository.createWithId(id, name, description);
+  createDossierWithId: async (id: DossierId, name: string, description?: string) => {
+    const dossier = await dossierRepository.createWithId(id, name, description);
     // Only add to list if it's not already there
     set((state) => {
-      const exists = state.investigations.some(inv => inv.id === id);
+      const exists = state.dossiers.some(inv => inv.id === id);
       if (exists) {
         return state;
       }
       return {
-        investigations: [investigation, ...state.investigations],
+        dossiers: [dossier, ...state.dossiers],
       };
     });
-    return investigation;
+    return dossier;
   },
 
-  updateInvestigation: async (id: InvestigationId, changes: Partial<Investigation>) => {
+  updateDossier: async (id: DossierId, changes: Partial<Dossier>) => {
     // Update Zustand FIRST (synchronous) for instant UI response
     // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
     localOpPending = true;
     set((state) => ({
-      investigations: state.investigations.map((inv) =>
+      dossiers: state.dossiers.map((inv) =>
         inv.id === id ? { ...inv, ...changes, updatedAt: new Date() } : inv
       ),
-      currentInvestigation:
-        state.currentInvestigation?.id === id
-          ? { ...state.currentInvestigation, ...changes, updatedAt: new Date() }
-          : state.currentInvestigation,
+      currentDossier:
+        state.currentDossier?.id === id
+          ? { ...state.currentDossier, ...changes, updatedAt: new Date() }
+          : state.currentDossier,
     }));
 
     // Then update Y.Doc for collaborative sync
@@ -672,21 +675,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }
 
     // Persist to IndexedDB (async, can happen after UI is updated)
-    await investigationRepository.update(id, changes);
+    await dossierRepository.update(id, changes);
   },
 
-  deleteInvestigation: async (id: InvestigationId) => {
-    await fileService.deleteInvestigationAssets(id);
+  deleteDossier: async (id: DossierId) => {
+    await fileService.deleteDossierAssets(id);
     await syncService.deleteLocalData(id);
-    await investigationRepository.delete(id);
+    await dossierRepository.delete(id);
     set((state) => ({
-      investigations: state.investigations.filter((inv) => inv.id !== id),
-      currentInvestigation:
-        state.currentInvestigation?.id === id ? null : state.currentInvestigation,
+      dossiers: state.dossiers.filter((inv) => inv.id !== id),
+      currentDossier:
+        state.currentDossier?.id === id ? null : state.currentDossier,
     }));
   },
 
-  unloadInvestigation: () => {
+  unloadDossier: () => {
     // Cleanup Y.Doc observer
     if (ydocObserverCleanup) {
       ydocObserverCleanup();
@@ -695,11 +698,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Don't close sync connection here - it breaks React StrictMode
     // and shared mode. The connection is closed explicitly via:
-    // - handleGoHome in InvestigationPage
-    // - syncService.close() when opening a different investigation
+    // - handleGoHome in DossierPage
+    // - syncService.close() when opening a different dossier
 
     set({
-      currentInvestigation: null,
+      currentDossier: null,
       elements: [],
       links: [],
       comments: [],
@@ -713,10 +716,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   createElement: async (label: string, position: Position, options?: Partial<Element>) => {
-    const { currentInvestigation } = get();
+    const { currentDossier } = get();
     assertWritable(get);
-    if (!currentInvestigation) {
-      throw new Error('No investigation loaded');
+    if (!currentDossier) {
+      throw new Error('No dossier loaded');
     }
 
     const ydoc = syncService.getYDoc();
@@ -727,7 +730,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const now = new Date();
     const element: Element = {
       id: crypto.randomUUID(),
-      investigationId: currentInvestigation.id,
+      dossierId: currentDossier.id,
       label,
       notes: '',
       tags: [],
@@ -767,7 +770,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also persist in Dexie for backwards compatibility (with same ID!)
     await elementRepository.create(
-      currentInvestigation.id,
+      currentDossier.id,
       label,
       position,
       { ...options, id: element.id }
@@ -859,7 +862,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     await elementRepository.delete(id).catch(() => {});
 
     // Cascade: remove from all canvas tabs
-    const invId = get().currentInvestigation?.id;
+    const invId = get().currentDossier?.id;
     if (invId) {
       import('./tabStore').then(({ useTabStore }) => {
         useTabStore.getState().removeElementFromAllTabs(invId, id);
@@ -906,7 +909,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     await elementRepository.deleteMany(ids).catch(() => {});
 
     // Cascade: remove from all canvas tabs
-    const invId = get().currentInvestigation?.id;
+    const invId = get().currentDossier?.id;
     if (invId) {
       import('./tabStore').then(({ useTabStore }) => {
         const tabStore = useTabStore.getState();
@@ -990,10 +993,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   createLink: async (fromId: ElementId, toId: ElementId, options?: Partial<Link>) => {
-    const { currentInvestigation } = get();
+    const { currentDossier } = get();
     assertWritable(get);
-    if (!currentInvestigation) {
-      throw new Error('No investigation loaded');
+    if (!currentDossier) {
+      throw new Error('No dossier loaded');
     }
 
     const ydoc = syncService.getYDoc();
@@ -1004,7 +1007,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const now = new Date();
     const link: Link = {
       id: crypto.randomUUID(),
-      investigationId: currentInvestigation.id,
+      dossierId: currentDossier.id,
       fromId,
       toId,
       sourceHandle: null,
@@ -1039,7 +1042,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Also persist in Dexie for backwards compatibility (with same ID!)
     await linkRepository.create(
-      currentInvestigation.id,
+      currentDossier.id,
       fromId,
       toId,
       { ...options, id: link.id }
@@ -1198,7 +1201,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     });
 
     // Persist to Dexie in background (fire-and-forget)
-    const invId = get().currentInvestigation?.id;
+    const invId = get().currentDossier?.id;
     if (invId) {
       for (const el of newElements) {
         elementRepository.create(invId, el.label, el.position, { ...el }).catch(() => {});
@@ -1684,7 +1687,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     }
 
     // Cascade: remove source from all canvas tabs
-    const invId = get().currentInvestigation?.id;
+    const invId = get().currentDossier?.id;
     if (invId) {
       import('./tabStore').then(({ useTabStore }) => {
         useTabStore.getState().removeElementFromAllTabs(invId, sourceId);
@@ -1697,10 +1700,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   addAsset: async (elementId: ElementId, file: File) => {
-    const { currentInvestigation } = get();
+    const { currentDossier } = get();
     assertWritable(get);
-    if (!currentInvestigation) {
-      throw new Error('No investigation loaded');
+    if (!currentDossier) {
+      throw new Error('No dossier loaded');
     }
 
     // Warn about large files in shared mode (sync can be slow or fail)
@@ -1714,7 +1717,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       );
     }
 
-    const asset = await fileService.saveAsset(currentInvestigation.id, file);
+    const asset = await fileService.saveAsset(currentDossier.id, file);
 
     // Update element's assetIds in Y.Doc
     const ydoc = syncService.getYDoc();
@@ -1746,7 +1749,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         const base64 = arrayBufferToBase64(arrayBuffer);
         const assetYMap = new Y.Map();
         assetYMap.set('id', asset.id);
-        assetYMap.set('investigationId', asset.investigationId);
+        assetYMap.set('dossierId', asset.dossierId);
         assetYMap.set('filename', asset.filename);
         assetYMap.set('mimeType', asset.mimeType);
         assetYMap.set('size', asset.size);
@@ -1838,9 +1841,9 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   createComment: async (targetId, targetType, content) => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) {
-      throw new Error('No investigation loaded');
+    const { currentDossier } = get();
+    if (!currentDossier) {
+      throw new Error('No dossier loaded');
     }
 
     const ydoc = syncService.getYDoc();
@@ -1855,7 +1858,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     const comment: Comment = {
       id: crypto.randomUUID(),
-      investigationId: currentInvestigation.id,
+      dossierId: currentDossier.id,
       targetId,
       targetType,
       authorName,
@@ -1939,21 +1942,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   addExistingTag: async (tag: string) => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    const existingTags = currentInvestigation.settings.existingTags;
+    const existingTags = currentDossier.settings.existingTags;
     if (existingTags.includes(tag)) return;
 
-    await investigationRepository.addTag(currentInvestigation.id, tag);
+    await dossierRepository.addTag(currentDossier.id, tag);
 
     set((state) => ({
-      currentInvestigation: state.currentInvestigation
+      currentDossier: state.currentDossier
         ? {
-            ...state.currentInvestigation,
+            ...state.currentDossier,
             settings: {
-              ...state.currentInvestigation.settings,
-              existingTags: [...state.currentInvestigation.settings.existingTags, tag],
+              ...state.currentDossier.settings,
+              existingTags: [...state.currentDossier.settings.existingTags, tag],
             },
           }
         : null,
@@ -1961,22 +1964,22 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   addSuggestedProperty: async (propertyDef: PropertyDefinition) => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    const suggestedProperties = currentInvestigation.settings.suggestedProperties;
+    const suggestedProperties = currentDossier.settings.suggestedProperties;
     if (suggestedProperties.some(p => p.key === propertyDef.key)) return;
 
-    await investigationRepository.addSuggestedProperty(currentInvestigation.id, propertyDef);
+    await dossierRepository.addSuggestedProperty(currentDossier.id, propertyDef);
 
     set((state) => ({
-      currentInvestigation: state.currentInvestigation
+      currentDossier: state.currentDossier
         ? {
-            ...state.currentInvestigation,
+            ...state.currentDossier,
             settings: {
-              ...state.currentInvestigation.settings,
+              ...state.currentDossier.settings,
               suggestedProperties: [
-                ...state.currentInvestigation.settings.suggestedProperties,
+                ...state.currentDossier.settings.suggestedProperties,
                 propertyDef,
               ],
             },
@@ -1986,19 +1989,19 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   associatePropertyWithTags: async (propertyDef: PropertyDefinition, tags: string[]) => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation || tags.length === 0) return;
+    const { currentDossier } = get();
+    if (!currentDossier || tags.length === 0) return;
 
-    await investigationRepository.associatePropertyWithTags(
-      currentInvestigation.id,
+    await dossierRepository.associatePropertyWithTags(
+      currentDossier.id,
       propertyDef,
       tags
     );
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
 
-      const associations = { ...state.currentInvestigation.settings.tagPropertyAssociations };
+      const associations = { ...state.currentDossier.settings.tagPropertyAssociations };
 
       for (const tag of tags) {
         if (!associations[tag]) {
@@ -2015,10 +2018,10 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       }
 
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             tagPropertyAssociations: associations,
           },
         },
@@ -2031,25 +2034,25 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   // ============================================================================
 
   toggleConfidenceIndicator: async () => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    const newValue = !currentInvestigation.settings.showConfidenceIndicator;
+    const newValue = !currentDossier.settings.showConfidenceIndicator;
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         showConfidenceIndicator: newValue,
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             showConfidenceIndicator: newValue,
           },
         },
@@ -2058,29 +2061,29 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   togglePropertyDisplay: async (propertyKey: string) => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    const currentDisplayed = currentInvestigation.settings.displayedProperties || [];
+    const currentDisplayed = currentDossier.settings.displayedProperties || [];
     const isDisplayed = currentDisplayed.includes(propertyKey);
     const newDisplayed = isDisplayed
       ? currentDisplayed.filter(k => k !== propertyKey)
       : [...currentDisplayed, propertyKey];
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         displayedProperties: newDisplayed,
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             displayedProperties: newDisplayed,
           },
         },
@@ -2089,23 +2092,23 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   clearDisplayedProperties: async () => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         displayedProperties: [],
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             displayedProperties: [],
           },
         },
@@ -2114,23 +2117,23 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   setTagDisplayMode: async (mode: 'none' | 'icons' | 'labels' | 'both') => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         tagDisplayMode: mode,
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             tagDisplayMode: mode,
           },
         },
@@ -2139,23 +2142,23 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   setTagDisplaySize: async (size: 'small' | 'medium' | 'large') => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         tagDisplaySize: size,
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             tagDisplaySize: size,
           },
         },
@@ -2164,23 +2167,23 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   setLinkAnchorMode: async (mode: 'auto' | 'manual') => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         linkAnchorMode: mode,
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             linkAnchorMode: mode,
           },
         },
@@ -2189,23 +2192,23 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   },
 
   setLinkCurveMode: async (mode: 'straight' | 'curved' | 'orthogonal') => {
-    const { currentInvestigation } = get();
-    if (!currentInvestigation) return;
+    const { currentDossier } = get();
+    if (!currentDossier) return;
 
-    await investigationRepository.update(currentInvestigation.id, {
+    await dossierRepository.update(currentDossier.id, {
       settings: {
-        ...currentInvestigation.settings,
+        ...currentDossier.settings,
         linkCurveMode: mode,
       },
     });
 
     set((state) => {
-      if (!state.currentInvestigation) return state;
+      if (!state.currentDossier) return state;
       return {
-        currentInvestigation: {
-          ...state.currentInvestigation,
+        currentDossier: {
+          ...state.currentDossier,
           settings: {
-            ...state.currentInvestigation.settings,
+            ...state.currentDossier.settings,
             linkCurveMode: mode,
           },
         },
@@ -2219,8 +2222,8 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
   _syncFromYDoc: () => {
     const ydoc = syncService.getYDoc();
-    const { currentInvestigation, elements: stateElements, links: stateLinks, comments: stateComments, assets: currentAssets } = get();
-    if (!ydoc || !currentInvestigation) {
+    const { currentDossier, elements: stateElements, links: stateLinks, comments: stateComments, assets: currentAssets } = get();
+    if (!ydoc || !currentDossier) {
       return;
     }
 
@@ -2266,7 +2269,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
     const { meta: metaMap, elements: elementsMap, links: linksMap, comments: commentsMap, assets: assetsMap, tabs: tabsMap } = getYMaps(ydoc);
 
     // --- META: only process when observer detected changes ---
-    let updatedInvestigation = currentInvestigation;
+    let updatedDossier = currentDossier;
     if (metaChanged) {
       const metaName = metaMap.get('name') as string | undefined;
       const metaDescription = metaMap.get('description') as string | undefined;
@@ -2278,17 +2281,17 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
       const metaRetentionPolicy = metaMap.get('retentionPolicy') as string | undefined;
 
       const hasMetaChanges =
-        (metaName !== undefined && metaName !== currentInvestigation.name) ||
-        (metaDescription !== undefined && metaDescription !== currentInvestigation.description) ||
-        (metaCreator !== undefined && metaCreator !== (currentInvestigation.creator || '')) ||
-        (metaStartDate !== undefined && metaStartDate !== (currentInvestigation.startDate?.toISOString() || null)) ||
-        (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentInvestigation.tags || [])) ||
-        (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentInvestigation.properties || [])) ||
-        (metaRetentionDays !== undefined && metaRetentionDays !== (currentInvestigation.retentionDays ?? null)) ||
-        (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentInvestigation.retentionPolicy || 'warn'));
+        (metaName !== undefined && metaName !== currentDossier.name) ||
+        (metaDescription !== undefined && metaDescription !== currentDossier.description) ||
+        (metaCreator !== undefined && metaCreator !== (currentDossier.creator || '')) ||
+        (metaStartDate !== undefined && metaStartDate !== (currentDossier.startDate?.toISOString() || null)) ||
+        (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentDossier.tags || [])) ||
+        (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentDossier.properties || [])) ||
+        (metaRetentionDays !== undefined && metaRetentionDays !== (currentDossier.retentionDays ?? null)) ||
+        (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentDossier.retentionPolicy || 'warn'));
 
       if (hasMetaChanges) {
-        const changes: Partial<Investigation> = {};
+        const changes: Partial<Dossier> = {};
         if (metaName !== undefined) changes.name = metaName;
         if (metaDescription !== undefined) changes.description = metaDescription;
         if (metaCreator !== undefined) changes.creator = metaCreator;
@@ -2296,13 +2299,13 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
         if (metaTags !== undefined) changes.tags = metaTags;
         if (metaProperties !== undefined) changes.properties = metaProperties;
         if (metaRetentionDays !== undefined) changes.retentionDays = metaRetentionDays;
-        if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Investigation['retentionPolicy'];
+        if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Dossier['retentionPolicy'];
 
-        updatedInvestigation = {
-          ...currentInvestigation,
+        updatedDossier = {
+          ...currentDossier,
           ...changes,
         };
-        investigationRepository.update(currentInvestigation.id, changes).catch(() => {});
+        dossierRepository.update(currentDossier.id, changes).catch(() => {});
       }
     }
 
@@ -2445,7 +2448,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Skip state update entirely if nothing changed
     if (!elementsDidChange && !linksDidChange && !commentsDidChange &&
-        updatedInvestigation === currentInvestigation && !assetsNeedSync) {
+        updatedDossier === currentDossier && !assetsNeedSync) {
       return;
     }
 
@@ -2465,7 +2468,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
               newAssetsToSave.push({
                 assetData: {
                   id: assetId,
-                  investigationId: map.get('investigationId') || currentInvestigation.id,
+                  dossierId: map.get('dossierId') || currentDossier.id,
                   filename: map.get('filename') || 'unknown',
                   mimeType: map.get('mimeType') || 'application/octet-stream',
                   size: map.get('size') || 0,
@@ -2518,34 +2521,34 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => ({
 
     // Update Zustand state
     set({
-      currentInvestigation: updatedInvestigation,
+      currentDossier: updatedDossier,
       elements,
       links,
       comments,
     });
 
     // Persist to IndexedDB — only changed collections
-    const investigationId = currentInvestigation.id;
+    const dossierId = currentDossier.id;
     const dbPromises: Promise<any>[] = [];
     if (elementsDidChange) {
       if (structuralElChange) {
         // Full rebuild — upsert all
-        dbPromises.push(elementRepository.bulkUpsert(elements.map(el => ({ ...el, investigationId }))));
+        dbPromises.push(elementRepository.bulkUpsert(elements.map(el => ({ ...el, dossierId }))));
       } else {
         // Incremental — only upsert changed elements
         const changedEls = elements.filter(el => elIdsChanged.has(el.id));
         if (changedEls.length > 0) {
-          dbPromises.push(elementRepository.bulkUpsert(changedEls.map(el => ({ ...el, investigationId }))));
+          dbPromises.push(elementRepository.bulkUpsert(changedEls.map(el => ({ ...el, dossierId }))));
         }
       }
     }
     if (linksDidChange) {
       if (structuralLkChange) {
-        dbPromises.push(linkRepository.bulkUpsert(links.map(lk => ({ ...lk, investigationId }))));
+        dbPromises.push(linkRepository.bulkUpsert(links.map(lk => ({ ...lk, dossierId }))));
       } else {
         const changedLks = links.filter(lk => lkIdsChanged.has(lk.id));
         if (changedLks.length > 0) {
-          dbPromises.push(linkRepository.bulkUpsert(changedLks.map(lk => ({ ...lk, investigationId }))));
+          dbPromises.push(linkRepository.bulkUpsert(changedLks.map(lk => ({ ...lk, dossierId }))));
         }
       }
     }

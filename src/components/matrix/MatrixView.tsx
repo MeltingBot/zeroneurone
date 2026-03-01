@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Download } from 'lucide-react';
-import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
 import type { Element, Confidence } from '../../types';
@@ -87,10 +87,10 @@ export function MatrixView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const columnsRef = useRef<HTMLDivElement>(null);
 
-  const elements = useInvestigationStore((s) => s.elements);
-  const links = useInvestigationStore((s) => s.links);
-  const updateElement = useInvestigationStore((s) => s.updateElement);
-  const investigationName = useInvestigationStore((s) => s.currentInvestigation?.name ?? 'export');
+  const elements = useDossierStore((s) => s.elements);
+  const links = useDossierStore((s) => s.links);
+  const updateElement = useDossierStore((s) => s.updateElement);
+  const dossierName = useDossierStore((s) => s.currentDossier?.name ?? 'export');
   const { selectElement, selectElements, toggleElement, selectedElementIds } = useSelectionStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const historyUndo = useHistoryStore((s) => s.undo);
@@ -548,7 +548,7 @@ export function MatrixView() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const slug = investigationName.replace(/[^a-zA-Z0-9À-ÿ_-]/g, '_').replace(/_+/g, '_');
+    const slug = dossierName.replace(/[^a-zA-Z0-9À-ÿ_-]/g, '_').replace(/_+/g, '_');
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const ts = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;

@@ -5,7 +5,7 @@ weight: 8
 
 # Search
 
-Quickly find any element or link in your investigation.
+Quickly find any element or link in your dossier.
 
 
 ## Quick Search
@@ -105,13 +105,13 @@ Recent searches are remembered:
 
 
 - Click on a recent search to relaunch it
-- History is per investigation
+- History is per dossier
 
 ---
 
 ## Performance
 
-Search is optimized to stay fast even on large investigations:
+Search is optimized to stay fast even on large dossiers:
 
 | Size | Performance |
 |------|-------------|
@@ -119,7 +119,7 @@ Search is optimized to stay fast even on large investigations:
 | 1000-10000 | < 100ms |
 | > 10000 | < 500ms |
 
-The index is rebuilt each time an investigation is opened.
+The index is rebuilt each time a dossier is opened.
 
 ---
 

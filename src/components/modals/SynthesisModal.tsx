@@ -7,7 +7,7 @@ import {
   type ReportOptions,
   DEFAULT_REPORT_OPTIONS,
 } from '../../services/reportService';
-import { useInvestigationStore, useViewStore, useUIStore } from '../../stores';
+import { useDossierStore, useViewStore, useUIStore } from '../../stores';
 import type { DisplayMode } from '../../types';
 
 interface SynthesisModalProps {
@@ -22,13 +22,13 @@ interface ScreenshotOptions {
 
 export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   const { t, i18n } = useTranslation('modals');
-  const { currentInvestigation, elements, links, assets } = useInvestigationStore();
+  const { currentDossier, elements, links, assets } = useDossierStore();
   const { displayMode, setDisplayMode } = useViewStore();
   const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore();
 
   const [options, setOptions] = useState<ReportOptions>({
     ...DEFAULT_REPORT_OPTIONS,
-    title: currentInvestigation?.name || '',
+    title: currentDossier?.name || '',
   });
   const [screenshotOptions, setScreenshotOptions] = useState<ScreenshotOptions>({
     canvas: false,
@@ -99,7 +99,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   };
 
   const handleGenerate = useCallback(async (format: ReportFormat, action: 'download' | 'print') => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
     const hasScreenshots = screenshotOptions.canvas;
     const originalState = { ...originalStateRef.current };
@@ -146,7 +146,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
 
       const content = reportService.generate(
         format,
-        currentInvestigation,
+        currentDossier,
         elements,
         links,
         assets,
@@ -157,11 +157,11 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
       if (action === 'print') {
         const htmlContent = format === 'html'
           ? content
-          : reportService.generate('html', currentInvestigation, elements, links, assets, finalOptions, i18n.language);
+          : reportService.generate('html', currentDossier, elements, links, assets, finalOptions, i18n.language);
         reportService.openForPrint(htmlContent);
       } else {
         const timestamp = new Date().toISOString().slice(0, 10);
-        const filename = `${(options.title || currentInvestigation.name).replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+        const filename = `${(options.title || currentDossier.name).replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
         reportService.download(content, filename, format);
       }
     } finally {
@@ -169,7 +169,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
       setShowCaptureOverlay(false);
       setCaptureStatus('');
     }
-  }, [currentInvestigation, elements, links, assets, options, screenshotOptions, displayMode, setDisplayMode, themeMode, setThemeMode, captureView, captureHandlers]);
+  }, [currentDossier, elements, links, assets, options, screenshotOptions, displayMode, setDisplayMode, themeMode, setThemeMode, captureView, captureHandlers]);
 
   if (!isOpen) return null;
 
@@ -224,7 +224,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
               type="text"
               value={options.title}
               onChange={(e) => updateOption('title', e.target.value)}
-              placeholder={currentInvestigation?.name}
+              placeholder={currentDossier?.name}
               className="w-full px-3 py-2 text-sm border border-border-default rounded-lg bg-bg-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
               disabled={isGenerating}
             />

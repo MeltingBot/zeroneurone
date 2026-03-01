@@ -5,7 +5,7 @@ import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
 import { reportRepository, tabRepository } from '../../db/repositories';
-import { useInvestigationStore, toast } from '../../stores';
+import { useDossierStore, toast } from '../../stores';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -38,10 +38,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [showZipPassword, setShowZipPassword] = useState(false);
   const zipPasswordRef = useRef<HTMLInputElement>(null);
 
-  const { currentInvestigation, elements, links } = useInvestigationStore();
+  const { currentDossier, elements, links } = useDossierStore();
 
   const handleExport = useCallback(async (format: ExportFormat) => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
     setIsProcessing(true);
     try {
@@ -49,15 +49,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       let assets;
       let report;
       if (format === 'zip') {
-        assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
-        // Use getByInvestigationWithYDoc to check both Dexie and Y.Doc storage
-        report = await reportRepository.getByInvestigationWithYDoc(currentInvestigation.id);
+        assets = await fileService.getAssetsByDossier(currentDossier.id);
+        // Use getByDossierWithYDoc to check both Dexie and Y.Doc storage
+        report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
       }
       const tabs = (format === 'zip' || format === 'json')
-        ? await tabRepository.getByInvestigation(currentInvestigation.id)
+        ? await tabRepository.getByDossier(currentDossier.id)
         : undefined;
 
-      await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets, report, tabs);
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
@@ -65,19 +65,19 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, elements, links, onClose, t]);
+  }, [currentDossier, elements, links, onClose, t]);
 
   const handleExportEncryptedZip = useCallback(async () => {
-    if (!currentInvestigation || zipPassword.length < 1) return;
+    if (!currentDossier || zipPassword.length < 1) return;
     setIsProcessing(true);
     try {
-      const assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
-      const report = await reportRepository.getByInvestigationWithYDoc(currentInvestigation.id);
-      const tabs = await tabRepository.getByInvestigation(currentInvestigation.id);
+      const assets = await fileService.getAssetsByDossier(currentDossier.id);
+      const report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
+      const tabs = await tabRepository.getByDossier(currentDossier.id);
 
       const encBlob = await exportService.exportToEncryptedZip(
         zipPassword,
-        currentInvestigation,
+        currentDossier,
         elements,
         links,
         assets,
@@ -87,7 +87,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
       const now = new Date();
       const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
-      const baseName = `${currentInvestigation.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+      const baseName = `${currentDossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
       exportService.downloadBlob(encBlob, `${baseName}.znzip`);
 
       toast.success('Export chiffré téléchargé (.znzip)');
@@ -100,10 +100,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, elements, links, zipPassword, onClose, t]);
+  }, [currentDossier, elements, links, zipPassword, onClose, t]);
 
   const handleExportPng = useCallback(async (scale: number) => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
     setIsProcessing(true);
     try {
@@ -125,7 +125,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Download the PNG
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `${currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
+      link.download = `${currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_')}_canvas_${scale}x.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -138,15 +138,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, onClose, t]);
+  }, [currentDossier, onClose, t]);
 
   const handleExportSvg = useCallback(async () => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
     setIsProcessing(true);
     try {
       // Fetch assets to embed media thumbnails in SVG nodes
-      const assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
+      const assets = await fileService.getAssetsByDossier(currentDossier.id);
       const assetDataUrls = new Map<string, string>();
       for (const asset of assets) {
         if (asset.thumbnailDataUrl) {
@@ -154,13 +154,13 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         }
       }
 
-      const settings = currentInvestigation.settings;
+      const settings = currentDossier.settings;
       const svgString = buildSVGExport(elements, links, {
         linkAnchorMode: settings?.linkAnchorMode ?? 'auto',
         linkCurveMode: settings?.linkCurveMode ?? 'curved',
         assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
       });
-      const baseName = currentInvestigation.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const baseName = currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
       exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
       toast.success(t('export.successFormat', { format: 'SVG' }));
       onClose();
@@ -170,7 +170,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, elements, links, onClose, t]);
+  }, [currentDossier, elements, links, onClose, t]);
 
   if (!isOpen) return null;
 
@@ -201,7 +201,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         <div className="p-4">
           <p className="text-xs text-text-secondary mb-4">
             {t('export.description', {
-              name: currentInvestigation?.name,
+              name: currentDossier?.name,
               elements: elements.length,
               links: links.length,
             })}

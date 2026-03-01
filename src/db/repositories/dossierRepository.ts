@@ -1,6 +1,6 @@
 import { db } from '../database';
 import { generateUUID } from '../../utils';
-import type { Investigation, InvestigationId, PropertyDefinition } from '../../types';
+import type { Dossier, DossierId, PropertyDefinition } from '../../types';
 
 /**
  * Migrate old string-based property to PropertyDefinition
@@ -35,28 +35,28 @@ function migrateTagAssociations(
 }
 
 /**
- * Rehydrate investigation with default values for new fields
+ * Rehydrate dossier with default values for new fields
  * This ensures backwards compatibility with existing data
  */
-function rehydrateInvestigation(investigation: Investigation): Investigation {
+function rehydrateDossier(dossier: Dossier): Dossier {
   return {
-    ...investigation,
-    startDate: investigation.startDate ?? null,
-    creator: investigation.creator ?? '',
-    tags: investigation.tags ?? [],
-    properties: investigation.properties ?? [],
-    isFavorite: investigation.isFavorite ?? false,
+    ...dossier,
+    startDate: dossier.startDate ?? null,
+    creator: dossier.creator ?? '',
+    tags: dossier.tags ?? [],
+    properties: dossier.properties ?? [],
+    isFavorite: dossier.isFavorite ?? false,
     settings: {
-      ...investigation.settings,
-      suggestedProperties: migratePropertyArray(investigation.settings?.suggestedProperties),
-      tagPropertyAssociations: migrateTagAssociations(investigation.settings?.tagPropertyAssociations),
+      ...dossier.settings,
+      suggestedProperties: migratePropertyArray(dossier.settings?.suggestedProperties),
+      tagPropertyAssociations: migrateTagAssociations(dossier.settings?.tagPropertyAssociations),
     },
   };
 }
 
-export const investigationRepository = {
-  async create(name: string, description: string = ''): Promise<Investigation> {
-    const investigation: Investigation = {
+export const dossierRepository = {
+  async create(name: string, description: string = ''): Promise<Dossier> {
+    const dossier: Dossier = {
       id: generateUUID(),
       name,
       description,
@@ -82,22 +82,22 @@ export const investigationRepository = {
       isFavorite: false,
     };
 
-    await db.investigations.add(investigation);
-    return investigation;
+    await db.dossiers.add(dossier);
+    return dossier;
   },
 
   /**
-   * Create an investigation with a specific UUID
-   * Used when joining a shared investigation to maintain the same ID across clients
+   * Create an dossier with a specific UUID
+   * Used when joining a shared dossier to maintain the same ID across clients
    */
-  async createWithId(id: InvestigationId, name: string, description: string = ''): Promise<Investigation> {
-    // Check if investigation with this ID already exists
-    const existing = await db.investigations.get(id);
+  async createWithId(id: DossierId, name: string, description: string = ''): Promise<Dossier> {
+    // Check if dossier with this ID already exists
+    const existing = await db.dossiers.get(id);
     if (existing) {
-      return rehydrateInvestigation(existing);
+      return rehydrateDossier(existing);
     }
 
-    const investigation: Investigation = {
+    const dossier: Dossier = {
       id,
       name,
       description,
@@ -123,19 +123,19 @@ export const investigationRepository = {
       isFavorite: false,
     };
 
-    await db.investigations.add(investigation);
-    return investigation;
+    await db.dossiers.add(dossier);
+    return dossier;
   },
 
   /**
-   * Toggle favorite status of an investigation
+   * Toggle favorite status of an dossier
    */
-  async toggleFavorite(id: InvestigationId): Promise<boolean> {
-    const investigation = await db.investigations.get(id);
-    if (!investigation) return false;
+  async toggleFavorite(id: DossierId): Promise<boolean> {
+    const dossier = await db.dossiers.get(id);
+    if (!dossier) return false;
 
-    const newValue = !investigation.isFavorite;
-    await db.investigations.update(id, {
+    const newValue = !dossier.isFavorite;
+    await db.dossiers.update(id, {
       isFavorite: newValue,
       updatedAt: new Date(),
     });
@@ -143,22 +143,22 @@ export const investigationRepository = {
   },
 
   /**
-   * Update investigation tags
+   * Update dossier tags
    */
-  async setTags(id: InvestigationId, tags: string[]): Promise<void> {
-    await db.investigations.update(id, {
+  async setTags(id: DossierId, tags: string[]): Promise<void> {
+    await db.dossiers.update(id, {
       tags,
       updatedAt: new Date(),
     });
   },
 
   /**
-   * Get all unique tags used across all investigations
+   * Get all unique tags used across all dossiers
    */
   async getAllTags(): Promise<string[]> {
-    const investigations = await db.investigations.toArray();
+    const dossiers = await db.dossiers.toArray();
     const tagSet = new Set<string>();
-    for (const inv of investigations) {
+    for (const inv of dossiers) {
       if (inv.tags) {
         for (const tag of inv.tags) {
           tagSet.add(tag);
@@ -168,60 +168,60 @@ export const investigationRepository = {
     return Array.from(tagSet).sort();
   },
 
-  async getById(id: InvestigationId): Promise<Investigation | undefined> {
-    const investigation = await db.investigations.get(id);
-    return investigation ? rehydrateInvestigation(investigation) : undefined;
+  async getById(id: DossierId): Promise<Dossier | undefined> {
+    const dossier = await db.dossiers.get(id);
+    return dossier ? rehydrateDossier(dossier) : undefined;
   },
 
-  async getAll(): Promise<Investigation[]> {
-    const investigations = await db.investigations.orderBy('updatedAt').reverse().toArray();
-    return investigations.map(rehydrateInvestigation);
+  async getAll(): Promise<Dossier[]> {
+    const dossiers = await db.dossiers.orderBy('updatedAt').reverse().toArray();
+    return dossiers.map(rehydrateDossier);
   },
 
   async update(
-    id: InvestigationId,
-    changes: Partial<Omit<Investigation, 'id' | 'createdAt'>>
+    id: DossierId,
+    changes: Partial<Omit<Dossier, 'id' | 'createdAt'>>
   ): Promise<void> {
-    await db.investigations.update(id, {
+    await db.dossiers.update(id, {
       ...changes,
       updatedAt: new Date(),
     });
   },
 
-  async delete(id: InvestigationId): Promise<void> {
+  async delete(id: DossierId): Promise<void> {
     await db.transaction(
       'rw',
-      [db.investigations, db.elements, db.links, db.assets, db.views, db.reports],
+      [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports],
       async () => {
-        await db.elements.where({ investigationId: id }).delete();
-        await db.links.where({ investigationId: id }).delete();
-        await db.assets.where({ investigationId: id }).delete();
-        await db.views.where({ investigationId: id }).delete();
-        await db.reports.where({ investigationId: id }).delete();
-        await db.investigations.delete(id);
+        await db.elements.where({ dossierId: id }).delete();
+        await db.links.where({ dossierId: id }).delete();
+        await db.assets.where({ dossierId: id }).delete();
+        await db.views.where({ dossierId: id }).delete();
+        await db.reports.where({ dossierId: id }).delete();
+        await db.dossiers.delete(id);
       }
     );
   },
 
   async updateViewport(
-    id: InvestigationId,
+    id: DossierId,
     viewport: { x: number; y: number; zoom: number }
   ): Promise<void> {
-    await db.investigations.update(id, {
+    await db.dossiers.update(id, {
       viewport,
       updatedAt: new Date(),
     });
   },
 
-  async addTag(id: InvestigationId, tag: string): Promise<void> {
-    const investigation = await db.investigations.get(id);
-    if (!investigation) return;
+  async addTag(id: DossierId, tag: string): Promise<void> {
+    const dossier = await db.dossiers.get(id);
+    if (!dossier) return;
 
-    const existingTags = investigation.settings.existingTags;
+    const existingTags = dossier.settings.existingTags;
     if (!existingTags.includes(tag)) {
-      await db.investigations.update(id, {
+      await db.dossiers.update(id, {
         settings: {
-          ...investigation.settings,
+          ...dossier.settings,
           existingTags: [...existingTags, tag],
         },
         updatedAt: new Date(),
@@ -229,17 +229,17 @@ export const investigationRepository = {
     }
   },
 
-  async addSuggestedProperty(id: InvestigationId, propertyDef: PropertyDefinition): Promise<void> {
-    const investigation = await db.investigations.get(id);
-    if (!investigation) return;
+  async addSuggestedProperty(id: DossierId, propertyDef: PropertyDefinition): Promise<void> {
+    const dossier = await db.dossiers.get(id);
+    if (!dossier) return;
 
-    const rehydrated = rehydrateInvestigation(investigation);
+    const rehydrated = rehydrateDossier(dossier);
     const suggestedProperties = rehydrated.settings.suggestedProperties;
 
     // Check if property with same key already exists
     const exists = suggestedProperties.some(p => p.key === propertyDef.key);
     if (!exists) {
-      await db.investigations.update(id, {
+      await db.dossiers.update(id, {
         settings: {
           ...rehydrated.settings,
           suggestedProperties: [...suggestedProperties, propertyDef],
@@ -250,14 +250,14 @@ export const investigationRepository = {
   },
 
   async associatePropertyWithTags(
-    id: InvestigationId,
+    id: DossierId,
     propertyDef: PropertyDefinition,
     tags: string[]
   ): Promise<void> {
-    const investigation = await db.investigations.get(id);
-    if (!investigation || tags.length === 0) return;
+    const dossier = await db.dossiers.get(id);
+    if (!dossier || tags.length === 0) return;
 
-    const rehydrated = rehydrateInvestigation(investigation);
+    const rehydrated = rehydrateDossier(dossier);
     const associations = { ...rehydrated.settings.tagPropertyAssociations };
     let updated = false;
 
@@ -281,7 +281,7 @@ export const investigationRepository = {
     }
 
     if (updated) {
-      await db.investigations.update(id, {
+      await db.dossiers.update(id, {
         settings: {
           ...rehydrated.settings,
           tagPropertyAssociations: associations,
@@ -291,15 +291,15 @@ export const investigationRepository = {
     }
   },
 
-  async getStats(id: InvestigationId): Promise<{
+  async getStats(id: DossierId): Promise<{
     elementCount: number;
     linkCount: number;
     assetCount: number;
   }> {
     const [elementCount, linkCount, assetCount] = await Promise.all([
-      db.elements.where({ investigationId: id }).count(),
-      db.links.where({ investigationId: id }).count(),
-      db.assets.where({ investigationId: id }).count(),
+      db.elements.where({ dossierId: id }).count(),
+      db.links.where({ dossierId: id }).count(),
+      db.assets.where({ dossierId: id }).count(),
     ]);
     return { elementCount, linkCount, assetCount };
   },

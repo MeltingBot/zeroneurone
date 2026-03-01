@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Torna alla home",
-    "newInvestigation": "Nuova indagine",
+    "newDossier": "Nuovo fascicolo",
     "manageTags": "Gestisci tag",
     "import": "Importa",
     "about": "Informazioni",
@@ -10,10 +10,10 @@
     "storage": "Archiviazione",
     "darkMode": "Modalità scura",
     "lightMode": "Modalità chiara",
-    "noInvestigations": "Nessuna indagine",
-    "createFirst": "Crea la tua prima indagine per iniziare",
-    "viewInvestigations": "Visualizza indagini",
-    "investigationCount": "{{count}} indagine/i",
+    "noDossiers": "Nessun fascicolo",
+    "createFirst": "Crea la tua prima fascicolo per iniziare",
+    "viewDossiers": "Visualizza fascicoli",
+    "dossierCount": "{{count}} fascicolo/i",
     "loading": "Caricamento...",
     "searchPlaceholder": "Cerca per nome o descrizione...",
     "filterByTag": "Filtra per tag",
@@ -22,9 +22,9 @@
     "sortName": "Nome",
     "activeFilters": "Filtri attivi",
     "clearFilters": "Cancella",
-    "noResults": "Nessuna indagine trovata",
+    "noResults": "Nessun fascicolo trovata",
     "noResultsHint": "Prova altri termini o cancella i filtri",
-    "resultsCount": "{{count}} / {{total}} indagine/i",
+    "resultsCount": "{{count}} / {{total}} fascicolo/i",
     "card": {
       "modified": "Modificato {{time}}",
       "elementCount": "{{count}} elemento/i",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Lavagna per analisti e investigatori",
       "description": "Uno strumento Open Source di amplificazione cognitiva che combina la semplicità di una lavagna con la potenza dell'analisi dei grafi. Mappa le tue idee, geolocalizza i tuoi elementi, visualizza gli eventi, collega gli indizi e rivela i pattern nascosti.",
-      "startNew": "Nuova indagine",
+      "startNew": "Nuovo fascicolo",
       "importExisting": "Importa",
-      "viewExisting": "Visualizza le mie {{count}} indagine/i",
+      "viewExisting": "Visualizza le mie {{count}} fascicolo/i",
       "features": {
         "graph": {
           "title": "Grafo relazionale",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Collaborazione sicura in tempo reale",
-          "description": "Lavora con altri sulla stessa indagine"
+          "description": "Lavora con altri sulla stessa fascicolo"
         }
       },
       "extensions": "Estensioni",
@@ -76,7 +76,7 @@
       "disablePlugin": "Disattiva estensione"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Apertura",
       "syncing": "Sincronizzazione",
@@ -258,7 +258,7 @@
       "navigateTo": "Vai alla scheda {{name}}"
     },
     "retentionExpiredBanner": "Conservazione scaduta da {{days}} giorno/i",
-    "retentionDeleteConfirm": "Questa indagine verrà eliminata definitivamente, senza possibilità di annullamento.",
+    "retentionDeleteConfirm": "Questa fascicolo verrà eliminata definitivamente, senza possibilità di annullamento.",
     "retentionDeleteAction": "Elimina definitivamente",
     "retentionReadonly": "Indagine in sola lettura (conservazione scaduta)",
     "retentionRedactConfirm": "L'oscuramento cancellerà definitivamente tutti i contenuti testuali (nomi, note, proprietà). La struttura del grafo sarà conservata. Questa azione è irreversibile.",

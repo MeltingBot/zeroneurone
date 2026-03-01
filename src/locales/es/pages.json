@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Volver al inicio",
-    "newInvestigation": "Nueva investigación",
+    "newDossier": "Nuevo expediente",
     "manageTags": "Gestionar tags",
     "import": "Importar",
     "about": "Acerca de",
@@ -10,10 +10,10 @@
     "storage": "Almacenamiento",
     "darkMode": "Modo oscuro",
     "lightMode": "Modo claro",
-    "noInvestigations": "Sin investigaciones",
-    "createFirst": "Cree su primera investigación para comenzar",
-    "viewInvestigations": "Ver investigaciones",
-    "investigationCount": "{{count}} investigación(es)",
+    "noDossiers": "Sin expedientes",
+    "createFirst": "Cree su primera expediente para comenzar",
+    "viewDossiers": "Ver expedientes",
+    "dossierCount": "{{count}} expediente(s)",
     "loading": "Cargando...",
     "searchPlaceholder": "Buscar por nombre o descripción...",
     "filterByTag": "Filtrar por tag",
@@ -22,9 +22,9 @@
     "sortName": "Nombre",
     "activeFilters": "Filtros activos",
     "clearFilters": "Borrar",
-    "noResults": "No se encontraron investigaciones",
+    "noResults": "No se encontraron expedientes",
     "noResultsHint": "Pruebe otros términos o borre los filtros",
-    "resultsCount": "{{count}} / {{total}} investigación(es)",
+    "resultsCount": "{{count}} / {{total}} expediente(s)",
     "card": {
       "modified": "Modificado {{time}}",
       "elementCount": "{{count}} elemento(s)",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Pizarra para analistas e investigadores",
       "description": "Una herramienta Open Source de amplificación cognitiva que combina la simplicidad de una pizarra con el poder del análisis de grafos. Mapee sus ideas, geolocalice sus elementos, visualice los eventos, conecte las pistas y revele los patrones ocultos.",
-      "startNew": "Nueva investigación",
+      "startNew": "Nuevo expediente",
       "importExisting": "Importar",
-      "viewExisting": "Ver mis {{count}} investigación(es)",
+      "viewExisting": "Ver mis {{count}} expediente(s)",
       "features": {
         "graph": {
           "title": "Grafo relacional",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Colaboración segura en tiempo real",
-          "description": "Trabaje con otros en la misma investigación"
+          "description": "Trabaje con otros en la mismo expediente"
         }
       },
       "extensions": "Extensiones",
@@ -76,7 +76,7 @@
       "disablePlugin": "Desactivar extensión"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Abriendo",
       "syncing": "Sincronizando",
@@ -258,7 +258,7 @@
       "navigateTo": "Ir a pestaña {{name}}"
     },
     "retentionExpiredBanner": "Retención vencida hace {{days}} día(s)",
-    "retentionDeleteConfirm": "Esta investigación se eliminará permanentemente, sin posibilidad de anulación.",
+    "retentionDeleteConfirm": "Esta expediente se eliminará permanentemente, sin posibilidad de anulación.",
     "retentionDeleteAction": "Eliminar permanentemente",
     "retentionReadonly": "Investigación en solo lectura (retención vencida)",
     "retentionRedactConfirm": "La redacción eliminará permanentemente todo el contenido textual (nombres, notas, propiedades). Se conservará la estructura del grafo. Esta acción es irreversible.",

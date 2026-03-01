@@ -4,7 +4,7 @@ import type {
   DisplayMode,
   ElementId,
   View,
-  InvestigationId,
+  DossierId,
   Position,
   Element,
 } from '../types';
@@ -48,8 +48,8 @@ interface ViewState {
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
   setZoom: (zoom: number) => void;
   panTo: (x: number, y: number) => void;
-  saveViewportForInvestigation: (investigationId: InvestigationId) => void;
-  loadViewportForInvestigation: (investigationId: InvestigationId) => boolean;
+  saveViewportForDossier: (dossierId: DossierId) => void;
+  loadViewportForDossier: (dossierId: DossierId) => boolean;
   requestViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
   clearPendingViewport: () => void;
   requestFitView: () => void;
@@ -77,8 +77,8 @@ interface ViewState {
   clearFocus: () => void;
 
   // Actions - Saved views
-  loadViews: (investigationId: InvestigationId) => Promise<void>;
-  saveView: (investigationId: InvestigationId, name: string, options?: { includePositions?: boolean; elements?: Element[] }) => Promise<View>;
+  loadViews: (dossierId: DossierId) => Promise<void>;
+  saveView: (dossierId: DossierId, name: string, options?: { includePositions?: boolean; elements?: Element[] }) => Promise<View>;
   loadView: (view: View, updatePositions?: (positions: { id: ElementId; position: Position }[]) => Promise<void>) => void;
   deleteView: (viewId: string) => Promise<void>;
   restoreView: (view: View) => void;
@@ -86,8 +86,8 @@ interface ViewState {
   // Derived
   hasActiveFilters: () => boolean;
 
-  // Reset investigation-specific state
-  resetInvestigationState: () => void;
+  // Reset dossier-specific state
+  resetDossierState: () => void;
 }
 
 export const useViewStore = create<ViewState>((set, get) => ({
@@ -106,20 +106,20 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({ viewport });
   },
 
-  // Save viewport for a specific investigation
-  saveViewportForInvestigation: (investigationId: InvestigationId) => {
+  // Save viewport for a specific dossier
+  saveViewportForDossier: (dossierId: DossierId) => {
     const { viewport } = get();
     try {
-      localStorage.setItem(`viewport_${investigationId}`, JSON.stringify(viewport));
+      localStorage.setItem(`viewport_${dossierId}`, JSON.stringify(viewport));
     } catch {
       // Ignore localStorage errors
     }
   },
 
-  // Load viewport for a specific investigation
-  loadViewportForInvestigation: (investigationId: InvestigationId) => {
+  // Load viewport for a specific dossier
+  loadViewportForDossier: (dossierId: DossierId) => {
     try {
-      const saved = localStorage.getItem(`viewport_${investigationId}`);
+      const saved = localStorage.getItem(`viewport_${dossierId}`);
       if (saved) {
         const viewport = JSON.parse(saved);
         if (viewport && typeof viewport.x === 'number' && typeof viewport.y === 'number' && typeof viewport.zoom === 'number') {
@@ -256,12 +256,12 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   // Saved views
-  loadViews: async (investigationId) => {
-    const views = await db.views.where({ investigationId }).toArray();
+  loadViews: async (dossierId) => {
+    const views = await db.views.where({ dossierId }).toArray();
     set({ savedViews: views });
   },
 
-  saveView: async (investigationId, name, options) => {
+  saveView: async (dossierId, name, options) => {
     const state = get();
     // Capture active tab for restoration
     const { useTabStore } = await import('./tabStore');
@@ -269,7 +269,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
 
     const view: View = {
       id: generateUUID(),
-      investigationId,
+      dossierId,
       name,
       viewport: { ...state.viewport },
       filters: { ...state.filters },
@@ -345,8 +345,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
     );
   },
 
-  // Reset investigation-specific state (called when closing an investigation)
-  resetInvestigationState: () => {
+  // Reset dossier-specific state (called when closing an dossier)
+  resetDossierState: () => {
     set({
       viewport: { x: 0, y: 0, zoom: 1 },
       pendingFitView: false,

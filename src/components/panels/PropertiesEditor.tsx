@@ -8,7 +8,7 @@ import { getLocalizedCountries, getCountryName, getCountryByCode, type Localized
 interface PropertiesEditorProps {
   properties: Property[];
   onChange: (properties: Property[]) => void;
-  /** Suggested property definitions from the investigation */
+  /** Suggested property definitions from the dossier */
   suggestions?: PropertyDefinition[];
   /** Callback when a new property is created */
   onNewProperty?: (propertyDef: PropertyDefinition) => void;

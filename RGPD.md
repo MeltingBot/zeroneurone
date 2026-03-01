@@ -2,7 +2,7 @@
 
 ## Synthèse
 
-ZeroNeurone est un outil local-first. Les données d'investigation
+ZeroNeurone est un outil local-first. Les données d'dossier
 sont stockées exclusivement dans le navigateur de l'utilisateur
 (IndexedDB + OPFS). Aucune donnée n'est transmise à un serveur sauf
 activation explicite de la collaboration.
@@ -14,7 +14,7 @@ Ce document analyse l'applicabilité du RGPD (Règlement UE 2016/679)
 
 ## 1. ZeroNeurone traite-t-il des données personnelles ?
 
-**Potentiellement oui.** ZeroNeurone est un outil d'investigation
+**Potentiellement oui.** ZeroNeurone est un outil d'dossier
 générique. Les éléments du graphe (personnes, organisations, lieux,
 documents) peuvent contenir des données à caractère personnel au
 sens de l'article 4(1) du RGPD :
@@ -28,7 +28,7 @@ sens de l'article 4(1) du RGPD :
 
 **L'outil lui-même ne collecte aucune donnée personnelle.** C'est
 l'utilisateur qui saisit les données. La qualification RGPD dépend
-donc du contenu des investigations, pas de l'outil.
+donc du contenu des dossiers, pas de l'outil.
 
 ---
 
@@ -57,9 +57,9 @@ La base légale dépend du contexte d'utilisation :
 |----------|---------------------|--------------|
 | Enquête judiciaire | Obligation légale | Art. 6(1)(c) |
 | Enquête administrative | Mission d'intérêt public | Art. 6(1)(e) |
-| Investigation interne (entreprise) | Intérêt légitime | Art. 6(1)(f) |
+| Dossier interne (entreprise) | Intérêt légitime | Art. 6(1)(f) |
 | Recherche OSINT | Intérêt légitime | Art. 6(1)(f) |
-| Journalisme d'investigation | Dérogation presse | Art. 85 |
+| Journalisme d'dossier | Dérogation presse | Art. 85 |
 | Usage personnel non professionnel | Exception domestique | Art. 2(2)(c) |
 
 **Note :** le traitement de données sensibles (art. 9) ou de
@@ -90,7 +90,7 @@ ZeroNeurone intègre des mesures conformes à l'article 25 du RGPD
 
 ### Limitation de la conservation (art. 5(1)(e))
 
-- Durée de rétention configurable par investigation (en jours)
+- Durée de rétention configurable par dossier (en jours)
 - Quatre actions à l'expiration : avertissement, lecture seule,
   suppression, caviardage définitif
 - Le caviardage remplace irréversiblement les contenus textuels
@@ -104,7 +104,7 @@ ZeroNeurone intègre des mesures conformes à l'article 25 du RGPD
 
 ### Droit à l'effacement (art. 17)
 
-- Suppression d'éléments individuels ou d'investigations entières
+- Suppression d'éléments individuels ou d'dossiers entières
 - Suppression effective des fichiers en OPFS
 - Caviardage disponible pour anonymiser sans supprimer la structure
 
@@ -132,7 +132,7 @@ traitement local par l'utilisateur.
 - Le transfert du fichier ZIP à un tiers constitue une
   communication de données soumise au RGPD
 - Les exports chiffrés sont protégés par le mot de passe de
-  l'investigation source
+  l'dossier source
 
 ---
 
@@ -144,12 +144,12 @@ Modèle d'entrée :
 
 | Champ | Valeur suggérée |
 |-------|-----------------|
-| Finalité | Analyse d'investigation / Recherche OSINT |
+| Finalité | Analyse d'dossier / Recherche OSINT |
 | Catégories de données | Identité, relations, localisation, documents |
-| Catégories de personnes | Personnes impliquées dans l'investigation |
+| Catégories de personnes | Personnes impliquées dans l'dossier |
 | Destinataires | Analystes habilités (collaboration P2P) |
 | Transferts hors UE | Non (stockage local navigateur) |
-| Durée de conservation | Configurable par investigation (rétention) |
+| Durée de conservation | Configurable par dossier (rétention) |
 | Mesures de sécurité | Chiffrement AES-256-GCM, PBKDF2, verrouillage auto |
 
 ---
@@ -158,8 +158,8 @@ Modèle d'entrée :
 
 Une analyse d'impact (art. 35) est **probablement nécessaire** si :
 
-- L'investigation porte sur des données sensibles (art. 9)
-- L'investigation implique une surveillance systématique
+- L'dossier porte sur des données sensibles (art. 9)
+- L'dossier implique une surveillance systématique
 - Le traitement concerne un grand nombre de personnes
 - Les données incluent des antécédents pénaux (art. 10)
 
@@ -172,8 +172,8 @@ l'AIPD si les critères ci-dessus sont remplis.
 ## 8. Recommandations pour les organisations
 
 1. **Identifier la base légale** applicable à chaque type
-   d'investigation
-2. **Activer le chiffrement** at-rest pour toute investigation
+   d'dossier
+2. **Activer le chiffrement** at-rest pour toute dossier
    contenant des données personnelles
 3. **Définir des durées de rétention** conformes aux obligations
    légales et à la finalité du traitement

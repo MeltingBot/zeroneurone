@@ -5,7 +5,7 @@ weight: 9
 
 # Collaboration temps réel
 
-Travaillez à plusieurs sur une enquête en temps réel avec synchronisation sécurisée et chiffrée de bout en bout.
+Travaillez à plusieurs sur un dossier en temps réel avec synchronisation sécurisée et chiffrée de bout en bout.
 
 
 ## Principes de sécurité
@@ -23,11 +23,11 @@ Travaillez à plusieurs sur une enquête en temps réel avec synchronisation sé
 
 ---
 
-## Partager une enquête
+## Partager un dossier
 
 ### Démarrer le partage
 
-1. Ouvrez l'enquête à partager
+1. Ouvrez le dossier à partager
 2. Menu **⋯** → **Partager**
 3. Configurez votre nom d'utilisateur
 4. Cliquez **Partager**
@@ -53,11 +53,11 @@ https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&n
 | `?server=` | Adresse du serveur de signalisation |
 | `?async=1` | Flag mode asynchrone (optionnel) |
 | `#key=` | Clé de chiffrement |
-| `#id=` | UUID original de l'enquête |
-| `#name=` | Nom de l'enquête |
+| `#id=` | UUID original du dossier |
+| `#name=` | Nom du dossier |
 
 {{< hint warning >}}
-**Important** : Tout ce qui suit `#` (fragment) n'est jamais envoyé au serveur (standard navigateur). L'identifiant de room est dérivé d'un hash de l'UUID + clé de chiffrement, donc le serveur ne peut pas corréler les sessions avec les enquêtes. C'est ce qui garantit le chiffrement de bout en bout et la confidentialité des métadonnées.
+**Important** : Tout ce qui suit `#` (fragment) n'est jamais envoyé au serveur (standard navigateur). L'identifiant de room est dérivé d'un hash de l'UUID + clé de chiffrement, donc le serveur ne peut pas corréler les sessions avec les dossiers. C'est ce qui garantit le chiffrement de bout en bout et la confidentialité des métadonnées.
 {{< /hint >}}
 
 ---
@@ -76,7 +76,7 @@ https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&n
 
 À la connexion :
 
-- Les données de l'enquête sont téléchargées
+- Les données du dossier sont téléchargées
 - Les fichiers joints sont synchronisés progressivement
 - Une copie locale est créée sur votre machine
 
@@ -154,7 +154,7 @@ Quand quelqu'un édite un élément :
 | Onglets du canvas | ✅ Noms, membres, ordre (viewport local) |
 | Vues sauvegardées | ✅ |
 | Commentaires | ✅ |
-| Paramètres d'enquête | ✅ |
+| Paramètres du dossier | ✅ |
 
 ---
 
@@ -215,7 +215,7 @@ ZeroNeurone permet la collaboration asynchrone, permettant aux collaborateurs de
 {{< hint danger >}}
 **Critique** : Sauvegardez et conservez précieusement le lien de partage. Sans ce lien :
 - Vous ne pourrez pas rejoindre la session
-- L'enquête ne pourra pas être recréée en mode asynchrone déconnecté
+- Le dossier ne pourra pas être recréé en mode asynchrone déconnecté
 - La clé de chiffrement dans le fragment URL (`#key=...`) est le seul moyen de déchiffrer les données
 {{< /hint >}}
 
@@ -226,7 +226,7 @@ Recommandations :
 
 ### Mettre à jour après un travail asynchrone
 
-Pour mettre à jour votre enquête locale avec les modifications asynchrones distantes :
+Pour mettre à jour votre dossier local avec les modifications asynchrones distantes :
 
 1. **Arrêtez d'abord le partage** (Menu **⋯** → **Partager** → **Arrêter le partage**)
 2. Puis rejoignez en utilisant votre lien de partage sauvegardé
@@ -278,13 +278,13 @@ Le serveur de signalisation est basé sur `y-websocket`. Consultez la documentat
 - Limitez le nombre de collaborateurs simultanés (< 10 recommandé)
 - Les gros fichiers peuvent ralentir la synchronisation initiale
 - Une bonne connexion internet améliore l'expérience
-- Enquêtes avec **500+ éléments** : les liens sont masqués pendant le pan/zoom pour la fluidité
+- Dossiers avec **500+ éléments** : les liens sont masqués pendant le pan/zoom pour la fluidité
 - Testé avec **1500+ éléments et liens** en mode collaboratif
 
 ### Organisation
 
 - Définissez qui fait quoi pour éviter les éditions simultanées du même élément
-- Utilisez les commentaires pour communiquer dans l'enquête
+- Utilisez les commentaires pour communiquer dans le dossier
 - Sauvegardez régulièrement en local (export ZIP)
 
 ---

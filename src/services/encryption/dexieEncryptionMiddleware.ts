@@ -290,7 +290,7 @@ export { createEncryptionMiddleware as createEncryptionMiddlewareForDexie };
  * Les tables techniques (_encryptionMeta, tagSets) ne sont pas chiffrées.
  */
 export const DEFAULT_ENCRYPTED_TABLES = new Set([
-  'investigations',
+  'dossiers',
   'elements',
   'links',
   'assets',

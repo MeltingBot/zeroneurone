@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nueva investigación",
-    "namePlaceholder": "Nombre de la investigación",
+  "createDossier": {
+    "title": "Nuevo expediente",
+    "namePlaceholder": "Nombre de el expediente",
     "descriptionPlaceholder": "Descripción (opcional)",
-    "create": "Crear la investigación"
+    "create": "Crear el expediente"
   },
   "confirmDelete": {
     "title": "Eliminar",
     "message": "Esta acción es irreversible.",
     "confirm": "Eliminar",
     "deleting": "Eliminando...",
-    "deleteInvestigation": "Eliminar la investigación",
-    "deleteInvestigationMessage": "¿Eliminar \"{{name}}\"? Esta acción es irreversible."
+    "deleteDossier": "Eliminar el expediente",
+    "deleteDossierMessage": "¿Eliminar \"{{name}}\"? Esta acción es irreversible."
   },
   "rename": {
     "title": "Renombrar",
     "rename": "Renombrar",
     "renaming": "Renombrando...",
     "label": "Nombre",
-    "renameInvestigation": "Renombrar la investigación",
+    "renameDossier": "Renombrar el expediente",
     "namePlaceholder": "Nuevo nombre"
   },
   "importIntoCurrent": {
-    "title": "Importar en la investigación",
-    "description": "Importar datos en la investigación actual. Los archivos ZIP se importarán en modo de colocación.",
+    "title": "Importar en el expediente",
+    "description": "Importar datos en el expediente actual. Los archivos ZIP se importarán en modo de colocación.",
     "selectFile": "Seleccionar un archivo",
     "emptyZip": "El archivo ZIP está vacío o no contiene elementos"
   },
   "import": {
-    "title": "Importar una investigación",
+    "title": "Importar un expediente",
     "dropzone": "Suelte un archivo o haga clic para seleccionar",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogía: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar en",
-    "newInvestigation": "Nueva investigación",
+    "newDossier": "Nuevo expediente",
     "selectFile": "Seleccionar un archivo",
     "importing": "Importando...",
     "success": "Importación exitosa",
@@ -56,7 +56,7 @@
     "andMore": "... y {{count}} más"
   },
   "export": {
-    "title": "Exportar la investigación",
+    "title": "Exportar el expediente",
     "description": "Exportar \"{{name}}\" ({{elements}} elementos, {{links}} enlaces)",
     "format": "Formato",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Contenido almacenado",
-      "investigations": "Investigaciones",
+      "dossiers": "Expedientes",
       "elements": "Elementos",
       "links": "Enlaces",
       "files": "Archivos"
@@ -278,11 +278,11 @@
       "title": "Copia de seguridad completa",
       "exportAll": "Exportar todo",
       "import": "Importar",
-      "description": "Todas las investigaciones, archivos y tags. La importación añade sin reemplazar.",
+      "description": "Todas las expedientes, archivos y tags. La importación añade sin reemplazar.",
       "exporting": "Exportando...",
       "importing": "Importando...",
       "exportSuccess": "Exportación completada",
-      "importSuccess": "Importación exitosa: {{investigations}} investigación(es), {{elements}} elemento(s), {{links}} enlace(s)",
+      "importSuccess": "Importación exitosa: {{dossiers}} expediente(s), {{elements}} elemento(s), {{links}} enlace(s)",
       "error": "Error"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Almacenamiento local de datos",
     "warning": "Sus datos se almacenan localmente",
-    "description": "Todas las investigaciones y archivos se guardan en el almacenamiento de su navegador (IndexedDB y OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Recomendación:</strong> Exporte regularmente sus investigaciones mediante el botón \"Exportar\" para conservar una copia de seguridad de sus datos.",
+    "description": "Todas las expedientes y archivos se guardan en el almacenamiento de su navegador (IndexedDB y OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Recomendación:</strong> Exporte regularmente sus expedientes mediante el botón \"Exportar\" para conservar una copia de seguridad de sus datos.",
     "acknowledge": "Lo he entendido",
     "bullets": {
       "deleted": "Los datos pueden ser <strong class=\"text-text-primary\">eliminados</strong> si vacía la caché de su navegador",
@@ -309,7 +309,7 @@
     "title": "Generar síntesis",
     "reportTitle": "Título de la síntesis",
     "contentToInclude": "Contenido a incluir",
-    "includeDescription": "Descripción de la investigación",
+    "includeDescription": "Descripción de el expediente",
     "includeSummary": "Resumen estadístico",
     "includeInsights": "Análisis del grafo (clusters, centralidad)",
     "includeTimeline": "Cronología de eventos",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://su-servidor.ejemplo.com",
     "save": "Guardar",
     "serverHelp": "Use un servidor compatible con y-websocket. Puede alojar el suyo con",
-    "shareDescription": "Comparta esta investigación para colaborar en tiempo real. Cada participante verá las modificaciones instantáneamente.",
+    "shareDescription": "Comparta este expediente para colaborar en tiempo real. Cada participante verá las modificaciones instantáneamente.",
     "asyncMode": "Colaboración asíncrona",
     "asyncModeHelp": "Permite a los colaboradores trabajar en diferentes momentos. Los cambios se conservan 7 días en el servidor.",
     "serverRequired": "Configure primero un servidor de sincronización para activar el uso compartido.",
@@ -432,8 +432,8 @@
     "stopSharing": "Dejar de compartir",
     "stopping": "Deteniendo..."
   },
-  "investigationTags": {
-    "title": "Tags de investigación",
+  "dossierTags": {
+    "title": "Tags de expediente",
     "currentTags": "Tags actuales",
     "noTags": "Sin tags",
     "addTag": "Añadir tag",
@@ -530,7 +530,7 @@
       "risks": [
         "Contraseña olvidada = datos permanentemente inaccesibles, sin excepciones",
         "Sin recuperación posible — ni por nosotros, ni por su navegador",
-        "Exporte sus investigaciones como ZIP antes de activar",
+        "Exporte sus expedientes como ZIP antes de activar",
         "El cifrado se aplica a IndexedDB y archivos adjuntos (OPFS)"
       ]
     },

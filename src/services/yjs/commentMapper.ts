@@ -17,7 +17,7 @@ export function commentToYMap(comment: Comment): Y.Map<any> {
   const map = new Y.Map();
 
   map.set('id', comment.id);
-  map.set('investigationId', comment.investigationId);
+  map.set('dossierId', comment.dossierId);
   map.set('targetId', comment.targetId);
   map.set('targetType', comment.targetType);
   map.set('authorName', comment.authorName);
@@ -41,7 +41,7 @@ export function commentToYMap(comment: Comment): Y.Map<any> {
 export function yMapToComment(ymap: Y.Map<any>): Comment {
   return {
     id: ymap.get('id') || '',
-    investigationId: ymap.get('investigationId') || '',
+    dossierId: ymap.get('dossierId') || '',
     targetId: ymap.get('targetId') || '',
     targetType: (ymap.get('targetType') as CommentTargetType) || 'element',
     authorName: ymap.get('authorName') || '',

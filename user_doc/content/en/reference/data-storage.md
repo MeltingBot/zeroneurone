@@ -13,7 +13,7 @@ ZeroNeurone uses two browser storage technologies:
 
 | Technology | Usage | Data |
 |------------|-------|------|
-| **IndexedDB** | Database | Metadata (elements, links, investigations) |
+| **IndexedDB** | Database | Metadata (elements, links, dossiers) |
 | **OPFS** | File system | Attached files (images, PDFs) |
 
 
@@ -25,7 +25,7 @@ ZeroNeurone uses two browser storage technologies:
 
 | Table | Content |
 |-------|---------|
-| `investigations` | Investigations and settings |
+| `investigations` | Dossiers and settings |
 | `elements` | Graph elements |
 | `links` | Links between elements |
 | `views` | Saved views |
@@ -108,7 +108,7 @@ navigator.storage.persisted().then(console.log)
 ### Regular Export
 
 {{< hint warning >}}
-**Important**: Regularly export your investigations as ZIP to have an external backup.
+**Important**: Regularly export your dossiers as ZIP to have an external backup.
 {{< /hint >}}
 
 ### Loss Risks
@@ -153,7 +153,7 @@ Click the lock icon (home page) to enable, change, or disable encryption.
 
 ### What Is Encrypted
 
-When encryption is active, all tables in the `zeroneurone` database containing investigation data are encrypted, as well as OPFS attached files. Data is only readable after entering the password at startup.
+When encryption is active, all tables in the `zeroneurone` database containing dossier data are encrypted, as well as OPFS attached files. Data is only readable after entering the password at startup.
 
 ### DevTools Inspection
 
@@ -176,15 +176,15 @@ If the application doesn't load:
 
 ### Insufficient Space
 
-1. Delete unused investigations
+1. Delete unused dossiers
 2. Delete large attached files
-3. Export as ZIP then delete the investigation
+3. Export as ZIP then delete the dossier
 
 ### Migration
 
 To change browser or machine:
 
-1. Export all investigations as ZIP
+1. Export all dossiers as ZIP
 2. Install on new browser
 3. Import the ZIPs
 

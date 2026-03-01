@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Hasierara itzuli",
-    "newInvestigation": "Ikerketa berria",
+    "newDossier": "Espediente berria",
     "manageTags": "Etiketak kudeatu",
     "import": "Inportatu",
     "about": "Honi buruz",
@@ -10,10 +10,10 @@
     "storage": "Biltegiratzea",
     "darkMode": "Modu iluna",
     "lightMode": "Modu argia",
-    "noInvestigations": "Ikerketarik ez",
-    "createFirst": "Sortu zure lehen ikerketa hasteko",
-    "viewInvestigations": "Ikerketak ikusi",
-    "investigationCount": "{{count}} ikerketa",
+    "noDossiers": "Espedienterik ez",
+    "createFirst": "Sortu zure lehen espediente hasteko",
+    "viewDossiers": "Espedientek ikusi",
+    "dossierCount": "{{count}} espediente",
     "loading": "Kargatzen...",
     "searchPlaceholder": "Izenaren edo deskribapenen arabera bilatu...",
     "filterByTag": "Etiketaren arabera iragazi",
@@ -22,9 +22,9 @@
     "sortName": "Izena",
     "activeFilters": "Iragazki aktiboak",
     "clearFilters": "Garbitu",
-    "noResults": "Ez da ikerketarik aurkitu",
+    "noResults": "Ez da espedienterik aurkitu",
     "noResultsHint": "Saiatu beste termino batzuekin edo garbitu iragazkiak",
-    "resultsCount": "{{count}} / {{total}} ikerketa",
+    "resultsCount": "{{count}} / {{total}} espediente",
     "card": {
       "modified": "Aldatua {{time}}",
       "elementCount": "{{count}} elementu",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Arbela analista eta ikertzaileentzat",
       "description": "Kode irekiko tresna kognitibo indargarria, arbel baten sinpletasuna grafo analisiaren indarrarekin konbinatzen duena. Mapatu zure ideiak, geolokalizatu zure elementuak, bistaratu gertaerak, lotu pistak eta ezkutuko patroiak azaldu.",
-      "startNew": "Ikerketa berria",
+      "startNew": "Espediente berria",
       "importExisting": "Inportatu",
-      "viewExisting": "Nire {{count}} ikerketa ikusi",
+      "viewExisting": "Nire {{count}} espediente ikusi",
       "features": {
         "graph": {
           "title": "Erlazio-grafoa",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Lankidetza segurua denbora errealean",
-          "description": "Lan egin beste batzuekin ikerketa berean"
+          "description": "Lan egin beste batzuekin espediente berean"
         }
       },
       "extensions": "Hedapenak",
@@ -76,7 +76,7 @@
       "disablePlugin": "Hedapena desgaitu"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Irekitzen",
       "syncing": "Sinkronizatzen",
@@ -222,7 +222,7 @@
       "exportSuccess": "Esportazioa bukatuta",
       "exportError": "Errorea esportatzean"
     },
-    "notFound": "Ikerketa ez da aurkitu",
+    "notFound": "Espediente ez da aurkitu",
     "header": {
       "report": "Sintesia",
       "generateReport": "Sintesia",
@@ -258,9 +258,9 @@
       "navigateTo": "{{name}} fitxara joan"
     },
     "retentionExpiredBanner": "Atxikipena iraungita duela {{days}} egun",
-    "retentionDeleteConfirm": "Ikerketa hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",
+    "retentionDeleteConfirm": "Espediente hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",
     "retentionDeleteAction": "Ezabatu behin betiko",
-    "retentionReadonly": "Ikerketa irakurtzeko soilik (atxikipena iraungita)",
+    "retentionReadonly": "Espediente irakurtzeko soilik (atxikipena iraungita)",
     "retentionRedactConfirm": "Zentzurak testu-eduki guztiak betiko ezabatuko ditu (izenak, oharrak, propietateak). Grafoaren egitura mantenduko da. Ekintza hau itzulezina da.",
     "retentionRedactAction": "Behin betiko zentzuratu"
   },

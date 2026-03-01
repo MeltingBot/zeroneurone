@@ -8,7 +8,7 @@
  * - Thumbnails of image assets
  */
 
-import type { Element, Link, Asset, Investigation, Report, Position } from '../types';
+import type { Element, Link, Asset, Dossier, Report, Position } from '../types';
 import { fileService } from './fileService';
 
 // CSS variable to hex color map (same as svgExportService)
@@ -450,7 +450,7 @@ function buildElementDetails(elements: Element[], thumbnails: Record<string, str
 
 // Main export function
 export async function exportInteractiveReport(
-  investigation: Investigation,
+  dossier: Dossier,
   report: Report,
   elements: Element[],
   links: Link[],
@@ -494,12 +494,12 @@ export async function exportInteractiveReport(
 
   // Assemble full HTML
   const html = buildFullHTML({
-    title: report.title || investigation.name,
-    investigationName: investigation.name,
-    investigationDescription: investigation.description || '',
-    investigationCreatedAt: investigation.createdAt instanceof Date
-      ? investigation.createdAt.toISOString()
-      : investigation.createdAt,
+    title: report.title || dossier.name,
+    dossierName: dossier.name,
+    dossierDescription: dossier.description || '',
+    dossierCreatedAt: dossier.createdAt instanceof Date
+      ? dossier.createdAt.toISOString()
+      : dossier.createdAt,
     reportHtml,
     reportMarkdown,
     graphSvg,
@@ -516,9 +516,9 @@ export async function exportInteractiveReport(
 
 interface HTMLParams {
   title: string;
-  investigationName: string;
-  investigationDescription: string;
-  investigationCreatedAt: string;
+  dossierName: string;
+  dossierDescription: string;
+  dossierCreatedAt: string;
   reportHtml: string;
   reportMarkdown: string;
   graphSvg: string;
@@ -663,10 +663,10 @@ main[data-active-tab="graph"] #graph-panel{display:block;width:100%;height:100%}
 </style></head>
 <body><div id="app">
 <header><a href="https://zeroneurone.com" target="_blank" rel="noopener" class="logo" title="ZeroNeurone"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="currentColor" fill-opacity="0.1"/><text x="6" y="22" font-family="system-ui" font-size="14" font-weight="700" fill="currentColor">0-1</text></svg></a>
-<h1>${escapeXml(params.investigationName)}</h1>
+<h1>${escapeXml(params.dossierName)}</h1>
 <div class="actions"><button id="search-btn" class="header-btn" title="Rechercher (Ctrl+K)">&#x2315;</button><div class="tag-filter-wrap"><button id="tag-btn" class="header-btn" title="Filtrer par tags" style="display:none;">&#x25cb;</button><div id="tag-popover"></div></div><button id="layout-toggle" class="header-btn" title="Inverser la disposition">&#x21C4;</button><button id="export-md" class="header-btn" title="Export Markdown">MD</button><button id="info-btn" class="header-btn" title="Informations">i</button><button id="theme-toggle" class="header-btn" title="Theme">☀</button></div>
 </header>
-<div id="info-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h2>Informations</h2><button class="modal-close" id="modal-close">&times;</button></div><div class="modal-body"><dl><dt>Investigation</dt><dd>${escapeXml(params.investigationName)}</dd><dt>Creee le</dt><dd>${new Date(params.investigationCreatedAt).toLocaleDateString('fr-FR')}</dd><dt>Exportee le</dt><dd>${new Date(params.exportDate).toLocaleDateString('fr-FR')}</dd></dl><div class="stats"><span>${params.elementCount} elements</span><span>${params.linkCount} liens</span>${params.groupCount > 0 ? `<span>${params.groupCount} groupes</span>` : ''}</div>${params.investigationDescription ? `<div class="description"><p>${escapeXml(params.investigationDescription)}</p></div>` : ''}</div><div class="modal-footer"><a href="https://zeroneurone.com" target="_blank" rel="noopener">zeroneurone.com</a></div></div></div>
+<div id="info-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h2>Informations</h2><button class="modal-close" id="modal-close">&times;</button></div><div class="modal-body"><dl><dt>Dossier</dt><dd>${escapeXml(params.dossierName)}</dd><dt>Creee le</dt><dd>${new Date(params.dossierCreatedAt).toLocaleDateString('fr-FR')}</dd><dt>Exportee le</dt><dd>${new Date(params.exportDate).toLocaleDateString('fr-FR')}</dd></dl><div class="stats"><span>${params.elementCount} elements</span><span>${params.linkCount} liens</span>${params.groupCount > 0 ? `<span>${params.groupCount} groupes</span>` : ''}</div>${params.dossierDescription ? `<div class="description"><p>${escapeXml(params.dossierDescription)}</p></div>` : ''}</div><div class="modal-footer"><a href="https://zeroneurone.com" target="_blank" rel="noopener">zeroneurone.com</a></div></div></div>
 <div id="search-overlay"><div id="search-box"><input id="search-input" type="text" placeholder="Rechercher un element..." autocomplete="off"/><div id="search-results"></div></div></div>
 <nav id="mobile-tabs"><button class="tab active" data-tab="report">Rapport</button><button class="tab" data-tab="graph">Graphe</button></nav>
 <main data-active-tab="report">

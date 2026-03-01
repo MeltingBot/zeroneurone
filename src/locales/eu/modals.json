@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Ikerketa berria",
-    "namePlaceholder": "Ikerketaren izena",
+  "createDossier": {
+    "title": "Espediente berria",
+    "namePlaceholder": "Espedienteren izena",
     "descriptionPlaceholder": "Deskribapena (aukerakoa)",
-    "create": "Ikerketa sortu"
+    "create": "Espediente sortu"
   },
   "confirmDelete": {
     "title": "Ezabatu",
     "message": "Ekintza hau itzulezina da.",
     "confirm": "Ezabatu",
     "deleting": "Ezabatzen...",
-    "deleteInvestigation": "Ikerketa ezabatu",
-    "deleteInvestigationMessage": "\"{{name}}\" ezabatu? Ekintza hau itzulezina da."
+    "deleteDossier": "Espediente ezabatu",
+    "deleteDossierMessage": "\"{{name}}\" ezabatu? Ekintza hau itzulezina da."
   },
   "rename": {
     "title": "Izena aldatu",
     "rename": "Izena aldatu",
     "renaming": "Izena aldatzen...",
     "label": "Izena",
-    "renameInvestigation": "Ikerketaren izena aldatu",
+    "renameDossier": "Espedienteren izena aldatu",
     "namePlaceholder": "Izen berria"
   },
   "importIntoCurrent": {
-    "title": "Ikerketara inportatu",
-    "description": "Datuak uneko ikerketara inportatu. ZIP fitxategiak kokapen moduan inportatuko dira.",
+    "title": "Espedientera inportatu",
+    "description": "Datuak uneko espedientera inportatu. ZIP fitxategiak kokapen moduan inportatuko dira.",
     "selectFile": "Fitxategi bat hautatu",
     "emptyZip": "ZIP fitxategia hutsik dago edo ez du elementurik"
   },
   "import": {
-    "title": "Ikerketa inportatu",
+    "title": "Espediente inportatu",
     "dropzone": "Jaregin fitxategia edo egin klik hautatzeko",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Hona inportatu",
-    "newInvestigation": "Ikerketa berria",
+    "newDossier": "Espediente berria",
     "selectFile": "Fitxategia hautatu",
     "importing": "Inportatzen...",
     "success": "Inportazioa arrakastatsua",
@@ -56,7 +56,7 @@
     "andMore": "... eta beste {{count}}"
   },
   "export": {
-    "title": "Ikerketa esportatu",
+    "title": "Espediente esportatu",
     "description": "\"{{name}}\" esportatu ({{elements}} elementu, {{links}} lotura)",
     "format": "Formatua",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Gordetako edukia",
-      "investigations": "Ikerketak",
+      "dossiers": "Espedientek",
       "elements": "Elementuak",
       "links": "Loturak",
       "files": "Fitxategiak"
@@ -278,11 +278,11 @@
       "title": "Babeskopia osoa",
       "exportAll": "Dena esportatu",
       "import": "Inportatu",
-      "description": "Ikerketa, fitxategi eta etiketa guztiak. Inportazioak gehitzen du, ez du ordezkatzen.",
+      "description": "Espediente, fitxategi eta etiketa guztiak. Inportazioak gehitzen du, ez du ordezkatzen.",
       "exporting": "Esportatzen...",
       "importing": "Inportatzen...",
       "exportSuccess": "Esportazioa bukatuta",
-      "importSuccess": "Inportazioa arrakastatsua: {{investigations}} ikerketa, {{elements}} elementu, {{links}} lotura",
+      "importSuccess": "Inportazioa arrakastatsua: {{dossiers}} espediente, {{elements}} elementu, {{links}} lotura",
       "error": "Errorea"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Datuen biltegiratze lokala",
     "warning": "Zure datuak lokalean gordetzen dira",
-    "description": "Ikerketa eta fitxategi guztiak zure nabigatzailearen biltegian gordetzen dira (IndexedDB eta OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Gomendioa:</strong> Esportatu zure ikerketak aldizka \"Esportatu\" botoia erabiliz zure datuen babeskopia mantentzeko.",
+    "description": "Espediente eta fitxategi guztiak zure nabigatzailearen biltegian gordetzen dira (IndexedDB eta OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Gomendioa:</strong> Esportatu zure espedienteak aldizka \"Esportatu\" botoia erabiliz zure datuen babeskopia mantentzeko.",
     "acknowledge": "Ulertuta",
     "bullets": {
       "deleted": "Datuak <strong class=\"text-text-primary\">ezabatu</strong> daitezke nabigatzailearen cachea garbitzen baduzu",
@@ -309,7 +309,7 @@
     "title": "Sintesia sortu",
     "reportTitle": "Sintesiaren izenburua",
     "contentToInclude": "Sartu beharreko edukia",
-    "includeDescription": "Ikerketaren deskribapena",
+    "includeDescription": "Espedienteren deskribapena",
     "includeSummary": "Laburpen estatistikoa",
     "includeInsights": "Grafo analisia (clusterrak, zentralitatea)",
     "includeTimeline": "Gertaeren kronologia",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://zure-zerbitzaria.adibidea.com",
     "save": "Gorde",
     "serverHelp": "Erabili y-websocket bateragarria den zerbitzari bat. Zurea ostatatu dezakezu honekin",
-    "shareDescription": "Partekatu ikerketa hau denbora errealean lankidetzan aritzeko. Partaide bakoitzak aldaketak berehala ikusiko ditu.",
+    "shareDescription": "Partekatu espediente hau denbora errealean lankidetzan aritzeko. Partaide bakoitzak aldaketak berehala ikusiko ditu.",
     "asyncMode": "Lankidetza asinkronoa",
     "asyncModeHelp": "Lankideei une ezberdinetan lan egitea ahalbidetzen die. Aldaketak zerbitzarian 7 egunez gordetzen dira.",
     "serverRequired": "Lehenik sinkronizazio zerbitzari bat konfiguratu partekatzea aktibatzeko.",
@@ -432,8 +432,8 @@
     "stopSharing": "Partekatzeari utzi",
     "stopping": "Gelditzen..."
   },
-  "investigationTags": {
-    "title": "Ikerketaren etiketak",
+  "dossierTags": {
+    "title": "Espedienteren etiketak",
     "currentTags": "Uneko etiketak",
     "noTags": "Etiketarik ez",
     "addTag": "Etiketa gehitu",
@@ -530,7 +530,7 @@
       "risks": [
         "Pasahitz ahaztu = datuak betiko eskuraezin, salbuespen gabe",
         "Ezinezkoa da berreskuratzea — ez guk, ez nabigatzaileak",
-        "Esportatu zure ikerketak ZIP gisa gaitu aurretik",
+        "Esportatu zure espedienteak ZIP gisa gaitu aurretik",
         "Enkriptatzea IndexedDB eta erantsitako fitxategiei (OPFS) aplikatzen zaie"
       ]
     },

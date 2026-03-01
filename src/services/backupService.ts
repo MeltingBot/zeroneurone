@@ -3,13 +3,13 @@ import { db } from '../db/database';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
 import type {
-  Investigation,
+  Dossier,
   Element,
   Link,
   View,
   Report,
   TagSet,
-  InvestigationId,
+  DossierId,
   AssetId,
   ElementId,
 } from '../types';
@@ -19,7 +19,7 @@ const BACKUP_VERSION = '1.0.0';
 interface BackupData {
   version: string;
   exportedAt: string;
-  investigations: Investigation[];
+  dossiers: Dossier[];
   elements: Element[];
   links: Link[];
   assets: AssetMetadata[];
@@ -30,7 +30,7 @@ interface BackupData {
 
 interface AssetMetadata {
   id: string;
-  investigationId: string;
+  dossierId: string;
   filename: string;
   mimeType: string;
   size: number;
@@ -46,9 +46,9 @@ class BackupService {
     const zip = new JSZip();
 
     // Load all data from IndexedDB
-    const [investigations, elements, links, assets, views, reports, tagSets] =
+    const [dossiers, elements, links, assets, views, reports, tagSets] =
       await Promise.all([
-        db.investigations.toArray(),
+        db.dossiers.toArray(),
         db.elements.toArray(),
         db.links.toArray(),
         db.assets.toArray(),
@@ -75,7 +75,7 @@ class BackupService {
         // Store metadata
         assetsMetadata.push({
           id: asset.id,
-          investigationId: asset.investigationId,
+          dossierId: asset.dossierId,
           filename: asset.filename,
           mimeType: asset.mimeType,
           size: asset.size,
@@ -91,7 +91,7 @@ class BackupService {
     const backupData: BackupData = {
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
-      investigations,
+      dossiers,
       elements,
       links,
       assets: assetsMetadata,
@@ -116,7 +116,7 @@ class BackupService {
     onProgress?: (message: string) => void
   ): Promise<{
     success: boolean;
-    investigations: number;
+    dossiers: number;
     elements: number;
     links: number;
     assets: number;
@@ -124,7 +124,7 @@ class BackupService {
   }> {
     const result = {
       success: false,
-      investigations: 0,
+      dossiers: 0,
       elements: 0,
       links: 0,
       assets: 0,
@@ -144,32 +144,40 @@ class BackupService {
 
       onProgress?.('Analyse des données...');
       const jsonContent = await jsonFile.async('string');
-      const data = JSON.parse(jsonContent) as BackupData;
+      const rawData = JSON.parse(jsonContent);
+
+      // Legacy compat: normalize 'investigations' key → 'dossiers'
+      if (rawData.investigations && !rawData.dossiers) {
+        rawData.dossiers = rawData.investigations;
+        delete rawData.investigations;
+      }
+
+      const data = rawData as BackupData;
 
       // Validate structure
-      if (!data.version || !data.investigations) {
+      if (!data.version || !data.dossiers) {
         result.errors.push('Format de sauvegarde invalide');
         return result;
       }
 
       // Create ID mappings (old ID -> new ID)
-      const investigationIdMap = new Map<InvestigationId, InvestigationId>();
+      const dossierIdMap = new Map<DossierId, DossierId>();
       const elementIdMap = new Map<ElementId, ElementId>();
       const assetIdMap = new Map<AssetId, AssetId>();
 
-      // Import investigations
-      onProgress?.('Import des enquêtes...');
-      for (const inv of data.investigations) {
+      // Import dossiers
+      onProgress?.('Import des dossiers...');
+      for (const inv of data.dossiers) {
         const newId = generateUUID();
-        investigationIdMap.set(inv.id, newId);
+        dossierIdMap.set(inv.id, newId);
 
-        await db.investigations.add({
+        await db.dossiers.add({
           ...inv,
           id: newId,
           createdAt: new Date(inv.createdAt),
           updatedAt: new Date(inv.updatedAt),
         });
-        result.investigations++;
+        result.dossiers++;
       }
 
       // Import assets
@@ -180,14 +188,14 @@ class BackupService {
           if (!assetFile) continue;
 
           const arrayBuffer = await assetFile.async('arraybuffer');
-          const newInvestigationId = investigationIdMap.get(assetMeta.investigationId);
-          if (!newInvestigationId) continue;
+          const newDossierId = dossierIdMap.get(assetMeta.dossierId);
+          if (!newDossierId) continue;
 
           // Create File object and save via fileService
           const fileObj = new File([arrayBuffer], assetMeta.filename, {
             type: assetMeta.mimeType,
           });
-          const savedAsset = await fileService.saveAsset(newInvestigationId, fileObj);
+          const savedAsset = await fileService.saveAsset(newDossierId, fileObj);
           assetIdMap.set(assetMeta.id, savedAsset.id);
           result.assets++;
         } catch (error) {
@@ -199,8 +207,8 @@ class BackupService {
       onProgress?.('Import des éléments...');
       for (const element of data.elements) {
         const newId = generateUUID();
-        const newInvestigationId = investigationIdMap.get(element.investigationId);
-        if (!newInvestigationId) continue;
+        const newDossierId = dossierIdMap.get(element.dossierId);
+        if (!newDossierId) continue;
 
         elementIdMap.set(element.id, newId);
 
@@ -212,7 +220,7 @@ class BackupService {
         await db.elements.add({
           ...element,
           id: newId,
-          investigationId: newInvestigationId,
+          dossierId: newDossierId,
           assetIds: newAssetIds,
           parentGroupId: null, // Reset group relations
           childIds: [],
@@ -226,16 +234,16 @@ class BackupService {
       // Import links
       onProgress?.('Import des liens...');
       for (const link of data.links) {
-        const newInvestigationId = investigationIdMap.get(link.investigationId);
+        const newDossierId = dossierIdMap.get(link.dossierId);
         const newFromId = elementIdMap.get(link.fromId);
         const newToId = elementIdMap.get(link.toId);
 
-        if (!newInvestigationId || !newFromId || !newToId) continue;
+        if (!newDossierId || !newFromId || !newToId) continue;
 
         await db.links.add({
           ...link,
           id: generateUUID(),
-          investigationId: newInvestigationId,
+          dossierId: newDossierId,
           fromId: newFromId,
           toId: newToId,
           date: link.date ? new Date(link.date) : null,
@@ -248,32 +256,32 @@ class BackupService {
       // Import views
       onProgress?.('Import des vues...');
       for (const view of data.views || []) {
-        const newInvestigationId = investigationIdMap.get(view.investigationId);
-        if (!newInvestigationId) continue;
+        const newDossierId = dossierIdMap.get(view.dossierId);
+        if (!newDossierId) continue;
 
         await db.views.add({
           ...view,
           id: generateUUID(),
-          investigationId: newInvestigationId,
+          dossierId: newDossierId,
           createdAt: new Date(view.createdAt),
         });
       }
 
       // Import reports
       for (const report of data.reports || []) {
-        const newInvestigationId = investigationIdMap.get(report.investigationId);
-        if (!newInvestigationId) continue;
+        const newDossierId = dossierIdMap.get(report.dossierId);
+        if (!newDossierId) continue;
 
         await db.reports.add({
           ...report,
           id: generateUUID(),
-          investigationId: newInvestigationId,
+          dossierId: newDossierId,
           createdAt: new Date(report.createdAt),
           updatedAt: new Date(report.updatedAt),
         });
       }
 
-      // Import tag sets (global, no investigation ID mapping needed)
+      // Import tag sets (global, no dossier ID mapping needed)
       onProgress?.('Import des tags...');
       for (const tagSet of data.tagSets || []) {
         // Check if tag set with same name already exists

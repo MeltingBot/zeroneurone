@@ -59,7 +59,7 @@ async function enableEncryptionFlow(page: Page, password: string) {
 
   // Attendre que l'app soit déverrouillée et accessible
   await page.waitForSelector(
-    '[data-testid="landing-section"], [data-testid="investigation-list"]',
+    '[data-testid="landing-section"], [data-testid="dossier-list"]',
     { timeout: 15_000 }
   );
 
@@ -142,8 +142,8 @@ test.describe('Chiffrement at-rest', () => {
     await page.reload();
     await unlockFromPasswordModal(page, TEST_PASSWORD);
 
-    // L'app doit être accessible (landing ou liste investigations)
-    await page.waitForSelector('[data-testid="landing-section"], [data-testid="investigation-list"]', {
+    // L'app doit être accessible (landing ou liste dossiers)
+    await page.waitForSelector('[data-testid="landing-section"], [data-testid="dossier-list"]', {
       timeout: 15_000,
     });
   });
@@ -193,7 +193,7 @@ test.describe('Chiffrement at-rest', () => {
     // Vérifier que le nouveau mot de passe fonctionne : recharger et unlock
     await page.reload();
     await unlockFromPasswordModal(page, NEW_PASSWORD);
-    await page.waitForSelector('[data-testid="landing-section"], [data-testid="investigation-list"]', {
+    await page.waitForSelector('[data-testid="landing-section"], [data-testid="dossier-list"]', {
       timeout: 15_000,
     });
   });
@@ -230,7 +230,7 @@ test.describe('Chiffrement at-rest', () => {
     // L'app se rechargera automatiquement (setTimeout 1500ms dans DisableView)
     // Attendre le rechargement
     await page.waitForLoadState('load', { timeout: 15_000 });
-    await page.waitForSelector('[data-testid="landing-section"], [data-testid="investigation-list"]', {
+    await page.waitForSelector('[data-testid="landing-section"], [data-testid="dossier-list"]', {
       timeout: 15_000,
     });
 
@@ -263,14 +263,14 @@ test.describe('Chiffrement at-rest', () => {
   // =========================================================================
 
   test('les données créées avant lock sont accessibles après unlock', async ({ page }) => {
-    const { createTestInvestigation } = await import('./fixtures/test-utils');
+    const { createTestDossier } = await import('./fixtures/test-utils');
 
-    // Créer une investigation en clair
-    await createTestInvestigation(page, 'Investigation Test Chiffrement');
+    // Créer une dossier en clair
+    await createTestDossier(page, 'Dossier Test Chiffrement');
 
     // Retourner à l'accueil via navigation
     await page.goto('/');
-    await page.waitForSelector('[data-testid="landing-section"], [data-testid="investigation-list"]', {
+    await page.waitForSelector('[data-testid="landing-section"], [data-testid="dossier-list"]', {
       timeout: 15_000,
     });
 
@@ -285,21 +285,21 @@ test.describe('Chiffrement at-rest', () => {
 
     // Attendre que l'app soit déverrouillée
     await page.waitForSelector(
-      '[data-testid="landing-section"], [data-testid="investigation-list"]',
+      '[data-testid="landing-section"], [data-testid="dossier-list"]',
       { timeout: 15_000 }
     );
 
     // Si la landing section est affichée (viewMode initial = 'landing'),
-    // naviguer vers la liste des investigations via le lien affiché
-    const viewLink = page.locator('[data-testid="view-investigations-link"]');
+    // naviguer vers la liste des dossiers via le lien affiché
+    const viewLink = page.locator('[data-testid="view-dossiers-link"]');
     if (await viewLink.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await viewLink.click();
     }
 
-    // La liste des investigations doit être visible et contenir notre investigation
-    await page.waitForSelector('[data-testid="investigation-list"]', { timeout: 10_000 });
-    await expect(page.locator('[data-testid="investigation-list"]')).toContainText(
-      'Investigation Test Chiffrement'
+    // La liste des dossiers doit être visible et contenir notre dossier
+    await page.waitForSelector('[data-testid="dossier-list"]', { timeout: 10_000 });
+    await expect(page.locator('[data-testid="dossier-list"]')).toContainText(
+      'Dossier Test Chiffrement'
     );
   });
 });

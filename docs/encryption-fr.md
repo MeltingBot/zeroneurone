@@ -4,12 +4,12 @@ Ce document décrit l'architecture, les primitives cryptographiques et le cycle 
 
 ## Pourquoi le chiffrement at-rest
 
-ZeroNeurone stocke des enquêtes potentiellement sensibles (personnes, organisations, lieux, documents) dans IndexedDB et OPFS. Ces bases sont lisibles par n'importe quel script de la même origine, et accessibles en clair via les DevTools du navigateur.
+ZeroNeurone stocke des dossiers potentiellement sensibles (personnes, organisations, lieux, documents) dans IndexedDB et OPFS. Ces bases sont lisibles par n'importe quel script de la même origine, et accessibles en clair via les DevTools du navigateur.
 
 Le chiffrement at-rest garantit que les données sont illisibles sans le mot de passe — même si quelqu'un a accès au profil du navigateur sur la machine.
 
 **Ce que le chiffrement protège :**
-- Le contenu des enquêtes (éléments, liens, assets, rapports, vues)
+- Le contenu des dossiers (éléments, liens, assets, rapports, vues)
 - Les fichiers joints (OPFS)
 - Les documents Yjs de collaboration (y-indexeddb)
 - Les données stockées par les plugins (`pluginData`)
@@ -104,7 +104,7 @@ Tweetnacl est utilisé pour sa propriété **synchrone** — les transactions In
 
 | Table | Contenu | Chiffrée |
 |-------|---------|----------|
-| `investigations` | Métadonnées des enquêtes | Oui |
+| `dossiers` | Métadonnées des dossiers | Oui |
 | `elements` | Nœuds du graphe | Oui |
 | `links` | Relations entre éléments | Oui |
 | `assets` | Métadonnées des fichiers joints | Oui |
@@ -134,7 +134,7 @@ Le header magique permet de détecter si un fichier est déjà chiffré (migrati
 
 ## Chiffrement des documents Yjs (y-indexeddb)
 
-Chaque investigation a une base IndexedDB `zeroneurone-ydoc-{id}` contenant les mises à jour Yjs pour la collaboration temps réel. Ces bases sont chiffrées lors de la migration, update par update, via leur propre mécanisme de chiffrement (couche distincte du middleware Dexie).
+Chaque dossier a une base IndexedDB `zeroneurone-ydoc-{id}` contenant les mises à jour Yjs pour la collaboration temps réel. Ces bases sont chiffrées lors de la migration, update par update, via leur propre mécanisme de chiffrement (couche distincte du middleware Dexie).
 
 ---
 

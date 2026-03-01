@@ -34,18 +34,18 @@ export async function clearIndexedDB(page: Page) {
  * Wait for the app to be fully loaded
  */
 export async function waitForAppLoad(page: Page) {
-  // Wait for either the landing page or the investigation list to appear
-  await page.waitForSelector('[data-testid="landing-section"], [data-testid="investigation-list"]', {
+  // Wait for either the landing page or the dossier list to appear
+  await page.waitForSelector('[data-testid="landing-section"], [data-testid="dossier-list"]', {
     timeout: 30000,
   });
 }
 
 /**
- * Create a new investigation from the home page
+ * Create a new dossier from the home page
  */
-export async function createTestInvestigation(page: Page, name: string, description = '') {
-  // Click new investigation button (handle both landing and list view)
-  const newButton = page.locator('[data-testid="new-investigation"]').first();
+export async function createTestDossier(page: Page, name: string, description = '') {
+  // Click new dossier button (handle both landing and list view)
+  const newButton = page.locator('[data-testid="new-dossier"]').first();
   await newButton.click();
 
   // Handle disclaimer modal if it appears (first time users)
@@ -53,16 +53,16 @@ export async function createTestInvestigation(page: Page, name: string, descript
   if (await disclaimerModal.isVisible({ timeout: 1000 }).catch(() => false)) {
     await disclaimerModal.click();
     // Wait for create modal to open after accepting disclaimer
-    await page.waitForSelector('[data-testid="investigation-name"]');
+    await page.waitForSelector('[data-testid="dossier-name"]');
   }
 
-  // Fill in investigation details
-  await page.fill('[data-testid="investigation-name"]', name);
+  // Fill in dossier details
+  await page.fill('[data-testid="dossier-name"]', name);
   if (description) {
-    await page.fill('[data-testid="investigation-description"]', description);
+    await page.fill('[data-testid="dossier-description"]', description);
   }
 
-  // Create the investigation
+  // Create the dossier
   await page.click('[data-testid="create-button"]');
 
   // Wait for navigation to the canvas

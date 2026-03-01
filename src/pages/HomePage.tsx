@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
-import { InvestigationCard, LandingSection } from '../components/home';
+import { DossierCard, LandingSection } from '../components/home';
 import {
-  CreateInvestigationModal,
+  CreateDossierModal,
   ConfirmDeleteModal,
   RenameModal,
   ImportModal,
@@ -14,12 +14,12 @@ import {
   StorageModal,
   LocalStorageDisclaimerModal,
   hasAcknowledgedLocalStorage,
-  InvestigationTagsModal,
+  DossierTagsModal,
   EncryptionModal,
 } from '../components/modals';
 import { useEncryptionStore } from '../stores/encryptionStore';
-import { useInvestigationStore, useUIStore } from '../stores';
-import { investigationRepository } from '../db/repositories';
+import { useDossierStore, useUIStore } from '../stores';
+import { dossierRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
 
 type ViewMode = 'landing' | 'list';
@@ -29,13 +29,13 @@ export function HomePage() {
   const { t } = useTranslation('pages');
   const navigate = useNavigate();
   const {
-    investigations,
+    dossiers,
     isLoading,
-    loadInvestigations,
-    createInvestigation,
-    updateInvestigation,
-    deleteInvestigation,
-  } = useInvestigationStore();
+    loadDossiers,
+    createDossier,
+    updateDossier,
+    deleteDossier,
+  } = useDossierStore();
 
   const { themeMode, toggleThemeMode } = useUIStore();
   const homePlugins = usePlugins('home:actions');
@@ -61,10 +61,10 @@ export function HomePage() {
   const [allTags, setAllTags] = useState<string[]>([]);
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
 
-  // Load all tags used across investigations
+  // Load all tags used across dossiers
   useEffect(() => {
-    investigationRepository.getAllTags().then(setAllTags);
-  }, [investigations]);
+    dossierRepository.getAllTags().then(setAllTags);
+  }, [dossiers]);
 
   // Handle opening create modal with disclaimer check
   const handleOpenCreateModal = () => {
@@ -82,45 +82,45 @@ export function HomePage() {
   };
 
   useEffect(() => {
-    loadInvestigations();
-  }, [loadInvestigations]);
+    loadDossiers();
+  }, [loadDossiers]);
 
-  // Set initial view mode based on whether there are investigations
+  // Set initial view mode based on whether there are dossiers
   useEffect(() => {
     if (!isLoading && viewMode === null) {
-      setViewMode(investigations.length > 0 ? 'list' : 'landing');
+      setViewMode(dossiers.length > 0 ? 'list' : 'landing');
     }
-  }, [isLoading, investigations.length, viewMode]);
+  }, [isLoading, dossiers.length, viewMode]);
 
   const handleCreate = async (name: string, description: string) => {
-    const investigation = await createInvestigation(name, description);
-    navigate(`/investigation/${investigation.id}`);
+    const dossier = await createDossier(name, description);
+    navigate(`/dossier/${dossier.id}`);
   };
 
   const handleDelete = async () => {
     if (deleteTarget) {
-      await deleteInvestigation(deleteTarget);
+      await deleteDossier(deleteTarget);
     }
   };
 
   const handleRename = async (newName: string) => {
     if (renameTarget) {
-      await updateInvestigation(renameTarget, { name: newName });
+      await updateDossier(renameTarget, { name: newName });
     }
   };
 
   const handleToggleFavorite = useCallback(async (id: string) => {
-    const inv = investigations.find((i) => i.id === id);
+    const inv = dossiers.find((i) => i.id === id);
     if (inv) {
-      await updateInvestigation(id, { isFavorite: !inv.isFavorite });
+      await updateDossier(id, { isFavorite: !inv.isFavorite });
     }
-  }, [investigations, updateInvestigation]);
+  }, [dossiers, updateDossier]);
 
   const handleSaveTags = useCallback(async (tags: string[]) => {
     if (tagsTarget) {
-      await updateInvestigation(tagsTarget, { tags });
+      await updateDossier(tagsTarget, { tags });
     }
-  }, [tagsTarget, updateInvestigation]);
+  }, [tagsTarget, updateDossier]);
 
   const handleTagFilterToggle = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -133,9 +133,9 @@ export function HomePage() {
     setSelectedTags([]);
   }, []);
 
-  // Filter and sort investigations
-  const filteredInvestigations = useMemo(() => {
-    let result = [...investigations];
+  // Filter and sort dossiers
+  const filteredDossiers = useMemo(() => {
+    let result = [...dossiers];
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -173,9 +173,9 @@ export function HomePage() {
     });
 
     return result;
-  }, [investigations, searchQuery, selectedTags, sortMode]);
+  }, [dossiers, searchQuery, selectedTags, sortMode]);
 
-  const targetInvestigation = investigations.find(
+  const targetDossier = dossiers.find(
     (inv) => inv.id === (deleteTarget || renameTarget || tagsTarget)
   );
 
@@ -199,7 +199,7 @@ export function HomePage() {
           <div className="flex items-center gap-2">
             {/* Plugin-provided actions */}
             {homePlugins.map((Plugin, i) => (
-              <Plugin key={i} context="investigations" />
+              <Plugin key={i} context="dossiers" />
             ))}
             <Button
               variant="ghost"
@@ -265,10 +265,10 @@ export function HomePage() {
               variant="primary"
               size="sm"
               onClick={handleOpenCreateModal}
-              data-testid="new-investigation"
+              data-testid="new-dossier"
             >
               <Plus size={16} />
-              {t('home.newInvestigation')}
+              {t('home.newDossier')}
             </Button>
           </div>
         </header>
@@ -284,25 +284,25 @@ export function HomePage() {
         </div>
       ) : viewMode === 'landing' ? (
         <LandingSection
-          onNewInvestigation={handleOpenCreateModal}
+          onNewDossier={handleOpenCreateModal}
           onImport={() => setIsImportModalOpen(true)}
           onAbout={() => setIsAboutModalOpen(true)}
-          investigationCount={investigations.length}
-          onViewInvestigations={() => setViewMode('list')}
+          dossierCount={dossiers.length}
+          onViewDossiers={() => setViewMode('list')}
           themeMode={themeMode}
           onToggleTheme={toggleThemeMode}
         />
       ) : (
-        <main className="flex-1 overflow-y-auto" data-testid="investigation-list">
+        <main className="flex-1 overflow-y-auto" data-testid="dossier-list">
           {/* Plugin banners */}
           {bannerPlugins.map((Banner, i) => (
             <Banner key={i} />
           ))}
           <div className="p-6">
-          {investigations.length === 0 ? (
+          {dossiers.length === 0 ? (
             <EmptyState
               icon={FolderOpen}
-              title={t('home.noInvestigations')}
+              title={t('home.noDossiers')}
               description={t('home.createFirst')}
               action={
                 <Button
@@ -310,7 +310,7 @@ export function HomePage() {
                   onClick={handleOpenCreateModal}
                 >
                   <Plus size={16} />
-                  {t('home.newInvestigation')}
+                  {t('home.newDossier')}
                 </Button>
               }
             />
@@ -433,13 +433,13 @@ export function HomePage() {
                 {/* Results count */}
                 {hasActiveFilters && (
                   <div className="text-xs text-text-tertiary">
-                    {t('home.resultsCount', { count: filteredInvestigations.length, total: investigations.length })}
+                    {t('home.resultsCount', { count: filteredDossiers.length, total: dossiers.length })}
                   </div>
                 )}
               </div>
 
-              {/* Investigation grid */}
-              {filteredInvestigations.length === 0 ? (
+              {/* Dossier grid */}
+              {filteredDossiers.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-sm text-text-secondary">{t('home.noResults')}</p>
                   <button
@@ -451,10 +451,10 @@ export function HomePage() {
                 </div>
               ) : (
                 <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredInvestigations.map((investigation) => (
-                    <InvestigationCard
-                      key={investigation.id}
-                      investigation={investigation}
+                  {filteredDossiers.map((dossier) => (
+                    <DossierCard
+                      key={dossier.id}
+                      dossier={dossier}
                       onDelete={setDeleteTarget}
                       onRename={setRenameTarget}
                       onToggleFavorite={handleToggleFavorite}
@@ -470,7 +470,7 @@ export function HomePage() {
       )}
 
       {/* Modals */}
-      <CreateInvestigationModal
+      <CreateDossierModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreate}
@@ -480,22 +480,22 @@ export function HomePage() {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title={t('modals:confirmDelete.deleteInvestigation')}
-        message={t('modals:confirmDelete.deleteInvestigationMessage', { name: targetInvestigation?.name })}
+        title={t('modals:confirmDelete.deleteDossier')}
+        message={t('modals:confirmDelete.deleteDossierMessage', { name: targetDossier?.name })}
       />
 
       <RenameModal
         isOpen={!!renameTarget}
         onClose={() => setRenameTarget(null)}
         onRename={handleRename}
-        currentName={targetInvestigation?.name || ''}
-        title={t('modals:rename.renameInvestigation')}
+        currentName={targetDossier?.name || ''}
+        title={t('modals:rename.renameDossier')}
       />
 
-      <InvestigationTagsModal
+      <DossierTagsModal
         isOpen={!!tagsTarget}
         onClose={() => setTagsTarget(null)}
-        investigation={targetInvestigation || null}
+        dossier={targetDossier || null}
         allTags={allTags}
         onSave={handleSaveTags}
       />

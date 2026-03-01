@@ -83,7 +83,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Import Excalidraw
 - Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques (nom, dates, lieux, profession, surnom, titre, notes)
 - Import ZIP (restauration complete avec onglets)
-- Import dans investigation courante (merge avec placement visuel)
+- Import dans dossier courante (merge avec placement visuel)
 - Panel Rapport (redaction Markdown avec references aux elements)
 - Generation de synthese (rapport automatique avec analyse du graphe)
 - [Format JSON d'import documente](docs/json-import-format-fr.md) ([EN](docs/json-import-format-en.md))
@@ -224,7 +224,7 @@ src/
 │   ├── modals/          # Dialogues modaux
 │   └── common/          # Composants partages
 ├── stores/              # Stores Zustand
-│   ├── investigationStore.ts   # Donnees (elements, liens, assets)
+│   ├── dossierStore.ts   # Donnees (elements, liens, assets)
 │   ├── selectionStore.ts       # Etat de selection
 │   ├── viewStore.ts            # Viewport, filtres, mode d'affichage
 │   ├── uiStore.ts              # Etat UI (modals, panels, toasts)
@@ -314,7 +314,7 @@ Ou deployer votre propre serveur y-websocket.
 ```typescript
 {
   id: UUID
-  investigationId: UUID
+  dossierId: UUID
   label: string
   notes: string
   tags: string[]
@@ -344,7 +344,7 @@ Ou deployer votre propre serveur y-websocket.
 ```typescript
 {
   id: UUID
-  investigationId: UUID
+  dossierId: UUID
   fromId: UUID
   toId: UUID
   label: string
@@ -380,7 +380,7 @@ Ou deployer votre propre serveur y-websocket.
 - [ ] Export des resultats d'analyse
 
 ### v1.2 — Integration ✓
-- [x] Import/merge d'investigations dans le canvas courant
+- [x] Import/merge d'dossiers dans le canvas courant
 - [ ] Import depuis tableur avec mapping colonnes
 
 ### v2.0 — Collaboration asynchrone ✓

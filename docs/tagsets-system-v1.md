@@ -12,7 +12,7 @@ Ce document spécifie le système de gestion des tags avec propriétés suggér�
 
 Un **TagSet** est une définition de tag réutilisable avec des propriétés suggérées.
 
-- Les TagSets sont **globaux** (partagés entre toutes les enquêtes)
+- Les TagSets sont **globaux** (partagés entre toutes les dossiers)
 - Les TagSets sont **optionnels** (l'utilisateur peut créer des tags libres sans TagSet)
 - Les propriétés sont **suggérées** (jamais obligatoires, jamais imposées)
 
@@ -106,7 +106,7 @@ type TagSetId = string; // UUID
 
 ### Stockage
 
-Les TagSets sont stockés dans IndexedDB, dans un store dédié **hors des enquêtes**.
+Les TagSets sont stockés dans IndexedDB, dans un store dédié **hors des dossiers**.
 
 ```typescript
 // Dans database.ts, ajouter le store
@@ -587,7 +587,7 @@ Ces TagSets sont conçus pour être ajoutés **en plus** d'un tag de base (Perso
 ```typescript
 {
   name: 'Suspect',
-  description: 'Statut dans l\'enquête',
+  description: 'Statut dans l\'dossier',
   defaultVisual: {
     color: '#f97316',  // Orange
     shape: null,
@@ -606,7 +606,7 @@ Ces TagSets sont conçus pour être ajoutés **en plus** d'un tag de base (Perso
 ```typescript
 {
   name: 'Témoin',
-  description: 'Statut dans l\'enquête',
+  description: 'Statut dans l\'dossier',
   defaultVisual: {
     color: '#06b6d4',  // Cyan
     shape: null,
@@ -625,7 +625,7 @@ Ces TagSets sont conçus pour être ajoutés **en plus** d'un tag de base (Perso
 ```typescript
 {
   name: 'Victime',
-  description: 'Statut dans l\'enquête',
+  description: 'Statut dans l\'dossier',
   defaultVisual: {
     color: '#8b5cf6',  // Violet
     shape: null,
@@ -933,7 +933,7 @@ function useSuggestedProperties(
   tagName: string
 ): UseSuggestedPropertiesResult {
   const { getByName } = useTagSetStore();
-  const { updateElement, getElementById } = useInvestigationStore();
+  const { updateElement, getElementById } = useDossierStore();
 
   const tagSet = getByName(tagName);
   const element = getElementById(elementId);

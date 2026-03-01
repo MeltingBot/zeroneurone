@@ -1,4 +1,4 @@
-export { investigationRepository } from './investigationRepository';
+export { dossierRepository } from './dossierRepository';
 export { elementRepository } from './elementRepository';
 export { linkRepository } from './linkRepository';
 export { tagSetRepository } from './tagSetRepository';

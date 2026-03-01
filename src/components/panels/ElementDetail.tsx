@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers } from 'lucide-react';
-import { useInvestigationStore, useTagSetStore, useTabStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore } from '../../stores';
 import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition } from '../../types';
 import { syncService } from '../../services/syncService';
 import { getYMaps } from '../../types/yjs';
@@ -50,15 +50,15 @@ function useDebounce<T>(value: T, delay: number): T {
 export function ElementDetail({ element }: ElementDetailProps) {
   const { t } = useTranslation('panels');
   // Individual selectors — prevent re-renders when unrelated store state changes
-  const updateElement = useInvestigationStore((s) => s.updateElement);
-  const createElement = useInvestigationStore((s) => s.createElement);
-  const createLink = useInvestigationStore((s) => s.createLink);
-  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
-  const addExistingTag = useInvestigationStore((s) => s.addExistingTag);
-  const addSuggestedProperty = useInvestigationStore((s) => s.addSuggestedProperty);
-  const associatePropertyWithTags = useInvestigationStore((s) => s.associatePropertyWithTags);
-  const comments = useInvestigationStore((s) => s.comments);
-  const togglePropertyDisplay = useInvestigationStore((s) => s.togglePropertyDisplay);
+  const updateElement = useDossierStore((s) => s.updateElement);
+  const createElement = useDossierStore((s) => s.createElement);
+  const createLink = useDossierStore((s) => s.createLink);
+  const currentDossier = useDossierStore((s) => s.currentDossier);
+  const addExistingTag = useDossierStore((s) => s.addExistingTag);
+  const addSuggestedProperty = useDossierStore((s) => s.addSuggestedProperty);
+  const associatePropertyWithTags = useDossierStore((s) => s.associatePropertyWithTags);
+  const comments = useDossierStore((s) => s.comments);
+  const togglePropertyDisplay = useDossierStore((s) => s.togglePropertyDisplay);
   const pushAction = useHistoryStore((s) => s.pushAction);
   const canvasTabs = useTabStore((s) => s.tabs);
   const setActiveTab = useTabStore((s) => s.setActiveTab);
@@ -132,7 +132,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
     // Fallback to Zustand if Y.Doc read failed
     if (!freshElement) {
-      freshElement = useInvestigationStore.getState().elements.find(el => el.id === element.id) ?? null;
+      freshElement = useDossierStore.getState().elements.find(el => el.id === element.id) ?? null;
     }
 
     if (!freshElement) return;
@@ -296,7 +296,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       setGeoLng('');
       setLastSavedGeo(null);
     });
-    useInvestigationStore.getState().updateElement(element.id, { geo: null });
+    useDossierStore.getState().updateElement(element.id, { geo: null });
     pushAction({
       type: 'update-element',
       undo: { elementId: element.id, changes: { geo: oldGeo } },
@@ -333,7 +333,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
     // Then update store (async, but local state is already committed)
     const oldGeo = element.geo ?? null;
-    useInvestigationStore.getState().updateElement(element.id, { geo: newGeo });
+    useDossierStore.getState().updateElement(element.id, { geo: newGeo });
     pushAction({
       type: 'update-element',
       undo: { elementId: element.id, changes: { geo: oldGeo } },
@@ -362,7 +362,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           setGeoLng(lng.toString());
           setLastSavedGeo(newGeo);
         });
-        useInvestigationStore.getState().updateElement(element.id, { geo: newGeo });
+        useDossierStore.getState().updateElement(element.id, { geo: newGeo });
         pushAction({
           type: 'update-element',
           undo: { elementId: element.id, changes: { geo: oldGeo } },
@@ -542,7 +542,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
     [element.id, element.position, element.events, createElement, createLink, updateElement, pushAction]
   );
 
-  // Handle new tag (save to investigation settings for reuse)
+  // Handle new tag (save to dossier settings for reuse)
   const handleNewTag = useCallback(
     (tag: string) => {
       addExistingTag(tag);
@@ -570,7 +570,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
     [element.id, element.properties, updateElement, pushAction]
   );
 
-  // Handle new property (save to investigation settings for reuse)
+  // Handle new property (save to dossier settings for reuse)
   // Also associate it with the element's tags for smart suggestions
   const handleNewProperty = useCallback(
     (propertyDef: PropertyDefinition) => {
@@ -691,7 +691,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   // Get TagSets to retrieve choices for 'choice' type properties
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
 
-  // Build a map of property key -> choices from TagSets and investigation suggestedProperties
+  // Build a map of property key -> choices from TagSets and dossier suggestedProperties
   const propertyChoicesMap = useMemo(() => {
     const choicesMap = new Map<string, string[]>();
     // From TagSets
@@ -702,23 +702,23 @@ export function ElementDetail({ element }: ElementDetailProps) {
         }
       }
     }
-    // From investigation suggestedProperties (overrides TagSet if exists)
-    const investigationSuggested = currentInvestigation?.settings.suggestedProperties || [];
-    for (const prop of investigationSuggested) {
+    // From dossier suggestedProperties (overrides TagSet if exists)
+    const dossierSuggested = currentDossier?.settings.suggestedProperties || [];
+    for (const prop of dossierSuggested) {
       if (prop.type === 'choice' && prop.choices) {
         choicesMap.set(prop.key, prop.choices);
       }
     }
     return choicesMap;
-  }, [tagSetsMap, currentInvestigation?.settings.suggestedProperties]);
+  }, [tagSetsMap, currentDossier?.settings.suggestedProperties]);
 
   // Compute property suggestions based on actual usage on elements
   // Uses getState() snapshot instead of reactive subscription to avoid
   // recomputing 150K iterations on every element change.
   // Only recomputes when selected element changes (id/tags) or settings change.
   const propertySuggestions: PropertyDefinition[] = useMemo(() => {
-    const elements = useInvestigationStore.getState().elements;
-    const tagAssociations = currentInvestigation?.settings.tagPropertyAssociations || {};
+    const elements = useDossierStore.getState().elements;
+    const tagAssociations = currentDossier?.settings.tagPropertyAssociations || {};
 
     // Collect actual property types from all elements (real data is authoritative)
     // If multiple elements have the same property with different types, prefer non-text
@@ -774,7 +774,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       }
     }
 
-    // Merge: tag-based first (most relevant), then other used properties, then investigation suggestions
+    // Merge: tag-based first (most relevant), then other used properties, then dossier suggestions
     const allSuggestions: PropertyDefinition[] = [...tagBasedProperties.values()];
     const addedKeys = new Set(tagBasedProperties.keys());
 
@@ -785,9 +785,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
       }
     }
 
-    // Add investigation suggestedProperties (these have choices saved by user)
-    const investigationSuggested = currentInvestigation?.settings.suggestedProperties || [];
-    for (const prop of investigationSuggested) {
+    // Add dossier suggestedProperties (these have choices saved by user)
+    const dossierSuggested = currentDossier?.settings.suggestedProperties || [];
+    for (const prop of dossierSuggested) {
       if (!addedKeys.has(prop.key)) {
         allSuggestions.push(prop);
         addedKeys.add(prop.key);
@@ -814,7 +814,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
     return allSuggestions;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [element.id, element.tags, currentInvestigation?.settings.tagPropertyAssociations, currentInvestigation?.settings.suggestedProperties, propertyChoicesMap, tagSetsMap]);
+  }, [element.id, element.tags, currentDossier?.settings.tagPropertyAssociations, currentDossier?.settings.suggestedProperties, propertyChoicesMap, tagSetsMap]);
 
   // Simplified view for annotations (just notes + border)
   if (element.isAnnotation) {
@@ -916,7 +916,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
             <TagsEditor
               tags={element.tags}
               onChange={handleTagsChange}
-              suggestions={currentInvestigation?.settings.existingTags}
+              suggestions={currentDossier?.settings.existingTags}
               onNewTag={handleNewTag}
               onTagSetTagAdded={handleTagSetTagAdded}
             />
@@ -1144,7 +1144,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           onChange={handlePropertiesChange}
           suggestions={propertySuggestions}
           onNewProperty={handleNewProperty}
-          displayedProperties={currentInvestigation?.settings.displayedProperties}
+          displayedProperties={currentDossier?.settings.displayedProperties}
           onToggleDisplayProperty={togglePropertyDisplay}
           onExtractToElement={handleExtractProperty}
         />

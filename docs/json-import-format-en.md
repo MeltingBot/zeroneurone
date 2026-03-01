@@ -4,7 +4,7 @@ Complete reference for the native JSON import format used by Zeroneurone.
 
 ## Overview
 
-Zeroneurone can import investigation data from a JSON file (standalone or inside a ZIP archive). The native format is auto-detected by the presence of the three required top-level fields: `version`, `elements`, and `links`.
+Zeroneurone can import dossier data from a JSON file (standalone or inside a ZIP archive). The native format is auto-detected by the presence of the three required top-level fields: `version`, `elements`, and `links`.
 
 When importing, **all IDs are regenerated** as new UUIDs. Internal references (element-to-element, link-to-element, tabs, reports) are remapped automatically. Timestamps (`createdAt`, `updatedAt`) are always overwritten with the current date.
 
@@ -16,7 +16,7 @@ When importing, **all IDs are regenerated** as new UUIDs. Internal references (e
 {
   "version": "1.1.0",
   "exportedAt": "2026-02-11T10:00:00.000Z",
-  "investigation": { ... },
+  "dossier": { ... },
   "elements": [ ... ],
   "links": [ ... ],
   "tabs": [ ... ],
@@ -29,11 +29,11 @@ When importing, **all IDs are regenerated** as new UUIDs. Internal references (e
 |-------|----------|------|-------------|
 | `version` | **Yes** | `string` | Format version (e.g. `"1.1.0"`). Must be truthy. |
 | `exportedAt` | No | `string` | ISO 8601 timestamp. Informational only, not validated. |
-| `investigation` | No | `object` | Investigation metadata. Included in exports for completeness but **not used** on native JSON import. |
+| `dossier` | No | `object` | Dossier metadata. Included in exports for completeness but **not used** on native JSON import. |
 | `elements` | **Yes** | `Element[]` | Array of element objects. Can be empty. |
 | `links` | **Yes** | `Link[]` | Array of link objects. Can be empty. |
-| `tabs` | No | `CanvasTab[]` | Canvas tab definitions. Only imported for new investigations (not merges). |
-| `report` | No | `Report` | Report with sections. Skipped if a report already exists for the target investigation. |
+| `tabs` | No | `CanvasTab[]` | Canvas tab definitions. Only imported for new dossiers (not merges). |
+| `report` | No | `Report` | Report with sections. Skipped if a report already exists for the target dossier. |
 | `assets` | No | `ExportedAssetMeta[]` | Asset metadata. Only meaningful in ZIP imports; ignored in standalone JSON. |
 
 If `version`, `elements`, or `links` is missing, the import fails with: `"Format JSON invalide: champs manquants"`.
@@ -47,7 +47,7 @@ Each element represents a node on the canvas (person, company, location, concept
 ```json
 {
   "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-  "investigationId": "00000000-0000-0000-0000-000000000001",
+  "dossierId": "00000000-0000-0000-0000-000000000001",
   "label": "John Doe",
   "notes": "Free-form text notes",
   "tags": ["person", "suspect"],
@@ -91,7 +91,7 @@ Each element represents a node on the canvas (person, company, location, concept
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `id` | `string` (UUID v4) | **Yes** | Remapped | Original ID used for cross-references; replaced with a new UUID on import. |
-| `investigationId` | `string` (UUID v4) | No | Overwritten | Always set to the target investigation ID. |
+| `dossierId` | `string` (UUID v4) | No | Overwritten | Always set to the target dossier ID. |
 | `label` | `string` | Recommended | `""` | Display name shown on the canvas. |
 | `notes` | `string` | No | `""` | Free-form text notes (supports Markdown). |
 | `tags` | `string[]` | No | `[]` | User-defined tags for filtering and categorization. |
@@ -122,7 +122,7 @@ Each link represents a relationship between two elements (an edge in the graph).
 ```json
 {
   "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-  "investigationId": "00000000-0000-0000-0000-000000000001",
+  "dossierId": "00000000-0000-0000-0000-000000000001",
   "fromId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
   "toId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
   "sourceHandle": null,
@@ -154,7 +154,7 @@ Each link represents a relationship between two elements (an edge in the graph).
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `id` | `string` (UUID v4) | **Yes** | Remapped | Replaced with a new UUID on import. |
-| `investigationId` | `string` (UUID v4) | No | Overwritten | Always set to the target investigation ID. |
+| `dossierId` | `string` (UUID v4) | No | Overwritten | Always set to the target dossier ID. |
 | `fromId` | `string` (UUID v4) | **Yes** | Remapped | Source element ID. Must reference an element in the import. **Links referencing missing elements are skipped.** |
 | `toId` | `string` (UUID v4) | **Yes** | Remapped | Target element ID. Must reference an element in the import. **Links referencing missing elements are skipped.** |
 | `sourceHandle` | `string \| null` | No | `null` | React Flow source handle identifier. |
@@ -180,12 +180,12 @@ Each link represents a relationship between two elements (an edge in the graph).
 
 ## Canvas Tab Object
 
-Canvas tabs organize elements into separate views within the same investigation.
+Canvas tabs organize elements into separate views within the same dossier.
 
 ```json
 {
   "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
-  "investigationId": "00000000-0000-0000-0000-000000000001",
+  "dossierId": "00000000-0000-0000-0000-000000000001",
   "name": "Main view",
   "order": 0,
   "memberElementIds": ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"],
@@ -200,7 +200,7 @@ Canvas tabs organize elements into separate views within the same investigation.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `id` | `string` (UUID v4) | **Yes** | Remapped | Replaced with a new UUID. |
-| `investigationId` | `string` (UUID v4) | No | Overwritten | Set to target investigation ID. |
+| `dossierId` | `string` (UUID v4) | No | Overwritten | Set to target dossier ID. |
 | `name` | `string` | No | `""` | Display name of the tab. |
 | `order` | `number` | No | `0` | Display order (0-based). |
 | `memberElementIds` | `string[]` | No | `[]` | Element IDs belonging to this tab. Remapped; missing elements dropped. |
@@ -209,7 +209,7 @@ Canvas tabs organize elements into separate views within the same investigation.
 | `updatedAt` | `string` | Overwritten | `new Date()` | Always replaced. |
 
 **Notes**:
-- Tabs are **only imported for new investigations**. When merging into an existing investigation (with position offset), tabs are ignored and imported elements join the currently active tab.
+- Tabs are **only imported for new dossiers**. When merging into an existing dossier (with position offset), tabs are ignored and imported elements join the currently active tab.
 - The `viewport` field (if present) is always **reset** to `{x: 0, y: 0, zoom: 1}`.
 
 ---
@@ -221,8 +221,8 @@ Reports are structured documents with sections that can reference elements.
 ```json
 {
   "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
-  "investigationId": "00000000-0000-0000-0000-000000000001",
-  "title": "Investigation Report",
+  "dossierId": "00000000-0000-0000-0000-000000000001",
+  "title": "Dossier Report",
   "sections": [
     {
       "id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
@@ -243,7 +243,7 @@ Reports are structured documents with sections that can reference elements.
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `id` | `string` (UUID v4) | **Yes** | Remapped | Replaced with a new UUID. |
-| `investigationId` | `string` (UUID v4) | No | Overwritten | Set to target investigation ID. |
+| `dossierId` | `string` (UUID v4) | No | Overwritten | Set to target dossier ID. |
 | `title` | `string` | No | `"Rapport importé"` | Report title. |
 | `sections` | `ReportSection[]` | **Yes** | - | Must contain at least one section for the report to be imported. |
 | `createdAt` | `string` | Overwritten | `new Date()` | Always replaced. |
@@ -261,7 +261,7 @@ Reports are structured documents with sections that can reference elements.
 | `graphSnapshot` | `GraphSnapshot \| null` | No | `null` | Canvas snapshot with `imageDataUrl`, `viewport`, and `capturedAt`. |
 
 **Notes**:
-- If a report already exists for the target investigation, the imported report is **skipped**.
+- If a report already exists for the target dossier, the imported report is **skipped**.
 - The `[[Label|UUID]]` syntax in content is automatically remapped to new UUIDs.
 
 ---
@@ -416,7 +416,7 @@ type LinkDirection = "none" | "forward" | "backward" | "both"
 
 ### ID Remapping
 
-All IDs (`id`, `investigationId`, asset IDs, tab IDs, report/section IDs) are regenerated as new UUID v4 values. An internal mapping (old ID -> new ID) is maintained to remap:
+All IDs (`id`, `dossierId`, asset IDs, tab IDs, report/section IDs) are regenerated as new UUID v4 values. An internal mapping (old ID -> new ID) is maintained to remap:
 - `fromId` / `toId` in links
 - `parentGroupId` / `childIds` in elements
 - `assetIds` in elements
@@ -429,10 +429,10 @@ All IDs (`id`, `investigationId`, asset IDs, tab IDs, report/section IDs) are re
 - Parsed with `new Date()`.
 - `createdAt` and `updatedAt` on elements, links, tabs, and reports are **always overwritten** with the current timestamp.
 
-### Merge vs New Investigation
+### Merge vs New Dossier
 
-- **New investigation**: All data is imported, including tabs.
-- **Merge** (importing into an existing investigation with a position offset):
+- **New dossier**: All data is imported, including tabs.
+- **Merge** (importing into an existing dossier with a position offset):
   - Tabs are **not imported**; elements join the currently active tab.
   - A position offset `{x, y}` is applied to top-level elements only (not children of groups).
 
@@ -444,7 +444,7 @@ All IDs (`id`, `investigationId`, asset IDs, tab IDs, report/section IDs) are re
 
 ### Post-Import Settings
 
-When links are imported, the investigation display settings are automatically set to:
+When links are imported, the dossier display settings are automatically set to:
 - `linkAnchorMode: "auto"`
 - `linkCurveMode: "curved"`
 
@@ -493,7 +493,7 @@ The smallest valid JSON that can be imported:
 }
 ```
 
-This creates an empty investigation.
+This creates an empty dossier.
 
 ## Example with Two Linked Elements
 

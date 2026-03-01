@@ -1,4 +1,4 @@
-import type { Investigation, Element, Link, Asset } from '../types';
+import type { Dossier, Element, Link, Asset } from '../types';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -77,7 +77,7 @@ class ReportService {
    */
   generate(
     format: ReportFormat,
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assets: Asset[],
@@ -98,16 +98,16 @@ class ReportService {
     let result: string;
     switch (format) {
       case 'html':
-        result = this.generateHTML(investigation, elements, links, assets, options, language);
+        result = this.generateHTML(dossier, elements, links, assets, options, language);
         break;
       case 'markdown':
-        result = this.generateMarkdown(investigation, elements, links, assets, options, language);
+        result = this.generateMarkdown(dossier, elements, links, assets, options, language);
         break;
       case 'extended-json':
-        result = this.generateExtendedJSON(investigation, elements, links, assets, language);
+        result = this.generateExtendedJSON(dossier, elements, links, assets, language);
         break;
       default:
-        result = this.generateMarkdown(investigation, elements, links, assets, options, language);
+        result = this.generateMarkdown(dossier, elements, links, assets, options, language);
     }
 
     // Restore language if changed
@@ -122,14 +122,14 @@ class ReportService {
    * Generate HTML report
    */
   private generateHTML(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assets: Asset[],
     options: ReportOptions,
     language?: string
   ): string {
-    const title = options.title || investigation.name;
+    const title = options.title || dossier.name;
     const sortedElements = this.sortElements(elements, options.sortElementsBy);
     const insights = options.includeInsights ? insightsService.computeInsights() : null;
     const locale = language || i18next.language || 'fr';
@@ -238,8 +238,8 @@ class ReportService {
 `;
 
     // Description
-    if (options.includeDescription && investigation.description) {
-      html += `  <div class="description markdown-content">${this.markdownToHTML(investigation.description)}</div>\n`;
+    if (options.includeDescription && dossier.description) {
+      html += `  <div class="description markdown-content">${this.markdownToHTML(dossier.description)}</div>\n`;
     }
 
     // Summary
@@ -577,14 +577,14 @@ class ReportService {
    * Generate Markdown report
    */
   private generateMarkdown(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     assets: Asset[],
     options: ReportOptions,
     language?: string
   ): string {
-    const title = options.title || investigation.name;
+    const title = options.title || dossier.name;
     const sortedElements = this.sortElements(elements, options.sortElementsBy);
     const insights = options.includeInsights ? insightsService.computeInsights() : null;
     const locale = language || i18next.language || 'fr';
@@ -605,8 +605,8 @@ class ReportService {
     md += `*${this.t('generatedOn', { date: new Date().toLocaleDateString(locale), time: new Date().toLocaleTimeString(locale) })}*\n\n`;
 
     // Description
-    if (options.includeDescription && investigation.description) {
-      md += `> ${investigation.description}\n\n`;
+    if (options.includeDescription && dossier.description) {
+      md += `> ${dossier.description}\n\n`;
     }
 
     // Summary
@@ -878,7 +878,7 @@ class ReportService {
    * Structured data optimized for AI report generation
    */
   private generateExtendedJSON(
-    investigation: Investigation,
+    dossier: Dossier,
     elements: Element[],
     links: Link[],
     _assets: Asset[],
@@ -907,14 +907,14 @@ class ReportService {
         format: 'zeroneurone-extended-json',
         version: '1.0',
         exportedAt: new Date().toISOString(),
-        purpose: 'Structured investigation data with graph analysis',
+        purpose: 'Structured dossier data with graph analysis',
       },
-      investigation: {
-        id: investigation.id,
-        name: investigation.name,
-        description: investigation.description || null,
-        createdAt: investigation.createdAt,
-        updatedAt: investigation.updatedAt,
+      dossier: {
+        id: dossier.id,
+        name: dossier.name,
+        description: dossier.description || null,
+        createdAt: dossier.createdAt,
+        updatedAt: dossier.updatedAt,
       },
       summary: {
         totalElements: elements.length,

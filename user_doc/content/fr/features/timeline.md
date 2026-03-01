@@ -176,7 +176,7 @@ Quand un filtre est actif, le compteur affiche "X / Y événements" pour indique
 
 | Scénario | Utilisation |
 |----------|-------------|
-| **Chronologie d'enquête** | Visualiser la séquence des événements |
+| **Chronologie du dossier** | Visualiser la séquence des événements |
 | **Durée des relations** | Voir quand des liens existent |
 | **Patterns temporels** | Identifier des périodes d'activité |
 | **Présentation** | Raconter une histoire dans le temps |

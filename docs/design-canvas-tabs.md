@@ -33,7 +33,7 @@ type TabId = string; // UUID
 
 interface CanvasTab {
   id: TabId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   name: string;                    // "Piste financiere"
   order: number;                   // Position dans la tab bar
   memberElementIds: ElementId[];   // Elements assignes

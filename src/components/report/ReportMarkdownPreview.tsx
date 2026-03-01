@@ -1,7 +1,7 @@
 import { useCallback, useMemo, isValidElement, Fragment, cloneElement } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useInvestigationStore, useSelectionStore, useViewStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore } from '../../stores';
 
 interface ReportMarkdownPreviewProps {
   content: string;
@@ -140,7 +140,7 @@ function processChildren(
 }
 
 export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdownPreviewProps) {
-  const { elements, links } = useInvestigationStore();
+  const { elements, links } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange, setDisplayMode, displayMode } = useViewStore();
 

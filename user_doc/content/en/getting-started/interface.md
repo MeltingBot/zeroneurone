@@ -15,8 +15,8 @@ ZeroNeurone's interface is organized around the central canvas, with contextual 
 
 | Icon | Action |
 |------|--------|
-| ← | Return to investigation list |
-| Name | Investigation name (click to rename) |
+| ← | Return to dossier list |
+| Name | Dossier name (click to rename) |
 | 🔍 | Quick search (Ctrl+K) |
 | Views | Toggle Canvas / Map / Timeline |
 | ⇄ | Toggle side panel left/right |

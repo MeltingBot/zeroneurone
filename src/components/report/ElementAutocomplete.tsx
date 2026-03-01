@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link2 } from 'lucide-react';
-import { useInvestigationStore } from '../../stores';
+import { useDossierStore } from '../../stores';
 import type { ElementShape } from '../../types';
 
 interface AutocompleteItem {
@@ -30,7 +30,7 @@ export function ElementAutocomplete({
   onClose,
 }: ElementAutocompleteProps) {
   const { t } = useTranslation('panels');
-  const { elements, links } = useInvestigationStore();
+  const { elements, links } = useDossierStore();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);

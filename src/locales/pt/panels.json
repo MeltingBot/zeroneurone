@@ -7,7 +7,7 @@
     "report": "Relatório",
     "collapsePanel": "Recolher painel"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informações",
       "dates": "Datas",
@@ -35,7 +35,7 @@
       "retentionReset": "Redefinir"
     },
     "placeholders": {
-      "name": "Nome da investigação",
+      "name": "Nome do dossiê",
       "creator": "Nome do criador..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Você: {{name}} (clique para editar)"
   },
   "report": {
-    "noInvestigation": "Nenhuma investigação carregada",
+    "noDossier": "Nenhum dossiê carregada",
     "noReport": "Sem relatório. Crie um para começar.",
     "createReport": "Criar relatório",
     "defaultTitle": "Relatório",

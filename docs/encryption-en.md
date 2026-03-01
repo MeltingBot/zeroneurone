@@ -4,12 +4,12 @@ This document describes the architecture, cryptographic primitives, and lifecycl
 
 ## Why At-Rest Encryption
 
-ZeroNeurone stores potentially sensitive investigations (people, organizations, locations, documents) in IndexedDB and OPFS. These databases are readable by any script of the same origin, and accessible in plaintext via browser DevTools.
+ZeroNeurone stores potentially sensitive dossiers (people, organizations, locations, documents) in IndexedDB and OPFS. These databases are readable by any script of the same origin, and accessible in plaintext via browser DevTools.
 
 At-rest encryption ensures data is unreadable without the password — even if someone has access to the browser profile on the machine.
 
 **What encryption protects:**
-- Investigation content (elements, links, assets, reports, views)
+- Dossier content (elements, links, assets, reports, views)
 - Attached files (OPFS)
 - Collaboration Yjs documents (y-indexeddb)
 - Plugin-stored data (`pluginData`)
@@ -104,7 +104,7 @@ Tweetnacl is used for its **synchronous** nature — IndexedDB transactions do n
 
 | Table | Content | Encrypted |
 |-------|---------|-----------|
-| `investigations` | Investigation metadata | Yes |
+| `dossiers` | Dossier metadata | Yes |
 | `elements` | Graph nodes | Yes |
 | `links` | Element relationships | Yes |
 | `assets` | Attached file metadata | Yes |
@@ -134,7 +134,7 @@ The magic header allows detecting whether a file is already encrypted (idempoten
 
 ## Yjs Document Encryption (y-indexeddb)
 
-Each investigation has an IndexedDB database `zeroneurone-ydoc-{id}` containing Yjs updates for real-time collaboration. These databases are encrypted during migration, update by update, through their own encryption mechanism (a separate layer from the Dexie middleware).
+Each dossier has an IndexedDB database `zeroneurone-ydoc-{id}` containing Yjs updates for real-time collaboration. These databases are encrypted during migration, update by update, through their own encryption mechanism (a separate layer from the Dexie middleware).
 
 ---
 

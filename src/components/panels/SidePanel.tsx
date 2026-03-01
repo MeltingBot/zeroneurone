@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelectionStore, useInvestigationStore, useViewStore, useInsightsStore, useUIStore } from '../../stores';
+import { useSelectionStore, useDossierStore, useViewStore, useInsightsStore, useUIStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
 import { LinkDetail } from './LinkDetail';
 import { MultiSelectionDetail } from './MultiSelectionDetail';
-import { InvestigationDetail } from './InvestigationDetail';
+import { DossierDetail } from './DossierDetail';
 import { FiltersPanel } from './FiltersPanel';
 import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
@@ -33,9 +33,9 @@ export function SidePanel() {
   // Individual selectors — prevent re-renders when unrelated state changes
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
   const selectedLinkIds = useSelectionStore((s) => s.selectedLinkIds);
-  const elements = useInvestigationStore((s) => s.elements);
-  const links = useInvestigationStore((s) => s.links);
-  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
+  const elements = useDossierStore((s) => s.elements);
+  const links = useDossierStore((s) => s.links);
+  const currentDossier = useDossierStore((s) => s.currentDossier);
   const hasActiveFilters = useViewStore((s) => s.hasActiveFilters);
   const displayMode = useViewStore((s) => s.displayMode);
   const highlightedElementIds = useInsightsStore((s) => s.highlightedElementIds);
@@ -181,19 +181,19 @@ export function SidePanel() {
 
   // Render detail content based on selection
   const renderDetailContent = () => {
-    // Nothing selected - show investigation details
+    // Nothing selected - show dossier details
     if (totalSelected === 0) {
-      if (currentInvestigation) {
+      if (currentDossier) {
         return (
           <div className="flex-1 overflow-y-auto">
-            <InvestigationDetail investigation={currentInvestigation} />
+            <DossierDetail dossier={currentDossier} />
           </div>
         );
       }
       return (
         <div className="flex-1 flex items-center justify-center p-4">
           <p className="text-sm text-text-tertiary text-center">
-            {tCommon('empty.noInvestigationLoaded')}
+            {tCommon('empty.noDossierLoaded')}
           </p>
         </div>
       );
@@ -260,7 +260,7 @@ export function SidePanel() {
           const PluginComponent = plugin.component;
           return (
             <div className="flex-1 overflow-y-auto">
-              <PluginComponent investigationId={currentInvestigation?.id || ''} />
+              <PluginComponent dossierId={currentDossier?.id || ''} />
             </div>
           );
         }

@@ -179,7 +179,7 @@ L'export **ZIP** inclut tous les fichiers joints :
 
 ```
 enquete.zip
-├── investigation.json    # Métadonnées
+├── dossier.json          # Métadonnées
 └── assets/              # Fichiers joints
     ├── abc123.pdf
     ├── def456.png

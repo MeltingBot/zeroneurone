@@ -2,13 +2,13 @@
  * Yjs Types for zeroneurone collaboration
  *
  * Y.Doc structure:
- * - meta: Y.Map<string>           → Investigation metadata
+ * - meta: Y.Map<string>           → Dossier metadata
  * - elements: Y.Map<Y.Map<any>>   → Elements by ID
  * - links: Y.Map<Y.Map<any>>      → Links by ID
  * - comments: Y.Map<Y.Map<any>>   → Comments by ID
  * - views: Y.Map<Y.Map<any>>      → Saved views
  * - assets: Y.Map<Y.Map<any>>     → Asset metadata (binaries stay in OPFS)
- * - reports: Y.Map<Y.Map<any>>    → Reports by ID (one per investigation)
+ * - reports: Y.Map<Y.Map<any>>    → Reports by ID (one per dossier)
  */
 
 import type * as Y from 'yjs';
@@ -53,7 +53,7 @@ export const DEFAULT_SYNC_STATE: SyncState = {
 /**
  * Typed interface for accessing Y.Doc maps
  */
-export interface YInvestigation {
+export interface YDossier {
   meta: Y.Map<any>;
   elements: Y.Map<Y.Map<any>>;
   links: Y.Map<Y.Map<any>>;
@@ -67,7 +67,7 @@ export interface YInvestigation {
 /**
  * Get typed maps from a Y.Doc
  */
-export function getYMaps(ydoc: Y.Doc): YInvestigation {
+export function getYMaps(ydoc: Y.Doc): YDossier {
   return {
     meta: ydoc.getMap('meta'),
     elements: ydoc.getMap('elements'),

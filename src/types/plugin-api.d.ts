@@ -15,11 +15,11 @@ import type { i18n as I18nInstance } from 'i18next';
 import type {
   Element,
   Link,
-  Investigation,
+  Dossier,
   Asset,
   ElementId,
   LinkId,
-  InvestigationId,
+  DossierId,
   Property,
   PropertyType,
   Confidence,
@@ -51,11 +51,11 @@ import type {
 export type {
   Element,
   Link,
-  Investigation,
+  Dossier,
   Asset,
   ElementId,
   LinkId,
-  InvestigationId,
+  DossierId,
   Property,
   PropertyType,
   Confidence,
@@ -82,19 +82,19 @@ export type {
 
 // ─── Store types ──────────────────────────────────────────────
 
-/** Subset of useInvestigationStore relevant to plugins */
-export interface InvestigationStoreAPI {
+/** Subset of useDossierStore relevant to plugins */
+export interface DossierStoreAPI {
   // State
-  currentInvestigation: Investigation | null;
+  currentDossier: Dossier | null;
   elements: Element[];
   links: Link[];
   assets: Asset[];
   comments: Comment[];
-  investigations: Investigation[];
+  dossiers: Dossier[];
   isLoading: boolean;
 
   // Actions
-  loadInvestigation: (id: InvestigationId) => Promise<void>;
+  loadDossier: (id: DossierId) => Promise<void>;
   createElement: (label: string, position: Position, options?: Partial<Element>) => Promise<Element>;
   updateElement: (id: ElementId, changes: Partial<Element>) => Promise<void>;
   deleteElement: (id: ElementId) => Promise<void>;
@@ -115,7 +115,7 @@ export interface SelectionStoreAPI {
 
 /** Subset of useViewStore relevant to plugins */
 export interface ViewStoreAPI {
-  investigationId: InvestigationId | null;
+  dossierId: DossierId | null;
   viewport: { x: number; y: number; zoom: number };
 }
 
@@ -123,7 +123,7 @@ export interface ViewStoreAPI {
 export interface ReportStoreAPI {
   report: Report | null;
   sections: ReportSection[];
-  loadReport: (investigationId: InvestigationId) => Promise<void>;
+  loadReport: (dossierId: DossierId) => Promise<void>;
   addSection: (section: Partial<ReportSection>) => Promise<void>;
   updateSection: (id: string, changes: Partial<ReportSection>) => Promise<void>;
   deleteSection: (id: string) => Promise<void>;
@@ -141,7 +141,7 @@ export interface InsightsStoreAPI {
 // ─── Repository types ─────────────────────────────────────────
 
 export interface ElementRepositoryAPI {
-  getByInvestigation: (id: InvestigationId) => Promise<Element[]>;
+  getByDossier: (id: DossierId) => Promise<Element[]>;
   getById: (id: ElementId) => Promise<Element | undefined>;
   create: (element: Element) => Promise<void>;
   update: (id: ElementId, changes: Partial<Element>) => Promise<void>;
@@ -149,24 +149,24 @@ export interface ElementRepositoryAPI {
 }
 
 export interface LinkRepositoryAPI {
-  getByInvestigation: (id: InvestigationId) => Promise<Link[]>;
+  getByDossier: (id: DossierId) => Promise<Link[]>;
   getById: (id: LinkId) => Promise<Link | undefined>;
   create: (link: Link) => Promise<void>;
   update: (id: LinkId, changes: Partial<Link>) => Promise<void>;
   remove: (id: LinkId) => Promise<void>;
 }
 
-export interface InvestigationRepositoryAPI {
-  getAll: () => Promise<Investigation[]>;
-  getById: (id: InvestigationId) => Promise<Investigation | undefined>;
+export interface DossierRepositoryAPI {
+  getAll: () => Promise<Dossier[]>;
+  getById: (id: DossierId) => Promise<Dossier | undefined>;
 }
 
 // ─── Plugin data ──────────────────────────────────────────────
 
 export interface PluginDataAPI {
-  get: (pluginId: string, investigationId: string, key: string) => Promise<any>;
-  set: (pluginId: string, investigationId: string, key: string, value: any) => Promise<void>;
-  remove: (pluginId: string, investigationId: string, key: string) => Promise<void>;
+  get: (pluginId: string, dossierId: string, key: string) => Promise<any>;
+  set: (pluginId: string, dossierId: string, key: string, value: any) => Promise<void>;
+  remove: (pluginId: string, dossierId: string, key: string) => Promise<void>;
 }
 
 // ─── Main API type ────────────────────────────────────────────
@@ -192,7 +192,7 @@ export interface PluginAPI {
 
   // Zustand stores
   stores: {
-    useInvestigationStore: () => InvestigationStoreAPI;
+    useDossierStore: () => DossierStoreAPI;
     useSelectionStore: () => SelectionStoreAPI;
     useViewStore: () => ViewStoreAPI;
     useReportStore: () => ReportStoreAPI;
@@ -203,7 +203,7 @@ export interface PluginAPI {
   repositories: {
     elementRepository: ElementRepositoryAPI;
     linkRepository: LinkRepositoryAPI;
-    investigationRepository: InvestigationRepositoryAPI;
+    dossierRepository: DossierRepositoryAPI;
   };
 
   // Dexie database instance

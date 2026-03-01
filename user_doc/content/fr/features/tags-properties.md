@@ -20,7 +20,7 @@ Les tags sont des étiquettes libres pour catégoriser vos éléments et liens.
 
 ### Tags suggérés
 
-ZeroNeurone suggère les tags déjà utilisés dans l'enquête pour maintenir la cohérence.
+ZeroNeurone suggère les tags déjà utilisés dans le dossier pour maintenir la cohérence.
 
 ### Filtrer par tags
 

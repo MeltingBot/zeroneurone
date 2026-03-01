@@ -25,8 +25,8 @@ export interface ImportPlacementData {
   };
   /** The file to import */
   file: File;
-  /** Target investigation ID */
-  investigationId: string;
+  /** Target dossier ID */
+  dossierId: string;
   /** Callback after successful import */
   onComplete?: () => void;
   /** Pre-read file content for text-based formats (CSV, JSON, GraphML, etc.) */
@@ -160,8 +160,8 @@ interface UIState {
   enterImportPlacementMode: (data: ImportPlacementData) => void;
   exitImportPlacementMode: () => void;
 
-  // Actions - Reset investigation-specific state
-  resetInvestigationState: () => void;
+  // Actions - Reset dossier-specific state
+  resetDossierState: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -376,8 +376,8 @@ export const useUIStore = create<UIState>()(
     });
   },
 
-  // Reset investigation-specific state (called when closing an investigation)
-  resetInvestigationState: () => {
+  // Reset dossier-specific state (called when closing an dossier)
+  resetDossierState: () => {
     set({
       hideMedia: false,
       anonymousMode: false,
@@ -388,7 +388,7 @@ export const useUIStore = create<UIState>()(
 }),
     {
       name: 'zeroneurone-ui-settings',
-      // Only persist global preferences, NOT investigation-specific settings (hideMedia, anonymousMode)
+      // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
       partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration

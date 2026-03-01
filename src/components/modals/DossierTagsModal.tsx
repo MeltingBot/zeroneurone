@@ -1,34 +1,34 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Plus, Tag } from 'lucide-react';
-import type { Investigation } from '../../types';
+import type { Dossier } from '../../types';
 
-interface InvestigationTagsModalProps {
+interface DossierTagsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  investigation: Investigation | null;
+  dossier: Dossier | null;
   allTags: string[];
   onSave: (tags: string[]) => void;
 }
 
-export function InvestigationTagsModal({
+export function DossierTagsModal({
   isOpen,
   onClose,
-  investigation,
+  dossier,
   allTags,
   onSave,
-}: InvestigationTagsModalProps) {
+}: DossierTagsModalProps) {
   const { t } = useTranslation('modals');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
 
-  // Reset tags when modal opens with new investigation
+  // Reset tags when modal opens with new dossier
   useEffect(() => {
-    if (isOpen && investigation) {
-      setTags(investigation.tags || []);
+    if (isOpen && dossier) {
+      setTags(dossier.tags || []);
       setNewTag('');
     }
-  }, [isOpen, investigation]);
+  }, [isOpen, dossier]);
 
   const handleAddTag = useCallback(() => {
     const trimmed = newTag.trim();
@@ -63,7 +63,7 @@ export function InvestigationTagsModal({
   // Suggestions: existing tags not already selected
   const suggestions = allTags.filter((t) => !tags.includes(t));
 
-  if (!isOpen || !investigation) return null;
+  if (!isOpen || !dossier) return null;
 
   return (
     <>
@@ -80,7 +80,7 @@ export function InvestigationTagsModal({
           <div className="flex items-center gap-2">
             <Tag size={16} className="text-text-secondary" />
             <h2 className="text-sm font-semibold text-text-primary">
-              {t('investigationTags.title')}
+              {t('dossierTags.title')}
             </h2>
           </div>
           <button
@@ -93,19 +93,19 @@ export function InvestigationTagsModal({
 
         {/* Content */}
         <div className="p-4 space-y-4">
-          {/* Investigation name */}
+          {/* Dossier name */}
           <div className="text-xs text-text-secondary">
-            {investigation.name}
+            {dossier.name}
           </div>
 
           {/* Current tags */}
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-2">
-              {t('investigationTags.currentTags')}
+              {t('dossierTags.currentTags')}
             </label>
             <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-border-default rounded bg-bg-secondary">
               {tags.length === 0 ? (
-                <span className="text-xs text-text-tertiary">{t('investigationTags.noTags')}</span>
+                <span className="text-xs text-text-tertiary">{t('dossierTags.noTags')}</span>
               ) : (
                 tags.map((tag) => (
                   <span
@@ -128,7 +128,7 @@ export function InvestigationTagsModal({
           {/* Add new tag */}
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-2">
-              {t('investigationTags.addTag')}
+              {t('dossierTags.addTag')}
             </label>
             <div className="flex gap-2">
               <input
@@ -136,7 +136,7 @@ export function InvestigationTagsModal({
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={t('investigationTags.placeholder')}
+                placeholder={t('dossierTags.placeholder')}
                 className="flex-1 px-3 py-1.5 text-sm border border-border-default rounded bg-bg-primary text-text-primary placeholder:text-text-tertiary"
               />
               <button
@@ -153,7 +153,7 @@ export function InvestigationTagsModal({
           {suggestions.length > 0 && (
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-2">
-                {t('investigationTags.existingTags')}
+                {t('dossierTags.existingTags')}
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {suggestions.slice(0, 10).map((tag) => (
@@ -167,7 +167,7 @@ export function InvestigationTagsModal({
                 ))}
                 {suggestions.length > 10 && (
                   <span className="px-2 py-0.5 text-xs text-text-tertiary">
-                    +{suggestions.length - 10} {t('investigationTags.more')}
+                    +{suggestions.length - 10} {t('dossierTags.more')}
                   </span>
                 )}
               </div>
