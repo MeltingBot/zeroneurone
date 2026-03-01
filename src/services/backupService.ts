@@ -12,6 +12,7 @@ import type {
   DossierId,
   AssetId,
   ElementId,
+  LinkId,
 } from '../types';
 
 const BACKUP_VERSION = '1.0.0';
@@ -111,6 +112,18 @@ class BackupService {
    * Import all data from a backup ZIP file
    * This ADDS data to existing data (doesn't replace)
    */
+  _remapReportContent(
+    content: string,
+    elementIdMap: Map<ElementId, ElementId>,
+    linkIdMap: Map<LinkId, LinkId>,
+  ): string {
+    // Replace [[Label|old-id]] with [[Label|new-id]]
+    return content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_match, label, oldId) => {
+      const newId = elementIdMap.get(oldId) || linkIdMap.get(oldId) || oldId;
+      return `[[${label}|${newId}]]`;
+    });
+  }
+
   async importAll(
     file: File,
     onProgress?: (message: string) => void
@@ -163,6 +176,7 @@ class BackupService {
       // Create ID mappings (old ID -> new ID)
       const dossierIdMap = new Map<DossierId, DossierId>();
       const elementIdMap = new Map<ElementId, ElementId>();
+      const linkIdMap = new Map<LinkId, LinkId>();
       const assetIdMap = new Map<AssetId, AssetId>();
 
       // Import dossiers
@@ -244,9 +258,11 @@ class BackupService {
 
         if (!newDossierId || !newFromId || !newToId) continue;
 
+        const newLinkId = generateUUID();
+        linkIdMap.set(link.id, newLinkId);
         await db.links.add({
           ...link,
-          id: generateUUID(),
+          id: newLinkId,
           dossierId: newDossierId,
           fromId: newFromId,
           toId: newToId,
@@ -268,6 +284,15 @@ class BackupService {
           ...view,
           id: generateUUID(),
           dossierId: newDossierId,
+          hiddenElementIds: (view.hiddenElementIds || [])
+            .map((eid: ElementId) => elementIdMap.get(eid))
+            .filter(Boolean) as ElementId[],
+          elementPositions: (view.elementPositions || [])
+            .map((ep: { id: ElementId; position: { x: number; y: number } }) => {
+              const newId = elementIdMap.get(ep.id);
+              return newId ? { ...ep, id: newId } : null;
+            })
+            .filter((ep): ep is NonNullable<typeof ep> => ep !== null),
           createdAt: new Date(view.createdAt),
         });
       }
@@ -278,10 +303,21 @@ class BackupService {
         const newDossierId = dossierIdMap.get(srcDossierId);
         if (!newDossierId) continue;
 
+        // Remap element/link references in report sections
+        const remappedSections = (report.sections || []).map((section: any) => ({
+          ...section,
+          id: generateUUID(),
+          content: this._remapReportContent(section.content || '', elementIdMap, linkIdMap),
+          elementIds: (section.elementIds || [])
+            .map((eid: ElementId) => elementIdMap.get(eid))
+            .filter(Boolean),
+        }));
+
         await db.reports.add({
           ...report,
           id: generateUUID(),
           dossierId: newDossierId,
+          sections: remappedSections,
           createdAt: new Date(report.createdAt),
           updatedAt: new Date(report.updatedAt),
         });

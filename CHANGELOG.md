@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.20.5
+
+### Fixes
+- Backup restore: remap element/link ID references in report sections (`[[Label|old-id]]` → `[[Label|new-id]]`)
+- Backup restore: remap `elementIds` in report sections, `hiddenElementIds` and `elementPositions` in views
+- Backup restore: track link ID mapping (`linkIdMap`) for complete reference remapping
+
 ## 2.20.4
 
 ### Fixes
