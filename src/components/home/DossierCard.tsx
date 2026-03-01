@@ -136,7 +136,7 @@ export function DossierCard({
         </div>
 
         {/* Tags */}
-        {dossier.tags && dossier.tags.length > 0 && (
+        {Array.isArray(dossier.tags) && dossier.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {dossier.tags.slice(0, 4).map((tag) => (
               <span

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.20.1
+
+### Fixes
+- DossierCard: defensive `Array.isArray` guard on tags to prevent crash when stale cached JS reads migrated DB
+
 ## 2.20.0
 
 ### Features
