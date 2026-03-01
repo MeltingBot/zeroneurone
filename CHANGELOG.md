@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.20.0
+
+### Features
+- Renamed core concept "Investigation/Enquête" → "Dossier" across entire application
+- Dexie DB migration v8/v9: automatic data migration from `investigations` to `dossiers` table
+- Legacy backward compatibility: import of old ZIP files (`investigation.json`), URL redirect (`/investigation/:id`)
+- i18n: all 11 languages updated with localized term (FR: dossier, DE: Akte, IT: fascicolo, ES: expediente, PT: dossiê, PL: teczka, UA: справа, NL: dossier, CA/EU: expedient)
+
 ## 2.19.1
 
 ### Fixes
