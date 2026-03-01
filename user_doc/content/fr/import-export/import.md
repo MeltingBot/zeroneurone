@@ -5,7 +5,7 @@ weight: 2
 
 # Importer des données
 
-Intégrez des données externes ou restaurez une enquête sauvegardée.
+Intégrez des données externes ou restaurez un dossier sauvegardé.
 
 
 ## Ouvrir l'import
@@ -18,19 +18,19 @@ Menu **⋯** → **Importer**
 
 ### ZIP (ZeroNeurone)
 
-**Import complet** d'une enquête exportée.
+**Import complet** d'un dossier exporté.
 
 | Action | Résultat |
 |--------|----------|
-| **Créer une nouvelle enquête** | Crée une copie indépendante |
-| **Fusionner** | Ajoute les éléments à l'enquête actuelle |
+| **Créer un nouveau dossier** | Crée une copie indépendante |
+| **Fusionner** | Ajoute les éléments au dossier actuel |
 
 
 ### Contenu attendu
 
 ```
 enquete.zip
-├── investigation.json    # Requis
+├── dossier.json          # Requis
 └── assets/               # Optionnel
     └── ...
 ```
@@ -51,7 +51,7 @@ enquete.zip
 ```json
 {
   "investigation": {
-    "name": "Nom de l'enquête",
+    "name": "Nom du dossier",
     "description": "Description optionnelle"
   },
   "elements": [
@@ -272,7 +272,7 @@ L'import préserve :
 - Éléments avec positions et propriétés
 - Liens entre éléments
 - Images intégrées (base64 → fichiers joints)
-- Métadonnées de l'enquête
+- Métadonnées du dossier
 
 ---
 
@@ -389,9 +389,9 @@ fam Dupont Jean + Martin Marie
 
 ---
 
-## Importer dans l'enquête courante
+## Importer dans le dossier courant
 
-Depuis une enquête ouverte, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans l'enquête en cours.
+Depuis un dossier ouvert, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans le dossier en cours.
 
 **Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
 
@@ -406,7 +406,7 @@ Après sélection du fichier, un **mode placement** s'active :
 Les éléments sont positionnés avec le coin supérieur gauche à l'endroit du clic.
 
 {{< hint info >}}
-Le mode placement est particulièrement utile quand l'enquête contient déjà des éléments, pour éviter les superpositions.
+Le mode placement est particulièrement utile quand le dossier contient déjà des éléments, pour éviter les superpositions.
 {{< /hint >}}
 
 ---
@@ -417,8 +417,8 @@ Le mode placement est particulièrement utile quand l'enquête contient déjà d
 
 | Mode | Comportement |
 |------|--------------|
-| **Nouvelle enquête** | Crée une enquête séparée |
-| **Fusionner** | Ajoute à l'enquête courante avec positionnement |
+| **Nouveau dossier** | Crée un dossier séparé |
+| **Fusionner** | Ajoute au dossier courant avec positionnement |
 
 ### Gestion des doublons
 

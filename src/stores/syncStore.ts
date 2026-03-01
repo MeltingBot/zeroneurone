@@ -73,7 +73,7 @@ interface SyncStoreState extends SyncState {
   mediaSyncProgress: MediaSyncProgress | null;
 
   /** Actions */
-  share: (investigationName?: string, asyncEnabled?: boolean) => Promise<{ shareUrl: string; encryptionKey: string }>;
+  share: (dossierName?: string, asyncEnabled?: boolean) => Promise<{ shareUrl: string; encryptionKey: string }>;
   unshare: () => Promise<void>;
   updateLocalUserName: (name: string) => void;
   updateLocalUserColor: (color: string) => void;
@@ -259,19 +259,19 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
     encryptionKey: null,
     mediaSyncProgress: null,
 
-    // Share the current investigation
-    // Uses the investigation UUID as room ID and generates a new encryption key
-    share: async (investigationName?: string, asyncEnabled: boolean = false) => {
-      const investigationId = syncService.getInvestigationId();
-      if (!investigationId) {
-        throw new Error('No investigation open');
+    // Share the current dossier
+    // Uses the dossier UUID as room ID and generates a new encryption key
+    share: async (dossierName?: string, asyncEnabled: boolean = false) => {
+      const dossierId = syncService.getDossierId();
+      if (!dossierId) {
+        throw new Error('No dossier open');
       }
 
-      // share() now generates an encryption key and uses investigation UUID as roomId
+      // share() now generates an encryption key and uses dossier UUID as roomId
       const encryptionKey = await syncService.share(asyncEnabled);
 
       // Build the share URL with encryption key in fragment (async for hash computation)
-      const shareUrl = await syncService.buildShareUrl(investigationId, encryptionKey, investigationName, asyncEnabled);
+      const shareUrl = await syncService.buildShareUrl(dossierId, encryptionKey, dossierName, asyncEnabled);
 
       set({ encryptionKey });
 

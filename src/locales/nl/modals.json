@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nieuw onderzoek",
-    "namePlaceholder": "Naam van het onderzoek",
+  "createDossier": {
+    "title": "Nieuw dossier",
+    "namePlaceholder": "Naam van het dossier",
     "descriptionPlaceholder": "Beschrijving (optioneel)",
-    "create": "Onderzoek aanmaken"
+    "create": "Dossier aanmaken"
   },
   "confirmDelete": {
     "title": "Verwijderen",
     "message": "Deze actie is onomkeerbaar.",
     "confirm": "Verwijderen",
     "deleting": "Verwijderen...",
-    "deleteInvestigation": "Onderzoek verwijderen",
-    "deleteInvestigationMessage": "\"{{name}}\" verwijderen? Deze actie is onomkeerbaar."
+    "deleteDossier": "Dossier verwijderen",
+    "deleteDossierMessage": "\"{{name}}\" verwijderen? Deze actie is onomkeerbaar."
   },
   "rename": {
     "title": "Hernoemen",
     "rename": "Hernoemen",
     "renaming": "Hernoemen...",
     "label": "Naam",
-    "renameInvestigation": "Onderzoek hernoemen",
+    "renameDossier": "Dossier hernoemen",
     "namePlaceholder": "Nieuwe naam"
   },
   "importIntoCurrent": {
-    "title": "Importeren in onderzoek",
-    "description": "Gegevens importeren in het huidige onderzoek. ZIP-bestanden worden in plaatsingsmodus geïmporteerd.",
+    "title": "Importeren in dossier",
+    "description": "Gegevens importeren in het huidige dossier. ZIP-bestanden worden in plaatsingsmodus geïmporteerd.",
     "selectFile": "Bestand selecteren",
     "emptyZip": "Het ZIP-bestand is leeg of bevat geen elementen"
   },
   "import": {
-    "title": "Onderzoek importeren",
+    "title": "Dossier importeren",
     "dropzone": "Sleep een bestand of klik om te selecteren",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importeren naar",
-    "newInvestigation": "Nieuw onderzoek",
+    "newDossier": "Nieuw dossier",
     "selectFile": "Bestand selecteren",
     "importing": "Importeren...",
     "success": "Import geslaagd",
@@ -56,7 +56,7 @@
     "andMore": "... en nog {{count}}"
   },
   "export": {
-    "title": "Onderzoek exporteren",
+    "title": "Dossier exporteren",
     "description": "\"{{name}}\" exporteren ({{elements}} elementen, {{links}} verbindingen)",
     "format": "Formaat",
     "formats": {
@@ -218,7 +218,7 @@
     "title": "Over",
     "version": "Versie {{version}}",
     "buildDate": "({{date}})",
-    "description": "Tool voor cognitieve versterking voor analisten en onderzoekers. Een whiteboard dat grafenvisualisatie, cartografie en tijdlijn combineert.",
+    "description": "Tool voor cognitieve versterking voor analisten en dossierers. Een whiteboard dat grafenvisualisatie, cartografie en tijdlijn combineert.",
     "philosophy": {
       "title": "Filosofie",
       "humanControl": "De mens behoudt de controle",
@@ -246,7 +246,7 @@
       "text": "Deze software wordt gedistribueerd onder de MIT-licentie.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
     },
-    "footer": "Met liefde gemaakt voor onderzoekers wereldwijd"
+    "footer": "Met liefde gemaakt voor dossierers wereldwijd"
   },
   "storage": {
     "title": "Opslag",
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Opgeslagen inhoud",
-      "investigations": "Onderzoeken",
+      "dossiers": "Dossiers",
       "elements": "Elementen",
       "links": "Verbindingen",
       "files": "Bestanden"
@@ -278,11 +278,11 @@
       "title": "Volledige back-up",
       "exportAll": "Alles exporteren",
       "import": "Importeren",
-      "description": "Alle onderzoeken, bestanden en tags. Import voegt toe zonder te vervangen.",
+      "description": "Alle dossiers, bestanden en tags. Import voegt toe zonder te vervangen.",
       "exporting": "Exporteren...",
       "importing": "Importeren...",
       "exportSuccess": "Export voltooid",
-      "importSuccess": "Import geslaagd: {{investigations}} onderzoek(en), {{elements}} element(en), {{links}} verbinding(en)",
+      "importSuccess": "Import geslaagd: {{dossiers}} dossier(en), {{elements}} element(en), {{links}} verbinding(en)",
       "error": "Fout"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Lokale gegevensopslag",
     "warning": "Uw gegevens worden lokaal opgeslagen",
-    "description": "Alle onderzoeken en bestanden worden opgeslagen in de opslag van uw browser (IndexedDB en OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Aanbeveling:</strong> Exporteer regelmatig uw onderzoeken via de knop \"Exporteren\" om een back-up van uw gegevens te bewaren.",
+    "description": "Alle dossiers en bestanden worden opgeslagen in de opslag van uw browser (IndexedDB en OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Aanbeveling:</strong> Exporteer regelmatig uw dossiers via de knop \"Exporteren\" om een back-up van uw gegevens te bewaren.",
     "acknowledge": "Begrepen",
     "bullets": {
       "deleted": "Gegevens kunnen worden <strong class=\"text-text-primary\">verwijderd</strong> als u de cache van uw browser wist",
@@ -309,7 +309,7 @@
     "title": "Synthese genereren",
     "reportTitle": "Titel van de samenvatting",
     "contentToInclude": "Op te nemen inhoud",
-    "includeDescription": "Beschrijving van het onderzoek",
+    "includeDescription": "Beschrijving van het dossier",
     "includeSummary": "Statistische samenvatting",
     "includeInsights": "Graafanalyse (clusters, centraliteit)",
     "includeTimeline": "Chronologie van gebeurtenissen",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://uw-server.voorbeeld.nl",
     "save": "Opslaan",
     "serverHelp": "Gebruik een server die compatibel is met y-websocket. U kunt uw eigen hosten met",
-    "shareDescription": "Deel dit onderzoek om in realtime samen te werken. Elke deelnemer ziet wijzigingen direct.",
+    "shareDescription": "Deel dit dossier om in realtime samen te werken. Elke deelnemer ziet wijzigingen direct.",
     "asyncMode": "Asynchrone samenwerking",
     "asyncModeHelp": "Laat medewerkers op verschillende tijden werken. Wijzigingen worden 7 dagen op de server bewaard.",
     "serverRequired": "Configureer eerst een synchronisatieserver om delen te activeren.",
@@ -432,8 +432,8 @@
     "stopSharing": "Stoppen met delen",
     "stopping": "Stoppen..."
   },
-  "investigationTags": {
-    "title": "Onderzoek-tags",
+  "dossierTags": {
+    "title": "Dossier-tags",
     "currentTags": "Huidige tags",
     "noTags": "Geen tags",
     "addTag": "Tag toevoegen",
@@ -530,7 +530,7 @@
       "risks": [
         "Vergeten wachtwoord = gegevens permanent ontoegankelijk, geen uitzonderingen",
         "Geen herstel mogelijk — niet door ons, niet door uw browser",
-        "Exporteer uw onderzoeken als ZIP voordat u activeert",
+        "Exporteer uw dossiers als ZIP voordat u activeert",
         "Versleuteling is van toepassing op IndexedDB en bijgevoegde bestanden (OPFS)"
       ]
     },

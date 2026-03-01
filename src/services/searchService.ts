@@ -4,7 +4,7 @@ import { getCountryByCode, getCountryName } from '../data/countries';
 
 class SearchService {
   private index: MiniSearch<SearchDocument>;
-  private currentInvestigationId: string | null = null;
+  private currentDossierId: string | null = null;
 
   constructor() {
     this.index = this.createIndex();
@@ -13,7 +13,7 @@ class SearchService {
   private createIndex(): MiniSearch<SearchDocument> {
     return new MiniSearch<SearchDocument>({
       fields: ['label', 'notes', 'tags', 'properties', 'extractedText'],
-      storeFields: ['id', 'type', 'label', 'investigationId'],
+      storeFields: ['id', 'type', 'label', 'dossierId'],
       searchOptions: {
         boost: { label: 3, tags: 2, notes: 1 },
         fuzzy: 0.2,
@@ -28,20 +28,20 @@ class SearchService {
   private assetTextMap = new Map<string, string>();
 
   /**
-   * Load and index all elements and links for an investigation (full rebuild).
+   * Load and index all elements and links for an dossier (full rebuild).
    * Use syncIncremental() for subsequent updates.
    */
-  loadInvestigation(
-    investigationId: string,
+  loadDossier(
+    dossierId: string,
     elements: Element[],
     links: Link[],
     assets: Asset[] = []
   ): void {
-    // Reset if different investigation
-    if (this.currentInvestigationId !== investigationId) {
+    // Reset if different dossier
+    if (this.currentDossierId !== dossierId) {
       this.index = this.createIndex();
       this.indexedIds.clear();
-      this.currentInvestigationId = investigationId;
+      this.currentDossierId = dossierId;
     }
 
     this.buildAssetTextMap(elements, assets);
@@ -178,7 +178,7 @@ class SearchService {
    */
   clear(): void {
     this.index = this.createIndex();
-    this.currentInvestigationId = null;
+    this.currentDossierId = null;
   }
 
   /**
@@ -216,7 +216,7 @@ class SearchService {
     return {
       id: element.id,
       type: 'element',
-      investigationId: element.investigationId,
+      dossierId: element.dossierId,
       label: element.label,
       notes: element.notes,
       tags: element.tags.join(' '),
@@ -231,7 +231,7 @@ class SearchService {
     return {
       id: link.id,
       type: 'link',
-      investigationId: link.investigationId,
+      dossierId: link.dossierId,
       label: link.label,
       notes: link.notes,
       tags: link.tags?.join(' ') ?? '',

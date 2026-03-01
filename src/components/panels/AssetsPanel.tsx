@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, File, Image, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
-import { useInvestigationStore } from '../../stores';
+import { useDossierStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
@@ -14,7 +14,7 @@ interface AssetsPanelProps {
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
   const { t } = useTranslation(['panels', 'modals']);
-  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText } = useInvestigationStore();
+  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText } = useDossierStore();
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);

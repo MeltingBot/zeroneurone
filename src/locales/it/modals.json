@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nuova indagine",
-    "namePlaceholder": "Nome dell'indagine",
+  "createDossier": {
+    "title": "Nuovo fascicolo",
+    "namePlaceholder": "Nome delil fascicolo",
     "descriptionPlaceholder": "Descrizione (opzionale)",
-    "create": "Crea l'indagine"
+    "create": "Crea il fascicolo"
   },
   "confirmDelete": {
     "title": "Elimina",
     "message": "Questa azione è irreversibile.",
     "confirm": "Elimina",
     "deleting": "Eliminazione...",
-    "deleteInvestigation": "Elimina l'indagine",
-    "deleteInvestigationMessage": "Eliminare \"{{name}}\"? Questa azione è irreversibile."
+    "deleteDossier": "Elimina il fascicolo",
+    "deleteDossierMessage": "Eliminare \"{{name}}\"? Questa azione è irreversibile."
   },
   "rename": {
     "title": "Rinomina",
     "rename": "Rinomina",
     "renaming": "Rinominazione...",
     "label": "Nome",
-    "renameInvestigation": "Rinomina l'indagine",
+    "renameDossier": "Rinomina il fascicolo",
     "namePlaceholder": "Nuovo nome"
   },
   "importIntoCurrent": {
-    "title": "Importa nell'indagine",
-    "description": "Importa dati nell'indagine corrente. I file ZIP saranno importati in modalità posizionamento.",
+    "title": "Importa nelil fascicolo",
+    "description": "Importa dati nelil fascicolo corrente. I file ZIP saranno importati in modalità posizionamento.",
     "selectFile": "Seleziona un file",
     "emptyZip": "Il file ZIP è vuoto o non contiene elementi"
   },
   "import": {
-    "title": "Importa un'indagine",
+    "title": "Importa un'fascicolo",
     "dropzone": "Trascina un file o clicca per selezionare",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importa in",
-    "newInvestigation": "Nuova indagine",
+    "newDossier": "Nuovo fascicolo",
     "selectFile": "Seleziona un file",
     "importing": "Importazione...",
     "success": "Importazione riuscita",
@@ -56,7 +56,7 @@
     "andMore": "... e altri {{count}}"
   },
   "export": {
-    "title": "Esporta l'indagine",
+    "title": "Esporta il fascicolo",
     "description": "Esporta \"{{name}}\" ({{elements}} elementi, {{links}} collegamenti)",
     "format": "Formato",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Contenuto archiviato",
-      "investigations": "Indagini",
+      "dossiers": "Fascicoli",
       "elements": "Elementi",
       "links": "Collegamenti",
       "files": "File"
@@ -278,11 +278,11 @@
       "title": "Backup completo",
       "exportAll": "Esporta tutto",
       "import": "Importa",
-      "description": "Tutte le indagini, file e tag. L'importazione aggiunge senza sostituire.",
+      "description": "Tutte le fascicoli, file e tag. L'importazione aggiunge senza sostituire.",
       "exporting": "Esportazione...",
       "importing": "Importazione...",
       "exportSuccess": "Esportazione completata",
-      "importSuccess": "Importazione riuscita: {{investigations}} indagine/i, {{elements}} elemento/i, {{links}} collegamento/i",
+      "importSuccess": "Importazione riuscita: {{dossiers}} fascicolo/i, {{elements}} elemento/i, {{links}} collegamento/i",
       "error": "Errore"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Archiviazione locale dei dati",
     "warning": "I tuoi dati sono archiviati localmente",
-    "description": "Tutte le indagini e i file sono salvati nell'archiviazione del tuo browser (IndexedDB e OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Raccomandazione:</strong> Esporta regolarmente le tue indagini tramite il pulsante \"Esporta\" per conservare un backup dei tuoi dati.",
+    "description": "Tutte le fascicoli e i file sono salvati nell'archiviazione del tuo browser (IndexedDB e OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Raccomandazione:</strong> Esporta regolarmente le tue fascicoli tramite il pulsante \"Esporta\" per conservare un backup dei tuoi dati.",
     "acknowledge": "Ho capito",
     "bullets": {
       "deleted": "I dati possono essere <strong class=\"text-text-primary\">eliminati</strong> se svuoti la cache del browser",
@@ -309,7 +309,7 @@
     "title": "Genera sintesi",
     "reportTitle": "Titolo della sintesi",
     "contentToInclude": "Contenuto da includere",
-    "includeDescription": "Descrizione dell'indagine",
+    "includeDescription": "Descrizione delil fascicolo",
     "includeSummary": "Riepilogo statistico",
     "includeInsights": "Analisi del grafo (cluster, centralità)",
     "includeTimeline": "Cronologia degli eventi",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://il-tuo-server.esempio.com",
     "save": "Salva",
     "serverHelp": "Usa un server compatibile con y-websocket. Puoi ospitare il tuo con",
-    "shareDescription": "Condividi questa indagine per collaborare in tempo reale. Ogni partecipante vedrà le modifiche istantaneamente.",
+    "shareDescription": "Condividi questa fascicolo per collaborare in tempo reale. Ogni partecipante vedrà le modifiche istantaneamente.",
     "asyncMode": "Collaborazione asincrona",
     "asyncModeHelp": "Permette ai collaboratori di lavorare in momenti diversi. Le modifiche vengono conservate 7 giorni sul server.",
     "serverRequired": "Configura prima un server di sincronizzazione per attivare la condivisione.",
@@ -432,8 +432,8 @@
     "stopSharing": "Interrompi condivisione",
     "stopping": "Interruzione..."
   },
-  "investigationTags": {
-    "title": "Tag dell'indagine",
+  "dossierTags": {
+    "title": "Tag delil fascicolo",
     "currentTags": "Tag attuali",
     "noTags": "Nessun tag",
     "addTag": "Aggiungi tag",
@@ -530,7 +530,7 @@
       "risks": [
         "Password dimenticata = dati permanentemente inaccessibili, senza eccezioni",
         "Nessun recupero possibile — né da noi, né dal browser",
-        "Esporta le tue indagini come ZIP prima di attivare",
+        "Esporta le tue fascicoli come ZIP prima di attivare",
         "La crittografia si applica a IndexedDB e ai file allegati (OPFS)"
       ]
     },

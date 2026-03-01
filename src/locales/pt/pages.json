@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Voltar ao início",
-    "newInvestigation": "Nova investigação",
+    "newDossier": "Novo dossiê",
     "manageTags": "Gerir tags",
     "import": "Importar",
     "about": "Sobre",
@@ -10,10 +10,10 @@
     "storage": "Armazenamento",
     "darkMode": "Modo escuro",
     "lightMode": "Modo claro",
-    "noInvestigations": "Sem investigações",
-    "createFirst": "Crie a sua primeira investigação para começar",
-    "viewInvestigations": "Ver investigações",
-    "investigationCount": "{{count}} investigação(ões)",
+    "noDossiers": "Sem dossiês",
+    "createFirst": "Crie a sua primeiro dossiê para começar",
+    "viewDossiers": "Ver dossiês",
+    "dossierCount": "{{count}} dossiê(s)",
     "loading": "A carregar...",
     "searchPlaceholder": "Pesquisar por nome ou descrição...",
     "filterByTag": "Filtrar por tag",
@@ -22,9 +22,9 @@
     "sortName": "Nome",
     "activeFilters": "Filtros ativos",
     "clearFilters": "Limpar",
-    "noResults": "Nenhuma investigação encontrada",
+    "noResults": "Nenhum dossiê encontrada",
     "noResultsHint": "Tente outros termos ou limpe os filtros",
-    "resultsCount": "{{count}} / {{total}} investigação(ões)",
+    "resultsCount": "{{count}} / {{total}} dossiê(s)",
     "card": {
       "modified": "Modificado {{time}}",
       "elementCount": "{{count}} elemento(s)",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Quadro branco para analistas e investigadores",
       "description": "Uma ferramenta Open Source de amplificação cognitiva que combina a simplicidade de um quadro branco com o poder da análise de grafos. Mapeie as suas ideias, geolocalize os seus elementos, visualize os eventos, conecte as pistas e revele os padrões ocultos.",
-      "startNew": "Nova investigação",
+      "startNew": "Novo dossiê",
       "importExisting": "Importar",
-      "viewExisting": "Ver as minhas {{count}} investigação(ões)",
+      "viewExisting": "Ver as minhas {{count}} dossiê(s)",
       "features": {
         "graph": {
           "title": "Grafo relacional",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Colaboração segura em tempo real",
-          "description": "Trabalhe com outros na mesma investigação"
+          "description": "Trabalhe com outros na mesmo dossiê"
         }
       },
       "extensions": "Extensões",
@@ -76,7 +76,7 @@
       "disablePlugin": "Desativar extensão"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "A abrir",
       "syncing": "A sincronizar",
@@ -258,7 +258,7 @@
       "navigateTo": "Ir para aba {{name}}"
     },
     "retentionExpiredBanner": "Retenção expirada há {{days}} dia(s)",
-    "retentionDeleteConfirm": "Esta investigação será excluída permanentemente, sem possibilidade de anulação.",
+    "retentionDeleteConfirm": "Esto dossiê será excluída permanentemente, sem possibilidade de anulação.",
     "retentionDeleteAction": "Excluir permanentemente",
     "retentionReadonly": "Investigação em somente leitura (retenção expirada)",
     "retentionRedactConfirm": "A redação apagará permanentemente todo o conteúdo textual (nomes, notas, propriedades). A estrutura do grafo será preservada. Esta ação é irreversível.",

@@ -39,7 +39,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
-import { useInvestigationStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, toast } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
@@ -151,14 +151,14 @@ function CanvasZoomControls() {
       <button
         onClick={handleZoomOut}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('investigation.toolbar.zoomOut')}
+        title={t('dossier.toolbar.zoomOut')}
       >
         <ZoomOut size={16} />
       </button>
       <button
         onClick={handleZoomIn}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('investigation.toolbar.zoomIn')}
+        title={t('dossier.toolbar.zoomIn')}
       >
         <ZoomIn size={16} />
       </button>
@@ -166,14 +166,14 @@ function CanvasZoomControls() {
       <button
         onClick={handleFitView}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('investigation.toolbar.fitView')}
+        title={t('dossier.toolbar.fitView')}
       >
         <Maximize2 size={16} />
       </button>
       <button
         onClick={handleReset}
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
-        title={t('investigation.toolbar.resetView')}
+        title={t('dossier.toolbar.resetView')}
       >
         <RotateCcw size={16} />
       </button>
@@ -540,28 +540,28 @@ export function Canvas() {
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Stores — individual selectors to avoid re-renders when unrelated state changes
-  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
-  const elements = useInvestigationStore((s) => s.elements);
-  const links = useInvestigationStore((s) => s.links);
+  const currentDossier = useDossierStore((s) => s.currentDossier);
+  const elements = useDossierStore((s) => s.elements);
+  const links = useDossierStore((s) => s.links);
 
   // O(1) element lookup map — avoids O(n) .find() in hot paths (drag, resize, context menu)
   const elementMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
-  const assets = useInvestigationStore((s) => s.assets);
-  const comments = useInvestigationStore((s) => s.comments);
-  const createElement = useInvestigationStore((s) => s.createElement);
-  const updateElement = useInvestigationStore((s) => s.updateElement);
-  const updateElementPositions = useInvestigationStore((s) => s.updateElementPositions);
-  const createLink = useInvestigationStore((s) => s.createLink);
-  const updateLink = useInvestigationStore((s) => s.updateLink);
-  const deleteElements = useInvestigationStore((s) => s.deleteElements);
-  const deleteLinks = useInvestigationStore((s) => s.deleteLinks);
-  const addAsset = useInvestigationStore((s) => s.addAsset);
-  const createGroup = useInvestigationStore((s) => s.createGroup);
-  const removeFromGroup = useInvestigationStore((s) => s.removeFromGroup);
-  const dissolveGroup = useInvestigationStore((s) => s.dissolveGroup);
-  const mergeElementsAction = useInvestigationStore((s) => s.mergeElements);
-  const pasteElements = useInvestigationStore((s) => s.pasteElements);
-  const loadInvestigation = useInvestigationStore((s) => s.loadInvestigation);
+  const assets = useDossierStore((s) => s.assets);
+  const comments = useDossierStore((s) => s.comments);
+  const createElement = useDossierStore((s) => s.createElement);
+  const updateElement = useDossierStore((s) => s.updateElement);
+  const updateElementPositions = useDossierStore((s) => s.updateElementPositions);
+  const createLink = useDossierStore((s) => s.createLink);
+  const updateLink = useDossierStore((s) => s.updateLink);
+  const deleteElements = useDossierStore((s) => s.deleteElements);
+  const deleteLinks = useDossierStore((s) => s.deleteLinks);
+  const addAsset = useDossierStore((s) => s.addAsset);
+  const createGroup = useDossierStore((s) => s.createGroup);
+  const removeFromGroup = useDossierStore((s) => s.removeFromGroup);
+  const dissolveGroup = useDossierStore((s) => s.dissolveGroup);
+  const mergeElementsAction = useDossierStore((s) => s.mergeElements);
+  const pasteElements = useDossierStore((s) => s.pasteElements);
+  const loadDossier = useDossierStore((s) => s.loadDossier);
 
   // Wrapper size for viewport culling
   const [wrapperSize, setWrapperSize] = useState({ width: 800, height: 600 });
@@ -948,25 +948,25 @@ export function Canvas() {
     [updateLink]
   );
 
-  // Get display settings from investigation using specific selectors for reactivity
-  const showConfidenceIndicator = useInvestigationStore(
-    (state) => state.currentInvestigation?.settings?.showConfidenceIndicator ?? false
+  // Get display settings from dossier using specific selectors for reactivity
+  const showConfidenceIndicator = useDossierStore(
+    (state) => state.currentDossier?.settings?.showConfidenceIndicator ?? false
   );
-  const tagDisplayMode = useInvestigationStore(
-    (state) => state.currentInvestigation?.settings?.tagDisplayMode ?? 'icons'
+  const tagDisplayMode = useDossierStore(
+    (state) => state.currentDossier?.settings?.tagDisplayMode ?? 'icons'
   );
-  const tagDisplaySize = useInvestigationStore(
-    (state) => state.currentInvestigation?.settings?.tagDisplaySize ?? 'small'
+  const tagDisplaySize = useDossierStore(
+    (state) => state.currentDossier?.settings?.tagDisplaySize ?? 'small'
   );
-  const linkAnchorMode = useInvestigationStore(
-    (state) => state.currentInvestigation?.settings?.linkAnchorMode ?? 'manual'
+  const linkAnchorMode = useDossierStore(
+    (state) => state.currentDossier?.settings?.linkAnchorMode ?? 'manual'
   );
-  const linkCurveMode = useInvestigationStore(
-    (state) => state.currentInvestigation?.settings?.linkCurveMode ?? 'curved'
+  const linkCurveMode = useDossierStore(
+    (state) => state.currentDossier?.settings?.linkCurveMode ?? 'curved'
   );
   const displayedProperties = useMemo(
-    () => currentInvestigation?.settings?.displayedProperties ?? [],
-    [currentInvestigation?.settings?.displayedProperties]
+    () => currentDossier?.settings?.displayedProperties ?? [],
+    [currentDossier?.settings?.displayedProperties]
   );
 
   // --- Stable callback refs (eliminates 500+ closure recreations per recalcul) ---
@@ -2149,7 +2149,7 @@ export function Canvas() {
 
   const handleSelectionDuplicate = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
-    if (selectedEls.length === 0 || !currentInvestigation) return;
+    if (selectedEls.length === 0 || !currentDossier) return;
     const elsToDuplicate = elements.filter(el => selectedEls.includes(el.id));
     if (elsToDuplicate.length === 0) return;
 
@@ -2163,7 +2163,7 @@ export function Canvas() {
       return {
         ...el,
         id: newId,
-        investigationId: currentInvestigation.id,
+        dossierId: currentDossier.id,
         position: { x: el.position.x + offset, y: el.position.y + offset },
         parentGroupId: null,
         createdAt: now,
@@ -2176,7 +2176,7 @@ export function Canvas() {
     const newLinks: Link[] = relevantLinks.map(link => ({
       ...link,
       id: generateUUID(),
-      investigationId: currentInvestigation.id,
+      dossierId: currentDossier.id,
       fromId: oldToNewIdMap.get(link.fromId)!,
       toId: oldToNewIdMap.get(link.toId)!,
       createdAt: now,
@@ -2195,7 +2195,7 @@ export function Canvas() {
       redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
-  }, [elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
+  }, [elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   const handleSelectionDelete = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
@@ -2294,7 +2294,7 @@ export function Canvas() {
       return {
         ...el,
         id: newId,
-        investigationId: currentInvestigation!.id,
+        dossierId: currentDossier!.id,
         position: {
           x: canvasX + (el.position.x - centerX),
           y: canvasY + (el.position.y - centerY),
@@ -2313,7 +2313,7 @@ export function Canvas() {
     const newLinks: Link[] = relevantLinks.map(link => ({
       ...link,
       id: generateUUID(),
-      investigationId: currentInvestigation!.id,
+      dossierId: currentDossier!.id,
       fromId: oldToNewIdMap.get(link.fromId)!,
       toId: oldToNewIdMap.get(link.toId)!,
       createdAt: now,
@@ -2337,7 +2337,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [canvasContextMenu, links, currentInvestigation, pasteElements, selectElements, pushAction, addAsset, createElement, activeTabId, addTabMembers]);
+  }, [canvasContextMenu, links, currentDossier, pasteElements, selectElements, pushAction, addAsset, createElement, activeTabId, addTabMembers]);
 
   // Context menu actions
   const handleContextMenuFocus = useCallback(
@@ -2471,7 +2471,7 @@ export function Canvas() {
       return {
         ...el,
         id: newId,
-        investigationId: currentInvestigation!.id,
+        dossierId: currentDossier!.id,
         position: {
           x: pasteX + (el.position.x - centerX),
           y: pasteY + (el.position.y - centerY),
@@ -2490,7 +2490,7 @@ export function Canvas() {
     const newLinks: Link[] = relevantLinks.map(link => ({
       ...link,
       id: generateUUID(),
-      investigationId: currentInvestigation!.id,
+      dossierId: currentDossier!.id,
       fromId: oldToNewIdMap.get(link.fromId)!,
       toId: oldToNewIdMap.get(link.toId)!,
       createdAt: now,
@@ -2514,7 +2514,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [contextMenu, viewport, currentInvestigation, pasteElements, links, selectElements, pushAction, activeTabId, addTabMembers]);
+  }, [contextMenu, viewport, currentDossier, pasteElements, links, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Duplicate handler for context menu
   const handleContextMenuDuplicate = useCallback(() => {
@@ -2535,7 +2535,7 @@ export function Canvas() {
       return {
         ...el,
         id: newId,
-        investigationId: currentInvestigation!.id,
+        dossierId: currentDossier!.id,
         position: {
           x: el.position.x + offset,
           y: el.position.y + offset,
@@ -2554,7 +2554,7 @@ export function Canvas() {
     const newLinks: Link[] = relevantLinks.map(link => ({
       ...link,
       id: generateUUID(),
-      investigationId: currentInvestigation!.id,
+      dossierId: currentDossier!.id,
       fromId: oldToNewIdMap.get(link.fromId)!,
       toId: oldToNewIdMap.get(link.toId)!,
       createdAt: now,
@@ -2576,7 +2576,7 @@ export function Canvas() {
       redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
-  }, [contextMenu, elements, links, getSelectedElementIds, currentInvestigation, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
+  }, [contextMenu, elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Group selection handler for context menu
   const handleGroupSelection = useCallback(async () => {
@@ -2618,7 +2618,7 @@ export function Canvas() {
     }));
 
     // Get fresh group snapshot from store (with childIds set)
-    const groupSnapshot = useInvestigationStore.getState().elements.find(el => el.id === group.id);
+    const groupSnapshot = useDossierStore.getState().elements.find(el => el.id === group.id);
     if (groupSnapshot) {
       pushAction({
         type: 'create-group',
@@ -2825,10 +2825,10 @@ export function Canvas() {
         if (importPlacementData.fileContent != null) {
           // ── Non-ZIP format: import then shift new elements ──
           const content = importPlacementData.fileContent;
-          const invId = importPlacementData.investigationId;
+          const invId = importPlacementData.dossierId;
 
           // Snapshot existing element IDs before import
-          const existingElements = await elementRepository.getByInvestigation(invId);
+          const existingElements = await elementRepository.getByDossier(invId);
           const existingIds = new Set(existingElements.map(e => e.id));
 
           // Dispatch to the appropriate import function
@@ -2856,7 +2856,7 @@ export function Canvas() {
 
           // Shift newly created elements to the click position
           if (result.success && result.elementsImported > 0) {
-            const allElements = await elementRepository.getByInvestigation(invId);
+            const allElements = await elementRepository.getByDossier(invId);
             const newElements = allElements.filter(e => !existingIds.has(e.id));
 
             if (newElements.length > 0) {
@@ -2886,13 +2886,13 @@ export function Canvas() {
           // ── ZIP format: import with built-in offset ──
           result = await importService.importFromZip(
             importPlacementData.file,
-            importPlacementData.investigationId,
+            importPlacementData.dossierId,
             { x: offsetX, y: offsetY }
           );
         }
 
         if (result.success) {
-          toast.success(tPages('investigation.importPlacement.success', {
+          toast.success(tPages('dossier.importPlacement.success', {
             count: result.elementsImported
           }));
 
@@ -2905,13 +2905,13 @@ export function Canvas() {
           // Close Y.Doc, delete its persistence, and reload from Dexie
           // This forces rebuild of Y.Doc from Dexie which now includes imported elements
           await syncService.close();
-          await syncService.deleteLocalData(importPlacementData.investigationId);
-          await loadInvestigation(importPlacementData.investigationId);
+          await syncService.deleteLocalData(importPlacementData.dossierId);
+          await loadDossier(importPlacementData.dossierId);
 
           // Restore shared mode if we were collaborating
           if (wasShared && savedEncryptionKey && savedRoomId) {
             await syncService.openShared(
-              importPlacementData.investigationId,
+              importPlacementData.dossierId,
               savedEncryptionKey,
               savedRoomId
             );
@@ -2922,7 +2922,7 @@ export function Canvas() {
 
           // Add imported elements to active tab
           if (activeTabId) {
-            const importedIds = useInvestigationStore.getState().elements
+            const importedIds = useDossierStore.getState().elements
               .filter(el => !preImportIds.has(el.id))
               .map(el => el.id);
             if (importedIds.length > 0) {
@@ -2933,10 +2933,10 @@ export function Canvas() {
           // Call completion callback if provided
           importPlacementData.onComplete?.();
         } else {
-          toast.error(result.errors[0] || tPages('investigation.importPlacement.error'));
+          toast.error(result.errors[0] || tPages('dossier.importPlacement.error'));
         }
       } catch (error) {
-        toast.error(tPages('investigation.importPlacement.error'));
+        toast.error(tPages('dossier.importPlacement.error'));
       } finally {
         setIsImportingPlacement(false);
         exitImportPlacementMode();
@@ -2945,7 +2945,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadInvestigation, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -3547,7 +3547,7 @@ export function Canvas() {
             return {
               ...el,
               id: newId,
-              investigationId: currentInvestigation!.id,
+              dossierId: currentDossier!.id,
               position: {
                 x: el.position.x + offset,
                 y: el.position.y + offset,
@@ -3568,7 +3568,7 @@ export function Canvas() {
           const newLinks: Link[] = relevantLinks.map(link => ({
             ...link,
             id: generateUUID(),
-            investigationId: currentInvestigation!.id,
+            dossierId: currentDossier!.id,
             fromId: oldToNewIdMap.get(link.fromId)!,
             toId: oldToNewIdMap.get(link.toId)!,
             createdAt: now,
@@ -3662,7 +3662,7 @@ export function Canvas() {
     createElement,
     createGroup,
     pasteElements,
-    currentInvestigation,
+    currentDossier,
     elements,
     links,
     viewport,
@@ -3785,7 +3785,7 @@ export function Canvas() {
           return {
             ...el,
             id: newId,
-            investigationId: currentInvestigation!.id,
+            dossierId: currentDossier!.id,
             position: {
               x: centerX + (el.position.x - copiedCenterX),
               y: centerY + (el.position.y - copiedCenterY),
@@ -3804,7 +3804,7 @@ export function Canvas() {
         const newLinks: Link[] = relevantLinks.map(link => ({
           ...link,
           id: generateUUID(),
-          investigationId: currentInvestigation!.id,
+          dossierId: currentDossier!.id,
           fromId: oldToNewIdMap.get(link.fromId)!,
           toId: oldToNewIdMap.get(link.toId)!,
           createdAt: now,
@@ -3836,7 +3836,7 @@ export function Canvas() {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [viewport, pasteElements, currentInvestigation, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
+  }, [viewport, pasteElements, currentDossier, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
 
   // Handle viewport change
   const handleViewportChange = useCallback(
@@ -3898,7 +3898,7 @@ export function Canvas() {
               <button
                 onClick={() => setIsShareModalOpen(true)}
                 className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded transition-colors"
-                title={tPages('investigation.toolbar.share')}
+                title={tPages('dossier.toolbar.share')}
               >
                 <Share2 size={16} />
               </button>
@@ -3919,15 +3919,15 @@ export function Canvas() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-accent font-medium">
                       {selectedElementIds.size === 1 && selectedLinkIds.size === 0
-                        ? tPages('investigation.toolbar.oneElement')
+                        ? tPages('dossier.toolbar.oneElement')
                         : selectedLinkIds.size === 1 && selectedElementIds.size === 0
-                        ? tPages('investigation.toolbar.oneLink')
-                        : tPages('investigation.toolbar.selectedCount', { count: selectedElementIds.size + selectedLinkIds.size })}
+                        ? tPages('dossier.toolbar.oneLink')
+                        : tPages('dossier.toolbar.selectedCount', { count: selectedElementIds.size + selectedLinkIds.size })}
                     </span>
                     <button
                       onClick={clearSelection}
                       className="p-0.5 text-text-tertiary hover:text-text-primary rounded transition-colors"
-                      title={tPages('investigation.toolbar.deselect')}
+                      title={tPages('dossier.toolbar.deselect')}
                     >
                       <X size={12} />
                     </button>
@@ -3941,21 +3941,21 @@ export function Canvas() {
               <button
                 onClick={toggleSnapToGrid}
                 className={`p-1.5 rounded transition-colors ${snapToGrid ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title={tPages('investigation.toolbar.snapToGrid')}
+                title={tPages('dossier.toolbar.snapToGrid')}
               >
                 <Grid3x3 size={16} />
               </button>
               <button
                 onClick={toggleAlignGuides}
                 className={`p-1.5 rounded transition-colors ${showAlignGuides ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title={tPages('investigation.toolbar.alignGuides')}
+                title={tPages('dossier.toolbar.alignGuides')}
               >
                 <Magnet size={16} />
               </button>
               <button
                 onClick={toggleMinimap}
                 className={`p-1.5 rounded transition-colors ${showMinimap ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title={tPages('investigation.toolbar.minimap')}
+                title={tPages('dossier.toolbar.minimap')}
               >
                 <MapIcon size={16} />
               </button>
@@ -4177,7 +4177,7 @@ export function Canvas() {
                 linkIds: Array.from(selectedLinkIds),
                 canvasPosition: { x: canvasContextMenu.canvasX, y: canvasContextMenu.canvasY },
                 hasTextAssets: false,
-                investigationId: currentInvestigation?.id || '',
+                dossierId: currentDossier?.id || '',
               }}
             />
           )}
@@ -4308,9 +4308,9 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           <button
             onClick={onClose}
             className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
-            title={t('investigation.toolbar.closeEsc')}
+            title={t('dossier.toolbar.closeEsc')}
           >
-            <span className="sr-only">{t('investigation.toolbar.close')}</span>
+            <span className="sr-only">{t('dossier.toolbar.close')}</span>
             ×
           </button>
         </div>
@@ -4321,7 +4321,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
             <div className="flex items-center justify-center p-8">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-text-secondary">{t('investigation.toolbar.loading')}</span>
+                <span className="text-xs text-text-secondary">{t('dossier.toolbar.loading')}</span>
               </div>
             </div>
           ) : isPdf && fileUrl ? (

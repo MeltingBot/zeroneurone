@@ -23,7 +23,7 @@ if (!(globalThis as any).process) {
 }
 
 // ─── Stores ────────────────────────────────────────────────────
-import { useInvestigationStore } from '../stores/investigationStore';
+import { useDossierStore } from '../stores/dossierStore';
 import { useSelectionStore } from '../stores/selectionStore';
 import { useViewStore } from '../stores/viewStore';
 import { useReportStore } from '../stores/reportStore';
@@ -32,7 +32,7 @@ import { useInsightsStore } from '../stores/insightsStore';
 // ─── Repositories ──────────────────────────────────────────────
 import { elementRepository } from '../db/repositories/elementRepository';
 import { linkRepository } from '../db/repositories/linkRepository';
-import { investigationRepository } from '../db/repositories/investigationRepository';
+import { dossierRepository } from '../db/repositories/dossierRepository';
 
 // ─── Services & utils ──────────────────────────────────────────
 import { fileService } from '../services/fileService';
@@ -81,7 +81,7 @@ export const pluginAPI = {
 
   // ─── Zustand stores ─────────────────────────────────────────
   stores: {
-    useInvestigationStore,
+    useDossierStore,
     useSelectionStore,
     useViewStore,
     useReportStore,
@@ -92,7 +92,7 @@ export const pluginAPI = {
   repositories: {
     elementRepository,
     linkRepository,
-    investigationRepository,
+    dossierRepository,
   },
 
   // ─── Dexie database instance ────────────────────────────────
@@ -188,18 +188,20 @@ export const pluginAPI = {
 
   // ─── Plugin data persistence (IndexedDB) ────────────────────
   pluginData: {
-    async get(pluginId: string, investigationId: string, key: string): Promise<any> {
-      const row = await db.pluginData.get({ pluginId, investigationId, key });
+    async get(pluginId: string, dossierId: string, key: string): Promise<any> {
+      // PK uses investigationId (legacy), so query with it
+      const row = await db.pluginData.get({ pluginId, investigationId: dossierId, key });
       return row?.value;
     },
 
-    async set(pluginId: string, investigationId: string, key: string, value: any): Promise<void> {
-      await db.pluginData.put({ pluginId, investigationId, key, value });
+    async set(pluginId: string, dossierId: string, key: string, value: any): Promise<void> {
+      // Must include investigationId for compound PK + dossierId for index
+      await db.pluginData.put({ pluginId, investigationId: dossierId, dossierId, key, value });
     },
 
-    async remove(pluginId: string, investigationId: string, key: string): Promise<void> {
+    async remove(pluginId: string, dossierId: string, key: string): Promise<void> {
       await db.pluginData
-        .where({ pluginId, investigationId, key })
+        .where({ pluginId, investigationId: dossierId, key })
         .delete();
     },
   },

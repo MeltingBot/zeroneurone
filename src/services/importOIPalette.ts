@@ -1,7 +1,7 @@
 import { generateUUID } from '../utils';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type {
-  InvestigationId,
+  DossierId,
   Element,
   ElementId,
   Link,
@@ -134,11 +134,11 @@ const SKIP_KEYS = new Set(['registered', 'platform_variables']);
 // ============================================================================
 
 /**
- * Import a Graph Palette (OSINT Industries visual export) into an investigation
+ * Import a Graph Palette (OSINT Industries visual export) into an dossier
  */
 export async function importOIPalette(
   content: string,
-  targetInvestigationId: InvestigationId
+  targetDossierId: DossierId
 ): Promise<ImportResult> {
   const result: ImportResult = {
     success: false,
@@ -196,7 +196,7 @@ export async function importOIPalette(
         if (meaningfulChildren.length > 0) {
           for (const child of meaningfulChildren) {
             const { element, warnings: childWarnings, assetsImported } = await convertPaletteNode(
-              child, targetInvestigationId, groupTag
+              child, targetDossierId, groupTag
             );
             if (childWarnings.length > 0) result.warnings.push(...childWarnings);
             result.assetsImported += assetsImported;
@@ -222,7 +222,7 @@ export async function importOIPalette(
         // If no meaningful children, fall through to create group as regular element
       }
 
-      const { element, warnings, assetsImported } = await convertPaletteNode(node, targetInvestigationId);
+      const { element, warnings, assetsImported } = await convertPaletteNode(node, targetDossierId);
 
       if (warnings.length > 0) {
         result.warnings.push(...warnings);
@@ -254,7 +254,7 @@ export async function importOIPalette(
 
         const link: Link = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           fromId,
           toId,
           sourceHandle: null,
@@ -280,8 +280,8 @@ export async function importOIPalette(
       }
     }
 
-    // Update investigation timestamp
-    await db.investigations.update(targetInvestigationId, {
+    // Update dossier timestamp
+    await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
 
@@ -301,7 +301,7 @@ export async function importOIPalette(
  */
 async function convertPaletteNode(
   node: PaletteNode,
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   groupTag?: string
 ): Promise<{ element: Element | null; warnings: string[]; assetsImported: number }> {
   const warnings: string[] = [];
@@ -422,7 +422,7 @@ async function convertPaletteNode(
             try {
               const filename = `${label.replace(/[^a-zA-Z0-9]/g, '_')}_pic.png`;
               const file = dataUrlToFile(picValue, filename);
-              const asset = await fileService.saveAsset(investigationId, file);
+              const asset = await fileService.saveAsset(dossierId, file);
               assetIds.push(asset.id);
               visualImageId = asset.id;
               assetsImported++;
@@ -493,7 +493,7 @@ async function convertPaletteNode(
 
   const element: Element = {
     id: generateUUID(),
-    investigationId,
+    dossierId,
     label,
     notes,
     tags,

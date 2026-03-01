@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { HomePage, InvestigationPage, JoinPage } from './pages';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { HomePage, DossierPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
 import { useTagSetStore } from './stores';
 import { useVersionCheck } from './hooks/useVersionCheck';
@@ -284,6 +284,12 @@ function EncryptionGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Legacy route: /investigation/:id → /dossier/:id */
+function LegacyInvestigationRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/dossier/${id}`} replace />;
+}
+
 function App() {
   const loadTagSets = useTagSetStore((state) => state.load);
   const isReady = useEncryptionStore((state) => state.isReady);
@@ -308,7 +314,9 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/investigation/:id" element={<InvestigationPage />} />
+              <Route path="/dossier/:id" element={<DossierPage />} />
+              {/* Legacy route redirect */}
+              <Route path="/investigation/:id" element={<LegacyInvestigationRedirect />} />
               <Route path="/join/:roomId" element={<JoinPage />} />
             </Routes>
             <ToastContainer />

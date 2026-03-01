@@ -59,7 +59,7 @@ export function ViewToolbar({
           onClick={undo}
           disabled={!canUndoNow}
           className={`p-1.5 rounded transition-colors ${canUndoNow ? 'hover:bg-bg-tertiary text-text-secondary' : 'opacity-40 cursor-not-allowed text-text-tertiary'}`}
-          title={t('investigation.viewToolbar.undo')}
+          title={t('dossier.viewToolbar.undo')}
         >
           <Undo2 size={16} />
         </button>
@@ -67,7 +67,7 @@ export function ViewToolbar({
           onClick={redo}
           disabled={!canRedoNow}
           className={`p-1.5 rounded transition-colors ${canRedoNow ? 'hover:bg-bg-tertiary text-text-secondary' : 'opacity-40 cursor-not-allowed text-text-tertiary'}`}
-          title={t('investigation.viewToolbar.redo')}
+          title={t('dossier.viewToolbar.redo')}
         >
           <Redo2 size={16} />
         </button>
@@ -79,7 +79,7 @@ export function ViewToolbar({
           <button
             onClick={toggleFontMode}
             className={`p-1.5 rounded transition-colors ${fontMode === 'handwritten' ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-            title={fontMode === 'handwritten' ? t('investigation.viewToolbar.readableFont') : t('investigation.viewToolbar.handwrittenFont')}
+            title={fontMode === 'handwritten' ? t('dossier.viewToolbar.readableFont') : t('dossier.viewToolbar.handwrittenFont')}
           >
             {fontMode === 'handwritten' ? <Type size={16} /> : <PenTool size={16} />}
           </button>
@@ -90,7 +90,7 @@ export function ViewToolbar({
           <button
             onClick={toggleHideMedia}
             className={`p-1.5 rounded transition-colors ${hideMedia ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-            title={hideMedia ? t('investigation.viewToolbar.showMedia') : t('investigation.viewToolbar.blurMedia')}
+            title={hideMedia ? t('dossier.viewToolbar.showMedia') : t('dossier.viewToolbar.blurMedia')}
           >
             {hideMedia ? <ImageOff size={16} /> : <Image size={16} />}
           </button>
@@ -100,7 +100,7 @@ export function ViewToolbar({
         <button
           onClick={toggleAnonymousMode}
           className={`p-1.5 rounded transition-colors ${anonymousMode ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-          title={anonymousMode ? t('investigation.viewToolbar.showNames') : t('investigation.viewToolbar.anonymousMode')}
+          title={anonymousMode ? t('dossier.viewToolbar.showNames') : t('dossier.viewToolbar.anonymousMode')}
         >
           {anonymousMode ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
@@ -110,7 +110,7 @@ export function ViewToolbar({
           <button
             onClick={toggleShowCommentBadges}
             className={`p-1.5 rounded transition-colors ${showCommentBadges ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-            title={showCommentBadges ? t('investigation.viewToolbar.hideCommentBadges') : t('investigation.viewToolbar.showCommentBadges')}
+            title={showCommentBadges ? t('dossier.viewToolbar.hideCommentBadges') : t('dossier.viewToolbar.showCommentBadges')}
           >
             {showCommentBadges ? <MessageCircle size={16} /> : <MessageCircleOff size={16} />}
           </button>

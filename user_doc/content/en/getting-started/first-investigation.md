@@ -1,33 +1,33 @@
 ---
-title: "First Investigation"
+title: "First Dossier"
 weight: 1
 ---
 
-# Create Your First Investigation
+# Create Your First Dossier
 
-An **investigation** in ZeroNeurone is a complete workspace containing your elements, links, views, and attached files.
+A **dossier** in ZeroNeurone is a complete workspace containing your elements, links, views, and attached files.
 
-## Create an Investigation
+## Create a Dossier
 
-1. From the home page, click **New Investigation**
-2. Give your investigation a name
+1. From the home page, click **New Dossier**
+2. Give your dossier a name
 3. (Optional) Add a description
 
 
-## Open an Existing Investigation
+## Open an Existing Dossier
 
-Click on an investigation card in the list to open it.
+Click on a dossier card in the list to open it.
 
 
-## Organize Your Investigations
+## Organize Your Dossiers
 
 ### Search and Filters
 
-The search bar lets you filter investigations by name or description. Combine with tag filters to quickly find your investigations.
+The search bar lets you filter dossiers by name or description. Combine with tag filters to quickly find your dossiers.
 
-### Investigation Tags
+### Dossier Tags
 
-Associate tags with your investigations to organize them by theme, client, status, etc.
+Associate tags with your dossiers to organize them by theme, client, status, etc.
 
 1. Click the **⋯** menu on a card
 2. Select **Manage tags**
@@ -41,17 +41,17 @@ Useful tag examples:
 
 ### Favorites
 
-Click the star on a card to mark an investigation as favorite. Favorites appear first in the list.
+Click the star on a card to mark a dossier as favorite. Favorites appear first in the list.
 
 ### Sorting
 
-Use the sort selector to order your investigations:
+Use the sort selector to order your dossiers:
 - **Recent** — By modification date (default)
 - **Created** — By creation date
 - **Name** — Alphabetical
 
 
-## Investigation Actions
+## Dossier Actions
 
 Click the **⋯** menu on a card to:
 
@@ -64,9 +64,9 @@ Click the **⋯** menu on a card to:
 **Warning**: Deletion is irreversible. Consider exporting your data first.
 {{< /hint >}}
 
-## Investigation Structure
+## Dossier Structure
 
-An investigation contains:
+A dossier contains:
 
 | Component | Description |
 |-----------|-------------|

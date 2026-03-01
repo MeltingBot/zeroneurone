@@ -15,8 +15,8 @@ L'interface de ZeroNeurone est organisée autour du canvas central, avec des pan
 
 | Icône | Action |
 |-------|--------|
-| ← | Retour à la liste des enquêtes |
-| Nom | Nom de l'enquête (cliquez pour renommer) |
+| ← | Retour à la liste des dossiers |
+| Nom | Nom du dossier (cliquez pour renommer) |
 | 🔍 | Recherche rapide (Ctrl+K) |
 | Vues | Bascule Canvas / Carte / Timeline |
 | ⇄ | Basculer le panneau latéral gauche/droite |

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Upload, AlertCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { importService } from '../../services/importService';
 import { exportService } from '../../services/exportService';
-import { useInvestigationStore, useUIStore } from '../../stores';
+import { useDossierStore, useUIStore } from '../../stores';
 
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
@@ -59,7 +59,7 @@ function estimateElementCount(file: File, content: string): number {
 }
 
 /**
- * Import modal for importing data into the current investigation.
+ * Import modal for importing data into the current dossier.
  * Supports all formats: ZIP, CSV, JSON, GraphML, GEDCOM, etc.
  * All imports go through placement mode so the user can choose where to place elements.
  */
@@ -70,14 +70,14 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
   const [createMissingElements, setCreateMissingElements] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentInvestigation } = useInvestigationStore();
+  const { currentDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !currentInvestigation) return;
+    if (!file || !currentDossier) return;
 
-    const investigationId = currentInvestigation.id;
+    const dossierId = currentDossier.id;
 
     setIsProcessing(true);
     setError(null);
@@ -91,7 +91,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
           enterImportPlacementMode({
             boundingBox: parseResult.boundingBox,
             file,
-            investigationId,
+            dossierId,
             onComplete: () => setError(null),
           });
           onClose();
@@ -148,7 +148,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
           elementCount,
         },
         file,
-        investigationId,
+        dossierId,
         fileContent: content,
         importOptions: { createMissingElements },
         onComplete: () => setError(null),
@@ -162,7 +162,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
         fileInputRef.current.value = '';
       }
     }
-  }, [currentInvestigation, createMissingElements, enterImportPlacementMode, onClose, t]);
+  }, [currentDossier, createMissingElements, enterImportPlacementMode, onClose, t]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();

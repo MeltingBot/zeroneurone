@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Tornar a l'inici",
-    "newInvestigation": "Nova investigació",
+    "newDossier": "Nou expedient",
     "manageTags": "Gestionar etiquetes",
     "import": "Importar",
     "about": "Quant a",
@@ -10,10 +10,10 @@
     "storage": "Emmagatzematge",
     "darkMode": "Mode fosc",
     "lightMode": "Mode clar",
-    "noInvestigations": "Sense investigacions",
-    "createFirst": "Creeu la vostra primera investigació per començar",
-    "viewInvestigations": "Veure investigacions",
-    "investigationCount": "{{count}} investigació/ns",
+    "noDossiers": "Sense expedients",
+    "createFirst": "Creeu la vostra primera expedient per començar",
+    "viewDossiers": "Veure expedients",
+    "dossierCount": "{{count}} expedient(s)",
     "loading": "Carregant...",
     "searchPlaceholder": "Cercar per nom o descripció...",
     "filterByTag": "Filtrar per etiqueta",
@@ -22,9 +22,9 @@
     "sortName": "Nom",
     "activeFilters": "Filtres actius",
     "clearFilters": "Esborrar",
-    "noResults": "No s'han trobat investigacions",
+    "noResults": "No s'han trobat expedients",
     "noResultsHint": "Proveu altres termes o esborreu els filtres",
-    "resultsCount": "{{count}} / {{total}} investigació/ns",
+    "resultsCount": "{{count}} / {{total}} expedient(s)",
     "card": {
       "modified": "Modificat {{time}}",
       "elementCount": "{{count}} element(s)",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Pissarra per a analistes i investigadors",
       "description": "Una eina de codi obert d'amplificació cognitiva que combina la simplicitat d'una pissarra amb la potència de l'anàlisi de grafs. Mapeu les vostres idees, geolocalitzeu els vostres elements, visualitzeu els esdeveniments, connecteu les pistes i reveleu els patrons ocults.",
-      "startNew": "Nova investigació",
+      "startNew": "Nou expedient",
       "importExisting": "Importar",
-      "viewExisting": "Veure les meves {{count}} investigació/ns",
+      "viewExisting": "Veure les meves {{count}} expedient(s)",
       "features": {
         "graph": {
           "title": "Graf relacional",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Col·laboració segura en temps real",
-          "description": "Treballeu amb altres en la mateixa investigació"
+          "description": "Treballeu amb altres en la mateixa expedient"
         }
       },
       "extensions": "Extensions",
@@ -76,7 +76,7 @@
       "disablePlugin": "Desactivar extensió"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Obrint",
       "syncing": "Sincronitzant",
@@ -258,7 +258,7 @@
       "navigateTo": "Anar a pestanya {{name}}"
     },
     "retentionExpiredBanner": "Retenció expirada des de fa {{days}} dia/es",
-    "retentionDeleteConfirm": "Aquesta investigació s'eliminarà definitivament, sense possibilitat d'anul·lació.",
+    "retentionDeleteConfirm": "Aquesta expedient s'eliminarà definitivament, sense possibilitat d'anul·lació.",
     "retentionDeleteAction": "Eliminar definitivament",
     "retentionReadonly": "Investigació en només lectura (retenció expirada)",
     "retentionRedactConfirm": "La redacció eliminarà permanentment tot el contingut textual (noms, notes, propietats). L'estructura del graf es conservarà. Aquesta acció és irreversible.",

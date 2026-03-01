@@ -21,7 +21,7 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
-import { useInvestigationStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
@@ -30,7 +30,7 @@ import { DEFAULT_FILTERS } from '../../types';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
-  const { elements, links, createGroup, dissolveGroup, mergeElements: mergeElementsAction } = useInvestigationStore();
+  const { elements, links, createGroup, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
   const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
@@ -194,7 +194,7 @@ export function InsightsPanel() {
         id: el.id,
         position: { x: el.position.x - groupPos.x, y: el.position.y - groupPos.y },
       }));
-      const groupSnapshot = useInvestigationStore.getState().elements.find(el => el.id === group.id);
+      const groupSnapshot = useDossierStore.getState().elements.find(el => el.id === group.id);
       if (groupSnapshot) {
         pushAction({
           type: 'create-group',

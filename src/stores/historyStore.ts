@@ -111,8 +111,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }));
 
     // Import dynamically to avoid circular dependencies
-    const { useInvestigationStore } = await import('./investigationStore');
-    const store = useInvestigationStore.getState();
+    const { useDossierStore } = await import('./dossierStore');
+    const store = useDossierStore.getState();
 
     switch (action.type) {
       case 'delete-elements':
@@ -210,7 +210,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           // Add child back to group's childIds
           const groupId = action.undo.changes.parentGroupId;
           if (groupId) {
-            const currentStore = (await import('./investigationStore')).useInvestigationStore.getState();
+            const currentStore = (await import('./dossierStore')).useDossierStore.getState();
             const group = currentStore.elements.find(el => el.id === groupId);
             if (group && !group.childIds.includes(action.undo.elementId)) {
               await currentStore.updateElement(groupId, {
@@ -283,8 +283,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }));
 
     // Import dynamically to avoid circular dependencies
-    const { useInvestigationStore } = await import('./investigationStore');
-    const store = useInvestigationStore.getState();
+    const { useDossierStore } = await import('./dossierStore');
+    const store = useDossierStore.getState();
 
     switch (action.type) {
       case 'delete-elements':
@@ -369,7 +369,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           // Remove child from group's childIds
           const groupId = action.undo.changes?.parentGroupId;
           if (groupId) {
-            const currentStore = (await import('./investigationStore')).useInvestigationStore.getState();
+            const currentStore = (await import('./dossierStore')).useDossierStore.getState();
             const group = currentStore.elements.find(el => el.id === groupId);
             if (group) {
               await currentStore.updateElement(groupId, {

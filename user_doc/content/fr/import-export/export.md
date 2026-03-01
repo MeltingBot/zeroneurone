@@ -3,9 +3,9 @@ title: "Exporter"
 weight: 1
 ---
 
-# Exporter une enquête
+# Exporter un dossier
 
-Sauvegardez et partagez vos enquêtes dans différents formats.
+Sauvegardez et partagez vos dossiers dans différents formats.
 
 
 ## Ouvrir l'export
@@ -31,7 +31,7 @@ Structure de l'archive :
 
 ```
 enquete_2024-01-15.zip
-├── investigation.json    # Métadonnées complètes
+├── dossier.json          # Métadonnées complètes
 └── assets/               # Fichiers joints
     ├── a1b2c3.pdf
     ├── d4e5f6.png
@@ -176,7 +176,7 @@ Format idéal pour l'impression haute qualité et l'édition graphique.
 Fonctionnalités :
 - **Navigation bidirectionnelle** : Cliquez sur les références dans le rapport pour zoomer sur le graphe, cliquez sur les nœuds pour défiler vers les références
 - **Table des matières** : Sommaire repliable pour les longs rapports
-- **Modale infos** : Métadonnées de l'enquête et statistiques (nombre d'éléments, liens, groupes)
+- **Modale infos** : Métadonnées du dossier et statistiques (nombre d'éléments, liens, groupes)
 - **Thème clair/sombre** : Basculer entre les modes
 - **Export Markdown** : Télécharger le rapport en `.md` (sans liens internes)
 - **Pan & zoom** : Naviguer dans le graphe avec la molette et le glisser
@@ -197,7 +197,7 @@ Accessible depuis le panneau Rapport via l'icône globe.
 Les fichiers exportés suivent le format :
 
 ```
-{nom_enquête}_{date}_{heure}.{extension}
+{nom_dossier}_{date}_{heure}.{extension}
 ```
 
 Exemple : `Affaire_Dupont_2024-01-15_10-30-00.zip`

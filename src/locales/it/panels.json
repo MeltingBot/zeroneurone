@@ -7,7 +7,7 @@
     "report": "Rapporto",
     "collapsePanel": "Riduci pannello"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informazioni",
       "dates": "Date",
@@ -35,7 +35,7 @@
       "retentionReset": "Reimpostare"
     },
     "placeholders": {
-      "name": "Nome dell'indagine",
+      "name": "Nome delil fascicolo",
       "creator": "Nome del creatore..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Tu: {{name}} (clicca per modificare)"
   },
   "report": {
-    "noInvestigation": "Nessuna indagine caricata",
+    "noDossier": "Nessun fascicolo caricata",
     "noReport": "Nessun rapporto. Creane uno per iniziare.",
     "createReport": "Crea rapporto",
     "defaultTitle": "Rapporto",

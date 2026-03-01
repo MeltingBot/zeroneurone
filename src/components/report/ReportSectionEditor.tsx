@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Trash2, GripVertical } from 'lucide-react';
 import type { ReportSection } from '../../types';
 import { ReportMarkdownEditor } from './ReportMarkdownEditor';
 import { usePlugins } from '../../plugins/usePlugins';
-import { useInvestigationStore } from '../../stores';
+import { useDossierStore } from '../../stores';
 import { Input, IconButton } from '../common';
 
 // Debounce hook (inline implementation)
@@ -49,7 +49,7 @@ export function ReportSectionEditor({
 }: ReportSectionEditorProps) {
   const { t } = useTranslation('panels');
   const sectionPlugins = usePlugins('report:sectionActions');
-  const investigationId = useInvestigationStore((s) => s.currentInvestigation?.id || '');
+  const dossierId = useDossierStore((s) => s.currentDossier?.id || '');
   const [isExpanded, setIsExpanded] = useState(true);
   const [title, setTitle] = useState(section.title);
   const [content, setContent] = useState(section.content);
@@ -190,7 +190,7 @@ export function ReportSectionEditor({
 
         {/* Plugin section actions */}
         {sectionPlugins.map((PluginComponent, i) => (
-          <PluginComponent key={`sp-${i}`} sectionId={section.id} investigationId={investigationId} />
+          <PluginComponent key={`sp-${i}`} sectionId={section.id} dossierId={dossierId} />
         ))}
 
         {/* Delete button */}

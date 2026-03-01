@@ -61,7 +61,7 @@
     "files": "Pliki",
     "links": "Połączenia",
     "elements": "Elementy",
-    "investigations": "Śledztwa",
+    "dossiers": "Śledztwa",
     "views": "Widoki",
     "filters": "Filtry",
     "insights": "Analizy",
@@ -100,7 +100,7 @@
     "noData": "Brak danych",
     "noSelection": "Brak zaznaczenia",
     "noItems": "Brak elementów",
-    "noInvestigationLoaded": "Nie załadowano śledztwa.",
+    "noDossierLoaded": "Nie załadowano teczki.",
     "unnamed": "Bez nazwy"
   },
   "errors": {

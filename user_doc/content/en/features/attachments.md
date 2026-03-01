@@ -178,8 +178,8 @@ Extracted text is automatically indexed in the search engine. A Ctrl+K search fo
 The **ZIP** export includes all attached files:
 
 ```
-investigation.zip
-├── investigation.json    # Metadata
+dossier.zip
+├── dossier.json          # Metadata
 └── assets/              # Attached files
     ├── abc123.pdf
     ├── def456.png

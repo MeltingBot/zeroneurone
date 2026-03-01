@@ -8,12 +8,12 @@
 
 ### 1.1 Ce que l'outil EST
 
-Un **amplificateur cognitif** pour les analystes et enquêteurs.
+Un **amplificateur cognitif** pour les analystes et dossierurs.
 
 L'outil est un **miroir de la pensée de l'analyste**. Il ne pense pas à la place de l'utilisateur. Il étend sa capacité à voir, organiser, et restituer.
 
 C'est un **tableau blanc infini avec de la mémoire** :
-- Comme un mur d'enquête physique avec des photos, des post-its, des fils rouges
+- Comme un mur d'dossier physique avec des photos, des post-its, des fils rouges
 - Qui se souvient de tout ce qu'on y met
 - Qui permet de chercher dedans
 - Qui montre des patterns invisibles à l'œil nu
@@ -64,7 +64,7 @@ Si la réponse est non à l'une de ces questions, la feature est à revoir.
 
 ### 2.1 L'humain reste maître
 
-- C'est l'utilisateur qui décide ce qui entre dans l'enquête
+- C'est l'utilisateur qui décide ce qui entre dans l'dossier
 - C'est l'utilisateur qui décide ce qui est lié à quoi
 - C'est l'utilisateur qui décide ce qui est pertinent
 - L'outil ne suggère jamais de manière intrusive
@@ -358,7 +358,7 @@ L'utilisateur peut regrouper plusieurs éléments en un seul nœud.
 
 ### 6.1 Principe
 
-Les enquêtes ont une dimension spatiale. Les éléments avec coordonnées GPS peuvent être visualisés sur une carte.
+Les dossiers ont une dimension spatiale. Les éléments avec coordonnées GPS peuvent être visualisés sur une carte.
 
 ### 6.2 Modes d'affichage
 
@@ -392,7 +392,7 @@ Les enquêtes ont une dimension spatiale. Les éléments avec coordonnées GPS p
 
 ### 7.1 Principe
 
-L'enquête c'est du temps. La chronologie révèle les causalités.
+L'dossier c'est du temps. La chronologie révèle les causalités.
 
 ### 7.2 Données temporelles
 
@@ -495,7 +495,7 @@ Interface dédiée à la construction du livrable :
 │                         │                                       │
 │   STRUCTURE             │           APERÇU                      │
 │                         │                                       │
-│   1. Introduction       │   # Titre de l'enquête               │
+│   1. Introduction       │   # Titre de l'dossier               │
 │   2. Acteurs clés       │                                       │
 │   3. Flux financiers    │   ## Section 1                        │
 │   4. Chronologie        │                                       │
@@ -565,13 +565,13 @@ Pour les imports en masse (listes de personnes, sociétés, etc.) :
 
 **Principe :** L'utilisateur valide le mapping. Il garde le contrôle.
 
-### 10.3 Export enquête complète
+### 10.3 Export dossier complète
 
 Format ZIP contenant :
 
 ```
 enquete-2025-01-16.zip
-├── manifest.json          # Métadonnées enquête, version format
+├── manifest.json          # Métadonnées dossier, version format
 ├── elements.json          # Tous les éléments
 ├── links.json             # Tous les liens
 ├── views.json             # Vues sauvegardées
@@ -611,17 +611,17 @@ enquete-2025-01-16.zip
 ### 11.3 Structure IndexedDB
 
 ```
-Database: investigation-tool
-├── Store: investigations
+Database: dossier-tool
+├── Store: dossiers
 │   └── {id, name, description, createdAt, updatedAt, settings}
 ├── Store: elements
-│   └── {id, investigationId, label, notes, tags, properties, ...}
+│   └── {id, dossierId, label, notes, tags, properties, ...}
 ├── Store: links
-│   └── {id, investigationId, from, to, label, ...}
+│   └── {id, dossierId, from, to, label, ...}
 ├── Store: views
-│   └── {id, investigationId, name, filters, viewport}
+│   └── {id, dossierId, name, filters, viewport}
 ├── Store: assets
-│   └── {id, investigationId, filename, mimeType, hash, opfsPath}
+│   └── {id, dossierId, filename, mimeType, hash, opfsPath}
 └── Store: searchIndex
     └── Index inversé pour full-text search
 ```
@@ -631,7 +631,7 @@ Database: investigation-tool
 Les fichiers sont stockés dans le système de fichiers privé du navigateur :
 
 ```
-/investigations/{investigationId}/assets/{hash}.{ext}
+/dossiers/{dossierId}/assets/{hash}.{ext}
 ```
 
 Le hash SHA-256 permet :
@@ -713,7 +713,7 @@ L'IA est un **outil**, pas un partenaire. L'utilisateur déclenche, l'utilisateu
 
 ### 14.1 Principe
 
-Plusieurs analystes sur la même enquête, en même temps, sans se marcher dessus.
+Plusieurs analystes sur la même dossier, en même temps, sans se marcher dessus.
 
 ### 14.2 Contraintes
 
@@ -757,7 +757,7 @@ Suppression = corbeille avec délai (récupérable).
 
 **Besoins clés :** Import fichiers, création fluide, tags/couleurs, filtres, focus, insights, rapport.
 
-### 15.2 Enquêteur privé — Corruption et crypto
+### 15.2 Dossierur privé — Corruption et crypto
 
 - Point de départ : nom d'un suspect, relevés bancaires, wallets
 - Structuration des flux financiers
@@ -841,9 +841,9 @@ Suppression = corbeille avec délai (récupérable).
 
 ### 17.3 Généraliste vs. Métier
 
-**Décision :** Généraliste dans le moteur, orienté enquête dans l'interface.
+**Décision :** Généraliste dans le moteur, orienté dossier dans l'interface.
 - Le moteur est agnostique
-- L'interface parle "enquête" (pas "nodes/edges" mais "éléments/liens")
+- L'interface parle "dossier" (pas "nodes/edges" mais "éléments/liens")
 
 ### 17.4 Regroupement automatique
 
@@ -901,7 +901,7 @@ Suppression = corbeille avec délai (récupérable).
 
 ### L'outil en une phrase
 
-Un tableau blanc infini pour enquêteurs, qui comprend ce que vous dessinez et vous aide à voir ce que vous ne voyez pas.
+Un tableau blanc infini pour dossierurs, qui comprend ce que vous dessinez et vous aide à voir ce que vous ne voyez pas.
 
 ### Les 3 F
 

@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nova investigació",
-    "namePlaceholder": "Nom de la investigació",
+  "createDossier": {
+    "title": "Nou expedient",
+    "namePlaceholder": "Nom de l'expedient",
     "descriptionPlaceholder": "Descripció (opcional)",
-    "create": "Crear la investigació"
+    "create": "Crear l'expedient"
   },
   "confirmDelete": {
     "title": "Eliminar",
     "message": "Aquesta acció és irreversible.",
     "confirm": "Eliminar",
     "deleting": "Eliminant...",
-    "deleteInvestigation": "Eliminar la investigació",
-    "deleteInvestigationMessage": "Eliminar \"{{name}}\"? Aquesta acció és irreversible."
+    "deleteDossier": "Eliminar l'expedient",
+    "deleteDossierMessage": "Eliminar \"{{name}}\"? Aquesta acció és irreversible."
   },
   "rename": {
     "title": "Reanomenar",
     "rename": "Reanomenar",
     "renaming": "Reanomenant...",
     "label": "Nom",
-    "renameInvestigation": "Reanomenar la investigació",
+    "renameDossier": "Reanomenar l'expedient",
     "namePlaceholder": "Nou nom"
   },
   "importIntoCurrent": {
-    "title": "Importar a la investigació",
-    "description": "Importar dades a la investigació actual. Els fitxers ZIP s'importaran en mode de col·locació.",
+    "title": "Importar a l'expedient",
+    "description": "Importar dades a l'expedient actual. Els fitxers ZIP s'importaran en mode de col·locació.",
     "selectFile": "Seleccionar un fitxer",
     "emptyZip": "El fitxer ZIP és buit o no conté elements"
   },
   "import": {
-    "title": "Importar una investigació",
+    "title": "Importar un expedient",
     "dropzone": "Deixeu anar un fitxer o feu clic per seleccionar",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar a",
-    "newInvestigation": "Nova investigació",
+    "newDossier": "Nou expedient",
     "selectFile": "Seleccionar un fitxer",
     "importing": "Important...",
     "success": "Importació reeixida",
@@ -56,7 +56,7 @@
     "andMore": "... i {{count}} més"
   },
   "export": {
-    "title": "Exportar la investigació",
+    "title": "Exportar l'expedient",
     "description": "Exportar \"{{name}}\" ({{elements}} elements, {{links}} enllaços)",
     "format": "Format",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Contingut emmagatzemat",
-      "investigations": "Investigacions",
+      "dossiers": "Expedients",
       "elements": "Elements",
       "links": "Enllaços",
       "files": "Fitxers"
@@ -278,11 +278,11 @@
       "title": "Còpia de seguretat completa",
       "exportAll": "Exportar tot",
       "import": "Importar",
-      "description": "Totes les investigacions, fitxers i etiquetes. La importació afegeix sense substituir.",
+      "description": "Totes les expedients, fitxers i etiquetes. La importació afegeix sense substituir.",
       "exporting": "Exportant...",
       "importing": "Important...",
       "exportSuccess": "Exportació acabada",
-      "importSuccess": "Importació reeixida: {{investigations}} investigació/ns, {{elements}} element(s), {{links}} enllaç(os)",
+      "importSuccess": "Importació reeixida: {{dossiers}} expedient(s), {{elements}} element(s), {{links}} enllaç(os)",
       "error": "Error"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Emmagatzematge local de dades",
     "warning": "Les vostres dades s'emmagatzemen localment",
-    "description": "Totes les investigacions i fitxers es desen a l'emmagatzematge del vostre navegador (IndexedDB i OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Recomanació:</strong> Exporteu regularment les vostres investigacions mitjançant el botó \"Exportar\" per conservar una còpia de seguretat de les vostres dades.",
+    "description": "Totes les expedients i fitxers es desen a l'emmagatzematge del vostre navegador (IndexedDB i OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Recomanació:</strong> Exporteu regularment les vostres expedients mitjançant el botó \"Exportar\" per conservar una còpia de seguretat de les vostres dades.",
     "acknowledge": "Ho he entès",
     "bullets": {
       "deleted": "Les dades poden ser <strong class=\"text-text-primary\">eliminades</strong> si buideu la memòria cau del vostre navegador",
@@ -309,7 +309,7 @@
     "title": "Generar síntesi",
     "reportTitle": "Títol de la síntesi",
     "contentToInclude": "Contingut a incloure",
-    "includeDescription": "Descripció de la investigació",
+    "includeDescription": "Descripció de l'expedient",
     "includeSummary": "Resum estadístic",
     "includeInsights": "Anàlisi del graf (clústers, centralitat)",
     "includeTimeline": "Cronologia d'esdeveniments",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://el-vostre-servidor.exemple.com",
     "save": "Desar",
     "serverHelp": "Utilitzeu un servidor compatible amb y-websocket. Podeu allotjar el vostre amb",
-    "shareDescription": "Compartiu aquesta investigació per col·laborar en temps real. Cada participant veurà les modificacions instantàniament.",
+    "shareDescription": "Compartiu aquesta expedient per col·laborar en temps real. Cada participant veurà les modificacions instantàniament.",
     "asyncMode": "Col·laboració asíncrona",
     "asyncModeHelp": "Permet als col·laboradors treballar en moments diferents. Els canvis es conserven 7 dies al servidor.",
     "serverRequired": "Configureu primer un servidor de sincronització per activar la compartició.",
@@ -432,8 +432,8 @@
     "stopSharing": "Deixar de compartir",
     "stopping": "Aturant..."
   },
-  "investigationTags": {
-    "title": "Etiquetes de la investigació",
+  "dossierTags": {
+    "title": "Etiquetes de l'expedient",
     "currentTags": "Etiquetes actuals",
     "noTags": "Sense etiquetes",
     "addTag": "Afegir etiqueta",
@@ -530,7 +530,7 @@
       "risks": [
         "Contrasenya oblidada = dades permanentment inaccessibles, sense excepcions",
         "Cap recuperació possible — ni per nosaltres, ni pel navegador",
-        "Exporteu les vostres investigacions com a ZIP abans d'activar",
+        "Exporteu les vostres expedients com a ZIP abans d'activar",
         "El xifrat s'aplica a IndexedDB i als fitxers adjunts (OPFS)"
       ]
     },

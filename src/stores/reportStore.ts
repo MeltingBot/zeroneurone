@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Y from 'yjs';
-import type { Report, ReportSection, InvestigationId, ReportSectionId } from '../types';
+import type { Report, ReportSection, DossierId, ReportSectionId } from '../types';
 import { db } from '../db/database';
 import { reportRepository } from '../db/repositories/reportRepository';
 import { syncService } from '../services/syncService';
@@ -16,7 +16,7 @@ import {
 } from '../services/yjs/reportMapper';
 
 interface ReportState {
-  // Current report for the active investigation
+  // Current report for the active dossier
   currentReport: Report | null;
 
   // Which section is being actively edited
@@ -29,8 +29,8 @@ interface ReportState {
   isLoading: boolean;
 
   // Actions - Report lifecycle
-  loadReport: (investigationId: InvestigationId) => Promise<void>;
-  createReport: (investigationId: InvestigationId, title: string) => Promise<Report>;
+  loadReport: (dossierId: DossierId) => Promise<void>;
+  createReport: (dossierId: DossierId, title: string) => Promise<Report>;
   updateReportTitle: (title: string) => Promise<void>;
   clearReport: () => void;
 
@@ -60,22 +60,22 @@ export const useReportStore = create<ReportState>((set, get) => ({
   isDirty: false,
   isLoading: false,
 
-  loadReport: async (investigationId) => {
+  loadReport: async (dossierId) => {
     set({ isLoading: true });
     try {
       // First, check what we have in local database
-      const localReport = await reportRepository.getByInvestigation(investigationId);
+      const localReport = await reportRepository.getByDossier(dossierId);
 
       // Then, try to load from Y.Doc if available
       const ydoc = syncService.getYDoc();
       if (ydoc) {
         const { reports: reportsMap } = getYMaps(ydoc);
 
-        // Find report for this investigation
+        // Find report for this dossier
         let ydocReport: Report | null = null;
         for (const [, ymap] of reportsMap.entries()) {
-          const invId = ymap.get('investigationId');
-          if (invId === investigationId) {
+          const invId = ymap.get('dossierId');
+          if (invId === dossierId) {
             ydocReport = yMapToReport(ymap);
             break;
           }
@@ -87,7 +87,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
             // Create report in local DB with same ID
             const reportToSave: Report = {
               id: ydocReport.id,
-              investigationId,
+              dossierId,
               title: ydocReport.title,
               sections: ydocReport.sections,
               createdAt: ydocReport.createdAt,
@@ -133,11 +133,11 @@ export const useReportStore = create<ReportState>((set, get) => ({
     }
   },
 
-  createReport: async (investigationId, title) => {
+  createReport: async (dossierId, title) => {
     set({ isLoading: true });
     try {
       // Create in local database first
-      const report = await reportRepository.create(investigationId, title);
+      const report = await reportRepository.create(dossierId, title);
 
       // Sync to Y.Doc if available
       const ydoc = syncService.getYDoc();

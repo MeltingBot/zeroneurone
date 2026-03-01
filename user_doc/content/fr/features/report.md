@@ -5,7 +5,7 @@ weight: 9
 
 # Panel Rapport
 
-Rédigez des rapports structurés avec références aux éléments de votre enquête.
+Rédigez des rapports structurés avec références aux éléments de votre dossier.
 
 ---
 
@@ -142,7 +142,7 @@ Crée un fichier HTML autonome contenant :
 - Un graphe SVG interactif avec pan & zoom
 - Navigation bidirectionnelle (clic références → zoom sur l'élément, clic nœuds → défilement vers les références)
 - Table des matières repliable
-- Modale infos avec métadonnées de l'enquête et statistiques
+- Modale infos avec métadonnées du dossier et statistiques
 - Basculement thème clair/sombre
 - Bouton export Markdown (sans liens internes)
 - **Recherche** (Ctrl+K) : recherche par label et tags avec navigation clavier

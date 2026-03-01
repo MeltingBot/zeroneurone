@@ -13,7 +13,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import { useInvestigationStore, useSelectionStore } from '../../stores';
+import { useDossierStore, useSelectionStore } from '../../stores';
 import type {
   ElementShape,
   LinkDirection,
@@ -60,9 +60,9 @@ export function MultiSelectionDetail() {
     links,
     updateElements,
     updateLinks,
-    currentInvestigation,
+    currentDossier,
     addExistingTag,
-  } = useInvestigationStore();
+  } = useDossierStore();
 
   const { selectedElementIds, selectedLinkIds } = useSelectionStore();
 
@@ -124,7 +124,7 @@ export function MultiSelectionDetail() {
         }
       }
 
-      // Save to investigation suggestions
+      // Save to dossier suggestions
       addExistingTag(tag);
     },
     [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks, addExistingTag]
@@ -382,7 +382,7 @@ export function MultiSelectionDetail() {
                 handleAddTag(newTags[newTags.length - 1]);
               }
             }}
-            suggestions={currentInvestigation?.settings.existingTags}
+            suggestions={currentDossier?.settings.existingTags}
             onNewTag={handleAddTag}
           />
         </div>

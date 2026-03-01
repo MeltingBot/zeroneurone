@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Trash2, Send } from 'lucide-react';
-import { useInvestigationStore, useSyncStore } from '../../stores';
+import { useDossierStore, useSyncStore } from '../../stores';
 import type { Comment, CommentTargetType } from '../../types';
 
 interface CommentsSectionProps {
@@ -11,7 +11,7 @@ interface CommentsSectionProps {
 
 export function CommentsSection({ targetId, targetType }: CommentsSectionProps) {
   const { t, i18n } = useTranslation('panels');
-  const { comments, createComment, resolveComment, unresolveComment, deleteComment } = useInvestigationStore();
+  const { comments, createComment, resolveComment, unresolveComment, deleteComment } = useDossierStore();
   const localUser = useSyncStore(state => state.localUser);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

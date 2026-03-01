@@ -7,7 +7,7 @@
     "report": "Rapport",
     "collapsePanel": "Réduire le panneau"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informations",
       "dates": "Dates",
@@ -20,8 +20,8 @@
       "creator": "Créateur",
       "tags": "Tags",
       "startDate": "Date de début",
-      "createdAt": "Créée le",
-      "updatedAt": "Modifiée le",
+      "createdAt": "Créé le",
+      "updatedAt": "Modifié le",
       "retentionDays": "Durée (jours)",
       "retentionPolicy": "À l'expiration",
       "retentionUnlimited": "Illimité",
@@ -29,13 +29,13 @@
       "retentionPolicyWarn": "Avertissement",
       "retentionPolicyReadonly": "Lecture seule",
       "retentionPolicyDelete": "Suppression proposée",
-      "retentionExpiredSince": "Expirée depuis {{days}} jour(s)",
+      "retentionExpiredSince": "Expiré depuis {{days}} jour(s)",
       "retentionPolicyRedact": "Caviardage définitif",
       "retentionApply": "Appliquer",
       "retentionReset": "Réinitialiser"
     },
     "placeholders": {
-      "name": "Nom de l'enquête",
+      "name": "Nom du dossier",
       "creator": "Nom du créateur..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Vous : {{name}} (cliquer pour modifier)"
   },
   "report": {
-    "noInvestigation": "Aucune enquête chargée",
+    "noDossier": "Aucun dossier chargé",
     "noReport": "Aucun rapport. Créez-en un pour commencer.",
     "createReport": "Créer un rapport",
     "defaultTitle": "Rapport",

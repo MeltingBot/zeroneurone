@@ -22,7 +22,7 @@ export function reportToYMap(report: Report): Y.Map<any> {
 
   // Simple fields
   map.set('id', report.id);
-  map.set('investigationId', report.investigationId);
+  map.set('dossierId', report.dossierId);
   map.set('title', report.title);
 
   // Sections as array of plain objects
@@ -75,7 +75,7 @@ export function yMapToReport(ymap: Y.Map<any>): Report {
 
   return {
     id: ymap.get('id') || '',
-    investigationId: ymap.get('investigationId') || '',
+    dossierId: ymap.get('dossierId') || '',
     title: ymap.get('title') || '',
     sections,
     createdAt,

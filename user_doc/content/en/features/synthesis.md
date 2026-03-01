@@ -5,7 +5,7 @@ weight: 10
 
 # Synthesis Generation
 
-Generate automatic structured reports from your investigation.
+Generate automatic structured reports from your dossier.
 
 ---
 
@@ -19,7 +19,7 @@ Toolbar → **Synthesis** button (document icon)
 
 ### Title
 
-Customize the generated document title. By default, the investigation name is used.
+Customize the generated document title. By default, the dossier name is used.
 
 ### Content to include
 
@@ -27,7 +27,7 @@ Select sections to include in the synthesis:
 
 | Option | Description |
 |--------|-------------|
-| Investigation description | Descriptive text of the investigation |
+| Dossier description | Descriptive text of the dossier |
 | Statistical summary | Number of elements, links, tags, etc. |
 | Graph analysis | Clusters, centrality, bridges, isolated elements |
 | Timeline | Dated events sorted chronologically |

@@ -34,7 +34,7 @@ class SyncService {
   /** DEK pour le chiffrement at-rest des bases y-indexeddb. Null = mode non chiffré. */
   private atRestDek: Uint8Array | null = null;
   private websocketProvider: WebsocketProvider | null = null;
-  private investigationId: string | null = null;
+  private dossierId: string | null = null;
   private encryptionKey: string | null = null;
 
   private state: SyncState = { ...DEFAULT_SYNC_STATE };
@@ -106,17 +106,17 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Get the current Y.Doc (null if no investigation open)
+   * Get the current Y.Doc (null if no dossier open)
    */
   getYDoc(): Y.Doc | null {
     return this.ydoc;
   }
 
   /**
-   * Get the current investigation ID
+   * Get the current dossier ID
    */
-  getInvestigationId(): string | null {
-    return this.investigationId;
+  getDossierId(): string | null {
+    return this.dossierId;
   }
 
   /**
@@ -127,7 +127,7 @@ class SyncService {
   }
 
   /**
-   * Check if an investigation is currently open
+   * Check if an dossier is currently open
    */
   isOpen(): boolean {
     return this.ydoc !== null;
@@ -174,18 +174,18 @@ class SyncService {
   }
 
   /**
-   * Open an investigation in local mode (no sync)
+   * Open an dossier in local mode (no sync)
    * Creates/loads Y.Doc with IndexedDB persistence (chiffré si DEK disponible)
    */
-  async openLocal(investigationId: string): Promise<Y.Doc> {
-    // Close any existing investigation
+  async openLocal(dossierId: string): Promise<Y.Doc> {
+    // Close any existing dossier
     await this.close();
 
-    this.investigationId = investigationId;
+    this.dossierId = dossierId;
     this.ydoc = new Y.Doc();
 
     // Set up IndexedDB persistence (chiffré ou non selon la DEK)
-    const dbName = `zeroneurone-ydoc-${investigationId}`;
+    const dbName = `zeroneurone-ydoc-${dossierId}`;
     if (this.atRestDek) {
       this.indexeddbProvider = new EncryptedIndexeddbPersistence(dbName, this.ydoc, this.atRestDek);
     } else {
@@ -212,16 +212,16 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Open an investigation in shared mode (sync with peers via signaling server)
-   * If the investigation has local data, it will be synced with peers
+   * Open an dossier in shared mode (sync with peers via signaling server)
+   * If the dossier has local data, it will be synced with peers
    *
-   * @param investigationId - The investigation UUID (used for local storage)
+   * @param dossierId - The dossier UUID (used for local storage)
    * @param encryptionKey - The AES-256-GCM key for E2E encryption (optional)
-   * @param roomId - The room ID for WebSocket (optional, defaults to investigationId for legacy support)
+   * @param roomId - The room ID for WebSocket (optional, defaults to dossierId for legacy support)
    * @param asyncEnabled - Whether async buffering is enabled (default: false)
    */
   async openShared(
-    investigationId: string,
+    dossierId: string,
     encryptionKey?: string,
     roomId?: string,
     asyncEnabled: boolean = false
@@ -235,16 +235,16 @@ class SyncService {
       throw new Error('Clé de chiffrement invalide');
     }
 
-    // Close any existing investigation
+    // Close any existing dossier
     await this.close();
 
-    this.investigationId = investigationId;
+    this.dossierId = dossierId;
     this.encryptionKey = encryptionKey || null;
     this.ydoc = new Y.Doc();
 
     // Set up IndexedDB persistence (for offline support, chiffré si DEK disponible)
-    // Uses investigationId (UUID) for local storage
-    const dbName = `zeroneurone-ydoc-${investigationId}`;
+    // Uses dossierId (UUID) for local storage
+    const dbName = `zeroneurone-ydoc-${dossierId}`;
     if (this.atRestDek) {
       this.indexeddbProvider = new EncryptedIndexeddbPersistence(dbName, this.ydoc, this.atRestDek);
     } else {
@@ -255,14 +255,14 @@ class SyncService {
     await this.indexeddbProvider.whenSynced;
 
     // Derive access token if we have encryption key and roomId
-    const effectiveRoomId = roomId || investigationId;
+    const effectiveRoomId = roomId || dossierId;
     let accessToken: string | undefined;
     if (encryptionKey && roomId) {
       accessToken = await deriveAccessToken(encryptionKey, roomId);
     }
 
     // Connect to signaling server
-    // Uses roomId if provided (hashed), otherwise investigationId (legacy)
+    // Uses roomId if provided (hashed), otherwise dossierId (legacy)
     this.connectWebSocket(effectiveRoomId, encryptionKey, {
       async: asyncEnabled,
       token: accessToken,
@@ -272,7 +272,7 @@ class SyncService {
   }
 
   /**
-   * Share the currently open investigation
+   * Share the currently open dossier
    * Generates a new encryption key and derives a hashed roomId
    *
    * @param asyncEnabled - Whether to enable async buffering (default: false)
@@ -283,8 +283,8 @@ class SyncService {
       throw new Error('Serveur de synchronisation non configuré');
     }
 
-    if (!this.ydoc || !this.investigationId) {
-      throw new Error('No investigation open');
+    if (!this.ydoc || !this.dossierId) {
+      throw new Error('No dossier open');
     }
 
     // Always generate a new encryption key when sharing
@@ -292,9 +292,9 @@ class SyncService {
     const newKey = await generateEncryptionKey();
     this.encryptionKey = newKey;
 
-    // Derive hashed roomId from investigation UUID + key
+    // Derive hashed roomId from dossier UUID + key
     // Server cannot correlate sessions, and re-sharing creates new room
-    const hashedRoomId = await deriveRoomId(this.investigationId, newKey);
+    const hashedRoomId = await deriveRoomId(this.dossierId, newKey);
 
     // Derive access token for room authentication
     const accessToken = await deriveAccessToken(newKey, hashedRoomId);
@@ -570,7 +570,7 @@ class SyncService {
   // ============================================================================
 
   /**
-   * Close the current investigation and clean up resources
+   * Close the current dossier and clean up resources
    */
   async close(): Promise<void> {
     // Disconnect and destroy WebSocket provider
@@ -592,7 +592,7 @@ class SyncService {
       this.ydoc = null;
     }
 
-    this.investigationId = null;
+    this.dossierId = null;
     this.encryptionKey = null;
 
     this.setState({ ...DEFAULT_SYNC_STATE });
@@ -610,7 +610,7 @@ class SyncService {
   }
 
   /**
-   * Build a share URL for the current investigation
+   * Build a share URL for the current dossier
    *
    * NEW FORMAT (v2):
    * /join/{hashedRoomId}?server=wss://...&async=1#key=xxx&name=xxx&id=uuid
@@ -622,23 +622,23 @@ class SyncService {
    * - key is in fragment (never sent to server)
    * - async flag enables server-side buffering for asynchronous collaboration
    *
-   * @param investigationId - The investigation UUID
+   * @param dossierId - The dossier UUID
    * @param encryptionKey - The E2E encryption key
-   * @param investigationName - Optional display name
+   * @param dossierName - Optional display name
    * @param asyncEnabled - Whether async buffering is enabled (default: false)
    * @param baseUrl - Optional base URL (defaults to current origin)
    */
   async buildShareUrl(
-    investigationId: string,
+    dossierId: string,
     encryptionKey: string,
-    investigationName?: string,
+    dossierName?: string,
     asyncEnabled?: boolean,
     baseUrl?: string
   ): Promise<string> {
     const base = baseUrl || window.location.origin;
 
     // Derive hashed room ID from UUID + key (server cannot correlate)
-    const hashedRoomId = await deriveRoomId(investigationId, encryptionKey);
+    const hashedRoomId = await deriveRoomId(dossierId, encryptionKey);
 
     const url = new URL(`${base}/join/${hashedRoomId}`);
 
@@ -654,16 +654,16 @@ class SyncService {
     // All sensitive data in fragment (never sent to server)
     const fragmentParams = new URLSearchParams();
     fragmentParams.set('key', encryptionKey);
-    fragmentParams.set('id', investigationId);
-    if (investigationName) {
-      fragmentParams.set('name', investigationName);
+    fragmentParams.set('id', dossierId);
+    if (dossierName) {
+      fragmentParams.set('name', dossierName);
     }
 
     return `${url.toString()}#${fragmentParams.toString()}`;
   }
 
   /**
-   * Parse a share URL to extract investigation ID and encryption key
+   * Parse a share URL to extract dossier ID and encryption key
    *
    * Supports both formats for backwards compatibility:
    *
@@ -674,10 +674,10 @@ class SyncService {
    * /join/{hash}?server=...&async=1#key=xxx&name=xxx&id=uuid
    *
    * @param url - The share URL to parse
-   * @returns Object with investigationId, encryptionKey, serverUrl, name, roomId, async flag
+   * @returns Object with dossierId, encryptionKey, serverUrl, name, roomId, async flag
    */
   parseShareUrl(url: string): {
-    investigationId: string;
+    dossierId: string;
     encryptionKey: string | null;
     serverUrl: string | null;
     name: string | null;
@@ -713,8 +713,8 @@ class SyncService {
     // - OLD FORMAT: id is in path (UUID format), name may be in query
     const isLegacyFormat = !fragmentId;
 
-    // Investigation ID: from fragment (new) or path (old)
-    const investigationId = fragmentId || pathSegment;
+    // Dossier ID: from fragment (new) or path (old)
+    const dossierId = fragmentId || pathSegment;
 
     // Room ID: path segment (hash in new format, UUID in old format)
     const roomId = pathSegment;
@@ -723,7 +723,7 @@ class SyncService {
     const name = fragmentName || queryName;
 
     return {
-      investigationId,
+      dossierId,
       encryptionKey,
       serverUrl,
       name,
@@ -734,10 +734,10 @@ class SyncService {
   }
 
   /**
-   * Check if IndexedDB has data for a given investigation
+   * Check if IndexedDB has data for a given dossier
    */
-  async hasLocalData(investigationId: string): Promise<boolean> {
-    const dbName = `zeroneurone-ydoc-${investigationId}`;
+  async hasLocalData(dossierId: string): Promise<boolean> {
+    const dbName = `zeroneurone-ydoc-${dossierId}`;
     try {
       const databases = await indexedDB.databases();
       return databases.some(db => db.name === dbName);
@@ -758,10 +758,10 @@ class SyncService {
   }
 
   /**
-   * Delete local data for an investigation
+   * Delete local data for an dossier
    */
-  async deleteLocalData(investigationId: string): Promise<void> {
-    const dbName = `zeroneurone-ydoc-${investigationId}`;
+  async deleteLocalData(dossierId: string): Promise<void> {
+    const dbName = `zeroneurone-ydoc-${dossierId}`;
     return new Promise((resolve, reject) => {
       const request = indexedDB.deleteDatabase(dbName);
       request.onsuccess = () => resolve();

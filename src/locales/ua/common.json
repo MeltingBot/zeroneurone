@@ -61,7 +61,7 @@
     "files": "Файли",
     "links": "Зв'язки",
     "elements": "Елементи",
-    "investigations": "Розслідування",
+    "dossiers": "Справа",
     "views": "Види",
     "filters": "Фільтри",
     "insights": "Аналітика",
@@ -100,7 +100,7 @@
     "noData": "Немає даних",
     "noSelection": "Немає вибору",
     "noItems": "Немає елементів",
-    "noInvestigationLoaded": "Розслідування не завантажено.",
+    "noDossierLoaded": "Справа не завантажено.",
     "unnamed": "Без назви"
   },
   "errors": {

@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nouvelle enquête",
-    "namePlaceholder": "Nom de l'enquête",
+  "createDossier": {
+    "title": "Nouveau dossier",
+    "namePlaceholder": "Nom du dossier",
     "descriptionPlaceholder": "Description (optionnel)",
-    "create": "Créer l'enquête"
+    "create": "Créer le dossier"
   },
   "confirmDelete": {
     "title": "Supprimer",
     "message": "Cette action est irréversible.",
     "confirm": "Supprimer",
     "deleting": "Suppression...",
-    "deleteInvestigation": "Supprimer l'enquête",
-    "deleteInvestigationMessage": "Supprimer \"{{name}}\" ? Cette action est irréversible."
+    "deleteDossier": "Supprimer le dossier",
+    "deleteDossierMessage": "Supprimer \"{{name}}\" ? Cette action est irréversible."
   },
   "rename": {
     "title": "Renommer",
     "rename": "Renommer",
     "renaming": "Renommage...",
     "label": "Nom",
-    "renameInvestigation": "Renommer l'enquête",
+    "renameDossier": "Renommer le dossier",
     "namePlaceholder": "Nouveau nom"
   },
   "importIntoCurrent": {
-    "title": "Importer dans l'enquête",
-    "description": "Importez des données dans l'enquête actuelle. Les fichiers ZIP seront importés en mode placement.",
+    "title": "Importer dans le dossier",
+    "description": "Importez des données dans le dossier actuel. Les fichiers ZIP seront importés en mode placement.",
     "selectFile": "Sélectionner un fichier",
     "emptyZip": "Le fichier ZIP est vide ou ne contient aucun élément"
   },
   "import": {
-    "title": "Importer une enquête",
+    "title": "Importer un dossier",
     "dropzone": "Déposez un fichier ou cliquez pour sélectionner",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Généalogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importer dans",
-    "newInvestigation": "Nouvelle enquête",
+    "newDossier": "Nouveau dossier",
     "selectFile": "Sélectionner un fichier",
     "importing": "Import en cours...",
     "success": "Import réussi",
@@ -56,7 +56,7 @@
     "andMore": "... et {{count}} autres"
   },
   "export": {
-    "title": "Exporter l'enquête",
+    "title": "Exporter le dossier",
     "description": "Exporter \"{{name}}\" ({{elements}} éléments, {{links}} liens)",
     "format": "Format",
     "formats": {
@@ -246,7 +246,7 @@
       "text": "Ce logiciel est distribué sous licence MIT.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
     },
-    "footer": "Fait avec amour pour les enquêteurs du monde entier"
+    "footer": "Fait avec amour pour les analystes du monde entier"
   },
   "storage": {
     "title": "Stockage",
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Contenu stocké",
-      "investigations": "Enquêtes",
+      "dossiers": "Dossiers",
       "elements": "Éléments",
       "links": "Liens",
       "files": "Fichiers"
@@ -278,11 +278,11 @@
       "title": "Sauvegarde complète",
       "exportAll": "Exporter tout",
       "import": "Importer",
-      "description": "Toutes les enquêtes, fichiers et tags. L'import ajoute sans remplacer.",
+      "description": "Tous les dossiers, fichiers et tags. L'import ajoute sans remplacer.",
       "exporting": "Export en cours...",
       "importing": "Import en cours...",
       "exportSuccess": "Export terminé",
-      "importSuccess": "Import réussi: {{investigations}} enquête(s), {{elements}} élément(s), {{links}} lien(s)",
+      "importSuccess": "Import réussi: {{dossiers}} dossier(s), {{elements}} élément(s), {{links}} lien(s)",
       "error": "Erreur"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Stockage local des données",
     "warning": "Vos données sont stockées localement",
-    "description": "Toutes les enquêtes et fichiers sont enregistrés dans le stockage de votre navigateur (IndexedDB et OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Recommandation :</strong> Exportez régulièrement vos enquêtes via le bouton \"Exporter\" pour conserver une sauvegarde de vos données.",
+    "description": "Tous les dossiers et fichiers sont enregistrés dans le stockage de votre navigateur (IndexedDB et OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Recommandation :</strong> Exportez régulièrement vos dossiers via le bouton \"Exporter\" pour conserver une sauvegarde de vos données.",
     "acknowledge": "J'ai bien compris",
     "bullets": {
       "deleted": "Les données peuvent être <strong class=\"text-text-primary\">supprimées</strong> si vous videz le cache de votre navigateur",
@@ -309,7 +309,7 @@
     "title": "Générer une synthèse",
     "reportTitle": "Titre de la synthèse",
     "contentToInclude": "Contenu à inclure",
-    "includeDescription": "Description de l'enquête",
+    "includeDescription": "Description du dossier",
     "includeSummary": "Résumé statistique",
     "includeInsights": "Analyse du graphe (clusters, centralité)",
     "includeTimeline": "Chronologie des événements",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://votre-serveur.example.com",
     "save": "Enregistrer",
     "serverHelp": "Utilisez un serveur y-websocket compatible. Vous pouvez héberger le vôtre avec",
-    "shareDescription": "Partagez cette investigation pour collaborer en temps réel. Chaque participant verra les modifications instantanément.",
+    "shareDescription": "Partagez ce dossier pour collaborer en temps réel. Chaque participant verra les modifications instantanément.",
     "asyncMode": "Collaboration asynchrone",
     "asyncModeHelp": "Permet aux collaborateurs de travailler en décalé. Les modifications sont conservées 7 jours sur le serveur.",
     "serverRequired": "Configurez d'abord un serveur de synchronisation pour activer le partage.",
@@ -432,8 +432,8 @@
     "stopSharing": "Arrêter le partage",
     "stopping": "Arrêt..."
   },
-  "investigationTags": {
-    "title": "Tags de l'enquête",
+  "dossierTags": {
+    "title": "Tags du dossier",
     "currentTags": "Tags actuels",
     "noTags": "Aucun tag",
     "addTag": "Ajouter un tag",
@@ -530,7 +530,7 @@
       "risks": [
         "Mot de passe oublié = données définitivement inaccessibles, sans exception",
         "Aucune récupération possible — ni par nous, ni par votre navigateur",
-        "Exportez vos enquêtes en ZIP avant d'activer",
+        "Exportez vos dossiers en ZIP avant d'activer",
         "Le chiffrement s'applique à IndexedDB et aux fichiers joints (OPFS)"
       ]
     },

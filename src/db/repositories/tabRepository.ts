@@ -1,6 +1,6 @@
 import { db } from '../database';
 import { generateUUID } from '../../utils';
-import type { CanvasTab, TabId, InvestigationId } from '../../types';
+import type { CanvasTab, TabId, DossierId } from '../../types';
 
 /**
  * Rehydrate CanvasTab dates (IndexedDB stores as strings)
@@ -16,10 +16,10 @@ function rehydrateTab(tab: CanvasTab): CanvasTab {
 
 export const tabRepository = {
   /**
-   * Get all tabs for an investigation, sorted by order
+   * Get all tabs for an dossier, sorted by order
    */
-  async getByInvestigation(investigationId: InvestigationId): Promise<CanvasTab[]> {
-    const tabs = await db.canvasTabs.where({ investigationId }).sortBy('order');
+  async getByDossier(dossierId: DossierId): Promise<CanvasTab[]> {
+    const tabs = await db.canvasTabs.where({ dossierId }).sortBy('order');
     return tabs.map(rehydrateTab);
   },
 
@@ -35,14 +35,14 @@ export const tabRepository = {
    * Create a new tab
    */
   async create(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     name: string,
     order: number,
   ): Promise<CanvasTab> {
     const now = new Date();
     const tab: CanvasTab = {
       id: generateUUID(),
-      investigationId,
+      dossierId,
       name,
       order,
       memberElementIds: [],
@@ -60,7 +60,7 @@ export const tabRepository = {
    */
   async update(
     id: TabId,
-    changes: Partial<Omit<CanvasTab, 'id' | 'investigationId' | 'createdAt'>>,
+    changes: Partial<Omit<CanvasTab, 'id' | 'dossierId' | 'createdAt'>>,
   ): Promise<void> {
     await db.canvasTabs.update(id, {
       ...changes,
@@ -76,10 +76,10 @@ export const tabRepository = {
   },
 
   /**
-   * Delete all tabs for an investigation
+   * Delete all tabs for an dossier
    */
-  async deleteByInvestigation(investigationId: InvestigationId): Promise<void> {
-    await db.canvasTabs.where({ investigationId }).delete();
+  async deleteByDossier(dossierId: DossierId): Promise<void> {
+    await db.canvasTabs.where({ dossierId }).delete();
   },
 
   /**
@@ -90,14 +90,14 @@ export const tabRepository = {
   },
 
   /**
-   * Remove an element from all tabs of an investigation
+   * Remove an element from all tabs of an dossier
    * (called when an element is deleted)
    */
   async removeElementFromAllTabs(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     elementId: string,
   ): Promise<void> {
-    const tabs = await db.canvasTabs.where({ investigationId }).toArray();
+    const tabs = await db.canvasTabs.where({ dossierId }).toArray();
     const updates = tabs
       .filter(tab => tab.memberElementIds.includes(elementId) || (tab.excludedElementIds ?? []).includes(elementId))
       .map(tab => ({

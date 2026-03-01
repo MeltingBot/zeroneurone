@@ -37,7 +37,7 @@ Once loaded, ZeroNeurone couldn't care less about internet. Cut the cable, it ke
 
 ### Where does my data go?
 
-Nowhere. It stays in your browser. No server, no cloud, no "we analyze your data to improve our services". Your investigations are your business.
+Nowhere. It stays in your browser. No server, no cloud, no "we analyze your data to improve our services". Your dossiers are your business.
 
 Technically:
 - Metadata → IndexedDB (a database in your browser)
@@ -67,7 +67,7 @@ Since v2.17, yes. ZeroNeurone offers **at-rest encryption** for all your local d
 
 Enable it from the lock icon on the home page. Once activated, your data is unreadable without the password.
 
-**Never refresh the page during activation, deactivation, or password change.** The operation encrypts/decrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish — it may take a while on large investigations.
+**Never refresh the page during activation, deactivation, or password change.** The operation encrypts/decrypts all your data one by one. Interrupting it can permanently corrupt your data. Wait for it to finish — it may take a while on large dossiers.
 
 ### What if I lose my encryption password?
 
@@ -75,24 +75,24 @@ Your data is gone. No "forgot password", no backdoor, no "contact support". That
 
 ### What's WebAuthn PRF?
 
-Since v2.18, you can unlock your encrypted investigations with a **hardware security key** (YubiKey, for example) instead of typing your password. That's FIDO2 Level 3 for the connoisseurs.
+Since v2.18, you can unlock your encrypted dossiers with a **hardware security key** (YubiKey, for example) instead of typing your password. That's FIDO2 Level 3 for the connoisseurs.
 
 You can register multiple keys and manage them from the encryption settings. The password always remains available as a fallback.
 
 ### How does auto-lock work?
 
-You can configure an **inactivity timeout** (5, 15, 30, or 60 minutes). If you don't touch anything for that long, the investigation locks automatically. You'll need to re-enter the password (or use your security key) to continue.
+You can configure an **inactivity timeout** (5, 15, 30, or 60 minutes). If you don't touch anything for that long, the dossier locks automatically. You'll need to re-enter the password (or use your security key) to continue.
 
 You can also lock manually with **Alt+L**. Handy when you're getting coffee and don't trust your colleagues.
 
 ### What's data retention?
 
-Since v2.18, you can set a **retention period** per investigation (in days). On expiration, four policies are available:
+Since v2.18, you can set a **retention period** per dossier (in days). On expiration, four policies are available:
 
 | Policy | Effect |
 |--------|--------|
 | Warning | A reminder is shown, that's it |
-| Read-only | The investigation is locked for viewing only |
+| Read-only | The dossier is locked for viewing only |
 | Proposed deletion | You're prompted to delete |
 | Permanent redaction | All text content is **irreversibly** replaced with masking characters |
 
@@ -131,7 +131,7 @@ Yes. Select 2 elements → right-click → **Merge**. Choose which label to keep
 
 ### What are canvas tabs?
 
-**Thematic workspaces** within a single investigation. One tab per hypothesis, per actor type, per time period... Elements from other tabs connected to yours appear semi-transparent. Handy for keeping things organized.
+**Thematic workspaces** within a single dossier. One tab per hypothesis, per actor type, per time period... Elements from other tabs connected to yours appear semi-transparent. Handy for keeping things organized.
 
 ### How do I add GPS coordinates?
 
@@ -149,7 +149,7 @@ Yes. **⇄** button in the toolbar. The choice is remembered.
 
 ### What's the Matrix view?
 
-A **spreadsheet** of your elements. Press **4** to access it. Sort, per-column filter, inline editing, multi-row selection, CSV export. Like Excel, but with your investigation data.
+A **spreadsheet** of your elements. Press **4** to access it. Sort, per-column filter, inline editing, multi-row selection, CSV export. Like Excel, but with your dossier data.
 
 ### And the Timeline?
 
@@ -210,11 +210,11 @@ Drop the `.js` file and its `manifest.json` in the `dist/plugins/` folder. For D
 
 ### Is it secure?
 
-Plugin errors never crash the application. But a plugin has access to your investigation data. Only install plugins you trust.
+Plugin errors never crash the application. But a plugin has access to your dossier data. Only install plugins you trust.
 
 ### I've heard about OneNeurone?
 
-That's the AI plugin for ZeroNeurone. **OneNeurone** adds an intelligent assistant to your investigation: chat with the graph in context, entity and relationship extraction (NER), report generation in 5 registers (judicial, intelligence, corporate, journalistic, CERT), pattern and anomaly detection, and cross-investigation analysis.
+That's the AI plugin for ZeroNeurone. **OneNeurone** adds an intelligent assistant to your dossier: chat with the graph in context, entity and relationship extraction (NER), report generation in 5 registers (judicial, intelligence, corporate, journalistic, CERT), pattern and anomaly detection, and cross-dossier analysis.
 
 Philosophy: **"The Neurone suggests, the analyst decides."** It never modifies the graph directly, no data is sent without your explicit action, and it works 100% offline with Ollama or LM Studio. Multi-provider: Ollama, LM Studio, Anthropic, OpenAI, or custom endpoint.
 
@@ -280,9 +280,9 @@ The encryption key is in the URL, after the `#`. This fragment is never sent to 
 
 Technically, no limit. Practically, beyond 10 it can get confusing. But it works.
 
-### What about large investigations?
+### What about large dossiers?
 
-ZeroNeurone handles investigations with **1500+ elements and links** in collaborative mode. Beyond 500 elements, edges are hidden during pan/zoom for fluidity. Locally, performance is excellent up to several thousand elements.
+ZeroNeurone handles dossiers with **1500+ elements and links** in collaborative mode. Beyond 500 elements, edges are hidden during pan/zoom for fluidity. Locally, performance is excellent up to several thousand elements.
 
 ### Can I work offline during a shared session?
 

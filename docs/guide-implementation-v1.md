@@ -73,10 +73,10 @@ Setup du projet, stockage fonctionnel, types de base.
 
 5. **Configurer Dexie**
    - Fichier `src/db/database.ts`
-   - Stores: investigations, elements, links, assets, views, reports
+   - Stores: dossiers, elements, links, assets, views, reports
 
 6. **Implémenter les repositories**
-   - `src/db/repositories/investigationRepository.ts`
+   - `src/db/repositories/dossierRepository.ts`
    - `src/db/repositories/elementRepository.ts`
    - `src/db/repositories/linkRepository.ts`
    - CRUD complet avec les méthodes du document technique
@@ -87,14 +87,14 @@ Setup du projet, stockage fonctionnel, types de base.
    - Hash SHA-256 pour déduplication
 
 8. **Créer les stores Zustand de base**
-   - `src/stores/investigationStore.ts` (structure de base)
+   - `src/stores/dossierStore.ts` (structure de base)
    - `src/stores/uiStore.ts` (structure de base)
 
 ### Critères de "done"
 
 - [ ] `npm run dev` démarre sans erreur
 - [ ] Types TypeScript compilent sans erreur
-- [ ] Peut créer une investigation via la console : `await investigationRepository.create('Test')`
+- [ ] Peut créer une dossier via la console : `await dossierRepository.create('Test')`
 - [ ] Peut créer un élément : `await elementRepository.create(invId, 'Element 1', {x:0, y:0})`
 - [ ] Peut créer un lien : `await linkRepository.create(invId, el1Id, el2Id)`
 - [ ] Peut sauvegarder un fichier dans OPFS et le récupérer
@@ -113,26 +113,26 @@ Setup du projet, stockage fonctionnel, types de base.
 ## Phase 2 — Page d'accueil
 
 ### Objectif
-Interface de gestion des enquêtes (liste, création, suppression).
+Interface de gestion des dossiers (liste, création, suppression).
 
 ### Tâches
 
 1. **Layout de base**
-   - `src/App.tsx` — Router simple (home / investigation/:id)
+   - `src/App.tsx` — Router simple (home / dossier/:id)
    - `src/components/Layout.tsx` — Container principal
 
 2. **Page d'accueil**
    - `src/pages/HomePage.tsx`
-   - Liste des enquêtes depuis le store
+   - Liste des dossiers depuis le store
    - Tri par date de modification
 
-3. **Carte d'enquête**
-   - `src/components/home/InvestigationCard.tsx`
+3. **Carte d'dossier**
+   - `src/components/home/DossierCard.tsx`
    - Nom, date modification, compteurs (éléments, liens)
    - Boutons: Ouvrir, Menu (renommer, supprimer, exporter)
 
 4. **Modal création**
-   - `src/components/modals/CreateInvestigationModal.tsx`
+   - `src/components/modals/CreateDossierModal.tsx`
    - Champs: nom, description (optionnel)
    - Validation: nom requis
 
@@ -141,24 +141,24 @@ Interface de gestion des enquêtes (liste, création, suppression).
    - Réutilisable pour d'autres suppressions
 
 6. **Navigation**
-   - Clic sur "Ouvrir" → navigate vers `/investigation/:id`
+   - Clic sur "Ouvrir" → navigate vers `/dossier/:id`
 
 ### Critères de "done"
 
-- [ ] Page d'accueil affiche la liste des enquêtes
-- [ ] Peut créer une nouvelle enquête via le bouton
-- [ ] Peut renommer une enquête
-- [ ] Peut supprimer une enquête (avec confirmation)
-- [ ] Clic sur une enquête navigue vers la page investigation
-- [ ] Liste vide → message "Aucune enquête"
+- [ ] Page d'accueil affiche la liste des dossiers
+- [ ] Peut créer une nouvelle dossier via le bouton
+- [ ] Peut renommer une dossier
+- [ ] Peut supprimer une dossier (avec confirmation)
+- [ ] Clic sur une dossier navigue vers la page dossier
+- [ ] Liste vide → message "Aucune dossier"
 
 ### Cas limites à gérer
 
 | Cas | Comportement attendu |
 |-----|----------------------|
-| Nom d'enquête vide | Bouton "Créer" désactivé |
+| Nom d'dossier vide | Bouton "Créer" désactivé |
 | Nom très long (>100 car) | Tronqué dans la liste |
-| Beaucoup d'enquêtes (>50) | Scroll, pas de pagination pour V1 |
+| Beaucoup d'dossiers (>50) | Scroll, pas de pagination pour V1 |
 
 ---
 
@@ -174,9 +174,9 @@ Canvas fonctionnel avec création et manipulation d'éléments.
    npm install reactflow
    ```
 
-2. **Page Investigation**
-   - `src/pages/InvestigationPage.tsx`
-   - Charge l'enquête depuis l'URL
+2. **Page Dossier**
+   - `src/pages/DossierPage.tsx`
+   - Charge l'dossier depuis l'URL
    - Layout: header + canvas + sidebar
 
 3. **Composant Canvas**
@@ -422,7 +422,7 @@ Recherche full-text sur tous les éléments.
 2. **Service de recherche**
    - `src/services/searchService.ts`
    - Index: label, notes, tags, propriétés
-   - Méthodes: loadInvestigation, search, indexElement, removeElement
+   - Méthodes: loadDossier, search, indexElement, removeElement
 
 3. **Barre de recherche header**
    - `src/components/header/SearchBar.tsx`
@@ -442,7 +442,7 @@ Recherche full-text sur tous les éléments.
 
 6. **Indexation incrémentale**
    - Mise à jour index à chaque modification d'élément
-   - Rebuild complet au chargement de l'enquête
+   - Rebuild complet au chargement de l'dossier
 
 ### Critères de "done"
 
@@ -710,7 +710,7 @@ Afficher les éléments géolocalisés sur une carte.
 ## Phase 12 — Import/Export
 
 ### Objectif
-Import/Export complet des enquêtes.
+Import/Export complet des dossiers.
 
 ### Tâches
 
@@ -721,12 +721,12 @@ Import/Export complet des enquêtes.
 
 2. **Export ZIP**
    - `src/services/exportService.ts`
-   - Méthode exportInvestigation → Blob ZIP
-   - Contenu: manifest.json, investigation.json, elements.json, links.json, views.json, assets/
+   - Méthode exportDossier → Blob ZIP
+   - Contenu: manifest.json, dossier.json, elements.json, links.json, views.json, assets/
 
 3. **Import ZIP**
    - `src/services/importService.ts`
-   - Méthode importInvestigation(file) → InvestigationId
+   - Méthode importDossier(file) → DossierId
    - Validation du format
    - Génération de nouveaux IDs
 
@@ -751,8 +751,8 @@ Import/Export complet des enquêtes.
 
 ### Critères de "done"
 
-- [ ] Peut exporter une enquête en ZIP
-- [ ] Peut importer une enquête depuis un ZIP
+- [ ] Peut exporter une dossier en ZIP
+- [ ] Peut importer une dossier depuis un ZIP
 - [ ] Import restaure tous les éléments, liens, fichiers
 - [ ] Peut importer un CSV avec mapping des colonnes
 - [ ] Peut exporter en PNG
@@ -766,7 +766,7 @@ Import/Export complet des enquêtes.
 | Version incompatible | Erreur avec numéro de version |
 | Fichiers manquants dans ZIP | Import partiel, warning |
 | CSV mal formé | Erreur explicite, ligne problématique indiquée |
-| Export enquête énorme | Progress bar, possibilité d'annuler |
+| Export dossier énorme | Progress bar, possibilité d'annuler |
 
 ---
 
@@ -903,7 +903,7 @@ Finitions, performance, UX.
 
 ### Fonctionnalités core
 
-- [ ] Créer/modifier/supprimer des enquêtes
+- [ ] Créer/modifier/supprimer des dossiers
 - [ ] Créer/modifier/supprimer des éléments
 - [ ] Créer/modifier/supprimer des liens
 - [ ] Métadonnées libres (tags, propriétés, confiance, source, dates)

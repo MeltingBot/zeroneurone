@@ -5,7 +5,7 @@ import { X, Download } from 'lucide-react';
 import { useUIStore } from '../../stores';
 
 /**
- * Visual overlay shown when importing into existing investigation.
+ * Visual overlay shown when importing into existing dossier.
  * Shows preview rectangle and instructions - click handling is in Canvas.tsx.
  * Uses pointer-events: none to let clicks pass through to canvas.
  */
@@ -64,7 +64,7 @@ export function ImportPlacementOverlay() {
       >
         {/* Element count badge */}
         <div className="absolute -top-6 left-0 px-2 py-0.5 bg-accent text-white text-xs rounded">
-          {t('investigation.importPlacement.elements', { count: boundingBox.elementCount })}
+          {t('dossier.importPlacement.elements', { count: boundingBox.elementCount })}
         </div>
       </div>
 
@@ -74,12 +74,12 @@ export function ImportPlacementOverlay() {
       >
         <Download size={16} className="text-accent" />
         <span className="text-sm text-text-primary">
-          {t('investigation.importPlacement.instructions')}
+          {t('dossier.importPlacement.instructions')}
         </span>
         <button
           onClick={exitImportPlacementMode}
           className="p-1 text-text-tertiary hover:text-text-primary rounded"
-          title={t('investigation.importPlacement.cancel')}
+          title={t('dossier.importPlacement.cancel')}
         >
           <X size={16} />
         </button>

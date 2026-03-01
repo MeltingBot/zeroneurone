@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Нове розслідування",
-    "namePlaceholder": "Назва розслідування",
+  "createDossier": {
+    "title": "Нове справа",
+    "namePlaceholder": "Назва справа",
     "descriptionPlaceholder": "Опис (необов'язково)",
-    "create": "Створити розслідування"
+    "create": "Створити справа"
   },
   "confirmDelete": {
     "title": "Видалити",
     "message": "Ця дія незворотна.",
     "confirm": "Видалити",
     "deleting": "Видалення...",
-    "deleteInvestigation": "Видалити розслідування",
-    "deleteInvestigationMessage": "Видалити \"{{name}}\"? Ця дія незворотна."
+    "deleteDossier": "Видалити справа",
+    "deleteDossierMessage": "Видалити \"{{name}}\"? Ця дія незворотна."
   },
   "rename": {
     "title": "Перейменувати",
     "rename": "Перейменувати",
     "renaming": "Перейменування...",
     "label": "Назва",
-    "renameInvestigation": "Перейменувати розслідування",
+    "renameDossier": "Перейменувати справа",
     "namePlaceholder": "Нова назва"
   },
   "importIntoCurrent": {
-    "title": "Імпорт у розслідування",
-    "description": "Імпортувати дані в поточне розслідування. ZIP-файли будуть імпортовані в режимі розміщення.",
+    "title": "Імпорт у справа",
+    "description": "Імпортувати дані в поточне справа. ZIP-файли будуть імпортовані в режимі розміщення.",
     "selectFile": "Вибрати файл",
     "emptyZip": "ZIP-файл порожній або не містить елементів"
   },
   "import": {
-    "title": "Імпортувати розслідування",
+    "title": "Імпортувати справа",
     "dropzone": "Перетягніть файл або клацніть для вибору",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Генеалогія: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Імпортувати до",
-    "newInvestigation": "Нове розслідування",
+    "newDossier": "Нове справа",
     "selectFile": "Вибрати файл",
     "importing": "Імпортування...",
     "success": "Імпорт успішний",
@@ -56,7 +56,7 @@
     "andMore": "... та ще {{count}}"
   },
   "export": {
-    "title": "Експортувати розслідування",
+    "title": "Експортувати справа",
     "description": "Експортувати \"{{name}}\" ({{elements}} елементів, {{links}} зв'язків)",
     "format": "Формат",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Збережений вміст",
-      "investigations": "Розслідування",
+      "dossiers": "Справа",
       "elements": "Елементи",
       "links": "Зв'язки",
       "files": "Файли"
@@ -278,11 +278,11 @@
       "title": "Повна резервна копія",
       "exportAll": "Експортувати все",
       "import": "Імпортувати",
-      "description": "Усі розслідування, файли та теги. Імпорт додає, не замінює.",
+      "description": "Усі справа, файли та теги. Імпорт додає, не замінює.",
       "exporting": "Експортування...",
       "importing": "Імпортування...",
       "exportSuccess": "Експорт завершено",
-      "importSuccess": "Імпорт успішний: {{investigations}} розслідувань, {{elements}} елементів, {{links}} зв'язків",
+      "importSuccess": "Імпорт успішний: {{dossiers}} справ, {{elements}} елементів, {{links}} зв'язків",
       "error": "Помилка"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Локальне сховище даних",
     "warning": "Ваші дані зберігаються локально",
-    "description": "Усі розслідування та файли зберігаються в сховищі вашого браузера (IndexedDB та OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Рекомендація:</strong> Регулярно експортуйте свої розслідування через кнопку \"Експортувати\", щоб зберегти резервну копію даних.",
+    "description": "Усі справа та файли зберігаються в сховищі вашого браузера (IndexedDB та OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Рекомендація:</strong> Регулярно експортуйте свої справа через кнопку \"Експортувати\", щоб зберегти резервну копію даних.",
     "acknowledge": "Зрозуміло",
     "bullets": {
       "deleted": "Дані можуть бути <strong class=\"text-text-primary\">видалені</strong>, якщо очистити кеш браузера",
@@ -309,7 +309,7 @@
     "title": "Створити синтез",
     "reportTitle": "Заголовок синтезу",
     "contentToInclude": "Вміст для включення",
-    "includeDescription": "Опис розслідування",
+    "includeDescription": "Опис справа",
     "includeSummary": "Статистичний підсумок",
     "includeInsights": "Аналіз графу (кластери, центральність)",
     "includeTimeline": "Хронологія подій",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://ваш-сервер.приклад.com",
     "save": "Зберегти",
     "serverHelp": "Використовуйте сервер, сумісний з y-websocket. Ви можете розмістити власний за допомогою",
-    "shareDescription": "Поділіться цим розслідуванням для співпраці в реальному часі. Кожен учасник бачитиме зміни миттєво.",
+    "shareDescription": "Поділіться цим справам для співпраці в реальному часі. Кожен учасник бачитиме зміни миттєво.",
     "asyncMode": "Асинхронна співпраця",
     "asyncModeHelp": "Дозволяє співробітникам працювати в різний час. Зміни зберігаються на сервері 7 днів.",
     "serverRequired": "Спочатку налаштуйте сервер синхронізації, щоб увімкнути спільний доступ.",
@@ -432,8 +432,8 @@
     "stopSharing": "Припинити спільний доступ",
     "stopping": "Зупинка..."
   },
-  "investigationTags": {
-    "title": "Теги розслідування",
+  "dossierTags": {
+    "title": "Теги справа",
     "currentTags": "Поточні теги",
     "noTags": "Немає тегів",
     "addTag": "Додати тег",

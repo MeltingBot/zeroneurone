@@ -1,18 +1,18 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Settings, Calendar, Timer } from 'lucide-react';
-import { useInvestigationStore } from '../../stores';
-import type { Investigation, Property, PropertyDefinition } from '../../types';
+import { useDossierStore } from '../../stores';
+import type { Dossier, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { AccordionSection, EditableField, MarkdownEditor } from '../common';
 
-interface InvestigationDetailProps {
-  investigation: Investigation;
+interface DossierDetailProps {
+  dossier: Dossier;
 }
 
 /**
- * InvestigationDetail with lock/edit pattern (like Report sections)
+ * DossierDetail with lock/edit pattern (like Report sections)
  *
  * Pattern:
  * - Name/Creator: EditableField - click to edit, blur/Enter to save
@@ -20,58 +20,58 @@ interface InvestigationDetailProps {
  * - No debounce, no continuous sync - saves only on validation
  * - During editing, external changes are ignored (no flash)
  */
-export function InvestigationDetail({ investigation }: InvestigationDetailProps) {
+export function DossierDetail({ dossier }: DossierDetailProps) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
-  const { updateInvestigation, addExistingTag, addSuggestedProperty } = useInvestigationStore();
+  const { updateDossier, addExistingTag, addSuggestedProperty } = useDossierStore();
 
   // Description state - managed separately for MarkdownEditor
-  const [description, setDescription] = useState(investigation.description);
+  const [description, setDescription] = useState(dossier.description);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const descriptionRef = useRef(investigation.description);
+  const descriptionRef = useRef(dossier.description);
 
   // Start date local state
   const [startDate, setStartDate] = useState(
-    investigation.startDate ? formatDateForInput(investigation.startDate) : ''
+    dossier.startDate ? formatDateForInput(dossier.startDate) : ''
   );
   const [isEditingStartDate, setIsEditingStartDate] = useState(false);
 
-  // Reset state when investigation changes
+  // Reset state when dossier changes
   useEffect(() => {
-    setDescription(investigation.description);
-    descriptionRef.current = investigation.description;
-    setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
-  }, [investigation.id]);
+    setDescription(dossier.description);
+    descriptionRef.current = dossier.description;
+    setStartDate(dossier.startDate ? formatDateForInput(dossier.startDate) : '');
+  }, [dossier.id]);
 
   // Sync description from props ONLY when not editing
   useEffect(() => {
     if (!isEditingDescription) {
-      setDescription(investigation.description);
-      descriptionRef.current = investigation.description;
+      setDescription(dossier.description);
+      descriptionRef.current = dossier.description;
     }
-  }, [investigation.description, isEditingDescription]);
+  }, [dossier.description, isEditingDescription]);
 
   // Sync startDate from props ONLY when not editing
   useEffect(() => {
     if (!isEditingStartDate) {
-      setStartDate(investigation.startDate ? formatDateForInput(investigation.startDate) : '');
+      setStartDate(dossier.startDate ? formatDateForInput(dossier.startDate) : '');
     }
-  }, [investigation.startDate, isEditingStartDate]);
+  }, [dossier.startDate, isEditingStartDate]);
 
   // Handle name change (from EditableField)
   const handleNameChange = useCallback(
     (value: string) => {
-      updateInvestigation(investigation.id, { name: value });
+      updateDossier(dossier.id, { name: value });
     },
-    [investigation.id, updateInvestigation]
+    [dossier.id, updateDossier]
   );
 
   // Handle creator change (from EditableField)
   const handleCreatorChange = useCallback(
     (value: string) => {
-      updateInvestigation(investigation.id, { creator: value });
+      updateDossier(dossier.id, { creator: value });
     },
-    [investigation.id, updateInvestigation]
+    [dossier.id, updateDossier]
   );
 
   // Handle description change - just update local state
@@ -90,9 +90,9 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
     setIsEditingDescription(false);
     // Only save if value changed
     if (description !== descriptionRef.current) {
-      updateInvestigation(investigation.id, { description });
+      updateDossier(dossier.id, { description });
     }
-  }, [description, investigation.id, updateInvestigation]);
+  }, [description, dossier.id, updateDossier]);
 
   // Handle start date change
   const handleStartDateChange = useCallback(
@@ -100,34 +100,34 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
       setStartDate(value);
       // Only update if empty (clearing) or valid date (YYYY-MM-DD format complete)
       if (!value) {
-        updateInvestigation(investigation.id, { startDate: null });
+        updateDossier(dossier.id, { startDate: null });
       } else if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
         const parsed = new Date(value + 'T12:00:00');
         if (!isNaN(parsed.getTime())) {
-          updateInvestigation(investigation.id, { startDate: parsed });
+          updateDossier(dossier.id, { startDate: parsed });
         }
       }
     },
-    [investigation.id, updateInvestigation]
+    [dossier.id, updateDossier]
   );
 
   // Handle tags change
   const handleTagsChange = useCallback(
     (tags: string[]) => {
-      updateInvestigation(investigation.id, { tags });
+      updateDossier(dossier.id, { tags });
     },
-    [investigation.id, updateInvestigation]
+    [dossier.id, updateDossier]
   );
 
   // Handle properties change
   const handlePropertiesChange = useCallback(
     (properties: Property[]) => {
-      updateInvestigation(investigation.id, { properties });
+      updateDossier(dossier.id, { properties });
     },
-    [investigation.id, updateInvestigation]
+    [dossier.id, updateDossier]
   );
 
-  // Handle new tag (save to investigation settings for reuse)
+  // Handle new tag (save to dossier settings for reuse)
   const handleNewTag = useCallback(
     (tag: string) => {
       addExistingTag(tag);
@@ -135,7 +135,7 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
     [addExistingTag]
   );
 
-  // Handle new property (save to investigation settings for reuse)
+  // Handle new property (save to dossier settings for reuse)
   const handleNewProperty = useCallback(
     (propertyDef: PropertyDefinition) => {
       addSuggestedProperty(propertyDef);
@@ -144,9 +144,9 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
   );
 
   // Badges for accordion sections
-  const propertiesBadge = (investigation.properties?.length || 0) > 0 ? (
+  const propertiesBadge = (dossier.properties?.length || 0) > 0 ? (
     <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">
-      {investigation.properties?.length}
+      {dossier.properties?.length}
     </span>
   ) : null;
 
@@ -155,25 +155,25 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
       {/* Informations générales */}
       <AccordionSection
         id="general"
-        title={t('investigation.sections.information')}
+        title={t('dossier.sections.information')}
         icon={<FileText size={12} />}
         defaultOpen={true}
       >
         <div className="space-y-4">
           {/* Name - EditableField with lock/edit pattern */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.name')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.name')}</label>
             <EditableField
-              value={investigation.name}
+              value={dossier.name}
               onChange={handleNameChange}
-              placeholder={t('investigation.placeholders.name')}
+              placeholder={t('dossier.placeholders.name')}
               allowEmpty={false}
             />
           </div>
 
           {/* Description - MarkdownEditor with lock/edit pattern */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.description')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.description')}</label>
             <MarkdownEditor
               value={description}
               onChange={handleDescriptionChange}
@@ -187,21 +187,21 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
 
           {/* Creator - EditableField with lock/edit pattern */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.creator')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.creator')}</label>
             <EditableField
-              value={investigation.creator || ''}
+              value={dossier.creator || ''}
               onChange={handleCreatorChange}
-              placeholder={t('investigation.placeholders.creator')}
+              placeholder={t('dossier.placeholders.creator')}
             />
           </div>
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.tags')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.tags')}</label>
             <TagsEditor
-              tags={investigation.tags || []}
+              tags={dossier.tags || []}
               onChange={handleTagsChange}
-              suggestions={investigation.settings?.existingTags}
+              suggestions={dossier.settings?.existingTags}
               onNewTag={handleNewTag}
             />
           </div>
@@ -211,14 +211,14 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
       {/* Dates */}
       <AccordionSection
         id="dates"
-        title={t('investigation.sections.dates')}
+        title={t('dossier.sections.dates')}
         icon={<Calendar size={12} />}
         defaultOpen={false}
       >
         <div className="space-y-4">
           {/* Start Date */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.startDate')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.startDate')}</label>
             <input
               type="date"
               value={startDate}
@@ -231,37 +231,37 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
 
           {/* Created At (read-only) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.createdAt')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.createdAt')}</label>
             <p className="text-sm text-text-primary">
-              {formatDateDisplay(investigation.createdAt, i18n.language)}
+              {formatDateDisplay(dossier.createdAt, i18n.language)}
             </p>
           </div>
 
           {/* Updated At (read-only) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.updatedAt')}</label>
+            <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.updatedAt')}</label>
             <p className="text-sm text-text-primary">
-              {formatDateDisplay(investigation.updatedAt, i18n.language)}
+              {formatDateDisplay(dossier.updatedAt, i18n.language)}
             </p>
           </div>
         </div>
       </AccordionSection>
 
       {/* Rétention */}
-      <RetentionSection investigation={investigation} />
+      <RetentionSection dossier={dossier} />
 
       {/* Propriétés */}
       <AccordionSection
         id="properties"
-        title={t('investigation.sections.properties')}
+        title={t('dossier.sections.properties')}
         icon={<Settings size={12} />}
         badge={propertiesBadge}
         defaultOpen={false}
       >
         <PropertiesEditor
-          properties={investigation.properties || []}
+          properties={dossier.properties || []}
           onChange={handlePropertiesChange}
-          suggestions={investigation.settings?.suggestedProperties}
+          suggestions={dossier.settings?.suggestedProperties}
           onNewProperty={handleNewProperty}
         />
       </AccordionSection>
@@ -271,31 +271,31 @@ export function InvestigationDetail({ investigation }: InvestigationDetailProps)
 
 type RetentionPolicy = 'warn' | 'readonly' | 'delete' | 'redact';
 
-function RetentionSection({ investigation }: { investigation: Investigation }) {
+function RetentionSection({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
-  const { updateInvestigation } = useInvestigationStore();
+  const { updateDossier } = useDossierStore();
 
   const [localDays, setLocalDays] = useState<string>(
-    investigation.retentionDays != null ? String(investigation.retentionDays) : ''
+    dossier.retentionDays != null ? String(dossier.retentionDays) : ''
   );
   const [localPolicy, setLocalPolicy] = useState<RetentionPolicy>(
-    investigation.retentionPolicy || 'warn'
+    dossier.retentionPolicy || 'warn'
   );
 
-  // Sync from props when investigation changes
+  // Sync from props when dossier changes
   useEffect(() => {
-    setLocalDays(investigation.retentionDays != null ? String(investigation.retentionDays) : '');
-    setLocalPolicy(investigation.retentionPolicy || 'warn');
-  }, [investigation.id, investigation.retentionDays, investigation.retentionPolicy]);
+    setLocalDays(dossier.retentionDays != null ? String(dossier.retentionDays) : '');
+    setLocalPolicy(dossier.retentionPolicy || 'warn');
+  }, [dossier.id, dossier.retentionDays, dossier.retentionPolicy]);
 
-  const savedDays = investigation.retentionDays ?? null;
-  const savedPolicy = investigation.retentionPolicy || 'warn';
+  const savedDays = dossier.retentionDays ?? null;
+  const savedPolicy = dossier.retentionPolicy || 'warn';
   const pendingDays = localDays === '' ? null : Math.max(1, parseInt(localDays, 10) || 1);
   const hasChanges = pendingDays !== savedDays || localPolicy !== savedPolicy;
 
   const handleApply = () => {
-    updateInvestigation(investigation.id, {
+    updateDossier(dossier.id, {
       retentionDays: pendingDays,
       retentionPolicy: localPolicy,
     });
@@ -303,7 +303,7 @@ function RetentionSection({ investigation }: { investigation: Investigation }) {
 
   // Compute expiration info based on pending values
   const expirationInfo = pendingDays != null ? (() => {
-    const expiresAt = new Date(new Date(investigation.createdAt).getTime() + pendingDays * 86400000);
+    const expiresAt = new Date(new Date(dossier.createdAt).getTime() + pendingDays * 86400000);
     const expiredDays = Math.ceil((Date.now() - expiresAt.getTime()) / 86400000);
     return { expiresAt, expiredDays, isExpired: expiredDays > 0 };
   })() : null;
@@ -311,19 +311,19 @@ function RetentionSection({ investigation }: { investigation: Investigation }) {
   return (
     <AccordionSection
       id="retention"
-      title={t('investigation.sections.retention')}
+      title={t('dossier.sections.retention')}
       icon={<Timer size={12} />}
       defaultOpen={false}
     >
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.retentionDays')}</label>
+          <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.retentionDays')}</label>
           <input
             type="number"
             min={1}
             value={localDays}
             onChange={(e) => setLocalDays(e.target.value)}
-            placeholder={t('investigation.labels.retentionUnlimited')}
+            placeholder={t('dossier.labels.retentionUnlimited')}
             className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
           />
         </div>
@@ -331,25 +331,25 @@ function RetentionSection({ investigation }: { investigation: Investigation }) {
         {pendingDays != null && (
           <>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.retentionPolicy')}</label>
+              <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.retentionPolicy')}</label>
               <select
                 value={localPolicy}
                 onChange={(e) => setLocalPolicy(e.target.value as RetentionPolicy)}
                 className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
               >
-                <option value="warn">{t('investigation.labels.retentionPolicyWarn')}</option>
-                <option value="readonly">{t('investigation.labels.retentionPolicyReadonly')}</option>
-                <option value="delete">{t('investigation.labels.retentionPolicyDelete')}</option>
-                <option value="redact">{t('investigation.labels.retentionPolicyRedact')}</option>
+                <option value="warn">{t('dossier.labels.retentionPolicyWarn')}</option>
+                <option value="readonly">{t('dossier.labels.retentionPolicyReadonly')}</option>
+                <option value="delete">{t('dossier.labels.retentionPolicyDelete')}</option>
+                <option value="redact">{t('dossier.labels.retentionPolicyRedact')}</option>
               </select>
             </div>
 
             {expirationInfo && (
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">{t('investigation.labels.retentionExpires')}</label>
+                <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.retentionExpires')}</label>
                 {expirationInfo.isExpired ? (
                   <p className="text-sm font-medium text-error">
-                    {t('investigation.labels.retentionExpiredSince', { days: expirationInfo.expiredDays })}
+                    {t('dossier.labels.retentionExpiredSince', { days: expirationInfo.expiredDays })}
                   </p>
                 ) : (
                   <p className="text-sm text-text-primary">
@@ -368,7 +368,7 @@ function RetentionSection({ investigation }: { investigation: Investigation }) {
                 onClick={handleApply}
                 className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded transition-colors"
               >
-                {t('investigation.labels.retentionApply')}
+                {t('dossier.labels.retentionApply')}
               </button>
             )}
             {savedDays != null && (
@@ -376,14 +376,14 @@ function RetentionSection({ investigation }: { investigation: Investigation }) {
                 onClick={() => {
                   setLocalDays('');
                   setLocalPolicy('warn');
-                  updateInvestigation(investigation.id, {
+                  updateDossier(dossier.id, {
                     retentionDays: null,
                     retentionPolicy: 'warn',
                   });
                 }}
                 className="flex-1 px-3 py-1.5 text-sm font-medium text-text-secondary bg-bg-secondary border border-border-default hover:bg-bg-tertiary rounded transition-colors"
               >
-                {t('investigation.labels.retentionReset')}
+                {t('dossier.labels.retentionReset')}
               </button>
             )}
           </div>

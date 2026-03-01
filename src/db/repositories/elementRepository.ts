@@ -3,7 +3,7 @@ import { generateUUID } from '../../utils';
 import type {
   Element,
   ElementId,
-  InvestigationId,
+  DossierId,
   Position,
 } from '../../types';
 import { DEFAULT_ELEMENT_VISUAL as defaultVisual } from '../../types';
@@ -28,13 +28,13 @@ function rehydrateElement(element: Element): Element {
 }
 
 function createDefaultElement(
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   label: string,
   position: Position
 ): Element {
   return {
     id: generateUUID(),
-    investigationId,
+    dossierId,
     label,
     notes: '',
     tags: [],
@@ -60,16 +60,16 @@ function createDefaultElement(
 
 export const elementRepository = {
   async create(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     label: string,
     position: Position,
     options: Partial<Element> = {}
   ): Promise<Element> {
-    const element = createDefaultElement(investigationId, label, position);
+    const element = createDefaultElement(dossierId, label, position);
     Object.assign(element, options);
 
     await db.elements.add(element);
-    await db.investigations.update(investigationId, { updatedAt: new Date() });
+    await db.dossiers.update(dossierId, { updatedAt: new Date() });
 
     return element;
   },
@@ -79,8 +79,8 @@ export const elementRepository = {
     return element ? rehydrateElement(element) : undefined;
   },
 
-  async getByInvestigation(investigationId: InvestigationId): Promise<Element[]> {
-    const elements = await db.elements.where({ investigationId }).toArray();
+  async getByDossier(dossierId: DossierId): Promise<Element[]> {
+    const elements = await db.elements.where({ dossierId }).toArray();
     return elements.map(rehydrateElement);
   },
 
@@ -91,7 +91,7 @@ export const elementRepository = {
 
   async update(
     id: ElementId,
-    changes: Partial<Omit<Element, 'id' | 'investigationId' | 'createdAt'>>
+    changes: Partial<Omit<Element, 'id' | 'dossierId' | 'createdAt'>>
   ): Promise<void> {
     const element = await db.elements.get(id);
     if (!element) return;
@@ -101,7 +101,7 @@ export const elementRepository = {
       updatedAt: new Date(),
     });
 
-    await db.investigations.update(element.investigationId, {
+    await db.dossiers.update(element.dossierId, {
       updatedAt: new Date(),
     });
   },
@@ -110,7 +110,7 @@ export const elementRepository = {
     const element = await db.elements.get(id);
     if (!element) return;
 
-    await db.transaction('rw', [db.elements, db.links, db.investigations], async () => {
+    await db.transaction('rw', [db.elements, db.links, db.dossiers], async () => {
       // Delete associated links
       await db.links
         .where('fromId')
@@ -127,8 +127,8 @@ export const elementRepository = {
       // Delete the element
       await db.elements.delete(id);
 
-      // Update investigation timestamp
-      await db.investigations.update(element.investigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(element.dossierId, {
         updatedAt: new Date(),
       });
     });
@@ -140,9 +140,9 @@ export const elementRepository = {
     const elements = await db.elements.where('id').anyOf(ids).toArray();
     if (elements.length === 0) return;
 
-    const investigationId = elements[0].investigationId;
+    const dossierId = elements[0].dossierId;
 
-    await db.transaction('rw', [db.elements, db.links, db.investigations], async () => {
+    await db.transaction('rw', [db.elements, db.links, db.dossiers], async () => {
       // Delete associated links
       for (const id of ids) {
         await db.links
@@ -156,8 +156,8 @@ export const elementRepository = {
       // Delete elements
       await db.elements.where('id').anyOf(ids).delete();
 
-      // Update investigation timestamp
-      await db.investigations.update(investigationId, {
+      // Update dossier timestamp
+      await db.dossiers.update(dossierId, {
         updatedAt: new Date(),
       });
     });
@@ -192,12 +192,12 @@ export const elementRepository = {
   },
 
   async createGroup(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     name: string,
     elementIds: ElementId[],
     position: Position
   ): Promise<Element> {
-    const group = await this.create(investigationId, name, position, {
+    const group = await this.create(dossierId, name, position, {
       isGroup: true,
       childIds: elementIds,
     });
@@ -283,9 +283,9 @@ export const elementRepository = {
    * Delete elements not in the given list of IDs
    * Used for syncing deletions from Y.Doc to IndexedDB
    */
-  async deleteNotIn(investigationId: InvestigationId, keepIds: ElementId[]): Promise<void> {
+  async deleteNotIn(dossierId: DossierId, keepIds: ElementId[]): Promise<void> {
     const keepSet = new Set(keepIds);
-    const allElements = await db.elements.where({ investigationId }).toArray();
+    const allElements = await db.elements.where({ dossierId }).toArray();
     const toDelete = allElements.filter(el => !keepSet.has(el.id)).map(el => el.id);
 
     if (toDelete.length > 0) {

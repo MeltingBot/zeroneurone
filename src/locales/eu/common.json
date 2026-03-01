@@ -61,7 +61,7 @@
     "files": "Fitxategiak",
     "links": "Loturak",
     "elements": "Elementuak",
-    "investigations": "Ikerketak",
+    "dossiers": "Espedientek",
     "views": "Ikuspegiak",
     "filters": "Iragazkiak",
     "insights": "Analisiak",
@@ -100,7 +100,7 @@
     "noData": "Daturik ez",
     "noSelection": "Hautapenik ez",
     "noItems": "Elementurik ez",
-    "noInvestigationLoaded": "Ez dago ikerketarik kargatuta.",
+    "noDossierLoaded": "Ez dago espedienterik kargatuta.",
     "unnamed": "Izenik gabe"
   },
   "errors": {

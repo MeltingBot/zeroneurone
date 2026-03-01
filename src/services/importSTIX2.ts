@@ -1,7 +1,7 @@
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
 import type {
-  InvestigationId,
+  DossierId,
   Element,
   ElementId,
   Link,
@@ -178,7 +178,7 @@ export function isSTIX2Format(data: unknown): boolean {
 
 export async function importSTIX2(
   content: string,
-  targetInvestigationId: InvestigationId
+  targetDossierId: DossierId
 ): Promise<ImportResult> {
   const result: ImportResult = {
     success: false,
@@ -359,7 +359,7 @@ export async function importSTIX2(
 
       const element: Element = {
         id: newId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label,
         notes: notes.trim(),
         tags,
@@ -415,7 +415,7 @@ export async function importSTIX2(
 
       const link: Link = {
         id: generateUUID(),
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         fromId,
         toId,
         sourceHandle: null,
@@ -473,7 +473,7 @@ export async function importSTIX2(
 
       const annotation: Element = {
         id: newId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label: note.abstract || 'Note',
         notes: annotationContent,
         tags: note.authors ? note.authors.map(a => `author:${a}`) : [],
@@ -512,7 +512,7 @@ export async function importSTIX2(
 
         const link: Link = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           fromId: newId,
           toId: targetId,
           sourceHandle: null,
@@ -542,9 +542,9 @@ export async function importSTIX2(
       }
     }
 
-    // Update investigation with bundle info
+    // Update dossier with bundle info
     const bundleDate = data.created ? new Date(data.created) : new Date();
-    await db.investigations.update(targetInvestigationId, {
+    await db.dossiers.update(targetDossierId, {
       description: `Import STIX 2.1 - ${data.id || 'Bundle'}`,
       updatedAt: bundleDate,
     });

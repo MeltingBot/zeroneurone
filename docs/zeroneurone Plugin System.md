@@ -36,8 +36,8 @@ export interface MenuContext {
   canvasPosition?: { x: number; y: number };
   /** L'élément sélectionné a des assets avec du texte extractible */
   hasTextAssets: boolean;
-  /** ID de l'investigation courante */
-  investigationId: string;
+  /** ID de l'dossier courante */
+  dossierId: string;
 }
 
 // ─── Extensions de menu contextuel ────────────────────────────
@@ -76,14 +76,14 @@ export interface ExportHook {
   /** Nom du plugin (pour logs et debug) */
   name: string;
   /** Appelé pendant l'export ZIP, après les données ZN de base */
-  onExport: (zip: any, investigationId: string) => Promise<void>;
+  onExport: (zip: any, dossierId: string) => Promise<void>;
 }
 
 export interface ImportHook {
   /** Nom du plugin */
   name: string;
   /** Appelé pendant l'import ZIP, après les données ZN de base */
-  onImport: (zip: any, investigationId: string) => Promise<void>;
+  onImport: (zip: any, dossierId: string) => Promise<void>;
 }
 
 // ─── Extension Dexie ──────────────────────────────────────────
@@ -91,29 +91,29 @@ export interface ImportHook {
 export interface DexieTableDefinition {
   /** Nom de la table */
   name: string;
-  /** Schema Dexie (ex: 'id, investigationId, updatedAt') */
+  /** Schema Dexie (ex: 'id, dossierId, updatedAt') */
   schema: string;
 }
 
 // ─── Props injectées aux composants de panneau ────────────────
 
 export interface PanelPluginProps {
-  /** ID de l'investigation courante */
-  investigationId: string;
+  /** ID de l'dossier courante */
+  dossierId: string;
 }
 
 // ─── Props injectées aux composants de rapport ────────────────
 
 export interface ReportToolbarPluginProps {
-  /** ID de l'investigation courante */
-  investigationId: string;
+  /** ID de l'dossier courante */
+  dossierId: string;
 }
 
 export interface ReportSectionPluginProps {
   /** ID de la section du rapport */
   sectionId: string;
-  /** ID de l'investigation courante */
-  investigationId: string;
+  /** ID de l'dossier courante */
+  dossierId: string;
 }
 
 // ─── Le registre complet ──────────────────────────────────────
@@ -209,7 +209,7 @@ export function registerPlugin<K extends keyof PluginSlots>(
  *
  * @example
  * registerPlugins('dexie:tables', [
- *   { name: 'myTable', schema: 'id, investigationId' },
+ *   { name: 'myTable', schema: 'id, dossierId' },
  *   { name: 'myOtherTable', schema: 'id, type' },
  * ]);
  */
@@ -318,14 +318,14 @@ function Header() {
 
 ### 3.2 Panneau latéral droit — slot `panel:right`
 
-**Fichier à modifier : `src/components/panels/` ou le layout `InvestigationPage.tsx`**
+**Fichier à modifier : `src/components/panels/` ou le layout `DossierPage.tsx`**
 
 Les panneaux plugin s'affichent dans la même zone que le panneau Insights/Détail, gérés par `uiStore` :
 
 ```tsx
 import { usePlugins } from '../plugins/usePlugins';
 
-function RightPanelArea({ investigationId }: { investigationId: string }) {
+function RightPanelArea({ dossierId }: { dossierId: string }) {
   const panelPlugins = usePlugins('panel:right');
 
   // Le uiStore gère quel panneau est actif (detail, insights, ou un plugin)
@@ -341,7 +341,7 @@ function RightPanelArea({ investigationId }: { investigationId: string }) {
       {panelPlugins.map((PanelPlugin, index) => (
         <PanelPlugin
           key={`panel-plugin-${index}`}
-          investigationId={investigationId}
+          dossierId={dossierId}
         />
       ))}
     </aside>
@@ -414,7 +414,7 @@ function CanvasContextMenu({ context }: { context: MenuContext }) {
 ```tsx
 import { usePlugins } from '../../plugins/usePlugins';
 
-function ReportToolbar({ investigationId }: { investigationId: string }) {
+function ReportToolbar({ dossierId }: { dossierId: string }) {
   const toolbarPlugins = usePlugins('report:toolbar');
 
   return (
@@ -426,14 +426,14 @@ function ReportToolbar({ investigationId }: { investigationId: string }) {
       {toolbarPlugins.map((ToolbarPlugin, index) => (
         <ToolbarPlugin
           key={`report-toolbar-${index}`}
-          investigationId={investigationId}
+          dossierId={dossierId}
         />
       ))}
     </div>
   );
 }
 
-function ReportSection({ sectionId, investigationId }: { sectionId: string; investigationId: string }) {
+function ReportSection({ sectionId, dossierId }: { sectionId: string; dossierId: string }) {
   const sectionPlugins = usePlugins('report:sectionActions');
 
   return (
@@ -446,7 +446,7 @@ function ReportSection({ sectionId, investigationId }: { sectionId: string; inve
         <SectionPlugin
           key={`section-plugin-${index}`}
           sectionId={sectionId}
-          investigationId={investigationId}
+          dossierId={dossierId}
         />
       ))}
     </div>
@@ -514,18 +514,18 @@ Ajouter l'appel aux hooks d'export après la construction du ZIP de base :
 ```typescript
 import { getPlugins } from '../plugins/pluginRegistry';
 
-async function exportInvestigationZip(investigationId: string): Promise<Blob> {
+async function exportDossierZip(dossierId: string): Promise<Blob> {
   const zip = new JSZip();
 
   // Export ZN existant (inchangé)
-  zip.file('investigation.json', JSON.stringify(investigationData));
+  zip.file('dossier.json', JSON.stringify(dossierData));
   // ... elements.json, links.json, tabs.json, report.json, assets/
 
   // Appel des hooks d'export plugins
   const exportHooks = getPlugins('export:hooks');
   for (const hook of exportHooks) {
     try {
-      await hook.onExport(zip, investigationId);
+      await hook.onExport(zip, dossierId);
     } catch (error) {
       console.warn(`Plugin export hook "${hook.name}" failed:`, error);
       // On ne bloque pas l'export si un plugin échoue
@@ -547,24 +547,24 @@ Ajouter l'appel aux hooks d'import après l'import des données ZN :
 ```typescript
 import { getPlugins } from '../plugins/pluginRegistry';
 
-async function importInvestigationZip(file: File): Promise<string> {
+async function importDossierZip(file: File): Promise<string> {
   const zip = await JSZip.loadAsync(file);
 
   // Import ZN existant (inchangé)
-  const investigationId = await importBaseData(zip);
+  const dossierId = await importBaseData(zip);
 
   // Appel des hooks d'import plugins
   const importHooks = getPlugins('import:hooks');
   for (const hook of importHooks) {
     try {
-      await hook.onImport(zip, investigationId);
+      await hook.onImport(zip, dossierId);
     } catch (error) {
       console.warn(`Plugin import hook "${hook.name}" failed:`, error);
       // On ne bloque pas l'import si un plugin échoue
     }
   }
 
-  return investigationId;
+  return dossierId;
 }
 ```
 
@@ -580,16 +580,16 @@ Les tables plugins sont enregistrées au démarrage de l'application, AVANT l'ou
 import { getPlugins } from '../plugins/pluginRegistry';
 
 function createDatabase(): Dexie {
-  const db = new Dexie('investigation-tool');
+  const db = new Dexie('dossier-tool');
 
   // Tables ZN de base (inchangées)
   const baseSchema: Record<string, string> = {
-    investigations: 'id, name, updatedAt',
-    elements: 'id, investigationId, label, *tags',
-    links: 'id, investigationId, from, to',
-    views: 'id, investigationId',
-    assets: 'id, investigationId, hash',
-    canvasTabs: 'id, investigationId, order',
+    dossiers: 'id, name, updatedAt',
+    elements: 'id, dossierId, label, *tags',
+    links: 'id, dossierId, from, to',
+    views: 'id, dossierId',
+    assets: 'id, dossierId, hash',
+    canvasTabs: 'id, dossierId, order',
     // ... autres tables ZN
   };
 
@@ -629,14 +629,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 Le `MenuContext` est construit au moment du clic droit, avant d'afficher le menu. Il agrège l'état de plusieurs stores :
 
 ```typescript
-import { useInvestigationStore } from '../../stores/investigationStore';
+import { useDossierStore } from '../../stores/dossierStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import type { MenuContext } from '../../types/plugins';
 
 function buildMenuContext(
   canvasPosition?: { x: number; y: number }
 ): MenuContext {
-  const { currentInvestigationId, elements, assets } = useInvestigationStore.getState();
+  const { currentDossierId, elements, assets } = useDossierStore.getState();
   const { selectedElementIds, selectedLinkIds } = useSelectionStore.getState();
 
   // Vérifier si les éléments sélectionnés ont des assets texte
@@ -654,7 +654,7 @@ function buildMenuContext(
     linkIds: [...selectedLinkIds],
     canvasPosition,
     hasTextAssets,
-    investigationId: currentInvestigationId ?? '',
+    dossierId: currentDossierId ?? '',
   };
 }
 
@@ -722,8 +722,8 @@ src/
 
 ### Tâche 4 — Intégration Panneau droit
 
-1. Modifier le layout `InvestigationPage` ou le conteneur de panneaux pour monter `panel:right`
-2. Passer `investigationId` en prop
+1. Modifier le layout `DossierPage` ou le conteneur de panneaux pour monter `panel:right`
+2. Passer `dossierId` en prop
 3. Vérifier : sans plugin, les panneaux existants fonctionnent identiquement
 
 ### Tâche 5 — Intégration Rapport

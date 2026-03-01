@@ -1,7 +1,7 @@
 /**
  * CanvasTab <-> Y.Map mapper for Yjs collaboration
  *
- * Synced fields: id, investigationId, name, order, memberElementIds, excludedElementIds, createdAt, updatedAt
+ * Synced fields: id, dossierId, name, order, memberElementIds, excludedElementIds, createdAt, updatedAt
  * NOT synced: viewport (each user has their own camera position per tab)
  */
 
@@ -22,7 +22,7 @@ export function tabToYMap(tab: CanvasTab): Y.Map<any> {
   const map = new Y.Map();
 
   map.set('id', tab.id);
-  map.set('investigationId', tab.investigationId);
+  map.set('dossierId', tab.dossierId);
   map.set('name', tab.name);
   map.set('order', tab.order);
   map.set('memberElementIds', tab.memberElementIds);
@@ -60,7 +60,7 @@ export function yMapToTab(ymap: Y.Map<any>): CanvasTab {
 
   return {
     id: ymap.get('id') || '',
-    investigationId: ymap.get('investigationId') || '',
+    dossierId: ymap.get('dossierId') || '',
     name: ymap.get('name') || '',
     order: ymap.get('order') ?? 0,
     memberElementIds,

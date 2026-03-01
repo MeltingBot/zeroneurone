@@ -4,7 +4,7 @@ import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
   Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight
 } from 'lucide-react';
-import { useInvestigationStore, useViewStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useViewStore, useHistoryStore } from '../../stores';
 import type { View } from '../../types';
 
 type TagDisplayMode = 'none' | 'icons' | 'labels' | 'both';
@@ -26,7 +26,7 @@ const TAG_SIZE_OPTIONS: { value: TagDisplaySize; label: string }[] = [
 export function ViewsPanel() {
   const { t } = useTranslation('panels');
   const {
-    currentInvestigation,
+    currentDossier,
     elements,
     links,
     updateElementPositions,
@@ -37,7 +37,7 @@ export function ViewsPanel() {
     setTagDisplaySize,
     setLinkAnchorMode,
     setLinkCurveMode,
-  } = useInvestigationStore();
+  } = useDossierStore();
   const { savedViews, saveView, loadView, deleteView } = useViewStore();
   const [isCreating, setIsCreating] = useState(false);
   const [newViewName, setNewViewName] = useState('');
@@ -46,7 +46,7 @@ export function ViewsPanel() {
   const [propertySearch, setPropertySearch] = useState('');
 
   // Current display settings
-  const settings = currentInvestigation?.settings;
+  const settings = currentDossier?.settings;
   const tagDisplayMode = settings?.tagDisplayMode ?? 'icons';
   const tagDisplaySize = settings?.tagDisplaySize ?? 'small';
   const showConfidence = settings?.showConfidenceIndicator ?? false;
@@ -80,16 +80,16 @@ export function ViewsPanel() {
   }, [allPropertyKeys, propertySearch]);
 
   const handleSaveView = useCallback(async () => {
-    if (!currentInvestigation || !newViewName.trim()) return;
+    if (!currentDossier || !newViewName.trim()) return;
 
-    await saveView(currentInvestigation.id, newViewName.trim(), {
+    await saveView(currentDossier.id, newViewName.trim(), {
       includePositions,
       elements: includePositions ? elements : undefined,
     });
     setNewViewName('');
     setIncludePositions(false);
     setIsCreating(false);
-  }, [currentInvestigation, newViewName, saveView, includePositions, elements]);
+  }, [currentDossier, newViewName, saveView, includePositions, elements]);
 
   const handleLoadView = useCallback(
     (view: View) => {

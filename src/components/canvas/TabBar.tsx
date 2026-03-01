@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
-import { useTabStore, useViewStore, useInvestigationStore, useHistoryStore } from '../../stores';
-import type { TabId, InvestigationId } from '../../types';
+import { useTabStore, useViewStore, useDossierStore, useHistoryStore } from '../../stores';
+import type { TabId, DossierId } from '../../types';
 
 interface TabBarProps {
-  investigationId: InvestigationId;
+  dossierId: DossierId;
 }
 
-export function TabBar({ investigationId }: TabBarProps) {
+export function TabBar({ dossierId }: TabBarProps) {
   const { t } = useTranslation('pages');
   const tabs = useTabStore((s) => s.tabs);
   const activeTabId = useTabStore((s) => s.activeTabId);
@@ -20,7 +20,7 @@ export function TabBar({ investigationId }: TabBarProps) {
   const saveTabViewport = useTabStore((s) => s.saveTabViewport);
   const viewport = useViewStore((s) => s.viewport);
   const requestViewportChange = useViewStore((s) => s.requestViewportChange);
-  const elements = useInvestigationStore((s) => s.elements);
+  const elements = useDossierStore((s) => s.elements);
   const pushAction = useHistoryStore((s) => s.pushAction);
 
   const [editingTabId, setEditingTabId] = useState<TabId | null>(null);
@@ -60,9 +60,9 @@ export function TabBar({ investigationId }: TabBarProps) {
     if (tabs.length >= MAX_TABS) return;
     const isFirst = tabs.length === 0;
     const name = isFirst
-      ? t('investigation.tabs.initialName')
-      : t('investigation.tabs.defaultName', { n: tabs.length + 1 });
-    const tab = await createTab(investigationId, name);
+      ? t('dossier.tabs.initialName')
+      : t('dossier.tabs.defaultName', { n: tabs.length + 1 });
+    const tab = await createTab(dossierId, name);
 
     // First tab: auto-populate with all existing elements
     if (isFirst && elements.length > 0) {
@@ -125,10 +125,10 @@ export function TabBar({ investigationId }: TabBarProps) {
         <button
           onClick={handleCreate}
           className="flex items-center gap-1 px-2 h-6 rounded text-xs text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
-          title={t('investigation.tabs.new')}
+          title={t('dossier.tabs.new')}
         >
           <Plus size={14} />
-          <span>{t('investigation.tabs.new')}</span>
+          <span>{t('dossier.tabs.new')}</span>
         </button>
       </div>
     );
@@ -146,7 +146,7 @@ export function TabBar({ investigationId }: TabBarProps) {
               : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
           }`}
         >
-          {t('investigation.tabs.all')}
+          {t('dossier.tabs.all')}
         </button>
 
         <div className="w-px h-4 bg-border-default shrink-0" />
@@ -183,7 +183,7 @@ export function TabBar({ investigationId }: TabBarProps) {
           <button
             onClick={handleCreate}
             className="flex items-center justify-center w-6 h-6 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary transition-colors shrink-0"
-            title={t('investigation.tabs.new')}
+            title={t('dossier.tabs.new')}
           >
             <Plus size={14} />
           </button>
@@ -332,14 +332,14 @@ function TabContextMenu({ x, y, onRename, onDelete, onClose, t }: TabContextMenu
         onClick={onRename}
         className="w-full px-3 py-1.5 text-xs text-left text-text-primary hover:bg-bg-tertiary"
       >
-        {t('investigation.tabs.rename')}
+        {t('dossier.tabs.rename')}
       </button>
       {onDelete && (
         <button
           onClick={onDelete}
           className="w-full px-3 py-1.5 text-xs text-left text-error hover:bg-bg-tertiary"
         >
-          {t('investigation.tabs.delete')}
+          {t('dossier.tabs.delete')}
         </button>
       )}
     </div>

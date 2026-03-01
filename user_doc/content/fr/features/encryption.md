@@ -5,7 +5,7 @@ weight: 14
 
 # Chiffrement at-rest
 
-ZeroNeurone peut chiffrer l'intégralité de vos données locales (enquêtes, éléments, liens, fichiers joints) avec un mot de passe. Sans ce mot de passe, les données stockées dans le navigateur sont illisibles.
+ZeroNeurone peut chiffrer l'intégralité de vos données locales (dossiers, éléments, liens, fichiers joints) avec un mot de passe. Sans ce mot de passe, les données stockées dans le navigateur sont illisibles.
 
 {{< hint info >}}
 Le chiffrement est **optionnel**. ZeroNeurone fonctionne normalement sans lui. Activez-le si vous travaillez sur des sujets sensibles ou sur une machine partagée.
@@ -15,7 +15,7 @@ Le chiffrement est **optionnel**. ZeroNeurone fonctionne normalement sans lui. A
 
 ## Activer le chiffrement
 
-1. Depuis la page d'accueil, cliquez sur l'icône **cadenas** (en bas à droite si aucune enquête, dans la barre de titre sinon)
+1. Depuis la page d'accueil, cliquez sur l'icône **cadenas** (en bas à droite si aucun dossier, dans la barre de titre sinon)
 2. Dans la fenêtre qui s'ouvre, cliquez sur **Activer le chiffrement**
 3. Choisissez un mot de passe (8 caractères minimum)
 4. Confirmez le mot de passe
@@ -24,7 +24,7 @@ Le chiffrement est **optionnel**. ZeroNeurone fonctionne normalement sans lui. A
 ZeroNeurone migre toutes vos données existantes, puis **recharge automatiquement la page**. À ce rechargement, une fenêtre vous demande votre mot de passe pour déverrouiller l'accès.
 
 {{< hint danger >}}
-**Ne rafraîchissez jamais la page pendant l'activation.** L'opération chiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine — cela peut prendre un moment sur les grosses enquêtes.
+**Ne rafraîchissez jamais la page pendant l'activation.** L'opération chiffre toutes vos données une par une. L'interrompre peut les corrompre définitivement. Attendez que l'opération se termine — cela peut prendre un moment sur les gros dossiers.
 {{< /hint >}}
 
 {{< hint warning >}}
@@ -120,7 +120,7 @@ ZeroNeurone déchiffre toutes les données, puis recharge la page. L'application
 
 | Données | Chiffrées |
 |---------|-----------|
-| Enquêtes, éléments, liens | Oui |
+| Dossiers, éléments, liens | Oui |
 | Fichiers joints (images, PDF…) | Oui |
 | Rapports et vues | Oui |
 | Données des extensions | Oui |
@@ -141,16 +141,16 @@ Ces deux protections sont complémentaires :
 ## Questions fréquentes
 
 **Que se passe-t-il si j'oublie mon mot de passe ?**
-Les données sont irrécupérables. ZeroNeurone n'a aucun mécanisme de récupération — c'est une propriété fondamentale du chiffrement. Exportez régulièrement vos enquêtes en ZIP.
+Les données sont irrécupérables. ZeroNeurone n'a aucun mécanisme de récupération — c'est une propriété fondamentale du chiffrement. Exportez régulièrement vos dossiers en ZIP.
 
 **Le chiffrement ralentit-il l'application ?**
-Imperceptiblement. Le chiffrement utilise des algorithmes optimisés pour le navigateur. Sur une enquête de taille normale, aucune latence n'est visible.
+Imperceptiblement. Le chiffrement utilise des algorithmes optimisés pour le navigateur. Sur un dossier de taille normale, aucune latence n'est visible.
 
 **Mes données sont-elles protégées si quelqu'un vole mon ordinateur ?**
 Oui, si la session est verrouillée ou le navigateur fermé. Les données stockées dans le navigateur sont illisibles sans le mot de passe. En revanche, si votre session est déverrouillée au moment du vol, les données sont accessibles.
 
 **Puis-je utiliser le même mot de passe sur plusieurs machines ?**
-Oui. Les données sont chiffrées par machine — chaque installation a sa propre clé. Exporter/importer une enquête depuis une machine chiffrée vers une autre produit des données en clair dans le ZIP (déchiffrées pour l'export).
+Oui. Les données sont chiffrées par machine — chaque installation a sa propre clé. Exporter/importer un dossier depuis une machine chiffrée vers une autre produit des données en clair dans le ZIP (déchiffrées pour l'export).
 
 ---
 

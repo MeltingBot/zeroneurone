@@ -23,7 +23,7 @@ ZeroNeurone is a cognitive amplification tool that combines the simplicity of an
 
 ## Quick Start
 
-1. [Create your first investigation]({{< relref "getting-started/first-investigation" >}})
+1. [Create your first dossier]({{< relref "getting-started/first-investigation" >}})
 2. [Understand the interface]({{< relref "getting-started/interface" >}})
 3. [Add elements and links]({{< relref "features/elements-links" >}})
 

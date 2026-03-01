@@ -4,7 +4,7 @@ import { Pencil, Check, Lock } from 'lucide-react';
 import { ElementAutocomplete } from './ElementAutocomplete';
 import { ReportMarkdownPreview } from './ReportMarkdownPreview';
 import { sanitizeLinkLabel } from '../../utils';
-import { useInvestigationStore, useSelectionStore, useViewStore, useSyncStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useSyncStore } from '../../stores';
 
 interface ReportMarkdownEditorProps {
   value: string;
@@ -354,7 +354,7 @@ export function ReportMarkdownEditor({
   minRows = 6,
 }: ReportMarkdownEditorProps) {
   const { t } = useTranslation('panels');
-  const { elements, links } = useInvestigationStore();
+  const { elements, links } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange, setDisplayMode, displayMode } = useViewStore();
   const { remoteUsers, updateEditingReportSection } = useSyncStore();

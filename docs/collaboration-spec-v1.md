@@ -10,7 +10,7 @@ Ce document spécifie l'implémentation du mode collaboratif. À implémenter ap
 
 ### Objectif
 
-Permettre à plusieurs utilisateurs de travailler sur la même enquête en temps réel, sans configuration complexe.
+Permettre à plusieurs utilisateurs de travailler sur la même dossier en temps réel, sans configuration complexe.
 
 ### Principes
 
@@ -18,7 +18,7 @@ Permettre à plusieurs utilisateurs de travailler sur la même enquête en temps
 2. **Serveur public par défaut** — Ça marche direct
 3. **Auto-hébergeable** — Code serveur open source
 4. **Local-first** — Fonctionne offline, sync au retour
-5. **Chiffrement E2E optionnel** — Pour les enquêtes sensibles
+5. **Chiffrement E2E optionnel** — Pour les dossiers sensibles
 
 ### Architecture
 
@@ -67,15 +67,15 @@ npm install yjs y-indexeddb y-websocket
 
 ### 1.2 Structure Y.Doc
 
-Chaque enquête est un `Y.Doc`. Structure :
+Chaque dossier est un `Y.Doc`. Structure :
 
 ```typescript
 // types/yjs.ts
 
 import * as Y from 'yjs';
 
-interface YInvestigation {
-  meta: Y.Map<string>;           // Métadonnées enquête
+interface YDossier {
+  meta: Y.Map<string>;           // Métadonnées dossier
   elements: Y.Map<Y.Map<any>>;   // Éléments
   links: Y.Map<Y.Map<any>>;      // Liens
   views: Y.Map<Y.Map<any>>;      // Vues sauvegardées
@@ -83,7 +83,7 @@ interface YInvestigation {
 }
 
 // Helpers pour accéder aux maps
-function getInvestigationMaps(ydoc: Y.Doc): YInvestigation {
+function getDossierMaps(ydoc: Y.Doc): YDossier {
   return {
     meta: ydoc.getMap('meta'),
     elements: ydoc.getMap('elements'),
@@ -219,7 +219,7 @@ function yMapToElement(ymap: Y.Map<any>): Element {
   
   return {
     id: ymap.get('id'),
-    investigationId: '', // Géré par le contexte
+    dossierId: '', // Géré par le contexte
     label: ymap.get('label'),
     notes: notesText?.toString() || '',
     tags: tagsArray?.toArray() || [],
@@ -348,7 +348,7 @@ class SyncService {
   private ydoc: Y.Doc | null = null;
   private indexeddbProvider: IndexeddbPersistence | null = null;
   private websocketProvider: WebsocketProvider | null = null;
-  private investigationId: string | null = null;
+  private dossierId: string | null = null;
   
   private state: SyncState = {
     mode: 'local',
@@ -385,17 +385,17 @@ class SyncService {
   }
 
   /**
-   * Ouvre une enquête en mode local
+   * Ouvre une dossier en mode local
    */
-  async openLocal(investigationId: string): Promise<Y.Doc> {
+  async openLocal(dossierId: string): Promise<Y.Doc> {
     await this.close();
     
-    this.investigationId = investigationId;
+    this.dossierId = dossierId;
     this.ydoc = new Y.Doc();
     
     // Persistance locale
     this.indexeddbProvider = new IndexeddbPersistence(
-      `zeroneurone-${investigationId}`,
+      `zeroneurone-${dossierId}`,
       this.ydoc
     );
     
@@ -407,22 +407,22 @@ class SyncService {
   }
 
   /**
-   * Ouvre une enquête en mode partagé
+   * Ouvre une dossier en mode partagé
    */
   async openShared(
-    investigationId: string,
+    dossierId: string,
     roomId: string,
     token: string,
     secretKey?: string // Pour E2E encryption
   ): Promise<Y.Doc> {
     await this.close();
     
-    this.investigationId = investigationId;
+    this.dossierId = dossierId;
     this.ydoc = new Y.Doc();
     
     // Persistance locale (pour offline)
     this.indexeddbProvider = new IndexeddbPersistence(
-      `zeroneurone-${investigationId}`,
+      `zeroneurone-${dossierId}`,
       this.ydoc
     );
     
@@ -457,14 +457,14 @@ class SyncService {
   }
 
   /**
-   * Convertit une enquête locale en partagée
+   * Convertit une dossier locale en partagée
    */
-  async shareInvestigation(
+  async shareDossier(
     roomId: string,
     token: string
   ): Promise<void> {
-    if (!this.ydoc || !this.investigationId) {
-      throw new Error('No investigation open');
+    if (!this.ydoc || !this.dossierId) {
+      throw new Error('No dossier open');
     }
     
     // Connecter le WebSocket
@@ -497,7 +497,7 @@ class SyncService {
   }
 
   /**
-   * Ferme l'enquête
+   * Ferme l'dossier
    */
   async close(): Promise<void> {
     if (this.websocketProvider) {
@@ -512,7 +512,7 @@ class SyncService {
       this.ydoc.destroy();
       this.ydoc = null;
     }
-    this.investigationId = null;
+    this.dossierId = null;
     this.setState({ mode: 'local', connected: false, syncing: false, error: null });
   }
 }
@@ -520,18 +520,18 @@ class SyncService {
 export const syncService = new SyncService();
 ```
 
-### 1.6 Store Investigation avec Yjs
+### 1.6 Store Dossier avec Yjs
 
 ```typescript
-// stores/investigationStore.ts
+// stores/dossierStore.ts
 
 import { create } from 'zustand';
 import * as Y from 'yjs';
 import { syncService } from '../services/syncService';
 
-interface InvestigationState {
+interface DossierState {
   // État
-  investigationId: string | null;
+  dossierId: string | null;
   isLoading: boolean;
   error: string | null;
   
@@ -547,8 +547,8 @@ interface InvestigationState {
   syncing: boolean;
   
   // Actions
-  openInvestigation: (id: string, shared?: { roomId: string; token: string }) => Promise<void>;
-  closeInvestigation: () => Promise<void>;
+  openDossier: (id: string, shared?: { roomId: string; token: string }) => Promise<void>;
+  closeDossier: () => Promise<void>;
   
   // CRUD Elements
   createElement: (label: string, position: Position, options?: Partial<Element>) => Element;
@@ -561,16 +561,16 @@ interface InvestigationState {
   deleteLink: (id: LinkId) => void;
   
   // Partage
-  shareInvestigation: () => Promise<{ roomId: string; inviteUrl: string }>;
-  unshareInvestigation: () => Promise<void>;
+  shareDossier: () => Promise<{ roomId: string; inviteUrl: string }>;
+  unshareDossier: () => Promise<void>;
 }
 
-export const useInvestigationStore = create<InvestigationState>((set, get) => {
+export const useDossierStore = create<DossierState>((set, get) => {
   // Observer pour mettre à jour le state depuis le Y.Doc
   let unsubscribe: (() => void) | null = null;
   
   function subscribeToYDoc(ydoc: Y.Doc) {
-    const { elements, links, views, assets } = getInvestigationMaps(ydoc);
+    const { elements, links, views, assets } = getDossierMaps(ydoc);
     
     const updateState = () => {
       set({
@@ -611,7 +611,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
   });
   
   return {
-    investigationId: null,
+    dossierId: null,
     isLoading: false,
     error: null,
     elements: new Map(),
@@ -622,7 +622,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
     connected: false,
     syncing: false,
     
-    openInvestigation: async (id, shared) => {
+    openDossier: async (id, shared) => {
       set({ isLoading: true, error: null });
       
       try {
@@ -640,21 +640,21 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
         
         unsubscribe = subscribeToYDoc(ydoc);
         
-        set({ investigationId: id, isLoading: false });
+        set({ dossierId: id, isLoading: false });
         
       } catch (error) {
         set({ error: (error as Error).message, isLoading: false });
       }
     },
     
-    closeInvestigation: async () => {
+    closeDossier: async () => {
       if (unsubscribe) {
         unsubscribe();
         unsubscribe = null;
       }
       await syncService.close();
       set({
-        investigationId: null,
+        dossierId: null,
         elements: new Map(),
         links: new Map(),
         views: new Map(),
@@ -664,11 +664,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
     
     createElement: (label, position, options = {}) => {
       const ydoc = syncService.getYDoc();
-      if (!ydoc) throw new Error('No investigation open');
+      if (!ydoc) throw new Error('No dossier open');
       
       const element: Element = {
         id: generateUUID(),
-        investigationId: get().investigationId!,
+        dossierId: get().dossierId!,
         label,
         notes: '',
         tags: [],
@@ -755,11 +755,11 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
     
     createLink: (fromId, toId, options = {}) => {
       const ydoc = syncService.getYDoc();
-      if (!ydoc) throw new Error('No investigation open');
+      if (!ydoc) throw new Error('No dossier open');
       
       const link: Link = {
         id: generateUUID(),
-        investigationId: get().investigationId!,
+        dossierId: get().dossierId!,
         fromId,
         toId,
         label: '',
@@ -794,12 +794,12 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
       links.delete(id);
     },
     
-    shareInvestigation: async () => {
-      const { investigationId } = get();
-      if (!investigationId) throw new Error('No investigation open');
+    shareDossier: async () => {
+      const { dossierId } = get();
+      if (!dossierId) throw new Error('No dossier open');
       
       // Appeler l'API pour créer la room
-      const response = await fetch(`${API_URL}/investigations/${investigationId}/share`, {
+      const response = await fetch(`${API_URL}/dossiers/${dossierId}/share`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -812,7 +812,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
       const { roomId, token } = await response.json();
       
       // Connecter le WebSocket
-      await syncService.shareInvestigation(roomId, token);
+      await syncService.shareDossier(roomId, token);
       
       // Générer l'URL d'invitation
       const inviteUrl = `${window.location.origin}/join/${roomId}`;
@@ -820,7 +820,7 @@ export const useInvestigationStore = create<InvestigationState>((set, get) => {
       return { roomId, inviteUrl };
     },
     
-    unshareInvestigation: async () => {
+    unshareDossier: async () => {
       await syncService.unshare();
     },
   };
@@ -996,7 +996,7 @@ zeroneurone-server/
 │   │   └── middleware.ts
 │   ├── routes/
 │   │   ├── auth.ts
-│   │   ├── investigations.ts
+│   │   ├── dossiers.ts
 │   │   └── assets.ts
 │   ├── ws/
 │   │   └── sync.ts        # WebSocket handler
@@ -1065,8 +1065,8 @@ export const config = {
   corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173'],
   
   // Limites
-  maxInvestigationsPerUser: parseInt(process.env.MAX_INVESTIGATIONS || '100'),
-  maxCollaboratorsPerInvestigation: parseInt(process.env.MAX_COLLABORATORS || '20'),
+  maxDossiersPerUser: parseInt(process.env.MAX_INVESTIGATIONS || '100'),
+  maxCollaboratorsPerDossier: parseInt(process.env.MAX_COLLABORATORS || '20'),
   maxAssetSizeMb: parseInt(process.env.MAX_ASSET_SIZE_MB || '50'),
 };
 ```
@@ -1093,7 +1093,7 @@ db.exec(`
     updated_at TEXT NOT NULL
   );
   
-  CREATE TABLE IF NOT EXISTS investigations (
+  CREATE TABLE IF NOT EXISTS dossiers (
     id TEXT PRIMARY KEY,
     room_id TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -1103,31 +1103,31 @@ db.exec(`
     FOREIGN KEY (owner_id) REFERENCES users(id)
   );
   
-  CREATE TABLE IF NOT EXISTS investigation_members (
-    investigation_id TEXT NOT NULL,
+  CREATE TABLE IF NOT EXISTS dossier_members (
+    dossier_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')),
     joined_at TEXT NOT NULL,
-    PRIMARY KEY (investigation_id, user_id),
-    FOREIGN KEY (investigation_id) REFERENCES investigations(id) ON DELETE CASCADE,
+    PRIMARY KEY (dossier_id, user_id),
+    FOREIGN KEY (dossier_id) REFERENCES dossiers(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
   
   CREATE TABLE IF NOT EXISTS invitations (
     id TEXT PRIMARY KEY,
-    investigation_id TEXT NOT NULL,
+    dossier_id TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('editor', 'viewer')),
     created_by TEXT NOT NULL,
     created_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
     used_by TEXT,
     used_at TEXT,
-    FOREIGN KEY (investigation_id) REFERENCES investigations(id) ON DELETE CASCADE
+    FOREIGN KEY (dossier_id) REFERENCES dossiers(id) ON DELETE CASCADE
   );
   
-  CREATE INDEX IF NOT EXISTS idx_investigations_owner ON investigations(owner_id);
-  CREATE INDEX IF NOT EXISTS idx_members_user ON investigation_members(user_id);
-  CREATE INDEX IF NOT EXISTS idx_invitations_investigation ON invitations(investigation_id);
+  CREATE INDEX IF NOT EXISTS idx_dossiers_owner ON dossiers(owner_id);
+  CREATE INDEX IF NOT EXISTS idx_members_user ON dossier_members(user_id);
+  CREATE INDEX IF NOT EXISTS idx_invitations_dossier ON invitations(dossier_id);
 `);
 
 export { db };
@@ -1231,10 +1231,10 @@ router.get('/me', authMiddleware, (req, res) => {
 export { router as authRouter };
 ```
 
-### 2.6 Routes Investigations
+### 2.6 Routes Dossiers
 
 ```typescript
-// src/routes/investigations.ts
+// src/routes/dossiers.ts
 
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
@@ -1246,20 +1246,20 @@ const router = Router();
 // Toutes les routes nécessitent une auth
 router.use(authMiddleware);
 
-// Liste des enquêtes de l'utilisateur
+// Liste des dossiers de l'utilisateur
 router.get('/', (req, res) => {
-  const investigations = db.prepare(`
+  const dossiers = db.prepare(`
     SELECT i.*, im.role
-    FROM investigations i
-    JOIN investigation_members im ON i.id = im.investigation_id
+    FROM dossiers i
+    JOIN dossier_members im ON i.id = im.dossier_id
     WHERE im.user_id = ?
     ORDER BY i.updated_at DESC
   `).all(req.userId);
   
-  res.json({ investigations });
+  res.json({ dossiers });
 });
 
-// Créer une enquête partagée
+// Créer une dossier partagée
 router.post('/', (req, res) => {
   const { name } = req.body;
   
@@ -1272,49 +1272,49 @@ router.post('/', (req, res) => {
   const now = new Date().toISOString();
   
   db.transaction(() => {
-    // Créer l'enquête
+    // Créer l'dossier
     db.prepare(`
-      INSERT INTO investigations (id, room_id, name, owner_id, created_at, updated_at)
+      INSERT INTO dossiers (id, room_id, name, owner_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(id, roomId, name, req.userId, now, now);
     
     // Ajouter le créateur comme owner
     db.prepare(`
-      INSERT INTO investigation_members (investigation_id, user_id, role, joined_at)
+      INSERT INTO dossier_members (dossier_id, user_id, role, joined_at)
       VALUES (?, ?, 'owner', ?)
     `).run(id, req.userId, now);
   })();
   
   res.json({
-    investigation: { id, roomId, name, role: 'owner', createdAt: now },
+    dossier: { id, roomId, name, role: 'owner', createdAt: now },
   });
 });
 
-// Obtenir les détails d'une enquête
+// Obtenir les détails d'une dossier
 router.get('/:id', (req, res) => {
   const { id } = req.params;
   
   // Vérifier l'accès
   const member = db.prepare(`
-    SELECT role FROM investigation_members
-    WHERE investigation_id = ? AND user_id = ?
+    SELECT role FROM dossier_members
+    WHERE dossier_id = ? AND user_id = ?
   `).get(id, req.userId) as any;
   
   if (!member) {
     return res.status(403).json({ error: 'Access denied' });
   }
   
-  const investigation = db.prepare('SELECT * FROM investigations WHERE id = ?').get(id) as any;
+  const dossier = db.prepare('SELECT * FROM dossiers WHERE id = ?').get(id) as any;
   
   const members = db.prepare(`
     SELECT u.id, u.name, u.color, im.role
-    FROM investigation_members im
+    FROM dossier_members im
     JOIN users u ON im.user_id = u.id
-    WHERE im.investigation_id = ?
+    WHERE im.dossier_id = ?
   `).all(id);
   
   res.json({
-    investigation: { ...investigation, role: member.role },
+    dossier: { ...dossier, role: member.role },
     members,
   });
 });
@@ -1330,8 +1330,8 @@ router.post('/:id/invitations', (req, res) => {
   
   // Vérifier que l'utilisateur est owner ou editor
   const member = db.prepare(`
-    SELECT role FROM investigation_members
-    WHERE investigation_id = ? AND user_id = ?
+    SELECT role FROM dossier_members
+    WHERE dossier_id = ? AND user_id = ?
   `).get(id, req.userId) as any;
   
   if (!member || member.role === 'viewer') {
@@ -1343,7 +1343,7 @@ router.post('/:id/invitations', (req, res) => {
   const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 jours
   
   db.prepare(`
-    INSERT INTO invitations (id, investigation_id, role, created_by, created_at, expires_at)
+    INSERT INTO invitations (id, dossier_id, role, created_by, created_at, expires_at)
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(invitationId, id, role, req.userId, now.toISOString(), expiresAt.toISOString());
   
@@ -1372,9 +1372,9 @@ router.post('/join/:invitationId', (req, res) => {
   
   // Vérifier si déjà membre
   const existing = db.prepare(`
-    SELECT 1 FROM investigation_members
-    WHERE investigation_id = ? AND user_id = ?
-  `).get(invitation.investigation_id, req.userId);
+    SELECT 1 FROM dossier_members
+    WHERE dossier_id = ? AND user_id = ?
+  `).get(invitation.dossier_id, req.userId);
   
   if (existing) {
     return res.status(409).json({ error: 'Already a member' });
@@ -1385,9 +1385,9 @@ router.post('/join/:invitationId', (req, res) => {
   db.transaction(() => {
     // Ajouter comme membre
     db.prepare(`
-      INSERT INTO investigation_members (investigation_id, user_id, role, joined_at)
+      INSERT INTO dossier_members (dossier_id, user_id, role, joined_at)
       VALUES (?, ?, ?, ?)
-    `).run(invitation.investigation_id, req.userId, invitation.role, now);
+    `).run(invitation.dossier_id, req.userId, invitation.role, now);
     
     // Marquer l'invitation comme utilisée
     db.prepare(`
@@ -1395,11 +1395,11 @@ router.post('/join/:invitationId', (req, res) => {
     `).run(req.userId, now, invitationId);
   })();
   
-  const investigation = db.prepare('SELECT * FROM investigations WHERE id = ?')
-    .get(invitation.investigation_id) as any;
+  const dossier = db.prepare('SELECT * FROM dossiers WHERE id = ?')
+    .get(invitation.dossier_id) as any;
   
   res.json({
-    investigation: { ...investigation, role: invitation.role },
+    dossier: { ...dossier, role: invitation.role },
   });
 });
 
@@ -1409,30 +1409,30 @@ router.post('/:id/ws-token', (req, res) => {
   
   // Vérifier l'accès
   const member = db.prepare(`
-    SELECT role FROM investigation_members
-    WHERE investigation_id = ? AND user_id = ?
+    SELECT role FROM dossier_members
+    WHERE dossier_id = ? AND user_id = ?
   `).get(id, req.userId) as any;
   
   if (!member) {
     return res.status(403).json({ error: 'Access denied' });
   }
   
-  const investigation = db.prepare('SELECT room_id FROM investigations WHERE id = ?').get(id) as any;
+  const dossier = db.prepare('SELECT room_id FROM dossiers WHERE id = ?').get(id) as any;
   
   // Token courte durée pour le WebSocket
   const wsToken = jwt.sign(
-    { userId: req.userId, roomId: investigation.room_id, role: member.role },
+    { userId: req.userId, roomId: dossier.room_id, role: member.role },
     config.jwtSecret,
     { expiresIn: '1h' }
   );
   
   res.json({
-    roomId: investigation.room_id,
+    roomId: dossier.room_id,
     wsToken,
   });
 });
 
-export { router as investigationsRouter };
+export { router as dossiersRouter };
 ```
 
 ### 2.7 WebSocket Sync
@@ -1499,7 +1499,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { config } from './config';
 import { authRouter } from './routes/auth';
-import { investigationsRouter } from './routes/investigations';
+import { dossiersRouter } from './routes/dossiers';
 import { setupWebSocket } from './ws/sync';
 
 const app = express();
@@ -1510,7 +1510,7 @@ app.use(express.json());
 
 // Routes
 app.use('/auth', authRouter);
-app.use('/investigations', investigationsRouter);
+app.use('/dossiers', dossiersRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -1588,7 +1588,7 @@ volumes:
 ```
 src/components/
 ├── collaboration/
-│   ├── ShareModal.tsx           # Modal pour partager une enquête
+│   ├── ShareModal.tsx           # Modal pour partager une dossier
 │   ├── JoinModal.tsx            # Modal pour rejoindre via invitation
 │   ├── CollaboratorsList.tsx    # Liste des collaborateurs
 │   ├── PresenceIndicator.tsx    # Qui est en ligne
@@ -1603,7 +1603,7 @@ src/components/
 // components/collaboration/ShareModal.tsx
 
 import { useState } from 'react';
-import { useInvestigationStore } from '../../stores/investigationStore';
+import { useDossierStore } from '../../stores/dossierStore';
 import { Copy, Check, Link } from 'lucide-react';
 
 interface ShareModalProps {
@@ -1612,7 +1612,7 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
-  const { shareInvestigation, syncMode } = useInvestigationStore();
+  const { shareDossier, syncMode } = useDossierStore();
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1623,7 +1623,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     setError(null);
     
     try {
-      const { inviteUrl } = await shareInvestigation();
+      const { inviteUrl } = await shareDossier();
       setInviteUrl(inviteUrl);
     } catch (err) {
       setError((err as Error).message);
@@ -1645,7 +1645,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded shadow-lg w-[400px]">
         <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h2 className="text-sm font-semibold">Partager l'enquête</h2>
+          <h2 className="text-sm font-semibold">Partager l'dossier</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
             <X size={16} />
           </button>
@@ -1655,7 +1655,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
           {syncMode === 'local' && !inviteUrl && (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
-                Cette enquête est actuellement locale. La partager permettra à d'autres personnes de collaborer en temps réel.
+                Cette dossier est actuellement locale. La partager permettra à d'autres personnes de collaborer en temps réel.
               </p>
               
               {error && (
@@ -1667,7 +1667,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                 disabled={loading}
                 className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? 'Création...' : 'Partager cette enquête'}
+                {loading ? 'Création...' : 'Partager cette dossier'}
               </button>
             </div>
           )}
@@ -1745,11 +1745,11 @@ export function PresenceIndicator() {
 ```typescript
 // components/collaboration/SyncStatus.tsx
 
-import { useInvestigationStore } from '../../stores/investigationStore';
+import { useDossierStore } from '../../stores/dossierStore';
 import { Cloud, CloudOff, Loader } from 'lucide-react';
 
 export function SyncStatus() {
-  const { syncMode, connected, syncing } = useInvestigationStore();
+  const { syncMode, connected, syncing } = useDossierStore();
   
   if (syncMode === 'local') {
     return (
@@ -1868,10 +1868,10 @@ export function UserCursor({ name, color, x, y }: UserCursorProps) {
 
 La V1 utilise Dexie directement. Pour passer à Yjs :
 
-1. **Garder Dexie pour les enquêtes locales non-partagées** (optionnel, simplifie la migration)
+1. **Garder Dexie pour les dossiers locales non-partagées** (optionnel, simplifie la migration)
 2. **Ou migrer tout vers Yjs** (plus propre à long terme)
 
-**Recommandation : Tout migrer vers Yjs.** Une enquête locale = un Y.Doc sans WebSocket.
+**Recommandation : Tout migrer vers Yjs.** Une dossier locale = un Y.Doc sans WebSocket.
 
 ### 4.2 Script de migration
 
@@ -1881,28 +1881,28 @@ La V1 utilise Dexie directement. Pour passer à Yjs :
 import * as Y from 'yjs';
 import { db } from '../db/database';
 
-export async function migrateInvestigationToYDoc(investigationId: string): Promise<Y.Doc> {
+export async function migrateDossierToYDoc(dossierId: string): Promise<Y.Doc> {
   const ydoc = new Y.Doc();
   
   // Charger les données depuis Dexie
-  const investigation = await db.investigations.get(investigationId);
-  const elements = await db.elements.where({ investigationId }).toArray();
-  const links = await db.links.where({ investigationId }).toArray();
-  const views = await db.views.where({ investigationId }).toArray();
-  const assets = await db.assets.where({ investigationId }).toArray();
+  const dossier = await db.dossiers.get(dossierId);
+  const elements = await db.elements.where({ dossierId }).toArray();
+  const links = await db.links.where({ dossierId }).toArray();
+  const views = await db.views.where({ dossierId }).toArray();
+  const assets = await db.assets.where({ dossierId }).toArray();
   
-  if (!investigation) {
-    throw new Error('Investigation not found');
+  if (!dossier) {
+    throw new Error('Dossier not found');
   }
   
   // Remplir le Y.Doc
   ydoc.transact(() => {
     // Meta
     const meta = ydoc.getMap('meta');
-    meta.set('id', investigation.id);
-    meta.set('name', investigation.name);
-    meta.set('description', investigation.description);
-    meta.set('createdAt', investigation.createdAt.toISOString());
+    meta.set('id', dossier.id);
+    meta.set('name', dossier.name);
+    meta.set('description', dossier.description);
+    meta.set('createdAt', dossier.createdAt.toISOString());
     
     // Elements
     const yElements = ydoc.getMap('elements');
@@ -1932,24 +1932,24 @@ export async function migrateInvestigationToYDoc(investigationId: string): Promi
   return ydoc;
 }
 
-export async function migrateAllInvestigations(): Promise<void> {
-  const investigations = await db.investigations.toArray();
+export async function migrateAllDossiers(): Promise<void> {
+  const dossiers = await db.dossiers.toArray();
   
-  for (const investigation of investigations) {
-    console.log(`Migrating ${investigation.name}...`);
+  for (const dossier of dossiers) {
+    console.log(`Migrating ${dossier.name}...`);
     
     // Créer le Y.Doc
-    const ydoc = await migrateInvestigationToYDoc(investigation.id);
+    const ydoc = await migrateDossierToYDoc(dossier.id);
     
     // Sauvegarder dans IndexedDB via y-indexeddb
     const persistence = new IndexeddbPersistence(
-      `zeroneurone-${investigation.id}`,
+      `zeroneurone-${dossier.id}`,
       ydoc
     );
     
     await persistence.whenSynced;
     
-    console.log(`Migrated ${investigation.name}`);
+    console.log(`Migrated ${dossier.name}`);
   }
   
   // Optionnel : supprimer les anciennes données Dexie
@@ -1962,16 +1962,16 @@ export async function migrateAllInvestigations(): Promise<void> {
 ### 4.3 Détection et migration automatique
 
 ```typescript
-// Au chargement d'une enquête, vérifier si elle est déjà migrée
+// Au chargement d'une dossier, vérifier si elle est déjà migrée
 
-async function openInvestigation(id: string) {
+async function openDossier(id: string) {
   // Vérifier si le Y.Doc existe dans IndexedDB
   const yjsKey = `zeroneurone-${id}`;
   const yjsExists = await checkIndexedDBExists(yjsKey);
   
   if (!yjsExists) {
     // Migration nécessaire
-    const ydoc = await migrateInvestigationToYDoc(id);
+    const ydoc = await migrateDossierToYDoc(id);
     const persistence = new IndexeddbPersistence(yjsKey, ydoc);
     await persistence.whenSynced;
   }
@@ -1989,7 +1989,7 @@ async function openInvestigation(id: string) {
 - [ ] Installer yjs, y-indexeddb, y-websocket
 - [ ] Créer les mappers Element/Link ↔ Y.Map
 - [ ] Créer SyncService
-- [ ] Adapter InvestigationStore pour utiliser Yjs
+- [ ] Adapter DossierStore pour utiliser Yjs
 - [ ] Tester en mode local (sans serveur)
 
 ### Phase 2 — Migration
@@ -2000,7 +2000,7 @@ async function openInvestigation(id: string) {
 ### Phase 3 — Serveur
 - [ ] Créer le projet zeroneurone-server
 - [ ] Implémenter auth (register/login)
-- [ ] Implémenter routes investigations
+- [ ] Implémenter routes dossiers
 - [ ] Implémenter WebSocket avec y-websocket
 - [ ] Dockerfile et docker-compose
 - [ ] Tester en local
@@ -2043,14 +2043,14 @@ async function openInvestigation(id: string) {
 | Awareness | Yjs protocol | Présence temps réel |
 
 **Flux :**
-1. Enquête ouverte → Y.Doc chargé depuis IndexedDB
+1. Dossier ouverte → Y.Doc chargé depuis IndexedDB
 2. Si partagée → WebSocket connecté au serveur
 3. Modifications → Y.Doc mis à jour → propagé aux autres
 4. Offline → modifications locales → sync au retour
 
 **Zéro friction :**
 - Clic "Partager" → lien généré
-- Clic sur lien → enquête ouverte, sync automatique
+- Clic sur lien → dossier ouverte, sync automatique
 
 ---
 

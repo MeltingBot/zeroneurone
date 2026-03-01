@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Terug naar home",
-    "newInvestigation": "Nieuw onderzoek",
+    "newDossier": "Nieuw dossier",
     "manageTags": "Tags beheren",
     "import": "Importeren",
     "about": "Over",
@@ -10,10 +10,10 @@
     "storage": "Opslag",
     "darkMode": "Donkere modus",
     "lightMode": "Lichte modus",
-    "noInvestigations": "Geen onderzoeken",
-    "createFirst": "Maak uw eerste onderzoek aan om te beginnen",
-    "viewInvestigations": "Onderzoeken bekijken",
-    "investigationCount": "{{count}} onderzoek(en)",
+    "noDossiers": "Geen dossiers",
+    "createFirst": "Maak uw eerste dossier aan om te beginnen",
+    "viewDossiers": "Dossiers bekijken",
+    "dossierCount": "{{count}} dossier(en)",
     "loading": "Laden...",
     "searchPlaceholder": "Zoeken op naam of beschrijving...",
     "filterByTag": "Filteren op tag",
@@ -22,9 +22,9 @@
     "sortName": "Naam",
     "activeFilters": "Actieve filters",
     "clearFilters": "Wissen",
-    "noResults": "Geen onderzoeken gevonden",
+    "noResults": "Geen dossiers gevonden",
     "noResultsHint": "Probeer andere termen of wis de filters",
-    "resultsCount": "{{count}} / {{total}} onderzoek(en)",
+    "resultsCount": "{{count}} / {{total}} dossier(en)",
     "card": {
       "modified": "Gewijzigd {{time}}",
       "elementCount": "{{count}} element(en)",
@@ -39,11 +39,11 @@
       "editTags": "Tags beheren"
     },
     "landing": {
-      "subtitle": "Whiteboard voor analisten en onderzoekers",
+      "subtitle": "Whiteboard voor analisten en dossierers",
       "description": "Een Open Source tool voor cognitieve versterking die de eenvoud van een whiteboard combineert met de kracht van grafenanalyse. Breng uw ideeën in kaart, geolocaliseer uw elementen, visualiseer gebeurtenissen, verbind aanwijzingen en onthul verborgen patronen.",
-      "startNew": "Nieuw onderzoek",
+      "startNew": "Nieuw dossier",
       "importExisting": "Importeren",
-      "viewExisting": "Bekijk mijn {{count}} onderzoek(en)",
+      "viewExisting": "Bekijk mijn {{count}} dossier(en)",
       "features": {
         "graph": {
           "title": "Relationele graaf",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Veilige realtime samenwerking",
-          "description": "Werk samen met anderen aan hetzelfde onderzoek"
+          "description": "Werk samen met anderen aan hetzelfde dossier"
         }
       },
       "extensions": "Extensies",
@@ -76,7 +76,7 @@
       "disablePlugin": "Extensie uitschakelen"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Openen",
       "syncing": "Synchroniseren",
@@ -222,7 +222,7 @@
       "exportSuccess": "Export voltooid",
       "exportError": "Fout tijdens export"
     },
-    "notFound": "Onderzoek niet gevonden",
+    "notFound": "Dossier niet gevonden",
     "header": {
       "report": "Samenvatting",
       "generateReport": "Synthese",
@@ -258,9 +258,9 @@
       "navigateTo": "Ga naar tabblad {{name}}"
     },
     "retentionExpiredBanner": "Bewaring verlopen sinds {{days}} dag(en)",
-    "retentionDeleteConfirm": "Dit onderzoek wordt definitief verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "retentionDeleteConfirm": "Dit dossier wordt definitief verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "retentionDeleteAction": "Definitief verwijderen",
-    "retentionReadonly": "Onderzoek is alleen-lezen (bewaring verlopen)",
+    "retentionReadonly": "Dossier is alleen-lezen (bewaring verlopen)",
     "retentionRedactConfirm": "Censuur zal alle tekstinhoud permanent wissen (namen, notities, eigenschappen). De grafiekstructuur blijft behouden. Deze actie is onomkeerbaar.",
     "retentionRedactAction": "Definitief censureren"
   },

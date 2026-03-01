@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nowe śledztwo",
-    "namePlaceholder": "Nazwa śledztwa",
+  "createDossier": {
+    "title": "Nowa teczka",
+    "namePlaceholder": "Nazwa teczki",
     "descriptionPlaceholder": "Opis (opcjonalnie)",
-    "create": "Utwórz śledztwo"
+    "create": "Utwórz teczka"
   },
   "confirmDelete": {
     "title": "Usuń",
     "message": "Ta operacja jest nieodwracalna.",
     "confirm": "Usuń",
     "deleting": "Usuwanie...",
-    "deleteInvestigation": "Usuń śledztwo",
-    "deleteInvestigationMessage": "Usunąć \"{{name}}\"? Ta operacja jest nieodwracalna."
+    "deleteDossier": "Usuń teczka",
+    "deleteDossierMessage": "Usunąć \"{{name}}\"? Ta operacja jest nieodwracalna."
   },
   "rename": {
     "title": "Zmień nazwę",
     "rename": "Zmień nazwę",
     "renaming": "Zmiana nazwy...",
     "label": "Nazwa",
-    "renameInvestigation": "Zmień nazwę śledztwa",
+    "renameDossier": "Zmień nazwę teczki",
     "namePlaceholder": "Nowa nazwa"
   },
   "importIntoCurrent": {
-    "title": "Importuj do śledztwa",
-    "description": "Importuj dane do bieżącego śledztwa. Pliki ZIP będą importowane w trybie rozmieszczenia.",
+    "title": "Importuj do teczki",
+    "description": "Importuj dane do bieżącego teczki. Pliki ZIP będą importowane w trybie rozmieszczenia.",
     "selectFile": "Wybierz plik",
     "emptyZip": "Plik ZIP jest pusty lub nie zawiera elementów"
   },
   "import": {
-    "title": "Importuj śledztwo",
+    "title": "Importuj teczka",
     "dropzone": "Upuść plik lub kliknij, aby wybrać",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importuj do",
-    "newInvestigation": "Nowe śledztwo",
+    "newDossier": "Nowa teczka",
     "selectFile": "Wybierz plik",
     "importing": "Importowanie...",
     "success": "Import zakończony pomyślnie",
@@ -56,7 +56,7 @@
     "andMore": "... i jeszcze {{count}}"
   },
   "export": {
-    "title": "Eksportuj śledztwo",
+    "title": "Eksportuj teczka",
     "description": "Eksportuj \"{{name}}\" ({{elements}} elementów, {{links}} połączeń)",
     "format": "Format",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Przechowywana zawartość",
-      "investigations": "Śledztwa",
+      "dossiers": "Śledztwa",
       "elements": "Elementy",
       "links": "Połączenia",
       "files": "Pliki"
@@ -278,11 +278,11 @@
       "title": "Pełna kopia zapasowa",
       "exportAll": "Eksportuj wszystko",
       "import": "Importuj",
-      "description": "Wszystkie śledztwa, pliki i tagi. Import dodaje bez zastępowania.",
+      "description": "Wszystkie teczki, pliki i tagi. Import dodaje bez zastępowania.",
       "exporting": "Eksportowanie...",
       "importing": "Importowanie...",
       "exportSuccess": "Eksport zakończony",
-      "importSuccess": "Import pomyślny: {{investigations}} śledztw, {{elements}} elementów, {{links}} połączeń",
+      "importSuccess": "Import pomyślny: {{dossiers}} śledztw, {{elements}} elementów, {{links}} połączeń",
       "error": "Błąd"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Lokalne przechowywanie danych",
     "warning": "Twoje dane są przechowywane lokalnie",
-    "description": "Wszystkie śledztwa i pliki są zapisywane w przechowywaniu przeglądarki (IndexedDB i OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Zalecenie:</strong> Regularnie eksportuj swoje śledztwa za pomocą przycisku \"Eksportuj\", aby zachować kopię zapasową danych.",
+    "description": "Wszystkie teczki i pliki są zapisywane w przechowywaniu przeglądarki (IndexedDB i OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Zalecenie:</strong> Regularnie eksportuj swoje teczki za pomocą przycisku \"Eksportuj\", aby zachować kopię zapasową danych.",
     "acknowledge": "Rozumiem",
     "bullets": {
       "deleted": "Dane mogą zostać <strong class=\"text-text-primary\">usunięte</strong>, jeśli wyczyścisz pamięć podręczną przeglądarki",
@@ -309,7 +309,7 @@
     "title": "Generuj syntezę",
     "reportTitle": "Tytuł syntezy",
     "contentToInclude": "Zawartość do uwzględnienia",
-    "includeDescription": "Opis śledztwa",
+    "includeDescription": "Opis teczki",
     "includeSummary": "Podsumowanie statystyczne",
     "includeInsights": "Analiza grafu (klastry, centralność)",
     "includeTimeline": "Chronologia zdarzeń",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://twoj-serwer.przyklad.com",
     "save": "Zapisz",
     "serverHelp": "Użyj serwera kompatybilnego z y-websocket. Możesz hostować własny za pomocą",
-    "shareDescription": "Udostępnij to śledztwo, aby współpracować w czasie rzeczywistym. Każdy uczestnik zobaczy zmiany natychmiast.",
+    "shareDescription": "Udostępnij to teczka, aby współpracować w czasie rzeczywistym. Każdy uczestnik zobaczy zmiany natychmiast.",
     "asyncMode": "Współpraca asynchroniczna",
     "asyncModeHelp": "Pozwala współpracownikom pracować w różnych momentach. Zmiany są przechowywane na serwerze przez 7 dni.",
     "serverRequired": "Najpierw skonfiguruj serwer synchronizacji, aby włączyć udostępnianie.",
@@ -432,8 +432,8 @@
     "stopSharing": "Zatrzymaj udostępnianie",
     "stopping": "Zatrzymywanie..."
   },
-  "investigationTags": {
-    "title": "Tagi śledztwa",
+  "dossierTags": {
+    "title": "Tagi teczki",
     "currentTags": "Aktualne tagi",
     "noTags": "Brak tagów",
     "addTag": "Dodaj tag",

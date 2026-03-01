@@ -8,9 +8,9 @@ import { useTagSetStore } from '../../stores';
 interface TagsEditorProps {
   tags: string[];
   onChange: (tags: string[]) => void;
-  /** Suggested tags from the investigation (existing tags used elsewhere) */
+  /** Suggested tags from the dossier (existing tags used elsewhere) */
   suggestions?: string[];
-  /** Callback when a new tag is created (to add to investigation settings) */
+  /** Callback when a new tag is created (to add to dossier settings) */
   onNewTag?: (tag: string) => void;
   /** Callback when a tag from a TagSet is added (to show suggested properties popup) */
   onTagSetTagAdded?: (tagSetName: string) => void;
@@ -62,7 +62,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
     return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
   }, []);
 
-  // Merge TagSet names with investigation suggestions (unique, sorted)
+  // Merge TagSet names with dossier suggestions (unique, sorted)
   const allSuggestions = useMemo(() => {
     const tagSetNamesList = Array.from(tagSetsMap.values()).map((ts) => ts.name);
     const merged = new Set([...tagSetNamesList, ...suggestions]);
@@ -100,7 +100,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
         onTagSetTagAdded(trimmed);
       }
 
-      // Notify parent to add to investigation settings if it's a new tag (not from TagSet or suggestions)
+      // Notify parent to add to dossier settings if it's a new tag (not from TagSet or suggestions)
       if (onNewTag && !suggestions.includes(trimmed) && !tagSetNames.has(trimmed) && !newTagIcon) {
         onNewTag(trimmed);
       }

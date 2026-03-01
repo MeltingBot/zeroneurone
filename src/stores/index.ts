@@ -1,4 +1,4 @@
-export { useInvestigationStore } from './investigationStore';
+export { useDossierStore } from './dossierStore';
 export { useSelectionStore } from './selectionStore';
 export { useViewStore } from './viewStore';
 export { useUIStore, type FontMode, type ThemeMode, type ImportPlacementData } from './uiStore';

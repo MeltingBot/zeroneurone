@@ -25,7 +25,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
 
   // Simple fields (primitives)
   map.set('id', element.id);
-  map.set('investigationId', element.investigationId);
+  map.set('dossierId', element.dossierId);
   map.set('label', element.label);
   map.set('confidence', element.confidence);
   map.set('source', element.source);
@@ -266,7 +266,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
 
   return {
     id: ymap.get('id') || '',
-    investigationId: ymap.get('investigationId') || '',
+    dossierId: ymap.get('dossierId') || '',
     label: ymap.get('label') || '',
     notes,
     tags,

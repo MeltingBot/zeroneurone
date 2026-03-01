@@ -8,5 +8,5 @@ bookCollapseSection: true
 
 This section guides you through your first steps with ZeroNeurone.
 
-- [First investigation]({{< relref "first-investigation" >}}) — Create and manage an investigation
+- [First dossier]({{< relref "first-investigation" >}}) — Create and manage a dossier
 - [The interface]({{< relref "interface" >}}) — Understand the screen layout

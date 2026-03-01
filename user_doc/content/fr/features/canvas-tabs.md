@@ -5,7 +5,7 @@ weight: 4
 
 # Onglets du canvas
 
-Organisez une enquête en **onglets thématiques**. Chaque onglet contient un sous-ensemble d'éléments, permettant de scinder un dossier complexe en espaces de travail ciblés (ex : "Flux financiers", "Personnes d'interet", "Lieux").
+Organisez un dossier en **onglets thématiques**. Chaque onglet contient un sous-ensemble d'éléments, permettant de scinder un dossier complexe en espaces de travail ciblés (ex : "Flux financiers", "Personnes d'interet", "Lieux").
 
 ## Barre d'onglets
 
@@ -24,7 +24,7 @@ La barre d'onglets apparait sous la barre d'outils des qu'au moins un onglet exi
 1. Cliquez sur **+** dans la barre d'onglets
 2. Saisissez un nom
 
-Le nombre d'onglets est limite a **10** par enquete.
+Le nombre d'onglets est limite a **10** par dossier.
 
 ---
 
@@ -43,7 +43,7 @@ Le nombre d'onglets est limite a **10** par enquete.
 Clic-droit sur un onglet → **Supprimer l'onglet**.
 
 {{< hint info >}}
-**Suppression sans perte** : Supprimer un onglet ne supprime aucun element. Seule l'organisation en onglet est retiree. Les elements restent dans l'enquete et sont visibles via **Tous**.
+**Suppression sans perte** : Supprimer un onglet ne supprime aucun element. Seule l'organisation en onglet est retiree. Les elements restent dans le dossier et sont visibles via **Tous**.
 {{< /hint >}}
 
 ---
@@ -102,8 +102,8 @@ Les modifications d'onglets (creation, renommage, ajout/retrait d'elements) appa
 | Scenario | Comportement |
 |----------|-------------|
 | **Export ZIP / JSON** | Les onglets sont inclus |
-| **Import d'une enquete** | Les onglets sont restaures |
-| **Import dans une enquete existante (fusion)** | Les elements importes rejoignent l'onglet actif. Les onglets du fichier source ne sont pas importes. |
+| **Import d'un dossier** | Les onglets sont restaures |
+| **Import dans un dossier existant (fusion)** | Les elements importes rejoignent l'onglet actif. Les onglets du fichier source ne sont pas importes. |
 
 ---
 
@@ -120,7 +120,7 @@ Les modifications d'onglets (creation, renommage, ajout/retrait d'elements) appa
 
 ## Bonnes pratiques
 
-- Decoupez une enquete complexe par **theme** ou **hypothese** (un onglet par axe d'analyse)
+- Decoupez un dossier complexe par **theme** ou **hypothese** (un onglet par axe d'analyse)
 - La vue **Tous** affiche toujours l'integralite des elements, quel que soit leur onglet
 - Les elements fantomes offrent une vision des connexions inter-onglets sans navigation supplementaire
 

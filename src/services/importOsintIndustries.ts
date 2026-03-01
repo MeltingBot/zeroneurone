@@ -1,7 +1,7 @@
 import { generateUUID } from '../utils';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type {
-  InvestigationId,
+  DossierId,
   Element,
   Link,
   Position,
@@ -86,12 +86,12 @@ const SKIP_KEYS = new Set(['registered', 'platform_variables']);
 // ============================================================================
 
 /**
- * Import OSINT Industries JSON results into an investigation
+ * Import OSINT Industries JSON results into an dossier
  * Creates a central query element connected to found modules
  */
 export async function importOsintIndustries(
   content: string,
-  targetInvestigationId: InvestigationId
+  targetDossierId: DossierId
 ): Promise<ImportResult> {
   const result: ImportResult = {
     success: false,
@@ -127,7 +127,7 @@ export async function importOsintIndustries(
 
     const queryElement: Element = {
       id: queryId,
-      investigationId: targetInvestigationId,
+      dossierId: targetDossierId,
       label: query,
       notes: '',
       tags: [queryTag],
@@ -211,7 +211,7 @@ export async function importOsintIndustries(
                 try {
                   const filename = `${label.replace(/[^a-zA-Z0-9]/g, '_')}_pic.png`;
                   const file = dataUrlToFile(picValue, filename);
-                  const asset = await fileService.saveAsset(targetInvestigationId, file);
+                  const asset = await fileService.saveAsset(targetDossierId, file);
                   moduleAssetIds.push(asset.id);
                   moduleImageId = asset.id;
                   result.assetsImported++;
@@ -291,7 +291,7 @@ export async function importOsintIndustries(
 
       const moduleElement: Element = {
         id: moduleId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label,
         notes,
         tags: [categoryTag],
@@ -320,7 +320,7 @@ export async function importOsintIndustries(
       // Create link from query to module
       const link: Link = {
         id: generateUUID(),
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         fromId: queryId,
         toId: moduleId,
         sourceHandle: null,
@@ -345,8 +345,8 @@ export async function importOsintIndustries(
       result.linksImported++;
     }
 
-    // Update investigation timestamp
-    await db.investigations.update(targetInvestigationId, {
+    // Update dossier timestamp
+    await db.dossiers.update(targetDossierId, {
       updatedAt: new Date(),
     });
 

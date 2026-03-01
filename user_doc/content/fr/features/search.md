@@ -5,7 +5,7 @@ weight: 8
 
 # Recherche
 
-Trouvez rapidement n'importe quel élément ou lien dans votre enquête.
+Trouvez rapidement n'importe quel élément ou lien dans votre dossier.
 
 
 ## Recherche rapide
@@ -105,13 +105,13 @@ Les recherches récentes sont mémorisées :
 
 
 - Cliquez sur une recherche récente pour la relancer
-- L'historique est par enquête
+- L'historique est par dossier
 
 ---
 
 ## Performance
 
-La recherche est optimisée pour rester rapide même sur de grandes enquêtes :
+La recherche est optimisée pour rester rapide même sur de gros dossiers :
 
 | Taille | Performance |
 |--------|-------------|
@@ -119,7 +119,7 @@ La recherche est optimisée pour rester rapide même sur de grandes enquêtes :
 | 1000-10000 | < 100ms |
 | > 10000 | < 500ms |
 
-L'index est reconstruit à chaque ouverture d'enquête.
+L'index est reconstruit à chaque ouverture de dossier.
 
 ---
 

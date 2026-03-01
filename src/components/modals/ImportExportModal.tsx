@@ -4,7 +4,7 @@ import { exportService, type ExportFormat } from '../../services/exportService';
 import { importService, type ImportResult } from '../../services/importService';
 import { fileService } from '../../services/fileService';
 import { tabRepository } from '../../db/repositories';
-import { useInvestigationStore, useViewStore, toast } from '../../stores';
+import { useDossierStore, useViewStore, toast } from '../../stores';
 
 interface ImportExportModalProps {
   isOpen: boolean;
@@ -27,35 +27,35 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
   const [createMissingElements, setCreateMissingElements] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentInvestigation, elements, links, loadInvestigation } = useInvestigationStore();
+  const { currentDossier, elements, links, loadDossier } = useDossierStore();
   const requestFitView = useViewStore((state) => state.requestFitView);
 
   const handleExport = useCallback(async (format: ExportFormat) => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
     setIsProcessing(true);
     try {
       // Fetch assets and tabs for ZIP/JSON export
       let assets;
       if (format === 'zip') {
-        assets = await fileService.getAssetsByInvestigation(currentInvestigation.id);
+        assets = await fileService.getAssetsByDossier(currentDossier.id);
       }
       const tabs = (format === 'zip' || format === 'json')
-        ? await tabRepository.getByInvestigation(currentInvestigation.id)
+        ? await tabRepository.getByDossier(currentDossier.id)
         : undefined;
 
-      await exportService.exportInvestigation(format, currentInvestigation, elements, links, assets, undefined, tabs);
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, undefined, tabs);
       toast.success(`Export ${format.toUpperCase()} termine`);
     } catch {
       toast.error('Erreur lors de l\'export');
     } finally {
       setIsProcessing(false);
     }
-  }, [currentInvestigation, elements, links]);
+  }, [currentDossier, elements, links]);
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !currentInvestigation) return;
+    if (!file || !currentDossier) return;
 
     setIsProcessing(true);
     setImportResult(null);
@@ -65,18 +65,18 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
 
       if (file.name.endsWith('.zip')) {
         // ZIP import (with assets)
-        result = await importService.importFromZip(file, currentInvestigation.id);
+        result = await importService.importFromZip(file, currentDossier.id);
       } else if (file.name.endsWith('.json')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromJSON(content, currentInvestigation.id);
+        result = await importService.importFromJSON(content, currentDossier.id);
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromCSV(content, currentInvestigation.id, {
+        result = await importService.importFromCSV(content, currentDossier.id, {
           createMissingElements,
         });
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromGraphML(content, currentInvestigation.id);
+        result = await importService.importFromGraphML(content, currentDossier.id);
       } else {
         result = {
           success: false,
@@ -91,9 +91,9 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
 
       setImportResult(result);
 
-      // Reload investigation to refresh data
+      // Reload dossier to refresh data
       if (result.success) {
-        await loadInvestigation(currentInvestigation.id);
+        await loadDossier(currentDossier.id);
         // Request fitView to show all imported elements
         requestFitView();
       }
@@ -114,7 +114,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [currentInvestigation, createMissingElements, loadInvestigation]);
+  }, [currentDossier, createMissingElements, loadDossier]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -176,7 +176,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
           {activeTab === 'export' ? (
             <div className="space-y-3">
               <p className="text-xs text-text-secondary mb-4">
-                Exporter l'enquete "{currentInvestigation?.name}" ({elements.length} elements, {links.length} liens)
+                Exporter l'enquete "{currentDossier?.name}" ({elements.length} elements, {links.length} liens)
               </p>
 
               {exportFormats.map((format) => {
@@ -204,7 +204,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
           ) : (
             <div className="space-y-4">
               <p className="text-xs text-text-secondary">
-                Importer des donnees dans l'enquete "{currentInvestigation?.name}"
+                Importer des donnees dans l'enquete "{currentDossier?.name}"
               </p>
 
               {/* Hidden file input */}

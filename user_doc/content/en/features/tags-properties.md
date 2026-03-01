@@ -20,7 +20,7 @@ Tags are free-form labels to categorize your elements and links.
 
 ### Suggested Tags
 
-ZeroNeurone suggests tags already used in the investigation to maintain consistency.
+ZeroNeurone suggests tags already used in the dossier to maintain consistency.
 
 ### Filter by Tags
 

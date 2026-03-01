@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { setupCleanEnvironment, createTestInvestigation, goToHomePage, navigateHomeViaBackButton } from './fixtures/test-utils';
+import { setupCleanEnvironment, createTestDossier, goToHomePage, navigateHomeViaBackButton } from './fixtures/test-utils';
 
 /**
- * Helper to navigate home using the back button and wait for investigation list
+ * Helper to navigate home using the back button and wait for dossier list
  * Uses client-side navigation which preserves IndexedDB state
  */
 async function goHomeAndWaitForList(page: import('@playwright/test').Page) {
@@ -10,42 +10,42 @@ async function goHomeAndWaitForList(page: import('@playwright/test').Page) {
   await navigateHomeViaBackButton(page);
 
   // Wait for the list to appear (not the landing page)
-  await page.waitForSelector('[data-testid="investigation-list"]', { timeout: 10000 });
+  await page.waitForSelector('[data-testid="dossier-list"]', { timeout: 10000 });
 }
 
-test.describe('Investigation Lifecycle', () => {
+test.describe('Dossier Lifecycle', () => {
   test.beforeEach(async ({ page }) => {
     await setupCleanEnvironment(page);
   });
 
-  test('should display landing page when no investigations exist', async ({ page }) => {
+  test('should display landing page when no dossiers exist', async ({ page }) => {
     await expect(page.locator('[data-testid="landing-section"]')).toBeVisible();
   });
 
-  test('should create a new investigation and navigate to canvas', async ({ page }) => {
-    const investigationName = 'Test Investigation';
-    await createTestInvestigation(page, investigationName, 'Test description');
+  test('should create a new dossier and navigate to canvas', async ({ page }) => {
+    const dossierName = 'Test Dossier';
+    await createTestDossier(page, dossierName, 'Test description');
 
     // Verify we're on the canvas
     await expect(page.locator('[data-testid="canvas"]')).toBeVisible();
 
-    // Go back home and wait for investigation list
+    // Go back home and wait for dossier list
     await goHomeAndWaitForList(page);
 
-    const card = page.locator(`[data-testid^="investigation-card-"]`);
+    const card = page.locator(`[data-testid^="dossier-card-"]`);
     await expect(card).toBeVisible();
-    await expect(card).toContainText(investigationName);
+    await expect(card).toContainText(dossierName);
   });
 
-  test('should rename an investigation', async ({ page }) => {
-    // First create an investigation
-    await createTestInvestigation(page, 'Original Name');
+  test('should rename an dossier', async ({ page }) => {
+    // First create an dossier
+    await createTestDossier(page, 'Original Name');
 
-    // Go back home and wait for investigation list
+    // Go back home and wait for dossier list
     await goHomeAndWaitForList(page);
 
     // Open the menu on the card
-    const menuButton = page.locator('[data-testid^="investigation-card-"] [data-testid="card-menu"]');
+    const menuButton = page.locator('[data-testid^="dossier-card-"] [data-testid="card-menu"]');
     await menuButton.click();
 
     // Click rename
@@ -55,29 +55,29 @@ test.describe('Investigation Lifecycle', () => {
     await page.waitForSelector('[data-testid="rename-input"]');
 
     // Clear and type new name
-    await page.fill('[data-testid="rename-input"]', 'Renamed Investigation');
+    await page.fill('[data-testid="rename-input"]', 'Renamed Dossier');
 
     // Confirm rename
     await page.click('[data-testid="rename-confirm"]');
 
     // Verify the name was updated
-    const card = page.locator(`[data-testid^="investigation-card-"]`);
-    await expect(card).toContainText('Renamed Investigation');
+    const card = page.locator(`[data-testid^="dossier-card-"]`);
+    await expect(card).toContainText('Renamed Dossier');
   });
 
-  test('should delete an investigation', async ({ page }) => {
-    // First create an investigation
-    await createTestInvestigation(page, 'To Be Deleted');
+  test('should delete an dossier', async ({ page }) => {
+    // First create an dossier
+    await createTestDossier(page, 'To Be Deleted');
 
-    // Go back home and wait for investigation list
+    // Go back home and wait for dossier list
     await goHomeAndWaitForList(page);
 
     // Verify the card exists
-    const cardBefore = page.locator(`[data-testid^="investigation-card-"]`);
+    const cardBefore = page.locator(`[data-testid^="dossier-card-"]`);
     await expect(cardBefore).toBeVisible();
 
     // Open the menu on the card
-    const menuButton = page.locator('[data-testid^="investigation-card-"] [data-testid="card-menu"]');
+    const menuButton = page.locator('[data-testid^="dossier-card-"] [data-testid="card-menu"]');
     await menuButton.click();
 
     // Click delete
@@ -90,23 +90,23 @@ test.describe('Investigation Lifecycle', () => {
     // Wait for delete to complete
     await page.waitForTimeout(500);
 
-    // Verify the investigation is gone (either landing section shows or no cards)
+    // Verify the dossier is gone (either landing section shows or no cards)
     const landingVisible = await page.locator('[data-testid="landing-section"]').isVisible({ timeout: 3000 }).catch(() => false);
-    const cardsExist = await page.locator('[data-testid^="investigation-card-"]').count();
+    const cardsExist = await page.locator('[data-testid^="dossier-card-"]').count();
 
     // Either landing section should be visible, or there should be no cards
     expect(landingVisible || cardsExist === 0).toBeTruthy();
   });
 
-  test('should navigate to investigation canvas on card click', async ({ page }) => {
-    // First create an investigation
-    await createTestInvestigation(page, 'Click Test');
+  test('should navigate to dossier canvas on card click', async ({ page }) => {
+    // First create an dossier
+    await createTestDossier(page, 'Click Test');
 
-    // Go back home and wait for investigation list
+    // Go back home and wait for dossier list
     await goHomeAndWaitForList(page);
 
     // Click on the card
-    const card = page.locator(`[data-testid^="investigation-card-"]`);
+    const card = page.locator(`[data-testid^="dossier-card-"]`);
     await card.click();
 
     // Verify we're on the canvas

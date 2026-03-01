@@ -4,7 +4,7 @@ import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, Ey
 import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { exportService } from '../../services/exportService';
-import { useInvestigationStore, useUIStore, useViewStore, toast } from '../../stores';
+import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -18,7 +18,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [createMissingElements, setCreateMissingElements] = useState(true);
-  const [targetInvestigationId, setTargetInvestigationId] = useState<string>('new');
+  const [targetDossierId, setTargetDossierId] = useState<string>('new');
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Déchiffrement .znzip
   const [pendingEncryptedFile, setPendingEncryptedFile] = useState<File | null>(null);
@@ -26,12 +26,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [znzipError, setZnzipError] = useState<string | null>(null);
   const [showZnzipPassword, setShowZnzipPassword] = useState(false);
 
-  const { investigations, createInvestigation, currentInvestigation } = useInvestigationStore();
+  const { dossiers, createDossier, currentDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
-  // Check if we're currently on an investigation page
-  const isOnInvestigationPage = location.pathname.startsWith('/investigation/');
+  // Check if we're currently on an dossier page
+  const isOnDossierPage = location.pathname.startsWith('/dossier/');
 
   const handleDecryptAndImport = useCallback(async (encFile: File, password: string) => {
     setZnzipError(null);
@@ -48,7 +48,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       setIsProcessing(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetInvestigationId]);
+  }, [targetDossierId]);
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -68,7 +68,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     await processFile(file);
     setIsProcessing(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetInvestigationId]);
+  }, [targetDossierId]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const processFile = useCallback(async (file: File) => {
@@ -76,20 +76,20 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setImportResult(null);
 
     try {
-      // Determine target investigation
-      let investigationId = targetInvestigationId;
-      const isImportingIntoExisting = targetInvestigationId !== 'new';
+      // Determine target dossier
+      let dossierId = targetDossierId;
+      const isImportingIntoExisting = targetDossierId !== 'new';
 
-      if (targetInvestigationId === 'new') {
-        // Create new investigation with file name (without extension)
+      if (targetDossierId === 'new') {
+        // Create new dossier with file name (without extension)
         const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|xml|ged|gw)$/i, '');
-        const investigation = await createInvestigation(name, '');
-        investigationId = investigation.id;
+        const dossier = await createDossier(name, '');
+        dossierId = dossier.id;
       }
 
-      // Special case: importing ZIP into existing investigation while on canvas
+      // Special case: importing ZIP into existing dossier while on canvas
       // → Enter placement mode so user can choose where to place elements
-      if (isImportingIntoExisting && file.name.endsWith('.zip') && isOnInvestigationPage && currentInvestigation?.id === targetInvestigationId) {
+      if (isImportingIntoExisting && file.name.endsWith('.zip') && isOnDossierPage && currentDossier?.id === targetDossierId) {
         // Parse the ZIP to get bounding box
         const parseResult = await importService.parseZipForPlacement(file);
 
@@ -98,11 +98,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           enterImportPlacementMode({
             boundingBox: parseResult.boundingBox,
             file,
-            investigationId,
+            dossierId,
             onComplete: () => {
               // Reset state after successful import
               setImportResult(null);
-              setTargetInvestigationId('new');
+              setTargetDossierId('new');
             }
           });
 
@@ -135,29 +135,29 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       let result: ImportResult;
 
       if (file.name.endsWith('.zip')) {
-        result = await importService.importFromZip(file, investigationId);
+        result = await importService.importFromZip(file, dossierId);
       } else if (file.name.endsWith('.osintracker')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromOsintracker(content, investigationId);
+        result = await importService.importFromOsintracker(content, dossierId);
       } else if (file.name.endsWith('.json') || file.name.endsWith('.excalidraw')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromJSON(content, investigationId);
+        result = await importService.importFromJSON(content, dossierId);
       } else if (file.name.endsWith('.csv')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromCSV(content, investigationId, {
+        result = await importService.importFromCSV(content, dossierId, {
           createMissingElements,
         });
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromGraphML(content, investigationId);
+        result = await importService.importFromGraphML(content, dossierId);
       } else if (file.name.endsWith('.ged') || file.name.endsWith('.gw')) {
-        result = await importService.importFromGenealogy(file, investigationId);
+        result = await importService.importFromGenealogy(file, dossierId);
       } else {
         // Unknown extension: try JSON auto-detection (handles .excalidraw and similar)
         const content = await importService.readFileAsText(file);
         try {
           JSON.parse(content);
-          result = await importService.importFromJSON(content, investigationId);
+          result = await importService.importFromJSON(content, dossierId);
         } catch {
           result = {
             success: false,
@@ -177,10 +177,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         toast.success(t('import.success'));
         // Request fitView to show the entire graph after import
         requestFitView();
-        // Navigate to the investigation
+        // Navigate to the dossier
         setTimeout(() => {
           onClose();
-          navigate(`/investigation/${investigationId}`);
+          navigate(`/dossier/${dossierId}`);
         }, 1500);
       }
     } catch (error) {
@@ -199,7 +199,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetInvestigationId, createMissingElements, createInvestigation, navigate, onClose, t, isOnInvestigationPage, currentInvestigation, enterImportPlacementMode, requestFitView]);
+  }, [targetDossierId, createMissingElements, createDossier, navigate, onClose, t, isOnDossierPage, currentDossier, enterImportPlacementMode, requestFitView]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -207,7 +207,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
   const handleClose = useCallback(() => {
     setImportResult(null);
-    setTargetInvestigationId('new');
+    setTargetDossierId('new');
     onClose();
   }, [onClose]);
 
@@ -250,12 +250,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               {t('import.importInto')}
             </label>
             <select
-              value={targetInvestigationId}
-              onChange={(e) => setTargetInvestigationId(e.target.value)}
+              value={targetDossierId}
+              onChange={(e) => setTargetDossierId(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-border-default rounded bg-bg-primary text-text-primary"
             >
-              <option value="new">{t('import.newInvestigation')}</option>
-              {investigations.map((inv) => (
+              <option value="new">{t('import.newDossier')}</option>
+              {dossiers.map((inv) => (
                 <option key={inv.id} value={inv.id}>
                   {inv.name}
                 </option>

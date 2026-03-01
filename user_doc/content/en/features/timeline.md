@@ -176,7 +176,7 @@ When a filter is active, the counter displays "X / Y events" to indicate how man
 
 | Scenario | Usage |
 |----------|-------|
-| **Investigation timeline** | Visualize the sequence of events |
+| **Dossier timeline** | Visualize the sequence of events |
 | **Relationship duration** | See when links exist |
 | **Temporal patterns** | Identify activity periods |
 | **Presentation** | Tell a story through time |

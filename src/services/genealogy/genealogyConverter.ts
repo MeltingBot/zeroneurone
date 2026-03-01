@@ -9,7 +9,7 @@ import type {
   Link,
   ElementEvent,
   Property,
-  InvestigationId,
+  DossierId,
   ElementId,
   LinkId,
 } from '../../types';
@@ -34,7 +34,7 @@ interface ConversionResult {
  */
 export function convertToZeroNeurone(
   data: GenealogyData,
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   options: GenealogyImportOptions
 ): ConversionResult {
   const idMapping = new Map<string, ElementId>();
@@ -43,7 +43,7 @@ export function convertToZeroNeurone(
   // Convert persons to elements
   const elements: Partial<Element>[] = [];
   for (const person of data.persons) {
-    const element = personToElement(person, investigationId, data.fileName, options);
+    const element = personToElement(person, dossierId, data.fileName, options);
     if (element && element.id) {
       elements.push(element);
       idMapping.set(person.id, element.id as ElementId);
@@ -53,7 +53,7 @@ export function convertToZeroNeurone(
   // Convert families to links
   const links: Partial<Link>[] = [];
   for (const family of data.families) {
-    const familyLinks = familyToLinks(family, idMapping, investigationId, data.fileName, options, data.persons);
+    const familyLinks = familyToLinks(family, idMapping, dossierId, data.fileName, options, data.persons);
     links.push(...familyLinks);
   }
 
@@ -65,7 +65,7 @@ export function convertToZeroNeurone(
  */
 function personToElement(
   person: GenealogyPerson,
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   sourceFile: string,
   options: GenealogyImportOptions
 ): Partial<Element> {
@@ -164,7 +164,7 @@ function personToElement(
 
   return {
     id,
-    investigationId,
+    dossierId,
     label: `${person.firstName} ${person.lastName}`,
     notes: options.importNotes && person.notes ? person.notes : '',
     tags,
@@ -243,7 +243,7 @@ function getPersonVisual(person: GenealogyPerson, options: GenealogyImportOption
 function familyToLinks(
   family: GenealogyFamily,
   idMapping: Map<string, ElementId>,
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   sourceFile: string,
   options: GenealogyImportOptions,
   persons: GenealogyPerson[]
@@ -311,7 +311,7 @@ function familyToLinks(
 
       links.push({
         id: uuidv4() as LinkId,
-        investigationId,
+        dossierId,
         fromId: husbandElementId,
         toId: wifeElementId,
         sourceHandle: null,
@@ -359,7 +359,7 @@ function familyToLinks(
 
       links.push({
         id: uuidv4() as LinkId,
-        investigationId,
+        dossierId,
         fromId: parentElementId,
         toId: childElementId,
         sourceHandle: null,
@@ -402,7 +402,7 @@ function familyToLinks(
 
           links.push({
             id: uuidv4() as LinkId,
-            investigationId,
+            dossierId,
             fromId: sibling1Id,
             toId: sibling2Id,
             sourceHandle: null,

@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Retour à l'accueil",
-    "newInvestigation": "Nouvelle enquête",
+    "newDossier": "Nouveau dossier",
     "manageTags": "Gérer les tags",
     "import": "Importer",
     "about": "À propos",
@@ -10,10 +10,10 @@
     "storage": "Stockage",
     "darkMode": "Mode sombre",
     "lightMode": "Mode clair",
-    "noInvestigations": "Aucune enquête",
-    "createFirst": "Créez votre première enquête pour commencer",
-    "viewInvestigations": "Voir les enquêtes",
-    "investigationCount": "{{count}} enquête(s)",
+    "noDossiers": "Aucun dossier",
+    "createFirst": "Créez votre premier dossier pour commencer",
+    "viewDossiers": "Voir les dossiers",
+    "dossierCount": "{{count}} dossier(s)",
     "loading": "Chargement...",
     "searchPlaceholder": "Rechercher par nom ou description...",
     "filterByTag": "Filtrer par tag",
@@ -22,9 +22,9 @@
     "sortName": "Nom",
     "activeFilters": "Filtres actifs",
     "clearFilters": "Effacer",
-    "noResults": "Aucune enquête trouvée",
+    "noResults": "Aucun dossier trouvé",
     "noResultsHint": "Essayez d'autres termes ou effacez les filtres",
-    "resultsCount": "{{count}} / {{total}} enquête(s)",
+    "resultsCount": "{{count}} / {{total}} dossier(s)",
     "card": {
       "modified": "Modifié {{time}}",
       "elementCount": "{{count}} élément(s)",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Tableau blanc pour analystes et enquêteurs",
       "description": "Un outil Open Source d'amplification cognitive qui combine la simplicité d'un tableau blanc avec la puissance de l'analyse de graphe. Cartographiez vos idées, géolocalisez vos élements, visualisez les événements, connectez les indices et révélez les patterns cachés.",
-      "startNew": "Nouvelle enquête",
+      "startNew": "Nouveau dossier",
       "importExisting": "Importer",
-      "viewExisting": "Voir mes {{count}} enquête(s)",
+      "viewExisting": "Voir mes {{count}} dossier(s)",
       "features": {
         "graph": {
           "title": "Graphe relationnel",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Collaboration sécurisé temps réel",
-          "description": "Travaillez à plusieurs sur la même enquête"
+          "description": "Travaillez à plusieurs sur le même dossier"
         }
       },
       "extensions": "Extensions",
@@ -76,7 +76,7 @@
       "disablePlugin": "Désactiver l'extension"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Ouverture",
       "syncing": "Synchronisation",
@@ -222,7 +222,7 @@
       "exportSuccess": "Export terminé",
       "exportError": "Erreur lors de l'export"
     },
-    "notFound": "Enquête non trouvée",
+    "notFound": "Dossier non trouvé",
     "header": {
       "report": "Synthèse",
       "generateReport": "Synthèse",
@@ -259,9 +259,9 @@
       "navigateTo": "Aller à l'onglet {{name}}"
     },
     "retentionExpiredBanner": "Rétention expirée depuis {{days}} jour(s)",
-    "retentionDeleteConfirm": "Cette enquête sera définitivement supprimée, sans annulation possible.",
+    "retentionDeleteConfirm": "Ce dossier sera définitivement supprimé, sans annulation possible.",
     "retentionDeleteAction": "Supprimer définitivement",
-    "retentionReadonly": "Enquête en lecture seule (rétention expirée)",
+    "retentionReadonly": "Dossier en lecture seule (rétention expirée)",
     "retentionRedactConfirm": "Le caviardage va effacer définitivement tous les contenus textuels (noms, notes, propriétés). La structure du graphe sera conservée. Cette action est irréversible.",
     "retentionRedactAction": "Caviarder définitivement"
   },

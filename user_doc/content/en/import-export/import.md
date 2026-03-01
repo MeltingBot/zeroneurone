@@ -5,7 +5,7 @@ weight: 2
 
 # Import Data
 
-Integrate external data or restore a saved investigation.
+Integrate external data or restore a saved dossier.
 
 
 ## Open Import
@@ -18,19 +18,19 @@ Menu **⋯** → **Import**
 
 ### ZIP (ZeroNeurone)
 
-**Complete import** of an exported investigation.
+**Complete import** of an exported dossier.
 
 | Action | Result |
 |--------|--------|
-| **Create new investigation** | Creates an independent copy |
-| **Merge** | Adds elements to current investigation |
+| **Create new dossier** | Creates an independent copy |
+| **Merge** | Adds elements to current dossier |
 
 
 ### Expected Content
 
 ```
-investigation.zip
-├── investigation.json    # Required
+dossier.zip
+├── dossier.json          # Required
 └── assets/               # Optional
     └── ...
 ```
@@ -51,7 +51,7 @@ investigation.zip
 ```json
 {
   "investigation": {
-    "name": "Investigation name",
+    "name": "Dossier name",
     "description": "Optional description"
   },
   "elements": [
@@ -272,7 +272,7 @@ Import preserves:
 - Elements with positions and properties
 - Links between elements
 - Embedded images (base64 → attachments)
-- Investigation metadata
+- Dossier metadata
 
 ---
 
@@ -389,9 +389,9 @@ fam Smith John + Johnson Mary
 
 ---
 
-## Import into Current Investigation
+## Import into Current Dossier
 
-From an open investigation, the **Import** button in the toolbar lets you add data directly into the current investigation.
+From an open dossier, the **Import** button in the toolbar lets you add data directly into the current dossier.
 
 **All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
 
@@ -406,7 +406,7 @@ After selecting a file, a **placement mode** activates:
 Elements are positioned with the top-left corner at the click location.
 
 {{< hint info >}}
-Placement mode is especially useful when the investigation already contains elements, to avoid overlapping.
+Placement mode is especially useful when the dossier already contains elements, to avoid overlapping.
 {{< /hint >}}
 
 ---
@@ -417,8 +417,8 @@ Placement mode is especially useful when the investigation already contains elem
 
 | Mode | Behavior |
 |------|----------|
-| **New investigation** | Creates a separate investigation |
-| **Merge** | Adds to current investigation with positioning |
+| **New dossier** | Creates a separate dossier |
+| **Merge** | Adds to current dossier with positioning |
 
 ### Duplicate Handling
 

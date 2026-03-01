@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
-import { useInvestigationStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useHistoryStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition, FontSize } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -71,14 +71,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
   // Individual selectors — prevent re-renders when unrelated state changes
-  const updateLink = useInvestigationStore((s) => s.updateLink);
-  const elements = useInvestigationStore((s) => s.elements);
-  const currentInvestigation = useInvestigationStore((s) => s.currentInvestigation);
-  const addSuggestedProperty = useInvestigationStore((s) => s.addSuggestedProperty);
-  const addExistingTag = useInvestigationStore((s) => s.addExistingTag);
+  const updateLink = useDossierStore((s) => s.updateLink);
+  const elements = useDossierStore((s) => s.elements);
+  const currentDossier = useDossierStore((s) => s.currentDossier);
+  const addSuggestedProperty = useDossierStore((s) => s.addSuggestedProperty);
+  const addExistingTag = useDossierStore((s) => s.addExistingTag);
   const pushAction = useHistoryStore((s) => s.pushAction);
-  const comments = useInvestigationStore((s) => s.comments);
-  // Note: currentInvestigation is used for suggestions in PropertiesEditor
+  const comments = useDossierStore((s) => s.comments);
+  // Note: currentDossier is used for suggestions in PropertiesEditor
 
   // Count unresolved comments for this link
   const linkComments = comments.filter(c => c.targetId === link.id);
@@ -291,7 +291,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
     [link.id, link.properties, updateLink, pushAction]
   );
 
-  // Handle new property (save to investigation settings for reuse)
+  // Handle new property (save to dossier settings for reuse)
   const handleNewProperty = useCallback(
     (propertyDef: PropertyDefinition) => {
       addSuggestedProperty(propertyDef);
@@ -313,7 +313,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
     [link.id, link.tags, updateLink, pushAction]
   );
 
-  // Handle new tag (save to investigation settings for reuse)
+  // Handle new tag (save to dossier settings for reuse)
   const handleNewTag = useCallback(
     (tag: string) => {
       addExistingTag(tag);
@@ -450,7 +450,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
             <TagsEditor
               tags={link.tags}
               onChange={handleTagsChange}
-              suggestions={currentInvestigation?.settings.existingTags}
+              suggestions={currentDossier?.settings.existingTags}
               onNewTag={handleNewTag}
               onTagSetTagAdded={handleTagSetTagAdded}
             />
@@ -601,7 +601,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
         <PropertiesEditor
           properties={link.properties}
           onChange={handlePropertiesChange}
-          suggestions={currentInvestigation?.settings.suggestedProperties}
+          suggestions={currentDossier?.settings.suggestedProperties}
           onNewProperty={handleNewProperty}
         />
       </AccordionSection>

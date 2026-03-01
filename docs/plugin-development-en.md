@@ -71,7 +71,7 @@ Right-click an element to see the new menu entry.
 
 ### `header:right` — Header Components
 
-Inject React components in the investigation header toolbar (right side, before the Ko-fi link).
+Inject React components in the dossier header toolbar (right side, before the Ko-fi link).
 
 ```typescript
 import { registerPlugin } from '../plugins/pluginRegistry';
@@ -115,11 +115,11 @@ function MyHomeAction({ context }: HomeActionsProps) {
 registerPlugin('home:actions', MyHomeAction);
 ```
 
-**Props received:** `{ context: 'landing' | 'investigations' }`
+**Props received:** `{ context: 'landing' | 'dossiers' }`
 
 ### `home:banner` — Full-Width Banner
 
-Inject React components at the top of the home page, above the hero (landing) or the investigation list. The component spans the full available width — ideal for announcements, alerts, or custom branding.
+Inject React components at the top of the home page, above the hero (landing) or the dossier list. The component spans the full available width — ideal for announcements, alerts, or custom branding.
 
 ```typescript
 import { registerPlugin } from '../plugins/pluginRegistry';
@@ -221,7 +221,7 @@ registerPlugin('app:global', GlobalOverlay, 'my-plugin');
 
 **Props received:** none
 
-Unlike `header:right` or `home:banner`, components in `app:global` are not tied to a specific page. They stay mounted whether the user is on the home page, inside an investigation, or anywhere else.
+Unlike `header:right` or `home:banner`, components in `app:global` are not tied to a specific page. They stay mounted whether the user is on the home page, inside an dossier, or anywhere else.
 
 ### `panel:right` — Side Panel Tabs
 
@@ -231,12 +231,12 @@ Add a custom tab to the right side panel (alongside Detail, Insights, Filters, V
 import { registerPlugin } from '../plugins/pluginRegistry';
 import type { PanelPluginProps } from '../types/plugins';
 
-function MyPanel({ investigationId }: PanelPluginProps) {
+function MyPanel({ dossierId }: PanelPluginProps) {
   return (
     <div className="p-4">
       <h3 className="text-sm font-semibold mb-2">My Plugin</h3>
       <p className="text-xs text-text-secondary">
-        Investigation: {investigationId}
+        Dossier: {dossierId}
       </p>
     </div>
   );
@@ -250,7 +250,7 @@ registerPlugin('panel:right', {
 });
 ```
 
-**Props received:** `{ investigationId: string }`
+**Props received:** `{ dossierId: string }`
 
 The panel appears as a new tab in the side panel. The icon is resolved dynamically from `lucide-react`.
 
@@ -273,7 +273,7 @@ interface MenuContext {
   linkIds: string[];                             // Selected link IDs
   canvasPosition?: { x: number; y: number };     // Right-click position
   hasTextAssets: boolean;                        // Has extractable text
-  investigationId: string;                       // Current investigation
+  dossierId: string;                       // Current dossier
 }
 ```
 
@@ -332,10 +332,10 @@ Add buttons to the report panel toolbar (next to export buttons).
 ```typescript
 import type { ReportToolbarPluginProps } from '../types/plugins';
 
-function MyReportButton({ investigationId }: ReportToolbarPluginProps) {
+function MyReportButton({ dossierId }: ReportToolbarPluginProps) {
   return (
     <button
-      onClick={() => console.log('Generate AI summary for', investigationId)}
+      onClick={() => console.log('Generate AI summary for', dossierId)}
       className="p-1 text-text-secondary hover:text-accent"
       title="AI Summary"
     >
@@ -347,7 +347,7 @@ function MyReportButton({ investigationId }: ReportToolbarPluginProps) {
 registerPlugin('report:toolbar', MyReportButton);
 ```
 
-**Props received:** `{ investigationId: string }`
+**Props received:** `{ dossierId: string }`
 
 ### `report:sectionActions` — Report Section Actions
 
@@ -356,7 +356,7 @@ Add action buttons per report section (next to the delete button).
 ```typescript
 import type { ReportSectionPluginProps } from '../types/plugins';
 
-function MySectionAction({ sectionId, investigationId }: ReportSectionPluginProps) {
+function MySectionAction({ sectionId, dossierId }: ReportSectionPluginProps) {
   return (
     <button
       onClick={() => console.log('Process section', sectionId)}
@@ -371,7 +371,7 @@ function MySectionAction({ sectionId, investigationId }: ReportSectionPluginProp
 registerPlugin('report:sectionActions', MySectionAction);
 ```
 
-**Props received:** `{ sectionId: string, investigationId: string }`
+**Props received:** `{ sectionId: string, dossierId: string }`
 
 ### `export:hooks` / `import:hooks` — ZIP Lifecycle
 
@@ -380,10 +380,10 @@ Hook into the ZIP export/import process to save/restore your plugin's data.
 ```typescript
 registerPlugin('export:hooks', {
   name: 'my-plugin',
-  onExport: async (zip, investigationId) => {
+  onExport: async (zip, dossierId) => {
     // Read your data from Dexie
     const myData = await db.pluginData
-      .where({ pluginId: 'my-plugin', investigationId })
+      .where({ pluginId: 'my-plugin', dossierId })
       .toArray();
 
     // Add to the ZIP
@@ -393,14 +393,14 @@ registerPlugin('export:hooks', {
 
 registerPlugin('import:hooks', {
   name: 'my-plugin',
-  onImport: async (zip, investigationId) => {
+  onImport: async (zip, dossierId) => {
     const file = zip.file('plugins/my-plugin.json');
     if (!file) return;
 
     const data = JSON.parse(await file.async('string'));
     // Restore your data into Dexie
     for (const row of data) {
-      await db.pluginData.put({ ...row, investigationId });
+      await db.pluginData.put({ ...row, dossierId });
     }
   },
 });
@@ -415,13 +415,13 @@ ZN provides a generic `pluginData` table in Dexie for plugin storage:
 ```typescript
 interface PluginDataRow {
   pluginId: string;        // Your plugin identifier
-  investigationId: string; // Associated investigation
+  dossierId: string; // Associated dossier
   key: string;             // Data key
   value: any;              // Your data (any serializable value)
 }
 ```
 
-**Compound index:** `[pluginId+investigationId+key]` — efficient queries per plugin per investigation.
+**Compound index:** `[pluginId+dossierId+key]` — efficient queries per plugin per dossier.
 
 ### Usage example
 
@@ -431,7 +431,7 @@ import { db } from '../db/database';
 // Write
 await db.pluginData.put({
   pluginId: 'my-plugin',
-  investigationId: 'inv-123',
+  dossierId: 'inv-123',
   key: 'settings',
   value: { threshold: 0.5, enabled: true },
 });
@@ -439,14 +439,14 @@ await db.pluginData.put({
 // Read
 const row = await db.pluginData.get({
   pluginId: 'my-plugin',
-  investigationId: 'inv-123',
+  dossierId: 'inv-123',
   key: 'settings',
 });
 console.log(row?.value); // { threshold: 0.5, enabled: true }
 
-// Read all keys for a plugin in an investigation
+// Read all keys for a plugin in an dossier
 const allRows = await db.pluginData
-  .where({ pluginId: 'my-plugin', investigationId: 'inv-123' })
+  .where({ pluginId: 'my-plugin', dossierId: 'inv-123' })
   .toArray();
 
 // Delete
@@ -674,9 +674,9 @@ const translations = {
 
 // ─── Components ──────────────────────────────────────────────
 
-function OsintPanel({ investigationId }: PanelPluginProps) {
+function OsintPanel({ dossierId }: PanelPluginProps) {
   // Your panel UI here
-  return <div className="p-4 text-sm">OSINT results for {investigationId}</div>;
+  return <div className="p-4 text-sm">OSINT results for {dossierId}</div>;
 }
 
 // ─── Init ────────────────────────────────────────────────────
@@ -698,7 +698,7 @@ export function initOsintPlugin() {
       // Call OSINT API, store results in pluginData...
       await db.pluginData.put({
         pluginId: 'osint',
-        investigationId: ctx.investigationId,
+        dossierId: ctx.dossierId,
         key: `result-${elementId}`,
         value: { /* enrichment data */ },
       });
@@ -727,9 +727,9 @@ export function initOsintPlugin() {
   // Export/import hooks
   registerPlugin('export:hooks', {
     name: 'osint',
-    onExport: async (zip, investigationId) => {
+    onExport: async (zip, dossierId) => {
       const data = await db.pluginData
-        .where({ pluginId: 'osint', investigationId })
+        .where({ pluginId: 'osint', dossierId })
         .toArray();
       if (data.length > 0) {
         zip.file('plugins/osint.json', JSON.stringify(data));
@@ -739,12 +739,12 @@ export function initOsintPlugin() {
 
   registerPlugin('import:hooks', {
     name: 'osint',
-    onImport: async (zip, investigationId) => {
+    onImport: async (zip, dossierId) => {
       const file = zip.file('plugins/osint.json');
       if (!file) return;
       const data = JSON.parse(await file.async('string'));
       for (const row of data) {
-        await db.pluginData.put({ ...row, investigationId });
+        await db.pluginData.put({ ...row, dossierId });
       }
     },
   });
@@ -835,20 +835,20 @@ if (isPluginDisabled('my-plugin')) return;
 
 | Slot | Type | Props/Interface | Location |
 |------|------|-----------------|----------|
-| `header:right` | `ComponentType` | none | Investigation header toolbar |
-| `home:actions` | `ComponentType<HomeActionsProps>` | `{ context: 'landing' \| 'investigations' }` | Home page (landing footer + list toolbar) |
+| `header:right` | `ComponentType` | none | Dossier header toolbar |
+| `home:actions` | `ComponentType<HomeActionsProps>` | `{ context: 'landing' \| 'dossiers' }` | Home page (landing footer + list toolbar) |
 | `home:banner` | `ComponentType` | none | Home page (full-width, above hero/list) |
 | `home:card` | `HomeCardRegistration` | structured metadata | Landing "Extensions" section |
 | `app:global` | `ComponentType` | none | Always mounted at app root, independent of page |
-| `panel:right` | `PanelPluginRegistration` | `{ investigationId }` | Side panel tabs |
+| `panel:right` | `PanelPluginRegistration` | `{ dossierId }` | Side panel tabs |
 | `contextMenu:element` | `ContextMenuExtension` | `MenuContext` | Element right-click |
 | `contextMenu:link` | `ContextMenuExtension` | `MenuContext` | Link right-click |
 | `contextMenu:canvas` | `ContextMenuExtension` | `MenuContext` | Canvas right-click |
-| `report:toolbar` | `ComponentType<ReportToolbarPluginProps>` | `{ investigationId }` | Report panel toolbar |
-| `report:sectionActions` | `ComponentType<ReportSectionPluginProps>` | `{ sectionId, investigationId }` | Report section header |
+| `report:toolbar` | `ComponentType<ReportToolbarPluginProps>` | `{ dossierId }` | Report panel toolbar |
+| `report:sectionActions` | `ComponentType<ReportSectionPluginProps>` | `{ sectionId, dossierId }` | Report section header |
 | `keyboard:shortcuts` | `KeyboardShortcut` | — | Global keydown handler |
-| `export:hooks` | `ExportHook` | `(zip, investigationId)` | ZIP export |
-| `import:hooks` | `ImportHook` | `(zip, investigationId)` | ZIP import |
+| `export:hooks` | `ExportHook` | `(zip, dossierId)` | ZIP export |
+| `import:hooks` | `ImportHook` | `(zip, dossierId)` | ZIP import |
 
 ## External Plugins (Local Loading)
 
@@ -929,9 +929,9 @@ The `api` object passed to `register()` provides:
 
 | Property | Description |
 |----------|-------------|
-| `stores.useInvestigationStore` | Elements, links, assets, comments, CRUD actions |
+| `stores.useDossierStore` | Elements, links, assets, comments, CRUD actions |
 | `stores.useSelectionStore` | Current canvas selection (element/link IDs) |
-| `stores.useViewStore` | Current investigation ID, viewport, filters |
+| `stores.useViewStore` | Current dossier ID, viewport, filters |
 | `stores.useReportStore` | Report sections, add/update/delete |
 | `stores.useInsightsStore` | Graph analysis: clusters, centrality, bridges |
 
@@ -939,9 +939,9 @@ The `api` object passed to `register()` provides:
 
 | Property | Description |
 |----------|-------------|
-| `repositories.elementRepository` | `getByInvestigation(id)`, `getById(id)`, etc. |
-| `repositories.linkRepository` | `getByInvestigation(id)`, `getById(id)`, etc. |
-| `repositories.investigationRepository` | `getAll()`, `getById(id)` |
+| `repositories.elementRepository` | `getByDossier(id)`, `getById(id)`, etc. |
+| `repositories.linkRepository` | `getByDossier(id)`, `getById(id)`, etc. |
+| `repositories.dossierRepository` | `getAll()`, `getById(id)` |
 
 **Services & utilities:**
 
@@ -950,9 +950,9 @@ The `api` object passed to `register()` provides:
 | `db` | Dexie database instance (direct IndexedDB access) |
 | `fileService` | OPFS file management (`getAssetFile`, `getAssetUrl`, `extractAssetText`) |
 | `generateUUID()` | Generate a UUID v4 |
-| `pluginData.get(pluginId, investigationId, key)` | Read from persistent plugin storage |
-| `pluginData.set(pluginId, investigationId, key, value)` | Write to persistent plugin storage |
-| `pluginData.remove(pluginId, investigationId, key)` | Delete from persistent plugin storage |
+| `pluginData.get(pluginId, dossierId, key)` | Read from persistent plugin storage |
+| `pluginData.set(pluginId, dossierId, key, value)` | Write to persistent plugin storage |
+| `pluginData.remove(pluginId, dossierId, key)` | Delete from persistent plugin storage |
 
 **At-rest encryption:**
 
@@ -975,11 +975,11 @@ export function register(api) {
   const { registerPlugin, React } = api;
   const h = React.createElement;
 
-  function MyPanel({ investigationId }) {
+  function MyPanel({ dossierId }) {
     const [count, setCount] = React.useState(0);
 
     return h('div', { className: 'p-4 text-sm' },
-      h('p', null, 'Investigation: ' + investigationId),
+      h('p', null, 'Dossier: ' + dossierId),
       h('button', {
         className: 'px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded',
         onClick: () => setCount(c => c + 1),

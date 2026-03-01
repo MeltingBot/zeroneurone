@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Powrót do strony głównej",
-    "newInvestigation": "Nowe śledztwo",
+    "newDossier": "Nowa teczka",
     "manageTags": "Zarządzaj tagami",
     "import": "Importuj",
     "about": "O aplikacji",
@@ -10,10 +10,10 @@
     "storage": "Przechowywanie",
     "darkMode": "Tryb ciemny",
     "lightMode": "Tryb jasny",
-    "noInvestigations": "Brak śledztw",
-    "createFirst": "Utwórz swoje pierwsze śledztwo, aby rozpocząć",
-    "viewInvestigations": "Zobacz śledztwa",
-    "investigationCount": "{{count}} śledztw(o/a)",
+    "noDossiers": "Brak teczek",
+    "createFirst": "Utwórz swoje pierwsze teczka, aby rozpocząć",
+    "viewDossiers": "Zobacz teczki",
+    "dossierCount": "{{count}} teczka/i",
     "loading": "Ładowanie...",
     "searchPlaceholder": "Szukaj po nazwie lub opisie...",
     "filterByTag": "Filtruj według tagu",
@@ -24,7 +24,7 @@
     "clearFilters": "Wyczyść",
     "noResults": "Nie znaleziono śledztw",
     "noResultsHint": "Spróbuj innych terminów lub wyczyść filtry",
-    "resultsCount": "{{count}} / {{total}} śledztw(o/a)",
+    "resultsCount": "{{count}} / {{total}} teczka/i",
     "card": {
       "modified": "Zmodyfikowano {{time}}",
       "elementCount": "{{count}} element(ów)",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Tablica dla analityków i śledczych",
       "description": "Narzędzie Open Source do wzmocnienia kognitywnego, łączące prostotę tablicy z mocą analizy grafów. Mapuj swoje pomysły, geolokalizuj elementy, wizualizuj zdarzenia, łącz wskazówki i odkrywaj ukryte wzorce.",
-      "startNew": "Nowe śledztwo",
+      "startNew": "Nowa teczka",
       "importExisting": "Importuj",
-      "viewExisting": "Zobacz moje {{count}} śledztw(o/a)",
+      "viewExisting": "Zobacz moje {{count}} teczka/i",
       "features": {
         "graph": {
           "title": "Graf relacyjny",
@@ -76,7 +76,7 @@
       "disablePlugin": "Wyłącz rozszerzenie"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Otwieranie",
       "syncing": "Synchronizacja",
@@ -222,7 +222,7 @@
       "exportSuccess": "Eksport zakończony",
       "exportError": "Błąd podczas eksportu"
     },
-    "notFound": "Nie znaleziono śledztwa",
+    "notFound": "Nie znaleziono teczki",
     "header": {
       "report": "Synteza",
       "generateReport": "Synteza",

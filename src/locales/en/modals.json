@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "New investigation",
-    "namePlaceholder": "Investigation name",
+  "createDossier": {
+    "title": "New dossier",
+    "namePlaceholder": "Dossier name",
     "descriptionPlaceholder": "Description (optional)",
-    "create": "Create investigation"
+    "create": "Create dossier"
   },
   "confirmDelete": {
     "title": "Delete",
     "message": "This action is irreversible.",
     "confirm": "Delete",
     "deleting": "Deleting...",
-    "deleteInvestigation": "Delete investigation",
-    "deleteInvestigationMessage": "Delete \"{{name}}\"? This action is irreversible."
+    "deleteDossier": "Delete dossier",
+    "deleteDossierMessage": "Delete \"{{name}}\"? This action is irreversible."
   },
   "rename": {
     "title": "Rename",
     "rename": "Rename",
     "renaming": "Renaming...",
     "label": "Name",
-    "renameInvestigation": "Rename investigation",
+    "renameDossier": "Rename dossier",
     "namePlaceholder": "New name"
   },
   "importIntoCurrent": {
-    "title": "Import into investigation",
-    "description": "Import data into the current investigation. ZIP files will use placement mode.",
+    "title": "Import into dossier",
+    "description": "Import data into the current dossier. ZIP files will use placement mode.",
     "selectFile": "Select a file",
     "emptyZip": "The ZIP file is empty or contains no elements"
   },
   "import": {
-    "title": "Import investigation",
+    "title": "Import dossier",
     "dropzone": "Drop a file or click to select",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogy: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Import into",
-    "newInvestigation": "New investigation",
+    "newDossier": "New dossier",
     "selectFile": "Select a file",
     "importing": "Importing...",
     "success": "Import successful",
@@ -56,7 +56,7 @@
     "andMore": "... and {{count}} more"
   },
   "export": {
-    "title": "Export investigation",
+    "title": "Export dossier",
     "description": "Export \"{{name}}\" ({{elements}} elements, {{links}} links)",
     "format": "Format",
     "formats": {
@@ -246,7 +246,7 @@
       "text": "This software is distributed under the MIT license.",
       "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
     },
-    "footer": "Made with love for investigators worldwide"
+    "footer": "Made with love for analysts worldwide"
   },
   "storage": {
     "title": "Storage",
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Stored content",
-      "investigations": "Investigations",
+      "dossiers": "Dossiers",
       "elements": "Elements",
       "links": "Links",
       "files": "Files"
@@ -278,11 +278,11 @@
       "title": "Full backup",
       "exportAll": "Export all",
       "import": "Import",
-      "description": "All investigations, files and tags. Import adds without replacing.",
+      "description": "All dossiers, files and tags. Import adds without replacing.",
       "exporting": "Exporting...",
       "importing": "Importing...",
       "exportSuccess": "Export complete",
-      "importSuccess": "Import successful: {{investigations}} investigation(s), {{elements}} element(s), {{links}} link(s)",
+      "importSuccess": "Import successful: {{dossiers}} dossier(s), {{elements}} element(s), {{links}} link(s)",
       "error": "Error"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Local data storage",
     "warning": "Your data is stored locally",
-    "description": "All investigations and files are stored in your browser storage (IndexedDB and OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Recommendation:</strong> Export your investigations regularly via the \"Export\" button to keep a backup of your data.",
+    "description": "All dossiers and files are stored in your browser storage (IndexedDB and OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Recommendation:</strong> Export your dossiers regularly via the \"Export\" button to keep a backup of your data.",
     "acknowledge": "I understand",
     "bullets": {
       "deleted": "Data may be <strong class=\"text-text-primary\">deleted</strong> if you clear your browser cache",
@@ -309,7 +309,7 @@
     "title": "Generate summary",
     "reportTitle": "Summary title",
     "contentToInclude": "Content to include",
-    "includeDescription": "Investigation description",
+    "includeDescription": "Dossier description",
     "includeSummary": "Statistical summary",
     "includeInsights": "Graph analysis (clusters, centrality)",
     "includeTimeline": "Event timeline",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://your-server.example.com",
     "save": "Save",
     "serverHelp": "Use a compatible y-websocket server. You can host your own with",
-    "shareDescription": "Share this investigation to collaborate in real time. Each participant will see changes instantly.",
+    "shareDescription": "Share this dossier to collaborate in real time. Each participant will see changes instantly.",
     "asyncMode": "Async collaboration",
     "asyncModeHelp": "Allow collaborators to work at different times. Changes are stored on the server for 7 days.",
     "serverRequired": "Configure a sync server first to enable sharing.",
@@ -432,8 +432,8 @@
     "stopSharing": "Stop sharing",
     "stopping": "Stopping..."
   },
-  "investigationTags": {
-    "title": "Investigation tags",
+  "dossierTags": {
+    "title": "Dossier tags",
     "currentTags": "Current tags",
     "noTags": "No tags",
     "addTag": "Add a tag",
@@ -530,7 +530,7 @@
       "risks": [
         "Forgotten password = data permanently inaccessible, no exceptions",
         "No recovery possible — not by us, not by your browser",
-        "Export your investigations as ZIP before enabling",
+        "Export your dossiers as ZIP before enabling",
         "Encryption applies to IndexedDB and attached files (OPFS)"
       ]
     },

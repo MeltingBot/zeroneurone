@@ -7,7 +7,7 @@
     "report": "Raport",
     "collapsePanel": "Zwiń panel"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Informacje",
       "dates": "Daty",
@@ -35,7 +35,7 @@
       "retentionReset": "Resetuj"
     },
     "placeholders": {
-      "name": "Nazwa śledztwa",
+      "name": "Nazwa teczki",
       "creator": "Nazwa twórcy..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Ty: {{name}} (kliknij, aby edytować)"
   },
   "report": {
-    "noInvestigation": "Nie załadowano śledztwa",
+    "noDossier": "Nie załadowano teczki",
     "noReport": "Brak raportu. Utwórz jeden, aby rozpocząć.",
     "createReport": "Utwórz raport",
     "defaultTitle": "Raport",

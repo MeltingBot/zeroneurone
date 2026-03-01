@@ -2,7 +2,7 @@ import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { db } from '../database';
 import { generateUUID } from '../../utils';
-import type { Report, ReportSection, InvestigationId, UUID, ReportSectionId } from '../../types';
+import type { Report, ReportSection, DossierId, UUID, ReportSectionId } from '../../types';
 import { getYMaps } from '../../types/yjs';
 import { yMapToReport } from '../../services/yjs/reportMapper';
 
@@ -27,8 +27,8 @@ function createDefaultSection(title: string, order: number): ReportSection {
 }
 
 export const reportRepository = {
-  async getByInvestigation(investigationId: InvestigationId): Promise<Report | null> {
-    const reports = await db.reports.where({ investigationId }).toArray();
+  async getByDossier(dossierId: DossierId): Promise<Report | null> {
+    const reports = await db.reports.where({ dossierId }).toArray();
     return reports.length > 0 ? rehydrateReport(reports[0]) : null;
   },
 
@@ -37,10 +37,10 @@ export const reportRepository = {
     return report ? rehydrateReport(report) : null;
   },
 
-  async create(investigationId: InvestigationId, title: string): Promise<Report> {
+  async create(dossierId: DossierId, title: string): Promise<Report> {
     const report: Report = {
       id: generateUUID(),
-      investigationId,
+      dossierId,
       title,
       sections: [],
       createdAt: new Date(),
@@ -50,7 +50,7 @@ export const reportRepository = {
     return report;
   },
 
-  async update(id: UUID, changes: Partial<Omit<Report, 'id' | 'investigationId' | 'createdAt'>>): Promise<void> {
+  async update(id: UUID, changes: Partial<Omit<Report, 'id' | 'dossierId' | 'createdAt'>>): Promise<void> {
     await db.reports.update(id, {
       ...changes,
       updatedAt: new Date(),
@@ -127,19 +127,19 @@ export const reportRepository = {
   },
 
   /**
-   * Get report by investigation, checking both Dexie and Y.Doc storage.
+   * Get report by dossier, checking both Dexie and Y.Doc storage.
    * This is useful for export from home page where Y.Doc may not be loaded.
    * If found in Y.Doc but not in Dexie, it will be persisted to Dexie.
    */
-  async getByInvestigationWithYDoc(investigationId: InvestigationId): Promise<Report | null> {
+  async getByDossierWithYDoc(dossierId: DossierId): Promise<Report | null> {
     // First try Dexie
-    const dexieReport = await this.getByInvestigation(investigationId);
+    const dexieReport = await this.getByDossier(dossierId);
     if (dexieReport) {
       return dexieReport;
     }
 
     // Try to load from Y.Doc via y-indexeddb
-    const dbName = `zeroneurone-ydoc-${investigationId}`;
+    const dbName = `zeroneurone-ydoc-${dossierId}`;
     let ydoc: Y.Doc | null = null;
     let provider: IndexeddbPersistence | null = null;
 
@@ -152,11 +152,11 @@ export const reportRepository = {
 
       const { reports: reportsMap } = getYMaps(ydoc);
 
-      // Find report for this investigation
+      // Find report for this dossier
       let foundReport: Report | null = null;
       for (const [, ymap] of reportsMap.entries()) {
-        const invId = ymap.get('investigationId');
-        if (invId === investigationId) {
+        const invId = ymap.get('dossierId');
+        if (invId === dossierId) {
           foundReport = yMapToReport(ymap);
           break;
         }

@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Nova investigação",
-    "namePlaceholder": "Nome da investigação",
+  "createDossier": {
+    "title": "Novo dossiê",
+    "namePlaceholder": "Nome do dossiê",
     "descriptionPlaceholder": "Descrição (opcional)",
-    "create": "Criar a investigação"
+    "create": "Criar o dossiê"
   },
   "confirmDelete": {
     "title": "Eliminar",
     "message": "Esta ação é irreversível.",
     "confirm": "Eliminar",
     "deleting": "A eliminar...",
-    "deleteInvestigation": "Eliminar a investigação",
-    "deleteInvestigationMessage": "Eliminar \"{{name}}\"? Esta ação é irreversível."
+    "deleteDossier": "Eliminar o dossiê",
+    "deleteDossierMessage": "Eliminar \"{{name}}\"? Esta ação é irreversível."
   },
   "rename": {
     "title": "Renomear",
     "rename": "Renomear",
     "renaming": "A renomear...",
     "label": "Nome",
-    "renameInvestigation": "Renomear a investigação",
+    "renameDossier": "Renomear o dossiê",
     "namePlaceholder": "Novo nome"
   },
   "importIntoCurrent": {
-    "title": "Importar na investigação",
-    "description": "Importar dados na investigação atual. Ficheiros ZIP serão importados em modo de posicionamento.",
+    "title": "Importar no dossiê",
+    "description": "Importar dados no dossiê atual. Ficheiros ZIP serão importados em modo de posicionamento.",
     "selectFile": "Selecionar um ficheiro",
     "emptyZip": "O ficheiro ZIP está vazio ou não contém elementos"
   },
   "import": {
-    "title": "Importar uma investigação",
+    "title": "Importar um dossiê",
     "dropzone": "Largue um ficheiro ou clique para selecionar",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar para",
-    "newInvestigation": "Nova investigação",
+    "newDossier": "Novo dossiê",
     "selectFile": "Selecionar um ficheiro",
     "importing": "A importar...",
     "success": "Importação bem-sucedida",
@@ -56,7 +56,7 @@
     "andMore": "... e mais {{count}}"
   },
   "export": {
-    "title": "Exportar a investigação",
+    "title": "Exportar o dossiê",
     "description": "Exportar \"{{name}}\" ({{elements}} elementos, {{links}} ligações)",
     "format": "Formato",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Conteúdo armazenado",
-      "investigations": "Investigações",
+      "dossiers": "Investigações",
       "elements": "Elementos",
       "links": "Ligações",
       "files": "Ficheiros"
@@ -278,11 +278,11 @@
       "title": "Cópia de segurança completa",
       "exportAll": "Exportar tudo",
       "import": "Importar",
-      "description": "Todas as investigações, ficheiros e tags. A importação adiciona sem substituir.",
+      "description": "Todas as dossiês, ficheiros e tags. A importação adiciona sem substituir.",
       "exporting": "A exportar...",
       "importing": "A importar...",
       "exportSuccess": "Exportação concluída",
-      "importSuccess": "Importação bem-sucedida: {{investigations}} investigação(ões), {{elements}} elemento(s), {{links}} ligação(ões)",
+      "importSuccess": "Importação bem-sucedida: {{dossiers}} dossiê(s), {{elements}} elemento(s), {{links}} ligação(ões)",
       "error": "Erro"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Armazenamento local de dados",
     "warning": "Os seus dados são armazenados localmente",
-    "description": "Todas as investigações e ficheiros são guardados no armazenamento do seu navegador (IndexedDB e OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Recomendação:</strong> Exporte regularmente as suas investigações através do botão \"Exportar\" para conservar uma cópia de segurança dos seus dados.",
+    "description": "Todas as dossiês e ficheiros são guardados no armazenamento do seu navegador (IndexedDB e OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Recomendação:</strong> Exporte regularmente as suas dossiês através do botão \"Exportar\" para conservar uma cópia de segurança dos seus dados.",
     "acknowledge": "Compreendi",
     "bullets": {
       "deleted": "Os dados podem ser <strong class=\"text-text-primary\">eliminados</strong> se limpar a cache do seu navegador",
@@ -309,7 +309,7 @@
     "title": "Gerar síntese",
     "reportTitle": "Título da síntese",
     "contentToInclude": "Conteúdo a incluir",
-    "includeDescription": "Descrição da investigação",
+    "includeDescription": "Descrição do dossiê",
     "includeSummary": "Resumo estatístico",
     "includeInsights": "Análise do grafo (clusters, centralidade)",
     "includeTimeline": "Cronologia de eventos",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://o-seu-servidor.exemplo.com",
     "save": "Guardar",
     "serverHelp": "Use um servidor compatível com y-websocket. Pode alojar o seu com",
-    "shareDescription": "Partilhe esta investigação para colaborar em tempo real. Cada participante verá as modificações instantaneamente.",
+    "shareDescription": "Partilhe esto dossiê para colaborar em tempo real. Cada participante verá as modificações instantaneamente.",
     "asyncMode": "Colaboração assíncrona",
     "asyncModeHelp": "Permite que os colaboradores trabalhem em momentos diferentes. As alterações são conservadas 7 dias no servidor.",
     "serverRequired": "Configure primeiro um servidor de sincronização para ativar a partilha.",
@@ -432,8 +432,8 @@
     "stopSharing": "Parar de partilhar",
     "stopping": "A parar..."
   },
-  "investigationTags": {
-    "title": "Tags da investigação",
+  "dossierTags": {
+    "title": "Tags do dossiê",
     "currentTags": "Tags atuais",
     "noTags": "Sem tags",
     "addTag": "Adicionar tag",
@@ -530,7 +530,7 @@
       "risks": [
         "Senha esquecida = dados permanentemente inacessíveis, sem exceções",
         "Sem recuperação possível — nem por nós, nem pelo navegador",
-        "Exporte as suas investigações como ZIP antes de ativar",
+        "Exporte as suas dossiês como ZIP antes de ativar",
         "A encriptação aplica-se ao IndexedDB e aos ficheiros anexados (OPFS)"
       ]
     },

@@ -7,7 +7,7 @@ export interface MenuContext {
   linkIds: string[];
   canvasPosition?: { x: number; y: number };
   hasTextAssets: boolean;
-  investigationId: string;
+  dossierId: string;
 }
 
 // ─── Context menu extensions ────────────────────────────────
@@ -36,31 +36,31 @@ export interface KeyboardShortcut {
 
 export interface ExportHook {
   name: string;
-  onExport: (zip: any, investigationId: string) => Promise<void>;
+  onExport: (zip: any, dossierId: string) => Promise<void>;
   pluginId?: string;
 }
 
 export interface ImportHook {
   name: string;
-  onImport: (zip: any, investigationId: string) => Promise<void>;
+  onImport: (zip: any, dossierId: string) => Promise<void>;
   pluginId?: string;
 }
 
 // ─── Panel plugin props ─────────────────────────────────────
 
 export interface PanelPluginProps {
-  investigationId: string;
+  dossierId: string;
 }
 
 // ─── Report plugin props ────────────────────────────────────
 
 export interface ReportToolbarPluginProps {
-  investigationId: string;
+  dossierId: string;
 }
 
 export interface ReportSectionPluginProps {
   sectionId: string;
-  investigationId: string;
+  dossierId: string;
 }
 
 // ─── Plugin panel registration ──────────────────────────────
@@ -76,7 +76,7 @@ export interface PanelPluginRegistration {
 // ─── Home actions props ────────────────────────────────────
 
 export interface HomeActionsProps {
-  context: 'landing' | 'investigations';
+  context: 'landing' | 'dossiers';
 }
 
 // ─── Home card registration ────────────────────────────────

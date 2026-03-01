@@ -1,4 +1,4 @@
-export { CreateInvestigationModal } from './CreateInvestigationModal';
+export { CreateDossierModal } from './CreateDossierModal';
 export { ConfirmDeleteModal } from './ConfirmDeleteModal';
 export { RenameModal } from './RenameModal';
 export { SearchModal } from './SearchModal';
@@ -14,6 +14,6 @@ export { StorageModal } from './StorageModal';
 export { LocalStorageDisclaimerModal, hasAcknowledgedLocalStorage } from './LocalStorageDisclaimerModal';
 export { MetadataImportModal } from './MetadataImportModal';
 export { ImportIntoCurrentModal } from './ImportIntoCurrentModal';
-export { InvestigationTagsModal } from './InvestigationTagsModal';
+export { DossierTagsModal } from './DossierTagsModal';
 export { EncryptionModal } from './EncryptionModal';
 export { PasswordModal } from './PasswordModal';

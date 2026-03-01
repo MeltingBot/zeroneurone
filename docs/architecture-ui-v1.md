@@ -14,17 +14,17 @@ Ce document décrit l'architecture de l'interface utilisateur : composants React
 
 ```
 App
-├── InvestigationProvider              # Context pour l'enquête active
+├── DossierProvider              # Context pour l'dossier active
 │
-├── HomePage                           # Liste des enquêtes
-│   ├── InvestigationList
-│   │   └── InvestigationCard
-│   ├── CreateInvestigationModal
-│   └── ImportInvestigationModal
+├── HomePage                           # Liste des dossiers
+│   ├── DossierList
+│   │   └── DossierCard
+│   ├── CreateDossierModal
+│   └── ImportDossierModal
 │
-└── InvestigationPage                  # Vue principale d'une enquête
+└── DossierPage                  # Vue principale d'une dossier
     ├── Header
-    │   ├── InvestigationTitle
+    │   ├── DossierTitle
     │   ├── ViewSwitcher               # Canvas / Carte / Split / Timeline
     │   ├── SearchBar                  # Ctrl+K
     │   └── MainMenu                   # Export, Settings, etc.
@@ -118,25 +118,25 @@ App
 
 ```typescript
 // stores/index.ts
-export { useInvestigationStore } from './investigationStore';
+export { useDossierStore } from './dossierStore';
 export { useSelectionStore } from './selectionStore';
 export { useViewStore } from './viewStore';
 export { useUIStore } from './uiStore';
 export { useInsightsStore } from './insightsStore';
 ```
 
-### 2.2 Investigation Store
+### 2.2 Dossier Store
 
-Gère les données de l'enquête active.
+Gère les données de l'dossier active.
 
 ```typescript
-// stores/investigationStore.ts
+// stores/dossierStore.ts
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-interface InvestigationState {
+interface DossierState {
   // Données
-  investigation: Investigation | null;
+  dossier: Dossier | null;
   elements: Map<ElementId, Element>;
   links: Map<LinkId, Link>;
   assets: Map<AssetId, Asset>;
@@ -146,10 +146,10 @@ interface InvestigationState {
   isLoading: boolean;
   error: string | null;
   
-  // Actions - Investigation
-  loadInvestigation: (id: InvestigationId) => Promise<void>;
-  unloadInvestigation: () => void;
-  updateInvestigation: (changes: Partial<Investigation>) => Promise<void>;
+  // Actions - Dossier
+  loadDossier: (id: DossierId) => Promise<void>;
+  unloadDossier: () => void;
+  updateDossier: (changes: Partial<Dossier>) => Promise<void>;
   
   // Actions - Elements
   createElement: (label: string, position: Position, options?: Partial<Element>) => Promise<Element>;
@@ -182,10 +182,10 @@ interface InvestigationState {
   getLinksForElement: (elementId: ElementId) => Link[];
 }
 
-export const useInvestigationStore = create<InvestigationState>()(
+export const useDossierStore = create<DossierState>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
-    investigation: null,
+    dossier: null,
     elements: new Map(),
     links: new Map(),
     assets: new Map(),
@@ -194,17 +194,17 @@ export const useInvestigationStore = create<InvestigationState>()(
     error: null,
     
     // Implementations...
-    loadInvestigation: async (id) => {
+    loadDossier: async (id) => {
       set({ isLoading: true, error: null });
       try {
-        const investigation = await db.investigations.get(id);
-        const elements = await db.elements.where({ investigationId: id }).toArray();
-        const links = await db.links.where({ investigationId: id }).toArray();
-        const assets = await db.assets.where({ investigationId: id }).toArray();
-        const views = await db.views.where({ investigationId: id }).toArray();
+        const dossier = await db.dossiers.get(id);
+        const elements = await db.elements.where({ dossierId: id }).toArray();
+        const links = await db.links.where({ dossierId: id }).toArray();
+        const assets = await db.assets.where({ dossierId: id }).toArray();
+        const views = await db.views.where({ dossierId: id }).toArray();
         
         set({
-          investigation,
+          dossier,
           elements: new Map(elements.map(e => [e.id, e])),
           links: new Map(links.map(l => [l.id, l])),
           assets: new Map(assets.map(a => [a.id, a])),
@@ -213,10 +213,10 @@ export const useInvestigationStore = create<InvestigationState>()(
         });
         
         // Charger l'index de recherche
-        await searchService.loadInvestigation(id);
+        await searchService.loadDossier(id);
         
         // Charger le graphe d'insights
-        await insightsService.loadInvestigation(id);
+        await insightsService.loadDossier(id);
         
       } catch (error) {
         set({ error: (error as Error).message, isLoading: false });
@@ -224,11 +224,11 @@ export const useInvestigationStore = create<InvestigationState>()(
     },
     
     createElement: async (label, position, options = {}) => {
-      const { investigation, elements } = get();
-      if (!investigation) throw new Error('No investigation loaded');
+      const { dossier, elements } = get();
+      if (!dossier) throw new Error('No dossier loaded');
       
       const element = await elementRepository.create(
-        investigation.id,
+        dossier.id,
         label,
         position,
         options
@@ -343,7 +343,7 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
   },
   
   selectAll: () => {
-    const elements = useInvestigationStore.getState().elements;
+    const elements = useDossierStore.getState().elements;
     set({
       selectedElementIds: new Set(elements.keys()),
       activeElementId: null,
@@ -510,7 +510,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   
   zoomToFit: () => {
     // Calcul du viewport pour voir tous les éléments
-    const elements = Array.from(useInvestigationStore.getState().elements.values());
+    const elements = Array.from(useDossierStore.getState().elements.values());
     if (elements.length === 0) return;
     
     const xs = elements.map(e => e.position.x);
@@ -538,7 +538,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
   
   centerOnElement: (elementId) => {
-    const element = useInvestigationStore.getState().getElementById(elementId);
+    const element = useDossierStore.getState().getElementById(elementId);
     if (!element) return;
     
     const { viewport } = get();
@@ -698,7 +698,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
   
   getVisibleElementIds: () => {
-    const elements = Array.from(useInvestigationStore.getState().elements.values());
+    const elements = Array.from(useDossierStore.getState().elements.values());
     const { isElementVisible } = get();
     return elements.filter(isElementVisible).map(e => e.id);
   },
@@ -764,8 +764,8 @@ interface UIState {
 }
 
 type ModalType = 
-  | 'create-investigation'
-  | 'import-investigation'
+  | 'create-dossier'
+  | 'import-dossier'
   | 'import-csv'
   | 'export'
   | 'report'
@@ -894,10 +894,10 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     set({ isComputing: true });
     
     try {
-      const investigationId = useInvestigationStore.getState().investigation?.id;
-      if (!investigationId) return;
+      const dossierId = useDossierStore.getState().dossier?.id;
+      if (!dossierId) return;
       
-      await insightsService.loadInvestigation(investigationId);
+      await insightsService.loadDossier(dossierId);
       
       set({
         clusters: insightsService.getClusters(),
@@ -942,7 +942,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 
 ## 3. Wireframes
 
-### 3.1 Page d'accueil (Liste des enquêtes)
+### 3.1 Page d'accueil (Liste des dossiers)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -951,7 +951,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 │                                                                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│   Mes enquêtes                                           Trier: Récent ▼   │
+│   Mes dossiers                                           Trier: Récent ▼   │
 │                                                                             │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
 │   │ 📁 Affaire Dupont                                                   │   │
@@ -966,7 +966,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 │   └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │ 📁 Enquête Crypto                                                   │   │
+│   │ 📁 Dossier Crypto                                                   │   │
 │   │    Modifié la semaine dernière • 67 éléments • 89 liens            │   │
 │   │    [Ouvrir]                                      [⋮]                │   │
 │   └─────────────────────────────────────────────────────────────────────┘   │
@@ -1049,7 +1049,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ ← Enquête Crypto                   [Timeline▼] [🔍 Rechercher...]   [≡]    │
+│ ← Dossier Crypto                   [Timeline▼] [🔍 Rechercher...]   [≡]    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ [Zoom: Mois ▼]  2024: [Jan][Fév][Mar][Avr][Mai][Jun]         [←Avant][→]   │
 ├─────────────────────────────────────────────────────────────┬───────────────┤
@@ -1200,7 +1200,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 │   [↑][↓][✕]           │                                                    │
 │                        │  ## 1. Introduction                               │
 │ ▾ 2. Acteurs clés      │                                                    │
-│   • Jean Martin        │  Cette enquête porte sur les activités            │
+│   • Jean Martin        │  Cette dossier porte sur les activités            │
 │   • Société A          │  financières suspectes de Jean Martin...          │
 │   • [+ Ajouter]        │                                                    │
 │   [↑][↓][✕]           │  ## 2. Acteurs clés                               │
@@ -1590,7 +1590,7 @@ interface TimelineViewProps {
 
 | Action | Indicateur |
 |--------|------------|
-| Chargement enquête | Spinner pleine page + "Chargement..." |
+| Chargement dossier | Spinner pleine page + "Chargement..." |
 | Import fichier | Progress bar dans modal |
 | Calcul insights | Spinner dans le panneau insights |
 | Export | Progress bar dans modal + "Préparation..." |
@@ -1600,7 +1600,7 @@ interface TimelineViewProps {
 
 | Erreur | Comportement |
 |--------|--------------|
-| Échec chargement enquête | Message + bouton "Réessayer" |
+| Échec chargement dossier | Message + bouton "Réessayer" |
 | Échec import | Toast erreur + détails |
 | Fichier trop gros | Toast warning + limite affichée |
 | Format non supporté | Toast info + formats acceptés |

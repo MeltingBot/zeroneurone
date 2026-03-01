@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Plus, Loader2, Download, Link2, Link2Off, Globe } from 'lucide-react';
-import { useInvestigationStore, useReportStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useReportStore, useHistoryStore } from '../../stores';
 import { usePlugins } from '../../plugins/usePlugins';
 import { ReportSectionEditor } from '../report/ReportSectionEditor';
 import { Input, IconButton } from '../common';
@@ -9,7 +9,7 @@ import { exportInteractiveReport } from '../../services/exportInteractiveReportS
 
 export function ReportPanel() {
   const { t } = useTranslation('panels');
-  const { currentInvestigation, elements, links, assets } = useInvestigationStore();
+  const { currentDossier, elements, links, assets } = useDossierStore();
   const {
     currentReport,
     isLoading,
@@ -34,12 +34,12 @@ export function ReportPanel() {
   // Export options
   const [exportWithLinks, setExportWithLinks] = useState(true);
 
-  // Load or create report when investigation changes
+  // Load or create report when dossier changes
   useEffect(() => {
-    if (!currentInvestigation) return;
+    if (!currentDossier) return;
 
-    loadReport(currentInvestigation.id);
-  }, [currentInvestigation, loadReport]);
+    loadReport(currentDossier.id);
+  }, [currentDossier, loadReport]);
 
   // Drag and drop handlers
   const handleDragStart = useCallback((sectionId: string) => {
@@ -95,9 +95,9 @@ export function ReportPanel() {
 
   // Handle creating report if none exists
   const handleCreateReport = useCallback(async () => {
-    if (!currentInvestigation) return;
-    await createReport(currentInvestigation.id, t('report.defaultTitle'));
-  }, [currentInvestigation, createReport, t]);
+    if (!currentDossier) return;
+    await createReport(currentDossier.id, t('report.defaultTitle'));
+  }, [currentDossier, createReport, t]);
 
   // Handle adding section
   const handleAddSection = useCallback(async () => {
@@ -148,11 +148,11 @@ export function ReportPanel() {
 
   // Export report as interactive HTML
   const handleExportHTML = useCallback(async () => {
-    if (!currentReport || !currentInvestigation) return;
+    if (!currentReport || !currentDossier) return;
 
     try {
       const blob = await exportInteractiveReport(
-        currentInvestigation,
+        currentDossier,
         currentReport,
         elements,
         links,
@@ -170,12 +170,12 @@ export function ReportPanel() {
     } catch (err) {
       console.error('Failed to export interactive report:', err);
     }
-  }, [currentReport, currentInvestigation, elements, links, assets]);
+  }, [currentReport, currentDossier, elements, links, assets]);
 
-  if (!currentInvestigation) {
+  if (!currentDossier) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
-        <p className="text-sm text-text-secondary">{t('report.noInvestigation')}</p>
+        <p className="text-sm text-text-secondary">{t('report.noDossier')}</p>
       </div>
     );
   }
@@ -232,7 +232,7 @@ export function ReportPanel() {
           <Globe size={14} />
         </IconButton>
         {reportToolbarPlugins.map((PluginComponent, i) => (
-          <PluginComponent key={`rtp-${i}`} investigationId={currentInvestigation.id} />
+          <PluginComponent key={`rtp-${i}`} dossierId={currentDossier.id} />
         ))}
       </div>
 

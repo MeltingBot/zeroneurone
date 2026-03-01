@@ -3,15 +3,15 @@
 ## Security Model
 
 ZeroNeurone is designed with a **privacy-first, local-first**
-architecture. Your investigation data stays on your device.
+architecture. Your dossier data stays on your device.
 The editor has no access to your data at any point.
 
 ### Data Storage
 
-- Investigation data — IndexedDB (browser), AES-256-GCM encrypted
+- Dossier data — IndexedDB (browser), AES-256-GCM encrypted
 - File attachments — OPFS (Origin Private File System), AES-256-GCM encrypted
 - Search index — Memory only, rebuilt on session load, never persisted
-- Internal identifiers — UUIDs v4, stored in clear (contain no investigation data)
+- Internal identifiers — UUIDs v4, stored in clear (contain no dossier data)
 
 **Key principles:**
 
@@ -69,15 +69,15 @@ entry.
 **Automatic lock** — The session locks automatically after a
 configurable inactivity period. Behavior is identical to manual lock.
 
-### Investigation Lifecycle
+### Dossier Lifecycle
 
-Each investigation can be assigned a retention period. At expiry,
+Each dossier can be assigned a retention period. At expiry,
 four behaviors are available:
 
-- **Warning** — a notification is shown at investigation load
-- **Deletion** — the investigation and all its data are permanently
+- **Warning** — a notification is shown at dossier load
+- **Deletion** — the dossier and all its data are permanently
   erased
-- **Read-only** — the investigation is preserved but cannot be
+- **Read-only** — the dossier is preserved but cannot be
   modified
 - **Redaction** — element content is permanently masked, element
   existence is preserved in the graph
@@ -149,7 +149,7 @@ responsibly:
   a malicious extension could read decrypted data from memory
   during an active session
 - Keep extensions to a minimum on workstations used for
-  sensitive investigations
+  sensitive dossiers
 
 ### Passphrase Management
 
@@ -161,15 +161,15 @@ responsibly:
 ### Collaboration Security
 
 - Only share room codes with trusted collaborators
-- Use unique room codes for each investigation
+- Use unique room codes for each dossier
 - Disconnect collaboration when not needed
-- Collaborators can see all investigation data once connected
+- Collaborators can see all dossier data once connected
 
 ### Data Protection
 
-- Regularly export backups of important investigations
+- Regularly export backups of important dossiers
 - Store exported ZIP files on encrypted storage
-- Apply retention policies to investigations with defined
+- Apply retention policies to dossiers with defined
   legal or operational end dates
 
 ### Import Security

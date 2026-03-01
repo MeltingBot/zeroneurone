@@ -5,7 +5,7 @@ weight: 9
 
 # Real-time Collaboration
 
-Work together on an investigation in real-time with secure, end-to-end encrypted synchronization.
+Work together on a dossier in real-time with secure, end-to-end encrypted synchronization.
 
 
 ## Security Principles
@@ -23,11 +23,11 @@ Work together on an investigation in real-time with secure, end-to-end encrypted
 
 ---
 
-## Share an Investigation
+## Share a Dossier
 
 ### Start Sharing
 
-1. Open the investigation to share
+1. Open the dossier to share
 2. Menu **⋯** → **Share**
 3. Configure your username
 4. Click **Share**
@@ -53,11 +53,11 @@ https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&n
 | `?server=` | Signaling server address |
 | `?async=1` | Asynchronous mode flag (optional) |
 | `#key=` | Encryption key |
-| `#id=` | Original investigation UUID |
-| `#name=` | Investigation name |
+| `#id=` | Original dossier UUID |
+| `#name=` | Dossier name |
 
 {{< hint warning >}}
-**Important**: Everything after `#` (fragment) is never sent to the server (browser standard). The room ID is derived from a hash of the UUID + encryption key, so the server cannot correlate sessions with investigations. This is what guarantees end-to-end encryption and metadata privacy.
+**Important**: Everything after `#` (fragment) is never sent to the server (browser standard). The room ID is derived from a hash of the UUID + encryption key, so the server cannot correlate sessions with dossiers. This is what guarantees end-to-end encryption and metadata privacy.
 {{< /hint >}}
 
 ---
@@ -76,7 +76,7 @@ https://zeroneurone.app/join/{roomId}?server=wss://...&async=1#key=xxx&id=uuid&n
 
 On connection:
 
-- Investigation data is downloaded
+- Dossier data is downloaded
 - Attached files are progressively synchronized
 - A local copy is created on your machine
 
@@ -154,7 +154,7 @@ When someone is editing an element:
 | Canvas tabs | ✅ Names, members, order (viewport local) |
 | Saved views | ✅ |
 | Comments | ✅ |
-| Investigation settings | ✅ |
+| Dossier settings | ✅ |
 
 ---
 
@@ -215,7 +215,7 @@ ZeroNeurone supports asynchronous collaboration, allowing collaborators to work 
 {{< hint danger >}}
 **Critical**: Save and keep the share link carefully. Without this link:
 - You will not be able to rejoin the session
-- The investigation cannot be recreated in disconnected async mode
+- The dossier cannot be recreated in disconnected async mode
 - The encryption key in the URL fragment (`#key=...`) is the only way to decrypt the data
 {{< /hint >}}
 
@@ -226,7 +226,7 @@ Recommendations:
 
 ### Update After Asynchronous Work
 
-To update your local investigation with remote async changes:
+To update your local dossier with remote async changes:
 
 1. **Stop sharing** first (Menu **⋯** → **Share** → **Stop sharing**)
 2. Then rejoin using your saved share link
@@ -278,13 +278,13 @@ The signaling server is based on `y-websocket`. See technical documentation for 
 - Limit simultaneous collaborators (< 10 recommended)
 - Large files can slow initial synchronization
 - A good internet connection improves the experience
-- Investigations with **500+ elements**: edges are hidden during pan/zoom for fluidity
+- Dossiers with **500+ elements**: edges are hidden during pan/zoom for fluidity
 - Tested with **1500+ elements and links** in collaborative mode
 
 ### Organization
 
 - Define who does what to avoid simultaneous edits of the same element
-- Use comments to communicate within the investigation
+- Use comments to communicate within the dossier
 - Save regularly locally (ZIP export)
 
 ---

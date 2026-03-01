@@ -13,7 +13,7 @@ import {
   AlertCircle,
   MessageSquare,
 } from 'lucide-react';
-import { useInvestigationStore, useViewStore, useInsightsStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore } from '../../stores';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence, Element, Comment, ViewFilters } from '../../types';
 
@@ -169,7 +169,7 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
 
 export function FiltersPanel() {
   const { t } = useTranslation('panels');
-  const { elements, comments } = useInvestigationStore();
+  const { elements, comments } = useDossierStore();
   const {
     filters,
     setFilters,

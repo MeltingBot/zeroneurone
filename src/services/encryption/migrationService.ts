@@ -11,7 +11,7 @@
  *   (le middleware chiffre à l'écriture). Simple et atomique par table.
  *
  * Migration y-indexeddb :
- *   Pour chaque investigation, on lit les updates Yjs, on les chiffre, on
+ *   Pour chaque dossier, on lit les updates Yjs, on les chiffre, on
  *   réécrit. La fonction migrateToEncrypted/migrateToPlaintext est dans
  *   encryptedIndexeddbPersistence.ts.
  */
@@ -153,7 +153,7 @@ async function migrateOpfsToPlaintext(
  * 1. Initialiser DEK/KEK → stocker _encryptionMeta dans Dexie
  * 2. Appliquer le middleware Dexie
  * 3. Re-écrire tous les enregistrements Dexie (middleware chiffre à l'écriture)
- * 4. Pour chaque investigation, migrer la base y-indexeddb
+ * 4. Pour chaque dossier, migrer la base y-indexeddb
  * 5. Configurer syncService avec la DEK
  */
 export async function enableEncryption(
@@ -176,14 +176,14 @@ export async function enableEncryption(
     onProgress({ phase: p.phase, current: 2, total: 5 })
   );
 
-  // 4. Migrer les bases y-indexeddb de chaque investigation
-  const investigations = await db.investigations.toArray();
+  // 4. Migrer les bases y-indexeddb de chaque dossier
+  const dossiers = await db.dossiers.toArray();
   onProgress({ phase: 'Migration bases Yjs', current: 3, total: 5 });
 
-  for (let i = 0; i < investigations.length; i++) {
-    const inv = investigations[i];
+  for (let i = 0; i < dossiers.length; i++) {
+    const inv = dossiers[i];
     onProgress({
-      phase: `Migration investigation ${i + 1}/${investigations.length}`,
+      phase: `Migration dossier ${i + 1}/${dossiers.length}`,
       current: 3,
       total: 5,
     });
@@ -275,7 +275,7 @@ export async function disableEncryption(
     } catch { data[tableName] = []; }
   }
 
-  const investigations = (data['investigations'] || []) as Array<{ id: string }>;
+  const dossiers = (data['dossiers'] || []) as Array<{ id: string }>;
 
   onProgress({ phase: 'Écriture en clair', current: 1, total: 5 });
 
@@ -287,10 +287,10 @@ export async function disableEncryption(
   onProgress({ phase: 'Déchiffrement bases Yjs', current: 2, total: 5 });
 
   // 3. Migrer les bases y-indexeddb vers le clair
-  for (let i = 0; i < investigations.length; i++) {
-    const inv = investigations[i];
+  for (let i = 0; i < dossiers.length; i++) {
+    const inv = dossiers[i];
     onProgress({
-      phase: `Déchiffrement investigation ${i + 1}/${investigations.length}`,
+      phase: `Déchiffrement dossier ${i + 1}/${dossiers.length}`,
       current: 2,
       total: 5,
     });

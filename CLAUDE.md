@@ -39,7 +39,7 @@ src/
 │   ├── modals/          # Modal dialogs
 │   └── common/          # Shared components
 ├── stores/              # Zustand stores
-│   ├── investigationStore.ts   # Investigation data (elements, links, assets)
+│   ├── dossierStore.ts   # Dossier data (elements, links, assets)
 │   ├── selectionStore.ts       # Canvas selection state
 │   ├── viewStore.ts            # Viewport, filters, display mode
 │   ├── uiStore.ts              # UI state (modals, panels, toasts)
@@ -60,7 +60,7 @@ src/
 
 ## Key Domain Concepts
 
-- **Investigation**: A complete inquiry/case containing elements, links, views, and reports
+- **Dossier**: A complete inquiry/case containing elements, links, views, and reports
 - **Element**: A node in the graph (person, company, location, concept, document, etc.)
 - **Link**: A relationship between two elements (first-class citizen with its own metadata)
 - **Asset**: File attached to an element (stored in OPFS, deduplicated by SHA-256)
@@ -86,11 +86,11 @@ npm run typecheck        # Run TypeScript compiler check
 ### Storage Strategy
 - **Metadata** (elements, links, views): IndexedDB via Dexie
 - **Binary files** (assets): OPFS with SHA-256 hash for deduplication
-- **Search index**: MiniSearch, rebuilt on investigation load
+- **Search index**: MiniSearch, rebuilt on dossier load
 
 ### State Management Pattern
 Zustand stores are organized by concern:
-- `investigationStore`: Source of truth for investigation data
+- `dossierStore`: Source of truth for dossier data
 - `selectionStore`: What's selected on canvas
 - `viewStore`: How things are displayed (viewport, filters, focus mode)
 - `uiStore`: UI state (modals, panels, toasts, active tool)
@@ -152,7 +152,7 @@ System font stack only: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
 
 The project follows a phased implementation (see `guide-implementation-v1.md`):
 1. Foundations (types, Dexie, OPFS, repositories)
-2. Home page (investigation list)
+2. Home page (dossier list)
 3. Canvas basics (React Flow, element creation, selection)
 4. Links (edge creation, handles)
 5. Detail panel (metadata editing)
@@ -208,7 +208,7 @@ src/
 ### Available Slots
 | Slot | Type | Consumed by |
 |------|------|-------------|
-| `header:right` | `ComponentType[]` | InvestigationPage header |
+| `header:right` | `ComponentType[]` | DossierPage header |
 | `home:actions` | `ComponentType[]` | HomePage (landing footer + list toolbar) |
 | `home:banner` | `ComponentType[]` | HomePage (full-width, above hero/list content) |
 | `home:card` | `HomeCardRegistration[]` | LandingSection "Extensions" section |
@@ -218,12 +218,12 @@ src/
 | `contextMenu:canvas` | `ContextMenuExtension[]` | CanvasContextMenu (always) |
 | `report:toolbar` | `ComponentType<ReportToolbarPluginProps>[]` | ReportPanel toolbar |
 | `report:sectionActions` | `ComponentType<ReportSectionPluginProps>[]` | ReportSectionEditor |
-| `keyboard:shortcuts` | `KeyboardShortcut[]` | InvestigationPage keydown |
+| `keyboard:shortcuts` | `KeyboardShortcut[]` | DossierPage keydown |
 | `export:hooks` | `ExportHook[]` | exportService.exportToZip() |
 | `import:hooks` | `ImportHook[]` | importService.importFromZip() |
 
 ### Plugin Data Storage
-Generic `pluginData` table in Dexie (v6): `{ pluginId, investigationId, key, value }` with compound index `[pluginId+investigationId+key]`.
+Generic `pluginData` table in Dexie (v6): `{ pluginId, dossierId, key, value }` with compound index `[pluginId+dossierId+key]`.
 
 ### Key Patterns
 - Plugin errors never crash the app: always `try/catch` with `console.warn`

@@ -61,7 +61,7 @@
     "files": "Ficheiros",
     "links": "Ligações",
     "elements": "Elementos",
-    "investigations": "Investigações",
+    "dossiers": "Investigações",
     "views": "Vistas",
     "filters": "Filtros",
     "insights": "Análises",
@@ -100,7 +100,7 @@
     "noData": "Sem dados",
     "noSelection": "Sem seleção",
     "noItems": "Sem elementos",
-    "noInvestigationLoaded": "Nenhuma investigação carregada.",
+    "noDossierLoaded": "Nenhum dossiê carregada.",
     "unnamed": "Sem nome"
   },
   "errors": {

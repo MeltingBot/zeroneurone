@@ -61,7 +61,7 @@
     "files": "File",
     "links": "Collegamenti",
     "elements": "Elementi",
-    "investigations": "Indagini",
+    "dossiers": "Fascicoli",
     "views": "Viste",
     "filters": "Filtri",
     "insights": "Analisi",
@@ -100,7 +100,7 @@
     "noData": "Nessun dato",
     "noSelection": "Nessuna selezione",
     "noItems": "Nessun elemento",
-    "noInvestigationLoaded": "Nessuna indagine caricata.",
+    "noDossierLoaded": "Nessun fascicolo caricata.",
     "unnamed": "Senza nome"
   },
   "errors": {

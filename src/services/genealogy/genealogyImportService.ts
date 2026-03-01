@@ -3,7 +3,7 @@
  * Main orchestrator for importing GEDCOM and GeneWeb files
  */
 
-import type { Element, Link, InvestigationId } from '../../types';
+import type { Element, Link, DossierId } from '../../types';
 import type {
   GenealogyData,
   GenealogyImportOptions,
@@ -65,12 +65,12 @@ export async function parseGenealogyFile(
 }
 
 /**
- * Import a genealogy file into an investigation
- * Returns elements and links ready to be added to the investigation
+ * Import a genealogy file into an dossier
+ * Returns elements and links ready to be added to the dossier
  */
 export async function importGenealogyFile(
   file: File,
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   options: Partial<GenealogyImportOptions> = {}
 ): Promise<{
   elements: Partial<Element>[];
@@ -88,7 +88,7 @@ export async function importGenealogyFile(
   // Convert to ZeroNeurone format
   const { elements, links, warnings } = convertToZeroNeurone(
     data,
-    investigationId,
+    dossierId,
     mergedOptions
   );
 

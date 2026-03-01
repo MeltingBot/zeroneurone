@@ -7,11 +7,11 @@ import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/plu
 import type { HomeCardRegistration } from '../../types/plugins';
 
 interface LandingSectionProps {
-  onNewInvestigation: () => void;
+  onNewDossier: () => void;
   onImport: () => void;
   onAbout: () => void;
-  investigationCount: number;
-  onViewInvestigations: () => void;
+  dossierCount: number;
+  onViewDossiers: () => void;
   themeMode: 'light' | 'dark';
   onToggleTheme: () => void;
 }
@@ -19,11 +19,11 @@ interface LandingSectionProps {
 const EXPANDED_KEY = 'zeroneurone:extensions-expanded';
 
 export function LandingSection({
-  onNewInvestigation,
+  onNewDossier,
   onImport,
   onAbout,
-  investigationCount,
-  onViewInvestigations,
+  dossierCount,
+  onViewDossiers,
   themeMode,
   onToggleTheme,
 }: LandingSectionProps) {
@@ -89,7 +89,7 @@ export function LandingSection({
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 mt-8">
-            <Button variant="primary" size="md" onClick={onNewInvestigation} data-testid="new-investigation">
+            <Button variant="primary" size="md" onClick={onNewDossier} data-testid="new-dossier">
               <Plus size={18} />
               {t('home.landing.startNew')}
             </Button>
@@ -99,14 +99,14 @@ export function LandingSection({
             </Button>
           </div>
 
-          {/* Existing investigations link */}
-          {investigationCount > 0 && (
+          {/* Existing dossiers link */}
+          {dossierCount > 0 && (
             <button
-              data-testid="view-investigations-link"
-              onClick={onViewInvestigations}
+              data-testid="view-dossiers-link"
+              onClick={onViewDossiers}
               className="mt-4 text-sm text-accent hover:underline"
             >
-              {t('home.landing.viewExisting', { count: investigationCount })}
+              {t('home.landing.viewExisting', { count: dossierCount })}
             </button>
           )}
         </div>

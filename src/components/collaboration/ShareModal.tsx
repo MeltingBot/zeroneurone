@@ -1,5 +1,5 @@
 /**
- * ShareModal - Modal to share or stop sharing an investigation
+ * ShareModal - Modal to share or stop sharing an dossier
  */
 
 import { useState, useEffect } from 'react';
@@ -8,7 +8,7 @@ import { Copy, Check, Link2, Link2Off, Users, Server, ChevronDown, ChevronUp, Lo
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
-import { useSyncStore, useInvestigationStore } from '../../stores';
+import { useSyncStore, useDossierStore } from '../../stores';
 import { syncService } from '../../services/syncService';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
@@ -22,27 +22,27 @@ interface ShareModalProps {
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const { t } = useTranslation('modals');
   const { mode, share, unshare, localUser, updateLocalUserName } = useSyncStore();
-  const currentInvestigation = useInvestigationStore((state) => state.currentInvestigation);
+  const currentDossier = useDossierStore((state) => state.currentDossier);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   // Rebuild share URL when modal opens if already sharing/connected
   // Works for both host and client (gets key from syncService)
   useEffect(() => {
     const buildUrl = async () => {
-      if (isOpen && mode === 'shared' && currentInvestigation && !shareUrl) {
+      if (isOpen && mode === 'shared' && currentDossier && !shareUrl) {
         const encryptionKey = syncService.getEncryptionKey();
         if (encryptionKey) {
           const url = await syncService.buildShareUrl(
-            currentInvestigation.id,
+            currentDossier.id,
             encryptionKey,
-            currentInvestigation.name
+            currentDossier.name
           );
           setShareUrl(url);
         }
       }
     };
     buildUrl();
-  }, [isOpen, mode, currentInvestigation, shareUrl]);
+  }, [isOpen, mode, currentDossier, shareUrl]);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -76,7 +76,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
 
     setIsLoading(true);
     try {
-      const result = await share(currentInvestigation?.name, asyncEnabled);
+      const result = await share(currentDossier?.name, asyncEnabled);
       setShareUrl(result.shareUrl);
     } catch (error) {
       console.error('Failed to share:', error);

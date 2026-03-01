@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Link2, Network, CircleOff, GitBranch, Copy } from 'lucide-react';
-import { useInvestigationStore, useInsightsStore } from '../../stores';
+import { useDossierStore, useInsightsStore } from '../../stores';
 
 interface StatItemProps {
   icon: React.ReactNode;
@@ -43,7 +43,7 @@ interface StatsOverviewProps {
 
 export function StatsOverview({ onStatClick, activeStat }: StatsOverviewProps) {
   const { t } = useTranslation('common');
-  const { elements, links } = useInvestigationStore();
+  const { elements, links } = useDossierStore();
   const { clusters, isolated, bridges, similarLabels } = useInsightsStore();
 
   const stats = useMemo(() => ({

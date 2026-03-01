@@ -6,7 +6,7 @@ bookCollapseSection: true
 
 # Import / Export
 
-Exchange your data with other tools and save your investigations.
+Exchange your data with other tools and save your dossiers.
 
 - [Export]({{< relref "export" >}}) — ZIP, JSON, CSV, GraphML, GeoJSON, PNG, SVG
 - [Import]({{< relref "import" >}}) — ZIP, JSON, CSV, STIX 2.1

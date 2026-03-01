@@ -7,7 +7,7 @@
     "report": "Звіт",
     "collapsePanel": "Згорнути панель"
   },
-  "investigation": {
+  "dossier": {
     "sections": {
       "information": "Інформація",
       "dates": "Дати",
@@ -35,7 +35,7 @@
       "retentionReset": "Скинути"
     },
     "placeholders": {
-      "name": "Назва розслідування",
+      "name": "Назва справа",
       "creator": "Ім'я автора..."
     }
   },
@@ -466,7 +466,7 @@
     "clickToEditName": "Ви: {{name}} (клацніть для редагування)"
   },
   "report": {
-    "noInvestigation": "Розслідування не завантажено",
+    "noDossier": "Справа не завантажено",
     "noReport": "Немає звіту. Створіть один, щоб почати.",
     "createReport": "Створити звіт",
     "defaultTitle": "Звіт",

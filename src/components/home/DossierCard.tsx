@@ -4,37 +4,37 @@ import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Trash2, Edit2, Download, Star, Tag } from 'lucide-react';
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
 import { formatRelativeTime } from '../../utils';
-import type { Investigation } from '../../types';
-import { investigationRepository, elementRepository, linkRepository, reportRepository, tabRepository } from '../../db/repositories';
+import type { Dossier } from '../../types';
+import { dossierRepository, elementRepository, linkRepository, reportRepository, tabRepository } from '../../db/repositories';
 import { exportService } from '../../services/exportService';
 import { fileService } from '../../services/fileService';
 import { toast } from '../../stores';
 
-interface InvestigationCardProps {
-  investigation: Investigation;
+interface DossierCardProps {
+  dossier: Dossier;
   onDelete: (id: string) => void;
   onRename: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onEditTags: (id: string) => void;
 }
 
-export function InvestigationCard({
-  investigation,
+export function DossierCard({
+  dossier,
   onDelete,
   onRename,
   onToggleFavorite,
   onEditTags,
-}: InvestigationCardProps) {
+}: DossierCardProps) {
   const { t, i18n } = useTranslation('pages');
   const navigate = useNavigate();
   const [stats, setStats] = useState({ elementCount: 0, linkCount: 0 });
 
   useEffect(() => {
-    investigationRepository.getStats(investigation.id).then(setStats);
-  }, [investigation.id]);
+    dossierRepository.getStats(dossier.id).then(setStats);
+  }, [dossier.id]);
 
   const handleOpen = () => {
-    navigate(`/investigation/${investigation.id}`);
+    navigate(`/dossier/${dossier.id}`);
   };
 
   const handleMenuClick = (e: React.MouseEvent) => {
@@ -43,20 +43,20 @@ export function InvestigationCard({
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleFavorite(investigation.id);
+    onToggleFavorite(dossier.id);
   };
 
   const handleExport = async () => {
     try {
-      const elements = await elementRepository.getByInvestigation(investigation.id);
-      const links = await linkRepository.getByInvestigation(investigation.id);
-      const assets = await fileService.getAssetsByInvestigation(investigation.id);
-      const report = await reportRepository.getByInvestigationWithYDoc(investigation.id);
-      const tabs = await tabRepository.getByInvestigation(investigation.id);
-      await exportService.exportInvestigation('zip', investigation, elements, links, assets, report, tabs);
+      const elements = await elementRepository.getByDossier(dossier.id);
+      const links = await linkRepository.getByDossier(dossier.id);
+      const assets = await fileService.getAssetsByDossier(dossier.id);
+      const report = await reportRepository.getByDossierWithYDoc(dossier.id);
+      const tabs = await tabRepository.getByDossier(dossier.id);
+      await exportService.exportDossier('zip', dossier, elements, links, assets, report, tabs);
       toast.success(t('home.card.exportSuccess'));
     } catch (error) {
-      console.error('[InvestigationCard] Export error:', error);
+      console.error('[DossierCard] Export error:', error);
       toast.error(t('home.card.exportError'));
     }
   };
@@ -64,7 +64,7 @@ export function InvestigationCard({
   return (
     <div
       onClick={handleOpen}
-      data-testid={`investigation-card-${investigation.id}`}
+      data-testid={`dossier-card-${dossier.id}`}
       className="
         border border-border-default sketchy-border node-shadow
         hover:bg-bg-secondary hover:node-shadow-hover
@@ -78,23 +78,23 @@ export function InvestigationCard({
       <button
         onClick={handleFavoriteClick}
         className={`absolute top-2 right-2 p-1 rounded transition-colors z-10 ${
-          investigation.isFavorite
+          dossier.isFavorite
             ? 'text-amber-500 hover:text-amber-600'
             : 'text-text-tertiary hover:text-text-secondary'
         }`}
-        title={investigation.isFavorite ? t('home.card.unfavorite') : t('home.card.favorite')}
+        title={dossier.isFavorite ? t('home.card.unfavorite') : t('home.card.favorite')}
       >
-        <Star size={14} fill={investigation.isFavorite ? 'currentColor' : 'none'} />
+        <Star size={14} fill={dossier.isFavorite ? 'currentColor' : 'none'} />
       </button>
 
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 pr-6">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-medium text-text-primary truncate">
-              {investigation.name}
+              {dossier.name}
             </h3>
             <p className="text-xs text-text-secondary mt-1">
-              {t('home.card.modified', { time: formatRelativeTime(investigation.updatedAt, i18n.language) })} •{' '}
+              {t('home.card.modified', { time: formatRelativeTime(dossier.updatedAt, i18n.language) })} •{' '}
               {t('home.card.elementCount', { count: stats.elementCount })}
               {stats.linkCount > 0 && ` • ${t('home.card.linkCount', { count: stats.linkCount })}`}
             </p>
@@ -107,13 +107,13 @@ export function InvestigationCard({
                 </IconButton>
               }
             >
-              <DropdownItem onClick={() => onRename(investigation.id)} data-testid="rename-action">
+              <DropdownItem onClick={() => onRename(dossier.id)} data-testid="rename-action">
                 <span className="flex items-center gap-2">
                   <Edit2 size={14} />
                   {t('home.card.rename')}
                 </span>
               </DropdownItem>
-              <DropdownItem onClick={() => onEditTags(investigation.id)} data-testid="edit-tags-action">
+              <DropdownItem onClick={() => onEditTags(dossier.id)} data-testid="edit-tags-action">
                 <span className="flex items-center gap-2">
                   <Tag size={14} />
                   {t('home.card.editTags')}
@@ -125,7 +125,7 @@ export function InvestigationCard({
                   {t('home.card.exportZip')}
                 </span>
               </DropdownItem>
-              <DropdownItem destructive onClick={() => onDelete(investigation.id)} data-testid="delete-action">
+              <DropdownItem destructive onClick={() => onDelete(dossier.id)} data-testid="delete-action">
                 <span className="flex items-center gap-2">
                   <Trash2 size={14} />
                   {t('home.card.delete')}
@@ -136,9 +136,9 @@ export function InvestigationCard({
         </div>
 
         {/* Tags */}
-        {investigation.tags && investigation.tags.length > 0 && (
+        {dossier.tags && dossier.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {investigation.tags.slice(0, 4).map((tag) => (
+            {dossier.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
                 className="px-1.5 py-0.5 text-[10px] bg-bg-tertiary text-text-secondary rounded border border-border-default"
@@ -146,18 +146,18 @@ export function InvestigationCard({
                 {tag}
               </span>
             ))}
-            {investigation.tags.length > 4 && (
+            {dossier.tags.length > 4 && (
               <span className="px-1.5 py-0.5 text-[10px] bg-bg-tertiary text-text-tertiary rounded border border-border-default">
-                +{investigation.tags.length - 4}
+                +{dossier.tags.length - 4}
               </span>
             )}
           </div>
         )}
 
         {/* Description */}
-        {investigation.description && (
+        {dossier.description && (
           <p className="text-xs text-text-tertiary mt-2 line-clamp-2">
-            {investigation.description}
+            {dossier.description}
           </p>
         )}
       </div>

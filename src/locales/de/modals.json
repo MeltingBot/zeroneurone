@@ -1,40 +1,40 @@
 {
-  "createInvestigation": {
-    "title": "Neue Ermittlung",
-    "namePlaceholder": "Name der Ermittlung",
+  "createDossier": {
+    "title": "Neue Akte",
+    "namePlaceholder": "Name der Akte",
     "descriptionPlaceholder": "Beschreibung (optional)",
-    "create": "Ermittlung erstellen"
+    "create": "Akte erstellen"
   },
   "confirmDelete": {
     "title": "Löschen",
     "message": "Diese Aktion ist unwiderruflich.",
     "confirm": "Löschen",
     "deleting": "Wird gelöscht...",
-    "deleteInvestigation": "Ermittlung löschen",
-    "deleteInvestigationMessage": "\"{{name}}\" löschen? Diese Aktion ist unwiderruflich."
+    "deleteDossier": "Akte löschen",
+    "deleteDossierMessage": "\"{{name}}\" löschen? Diese Aktion ist unwiderruflich."
   },
   "rename": {
     "title": "Umbenennen",
     "rename": "Umbenennen",
     "renaming": "Wird umbenannt...",
     "label": "Name",
-    "renameInvestigation": "Ermittlung umbenennen",
+    "renameDossier": "Akte umbenennen",
     "namePlaceholder": "Neuer Name"
   },
   "importIntoCurrent": {
-    "title": "In Ermittlung importieren",
-    "description": "Daten in die aktuelle Ermittlung importieren. ZIP-Dateien werden im Platzierungsmodus importiert.",
+    "title": "In Akte importieren",
+    "description": "Daten in die aktuelle Akte importieren. ZIP-Dateien werden im Platzierungsmodus importiert.",
     "selectFile": "Datei auswählen",
     "emptyZip": "Die ZIP-Datei ist leer oder enthält keine Elemente"
   },
   "import": {
-    "title": "Ermittlung importieren",
+    "title": "Akte importieren",
     "dropzone": "Datei ablegen oder klicken zum Auswählen",
     "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importieren in",
-    "newInvestigation": "Neue Ermittlung",
+    "newDossier": "Neue Akte",
     "selectFile": "Datei auswählen",
     "importing": "Wird importiert...",
     "success": "Import erfolgreich",
@@ -56,7 +56,7 @@
     "andMore": "... und {{count}} weitere"
   },
   "export": {
-    "title": "Ermittlung exportieren",
+    "title": "Akte exportieren",
     "description": "\"{{name}}\" exportieren ({{elements}} Elemente, {{links}} Verbindungen)",
     "format": "Format",
     "formats": {
@@ -269,7 +269,7 @@
     },
     "content": {
       "title": "Gespeicherte Inhalte",
-      "investigations": "Ermittlungen",
+      "dossiers": "Akten",
       "elements": "Elemente",
       "links": "Verbindungen",
       "files": "Dateien"
@@ -278,11 +278,11 @@
       "title": "Vollständige Sicherung",
       "exportAll": "Alles exportieren",
       "import": "Importieren",
-      "description": "Alle Ermittlungen, Dateien und Tags. Import fügt hinzu, ohne zu ersetzen.",
+      "description": "Alle Akten, Dateien und Tags. Import fügt hinzu, ohne zu ersetzen.",
       "exporting": "Wird exportiert...",
       "importing": "Wird importiert...",
       "exportSuccess": "Export abgeschlossen",
-      "importSuccess": "Import erfolgreich: {{investigations}} Ermittlung(en), {{elements}} Element(e), {{links}} Verbindung(en)",
+      "importSuccess": "Import erfolgreich: {{dossiers}} Akte(n), {{elements}} Element(e), {{links}} Verbindung(en)",
       "error": "Fehler"
     },
     "purge": {
@@ -296,8 +296,8 @@
   "localStorage": {
     "title": "Lokale Datenspeicherung",
     "warning": "Ihre Daten werden lokal gespeichert",
-    "description": "Alle Ermittlungen und Dateien werden im Speicher Ihres Browsers gespeichert (IndexedDB und OPFS).",
-    "recommendation": "<strong class=\"text-text-primary\">Empfehlung:</strong> Exportieren Sie Ihre Ermittlungen regelmäßig über die \"Exportieren\"-Schaltfläche, um eine Sicherung Ihrer Daten zu behalten.",
+    "description": "Alle Akten und Dateien werden im Speicher Ihres Browsers gespeichert (IndexedDB und OPFS).",
+    "recommendation": "<strong class=\"text-text-primary\">Empfehlung:</strong> Exportieren Sie Ihre Akten regelmäßig über die \"Exportieren\"-Schaltfläche, um eine Sicherung Ihrer Daten zu behalten.",
     "acknowledge": "Verstanden",
     "bullets": {
       "deleted": "Daten können <strong class=\"text-text-primary\">gelöscht werden</strong>, wenn Sie den Browser-Cache leeren",
@@ -309,7 +309,7 @@
     "title": "Synthese generieren",
     "reportTitle": "Titel der Zusammenfassung",
     "contentToInclude": "Einzuschließender Inhalt",
-    "includeDescription": "Ermittlungsbeschreibung",
+    "includeDescription": "Aktenbeschreibung",
     "includeSummary": "Statistische Zusammenfassung",
     "includeInsights": "Graphenanalyse (Cluster, Zentralität)",
     "includeTimeline": "Ereignischronologie",
@@ -420,7 +420,7 @@
     "serverPlaceholder": "wss://ihr-server.beispiel.com",
     "save": "Speichern",
     "serverHelp": "Verwenden Sie einen y-websocket-kompatiblen Server. Sie können Ihren eigenen hosten mit",
-    "shareDescription": "Teilen Sie diese Ermittlung für Echtzeit-Zusammenarbeit. Jeder Teilnehmer sieht Änderungen sofort.",
+    "shareDescription": "Teilen Sie diese Akte für Echtzeit-Zusammenarbeit. Jeder Teilnehmer sieht Änderungen sofort.",
     "asyncMode": "Asynchrone Zusammenarbeit",
     "asyncModeHelp": "Ermöglicht Mitarbeitern, zu unterschiedlichen Zeiten zu arbeiten. Änderungen werden 7 Tage auf dem Server gespeichert.",
     "serverRequired": "Konfigurieren Sie zuerst einen Synchronisierungsserver, um das Teilen zu aktivieren.",
@@ -432,8 +432,8 @@
     "stopSharing": "Freigabe beenden",
     "stopping": "Wird beendet..."
   },
-  "investigationTags": {
-    "title": "Ermittlungs-Tags",
+  "dossierTags": {
+    "title": "Akten-Tags",
     "currentTags": "Aktuelle Tags",
     "noTags": "Keine Tags",
     "addTag": "Tag hinzufügen",

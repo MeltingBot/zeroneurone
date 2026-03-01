@@ -61,7 +61,7 @@
     "files": "Files",
     "links": "Links",
     "elements": "Elements",
-    "investigations": "Investigations",
+    "dossiers": "Dossiers",
     "views": "Views",
     "filters": "Filters",
     "insights": "Insights",
@@ -100,7 +100,7 @@
     "noData": "No data",
     "noSelection": "No selection",
     "noItems": "No items",
-    "noInvestigationLoaded": "No investigation loaded.",
+    "noDossierLoaded": "No dossier loaded.",
     "unnamed": "Unnamed"
   },
   "errors": {

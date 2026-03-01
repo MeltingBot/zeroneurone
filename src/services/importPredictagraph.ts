@@ -1,7 +1,7 @@
 import { generateUUID } from '../utils';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type {
-  InvestigationId,
+  DossierId,
   Element,
   ElementId,
   Link,
@@ -110,11 +110,11 @@ const PROPERTY_FIELDS = [
 // ============================================================================
 
 /**
- * Import a PredicaGraph JSON export into an investigation
+ * Import a PredicaGraph JSON export into an dossier
  */
 export async function importPredicaGraph(
   content: string,
-  targetInvestigationId: InvestigationId
+  targetDossierId: DossierId
 ): Promise<ImportResult> {
   const result: ImportResult = {
     success: false,
@@ -207,7 +207,7 @@ export async function importPredicaGraph(
               const ext = blob.type.split('/')[1] || 'png';
               const filename = `${String(label).replace(/[^a-zA-Z0-9]/g, '_')}_pfp.${ext}`;
               const file = new File([blob], filename, { type: blob.type });
-              const asset = await fileService.saveAsset(targetInvestigationId, file);
+              const asset = await fileService.saveAsset(targetDossierId, file);
               assetIds.push(asset.id);
               visualImageId = asset.id;
               downloadedImageCount++;
@@ -262,7 +262,7 @@ export async function importPredicaGraph(
 
       const element: Element = {
         id: newId,
-        investigationId: targetInvestigationId,
+        dossierId: targetDossierId,
         label: String(label),
         notes,
         tags: [tag],
@@ -324,7 +324,7 @@ export async function importPredicaGraph(
 
         const link: Link = {
           id: generateUUID(),
-          investigationId: targetInvestigationId,
+          dossierId: targetDossierId,
           fromId,
           toId,
           sourceHandle: null,
@@ -353,14 +353,14 @@ export async function importPredicaGraph(
       }
     }
 
-    // Update investigation viewport if available
+    // Update dossier viewport if available
     if (data.viewport) {
-      await db.investigations.update(targetInvestigationId, {
+      await db.dossiers.update(targetDossierId, {
         viewport: data.viewport,
         updatedAt: new Date(),
       });
     } else {
-      await db.investigations.update(targetInvestigationId, {
+      await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
     }

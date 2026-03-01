@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useUIStore } from '../../stores/uiStore';
-import { useInvestigationStore } from '../../stores';
+import { useDossierStore } from '../../stores';
 import type { Property, GeoCoordinates } from '../../types';
 
 function formatPropertyValue(prop: Property): string {
@@ -26,8 +26,8 @@ const TYPE_LABELS: Record<string, string> = {
 export function MetadataImportModal() {
   const queue = useUIStore((s) => s.metadataImportQueue);
   const shiftMetadataImport = useUIStore((s) => s.shiftMetadataImport);
-  const updateElement = useInvestigationStore((s) => s.updateElement);
-  const elements = useInvestigationStore((s) => s.elements);
+  const updateElement = useDossierStore((s) => s.updateElement);
+  const elements = useDossierStore((s) => s.elements);
 
   const current = queue[0];
 

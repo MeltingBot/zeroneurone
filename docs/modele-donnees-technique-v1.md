@@ -39,7 +39,7 @@ src/
 │   ├── report/          # Mode rapport
 │   └── common/          # Composants partagés
 ├── stores/              # Zustand stores
-│   ├── investigationStore.ts
+│   ├── dossierStore.ts
 │   ├── selectionStore.ts
 │   ├── viewStore.ts
 │   └── uiStore.ts
@@ -70,7 +70,7 @@ src/
 type UUID = string;
 
 // Types d'identifiants spécifiques (pour la clarté)
-type InvestigationId = UUID;
+type DossierId = UUID;
 type ElementId = UUID;
 type LinkId = UUID;
 type AssetId = UUID;
@@ -131,11 +131,11 @@ type LinkStyle = 'solid' | 'dashed' | 'dotted';
 type Confidence = 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100;
 ```
 
-### 2.3 Investigation (Enquête)
+### 2.3 Dossier (Dossier)
 
 ```typescript
-interface Investigation {
-  id: InvestigationId;
+interface Dossier {
+  id: DossierId;
   name: string;
   description: string;
   
@@ -150,11 +150,11 @@ interface Investigation {
     zoom: number;        // Niveau de zoom
   };
   
-  // Paramètres de l'enquête
-  settings: InvestigationSettings;
+  // Paramètres de l'dossier
+  settings: DossierSettings;
 }
 
-interface InvestigationSettings {
+interface DossierSettings {
   // Apparence par défaut des nouveaux éléments
   defaultElementVisual: Partial<ElementVisual>;
   
@@ -174,7 +174,7 @@ interface InvestigationSettings {
 ```typescript
 interface Element {
   id: ElementId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   
   // Contenu principal
   label: string;
@@ -186,7 +186,7 @@ interface Element {
   // Propriétés libres
   properties: Property[];
   
-  // Métadonnées d'investigation
+  // Métadonnées d'dossier
   confidence: Confidence | null;
   source: string;
   
@@ -230,13 +230,13 @@ const DEFAULT_ELEMENT_VISUAL: ElementVisual = {
 };
 
 function createDefaultElement(
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   label: string,
   position: Position
 ): Element {
   return {
     id: generateUUID(),
-    investigationId,
+    dossierId,
     label,
     notes: '',
     tags: [],
@@ -263,7 +263,7 @@ function createDefaultElement(
 ```typescript
 interface Link {
   id: LinkId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   
   // Connexion
   fromId: ElementId;
@@ -279,7 +279,7 @@ interface Link {
   // Direction
   directed: boolean;              // true = flèche, false = trait simple
   
-  // Métadonnées d'investigation
+  // Métadonnées d'dossier
   confidence: Confidence | null;
   source: string;
   
@@ -306,13 +306,13 @@ const DEFAULT_LINK_VISUAL: LinkVisual = {
 };
 
 function createDefaultLink(
-  investigationId: InvestigationId,
+  dossierId: DossierId,
   fromId: ElementId,
   toId: ElementId
 ): Link {
   return {
     id: generateUUID(),
-    investigationId,
+    dossierId,
     fromId,
     toId,
     label: '',
@@ -335,7 +335,7 @@ function createDefaultLink(
 ```typescript
 interface Asset {
   id: AssetId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   
   // Métadonnées fichier
   filename: string;
@@ -362,7 +362,7 @@ interface Asset {
 ```typescript
 interface View {
   id: ViewId;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   
   name: string;
   
@@ -428,7 +428,7 @@ const DEFAULT_FILTERS: ViewFilters = {
 ```typescript
 interface Report {
   id: UUID;
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   
   title: string;
   
@@ -472,7 +472,7 @@ interface GraphSnapshot {
 interface SearchDocument {
   id: string;                     // ElementId ou LinkId
   type: 'element' | 'link';
-  investigationId: InvestigationId;
+  dossierId: DossierId;
   
   // Champs indexés
   label: string;
@@ -492,8 +492,8 @@ interface SearchDocument {
 ```typescript
 import Dexie, { Table } from 'dexie';
 
-class InvestigationDatabase extends Dexie {
-  investigations!: Table<Investigation, InvestigationId>;
+class DossierDatabase extends Dexie {
+  dossiers!: Table<Dossier, DossierId>;
   elements!: Table<Element, ElementId>;
   links!: Table<Link, LinkId>;
   assets!: Table<Asset, AssetId>;
@@ -501,49 +501,49 @@ class InvestigationDatabase extends Dexie {
   reports!: Table<Report, UUID>;
 
   constructor() {
-    super('InvestigationTool');
+    super('DossierTool');
     
     this.version(1).stores({
-      investigations: 'id, name, createdAt, updatedAt',
+      dossiers: 'id, name, createdAt, updatedAt',
       
-      elements: 'id, investigationId, label, parentGroupId, createdAt, updatedAt, *tags',
+      elements: 'id, dossierId, label, parentGroupId, createdAt, updatedAt, *tags',
       
-      links: 'id, investigationId, fromId, toId, createdAt, updatedAt',
+      links: 'id, dossierId, fromId, toId, createdAt, updatedAt',
       
-      assets: 'id, investigationId, hash, createdAt',
+      assets: 'id, dossierId, hash, createdAt',
       
-      views: 'id, investigationId, name, createdAt',
+      views: 'id, dossierId, name, createdAt',
       
-      reports: 'id, investigationId, createdAt, updatedAt',
+      reports: 'id, dossierId, createdAt, updatedAt',
     });
   }
 }
 
-export const db = new InvestigationDatabase();
+export const db = new DossierDatabase();
 ```
 
 ### 3.2 Index expliqués
 
 | Store | Index | Utilité |
 |-------|-------|---------|
-| investigations | `id` | Clé primaire |
-| investigations | `name` | Recherche par nom |
-| investigations | `createdAt, updatedAt` | Tri chronologique |
+| dossiers | `id` | Clé primaire |
+| dossiers | `name` | Recherche par nom |
+| dossiers | `createdAt, updatedAt` | Tri chronologique |
 | elements | `id` | Clé primaire |
-| elements | `investigationId` | Tous les éléments d'une enquête |
+| elements | `dossierId` | Tous les éléments d'une dossier |
 | elements | `label` | Recherche par label |
 | elements | `parentGroupId` | Enfants d'un groupe |
 | elements | `*tags` | Multi-index sur les tags |
 | links | `id` | Clé primaire |
-| links | `investigationId` | Tous les liens d'une enquête |
+| links | `dossierId` | Tous les liens d'une dossier |
 | links | `fromId, toId` | Liens d'un élément |
 | assets | `id` | Clé primaire |
-| assets | `investigationId` | Assets d'une enquête |
+| assets | `dossierId` | Assets d'une dossier |
 | assets | `hash` | Déduplication |
 | views | `id` | Clé primaire |
-| views | `investigationId` | Vues d'une enquête |
+| views | `dossierId` | Vues d'une dossier |
 | reports | `id` | Clé primaire |
-| reports | `investigationId` | Rapports d'une enquête |
+| reports | `dossierId` | Rapports d'une dossier |
 
 ---
 
@@ -553,8 +553,8 @@ export const db = new InvestigationDatabase();
 
 ```
 root/
-└── investigations/
-    └── {investigationId}/
+└── dossiers/
+    └── {dossierId}/
         └── assets/
             ├── {hash1}.pdf
             ├── {hash2}.jpg
@@ -572,7 +572,7 @@ class FileService {
   }
 
   async saveAsset(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     file: File
   ): Promise<Asset> {
     // 1. Calculer le hash
@@ -582,14 +582,14 @@ class FileService {
 
     // 2. Vérifier si déjà existant (dédup)
     const existing = await db.assets
-      .where({ investigationId, hash })
+      .where({ dossierId, hash })
       .first();
     if (existing) {
       return existing;
     }
 
     // 3. Créer le chemin OPFS
-    const dirHandle = await this.getAssetDirectory(investigationId);
+    const dirHandle = await this.getAssetDirectory(dossierId);
     const extension = this.getExtension(file.name);
     const filename = `${hash}.${extension}`;
     
@@ -608,12 +608,12 @@ class FileService {
     // 7. Créer l'entrée Asset
     const asset: Asset = {
       id: generateUUID(),
-      investigationId,
+      dossierId,
       filename: file.name,
       mimeType: file.type,
       size: file.size,
       hash,
-      opfsPath: `investigations/${investigationId}/assets/${filename}`,
+      opfsPath: `dossiers/${dossierId}/assets/${filename}`,
       thumbnailDataUrl,
       extractedText,
       createdAt: new Date(),
@@ -651,11 +651,11 @@ class FileService {
   }
 
   private async getAssetDirectory(
-    investigationId: InvestigationId
+    dossierId: DossierId
   ): Promise<FileSystemDirectoryHandle> {
-    const investigations = await this.root!.getDirectoryHandle('investigations', { create: true });
-    const investigation = await investigations.getDirectoryHandle(investigationId, { create: true });
-    return investigation.getDirectoryHandle('assets', { create: true });
+    const dossiers = await this.root!.getDirectoryHandle('dossiers', { create: true });
+    const dossier = await dossiers.getDirectoryHandle(dossierId, { create: true });
+    return dossier.getDirectoryHandle('assets', { create: true });
   }
 
   private bufferToHex(buffer: ArrayBuffer): string {
@@ -686,12 +686,12 @@ class FileService {
 
 ## 5. Repositories (CRUD)
 
-### 5.1 Investigation Repository
+### 5.1 Dossier Repository
 
 ```typescript
-class InvestigationRepository {
-  async create(name: string, description: string = ''): Promise<Investigation> {
-    const investigation: Investigation = {
+class DossierRepository {
+  async create(name: string, description: string = ''): Promise<Dossier> {
+    const dossier: Dossier = {
       id: generateUUID(),
       name,
       description,
@@ -706,36 +706,36 @@ class InvestigationRepository {
       },
     };
     
-    await db.investigations.add(investigation);
-    return investigation;
+    await db.dossiers.add(dossier);
+    return dossier;
   }
 
-  async getById(id: InvestigationId): Promise<Investigation | undefined> {
-    return db.investigations.get(id);
+  async getById(id: DossierId): Promise<Dossier | undefined> {
+    return db.dossiers.get(id);
   }
 
-  async getAll(): Promise<Investigation[]> {
-    return db.investigations.orderBy('updatedAt').reverse().toArray();
+  async getAll(): Promise<Dossier[]> {
+    return db.dossiers.orderBy('updatedAt').reverse().toArray();
   }
 
-  async update(id: InvestigationId, changes: Partial<Investigation>): Promise<void> {
-    await db.investigations.update(id, {
+  async update(id: DossierId, changes: Partial<Dossier>): Promise<void> {
+    await db.dossiers.update(id, {
       ...changes,
       updatedAt: new Date(),
     });
   }
 
-  async delete(id: InvestigationId): Promise<void> {
+  async delete(id: DossierId): Promise<void> {
     // Supprimer en cascade
     await db.transaction('rw', 
-      [db.investigations, db.elements, db.links, db.assets, db.views, db.reports],
+      [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports],
       async () => {
-        await db.elements.where({ investigationId: id }).delete();
-        await db.links.where({ investigationId: id }).delete();
-        await db.assets.where({ investigationId: id }).delete();
-        await db.views.where({ investigationId: id }).delete();
-        await db.reports.where({ investigationId: id }).delete();
-        await db.investigations.delete(id);
+        await db.elements.where({ dossierId: id }).delete();
+        await db.links.where({ dossierId: id }).delete();
+        await db.assets.where({ dossierId: id }).delete();
+        await db.views.where({ dossierId: id }).delete();
+        await db.reports.where({ dossierId: id }).delete();
+        await db.dossiers.delete(id);
       }
     );
     
@@ -750,16 +750,16 @@ class InvestigationRepository {
 ```typescript
 class ElementRepository {
   async create(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     label: string,
     position: Position,
     options: Partial<Element> = {}
   ): Promise<Element> {
-    const element = createDefaultElement(investigationId, label, position);
+    const element = createDefaultElement(dossierId, label, position);
     Object.assign(element, options);
     
     await db.elements.add(element);
-    await this.updateInvestigationTimestamp(investigationId);
+    await this.updateDossierTimestamp(dossierId);
     
     return element;
   }
@@ -768,8 +768,8 @@ class ElementRepository {
     return db.elements.get(id);
   }
 
-  async getByInvestigation(investigationId: InvestigationId): Promise<Element[]> {
-    return db.elements.where({ investigationId }).toArray();
+  async getByDossier(dossierId: DossierId): Promise<Element[]> {
+    return db.elements.where({ dossierId }).toArray();
   }
 
   async getByParentGroup(parentGroupId: ElementId): Promise<Element[]> {
@@ -785,7 +785,7 @@ class ElementRepository {
       updatedAt: new Date(),
     });
     
-    await this.updateInvestigationTimestamp(element.investigationId);
+    await this.updateDossierTimestamp(element.dossierId);
   }
 
   async delete(id: ElementId): Promise<void> {
@@ -808,7 +808,7 @@ class ElementRepository {
       await db.elements.delete(id);
     });
     
-    await this.updateInvestigationTimestamp(element.investigationId);
+    await this.updateDossierTimestamp(element.dossierId);
   }
 
   async addToGroup(elementId: ElementId, groupId: ElementId): Promise<void> {
@@ -840,12 +840,12 @@ class ElementRepository {
   }
 
   async createGroup(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     name: string,
     elementIds: ElementId[],
     position: Position
   ): Promise<Element> {
-    const group = await this.create(investigationId, name, position, {
+    const group = await this.create(dossierId, name, position, {
       isGroup: true,
       childIds: elementIds,
     });
@@ -859,8 +859,8 @@ class ElementRepository {
     return group;
   }
 
-  private async updateInvestigationTimestamp(investigationId: InvestigationId): Promise<void> {
-    await db.investigations.update(investigationId, { updatedAt: new Date() });
+  private async updateDossierTimestamp(dossierId: DossierId): Promise<void> {
+    await db.dossiers.update(dossierId, { updatedAt: new Date() });
   }
 }
 ```
@@ -870,16 +870,16 @@ class ElementRepository {
 ```typescript
 class LinkRepository {
   async create(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     fromId: ElementId,
     toId: ElementId,
     options: Partial<Link> = {}
   ): Promise<Link> {
-    const link = createDefaultLink(investigationId, fromId, toId);
+    const link = createDefaultLink(dossierId, fromId, toId);
     Object.assign(link, options);
     
     await db.links.add(link);
-    await this.updateInvestigationTimestamp(investigationId);
+    await this.updateDossierTimestamp(dossierId);
     
     return link;
   }
@@ -888,8 +888,8 @@ class LinkRepository {
     return db.links.get(id);
   }
 
-  async getByInvestigation(investigationId: InvestigationId): Promise<Link[]> {
-    return db.links.where({ investigationId }).toArray();
+  async getByDossier(dossierId: DossierId): Promise<Link[]> {
+    return db.links.where({ dossierId }).toArray();
   }
 
   async getByElement(elementId: ElementId): Promise<Link[]> {
@@ -916,7 +916,7 @@ class LinkRepository {
       updatedAt: new Date(),
     });
     
-    await this.updateInvestigationTimestamp(link.investigationId);
+    await this.updateDossierTimestamp(link.dossierId);
   }
 
   async delete(id: LinkId): Promise<void> {
@@ -924,11 +924,11 @@ class LinkRepository {
     if (!link) return;
     
     await db.links.delete(id);
-    await this.updateInvestigationTimestamp(link.investigationId);
+    await this.updateDossierTimestamp(link.dossierId);
   }
 
-  private async updateInvestigationTimestamp(investigationId: InvestigationId): Promise<void> {
-    await db.investigations.update(investigationId, { updatedAt: new Date() });
+  private async updateDossierTimestamp(dossierId: DossierId): Promise<void> {
+    await db.dossiers.update(dossierId, { updatedAt: new Date() });
   }
 }
 ```
@@ -944,12 +944,12 @@ import MiniSearch from 'minisearch';
 
 class SearchService {
   private index: MiniSearch<SearchDocument>;
-  private investigationId: InvestigationId | null = null;
+  private dossierId: DossierId | null = null;
 
   constructor() {
     this.index = new MiniSearch<SearchDocument>({
       fields: ['label', 'notes', 'tags', 'properties', 'extractedText'],
-      storeFields: ['id', 'type', 'investigationId'],
+      storeFields: ['id', 'type', 'dossierId'],
       searchOptions: {
         boost: { label: 3, tags: 2, notes: 1 },
         fuzzy: 0.2,
@@ -958,19 +958,19 @@ class SearchService {
     });
   }
 
-  async loadInvestigation(investigationId: InvestigationId): Promise<void> {
+  async loadDossier(dossierId: DossierId): Promise<void> {
     this.index.removeAll();
-    this.investigationId = investigationId;
+    this.dossierId = dossierId;
 
     // Indexer les éléments
-    const elements = await db.elements.where({ investigationId }).toArray();
-    const assets = await db.assets.where({ investigationId }).toArray();
+    const elements = await db.elements.where({ dossierId }).toArray();
+    const assets = await db.assets.where({ dossierId }).toArray();
     const assetTextMap = new Map(assets.map(a => [a.id, a.extractedText || '']));
 
     const elementDocs: SearchDocument[] = elements.map(el => ({
       id: el.id,
       type: 'element',
-      investigationId,
+      dossierId,
       label: el.label,
       notes: el.notes,
       tags: el.tags.join(' '),
@@ -979,11 +979,11 @@ class SearchService {
     }));
 
     // Indexer les liens
-    const links = await db.links.where({ investigationId }).toArray();
+    const links = await db.links.where({ dossierId }).toArray();
     const linkDocs: SearchDocument[] = links.map(link => ({
       id: link.id,
       type: 'link',
-      investigationId,
+      dossierId,
       label: link.label,
       notes: link.notes,
       tags: '',
@@ -1013,7 +1013,7 @@ class SearchService {
     const doc: SearchDocument = {
       id: element.id,
       type: 'element',
-      investigationId: element.investigationId,
+      dossierId: element.dossierId,
       label: element.label,
       notes: element.notes,
       tags: element.tags.join(' '),
@@ -1057,14 +1057,14 @@ import { bidirectional } from 'graphology-shortest-path';
 
 class InsightsService {
   private graph: Graph | null = null;
-  private investigationId: InvestigationId | null = null;
+  private dossierId: DossierId | null = null;
 
-  async loadInvestigation(investigationId: InvestigationId): Promise<void> {
-    this.investigationId = investigationId;
+  async loadDossier(dossierId: DossierId): Promise<void> {
+    this.dossierId = dossierId;
     this.graph = new Graph({ multi: true, allowSelfLoops: false });
 
-    const elements = await db.elements.where({ investigationId }).toArray();
-    const links = await db.links.where({ investigationId }).toArray();
+    const elements = await db.elements.where({ dossierId }).toArray();
+    const links = await db.links.where({ dossierId }).toArray();
 
     // Ajouter les nœuds (exclure ceux dans un groupe fermé)
     for (const el of elements) {
@@ -1265,24 +1265,24 @@ interface SimilarPair {
 import JSZip from 'jszip';
 
 class ExportService {
-  async exportInvestigation(investigationId: InvestigationId): Promise<Blob> {
+  async exportDossier(dossierId: DossierId): Promise<Blob> {
     const zip = new JSZip();
     
     // Récupérer toutes les données
-    const investigation = await db.investigations.get(investigationId);
-    const elements = await db.elements.where({ investigationId }).toArray();
-    const links = await db.links.where({ investigationId }).toArray();
-    const views = await db.views.where({ investigationId }).toArray();
-    const reports = await db.reports.where({ investigationId }).toArray();
-    const assets = await db.assets.where({ investigationId }).toArray();
+    const dossier = await db.dossiers.get(dossierId);
+    const elements = await db.elements.where({ dossierId }).toArray();
+    const links = await db.links.where({ dossierId }).toArray();
+    const views = await db.views.where({ dossierId }).toArray();
+    const reports = await db.reports.where({ dossierId }).toArray();
+    const assets = await db.assets.where({ dossierId }).toArray();
     
     // Manifest
     const manifest = {
       version: '1.0.0',
       exportedAt: new Date().toISOString(),
-      investigation: {
-        id: investigation!.id,
-        name: investigation!.name,
+      dossier: {
+        id: dossier!.id,
+        name: dossier!.name,
       },
       counts: {
         elements: elements.length,
@@ -1293,7 +1293,7 @@ class ExportService {
     };
     
     zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-    zip.file('investigation.json', JSON.stringify(investigation, null, 2));
+    zip.file('dossier.json', JSON.stringify(dossier, null, 2));
     zip.file('elements.json', JSON.stringify(elements, null, 2));
     zip.file('links.json', JSON.stringify(links, null, 2));
     zip.file('views.json', JSON.stringify(views, null, 2));
@@ -1314,8 +1314,8 @@ class ExportService {
     return zip.generateAsync({ type: 'blob' });
   }
 
-  async exportAsGeoJSON(investigationId: InvestigationId): Promise<string> {
-    const elements = await db.elements.where({ investigationId }).toArray();
+  async exportAsGeoJSON(dossierId: DossierId): Promise<string> {
+    const elements = await db.elements.where({ dossierId }).toArray();
     
     const features = elements
       .filter(el => el.geo !== null)
@@ -1339,8 +1339,8 @@ class ExportService {
     }, null, 2);
   }
 
-  async exportAsCSV(investigationId: InvestigationId): Promise<string> {
-    const elements = await db.elements.where({ investigationId }).toArray();
+  async exportAsCSV(dossierId: DossierId): Promise<string> {
+    const elements = await db.elements.where({ dossierId }).toArray();
     
     // Collecter toutes les clés de propriétés
     const allPropertyKeys = new Set<string>();
@@ -1378,7 +1378,7 @@ class ExportService {
 
 ```typescript
 class ImportService {
-  async importInvestigation(file: File): Promise<InvestigationId> {
+  async importDossier(file: File): Promise<DossierId> {
     const zip = await JSZip.loadAsync(file);
     
     // Lire le manifest
@@ -1393,7 +1393,7 @@ class ImportService {
     }
     
     // Lire les données
-    const investigation = JSON.parse(await zip.file('investigation.json')!.async('string'));
+    const dossier = JSON.parse(await zip.file('dossier.json')!.async('string'));
     const elements = JSON.parse(await zip.file('elements.json')!.async('string'));
     const links = JSON.parse(await zip.file('links.json')!.async('string'));
     const views = JSON.parse(await zip.file('views.json')!.async('string'));
@@ -1401,9 +1401,9 @@ class ImportService {
     const assetsMeta = JSON.parse(await zip.file('assets.json')!.async('string'));
     
     // Générer un nouvel ID pour éviter les conflits
-    const newInvestigationId = generateUUID();
+    const newDossierId = generateUUID();
     const idMap = new Map<string, string>();
-    idMap.set(investigation.id, newInvestigationId);
+    idMap.set(dossier.id, newDossierId);
     
     // Mapper tous les IDs
     for (const el of elements) {
@@ -1431,14 +1431,14 @@ class ImportService {
     }
     
     // Transformer et insérer
-    investigation.id = newInvestigationId;
-    investigation.createdAt = new Date(investigation.createdAt);
-    investigation.updatedAt = new Date();
+    dossier.id = newDossierId;
+    dossier.createdAt = new Date(dossier.createdAt);
+    dossier.updatedAt = new Date();
     
     const transformedElements = elements.map((el: any) => ({
       ...el,
       id: idMap.get(el.id),
-      investigationId: newInvestigationId,
+      dossierId: newDossierId,
       parentGroupId: el.parentGroupId ? idMap.get(el.parentGroupId) : null,
       childIds: el.childIds.map((id: string) => idMap.get(id)),
       assetIds: el.assetIds.map((id: string) => idMap.get(id)),
@@ -1454,7 +1454,7 @@ class ImportService {
     const transformedLinks = links.map((link: any) => ({
       ...link,
       id: idMap.get(link.id),
-      investigationId: newInvestigationId,
+      dossierId: newDossierId,
       fromId: idMap.get(link.fromId),
       toId: idMap.get(link.toId),
       createdAt: new Date(link.createdAt),
@@ -1468,20 +1468,20 @@ class ImportService {
     
     // Insérer en base
     await db.transaction('rw', 
-      [db.investigations, db.elements, db.links, db.views, db.reports, db.assets],
+      [db.dossiers, db.elements, db.links, db.views, db.reports, db.assets],
       async () => {
-        await db.investigations.add(investigation);
+        await db.dossiers.add(dossier);
         await db.elements.bulkAdd(transformedElements);
         await db.links.bulkAdd(transformedLinks);
         // ... views, reports, assets
       }
     );
     
-    return newInvestigationId;
+    return newDossierId;
   }
 
   async importCSV(
-    investigationId: InvestigationId,
+    dossierId: DossierId,
     file: File,
     mapping: CSVMapping
   ): Promise<ElementId[]> {
@@ -1524,7 +1524,7 @@ class ImportService {
       };
       
       const element = await new ElementRepository().create(
-        investigationId,
+        dossierId,
         label,
         position,
         { properties, tags }
@@ -1639,23 +1639,23 @@ function getRandomColor(): string {
 Dexie gère les migrations via les versions. Chaque changement de schéma incrémente la version.
 
 ```typescript
-class InvestigationDatabase extends Dexie {
+class DossierDatabase extends Dexie {
   constructor() {
-    super('InvestigationTool');
+    super('DossierTool');
     
     // Version 1 - Initial
     this.version(1).stores({
-      investigations: 'id, name, createdAt, updatedAt',
-      elements: 'id, investigationId, label, parentGroupId, *tags',
-      links: 'id, investigationId, fromId, toId',
-      assets: 'id, investigationId, hash',
-      views: 'id, investigationId, name',
-      reports: 'id, investigationId',
+      dossiers: 'id, name, createdAt, updatedAt',
+      elements: 'id, dossierId, label, parentGroupId, *tags',
+      links: 'id, dossierId, fromId, toId',
+      assets: 'id, dossierId, hash',
+      views: 'id, dossierId, name',
+      reports: 'id, dossierId',
     });
     
     // Version 2 - Exemple d'ajout d'index
     // this.version(2).stores({
-    //   elements: 'id, investigationId, label, parentGroupId, *tags, confidence',
+    //   elements: 'id, dossierId, label, parentGroupId, *tags, confidence',
     // });
     
     // Version 3 - Exemple de migration de données

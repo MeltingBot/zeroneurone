@@ -2,7 +2,7 @@
   "home": {
     "title": "ZeroNeurone",
     "backToHome": "Zurück zur Startseite",
-    "newInvestigation": "Neue Ermittlung",
+    "newDossier": "Neue Akte",
     "manageTags": "Tags verwalten",
     "import": "Importieren",
     "about": "Über",
@@ -10,10 +10,10 @@
     "storage": "Speicher",
     "darkMode": "Dunkler Modus",
     "lightMode": "Heller Modus",
-    "noInvestigations": "Keine Ermittlungen",
-    "createFirst": "Erstellen Sie Ihre erste Ermittlung, um zu beginnen",
-    "viewInvestigations": "Ermittlungen anzeigen",
-    "investigationCount": "{{count}} Ermittlung(en)",
+    "noDossiers": "Keine Akten",
+    "createFirst": "Erstellen Sie Ihre erste Akte, um zu beginnen",
+    "viewDossiers": "Akten anzeigen",
+    "dossierCount": "{{count}} Akte(n)",
     "loading": "Wird geladen...",
     "searchPlaceholder": "Nach Name oder Beschreibung suchen...",
     "filterByTag": "Nach Tag filtern",
@@ -22,9 +22,9 @@
     "sortName": "Name",
     "activeFilters": "Aktive Filter",
     "clearFilters": "Löschen",
-    "noResults": "Keine Ermittlungen gefunden",
+    "noResults": "Keine Akten gefunden",
     "noResultsHint": "Versuchen Sie andere Begriffe oder löschen Sie die Filter",
-    "resultsCount": "{{count}} / {{total}} Ermittlung(en)",
+    "resultsCount": "{{count}} / {{total}} Akte(n)",
     "card": {
       "modified": "Geändert {{time}}",
       "elementCount": "{{count}} Element(e)",
@@ -41,9 +41,9 @@
     "landing": {
       "subtitle": "Whiteboard für Analysten und Ermittler",
       "description": "Ein Open-Source-Tool zur kognitiven Verstärkung, das die Einfachheit eines Whiteboards mit der Leistung der Graphenanalyse kombiniert. Kartieren Sie Ihre Ideen, geolokalisieren Sie Ihre Elemente, visualisieren Sie Ereignisse, verbinden Sie Hinweise und enthüllen Sie versteckte Muster.",
-      "startNew": "Neue Ermittlung",
+      "startNew": "Neue Akte",
       "importExisting": "Importieren",
-      "viewExisting": "Meine {{count}} Ermittlung(en) anzeigen",
+      "viewExisting": "Meine {{count}} Akte(n) anzeigen",
       "features": {
         "graph": {
           "title": "Beziehungsgraph",
@@ -67,7 +67,7 @@
         },
         "collab": {
           "title": "Sichere Echtzeit-Zusammenarbeit",
-          "description": "Arbeiten Sie gemeinsam an derselben Ermittlung"
+          "description": "Arbeiten Sie gemeinsam an derselben Akte"
         }
       },
       "extensions": "Erweiterungen",
@@ -76,7 +76,7 @@
       "disablePlugin": "Erweiterung deaktivieren"
     }
   },
-  "investigation": {
+  "dossier": {
     "loading": {
       "opening": "Wird geöffnet",
       "syncing": "Wird synchronisiert",
@@ -222,7 +222,7 @@
       "exportSuccess": "Export abgeschlossen",
       "exportError": "Fehler beim Export"
     },
-    "notFound": "Ermittlung nicht gefunden",
+    "notFound": "Akte nicht gefunden",
     "header": {
       "report": "Zusammenfassung",
       "generateReport": "Synthese",
@@ -258,9 +258,9 @@
       "navigateTo": "Zu Tab {{name}} wechseln"
     },
     "retentionExpiredBanner": "Aufbewahrung abgelaufen seit {{days}} Tag(en)",
-    "retentionDeleteConfirm": "Diese Ermittlung wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "retentionDeleteConfirm": "Diese Akte wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
     "retentionDeleteAction": "Endgültig löschen",
-    "retentionReadonly": "Ermittlung ist schreibgeschützt (Aufbewahrung abgelaufen)",
+    "retentionReadonly": "Akte ist schreibgeschützt (Aufbewahrung abgelaufen)",
     "retentionRedactConfirm": "Die Schwärzung löscht dauerhaft alle Textinhalte (Namen, Notizen, Eigenschaften). Die Graphstruktur bleibt erhalten. Diese Aktion ist unwiderruflich.",
     "retentionRedactAction": "Endgültig schwärzen"
   },

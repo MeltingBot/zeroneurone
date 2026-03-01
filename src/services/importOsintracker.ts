@@ -1,11 +1,11 @@
 /**
  * OSINTracker Import Service
  *
- * Imports investigations from OSINTracker (.osintracker) files
- * Format: Dexie JSON export with data, relation, and investigation tables
+ * Imports dossiers from OSINTracker (.osintracker) files
+ * Format: Dexie JSON export with data, relation, and dossier tables
  */
 
-import type { Element, Link, Investigation, Confidence } from '../types';
+import type { Element, Link, Dossier, Confidence } from '../types';
 
 // ============================================================================
 // TYPE MAPPING DEFINITIONS (minimal structure for import)
@@ -85,7 +85,7 @@ interface OsintrackerData {
 
 interface OsintrackerElement {
   id: string;
-  investigationId: string;
+  dossierId: string;
   value: string;
   typeId: string;
   position: { x: number; y: number };
@@ -101,7 +101,7 @@ interface OsintrackerElement {
 
 interface OsintrackerRelation {
   id: string;
-  investigationId: string;
+  dossierId: string;
   originId: string;
   targetId: string;
   label?: string;
@@ -116,7 +116,7 @@ interface OsintrackerRelation {
   creationDate: number;
 }
 
-interface OsintrackerInvestigation {
+interface OsintrackerDossier {
   id: string;
   name: string;
   description?: string;
@@ -129,9 +129,9 @@ interface OsintrackerInvestigation {
 // ============================================================================
 
 export interface OsintrackerImportResult {
-  investigation: Omit<Investigation, 'id'> & { originalId: string };
-  elements: Array<Omit<Element, 'id' | 'investigationId'> & { originalId: string }>;
-  links: Array<Omit<Link, 'id' | 'investigationId' | 'fromId' | 'toId'> & {
+  dossier: Omit<Dossier, 'id'> & { originalId: string };
+  elements: Array<Omit<Element, 'id' | 'dossierId'> & { originalId: string }>;
+  links: Array<Omit<Link, 'id' | 'dossierId' | 'fromId' | 'toId'> & {
     originalId: string;
     originalFromId: string;
     originalToId: string;
@@ -176,33 +176,33 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
 
   const osintElements = (tables['data'] || []) as OsintrackerElement[];
   const osintRelations = (tables['relation'] || []) as OsintrackerRelation[];
-  const osintInvestigations = (tables['investigation'] || []) as OsintrackerInvestigation[];
+  const osintDossiers = (tables['dossier'] || []) as OsintrackerDossier[];
 
-  // Get the investigation (use first one if multiple)
-  const osintInvestigation = osintInvestigations[0];
-  if (!osintInvestigation) {
-    throw new Error('No investigation found in OSINTracker file');
+  // Get the dossier (use first one if multiple)
+  const osintDossier = osintDossiers[0];
+  if (!osintDossier) {
+    throw new Error('No dossier found in OSINTracker file');
   }
 
-  // Filter elements and relations for this investigation
-  const investigationId = osintInvestigation.id;
-  const filteredElements = osintElements.filter(e => e.investigationId === investigationId);
-  const filteredRelations = osintRelations.filter(r => r.investigationId === investigationId);
+  // Filter elements and relations for this dossier
+  const dossierId = osintDossier.id;
+  const filteredElements = osintElements.filter(e => e.dossierId === dossierId);
+  const filteredRelations = osintRelations.filter(r => r.dossierId === dossierId);
 
   // Track valid element IDs for link validation
   const validElementIds = new Set(filteredElements.map(e => e.id));
 
-  // Convert investigation
-  const investigation: OsintrackerImportResult['investigation'] = {
-    originalId: osintInvestigation.id,
-    name: osintInvestigation.name || 'Investigation importée',
-    description: osintInvestigation.description || '',
+  // Convert dossier
+  const dossier: OsintrackerImportResult['dossier'] = {
+    originalId: osintDossier.id,
+    name: osintDossier.name || 'Dossier importée',
+    description: osintDossier.description || '',
     startDate: null,
     creator: '',
     tags: [],
     properties: [],
-    createdAt: new Date(osintInvestigation.creationDate),
-    updatedAt: new Date(osintInvestigation.editionDate || osintInvestigation.creationDate),
+    createdAt: new Date(osintDossier.creationDate),
+    updatedAt: new Date(osintDossier.editionDate || osintDossier.creationDate),
     viewport: { x: 0, y: 0, zoom: 1 },
     settings: {
       defaultElementVisual: {},
@@ -413,7 +413,7 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   }
 
   return {
-    investigation,
+    dossier,
     elements,
     links,
     assets,

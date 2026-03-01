@@ -5,7 +5,7 @@ weight: 8
 
 # Matrix View
 
-Display all investigation elements in a sortable, filterable spreadsheet.
+Display all dossier elements in a sortable, filterable spreadsheet.
 
 ---
 
@@ -74,7 +74,7 @@ Selected rows are highlighted. Use **Ctrl+C** to copy selected rows as tab-separ
 Click the **download icon** in the toolbar to export the current view as CSV.
 
 - Respects active column visibility, sort order, and filters
-- File name: `investigation-name_matrice_ddMMyyyyHHmmss.csv`
+- File name: `dossier-name_matrice_ddMMyyyyHHmmss.csv`
 - UTF-8 encoding with BOM for Excel compatibility
 
 ---
