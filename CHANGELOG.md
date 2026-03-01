@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.20.6
+
+### Fixes
+- PDF thumbnails: add `.mjs` to service worker precache patterns, fixing pdf.js worker loading in production
+
 ## 2.20.5
 
 ### Fixes

@@ -70,7 +70,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}'],
         navigateFallbackDenylist: [/^\/version\.json$/, /^\/plugins\//],
         // Exclude version.json and plugins from SW precache (always fetched fresh)
         globIgnores: ['version.json', 'plugins/**'],

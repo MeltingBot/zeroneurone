@@ -1,5 +1,4 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { db } from '../db/database';
 import { generateUUID, bufferToHex, getExtension } from '../utils';
 import type { Asset, AssetId, DossierId } from '../types';
@@ -7,6 +6,7 @@ import { useEncryptionStore } from '../stores/encryptionStore';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
 
 // Configure pdf.js worker
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // ============================================================================
