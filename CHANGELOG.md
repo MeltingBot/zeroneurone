@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.20.4
+
+### Fixes
+- StorageModal: refresh dossier list after backup import (`onDataChanged` callback)
+
+### Improvements
+- Landing page: add Storage and Encryption buttons in footer (remove fixed bottom-right button)
+- StorageModal: add "Purge all dossiers" with CSS-based double confirmation and app reload
+- i18n: add `encryption` label for all 11 languages
+
 ## 2.20.3
 
 ### Fixes

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, icons } from 'lucide-react';
+import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
@@ -10,6 +10,9 @@ interface LandingSectionProps {
   onNewDossier: () => void;
   onImport: () => void;
   onAbout: () => void;
+  onStorage: () => void;
+  onEncryption: () => void;
+  isEncryptionEnabled: boolean;
   dossierCount: number;
   onViewDossiers: () => void;
   themeMode: 'light' | 'dark';
@@ -22,6 +25,9 @@ export function LandingSection({
   onNewDossier,
   onImport,
   onAbout,
+  onStorage,
+  onEncryption,
+  isEncryptionEnabled,
   dossierCount,
   onViewDossiers,
   themeMode,
@@ -246,6 +252,20 @@ export function LandingSection({
           {homePlugins.map((Plugin, i) => (
             <Plugin key={i} context="landing" />
           ))}
+          <button
+            onClick={onEncryption}
+            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            <Lock size={14} className={isEncryptionEnabled ? 'text-success' : undefined} />
+            {t('home.encryption')}
+          </button>
+          <button
+            onClick={onStorage}
+            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            <HardDrive size={14} />
+            {t('home.storage')}
+          </button>
           <button
             onClick={onToggleTheme}
             className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"

@@ -507,3 +507,41 @@ export async function purgeYjsDatabases(): Promise<{ deleted: number; errors: st
 
   return result;
 }
+
+/**
+ * Delete ALL dossiers and associated data (elements, links, assets, views,
+ * reports, canvasTabs, pluginData) + purge all Y.js databases.
+ * TagSets and _encryptionMeta are preserved.
+ */
+export async function purgeAllDossiers(): Promise<void> {
+  // Clear all Dexie tables except tagSets and _encryptionMeta
+  await db.transaction('rw',
+    [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports, db.canvasTabs, db.pluginData],
+    async () => {
+      await Promise.all([
+        db.dossiers.clear(),
+        db.elements.clear(),
+        db.links.clear(),
+        db.assets.clear(),
+        db.views.clear(),
+        db.reports.clear(),
+        db.canvasTabs.clear(),
+        db.pluginData.clear(),
+      ]);
+    }
+  );
+
+  // Purge OPFS files
+  try {
+    const root = await navigator.storage.getDirectory();
+    const assetsDir = await root.getDirectoryHandle('assets', { create: false }).catch(() => null);
+    if (assetsDir) {
+      await root.removeEntry('assets', { recursive: true });
+    }
+  } catch {
+    // OPFS not available or empty
+  }
+
+  // Purge Y.js databases
+  await purgeYjsDatabases();
+}

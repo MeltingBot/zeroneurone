@@ -287,6 +287,9 @@ export function HomePage() {
           onNewDossier={handleOpenCreateModal}
           onImport={() => setIsImportModalOpen(true)}
           onAbout={() => setIsAboutModalOpen(true)}
+          onStorage={() => setIsStorageModalOpen(true)}
+          onEncryption={() => setIsEncryptionModalOpen(true)}
+          isEncryptionEnabled={isEncryptionEnabled}
           dossierCount={dossiers.length}
           onViewDossiers={() => setViewMode('list')}
           themeMode={themeMode}
@@ -518,19 +521,8 @@ export function HomePage() {
       <StorageModal
         isOpen={isStorageModalOpen}
         onClose={() => setIsStorageModalOpen(false)}
+        onDataChanged={loadDossiers}
       />
-
-      {/* Encryption button accessible from landing view (list view has it in the header) */}
-      {viewMode === 'landing' && (
-        <button
-          data-testid="encryption-settings-button"
-          onClick={() => setIsEncryptionModalOpen(true)}
-          title={isEncryptionEnabled ? 'Chiffrement actif' : 'Chiffrement inactif'}
-          className="fixed bottom-4 right-4 p-2 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors z-10"
-        >
-          <Lock size={14} className={isEncryptionEnabled ? 'text-success' : undefined} />
-        </button>
-      )}
 
       <EncryptionModal
         isOpen={isEncryptionModalOpen}

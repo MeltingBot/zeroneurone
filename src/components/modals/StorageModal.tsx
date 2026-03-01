@@ -22,6 +22,7 @@ import {
   getDetailedStorageInfo,
   requestPersistentStorage,
   purgeYjsDatabases,
+  purgeAllDossiers,
   type StorageInfo,
 } from '../../db/database';
 import { backupService } from '../../services/backupService';
@@ -29,6 +30,7 @@ import { backupService } from '../../services/backupService';
 interface StorageModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onDataChanged?: () => void;
 }
 
 function formatBytes(bytes: number, locale: string): string {
@@ -39,7 +41,7 @@ function formatBytes(bytes: number, locale: string): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-export function StorageModal({ isOpen, onClose }: StorageModalProps) {
+export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalProps) {
   const { t, i18n } = useTranslation('modals');
   const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,8 +50,11 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [isPurgingAll, setIsPurgingAll] = useState(false);
+  const [purgeAllStep, setPurgeAllStep] = useState<'idle' | 'confirm1' | 'confirm2'>('idle');
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const [purgeMessage, setPurgeMessage] = useState<string | null>(null);
+  const [purgeAllMessage, setPurgeAllMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadStorageInfo = useCallback(async () => {
@@ -122,6 +127,7 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
           })
         );
         await loadStorageInfo();
+        onDataChanged?.();
       } else {
         setBackupMessage(result.errors.join(', ') || t('storage.backup.error'));
       }
@@ -157,6 +163,21 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
       setPurgeMessage(t('storage.purge.error'));
     } finally {
       setIsPurging(false);
+    }
+  };
+
+  const handlePurgeAllExecute = async () => {
+    setPurgeAllStep('idle');
+    setIsPurgingAll(true);
+    setPurgeAllMessage(null);
+    try {
+      await purgeAllDossiers();
+      // Reload app to clear all in-memory state (Zustand, Y.Doc, etc.)
+      window.location.replace('/');
+    } catch (error) {
+      console.error('Purge all failed:', error);
+      setPurgeAllMessage(t('storage.purgeAll.error'));
+      setIsPurgingAll(false);
     }
   };
 
@@ -429,6 +450,79 @@ export function StorageModal({ isOpen, onClose }: StorageModalProps) {
               <p className="mt-2 text-[10px] text-text-tertiary">
                 {t('storage.backup.description')}
               </p>
+            </div>
+
+            {/* Danger zone: purge all dossiers */}
+            <div className="p-3 bg-bg-secondary rounded border border-error/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Trash2 size={14} className="text-error" />
+                <span className="text-xs font-medium text-text-primary">
+                  {t('storage.purgeAll.title')}
+                </span>
+              </div>
+              <p className="text-[10px] text-text-tertiary mb-2">
+                {t('storage.purgeAll.description')}
+              </p>
+
+              {purgeAllStep === 'idle' && (
+                <button
+                  onClick={() => setPurgeAllStep('confirm1')}
+                  disabled={isPurgingAll}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-error border border-error/30 rounded hover:bg-error/10 disabled:opacity-50"
+                >
+                  {isPurgingAll ? (
+                    <RefreshCw size={12} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={12} />
+                  )}
+                  {t('storage.purgeAll.button')}
+                </button>
+              )}
+
+              {purgeAllStep === 'confirm1' && (
+                <div className="p-2 border border-error/30 rounded bg-error/5 space-y-2">
+                  <p className="text-xs text-error font-medium">{t('storage.purgeAll.confirm')}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setPurgeAllStep('confirm2')}
+                      className="px-2 py-1 text-xs text-white bg-error rounded hover:bg-error/90"
+                    >
+                      {t('common:actions.continue')}
+                    </button>
+                    <button
+                      onClick={() => setPurgeAllStep('idle')}
+                      className="px-2 py-1 text-xs text-text-secondary border border-border-default rounded hover:bg-bg-tertiary"
+                    >
+                      {t('common:actions.cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {purgeAllStep === 'confirm2' && (
+                <div className="p-2 border border-error rounded bg-error/10 space-y-2">
+                  <p className="text-xs text-error font-bold">{t('storage.purgeAll.confirmAgain')}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handlePurgeAllExecute}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-white bg-error rounded hover:bg-error/90"
+                    >
+                      <Trash2 size={12} />
+                      {t('storage.purgeAll.button')}
+                    </button>
+                    <button
+                      onClick={() => setPurgeAllStep('idle')}
+                      className="px-2 py-1 text-xs text-text-secondary border border-border-default rounded hover:bg-bg-tertiary"
+                    >
+                      {t('common:actions.cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {purgeAllMessage && (
+                <p className="mt-1 text-[10px] text-text-tertiary">{purgeAllMessage}</p>
+              )}
             </div>
 
             {/* Refresh button */}

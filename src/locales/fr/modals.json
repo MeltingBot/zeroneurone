@@ -291,6 +291,15 @@
       "success": "{{count}} base(s) supprimée(s)",
       "successWithErrors": "{{deleted}} base(s) supprimée(s), {{errors}} erreur(s)",
       "error": "Erreur lors de la purge"
+    },
+    "purgeAll": {
+      "title": "Supprimer tous les dossiers",
+      "description": "Supprime tous les dossiers, éléments, liens, fichiers et historique. Les jeux de tags et le chiffrement sont conservés. Action irréversible.",
+      "button": "Tout supprimer",
+      "confirm": "Supprimer TOUS les dossiers et leurs données ?\n\nCette action est irréversible.",
+      "confirmAgain": "Dernière confirmation : toutes les données seront perdues. Continuer ?",
+      "success": "Tous les dossiers ont été supprimés.",
+      "error": "Erreur lors de la suppression"
     }
   },
   "localStorage": {

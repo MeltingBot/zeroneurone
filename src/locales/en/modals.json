@@ -291,6 +291,15 @@
       "success": "{{count}} database(s) deleted",
       "successWithErrors": "{{deleted}} database(s) deleted, {{errors}} error(s)",
       "error": "Purge error"
+    },
+    "purgeAll": {
+      "title": "Delete all dossiers",
+      "description": "Deletes all dossiers, elements, links, files and history. Tag sets and encryption are preserved. Irreversible.",
+      "button": "Delete all",
+      "confirm": "Delete ALL dossiers and their data?\n\nThis action is irreversible.",
+      "confirmAgain": "Final confirmation: all data will be lost. Continue?",
+      "success": "All dossiers have been deleted.",
+      "error": "Deletion error"
     }
   },
   "localStorage": {
