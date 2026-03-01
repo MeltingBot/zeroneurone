@@ -23,7 +23,27 @@ if (!(globalThis as any).process) {
 }
 
 // ─── Stores ────────────────────────────────────────────────────
-import { useDossierStore } from '../stores/dossierStore';
+import { useDossierStore as _useDossierStore } from '../stores/dossierStore';
+
+// Wrap useDossierStore to add legacy aliases for plugins (investigation → dossier)
+const useDossierStore = Object.assign(
+  (selector?: any) => {
+    const state: any = selector ? _useDossierStore(selector) : _useDossierStore();
+    if (!selector && state && typeof state === 'object') {
+      return { ...state, currentInvestigation: state.currentDossier };
+    }
+    return state;
+  },
+  {
+    getState: () => {
+      const state: any = _useDossierStore.getState();
+      return { ...state, currentInvestigation: state.currentDossier };
+    },
+    setState: _useDossierStore.setState,
+    subscribe: _useDossierStore.subscribe,
+    destroy: (_useDossierStore as any).destroy,
+  }
+) as any;
 import { useSelectionStore } from '../stores/selectionStore';
 import { useViewStore } from '../stores/viewStore';
 import { useReportStore } from '../stores/reportStore';
@@ -82,6 +102,7 @@ export const pluginAPI = {
   // ─── Zustand stores ─────────────────────────────────────────
   stores: {
     useDossierStore,
+    useInvestigationStore: useDossierStore, // legacy alias for plugins
     useSelectionStore,
     useViewStore,
     useReportStore,
@@ -93,6 +114,7 @@ export const pluginAPI = {
     elementRepository,
     linkRepository,
     dossierRepository,
+    investigationRepository: dossierRepository, // legacy alias for plugins
   },
 
   // ─── Dexie database instance ────────────────────────────────
