@@ -1,5 +1,5 @@
 import * as Y from 'yjs';
-import { IndexeddbPersistence } from 'y-indexeddb';
+import { EncryptedIndexeddbPersistence } from '../../services/encryption/encryptedIndexeddbPersistence';
 import { db } from '../database';
 import { generateUUID } from '../../utils';
 import type { Report, ReportSection, DossierId, UUID, ReportSectionId } from '../../types';
@@ -141,11 +141,11 @@ export const reportRepository = {
     // Try to load from Y.Doc via y-indexeddb
     const dbName = `zeroneurone-ydoc-${dossierId}`;
     let ydoc: Y.Doc | null = null;
-    let provider: IndexeddbPersistence | null = null;
+    let provider: EncryptedIndexeddbPersistence | null = null;
 
     try {
       ydoc = new Y.Doc();
-      provider = new IndexeddbPersistence(dbName, ydoc);
+      provider = new EncryptedIndexeddbPersistence(dbName, ydoc);
 
       // Wait for data to sync from IndexedDB
       await provider.whenSynced;

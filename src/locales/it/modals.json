@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Archiviazione",
+    "tabs": {
+      "storage": "Archiviazione",
+      "backup": "Backup",
+      "maintenance": "Manutenzione"
+    },
     "spaceUsed": "Spazio utilizzato",
+    "breakdown": {
+      "opfs": "File (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Cronologia Y.js",
+      "other": "Altro",
+      "measured": "Dati misurati"
+    },
     "persistent": {
       "title": "Archiviazione persistente",
       "protected": "Protezione attiva (disattivabile tramite impostazioni del browser)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Cronologia Y.js",
       "supported": "Supportato",
       "notSupported": "Non supportato",
-      "databases": "{{count}} database"
+      "databases": "{{count}} database",
+      "tableSizes": "Dimensione per tabella (stima)"
     },
     "content": {
       "title": "Contenuto archiviato",

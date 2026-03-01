@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Storage",
+    "tabs": {
+      "storage": "Storage",
+      "backup": "Backup",
+      "maintenance": "Maintenance"
+    },
     "spaceUsed": "Space used",
+    "breakdown": {
+      "opfs": "Files (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Y.js history",
+      "other": "Other",
+      "measured": "Measured data"
+    },
     "persistent": {
       "title": "Persistent storage",
       "protected": "Protection active (can be disabled via browser settings)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Y.js history",
       "supported": "Supported",
       "notSupported": "Not supported",
-      "databases": "{{count}} database(s)"
+      "databases": "{{count}} database(s)",
+      "tableSizes": "Size per table (estimate)"
     },
     "content": {
       "title": "Stored content",
@@ -300,6 +313,14 @@
       "confirmAgain": "Final confirmation: all data will be lost. Continue?",
       "success": "All dossiers have been deleted.",
       "error": "Deletion error"
+    },
+    "compact": {
+      "title": "Y.js history per dossier",
+      "button": "Compact",
+      "all": "Compact all",
+      "success": "Compaction complete",
+      "allSuccess": "All databases compacted",
+      "error": "Compaction error"
     }
   },
   "localStorage": {

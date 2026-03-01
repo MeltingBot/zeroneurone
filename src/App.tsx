@@ -10,7 +10,7 @@ import { useEncryptionStore } from './stores/encryptionStore';
 import { unlockEncryption } from './services/encryption/encryptionService';
 import type { EncryptionMeta } from './services/encryption/encryptionService';
 import { isWebAuthnAvailable, unlockWithWebAuthn } from './services/encryption/webauthnService';
-import { db } from './db/database';
+import { db, cleanOrphanedOpfs } from './db/database';
 import { syncService } from './services/syncService';
 
 /**
@@ -300,6 +300,7 @@ function App() {
   useEffect(() => {
     if (!isReady) return;
     loadTagSets();
+    cleanOrphanedOpfs();
   }, [loadTagSets, isReady]);
 
   // Check for app updates on tab focus

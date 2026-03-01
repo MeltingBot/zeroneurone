@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Biltegiratzea",
+    "tabs": {
+      "storage": "Biltegiratzea",
+      "backup": "Babeskopia",
+      "maintenance": "Mantentze"
+    },
     "spaceUsed": "Erabilitako espazioa",
+    "breakdown": {
+      "opfs": "Fitxategiak (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Y.js historia",
+      "other": "Beste",
+      "measured": "Neurtutako datuak"
+    },
     "persistent": {
       "title": "Biltegiratze iraunkorra",
       "protected": "Babesa aktiboa (nabigatzailearen ezarpenetatik desaktiba daiteke)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Y.js historia",
       "supported": "Onartua",
       "notSupported": "Ez onartua",
-      "databases": "{{count}} datu-base"
+      "databases": "{{count}} datu-base",
+      "tableSizes": "Taula bakoitzeko tamaina (estimazioa)"
     },
     "content": {
       "title": "Gordetako edukia",

@@ -10,7 +10,6 @@
  */
 
 import * as Y from 'yjs';
-import { IndexeddbPersistence } from 'y-indexeddb';
 import { WebsocketProvider } from 'y-websocket';
 import { EncryptedIndexeddbPersistence } from './encryption/encryptedIndexeddbPersistence';
 import * as encoding from 'lib0/encoding';
@@ -30,7 +29,7 @@ type StateListener = (state: SyncState) => void;
 
 class SyncService {
   private ydoc: Y.Doc | null = null;
-  private indexeddbProvider: IndexeddbPersistence | EncryptedIndexeddbPersistence | null = null;
+  private indexeddbProvider: EncryptedIndexeddbPersistence | null = null;
   /** DEK pour le chiffrement at-rest des bases y-indexeddb. Null = mode non chiffré. */
   private atRestDek: Uint8Array | null = null;
   private websocketProvider: WebsocketProvider | null = null;
@@ -186,11 +185,9 @@ class SyncService {
 
     // Set up IndexedDB persistence (chiffré ou non selon la DEK)
     const dbName = `zeroneurone-ydoc-${dossierId}`;
-    if (this.atRestDek) {
-      this.indexeddbProvider = new EncryptedIndexeddbPersistence(dbName, this.ydoc, this.atRestDek);
-    } else {
-      this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
-    }
+    this.indexeddbProvider = new EncryptedIndexeddbPersistence(
+      dbName, this.ydoc, this.atRestDek || undefined
+    );
 
     // Wait for local data to be loaded
     await this.indexeddbProvider.whenSynced;
@@ -245,11 +242,9 @@ class SyncService {
     // Set up IndexedDB persistence (for offline support, chiffré si DEK disponible)
     // Uses dossierId (UUID) for local storage
     const dbName = `zeroneurone-ydoc-${dossierId}`;
-    if (this.atRestDek) {
-      this.indexeddbProvider = new EncryptedIndexeddbPersistence(dbName, this.ydoc, this.atRestDek);
-    } else {
-      this.indexeddbProvider = new IndexeddbPersistence(dbName, this.ydoc);
-    }
+    this.indexeddbProvider = new EncryptedIndexeddbPersistence(
+      dbName, this.ydoc, this.atRestDek || undefined
+    );
 
     // Wait for local data to be loaded first
     await this.indexeddbProvider.whenSynced;
@@ -580,8 +575,9 @@ class SyncService {
       this.websocketProvider = null;
     }
 
-    // Destroy IndexedDB provider
+    // Compact Y.js data (replace all updates with single snapshot) then destroy
     if (this.indexeddbProvider) {
+      await this.indexeddbProvider.compact();
       await this.indexeddbProvider.destroy();
       this.indexeddbProvider = null;
     }

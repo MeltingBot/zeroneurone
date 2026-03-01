@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.20.7
+
+### Fixes
+- StorageModal: fix OPFS cleanup on "Purge all dossiers" (was targeting wrong directory `assets/` instead of `dossiers/`)
+- StorageModal: clean orphaned OPFS directories on startup (legacy `investigations/`, `media/`)
+- StorageModal: fix recovery migration crash when `investigations` table doesn't exist
+- Remove `compactAllYjsDatabases()` from startup (caused Firefox crash)
+
+### Improvements
+- StorageModal: per-dossier Y.js compact buttons + "Compact all" in Maintenance tab
+- Y.js compaction on dossier close (replaces all updates with single snapshot)
+- Unified Y.js persistence layer (`EncryptedIndexeddbPersistence` for both encrypted and plain)
+- Reduced `PREFERRED_TRIM_SIZE` for more frequent auto-compaction
+
 ## 2.20.6
 
 ### Fixes

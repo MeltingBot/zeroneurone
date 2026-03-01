@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Сховище",
+    "tabs": {
+      "storage": "Сховище",
+      "backup": "Резервна копія",
+      "maintenance": "Обслуговування"
+    },
     "spaceUsed": "Використаний простір",
+    "breakdown": {
+      "opfs": "Файли (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Історія Y.js",
+      "other": "Інше",
+      "measured": "Виміряні дані"
+    },
     "persistent": {
       "title": "Постійне сховище",
       "protected": "Захист активний (можна вимкнути в налаштуваннях браузера)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Історія Y.js",
       "supported": "Підтримується",
       "notSupported": "Не підтримується",
-      "databases": "{{count}} баз"
+      "databases": "{{count}} баз",
+      "tableSizes": "Розмір за таблицею (оцінка)"
     },
     "content": {
       "title": "Збережений вміст",

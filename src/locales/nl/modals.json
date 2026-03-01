@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Opslag",
+    "tabs": {
+      "storage": "Opslag",
+      "backup": "Back-up",
+      "maintenance": "Onderhoud"
+    },
     "spaceUsed": "Gebruikte ruimte",
+    "breakdown": {
+      "opfs": "Bestanden (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Y.js-geschiedenis",
+      "other": "Overig",
+      "measured": "Gemeten gegevens"
+    },
     "persistent": {
       "title": "Permanente opslag",
       "protected": "Bescherming actief (uit te schakelen via browserinstellingen)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Y.js-geschiedenis",
       "supported": "Ondersteund",
       "notSupported": "Niet ondersteund",
-      "databases": "{{count}} database(s)"
+      "databases": "{{count}} database(s)",
+      "tableSizes": "Grootte per tabel (schatting)"
     },
     "content": {
       "title": "Opgeslagen inhoud",

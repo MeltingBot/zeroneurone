@@ -19,7 +19,7 @@ import { secretbox, randomBytes } from 'tweetnacl';
 const CUSTOM_STORE_NAME = 'custom';
 const UPDATES_STORE_NAME = 'updates';
 
-export const PREFERRED_TRIM_SIZE = 500;
+export const PREFERRED_TRIM_SIZE = 50;
 
 // ============================================================================
 // CHIFFREMENT / DÉCHIFFREMENT DES UPDATES YJS
@@ -247,6 +247,17 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
     doc.on('update', this._storeUpdate);
     this.destroy = this.destroy.bind(this);
     doc.on('destroy', this.destroy);
+  }
+
+  /**
+   * Force compaction: replace all updates with a single state snapshot.
+   * Call before destroy() to minimize storage usage.
+   */
+  compact(): Promise<void> {
+    if (this.db && !this._destroyed) {
+      return storeStateEncrypted(this, true);
+    }
+    return Promise.resolve();
   }
 
   destroy(): Promise<void> {

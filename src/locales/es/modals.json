@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Almacenamiento",
+    "tabs": {
+      "storage": "Almacenamiento",
+      "backup": "Respaldo",
+      "maintenance": "Mantenimiento"
+    },
     "spaceUsed": "Espacio utilizado",
+    "breakdown": {
+      "opfs": "Archivos (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Historial Y.js",
+      "other": "Otro",
+      "measured": "Datos medidos"
+    },
     "persistent": {
       "title": "Almacenamiento persistente",
       "protected": "Protección activa (desactivable en configuración del navegador)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Historial Y.js",
       "supported": "Soportado",
       "notSupported": "No soportado",
-      "databases": "{{count}} base(s)"
+      "databases": "{{count}} base(s)",
+      "tableSizes": "Tamaño por tabla (estimación)"
     },
     "content": {
       "title": "Contenido almacenado",

@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Stockage",
+    "tabs": {
+      "storage": "Stockage",
+      "backup": "Sauvegarde",
+      "maintenance": "Maintenance"
+    },
     "spaceUsed": "Espace utilisé",
+    "breakdown": {
+      "opfs": "Fichiers (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Historique Y.js",
+      "other": "Autre",
+      "measured": "Données mesurées"
+    },
     "persistent": {
       "title": "Stockage persistant",
       "protected": "Protection active (désactivable via paramètres navigateur)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Historique Y.js",
       "supported": "Supporté",
       "notSupported": "Non supporté",
-      "databases": "{{count}} base(s)"
+      "databases": "{{count}} base(s)",
+      "tableSizes": "Taille par table (estimation)"
     },
     "content": {
       "title": "Contenu stocké",
@@ -291,6 +304,14 @@
       "success": "{{count}} base(s) supprimée(s)",
       "successWithErrors": "{{deleted}} base(s) supprimée(s), {{errors}} erreur(s)",
       "error": "Erreur lors de la purge"
+    },
+    "compact": {
+      "title": "Historique Y.js par dossier",
+      "button": "Compacter",
+      "all": "Tout compacter",
+      "success": "Compaction terminée",
+      "allSuccess": "Toutes les bases compactées",
+      "error": "Erreur lors de la compaction"
     },
     "purgeAll": {
       "title": "Supprimer tous les dossiers",

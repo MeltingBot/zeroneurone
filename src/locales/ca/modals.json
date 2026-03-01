@@ -250,7 +250,19 @@
   },
   "storage": {
     "title": "Emmagatzematge",
+    "tabs": {
+      "storage": "Emmagatzematge",
+      "backup": "Còpia",
+      "maintenance": "Manteniment"
+    },
     "spaceUsed": "Espai utilitzat",
+    "breakdown": {
+      "opfs": "Fitxers (OPFS)",
+      "indexedDB": "IndexedDB",
+      "yjs": "Historial Y.js",
+      "other": "Altre",
+      "measured": "Dades mesurades"
+    },
     "persistent": {
       "title": "Emmagatzematge persistent",
       "protected": "Protecció activa (desactivable via configuració del navegador)",
@@ -265,7 +277,8 @@
       "yjsHistory": "Historial Y.js",
       "supported": "Suportat",
       "notSupported": "No suportat",
-      "databases": "{{count}} base(s)"
+      "databases": "{{count}} base(s)",
+      "tableSizes": "Mida per taula (estimació)"
     },
     "content": {
       "title": "Contingut emmagatzemat",
