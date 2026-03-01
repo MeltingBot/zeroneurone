@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.20.3
+
+### Fixes
+- Backup import: fix `tagSets.where('name')` crash (`name` not indexed since v7), use `toArray()` + filter
+- Backup import: handle legacy backups with `investigationId` instead of `dossierId` in all tables
+- Y.Doc mappers: defensive `Array.isArray` guards on `properties`, `tags`, `events`, `assetIds`, `childIds` to prevent `.map` crash on corrupted data
+- ElementDetail/LinkDetail: guard `properties.map` in SuggestedPropertiesPopup
+
 ## 2.20.2
 
 ### Fixes

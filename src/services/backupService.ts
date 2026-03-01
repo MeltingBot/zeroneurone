@@ -188,7 +188,8 @@ class BackupService {
           if (!assetFile) continue;
 
           const arrayBuffer = await assetFile.async('arraybuffer');
-          const newDossierId = dossierIdMap.get(assetMeta.dossierId);
+          const srcDossierId = assetMeta.dossierId || (assetMeta as any).investigationId;
+          const newDossierId = dossierIdMap.get(srcDossierId);
           if (!newDossierId) continue;
 
           // Create File object and save via fileService
@@ -207,7 +208,9 @@ class BackupService {
       onProgress?.('Import des éléments...');
       for (const element of data.elements) {
         const newId = generateUUID();
-        const newDossierId = dossierIdMap.get(element.dossierId);
+        // Legacy compat: old backups use investigationId instead of dossierId
+        const srcDossierId = element.dossierId || (element as any).investigationId;
+        const newDossierId = dossierIdMap.get(srcDossierId);
         if (!newDossierId) continue;
 
         elementIdMap.set(element.id, newId);
@@ -234,7 +237,8 @@ class BackupService {
       // Import links
       onProgress?.('Import des liens...');
       for (const link of data.links) {
-        const newDossierId = dossierIdMap.get(link.dossierId);
+        const srcDossierId = link.dossierId || (link as any).investigationId;
+        const newDossierId = dossierIdMap.get(srcDossierId);
         const newFromId = elementIdMap.get(link.fromId);
         const newToId = elementIdMap.get(link.toId);
 
@@ -256,7 +260,8 @@ class BackupService {
       // Import views
       onProgress?.('Import des vues...');
       for (const view of data.views || []) {
-        const newDossierId = dossierIdMap.get(view.dossierId);
+        const srcDossierId = view.dossierId || (view as any).investigationId;
+        const newDossierId = dossierIdMap.get(srcDossierId);
         if (!newDossierId) continue;
 
         await db.views.add({
@@ -269,7 +274,8 @@ class BackupService {
 
       // Import reports
       for (const report of data.reports || []) {
-        const newDossierId = dossierIdMap.get(report.dossierId);
+        const srcDossierId = report.dossierId || (report as any).investigationId;
+        const newDossierId = dossierIdMap.get(srcDossierId);
         if (!newDossierId) continue;
 
         await db.reports.add({
@@ -284,8 +290,9 @@ class BackupService {
       // Import tag sets (global, no dossier ID mapping needed)
       onProgress?.('Import des tags...');
       for (const tagSet of data.tagSets || []) {
-        // Check if tag set with same name already exists
-        const existing = await db.tagSets.where('name').equals(tagSet.name).first();
+        // Check if tag set with same name already exists ('name' is not indexed, use filter)
+        const allTagSets = await db.tagSets.toArray();
+        const existing = allTagSets.find(ts => ts.name === tagSet.name);
         if (!existing) {
           await db.tagSets.add({
             ...tagSet,

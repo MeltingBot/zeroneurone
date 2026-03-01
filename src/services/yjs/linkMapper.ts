@@ -40,10 +40,11 @@ export function linkToYMap(link: Link): Y.Map<any> {
   map.set('notes', link.notes || '');
 
   // Tags as plain array
-  map.set('tags', link.tags);
+  map.set('tags', Array.isArray(link.tags) ? link.tags : []);
 
   // Properties as plain array of objects
-  map.set('properties', link.properties.map(prop => ({
+  const props = Array.isArray(link.properties) ? link.properties : [];
+  map.set('properties', props.map(prop => ({
     key: prop.key,
     value: serializePropertyValue(prop.value),
     type: prop.type || 'text',
@@ -237,7 +238,8 @@ export function updateLinkYMap(
     }
 
     if (changes.properties !== undefined) {
-      ymap.set('properties', changes.properties.map(prop => ({
+      const cp = Array.isArray(changes.properties) ? changes.properties : [];
+      ymap.set('properties', cp.map(prop => ({
         key: prop.key,
         value: serializePropertyValue(prop.value),
         type: prop.type || 'text',

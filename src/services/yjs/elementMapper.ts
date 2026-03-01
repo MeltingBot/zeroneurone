@@ -39,10 +39,11 @@ export function elementToYMap(element: Element): Y.Map<any> {
   map.set('notes', element.notes || '');
 
   // Tags as plain array (will be converted to Y.Array on first update)
-  map.set('tags', element.tags);
+  map.set('tags', Array.isArray(element.tags) ? element.tags : []);
 
   // Properties as plain array of objects
-  map.set('properties', element.properties.map(prop => ({
+  const props = Array.isArray(element.properties) ? element.properties : [];
+  map.set('properties', props.map(prop => ({
     key: prop.key,
     value: serializePropertyValue(prop.value),
     type: prop.type || 'text',
@@ -68,7 +69,8 @@ export function elementToYMap(element: Element): Y.Map<any> {
   } : null);
 
   // Events as plain array of objects
-  map.set('events', element.events.map(eventToPlainObject));
+  const events = Array.isArray(element.events) ? element.events : [];
+  map.set('events', events.map(eventToPlainObject));
 
   // Visual as plain object
   map.set('visual', {
@@ -86,10 +88,10 @@ export function elementToYMap(element: Element): Y.Map<any> {
   });
 
   // AssetIds as plain array
-  map.set('assetIds', element.assetIds);
+  map.set('assetIds', Array.isArray(element.assetIds) ? element.assetIds : []);
 
   // ChildIds as plain array
-  map.set('childIds', element.childIds);
+  map.set('childIds', Array.isArray(element.childIds) ? element.childIds : []);
 
   // Metadata
   map.set('_meta', {
@@ -318,7 +320,8 @@ export function updateElementYMap(
     }
 
     if (changes.properties !== undefined) {
-      ymap.set('properties', changes.properties.map(prop => ({
+      const cp = Array.isArray(changes.properties) ? changes.properties : [];
+      ymap.set('properties', cp.map(prop => ({
         key: prop.key,
         value: serializePropertyValue(prop.value),
         type: prop.type || 'text',
@@ -349,7 +352,8 @@ export function updateElementYMap(
     }
 
     if (changes.events !== undefined) {
-      ymap.set('events', changes.events.map(eventToPlainObject));
+      const ev = Array.isArray(changes.events) ? changes.events : [];
+      ymap.set('events', ev.map(eventToPlainObject));
     }
 
     if (changes.confidence !== undefined) {

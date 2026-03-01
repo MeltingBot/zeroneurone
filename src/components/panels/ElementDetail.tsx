@@ -1249,7 +1249,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {suggestedPropsTagSet && (
         <SuggestedPropertiesPopup
           tagSetName={suggestedPropsTagSet}
-          existingPropertyKeys={element.properties.map((p) => p.key)}
+          existingPropertyKeys={(Array.isArray(element.properties) ? element.properties : []).map((p) => p.key)}
           onApply={handleApplySuggestedProperties}
           onClose={() => setSuggestedPropsTagSet(null)}
         />

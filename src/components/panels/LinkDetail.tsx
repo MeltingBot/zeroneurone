@@ -751,7 +751,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
       {suggestedPropsTagSet && (
         <SuggestedPropertiesPopup
           tagSetName={suggestedPropsTagSet}
-          existingPropertyKeys={link.properties.map((p) => p.key)}
+          existingPropertyKeys={(Array.isArray(link.properties) ? link.properties : []).map((p) => p.key)}
           onApply={handleApplySuggestedProperties}
           onClose={() => setSuggestedPropsTagSet(null)}
         />
