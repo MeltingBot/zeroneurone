@@ -49,7 +49,8 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
   const { t, i18n } = useTranslation('modals');
   const [activeTab, setActiveTab] = useState<TabId>('storage');
   const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isPersisting, setIsPersisting] = useState(false);
   const [persistResult, setPersistResult] = useState<'success' | 'denied' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -66,8 +67,12 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
   const loadStorageInfo = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const info = await getDetailedStorageInfo();
+      const [info] = await Promise.all([
+        getDetailedStorageInfo(),
+        silent ? Promise.resolve() : new Promise(r => setTimeout(r, 400)),
+      ]);
       setStorageInfo(info);
+      setIsInitialLoad(false);
     } catch (error) {
       console.error('Failed to load storage info:', error);
     } finally {
@@ -229,7 +234,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
       </div>
 
       <div className="space-y-4">
-        {isLoading ? (
+        {isInitialLoad && !storageInfo ? (
           <div className="flex items-center justify-center py-8">
             <RefreshCw size={20} className="animate-spin text-text-tertiary" />
           </div>
@@ -413,9 +418,10 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
                 <div className="flex justify-end">
                   <button
                     onClick={() => loadStorageInfo()}
-                    className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+                    disabled={isLoading}
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded disabled:opacity-50"
                   >
-                    <RefreshCw size={12} />
+                    <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
                     {t('common:actions.refresh')}
                   </button>
                 </div>

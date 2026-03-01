@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.20.8
+
+### Improvements
+- Splash screen with logo and version on app startup (eliminates white flash)
+- Version injected automatically via Vite `transformIndexHtml` plugin
+- StorageModal: refresh button no longer hides content (spinner only on initial load)
+
 ## 2.20.7
 
 ### Fixes

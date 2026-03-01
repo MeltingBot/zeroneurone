@@ -39,6 +39,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
     writeVersionFile(),
+    {
+      name: 'html-version',
+      transformIndexHtml(html) {
+        return html.replace(/%APP_VERSION%/g, pkg.version)
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'logo.png', 'logo-192.png', 'logo-512.png'],
