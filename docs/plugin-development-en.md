@@ -1102,6 +1102,19 @@ export function register(api) {
 }
 ```
 
+### Legacy aliases (backward compatibility)
+
+Since v2.20.0, ZN renamed "Investigation" to "Dossier" everywhere. To avoid breaking existing plugins, temporary aliases are exposed:
+
+| Old name | New name | Support |
+|----------|----------|---------|
+| `stores.useInvestigationStore` | `stores.useDossierStore` | Alias available |
+| `repositories.investigationRepository` | `repositories.dossierRepository` | Alias available |
+| `getState().currentInvestigation` | `getState().currentDossier` | Alias available |
+| `element.investigationId` | `element.dossierId` | **No alias** — data uses `dossierId` |
+
+> **These aliases will be removed in a future major version.** Migrate your code to the new names as soon as possible. In particular, any filtering on `element.investigationId` returns `undefined` — use `element.dossierId`.
+
 ### Security
 
 - Plugins run in the same JS context as the app (no sandbox)
