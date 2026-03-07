@@ -234,8 +234,10 @@
       "shortcuts": "Клавіатурні скорочення",
       "documentation": "Документація",
       "supportKofi": "Підтримати на Ko-fi",
-      "panelToLeft": "Панель ліворуч",
-      "panelToRight": "Панель праворуч"
+      "panelDockRight": "Панель праворуч",
+      "panelDockBottom": "Панель знизу",
+      "panelDockLeft": "Панель ліворуч",
+      "panelDetach": "Від'єднати панель"
     },
     "collab": {
       "leaveTitle": "Покинути сеанс співпраці",

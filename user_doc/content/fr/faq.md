@@ -139,9 +139,9 @@ Des **espaces de travail thématiques** au sein d'un même dossier. Un onglet pa
 2. Panneau de détail → **Localisation**
 3. Tapez les coordonnées ou cliquez directement sur la carte
 
-### Je peux mettre le panneau latéral à gauche ?
+### Je peux déplacer le panneau latéral ?
 
-Oui. Bouton **⇄** dans la barre d'outils. Le choix est mémorisé.
+Oui. Bouton **⇄** dans la barre d'outils — cycle entre droite, bas, gauche et fenêtre détachée. Le choix est mémorisé (sauf le mode détaché).
 
 ---
 

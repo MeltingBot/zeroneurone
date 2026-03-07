@@ -19,7 +19,7 @@ ZeroNeurone's interface is organized around the central canvas, with contextual 
 | Name | Dossier name (click to rename) |
 | 🔍 | Quick search (Ctrl+K) |
 | Views | Toggle Canvas / Map / Timeline |
-| ⇄ | Toggle side panel left/right |
+| ⇄ | Cycle panel position (right / bottom / left / detached) |
 | ⋯ | Menu: Export, Import, Settings |
 
 ### 2. Central Canvas
@@ -30,26 +30,30 @@ Main workspace where you create and organize your elements.
 - **Pan**: Click-drag on the background
 - **Selection**: Click on an element or draw a selection rectangle
 
-### 3. Left Side Panel
+### 3. Side Panel
 
-Access to analysis and filtering tools:
+The unified panel contains all tabs:
 
 | Tab | Function |
 |-----|----------|
+| **Detail** | Metadata, tags, properties, files, connections |
 | **Filters** | Filter by tags, confidence, properties |
 | **Insights** | Graph analysis (clusters, centrality) |
 | **Views** | Save/load configurations |
+| **Report** | Write and export reports |
 
+#### Panel Position
 
-### 4. Detail Panel (right)
+The ⇄ button in the toolbar cycles through 4 positions:
 
-Displays information about the selected element or link:
+| Position | Description |
+|----------|-------------|
+| **Right** | Default position, panel on the right of the canvas |
+| **Bottom** | Panel at the bottom, DevTools-style — vertically resizable |
+| **Left** | Panel on the left |
+| **Detached** | Separate window — ideal for multi-monitor setups |
 
-- Metadata (name, notes, dates)
-- Tags
-- Custom properties
-- Attached files
-- Connections
+The choice is remembered across sessions (except detached mode, which resets to right on reload).
 
 
 ## View Modes

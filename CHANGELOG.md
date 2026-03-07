@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.21.0
+
+### Features
+- Panel docking: cycle between right, bottom, left and detached window (DevTools-style)
+- Detached panel opens in a separate browser window with full styling and theme sync
+- Bottom dock with vertical resize handle
+
+### Fixes
+- Map: reduce link arrow z-index from 500 to 50 (was overlapping modals)
+- Map: isolate Leaflet stacking context so map z-indexes never cover modals/overlays
+- SynthesisModal: fix capture overlay z-index (100 → 1000) to stay above map
+
 ## 2.20.8
 
 ### Improvements

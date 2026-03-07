@@ -234,8 +234,10 @@
       "shortcuts": "Dreceres de teclat",
       "documentation": "Documentació",
       "supportKofi": "Donar suport a Ko-fi",
-      "panelToLeft": "Panell a l'esquerra",
-      "panelToRight": "Panell a la dreta"
+      "panelDockRight": "Panell a la dreta",
+      "panelDockBottom": "Panell a baix",
+      "panelDockLeft": "Panell a l'esquerra",
+      "panelDetach": "Separar panell"
     },
     "collab": {
       "leaveTitle": "Abandonar la sessió col·laborativa",

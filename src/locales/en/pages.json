@@ -235,8 +235,10 @@
       "shortcuts": "Keyboard shortcuts",
       "documentation": "Documentation",
       "supportKofi": "Support on Ko-fi",
-      "panelToLeft": "Panel to left",
-      "panelToRight": "Panel to right"
+      "panelDockRight": "Dock panel right",
+      "panelDockBottom": "Dock panel bottom",
+      "panelDockLeft": "Dock panel left",
+      "panelDetach": "Detach panel"
     },
     "collab": {
       "leaveTitle": "Leave collaborative session",

@@ -1476,7 +1476,7 @@ export function MapView() {
       )}
 
       {/* Map container */}
-      <div ref={mapContainerRef} className="flex-1" data-report-capture="map" />
+      <div ref={mapContainerRef} className="flex-1" style={{ isolation: 'isolate' }} data-report-capture="map" />
 
       {/* Custom styles */}
       <style>{`
@@ -1534,7 +1534,7 @@ export function MapView() {
         .link-arrow-icon {
           background: transparent !important;
           border: none !important;
-          z-index: 500 !important;
+          z-index: 50 !important;
         }
         .link-arrow-icon svg {
           filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));

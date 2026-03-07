@@ -177,7 +177,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
     <>
       {/* Capture overlay - covers everything during screenshot capture */}
       {showCaptureOverlay && (
-        <div className="fixed inset-0 z-[100] bg-bg-primary flex flex-col items-center justify-center">
+        <div className="fixed inset-0 z-[1000] bg-bg-primary flex flex-col items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader size={32} className="animate-spin text-accent" />
             <p className="text-sm text-text-primary font-medium">

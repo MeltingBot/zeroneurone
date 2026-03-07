@@ -19,7 +19,7 @@ L'interface de ZeroNeurone est organisée autour du canvas central, avec des pan
 | Nom | Nom du dossier (cliquez pour renommer) |
 | 🔍 | Recherche rapide (Ctrl+K) |
 | Vues | Bascule Canvas / Carte / Timeline |
-| ⇄ | Basculer le panneau latéral gauche/droite |
+| ⇄ | Changer la position du panneau (droite / bas / gauche / détaché) |
 | ⋯ | Menu : Export, Import, Paramètres |
 
 ### 2. Canvas central
@@ -30,26 +30,30 @@ Zone de travail principale où vous créez et organisez vos éléments.
 - **Déplacement** : Clic-glisser sur le fond
 - **Sélection** : Clic sur un élément ou rectangle de sélection
 
-### 3. Panneau latéral gauche
+### 3. Panneau latéral
 
-Accès aux outils d'analyse et de filtrage :
+Le panneau unique regroupe tous les onglets :
 
 | Onglet | Fonction |
 |--------|----------|
+| **Détail** | Métadonnées, tags, propriétés, fichiers, connexions |
 | **Filtres** | Filtrer par tags, confiance, propriétés |
 | **Insights** | Analyse de graphe (clusters, centralité) |
 | **Vues** | Sauvegarder/charger des configurations |
+| **Rapport** | Rédiger et exporter un rapport |
 
+#### Position du panneau
 
-### 4. Panneau de détail (droite)
+Le bouton ⇄ dans la barre d'outils cycle entre 4 positions :
 
-Affiche les informations de l'élément ou lien sélectionné :
+| Position | Description |
+|----------|-------------|
+| **Droite** | Position par défaut, panneau à droite du canvas |
+| **Bas** | Panneau en bas, style DevTools — redimensionnable verticalement |
+| **Gauche** | Panneau à gauche |
+| **Détaché** | Fenêtre séparée — idéal pour le multi-écran |
 
-- Métadonnées (nom, notes, dates)
-- Tags
-- Propriétés personnalisées
-- Fichiers joints
-- Connexions
+Le choix est mémorisé entre les sessions (sauf le mode détaché qui revient à droite au rechargement).
 
 
 ## Modes de vue
