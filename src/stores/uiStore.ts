@@ -51,7 +51,7 @@ interface UIState {
   // Side panel
   sidePanelOpen: boolean;
   sidePanelTab: SidePanelTab;
-  panelSide: 'left' | 'right';
+  panelSide: 'left' | 'right' | 'bottom' | 'detached';
 
   // Tool
   activeTool: ToolType;
@@ -110,6 +110,7 @@ interface UIState {
   closeSidePanel: () => void;
   setSidePanelTab: (tab: SidePanelTab) => void;
   togglePanelSide: () => void;
+  setPanelSide: (side: 'left' | 'right' | 'bottom' | 'detached') => void;
 
   // Actions - Tool
   setActiveTool: (tool: ToolType) => void;
@@ -171,7 +172,7 @@ export const useUIStore = create<UIState>()(
   modalData: null,
   sidePanelOpen: true,
   sidePanelTab: 'detail',
-  panelSide: 'right' as 'left' | 'right',
+  panelSide: 'right' as 'left' | 'right' | 'bottom' | 'detached',
   activeTool: 'select',
   toasts: [],
   searchOpen: false,
@@ -244,7 +245,12 @@ export const useUIStore = create<UIState>()(
   },
 
   togglePanelSide: () => {
-    set((state) => ({ panelSide: state.panelSide === 'right' ? 'left' : 'right' }));
+    const cycle = { right: 'bottom', bottom: 'left', left: 'detached', detached: 'right' } as const;
+    set((state) => ({ panelSide: cycle[state.panelSide] ?? 'right' }));
+  },
+
+  setPanelSide: (side) => {
+    set({ panelSide: side });
   },
 
   // Tool
@@ -389,7 +395,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide }),
+      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

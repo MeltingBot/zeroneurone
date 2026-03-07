@@ -139,9 +139,9 @@ Yes. Select 2 elements → right-click → **Merge**. Choose which label to keep
 2. Detail panel → **Location**
 3. Type the coordinates or click directly on the map
 
-### Can I put the side panel on the left?
+### Can I move the side panel?
 
-Yes. **⇄** button in the toolbar. The choice is remembered.
+Yes. **⇄** button in the toolbar — cycles between right, bottom, left and detached window. The choice is remembered (except detached mode).
 
 ---
 

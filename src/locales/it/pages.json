@@ -234,8 +234,10 @@
       "shortcuts": "Scorciatoie da tastiera",
       "documentation": "Documentazione",
       "supportKofi": "Supporta su Ko-fi",
-      "panelToLeft": "Pannello a sinistra",
-      "panelToRight": "Pannello a destra"
+      "panelDockRight": "Pannello a destra",
+      "panelDockBottom": "Pannello in basso",
+      "panelDockLeft": "Pannello a sinistra",
+      "panelDetach": "Stacca il pannello"
     },
     "collab": {
       "leaveTitle": "Abbandona la sessione collaborativa",

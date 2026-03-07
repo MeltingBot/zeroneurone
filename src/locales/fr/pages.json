@@ -235,8 +235,10 @@
       "shortcuts": "Raccourcis clavier",
       "documentation": "Documentation",
       "supportKofi": "Soutenir sur Ko-fi",
-      "panelToLeft": "Panneau à gauche",
-      "panelToRight": "Panneau à droite"
+      "panelDockRight": "Panneau à droite",
+      "panelDockBottom": "Panneau en bas",
+      "panelDockLeft": "Panneau à gauche",
+      "panelDetach": "Détacher le panneau"
     },
     "collab": {
       "leaveTitle": "Quitter la session collaborative",

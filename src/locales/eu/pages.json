@@ -234,8 +234,10 @@
       "shortcuts": "Teklatuko lasterbideak",
       "documentation": "Dokumentazioa",
       "supportKofi": "Ko-fi-n lagundu",
-      "panelToLeft": "Panela ezkerrera",
-      "panelToRight": "Panela eskuinera"
+      "panelDockRight": "Panela eskuinera",
+      "panelDockBottom": "Panela behera",
+      "panelDockLeft": "Panela ezkerrera",
+      "panelDetach": "Panela askatu"
     },
     "collab": {
       "leaveTitle": "Lankidetza saioa utzi",

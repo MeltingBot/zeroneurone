@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useSelectionStore, useDossierStore, useViewStore, useInsightsStore, useUIStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
@@ -12,11 +13,17 @@ import { ReportPanel } from './ReportPanel';
 import { Info, Filter, Eye, Network, PanelRightClose, FileText, icons } from 'lucide-react';
 import { IconButton } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
+import { useDetachedWindow } from '../../hooks/useDetachedWindow';
 
 const MIN_WIDTH = 360;
 const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 420;
 const WIDTH_STORAGE_KEY = 'zeroneurone:sidepanel-width';
+
+const MIN_HEIGHT = 200;
+const MAX_HEIGHT = 500;
+const DEFAULT_HEIGHT = 300;
+const HEIGHT_STORAGE_KEY = 'zeroneurone:sidepanel-height';
 
 type TabId = 'detail' | 'insights' | 'filters' | 'views' | 'report' | (string & {});
 
@@ -30,7 +37,6 @@ interface Tab {
 export function SidePanel() {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
-  // Individual selectors — prevent re-renders when unrelated state changes
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
   const selectedLinkIds = useSelectionStore((s) => s.selectedLinkIds);
   const elements = useDossierStore((s) => s.elements);
@@ -40,6 +46,7 @@ export function SidePanel() {
   const displayMode = useViewStore((s) => s.displayMode);
   const highlightedElementIds = useInsightsStore((s) => s.highlightedElementIds);
   const panelSide = useUIStore((s) => s.panelSide);
+  const setPanelSide = useUIStore((s) => s.setPanelSide);
 
   const [activeTab, setActiveTab] = useState<TabId>('detail');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -51,8 +58,27 @@ export function SidePanel() {
     }
     return DEFAULT_WIDTH;
   });
+  const [height, setHeight] = useState(() => {
+    const stored = localStorage.getItem(HEIGHT_STORAGE_KEY);
+    if (stored) {
+      const n = parseInt(stored, 10);
+      if (n >= MIN_HEIGHT && n <= MAX_HEIGHT) return n;
+    }
+    return DEFAULT_HEIGHT;
+  });
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
+
+  const isBottom = panelSide === 'bottom';
+  const isDetached = panelSide === 'detached';
+
+  // Reset collapsed state when dock mode changes
+  useEffect(() => {
+    setIsCollapsed(false);
+  }, [panelSide]);
+
+  // Detached window
+  const detachedContainer = useDetachedWindow(isDetached, () => setPanelSide('right'));
 
   // Handle resize
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -69,19 +95,31 @@ export function SidePanel() {
       if (!containerRect) return;
 
       const side = useUIStore.getState().panelSide;
-      const newWidth = side === 'left'
-        ? e.clientX - containerRect.left
-        : containerRect.right - e.clientX;
-      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, newWidth)));
+      if (side === 'bottom') {
+        const newHeight = containerRect.bottom - e.clientY;
+        setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight)));
+      } else {
+        const newWidth = side === 'left'
+          ? e.clientX - containerRect.left
+          : containerRect.right - e.clientX;
+        setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, newWidth)));
+      }
     };
 
     const handleMouseUp = () => {
       setIsResizing(false);
-      // Persist width after resize
-      setWidth((w) => {
-        localStorage.setItem(WIDTH_STORAGE_KEY, String(w));
-        return w;
-      });
+      const side = useUIStore.getState().panelSide;
+      if (side === 'bottom') {
+        setHeight((h) => {
+          localStorage.setItem(HEIGHT_STORAGE_KEY, String(h));
+          return h;
+        });
+      } else {
+        setWidth((w) => {
+          localStorage.setItem(WIDTH_STORAGE_KEY, String(w));
+          return w;
+        });
+      }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -104,7 +142,6 @@ export function SidePanel() {
   const totalSelected = selectedElements.length + selectedLinks.length;
 
   // Blur any focused input in the panel when selection is cleared
-  // This ensures keyboard events (like Delete) go to the canvas
   useEffect(() => {
     if (totalSelected === 0 && panelRef.current) {
       const activeElement = document.activeElement;
@@ -147,41 +184,8 @@ export function SidePanel() {
     })),
   ];
 
-  if (isCollapsed) {
-    return (
-      <aside className={`w-12 ${panelSide === 'left' ? 'border-r' : 'border-l'} border-border-default bg-bg-primary flex flex-col`}>
-        <div className="flex flex-col items-center py-2 gap-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setIsCollapsed(false);
-                }}
-                className={`relative p-2 rounded transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-accent/10 text-accent'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
-                }`}
-                title={tab.label}
-              >
-                <Icon size={18} />
-                {tab.badge && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </aside>
-    );
-  }
-
   // Render detail content based on selection
   const renderDetailContent = () => {
-    // Nothing selected - show dossier details
     if (totalSelected === 0) {
       if (currentDossier) {
         return (
@@ -199,7 +203,6 @@ export function SidePanel() {
       );
     }
 
-    // Multiple items selected - show bulk edit panel
     if (totalSelected > 1) {
       return (
         <div className="flex-1 overflow-y-auto">
@@ -208,7 +211,6 @@ export function SidePanel() {
       );
     }
 
-    // Single element selected
     if (selectedElements.length === 1) {
       return (
         <div className="flex-1 overflow-y-auto">
@@ -217,7 +219,6 @@ export function SidePanel() {
       );
     }
 
-    // Single link selected
     if (selectedLinks.length === 1) {
       return (
         <div className="flex-1 overflow-y-auto">
@@ -269,26 +270,102 @@ export function SidePanel() {
     }
   };
 
-  return (
+  // --- Collapsed mode ---
+  if (isCollapsed && !isDetached) {
+    if (isBottom) {
+      return (
+        <aside className="h-8 border-t border-border-default bg-bg-primary flex items-center">
+          <div className="flex items-center px-2 gap-0.5">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsCollapsed(false);
+                  }}
+                  className={`relative p-1.5 rounded transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                  }`}
+                  title={tab.label}
+                >
+                  <Icon size={16} />
+                  {tab.badge && (
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-accent rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+      );
+    }
+
+    return (
+      <aside className={`w-12 ${panelSide === 'left' ? 'border-r' : 'border-l'} border-border-default bg-bg-primary flex flex-col`}>
+        <div className="flex flex-col items-center py-2 gap-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsCollapsed(false);
+                }}
+                className={`relative p-2 rounded transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-accent/10 text-accent'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                }`}
+                title={tab.label}
+              >
+                <Icon size={18} />
+                {tab.badge && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+    );
+  }
+
+  // --- Panel body (shared between docked and detached) ---
+  const panelBody = (
     <aside
-      ref={panelRef}
-      className={`${panelSide === 'left' ? 'border-r' : 'border-l'} border-border-default bg-bg-primary flex flex-col overflow-hidden relative`}
-      style={{ width: `${width}px` }}
+      ref={isDetached ? undefined : panelRef}
+      className={`${
+        isBottom ? 'border-t' :
+        isDetached ? '' :
+        panelSide === 'left' ? 'border-r' : 'border-l'
+      } border-border-default bg-bg-primary flex flex-col overflow-hidden relative${
+        isDetached ? ' h-full' : ''
+      }`}
+      style={isDetached ? undefined : isBottom ? { height: `${height}px` } : { width: `${width}px` }}
       data-testid="detail-panel"
     >
-      {/* Resize handle */}
-      <div
-        onMouseDown={handleMouseDown}
-        className={`absolute ${panelSide === 'left' ? 'right-0' : 'left-0'} top-0 bottom-0 w-1 cursor-ew-resize hover:bg-accent/30 transition-colors z-10 ${
-          isResizing ? 'bg-accent/50' : ''
-        }`}
-      />
+      {/* Resize handle (not shown when detached) */}
+      {!isDetached && (
+        <div
+          onMouseDown={handleMouseDown}
+          className={`absolute ${
+            isBottom
+              ? 'top-0 left-0 right-0 h-1 cursor-ns-resize'
+              : `${panelSide === 'left' ? 'right-0' : 'left-0'} top-0 bottom-0 w-1 cursor-ew-resize`
+          } hover:bg-accent/30 transition-colors z-10 ${
+            isResizing ? 'bg-accent/50' : ''
+          }`}
+        />
+      )}
 
       {/* Header with tabs */}
       <header className="border-b border-border-default shrink-0">
-        {/* Tab bar */}
         <div className="flex items-center h-10 px-1 overflow-hidden">
-          {/* Tabs with labels */}
           <div className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto scrollbar-none">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -313,18 +390,27 @@ export function SidePanel() {
             })}
           </div>
 
-          {/* Collapse button - always visible */}
-          <div className="ml-auto shrink-0">
-            <IconButton onClick={() => setIsCollapsed(true)} title={t('tabs.collapsePanel')}>
-              <PanelRightClose size={14} />
-            </IconButton>
-          </div>
+          {/* Collapse button (not in detached mode) */}
+          {!isDetached && (
+            <div className="ml-auto shrink-0">
+              <IconButton onClick={() => setIsCollapsed(true)} title={t('tabs.collapsePanel')}>
+                <PanelRightClose size={14} />
+              </IconButton>
+            </div>
+          )}
         </div>
-
       </header>
 
       {/* Tab content */}
       {renderTabContent()}
     </aside>
   );
+
+  // --- Detached mode: render into popup window ---
+  if (isDetached) {
+    if (!detachedContainer) return null;
+    return createPortal(panelBody, detachedContainer);
+  }
+
+  return panelBody;
 }

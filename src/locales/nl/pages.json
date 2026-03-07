@@ -234,8 +234,10 @@
       "shortcuts": "Sneltoetsen",
       "documentation": "Documentatie",
       "supportKofi": "Steun op Ko-fi",
-      "panelToLeft": "Paneel naar links",
-      "panelToRight": "Paneel naar rechts"
+      "panelDockRight": "Paneel naar rechts",
+      "panelDockBottom": "Paneel naar beneden",
+      "panelDockLeft": "Paneel naar links",
+      "panelDetach": "Paneel loskoppelen"
     },
     "collab": {
       "leaveTitle": "Samenwerkingssessie verlaten",

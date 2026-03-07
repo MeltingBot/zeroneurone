@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
@@ -529,13 +529,21 @@ export function DossierPage() {
             <FileText size={14} />
             <span className="hidden sm:inline">{t('dossier.header.report')}</span>
           </button>
-          {/* Panel side toggle */}
+          {/* Panel dock mode toggle */}
           <button
             onClick={togglePanelSide}
             className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-            title={panelSide === 'right' ? t('dossier.header.panelToLeft', 'Panneau a gauche') : t('dossier.header.panelToRight', 'Panneau a droite')}
+            title={
+              panelSide === 'right' ? t('dossier.header.panelDockBottom', 'Panneau en bas') :
+              panelSide === 'bottom' ? t('dossier.header.panelDockLeft', 'Panneau a gauche') :
+              panelSide === 'left' ? t('dossier.header.panelDetach', 'Detacher le panneau') :
+              t('dossier.header.panelDockRight', 'Panneau a droite')
+            }
           >
-            {panelSide === 'right' ? <PanelLeft size={14} /> : <PanelRight size={14} />}
+            {panelSide === 'right' ? <PanelBottom size={14} /> :
+             panelSide === 'bottom' ? <PanelLeft size={14} /> :
+             panelSide === 'left' ? <ExternalLink size={14} /> :
+             <PanelRight size={14} />}
           </button>
           {/* Dark mode toggle */}
           <button
@@ -612,9 +620,13 @@ export function DossierPage() {
       </header>
 
       {/* Main content */}
-      <div className={`flex-1 flex overflow-hidden${panelSide === 'left' ? ' flex-row-reverse' : ''}`}>
+      <div className={`flex-1 flex overflow-hidden ${
+        panelSide === 'bottom' ? 'flex-col' :
+        panelSide === 'left' ? 'flex-row-reverse' :
+        'flex-row'
+      }`}>
         {/* Main view */}
-        <main className="flex-1 relative bg-bg-secondary flex flex-col">
+        <main className="flex-1 relative bg-bg-secondary flex flex-col min-h-0 min-w-0">
           <TabBar dossierId={currentDossier.id} />
           <div className="flex-1 relative">
             {renderMainView()}
