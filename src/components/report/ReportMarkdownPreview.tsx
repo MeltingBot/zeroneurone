@@ -11,6 +11,9 @@ interface ReportMarkdownPreviewProps {
 // Regex to match [[Label|uuid]] element links (case-insensitive for UUID)
 const ELEMENT_LINK_REGEX = /\[\[([^\]|]+)\|([a-fA-F0-9-]+)\]\]/g;
 
+// Fallback regex for preprocessed format [Label](#element:uuid) in case ReactMarkdown doesn't parse it
+const PREPROCESSED_LINK_REGEX = /\[([^\]]+)\]\(#element:([a-fA-F0-9-]+)\)/g;
+
 // Size mapping for element visual size (same as svgExportService)
 const SIZE_MAP: Record<string, number> = { small: 40, medium: 56, large: 72 };
 function getElementSizePixels(size: string | number | undefined): number {
@@ -49,20 +52,21 @@ function ElementLinkRenderer({
   existingIds: Set<string>;
   onElementClick: (id: string) => void;
 }) {
-  // Split text by element link pattern and render
+  // Combined regex: matches both [[Label|uuid]] and [Label](#element:uuid) formats
+  const combinedRegex = /\[\[([^\]|]+)\|([a-fA-F0-9-]+)\]\]|\[([^\]]+)\]\(#element:([a-fA-F0-9-]+)\)/g;
+
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match;
 
-  const regex = new RegExp(ELEMENT_LINK_REGEX.source, 'g');
-
-  while ((match = regex.exec(text)) !== null) {
-    // Add text before the match
+  while ((match = combinedRegex.exec(text)) !== null) {
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
 
-    const [, label, id] = match;
+    // Group 1,2 = [[Label|uuid]], Group 3,4 = [Label](#element:uuid)
+    const label = match[1] || match[3];
+    const id = match[2] || match[4];
     const exists = existingIds.has(id);
 
     if (exists) {
@@ -87,10 +91,9 @@ function ElementLinkRenderer({
       );
     }
 
-    lastIndex = regex.lastIndex;
+    lastIndex = combinedRegex.lastIndex;
   }
 
-  // Add remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
@@ -105,9 +108,12 @@ function processChildren(
   onElementClick: (id: string) => void
 ): React.ReactNode {
   if (typeof children === 'string') {
-    if (ELEMENT_LINK_REGEX.test(children)) {
-      // Reset regex since test() advances lastIndex
-      ELEMENT_LINK_REGEX.lastIndex = 0;
+    // Check for both [[Label|uuid]] and [Label](#element:uuid) formats
+    const hasOriginal = ELEMENT_LINK_REGEX.test(children);
+    ELEMENT_LINK_REGEX.lastIndex = 0;
+    const hasPreprocessed = PREPROCESSED_LINK_REGEX.test(children);
+    PREPROCESSED_LINK_REGEX.lastIndex = 0;
+    if (hasOriginal || hasPreprocessed) {
       return (
         <ElementLinkRenderer
           text={children}
@@ -139,6 +145,13 @@ function processChildren(
   return children;
 }
 
+// Pre-process content: convert [[Label|uuid]] to [Label](#element:uuid)
+// This prevents remarkGfm from interpreting | as a table separator
+// Uses # anchor format to avoid react-markdown URL sanitization (which strips non-standard protocols)
+function preprocessElementLinks(text: string): string {
+  return text.replace(ELEMENT_LINK_REGEX, (_, label, id) => `[${label}](#element:${id})`);
+}
+
 export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdownPreviewProps) {
   const { elements, links } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
@@ -155,6 +168,9 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
     links.forEach((link) => ids.add(link.id));
     return ids;
   }, [elements, links]);
+
+  // Pre-process content to protect [[Label|uuid]] from GFM pipe parsing
+  const processedContent = useMemo(() => preprocessElementLinks(content), [content]);
 
   // Handle element/link click
   const handleElementClick = useCallback(
@@ -273,7 +289,32 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
             <li>{processChildren(children, existingIds, handleElementClick)}</li>
           ),
           a: ({ href, children }) => {
-            if (href?.startsWith('#')) {
+            // Element links: #element:uuid (converted from [[Label|uuid]])
+            if (href?.startsWith('#element:')) {
+              const id = href.slice('#element:'.length);
+              const exists = existingIds.has(id);
+              if (exists) {
+                return (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleElementClick(id);
+                    }}
+                    className="text-accent hover:underline cursor-pointer font-medium"
+                  >
+                    {children}
+                  </button>
+                );
+              }
+              return (
+                <span className="line-through text-text-tertiary">
+                  {children} <span className="text-xs">(deleted)</span>
+                </span>
+              );
+            }
+            // Anchor links (skip #element: which is handled above)
+            if (href?.startsWith('#') && !href.startsWith('#element:')) {
               return (
                 <a
                   href={href}
@@ -336,7 +377,7 @@ export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdow
           ),
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );

@@ -995,6 +995,7 @@ export function ReportMarkdownEditor({
       {/* Editor (write mode) or Preview (read mode) */}
       {isWriteMode ? (
         <div
+          key="editor"
           ref={editorRef}
           contentEditable
           onInput={handleInput}
@@ -1011,6 +1012,7 @@ export function ReportMarkdownEditor({
         />
       ) : (
         <div
+          key="preview"
           onClick={!isLockedByOther ? handleToggleWriteMode : undefined}
           className={`w-full px-3 py-2 pr-8 text-sm bg-bg-secondary border border-border-default rounded overflow-auto ${
             isLockedByOther ? 'cursor-not-allowed' : 'cursor-pointer hover:border-text-tertiary'

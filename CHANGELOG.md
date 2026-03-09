@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.4
+
+### Fixes
+- Report: fix link rendering on write→read toggle (force DOM node recreation via React keys)
+- Report: preprocess `[[Label|uuid]]` to anchor format before Markdown rendering (GFM pipe conflict)
+
 ## 2.21.3
 
 ### Fixes
