@@ -685,9 +685,20 @@ export function MapView() {
       maxZoom: 19,
     });
 
+    const osmDeLayer = L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    });
+
+    const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 20,
+      subdomains: 'abcd',
+    });
+
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
-      maxZoom: 18, // Satellite imagery not available beyond zoom 18 in most areas
+      maxZoom: 18,
     });
 
     // Add default layer (OSM)
@@ -695,7 +706,12 @@ export function MapView() {
 
     // Add layer control
     L.control.layers(
-      { 'OpenStreetMap': osmLayer, 'Satellite': satelliteLayer },
+      {
+        'OpenStreetMap': osmLayer,
+        'OSM Latin': osmDeLayer,
+        'CartoDB Light': cartoLayer,
+        'Satellite': satelliteLayer,
+      },
       {},
       { position: 'topright' }
     ).addTo(mapRef.current);

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.21.1
+
+### Fixes
+- Report: CRDT-safe collaborative sync — sections stored as Y.Map per section instead of plain array (no more data loss on concurrent edits)
+- Relay: increase default MAX_CONNECTIONS_PER_IP from 10 to 50 (fixes disconnections behind NAT/corporate networks)
+- Map: add OSM Latin and CartoDB Light base layer options
+
 ## 2.21.0
 
 ### Features
