@@ -1,8 +1,11 @@
 /**
  * Report <-> Y.Map mapper for Yjs collaboration
  *
- * Handles conversion between Report domain objects and Y.Map for Y.Doc storage.
- * Reports contain sections with Markdown content that can reference elements via [[Label|id]].
+ * Sections are stored as Y.Map<sectionId, Y.Map> for CRDT-level conflict resolution.
+ * Each section field can be updated independently without overwriting other sections.
+ *
+ * v1 (legacy): sections stored as plain JS array → migrated on first access
+ * v2 (current): sections stored as Y.Map<sectionId, Y.Map>
  */
 
 import * as Y from 'yjs';
@@ -10,25 +13,89 @@ import type { Report, ReportSection, GraphSnapshot } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
 
 // ============================================================================
-// REPORT -> Y.MAP (FOR MIGRATION/CREATION)
+// INTERNAL HELPERS
+// ============================================================================
+
+/** Convert a ReportSection to a detached Y.Map for insertion */
+function sectionToYMap(section: ReportSection): Y.Map<any> {
+  const map = new Y.Map();
+  map.set('id', section.id);
+  map.set('title', section.title);
+  map.set('order', section.order);
+  map.set('content', section.content);
+  map.set('elementIds', Array.isArray(section.elementIds) ? [...section.elementIds] : []);
+  map.set('graphSnapshot', section.graphSnapshot ? {
+    imageDataUrl: section.graphSnapshot.imageDataUrl,
+    viewport: { ...section.graphSnapshot.viewport },
+    capturedAt: dateToYjs(section.graphSnapshot.capturedAt),
+  } : null);
+  return map;
+}
+
+/** Get sections Y.Map if v2 format, null otherwise */
+function getSectionsYMap(ymap: Y.Map<any>): Y.Map<any> | null {
+  const raw = ymap.get('sections');
+  if (raw instanceof Y.Map) return raw;
+  return null;
+}
+
+/** Migrate v1 plain array → v2 Y.Map<sectionId, Y.Map> */
+function migrateSectionsToYMap(reportYMap: Y.Map<any>, ydoc: Y.Doc): Y.Map<any> {
+  const sectionsRaw = reportYMap.get('sections');
+  let oldSections: ReportSection[] = [];
+
+  if (Array.isArray(sectionsRaw)) {
+    oldSections = sectionsRaw.map(plainObjectToSection);
+  } else if (sectionsRaw instanceof Y.Array) {
+    oldSections = sectionsRaw.toArray().map((item: any) =>
+      item instanceof Y.Map ? yMapToSection(item) : plainObjectToSection(item)
+    );
+  }
+
+  const newSections = new Y.Map<any>();
+  ydoc.transact(() => {
+    for (const section of oldSections) {
+      newSections.set(section.id, sectionToYMap(section));
+    }
+    reportYMap.set('sections', newSections);
+    reportYMap.set('_version', 2);
+  });
+
+  return newSections;
+}
+
+/** Update _meta.updatedAt timestamp */
+function _updateMeta(ymap: Y.Map<any>): void {
+  const currentMeta = ymap.get('_meta') || {};
+  const newMeta = typeof currentMeta === 'object' && !(currentMeta instanceof Y.Map)
+    ? { ...currentMeta, updatedAt: new Date().toISOString() }
+    : { updatedAt: new Date().toISOString() };
+  ymap.set('_meta', newMeta);
+}
+
+// ============================================================================
+// REPORT -> Y.MAP (FOR CREATION)
 // ============================================================================
 
 /**
  * Convert a Report to a Y.Map for insertion into Y.Doc.
- * Uses primitive values that can be set before the map is added to a document.
+ * Always creates v2 format with Y.Map<sectionId, Y.Map> for sections.
  */
 export function reportToYMap(report: Report): Y.Map<any> {
   const map = new Y.Map();
 
-  // Simple fields
   map.set('id', report.id);
   map.set('dossierId', report.dossierId);
   map.set('title', report.title);
+  map.set('_version', 2);
 
-  // Sections as array of plain objects
-  map.set('sections', report.sections.map(sectionToPlainObject));
+  // Sections as Y.Map<sectionId, Y.Map>
+  const sectionsMap = new Y.Map<any>();
+  for (const section of report.sections) {
+    sectionsMap.set(section.id, sectionToYMap(section));
+  }
+  map.set('sections', sectionsMap);
 
-  // Metadata
   map.set('_meta', {
     createdAt: dateToYjs(report.createdAt) || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -43,26 +110,42 @@ export function reportToYMap(report: Report): Y.Map<any> {
 
 /**
  * Convert a Y.Map to a Report.
- * Handles both Y types and primitive values for backward compatibility.
+ * If ydoc is provided and sections are in v1 format, migrates to v2 automatically.
  */
-export function yMapToReport(ymap: Y.Map<any>): Report {
-  const sectionsRaw = ymap.get('sections');
-  const metaRaw = ymap.get('_meta');
+export function yMapToReport(ymap: Y.Map<any>, ydoc?: Y.Doc): Report {
+  let sectionsYMap = getSectionsYMap(ymap);
 
-  // Handle sections - can be Y.Array or plain array
-  let sections: ReportSection[] = [];
-  if (sectionsRaw instanceof Y.Array) {
-    sections = sectionsRaw.toArray().map((item: any) => {
-      if (item instanceof Y.Map) {
-        return yMapToSection(item);
-      }
-      return plainObjectToSection(item);
-    });
-  } else if (Array.isArray(sectionsRaw)) {
-    sections = sectionsRaw.map(plainObjectToSection);
+  // Migrate old format if Y.Doc is available
+  if (!sectionsYMap && ydoc) {
+    sectionsYMap = migrateSectionsToYMap(ymap, ydoc);
   }
 
-  // Handle metadata
+  let sections: ReportSection[] = [];
+
+  if (sectionsYMap) {
+    // v2: Y.Map<sectionId, Y.Map>
+    for (const [, sectionEntry] of sectionsYMap.entries()) {
+      if (sectionEntry instanceof Y.Map) {
+        sections.push(yMapToSection(sectionEntry));
+      } else if (sectionEntry && typeof sectionEntry === 'object') {
+        sections.push(plainObjectToSection(sectionEntry));
+      }
+    }
+    sections.sort((a, b) => a.order - b.order);
+  } else {
+    // Fallback for offline reads without ydoc (e.g. getByDossierWithYDoc)
+    const sectionsRaw = ymap.get('sections');
+    if (Array.isArray(sectionsRaw)) {
+      sections = sectionsRaw.map(plainObjectToSection);
+    } else if (sectionsRaw instanceof Y.Array) {
+      sections = sectionsRaw.toArray().map((item: any) =>
+        item instanceof Y.Map ? yMapToSection(item) : plainObjectToSection(item)
+      );
+    }
+  }
+
+  // Metadata
+  const metaRaw = ymap.get('_meta');
   let createdAt = new Date();
   let updatedAt = new Date();
   if (metaRaw instanceof Y.Map) {
@@ -84,12 +167,12 @@ export function yMapToReport(ymap: Y.Map<any>): Report {
 }
 
 // ============================================================================
-// PARTIAL UPDATE HELPERS
+// MUTATION FUNCTIONS (CRDT-safe)
 // ============================================================================
 
 /**
  * Apply partial changes to an existing report Y.Map.
- * The map must already be part of a Y.Doc for this to work.
+ * For sections, clears and repopulates (used by restoreSection only).
  */
 export function updateReportYMap(
   ymap: Y.Map<any>,
@@ -102,20 +185,28 @@ export function updateReportYMap(
     }
 
     if (changes.sections !== undefined) {
-      ymap.set('sections', changes.sections.map(sectionToPlainObject));
+      let sectionsYMap = getSectionsYMap(ymap);
+      if (!sectionsYMap) {
+        sectionsYMap = new Y.Map<any>();
+        ymap.set('sections', sectionsYMap);
+        ymap.set('_version', 2);
+      }
+      // Clear and repopulate
+      for (const key of Array.from(sectionsYMap.keys())) {
+        sectionsYMap.delete(key);
+      }
+      for (const section of changes.sections) {
+        sectionsYMap.set(section.id, sectionToYMap(section));
+      }
     }
 
-    // Always update updatedAt
-    const currentMeta = ymap.get('_meta') || {};
-    const newMeta = typeof currentMeta === 'object' && !(currentMeta instanceof Y.Map)
-      ? { ...currentMeta, updatedAt: new Date().toISOString() }
-      : { updatedAt: new Date().toISOString() };
-    ymap.set('_meta', newMeta);
+    _updateMeta(ymap);
   });
 }
 
 /**
- * Update a single section in the report Y.Map
+ * Update a single section — only sets changed fields on the section's Y.Map.
+ * Other sections are completely untouched.
  */
 export function updateSectionInYMap(
   ymap: Y.Map<any>,
@@ -124,37 +215,30 @@ export function updateSectionInYMap(
   ydoc: Y.Doc
 ): void {
   ydoc.transact(() => {
-    const sectionsRaw = ymap.get('sections');
-    let sections: any[] = [];
+    const sectionsYMap = getSectionsYMap(ymap);
+    if (!sectionsYMap) return;
 
-    if (sectionsRaw instanceof Y.Array) {
-      sections = sectionsRaw.toArray();
-    } else if (Array.isArray(sectionsRaw)) {
-      sections = [...sectionsRaw];
+    const sectionYMap = sectionsYMap.get(sectionId);
+    if (!(sectionYMap instanceof Y.Map)) return;
+
+    if (changes.title !== undefined) sectionYMap.set('title', changes.title);
+    if (changes.order !== undefined) sectionYMap.set('order', changes.order);
+    if (changes.content !== undefined) sectionYMap.set('content', changes.content);
+    if (changes.elementIds !== undefined) sectionYMap.set('elementIds', [...changes.elementIds]);
+    if (changes.graphSnapshot !== undefined) {
+      sectionYMap.set('graphSnapshot', changes.graphSnapshot ? {
+        imageDataUrl: changes.graphSnapshot.imageDataUrl,
+        viewport: { ...changes.graphSnapshot.viewport },
+        capturedAt: dateToYjs(changes.graphSnapshot.capturedAt),
+      } : null);
     }
 
-    const updatedSections = sections.map((s: any) => {
-      const id = s instanceof Y.Map ? s.get('id') : s.id;
-      if (id === sectionId) {
-        const currentSection = s instanceof Y.Map ? yMapToSection(s) : plainObjectToSection(s);
-        return sectionToPlainObject({ ...currentSection, ...changes });
-      }
-      return s instanceof Y.Map ? yMapToSection(s) : s;
-    }).map(sectionToPlainObject);
-
-    ymap.set('sections', updatedSections);
-
-    // Update timestamp
-    const currentMeta = ymap.get('_meta') || {};
-    const newMeta = typeof currentMeta === 'object' && !(currentMeta instanceof Y.Map)
-      ? { ...currentMeta, updatedAt: new Date().toISOString() }
-      : { updatedAt: new Date().toISOString() };
-    ymap.set('_meta', newMeta);
+    _updateMeta(ymap);
   });
 }
 
 /**
- * Add a section to the report Y.Map
+ * Add a section — inserts a new Y.Map entry into the sections Y.Map.
  */
 export function addSectionToYMap(
   ymap: Y.Map<any>,
@@ -162,31 +246,19 @@ export function addSectionToYMap(
   ydoc: Y.Doc
 ): void {
   ydoc.transact(() => {
-    const sectionsRaw = ymap.get('sections');
-    let sections: any[] = [];
-
-    if (sectionsRaw instanceof Y.Array) {
-      sections = sectionsRaw.toArray().map((s: any) =>
-        s instanceof Y.Map ? yMapToSection(s) : plainObjectToSection(s)
-      );
-    } else if (Array.isArray(sectionsRaw)) {
-      sections = sectionsRaw.map(plainObjectToSection);
+    let sectionsYMap = getSectionsYMap(ymap);
+    if (!sectionsYMap) {
+      sectionsYMap = new Y.Map<any>();
+      ymap.set('sections', sectionsYMap);
+      ymap.set('_version', 2);
     }
-
-    sections.push(section);
-    ymap.set('sections', sections.map(sectionToPlainObject));
-
-    // Update timestamp
-    const currentMeta = ymap.get('_meta') || {};
-    const newMeta = typeof currentMeta === 'object' && !(currentMeta instanceof Y.Map)
-      ? { ...currentMeta, updatedAt: new Date().toISOString() }
-      : { updatedAt: new Date().toISOString() };
-    ymap.set('_meta', newMeta);
+    sectionsYMap.set(section.id, sectionToYMap(section));
+    _updateMeta(ymap);
   });
 }
 
 /**
- * Remove a section from the report Y.Map
+ * Remove a section — deletes key from sections Y.Map, renumbers order on remaining.
  */
 export function removeSectionFromYMap(
   ymap: Y.Map<any>,
@@ -194,34 +266,27 @@ export function removeSectionFromYMap(
   ydoc: Y.Doc
 ): void {
   ydoc.transact(() => {
-    const sectionsRaw = ymap.get('sections');
-    let sections: ReportSection[] = [];
+    const sectionsYMap = getSectionsYMap(ymap);
+    if (!sectionsYMap) return;
 
-    if (sectionsRaw instanceof Y.Array) {
-      sections = sectionsRaw.toArray().map((s: any) =>
-        s instanceof Y.Map ? yMapToSection(s) : plainObjectToSection(s)
-      );
-    } else if (Array.isArray(sectionsRaw)) {
-      sections = sectionsRaw.map(plainObjectToSection);
+    sectionsYMap.delete(sectionId);
+
+    // Renumber order fields on remaining sections
+    const remaining: Array<{ order: number; map: Y.Map<any> }> = [];
+    for (const [, entry] of sectionsYMap.entries()) {
+      if (entry instanceof Y.Map) {
+        remaining.push({ order: entry.get('order') ?? 0, map: entry });
+      }
     }
+    remaining.sort((a, b) => a.order - b.order);
+    remaining.forEach(({ map }, i) => map.set('order', i));
 
-    const filtered = sections
-      .filter((s) => s.id !== sectionId)
-      .map((s, i) => ({ ...s, order: i }));
-
-    ymap.set('sections', filtered.map(sectionToPlainObject));
-
-    // Update timestamp
-    const currentMeta = ymap.get('_meta') || {};
-    const newMeta = typeof currentMeta === 'object' && !(currentMeta instanceof Y.Map)
-      ? { ...currentMeta, updatedAt: new Date().toISOString() }
-      : { updatedAt: new Date().toISOString() };
-    ymap.set('_meta', newMeta);
+    _updateMeta(ymap);
   });
 }
 
 /**
- * Reorder sections in the report Y.Map
+ * Reorder sections — updates only the order field on each section's Y.Map.
  */
 export function reorderSectionsInYMap(
   ymap: Y.Map<any>,
@@ -229,41 +294,25 @@ export function reorderSectionsInYMap(
   ydoc: Y.Doc
 ): void {
   ydoc.transact(() => {
-    const sectionsRaw = ymap.get('sections');
-    let sections: ReportSection[] = [];
+    const sectionsYMap = getSectionsYMap(ymap);
+    if (!sectionsYMap) return;
 
-    if (sectionsRaw instanceof Y.Array) {
-      sections = sectionsRaw.toArray().map((s: any) =>
-        s instanceof Y.Map ? yMapToSection(s) : plainObjectToSection(s)
-      );
-    } else if (Array.isArray(sectionsRaw)) {
-      sections = sectionsRaw.map(plainObjectToSection);
-    }
+    sectionIds.forEach((id, i) => {
+      const sectionYMap = sectionsYMap.get(id);
+      if (sectionYMap instanceof Y.Map) {
+        sectionYMap.set('order', i);
+      }
+    });
 
-    const sectionMap = new Map(sections.map((s) => [s.id, s]));
-    const reordered = sectionIds
-      .map((id, i) => {
-        const section = sectionMap.get(id);
-        return section ? { ...section, order: i } : null;
-      })
-      .filter((s): s is ReportSection => s !== null);
-
-    ymap.set('sections', reordered.map(sectionToPlainObject));
-
-    // Update timestamp
-    const currentMeta = ymap.get('_meta') || {};
-    const newMeta = typeof currentMeta === 'object' && !(currentMeta instanceof Y.Map)
-      ? { ...currentMeta, updatedAt: new Date().toISOString() }
-      : { updatedAt: new Date().toISOString() };
-    ymap.set('_meta', newMeta);
+    _updateMeta(ymap);
   });
 }
 
 // ============================================================================
-// HELPER FUNCTIONS
+// SECTION CONVERSION HELPERS (kept for Dexie/export paths)
 // ============================================================================
 
-function sectionToPlainObject(section: ReportSection): any {
+export function sectionToPlainObject(section: ReportSection): any {
   return {
     id: section.id,
     title: section.title,

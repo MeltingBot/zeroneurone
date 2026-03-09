@@ -76,7 +76,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
         for (const [, ymap] of reportsMap.entries()) {
           const invId = ymap.get('dossierId');
           if (invId === dossierId) {
-            ydocReport = yMapToReport(ymap);
+            ydocReport = yMapToReport(ymap, ydoc);
             break;
           }
         }
@@ -353,7 +353,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     }
 
     try {
-      const reportFromYDoc = yMapToReport(ymap);
+      const reportFromYDoc = yMapToReport(ymap, ydoc);
 
       // Only update if there are actual changes
       const currentJson = JSON.stringify({
@@ -396,29 +396,24 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     const { reports: reportsMap } = getYMaps(ydoc);
 
-    // Throttle sync to avoid excessive re-renders
-    let syncTimeout: ReturnType<typeof setTimeout> | null = null;
-    const throttledSync = () => {
-      if (syncTimeout) {
-        clearTimeout(syncTimeout);
-      }
-      syncTimeout = setTimeout(() => {
+    // Sync via microtask to batch rapid Y.js changes without losing updates
+    let syncPending = false;
+    const scheduleSync = () => {
+      if (syncPending) return;
+      syncPending = true;
+      queueMicrotask(() => {
+        syncPending = false;
         get()._syncFromYDoc();
-      }, 50);
+      });
     };
 
-    // Observe changes to reports map
     const reportsObserver = () => {
-      throttledSync();
+      scheduleSync();
     };
 
     reportsMap.observeDeep(reportsObserver);
 
-    // Return cleanup function
     return () => {
-      if (syncTimeout) {
-        clearTimeout(syncTimeout);
-      }
       reportsMap.unobserveDeep(reportsObserver);
     };
   },
