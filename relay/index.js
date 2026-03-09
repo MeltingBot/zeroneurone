@@ -13,7 +13,7 @@
  * - REDIS_URL:              Redis connection URL (optional, default: in-memory)
  * - MAX_MESSAGE_SIZE_MB:    Max message size in MB (default: 100)
  * - RATE_LIMIT:             Max messages per second per client (default: 500)
- * - MAX_CONNECTIONS_PER_IP: Max WS connections per IP (default: 10)
+ * - MAX_CONNECTIONS_PER_IP: Max WS connections per IP (default: 50)
  * - MAX_CLIENTS_PER_ROOM:   Max clients per room (default: 50)
  * - MAX_ROOMS:              Max concurrent rooms (default: 1000)
  * - PING_INTERVAL_S:        Keepalive ping interval in seconds (default: 30)
@@ -21,6 +21,9 @@
  * - BUFFER_MAX_MSGS:        Max buffered messages per room (default: 100000)
  * - BUFFER_AGE_HOURS:       Max buffer message age in hours (default: 48)
  * - BUFFER_TOTAL_GB:        Max total buffer size in GB (default: 10)
+ * - RATE_WINDOW_MS:         Rate limit window in ms (default: 1000)
+ * - MAX_ROOM_ID_LENGTH:     Max room ID length (default: 128)
+ * - PONG_TIMEOUT_MS:        Pong timeout in ms (default: 10000)
  *
  * URL parameters:
  * - async=1:   Enable async buffering (messages stored when alone in room)
@@ -67,15 +70,15 @@ const env = (key, fallback) => {
 // ============================================================================
 const LIMITS = {
   MAX_MESSAGE_SIZE: env('MAX_MESSAGE_SIZE_MB', 100) * 1024 * 1024,
-  RATE_WINDOW_MS: 1000,
+  RATE_WINDOW_MS: env('RATE_WINDOW_MS', 1000),
   MAX_MESSAGES_PER_WINDOW: env('RATE_LIMIT', 500),
   MAX_CONNECTIONS_PER_IP: env('MAX_CONNECTIONS_PER_IP', 50),
   MAX_CLIENTS_PER_ROOM: env('MAX_CLIENTS_PER_ROOM', 50),
   MAX_ROOMS: env('MAX_ROOMS', 1000),
-  MAX_ROOM_ID_LENGTH: 128,
+  MAX_ROOM_ID_LENGTH: env('MAX_ROOM_ID_LENGTH', 128),
   ROOM_ID_PATTERN: /^[a-zA-Z0-9._-]+$/,
   PING_INTERVAL_MS: env('PING_INTERVAL_S', 30) * 1000,
-  PONG_TIMEOUT_MS: 10_000,
+  PONG_TIMEOUT_MS: env('PONG_TIMEOUT_MS', 10_000),
 };
 
 // ============================================================================
@@ -527,9 +530,14 @@ server.listen(PORT, HOST, () => {
   console.log('║  Limits:                                                   ║');
   console.log(`║  • Max message:  ${(LIMITS.MAX_MESSAGE_SIZE / 1024 / 1024).toFixed(0)} MB`.padEnd(63) + '║');
   console.log(`║  • Rate limit:   ${LIMITS.MAX_MESSAGES_PER_WINDOW}/sec`.padEnd(63) + '║');
+  console.log(`║  • Conn/IP:      ${LIMITS.MAX_CONNECTIONS_PER_IP}`.padEnd(63) + '║');
+  console.log(`║  • Clients/room: ${LIMITS.MAX_CLIENTS_PER_ROOM}`.padEnd(63) + '║');
+  console.log(`║  • Max rooms:    ${LIMITS.MAX_ROOMS}`.padEnd(63) + '║');
+  console.log(`║  • Ping:         ${LIMITS.PING_INTERVAL_MS / 1000}s (timeout ${LIMITS.PONG_TIMEOUT_MS / 1000}s)`.padEnd(63) + '║');
   const ageHours = BUFFER_LIMITS.MAX_MESSAGE_AGE_MS / 3_600_000;
   const ageLabel = ageHours >= 24 ? `${(ageHours / 24).toFixed(0)}d` : `${ageHours}h`;
   console.log(`║  • Buffer/room:  ${(BUFFER_LIMITS.MAX_BUFFER_SIZE_PER_ROOM / 1024 / 1024).toFixed(0)} MB, ${BUFFER_LIMITS.MAX_MESSAGES_PER_ROOM} msgs, ${ageLabel}`.padEnd(63) + '║');
+  console.log(`║  • Total buffer: ${(BUFFER_LIMITS.MAX_TOTAL_BUFFER_SIZE / 1024 / 1024 / 1024).toFixed(0)} GB`.padEnd(63) + '║');
   console.log(`║  • Storage:      ${redisClient ? 'Redis (persistent)' : 'Memory (ephemeral)'}`.padEnd(63) + '║');
   console.log('╚════════════════════════════════════════════════════════════╝');
   console.log('');

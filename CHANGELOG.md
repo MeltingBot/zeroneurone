@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.2
+
+### Improvements
+- Relay: all configuration values exposed as environment variables (RATE_WINDOW_MS, MAX_ROOM_ID_LENGTH, PONG_TIMEOUT_MS)
+- Relay: startup banner displays all active limits
+
 ## 2.21.1
 
 ### Fixes
