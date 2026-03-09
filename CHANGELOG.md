@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.21.3
+
+### Fixes
+- Report: edited links now render immediately on validation (no tab switch needed)
+
 ## 2.21.2
 
 ### Improvements

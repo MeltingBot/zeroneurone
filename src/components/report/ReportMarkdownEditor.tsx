@@ -726,6 +726,8 @@ export function ReportMarkdownEditor({
       // before parent stops ignoring Yjs updates
       // Serialize content now (deferred from handleInput for performance)
       const currentContent = editorRef.current ? serializeContent(editorRef.current) : value;
+      // Always update localContent so the preview renders immediately
+      setLocalContent(currentContent);
       if (currentContent !== value) {
         // Track what we sent so we can detect our echo vs remote updates
         lastSentContentRef.current = currentContent;
