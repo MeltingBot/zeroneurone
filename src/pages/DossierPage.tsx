@@ -628,7 +628,7 @@ export function DossierPage() {
         {/* Main view */}
         <main className="flex-1 relative bg-bg-secondary flex flex-col min-h-0 min-w-0">
           <TabBar dossierId={currentDossier.id} />
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-0">
             {renderMainView()}
           </div>
         </main>

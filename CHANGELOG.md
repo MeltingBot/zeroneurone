@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.22.1
+
+### Fixes
+- Timeline: restore vertical scroll (missing min-h-0 on flex container)
+
 ## 2.22.0
 
 ### Features
