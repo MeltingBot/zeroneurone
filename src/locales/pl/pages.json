@@ -142,7 +142,9 @@
       "findPaths": "Znajdź ścieżki",
       "merge": "Połącz",
       "lockPosition": "Zablokuj pozycję",
-      "unlockPosition": "Odblokuj pozycję"
+      "unlockPosition": "Odblokuj pozycję",
+      "setKeyObject": "Ustaw jako odniesienie wyrównania",
+      "clearKeyObject": "Usuń odniesienie wyrównania"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
@@ -212,6 +214,25 @@
           "description": "Organizuje elementy według poziomów (drzewa, schematy organizacyjne)"
         }
       }
+    },
+    "align": {
+      "button": "Wyrównaj",
+      "buttonTitle": "Wyrównaj zaznaczone elementy",
+      "sectionAlign": "Wyrównaj",
+      "sectionDistribute": "Rozłóż",
+      "sectionReference": "Odniesienie",
+      "left": "Wyrównaj do lewej",
+      "centerH": "Wyśrodkuj poziomo",
+      "right": "Wyrównaj do prawej",
+      "top": "Wyrównaj do góry",
+      "centerV": "Wyśrodkuj pionowo",
+      "bottom": "Wyrównaj do dołu",
+      "distributeH": "Rozłóż poziomo",
+      "distributeV": "Rozłóż pionowo",
+      "undoHint": "Ctrl+Z aby cofnąć",
+      "keyObject": "Obiekt odniesienia",
+      "keyObjectHint": "Wyrównanie do ostatnio klikniętego elementu",
+      "noKeyObjectHint": "Ctrl+klik aby wybrać element odniesienia"
     },
     "toast": {
       "elementCreated": "Element utworzony",

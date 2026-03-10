@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Layers,
@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   ArrowLeftRight,
   Minus,
-  Plus,
   X,
 } from 'lucide-react';
 import { useDossierStore, useSelectionStore } from '../../stores';
@@ -25,6 +24,7 @@ import type {
 import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
 import { AccordionSection } from '../common';
 import { TagsEditor } from './TagsEditor';
+import { PropertiesEditor } from './PropertiesEditor';
 
 const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'circle', label: '○' },
@@ -88,9 +88,23 @@ export function MultiSelectionDetail() {
     return Array.from(tags).sort();
   }, [selectedElements, selectedLinks]);
 
-  // State for adding new property
-  const [newPropertyKey, setNewPropertyKey] = useState('');
-  const [newPropertyValue, setNewPropertyValue] = useState('');
+  // Common properties: only those with the same key, type AND value across ALL selected items
+  const mergedProperties = useMemo(() => {
+    const allItems = [...selectedElements, ...selectedLinks];
+    if (allItems.length === 0) return [];
+
+    // Start with the first item's properties, then intersect
+    const first = allItems[0];
+    return first.properties.filter(prop =>
+      allItems.every(item =>
+        item.properties.some(p =>
+          p.key === prop.key &&
+          p.type === prop.type &&
+          String(p.value ?? '') === String(prop.value ?? '')
+        )
+      )
+    );
+  }, [selectedElements, selectedLinks]);
 
   // ============================================================================
   // HANDLERS - Tags
@@ -157,42 +171,66 @@ export function MultiSelectionDetail() {
   );
 
   // ============================================================================
-  // HANDLERS - Properties
+  // HANDLERS - Properties (bulk via PropertiesEditor)
   // ============================================================================
 
-  const handleAddProperty = useCallback(async () => {
-    if (!newPropertyKey.trim()) return;
+  const handleBulkPropertiesChange = useCallback(async (newProperties: Property[]) => {
+    const allItems = [...selectedElements, ...selectedLinks];
+    if (allItems.length === 0) return;
 
-    const newProp: Property = {
-      key: newPropertyKey.trim(),
-      value: newPropertyValue || null,
-      type: 'text',
-    };
+    // Determine what changed: added, updated, or removed
+    const oldKeys = new Set(mergedProperties.map(p => p.key));
+    const newKeys = new Set(newProperties.map(p => p.key));
 
-    const elementIds = Array.from(selectedElementIds);
-    const linkIds = Array.from(selectedLinkIds);
+    // Removed properties
+    const removedKeys = [...oldKeys].filter(k => !newKeys.has(k));
 
-    // Add property to elements (only if they don't already have it)
-    if (elementIds.length > 0) {
+    // Added or updated properties
+    const changedProps = newProperties.filter(p => {
+      const old = mergedProperties.find(o => o.key === p.key);
+      return !old || old.value !== p.value || old.type !== p.type;
+    });
+
+    // Apply removals
+    for (const key of removedKeys) {
       for (const el of selectedElements) {
-        if (!el.properties.some((p) => p.key === newProp.key)) {
-          await updateElements([el.id], { properties: [...el.properties, newProp] });
+        if (el.properties.some(p => p.key === key)) {
+          await updateElements([el.id], { properties: el.properties.filter(p => p.key !== key) });
         }
       }
-    }
-
-    // Add property to links
-    if (linkIds.length > 0) {
       for (const link of selectedLinks) {
-        if (!link.properties.some((p) => p.key === newProp.key)) {
-          await updateLinks([link.id], { properties: [...link.properties, newProp] });
+        if (link.properties.some(p => p.key === key)) {
+          await updateLinks([link.id], { properties: link.properties.filter(p => p.key !== key) });
         }
       }
     }
 
-    setNewPropertyKey('');
-    setNewPropertyValue('');
-  }, [newPropertyKey, newPropertyValue, selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks]);
+    // Apply additions/updates
+    for (const prop of changedProps) {
+      for (const el of selectedElements) {
+        const existing = el.properties.find(p => p.key === prop.key);
+        if (existing) {
+          // Update value
+          await updateElements([el.id], {
+            properties: el.properties.map(p => p.key === prop.key ? { ...p, value: prop.value, type: prop.type } : p),
+          });
+        } else {
+          // Add
+          await updateElements([el.id], { properties: [...el.properties, prop] });
+        }
+      }
+      for (const link of selectedLinks) {
+        const existing = link.properties.find(p => p.key === prop.key);
+        if (existing) {
+          await updateLinks([link.id], {
+            properties: link.properties.map(p => p.key === prop.key ? { ...p, value: prop.value, type: prop.type } : p),
+          });
+        } else {
+          await updateLinks([link.id], { properties: [...link.properties, prop] });
+        }
+      }
+    }
+  }, [mergedProperties, selectedElements, selectedLinks, updateElements, updateLinks]);
 
   // ============================================================================
   // HANDLERS - Confidence
@@ -399,30 +437,11 @@ export function MultiSelectionDetail() {
           <p className="text-[10px] text-text-tertiary">
             {t('detail.multi.addPropertyToAll')}
           </p>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newPropertyKey}
-              onChange={(e) => setNewPropertyKey(e.target.value)}
-              placeholder={t('detail.placeholders.keyName')}
-              className="flex-1 px-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
-            />
-            <input
-              type="text"
-              value={newPropertyValue}
-              onChange={(e) => setNewPropertyValue(e.target.value)}
-              placeholder={t('detail.placeholders.keyValue')}
-              className="flex-1 px-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
-            />
-            <button
-              onClick={handleAddProperty}
-              disabled={!newPropertyKey.trim()}
-              className="px-2 py-1.5 text-xs font-medium bg-accent text-white rounded hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
+          <PropertiesEditor
+            properties={mergedProperties}
+            onChange={handleBulkPropertiesChange}
+            suggestions={currentDossier?.settings?.suggestedProperties}
+          />
         </div>
       </AccordionSection>
 

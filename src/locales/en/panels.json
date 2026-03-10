@@ -462,6 +462,7 @@
     "disconnectWarning": "Other participants will still be able to use the share link to sync their changes and resume collaboration.",
     "disconnectResume": "You can rejoin the session later using the same link.",
     "filesProgress": "{{completed}}/{{total}} files",
+    "filesFailed": "{{count}} file(s) failed",
     "yourName": "Your name",
     "clickToEditName": "You: {{name}} (click to edit)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Export without internal links",
     "editContent": "Edit",
     "validateContent": "Validate",
-    "lockedBy": "Edited by {{name}}"
+    "lockedBy": "Edited by {{name}}",
+    "unsavedChangesTitle": "Unsaved changes",
+    "unsavedChangesMessage": "This section has unsaved changes. Do you want to save them before leaving?",
+    "unsavedSave": "Save",
+    "unsavedDiscard": "Discard"
   }
 }

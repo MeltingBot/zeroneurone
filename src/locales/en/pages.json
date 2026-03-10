@@ -142,7 +142,9 @@
       "findPaths": "Find paths",
       "merge": "Merge",
       "lockPosition": "Lock position",
-      "unlockPosition": "Unlock position"
+      "unlockPosition": "Unlock position",
+      "setKeyObject": "Set as alignment reference",
+      "clearKeyObject": "Clear alignment reference"
     },
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",
@@ -212,6 +214,25 @@
           "description": "Organizes elements by levels (trees, org charts)"
         }
       }
+    },
+    "align": {
+      "button": "Align",
+      "buttonTitle": "Align selected elements",
+      "sectionAlign": "Align",
+      "sectionDistribute": "Distribute",
+      "sectionReference": "Reference",
+      "left": "Align left",
+      "centerH": "Center horizontally",
+      "right": "Align right",
+      "top": "Align top",
+      "centerV": "Center vertically",
+      "bottom": "Align bottom",
+      "distributeH": "Distribute horizontally",
+      "distributeV": "Distribute vertically",
+      "undoHint": "Ctrl+Z to undo",
+      "keyObject": "Key object",
+      "keyObjectHint": "Aligning to last clicked element",
+      "noKeyObjectHint": "Ctrl+click to set a reference element"
     },
     "toast": {
       "elementCreated": "Element created",

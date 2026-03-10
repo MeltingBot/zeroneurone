@@ -51,6 +51,8 @@ export interface MediaSyncProgress {
   total: number;
   /** Number of assets completed */
   completed: number;
+  /** Number of assets that failed */
+  failed: number;
   /** Total size in bytes */
   totalSize: number;
   /** Completed size in bytes */
@@ -90,6 +92,7 @@ interface SyncStoreState extends SyncState {
   /** Media sync progress updates */
   startMediaSync: (total: number, totalSize: number) => void;
   updateMediaSyncProgress: (completed: number, completedSize: number, currentAsset: string | null) => void;
+  incrementMediaSyncFailed: () => void;
   completeMediaSync: () => void;
 
   /** Internal: called by syncService state changes */
@@ -388,6 +391,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         mediaSyncProgress: {
           total,
           completed: 0,
+          failed: 0,
           totalSize,
           completedSize: 0,
           currentAsset: null,
@@ -405,6 +409,15 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
               completedSize,
               currentAsset,
             }
+          : null,
+      }));
+    },
+
+    // Increment failed count
+    incrementMediaSyncFailed: () => {
+      set((state) => ({
+        mediaSyncProgress: state.mediaSyncProgress
+          ? { ...state.mediaSyncProgress, failed: state.mediaSyncProgress.failed + 1 }
           : null,
       }));
     },

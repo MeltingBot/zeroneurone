@@ -128,6 +128,31 @@ With multiple elements selected:
 - Change text size of all
 - Delete all
 - Move as a group
+- Align elements
+- Distribute elements
+
+### Alignment and Distribution
+
+When 2 or more elements are selected, an **Align** button appears in the canvas toolbar.
+
+| Action | Description |
+|--------|-------------|
+| **Left** | Aligns all elements to the leftmost X position |
+| **Center H** | Aligns to the average X position |
+| **Right** | Aligns to the rightmost X position |
+| **Top** | Aligns to the topmost Y position |
+| **Center V** | Aligns to the average Y position |
+| **Bottom** | Aligns to the bottommost Y position |
+| **Distribute H** | Evenly spaces along the horizontal axis (3+ elements) |
+| **Distribute V** | Evenly spaces along the vertical axis (3+ elements) |
+
+#### Reference Object
+
+By default, alignment uses the extreme or average positions of the group. You can choose a **reference object** from the dropdown menu: all other elements will align to its position.
+
+The last individually clicked element (before or during the selection) is suggested as the reference. You can also change the reference directly in the menu.
+
+This operation can be undone with **Ctrl+Z**.
 
 
 ---

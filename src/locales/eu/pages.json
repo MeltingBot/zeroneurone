@@ -142,7 +142,9 @@
       "findPaths": "Bideak aurkitu",
       "merge": "Batu",
       "lockPosition": "Posizioa blokeatu",
-      "unlockPosition": "Posizioa desblokeatu"
+      "unlockPosition": "Posizioa desblokeatu",
+      "setKeyObject": "Lerrokatze-erreferentzia gisa ezarri",
+      "clearKeyObject": "Lerrokatze-erreferentzia kendu"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
@@ -212,6 +214,25 @@
           "description": "Elementuak mailaka antolatu (zuhaitzak, organogramak)"
         }
       }
+    },
+    "align": {
+      "button": "Lerrokatu",
+      "buttonTitle": "Hautatutako elementuak lerrokatu",
+      "sectionAlign": "Lerrokatu",
+      "sectionDistribute": "Banatu",
+      "sectionReference": "Erreferentzia",
+      "left": "Ezkerrera lerrokatu",
+      "centerH": "Horizontalki zentratu",
+      "right": "Eskuinera lerrokatu",
+      "top": "Gora lerrokatu",
+      "centerV": "Bertikalki zentratu",
+      "bottom": "Behera lerrokatu",
+      "distributeH": "Horizontalki banatu",
+      "distributeV": "Bertikalki banatu",
+      "undoHint": "Ctrl+Z desegin",
+      "keyObject": "Erreferentzia-objektua",
+      "keyObjectHint": "Azken klikatutako elementura lerrokatzen",
+      "noKeyObjectHint": "Ctrl+klik erreferentzia-elementu bat aukeratzeko"
     },
     "toast": {
       "elementCreated": "Elementua sortuta",

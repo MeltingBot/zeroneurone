@@ -14,6 +14,8 @@ interface SelectionState {
   selectedLinkIds: Set<LinkId>;
   editingElementId: ElementId | null;
   editingLinkId: LinkId | null;
+  /** Last individually clicked element (key object for alignment) */
+  lastClickedElementId: ElementId | null;
 
   // Actions
   selectElement: (id: ElementId, addToSelection?: boolean) => void;
@@ -49,6 +51,7 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
   selectedLinkIds: new Set(),
   editingElementId: null,
   editingLinkId: null,
+  lastClickedElementId: null,
 
   selectElement: (id: ElementId, addToSelection = false) => {
     set((state) => {
@@ -59,6 +62,7 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
       return {
         selectedElementIds: newSet,
         selectedLinkIds: addToSelection ? state.selectedLinkIds : new Set(),
+        lastClickedElementId: id,
       };
     });
   },
@@ -156,6 +160,10 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
     set({
       selectedElementIds: newElementSet,
       selectedLinkIds: newLinkSet,
+      // Preserve key object if it's still in the new selection
+      lastClickedElementId: state.lastClickedElementId && newElementSet.has(state.lastClickedElementId)
+        ? state.lastClickedElementId
+        : null,
     });
   },
 
@@ -163,6 +171,7 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
     set({
       selectedElementIds: new Set(),
       selectedLinkIds: new Set(),
+      lastClickedElementId: null,
     });
   },
 

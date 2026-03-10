@@ -462,6 +462,7 @@
     "disconnectWarning": "Los demás participantes podrán seguir utilizando el enlace de uso compartido para sincronizar sus cambios y reanudar la colaboración.",
     "disconnectResume": "Puede volver a unirse a la sesión más tarde utilizando el mismo enlace.",
     "filesProgress": "{{completed}}/{{total}} archivos",
+    "filesFailed": "{{count}} archivo(s) fallido(s)",
     "yourName": "Su nombre",
     "clickToEditName": "Usted: {{name}} (clic para editar)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Exportar sin enlaces internos",
     "editContent": "Editar",
     "validateContent": "Validar",
-    "lockedBy": "Editado por {{name}}"
+    "lockedBy": "Editado por {{name}}",
+    "unsavedChangesTitle": "Cambios sin guardar",
+    "unsavedChangesMessage": "Esta sección tiene cambios sin guardar. ¿Desea guardarlos antes de salir?",
+    "unsavedSave": "Guardar",
+    "unsavedDiscard": "Descartar"
   }
 }

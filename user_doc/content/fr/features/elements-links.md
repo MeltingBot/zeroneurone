@@ -128,6 +128,31 @@ Avec plusieurs éléments sélectionnés :
 - Modifier la taille du texte de tous
 - Supprimer tous
 - Déplacer en groupe
+- Aligner les éléments
+- Distribuer les éléments
+
+### Alignement et distribution
+
+Quand 2 éléments ou plus sont sélectionnés, un bouton **Aligner** apparaît dans la barre d'outils du canvas.
+
+| Action | Description |
+|--------|-------------|
+| **Gauche** | Aligne tous les éléments sur la position X la plus à gauche |
+| **Centre H** | Aligne sur la moyenne des positions X |
+| **Droite** | Aligne sur la position X la plus à droite |
+| **Haut** | Aligne sur la position Y la plus haute |
+| **Centre V** | Aligne sur la moyenne des positions Y |
+| **Bas** | Aligne sur la position Y la plus basse |
+| **Distribuer H** | Espace régulièrement sur l'axe horizontal (3+ éléments) |
+| **Distribuer V** | Espace régulièrement sur l'axe vertical (3+ éléments) |
+
+#### Objet de référence
+
+Par défaut, l'alignement utilise les positions extrêmes ou moyennes du groupe. Vous pouvez choisir un **objet de référence** dans le menu déroulant : tous les autres éléments s'aligneront sur sa position.
+
+Le dernier élément cliqué individuellement (avant ou pendant la sélection) est proposé comme référence. Vous pouvez aussi changer la référence directement dans le menu.
+
+L'opération est réversible avec **Ctrl+Z**.
 
 
 ---

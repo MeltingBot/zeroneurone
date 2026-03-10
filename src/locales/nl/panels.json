@@ -462,6 +462,7 @@
     "disconnectWarning": "Andere deelnemers kunnen de deellink nog steeds gebruiken om hun wijzigingen te synchroniseren en de samenwerking voort te zetten.",
     "disconnectResume": "U kunt later opnieuw deelnemen aan de sessie via dezelfde link.",
     "filesProgress": "{{completed}}/{{total}} bestanden",
+    "filesFailed": "{{count}} bestand(en) mislukt",
     "yourName": "Uw naam",
     "clickToEditName": "U: {{name}} (klik om te bewerken)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Exporteren zonder interne links",
     "editContent": "Bewerken",
     "validateContent": "Bevestigen",
-    "lockedBy": "Bewerkt door {{name}}"
+    "lockedBy": "Bewerkt door {{name}}",
+    "unsavedChangesTitle": "Niet-opgeslagen wijzigingen",
+    "unsavedChangesMessage": "Deze sectie bevat niet-opgeslagen wijzigingen. Wilt u deze opslaan voordat u vertrekt?",
+    "unsavedSave": "Opslaan",
+    "unsavedDiscard": "Verwerpen"
   }
 }

@@ -49,6 +49,7 @@ import {
   yMapToTab,
 } from '../services/yjs/tabMapper';
 import { useSyncStore } from './syncStore';
+import { useUIStore } from './uiStore';
 import { useTabStore } from './tabStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
@@ -2488,34 +2489,37 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         const totalSize = newAssetsToSave.reduce((sum, item) => sum + (item.assetData.size || 0), 0);
         const syncStore = useSyncStore.getState();
         syncStore.startMediaSync(newAssetsToSave.length, totalSize);
-        let completedCount = 0;
-        let completedSize = 0;
 
-        for (const { assetData, base64Data } of newAssetsToSave) {
-          syncStore.updateMediaSyncProgress(completedCount, completedSize, assetData.filename);
-          fileService.saveAssetFromBase64(assetData, base64Data)
-            .then((savedAsset) => {
+        // Sequential saves for predictable progress feedback
+        (async () => {
+          let completedCount = 0;
+          let completedSize = 0;
+
+          for (const { assetData, base64Data } of newAssetsToSave) {
+            syncStore.updateMediaSyncProgress(completedCount, completedSize, assetData.filename);
+            try {
+              const savedAsset = await fileService.saveAssetFromBase64(assetData, base64Data);
               if (savedAsset) {
                 set((state) => ({
                   assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],
                 }));
-                completedCount++;
-                completedSize += assetData.size || 0;
-                syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
-                if (completedCount === newAssetsToSave.length) {
-                  setTimeout(() => syncStore.completeMediaSync(), 500);
-                }
               }
-            })
-            .catch((error) => {
+              completedSize += assetData.size || 0;
+            } catch (error) {
               console.warn(`[Sync] Failed to save asset ${assetData.filename}:`, error);
-              completedCount++;
-              syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
-              if (completedCount === newAssetsToSave.length) {
-                setTimeout(() => syncStore.completeMediaSync(), 500);
-              }
-            });
-        }
+              syncStore.incrementMediaSyncFailed();
+              useUIStore.getState().showToast(
+                'error',
+                `${assetData.filename}`,
+                5000,
+              );
+            }
+            completedCount++;
+          }
+
+          syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
+          setTimeout(() => syncStore.completeMediaSync(), 500);
+        })();
       }
     }
 

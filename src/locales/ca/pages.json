@@ -142,7 +142,9 @@
       "findPaths": "Trobar camins",
       "merge": "Fusionar",
       "lockPosition": "Bloquejar posició",
-      "unlockPosition": "Desbloquejar posició"
+      "unlockPosition": "Desbloquejar posició",
+      "setKeyObject": "Definir com a referència d'alineació",
+      "clearKeyObject": "Treure referència d'alineació"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
@@ -212,6 +214,25 @@
           "description": "Organitza els elements per nivells (arbres, organigrames)"
         }
       }
+    },
+    "align": {
+      "button": "Alinear",
+      "buttonTitle": "Alinear elements seleccionats",
+      "sectionAlign": "Alinear",
+      "sectionDistribute": "Distribuir",
+      "sectionReference": "Referència",
+      "left": "Alinear a l'esquerra",
+      "centerH": "Centrar horitzontalment",
+      "right": "Alinear a la dreta",
+      "top": "Alinear a dalt",
+      "centerV": "Centrar verticalment",
+      "bottom": "Alinear a baix",
+      "distributeH": "Distribuir horitzontalment",
+      "distributeV": "Distribuir verticalment",
+      "undoHint": "Ctrl+Z per desfer",
+      "keyObject": "Objecte clau",
+      "keyObjectHint": "Alineant a l'últim element clicat",
+      "noKeyObjectHint": "Ctrl+clic per triar un element de referència"
     },
     "toast": {
       "elementCreated": "Element creat",

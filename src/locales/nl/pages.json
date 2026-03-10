@@ -142,7 +142,9 @@
       "findPaths": "Paden zoeken",
       "merge": "Samenvoegen",
       "lockPosition": "Positie vergrendelen",
-      "unlockPosition": "Positie ontgrendelen"
+      "unlockPosition": "Positie ontgrendelen",
+      "setKeyObject": "Instellen als uitlijnreferentie",
+      "clearKeyObject": "Uitlijnreferentie verwijderen"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
@@ -212,6 +214,25 @@
           "description": "Rangschikt elementen per niveau (bomen, organogrammen)"
         }
       }
+    },
+    "align": {
+      "button": "Uitlijnen",
+      "buttonTitle": "Geselecteerde elementen uitlijnen",
+      "sectionAlign": "Uitlijnen",
+      "sectionDistribute": "Verdelen",
+      "sectionReference": "Referentie",
+      "left": "Links uitlijnen",
+      "centerH": "Horizontaal centreren",
+      "right": "Rechts uitlijnen",
+      "top": "Boven uitlijnen",
+      "centerV": "Verticaal centreren",
+      "bottom": "Onder uitlijnen",
+      "distributeH": "Horizontaal verdelen",
+      "distributeV": "Verticaal verdelen",
+      "undoHint": "Ctrl+Z om ongedaan te maken",
+      "keyObject": "Referentieobject",
+      "keyObjectHint": "Uitlijnen op laatst aangeklikt element",
+      "noKeyObjectHint": "Ctrl+klik om een referentie-element te kiezen"
     },
     "toast": {
       "elementCreated": "Element aangemaakt",

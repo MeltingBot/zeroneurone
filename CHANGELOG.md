@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.22.0
+
+### Features
+- Canvas: alignment tools (left, center, right, top, middle, bottom) with key object reference picker
+- Canvas: distribute horizontally/vertically for 3+ selected elements
+- Multi-selection: bulk property editing with full PropertiesEditor (intersection of common properties)
+
+### Improvements
+- Collaboration: sequential asset sync with linear progress feedback
+- Collaboration: media sync badge shows current filename, error count, visible in all connection states
+- Collaboration: toast notification on asset sync failure
+- Report: unsaved changes modal when leaving write mode without validating
+- Events: date editing no longer causes immediate re-sorting (blur-based sync)
+
 ## 2.21.4
 
 ### Fixes

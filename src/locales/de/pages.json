@@ -142,7 +142,9 @@
       "findPaths": "Pfade finden",
       "merge": "Zusammenführen",
       "lockPosition": "Position sperren",
-      "unlockPosition": "Position entsperren"
+      "unlockPosition": "Position entsperren",
+      "setKeyObject": "Als Ausrichtungsreferenz festlegen",
+      "clearKeyObject": "Ausrichtungsreferenz entfernen"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",
@@ -212,6 +214,25 @@
           "description": "Ordnet Elemente nach Ebenen (Bäume, Organigramme)"
         }
       }
+    },
+    "align": {
+      "button": "Ausrichten",
+      "buttonTitle": "Ausgewählte Elemente ausrichten",
+      "sectionAlign": "Ausrichten",
+      "sectionDistribute": "Verteilen",
+      "sectionReference": "Referenz",
+      "left": "Links ausrichten",
+      "centerH": "Horizontal zentrieren",
+      "right": "Rechts ausrichten",
+      "top": "Oben ausrichten",
+      "centerV": "Vertikal zentrieren",
+      "bottom": "Unten ausrichten",
+      "distributeH": "Horizontal verteilen",
+      "distributeV": "Vertikal verteilen",
+      "undoHint": "Strg+Z zum Rückgängig machen",
+      "keyObject": "Bezugsobjekt",
+      "keyObjectHint": "Ausrichtung am zuletzt angeklickten Element",
+      "noKeyObjectHint": "Ctrl+Klick um ein Bezugselement zu wählen"
     },
     "toast": {
       "elementCreated": "Element erstellt",

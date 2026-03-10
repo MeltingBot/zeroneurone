@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pencil, Check, Lock } from 'lucide-react';
 import { ElementAutocomplete } from './ElementAutocomplete';
 import { ReportMarkdownPreview } from './ReportMarkdownPreview';
+import { Modal, Button } from '../common';
 import { sanitizeLinkLabel } from '../../utils';
 import { useDossierStore, useSelectionStore, useViewStore, useSyncStore } from '../../stores';
 
@@ -382,6 +383,7 @@ export function ReportMarkdownEditor({
   const [localContent, setLocalContent] = useState(value); // Local buffer for editing (synced only on validate)
   const [autocomplete, setAutocomplete] = useState<AutocompleteState | null>(null);
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const isUpdatingRef = useRef(false);
   const justClickedLinkRef = useRef(false);
@@ -624,7 +626,7 @@ export function ReportMarkdownEditor({
     }
   }, [autocomplete]);
 
-  // Handle blur
+  // Handle blur - check for unsaved changes when leaving write mode
   const handleBlur = useCallback((e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as HTMLElement | null;
     if (relatedTarget?.closest('[data-autocomplete]')) {
@@ -635,7 +637,47 @@ export function ReportMarkdownEditor({
     if (editingLinkId) {
       setEditingLinkId(null);
     }
-  }, [editingLinkId]);
+
+    // If in write mode, check for unsaved changes
+    if (isWriteMode && editorRef.current) {
+      const currentContent = serializeContent(editorRef.current);
+      if (currentContent !== value) {
+        setShowUnsavedModal(true);
+      }
+    }
+  }, [editingLinkId, isWriteMode, value]);
+
+  // Unsaved modal actions
+  const handleUnsavedSave = useCallback(() => {
+    setShowUnsavedModal(false);
+    // Save and exit write mode
+    const currentContent = editorRef.current ? serializeContent(editorRef.current) : value;
+    setLocalContent(currentContent);
+    setEditingLinkId(null);
+    updateEditingReportSection(null);
+    if (currentContent !== value) {
+      lastSentContentRef.current = currentContent;
+      onChange(currentContent);
+    }
+    onEditingChange?.(false);
+    setIsWriteMode(false);
+  }, [value, onChange, onEditingChange, updateEditingReportSection]);
+
+  const handleUnsavedDiscard = useCallback(() => {
+    setShowUnsavedModal(false);
+    // Discard and exit write mode
+    setLocalContent(value);
+    setEditingLinkId(null);
+    updateEditingReportSection(null);
+    onEditingChange?.(false);
+    setIsWriteMode(false);
+  }, [value, onEditingChange, updateEditingReportSection]);
+
+  const handleUnsavedContinue = useCallback(() => {
+    setShowUnsavedModal(false);
+    // Re-focus the editor to continue editing
+    setTimeout(() => editorRef.current?.focus(), 0);
+  }, []);
 
   // Navigate to element on canvas
   const navigateToElement = useCallback(
@@ -1051,6 +1093,28 @@ export function ReportMarkdownEditor({
           onClose={handleAutocompleteClose}
         />
       )}
+
+      {/* Unsaved changes modal */}
+      <Modal
+        isOpen={showUnsavedModal}
+        onClose={handleUnsavedContinue}
+        title={t('report.unsavedChangesTitle')}
+        width="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleUnsavedDiscard}>
+              {t('report.unsavedDiscard')}
+            </Button>
+            <Button variant="primary" onClick={handleUnsavedSave}>
+              {t('report.unsavedSave')}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          {t('report.unsavedChangesMessage')}
+        </p>
+      </Modal>
     </div>
   );
 }

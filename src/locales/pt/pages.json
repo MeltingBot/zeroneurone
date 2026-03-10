@@ -142,7 +142,9 @@
       "findPaths": "Encontrar caminhos",
       "merge": "Fundir",
       "lockPosition": "Bloquear posição",
-      "unlockPosition": "Desbloquear posição"
+      "unlockPosition": "Desbloquear posição",
+      "setKeyObject": "Definir como referência de alinhamento",
+      "clearKeyObject": "Remover referência de alinhamento"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",
@@ -212,6 +214,25 @@
           "description": "Organiza os elementos por níveis (árvores, organogramas)"
         }
       }
+    },
+    "align": {
+      "button": "Alinhar",
+      "buttonTitle": "Alinhar elementos selecionados",
+      "sectionAlign": "Alinhar",
+      "sectionDistribute": "Distribuir",
+      "sectionReference": "Referência",
+      "left": "Alinhar à esquerda",
+      "centerH": "Centralizar horizontalmente",
+      "right": "Alinhar à direita",
+      "top": "Alinhar acima",
+      "centerV": "Centralizar verticalmente",
+      "bottom": "Alinhar abaixo",
+      "distributeH": "Distribuir horizontalmente",
+      "distributeV": "Distribuir verticalmente",
+      "undoHint": "Ctrl+Z para desfazer",
+      "keyObject": "Objeto chave",
+      "keyObjectHint": "Alinhando ao último elemento clicado",
+      "noKeyObjectHint": "Ctrl+clique para escolher um elemento de referência"
     },
     "toast": {
       "elementCreated": "Elemento criado",

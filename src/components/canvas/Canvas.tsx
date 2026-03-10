@@ -35,6 +35,7 @@ import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { usePlugins } from '../../plugins/usePlugins';
+import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -3960,6 +3961,7 @@ export function Canvas() {
                 <MapIcon size={16} />
               </button>
               <div className="w-px h-4 bg-border-default mx-1" />
+              <AlignDropdown />
               <LayoutDropdown />
               <div className="w-px h-4 bg-border-default mx-1" />
               <CanvasZoomControls />

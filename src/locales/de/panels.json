@@ -462,6 +462,7 @@
     "disconnectWarning": "Andere Teilnehmer können den Freigabelink weiterhin verwenden, um Änderungen zu synchronisieren und die Zusammenarbeit fortzusetzen.",
     "disconnectResume": "Sie können der Sitzung später über denselben Link wieder beitreten.",
     "filesProgress": "{{completed}}/{{total}} Dateien",
+    "filesFailed": "{{count}} Datei(en) fehlgeschlagen",
     "yourName": "Ihr Name",
     "clickToEditName": "Sie: {{name}} (klicken zum Bearbeiten)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Ohne interne Links exportieren",
     "editContent": "Bearbeiten",
     "validateContent": "Bestätigen",
-    "lockedBy": "Bearbeitet von {{name}}"
+    "lockedBy": "Bearbeitet von {{name}}",
+    "unsavedChangesTitle": "Ungespeicherte Änderungen",
+    "unsavedChangesMessage": "Dieser Abschnitt enthält ungespeicherte Änderungen. Möchten Sie diese vor dem Verlassen speichern?",
+    "unsavedSave": "Speichern",
+    "unsavedDiscard": "Verwerfen"
   }
 }

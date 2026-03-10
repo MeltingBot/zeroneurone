@@ -462,6 +462,7 @@
     "disconnectWarning": "Os outros participantes poderão continuar a usar o link de partilha para sincronizar as suas alterações e retomar a colaboração.",
     "disconnectResume": "Pode voltar a juntar-se à sessão mais tarde usando o mesmo link.",
     "filesProgress": "{{completed}}/{{total}} ficheiros",
+    "filesFailed": "{{count}} ficheiro(s) falhado(s)",
     "yourName": "O seu nome",
     "clickToEditName": "Você: {{name}} (clique para editar)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Exportar sem links internos",
     "editContent": "Editar",
     "validateContent": "Validar",
-    "lockedBy": "Editado por {{name}}"
+    "lockedBy": "Editado por {{name}}",
+    "unsavedChangesTitle": "Alterações não guardadas",
+    "unsavedChangesMessage": "Esta secção tem alterações não guardadas. Deseja guardá-las antes de sair?",
+    "unsavedSave": "Guardar",
+    "unsavedDiscard": "Descartar"
   }
 }

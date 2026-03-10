@@ -52,6 +52,10 @@ function EventItem({
   const [latStr, setLatStr] = useState(event.geo?.lat?.toFixed(6) ?? '');
   const [lngStr, setLngStr] = useState(event.geo?.lng?.toFixed(6) ?? '');
 
+  // Local state for dates - syncs on blur to prevent re-sorting during editing
+  const [localDate, setLocalDate] = useState(event.date);
+  const [localDateEnd, setLocalDateEnd] = useState(event.dateEnd);
+
   // Sync local state when event prop changes (e.g., from undo/redo or collab)
   useEffect(() => {
     setLabel(event.label || '');
@@ -59,7 +63,9 @@ function EventItem({
     setSource(event.source || '');
     setLatStr(event.geo?.lat?.toFixed(6) ?? '');
     setLngStr(event.geo?.lng?.toFixed(6) ?? '');
-  }, [event.id, event.label, event.description, event.source, event.geo?.lat, event.geo?.lng]);
+    setLocalDate(event.date);
+    setLocalDateEnd(event.dateEnd);
+  }, [event.id, event.label, event.description, event.source, event.geo?.lat, event.geo?.lng, event.date, event.dateEnd]);
 
   const formatDateForInput = (date: Date): string => {
     const d = new Date(date);
@@ -166,27 +172,39 @@ function EventItem({
         </div>
       </div>
 
-      {/* Dates - always visible */}
+      {/* Dates - always visible, syncs on blur to prevent re-sorting during editing */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Calendar size={12} className="text-text-tertiary shrink-0" />
           <span className="text-[10px] text-text-tertiary w-8">{t('detail.events.dateFrom')}</span>
           <input
             type="date"
-            value={formatDateForInput(new Date(event.date))}
+            value={formatDateForInput(new Date(localDate))}
             onChange={(e) => {
               if (!e.target.value) return;
-              const existingTime = formatTimeForInput(new Date(event.date));
-              onUpdate({ date: new Date(`${e.target.value}T${existingTime}`) });
+              const existingTime = formatTimeForInput(new Date(localDate));
+              setLocalDate(new Date(`${e.target.value}T${existingTime}`));
+            }}
+            onBlur={() => {
+              const d = new Date(localDate);
+              if (!isNaN(d.getTime()) && d.getTime() !== new Date(event.date).getTime()) {
+                onUpdate({ date: d });
+              }
             }}
             className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
           <input
             type="time"
-            value={formatTimeForInput(new Date(event.date))}
+            value={formatTimeForInput(new Date(localDate))}
             onChange={(e) => {
-              const existingDate = formatDateForInput(new Date(event.date));
-              onUpdate({ date: new Date(`${existingDate}T${e.target.value || '00:00'}`) });
+              const existingDate = formatDateForInput(new Date(localDate));
+              setLocalDate(new Date(`${existingDate}T${e.target.value || '00:00'}`));
+            }}
+            onBlur={() => {
+              const d = new Date(localDate);
+              if (!isNaN(d.getTime()) && d.getTime() !== new Date(event.date).getTime()) {
+                onUpdate({ date: d });
+              }
             }}
             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
@@ -196,24 +214,41 @@ function EventItem({
           <span className="text-[10px] text-text-tertiary w-8">{t('detail.events.dateTo')}</span>
           <input
             type="date"
-            value={event.dateEnd ? formatDateForInput(new Date(event.dateEnd)) : ''}
+            value={localDateEnd ? formatDateForInput(new Date(localDateEnd)) : ''}
             onChange={(e) => {
               if (!e.target.value) {
+                setLocalDateEnd(undefined);
                 onUpdate({ dateEnd: undefined });
                 return;
               }
-              const existingTime = event.dateEnd ? formatTimeForInput(new Date(event.dateEnd)) : '00:00';
-              onUpdate({ dateEnd: new Date(`${e.target.value}T${existingTime}`) });
+              const existingTime = localDateEnd ? formatTimeForInput(new Date(localDateEnd)) : '00:00';
+              setLocalDateEnd(new Date(`${e.target.value}T${existingTime}`));
+            }}
+            onBlur={() => {
+              if (!localDateEnd) return;
+              const d = new Date(localDateEnd);
+              const oldEnd = event.dateEnd ? new Date(event.dateEnd).getTime() : null;
+              if (!isNaN(d.getTime()) && d.getTime() !== oldEnd) {
+                onUpdate({ dateEnd: d });
+              }
             }}
             className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
           <input
             type="time"
-            value={event.dateEnd ? formatTimeForInput(new Date(event.dateEnd)) : ''}
+            value={localDateEnd ? formatTimeForInput(new Date(localDateEnd)) : ''}
             onChange={(e) => {
-              const existingDate = event.dateEnd ? formatDateForInput(new Date(event.dateEnd)) : '';
-              if (!existingDate) return;
-              onUpdate({ dateEnd: new Date(`${existingDate}T${e.target.value || '00:00'}`) });
+              if (!localDateEnd) return;
+              const existingDate = formatDateForInput(new Date(localDateEnd));
+              setLocalDateEnd(new Date(`${existingDate}T${e.target.value || '00:00'}`));
+            }}
+            onBlur={() => {
+              if (!localDateEnd) return;
+              const d = new Date(localDateEnd);
+              const oldEnd = event.dateEnd ? new Date(event.dateEnd).getTime() : null;
+              if (!isNaN(d.getTime()) && d.getTime() !== oldEnd) {
+                onUpdate({ dateEnd: d });
+              }
             }}
             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />

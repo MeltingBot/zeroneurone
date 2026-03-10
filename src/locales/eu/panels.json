@@ -462,6 +462,7 @@
     "disconnectWarning": "Beste parte-hartzaileek partekatzeko esteka erabiltzen jarraitu ahal izango dute aldaketak sinkronizatzeko eta lankidetza berriro hasteko.",
     "disconnectResume": "Saiora berriro sartu zaitezke geroago esteka bera erabiliz.",
     "filesProgress": "{{completed}}/{{total}} fitxategi",
+    "filesFailed": "{{count}} fitxategi huts egin du(te)",
     "yourName": "Zure izena",
     "clickToEditName": "Zu: {{name}} (klikatu editatzeko)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Esportatu barne-esteekarik gabe",
     "editContent": "Editatu",
     "validateContent": "Balidatu",
-    "lockedBy": "{{name}}(e)k editatzen"
+    "lockedBy": "{{name}}(e)k editatzen",
+    "unsavedChangesTitle": "Gorde gabeko aldaketak",
+    "unsavedChangesMessage": "Atal honek gorde gabeko aldaketak ditu. Irten aurretik gorde nahi dituzu?",
+    "unsavedSave": "Gorde",
+    "unsavedDiscard": "Baztertu"
   }
 }

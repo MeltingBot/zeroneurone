@@ -462,6 +462,7 @@
     "disconnectWarning": "Інші учасники все ще зможуть використовувати посилання для спільного доступу, щоб синхронізувати свої зміни та продовжити співпрацю.",
     "disconnectResume": "Ви можете повернутися до сесії пізніше за тим самим посиланням.",
     "filesProgress": "{{completed}}/{{total}} файлів",
+    "filesFailed": "{{count}} файл(ів) не вдалося",
     "yourName": "Ваше ім'я",
     "clickToEditName": "Ви: {{name}} (клацніть для редагування)"
   },
@@ -485,6 +486,10 @@
     "exportWithoutLinks": "Експорт без внутрішніх посилань",
     "editContent": "Редагувати",
     "validateContent": "Підтвердити",
-    "lockedBy": "Редагує {{name}}"
+    "lockedBy": "Редагує {{name}}",
+    "unsavedChangesTitle": "Незбережені зміни",
+    "unsavedChangesMessage": "Цей розділ містить незбережені зміни. Бажаєте зберегти їх перед виходом?",
+    "unsavedSave": "Зберегти",
+    "unsavedDiscard": "Відхилити"
   }
 }
