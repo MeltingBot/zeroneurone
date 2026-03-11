@@ -176,7 +176,8 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
 
   const osintElements = (tables['data'] || []) as OsintrackerElement[];
   const osintRelations = (tables['relation'] || []) as OsintrackerRelation[];
-  const osintDossiers = (tables['dossier'] || []) as OsintrackerDossier[];
+  // Support both v1 ("dossier") and v2 ("investigation") table names
+  const osintDossiers = (tables['dossier'] || tables['investigation'] || []) as OsintrackerDossier[];
 
   // Get the dossier (use first one if multiple)
   const osintDossier = osintDossiers[0];
@@ -185,9 +186,10 @@ export async function parseOsintrackerFile(jsonContent: string): Promise<Osintra
   }
 
   // Filter elements and relations for this dossier
+  // v1 uses "dossierId", v2 uses "investigationId"
   const dossierId = osintDossier.id;
-  const filteredElements = osintElements.filter(e => e.dossierId === dossierId);
-  const filteredRelations = osintRelations.filter(r => r.dossierId === dossierId);
+  const filteredElements = osintElements.filter(e => (e.dossierId || (e as any).investigationId) === dossierId);
+  const filteredRelations = osintRelations.filter(r => (r.dossierId || (r as any).investigationId) === dossierId);
 
   // Track valid element IDs for link validation
   const validElementIds = new Set(filteredElements.map(e => e.id));

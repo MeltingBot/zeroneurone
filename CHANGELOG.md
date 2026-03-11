@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.22.2
+
+### Fixes
+- Import: support OSINTracker v2 format (investigation table + investigationId)
+
 ## 2.22.1
 
 ### Fixes
