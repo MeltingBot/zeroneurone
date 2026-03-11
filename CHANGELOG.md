@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.23.0
+
+### Features
+- Search: extracted text snippets shown in results with highlighted match and centered window
+- Search: notes highlight with centered window on long text
+- Assets: text file preview (txt, md, json, xml, csv, yaml, log, etc.)
+- Assets: DOCX and ODT text extraction via JSZip XML parsing
+- Assets: DOCX and ODT preview (extracted text view)
+
+### Fixes
+- Import: support OSINTracker v2 format (investigation table + investigationId)
+
 ## 2.22.2
 
 ### Fixes

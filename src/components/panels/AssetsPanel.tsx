@@ -316,7 +316,8 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
               onRemove={() => handleRemove(asset.id)}
               onClearText={asset.extractedText ? () => handleClearText(asset.id) : undefined}
               onExtractText={
-                (asset.mimeType === 'application/pdf' || asset.mimeType.startsWith('text/'))
+                (asset.mimeType === 'application/pdf' || asset.mimeType.startsWith('text/')
+                  || asset.filename.toLowerCase().endsWith('.docx') || asset.filename.toLowerCase().endsWith('.odt'))
                   ? () => handleExtractText(asset.id)
                   : undefined
               }
@@ -401,9 +402,11 @@ function AssetItem({
   const [showText, setShowText] = useState(false);
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
+  const isText = asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename);
+  const isDoc = /\.(docx|odt)$/i.test(asset.filename);
   const hasText = !!asset.extractedText;
 
-  const Icon = isImage ? Image : isPdf ? FileText : File;
+  const Icon = isImage ? Image : (isPdf || isDoc) ? FileText : File;
 
   return (
     <div>
@@ -484,7 +487,7 @@ function AssetItem({
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {(isImage || isPdf) && (
+          {(isImage || isPdf || isText || isDoc) && (
             <button
               onClick={onPreview}
               className="p-1 text-text-tertiary hover:text-text-primary"
@@ -549,10 +552,14 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
   const { t: tCommon } = useTranslation('common');
   const { t: tPanels } = useTranslation('panels');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [textContent, setTextContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
+  const isText = asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename);
+  const isDoc = /\.(docx|odt)$/i.test(asset.filename);
+  const hasPreview = isImage || isPdf || isText || isDoc;
 
   // Load file from OPFS
   useEffect(() => {
@@ -562,20 +569,25 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     const loadFile = async () => {
       try {
         setIsLoading(true);
-        url = await fileService.getAssetUrl(asset);
-        if (mounted) {
-          setFileUrl(url);
+        if (isText) {
+          const file = await fileService.getAssetFile(asset);
+          const text = await file.text();
+          if (mounted) setTextContent(text);
+        } else if (isDoc) {
+          // Use extractedText if available, otherwise show notice
+          if (mounted) setTextContent(asset.extractedText || null);
+        } else {
+          url = await fileService.getAssetUrl(asset);
+          if (mounted) setFileUrl(url);
         }
       } catch (error) {
         console.error('Error loading file:', error);
       } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        if (mounted) setIsLoading(false);
       }
     };
 
-    if (isImage || isPdf) {
+    if (hasPreview) {
       loadFile();
     } else {
       setIsLoading(false);
@@ -583,12 +595,9 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
 
     return () => {
       mounted = false;
-      // Revoke object URL to free memory
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
+      if (url) URL.revokeObjectURL(url);
     };
-  }, [asset, isImage, isPdf]);
+  }, [asset, isImage, isPdf, isText, isDoc, hasPreview]);
 
   // Handle keyboard events
   useEffect(() => {
@@ -608,7 +617,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     >
       <div
         className={`bg-bg-primary rounded shadow-lg ${
-          isPdf ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
+          isPdf || isText || isDoc ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -627,7 +636,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         </div>
 
         {/* Content */}
-        <div className={isPdf ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
+        <div className={isPdf || isText || isDoc ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <div className="flex flex-col items-center gap-2">
@@ -642,6 +651,15 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
               className="w-full h-full border-0"
               title={asset.filename}
             />
+          ) : (isText || isDoc) && textContent !== null ? (
+            <pre className="w-full h-full overflow-auto p-4 text-xs text-text-primary font-mono whitespace-pre-wrap leading-relaxed">
+              {textContent}
+            </pre>
+          ) : isDoc && textContent === null ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
+              <FileText size={48} />
+              <p className="text-sm">Extraire le texte pour afficher l'apercu</p>
+            </div>
           ) : isImage && fileUrl ? (
             <div className="p-4 text-center">
               <img

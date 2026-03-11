@@ -1,4 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import JSZip from 'jszip';
 import { db } from '../db/database';
 import { generateUUID, bufferToHex, getExtension } from '../utils';
 import type { Asset, AssetId, DossierId } from '../types';
@@ -510,6 +511,17 @@ class FileService {
       return this.extractPdfText(arrayBuffer);
     }
 
+    // Extract text from DOCX
+    const nameLower = file.name.toLowerCase();
+    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || nameLower.endsWith('.docx')) {
+      return this.extractDocxText(arrayBuffer);
+    }
+
+    // Extract text from ODT
+    if (file.type === 'application/vnd.oasis.opendocument.text' || nameLower.endsWith('.odt')) {
+      return this.extractOdtText(arrayBuffer);
+    }
+
     return null;
   }
 
@@ -533,6 +545,57 @@ class FileService {
       return this.normalizeExtractedText(textParts.join('\n\n'));
     } catch (error) {
       console.warn('Failed to extract PDF text:', error);
+      return null;
+    }
+  }
+
+  private async extractDocxText(arrayBuffer: ArrayBuffer): Promise<string | null> {
+    try {
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const docXml = await zip.file('word/document.xml')?.async('string');
+      if (!docXml) return null;
+
+      // Parse XML and extract text from <w:t> elements
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(docXml, 'application/xml');
+      const paragraphs = doc.getElementsByTagName('w:p');
+      const textParts: string[] = [];
+
+      for (let i = 0; i < paragraphs.length; i++) {
+        const texts = paragraphs[i].getElementsByTagName('w:t');
+        const parts: string[] = [];
+        for (let j = 0; j < texts.length; j++) {
+          parts.push(texts[j].textContent || '');
+        }
+        textParts.push(parts.join(''));
+      }
+
+      return this.normalizeExtractedText(textParts.join('\n'));
+    } catch (error) {
+      console.warn('Failed to extract DOCX text:', error);
+      return null;
+    }
+  }
+
+  private async extractOdtText(arrayBuffer: ArrayBuffer): Promise<string | null> {
+    try {
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const contentXml = await zip.file('content.xml')?.async('string');
+      if (!contentXml) return null;
+
+      // Parse XML and extract text from <text:p> elements
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(contentXml, 'application/xml');
+      const paragraphs = doc.getElementsByTagNameNS('urn:oasis:names:tc:opendocument:xmlns:text:1.0', 'p');
+      const textParts: string[] = [];
+
+      for (let i = 0; i < paragraphs.length; i++) {
+        textParts.push(paragraphs[i].textContent || '');
+      }
+
+      return this.normalizeExtractedText(textParts.join('\n'));
+    } catch (error) {
+      console.warn('Failed to extract ODT text:', error);
       return null;
     }
   }

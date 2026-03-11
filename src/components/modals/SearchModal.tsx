@@ -27,7 +27,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links } = useDossierStore();
+  const { elements, links, assets } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange } = useViewStore();
   const canvasTabs = useTabStore((s) => s.tabs);
@@ -262,23 +262,76 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [elementsMap, linksMap]
   );
 
-  // Get excerpt (notes) for a result
+  // Get excerpt (notes) for a result, centered on match if query found in notes
   const getResultNotes = useCallback(
     (result: SearchResult): string | null => {
-      if (result.type === 'element') {
-        const el = elementsMap.get(result.id);
-        if (el?.notes) {
-          return el.notes.substring(0, 80) + (el.notes.length > 80 ? '...' : '');
-        }
-      } else {
-        const link = linksMap.get(result.id);
-        if (link?.notes) {
-          return link.notes.substring(0, 80) + (link.notes.length > 80 ? '...' : '');
-        }
+      const notes = result.type === 'element'
+        ? elementsMap.get(result.id)?.notes
+        : linksMap.get(result.id)?.notes;
+      if (!notes) return null;
+
+      const maxLen = 100;
+      const queryLower = query.toLowerCase();
+      const matchIdx = notes.toLowerCase().indexOf(queryLower);
+
+      if (matchIdx !== -1 && notes.length > maxLen) {
+        const half = Math.floor((maxLen - query.length) / 2);
+        let start = Math.max(0, matchIdx - half);
+        let end = Math.min(notes.length, start + maxLen);
+        if (end - start < maxLen) start = Math.max(0, end - maxLen);
+        const prefix = start > 0 ? '...' : '';
+        const suffix = end < notes.length ? '...' : '';
+        return prefix + notes.substring(start, end) + suffix;
       }
-      return null;
+
+      return notes.length > maxLen ? notes.substring(0, maxLen) + '...' : notes;
     },
-    [elementsMap, linksMap]
+    [elementsMap, linksMap, query]
+  );
+
+  // Get matching extracted text snippet from assets
+  const getMatchingExtractedText = useCallback(
+    (result: SearchResult): string[] | null => {
+      if (result.type !== 'element' || !query.trim()) return null;
+      const el = elementsMap.get(result.id);
+      if (!el?.assetIds?.length) return null;
+
+      const queryLower = query.toLowerCase();
+      const snippets: string[] = [];
+      const maxLen = 120;
+
+      for (const assetId of el.assetIds) {
+        const asset = assets.find(a => a.id === assetId);
+        if (!asset?.extractedText) continue;
+
+        const lines = asset.extractedText.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const idx = lines[i].toLowerCase().indexOf(queryLower);
+          if (idx === -1) continue;
+          const line = lines[i].trim();
+          if (line.length === 0) continue;
+
+          if (line.length <= maxLen) {
+            snippets.push(line);
+          } else {
+            // Window centered around the match
+            const matchIdx = line.toLowerCase().indexOf(queryLower);
+            const half = Math.floor((maxLen - query.length) / 2);
+            let start = Math.max(0, matchIdx - half);
+            let end = Math.min(line.length, start + maxLen);
+            if (end - start < maxLen) start = Math.max(0, end - maxLen);
+            const prefix = start > 0 ? '...' : '';
+            const suffix = end < line.length ? '...' : '';
+            snippets.push(prefix + line.substring(start, end) + suffix);
+          }
+          if (snippets.length >= 3) break;
+        }
+        if (snippets.length >= 3) break;
+      }
+
+      return snippets.length > 0 ? snippets : null;
+    },
+    [elementsMap, assets, query]
   );
 
   // Get tab names for a result (elements only)
@@ -291,6 +344,18 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     },
     [canvasTabs]
   );
+
+  const highlightMatch = (text: string, q: string) => {
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.substring(0, idx)}
+        <mark className="bg-accent/25 text-text-primary rounded-sm px-0.5">{text.substring(idx, idx + q.length)}</mark>
+        {text.substring(idx + q.length)}
+      </>
+    );
+  };
 
   if (!isOpen) return null;
 
@@ -336,6 +401,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             const matchingProp = getMatchingProperty(result);
             const tags = getResultTags(result);
             const notes = getResultNotes(result);
+            const extractedSnippets = getMatchingExtractedText(result);
             const tabNames = getResultTabNames(result);
 
             return (
@@ -373,9 +439,19 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     </div>
                   )}
                   {/* Notes excerpt */}
-                  {notes && !matchingProp && (
+                  {notes && !matchingProp && !extractedSnippets && (
                     <div className="text-xs text-text-tertiary truncate mt-0.5">
-                      {notes}
+                      {highlightMatch(notes, query)}
+                    </div>
+                  )}
+                  {/* Extracted text snippets */}
+                  {extractedSnippets && (
+                    <div className="mt-0.5 space-y-0.5">
+                      {extractedSnippets.map((snippet, i) => (
+                        <div key={i} className="text-xs text-text-secondary truncate pl-2 border-l-2 border-accent/30">
+                          {highlightMatch(snippet, query)}
+                        </div>
+                      ))}
                     </div>
                   )}
                   {/* Tags */}
