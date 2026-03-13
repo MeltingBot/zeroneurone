@@ -85,6 +85,11 @@ interface UIState {
   showAlignGuides: boolean;
   gridSize: number;
 
+  // Map preferences
+  mapBaseLayer: string;
+  map3D: boolean;
+  map3DBuildings: boolean;
+
   // Metadata import queue
   metadataImportQueue: MetadataImportItem[];
 
@@ -185,6 +190,9 @@ export const useUIStore = create<UIState>()(
   snapToGrid: false,
   showAlignGuides: true,
   gridSize: 20,
+  mapBaseLayer: 'osmLatin',
+  map3D: false,
+  map3DBuildings: false,
   metadataImportQueue: [],
   importPlacementMode: false,
   importPlacementData: null,
@@ -395,7 +403,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide }),
+      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, map3D: state.map3D, map3DBuildings: state.map3DBuildings }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

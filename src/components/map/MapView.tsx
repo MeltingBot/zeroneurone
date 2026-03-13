@@ -131,7 +131,7 @@ function add3DBuildingsLayer(map: maplibregl.Map) {
         'fill-extrusion-color': '#d4cfc8',
         'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 5],
         'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-        'fill-extrusion-opacity': 0.7,
+        'fill-extrusion-opacity': 0.85,
       },
     },
     firstLinkLayer?.id,
@@ -188,14 +188,16 @@ export function MapView() {
   const [placeSearching, setPlaceSearching] = useState(false);
   const placeSearchMarkerRef = useRef<maplibregl.Marker | null>(null);
 
-  // Track active base layer
-  const [activeBaseLayer, setActiveBaseLayer] = useState('osmLatin');
-  // 3D mode (globe + pitch + terrain)
-  const [is3D, setIs3D] = useState(true);
-  const [show3DBuildings, setShow3DBuildings] = useState(true);
-  const show3DBuildingsRef = useRef(true);
+  // Map preferences (persisted in uiStore)
+  const activeBaseLayer = useUIStore((s) => s.mapBaseLayer);
+  const setActiveBaseLayer = (id: string) => useUIStore.setState({ mapBaseLayer: id });
+  const is3D = useUIStore((s) => s.map3D);
+  const setIs3D = (v: boolean | ((prev: boolean) => boolean)) => useUIStore.setState((s) => ({ map3D: typeof v === 'function' ? v(s.map3D) : v }));
+  const show3DBuildings = useUIStore((s) => s.map3DBuildings);
+  const setShow3DBuildings = (v: boolean | ((prev: boolean) => boolean)) => useUIStore.setState((s) => ({ map3DBuildings: typeof v === 'function' ? v(s.map3DBuildings) : v }));
+  const show3DBuildingsRef = useRef(show3DBuildings);
   useEffect(() => { show3DBuildingsRef.current = show3DBuildings; }, [show3DBuildings]);
-  const is3DRef = useRef(true);
+  const is3DRef = useRef(is3D);
   useEffect(() => { is3DRef.current = is3D; }, [is3D]);
 
   // Track manually dragged positions
@@ -573,12 +575,13 @@ export function MapView() {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
+    const { mapBaseLayer: initLayer, map3D: init3D, themeMode: initTheme } = useUIStore.getState();
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: buildMapStyle(resolveLayerId('osmLatin', themeMode === 'dark'), true),
+      style: buildMapStyle(resolveLayerId(initLayer, initTheme === 'dark'), init3D),
       center: [1.888334, 46.603354], // Center of France [lng, lat]
       zoom: 6,
-      pitch: 45,
+      pitch: init3D ? 45 : 0,
       maxPitch: 70,
       canvasContextAttributes: { preserveDrawingBuffer: true },
     });
@@ -602,9 +605,14 @@ export function MapView() {
 
     map.on('load', () => {
       mapLoadedRef.current = true;
-      map.setProjection({ type: 'globe' });
-      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
-      add3DBuildingsLayer(map);
+      const { map3D: load3D, map3DBuildings: loadBuildings } = useUIStore.getState();
+      if (load3D) {
+        map.setProjection({ type: 'globe' });
+        map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
+      }
+      if (loadBuildings) {
+        add3DBuildingsLayer(map);
+      }
       setClusteringVersion(v => v + 1);
     });
 
@@ -679,10 +687,15 @@ export function MapView() {
       map.setProjection({ type: 'globe' });
       map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
       map.easeTo({ pitch: 45, duration: 600 });
+      if (show3DBuildingsRef.current) add3DBuildingsLayer(map);
     } else {
       map.setTerrain(null as unknown as maplibregl.TerrainSpecification);
       map.setProjection({ type: 'mercator' });
       map.easeTo({ pitch: 0, duration: 600 });
+      if (map.getLayer('3d-buildings')) {
+        map.removeLayer('3d-buildings');
+        if (map.getSource('openmaptiles')) map.removeSource('openmaptiles');
+      }
     }
   }, [is3D]);
 

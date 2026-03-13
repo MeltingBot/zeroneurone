@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.30.1
+
+### Fixes
+- Map: persist base layer, 3D and buildings preferences across views
+- Map: 3D mode disabled by default
+- Map: disabling 3D now also hides buildings
+- Map: buildings opacity increased (0.7 → 0.85)
+- Map: links no longer hidden behind buildings on base layer switch
+- Map: fix "Style is not done loading" error on init
+- Docker: sync package-lock.json with new dependencies
+
 ## 2.30.0
 
 ### Features
