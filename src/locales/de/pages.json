@@ -350,7 +350,8 @@
     "playAnimation": "Zeitraum animieren",
     "pauseAnimation": "Pause",
     "clearFilter": "Filter löschen",
-    "dragToMoveRange": "Ziehen um den Zeitraum zu verschieben"
+    "dragToMoveRange": "Ziehen um den Zeitraum zu verschieben",
+    "exportCSV": "Als CSV exportieren"
   },
   "matrix": {
     "label": "Name",

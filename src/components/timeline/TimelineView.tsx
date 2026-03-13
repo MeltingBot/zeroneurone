@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3 } from 'lucide-react';
+import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Download } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { toPng } from 'html-to-image';
@@ -53,7 +53,7 @@ export function TimelineView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links, comments } = useDossierStore();
+  const { elements, links, comments, currentDossier } = useDossierStore();
   const { selectElement, selectLink, selectedElementIds, selectedLinkIds } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
@@ -970,6 +970,19 @@ export function TimelineView() {
               <Filter size={10} />
               {t('timeline.filter')}
             </button>
+            <div className="w-px h-4 bg-border-default mx-1" />
+            <button
+              onClick={() => {
+                const name = currentDossier?.name || 'timeline';
+                const date = new Date().toISOString().slice(0, 10);
+                exportTimelineToCSV(filteredItems, `${name}_timeline_${date}.csv`);
+              }}
+              disabled={filteredItems.length === 0}
+              className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              title={t('timeline.exportCSV')}
+            >
+              <Download size={16} />
+            </button>
           </>
         }
       />
@@ -1511,6 +1524,41 @@ function formatDateRange(start: Date, end?: Date, locale: string = 'en-US'): str
   if (!end) return startStr;
   const endStr = end.toLocaleDateString(locale, opts);
   return `${startStr} → ${endStr}`;
+}
+
+function escapeCSV(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
+  const typeLabels: Record<string, string> = { link: 'lien', event: 'evenement', property: 'propriete' };
+  const formatDate = (d: Date) => d.toISOString().slice(0, 10);
+
+  const sorted = [...items].sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  const header = 'date_debut,date_fin,type,label,sublabel,couleur';
+  const rows = sorted.map(item => [
+    formatDate(item.start),
+    item.end ? formatDate(item.end) : '',
+    typeLabels[item.type] || item.type,
+    escapeCSV(item.label),
+    escapeCSV(item.sublabel || ''),
+    item.color,
+  ].join(','));
+
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function getDensityColor(count: number, max: number): string {

@@ -242,8 +242,8 @@ function AnnotationNodeComponent({ data }: NodeProps) {
           minWidth={MIN_WIDTH}
           minHeight={MIN_HEIGHT}
           onResizeEnd={handleResizeEnd}
-          lineClassName="!border-transparent"
-          handleClassName="!w-2 !h-2 !bg-gray-700 !border !border-white !rounded-sm"
+          lineClassName="!border-transparent hover:!border-accent/30 !border-2"
+          handleClassName="!w-2.5 !h-2.5 !bg-gray-700 !border !border-white !rounded-sm"
         />
       )}
 

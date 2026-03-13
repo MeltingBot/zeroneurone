@@ -350,7 +350,8 @@
     "playAnimation": "Periode animeren",
     "pauseAnimation": "Pauze",
     "clearFilter": "Filter wissen",
-    "dragToMoveRange": "Sleep om de periode te verplaatsen"
+    "dragToMoveRange": "Sleep om de periode te verplaatsen",
+    "exportCSV": "Exporteren naar CSV"
   },
   "matrix": {
     "label": "Naam",

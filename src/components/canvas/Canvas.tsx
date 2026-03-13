@@ -277,6 +277,7 @@ function elementToNode(
       selectable: !isGhost,
       style: {
         width: element.visual.customWidth || 200,
+        ...(element.visual.customHeight ? { height: element.visual.customHeight } : {}),
       },
     };
   }
@@ -1793,6 +1794,11 @@ export function Canvas() {
       } else if (!isNowDragging && positionChanges.some(c => c.position)) {
         // Non-drag position changes (e.g., from NodeResizer on non-bottom-right corners).
         // Switch to localNodes mode so the node visually moves during resize.
+        isDraggingRef.current = true;
+        setLocalNodes(applyNodeChanges(safeChanges, nodesRef.current));
+      } else if (!isNowDragging && !wasDragging && safeChanges.some(c => c.type === 'dimensions' && 'resizing' in c && (c as any).resizing)) {
+        // NodeResizer dimension changes (resize from bottom-right corner, no position change).
+        // Switch to localNodes mode so dimensions update smoothly during resize.
         isDraggingRef.current = true;
         setLocalNodes(applyNodeChanges(safeChanges, nodesRef.current));
       }

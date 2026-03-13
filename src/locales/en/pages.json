@@ -351,7 +351,8 @@
     "playAnimation": "Animate time period",
     "pauseAnimation": "Pause",
     "clearFilter": "Clear filter",
-    "dragToMoveRange": "Drag to move the time range"
+    "dragToMoveRange": "Drag to move the time range",
+    "exportCSV": "Export to CSV"
   },
   "matrix": {
     "label": "Name",

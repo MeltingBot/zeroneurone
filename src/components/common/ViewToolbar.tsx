@@ -36,7 +36,7 @@ export function ViewToolbar({
   return (
     <div className="h-10 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary shrink-0">
       {/* Left side */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 shrink-0">
         {leftContent}
       </div>
 
@@ -48,11 +48,11 @@ export function ViewToolbar({
       )}
 
       {/* Right side - view-specific + common controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 min-w-0 ml-2 flex-wrap justify-end">
         {rightContent}
 
         {/* Separator if there's right content */}
-        {rightContent && <div className="w-px h-4 bg-border-default mx-1" />}
+        {rightContent && <div className="w-px h-4 bg-border-default mx-1 shrink-0" />}
 
         {/* Undo/Redo */}
         <button

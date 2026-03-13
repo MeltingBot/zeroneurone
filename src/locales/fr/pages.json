@@ -305,7 +305,8 @@
     "stepForward": "Avancer",
     "play": "Lecture",
     "pause": "Pause",
-    "unnamed": "Sans nom"
+    "unnamed": "Sans nom",
+    "exportCSV": "Exporter en CSV"
   },
   "timeline": {
     "noEvents": "Aucun événement daté",
@@ -351,7 +352,8 @@
     "playAnimation": "Animer la période",
     "pauseAnimation": "Pause",
     "clearFilter": "Effacer le filtre",
-    "dragToMoveRange": "Glisser pour déplacer la période"
+    "dragToMoveRange": "Glisser pour déplacer la période",
+    "exportCSV": "Exporter en CSV"
   },
   "matrix": {
     "label": "Nom",

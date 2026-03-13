@@ -350,7 +350,8 @@
     "playAnimation": "Aldia animatu",
     "pauseAnimation": "Pausa",
     "clearFilter": "Iragazkia garbitu",
-    "dragToMoveRange": "Arrastatu aldia mugitzeko"
+    "dragToMoveRange": "Arrastatu aldia mugitzeko",
+    "exportCSV": "CSV-ra esportatu"
   },
   "matrix": {
     "label": "Izena",

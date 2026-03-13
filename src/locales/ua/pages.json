@@ -350,7 +350,8 @@
     "playAnimation": "Анімувати період",
     "pauseAnimation": "Пауза",
     "clearFilter": "Очистити фільтр",
-    "dragToMoveRange": "Перетягніть для переміщення періоду"
+    "dragToMoveRange": "Перетягніть для переміщення періоду",
+    "exportCSV": "Експортувати в CSV"
   },
   "matrix": {
     "label": "Назва",

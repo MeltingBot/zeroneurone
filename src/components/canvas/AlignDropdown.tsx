@@ -175,6 +175,7 @@ export function AlignDropdown() {
             <div className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
               {t('dossier.align.sectionReference')}
             </div>
+            <div className={selectedElements.length > 5 ? 'max-h-40 overflow-y-auto' : ''}>
             {selectedElements.map((el) => {
               const isRef = lastClickedElementId === el.id;
               return (
@@ -190,6 +191,7 @@ export function AlignDropdown() {
                 </button>
               );
             })}
+            </div>
           </div>
 
           {/* Align actions */}

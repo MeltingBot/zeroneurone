@@ -350,7 +350,8 @@
     "playAnimation": "Animar el período",
     "pauseAnimation": "Pausa",
     "clearFilter": "Borrar filtro",
-    "dragToMoveRange": "Arrastra para mover el período"
+    "dragToMoveRange": "Arrastra para mover el período",
+    "exportCSV": "Exportar a CSV"
   },
   "matrix": {
     "label": "Nombre",

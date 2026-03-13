@@ -10,7 +10,7 @@ import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
 import type { Element } from '../../types';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 // Fix Leaflet default marker icon issue with bundlers
@@ -62,7 +62,7 @@ export function MapView() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { elements, links, assets, comments, updateElement } = useDossierStore();
+  const { elements, links, assets, comments, updateElement, currentDossier } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
@@ -1409,6 +1409,19 @@ export function MapView() {
             >
               {t('map.fit')}
             </button>
+            <div className="w-px h-4 bg-border-default mx-1" />
+            <button
+              onClick={() => {
+                const name = currentDossier?.name || 'map';
+                const date = new Date().toISOString().slice(0, 10);
+                exportMapToCSV(geoElements, `${name}_carte_${date}.csv`);
+              }}
+              disabled={geoElements.length === 0}
+              className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              title={t('map.exportCSV')}
+            >
+              <Download size={16} />
+            </button>
           </>
         }
       />
@@ -1604,4 +1617,34 @@ export function MapView() {
       `}</style>
     </div>
   );
+}
+
+function escapeCSV(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function exportMapToCSV(geoElements: { label: string; type?: string; geo: { lat: number; lng: number }; visual: { color: string }; tags: string[] }[], filename: string): void {
+  const sorted = [...geoElements].sort((a, b) => a.label.localeCompare(b.label));
+  const header = 'label,type,latitude,longitude,couleur,tags';
+  const rows = sorted.map(el => [
+    escapeCSV(el.label),
+    el.type || '',
+    el.geo.lat.toFixed(6),
+    el.geo.lng.toFixed(6),
+    el.visual.color,
+    escapeCSV(el.tags.join('; ')),
+  ].join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
