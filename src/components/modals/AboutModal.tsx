@@ -18,7 +18,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
     { name: 'React Flow', url: 'https://reactflow.dev', key: 'reactflow' },
     { name: 'Yjs', url: 'https://yjs.dev', key: 'yjs' },
     { name: 'Dexie', url: 'https://dexie.org', key: 'dexie' },
-    { name: 'Leaflet', url: 'https://leafletjs.com', key: 'leaflet' },
+    { name: 'MapLibre GL JS', url: 'https://maplibre.org', key: 'maplibre' },
     { name: 'Graphology', url: 'https://graphology.github.io', key: 'graphology' },
   ];
 

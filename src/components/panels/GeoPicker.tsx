@@ -1,21 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Search, Check } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix Leaflet default marker icon issue with bundlers
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-// @ts-expect-error - Leaflet internal
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface GeoPickerProps {
   initialLat?: number;
@@ -27,8 +14,8 @@ interface GeoPickerProps {
 export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPickerProps) {
   const { t } = useTranslation(['panels', 'common']);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
 
   const [selectedLat, setSelectedLat] = useState<number | null>(initialLat ?? null);
   const [selectedLng, setSelectedLng] = useState<number | null>(initialLng ?? null);
@@ -44,15 +31,15 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
     setSelectedLng(lng);
 
     if (markerRef.current) {
-      markerRef.current.setLatLng([lat, lng]);
+      markerRef.current.setLngLat([lng, lat]);
     } else {
-      markerRef.current = L.marker([lat, lng], {
-        draggable: true,
-      }).addTo(mapRef.current);
+      markerRef.current = new maplibregl.Marker({ draggable: true })
+        .setLngLat([lng, lat])
+        .addTo(mapRef.current);
 
       // Update coordinates when marker is dragged
       markerRef.current.on('dragend', () => {
-        const pos = markerRef.current?.getLatLng();
+        const pos = markerRef.current?.getLngLat();
         if (pos) {
           setSelectedLat(pos.lat);
           setSelectedLng(pos.lng);
@@ -65,22 +52,35 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Default center: France or initial coordinates
     const defaultCenter: [number, number] = initialLat && initialLng
-      ? [initialLat, initialLng]
-      : [46.603354, 1.888334];
+      ? [initialLng, initialLat]
+      : [1.888334, 46.603354];
     const defaultZoom = initialLat && initialLng ? 12 : 6;
 
-    mapRef.current = L.map(mapContainerRef.current, {
+    mapRef.current = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxzoom: 19,
+          },
+        },
+        layers: [
+          {
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm',
+          },
+        ],
+      },
       center: defaultCenter,
       zoom: defaultZoom,
     });
-
-    // Add tile layer (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(mapRef.current);
 
     // Add initial marker if coordinates provided
     if (initialLat && initialLng) {
@@ -88,8 +88,8 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
     }
 
     // Click on map to place/move marker
-    mapRef.current.on('click', (e: L.LeafletMouseEvent) => {
-      updateMarker(e.latlng.lat, e.latlng.lng);
+    mapRef.current.on('click', (e: maplibregl.MapMouseEvent) => {
+      updateMarker(e.lngLat.lat, e.lngLat.lng);
     });
 
     return () => {
@@ -126,7 +126,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
         const lngNum = parseFloat(lon);
 
         updateMarker(latNum, lngNum);
-        mapRef.current.setView([latNum, lngNum], 14);
+        mapRef.current.flyTo({ center: [lngNum, latNum], zoom: 14 });
       } else {
         setSearchError(t('panels:detail.geoPicker.noResults'));
       }

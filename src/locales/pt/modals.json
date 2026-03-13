@@ -238,7 +238,7 @@
       "reactflow": "Tela interativa",
       "yjs": "Colaboração em tempo real",
       "dexie": "Base de dados local",
-      "leaflet": "Cartografia",
+      "maplibre": "Cartografia",
       "graphology": "Análise de grafos"
     },
     "license": {

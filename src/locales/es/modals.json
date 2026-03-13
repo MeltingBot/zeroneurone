@@ -238,7 +238,7 @@
       "reactflow": "Lienzo interactivo",
       "yjs": "Colaboración en tiempo real",
       "dexie": "Base de datos local",
-      "leaflet": "Cartografía",
+      "maplibre": "Cartografía",
       "graphology": "Análisis de grafos"
     },
     "license": {
