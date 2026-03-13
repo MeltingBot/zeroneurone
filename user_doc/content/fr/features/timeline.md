@@ -183,4 +183,10 @@ Quand un filtre est actif, le compteur affiche "X / Y événements" pour indique
 
 ---
 
-**Voir aussi** : [Fichiers joints]({{< relref "attachments" >}})
+## Export CSV
+
+Cliquez sur l'icône de téléchargement dans la barre d'outils pour exporter les événements de la timeline en CSV. Le filtre temporel est respecté : seuls les événements visibles sont exportés.
+
+---
+
+**Voir aussi** : [Vue carte]({{< relref "map-view" >}}) | [Fichiers joints]({{< relref "attachments" >}})

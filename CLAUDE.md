@@ -20,7 +20,7 @@ Key philosophy:
 | State | Zustand |
 | Storage | Dexie.js (IndexedDB) + OPFS |
 | Canvas | React Flow |
-| Map | Leaflet + React-Leaflet |
+| Map | MapLibre GL JS + Supercluster |
 | Graph Analysis | Graphology |
 | Search | MiniSearch |
 | Export | JSZip, jsPDF, html2canvas |
@@ -32,7 +32,7 @@ Key philosophy:
 src/
 ├── components/
 │   ├── canvas/          # Canvas and graph elements (ElementNode, LinkEdge)
-│   ├── map/             # Map view (Leaflet integration)
+│   ├── map/             # Map view (MapLibre GL JS)
 │   ├── timeline/        # Timeline view
 │   ├── panels/          # Side panels (detail, insights, filters, views)
 │   ├── report/          # Report mode components
@@ -55,7 +55,8 @@ src/
 │   └── exportService.ts        # ZIP/PNG/PDF export
 ├── types/index.ts              # TypeScript types
 ├── utils/                      # Utilities
-└── hooks/                      # Custom React hooks
+├── hooks/                      # Custom React hooks
+└── user_doc/                   # User Documentation
 ```
 
 ## Key Domain Concepts

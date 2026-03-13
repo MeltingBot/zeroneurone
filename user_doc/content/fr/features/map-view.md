@@ -5,8 +5,7 @@ weight: 5
 
 # Vue carte
 
-Visualisez vos éléments géolocalisés sur une carte interactive.
-
+Visualisez vos éléments géolocalisés sur une carte interactive avec rendu 3D.
 
 ## Activer la vue carte
 
@@ -40,6 +39,7 @@ Le marqueur est déplaçable : glissez-le pour ajuster la position.
 | **Glisser** | Déplacer la carte |
 | **Molette** | Zoom |
 | **Double-clic** | Zoom avant |
+| **Clic droit + glisser** | Inclinaison (pitch) et rotation |
 
 ### Sélection
 
@@ -47,6 +47,42 @@ Le marqueur est déplaçable : glissez-le pour ajuster la position.
 |--------|----------|
 | **Clic marqueur** | Sélectionne l'élément |
 | **Glisser marqueur** | Déplace la position de l'élément |
+
+---
+
+## Recherche de lieu
+
+Le champ de recherche dans la barre d'outils permet de localiser un lieu sur la carte :
+
+1. Tapez un nom de lieu ou une adresse
+2. Appuyez sur **Entrée** ou cliquez sur la loupe
+3. La carte se centre sur le résultat avec un marqueur temporaire (8 secondes)
+
+La recherche utilise Nominatim (OpenStreetMap) et respecte la langue de l'interface.
+
+---
+
+## Mode 3D
+
+La carte utilise MapLibre GL JS avec rendu WebGL. Le mode 3D est activé par défaut.
+
+### Globe
+
+Au dézoom maximal, la carte se transforme en globe terrestre. La transition vers la projection Mercator classique est automatique en zoomant.
+
+### Terrain 3D
+
+Le relief est affiché grâce aux données d'élévation. Les montagnes, vallées et plaines sont visibles en inclinant la carte.
+
+### Bâtiments 3D
+
+À partir du zoom 14, les bâtiments sont affichés en volume avec leur hauteur réelle. Activez/désactivez cette option avec le bouton **Bâtiments** dans la barre d'outils.
+
+### Toggle 3D
+
+Le bouton **3D** dans la barre d'outils permet de basculer entre :
+- **Mode 3D** : globe, terrain en relief, inclinaison à 45°
+- **Mode 2D** : carte plate classique (projection Mercator)
 
 ---
 
@@ -76,6 +112,19 @@ Les liens entre éléments géolocalisés sont affichés comme des lignes sur la
 
 ---
 
+## Fonds de carte
+
+Quatre fonds de carte sont disponibles via le sélecteur dans la barre d'outils :
+
+| Fond | Description |
+|------|-------------|
+| **OpenStreetMap** | Carte standard avec noms locaux |
+| **OSM Latin** | Noms de lieux en alphabet latin (par défaut) |
+| **CartoDB** | Carte claire et épurée (bascule auto en mode sombre) |
+| **Satellite** | Imagerie satellite (Esri) |
+
+---
+
 ## Mode temporel
 
 Si vos éléments ont des dates ou des événements avec positions, activez le **mode temporel** :
@@ -94,13 +143,22 @@ Contrôles :
 
 | Bouton | Action |
 |--------|--------|
+| **Recherche** | Rechercher un lieu (Nominatim) |
+| **Fond de carte** | Choisir entre 4 fonds de carte |
+| **3D** | Activer/désactiver le mode 3D |
+| **Bâtiments** | Afficher/masquer les bâtiments 3D |
 | **Temporel** | Activer/désactiver le mode temporel |
 | **Sélection** | Zoomer sur les éléments sélectionnés |
 | **Ajuster** | Ajuster la vue pour voir tous les marqueurs |
+| **Export CSV** | Exporter les données de la carte en CSV |
 
 ---
 
-## Export cartographique
+## Exports
+
+### Export CSV
+
+Cliquez sur l'icône de téléchargement dans la barre d'outils pour exporter les éléments géolocalisés en CSV.
 
 ### Export GeoJSON
 

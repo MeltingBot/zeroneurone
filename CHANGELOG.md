@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.30.0
+
+### Features
+- Map: migrate from Leaflet to MapLibre GL JS (WebGL rendering)
+- Map: globe projection with automatic mercator transition on zoom
+- Map: 3D terrain with real elevation data (Terrarium tiles)
+- Map: 3D buildings extrusion from OpenFreeMap vector tiles (zoom 14+)
+- Map: Nominatim place search with temporary marker and flyTo
+- Map: CartoDB tiles auto-switch between light/dark based on app theme
+- Map: toggle 3D mode on/off (globe + pitch + terrain)
+- Map: toggle 3D buildings on/off
+- Map: pitch control via right-click drag, compass visualization
+- Map: client-side clustering via Supercluster (replaces leaflet.markercluster)
+- Timeline: CSV export
+- Map: CSV export
+
+### Improvements
+- Map: OSM Latin as default base layer
+- Map: 4 base layers (OSM, OSM Latin, CartoDB, Satellite)
+- Canvas: ViewToolbar responsive flex-wrap
+- Canvas: annotation resize handle sizing
+- Canvas: AlignDropdown scrollable for >5 elements
+
 ## 2.23.0
 
 ### Features

@@ -183,4 +183,10 @@ When a filter is active, the counter displays "X / Y events" to indicate how man
 
 ---
 
-**See also**: [Attachments]({{< relref "attachments" >}})
+## CSV Export
+
+Click the download icon in the toolbar to export timeline events as CSV. The temporal filter is respected: only visible events are exported.
+
+---
+
+**See also**: [Map View]({{< relref "map-view" >}}) | [Attachments]({{< relref "attachments" >}})

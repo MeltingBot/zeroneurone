@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-2.23.0-blue)
+![Version](https://img.shields.io/badge/version-2.30.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -57,7 +57,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 
 ### Vues Multiples
 - **Canvas** : Vue graphe principale
-- **Carte** : Visualisation geographique (Leaflet) avec vue satellite
+- **Carte** : Visualisation geographique (MapLibre GL JS) avec vue satellite
 - **Timeline** : Frise chronologique virtualisee (10k+ elements)
 
 ### Collaboration Temps Reel
@@ -139,7 +139,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 | Etat | Zustand |
 | Stockage | Dexie.js (IndexedDB) + OPFS |
 | Canvas | React Flow |
-| Carte | Leaflet + React-Leaflet |
+| Carte | MapLibre GL JS |
 | Analyse | Graphology |
 | Recherche | MiniSearch |
 | Sync | Yjs + y-websocket + y-indexeddb |
@@ -217,7 +217,7 @@ Voir la [documentation](https://doc.zeroneurone.com) pour les details.
 src/
 ├── components/
 │   ├── canvas/          # Canvas et elements graphiques
-│   ├── map/             # Vue carte (Leaflet)
+│   ├── map/             # Vue carte (MapLibre GL JS)
 │   ├── timeline/        # Vue chronologique
 │   ├── panels/          # Panneaux lateraux
 │   ├── collaboration/   # UI de collaboration
