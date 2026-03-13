@@ -1,60 +1,204 @@
 import { useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
 import type { Element } from '../../types';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download } from 'lucide-react';
+import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
-
-// Fix Leaflet default marker icon issue with bundlers
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-// @ts-expect-error - Leaflet internal
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
 
 // Element with geo coordinates (resolved for a specific time)
 interface ResolvedGeoElement {
   element: Element;
   geo: { lat: number; lng: number };
-  fromEvent: boolean;  // True if position comes from an event
-  eventLabel?: string; // Label from event if applicable
+  fromEvent: boolean;
+  eventLabel?: string;
 }
 
-// Link layer group type (polyline + optional tooltip + arrows)
+// Link layer managed via MapLibre layers + markers
 interface LinkLayer {
-  outline: L.Polyline;
-  line: L.Polyline;
-  arrowStart?: L.Marker;
-  arrowEnd?: L.Marker;
+  sourceId: string;
+  outlineLayerId: string;
+  lineLayerId: string;
+  labelMarker?: maplibregl.Marker;
+  arrowStart?: maplibregl.Marker;
+  arrowEnd?: maplibregl.Marker;
+}
+
+// Supercluster point feature
+interface PointFeature {
+  type: 'Feature';
+  geometry: { type: 'Point'; coordinates: [number, number] };
+  properties: { elementId: string };
+}
+
+// Cluster lookup: for each element, where it visually appears
+interface ClusterState {
+  clustered: boolean;
+  clusterCenter?: [number, number]; // [lng, lat]
+  clusterId?: number;
+}
+
+// Raster tile sources
+const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom: number; tileSize?: number; subdomains?: string }> = {
+  osm: {
+    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxzoom: 19,
+  },
+  osmLatin: {
+    tiles: ['https://a.tile.openstreetmap.de/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.de/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.de/{z}/{x}/{y}.png'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxzoom: 19,
+  },
+  cartoLight: {
+    tiles: ['https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 'https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    maxzoom: 20,
+  },
+  cartoDark: {
+    tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    maxzoom: 20,
+  },
+  satellite: {
+    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+    attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+    maxzoom: 18,
+  },
+};
+
+const BASE_LAYERS = [
+  { id: 'osm', label: 'OpenStreetMap' },
+  { id: 'osmLatin', label: 'OSM Latin' },
+  { id: 'carto', label: 'CartoDB' },
+  { id: 'satellite', label: 'Satellite' },
+];
+
+function resolveLayerId(id: string, isDark: boolean): string {
+  if (id === 'carto') return isDark ? 'cartoDark' : 'cartoLight';
+  return id;
+}
+
+function buildMapStyle(activeLayerId: string, enable3D: boolean): maplibregl.StyleSpecification {
+  const src = TILE_SOURCES[activeLayerId];
+  const sources: maplibregl.StyleSpecification['sources'] = {
+    'base-tiles': {
+      type: 'raster',
+      tiles: src.tiles,
+      tileSize: 256,
+      attribution: src.attribution,
+      maxzoom: src.maxzoom,
+    },
+  };
+  if (enable3D) {
+    sources['terrain-dem'] = {
+      type: 'raster-dem',
+      tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      encoding: 'terrarium',
+    };
+  }
+  return {
+    version: 8,
+    sources,
+    layers: [
+      { id: 'base-layer', type: 'raster', source: 'base-tiles' },
+    ],
+  };
+}
+
+function add3DBuildingsLayer(map: maplibregl.Map) {
+  if (map.getSource('openmaptiles')) return;
+  map.addSource('openmaptiles', {
+    type: 'vector',
+    url: 'https://tiles.openfreemap.org/planet',
+  });
+  // Find the first link layer to insert buildings below it
+  const firstLinkLayer = map.getStyle().layers.find(l => l.id.startsWith('link-'));
+  map.addLayer(
+    {
+      id: '3d-buildings',
+      type: 'fill-extrusion',
+      source: 'openmaptiles',
+      'source-layer': 'building',
+      minzoom: 14,
+      paint: {
+        'fill-extrusion-color': '#d4cfc8',
+        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 5],
+        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+        'fill-extrusion-opacity': 0.7,
+      },
+    },
+    firstLinkLayer?.id,
+  );
+}
+
+// Spiderfy: offset markers at the same position
+function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number }[], zoom: number): Map<string, [number, number]> {
+  const offsets = new Map<string, [number, number]>();
+  const groups = new Map<string, string[]>();
+
+  // Group by position (rounded to ~1m precision at high zoom)
+  elements.forEach(el => {
+    const key = `${el.lat.toFixed(5)},${el.lng.toFixed(5)}`;
+    const group = groups.get(key) || [];
+    group.push(el.id);
+    groups.set(key, group);
+  });
+
+  // For groups with >1 element, apply spiral offset
+  const pixelToDeg = 360 / (256 * Math.pow(2, zoom)); // approximate degrees per pixel at this zoom
+  groups.forEach(ids => {
+    if (ids.length <= 1) return;
+    const radius = 25 * pixelToDeg; // 25px radius
+    ids.forEach((id, i) => {
+      if (i === 0) return; // keep first at original position
+      const angle = (2 * Math.PI * i) / ids.length;
+      const spiralRadius = radius * (1 + i * 0.2);
+      offsets.set(id, [
+        Math.cos(angle) * spiralRadius,
+        Math.sin(angle) * spiralRadius,
+      ]);
+    });
+  });
+  return offsets;
 }
 
 export function MapView() {
   const { t, i18n } = useTranslation('pages');
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
-  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const clusterMarkersRef = useRef<Map<number, maplibregl.Marker>>(new Map());
   const linkLayersRef = useRef<Map<string, LinkLayer>>(new Map());
+  const superclusterRef = useRef<Supercluster<{ elementId: string }, Supercluster.AnyProps> | null>(null);
+  const clusterStateRef = useRef<Map<string, ClusterState>>(new Map());
+  const mapLoadedRef = useRef(false);
 
   // Track clustering state for dynamic link positioning
   const [clusteringVersion, setClusteringVersion] = useState(0);
 
-  // Track manually dragged positions - these override resolved positions
-  // Using state (not ref) to trigger re-renders when positions change
+  // Place search (Nominatim)
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeSearching, setPlaceSearching] = useState(false);
+  const placeSearchMarkerRef = useRef<maplibregl.Marker | null>(null);
+
+  // Track active base layer
+  const [activeBaseLayer, setActiveBaseLayer] = useState('osmLatin');
+  // 3D mode (globe + pitch + terrain)
+  const [is3D, setIs3D] = useState(true);
+  const [show3DBuildings, setShow3DBuildings] = useState(true);
+  const show3DBuildingsRef = useRef(true);
+  useEffect(() => { show3DBuildingsRef.current = show3DBuildings; }, [show3DBuildings]);
+  const is3DRef = useRef(true);
+  useEffect(() => { is3DRef.current = is3D; }, [is3D]);
+
+  // Track manually dragged positions
   const [draggedPositions, setDraggedPositions] = useState<Map<string, { lat: number; lng: number }>>(new Map());
 
   // Temporal mode state
@@ -65,6 +209,7 @@ export function MapView() {
   const { elements, links, assets, comments, updateElement, currentDossier } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
+  const themeMode = useUIStore((state) => state.themeMode);
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
@@ -78,30 +223,21 @@ export function MapView() {
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
-    // If insights highlighting is active, dim everything except highlighted elements
     if (insightsHighlightedIds.size > 0) {
       const dimmed = new Set<string>();
       elements.forEach((el) => {
-        if (!insightsHighlightedIds.has(el.id)) {
-          dimmed.add(el.id);
-        }
+        if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
       return dimmed;
     }
-
-    // If in focus mode, dim everything except focus element and neighbors
     if (focusElementId) {
       const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
       const dimmed = new Set<string>();
       elements.forEach((el) => {
-        if (!visibleIds.has(el.id)) {
-          dimmed.add(el.id);
-        }
+        if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
       return dimmed;
     }
-
-    // Otherwise use filter-based dimming
     return getDimmedElementIds(elements, filters, hiddenElementIds);
   }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
 
@@ -133,42 +269,35 @@ export function MapView() {
     return counts;
   }, [comments]);
 
-  // Normalize a date to noon local time for day-level comparison
-  // Uses noon (not midnight) to avoid timezone issues with toISOString() display
+  // Normalize a date to noon local time
   const toNoonLocal = useCallback((d: Date | string | number): Date => {
     const date = new Date(d);
     date.setHours(12, 0, 0, 0);
     return date;
   }, []);
 
-  // Compare two dates at day level (ignoring time)
+  // Compare two dates at day level
   const dayStart = useCallback((d: Date | string | number): number => {
     const date = new Date(d);
     date.setHours(0, 0, 0, 0);
     return date.getTime();
   }, []);
 
-  // Calculate time range and collect all unique event dates for discrete slider
+  // Calculate time range and collect all unique event dates
   const { timeRange, eventDates } = useMemo(() => {
     const allDates: Date[] = [];
-
     elements.forEach((el) => {
-      // Only consider elements that have geo (either base geo or events with geo)
       const hasBaseGeo = !!el.geo;
       const hasEventGeo = el.events?.some((e) => e.geo);
-
       if (hasBaseGeo || hasEventGeo) {
-        // Add dates from ALL events (they can use element's base geo if they don't have their own)
         if (el.events && el.events.length > 0) {
           el.events.forEach((event) => {
-            // Include event dates if: event has geo OR element has base geo
             if (event.geo || hasBaseGeo) {
               if (event.date) allDates.push(new Date(event.date));
               if (event.dateEnd) allDates.push(new Date(event.dateEnd));
             }
           });
         }
-        // Add element's own date/dateRange if it has base geo
         if (hasBaseGeo) {
           if (el.date) allDates.push(new Date(el.date));
           if (el.dateRange?.start) allDates.push(new Date(el.dateRange.start));
@@ -176,26 +305,16 @@ export function MapView() {
         }
       }
     });
-
-    // Also consider link dates
     links.forEach((link) => {
       if (link.date) allDates.push(new Date(link.date));
       if (link.dateRange?.start) allDates.push(new Date(link.dateRange.start));
       if (link.dateRange?.end) allDates.push(new Date(link.dateRange.end));
     });
-
     if (allDates.length === 0) return { timeRange: null, eventDates: [] };
-
-    // Normalize to noon local time and deduplicate by day
-    // Noon avoids timezone issues when displaying with toISOString().split('T')[0]
     const uniqueTimestamps = [...new Set(allDates.map((d) => toNoonLocal(d).getTime()))].sort((a, b) => a - b);
     const sortedDates = uniqueTimestamps.map((t) => new Date(t));
-
     return {
-      timeRange: {
-        min: sortedDates[0],
-        max: sortedDates[sortedDates.length - 1],
-      },
+      timeRange: { min: sortedDates[0], max: sortedDates[sortedDates.length - 1] },
       eventDates: sortedDates,
     };
   }, [elements, links, toNoonLocal]);
@@ -203,127 +322,70 @@ export function MapView() {
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
     (element: Element, date: Date | null): { geo: { lat: number; lng: number }; label?: string } | null => {
-      // If no temporal mode or no date, show element at its current position
       if (!date || !temporalMode) {
-        // Priority 1: Use element.geo if it exists (may have been manually positioned/dragged)
-        // This ensures dragged positions are respected even if element has events with geo
-        if (element.geo) {
-          return { geo: element.geo };
-        }
-
-        // Priority 2: Fall back to most recent event's geo if element has no base geo
-        // This allows elements with only event-based positions to still appear on map
+        if (element.geo) return { geo: element.geo };
         const geoEvents = (element.events || [])
           .filter((e) => e.geo && e.date)
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
         if (geoEvents.length > 0) {
           const mostRecent = geoEvents[geoEvents.length - 1];
           return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
         }
-
         return null;
       }
-
       const targetDay = dayStart(date);
       const hasBaseGeo = !!element.geo;
-
-      // Get ALL events with dates (sorted by date)
       const datedEvents = (element.events || [])
         .filter((e) => e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
       if (datedEvents.length > 0) {
-        const firstEvent = datedEvents[0];
-        const firstEventDay = dayStart(firstEvent.date);
-
-        // Before first event's day: element doesn't exist yet
-        if (targetDay < firstEventDay) {
-          return null;
-        }
-
-        // Find the most recent event on or before the target day
-        let activeEvent = firstEvent;
+        const firstEventDay = dayStart(datedEvents[0].date);
+        if (targetDay < firstEventDay) return null;
+        let activeEvent = datedEvents[0];
         for (const event of datedEvents) {
-          if (dayStart(event.date) <= targetDay) {
-            activeEvent = event;
-          } else {
-            break; // Events are sorted, no need to continue
-          }
+          if (dayStart(event.date) <= targetDay) activeEvent = event;
+          else break;
         }
-
-        // Use active event's geo if available, otherwise element's base geo
         const eventGeo = activeEvent.geo || element.geo;
-        if (eventGeo) {
-          return { geo: { lat: eventGeo.lat, lng: eventGeo.lng }, label: activeEvent.label };
-        }
+        if (eventGeo) return { geo: { lat: eventGeo.lat, lng: eventGeo.lng }, label: activeEvent.label };
         return null;
       }
-
-      // Element has no dated events - check if element has base geo with temporal data
       if (hasBaseGeo) {
-        // If element has a dateRange, check if selected date is within it
         if (element.dateRange?.start) {
           const elStartDay = dayStart(element.dateRange.start);
-          const elEndDay = element.dateRange.end
-            ? dayStart(element.dateRange.end)
-            : Infinity;
-
-          if (targetDay < elStartDay || targetDay > elEndDay) {
-            return null; // Element not active at this time
-          }
+          const elEndDay = element.dateRange.end ? dayStart(element.dateRange.end) : Infinity;
+          if (targetDay < elStartDay || targetDay > elEndDay) return null;
+        } else if (element.date) {
+          if (targetDay !== dayStart(element.date)) return null;
         }
-        // If element has only a single date (no range), check if it matches the same day
-        else if (element.date) {
-          const elDay = dayStart(element.date);
-
-          if (targetDay !== elDay) {
-            return null; // Element not active at this time
-          }
-        }
-        // No temporal data on element - always show
         return element.geo ? { geo: element.geo } : null;
       }
-
       return null;
     },
     [temporalMode, dayStart]
   );
 
   // Get any geo position for an element (for link-pulled visibility)
-  // This returns a position even for future events
   const getAnyGeoPosition = useCallback(
     (element: Element): { geo: { lat: number; lng: number }; label?: string } | null => {
-      // Priority 1: Use element.geo if it exists (consistent with getPositionAtTime)
-      if (element.geo) {
-        return { geo: element.geo };
-      }
-
-      // Priority 2: Try events with geo (prefer closest to selected date or most recent)
+      if (element.geo) return { geo: element.geo };
       const geoEvents = (element.events || [])
         .filter((e) => e.geo && e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
       if (geoEvents.length > 0) {
-        // If in temporal mode with a date, find closest event
         if (temporalMode && selectedDate) {
           const targetTime = selectedDate.getTime();
           let closest = geoEvents[0];
           let closestDiff = Math.abs(new Date(closest.date).getTime() - targetTime);
           for (const event of geoEvents) {
             const diff = Math.abs(new Date(event.date).getTime() - targetTime);
-            if (diff < closestDiff) {
-              closestDiff = diff;
-              closest = event;
-            }
+            if (diff < closestDiff) { closestDiff = diff; closest = event; }
           }
           return { geo: { lat: closest.geo!.lat, lng: closest.geo!.lng }, label: closest.label };
         }
-        // Otherwise use most recent
         const mostRecent = geoEvents[geoEvents.length - 1];
         return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
       }
-
       return null;
     },
     [temporalMode, selectedDate]
@@ -333,53 +395,36 @@ export function MapView() {
   const isLinkActiveAtTime = useCallback(
     (link: typeof links[0]): boolean => {
       if (!temporalMode || !selectedDate) return true;
-
       const targetTime = selectedDate.getTime();
-
-      // Check link's own date
       if (link.date) {
         const linkDate = new Date(link.date).getTime();
         const linkEnd = linkDate + 24 * 60 * 60 * 1000 - 1;
         if (targetTime >= linkDate && targetTime <= linkEnd) return true;
       }
-
-      // Check link's dateRange
       if (link.dateRange?.start) {
         const linkStart = new Date(link.dateRange.start).getTime();
-        const linkEnd = link.dateRange.end
-          ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1
-          : Infinity;
+        const linkEnd = link.dateRange.end ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity;
         if (targetTime >= linkStart && targetTime <= linkEnd) return true;
-        // If link has dateRange but we're outside it, it's not active
         return false;
       }
-
-      // No temporal data on link = always active
       return true;
     },
     [temporalMode, selectedDate]
   );
 
   // Calculate visibility windows for each element based on links
-  // An element is visible during any link's active period that connects to it
   const elementLinkVisibility = useMemo(() => {
     const visibilityMap = new Map<string, { from: number; until: number }[]>();
-
     links.forEach((link) => {
-      // Get the link's active period
       let linkFrom: number | null = null;
       let linkUntil: number | null = null;
-
       if (link.date) {
         linkFrom = new Date(link.date).getTime();
         linkUntil = linkFrom + 24 * 60 * 60 * 1000 - 1;
       }
       if (link.dateRange?.start) {
         const rangeStart = new Date(link.dateRange.start).getTime();
-        const rangeEnd = link.dateRange.end
-          ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1
-          : Infinity;
-        // Merge with date if both exist
+        const rangeEnd = link.dateRange.end ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity;
         if (linkFrom !== null) {
           linkFrom = Math.min(linkFrom, rangeStart);
           linkUntil = Math.max(linkUntil!, rangeEnd);
@@ -388,9 +433,7 @@ export function MapView() {
           linkUntil = rangeEnd;
         }
       }
-
       if (linkFrom !== null && linkUntil !== null) {
-        // Add visibility window for both connected elements
         [link.fromId, link.toId].forEach((elId) => {
           const existing = visibilityMap.get(elId) || [];
           existing.push({ from: linkFrom!, until: linkUntil! });
@@ -398,7 +441,6 @@ export function MapView() {
         });
       }
     });
-
     return visibilityMap;
   }, [links]);
 
@@ -415,112 +457,59 @@ export function MapView() {
   // Get elements with resolved geo positions (considering temporal mode)
   const resolvedGeoElements = useMemo((): ResolvedGeoElement[] => {
     const result: ResolvedGeoElement[] = [];
-    const addedIds = new Set<string>();
-
     if (!temporalMode || !selectedDate) {
-      // No temporal mode: show all elements with geo
       elements.forEach((el) => {
         if (hiddenElementIds.has(el.id)) return;
         if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
         const position = getPositionAtTime(el, null);
         if (position) {
-          result.push({
-            element: el,
-            geo: position.geo,
-            fromEvent: !!position.label,
-            eventLabel: position.label,
-          });
-          addedIds.add(el.id);
+          result.push({ element: el, geo: position.geo, fromEvent: !!position.label, eventLabel: position.label });
         }
       });
       return result;
     }
-
     const targetDay = dayStart(selectedDate);
-
-    // In temporal mode: check each element's visibility (day-level comparison)
     elements.forEach((el) => {
       if (hiddenElementIds.has(el.id)) return;
       if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
-
-      // Check if element is visible via an active link
       const visibleViaActiveLink = isVisibleViaLink(el.id, selectedDate.getTime());
-
-      // Get element's events
-      const datedEvents = (el.events || [])
-        .filter((e) => e.date)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      // Determine if element is visible based on its own temporal data
+      const datedEvents = (el.events || []).filter((e) => e.date).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       let visibleByOwnData = false;
-
       if (datedEvents.length > 0) {
-        // Element has events - visible between first and last event's day
         const firstEventDay = dayStart(datedEvents[0].date);
         const lastEventDay = dayStart(datedEvents[datedEvents.length - 1].date);
-        if (targetDay >= firstEventDay && targetDay <= lastEventDay) {
-          visibleByOwnData = true;
-        }
+        if (targetDay >= firstEventDay && targetDay <= lastEventDay) visibleByOwnData = true;
       } else if (el.geo) {
-        // Element has no events but has base geo - check date/dateRange
         if (el.dateRange?.start) {
           const elStartDay = dayStart(el.dateRange.start);
-          const elEndDay = el.dateRange.end
-            ? dayStart(el.dateRange.end)
-            : Infinity;
-          if (targetDay >= elStartDay && targetDay <= elEndDay) {
-            visibleByOwnData = true;
-          }
+          const elEndDay = el.dateRange.end ? dayStart(el.dateRange.end) : Infinity;
+          if (targetDay >= elStartDay && targetDay <= elEndDay) visibleByOwnData = true;
         } else if (el.date) {
-          if (targetDay === dayStart(el.date)) {
-            visibleByOwnData = true;
-          }
+          if (targetDay === dayStart(el.date)) visibleByOwnData = true;
         }
-        // No temporal data = not visible by own data
       }
-
-      // Element is visible if: visible by own data OR visible via active link
       if (visibleByOwnData || visibleViaActiveLink) {
         const position = getPositionAtTime(el, selectedDate) || getAnyGeoPosition(el);
         if (position) {
-          result.push({
-            element: el,
-            geo: position.geo,
-            fromEvent: !!position.label,
-            eventLabel: position.label,
-          });
-          addedIds.add(el.id);
+          result.push({ element: el, geo: position.geo, fromEvent: !!position.label, eventLabel: position.label });
         }
       }
     });
-
     return result;
   }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dayStart, activeTabId, tabMemberSet, tabGhostIds]);
 
-  // Legacy geoElements for compatibility (elements with current geo)
+  // Legacy geoElements for compatibility
   const geoElements = useMemo(() => {
-    return resolvedGeoElements.map((r) => ({
-      ...r.element,
-      geo: r.geo,
-    }));
+    return resolvedGeoElements.map((r) => ({ ...r.element, geo: r.geo }));
   }, [resolvedGeoElements]);
 
-  // Get geo element IDs for quick lookup
   const geoElementIds = useMemo(() => new Set(geoElements.map(el => el.id)), [geoElements]);
 
-  // Filter links where both elements have geo coordinates AND are active at selected time
+  // Filter links where both elements have geo and are active
   const geoLinks = useMemo(() => {
     return links.filter(link => {
-      // Both elements must have geo at the current time
-      if (!geoElementIds.has(link.fromId) || !geoElementIds.has(link.toId)) {
-        return false;
-      }
-
-      // In temporal mode, filter by link's active state
-      if (temporalMode && selectedDate) {
-        return isLinkActiveAtTime(link);
-      }
-
+      if (!geoElementIds.has(link.fromId) || !geoElementIds.has(link.toId)) return false;
+      if (temporalMode && selectedDate) return isLinkActiveAtTime(link);
       return true;
     });
   }, [links, geoElementIds, temporalMode, selectedDate, isLinkActiveAtTime]);
@@ -532,267 +521,182 @@ export function MapView() {
     return assetMap.get(firstAssetId) ?? null;
   }, [assetMap]);
 
-  // Create custom marker HTML with name and thumbnail
+  // Create custom marker HTML
   const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number): string => {
     const color = element.visual.color || '#f5f5f4';
     const borderColor = element.visual.borderColor || '#a8a29e';
     const thumbnail = getThumbnail(element);
     const label = element.label || t('map.unnamed');
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
-
-    // Anonymous mode: show redacted label
     const displayLabel = anonymousMode
       ? '<span style="display:inline-block;background:var(--color-text-primary,#3d3833);border-radius:2px;width:2.5em;height:0.8em;"></span>'
       : truncatedLabel;
-
     const selectedStyle = isSelected
       ? 'box-shadow: 0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3);'
       : 'box-shadow: 0 1px 4px rgba(0,0,0,0.2);';
-
-    // Dimmed style for filtered elements
     const dimmedStyle = isDimmed ? 'opacity: 0.3;' : '';
-
-    // Comment indicator badge (only if showCommentBadges is enabled)
     const commentBadge = showCommentBadges && unresolvedCommentCount && unresolvedCommentCount > 0
-      ? `<div style="
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          width: 16px;
-          height: 16px;
-          background-color: #f59e0b;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 9px;
-          font-weight: bold;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-          z-index: 10;
-        ">${unresolvedCommentCount}</div>`
+      ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background-color:#f59e0b;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3);z-index:10;">${unresolvedCommentCount}</div>`
       : '';
 
     if (thumbnail) {
-      // Marker with thumbnail - compact card (blur if hideMedia)
       const blurStyle = hideMedia ? 'filter: blur(8px);' : '';
       return `
-        <div class="map-marker-card" style="
-          position: relative;
-          background: var(--color-bg-primary, #ffffff);
-          border: 1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};
-          border-radius: 4px;
-          overflow: visible;
-          ${selectedStyle}
-          ${dimmedStyle}
-          width: 48px;
-        ">
+        <div class="map-marker-card" style="position:relative;background:var(--color-bg-primary, #ffffff);border:1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};border-radius:4px;overflow:visible;${selectedStyle}${dimmedStyle}width:48px;">
           ${commentBadge}
-          <div style="
-            width: 48px;
-            height: 36px;
-            background-image: url(${thumbnail});
-            background-size: cover;
-            background-position: center;
-            background-color: var(--color-bg-secondary, #f7f4ef);
-            border-radius: 4px 4px 0 0;
-            ${blurStyle}
-          "></div>
-          <div style="
-            padding: 2px 3px;
-            background: var(--color-bg-primary, #ffffff);
-            border-top: 1px solid var(--color-border-default, #e8e3db);
-          ">
-            <span style="
-              font-size: 9px;
-              font-weight: 500;
-              color: var(--color-text-primary, #3d3833);
-              display: block;
-              text-align: center;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            ">${displayLabel}</span>
+          <div style="width:48px;height:36px;background-image:url(${thumbnail});background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
+          <div style="padding:2px 3px;background:var(--color-bg-primary, #ffffff);border-top:1px solid var(--color-border-default, #e8e3db);">
+            <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayLabel}</span>
           </div>
-        </div>
-      `;
+        </div>`;
     } else {
-      // Marker without thumbnail - small dot with label
       return `
-        <div class="map-marker-simple" style="
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2px;
-          ${dimmedStyle}
-        ">
+        <div class="map-marker-simple" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;${dimmedStyle}">
           ${commentBadge}
-          <div style="
-            width: 16px;
-            height: 16px;
-            background-color: ${color};
-            border: 2px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};
-            border-radius: 50%;
-            ${selectedStyle}
-          "></div>
-          <div style="
-            background: var(--color-bg-primary, #ffffff);
-            border: 1px solid var(--color-border-default, #e8e3db);
-            border-radius: 3px;
-            padding: 1px 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-          ">
-            <span style="
-              font-size: 9px;
-              font-weight: 500;
-              color: var(--color-text-primary, #3d3833);
-              white-space: nowrap;
-            ">${displayLabel}</span>
+          <div style="width:16px;height:16px;background-color:${color};border:2px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};border-radius:50%;${selectedStyle}"></div>
+          <div style="background:var(--color-bg-primary, #ffffff);border:1px solid var(--color-border-default, #e8e3db);border-radius:3px;padding:1px 4px;box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+            <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);white-space:nowrap;">${displayLabel}</span>
           </div>
-        </div>
-      `;
+        </div>`;
     }
   }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges, t]);
 
-  // Create custom icon
-  const createIcon = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number) => {
-    const thumbnail = getThumbnail(element);
-    const hasThumb = !!thumbnail;
-
-    return L.divIcon({
-      className: 'custom-marker-container',
-      html: createMarkerHtml(element, isSelected, isDimmed, unresolvedCommentCount),
-      iconSize: hasThumb ? [48, 52] : [60, 36],
-      iconAnchor: hasThumb ? [24, 52] : [30, 36],
-    });
-  }, [createMarkerHtml, getThumbnail]);
+  // Create marker DOM element
+  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number): HTMLDivElement => {
+    const el = document.createElement('div');
+    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount);
+    el.style.cursor = 'pointer';
+    return el;
+  }, [createMarkerHtml]);
 
   // Initialize map
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Create map centered on France by default
-    mapRef.current = L.map(mapContainerRef.current, {
-      center: [46.603354, 1.888334], // Center of France
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: buildMapStyle(resolveLayerId('osmLatin', themeMode === 'dark'), true),
+      center: [1.888334, 46.603354], // Center of France [lng, lat]
       zoom: 6,
-      zoomControl: false, // We'll add custom controls
+      pitch: 45,
+      maxPitch: 70,
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
 
-    // Base layers
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
-    const osmDeLayer = L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    });
-
-    const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      maxZoom: 20,
-      subdomains: 'abcd',
-    });
-
-    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
-      maxZoom: 18,
-    });
-
-    // Add default layer (OSM)
-    osmLayer.addTo(mapRef.current);
-
-    // Add layer control
-    L.control.layers(
-      {
-        'OpenStreetMap': osmLayer,
-        'OSM Latin': osmDeLayer,
-        'CartoDB Light': cartoLayer,
-        'Satellite': satelliteLayer,
-      },
-      {},
-      { position: 'topright' }
-    ).addTo(mapRef.current);
-
-    // Adjust zoom when switching layers (satellite has lower max zoom)
-    mapRef.current.on('baselayerchange', (e: L.LayersControlEvent) => {
-      const map = mapRef.current;
-      if (!map) return;
-
-      if (e.name === 'Satellite' && map.getZoom() > 18) {
-        map.setZoom(18);
+    map.on('click', (e) => {
+      // Only clear selection if clicking on the map background (not a marker)
+      if (!(e.originalEvent.target as HTMLElement).closest('.map-marker-card, .map-marker-simple, .cluster-icon')) {
+        clearSelection();
       }
     });
 
-    // Create marker cluster group with custom options
-    clusterGroupRef.current = L.markerClusterGroup({
-      maxClusterRadius: 50, // Cluster markers within 50px
-      spiderfyOnMaxZoom: true,
-      spiderfyDistanceMultiplier: 2, // Spread spiderfied markers wider
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      iconCreateFunction: (cluster) => {
-        const count = cluster.getChildCount();
-        let size = 'small';
-        let dimension = 30;
-
-        if (count >= 10) {
-          size = 'large';
-          dimension = 44;
-        } else if (count >= 5) {
-          size = 'medium';
-          dimension = 36;
-        }
-
-        return L.divIcon({
-          html: `<div class="cluster-icon cluster-${size}"><span>${count}</span></div>`,
-          className: 'custom-cluster-icon',
-          iconSize: [dimension, dimension],
-        });
-      },
-    });
-
-    mapRef.current.addLayer(clusterGroupRef.current);
-
-    // Track clustering changes to update link positions
-    clusterGroupRef.current.on('animationend', () => {
-      setClusteringVersion(v => v + 1);
-    });
-    clusterGroupRef.current.on('spiderfied', () => {
-      setClusteringVersion(v => v + 1);
-    });
-    clusterGroupRef.current.on('unspiderfied', () => {
+    map.on('zoomend', () => {
       setClusteringVersion(v => v + 1);
     });
 
-    // Add zoom control to top-right
-    L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
-
-    // Click on map background to clear selection
-    mapRef.current.on('click', () => {
-      clearSelection();
-    });
-
-    // Track zoom level changes to update links
-    mapRef.current.on('zoomend', () => {
+    map.on('moveend', () => {
       setClusteringVersion(v => v + 1);
     });
+
+    map.on('load', () => {
+      mapLoadedRef.current = true;
+      map.setProjection({ type: 'globe' });
+      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
+      add3DBuildingsLayer(map);
+      setClusteringVersion(v => v + 1);
+    });
+
+    mapRef.current = map;
 
     return () => {
-      if (clusterGroupRef.current) {
-        clusterGroupRef.current.clearLayers();
-        clusterGroupRef.current = null;
-      }
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
+      mapLoadedRef.current = false;
+      // Clean up markers
+      markersRef.current.forEach(m => m.remove());
       markersRef.current.clear();
+      clusterMarkersRef.current.forEach(m => m.remove());
+      clusterMarkersRef.current.clear();
+      // Clean up link layers
+      linkLayersRef.current.forEach(ll => {
+        ll.labelMarker?.remove();
+        ll.arrowStart?.remove();
+        ll.arrowEnd?.remove();
+        try {
+          if (map.getLayer(ll.lineLayerId)) map.removeLayer(ll.lineLayerId);
+          if (map.getLayer(ll.outlineLayerId)) map.removeLayer(ll.outlineLayerId);
+          if (map.getSource(ll.sourceId)) map.removeSource(ll.sourceId);
+        } catch { /* map already removed */ }
+      });
       linkLayersRef.current.clear();
+      map.remove();
+      mapRef.current = null;
     };
   }, [clearSelection]);
+
+  // Switch base layer
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    // setStyle removes all sources/layers — clear link refs so the effect recreates them
+    linkLayersRef.current.forEach(ll => {
+      ll.labelMarker?.remove();
+      ll.arrowStart?.remove();
+      ll.arrowEnd?.remove();
+    });
+    linkLayersRef.current.clear();
+    map.setStyle(buildMapStyle(resolveLayerId(activeBaseLayer, themeMode === 'dark'), is3DRef.current));
+    // Re-flag as loaded after style switch
+    map.once('style.load', () => {
+      mapLoadedRef.current = true;
+      if (is3DRef.current) {
+        map.setProjection({ type: 'globe' });
+        map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
+      }
+      if (show3DBuildingsRef.current) {
+        add3DBuildingsLayer(map);
+      }
+      setClusteringVersion(v => v + 1);
+    });
+  }, [activeBaseLayer, themeMode]);
+
+  // Toggle 3D mode (projection + terrain + pitch) without full style reload
+  const is3DInitRef = useRef(true); // skip first render (handled by init)
+  useEffect(() => {
+    if (is3DInitRef.current) { is3DInitRef.current = false; return; }
+    const map = mapRef.current;
+    if (!map || !mapLoadedRef.current) return;
+    if (is3D) {
+      // Add terrain source if missing
+      if (!map.getSource('terrain-dem')) {
+        map.addSource('terrain-dem', {
+          type: 'raster-dem',
+          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          encoding: 'terrarium',
+        });
+      }
+      map.setProjection({ type: 'globe' });
+      map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
+      map.easeTo({ pitch: 45, duration: 600 });
+    } else {
+      map.setTerrain(null as unknown as maplibregl.TerrainSpecification);
+      map.setProjection({ type: 'mercator' });
+      map.easeTo({ pitch: 0, duration: 600 });
+    }
+  }, [is3D]);
+
+  // Toggle 3D buildings layer
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoadedRef.current) return;
+    if (show3DBuildings) {
+      add3DBuildingsLayer(map);
+    } else if (map.getLayer('3d-buildings')) {
+      map.removeLayer('3d-buildings');
+      if (map.getSource('openmaptiles')) map.removeSource('openmaptiles');
+    }
+  }, [show3DBuildings]);
 
   // Track drag start position for undo/redo
   const dragStartGeoRef = useRef<{ id: string; geo: { lat: number; lng: number } } | null>(null);
@@ -804,10 +708,7 @@ export function MapView() {
       let changed = false;
       const next = new Map(prev);
       next.forEach((_, id) => {
-        if (!currentIds.has(id)) {
-          next.delete(id);
-          changed = true;
-        }
+        if (!currentIds.has(id)) { next.delete(id); changed = true; }
       });
       return changed ? next : prev;
     });
@@ -817,106 +718,140 @@ export function MapView() {
   const effectiveGeoElements = useMemo(() => {
     return geoElements.map((element) => {
       const draggedPos = draggedPositions.get(element.id);
-      if (draggedPos) {
-        return { ...element, geo: draggedPos };
-      }
+      if (draggedPos) return { ...element, geo: draggedPos };
       return element;
     });
   }, [geoElements, draggedPositions]);
 
-  // Update markers when elements change
+  // Rebuild Supercluster and update markers
   useEffect(() => {
-    if (!mapRef.current || !clusterGroupRef.current) return;
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+    const zoom = Math.floor(map.getZoom());
 
-    const clusterGroup = clusterGroupRef.current;
+    // Build supercluster index
+    const sc = new Supercluster<{ elementId: string }>({
+      radius: 50,
+      maxZoom: 18,
+    });
+
+    const points: PointFeature[] = effectiveGeoElements.map(el => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [el.geo.lng, el.geo.lat] },
+      properties: { elementId: el.id },
+    }));
+
+    sc.load(points);
+    superclusterRef.current = sc;
+
+    // Get clusters at current zoom
+    const clusters = sc.getClusters([-180, -90, 180, 90], zoom);
+
+    // Build cluster state lookup
+    const newClusterState = new Map<string, ClusterState>();
+    const activeClusters = new Map<number, { center: [number, number]; count: number }>();
+
+    clusters.forEach(feature => {
+      const props = feature.properties as Record<string, unknown>;
+      if (props.cluster) {
+        const clusterId = props.cluster_id as number;
+        const center = feature.geometry.coordinates as [number, number];
+        const count = props.point_count as number;
+        activeClusters.set(clusterId, { center, count });
+
+        // Get all leaves (element IDs) in this cluster
+        const leaves = sc.getLeaves(clusterId, Infinity);
+        leaves.forEach(leaf => {
+          newClusterState.set(leaf.properties.elementId, {
+            clustered: true,
+            clusterCenter: center,
+            clusterId,
+          });
+        });
+      } else {
+        newClusterState.set(feature.properties.elementId, { clustered: false });
+      }
+    });
+
+    clusterStateRef.current = newClusterState;
+
+    // Compute spiderfy offsets for unclustered elements at same position
+    const unclusteredElements = effectiveGeoElements.filter(el => {
+      const state = newClusterState.get(el.id);
+      return state && !state.clustered;
+    });
+    const spiderfyOffsets = computeSpiderfyOffsets(
+      unclusteredElements.map(el => ({ id: el.id, lng: el.geo.lng, lat: el.geo.lat })),
+      zoom
+    );
+
+    // Update element markers
     const existingMarkers = markersRef.current;
-    const currentIds = new Set(effectiveGeoElements.map((el) => el.id));
+    const currentIds = new Set(effectiveGeoElements.map(el => el.id));
 
-    // Remove markers for elements that no longer exist or lost geo
+    // Remove markers for elements no longer present
     existingMarkers.forEach((marker, id) => {
       if (!currentIds.has(id)) {
-        clusterGroup.removeLayer(marker);
+        marker.remove();
         existingMarkers.delete(id);
       }
     });
 
-    // Add or update markers
+    // Add/update element markers
     effectiveGeoElements.forEach((element) => {
       const isSelected = selectedElementIds.has(element.id);
       const isDimmed = effectiveDimmedIds.has(element.id);
       const commentCount = unresolvedCommentCounts.get(element.id);
+      const state = newClusterState.get(element.id);
+      const isClustered = state?.clustered ?? false;
+
       const existingMarker = existingMarkers.get(element.id);
+      const offset = spiderfyOffsets.get(element.id);
+      const lng = element.geo.lng + (offset ? offset[0] : 0);
+      const lat = element.geo.lat + (offset ? offset[1] : 0);
 
       if (existingMarker) {
-        // Check if position actually changed (need to refresh cluster)
-        const currentLatLng = existingMarker.getLatLng();
-        const positionChanged =
-          Math.abs(currentLatLng.lat - element.geo.lat) > 0.000001 ||
-          Math.abs(currentLatLng.lng - element.geo.lng) > 0.000001;
-
-        // Update position if changed
-        if (positionChanged) {
-          existingMarker.setLatLng([element.geo.lat, element.geo.lng]);
-        }
-
-        existingMarker.setIcon(createIcon(element, isSelected, isDimmed, commentCount));
-
-        // Update title (hover tooltip) based on anonymous mode
-        const markerElement = existingMarker.getElement();
-        if (markerElement) {
-          markerElement.setAttribute('title', anonymousMode ? '' : (element.label || ''));
-        }
-
-        // Only refresh cluster if position actually changed
-        // This preserves spiderfied state when just selection changes
-        if (positionChanged) {
-          clusterGroup.refreshClusters(existingMarker);
-        }
+        // Update position
+        existingMarker.setLngLat([lng, lat]);
+        // Update visibility (hide if clustered)
+        const el = existingMarker.getElement();
+        el.style.display = isClustered ? 'none' : '';
+        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount);
+        el.setAttribute('title', anonymousMode ? '' : (element.label || ''));
       } else {
-        // Create new marker (draggable)
-        const marker = L.marker([element.geo.lat, element.geo.lng], {
-          icon: createIcon(element, isSelected, isDimmed, commentCount),
-          title: anonymousMode ? '' : element.label,
-          zIndexOffset: isSelected ? 1000 : 0,
-          draggable: true,
-        });
+        // Create new marker
+        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount);
+        markerEl.style.display = isClustered ? 'none' : '';
+        markerEl.setAttribute('title', anonymousMode ? '' : (element.label || ''));
 
-        marker.on('click', () => {
-          selectElement(element.id);
-        });
+        const marker = new maplibregl.Marker({ element: markerEl, anchor: 'bottom', draggable: true })
+          .setLngLat([lng, lat])
+          .addTo(map);
 
-        // Drag to update geo position (with undo/redo support)
-        // Capture element.id at marker creation time to avoid closure issues
+        // Click to select
         const markerId = element.id;
+        markerEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectElement(markerId);
+        });
+
+        // Drag handlers
         marker.on('dragstart', () => {
-          const pos = marker.getLatLng();
+          const pos = marker.getLngLat();
           dragStartGeoRef.current = { id: markerId, geo: { lat: pos.lat, lng: pos.lng } };
         });
         marker.on('dragend', () => {
-          const newPos = marker.getLatLng();
+          const newPos = marker.getLngLat();
           const newGeo = { lat: newPos.lat, lng: newPos.lng };
-
-          // Verify we're updating the correct element (safety check)
           const dragStart = dragStartGeoRef.current;
-          if (dragStart && dragStart.id !== markerId) {
-            // Race condition - dragStartGeoRef was overwritten by another marker
-            // Skip undo/redo but still update position
-            console.warn('Map drag: id mismatch, skipping undo/redo');
-          }
-
           const oldGeo = dragStart?.id === markerId ? dragStart.geo : null;
 
-          // Store dragged position to trigger immediate re-render
-          // (updateElement updates store but re-render may be async)
           setDraggedPositions(prev => {
             const next = new Map(prev);
             next.set(markerId, newGeo);
             return next;
           });
-
-          // Update element.geo in store - this is the persisted position
           updateElement(markerId, { geo: newGeo });
-
           if (oldGeo) {
             pushAction({
               type: 'update-element',
@@ -928,325 +863,372 @@ export function MapView() {
           setClusteringVersion(v => v + 1);
         });
 
-        clusterGroup.addLayer(marker);
         existingMarkers.set(element.id, marker);
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createIcon, selectElement, updateElement, pushAction, anonymousMode, hideMedia]);
+    // Update cluster markers
+    const existingClusterMarkers = clusterMarkersRef.current;
+    const activeClusterIds = new Set(activeClusters.keys());
 
-  // Get visible position for a marker (either marker position or cluster position)
-  const getVisibleLatLng = useCallback((marker: L.Marker): L.LatLng => {
-    if (!clusterGroupRef.current) {
-      return marker.getLatLng();
-    }
-    const visibleParent = clusterGroupRef.current.getVisibleParent(marker);
-    return visibleParent ? visibleParent.getLatLng() : marker.getLatLng();
+    // Remove old cluster markers
+    existingClusterMarkers.forEach((marker, id) => {
+      if (!activeClusterIds.has(id)) {
+        marker.remove();
+        existingClusterMarkers.delete(id);
+      }
+    });
+
+    // Add/update cluster markers
+    activeClusters.forEach(({ center, count }, clusterId) => {
+      let size = 'small';
+      let dimension = 30;
+      if (count >= 10) { size = 'large'; dimension = 44; }
+      else if (count >= 5) { size = 'medium'; dimension = 36; }
+
+      const existingCluster = existingClusterMarkers.get(clusterId);
+      if (existingCluster) {
+        existingCluster.setLngLat(center);
+        const el = existingCluster.getElement();
+        el.innerHTML = `<div class="cluster-icon cluster-${size}" style="width:${dimension}px;height:${dimension}px;"><span>${count}</span></div>`;
+      } else {
+        const el = document.createElement('div');
+        el.className = 'custom-cluster-icon';
+        el.innerHTML = `<div class="cluster-icon cluster-${size}" style="width:${dimension}px;height:${dimension}px;"><span>${count}</span></div>`;
+        el.style.cursor = 'pointer';
+
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const expansionZoom = sc.getClusterExpansionZoom(clusterId);
+          map.flyTo({ center: center as [number, number], zoom: expansionZoom });
+        });
+
+        const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat(center)
+          .addTo(map);
+        existingClusterMarkers.set(clusterId, marker);
+      }
+    });
+
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion]);
+
+  // Get visible position for an element (considering clustering)
+  const getVisibleLngLat = useCallback((elementId: string): [number, number] | null => {
+    const state = clusterStateRef.current.get(elementId);
+    if (!state) return null;
+    if (state.clustered && state.clusterCenter) return state.clusterCenter;
+    const el = effectiveGeoElements.find(e => e.id === elementId);
+    if (!el) return null;
+    return [el.geo.lng, el.geo.lat];
+  }, [effectiveGeoElements]);
+
+  // Check if two elements are in the same cluster
+  const areInSameCluster = useCallback((id1: string, id2: string): boolean => {
+    const s1 = clusterStateRef.current.get(id1);
+    const s2 = clusterStateRef.current.get(id2);
+    if (!s1 || !s2) return false;
+    return s1.clustered && s2.clustered && s1.clusterId === s2.clusterId;
   }, []);
 
-  // Check if two markers are in the same cluster
-  const areInSameCluster = useCallback((marker1: L.Marker, marker2: L.Marker): boolean => {
-    if (!clusterGroupRef.current) return false;
-    const parent1 = clusterGroupRef.current.getVisibleParent(marker1);
-    const parent2 = clusterGroupRef.current.getVisibleParent(marker2);
-    // If both have the same parent and it's not the marker itself, they're in the same cluster
-    return parent1 === parent2 && parent1 !== marker1 && parent2 !== marker2;
-  }, []);
-
-  // Calculate angle between two points (in degrees)
-  const calculateAngle = useCallback((from: L.LatLng, to: L.LatLng): number => {
-    const dx = to.lng - from.lng;
-    const dy = to.lat - from.lat;
+  // Calculate angle between two points (degrees)
+  const calculateAngle = useCallback((from: [number, number], to: [number, number]): number => {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
     return Math.atan2(dy, dx) * (180 / Math.PI);
   }, []);
 
-  // Create arrow marker icon
-  const createArrowIcon = useCallback((color: string, angle: number, size: number = 20) => {
-    return L.divIcon({
-      className: 'link-arrow-icon',
-      html: `<svg width="${size}" height="${size}" viewBox="0 0 20 20" style="transform: rotate(${-angle + 90}deg);">
-        <path d="M10 2 L18 18 L10 13 L2 18 Z" fill="${color}" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-      </svg>`,
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
-    });
+  // Create arrow marker element
+  const createArrowElement = useCallback((color: string, angle: number, size: number = 20): HTMLDivElement => {
+    const el = document.createElement('div');
+    el.className = 'link-arrow-icon';
+    el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 20 20" style="transform: rotate(${-angle + 90}deg);"><path d="M10 2 L18 18 L10 13 L2 18 Z" fill="${color}" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
+    el.style.pointerEvents = 'none';
+    return el;
   }, []);
 
   // Get position along line (0 = start, 1 = end)
-  const getPointOnLine = useCallback((from: L.LatLng, to: L.LatLng, ratio: number): L.LatLng => {
-    return L.latLng(
-      from.lat + (to.lat - from.lat) * ratio,
-      from.lng + (to.lng - from.lng) * ratio
-    );
+  const getPointOnLine = useCallback((from: [number, number], to: [number, number], ratio: number): [number, number] => {
+    return [
+      from[0] + (to[0] - from[0]) * ratio,
+      from[1] + (to[1] - from[1]) * ratio,
+    ];
   }, []);
 
-  // Update links (polylines with outlines and labels) - reacts to clustering changes
+  // Update links - uses MapLibre GeoJSON sources + layers
   useEffect(() => {
-    if (!mapRef.current || !clusterGroupRef.current) return;
+    if (!mapRef.current || !mapLoadedRef.current) return;
 
     const map = mapRef.current;
-    const markers = markersRef.current;
     const existingLinkLayers = linkLayersRef.current;
     const currentLinkIds = new Set(geoLinks.map((l) => l.id));
 
     // Remove link layers that no longer exist
-    existingLinkLayers.forEach((linkLayer, id) => {
+    existingLinkLayers.forEach((ll, id) => {
       if (!currentLinkIds.has(id)) {
-        linkLayer.outline.remove();
-        linkLayer.line.remove();
-        linkLayer.arrowStart?.remove();
-        linkLayer.arrowEnd?.remove();
+        ll.labelMarker?.remove();
+        ll.arrowStart?.remove();
+        ll.arrowEnd?.remove();
+        try {
+          if (map.getLayer(ll.lineLayerId)) map.removeLayer(ll.lineLayerId);
+          if (map.getLayer(ll.outlineLayerId)) map.removeLayer(ll.outlineLayerId);
+          if (map.getSource(ll.sourceId)) map.removeSource(ll.sourceId);
+        } catch { /* ignore */ }
         existingLinkLayers.delete(id);
       }
     });
 
     // Add or update link layers
     geoLinks.forEach((link) => {
-      const fromMarker = markers.get(link.fromId);
-      const toMarker = markers.get(link.toId);
+      const fromLngLat = getVisibleLngLat(link.fromId);
+      const toLngLat = getVisibleLngLat(link.toId);
+      if (!fromLngLat || !toLngLat) return;
 
-      if (!fromMarker || !toMarker) return;
-
-      // Check if link should be dimmed (either connected element is dimmed)
       const isLinkDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
       const linkOpacity = isLinkDimmed ? 0.3 : 1;
 
-      // Skip if both markers are in the same cluster (link would be invisible/redundant)
-      if (areInSameCluster(fromMarker, toMarker)) {
-        const existingLayer = existingLinkLayers.get(link.id);
-        if (existingLayer) {
-          existingLayer.outline.setStyle({ opacity: 0 });
-          existingLayer.line.setStyle({ opacity: 0 });
-          existingLayer.line.closeTooltip();
-          existingLayer.arrowStart?.setOpacity(0);
-          existingLayer.arrowEnd?.setOpacity(0);
+      // Skip if both in same cluster
+      if (areInSameCluster(link.fromId, link.toId)) {
+        const existing = existingLinkLayers.get(link.id);
+        if (existing) {
+          try {
+            if (map.getLayer(existing.outlineLayerId)) map.setPaintProperty(existing.outlineLayerId, 'line-opacity', 0);
+            if (map.getLayer(existing.lineLayerId)) map.setPaintProperty(existing.lineLayerId, 'line-opacity', 0);
+          } catch { /* ignore */ }
+          existing.labelMarker?.getElement()?.style.setProperty('display', 'none');
+          if (existing.arrowStart) existing.arrowStart.getElement().style.display = 'none';
+          if (existing.arrowEnd) existing.arrowEnd.getElement().style.display = 'none';
         }
         return;
       }
 
-      // Get visible positions (marker or cluster)
-      const fromLatLng = getVisibleLatLng(fromMarker);
-      const toLatLng = getVisibleLatLng(toMarker);
-
-      const existingLinkLayer = existingLinkLayers.get(link.id);
-
-      // Determine line style from link visual properties
       const color = link.visual.color || '#6b6560';
       const weight = Math.max(2, (link.visual.thickness || 2));
-      const dashArray = link.visual.style === 'dashed' ? '10, 6' :
-                       link.visual.style === 'dotted' ? '3, 6' : undefined;
-
-      // Determine link direction
+      const dashArray = link.visual.style === 'dashed' ? [10, 6] :
+                       link.visual.style === 'dotted' ? [3, 6] : undefined;
       const direction = link.direction || (link.directed ? 'forward' : 'none');
       const needsEndArrow = direction === 'forward' || direction === 'both';
       const needsStartArrow = direction === 'backward' || direction === 'both';
-      const angle = calculateAngle(fromLatLng, toLatLng);
+      const angle = calculateAngle(fromLngLat, toLngLat);
 
-      // Tooltip content with anonymous mode support
       const tooltipContent = link.label
         ? (anonymousMode
-            ? '<span style="display:inline-block;background:var(--color-text-primary,#3d3833);border-radius:2px;width:2.5em;height:0.8em;vertical-align:middle;"></span>'
+            ? '\u2588\u2588\u2588'
             : link.label)
         : null;
 
-      if (existingLinkLayer) {
-        // Update existing layers with new positions
-        existingLinkLayer.outline.setLatLngs([fromLatLng, toLatLng]);
-        existingLinkLayer.outline.setStyle({ weight: weight + 4, opacity: 0.9 * linkOpacity });
+      const geojsonData: GeoJSON.Feature<GeoJSON.LineString> = {
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: [fromLngLat, toLngLat] },
+        properties: {},
+      };
 
-        existingLinkLayer.line.setLatLngs([fromLatLng, toLatLng]);
-        existingLinkLayer.line.setStyle({ color, weight, dashArray, opacity: linkOpacity });
+      const existingLL = existingLinkLayers.get(link.id);
 
-        // Update tooltip content (label may have changed or anonymousMode toggled)
-        const existingTooltip = existingLinkLayer.line.getTooltip();
-        if (tooltipContent) {
-          if (existingTooltip) {
-            // Update existing tooltip content
-            existingTooltip.setContent(tooltipContent);
-            existingLinkLayer.line.openTooltip();
-          } else {
-            // Bind new tooltip if label was added
-            existingLinkLayer.line.bindTooltip(tooltipContent, {
-              permanent: true,
-              direction: 'center',
-              className: 'link-label-tooltip',
-            });
+      if (existingLL) {
+        // Update existing
+        try {
+          const src = map.getSource(existingLL.sourceId) as maplibregl.GeoJSONSource;
+          if (src) src.setData(geojsonData);
+
+          if (map.getLayer(existingLL.outlineLayerId)) {
+            map.setPaintProperty(existingLL.outlineLayerId, 'line-width', weight + 4);
+            map.setPaintProperty(existingLL.outlineLayerId, 'line-opacity', 0.9 * linkOpacity);
           }
-        } else if (existingTooltip) {
-          // Remove tooltip if label was cleared
-          existingLinkLayer.line.unbindTooltip();
+          if (map.getLayer(existingLL.lineLayerId)) {
+            map.setPaintProperty(existingLL.lineLayerId, 'line-color', color);
+            map.setPaintProperty(existingLL.lineLayerId, 'line-width', weight);
+            map.setPaintProperty(existingLL.lineLayerId, 'line-opacity', linkOpacity);
+            if (dashArray) map.setPaintProperty(existingLL.lineLayerId, 'line-dasharray', dashArray);
+          }
+        } catch { /* source/layer may not exist after style change */ }
+
+        // Update label
+        const midpoint = getPointOnLine(fromLngLat, toLngLat, 0.5);
+        if (tooltipContent) {
+          if (existingLL.labelMarker) {
+            existingLL.labelMarker.setLngLat(midpoint);
+            existingLL.labelMarker.getElement().textContent = tooltipContent;
+            existingLL.labelMarker.getElement().style.display = '';
+          } else {
+            const labelEl = document.createElement('div');
+            labelEl.className = 'link-label-overlay';
+            labelEl.textContent = tooltipContent;
+            existingLL.labelMarker = new maplibregl.Marker({ element: labelEl, anchor: 'center' })
+              .setLngLat(midpoint)
+              .addTo(map);
+          }
+        } else if (existingLL.labelMarker) {
+          existingLL.labelMarker.remove();
+          existingLL.labelMarker = undefined;
         }
 
         // Update arrows
-        // End arrow (pointing to target)
         if (needsEndArrow) {
-          const endPos = getPointOnLine(fromLatLng, toLatLng, 0.92);
-          if (existingLinkLayer.arrowEnd) {
-            existingLinkLayer.arrowEnd.setLatLng(endPos);
-            existingLinkLayer.arrowEnd.setIcon(createArrowIcon(color, angle));
-            existingLinkLayer.arrowEnd.setOpacity(linkOpacity);
+          const endPos = getPointOnLine(fromLngLat, toLngLat, 0.92);
+          if (existingLL.arrowEnd) {
+            existingLL.arrowEnd.setLngLat(endPos);
+            existingLL.arrowEnd.getElement().innerHTML = createArrowElement(color, angle).innerHTML;
+            existingLL.arrowEnd.getElement().style.display = '';
           } else {
-            existingLinkLayer.arrowEnd = L.marker(endPos, {
-              icon: createArrowIcon(color, angle),
-              interactive: false,
-              opacity: linkOpacity,
-            }).addTo(map);
+            existingLL.arrowEnd = new maplibregl.Marker({ element: createArrowElement(color, angle), anchor: 'center' })
+              .setLngLat(endPos).addTo(map);
           }
-        } else if (existingLinkLayer.arrowEnd) {
-          existingLinkLayer.arrowEnd.remove();
-          existingLinkLayer.arrowEnd = undefined;
+        } else if (existingLL.arrowEnd) {
+          existingLL.arrowEnd.remove();
+          existingLL.arrowEnd = undefined;
         }
 
-        // Start arrow (pointing to source)
         if (needsStartArrow) {
-          const startPos = getPointOnLine(fromLatLng, toLatLng, 0.08);
-          if (existingLinkLayer.arrowStart) {
-            existingLinkLayer.arrowStart.setLatLng(startPos);
-            existingLinkLayer.arrowStart.setIcon(createArrowIcon(color, angle + 180));
-            existingLinkLayer.arrowStart.setOpacity(linkOpacity);
+          const startPos = getPointOnLine(fromLngLat, toLngLat, 0.08);
+          if (existingLL.arrowStart) {
+            existingLL.arrowStart.setLngLat(startPos);
+            existingLL.arrowStart.getElement().innerHTML = createArrowElement(color, angle + 180).innerHTML;
+            existingLL.arrowStart.getElement().style.display = '';
           } else {
-            existingLinkLayer.arrowStart = L.marker(startPos, {
-              icon: createArrowIcon(color, angle + 180),
-              interactive: false,
-              opacity: linkOpacity,
-            }).addTo(map);
+            existingLL.arrowStart = new maplibregl.Marker({ element: createArrowElement(color, angle + 180), anchor: 'center' })
+              .setLngLat(startPos).addTo(map);
           }
-        } else if (existingLinkLayer.arrowStart) {
-          existingLinkLayer.arrowStart.remove();
-          existingLinkLayer.arrowStart = undefined;
+        } else if (existingLL.arrowStart) {
+          existingLL.arrowStart.remove();
+          existingLL.arrowStart = undefined;
         }
       } else {
-        // Create white outline for visibility (underneath)
-        const outline = L.polyline([fromLatLng, toLatLng], {
-          color: '#ffffff',
-          weight: weight + 4,
-          opacity: 0.9 * linkOpacity,
-          lineCap: 'round',
-          lineJoin: 'round',
-          bubblingMouseEvents: false,
-        });
-        outline.addTo(map);
+        // Create new link layers
+        const sourceId = `link-src-${link.id}`;
+        const outlineLayerId = `link-outline-${link.id}`;
+        const lineLayerId = `link-line-${link.id}`;
 
-        // Create main line with actual style
-        const line = L.polyline([fromLatLng, toLatLng], {
-          color,
-          weight,
-          dashArray,
-          opacity: linkOpacity,
-          lineCap: 'round',
-          lineJoin: 'round',
-          className: 'link-line',
-          bubblingMouseEvents: false,
-        });
+        try {
+          map.addSource(sourceId, { type: 'geojson', data: geojsonData });
 
-        // Add permanent tooltip for label
-        if (tooltipContent) {
-          line.bindTooltip(tooltipContent, {
-            permanent: true,
-            direction: 'center',
-            className: 'link-label-tooltip',
+          map.addLayer({
+            id: outlineLayerId,
+            type: 'line',
+            source: sourceId,
+            paint: {
+              'line-color': '#ffffff',
+              'line-width': weight + 4,
+              'line-opacity': 0.9 * linkOpacity,
+            },
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
           });
+
+          map.addLayer({
+            id: lineLayerId,
+            type: 'line',
+            source: sourceId,
+            paint: {
+              'line-color': color,
+              'line-width': weight,
+              'line-opacity': linkOpacity,
+              ...(dashArray ? { 'line-dasharray': dashArray } : {}),
+            },
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+          });
+
+          // Click handler on line
+          map.on('click', lineLayerId, (e) => {
+            e.preventDefault();
+            selectLink(link.id);
+          });
+          map.on('mouseenter', lineLayerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+          map.on('mouseleave', lineLayerId, () => { map.getCanvas().style.cursor = ''; });
+        } catch (err) {
+          console.warn('Failed to add link layer', link.id, err);
+          return;
         }
 
-        line.on('click', () => {
-          selectLink(link.id);
-        });
+        // Label marker
+        let labelMarker: maplibregl.Marker | undefined;
+        if (tooltipContent) {
+          const labelEl = document.createElement('div');
+          labelEl.className = 'link-label-overlay';
+          labelEl.textContent = tooltipContent;
+          const midpoint = getPointOnLine(fromLngLat, toLngLat, 0.5);
+          labelMarker = new maplibregl.Marker({ element: labelEl, anchor: 'center' })
+            .setLngLat(midpoint)
+            .addTo(map);
+        }
 
-        line.addTo(map);
-
-        // Create arrow markers
-        let arrowEnd: L.Marker | undefined;
-        let arrowStart: L.Marker | undefined;
-
+        // Arrow markers
+        let arrowEnd: maplibregl.Marker | undefined;
+        let arrowStart: maplibregl.Marker | undefined;
         if (needsEndArrow) {
-          const endPos = getPointOnLine(fromLatLng, toLatLng, 0.92);
-          arrowEnd = L.marker(endPos, {
-            icon: createArrowIcon(color, angle),
-            interactive: false,
-            opacity: linkOpacity,
-          }).addTo(map);
+          const endPos = getPointOnLine(fromLngLat, toLngLat, 0.92);
+          arrowEnd = new maplibregl.Marker({ element: createArrowElement(color, angle), anchor: 'center' })
+            .setLngLat(endPos).addTo(map);
         }
-
         if (needsStartArrow) {
-          const startPos = getPointOnLine(fromLatLng, toLatLng, 0.08);
-          arrowStart = L.marker(startPos, {
-            icon: createArrowIcon(color, angle + 180),
-            interactive: false,
-            opacity: linkOpacity,
-          }).addTo(map);
+          const startPos = getPointOnLine(fromLngLat, toLngLat, 0.08);
+          arrowStart = new maplibregl.Marker({ element: createArrowElement(color, angle + 180), anchor: 'center' })
+            .setLngLat(startPos).addTo(map);
         }
 
-        existingLinkLayers.set(link.id, { outline, line, arrowStart, arrowEnd });
+        existingLinkLayers.set(link.id, { sourceId, outlineLayerId, lineLayerId, labelMarker, arrowStart, arrowEnd });
       }
     });
-  }, [geoLinks, selectLink, clusteringVersion, getVisibleLatLng, areInSameCluster, calculateAngle, createArrowIcon, getPointOnLine, anonymousMode, effectiveDimmedIds]);
+  }, [geoLinks, selectLink, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, createArrowElement, getPointOnLine, anonymousMode, effectiveDimmedIds]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {
     if (!mapRef.current || geoElements.length === 0) return;
-
-    const bounds = L.latLngBounds(
-      geoElements.map((el) => [el.geo.lat, el.geo.lng] as L.LatLngTuple)
+    const coords = geoElements.map(el => [el.geo.lng, el.geo.lat] as [number, number]);
+    const bounds = coords.reduce(
+      (b, c) => b.extend(c),
+      new maplibregl.LngLatBounds(coords[0], coords[0])
     );
-    mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    mapRef.current.fitBounds(bounds, { padding: 50 });
   }, [geoElements]);
 
   // Zoom to selected element
   const handleZoomToSelected = useCallback(() => {
     if (!mapRef.current || selectedElementIds.size === 0) return;
-
     const selectedGeoElements = geoElements.filter((el) => selectedElementIds.has(el.id));
     if (selectedGeoElements.length === 0) return;
-
     if (selectedGeoElements.length === 1) {
-      mapRef.current.setView(
-        [selectedGeoElements[0].geo.lat, selectedGeoElements[0].geo.lng],
-        14
-      );
+      mapRef.current.flyTo({ center: [selectedGeoElements[0].geo.lng, selectedGeoElements[0].geo.lat], zoom: 14 });
     } else {
-      const bounds = L.latLngBounds(
-        selectedGeoElements.map((el) => [el.geo.lat, el.geo.lng] as L.LatLngTuple)
-      );
-      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      const coords = selectedGeoElements.map(el => [el.geo.lng, el.geo.lat] as [number, number]);
+      const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+      mapRef.current.fitBounds(bounds, { padding: 50 });
     }
   }, [geoElements, selectedElementIds]);
 
   // Register capture handler for report screenshots
   useEffect(() => {
     const captureHandler = async (): Promise<string | null> => {
-      if (!mapRef.current) {
-        return null;
-      }
+      if (!mapRef.current) return null;
 
-      // Fit bounds to show all elements
+      // Fit bounds
       if (geoElements.length > 0) {
-        const bounds = L.latLngBounds(
-          geoElements.map((el) => [el.geo.lat, el.geo.lng] as L.LatLngTuple)
-        );
-        mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: false });
-        // Force map to update multiple times to ensure rendering
-        mapRef.current.invalidateSize();
+        const coords = geoElements.map(el => [el.geo.lng, el.geo.lat] as [number, number]);
+        const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+        mapRef.current.fitBounds(bounds, { padding: 50, animate: false });
+        mapRef.current.resize();
         await new Promise(resolve => setTimeout(resolve, 200));
-        mapRef.current.invalidateSize();
+        mapRef.current.resize();
       }
 
-      // Wait for tiles to load (longer wait for map tiles)
+      // Wait for tiles
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Capture
-      const element = document.querySelector('[data-report-capture="map"]') as HTMLElement;
-      if (!element) {
-        return null;
-      }
+      // Capture: combine WebGL canvas + HTML overlays
+      const container = document.querySelector('[data-report-capture="map"]') as HTMLElement;
+      if (!container) return null;
 
       try {
-        return await toPng(element, {
+        return await toPng(container, {
           backgroundColor: '#e5e3df',
           pixelRatio: 2,
           skipFonts: true,
         });
       } catch {
-        return null;
+        // Fallback: just the WebGL canvas
+        try {
+          return mapRef.current.getCanvas().toDataURL('image/png');
+        } catch {
+          return null;
+        }
       }
     };
 
@@ -1257,9 +1239,7 @@ export function MapView() {
   // Format date for display
   const formatDate = (date: Date) => {
     return date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+      day: '2-digit', month: 'short', year: 'numeric',
     });
   };
 
@@ -1267,40 +1247,30 @@ export function MapView() {
   const currentEventIndex = useMemo(() => {
     if (eventDates.length === 0 || !selectedDate) return 0;
     const selectedTime = selectedDate.getTime();
-    // Find closest event date
     let closestIdx = 0;
     let closestDiff = Math.abs(eventDates[0].getTime() - selectedTime);
     for (let i = 1; i < eventDates.length; i++) {
       const diff = Math.abs(eventDates[i].getTime() - selectedTime);
-      if (diff < closestDiff) {
-        closestDiff = diff;
-        closestIdx = i;
-      }
+      if (diff < closestDiff) { closestDiff = diff; closestIdx = i; }
     }
     return closestIdx;
   }, [eventDates, selectedDate]);
 
-  // Handle slider change - jump to event date by index
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (eventDates.length === 0) return;
     const index = parseInt(e.target.value);
     setSelectedDate(eventDates[index]);
   };
 
-  // Toggle temporal mode
   const handleToggleTemporal = () => {
     if (!temporalMode && eventDates.length > 0) {
       setTemporalMode(true);
-      // Start at the event date closest to today (allows navigating both past and future)
       const now = Date.now();
       let closestDate = eventDates[0];
       let closestDiff = Math.abs(eventDates[0].getTime() - now);
       for (const ed of eventDates) {
         const diff = Math.abs(ed.getTime() - now);
-        if (diff < closestDiff) {
-          closestDiff = diff;
-          closestDate = ed;
-        }
+        if (diff < closestDiff) { closestDiff = diff; closestDate = ed; }
       }
       setSelectedDate(closestDate);
     } else {
@@ -1310,7 +1280,6 @@ export function MapView() {
     }
   };
 
-  // Step forward/backward through events
   const handleStep = (direction: 'forward' | 'backward') => {
     if (eventDates.length === 0) return;
     const newIndex = direction === 'forward'
@@ -1319,48 +1288,70 @@ export function MapView() {
     setSelectedDate(eventDates[newIndex]);
   };
 
-  // Play animation - step through events
+  // Play animation
   useEffect(() => {
     if (!isPlaying || eventDates.length === 0) return;
-
     const interval = setInterval(() => {
       setSelectedDate((prev) => {
         if (!prev) return eventDates[0];
-
-        // Find current index and move to next
-        const currentTime = prev.getTime();
         let currentIdx = 0;
         for (let i = 0; i < eventDates.length; i++) {
-          if (eventDates[i].getTime() <= currentTime) {
-            currentIdx = i;
-          }
+          if (eventDates[i].getTime() <= prev.getTime()) currentIdx = i;
         }
-
         const nextIdx = currentIdx + 1;
-        if (nextIdx >= eventDates.length) {
-          setIsPlaying(false);
-          return eventDates[eventDates.length - 1];
-        }
+        if (nextIdx >= eventDates.length) { setIsPlaying(false); return eventDates[eventDates.length - 1]; }
         return eventDates[nextIdx];
       });
-    }, 800); // Slower for discrete events
-
+    }, 800);
     return () => clearInterval(interval);
   }, [isPlaying, eventDates]);
 
-  // No geo elements — only show empty state if NOT in temporal mode
-  // In temporal mode, keep the map + timeline visible so user can navigate back
+  // No geo elements — show empty state
   if (geoElements.length === 0 && !temporalMode) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
         <MapPin size={48} className="text-text-tertiary mb-4" />
         <p className="text-sm text-text-secondary">{t('map.noGeoElements')}</p>
-        <p className="text-xs text-text-tertiary mt-2">
-          {t('map.addLocation')}
-        </p>
+        <p className="text-xs text-text-tertiary mt-2">{t('map.addLocation')}</p>
       </div>
     );
   }
+
+  const handlePlaceSearch = async () => {
+    if (!placeQuery.trim() || !mapRef.current) return;
+    setPlaceSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeQuery)}&limit=1`,
+        { headers: { 'Accept-Language': i18n.language } }
+      );
+      const data = await res.json();
+      if (data.length > 0) {
+        const { lon, lat, boundingbox } = data[0];
+        const map = mapRef.current!;
+        // Remove previous search marker
+        placeSearchMarkerRef.current?.remove();
+        // Add a temporary marker
+        const el = document.createElement('div');
+        el.className = 'place-search-marker';
+        el.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#2563eb;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);';
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([parseFloat(lon), parseFloat(lat)])
+          .addTo(map);
+        placeSearchMarkerRef.current = marker;
+        // Fly to bounding box or point
+        if (boundingbox) {
+          const [s, n, w, e] = boundingbox.map(Number);
+          map.fitBounds([[w, s], [e, n]], { padding: 60, maxZoom: 16 });
+        } else {
+          map.flyTo({ center: [parseFloat(lon), parseFloat(lat)], zoom: 14 });
+        }
+        // Auto-remove marker after 8s
+        setTimeout(() => { marker.remove(); if (placeSearchMarkerRef.current === marker) placeSearchMarkerRef.current = null; }, 8000);
+      }
+    } catch { /* ignore */ }
+    setPlaceSearching(false);
+  };
 
   return (
     <div className="h-full flex flex-col bg-bg-secondary">
@@ -1370,22 +1361,74 @@ export function MapView() {
           <span className="text-xs text-text-secondary">
             {t('map.elementsLocated', { count: geoElements.length })}
             {geoLinks.length > 0 && (
-              <span className="ml-2 text-text-tertiary">
-                {t('map.linksCount', { count: geoLinks.length })}
-              </span>
+              <span className="ml-2 text-text-tertiary">{t('map.linksCount', { count: geoLinks.length })}</span>
             )}
           </span>
         }
         rightContent={
           <>
+            {/* Place search */}
+            <form
+              className="flex items-center mr-2"
+              onSubmit={(e) => { e.preventDefault(); handlePlaceSearch(); }}
+            >
+              <input
+                type="text"
+                value={placeQuery}
+                onChange={(e) => setPlaceQuery(e.target.value)}
+                placeholder={t('map.searchPlace')}
+                className="h-6 w-36 px-2 text-[10px] border border-border-default rounded-l bg-bg-primary text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
+              />
+              <button
+                type="submit"
+                disabled={placeSearching || !placeQuery.trim()}
+                className="h-6 px-1.5 border border-l-0 border-border-default rounded-r text-text-secondary hover:bg-bg-tertiary disabled:opacity-40"
+              >
+                <Search size={11} />
+              </button>
+            </form>
+
+            {/* Base layer switcher */}
+            <div className="flex items-center border border-border-default rounded overflow-hidden mr-2">
+              {BASE_LAYERS.map(layer => (
+                <button
+                  key={layer.id}
+                  onClick={() => setActiveBaseLayer(layer.id)}
+                  className={`px-2 h-6 text-[10px] ${activeBaseLayer === layer.id ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                >
+                  {layer.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 3D toggle */}
+            <button
+              onClick={() => setIs3D(v => !v)}
+              className={`px-2 h-6 text-[10px] flex items-center gap-1 border border-border-default rounded mr-2 ${is3D ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+              title={t('map.toggle3D')}
+            >
+              {is3D ? <Globe size={11} /> : <MapIcon size={11} />}
+              3D
+            </button>
+
+            {/* 3D buildings toggle */}
+            {is3D && (
+              <button
+                onClick={() => setShow3DBuildings(v => !v)}
+                className={`px-2 h-6 text-[10px] flex items-center gap-1 border border-border-default rounded mr-2 ${show3DBuildings ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                title={t('map.toggle3DBuildings')}
+              >
+                <Building size={11} />
+                {t('map.buildings')}
+              </button>
+            )}
+
             {/* Temporal mode toggle */}
             {timeRange && (
               <button
                 onClick={handleToggleTemporal}
                 className={`px-2 py-1 text-xs flex items-center gap-1 rounded transition-colors ${
-                  temporalMode
-                    ? 'bg-accent text-white'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                  temporalMode ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
                 }`}
                 title={t('map.temporalMode')}
               >
@@ -1429,7 +1472,6 @@ export function MapView() {
       {/* Temporal slider */}
       {temporalMode && timeRange && (
         <div className="px-4 py-2 border-b border-border-default bg-bg-primary flex items-center gap-3">
-          {/* Play controls */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => handleStep('backward')}
@@ -1440,11 +1482,7 @@ export function MapView() {
             </button>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`p-1 rounded ${
-                isPlaying
-                  ? 'bg-accent text-white'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
-              }`}
+              className={`p-1 rounded ${isPlaying ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
               title={isPlaying ? t('map.pause') : t('map.play')}
             >
               {isPlaying ? <Pause size={14} /> : <Play size={14} />}
@@ -1457,13 +1495,7 @@ export function MapView() {
               <SkipForward size={14} />
             </button>
           </div>
-
-          {/* Date range display */}
-          <span className="text-xs text-text-tertiary whitespace-nowrap">
-            {formatDate(timeRange.min)}
-          </span>
-
-          {/* Slider - discrete steps on event dates */}
+          <span className="text-xs text-text-tertiary whitespace-nowrap">{formatDate(timeRange.min)}</span>
           <input
             type="range"
             min="0"
@@ -1472,30 +1504,19 @@ export function MapView() {
             onChange={handleSliderChange}
             className="flex-1 h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
           />
-
-          {/* Date range display */}
-          <span className="text-xs text-text-tertiary whitespace-nowrap">
-            {formatDate(timeRange.max)}
-          </span>
-
-          {/* Event counter */}
+          <span className="text-xs text-text-tertiary whitespace-nowrap">{formatDate(timeRange.max)}</span>
           <span className="text-[10px] text-text-tertiary whitespace-nowrap">
             {currentEventIndex + 1}/{eventDates.length}
           </span>
-
-          {/* Current date - editable input (allows any date to see what's visible at that time) */}
           {selectedDate && (
             <input
               type="date"
               value={selectedDate.toISOString().split('T')[0]}
               onChange={(e) => {
                 const dateStr = e.target.value;
-                // Only update if valid date (YYYY-MM-DD format complete)
                 if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
                   const newDate = new Date(dateStr + 'T12:00:00');
-                  if (!isNaN(newDate.getTime())) {
-                    setSelectedDate(newDate);
-                  }
+                  if (!isNaN(newDate.getTime())) setSelectedDate(newDate);
                 }
               }}
               className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-28"
@@ -1509,10 +1530,6 @@ export function MapView() {
 
       {/* Custom styles */}
       <style>{`
-        .custom-marker-container {
-          background: transparent;
-          border: none;
-        }
         .map-marker-card,
         .map-marker-simple {
           cursor: pointer;
@@ -1522,44 +1539,6 @@ export function MapView() {
         .map-marker-simple:hover {
           transform: scale(1.05);
         }
-        .leaflet-tooltip {
-          background: var(--color-bg-primary, #ffffff);
-          border: 1px solid var(--color-border-default, #e5e7eb);
-          border-radius: 4px;
-          color: var(--color-text-primary, #111827);
-          font-size: 12px;
-          padding: 4px 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .leaflet-tooltip-top:before {
-          border-top-color: var(--color-border-default, #e5e7eb);
-        }
-        .link-tooltip {
-          background: var(--color-bg-tertiary, #f0ece4);
-          border: 1px solid var(--color-border-sketchy, #b8b0a4);
-          font-size: 11px;
-          padding: 2px 6px;
-        }
-        /* Permanent link labels */
-        .link-label-tooltip {
-          background: var(--color-bg-primary, #ffffff) !important;
-          border: 1px solid var(--color-border-strong, #d4cec4) !important;
-          border-radius: 3px !important;
-          color: var(--color-text-primary, #3d3833) !important;
-          font-size: 10px !important;
-          font-weight: 500 !important;
-          padding: 2px 6px !important;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
-          white-space: nowrap !important;
-        }
-        .link-label-tooltip::before {
-          display: none !important;
-        }
-        /* Make links look clickable */
-        .leaflet-interactive.link-line {
-          cursor: pointer;
-        }
-        /* Link arrow icons */
         .link-arrow-icon {
           background: transparent !important;
           border: none !important;
@@ -1568,7 +1547,6 @@ export function MapView() {
         .link-arrow-icon svg {
           filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
         }
-        /* Cluster icons */
         .custom-cluster-icon {
           background: transparent;
         }
@@ -1588,31 +1566,23 @@ export function MapView() {
         .cluster-icon:hover {
           transform: scale(1.1);
         }
-        .cluster-small {
-          width: 30px;
-          height: 30px;
-          font-size: 12px;
+        .cluster-small { font-size: 12px; }
+        .cluster-medium { font-size: 13px; }
+        .cluster-large { font-size: 14px; }
+        .link-label-overlay {
+          background: var(--color-bg-primary, #ffffff);
+          border: 1px solid var(--color-border-strong, #d4cec4);
+          border-radius: 3px;
+          color: var(--color-text-primary, #3d3833);
+          font-size: 10px;
+          font-weight: 500;
+          padding: 2px 6px;
+          pointer-events: none;
+          white-space: nowrap;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
-        .cluster-medium {
-          width: 36px;
-          height: 36px;
-          font-size: 13px;
-        }
-        .cluster-large {
-          width: 44px;
-          height: 44px;
-          font-size: 14px;
-        }
-        /* Override default markercluster styles */
-        .marker-cluster-small,
-        .marker-cluster-medium,
-        .marker-cluster-large {
-          background: transparent !important;
-        }
-        .marker-cluster-small div,
-        .marker-cluster-medium div,
-        .marker-cluster-large div {
-          background: var(--color-accent, #e07a5f) !important;
+        .maplibregl-canvas {
+          outline: none;
         }
       `}</style>
     </div>

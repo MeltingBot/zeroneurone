@@ -238,7 +238,7 @@
       "reactflow": "Interactief canvas",
       "yjs": "Realtime samenwerking",
       "dexie": "Lokale database",
-      "leaflet": "Cartografie",
+      "maplibre": "Cartografie",
       "graphology": "Graafanalyse"
     },
     "license": {
