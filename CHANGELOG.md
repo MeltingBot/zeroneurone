@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.31.0
+
+### Features
+- Map: geographic zones with three shapes (polygon, circle, square)
+- Map: zone editing (vertex drag for polygons, radius resize for circles)
+- Map: zone movement by dragging the central marker
+- Map: GeoJSON text editor for events (copy/paste from QGIS, geojson.io)
+- Map: real-time preview during zone drawing (area, radius display)
+- Map: zone shape selector dropdown on the Zone toolbar button
+- Export: GeoJSON export includes zones as Polygon features
+
+### Improvements
+- Map: full element name displayed when selected (no truncation)
+- Map: "Fit" button uses icon instead of text label
+- Map: zone properties (area, radius) stored on elements
+- Types: GeoPolygon supports shapeOrigin, radius, altitude, extrude fields
+- Yjs: sync preserves all GeoPolygon fields across collaboration
+
+### Documentation
+- Map view: added Geographic Zones section (FR + EN)
+- Tags & properties: added Tag Sets Manager section and 5 missing property types (FR + EN)
+- Attachments: added DOCX/ODT text extraction support (FR + EN)
+- Search: updated indexed content to include DOCX/ODT (FR + EN)
+- Elements & links: clarified event geolocation supports zones (FR + EN)
+
 ## 2.30.1
 
 ### Fixes
