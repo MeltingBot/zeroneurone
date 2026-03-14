@@ -63,7 +63,7 @@ Chaque element represente un noeud sur le canvas (personne, entreprise, lieu, co
   },
   "position": { "x": 100, "y": 200 },
   "isPositionLocked": false,
-  "geo": { "lat": 48.8566, "lng": 2.3522 },
+  "geo": { "type": "point", "lat": 48.8566, "lng": 2.3522 },
   "events": [],
   "visual": {
     "color": "#fcd34d",
@@ -102,7 +102,7 @@ Chaque element represente un noeud sur le canvas (personne, entreprise, lieu, co
 | `dateRange` | `DateRange \| null` | Non | `null` | Plage de dates avec champs `start` et `end`. Voir [DateRange](#daterange). |
 | `position` | `Position` | Recommande | `{x: 0, y: 0}` | Coordonnees canvas `{x, y}`. |
 | `isPositionLocked` | `boolean` | Non | `false` | Si `true`, l'element ne peut pas etre deplace sur le canvas. |
-| `geo` | `GeoCoordinates \| null` | Non | `null` | Coordonnees geographiques pour la vue carte. Voir [GeoCoordinates](#geocoordinates). |
+| `geo` | `GeoData \| null` | Non | `null` | Donnees geographiques pour la vue carte (point ou polygone). Voir [GeoData](#geodata). |
 | `events` | `ElementEvent[]` | Non | `[]` | Occurrences temporelles rattachees a cet element. Voir [ElementEvent](#elementevent). |
 | `visual` | `ElementVisual` | Non | Depuis le JSON | Parametres d'apparence. Voir [ElementVisual](#elementvisual). |
 | `assetIds` | `string[]` | Non | `[]` | References aux fichiers joints. Les assets non importes sont silencieusement supprimes. |
@@ -290,13 +290,47 @@ Paire cle/valeur typee pour les metadonnees.
 
 Coordonnees canvas en pixels. L'origine `{0, 0}` est le centre du canvas.
 
-### GeoCoordinates
+### GeoData
+
+Union discriminee par le champ `type`. Supporte les points et les zones polygonales.
+
+#### GeoPoint
 
 ```json
-{ "lat": 48.8566, "lng": 2.3522 }
+{ "type": "point", "lat": 48.8566, "lng": 2.3522 }
 ```
 
-Coordonnees WGS84 pour l'affichage sur la vue carte.
+| Champ | Type | Obligatoire | Description |
+|-------|------|-------------|-------------|
+| `type` | `"point"` | **Oui** | Discriminant. |
+| `lat` | `number` | **Oui** | Latitude WGS84. |
+| `lng` | `number` | **Oui** | Longitude WGS84. |
+
+#### GeoPolygon
+
+```json
+{
+  "type": "polygon",
+  "coordinates": [[2.35, 48.85], [2.36, 48.86], [2.37, 48.85]],
+  "center": { "lat": 48.8533, "lng": 2.36 },
+  "shapeOrigin": "circle",
+  "radius": 1.5,
+  "altitude": 100,
+  "extrude": true
+}
+```
+
+| Champ | Type | Obligatoire | Description |
+|-------|------|-------------|-------------|
+| `type` | `"polygon"` | **Oui** | Discriminant. |
+| `coordinates` | `[number, number][]` | **Oui** | Sommets du polygone en `[lng, lat]` (convention GeoJSON). |
+| `center` | `{ lat, lng }` | **Oui** | Centroide du polygone. |
+| `shapeOrigin` | `"circle"` | Non | Si present, indique que le polygone represente un cercle (active le mode redimensionnement au lieu de l'edition par sommets). |
+| `radius` | `number` | Non | Rayon en kilometres (uniquement pour les cercles). |
+| `altitude` | `number` | Non | Altitude en metres au-dessus du sol (pour l'extrusion 3D). |
+| `extrude` | `boolean` | Non | Si `true`, la zone est extrudee en 3D sur la carte. |
+
+**Note** : pour la retrocompatibilite, un objet `{ lat, lng }` sans champ `type` est accepte a l'import et traite comme un `GeoPoint`.
 
 ### DateRange
 
@@ -320,7 +354,7 @@ Occurrence temporelle rattachee a un element.
   "dateEnd": "2025-03-16T00:00:00.000Z",
   "label": "Reunion a Paris",
   "description": "Observe sur place",
-  "geo": { "lat": 48.8566, "lng": 2.3522 },
+  "geo": { "type": "point", "lat": 48.8566, "lng": 2.3522 },
   "properties": [],
   "source": "Surveillance"
 }
@@ -333,7 +367,7 @@ Occurrence temporelle rattachee a un element.
 | `dateEnd` | `string` | Non | Date de fin pour les evenements avec duree. |
 | `label` | `string` | **Oui** | Libelle de l'evenement. |
 | `description` | `string` | Non | Description de l'evenement. |
-| `geo` | `GeoCoordinates` | Non | Localisation de l'evenement. |
+| `geo` | `GeoData` | Non | Localisation de l'evenement (point ou zone polygonale). Voir [GeoData](#geodata). |
 | `properties` | `Property[]` | Non | Metadonnees typees supplementaires. |
 | `source` | `string` | Non | Source de l'information. |
 
@@ -363,7 +397,7 @@ Controle l'apparence d'un element sur le canvas.
 | `borderColor` | `string` | `"#a8a29e"` | Toute couleur CSS |
 | `borderWidth` | `number` | `2` | Pixels |
 | `borderStyle` | `string` | `"solid"` | `"solid"`, `"dashed"`, `"dotted"` |
-| `shape` | `string` | `"circle"` | `"circle"`, `"square"`, `"diamond"`, `"rectangle"` |
+| `shape` | `string` | `"circle"` | `"circle"`, `"square"`, `"diamond"`, `"rectangle"`, `"hexagon"` |
 | `size` | `string \| number` | `"medium"` | `"small"`, `"medium"`, `"large"`, ou un nombre (pixels) |
 | `icon` | `string \| null` | `null` | Nom d'icone Lucide (ex. `"user"`, `"building"`, `"map-pin"`) |
 | `image` | `string \| null` | `null` | ID d'asset utilise comme image d'affichage |

@@ -225,9 +225,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   }
 
   // Handle visual - can be Y.Map or plain object
-  // Migration: hexagon shape is no longer supported, convert to square
-  const migrateShape = (shape: string | undefined): string => {
-    if (shape === 'hexagon') return 'square';
+  const normalizeShape = (shape: string | undefined): string => {
     return shape ?? DEFAULT_ELEMENT_VISUAL.shape;
   };
 
@@ -238,7 +236,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
       borderColor: visualRaw.get('borderColor') ?? DEFAULT_ELEMENT_VISUAL.borderColor,
       borderWidth: visualRaw.get('borderWidth') ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
       borderStyle: visualRaw.get('borderStyle') ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
-      shape: migrateShape(visualRaw.get('shape')) as typeof DEFAULT_ELEMENT_VISUAL.shape,
+      shape: normalizeShape(visualRaw.get('shape')) as typeof DEFAULT_ELEMENT_VISUAL.shape,
       size: visualRaw.get('size') ?? DEFAULT_ELEMENT_VISUAL.size,
       icon: visualRaw.get('icon') ?? null,
       image: visualRaw.get('image') ?? null,
@@ -252,7 +250,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
       borderColor: visualRaw.borderColor ?? DEFAULT_ELEMENT_VISUAL.borderColor,
       borderWidth: visualRaw.borderWidth ?? DEFAULT_ELEMENT_VISUAL.borderWidth,
       borderStyle: visualRaw.borderStyle ?? DEFAULT_ELEMENT_VISUAL.borderStyle,
-      shape: migrateShape(visualRaw.shape) as typeof DEFAULT_ELEMENT_VISUAL.shape,
+      shape: normalizeShape(visualRaw.shape) as typeof DEFAULT_ELEMENT_VISUAL.shape,
       size: visualRaw.size ?? DEFAULT_ELEMENT_VISUAL.size,
       icon: visualRaw.icon ?? null,
       image: visualRaw.image ?? null,

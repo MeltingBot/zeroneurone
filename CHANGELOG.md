@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.31.1
+
+### Fixes
+- Canvas: hexagon shape no longer reverts to square on selection (removed erroneous Yjs migration)
+- Canvas: diamond shape connection handles now accessible (z-index fix)
+- Canvas: hexagon shape sizing in getDefaultDimensions
+
+### Documentation
+- Import JSON format: updated GeoData type documentation (FR + EN)
+
 ## 2.31.0
 
 ### Features

@@ -63,7 +63,7 @@ Each element represents a node on the canvas (person, company, location, concept
   },
   "position": { "x": 100, "y": 200 },
   "isPositionLocked": false,
-  "geo": { "lat": 48.8566, "lng": 2.3522 },
+  "geo": { "type": "point", "lat": 48.8566, "lng": 2.3522 },
   "events": [],
   "visual": {
     "color": "#fcd34d",
@@ -102,7 +102,7 @@ Each element represents a node on the canvas (person, company, location, concept
 | `dateRange` | `DateRange \| null` | No | `null` | Date range with `start` and `end` fields. See [DateRange](#daterange). |
 | `position` | `Position` | Recommended | `{x: 0, y: 0}` | Canvas coordinates `{x, y}`. |
 | `isPositionLocked` | `boolean` | No | `false` | When `true`, the element cannot be moved on the canvas. |
-| `geo` | `GeoCoordinates \| null` | No | `null` | Geographic coordinates for map view. See [GeoCoordinates](#geocoordinates). |
+| `geo` | `GeoData \| null` | No | `null` | Geographic data for map view (point or polygon). See [GeoData](#geodata). |
 | `events` | `ElementEvent[]` | No | `[]` | Temporal occurrences attached to this element. See [ElementEvent](#elementevent). |
 | `visual` | `ElementVisual` | No | Spread from JSON | Appearance settings. See [ElementVisual](#elementvisual). |
 | `assetIds` | `string[]` | No | `[]` | References to attached assets. Non-imported assets are silently dropped. |
@@ -290,13 +290,47 @@ Typed key/value metadata pair.
 
 Canvas coordinates in pixels. The origin `{0, 0}` is the center of the canvas.
 
-### GeoCoordinates
+### GeoData
+
+Discriminated union on the `type` field. Supports points and polygon zones.
+
+#### GeoPoint
 
 ```json
-{ "lat": 48.8566, "lng": 2.3522 }
+{ "type": "point", "lat": 48.8566, "lng": 2.3522 }
 ```
 
-WGS84 coordinates for map view display.
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `"point"` | **Yes** | Discriminant. |
+| `lat` | `number` | **Yes** | WGS84 latitude. |
+| `lng` | `number` | **Yes** | WGS84 longitude. |
+
+#### GeoPolygon
+
+```json
+{
+  "type": "polygon",
+  "coordinates": [[2.35, 48.85], [2.36, 48.86], [2.37, 48.85]],
+  "center": { "lat": 48.8533, "lng": 2.36 },
+  "shapeOrigin": "circle",
+  "radius": 1.5,
+  "altitude": 100,
+  "extrude": true
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `"polygon"` | **Yes** | Discriminant. |
+| `coordinates` | `[number, number][]` | **Yes** | Polygon vertices as `[lng, lat]` (GeoJSON convention). |
+| `center` | `{ lat, lng }` | **Yes** | Polygon centroid. |
+| `shapeOrigin` | `"circle"` | No | If present, indicates the polygon represents a circle (enables resize mode instead of vertex editing). |
+| `radius` | `number` | No | Radius in kilometers (circles only). |
+| `altitude` | `number` | No | Altitude in meters above ground (for 3D extrusion). |
+| `extrude` | `boolean` | No | If `true`, the zone is extruded in 3D on the map. |
+
+**Note**: for backward compatibility, a plain `{ lat, lng }` object without a `type` field is accepted on import and treated as a `GeoPoint`.
 
 ### DateRange
 
@@ -320,7 +354,7 @@ Temporal occurrence attached to an element.
   "dateEnd": "2025-03-16T00:00:00.000Z",
   "label": "Meeting in Paris",
   "description": "Observed at location",
-  "geo": { "lat": 48.8566, "lng": 2.3522 },
+  "geo": { "type": "point", "lat": 48.8566, "lng": 2.3522 },
   "properties": [],
   "source": "Surveillance"
 }
@@ -333,7 +367,7 @@ Temporal occurrence attached to an element.
 | `dateEnd` | `string` | No | End date for duration events. |
 | `label` | `string` | **Yes** | Event label. |
 | `description` | `string` | No | Event description. |
-| `geo` | `GeoCoordinates` | No | Location of the event. |
+| `geo` | `GeoData` | No | Location of the event (point or polygon zone). See [GeoData](#geodata). |
 | `properties` | `Property[]` | No | Additional typed metadata. |
 | `source` | `string` | No | Information source. |
 
@@ -363,7 +397,7 @@ Controls the appearance of an element on the canvas.
 | `borderColor` | `string` | `"#a8a29e"` | Any CSS color |
 | `borderWidth` | `number` | `2` | Pixels |
 | `borderStyle` | `string` | `"solid"` | `"solid"`, `"dashed"`, `"dotted"` |
-| `shape` | `string` | `"circle"` | `"circle"`, `"square"`, `"diamond"`, `"rectangle"` |
+| `shape` | `string` | `"circle"` | `"circle"`, `"square"`, `"diamond"`, `"rectangle"`, `"hexagon"` |
 | `size` | `string \| number` | `"medium"` | `"small"`, `"medium"`, `"large"`, or a number (pixels) |
 | `icon` | `string \| null` | `null` | Lucide icon name (e.g. `"user"`, `"building"`, `"map-pin"`) |
 | `image` | `string \| null` | `null` | Asset ID used as display image |

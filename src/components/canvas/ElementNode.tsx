@@ -215,7 +215,13 @@ function ElementNodeComponent({ data }: NodeProps) {
       return { width: Math.min(size, 150), height: Math.min(size, 150) };
     }
 
-    // Default fallback (shouldn't reach here)
+    if (shape === 'hexagon') {
+      // Hexagon: clip-path clips corners, needs slightly more space than circle
+      const size = Math.max(estimatedTextWidth * 0.85, baseSize, 55);
+      return { width: Math.min(size, 150), height: Math.min(size, 150) };
+    }
+
+    // Default fallback
     return { width: baseSize, height: baseSize };
   };
 
@@ -317,25 +323,25 @@ function ElementNodeComponent({ data }: NodeProps) {
         type="source"
         position={Position.Top}
         id="source-top"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="source-left"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
 
       {/* Target handles on all 4 sides */}
@@ -343,25 +349,25 @@ function ElementNodeComponent({ data }: NodeProps) {
         type="target"
         position={Position.Top}
         id="target-top"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="target-bottom"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="target-left"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
       <Handle
         type="target"
         position={Position.Right}
         id="target-right"
-        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox ${handleOpacity}`}
+        className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
       />
 
       {/* Comment indicator - shows when element has unresolved comments */}
