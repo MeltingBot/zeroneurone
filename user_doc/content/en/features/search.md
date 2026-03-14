@@ -40,7 +40,7 @@ Search covers:
 | **Extracted text** | Normal |
 
 {{< hint info >}}
-**Extracted text**: Text content from PDF and text files attached to elements is automatically indexed. See [Attachments - Text Extraction]({{< relref "attachments#text-extraction" >}}).
+**Extracted text**: Text content from PDF, DOCX, ODT and text files attached to elements is automatically indexed. See [Attachments - Text Extraction]({{< relref "attachments#text-extraction" >}}).
 {{< /hint >}}
 
 ### Fuzzy Search

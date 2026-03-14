@@ -77,6 +77,9 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, currentDossier.id);
+      } else if (file.name.endsWith('.geojson')) {
+        const content = await importService.readFileAsText(file);
+        result = await importService.importFromGeoJSON(content, currentDossier.id);
       } else {
         result = {
           success: false,
@@ -84,7 +87,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
           linksImported: 0,
           assetsImported: 0,
           reportImported: false,
-          errors: ['Format de fichier non supporte. Utilisez ZIP, JSON, CSV ou GraphML.'],
+          errors: ['Format de fichier non supporte. Utilisez ZIP, JSON, CSV, GraphML ou GeoJSON.'],
           warnings: [],
         };
       }
@@ -211,7 +214,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".zip,.json,.csv,.graphml,.xml"
+                accept=".zip,.json,.csv,.graphml,.xml,.geojson"
                 onChange={handleFileSelect}
                 className="hidden"
               />

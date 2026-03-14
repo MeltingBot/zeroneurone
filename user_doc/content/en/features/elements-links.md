@@ -55,7 +55,7 @@ Prevent accidental moves by locking an element's position.
 
 ### Events
 
-Elements can have associated **events**, each with a date, description, and optionally a geolocation.
+Elements can have associated **events**, each with a date, description, and optionally a geolocation (point or polygon zone).
 
 ### Extract an Event to Element
 

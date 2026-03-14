@@ -236,6 +236,7 @@ function ElementNodeComponent({ data }: NodeProps) {
     square: 'sketchy-border',
     diamond: 'sketchy-border rotate-45',
     rectangle: 'sketchy-border',
+    hexagon: 'sketchy-hexagon',
   };
 
   // Handle visibility: show when hovered or selected

@@ -308,7 +308,24 @@
     "stepForward": "Крок вперед",
     "play": "Відтворити",
     "pause": "Пауза",
-    "unnamed": "Без назви"
+    "unnamed": "Без назви",
+    "drawZone": "Намалювати зону",
+    "cancelDraw": "Скасувати малювання",
+    "zone": "Зона",
+    "newZone": "Нова зона",
+    "deleteSelection": "Видалити вибране",
+    "editZone": "Редагувати форму",
+    "geometry": "Геометрія",
+    "vertices": "Вершини",
+    "area": "Площа",
+    "center": "Центр",
+    "viewOnMap": "Показати на карті",
+    "deleteVertex": "Видалити вершину"
+    ,
+    "geoJsonSave": "Застосувати",
+    "geoJsonParseError": "Невалідний JSON",
+    "geoJsonMinVertices": "Мінімум 3 вершини",
+    "geoJsonInvalidCoord": "Невалідна координата: [lng, lat]"
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

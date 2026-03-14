@@ -150,6 +150,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, dossierId);
+      } else if (file.name.endsWith('.geojson')) {
+        const content = await importService.readFileAsText(file);
+        result = await importService.importFromGeoJSON(content, dossierId);
       } else if (file.name.endsWith('.ged') || file.name.endsWith('.gw')) {
         result = await importService.importFromGenealogy(file, dossierId);
       } else {
@@ -267,7 +270,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,.geojson,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

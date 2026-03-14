@@ -27,6 +27,29 @@ ZeroNeurone suggère les tags déjà utilisés dans le dossier pour maintenir la
 Utilisez le panneau **Filtres** pour afficher uniquement les éléments avec certains tags.
 
 
+### Jeux de tags
+
+Les jeux de tags sont des modèles prédéfinis qui associent à chaque tag une apparence et des propriétés suggérées.
+
+**Accéder au gestionnaire** : Menu **⋯** → **Paramètres** → **Jeux de tags**
+
+Chaque jeu de tags définit :
+
+| Attribut | Description |
+|----------|-------------|
+| **Nom** | Nom unique du tag |
+| **Description** | Description du concept |
+| **Couleur** | Couleur par défaut appliquée à l'élément |
+| **Forme** | Forme par défaut (cercle, carré, losange, rectangle, hexagone) |
+| **Icône** | Icône associée |
+| **Propriétés suggérées** | Liste de propriétés pré-typées proposées à l'ajout du tag |
+
+Lorsque vous appliquez un tag issu d'un jeu à un élément, son apparence (couleur, forme) est automatiquement définie et les propriétés suggérées sont proposées.
+
+**Import/Export** : Les jeux de tags peuvent être exportés et importés au format JSON ou CSV pour les partager entre dossiers.
+
+**Jeux intégrés** : ZeroNeurone fournit des jeux de tags par défaut (Personne, Entreprise, Compte bancaire, Lieu…). Ils ne peuvent pas être supprimés mais peuvent être modifiés. Le bouton **Réinitialiser** restaure les jeux par défaut.
+
 ### Affichage des tags sur le canvas
 
 Dans le panneau **Vues**, configurez l'affichage des tags :
@@ -54,6 +77,11 @@ Les propriétés permettent d'ajouter des données structurées à vos élément
 | **URL** | Lien cliquable |
 | **Email** | Adresse email |
 | **Téléphone** | Numéro de téléphone |
+| **Date & heure** | Date et heure avec sélecteur |
+| **Choix** | Liste déroulante avec options prédéfinies |
+| **Géo** | Coordonnées géographiques (point ou polygone) |
+| **Pays** | Sélecteur de pays (avec drapeau) |
+| **Lien** | Référence vers un autre élément du dossier |
 
 ### Ajouter une propriété
 

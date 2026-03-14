@@ -112,6 +112,45 @@ Les liens entre éléments géolocalisés sont affichés comme des lignes sur la
 
 ---
 
+## Zones géographiques
+
+Les zones permettent de définir des surfaces sur la carte (périmètres de surveillance, zones d'intérêt, secteurs d'intervention…).
+
+### Créer une zone
+
+Le bouton **Zone** dans la barre d'outils propose trois formes via un menu déroulant :
+
+| Forme | Dessin |
+|-------|--------|
+| **Polygone** | Cliquez pour placer chaque sommet, double-clic ou clic sur le premier point pour fermer |
+| **Cercle** | 1er clic = centre, déplacez la souris pour ajuster le rayon (affiché en temps réel), 2e clic = valider |
+| **Carré** | 1er clic = centre, déplacez la souris pour ajuster la taille, 2e clic = valider |
+
+Appuyez sur **Échap** pour annuler le dessin en cours.
+
+Un élément de type Zone est créé avec les propriétés **Surface** et **Rayon** (pour les cercles).
+
+### Modifier une zone
+
+Double-cliquez sur une zone pour entrer en mode édition :
+
+| Type | Mode d'édition |
+|------|---------------|
+| **Polygone / Carré** | Glissez les sommets pour les déplacer. Cliquez sur les points intermédiaires pour ajouter un sommet. |
+| **Cercle** | Quatre poignées cardinales (N, E, S, O) permettent de redimensionner le rayon par glisser-déposer. |
+
+Cliquez en dehors de la zone pour sauvegarder. Appuyez sur **Échap** pour annuler.
+
+### Déplacer une zone
+
+Glissez le marqueur central de la zone pour la déplacer. La forme (polygone, cercle, carré) est conservée.
+
+### Éditer le GeoJSON
+
+Pour les événements avec zone, un éditeur texte permet de copier/coller du GeoJSON depuis un outil externe (QGIS, geojson.io…). Les formats acceptés : `Polygon` (Geometry, Feature ou FeatureCollection).
+
+---
+
 ## Fonds de carte
 
 Quatre fonds de carte sont disponibles via le sélecteur dans la barre d'outils :
@@ -149,6 +188,7 @@ Contrôles :
 | **Bâtiments** | Afficher/masquer les bâtiments 3D |
 | **Temporel** | Activer/désactiver le mode temporel |
 | **Sélection** | Zoomer sur les éléments sélectionnés |
+| **Zone** | Dessiner une zone (polygone, cercle ou carré) |
 | **Ajuster** | Ajuster la vue pour voir tous les marqueurs |
 | **Export CSV** | Exporter les données de la carte en CSV |
 
@@ -171,6 +211,7 @@ Exporte les éléments géolocalisés dans un format compatible SIG (QGIS, ArcGI
 | Élément | Format GeoJSON |
 |---------|----------------|
 | Éléments géolocalisés | Point |
+| Zones géographiques | Polygon |
 | Liens (si deux extrémités géolocalisées) | LineString |
 
 ---

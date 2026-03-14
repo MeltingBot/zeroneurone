@@ -3,6 +3,7 @@ import type { Dossier, Element, Link, Asset, Report, CanvasTab } from '../types'
 import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
+import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { encryptZip } from './encryption/zipEncryption';
 
 export type ExportFormat = 'json' | 'csv' | 'graphml' | 'geojson' | 'zip';
@@ -237,8 +238,8 @@ class ExportService {
         el.date ? new Date(el.date).toISOString().slice(0, 10) : '',
         '', // date_debut
         '', // date_fin
-        el.geo?.lat?.toString() ?? '',
-        el.geo?.lng?.toString() ?? '',
+        el.geo ? getGeoCenter(el.geo).lat.toString() : '',
+        el.geo ? getGeoCenter(el.geo).lng.toString() : '',
         el.position?.x?.toString() ?? '',
         el.position?.y?.toString() ?? '',
         '', // dirige
@@ -366,34 +367,48 @@ class ExportService {
     const elementMap = new Map(elements.map(el => [el.id, el]));
 
     // Filter elements with valid geo coordinates
-    const geoElements = elements.filter(
-      el => el.geo && (el.geo.lat !== 0 || el.geo.lng !== 0)
-    );
+    const geoElements = elements.filter(el => {
+      if (!el.geo) return false;
+      const c = getGeoCenter(el.geo);
+      return c.lat !== 0 || c.lng !== 0;
+    });
 
     // Build features from elements
-    const elementFeatures = geoElements.map(el => ({
-      type: 'Feature' as const,
-      id: el.id,
-      geometry: {
-        type: 'Point' as const,
-        coordinates: [el.geo!.lng, el.geo!.lat], // GeoJSON uses [lng, lat]
-      },
-      properties: {
-        name: el.label,
-        type: 'element',
-        notes: el.notes || null,
-        tags: el.tags.length > 0 ? el.tags : null,
-        confidence: el.confidence,
-        source: el.source || null,
-        date: el.date ? new Date(el.date).toISOString() : null,
-        color: el.visual.color,
-        shape: el.visual.shape,
-        // Include custom properties
-        ...Object.fromEntries(
-          el.properties?.map(p => [`prop_${p.key}`, p.value]) ?? []
-        ),
-      },
-    }));
+    const elementFeatures = geoElements.map(el => {
+      const geo = el.geo!;
+      let geometry: GeoJSON.Geometry;
+      if (isGeoPolygon(geo)) {
+        geometry = {
+          type: 'Polygon',
+          coordinates: [[...geo.coordinates, geo.coordinates[0]]],
+        };
+      } else {
+        const c = getGeoCenter(geo);
+        geometry = {
+          type: 'Point',
+          coordinates: [c.lng, c.lat],
+        };
+      }
+      return {
+        type: 'Feature' as const,
+        id: el.id,
+        geometry,
+        properties: {
+          name: el.label,
+          type: 'element',
+          notes: el.notes || null,
+          tags: el.tags.length > 0 ? el.tags : null,
+          confidence: el.confidence,
+          source: el.source || null,
+          date: el.date ? new Date(el.date).toISOString() : null,
+          color: el.visual.color,
+          shape: el.visual.shape,
+          ...Object.fromEntries(
+            el.properties?.map(p => [`prop_${p.key}`, p.value]) ?? []
+          ),
+        },
+      };
+    });
 
     // Build features from links (as LineStrings if both endpoints have geo)
     const linkFeatures = links
@@ -403,8 +418,10 @@ class ExportService {
 
         // Skip if either endpoint doesn't have geo
         if (!fromEl?.geo || !toEl?.geo) return null;
-        if (fromEl.geo.lat === 0 && fromEl.geo.lng === 0) return null;
-        if (toEl.geo.lat === 0 && toEl.geo.lng === 0) return null;
+        const fromCenter = getGeoCenter(fromEl.geo);
+        const toCenter = getGeoCenter(toEl.geo);
+        if (fromCenter.lat === 0 && fromCenter.lng === 0) return null;
+        if (toCenter.lat === 0 && toCenter.lng === 0) return null;
 
         return {
           type: 'Feature' as const,
@@ -412,8 +429,8 @@ class ExportService {
           geometry: {
             type: 'LineString' as const,
             coordinates: [
-              [fromEl.geo.lng, fromEl.geo.lat],
-              [toEl.geo.lng, toEl.geo.lat],
+              [fromCenter.lng, fromCenter.lat],
+              [toCenter.lng, toCenter.lat],
             ],
           },
           properties: {

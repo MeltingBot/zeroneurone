@@ -7,14 +7,20 @@ import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsigh
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
-import type { Element } from '../../types';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building } from 'lucide-react';
+import type { Element, GeoData, GeoPolygon } from '../../types';
+import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
+import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2 } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
+import { ZoneDrawTool } from './ZoneDrawTool';
+import { ZoneEditTool } from './ZoneEditTool';
+import { ZoneLayers, resolveCssColor } from './ZoneLayers';
 
 // Element with geo coordinates (resolved for a specific time)
 interface ResolvedGeoElement {
   element: Element;
   geo: { lat: number; lng: number };
+  /** Full GeoData (point or polygon) — used by ZoneLayers for temporal zone geometry */
+  geoData?: GeoData;
   fromEvent: boolean;
   eventLabel?: string;
 }
@@ -51,8 +57,8 @@ const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzo
     maxzoom: 19,
   },
   osmLatin: {
-    tiles: ['https://a.tile.openstreetmap.de/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.de/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.de/{z}/{x}/{y}.png'],
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    tiles: ['https://a.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.openstreetmap.fr">OSM France</a>',
     maxzoom: 19,
   },
   cartoLight: {
@@ -201,14 +207,22 @@ export function MapView() {
   useEffect(() => { is3DRef.current = is3D; }, [is3D]);
 
   // Track manually dragged positions
-  const [draggedPositions, setDraggedPositions] = useState<Map<string, { lat: number; lng: number }>>(new Map());
+  const [draggedPositions, setDraggedPositions] = useState<Map<string, GeoData>>(new Map());
+
+  // Zone drawing mode
+  const [isDrawingZone, setIsDrawingZone] = useState(false);
+  const [showZoneShapeMenu, setShowZoneShapeMenu] = useState(false);
+  const zoneShape = useUIStore((s) => s.zoneShape);
+  const setZoneShape = useUIStore((s) => s.setZoneShape);
+  // Zone editing mode (editing polygon vertices)
+  const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
 
   // Temporal mode state
   const [temporalMode, setTemporalMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { elements, links, assets, comments, updateElement, currentDossier } = useDossierStore();
+  const { elements, links, assets, comments, updateElement, createElement, deleteElements, currentDossier } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
   const themeMode = useUIStore((state) => state.themeMode);
@@ -323,15 +337,23 @@ export function MapView() {
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
-    (element: Element, date: Date | null): { geo: { lat: number; lng: number }; label?: string } | null => {
+    (element: Element, date: Date | null): { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string } | null => {
       if (!date || !temporalMode) {
-        if (element.geo) return { geo: element.geo };
+        // Check events for the most recent polygon geo (zone evolution)
         const geoEvents = (element.events || [])
           .filter((e) => e.geo && e.date)
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        if (geoEvents.length > 0) {
-          const mostRecent = geoEvents[geoEvents.length - 1];
-          return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
+        const mostRecentEventGeo = geoEvents.length > 0 ? geoEvents[geoEvents.length - 1] : null;
+
+        if (element.geo) {
+          // If an event has polygon geo, use it for zone rendering (geoData) while keeping marker at element position
+          const effectiveGeoData = (mostRecentEventGeo?.geo && isGeoPolygon(mostRecentEventGeo.geo))
+            ? mostRecentEventGeo.geo
+            : element.geo;
+          return { geo: getGeoCenter(element.geo), geoData: effectiveGeoData };
+        }
+        if (mostRecentEventGeo) {
+          return { geo: getGeoCenter(mostRecentEventGeo.geo!), geoData: mostRecentEventGeo.geo!, label: mostRecentEventGeo.label };
         }
         return null;
       }
@@ -348,8 +370,9 @@ export function MapView() {
           if (dayStart(event.date) <= targetDay) activeEvent = event;
           else break;
         }
-        const eventGeo = activeEvent.geo || element.geo;
-        if (eventGeo) return { geo: { lat: eventGeo.lat, lng: eventGeo.lng }, label: activeEvent.label };
+        const eventGeo = activeEvent.geo;
+        if (eventGeo) return { geo: getGeoCenter(eventGeo), geoData: eventGeo, label: activeEvent.label };
+        if (element.geo) return { geo: getGeoCenter(element.geo), geoData: element.geo, label: activeEvent.label };
         return null;
       }
       if (hasBaseGeo) {
@@ -360,7 +383,7 @@ export function MapView() {
         } else if (element.date) {
           if (targetDay !== dayStart(element.date)) return null;
         }
-        return element.geo ? { geo: element.geo } : null;
+        return element.geo ? { geo: getGeoCenter(element.geo), geoData: element.geo } : null;
       }
       return null;
     },
@@ -369,8 +392,8 @@ export function MapView() {
 
   // Get any geo position for an element (for link-pulled visibility)
   const getAnyGeoPosition = useCallback(
-    (element: Element): { geo: { lat: number; lng: number }; label?: string } | null => {
-      if (element.geo) return { geo: element.geo };
+    (element: Element): { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string } | null => {
+      if (element.geo) return { geo: getGeoCenter(element.geo), geoData: element.geo };
       const geoEvents = (element.events || [])
         .filter((e) => e.geo && e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -383,10 +406,10 @@ export function MapView() {
             const diff = Math.abs(new Date(event.date).getTime() - targetTime);
             if (diff < closestDiff) { closestDiff = diff; closest = event; }
           }
-          return { geo: { lat: closest.geo!.lat, lng: closest.geo!.lng }, label: closest.label };
+          return { geo: getGeoCenter(closest.geo!), geoData: closest.geo!, label: closest.label };
         }
         const mostRecent = geoEvents[geoEvents.length - 1];
-        return { geo: { lat: mostRecent.geo!.lat, lng: mostRecent.geo!.lng }, label: mostRecent.label };
+        return { geo: getGeoCenter(mostRecent.geo!), geoData: mostRecent.geo!, label: mostRecent.label };
       }
       return null;
     },
@@ -465,7 +488,7 @@ export function MapView() {
         if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
         const position = getPositionAtTime(el, null);
         if (position) {
-          result.push({ element: el, geo: position.geo, fromEvent: !!position.label, eventLabel: position.label });
+          result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label });
         }
       });
       return result;
@@ -493,16 +516,27 @@ export function MapView() {
       if (visibleByOwnData || visibleViaActiveLink) {
         const position = getPositionAtTime(el, selectedDate) || getAnyGeoPosition(el);
         if (position) {
-          result.push({ element: el, geo: position.geo, fromEvent: !!position.label, eventLabel: position.label });
+          result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label });
         }
       }
     });
     return result;
   }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dayStart, activeTabId, tabMemberSet, tabGhostIds]);
 
-  // Legacy geoElements for compatibility
+  // Legacy geoElements for compatibility (preserves full GeoData including polygons)
   const geoElements = useMemo(() => {
-    return resolvedGeoElements.map((r) => ({ ...r.element, geo: r.geo }));
+    return resolvedGeoElements.map((r) => ({ ...r.element, geo: r.geoData || { type: 'point' as const, ...r.geo } }));
+  }, [resolvedGeoElements]);
+
+  // Elements whose displayed zone polygon comes from an event (not draggable)
+  const eventZoneIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of resolvedGeoElements) {
+      if (r.geoData && isGeoPolygon(r.geoData) && !isGeoPolygon(r.element.geo)) {
+        ids.add(r.element.id);
+      }
+    }
+    return ids;
   }, [resolvedGeoElements]);
 
   const geoElementIds = useMemo(() => new Set(geoElements.map(el => el.id)), [geoElements]);
@@ -532,7 +566,7 @@ export function MapView() {
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
     const displayLabel = anonymousMode
       ? '<span style="display:inline-block;background:var(--color-text-primary,#3d3833);border-radius:2px;width:2.5em;height:0.8em;"></span>'
-      : truncatedLabel;
+      : isSelected ? label : truncatedLabel;
     const selectedStyle = isSelected
       ? 'box-shadow: 0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3);'
       : 'box-shadow: 0 1px 4px rgba(0,0,0,0.2);';
@@ -543,12 +577,14 @@ export function MapView() {
 
     if (thumbnail) {
       const blurStyle = hideMedia ? 'filter: blur(8px);' : '';
+      const cardWidth = isSelected ? 'min-width:48px' : 'width:48px';
+      const labelOverflow = isSelected ? 'white-space:nowrap' : 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
       return `
-        <div class="map-marker-card" style="position:relative;background:var(--color-bg-primary, #ffffff);border:1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};border-radius:4px;overflow:visible;${selectedStyle}${dimmedStyle}width:48px;">
+        <div class="map-marker-card" style="position:relative;background:var(--color-bg-primary, #ffffff);border:1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};border-radius:4px;overflow:visible;${selectedStyle}${dimmedStyle}${cardWidth};">
           ${commentBadge}
-          <div style="width:48px;height:36px;background-image:url(${thumbnail});background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
+          <div style="width:100%;min-width:48px;height:36px;background-image:url(${thumbnail});background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
           <div style="padding:2px 3px;background:var(--color-bg-primary, #ffffff);border-top:1px solid var(--color-border-default, #e8e3db);">
-            <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayLabel}</span>
+            <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;${labelOverflow}">${displayLabel}</span>
           </div>
         </div>`;
     } else {
@@ -689,13 +725,15 @@ export function MapView() {
       map.easeTo({ pitch: 45, duration: 600 });
       if (show3DBuildingsRef.current) add3DBuildingsLayer(map);
     } else {
-      map.setTerrain(null as unknown as maplibregl.TerrainSpecification);
+      try { map.setTerrain(undefined as any); } catch { /* ignore */ }
       map.setProjection({ type: 'mercator' });
       map.easeTo({ pitch: 0, duration: 600 });
       if (map.getLayer('3d-buildings')) {
         map.removeLayer('3d-buildings');
         if (map.getSource('openmaptiles')) map.removeSource('openmaptiles');
       }
+      // Remove terrain source to fully disable 3D
+      try { if (map.getSource('terrain-dem')) map.removeSource('terrain-dem'); } catch { /* ignore */ }
     }
   }, [is3D]);
 
@@ -712,7 +750,8 @@ export function MapView() {
   }, [show3DBuildings]);
 
   // Track drag start position for undo/redo
-  const dragStartGeoRef = useRef<{ id: string; geo: { lat: number; lng: number } } | null>(null);
+  const dragStartGeoRef = useRef<{ id: string; geo: import('../../types').GeoData } | null>(null);
+  const isDraggingRef = useRef(false);
 
   // Clean up dragged positions when elements are removed
   useEffect(() => {
@@ -729,12 +768,15 @@ export function MapView() {
 
   // Compute effective positions (dragged positions override resolved positions)
   const effectiveGeoElements = useMemo(() => {
-    return geoElements.map((element) => {
-      const draggedPos = draggedPositions.get(element.id);
-      if (draggedPos) return { ...element, geo: draggedPos };
-      return element;
+    return geoElements.map((el) => {
+      const draggedPos = draggedPositions.get(el.id);
+      if (draggedPos) return { ...el, geo: draggedPos };
+      return el;
     });
   }, [geoElements, draggedPositions]);
+
+  const effectiveGeoElementsRef = useRef(effectiveGeoElements);
+  effectiveGeoElementsRef.current = effectiveGeoElements;
 
   // Rebuild Supercluster and update markers
   useEffect(() => {
@@ -750,7 +792,7 @@ export function MapView() {
 
     const points: PointFeature[] = effectiveGeoElements.map(el => ({
       type: 'Feature',
-      geometry: { type: 'Point', coordinates: [el.geo.lng, el.geo.lat] },
+      geometry: { type: 'Point', coordinates: [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] },
       properties: { elementId: el.id },
     }));
 
@@ -794,7 +836,7 @@ export function MapView() {
       return state && !state.clustered;
     });
     const spiderfyOffsets = computeSpiderfyOffsets(
-      unclusteredElements.map(el => ({ id: el.id, lng: el.geo.lng, lat: el.geo.lat })),
+      unclusteredElements.map(el => { const c = getGeoCenter(el.geo); return { id: el.id, lng: c.lng, lat: c.lat }; }),
       zoom
     );
 
@@ -820,24 +862,30 @@ export function MapView() {
 
       const existingMarker = existingMarkers.get(element.id);
       const offset = spiderfyOffsets.get(element.id);
-      const lng = element.geo.lng + (offset ? offset[0] : 0);
-      const lat = element.geo.lat + (offset ? offset[1] : 0);
+      const center = getGeoCenter(element.geo);
+      const lng = center.lng + (offset ? offset[0] : 0);
+      const lat = center.lat + (offset ? offset[1] : 0);
 
       if (existingMarker) {
         // Update position
         existingMarker.setLngLat([lng, lat]);
+        // Update draggability
+        existingMarker.setDraggable(!element.isPositionLocked && !eventZoneIds.has(element.id));
         // Update visibility (hide if clustered)
         const el = existingMarker.getElement();
-        el.style.display = isClustered ? 'none' : '';
+        const isBeingEdited = editingZoneId === element.id;
+        el.style.display = (isClustered || isBeingEdited) ? 'none' : '';
         el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount);
         el.setAttribute('title', anonymousMode ? '' : (element.label || ''));
       } else {
         // Create new marker
         const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount);
-        markerEl.style.display = isClustered ? 'none' : '';
+        const isBeingEdited = editingZoneId === element.id;
+        markerEl.style.display = (isClustered || isBeingEdited) ? 'none' : '';
         markerEl.setAttribute('title', anonymousMode ? '' : (element.label || ''));
 
-        const marker = new maplibregl.Marker({ element: markerEl, anchor: 'bottom', draggable: true })
+        const isDraggable = !element.isPositionLocked && !eventZoneIds.has(element.id);
+        const marker = new maplibregl.Marker({ element: markerEl, anchor: 'top', offset: [0, -8], draggable: isDraggable })
           .setLngLat([lng, lat])
           .addTo(map);
 
@@ -850,14 +898,84 @@ export function MapView() {
 
         // Drag handlers
         marker.on('dragstart', () => {
+          isDraggingRef.current = true;
+          // Store the original geo (could be point or polygon) for undo
+          // Read fresh from store to avoid stale closure
+          const freshElements = useDossierStore.getState().elements;
+          const originalElement = freshElements.find(e => e.id === markerId);
+          if (originalElement?.geo) {
+            dragStartGeoRef.current = { id: markerId, geo: originalElement.geo };
+          } else {
+            const pos = marker.getLngLat();
+            dragStartGeoRef.current = { id: markerId, geo: { type: 'point', lat: pos.lat, lng: pos.lng } };
+          }
+        });
+        marker.on('drag', () => {
+          // Live-update polygon zone directly on MapLibre source (bypasses React for smooth animation)
+          const dragStart = dragStartGeoRef.current;
+          if (!dragStart || dragStart.id !== markerId || !isGeoPolygon(dragStart.geo)) return;
+          const startGeo = dragStart.geo;
+
           const pos = marker.getLngLat();
-          dragStartGeoRef.current = { id: markerId, geo: { lat: pos.lat, lng: pos.lng } };
+          const dLng = pos.lng - startGeo.center.lng;
+          const dLat = pos.lat - startGeo.center.lat;
+
+          const m = mapRef.current;
+          if (!m) return;
+          const src = m.getSource('zones-source') as maplibregl.GeoJSONSource | undefined;
+          if (!src) return;
+
+          // Rebuild all zone features, translating the dragged polygon
+          // Use effectiveGeoElements (includes event polygon overrides)
+          const allEls = effectiveGeoElementsRef.current;
+          const features: GeoJSON.Feature[] = [];
+          for (const el of allEls) {
+            if (!el.geo || !isGeoPolygon(el.geo)) continue;
+            let coords = el.geo.coordinates;
+            if (el.id === markerId) {
+              coords = startGeo.coordinates.map(
+                ([lng, lat]) => [lng + dLng, lat + dLat] as [number, number]
+              );
+            }
+            features.push({
+              type: 'Feature',
+              geometry: { type: 'Polygon', coordinates: [[...coords, coords[0]]] },
+              properties: {
+                id: el.id,
+                color: resolveCssColor(el.visual.color, '#10b981'),
+                borderColor: resolveCssColor(el.visual.borderColor || el.visual.color, '#059669'),
+                isSelected: false,
+                isDimmed: false,
+              },
+            });
+          }
+          src.setData({ type: 'FeatureCollection', features });
         });
         marker.on('dragend', () => {
           const newPos = marker.getLngLat();
-          const newGeo = { lat: newPos.lat, lng: newPos.lng };
           const dragStart = dragStartGeoRef.current;
           const oldGeo = dragStart?.id === markerId ? dragStart.geo : null;
+
+          // Build new geo: translate polygon or create point
+          let newGeo: GeoData;
+          if (oldGeo && isGeoPolygon(oldGeo)) {
+            // Translate polygon: shift all coordinates by the delta from original position
+            const dLng = newPos.lng - oldGeo.center.lng;
+            const dLat = newPos.lat - oldGeo.center.lat;
+            newGeo = {
+              type: 'polygon',
+              coordinates: oldGeo.coordinates.map(
+                ([lng, lat]) => [lng + dLng, lat + dLat] as [number, number]
+              ),
+              center: { lat: newPos.lat, lng: newPos.lng },
+              ...(oldGeo.shapeOrigin ? { shapeOrigin: oldGeo.shapeOrigin } : {}),
+              ...(oldGeo.radius != null ? { radius: oldGeo.radius } : {}),
+              ...(oldGeo.altitude != null ? { altitude: oldGeo.altitude } : {}),
+              ...(oldGeo.extrude != null ? { extrude: oldGeo.extrude } : {}),
+            };
+          } else {
+            newGeo = { type: 'point' as const, lat: newPos.lat, lng: newPos.lng };
+          }
 
           setDraggedPositions(prev => {
             const next = new Map(prev);
@@ -873,6 +991,7 @@ export function MapView() {
             });
           }
           dragStartGeoRef.current = null;
+          isDraggingRef.current = false;
           setClusteringVersion(v => v + 1);
         });
 
@@ -923,16 +1042,15 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds]);
 
   // Get visible position for an element (considering clustering)
   const getVisibleLngLat = useCallback((elementId: string): [number, number] | null => {
     const state = clusterStateRef.current.get(elementId);
-    if (!state) return null;
-    if (state.clustered && state.clusterCenter) return state.clusterCenter;
+    if (state?.clustered && state.clusterCenter) return state.clusterCenter;
     const el = effectiveGeoElements.find(e => e.id === elementId);
     if (!el) return null;
-    return [el.geo.lng, el.geo.lat];
+    return [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat];
   }, [effectiveGeoElements]);
 
   // Check if two elements are in the same cluster
@@ -990,11 +1108,29 @@ export function MapView() {
       }
     });
 
+    // Build element geo lookup for polygon edge snapping
+    const elementGeoMap = new Map<string, GeoData>();
+    effectiveGeoElements.forEach(el => { if (el.geo) elementGeoMap.set(el.id, el.geo); });
+
     // Add or update link layers
     geoLinks.forEach((link) => {
-      const fromLngLat = getVisibleLngLat(link.fromId);
-      const toLngLat = getVisibleLngLat(link.toId);
+      let fromLngLat = getVisibleLngLat(link.fromId);
+      let toLngLat = getVisibleLngLat(link.toId);
       if (!fromLngLat || !toLngLat) return;
+
+      // Snap link endpoints to polygon edge, unless the other point is inside the zone
+      const fromGeo = elementGeoMap.get(link.fromId);
+      const toGeo = elementGeoMap.get(link.toId);
+      if (fromGeo && isGeoPolygon(fromGeo)) {
+        if (!pointInPolygon(fromGeo.coordinates, toLngLat)) {
+          fromLngLat = closestPointOnPolygon(fromGeo.coordinates, toLngLat);
+        }
+      }
+      if (toGeo && isGeoPolygon(toGeo)) {
+        if (!pointInPolygon(toGeo.coordinates, fromLngLat)) {
+          toLngLat = closestPointOnPolygon(toGeo.coordinates, fromLngLat);
+        }
+      }
 
       const isLinkDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
       const linkOpacity = isLinkDimmed ? 0.3 : 1;
@@ -1180,12 +1316,12 @@ export function MapView() {
         existingLinkLayers.set(link.id, { sourceId, outlineLayerId, lineLayerId, labelMarker, arrowStart, arrowEnd });
       }
     });
-  }, [geoLinks, selectLink, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, createArrowElement, getPointOnLine, anonymousMode, effectiveDimmedIds]);
+  }, [geoLinks, selectLink, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, createArrowElement, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {
     if (!mapRef.current || geoElements.length === 0) return;
-    const coords = geoElements.map(el => [el.geo.lng, el.geo.lat] as [number, number]);
+    const coords = geoElements.map(el => [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] as [number, number]);
     const bounds = coords.reduce(
       (b, c) => b.extend(c),
       new maplibregl.LngLatBounds(coords[0], coords[0])
@@ -1199,13 +1335,217 @@ export function MapView() {
     const selectedGeoElements = geoElements.filter((el) => selectedElementIds.has(el.id));
     if (selectedGeoElements.length === 0) return;
     if (selectedGeoElements.length === 1) {
-      mapRef.current.flyTo({ center: [selectedGeoElements[0].geo.lng, selectedGeoElements[0].geo.lat], zoom: 14 });
+      const c = getGeoCenter(selectedGeoElements[0].geo);
+      mapRef.current.flyTo({ center: [c.lng, c.lat], zoom: 14 });
     } else {
-      const coords = selectedGeoElements.map(el => [el.geo.lng, el.geo.lat] as [number, number]);
+      const coords = selectedGeoElements.map(el => [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] as [number, number]);
       const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
       mapRef.current.fitBounds(bounds, { padding: 50 });
     }
   }, [geoElements, selectedElementIds]);
+
+  // Watch for pending zone draw/edit requests (from EventsEditor)
+  const pendingZoneDrawCallbackRef = useRef<((geo: GeoData) => void) | null>(null);
+  const [eventEditZoneGeo, setEventEditZoneGeo] = useState<GeoPolygon | null>(null);
+  const pendingZoneRequestId = useUIStore((s) => s.pendingZoneRequestId);
+  useEffect(() => {
+    const { pendingZoneDrawCallback, pendingZoneEditGeo } = useUIStore.getState();
+    if (!pendingZoneDrawCallback) return;
+    pendingZoneDrawCallbackRef.current = pendingZoneDrawCallback;
+    if (pendingZoneEditGeo) {
+      setEventEditZoneGeo(pendingZoneEditGeo);
+    } else {
+      setIsDrawingZone(true);
+    }
+  }, [pendingZoneRequestId]);
+
+  // Zone drawing: handle polygon completion
+  const handleZoneDrawFinish = useCallback(async (geo: GeoPolygon, areaKm2: number) => {
+    setIsDrawingZone(false);
+
+    // If this was triggered by an event draw request, call the callback instead of creating element
+    const pendingCb = pendingZoneDrawCallbackRef.current;
+    if (pendingCb) {
+      pendingZoneDrawCallbackRef.current = null;
+      useUIStore.getState().clearZoneDraw();
+      pendingCb(geo);
+      return;
+    }
+
+    try {
+      // Place the zone at the center of the current canvas viewport
+      const { viewport } = useViewStore.getState();
+      const canvasX = (-viewport.x + 600) / viewport.zoom;
+      const canvasY = (-viewport.y + 400) / viewport.zoom;
+
+      const newEl = await createElement(t('map.newZone'), { x: canvasX, y: canvasY }, {
+        tags: ['Zone'],
+        geo,
+        visual: {
+          color: '#10b981',
+          borderColor: '#059669',
+          shape: 'hexagon',
+          size: 'medium',
+          icon: 'MapPin',
+          image: null,
+        },
+        properties: [
+          { key: 'Surface', value: `${areaKm2} km²`, type: 'text' },
+          ...(geo.radius ? [{ key: 'Rayon', value: geo.radius < 1 ? `${(geo.radius * 1000).toFixed(0)} m` : `${geo.radius.toFixed(3)} km`, type: 'text' as const }] : []),
+        ],
+      });
+      selectElement(newEl.id);
+    } catch (e) {
+      console.warn('Failed to create zone element:', e);
+    }
+  }, [createElement, selectElement, t]);
+
+  const handleZoneDrawCancel = useCallback(() => {
+    setIsDrawingZone(false);
+    pendingZoneDrawCallbackRef.current = null;
+    useUIStore.getState().clearZoneDraw();
+  }, []);
+
+  // Zone click: select the zone element
+  const handleZoneClick = useCallback((elementId: string) => {
+    selectElement(elementId as any);
+  }, [selectElement]);
+
+  // Zone double-click: enter polygon edit mode (not for event-based zones)
+  const handleZoneDoubleClick = useCallback((elementId: string) => {
+    if (eventZoneIds.has(elementId)) return;
+    setEditingZoneId(elementId);
+  }, [eventZoneIds]);
+
+  // Zone edit: save new coordinates
+  const handleZoneEditSave = useCallback((newCoords: [number, number][]) => {
+    if (!editingZoneId) return;
+    const el = elements.find(e => e.id === editingZoneId);
+    if (!el || !el.geo || !isGeoPolygon(el.geo)) { setEditingZoneId(null); return; }
+
+    const oldGeo = el.geo;
+    const newCenter = computePolygonCenter(newCoords);
+    // For circles, compute radius from center to first vertex
+    let newRadius: number | undefined;
+    if (oldGeo.shapeOrigin === 'circle' && newCoords.length > 0) {
+      const dLat = (newCoords[0][1] - newCenter.lat) * 111.32;
+      const dLng = (newCoords[0][0] - newCenter.lng) * 111.32 * Math.cos((newCenter.lat * Math.PI) / 180);
+      newRadius = Math.round(Math.sqrt(dLat * dLat + dLng * dLng) * 1000) / 1000;
+    }
+    const newGeo: GeoPolygon = {
+      type: 'polygon',
+      coordinates: newCoords,
+      center: newCenter,
+      ...(oldGeo.shapeOrigin ? { shapeOrigin: oldGeo.shapeOrigin } : {}),
+      ...(oldGeo.altitude !== undefined ? { altitude: oldGeo.altitude } : {}),
+      ...(oldGeo.extrude !== undefined ? { extrude: oldGeo.extrude } : {}),
+      ...(newRadius !== undefined ? { radius: newRadius } : {}),
+    };
+    const areaKm2 = computePolygonAreaKm2(newCoords);
+
+    const radiusLabel = newRadius
+      ? (newRadius < 1 ? `${(newRadius * 1000).toFixed(0)} m` : `${newRadius.toFixed(3)} km`)
+      : null;
+    const newProps = el.properties?.map(p => {
+      if (p.key === 'Surface') return { ...p, value: `${areaKm2} km²` };
+      if (p.key === 'Rayon' && radiusLabel) return { ...p, value: radiusLabel };
+      return p;
+    });
+    pushAction({
+      type: 'update-element',
+      undo: { elementId: editingZoneId, changes: { geo: oldGeo, properties: el.properties } },
+      redo: { elementId: editingZoneId, changes: { geo: newGeo, properties: newProps } },
+    });
+    updateElement(editingZoneId as any, { geo: newGeo, properties: newProps });
+    // Clear any stale dragged position so effectiveGeoElements uses the fresh store data
+    setDraggedPositions(prev => {
+      if (!prev.has(editingZoneId)) return prev;
+      const next = new Map(prev);
+      next.delete(editingZoneId);
+      return next;
+    });
+    setEditingZoneId(null);
+  }, [editingZoneId, elements, updateElement, pushAction]);
+
+  // Zone edit: cancel (restore original)
+  const handleZoneEditCancel = useCallback(() => {
+    setEditingZoneId(null);
+  }, []);
+
+  // Event zone edit: save
+  const handleEventZoneEditSave = useCallback((newCoords: [number, number][]) => {
+    const pendingCb = pendingZoneDrawCallbackRef.current;
+    if (pendingCb) {
+      const newGeo: GeoPolygon = {
+        type: 'polygon',
+        coordinates: newCoords,
+        center: computePolygonCenter(newCoords),
+        altitude: eventEditZoneGeo?.altitude,
+        extrude: eventEditZoneGeo?.extrude,
+      };
+      pendingZoneDrawCallbackRef.current = null;
+      useUIStore.getState().clearZoneDraw();
+      pendingCb(newGeo);
+    }
+    setEventEditZoneGeo(null);
+  }, [eventEditZoneGeo]);
+
+  // Event zone edit: cancel
+  const handleEventZoneEditCancel = useCallback(() => {
+    pendingZoneDrawCallbackRef.current = null;
+    useUIStore.getState().clearZoneDraw();
+    setEventEditZoneGeo(null);
+  }, []);
+
+  // Check if there are polygon zones (to show map even without point elements)
+  const hasZonePolygons = useMemo(() => {
+    return elements.some(el => el.geo && isGeoPolygon(el.geo));
+  }, [elements]);
+
+  // Delete selected elements from map (Delete / Backspace) with undo support
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedElementIds.size === 0) return;
+    const ids = Array.from(selectedElementIds) as string[];
+    const elsToDelete = elements.filter(e => ids.includes(e.id));
+    const relevantLinks = links.filter(l => ids.includes(l.fromId) || ids.includes(l.toId));
+
+    // Capture tab membership for undo
+    const { getTabsForElement } = useTabStore.getState();
+    const tabMembership: Record<string, string[]> = {};
+    let hasTabMembership = false;
+    for (const elId of ids) {
+      for (const tab of getTabsForElement(elId)) {
+        if (!tabMembership[tab.id]) tabMembership[tab.id] = [];
+        tabMembership[tab.id].push(elId);
+        hasTabMembership = true;
+      }
+    }
+
+    pushAction({
+      type: 'delete-elements',
+      undo: { elements: elsToDelete, links: relevantLinks, tabMembership: hasTabMembership ? tabMembership : undefined },
+      redo: { elementIds: ids, linkIds: relevantLinks.map(l => l.id) },
+    });
+    await deleteElements(ids);
+    clearSelection();
+  }, [selectedElementIds, elements, links, clearSelection, deleteElements, pushAction]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isDrawingZone || editingZoneId) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Don't trigger if user is typing in an input
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (selectedElementIds.size > 0) {
+          e.preventDefault();
+          handleDeleteSelected();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isDrawingZone, editingZoneId, selectedElementIds, handleDeleteSelected]);
 
   // Register capture handler for report screenshots
   useEffect(() => {
@@ -1214,7 +1554,7 @@ export function MapView() {
 
       // Fit bounds
       if (geoElements.length > 0) {
-        const coords = geoElements.map(el => [el.geo.lng, el.geo.lat] as [number, number]);
+        const coords = geoElements.map(el => [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] as [number, number]);
         const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
         mapRef.current.fitBounds(bounds, { padding: 50, animate: false });
         mapRef.current.resize();
@@ -1320,7 +1660,7 @@ export function MapView() {
   }, [isPlaying, eventDates]);
 
   // No geo elements — show empty state
-  if (geoElements.length === 0 && !temporalMode) {
+  if (geoElements.length === 0 && !temporalMode && !hasZonePolygons) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
         <MapPin size={48} className="text-text-tertiary mb-4" />
@@ -1365,6 +1705,29 @@ export function MapView() {
     } catch { /* ignore */ }
     setPlaceSearching(false);
   };
+
+  // ── Listen for flyToPolygon events from detail panel ──────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const coords = (e as CustomEvent).detail?.coordinates as [number, number][] | undefined;
+      if (!coords || coords.length < 2 || !mapRef.current) return;
+      // Small delay to let mode switch render the map
+      setTimeout(() => {
+        const map = mapRef.current;
+        if (!map) return;
+        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+        for (const [lng, lat] of coords) {
+          if (lng < minLng) minLng = lng;
+          if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        }
+        map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 60, maxZoom: 16 });
+      }, 100);
+    };
+    window.addEventListener('map:flyToPolygon', handler);
+    return () => window.removeEventListener('map:flyToPolygon', handler);
+  }, []);
 
   return (
     <div className="h-full flex flex-col bg-bg-secondary">
@@ -1436,6 +1799,51 @@ export function MapView() {
               </button>
             )}
 
+            {/* Draw zone button with shape dropdown */}
+            <div className="relative mr-2">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setIsDrawingZone(v => !v)}
+                  className={`px-2 h-6 text-[10px] flex items-center gap-1 border border-border-default rounded-l ${isDrawingZone ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                  title={isDrawingZone ? t('map.cancelDraw') : t('map.drawZone')}
+                >
+                  {zoneShape === 'circle' ? <Circle size={11} /> : zoneShape === 'square' ? <Square size={11} /> : <Pentagon size={11} />}
+                  {t('map.zone')}
+                </button>
+                <button
+                  onClick={() => setShowZoneShapeMenu(v => !v)}
+                  className={`h-6 px-1 border border-l-0 border-border-default rounded-r ${isDrawingZone ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                >
+                  <ChevronDown size={10} />
+                </button>
+              </div>
+              {showZoneShapeMenu && (
+                <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowZoneShapeMenu(false)} />
+                <div className="absolute top-7 left-0 bg-bg-primary border border-border-default rounded shadow-md z-50 min-w-[120px]">
+                  {([
+                    { shape: 'polygon' as const, icon: Pentagon, label: t('map.zonePolygon', 'Polygone') },
+                    { shape: 'circle' as const, icon: Circle, label: t('map.zoneCircle', 'Cercle') },
+                    { shape: 'square' as const, icon: Square, label: t('map.zoneSquare', 'Carré') },
+                  ]).map(({ shape, icon: Icon, label }) => (
+                    <button
+                      key={shape}
+                      onClick={() => {
+                        setZoneShape(shape);
+                        setShowZoneShapeMenu(false);
+                        if (!isDrawingZone) setIsDrawingZone(true);
+                      }}
+                      className={`w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-bg-tertiary ${zoneShape === shape ? 'font-medium text-text-primary' : 'text-text-secondary'}`}
+                    >
+                      <Icon size={12} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                </>
+              )}
+            </div>
+
             {/* Temporal mode toggle */}
             {timeRange && (
               <button
@@ -1450,20 +1858,29 @@ export function MapView() {
               </button>
             )}
             {selectedElementIds.size > 0 && (
-              <button
-                onClick={handleZoomToSelected}
-                className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-                title={t('map.zoomToSelection')}
-              >
-                {t('map.selection')}
-              </button>
+              <>
+                <button
+                  onClick={handleZoomToSelected}
+                  className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+                  title={t('map.zoomToSelection')}
+                >
+                  {t('map.selection')}
+                </button>
+                <button
+                  onClick={handleDeleteSelected}
+                  className="p-1 text-text-tertiary hover:text-error hover:bg-bg-tertiary rounded"
+                  title={t('map.deleteSelection')}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
             )}
             <button
               onClick={handleFit}
-              className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+              className="p-1 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
               title={t('map.fitAll')}
             >
-              {t('map.fit')}
+              <Maximize2 size={14} />
             </button>
             <div className="w-px h-4 bg-border-default mx-1" />
             <button
@@ -1541,6 +1958,56 @@ export function MapView() {
       {/* Map container */}
       <div ref={mapContainerRef} className="flex-1" style={{ isolation: 'isolate' }} data-report-capture="map" />
 
+      {/* Zone polygon layers */}
+      <ZoneLayers
+        map={mapRef.current}
+        elements={effectiveGeoElements as Element[]}
+        selectedElementIds={selectedElementIds}
+        dimmedElementIds={effectiveDimmedIds}
+        editingElementId={editingZoneId as any}
+        isDraggingRef={isDraggingRef}
+        onZoneClick={handleZoneClick}
+        onZoneDoubleClick={handleZoneDoubleClick}
+      />
+
+      {/* Zone drawing tool */}
+      <ZoneDrawTool
+        map={mapRef.current}
+        isDrawing={isDrawingZone}
+        shape={zoneShape}
+        onFinish={handleZoneDrawFinish}
+        onCancel={handleZoneDrawCancel}
+      />
+      <ZoneEditTool
+        map={mapRef.current}
+        elementId={editingZoneId as any}
+        coordinates={(() => {
+          if (!editingZoneId) return [];
+          const el = elements.find(e => e.id === editingZoneId);
+          if (el?.geo && isGeoPolygon(el.geo)) return el.geo.coordinates;
+          return [];
+        })()}
+        color={elements.find(e => e.id === editingZoneId)?.visual.color || '#10b981'}
+        borderColor={elements.find(e => e.id === editingZoneId)?.visual.borderColor || '#059669'}
+        shapeOrigin={(() => {
+          if (!editingZoneId) return undefined;
+          const el = elements.find(e => e.id === editingZoneId);
+          return el?.geo && isGeoPolygon(el.geo) ? el.geo.shapeOrigin : undefined;
+        })()}
+        onSave={handleZoneEditSave}
+        onCancel={handleZoneEditCancel}
+      />
+      {/* Event zone edit tool */}
+      {eventEditZoneGeo && (
+        <ZoneEditTool
+          map={mapRef.current}
+          elementId={null as any}
+          coordinates={eventEditZoneGeo.coordinates}
+          onSave={handleEventZoneEditSave}
+          onCancel={handleEventZoneEditCancel}
+        />
+      )}
+
       {/* Custom styles */}
       <style>{`
         .map-marker-card,
@@ -1609,17 +2076,20 @@ function escapeCSV(value: string): string {
   return value;
 }
 
-function exportMapToCSV(geoElements: { label: string; type?: string; geo: { lat: number; lng: number }; visual: { color: string }; tags: string[] }[], filename: string): void {
+function exportMapToCSV(geoElements: { label: string; type?: string; geo: GeoData; visual: { color: string }; tags: string[] }[], filename: string): void {
   const sorted = [...geoElements].sort((a, b) => a.label.localeCompare(b.label));
   const header = 'label,type,latitude,longitude,couleur,tags';
-  const rows = sorted.map(el => [
+  const rows = sorted.map(el => {
+    const c = getGeoCenter(el.geo);
+    return [
     escapeCSV(el.label),
     el.type || '',
-    el.geo.lat.toFixed(6),
-    el.geo.lng.toFixed(6),
+    c.lat.toFixed(6),
+    c.lng.toFixed(6),
     el.visual.color,
     escapeCSV(el.tags.join('; ')),
-  ].join(','));
+  ].join(',');
+  });
   const csv = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);

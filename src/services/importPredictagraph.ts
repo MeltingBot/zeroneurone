@@ -6,7 +6,6 @@ import type {
   ElementId,
   Link,
   Position,
-  GeoCoordinates,
   Property,
   AssetId,
 } from '../types';
@@ -239,7 +238,7 @@ export async function importPredicaGraph(
       }
 
       // Parse geo from data if available
-      let geo: GeoCoordinates | null = null;
+      let geo: import('../types').GeoData | null = null;
       if (node.data) {
         const lat = node.data.latitude || node.data.lat;
         const lng = node.data.longitude || node.data.lng || node.data.lon;
@@ -247,7 +246,7 @@ export async function importPredicaGraph(
           const latNum = typeof lat === 'number' ? lat : parseFloat(String(lat));
           const lngNum = typeof lng === 'number' ? lng : parseFloat(String(lng));
           if (!isNaN(latNum) && !isNaN(lngNum)) {
-            geo = { lat: latNum, lng: lngNum };
+            geo = { type: 'point', lat: latNum, lng: lngNum };
           }
         }
       }

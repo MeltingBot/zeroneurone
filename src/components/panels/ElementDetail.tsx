@@ -1,9 +1,10 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers } from 'lucide-react';
-import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore } from '../../stores';
-import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition } from '../../types';
+import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers, Code } from 'lucide-react';
+import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore } from '../../stores';
+import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
+import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter } from '../../utils/geo';
 import { syncService } from '../../services/syncService';
 import { getYMaps } from '../../types/yjs';
 import { yMapToElement } from '../../services/yjs/elementMapper';
@@ -47,8 +48,79 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+/** Inline GeoJSON coordinate editor for polygon zones */
+function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => void }) {
+  const { t: tPages } = useTranslation('pages');
+  const updateElement = useDossierStore((s) => s.updateElement);
+  const pushAction = useHistoryStore((s) => s.pushAction);
+  const geo = element.geo;
+  if (!geo || !isGeoPolygon(geo)) return null;
+
+  const initialJson = JSON.stringify(geo.coordinates, null, 2);
+  const [text, setText] = useState(initialJson);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = () => {
+    try {
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed) || parsed.length < 3) {
+        setError(tPages('map.geoJsonMinVertices') || 'Min 3 vertices');
+        return;
+      }
+      for (const p of parsed) {
+        if (!Array.isArray(p) || p.length !== 2 || typeof p[0] !== 'number' || typeof p[1] !== 'number') {
+          setError(tPages('map.geoJsonInvalidCoord') || 'Invalid coordinate: [lng, lat]');
+          return;
+        }
+      }
+      const newCoords = parsed as [number, number][];
+      const center = computePolygonCenter(newCoords);
+      const area = computePolygonAreaKm2(newCoords);
+      const oldGeo = element.geo;
+      const newGeo = { ...geo, coordinates: newCoords, center, area };
+      updateElement(element.id, { geo: newGeo });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { geo: oldGeo } },
+        redo: { elementId: element.id, changes: { geo: newGeo } },
+      });
+      onClose();
+    } catch {
+      setError(tPages('map.geoJsonParseError') || 'Invalid JSON');
+    }
+  };
+
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        value={text}
+        onChange={(e) => { setText(e.target.value); setError(null); }}
+        className="w-full h-40 px-2 py-1.5 text-xs font-mono bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary resize-y"
+        spellCheck={false}
+      />
+      {error && <p className="text-xs text-error">{error}</p>}
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          className="flex-1 px-3 py-1.5 text-xs bg-accent text-white rounded hover:bg-accent/90 transition-colors flex items-center justify-center gap-1.5"
+        >
+          <Check size={12} />
+          {tPages('map.geoJsonSave') || 'Save'}
+        </button>
+        <button
+          onClick={onClose}
+          className="flex-1 px-3 py-1.5 text-xs bg-bg-tertiary border border-border-default rounded hover:bg-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-text-secondary"
+        >
+          <X size={12} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ElementDetail({ element }: ElementDetailProps) {
   const { t } = useTranslation('panels');
+  const { t: tPages } = useTranslation('pages');
   // Individual selectors — prevent re-renders when unrelated store state changes
   const updateElement = useDossierStore((s) => s.updateElement);
   const createElement = useDossierStore((s) => s.createElement);
@@ -73,16 +145,19 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const unresolvedCommentCount = elementComments.filter(c => !c.resolved).length;
 
   // Local state for inputs
+  const [geoJsonEditing, setGeoJsonEditing] = useState(false);
   const [label, setLabel] = useState(element.label);
   const [notes, setNotes] = useState(element.notes);
   const [source, setSource] = useState(element.source);
   const [confidence, setConfidence] = useState<Confidence | null>(element.confidence);
   const [dateDate, setDateDate] = useState(element.date ? formatDateForInput(element.date) : '');
   const [dateTime, setDateTime] = useState(element.date ? formatTimeForInput(element.date) : '');
-  const [geoLat, setGeoLat] = useState(element.geo?.lat?.toString() ?? '');
-  const [geoLng, setGeoLng] = useState(element.geo?.lng?.toString() ?? '');
+  const initCenter = element.geo ? getGeoCenter(element.geo) : null;
+  const [geoLat, setGeoLat] = useState(initCenter?.lat?.toString() ?? '');
+  const [geoLng, setGeoLng] = useState(initCenter?.lng?.toString() ?? '');
+  const [geoAlt, setGeoAlt] = useState(element.geo?.altitude?.toString() ?? '');
   // Track what was last saved locally (independent of prop update timing)
-  const [lastSavedGeo, setLastSavedGeo] = useState<{ lat: number; lng: number } | null>(element.geo);
+  const [lastSavedGeo, setLastSavedGeo] = useState<{ lat: number; lng: number } | null>(initCenter);
   const [showGeoPicker, setShowGeoPicker] = useState(false);
   const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
@@ -145,9 +220,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setConfidence(freshElement.confidence);
     setDateDate(freshElement.date ? formatDateForInput(freshElement.date) : '');
     setDateTime(freshElement.date ? formatTimeForInput(freshElement.date) : '');
-    setGeoLat(freshElement.geo?.lat?.toString() ?? '');
-    setGeoLng(freshElement.geo?.lng?.toString() ?? '');
-    setLastSavedGeo(freshElement.geo ?? null);
+    const freshCenter = freshElement.geo ? getGeoCenter(freshElement.geo) : null;
+    setGeoLat(freshCenter?.lat?.toString() ?? '');
+    setGeoLng(freshCenter?.lng?.toString() ?? '');
+    setGeoAlt(freshElement.geo?.altitude?.toString() ?? '');
+    setLastSavedGeo(freshCenter);
     // Also reset lastSynced refs to prevent false "remote change" detection
     lastSyncedLabelRef.current = freshElement.label;
     lastSyncedNotesRef.current = freshElement.notes;
@@ -321,14 +398,27 @@ export function ElementDetail({ element }: ElementDetailProps) {
     // Both must be in valid range
     if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) return;
 
-    const newGeo = { lat: latNum, lng: lngNum };
+    const newGeoCenter = { lat: latNum, lng: lngNum };
+    const altNum = geoAlt.trim() ? parseFloat(geoAlt.trim()) : undefined;
+    const altitude = (altNum !== undefined && !isNaN(altNum)) ? altNum : undefined;
+    let newGeo: GeoData;
+    if (element.geo && isGeoPolygon(element.geo)) {
+      // Translate polygon to new center
+      const oldCenter = getGeoCenter(element.geo);
+      const dLat = latNum - oldCenter.lat;
+      const dLng = lngNum - oldCenter.lng;
+      const newCoords = element.geo.coordinates.map(([ln, lt]) => [ln + dLng, lt + dLat] as [number, number]);
+      newGeo = { ...element.geo, coordinates: newCoords, center: computePolygonCenter(newCoords), ...(altitude !== undefined ? { altitude } : {}) };
+    } else {
+      newGeo = { type: 'point', lat: latNum, lng: lngNum, ...(altitude !== undefined ? { altitude } : {}) };
+    }
 
     // Use flushSync to force synchronous state updates before any async operations
     // This prevents React batching from being affected by store updates
     flushSync(() => {
       setGeoLat(latNum.toString());
       setGeoLng(lngNum.toString());
-      setLastSavedGeo(newGeo);
+      setLastSavedGeo(newGeoCenter);
     });
 
     // Then update store (async, but local state is already committed)
@@ -356,11 +446,20 @@ export function ElementDetail({ element }: ElementDetailProps) {
       } else {
         // Save immediately when selecting from map (user expects instant feedback)
         const oldGeo = element.geo ?? null;
-        const newGeo = { lat, lng };
+        let newGeo: GeoData;
+        if (oldGeo && isGeoPolygon(oldGeo)) {
+          const oldCenter = getGeoCenter(oldGeo);
+          const dLat = lat - oldCenter.lat;
+          const dLng = lng - oldCenter.lng;
+          const newCoords = oldGeo.coordinates.map(([ln, lt]) => [ln + dLng, lt + dLat] as [number, number]);
+          newGeo = { ...oldGeo, coordinates: newCoords, center: computePolygonCenter(newCoords) };
+        } else {
+          newGeo = { type: 'point', lat, lng };
+        }
         flushSync(() => {
           setGeoLat(lat.toString());
           setGeoLng(lng.toString());
-          setLastSavedGeo(newGeo);
+          setLastSavedGeo({ lat, lng });
         });
         useDossierStore.getState().updateElement(element.id, { geo: newGeo });
         pushAction({
@@ -445,7 +544,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       if (property.type === 'geo' && typeof property.value === 'string') {
         const parts = property.value.split(',').map((s) => parseFloat(s.trim()));
         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-          options.geo = { lat: parts[0], lng: parts[1] };
+          options.geo = { type: 'point', lat: parts[0], lng: parts[1] };
         }
       } else if ((property.type === 'date' || property.type === 'datetime') && property.value) {
         options.date = new Date(property.value as string | number);
@@ -501,7 +600,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
       };
 
       if (event.geo) {
-        elementOptions.geo = { lat: event.geo.lat, lng: event.geo.lng };
+        elementOptions.geo = event.geo.type === 'point'
+          ? { type: 'point', lat: event.geo.lat, lng: event.geo.lng }
+          : { type: 'point', lat: event.geo.center.lat, lng: event.geo.center.lng };
       }
 
       const newElement = await createElement(label, position, elementOptions);
@@ -1041,6 +1142,20 @@ export function ElementDetail({ element }: ElementDetailProps) {
             suggestions={propertySuggestions}
             onNewProperty={handleNewProperty}
             onExtractToElement={handleExtractEvent}
+            isZone={isGeoPolygon(element.geo)}
+            currentZoneGeo={element.geo}
+            onDrawZone={(callback, existingGeo) => {
+              const currentMode = useViewStore.getState().displayMode;
+              if (currentMode === 'map') {
+                useUIStore.getState().requestZoneDraw(callback, existingGeo);
+              } else {
+                useViewStore.getState().setDisplayMode('map');
+                // Delay to let MapView mount and map style load
+                setTimeout(() => {
+                  useUIStore.getState().requestZoneDraw(callback, existingGeo);
+                }, 500);
+              }
+            }}
           />
         </div>
       </AccordionSection>
@@ -1116,6 +1231,29 @@ export function ElementDetail({ element }: ElementDetailProps) {
                 />
                 <span className="text-[10px] text-text-tertiary">{t('detail.location.lngRange')}</span>
               </div>
+              <div className="flex items-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!element.geo) return;
+                    updateElement(element.id, { geo: { ...element.geo, extrude: !element.geo.extrude } });
+                  }}
+                  className={`px-1.5 py-2 text-xs rounded border ${element.geo?.extrude ? 'bg-accent text-white border-accent' : 'text-text-tertiary border-border-default hover:text-text-secondary'}`}
+                  title={t('detail.location.extrude')}
+                >
+                  3D
+                </button>
+                <div>
+                  <input
+                    type="text"
+                    value={geoAlt}
+                    onChange={(e) => setGeoAlt(e.target.value)}
+                    placeholder={t('detail.location.altitude')}
+                    className="w-20 px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
+                  />
+                  <span className="text-[10px] text-text-tertiary">{t('detail.location.altUnit')}</span>
+                </div>
+              </div>
             </div>
             <button
               onClick={() => {
@@ -1127,6 +1265,38 @@ export function ElementDetail({ element }: ElementDetailProps) {
               <MapIcon size={14} />
               {t('detail.location.pickOnMap')}
             </button>
+
+            {/* Zone geometry sub-section (inline in LOCALISATION) */}
+            {element.geo && isGeoPolygon(element.geo) && (() => {
+              const geo = element.geo!;
+              if (!isGeoPolygon(geo)) return null;
+              const coords = geo.coordinates;
+              return (
+                <div className="border-t border-border-default pt-2 mt-2 space-y-2">
+                  <label className="text-xs font-medium text-text-secondary">{tPages('map.geometry')}</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        useViewStore.getState().setDisplayMode('map');
+                        window.dispatchEvent(new CustomEvent('map:flyToPolygon', { detail: { coordinates: coords } }));
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-text-secondary"
+                    >
+                      <MapIcon size={12} />
+                      {tPages('map.viewOnMap')}
+                    </button>
+                    <button
+                      onClick={() => setGeoJsonEditing(true)}
+                      className="flex-1 px-3 py-1.5 text-xs bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-text-secondary"
+                    >
+                      <Code size={12} />
+                      {tPages('map.editZone')}
+                    </button>
+                  </div>
+                  {geoJsonEditing && <GeoJsonEditor element={element} onClose={() => setGeoJsonEditing(false)} />}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </AccordionSection>

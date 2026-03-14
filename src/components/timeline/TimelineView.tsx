@@ -22,12 +22,12 @@ interface TimelineItem {
   // Thumbnail info from source element
   thumbLetter: string;
   thumbColor: string;
-  thumbShape: 'circle' | 'square' | 'diamond' | 'rectangle';
+  thumbShape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon' | 'hexagon';
   thumbImageId?: string; // AssetId for image thumbnail
   // Destination thumbnail info (for links)
   destThumbLetter?: string;
   destThumbColor?: string;
-  destThumbShape?: 'circle' | 'square' | 'diamond' | 'rectangle';
+  destThumbShape?: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
   destThumbImageId?: string;
 }
 
@@ -1469,7 +1469,7 @@ export function TimelineView() {
 // Thumbnail component showing element image or shape with color
 function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
   imageUrl?: string;
-  shape: 'circle' | 'square' | 'diamond' | 'rectangle';
+  shape: 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
   color: string;
   letter: string;
   blur?: boolean;
@@ -1500,6 +1500,7 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
     square: 'rounded-sm',
     diamond: 'rounded-sm rotate-45',
     rectangle: 'rounded-sm',
+    hexagon: 'sketchy-hexagon',
   };
 
   return (

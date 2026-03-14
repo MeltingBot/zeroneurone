@@ -141,13 +141,15 @@ Si une image contient des **coordonnées GPS** (EXIF) :
 
 ## Extraction de texte
 
-ZeroNeurone extrait automatiquement le contenu textuel des fichiers PDF et texte (TXT, Markdown, CSV...) lors de l'ajout a un element. Ce texte est indexe pour la recherche globale (Ctrl+K).
+ZeroNeurone extrait automatiquement le contenu textuel des fichiers PDF, DOCX, ODT et texte (TXT, Markdown, CSV...) lors de l'ajout a un element. Ce texte est indexe pour la recherche globale (Ctrl+K).
 
 ### Formats supportes
 
 | Format | Extraction |
 |--------|-----------|
 | **PDF** | Texte selectionnable (jusqu'a 100 pages) |
+| **DOCX** | Contenu textuel extrait du XML Word |
+| **ODT** | Contenu textuel extrait du format OpenDocument |
 | **TXT, MD, CSV** | Contenu integral |
 
 ### Visualisation

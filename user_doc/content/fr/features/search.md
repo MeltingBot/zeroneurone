@@ -40,7 +40,7 @@ La recherche porte sur :
 | **Texte extrait** | Normal |
 
 {{< hint info >}}
-**Texte extrait** : Le contenu textuel des PDF et fichiers texte attaches aux elements est automatiquement indexe. Voir [Fichiers joints - Extraction de texte]({{< relref "attachments#extraction-de-texte" >}}).
+**Texte extrait** : Le contenu textuel des PDF, DOCX, ODT et fichiers texte attaches aux elements est automatiquement indexe. Voir [Fichiers joints - Extraction de texte]({{< relref "attachments#extraction-de-texte" >}}).
 {{< /hint >}}
 
 ### Recherche floue

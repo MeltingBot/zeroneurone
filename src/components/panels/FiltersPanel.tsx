@@ -16,6 +16,7 @@ import {
 import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore } from '../../stores';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence, Element, Comment, ViewFilters } from '../../types';
+import { getGeoCenter } from '../../utils/geo';
 
 // Quick filter definitions (without labels - those come from translations)
 interface QuickFilterParams {
@@ -83,7 +84,11 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     icon: <MapPin size={12} />,
     apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
       const noGeoElements = elements
-        .filter((el) => !el.geo || (el.geo.lat === 0 && el.geo.lng === 0))
+        .filter((el) => {
+          if (!el.geo) return true;
+          const c = getGeoCenter(el.geo);
+          return c.lat === 0 && c.lng === 0;
+        })
         .map((el) => el.id);
       const allHidden = noGeoElements.every((id) => hiddenElementIds.has(id));
       if (allHidden) {
@@ -94,7 +99,11 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     },
     isActive: ({ elements, hiddenElementIds }) => {
       const noGeoElements = elements
-        .filter((el) => !el.geo || (el.geo.lat === 0 && el.geo.lng === 0))
+        .filter((el) => {
+          if (!el.geo) return true;
+          const c = getGeoCenter(el.geo);
+          return c.lat === 0 && c.lng === 0;
+        })
         .map((el) => el.id);
       return noGeoElements.length > 0 && noGeoElements.every((id) => hiddenElementIds.has(id));
     },

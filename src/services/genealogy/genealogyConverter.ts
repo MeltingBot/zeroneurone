@@ -82,7 +82,7 @@ function personToElement(
       dateEnd: birthDate, // Point-in-time event: same start and end
       label: 'Naissance',
       geo: person.birthPlace?.lat != null && person.birthPlace?.lng != null
-        ? { lat: person.birthPlace.lat, lng: person.birthPlace.lng }
+        ? { type: 'point' as const, lat: person.birthPlace.lat, lng: person.birthPlace.lng }
         : undefined,
       properties: person.birthPlace
         ? [{ key: 'Lieu', value: person.birthPlace.name, type: 'text' as const }]
@@ -98,7 +98,7 @@ function personToElement(
       dateEnd: deathDate, // Point-in-time event: same start and end
       label: 'Décès',
       geo: person.deathPlace?.lat != null && person.deathPlace?.lng != null
-        ? { lat: person.deathPlace.lat, lng: person.deathPlace.lng }
+        ? { type: 'point' as const, lat: person.deathPlace.lat, lng: person.deathPlace.lng }
         : undefined,
       properties: person.deathPlace
         ? [{ key: 'Lieu', value: person.deathPlace.name, type: 'text' as const }]
@@ -115,7 +115,7 @@ function personToElement(
         dateEnd: residence.endDate ? toDate(residence.endDate) : undefined,
         label: 'Résidence',
         geo: residence.place?.lat != null && residence.place?.lng != null
-          ? { lat: residence.place.lat, lng: residence.place.lng }
+          ? { type: 'point' as const, lat: residence.place.lat, lng: residence.place.lng }
           : undefined,
         properties: residence.place
           ? [{ key: 'Lieu', value: residence.place.name, type: 'text' as const }]

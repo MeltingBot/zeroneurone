@@ -27,6 +27,29 @@ ZeroNeurone suggests tags already used in the dossier to maintain consistency.
 Use the **Filters** panel to display only elements with certain tags.
 
 
+### Tag Sets
+
+Tag sets are predefined templates that associate each tag with a default appearance and suggested properties.
+
+**Access the manager**: Menu **⋯** → **Settings** → **Tag Sets**
+
+Each tag set defines:
+
+| Attribute | Description |
+|-----------|-------------|
+| **Name** | Unique tag name |
+| **Description** | Concept description |
+| **Color** | Default color applied to the element |
+| **Shape** | Default shape (circle, square, diamond, rectangle, hexagon) |
+| **Icon** | Associated icon |
+| **Suggested properties** | List of pre-typed properties offered when the tag is applied |
+
+When you apply a tag from a set to an element, its appearance (color, shape) is automatically defined and the suggested properties are offered.
+
+**Import/Export**: Tag sets can be exported and imported in JSON or CSV format for sharing between dossiers.
+
+**Built-in sets**: ZeroNeurone provides default tag sets (Person, Company, Bank Account, Location…). They cannot be deleted but can be modified. The **Reset** button restores the default sets.
+
 ### Tag Display on Canvas
 
 In the **Views** panel, configure tag display:
@@ -54,6 +77,11 @@ Properties allow you to add structured data to your elements and links.
 | **URL** | Clickable link |
 | **Email** | Email address |
 | **Phone** | Phone number |
+| **Datetime** | Date and time with picker |
+| **Choice** | Dropdown with predefined options |
+| **Geo** | Geographic coordinates (point or polygon) |
+| **Country** | Country selector (with flag) |
+| **Link** | Reference to another element in the dossier |
 
 ### Add a Property
 

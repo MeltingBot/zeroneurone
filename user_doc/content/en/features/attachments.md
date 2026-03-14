@@ -141,13 +141,15 @@ If an image contains **GPS coordinates** (EXIF):
 
 ## Text Extraction
 
-ZeroNeurone automatically extracts text content from PDF and text files (TXT, Markdown, CSV...) when added to an element. This text is indexed for global search (Ctrl+K).
+ZeroNeurone automatically extracts text content from PDF, DOCX, ODT and text files (TXT, Markdown, CSV...) when added to an element. This text is indexed for global search (Ctrl+K).
 
 ### Supported Formats
 
 | Format | Extraction |
 |--------|-----------|
 | **PDF** | Selectable text (up to 100 pages) |
+| **DOCX** | Text content extracted from Word XML |
+| **ODT** | Text content extracted from OpenDocument format |
 | **TXT, MD, CSV** | Full content |
 
 ### Viewing

@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight } from 'lucide-react';
-import type { ElementEvent, PropertyDefinition } from '../../types';
+import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight, Hexagon, Copy, PenTool, Code, Check, X } from 'lucide-react';
+import type { ElementEvent, PropertyDefinition, GeoData, GeoPolygon } from '../../types';
 import { generateUUID } from '../../utils';
 import { PropertiesEditor } from './PropertiesEditor';
+import { isGeoPolygon, getGeoCenter, computePolygonAreaKm2, computePolygonCenter } from '../../utils/geo';
 
 interface EventsEditorProps {
   events: ElementEvent[];
@@ -15,6 +16,12 @@ interface EventsEditorProps {
   onNewProperty?: (propertyDef: PropertyDefinition) => void;
   /** Callback to extract an event as a new element */
   onExtractToElement?: (event: ElementEvent) => void;
+  /** Whether the parent element is a polygon zone */
+  isZone?: boolean;
+  /** Current zone geometry (for "inherit" action) */
+  currentZoneGeo?: GeoData | null;
+  /** Callback to draw/edit a zone on the map */
+  onDrawZone?: (callback: (geo: GeoData) => void, existingGeo?: GeoPolygon) => void;
 }
 
 // Sub-component for a single event - manages local state for text fields
@@ -29,6 +36,9 @@ interface EventItemProps {
   onClearGeo: () => void;
   suggestions: PropertyDefinition[];
   onNewProperty?: (propertyDef: PropertyDefinition) => void;
+  isZone?: boolean;
+  onInheritZone?: () => void;
+  onDrawZone?: () => void;
 }
 
 function EventItem({
@@ -42,15 +52,27 @@ function EventItem({
   onClearGeo,
   suggestions,
   onNewProperty,
+  isZone,
+  onInheritZone,
+  onDrawZone,
 }: EventItemProps) {
   const { t } = useTranslation('panels');
+
+  const eventGeoIsPolygon = event.geo && isGeoPolygon(event.geo);
+  const eventCenter = event.geo ? getGeoCenter(event.geo) : null;
+
+  // GeoJSON edit mode
+  const [geoJsonEditing, setGeoJsonEditing] = useState(false);
+  const [geoJsonText, setGeoJsonText] = useState('');
+  const [geoJsonError, setGeoJsonError] = useState('');
 
   // Local state for text fields - syncs on blur
   const [label, setLabel] = useState(event.label || '');
   const [description, setDescription] = useState(event.description || '');
   const [source, setSource] = useState(event.source || '');
-  const [latStr, setLatStr] = useState(event.geo?.lat?.toFixed(6) ?? '');
-  const [lngStr, setLngStr] = useState(event.geo?.lng?.toFixed(6) ?? '');
+  const [latStr, setLatStr] = useState(eventCenter?.lat?.toFixed(6) ?? '');
+  const [lngStr, setLngStr] = useState(eventCenter?.lng?.toFixed(6) ?? '');
+  const [altStr, setAltStr] = useState(event.geo?.altitude?.toString() ?? '');
 
   // Local state for dates - syncs on blur to prevent re-sorting during editing
   const [localDate, setLocalDate] = useState(event.date);
@@ -61,11 +83,13 @@ function EventItem({
     setLabel(event.label || '');
     setDescription(event.description || '');
     setSource(event.source || '');
-    setLatStr(event.geo?.lat?.toFixed(6) ?? '');
-    setLngStr(event.geo?.lng?.toFixed(6) ?? '');
+    const center = event.geo ? getGeoCenter(event.geo) : null;
+    setLatStr(center?.lat?.toFixed(6) ?? '');
+    setLngStr(center?.lng?.toFixed(6) ?? '');
+    setAltStr(event.geo?.altitude?.toString() ?? '');
     setLocalDate(event.date);
     setLocalDateEnd(event.dateEnd);
-  }, [event.id, event.label, event.description, event.source, event.geo?.lat, event.geo?.lng, event.date, event.dateEnd]);
+  }, [event.id, event.label, event.description, event.source, event.geo, event.date, event.dateEnd]);
 
   const formatDateForInput = (date: Date): string => {
     const d = new Date(date);
@@ -106,8 +130,17 @@ function EventItem({
   const handleLatBlur = () => {
     const lat = parseFloat(latStr);
     if (!isNaN(lat) && lat >= -90 && lat <= 90) {
-      if (lat !== event.geo?.lat) {
-        onUpdate({ geo: { lat, lng: event.geo?.lng ?? 0 } });
+      if (lat !== eventCenter?.lat) {
+        if (eventGeoIsPolygon) {
+          // Translate the polygon by the lat delta
+          const poly = event.geo as GeoPolygon;
+          const dLat = lat - (eventCenter?.lat ?? 0);
+          const newCoords = poly.coordinates.map(([lng, lt]) => [lng, lt + dLat] as [number, number]);
+          onUpdate({ geo: { ...poly, coordinates: newCoords, center: computePolygonCenter(newCoords) } });
+        } else {
+          const altitude = event.geo?.altitude;
+          onUpdate({ geo: { type: 'point', lat, lng: eventCenter?.lng ?? 0, ...(altitude !== undefined ? { altitude } : {}) } });
+        }
       }
     }
   };
@@ -115,9 +148,68 @@ function EventItem({
   const handleLngBlur = () => {
     const lng = parseFloat(lngStr);
     if (!isNaN(lng) && lng >= -180 && lng <= 180) {
-      if (lng !== event.geo?.lng) {
-        onUpdate({ geo: { lat: event.geo?.lat ?? 0, lng } });
+      if (lng !== eventCenter?.lng) {
+        if (eventGeoIsPolygon) {
+          // Translate the polygon by the lng delta
+          const poly = event.geo as GeoPolygon;
+          const dLng = lng - (eventCenter?.lng ?? 0);
+          const newCoords = poly.coordinates.map(([ln, lat]) => [ln + dLng, lat] as [number, number]);
+          onUpdate({ geo: { ...poly, coordinates: newCoords, center: computePolygonCenter(newCoords) } });
+        } else {
+          const altitude = event.geo?.altitude;
+          onUpdate({ geo: { type: 'point', lat: eventCenter?.lat ?? 0, lng, ...(altitude !== undefined ? { altitude } : {}) } });
+        }
       }
+    }
+  };
+
+  const handleOpenGeoJsonEditor = () => {
+    if (eventGeoIsPolygon) {
+      const coords = (event.geo as Extract<GeoData, { type: 'polygon' }>).coordinates;
+      // Format as GeoJSON Polygon geometry
+      const geojson = {
+        type: 'Polygon',
+        coordinates: [[...coords.map(([lng, lat]) => [lng, lat]), [coords[0][0], coords[0][1]]]],
+      };
+      setGeoJsonText(JSON.stringify(geojson, null, 2));
+    } else {
+      setGeoJsonText('{\n  "type": "Polygon",\n  "coordinates": [[\n    [lng, lat],\n    [lng, lat],\n    [lng, lat],\n    [lng, lat]\n  ]]\n}');
+    }
+    setGeoJsonError('');
+    setGeoJsonEditing(true);
+  };
+
+  const handleApplyGeoJson = () => {
+    try {
+      const parsed = JSON.parse(geoJsonText);
+      let coords: [number, number][];
+      // Accept GeoJSON Geometry, Feature, or FeatureCollection
+      let geometry = parsed;
+      if (parsed.type === 'Feature') geometry = parsed.geometry;
+      else if (parsed.type === 'FeatureCollection' && parsed.features?.length > 0) geometry = parsed.features[0].geometry;
+
+      if (geometry?.type === 'Polygon' && Array.isArray(geometry.coordinates?.[0])) {
+        const ring: number[][] = geometry.coordinates[0];
+        // Remove closing point if same as first
+        const rawCoords = ring.length > 1 &&
+          ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]
+          ? ring.slice(0, -1)
+          : ring;
+        if (rawCoords.length < 3) {
+          setGeoJsonError(t('detail.events.geoJsonMinPoints'));
+          return;
+        }
+        coords = rawCoords.map(c => [c[0], c[1]] as [number, number]);
+      } else {
+        setGeoJsonError(t('detail.events.geoJsonInvalidType'));
+        return;
+      }
+      const center = computePolygonCenter(coords);
+      onUpdate({ geo: { type: 'polygon', coordinates: coords, center } });
+      setGeoJsonEditing(false);
+      setGeoJsonError('');
+    } catch {
+      setGeoJsonError(t('detail.events.geoJsonParseError'));
     }
   };
 
@@ -135,8 +227,12 @@ function EventItem({
         />
         <div className="flex items-center gap-1">
           {event.geo && (
-            <span title={t('detail.events.hasLocation')}>
-              <MapPin size={12} className="text-accent" />
+            <span title={eventGeoIsPolygon ? t('detail.events.hasZone') : t('detail.events.hasLocation')}>
+              {eventGeoIsPolygon ? (
+                <Hexagon size={12} className="text-accent" />
+              ) : (
+                <MapPin size={12} className="text-accent" />
+              )}
             </span>
           )}
           {event.description && (
@@ -284,12 +380,12 @@ function EventItem({
             />
           </div>
 
-          {/* Geo coordinates (optional) */}
+          {/* Geo section - adapts for zones vs points */}
           <div>
             <div className="flex items-center justify-between">
               <label className="text-[10px] text-text-tertiary flex items-center gap-1">
-                <MapPin size={10} />
-                {t('detail.events.locationOptional')}
+                {isZone ? <Hexagon size={10} /> : <MapPin size={10} />}
+                {isZone ? t('detail.events.zoneOptional') : t('detail.events.locationOptional')}
               </label>
               {event.geo && (
                 <button
@@ -301,31 +397,141 @@ function EventItem({
                 </button>
               )}
             </div>
+
+            {/* Polygon summary (shown whenever event has polygon geo) */}
+            {eventGeoIsPolygon && (
+              <div className="text-[10px] text-text-secondary bg-bg-tertiary px-2 py-1 rounded mt-1">
+                {t('detail.events.zoneInfo', {
+                  points: (event.geo as Extract<GeoData, { type: 'polygon' }>).coordinates.length,
+                  area: computePolygonAreaKm2((event.geo as Extract<GeoData, { type: 'polygon' }>).coordinates),
+                })}
+              </div>
+            )}
+
+            {/* Zone actions: inherit + draw + edit GeoJSON */}
+            {!geoJsonEditing && (
+              <div className="flex items-center gap-1 mt-1">
+                {onInheritZone && (
+                  <button
+                    type="button"
+                    onClick={onInheritZone}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+                  >
+                    <Copy size={10} />
+                    {t('detail.events.inheritZone')}
+                  </button>
+                )}
+                {onDrawZone && (
+                  <button
+                    type="button"
+                    onClick={onDrawZone}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+                  >
+                    <PenTool size={10} />
+                    {t('detail.events.drawZone')}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleOpenGeoJsonEditor}
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+                >
+                  <Code size={10} />
+                  {t('detail.events.editGeoJson')}
+                </button>
+              </div>
+            )}
+
+            {/* GeoJSON editor */}
+            {geoJsonEditing && (
+              <div className="space-y-1 mt-1">
+                <textarea
+                  value={geoJsonText}
+                  onChange={(e) => { setGeoJsonText(e.target.value); setGeoJsonError(''); }}
+                  className="w-full h-32 px-2 py-1 text-[10px] font-mono bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent resize-y"
+                  placeholder='{"type":"Polygon","coordinates":[[[lng,lat],...]]}'
+                  spellCheck={false}
+                />
+                {geoJsonError && (
+                  <p className="text-[10px] text-error">{geoJsonError}</p>
+                )}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleApplyGeoJson}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] text-white bg-accent hover:bg-accent/90 rounded"
+                  >
+                    <Check size={10} />
+                    {t('detail.events.applyGeoJson')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setGeoJsonEditing(false); setGeoJsonError(''); }}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+                  >
+                    <X size={10} />
+                    {t('detail.properties.cancel')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Point: lat/lng inputs + pick on map */}
             <div className="flex items-center gap-2 mt-1">
-              <input
-                type="text"
-                value={latStr}
-                onChange={(e) => setLatStr(e.target.value)}
-                onBlur={handleLatBlur}
-                className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-                placeholder={t('detail.location.latitude')}
-              />
-              <input
-                type="text"
-                value={lngStr}
-                onChange={(e) => setLngStr(e.target.value)}
-                onBlur={handleLngBlur}
-                className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
-                placeholder={t('detail.location.longitude')}
-              />
-              <button
-                type="button"
-                onClick={onPickLocation}
-                className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
-              >
-                {t('detail.events.pickOnMap')}
-              </button>
-            </div>
+                <input
+                  type="text"
+                  value={latStr}
+                  onChange={(e) => setLatStr(e.target.value)}
+                  onBlur={handleLatBlur}
+                  className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+                  placeholder={t('detail.location.latitude')}
+                />
+                <input
+                  type="text"
+                  value={lngStr}
+                  onChange={(e) => setLngStr(e.target.value)}
+                  onBlur={handleLngBlur}
+                  className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+                  placeholder={t('detail.location.longitude')}
+                />
+                <button
+                  type="button"
+                  onClick={onPickLocation}
+                  className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+                >
+                  {t('detail.events.pickOnMap')}
+                </button>
+              </div>
+
+            {/* Altitude + 3D toggle (shown when event has any geo) */}
+            {event.geo && (
+              <div className="flex items-center gap-1 mt-1">
+                <button
+                  type="button"
+                  onClick={() => onUpdate({ geo: { ...event.geo!, extrude: !event.geo!.extrude } })}
+                  className={`px-1.5 py-1 text-[10px] rounded border ${event.geo.extrude ? 'bg-accent text-white border-accent' : 'text-text-tertiary border-border-default hover:text-text-secondary'}`}
+                  title={t('detail.location.extrude')}
+                >
+                  3D
+                </button>
+                <input
+                  type="text"
+                  value={altStr}
+                  onChange={(e) => setAltStr(e.target.value)}
+                  onBlur={() => {
+                    if (!event.geo) return;
+                    const alt = altStr.trim() ? parseFloat(altStr.trim()) : undefined;
+                    const altitude = (alt !== undefined && !isNaN(alt)) ? alt : undefined;
+                    if (altitude !== event.geo.altitude) {
+                      onUpdate({ geo: { ...event.geo, altitude } });
+                    }
+                  }}
+                  placeholder={t('detail.location.altitude')}
+                  className="w-16 px-2 py-1 text-[10px] bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
+                />
+                <span className="text-[10px] text-text-tertiary">{t('detail.location.altUnit')}</span>
+              </div>
+            )}
           </div>
 
           {/* Properties */}
@@ -353,6 +559,9 @@ export function EventsEditor({
   suggestions = [],
   onNewProperty,
   onExtractToElement,
+  isZone,
+  currentZoneGeo,
+  onDrawZone,
 }: EventsEditorProps) {
   const { t } = useTranslation('panels');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -396,15 +605,50 @@ export function EventsEditor({
     [events, onChange]
   );
 
-  // Pick location on map
+  // Pick location on map (point or translate polygon center)
   const handlePickLocation = useCallback(
     (eventId: string) => {
       const event = events.find((e) => e.id === eventId);
+      const center = event?.geo ? getGeoCenter(event.geo) : undefined;
       onOpenGeoPicker((lat, lng) => {
-        handleUpdate(eventId, { geo: { lat, lng } });
-      }, event?.geo);
+        if (event?.geo && isGeoPolygon(event.geo)) {
+          // Translate polygon to new center
+          const poly = event.geo as GeoPolygon;
+          const oldCenter = getGeoCenter(poly);
+          const dLat = lat - oldCenter.lat;
+          const dLng = lng - oldCenter.lng;
+          const newCoords = poly.coordinates.map(([ln, lt]) => [ln + dLng, lt + dLat] as [number, number]);
+          handleUpdate(eventId, { geo: { ...poly, coordinates: newCoords, center: { lat, lng } } });
+        } else {
+          handleUpdate(eventId, { geo: { type: 'point', lat, lng } });
+        }
+      }, center);
     },
     [onOpenGeoPicker, handleUpdate, events]
+  );
+
+  // Inherit current zone geometry
+  const handleInheritZone = useCallback(
+    (eventId: string) => {
+      if (currentZoneGeo) {
+        handleUpdate(eventId, { geo: structuredClone(currentZoneGeo) });
+      }
+    },
+    [currentZoneGeo, handleUpdate]
+  );
+
+  // Draw or edit zone on map
+  const handleDrawZone = useCallback(
+    (eventId: string) => {
+      if (onDrawZone) {
+        const event = events.find((e) => e.id === eventId);
+        const existingPoly = (event?.geo && isGeoPolygon(event.geo)) ? event.geo as GeoPolygon : undefined;
+        onDrawZone((geo) => {
+          handleUpdate(eventId, { geo });
+        }, existingPoly);
+      }
+    },
+    [onDrawZone, handleUpdate, events]
   );
 
   // Clear geo from event
@@ -455,6 +699,9 @@ export function EventsEditor({
               onClearGeo={() => handleClearGeo(event.id)}
               suggestions={suggestions}
               onNewProperty={onNewProperty}
+              isZone={isZone}
+              onInheritZone={isZone && currentZoneGeo ? () => handleInheritZone(event.id) : undefined}
+              onDrawZone={onDrawZone ? () => handleDrawZone(event.id) : undefined}
             />
           ))}
         </div>

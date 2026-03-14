@@ -6,7 +6,6 @@ import type {
   ElementId,
   Link,
   Position,
-  GeoCoordinates,
   Property,
   AssetId,
 } from '../types';
@@ -311,7 +310,7 @@ async function convertPaletteNode(
   let assetsImported = 0;
   let label = '';
   let tags: string[] = [];
-  let geo: GeoCoordinates | null = null;
+  let geo: import('../types').GeoData | null = null;
   let notes = '';
 
   const position: Position = {
@@ -382,7 +381,7 @@ async function convertPaletteNode(
           if (!geo && entry.lat_lng && Array.isArray(entry.lat_lng) && entry.lat_lng.length >= 2) {
             const [lat, lng] = entry.lat_lng;
             if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
-              geo = { lat, lng };
+              geo = { type: 'point', lat, lng };
             }
           }
 
@@ -402,7 +401,7 @@ async function convertPaletteNode(
           notes = noteParts.join('\n\n---\n\n');
         }
 
-        if (geo) {
+        if (geo && geo.type === 'point') {
           properties.push({ key: 'Latitude', value: String(geo.lat), type: 'number' });
           properties.push({ key: 'Longitude', value: String(geo.lng), type: 'number' });
         }
@@ -463,7 +462,7 @@ async function convertPaletteNode(
         const lat = typeof node.data.latitude === 'number' ? node.data.latitude : parseFloat(String(node.data.latitude));
         const lng = typeof node.data.longitude === 'number' ? node.data.longitude : parseFloat(String(node.data.longitude));
         if (!isNaN(lat) && !isNaN(lng)) {
-          geo = { lat, lng };
+          geo = { type: 'point', lat, lng };
           properties.push({ key: 'Latitude', value: String(lat), type: 'number' });
           properties.push({ key: 'Longitude', value: String(lng), type: 'number' });
         }

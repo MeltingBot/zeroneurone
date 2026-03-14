@@ -8,6 +8,7 @@
 
 import * as Y from 'yjs';
 import type { Element, ElementVisual, ElementEvent, Property } from '../../types';
+import { normalizeGeo } from '../../utils/geo';
 import { DEFAULT_ELEMENT_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
 
@@ -62,11 +63,8 @@ export function elementToYMap(element: Element): Y.Map<any> {
     end: dateToYjs(element.dateRange.end),
   } : null);
 
-  // Geo as plain object or null
-  map.set('geo', element.geo ? {
-    lat: element.geo.lat,
-    lng: element.geo.lng,
-  } : null);
+  // Geo as plain object or null (serialized as-is, includes type discriminator)
+  map.set('geo', element.geo ?? null);
 
   // Events as plain array of objects
   const events = Array.isArray(element.events) ? element.events : [];
@@ -186,12 +184,31 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     };
   }
 
-  // Handle geo - can be Y.Map, plain object, or null
-  let geo = null;
+  // Handle geo - can be Y.Map, plain object (GeoData), or null
+  let geo: import('../../types').GeoData | null = null;
   if (geoRaw instanceof Y.Map) {
-    geo = { lat: geoRaw.get('lat') ?? 0, lng: geoRaw.get('lng') ?? 0 };
+    // Legacy Y.Map format: extract and normalize
+    const type = geoRaw.get('type');
+    if (type === 'polygon') {
+      geo = {
+        type: 'polygon',
+        coordinates: geoRaw.get('coordinates') ?? [],
+        center: geoRaw.get('center') ?? { lat: 0, lng: 0 },
+        ...(geoRaw.get('shapeOrigin') ? { shapeOrigin: geoRaw.get('shapeOrigin') } : {}),
+        ...(geoRaw.get('radius') != null ? { radius: geoRaw.get('radius') } : {}),
+        ...(geoRaw.get('altitude') != null ? { altitude: geoRaw.get('altitude') } : {}),
+        ...(geoRaw.get('extrude') != null ? { extrude: geoRaw.get('extrude') } : {}),
+      };
+    } else {
+      geo = { type: 'point', lat: geoRaw.get('lat') ?? 0, lng: geoRaw.get('lng') ?? 0 };
+    }
   } else if (geoRaw && typeof geoRaw === 'object') {
-    geo = { lat: geoRaw.lat ?? 0, lng: geoRaw.lng ?? 0 };
+    // Plain object — normalize legacy format
+    if (geoRaw.type === 'point' || geoRaw.type === 'polygon') {
+      geo = geoRaw;
+    } else {
+      geo = { type: 'point', lat: geoRaw.lat ?? 0, lng: geoRaw.lng ?? 0 };
+    }
   }
 
   // Handle events - can be Y.Array or plain array
@@ -337,10 +354,7 @@ export function updateElementYMap(
     }
 
     if (changes.geo !== undefined) {
-      ymap.set('geo', changes.geo ? {
-        lat: changes.geo.lat,
-        lng: changes.geo.lng,
-      } : null);
+      ymap.set('geo', changes.geo ?? null);
     }
 
     if (changes.visual !== undefined) {
@@ -420,7 +434,7 @@ function eventToPlainObject(event: ElementEvent): any {
     label: event.label,
     description: event.description || null,
     source: event.source || null,
-    geo: event.geo ? { lat: event.geo.lat, lng: event.geo.lng } : null,
+    geo: event.geo || null,
     properties: event.properties || null,
   };
 }
@@ -432,7 +446,7 @@ function plainObjectToEvent(obj: any): ElementEvent {
     dateEnd: dateFromYjs(obj.dateEnd) || undefined,
     label: obj.label || '',
     description: obj.description || undefined,
-    geo: obj.geo ? { lat: obj.geo.lat ?? 0, lng: obj.geo.lng ?? 0 } : undefined,
+    geo: normalizeGeo(obj.geo) || undefined,
     properties: obj.properties || undefined,
     source: obj.source || undefined,
   };
@@ -440,12 +454,14 @@ function plainObjectToEvent(obj: any): ElementEvent {
 
 function yMapToEvent(ymap: Y.Map<any>): ElementEvent {
   const geoMap = ymap.get('geo');
-  let geo = undefined;
+  let geoRaw: any = undefined;
   if (geoMap instanceof Y.Map) {
-    geo = { lat: geoMap.get('lat') ?? 0, lng: geoMap.get('lng') ?? 0 };
+    // Convert Y.Map to plain object
+    geoRaw = geoMap.toJSON();
   } else if (geoMap && typeof geoMap === 'object') {
-    geo = { lat: geoMap.lat ?? 0, lng: geoMap.lng ?? 0 };
+    geoRaw = geoMap;
   }
+  const geo = normalizeGeo(geoRaw) || undefined;
 
   return {
     id: ymap.get('id') || '',

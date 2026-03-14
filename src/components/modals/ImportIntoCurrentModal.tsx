@@ -23,9 +23,19 @@ function estimateElementCount(file: File, content: string): number {
     return Math.max(lines.length - 1, 1); // minus header
   }
 
+  if (name.endsWith('.geojson')) {
+    try {
+      const data = JSON.parse(content);
+      if (data.type === 'FeatureCollection' && Array.isArray(data.features)) return data.features.length;
+    } catch { /* fall through */ }
+    return 10;
+  }
+
   if (name.endsWith('.json') || name.endsWith('.excalidraw')) {
     try {
       const data = JSON.parse(content);
+      // GeoJSON via .json extension
+      if (data.type === 'FeatureCollection' && Array.isArray(data.features)) return data.features.length;
       // ZeroNeurone native
       if (data.elements && Array.isArray(data.elements)) return data.elements.length;
       // Excalidraw
@@ -214,7 +224,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,.geojson"
             onChange={handleFileSelect}
             className="hidden"
           />
