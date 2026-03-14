@@ -308,7 +308,12 @@
     "stepForward": "Aurrera",
     "play": "Erreproduzitu",
     "pause": "Pausatu",
-    "unnamed": "Izenik gabe"
+    "unnamed": "Izenik gabe",
+    "drawZone": "Zona bat marraztu",
+    "cancelDraw": "Marrazketa ezeztatu",
+    "zone": "Zona",
+    "newZone": "Zona berria",
+    "deleteSelection": "Hautapena ezabatu"
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

@@ -291,6 +291,11 @@ button {
   border-radius: 48% 52% 49% 51% / 52% 48% 51% 49%;
 }
 
+/* Hexagon shape via clip-path */
+.sketchy-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
 /* Paper/post-it shadow — single shadow for performance at scale */
 .node-shadow {
   box-shadow: 2px 3px 0 0 rgba(180, 176, 164, 0.25);
@@ -409,5 +414,18 @@ button {
 .edge-label-bg {
   fill: var(--color-bg-primary);
   fill-opacity: 0.95;
+}
+
+/* Zone draw tooltip */
+.zone-draw-tooltip .maplibregl-popup-content {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.zone-draw-tooltip .maplibregl-popup-tip {
+  display: none;
 }
 

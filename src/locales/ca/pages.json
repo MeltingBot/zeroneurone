@@ -308,7 +308,12 @@
     "stepForward": "Avançar",
     "play": "Reproduir",
     "pause": "Pausa",
-    "unnamed": "Sense nom"
+    "unnamed": "Sense nom",
+    "drawZone": "Dibuixar una zona",
+    "cancelDraw": "Cancel·lar el dibuix",
+    "zone": "Zona",
+    "newZone": "Nova zona",
+    "deleteSelection": "Eliminar la selecció"
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

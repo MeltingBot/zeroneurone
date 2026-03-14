@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Download, Upload, HelpCircle } from 'lucide-react';
+import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Hexagon, Download, Upload, HelpCircle } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { Modal, Button, IconButton } from '../common';
 import { useTagSetStore, useUIStore } from '../../stores';
@@ -17,6 +17,7 @@ const shapeIcons: Record<ElementShape, typeof Circle> = {
   square: Square,
   diamond: Diamond,
   rectangle: RectangleHorizontal,
+  hexagon: Hexagon,
 };
 
 // Export format version for future compatibility

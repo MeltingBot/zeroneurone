@@ -25,11 +25,40 @@ export interface Position {
   y: number;
 }
 
-/** Geographic coordinates */
+/** Geographic coordinates (legacy, still used for events) */
 export interface GeoCoordinates {
   lat: number;
   lng: number;
 }
+
+/** Geographic point with discriminator */
+export interface GeoPoint {
+  type: 'point';
+  lat: number;
+  lng: number;
+  /** Altitude in meters above ground (optional) */
+  altitude?: number;
+  /** Whether to render as 3D extrusion on the map */
+  extrude?: boolean;
+}
+
+/** Geographic polygon zone */
+export interface GeoPolygon {
+  type: 'polygon';
+  coordinates: [number, number][]; // Array of [lng, lat] (GeoJSON convention)
+  center: { lat: number; lng: number }; // Computed centroid
+  /** Altitude in meters above ground (optional) */
+  altitude?: number;
+  /** Whether to render as 3D extrusion on the map */
+  extrude?: boolean;
+  /** Circle origin — enables resize editing instead of vertex editing */
+  shapeOrigin?: 'circle';
+  /** Radius in km (circles only) */
+  radius?: number;
+}
+
+/** Union type for element geo data */
+export type GeoData = GeoPoint | GeoPolygon;
 
 /** Element event - tracks any temporal occurrence for an element */
 export interface ElementEvent {
@@ -40,7 +69,7 @@ export interface ElementEvent {
   description?: string; // Detailed description (optional)
 
   // Optional contextual data - user adds what's relevant
-  geo?: GeoCoordinates; // If present, event appears on map
+  geo?: GeoData; // Point or polygon — if present, event appears on map
   properties?: Property[]; // Typed properties (same system as elements/links)
   source?: string;      // Source of this information
 }
@@ -130,7 +159,7 @@ export interface ElementVisual {
   fontSize?: FontSize;
 }
 
-export type ElementShape = 'circle' | 'square' | 'diamond' | 'rectangle';
+export type ElementShape = 'circle' | 'square' | 'diamond' | 'rectangle' | 'hexagon';
 export type ElementSize = 'small' | 'medium' | 'large' | number;
 
 /** Link visual appearance */
@@ -218,8 +247,8 @@ export interface Element {
   position: Position;
   /** When true, the element cannot be moved on the canvas */
   isPositionLocked: boolean;
-  /** Current/default geo position (for simple cases without history) */
-  geo: GeoCoordinates | null;
+  /** Geographic data: point or polygon zone */
+  geo: GeoData | null;
   /** Event history - all temporal occurrences for this element */
   events: ElementEvent[];
   visual: ElementVisual;

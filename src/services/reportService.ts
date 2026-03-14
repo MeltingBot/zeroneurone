@@ -1,4 +1,5 @@
 import type { Dossier, Element, Link, Asset } from '../types';
+import { getGeoCenter, isGeoPolygon } from '../utils/geo';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -358,7 +359,7 @@ class ReportService {
       ${allEvents.map(ev => {
         const dateStr = new Date(ev.date).toLocaleDateString(locale);
         const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
-        const location = ev.geo ? `${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}` : '';
+        const location = ev.geo ? `${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' (zone)' : ''}` : '';
         return `<tr>
         <td>${dateStr}${endStr}</td>
         <td>${this.escapeHTML(ev.elementLabel)}</td>
@@ -487,7 +488,7 @@ class ReportService {
         ${el.events.map(ev => {
           const dateStr = new Date(ev.date).toLocaleDateString(locale);
           const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
-          const geo = ev.geo ? ` [${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
+          const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
           return `<tr><td>${dateStr}${endStr}</td><td><b>${this.escapeHTML(ev.label)}</b>${ev.description ? ` - ${this.escapeHTML(ev.description)}` : ''}${geo}</td></tr>`;
         }).join('\n        ')}
       </table>\n`;
@@ -686,7 +687,7 @@ class ReportService {
       for (const ev of allEvents) {
         const dateStr = new Date(ev.date).toLocaleDateString(locale);
         const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
-        const location = ev.geo ? `[${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
+        const location = ev.geo && ev.geo.type === 'point' ? `[${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
         const details = [ev.description, location].filter(Boolean).join(' ');
         md += `| ${dateStr}${endStr} | ${ev.elementLabel} | ${ev.label} | ${details || '-'} |\n`;
       }
@@ -797,7 +798,7 @@ class ReportService {
             for (const ev of el.events) {
               const dateStr = new Date(ev.date).toLocaleDateString(locale);
               const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
-              const geo = ev.geo ? ` [${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
+              const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
               md += `| ${dateStr}${endStr} | ${ev.label} | ${ev.description || '-'}${geo} |\n`;
             }
             md += `\n`;

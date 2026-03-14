@@ -11,7 +11,7 @@ import type {
   LinkId,
   AssetId,
   Position,
-  GeoCoordinates,
+  GeoData,
   Confidence,
   ElementShape,
   LinkStyle,
@@ -23,6 +23,7 @@ import type {
   TabId,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
+import { normalizeGeo, computePolygonCenter } from '../utils/geo';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
 import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
@@ -416,8 +417,11 @@ class ImportService {
         case 'stix2':
           importResult = await importSTIX2(content, targetDossierId);
           break;
+        case 'geojson':
+          importResult = await this.importFromGeoJSON(content, targetDossierId);
+          break;
         default:
-          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1');
+          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1, GeoJSON');
           return result;
       }
 
@@ -435,7 +439,7 @@ class ImportService {
   /**
    * Detect the JSON format from parsed data
    */
-  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'stix2' | 'unknown' {
+  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'stix2' | 'geojson' | 'unknown' {
     // Excalidraw: { type: "excalidraw", elements: [...] }
     if (isExcalidrawFormat(data)) {
       return 'excalidraw';
@@ -444,6 +448,14 @@ class ImportService {
     // STIX 2.1: { type: "bundle", objects: [...] }
     if (isSTIX2Format(data)) {
       return 'stix2';
+    }
+
+    // GeoJSON: { type: "FeatureCollection", features: [...] }
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const obj = data as Record<string, unknown>;
+      if (obj.type === 'FeatureCollection' && Array.isArray(obj.features)) {
+        return 'geojson';
+      }
     }
 
     // ZeroNeurone native: { version, elements, links }
@@ -593,7 +605,7 @@ class ImportService {
           dateRange: parsedElement.dateRange,
           position: parsedElement.position,
           isPositionLocked: parsedElement.isPositionLocked ?? false,
-          geo: parsedElement.geo,
+          geo: normalizeGeo(parsedElement.geo),
           visual: parsedElement.visual,
           assetIds: assetId ? [assetId] : [],
           parentGroupId: parsedElement.parentGroupId,
@@ -671,6 +683,226 @@ class ImportService {
       result.errors.push(
         `Erreur d'import OSINTracker: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
       );
+    }
+
+    return result;
+  }
+
+  /**
+   * Import from GeoJSON file (FeatureCollection with Points and Polygons)
+   * Points → elements with geo point, Polygons → elements with geo zone
+   */
+  async importFromGeoJSON(
+    content: string,
+    targetDossierId: DossierId
+  ): Promise<ImportResult> {
+    const result: ImportResult = {
+      success: false,
+      elementsImported: 0,
+      linksImported: 0,
+      assetsImported: 0,
+      reportImported: false,
+      errors: [],
+      warnings: [],
+    };
+
+    try {
+      const data = JSON.parse(content);
+
+      if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+        result.errors.push('Format GeoJSON invalide: FeatureCollection attendu');
+        return result;
+      }
+
+      const features = data.features as Array<{
+        type: string;
+        id?: string;
+        geometry?: {
+          type: string;
+          coordinates?: unknown;
+        };
+        properties?: Record<string, unknown>;
+      }>;
+
+      // Grid layout for canvas positions
+      let gridX = 0;
+      let gridY = 0;
+      const gridSpacing = 200;
+      const gridCols = 10;
+
+      for (const feature of features) {
+        if (!feature.geometry) {
+          result.warnings.push('Feature sans géométrie ignorée');
+          continue;
+        }
+
+        const props = feature.properties || {};
+        const label = String(
+          props.name || props.label || props.nom || props.title ||
+          props.NAME || props.LABEL || props.NOM ||
+          feature.id || `Feature ${result.elementsImported + 1}`
+        );
+
+        // Extract metadata from properties
+        const notes = String(props.notes || props.description || props.desc || props.NOTES || '');
+        const tags: string[] = [];
+        if (props.tags) {
+          if (Array.isArray(props.tags)) {
+            tags.push(...props.tags.map(String));
+          } else {
+            tags.push(...String(props.tags).split(';').map(t => t.trim()).filter(Boolean));
+          }
+        }
+
+        // Extract source
+        const source = String(props.source || props.SOURCE || '');
+
+        // Parse confidence
+        let confidence: Confidence | null = null;
+        const confVal = props.confidence ?? props.confiance;
+        if (confVal !== undefined && confVal !== null) {
+          let conf = typeof confVal === 'number' ? confVal : parseFloat(String(confVal));
+          if (conf > 0 && conf <= 1) conf = Math.round(conf * 100);
+          conf = Math.round(conf / 10) * 10;
+          if (conf >= 0 && conf <= 100) confidence = conf as Confidence;
+        }
+
+        // Extract color/shape from properties (for re-import of ZN geojson exports)
+        const color = String(props.color || props.couleur || DEFAULT_ELEMENT_VISUAL.color);
+        const shapeRaw = String(props.shape || props.forme || '');
+        const shape = this.isValidShape(shapeRaw) ? shapeRaw as ElementShape : DEFAULT_ELEMENT_VISUAL.shape;
+
+        // Build custom properties from remaining keys
+        const knownProps = new Set([
+          'name', 'label', 'nom', 'title', 'NAME', 'LABEL', 'NOM',
+          'notes', 'description', 'desc', 'NOTES',
+          'tags', 'source', 'SOURCE',
+          'confidence', 'confiance',
+          'color', 'couleur', 'shape', 'forme',
+          'type', 'date',
+        ]);
+        const properties: Property[] = [];
+        for (const [key, value] of Object.entries(props)) {
+          if (!knownProps.has(key) && value !== null && value !== undefined) {
+            // Handle prop_ prefixed keys from ZN geojson export
+            const propKey = key.startsWith('prop_') ? key.slice(5) : key;
+            properties.push({ key: propKey, value: String(value), type: 'text' });
+          }
+        }
+
+        // Parse date
+        let date: Date | null = null;
+        if (props.date) {
+          const parsed = new Date(String(props.date));
+          if (!isNaN(parsed.getTime())) date = parsed;
+        }
+
+        // Build geo data based on geometry type
+        let geo: GeoData | null = null;
+        const geomType = feature.geometry.type;
+
+        if (geomType === 'Point') {
+          const coords = feature.geometry.coordinates as [number, number];
+          if (Array.isArray(coords) && coords.length >= 2) {
+            geo = { type: 'point', lat: coords[1], lng: coords[0] };
+          }
+        } else if (geomType === 'Polygon') {
+          const rings = feature.geometry.coordinates as [number, number][][];
+          if (Array.isArray(rings) && rings.length > 0) {
+            // Take outer ring, remove closing point (last = first in GeoJSON)
+            const outerRing = rings[0];
+            const coords = outerRing.length > 1 &&
+              outerRing[0][0] === outerRing[outerRing.length - 1][0] &&
+              outerRing[0][1] === outerRing[outerRing.length - 1][1]
+              ? outerRing.slice(0, -1)
+              : outerRing;
+
+            if (coords.length >= 3) {
+              geo = {
+                type: 'polygon',
+                coordinates: coords as [number, number][],
+                center: computePolygonCenter(coords as [number, number][]),
+              };
+            } else {
+              result.warnings.push(`"${label}": polygone avec moins de 3 points, ignoré`);
+              continue;
+            }
+          }
+        } else if (geomType === 'MultiPoint') {
+          // Import first point only
+          const coords = feature.geometry.coordinates as [number, number][];
+          if (Array.isArray(coords) && coords.length > 0) {
+            geo = { type: 'point', lat: coords[0][1], lng: coords[0][0] };
+            if (coords.length > 1) {
+              result.warnings.push(`"${label}": MultiPoint réduit au premier point`);
+            }
+          }
+        } else if (geomType === 'LineString') {
+          // Skip links/linestrings — they are relationships, not elements
+          // Could be ZN-exported links; skip silently
+          continue;
+        } else {
+          result.warnings.push(`"${label}": géométrie "${geomType}" non supportée, ignorée`);
+          continue;
+        }
+
+        if (!geo) {
+          result.warnings.push(`"${label}": coordonnées invalides, ignoré`);
+          continue;
+        }
+
+        // Canvas position
+        const position: Position = {
+          x: gridX * gridSpacing,
+          y: gridY * gridSpacing,
+        };
+        gridX++;
+        if (gridX >= gridCols) {
+          gridX = 0;
+          gridY++;
+        }
+
+        const element: Element = {
+          id: generateUUID(),
+          dossierId: targetDossierId,
+          label,
+          notes,
+          tags,
+          properties,
+          confidence,
+          source,
+          date,
+          dateRange: null,
+          position,
+          isPositionLocked: false,
+          geo,
+          visual: {
+            ...DEFAULT_ELEMENT_VISUAL,
+            color,
+            shape,
+          },
+          assetIds: [],
+          parentGroupId: null,
+          isGroup: false,
+          isAnnotation: false,
+          childIds: [],
+          events: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await db.elements.add(element);
+        result.elementsImported++;
+      }
+
+      // Update dossier timestamp
+      await db.dossiers.update(targetDossierId, {
+        updatedAt: new Date(),
+      });
+
+      result.success = result.elementsImported > 0;
+    } catch (error) {
+      result.errors.push(`Erreur d'import GeoJSON: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
 
     return result;
@@ -790,14 +1022,14 @@ class ImportService {
         }
 
         // Parse geo coordinates
-        let geo: GeoCoordinates | null = null;
+        let geo: GeoData | null = null;
         const lat = nodeData.lat || nodeData.latitude;
         const lng = nodeData.lng || nodeData.lon || nodeData.longitude;
         if (lat !== undefined && lng !== undefined) {
           const latNum = typeof lat === 'number' ? lat : parseFloat(lat);
           const lngNum = typeof lng === 'number' ? lng : parseFloat(lng);
           if (!isNaN(latNum) && !isNaN(lngNum)) {
-            geo = { lat: latNum, lng: lngNum };
+            geo = { type: 'point', lat: latNum, lng: lngNum };
           }
         }
 
@@ -1042,6 +1274,7 @@ class ImportService {
         dossierId: targetDossierId,
         position,
         assetIds: newAssetIds,
+        geo: normalizeGeo(importedElement.geo),
         date: importedElement.date ? new Date(importedElement.date) : null,
         dateRange: importedElement.dateRange
           ? {
@@ -1380,12 +1613,12 @@ class ImportService {
         }
 
         // Parse geo coordinates
-        let geo: GeoCoordinates | null = null;
+        let geo: GeoData | null = null;
         if (latIdx >= 0 && lngIdx >= 0 && values[latIdx] && values[lngIdx]) {
           const lat = parseFloat(values[latIdx]);
           const lng = parseFloat(values[lngIdx]);
           if (!isNaN(lat) && !isNaN(lng)) {
-            geo = { lat, lng };
+            geo = { type: 'point', lat, lng };
           }
         }
 
@@ -1728,12 +1961,12 @@ class ImportService {
           };
 
           // Parse geo coordinates
-          let geo: GeoCoordinates | null = null;
+          let geo: GeoData | null = null;
           if (geoLatIdx >= 0 && geoLngIdx >= 0) {
             const lat = parseFloat(values[geoLatIdx]);
             const lng = parseFloat(values[geoLngIdx]);
             if (!isNaN(lat) && !isNaN(lng)) {
-              geo = { lat, lng };
+              geo = { type: 'point', lat, lng };
             }
           }
 
@@ -2161,7 +2394,7 @@ class ImportService {
 
   private isValidShape(value: string | number | undefined): boolean {
     if (!value || typeof value !== 'string') return false;
-    return ['circle', 'square', 'diamond', 'rectangle'].includes(value.toLowerCase());
+    return ['circle', 'square', 'diamond', 'rectangle', 'hexagon'].includes(value.toLowerCase());
   }
 
   private isValidLinkStyle(value: string | number | undefined): boolean {

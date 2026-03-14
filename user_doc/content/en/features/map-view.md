@@ -112,6 +112,45 @@ Links between geolocated elements are displayed as lines on the map.
 
 ---
 
+## Geographic Zones
+
+Zones let you define areas on the map (surveillance perimeters, areas of interest, intervention sectors…).
+
+### Create a Zone
+
+The **Zone** button in the toolbar offers three shapes via a dropdown menu:
+
+| Shape | Drawing |
+|-------|---------|
+| **Polygon** | Click to place each vertex, double-click or click on the first point to close |
+| **Circle** | 1st click = center, move the mouse to adjust radius (displayed in real time), 2nd click = confirm |
+| **Square** | 1st click = center, move the mouse to adjust size, 2nd click = confirm |
+
+Press **Escape** to cancel drawing.
+
+A Zone element is created with **Area** and **Radius** (for circles) properties.
+
+### Edit a Zone
+
+Double-click on a zone to enter edit mode:
+
+| Type | Edit Mode |
+|------|-----------|
+| **Polygon / Square** | Drag vertices to move them. Click on midpoints to add a vertex. |
+| **Circle** | Four cardinal handles (N, E, S, W) allow resizing the radius by dragging. |
+
+Click outside the zone to save. Press **Escape** to cancel.
+
+### Move a Zone
+
+Drag the zone's central marker to move it. The shape (polygon, circle, square) is preserved.
+
+### Edit GeoJSON
+
+For events with zones, a text editor allows copy/pasting GeoJSON from an external tool (QGIS, geojson.io…). Accepted formats: `Polygon` (Geometry, Feature or FeatureCollection).
+
+---
+
 ## Base Maps
 
 Four base maps are available via the selector in the toolbar:
@@ -149,6 +188,7 @@ Controls:
 | **Buildings** | Show/hide 3D buildings |
 | **Temporal** | Enable/disable temporal mode |
 | **Selection** | Zoom to selected elements |
+| **Zone** | Draw a zone (polygon, circle or square) |
 | **Fit** | Adjust view to see all markers |
 | **Export CSV** | Export map data as CSV |
 
@@ -171,6 +211,7 @@ Exports geolocated elements in a GIS-compatible format (QGIS, ArcGIS).
 | Element | GeoJSON Format |
 |---------|----------------|
 | Geolocated elements | Point |
+| Geographic zones | Polygon |
 | Links (if both ends geolocated) | LineString |
 
 ---

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useUIStore } from '../../stores/uiStore';
 import { useDossierStore } from '../../stores';
-import type { Property, GeoCoordinates } from '../../types';
+import type { Property, Element } from '../../types';
 
 function formatPropertyValue(prop: Property): string {
   if (prop.value == null) return '';
@@ -105,12 +105,12 @@ export function MetadataImportModal() {
     }
     const mergedProperties = Array.from(existingMap.values());
 
-    const changes: Partial<{ properties: Property[]; geo: GeoCoordinates | null }> = {
+    const changes: Partial<Element> = {
       properties: mergedProperties,
     };
 
     if (geoSelected && metadata.geo) {
-      changes.geo = metadata.geo;
+      changes.geo = { type: 'point', lat: metadata.geo.lat, lng: metadata.geo.lng };
     }
 
     await updateElement(elementId, changes);

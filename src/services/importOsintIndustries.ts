@@ -5,7 +5,6 @@ import type {
   Element,
   Link,
   Position,
-  GeoCoordinates,
   Property,
   AssetId,
 } from '../types';
@@ -185,7 +184,7 @@ export async function importOsintIndustries(
       const properties: Property[] = [];
       const moduleAssetIds: AssetId[] = [];
       let moduleImageId: AssetId | null = null;
-      let geo: GeoCoordinates | null = null;
+      let geo: import('../types').GeoData | null = null;
       let notes = '';
       const isMapModule = mod.module === 'maps' || mod.module === 'google_maps';
 
@@ -258,7 +257,7 @@ export async function importOsintIndustries(
             if (!geo && entry.lat_lng && Array.isArray(entry.lat_lng) && entry.lat_lng.length >= 2) {
               const [lat, lng] = entry.lat_lng;
               if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
-                geo = { lat, lng };
+                geo = { type: 'point', lat, lng };
               }
             }
             if (entry.popup) {
@@ -274,7 +273,7 @@ export async function importOsintIndustries(
           if (noteParts.length > 0) {
             notes = noteParts.join('\n\n---\n\n');
           }
-          if (geo) {
+          if (geo && geo.type === 'point') {
             properties.push({ key: 'Latitude', value: String(geo.lat), type: 'number' });
             properties.push({ key: 'Longitude', value: String(geo.lng), type: 'number' });
           }

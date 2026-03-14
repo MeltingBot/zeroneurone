@@ -308,7 +308,24 @@
     "stepForward": "Stap vooruit",
     "play": "Afspelen",
     "pause": "Pauze",
-    "unnamed": "Naamloos"
+    "unnamed": "Naamloos",
+    "drawZone": "Zone tekenen",
+    "cancelDraw": "Tekening annuleren",
+    "zone": "Zone",
+    "newZone": "Nieuwe zone",
+    "deleteSelection": "Selectie verwijderen",
+    "editZone": "Vorm bewerken",
+    "geometry": "Geometrie",
+    "vertices": "Hoekpunten",
+    "area": "Oppervlakte",
+    "center": "Middelpunt",
+    "viewOnMap": "Bekijk op kaart",
+    "deleteVertex": "Hoekpunt verwijderen"
+    ,
+    "geoJsonSave": "Toepassen",
+    "geoJsonParseError": "Ongeldige JSON",
+    "geoJsonMinVertices": "Minimaal 3 hoekpunten",
+    "geoJsonInvalidCoord": "Ongeldige coördinaat: [lng, lat]"
   },
   "timeline": {
     "noEvents": "Geen gedateerde gebeurtenissen",

@@ -127,7 +127,17 @@
       "locationOptional": "Localisation (optionnel)",
       "clearLocation": "Effacer",
       "pickOnMap": "Carte",
-      "extractToElement": "Extraire en élément"
+      "extractToElement": "Extraire en élément",
+      "hasZone": "A une zone",
+      "zoneOptional": "Zone (optionnel)",
+      "zoneInfo": "{{points}} points, ~{{area}} km²",
+      "inheritZone": "Hériter de la zone",
+      "drawZone": "Dessiner",
+      "editGeoJson": "GeoJSON",
+      "applyGeoJson": "Appliquer",
+      "geoJsonParseError": "JSON invalide",
+      "geoJsonInvalidType": "Type attendu : Polygon",
+      "geoJsonMinPoints": "3 points minimum"
     },
     "location": {
       "title": "Localisation",
@@ -141,7 +151,10 @@
       "clearLocation": "Effacer",
       "removeLocation": "Supprimer la localisation",
       "saveLocation": "Valider",
-      "noLocation": "Aucune position définie"
+      "noLocation": "Aucune position définie",
+      "altitude": "Altitude",
+      "altUnit": "mètres",
+      "extrude": "Extrusion 3D"
     },
     "properties": {
       "title": "Propriétés",

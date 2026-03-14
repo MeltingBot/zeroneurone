@@ -386,5 +386,20 @@
       { "key": "Agent enregistré", "type": "text", "description": "", "placeholder": "Mossack Fonseca" },
       { "key": "Bénéficiaire effectif", "type": "text", "description": "", "placeholder": "" }
     ]
+  },
+  {
+    "name": "Zone",
+    "description": "Zone géographique, périmètre, secteur",
+    "defaultVisual": {
+      "color": "#10b981",
+      "shape": "hexagon",
+      "icon": "MapPin"
+    },
+    "suggestedProperties": [
+      { "key": "Type de zone", "type": "choice", "description": "", "placeholder": "", "choices": ["Périmètre enquête", "Juridiction", "Surveillance", "Zone interdite", "Secteur activité", "Autre"] },
+      { "key": "Surface", "type": "text", "description": "Calculée automatiquement", "placeholder": "2.5 km²" },
+      { "key": "Adresse", "type": "text", "description": "Adresse ou description du lieu", "placeholder": "Quartier Belleville, Paris 20e" },
+      { "key": "Responsable", "type": "text", "description": "Personne ou entité responsable", "placeholder": "Commissariat du 20e" }
+    ]
   }
 ]

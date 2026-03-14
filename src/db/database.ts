@@ -193,6 +193,16 @@ class DossierDatabase extends Dexie {
     this.version(9).stores({
       investigations: null, // Safe to delete after v8 upgrade copied data
     });
+
+    // ─── Version 10: Migrate geo to typed GeoData (point/polygon) ────────
+    this.version(10).stores({}).upgrade(async tx => {
+      const elements = tx.table('elements');
+      await elements.toCollection().modify((el: any) => {
+        if (el.geo && !el.geo.type) {
+          el.geo = { type: 'point', lat: el.geo.lat, lng: el.geo.lng };
+        }
+      });
+    });
   }
 
   /**

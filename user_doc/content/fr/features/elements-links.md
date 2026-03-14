@@ -55,7 +55,7 @@ Empêchez les déplacements accidentels en verrouillant la position d'un éléme
 
 ### Événements
 
-Les éléments peuvent avoir des **événements** associés, chacun avec une date, une description et éventuellement une géolocalisation.
+Les éléments peuvent avoir des **événements** associés, chacun avec une date, une description et éventuellement une géolocalisation (point ou zone polygonale).
 
 ### Extraire un événement en élément
 

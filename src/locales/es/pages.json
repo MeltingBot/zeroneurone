@@ -308,7 +308,24 @@
     "stepForward": "Avanzar",
     "play": "Reproducir",
     "pause": "Pausa",
-    "unnamed": "Sin nombre"
+    "unnamed": "Sin nombre",
+    "drawZone": "Dibujar una zona",
+    "cancelDraw": "Cancelar el dibujo",
+    "zone": "Zona",
+    "newZone": "Nueva zona",
+    "deleteSelection": "Eliminar selección",
+    "editZone": "Editar forma",
+    "geometry": "Geometría",
+    "vertices": "Vértices",
+    "area": "Superficie",
+    "center": "Centro",
+    "viewOnMap": "Ver en el mapa",
+    "deleteVertex": "Eliminar vértice"
+    ,
+    "geoJsonSave": "Aplicar",
+    "geoJsonParseError": "JSON no válido",
+    "geoJsonMinVertices": "Mínimo 3 vértices",
+    "geoJsonInvalidCoord": "Coordenada inválida: [lng, lat]"
   },
   "timeline": {
     "noEvents": "Ningún evento fechado",

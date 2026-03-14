@@ -308,7 +308,24 @@
     "stepForward": "Vorwärts",
     "play": "Abspielen",
     "pause": "Pause",
-    "unnamed": "Unbenannt"
+    "unnamed": "Unbenannt",
+    "drawZone": "Zone zeichnen",
+    "cancelDraw": "Zeichnung abbrechen",
+    "zone": "Zone",
+    "newZone": "Neue Zone",
+    "deleteSelection": "Auswahl löschen",
+    "editZone": "Form bearbeiten",
+    "geometry": "Geometrie",
+    "vertices": "Eckpunkte",
+    "area": "Fläche",
+    "center": "Mittelpunkt",
+    "viewOnMap": "Auf Karte anzeigen",
+    "deleteVertex": "Eckpunkt löschen"
+    ,
+    "geoJsonSave": "Anwenden",
+    "geoJsonParseError": "Ungültiges JSON",
+    "geoJsonMinVertices": "Mindestens 3 Eckpunkte",
+    "geoJsonInvalidCoord": "Ungültige Koordinate: [lng, lat]"
   },
   "timeline": {
     "noEvents": "Keine datierten Ereignisse",

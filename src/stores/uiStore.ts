@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode } from '../types';
+import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode, GeoData, GeoPolygon } from '../types';
 import type { ExtractedMetadata } from '../services/metadataService';
 import { generateUUID } from '../utils';
 
@@ -165,6 +165,17 @@ interface UIState {
   // Actions - Import placement mode
   enterImportPlacementMode: (data: ImportPlacementData) => void;
   exitImportPlacementMode: () => void;
+
+  // Zone shape selection
+  zoneShape: 'polygon' | 'circle' | 'square';
+  setZoneShape: (shape: 'polygon' | 'circle' | 'square') => void;
+
+  // Zone draw/edit request (from EventsEditor → MapView)
+  pendingZoneDrawCallback: ((geo: GeoData) => void) | null;
+  pendingZoneEditGeo: GeoPolygon | null; // If set, edit existing polygon instead of drawing new
+  pendingZoneRequestId: number; // Incremented on each request to guarantee change detection
+  requestZoneDraw: (callback: (geo: GeoData) => void, existingGeo?: GeoPolygon) => void;
+  clearZoneDraw: () => void;
 
   // Actions - Reset dossier-specific state
   resetDossierState: () => void;
@@ -390,6 +401,17 @@ export const useUIStore = create<UIState>()(
     });
   },
 
+  // Zone shape
+  zoneShape: 'polygon' as 'polygon' | 'circle' | 'square',
+  setZoneShape: (shape: 'polygon' | 'circle' | 'square') => set({ zoneShape: shape }),
+
+  // Zone draw request
+  pendingZoneDrawCallback: null,
+  pendingZoneEditGeo: null,
+  pendingZoneRequestId: 0,
+  requestZoneDraw: (callback, existingGeo) => set((s) => ({ pendingZoneDrawCallback: callback, pendingZoneEditGeo: existingGeo ?? null, pendingZoneRequestId: s.pendingZoneRequestId + 1 })),
+  clearZoneDraw: () => set({ pendingZoneDrawCallback: null, pendingZoneEditGeo: null }),
+
   // Reset dossier-specific state (called when closing an dossier)
   resetDossierState: () => {
     set({
@@ -397,6 +419,8 @@ export const useUIStore = create<UIState>()(
       anonymousMode: false,
       importPlacementMode: false,
       importPlacementData: null,
+      pendingZoneDrawCallback: null,
+      pendingZoneEditGeo: null,
     });
   },
 }),

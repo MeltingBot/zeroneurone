@@ -13,6 +13,7 @@ const SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'square', label: 'Carré' },
   { value: 'diamond', label: 'Losange' },
   { value: 'rectangle', label: 'Rectangle' },
+  { value: 'hexagon', label: 'Hexagone' },
 ];
 
 const FONT_SIZES: { value: FontSize; label: string }[] = [
