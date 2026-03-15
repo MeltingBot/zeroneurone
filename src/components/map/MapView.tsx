@@ -1659,16 +1659,30 @@ export function MapView() {
     return () => clearInterval(interval);
   }, [isPlaying, eventDates]);
 
-  // No geo elements — show empty state
-  if (geoElements.length === 0 && !temporalMode && !hasZonePolygons) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center bg-bg-secondary">
-        <MapPin size={48} className="text-text-tertiary mb-4" />
-        <p className="text-sm text-text-secondary">{t('map.noGeoElements')}</p>
-        <p className="text-xs text-text-tertiary mt-2">{t('map.addLocation')}</p>
-      </div>
-    );
-  }
+  // ── Listen for flyToPolygon events from detail panel ──────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const coords = (e as CustomEvent).detail?.coordinates as [number, number][] | undefined;
+      if (!coords || coords.length < 2 || !mapRef.current) return;
+      // Small delay to let mode switch render the map
+      setTimeout(() => {
+        const map = mapRef.current;
+        if (!map) return;
+        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+        for (const [lng, lat] of coords) {
+          if (lng < minLng) minLng = lng;
+          if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        }
+        map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 60, maxZoom: 16 });
+      }, 100);
+    };
+    window.addEventListener('map:flyToPolygon', handler);
+    return () => window.removeEventListener('map:flyToPolygon', handler);
+  }, []);
+
+  const showEmptyState = geoElements.length === 0 && !temporalMode && !hasZonePolygons;
 
   const handlePlaceSearch = async () => {
     if (!placeQuery.trim() || !mapRef.current) return;
@@ -1706,31 +1720,8 @@ export function MapView() {
     setPlaceSearching(false);
   };
 
-  // ── Listen for flyToPolygon events from detail panel ──────────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const coords = (e as CustomEvent).detail?.coordinates as [number, number][] | undefined;
-      if (!coords || coords.length < 2 || !mapRef.current) return;
-      // Small delay to let mode switch render the map
-      setTimeout(() => {
-        const map = mapRef.current;
-        if (!map) return;
-        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
-        for (const [lng, lat] of coords) {
-          if (lng < minLng) minLng = lng;
-          if (lng > maxLng) maxLng = lng;
-          if (lat < minLat) minLat = lat;
-          if (lat > maxLat) maxLat = lat;
-        }
-        map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 60, maxZoom: 16 });
-      }, 100);
-    };
-    window.addEventListener('map:flyToPolygon', handler);
-    return () => window.removeEventListener('map:flyToPolygon', handler);
-  }, []);
-
   return (
-    <div className="h-full flex flex-col bg-bg-secondary">
+    <div className="h-full flex flex-col bg-bg-secondary relative">
       {/* Toolbar */}
       <ViewToolbar
         leftContent={
@@ -1957,6 +1948,15 @@ export function MapView() {
 
       {/* Map container */}
       <div ref={mapContainerRef} className="flex-1" style={{ isolation: 'isolate' }} data-report-capture="map" />
+
+      {/* Empty state overlay */}
+      {showEmptyState && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg-secondary/90 z-10">
+          <MapPin size={48} className="text-text-tertiary mb-4" />
+          <p className="text-sm text-text-secondary">{t('map.noGeoElements')}</p>
+          <p className="text-xs text-text-tertiary mt-2">{t('map.addLocation')}</p>
+        </div>
+      )}
 
       {/* Zone polygon layers */}
       <ZoneLayers

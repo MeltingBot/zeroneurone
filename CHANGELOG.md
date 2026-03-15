@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.31.2
+
+### Fixes
+- Map: fix "Rendered more hooks" error (useEffect after early return)
+- Map: fix blank map when switching tabs (early return removed map container from DOM)
+- Map toolbar: fix controls wrapping to second line (overflow-x-auto instead of flex-wrap)
+
 ## 2.31.1
 
 ### Fixes

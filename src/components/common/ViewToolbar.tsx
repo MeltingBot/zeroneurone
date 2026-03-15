@@ -48,7 +48,7 @@ export function ViewToolbar({
       )}
 
       {/* Right side - view-specific + common controls */}
-      <div className="flex items-center gap-1 min-w-0 ml-2 flex-wrap justify-end">
+      <div className="flex items-center gap-1 min-w-0 ml-2 justify-end overflow-x-auto scrollbar-none">
         {rightContent}
 
         {/* Separator if there's right content */}
