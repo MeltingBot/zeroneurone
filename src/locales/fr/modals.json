@@ -383,7 +383,7 @@
       "generating": "Génération du rapport..."
     },
     "content": {
-      "generatedOn": "Rapport généré le {{date}} à {{time}}",
+      "generatedOn": "Synthèse générée le {{date}} à {{time}}",
       "summary": "Résumé",
       "elements": "Éléments",
       "links": "Liens",
@@ -433,6 +433,25 @@
       "uniqueTags": "Tags uniques",
       "field": "Champ",
       "property": "Propriété"
+    },
+    "interactive": {
+      "noElements": "Aucun élément",
+      "report": "Rapport",
+      "search": "Rechercher (Ctrl+K)",
+      "filterByTags": "Filtrer par tags",
+      "toggleLayout": "Inverser la disposition",
+      "exportMarkdown": "Export Markdown",
+      "info": "Informations",
+      "theme": "Thème",
+      "dossier": "Dossier",
+      "createdOn": "Créé le",
+      "exportedOn": "Exporté le",
+      "elements": "éléments",
+      "links": "liens",
+      "groups": "groupes",
+      "searchPlaceholder": "Rechercher un élément...",
+      "graph": "Graphe",
+      "toc": "Sommaire"
     }
   },
   "metadataImport": {

@@ -383,7 +383,7 @@
       "generating": "Generating report..."
     },
     "content": {
-      "generatedOn": "Report generated on {{date}} at {{time}}",
+      "generatedOn": "Summary generated on {{date}} at {{time}}",
       "summary": "Summary",
       "elements": "Elements",
       "links": "Links",
@@ -433,6 +433,25 @@
       "uniqueTags": "Unique tags",
       "field": "Field",
       "property": "Property"
+    },
+    "interactive": {
+      "noElements": "No elements",
+      "report": "Report",
+      "search": "Search (Ctrl+K)",
+      "filterByTags": "Filter by tags",
+      "toggleLayout": "Toggle layout",
+      "exportMarkdown": "Export Markdown",
+      "info": "Information",
+      "theme": "Theme",
+      "dossier": "Dossier",
+      "createdOn": "Created on",
+      "exportedOn": "Exported on",
+      "elements": "elements",
+      "links": "links",
+      "groups": "groups",
+      "searchPlaceholder": "Search an element...",
+      "graph": "Graph",
+      "toc": "Table of contents"
     }
   },
   "metadataImport": {

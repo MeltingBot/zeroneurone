@@ -366,7 +366,7 @@
       "generating": "Bericht wird generiert..."
     },
     "content": {
-      "generatedOn": "Bericht generiert am {{date}} um {{time}}",
+      "generatedOn": "Synthese erstellt am {{date}} um {{time}}",
       "summary": "Zusammenfassung",
       "elements": "Elemente",
       "links": "Verbindungen",
@@ -416,6 +416,25 @@
       "uniqueTags": "Eindeutige Tags",
       "field": "Feld",
       "property": "Eigenschaft"
+    },
+    "interactive": {
+      "noElements": "Keine Elemente",
+      "report": "Bericht",
+      "search": "Suchen (Ctrl+K)",
+      "filterByTags": "Nach Tags filtern",
+      "toggleLayout": "Layout umkehren",
+      "exportMarkdown": "Markdown exportieren",
+      "info": "Informationen",
+      "theme": "Thema",
+      "dossier": "Dossier",
+      "createdOn": "Erstellt am",
+      "exportedOn": "Exportiert am",
+      "elements": "Elemente",
+      "links": "Verbindungen",
+      "groups": "Gruppen",
+      "searchPlaceholder": "Element suchen...",
+      "graph": "Graph",
+      "toc": "Inhaltsverzeichnis"
     }
   },
   "metadataImport": {

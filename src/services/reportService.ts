@@ -70,7 +70,7 @@ class ReportService {
    * Helper to get translation with fallback
    */
   private t(key: string, options?: Record<string, unknown>): string {
-    return i18next.t(`modals:report.content.${key}`, options) as string;
+    return i18next.t(`modals:synthesis.content.${key}`, options) as string;
   }
 
   /**

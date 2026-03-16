@@ -366,7 +366,7 @@
       "generating": "Генерація звіту..."
     },
     "content": {
-      "generatedOn": "Звіт створено {{date}} о {{time}}",
+      "generatedOn": "Синтез створено {{date}} о {{time}}",
       "summary": "Підсумок",
       "elements": "Елементи",
       "links": "Зв'язки",
@@ -416,6 +416,25 @@
       "uniqueTags": "Унікальні теги",
       "field": "Поле",
       "property": "Властивість"
+    },
+    "interactive": {
+      "noElements": "Немає елементів",
+      "report": "Звіт",
+      "search": "Пошук (Ctrl+K)",
+      "filterByTags": "Фільтрувати за тегами",
+      "toggleLayout": "Змінити розташування",
+      "exportMarkdown": "Експорт Markdown",
+      "info": "Інформація",
+      "theme": "Тема",
+      "dossier": "Досьє",
+      "createdOn": "Створено",
+      "exportedOn": "Експортовано",
+      "elements": "елементи",
+      "links": "зв'язки",
+      "groups": "групи",
+      "searchPlaceholder": "Шукати елемент...",
+      "graph": "Граф",
+      "toc": "Зміст"
     }
   },
   "metadataImport": {

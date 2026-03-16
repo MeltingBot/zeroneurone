@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.31.4
+
+### Fixes
+- Synthesis: i18n for interactive HTML report (11 languages) — all UI strings were hardcoded in French
+- Synthesis: fix report content translations not resolving (wrong i18n namespace `report.content` → `synthesis.content`)
+- Synthesis: "Synthèse générée le..." instead of "Rapport généré le..." in all languages
+
 ## 2.31.3
 
 ### Fixes

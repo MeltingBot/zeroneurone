@@ -366,7 +366,7 @@
       "generating": "Generant informe..."
     },
     "content": {
-      "generatedOn": "Informe generat el {{date}} a les {{time}}",
+      "generatedOn": "Síntesi generada el {{date}} a les {{time}}",
       "summary": "Resum",
       "elements": "Elements",
       "links": "Enllaços",
@@ -416,6 +416,25 @@
       "uniqueTags": "Etiquetes úniques",
       "field": "Camp",
       "property": "Propietat"
+    },
+    "interactive": {
+      "noElements": "Cap element",
+      "report": "Informe",
+      "search": "Cercar (Ctrl+K)",
+      "filterByTags": "Filtrar per etiquetes",
+      "toggleLayout": "Invertir disposició",
+      "exportMarkdown": "Exportar Markdown",
+      "info": "Informació",
+      "theme": "Tema",
+      "dossier": "Expedient",
+      "createdOn": "Creat el",
+      "exportedOn": "Exportat el",
+      "elements": "elements",
+      "links": "enllaços",
+      "groups": "grups",
+      "searchPlaceholder": "Cercar un element...",
+      "graph": "Graf",
+      "toc": "Sumari"
     }
   },
   "metadataImport": {

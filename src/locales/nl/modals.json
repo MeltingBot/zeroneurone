@@ -366,7 +366,7 @@
       "generating": "Rapport genereren..."
     },
     "content": {
-      "generatedOn": "Rapport gegenereerd op {{date}} om {{time}}",
+      "generatedOn": "Synthese gegenereerd op {{date}} om {{time}}",
       "summary": "Samenvatting",
       "elements": "Elementen",
       "links": "Verbindingen",
@@ -416,6 +416,25 @@
       "uniqueTags": "Unieke tags",
       "field": "Veld",
       "property": "Eigenschap"
+    },
+    "interactive": {
+      "noElements": "Geen elementen",
+      "report": "Rapport",
+      "search": "Zoeken (Ctrl+K)",
+      "filterByTags": "Filteren op tags",
+      "toggleLayout": "Layout omdraaien",
+      "exportMarkdown": "Markdown exporteren",
+      "info": "Informatie",
+      "theme": "Thema",
+      "dossier": "Dossier",
+      "createdOn": "Aangemaakt op",
+      "exportedOn": "Geëxporteerd op",
+      "elements": "elementen",
+      "links": "verbindingen",
+      "groups": "groepen",
+      "searchPlaceholder": "Element zoeken...",
+      "graph": "Graaf",
+      "toc": "Inhoudsopgave"
     }
   },
   "metadataImport": {

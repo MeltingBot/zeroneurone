@@ -366,7 +366,7 @@
       "generating": "Txostena sortzen..."
     },
     "content": {
-      "generatedOn": "Txostena sortua {{date}}-(e)an {{time}}-(e)tan",
+      "generatedOn": "Sintesia sortua {{date}}-(e)an {{time}}-(e)tan",
       "summary": "Laburpena",
       "elements": "Elementuak",
       "links": "Loturak",
@@ -416,6 +416,25 @@
       "uniqueTags": "Etiketa bakarrak",
       "field": "Eremua",
       "property": "Propietatea"
+    },
+    "interactive": {
+      "noElements": "Elementurik ez",
+      "report": "Txostena",
+      "search": "Bilatu (Ctrl+K)",
+      "filterByTags": "Etiketaz iragazi",
+      "toggleLayout": "Diseinua alderantzikatu",
+      "exportMarkdown": "Markdown esportatu",
+      "info": "Informazioa",
+      "theme": "Gaia",
+      "dossier": "Espedientea",
+      "createdOn": "Sortua",
+      "exportedOn": "Esportatua",
+      "elements": "elementu",
+      "links": "lotura",
+      "groups": "talde",
+      "searchPlaceholder": "Elementu bat bilatu...",
+      "graph": "Grafoa",
+      "toc": "Aurkibidea"
     }
   },
   "metadataImport": {

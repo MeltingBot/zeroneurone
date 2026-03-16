@@ -366,7 +366,7 @@
       "generating": "Generando informe..."
     },
     "content": {
-      "generatedOn": "Informe generado el {{date}} a las {{time}}",
+      "generatedOn": "Síntesis generada el {{date}} a las {{time}}",
       "summary": "Resumen",
       "elements": "Elementos",
       "links": "Enlaces",
@@ -416,6 +416,25 @@
       "uniqueTags": "Tags únicos",
       "field": "Campo",
       "property": "Propiedad"
+    },
+    "interactive": {
+      "noElements": "Sin elementos",
+      "report": "Informe",
+      "search": "Buscar (Ctrl+K)",
+      "filterByTags": "Filtrar por etiquetas",
+      "toggleLayout": "Invertir disposición",
+      "exportMarkdown": "Exportar Markdown",
+      "info": "Información",
+      "theme": "Tema",
+      "dossier": "Expediente",
+      "createdOn": "Creado el",
+      "exportedOn": "Exportado el",
+      "elements": "elementos",
+      "links": "enlaces",
+      "groups": "grupos",
+      "searchPlaceholder": "Buscar un elemento...",
+      "graph": "Grafo",
+      "toc": "Índice"
     }
   },
   "metadataImport": {

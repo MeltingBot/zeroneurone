@@ -366,7 +366,7 @@
       "generating": "Generazione del report..."
     },
     "content": {
-      "generatedOn": "Report generato il {{date}} alle {{time}}",
+      "generatedOn": "Sintesi generata il {{date}} alle {{time}}",
       "summary": "Riepilogo",
       "elements": "Elementi",
       "links": "Collegamenti",
@@ -416,6 +416,25 @@
       "uniqueTags": "Tag unici",
       "field": "Campo",
       "property": "Proprietà"
+    },
+    "interactive": {
+      "noElements": "Nessun elemento",
+      "report": "Rapporto",
+      "search": "Cerca (Ctrl+K)",
+      "filterByTags": "Filtra per tag",
+      "toggleLayout": "Inverti disposizione",
+      "exportMarkdown": "Esporta Markdown",
+      "info": "Informazioni",
+      "theme": "Tema",
+      "dossier": "Fascicolo",
+      "createdOn": "Creato il",
+      "exportedOn": "Esportato il",
+      "elements": "elementi",
+      "links": "collegamenti",
+      "groups": "gruppi",
+      "searchPlaceholder": "Cerca un elemento...",
+      "graph": "Grafo",
+      "toc": "Sommario"
     }
   },
   "metadataImport": {

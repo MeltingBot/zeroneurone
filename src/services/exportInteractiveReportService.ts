@@ -10,6 +10,7 @@
 
 import type { Element, Link, Asset, Dossier, Report, Position } from '../types';
 import { fileService } from './fileService';
+import i18next from 'i18next';
 
 // CSS variable to hex color map (same as svgExportService)
 const CSS_VAR_MAP: Record<string, string> = {
@@ -127,9 +128,9 @@ function getGroupBounds(group: Element): { x: number; y: number; width: number; 
 }
 
 // Generate SVG for the graph
-function generateGraphSVG(elements: Element[], links: Link[], thumbnails: Record<string, string> = {}): string {
+function generateGraphSVG(elements: Element[], links: Link[], thumbnails: Record<string, string> = {}, noElementsLabel = 'No elements'): string {
   if (elements.length === 0) {
-    return '<svg viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" class="svg-text">Aucun element</text></svg>';
+    return `<svg viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" class="svg-text">${escapeXml(noElementsLabel)}</text></svg>`;
   }
 
   const elementMap = new Map(elements.map((e) => [e.id, e]));
@@ -456,11 +457,35 @@ export async function exportInteractiveReport(
   links: Link[],
   assets: Asset[]
 ): Promise<Blob> {
+  // Resolve i18n strings at export time
+  const t = (key: string) => i18next.t(`modals:synthesis.interactive.${key}`);
+  const lang = i18next.language?.substring(0, 2) || 'en';
+  const i18nStrings = {
+    lang,
+    noElements: t('noElements'),
+    report: t('report'),
+    search: t('search'),
+    filterByTags: t('filterByTags'),
+    toggleLayout: t('toggleLayout'),
+    exportMarkdown: t('exportMarkdown'),
+    info: t('info'),
+    theme: t('theme'),
+    dossier: t('dossier'),
+    createdOn: t('createdOn'),
+    exportedOn: t('exportedOn'),
+    elements: t('elements'),
+    links: t('links'),
+    groups: t('groups'),
+    searchPlaceholder: t('searchPlaceholder'),
+    graph: t('graph'),
+    toc: t('toc'),
+  };
+
   // Generate thumbnails
   const thumbnails = await generateThumbnails(assets);
 
   // Generate SVG
-  const graphSvg = generateGraphSVG(elements, links, thumbnails);
+  const graphSvg = generateGraphSVG(elements, links, thumbnails, i18nStrings.noElements);
 
   // Build TOC and report HTML
   const tocItems: { id: string; title: string }[] = [];
@@ -509,6 +534,7 @@ export async function exportInteractiveReport(
     linkCount: links.length,
     groupCount,
     tocItems,
+    i18n: i18nStrings,
   });
 
   return new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -530,11 +556,33 @@ interface HTMLParams {
   groupCount: number;
   // TOC
   tocItems: { id: string; title: string }[];
+  // i18n
+  i18n: {
+    lang: string;
+    noElements: string;
+    report: string;
+    search: string;
+    filterByTags: string;
+    toggleLayout: string;
+    exportMarkdown: string;
+    info: string;
+    theme: string;
+    dossier: string;
+    createdOn: string;
+    exportedOn: string;
+    elements: string;
+    links: string;
+    groups: string;
+    searchPlaceholder: string;
+    graph: string;
+    toc: string;
+  };
 }
 
 function buildFullHTML(params: HTMLParams): string {
+  const s = params.i18n;
   return `<!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${escapeXml(params.title)} - Rapport</title>
+<html lang="${s.lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${escapeXml(params.title)} - ${escapeXml(s.report)}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg-primary:#ffffff;--bg-secondary:#f9fafb;--bg-tertiary:#f3f4f6;--text-primary:#111827;--text-secondary:#6b7280;--text-tertiary:#9ca3af;--border-default:#e5e7eb;--accent:#2563eb;--graph-bg:#f9fafb}
@@ -664,13 +712,13 @@ main[data-active-tab="graph"] #graph-panel{display:block;width:100%;height:100%}
 <body><div id="app">
 <header><a href="https://zeroneurone.com" target="_blank" rel="noopener" class="logo" title="ZeroNeurone"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="currentColor" fill-opacity="0.1"/><text x="6" y="22" font-family="system-ui" font-size="14" font-weight="700" fill="currentColor">0-1</text></svg></a>
 <h1>${escapeXml(params.dossierName)}</h1>
-<div class="actions"><button id="search-btn" class="header-btn" title="Rechercher (Ctrl+K)">&#x2315;</button><div class="tag-filter-wrap"><button id="tag-btn" class="header-btn" title="Filtrer par tags" style="display:none;">&#x25cb;</button><div id="tag-popover"></div></div><button id="layout-toggle" class="header-btn" title="Inverser la disposition">&#x21C4;</button><button id="export-md" class="header-btn" title="Export Markdown">MD</button><button id="info-btn" class="header-btn" title="Informations">i</button><button id="theme-toggle" class="header-btn" title="Theme">☀</button></div>
+<div class="actions"><button id="search-btn" class="header-btn" title="${escapeXml(s.search)}">&#x2315;</button><div class="tag-filter-wrap"><button id="tag-btn" class="header-btn" title="${escapeXml(s.filterByTags)}" style="display:none;">&#x25cb;</button><div id="tag-popover"></div></div><button id="layout-toggle" class="header-btn" title="${escapeXml(s.toggleLayout)}">&#x21C4;</button><button id="export-md" class="header-btn" title="${escapeXml(s.exportMarkdown)}">MD</button><button id="info-btn" class="header-btn" title="${escapeXml(s.info)}">i</button><button id="theme-toggle" class="header-btn" title="${escapeXml(s.theme)}">☀</button></div>
 </header>
-<div id="info-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h2>Informations</h2><button class="modal-close" id="modal-close">&times;</button></div><div class="modal-body"><dl><dt>Dossier</dt><dd>${escapeXml(params.dossierName)}</dd><dt>Creee le</dt><dd>${new Date(params.dossierCreatedAt).toLocaleDateString('fr-FR')}</dd><dt>Exportee le</dt><dd>${new Date(params.exportDate).toLocaleDateString('fr-FR')}</dd></dl><div class="stats"><span>${params.elementCount} elements</span><span>${params.linkCount} liens</span>${params.groupCount > 0 ? `<span>${params.groupCount} groupes</span>` : ''}</div>${params.dossierDescription ? `<div class="description"><p>${escapeXml(params.dossierDescription)}</p></div>` : ''}</div><div class="modal-footer"><a href="https://zeroneurone.com" target="_blank" rel="noopener">zeroneurone.com</a></div></div></div>
-<div id="search-overlay"><div id="search-box"><input id="search-input" type="text" placeholder="Rechercher un element..." autocomplete="off"/><div id="search-results"></div></div></div>
-<nav id="mobile-tabs"><button class="tab active" data-tab="report">Rapport</button><button class="tab" data-tab="graph">Graphe</button></nav>
+<div id="info-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h2>${escapeXml(s.info)}</h2><button class="modal-close" id="modal-close">&times;</button></div><div class="modal-body"><dl><dt>${escapeXml(s.dossier)}</dt><dd>${escapeXml(params.dossierName)}</dd><dt>${escapeXml(s.createdOn)}</dt><dd>${new Date(params.dossierCreatedAt).toLocaleDateString(s.lang)}</dd><dt>${escapeXml(s.exportedOn)}</dt><dd>${new Date(params.exportDate).toLocaleDateString(s.lang)}</dd></dl><div class="stats"><span>${params.elementCount} ${escapeXml(s.elements)}</span><span>${params.linkCount} ${escapeXml(s.links)}</span>${params.groupCount > 0 ? `<span>${params.groupCount} ${escapeXml(s.groups)}</span>` : ''}</div>${params.dossierDescription ? `<div class="description"><p>${escapeXml(params.dossierDescription)}</p></div>` : ''}</div><div class="modal-footer"><a href="https://zeroneurone.com" target="_blank" rel="noopener">zeroneurone.com</a></div></div></div>
+<div id="search-overlay"><div id="search-box"><input id="search-input" type="text" placeholder="${escapeXml(s.searchPlaceholder)}" autocomplete="off"/><div id="search-results"></div></div></div>
+<nav id="mobile-tabs"><button class="tab active" data-tab="report">${escapeXml(s.report)}</button><button class="tab" data-tab="graph">${escapeXml(s.graph)}</button></nav>
 <main data-active-tab="report">
-<aside id="report-panel">${params.tocItems.length > 1 ? `<nav class="toc"><details><summary>Sommaire</summary><ul>${params.tocItems.map((item) => `<li><a href="#${item.id}">${escapeXml(item.title)}</a></li>`).join('')}</ul></details></nav>` : ''}${params.reportHtml}</aside>
+<aside id="report-panel">${params.tocItems.length > 1 ? `<nav class="toc"><details><summary>${escapeXml(s.toc)}</summary><ul>${params.tocItems.map((item) => `<li><a href="#${item.id}">${escapeXml(item.title)}</a></li>`).join('')}</ul></details></nav>` : ''}${params.reportHtml}</aside>
 <div id="resize-handle"></div>
 <section id="graph-panel"><div id="graph-container">${params.graphSvg}</div><div id="graph-controls"><button id="zoom-in" title="Zoom +">+</button><button id="zoom-out" title="Zoom -">&minus;</button><button id="zoom-reset" title="Reset">&#x27F2;</button></div><div id="element-tooltip"></div></section>
 </main></div>
