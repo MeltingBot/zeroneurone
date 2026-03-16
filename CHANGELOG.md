@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.31.3
+
+### Fixes
+- Canvas: alignment now works for elements inside groups (absolute/relative position conversion)
+- Canvas: distribute uses measured node dimensions for proper spacing
+- Canvas: align dropdown closes reliably (capture phase + selection change listener)
+- Canvas: toolbar dropdown menus no longer clipped by overflow
+
 ## 2.31.2
 
 ### Fixes

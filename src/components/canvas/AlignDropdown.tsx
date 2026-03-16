@@ -13,6 +13,7 @@ import {
   AlignVerticalSpaceBetween,
   Anchor,
 } from 'lucide-react';
+import { useReactFlow } from '@xyflow/react';
 import { useDossierStore, useHistoryStore, useSelectionStore } from '../../stores';
 import type { Position } from '../../types';
 
@@ -32,9 +33,13 @@ const ALIGN_ICONS: Record<AlignAction, typeof AlignStartVertical> = {
 const ALIGN_ACTIONS: AlignAction[] = ['left', 'centerH', 'right', 'top', 'centerV', 'bottom'];
 const DISTRIBUTE_ACTIONS: AlignAction[] = ['distributeH', 'distributeV'];
 
+// Default node dimensions for distribute when measured size unavailable
+const DEFAULT_NODE_WIDTH = 120;
+const DEFAULT_NODE_HEIGHT = 60;
+
 function computeAlignedPositions(
   action: AlignAction,
-  selected: { id: string; position: Position }[],
+  selected: { id: string; position: Position; width?: number; height?: number }[],
   keyObjectId: string | null,
 ): { id: string; position: Position }[] {
   if (selected.length < 2) return [];
@@ -71,18 +76,32 @@ function computeAlignedPositions(
     case 'distributeH': {
       if (selected.length < 3) return [];
       const sorted = [...selected].sort((a, b) => a.position.x - b.position.x);
+      const totalWidths = sorted.reduce((sum, el) => sum + (el.width || DEFAULT_NODE_WIDTH), 0);
       const minX = sorted[0].position.x;
-      const maxX = sorted[sorted.length - 1].position.x;
-      const step = (maxX - minX) / (sorted.length - 1);
-      return sorted.map((el, i) => ({ id: el.id, position: { x: minX + i * step, y: el.position.y } }));
+      const maxX = sorted[sorted.length - 1].position.x + (sorted[sorted.length - 1].width || DEFAULT_NODE_WIDTH);
+      const availableSpace = Math.max(maxX - minX - totalWidths, 0);
+      const gap = availableSpace / (sorted.length - 1);
+      let currentX = minX;
+      return sorted.map((el) => {
+        const pos = { id: el.id, position: { x: currentX, y: el.position.y } };
+        currentX += (el.width || DEFAULT_NODE_WIDTH) + gap;
+        return pos;
+      });
     }
     case 'distributeV': {
       if (selected.length < 3) return [];
       const sorted = [...selected].sort((a, b) => a.position.y - b.position.y);
+      const totalHeights = sorted.reduce((sum, el) => sum + (el.height || DEFAULT_NODE_HEIGHT), 0);
       const minY = sorted[0].position.y;
-      const maxY = sorted[sorted.length - 1].position.y;
-      const step = (maxY - minY) / (sorted.length - 1);
-      return sorted.map((el, i) => ({ id: el.id, position: { x: el.position.x, y: minY + i * step } }));
+      const maxY = sorted[sorted.length - 1].position.y + (sorted[sorted.length - 1].height || DEFAULT_NODE_HEIGHT);
+      const availableSpace = Math.max(maxY - minY - totalHeights, 0);
+      const gap = availableSpace / (sorted.length - 1);
+      let currentY = minY;
+      return sorted.map((el) => {
+        const pos = { id: el.id, position: { x: el.position.x, y: currentY } };
+        currentY += (el.height || DEFAULT_NODE_HEIGHT) + gap;
+        return pos;
+      });
     }
     default:
       return [];
@@ -98,18 +117,20 @@ export function AlignDropdown() {
   const { pushAction } = useHistoryStore();
   const selectedElementIds = useSelectionStore(s => s.selectedElementIds);
   const lastClickedElementId = useSelectionStore(s => s.lastClickedElementId);
+  const { getNodes } = useReactFlow();
 
-  const selectedCount = selectedElementIds.size;
-  const hasKeyObject = lastClickedElementId !== null && selectedElementIds.has(lastClickedElementId) && selectedCount > 1;
-
-  // Build list of selected elements with labels for the reference picker
+  // Build list of selected elements with labels for the reference picker (exclude groups)
   const selectedElements = useMemo(() => {
     const ids = Array.from(selectedElementIds);
     return elements
-      .filter(el => ids.includes(el.id))
+      .filter(el => ids.includes(el.id) && !el.isGroup)
       .map(el => ({ id: el.id, label: el.label || t('empty.unnamed') }));
   }, [elements, selectedElementIds, t]);
 
+  const selectedCount = selectedElements.length;
+  const hasKeyObject = lastClickedElementId !== null && selectedElementIds.has(lastClickedElementId) && selectedCount > 1;
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -117,28 +138,84 @@ export function AlignDropdown() {
       }
     };
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside, true); // capture phase
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, [isOpen]);
+
+  // Close dropdown when selection changes (e.g. clicking canvas nodes)
+  useEffect(() => {
+    if (isOpen) setIsOpen(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElementIds]);
 
   const handleAlign = useCallback(async (action: AlignAction) => {
     setIsOpen(false);
 
     const ids = Array.from(selectedElementIds);
-    const selected = elements
-      .filter(el => ids.includes(el.id))
-      .map(el => ({ id: el.id, position: { ...el.position } }));
+    // Exclude group frames from alignment — only align their children
+    const selectedEls = elements.filter(el => ids.includes(el.id) && !el.isGroup);
 
-    if (selected.length < 2) return;
+    if (selectedEls.length < 2) return;
+
+    // Build a map of group positions for converting relative → absolute
+    const groupPositionMap = new Map<string, Position>();
+    for (const el of elements) {
+      if (el.isGroup) groupPositionMap.set(el.id, el.position);
+    }
+
+    // Convert positions to absolute for alignment computation
+    const toAbsolute = (el: { position: Position; parentGroupId?: string | null }): Position => {
+      if (el.parentGroupId) {
+        const gp = groupPositionMap.get(el.parentGroupId);
+        if (gp) return { x: el.position.x + gp.x, y: el.position.y + gp.y };
+      }
+      return el.position;
+    };
+
+    const toRelativeOffset = (el: { parentGroupId?: string | null }): Position => {
+      if (el.parentGroupId) {
+        const gp = groupPositionMap.get(el.parentGroupId);
+        if (gp) return gp;
+      }
+      return { x: 0, y: 0 };
+    };
+
+    // Get measured dimensions from React Flow nodes
+    const rfNodes = getNodes();
+    const nodeDims = new Map<string, { width: number; height: number }>();
+    for (const n of rfNodes) {
+      if (n.measured?.width && n.measured?.height) {
+        nodeDims.set(n.id, { width: n.measured.width, height: n.measured.height });
+      }
+    }
+
+    const selected = selectedEls.map(el => {
+      const dims = nodeDims.get(el.id);
+      return {
+        id: el.id,
+        position: toAbsolute(el),
+        width: dims?.width,
+        height: dims?.height,
+        _offset: toRelativeOffset(el),
+        _origPosition: { ...el.position },
+      };
+    });
 
     const keyId = hasKeyObject ? lastClickedElementId : null;
-    const newPositions = computeAlignedPositions(action, selected, keyId);
-    if (newPositions.length === 0) return;
+    const newAbsolutePositions = computeAlignedPositions(action, selected, keyId);
+    if (newAbsolutePositions.length === 0) return;
 
-    const oldPositions = selected.map(el => ({ id: el.id, position: el.position }));
+    // Convert back to relative positions (subtract parent group offset)
+    const newPositions = newAbsolutePositions.map(np => {
+      const orig = selected.find(s => s.id === np.id);
+      const offset = orig?._offset ?? { x: 0, y: 0 };
+      return { id: np.id, position: { x: np.position.x - offset.x, y: np.position.y - offset.y } };
+    });
+
+    const oldPositions = selectedEls.map(el => ({ id: el.id, position: { ...el.position } }));
 
     pushAction({
       type: 'move-elements',
@@ -147,7 +224,7 @@ export function AlignDropdown() {
     });
 
     await updateElementPositions(newPositions);
-  }, [elements, selectedElementIds, lastClickedElementId, hasKeyObject, updateElementPositions, pushAction]);
+  }, [elements, selectedElementIds, lastClickedElementId, hasKeyObject, updateElementPositions, pushAction, getNodes]);
 
   const handleSetKeyObject = useCallback((id: string) => {
     useSelectionStore.setState({
