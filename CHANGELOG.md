@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.31.5
+
+### Fixes
+- Canvas: context menu i18n — all labels were hardcoded in French, now use existing translation keys
+
 ## 2.31.4
 
 ### Fixes

@@ -1,5 +1,6 @@
 import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
 import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, icons } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 
 interface CanvasContextMenuProps {
@@ -41,6 +42,8 @@ function CanvasContextMenuComponent({
   pluginExtensions,
   menuContext,
 }: CanvasContextMenuProps) {
+  const { t } = useTranslation('pages');
+  const cm = (key: string) => t(`dossier.contextMenu.${key}`);
   const hasSelection = selectedCount > 0;
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
@@ -107,7 +110,7 @@ function CanvasContextMenuComponent({
           <>
             <div className="px-3 py-1.5 border-b border-border-default">
               <span className="text-xs text-text-secondary">
-                {selectedCount} element{selectedCount > 1 ? 's' : ''} selectionne{selectedCount > 1 ? 's' : ''}
+                {t('dossier.toolbar.selectedCount', { count: selectedCount })}
               </span>
             </div>
             <div className="py-1 border-b border-border-default">
@@ -120,7 +123,7 @@ function CanvasContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   <Copy size={14} />
-                  Copier
+                  {cm('copy')}
                   <span className="ml-auto text-xs text-text-tertiary">Ctrl+C</span>
                 </button>
               )}
@@ -133,7 +136,7 @@ function CanvasContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   <Scissors size={14} />
-                  Couper
+                  {cm('cut')}
                   <span className="ml-auto text-xs text-text-tertiary">Ctrl+X</span>
                 </button>
               )}
@@ -146,7 +149,7 @@ function CanvasContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   <CopyPlus size={14} />
-                  Dupliquer
+                  {cm('duplicate')}
                   <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
                 </button>
               )}
@@ -161,8 +164,8 @@ function CanvasContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   <Group size={14} />
-                  Grouper
-                </button>
+                  {cm('group')}
+</button>
               )}
               {onHideSelection && (
                 <button
@@ -173,7 +176,7 @@ function CanvasContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   <EyeOff size={14} />
-                  Masquer
+                  {cm('hide')}
                 </button>
               )}
               {onDeleteSelection && (
@@ -185,8 +188,8 @@ function CanvasContextMenuComponent({
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-error hover:bg-pastel-pink transition-colors"
                 >
                   <Trash2 size={14} />
-                  Supprimer
-                  <span className="ml-auto text-xs text-text-tertiary">Suppr</span>
+                  {cm('delete')}
+                  <span className="ml-auto text-xs text-text-tertiary">Del</span>
                 </button>
               )}
             </div>
@@ -203,7 +206,7 @@ function CanvasContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Plus size={14} />
-            Nouvel element
+            {cm('addElement')}
             <span className="ml-auto text-xs text-text-tertiary">E</span>
           </button>
           <button
@@ -214,7 +217,7 @@ function CanvasContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Group size={14} />
-            Nouveau groupe visuel
+            {cm('addGroup')}
             <span className="ml-auto text-xs text-text-tertiary">G</span>
           </button>
           <button
@@ -225,7 +228,7 @@ function CanvasContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <StickyNote size={14} />
-            Nouvelle note
+            {cm('addAnnotation')}
             <span className="ml-auto text-xs text-text-tertiary">N</span>
           </button>
         </div>
@@ -240,7 +243,7 @@ function CanvasContextMenuComponent({
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
           >
             <Clipboard size={14} />
-            Coller
+            {cm('paste')}
             <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
           </button>
         </div>
