@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.31.6
+
+### Fixes
+- Canvas: circle/hexagon shapes with media — label no longer clipped, displayed below the shape
+- Map: localized tiles adapt to app language (FR → OSM France, DE → OSM Deutschland, other → default OSM)
+- Map: "OSM Latin" renamed to "OSM Localized" with automatic language-based tile resolution
+
 ## 2.31.5
 
 ### Fixes

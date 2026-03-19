@@ -201,7 +201,7 @@ export const useUIStore = create<UIState>()(
   snapToGrid: false,
   showAlignGuides: true,
   gridSize: 20,
-  mapBaseLayer: 'osmLatin',
+  mapBaseLayer: 'osmLocalized',
   map3D: false,
   map3DBuildings: false,
   metadataImportQueue: [],
@@ -432,6 +432,10 @@ export const useUIStore = create<UIState>()(
         // Apply theme on rehydration
         if (state?.themeMode) {
           document.documentElement.setAttribute('data-theme', state.themeMode);
+        }
+        // Migrate old osmLatin → osmLocalized
+        if (state && state.mapBaseLayer === 'osmLatin') {
+          state.mapBaseLayer = 'osmLocalized';
         }
       },
     }

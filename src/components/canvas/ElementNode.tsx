@@ -539,6 +539,18 @@ function ElementNodeComponent({ data }: NodeProps) {
           </>
         ) : hasThumbnail ? (
           /* Diamond: counter-rotate + scale √2 so content fills the rotated square */
+          /* Circle/Hexagon: image fills the entire shape, label is rendered outside (below) */
+          (element.visual.shape === 'circle' || element.visual.shape === 'hexagon') ? (
+            <div
+              className="w-full h-full bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${hideMedia ? thumbnail : (hdImageUrl || thumbnail)})`,
+                backgroundColor: 'var(--color-bg-secondary)',
+                filter: hideMedia ? 'blur(16px) grayscale(1)' : undefined,
+                imageRendering: hideMedia ? 'pixelated' : undefined,
+              }}
+            />
+          ) : (
           <div className={`flex flex-col w-full h-full ${element.visual.shape === 'diamond' ? '-rotate-45 scale-[1.414]' : ''}`}>
             {/* Thumbnail preview - using contain to show full image, pixelate+grayscale if hideMedia */}
             <div
@@ -583,6 +595,7 @@ function ElementNodeComponent({ data }: NodeProps) {
               )}
             </div>
           </div>
+          )
         ) : (
           /* Diamond shape content needs to be counter-rotated */
           <div
@@ -636,6 +649,41 @@ function ElementNodeComponent({ data }: NodeProps) {
           </div>
         )}
       </div>
+
+      {/* External label for circle/hexagon with thumbnail — rendered outside the clipped node body */}
+      {hasThumbnail && (element.visual.shape === 'circle' || element.visual.shape === 'hexagon') && (
+        <div className="absolute left-1/2 -translate-x-1/2 max-w-[150%] text-center" style={{ top: 'calc(100% + 2px)' }}>
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+              onBlur={handleInputBlur}
+              className="w-full text-[10px] text-text-primary text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
+              style={{ fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined }}
+            />
+          ) : anonymousMode ? (
+            <RedactedText
+              text={element.label || t('empty.unnamed')}
+              className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+            />
+          ) : (
+            <span
+              className={`text-[10px] text-text-primary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {element.label || t('empty.unnamed')}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -56,9 +56,14 @@ const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzo
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxzoom: 19,
   },
-  osmLatin: {
+  osmFr: {
     tiles: ['https://a.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'],
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.openstreetmap.fr">OSM France</a>',
+    maxzoom: 19,
+  },
+  osmDe: {
+    tiles: ['https://a.tile.openstreetmap.de/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.de/{z}/{x}/{y}.png', 'https://c.tile.openstreetmap.de/{z}/{x}/{y}.png'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.openstreetmap.de">OSM Deutschland</a>',
     maxzoom: 19,
   },
   cartoLight: {
@@ -80,13 +85,19 @@ const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzo
 
 const BASE_LAYERS = [
   { id: 'osm', label: 'OpenStreetMap' },
-  { id: 'osmLatin', label: 'OSM Latin' },
+  { id: 'osmLocalized', label: 'OSM Localized' },
   { id: 'carto', label: 'CartoDB' },
   { id: 'satellite', label: 'Satellite' },
 ];
 
-function resolveLayerId(id: string, isDark: boolean): string {
+function resolveLayerId(id: string, isDark: boolean, lang?: string): string {
   if (id === 'carto') return isDark ? 'cartoDark' : 'cartoLight';
+  if (id === 'osmLocalized') {
+    const l = lang?.substring(0, 2);
+    if (l === 'fr') return 'osmFr';
+    if (l === 'de') return 'osmDe';
+    return 'osm';
+  }
   return id;
 }
 
@@ -614,7 +625,7 @@ export function MapView() {
     const { mapBaseLayer: initLayer, map3D: init3D, themeMode: initTheme } = useUIStore.getState();
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: buildMapStyle(resolveLayerId(initLayer, initTheme === 'dark'), init3D),
+      style: buildMapStyle(resolveLayerId(initLayer, initTheme === 'dark', i18n.language), init3D),
       center: [1.888334, 46.603354], // Center of France [lng, lat]
       zoom: 6,
       pitch: init3D ? 45 : 0,
@@ -689,7 +700,7 @@ export function MapView() {
       ll.arrowEnd?.remove();
     });
     linkLayersRef.current.clear();
-    map.setStyle(buildMapStyle(resolveLayerId(activeBaseLayer, themeMode === 'dark'), is3DRef.current));
+    map.setStyle(buildMapStyle(resolveLayerId(activeBaseLayer, themeMode === 'dark', i18n.language), is3DRef.current));
     // Re-flag as loaded after style switch
     map.once('style.load', () => {
       mapLoadedRef.current = true;
@@ -702,7 +713,7 @@ export function MapView() {
       }
       setClusteringVersion(v => v + 1);
     });
-  }, [activeBaseLayer, themeMode]);
+  }, [activeBaseLayer, themeMode, i18n.language]);
 
   // Toggle 3D mode (projection + terrain + pitch) without full style reload
   const is3DInitRef = useRef(true); // skip first render (handled by init)
