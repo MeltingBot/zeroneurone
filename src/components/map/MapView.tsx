@@ -84,8 +84,8 @@ const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzo
 };
 
 const BASE_LAYERS = [
-  { id: 'osm', label: 'OpenStreetMap' },
-  { id: 'osmLocalized', label: 'OSM Localized' },
+  { id: 'osm', label: 'OSM' },
+  { id: 'osmLocalized', label: 'OSM FR/DE' },
   { id: 'carto', label: 'CartoDB' },
   { id: 'satellite', label: 'Satellite' },
 ];
@@ -1692,6 +1692,45 @@ export function MapView() {
     window.addEventListener('map:flyToPolygon', handler);
     return () => window.removeEventListener('map:flyToPolygon', handler);
   }, []);
+
+  // ── Listen for flyToElement events (from search modal) ──────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const elementId = (e as CustomEvent).detail?.elementId as string | undefined;
+      if (!elementId || !mapRef.current) return;
+      const target = geoElements.find(el => el.id === elementId);
+      if (!target) return;
+      const c = getGeoCenter(target.geo);
+      mapRef.current.flyTo({ center: [c.lng, c.lat], zoom: 14 });
+    };
+    window.addEventListener('map:flyToElement', handler);
+    return () => window.removeEventListener('map:flyToElement', handler);
+  }, [geoElements]);
+
+  // ── Auto-zoom to selected elements on mount ──────────────
+  const didAutoZoomRef = useRef(false);
+  useEffect(() => {
+    if (didAutoZoomRef.current) return;
+    const map = mapRef.current;
+    if (!map || !mapLoadedRef.current || geoElements.length === 0) return;
+    const selIds = useSelectionStore.getState().selectedElementIds;
+    if (selIds.size === 0) return;
+    const selectedGeo = geoElements.filter((el) => selIds.has(el.id));
+    if (selectedGeo.length === 0) return;
+    didAutoZoomRef.current = true;
+    // Small delay so markers are placed first
+    setTimeout(() => {
+      if (!mapRef.current) return;
+      if (selectedGeo.length === 1) {
+        const c = getGeoCenter(selectedGeo[0].geo);
+        mapRef.current.flyTo({ center: [c.lng, c.lat], zoom: 14 });
+      } else {
+        const coords = selectedGeo.map(el => [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] as [number, number]);
+        const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+        mapRef.current.fitBounds(bounds, { padding: 50 });
+      }
+    }, 300);
+  }, [geoElements, clusteringVersion]);
 
   const showEmptyState = geoElements.length === 0 && !temporalMode && !hasZonePolygons;
 

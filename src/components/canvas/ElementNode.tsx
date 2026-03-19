@@ -540,9 +540,9 @@ function ElementNodeComponent({ data }: NodeProps) {
         ) : hasThumbnail ? (
           /* Diamond: counter-rotate + scale √2 so content fills the rotated square */
           /* Circle/Hexagon: image fills the entire shape, label is rendered outside (below) */
-          (element.visual.shape === 'circle' || element.visual.shape === 'hexagon') ? (
+          (element.visual.shape === 'circle' || element.visual.shape === 'hexagon' || element.visual.shape === 'diamond') ? (
             <div
-              className="w-full h-full bg-cover bg-center"
+              className={`w-full h-full bg-cover bg-center ${element.visual.shape === 'diamond' ? '-rotate-45 scale-[1.414]' : ''}`}
               style={{
                 backgroundImage: `url(${hideMedia ? thumbnail : (hdImageUrl || thumbnail)})`,
                 backgroundColor: 'var(--color-bg-secondary)',
@@ -551,7 +551,7 @@ function ElementNodeComponent({ data }: NodeProps) {
               }}
             />
           ) : (
-          <div className={`flex flex-col w-full h-full ${element.visual.shape === 'diamond' ? '-rotate-45 scale-[1.414]' : ''}`}>
+          <div className="flex flex-col w-full h-full">
             {/* Thumbnail preview - using contain to show full image, pixelate+grayscale if hideMedia */}
             <div
               className="flex-1 w-full bg-contain bg-center bg-no-repeat"
@@ -650,8 +650,8 @@ function ElementNodeComponent({ data }: NodeProps) {
         )}
       </div>
 
-      {/* External label for circle/hexagon with thumbnail — rendered outside the clipped node body */}
-      {hasThumbnail && (element.visual.shape === 'circle' || element.visual.shape === 'hexagon') && (
+      {/* External label for circle/hexagon/diamond with thumbnail — rendered outside the clipped node body */}
+      {hasThumbnail && (element.visual.shape === 'circle' || element.visual.shape === 'hexagon' || element.visual.shape === 'diamond') && (
         <div className="absolute left-1/2 -translate-x-1/2 max-w-[150%] text-center" style={{ top: 'calc(100% + 2px)' }}>
           {isEditing ? (
             <input

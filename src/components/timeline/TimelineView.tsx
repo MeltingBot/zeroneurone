@@ -789,6 +789,23 @@ export function TimelineView() {
     setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
   }, [timeBounds, getContainerWidth]);
 
+  // ── Listen for scrollToElement events (from search modal) ──────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const elementId = (e as CustomEvent).detail?.elementId as string | undefined;
+      if (!elementId) return;
+      // Find the first timeline item for this element
+      const item = items.find(it => it.sourceId === elementId);
+      if (!item) return;
+      // Center view on item's start date
+      const containerWidth = getContainerWidth();
+      const daysVisible = containerWidth / zoom;
+      setViewStart(new Date(item.start.getTime() - (daysVisible / 2) * 24 * 60 * 60 * 1000));
+    };
+    window.addEventListener('timeline:scrollToElement', handler);
+    return () => window.removeEventListener('timeline:scrollToElement', handler);
+  }, [items, zoom, getContainerWidth]);
+
   // Cleanup mouse events and RAF
   useEffect(() => {
     const handleGlobalMouseUp = () => {

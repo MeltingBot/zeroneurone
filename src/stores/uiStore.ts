@@ -201,7 +201,7 @@ export const useUIStore = create<UIState>()(
   snapToGrid: false,
   showAlignGuides: true,
   gridSize: 20,
-  mapBaseLayer: 'osmLocalized',
+  mapBaseLayer: 'osm',
   map3D: false,
   map3DBuildings: false,
   metadataImportQueue: [],

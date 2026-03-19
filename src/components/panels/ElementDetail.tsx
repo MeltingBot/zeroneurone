@@ -1255,16 +1255,33 @@ export function ElementDetail({ element }: ElementDetailProps) {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => {
-                pendingGeoPickerCallback.current = null;
-                setShowGeoPicker(true);
-              }}
-              className="w-full px-3 py-2 text-sm bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-2 text-text-secondary"
-            >
-              <MapIcon size={14} />
-              {t('detail.location.pickOnMap')}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  pendingGeoPickerCallback.current = null;
+                  setShowGeoPicker(true);
+                }}
+                className={`${hasGeo ? 'flex-1' : 'w-full'} px-3 py-2 text-sm bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-2 text-text-secondary`}
+              >
+                <MapIcon size={14} />
+                {t('detail.location.pickOnMap')}
+              </button>
+              {hasGeo && (
+                <button
+                  onClick={() => {
+                    const wasMap = useViewStore.getState().displayMode === 'map';
+                    useViewStore.getState().setDisplayMode('map');
+                    setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent('map:flyToElement', { detail: { elementId: element.id } }));
+                    }, wasMap ? 0 : 500);
+                  }}
+                  className="flex-1 px-3 py-2 text-sm bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-2 text-text-secondary"
+                >
+                  <MapIcon size={14} />
+                  {tPages('map.viewOnMap')}
+                </button>
+              )}
+            </div>
 
             {/* Zone geometry sub-section (inline in LOCALISATION) */}
             {element.geo && isGeoPolygon(element.geo) && (() => {
@@ -1277,8 +1294,12 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
+                        const wasMap = useViewStore.getState().displayMode === 'map';
                         useViewStore.getState().setDisplayMode('map');
-                        window.dispatchEvent(new CustomEvent('map:flyToPolygon', { detail: { coordinates: coords } }));
+                        // Delay if MapView needs to mount first
+                        setTimeout(() => {
+                          window.dispatchEvent(new CustomEvent('map:flyToPolygon', { detail: { coordinates: coords } }));
+                        }, wasMap ? 0 : 500);
                       }}
                       className="flex-1 px-3 py-1.5 text-xs bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-1.5 text-text-secondary"
                     >

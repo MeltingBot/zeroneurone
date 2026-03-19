@@ -100,25 +100,36 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         }
       }
 
+      const currentMode = useViewStore.getState().displayMode;
+
       if (result.type === 'element') {
         const element = elementsMap.get(result.id);
         if (element) {
           selectElement(element.id);
-          // Get element center (position is top-left, add half of typical size)
-          const sizeMap: Record<string, number> = { small: 40, medium: 56, large: 72 };
-          const baseSize = typeof element.visual?.size === 'number'
-            ? element.visual.size
-            : sizeMap[element.visual?.size ?? 'medium'] ?? 56;
-          const elementWidth = element.visual?.customWidth ?? baseSize;
-          const elementHeight = element.visual?.customHeight ?? baseSize;
-          const centerX = element.position.x + elementWidth / 2;
-          const centerY = element.position.y + elementHeight / 2;
-          // Center viewport on element
-          requestViewportChange({
-            x: -centerX * targetZoom + canvasWidth / 2,
-            y: -centerY * targetZoom + canvasHeight / 2,
-            zoom: targetZoom,
-          });
+
+          if (currentMode === 'map' && element.geo) {
+            // Fly to element on map
+            window.dispatchEvent(new CustomEvent('map:flyToElement', { detail: { elementId: element.id } }));
+          } else if (currentMode === 'timeline') {
+            // Scroll to element on timeline
+            window.dispatchEvent(new CustomEvent('timeline:scrollToElement', { detail: { elementId: element.id } }));
+          } else {
+            // Get element center (position is top-left, add half of typical size)
+            const sizeMap: Record<string, number> = { small: 40, medium: 56, large: 72 };
+            const baseSize = typeof element.visual?.size === 'number'
+              ? element.visual.size
+              : sizeMap[element.visual?.size ?? 'medium'] ?? 56;
+            const elementWidth = element.visual?.customWidth ?? baseSize;
+            const elementHeight = element.visual?.customHeight ?? baseSize;
+            const centerX = element.position.x + elementWidth / 2;
+            const centerY = element.position.y + elementHeight / 2;
+            // Center viewport on element
+            requestViewportChange({
+              x: -centerX * targetZoom + canvasWidth / 2,
+              y: -centerY * targetZoom + canvasHeight / 2,
+              zoom: targetZoom,
+            });
+          }
         }
       } else {
         const link = linksMap.get(result.id);

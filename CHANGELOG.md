@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.31.7
+
+### Fixes
+- Canvas: diamond shapes with media — label no longer clipped, displayed below the shape (same fix as circle/hexagon)
+- Map: auto-zoom to selected element when switching from canvas to map view
+- Map: search (Ctrl+K) now zooms to element on map
+- Map: "View on map" button added to element location panel (next to "Pick on map")
+- Map: polygon "View on map" button now works when switching from canvas (delayed event dispatch)
+- Map: default base layer changed to OSM (standard), OSM FR/DE available as option
+- Timeline: search (Ctrl+K) now scrolls to element on timeline
+
 ## 2.31.6
 
 ### Fixes
