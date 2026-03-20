@@ -5,6 +5,7 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Download } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
+import { CollaborationInfo } from '../collaboration';
 import { toPng } from 'html-to-image';
 import { TimelineRangeSlider } from './TimelineRangeSlider';
 
@@ -866,7 +867,9 @@ export function TimelineView() {
       <ViewToolbar
         showFontToggle
         leftContent={
-          <>
+          <div className="flex items-center gap-3">
+            <CollaborationInfo />
+            <div className="w-px h-4 bg-border-default" />
             <span className="text-xs text-text-secondary">
               {filterStartDate || filterEndDate
                 ? t('timeline.filteredEventsCount', { filtered: filteredItems.length, total: items.length })
@@ -876,7 +879,7 @@ export function TimelineView() {
             <span className="text-[10px] text-text-tertiary hidden sm:inline">
               {t('timeline.zoomHint')}
             </span>
-          </>
+          </div>
         }
         rightContent={
           <>

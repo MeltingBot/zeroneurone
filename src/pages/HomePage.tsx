@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
 import { DossierCard, LandingSection } from '../components/home';
@@ -60,6 +60,7 @@ export function HomePage() {
   const [sortMode, setSortMode] = useState<SortMode>('updated');
   const [allTags, setAllTags] = useState<string[]>([]);
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   // Load all tags used across dossiers
   useEffect(() => {
@@ -116,6 +117,13 @@ export function HomePage() {
     }
   }, [dossiers, updateDossier]);
 
+  const handleToggleArchive = useCallback(async (id: string) => {
+    const inv = dossiers.find((i) => i.id === id);
+    if (inv) {
+      await updateDossier(id, { isArchived: !inv.isArchived });
+    }
+  }, [dossiers, updateDossier]);
+
   const handleSaveTags = useCallback(async (tags: string[]) => {
     if (tagsTarget) {
       await updateDossier(tagsTarget, { tags });
@@ -133,9 +141,19 @@ export function HomePage() {
     setSelectedTags([]);
   }, []);
 
+  const archivedCount = useMemo(
+    () => dossiers.filter((d) => d.isArchived).length,
+    [dossiers]
+  );
+
   // Filter and sort dossiers
   const filteredDossiers = useMemo(() => {
     let result = [...dossiers];
+
+    // Hide archived dossiers unless showArchived is on
+    if (!showArchived) {
+      result = result.filter((inv) => !inv.isArchived);
+    }
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -173,7 +191,7 @@ export function HomePage() {
     });
 
     return result;
-  }, [dossiers, searchQuery, selectedTags, sortMode]);
+  }, [dossiers, searchQuery, selectedTags, sortMode, showArchived]);
 
   const targetDossier = dossiers.find(
     (inv) => inv.id === (deleteTarget || renameTarget || tagsTarget)
@@ -185,8 +203,9 @@ export function HomePage() {
     <Layout>
       {/* Header - only shown in list view */}
       {viewMode === 'list' && (
-        <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary panel-shadow">
-          <div className="flex items-center gap-3">
+        <header className="h-12 flex items-center px-4 border-b border-border-default bg-bg-primary panel-shadow">
+          {/* Left — title */}
+          <div className="flex items-center gap-3 shrink-0">
             <h1 className="text-sm font-semibold text-text-primary">{t('home.title')}</h1>
             <button
               onClick={() => setViewMode('landing')}
@@ -196,8 +215,31 @@ export function HomePage() {
               <Home size={16} className="text-text-secondary" />
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Plugin-provided actions */}
+
+          {/* Center — new dossier + import */}
+          <div className="flex-1 flex items-center justify-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenCreateModal}
+              data-testid="new-dossier"
+            >
+              <Plus size={16} />
+              {t('home.newDossier')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsImportModalOpen(true)}
+              data-testid="import-button"
+            >
+              <Upload size={16} />
+              {t('home.import')}
+            </Button>
+          </div>
+
+          {/* Right — utilities + plugins + language */}
+          <div className="flex items-center gap-1 shrink-0">
             {homePlugins.map((Plugin, i) => (
               <Plugin key={i} context="dossiers" />
             ))}
@@ -209,7 +251,6 @@ export function HomePage() {
             >
               {themeMode === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </Button>
-            <LanguageSwitcher size="md" />
             <Button
               variant="ghost"
               size="sm"
@@ -245,31 +286,14 @@ export function HomePage() {
               <HardDrive size={16} />
             </Button>
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
               onClick={() => setIsTagSetModalOpen(true)}
+              title={t('home.manageTags')}
             >
               <Tags size={16} />
-              {t('home.manageTags')}
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsImportModalOpen(true)}
-              data-testid="import-button"
-            >
-              <Upload size={16} />
-              {t('home.import')}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleOpenCreateModal}
-              data-testid="new-dossier"
-            >
-              <Plus size={16} />
-              {t('home.newDossier')}
-            </Button>
+            <LanguageSwitcher size="md" />
           </div>
         </header>
       )}
@@ -399,6 +423,23 @@ export function HomePage() {
                     <option value="created">{t('home.sortCreated')}</option>
                     <option value="name">{t('home.sortName')}</option>
                   </select>
+
+                  {/* Archive toggle */}
+                  {archivedCount > 0 && (
+                    <button
+                      onClick={() => setShowArchived(!showArchived)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded transition-colors ${
+                        showArchived
+                          ? 'border-accent bg-accent/10 text-accent'
+                          : 'border-border-default bg-bg-primary text-text-secondary hover:bg-bg-secondary'
+                      }`}
+                    >
+                      <Archive size={14} />
+                      <span>
+                        {showArchived ? t('home.hideArchived') : t('home.showArchived', { count: archivedCount })}
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Active filters display */}
@@ -462,6 +503,7 @@ export function HomePage() {
                       onRename={setRenameTarget}
                       onToggleFavorite={handleToggleFavorite}
                       onEditTags={setTagsTarget}
+                      onToggleArchive={handleToggleArchive}
                     />
                   ))}
                 </div>

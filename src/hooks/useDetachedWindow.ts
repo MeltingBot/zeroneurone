@@ -33,50 +33,53 @@ export function useDetachedWindow(
       return;
     }
 
-    // Open popup
-    const width = 460;
-    const height = 700;
-    const left = window.screenX + window.outerWidth - width - 20;
-    const top = window.screenY + 80;
-    const popup = window.open(
-      '',
-      'zn-panel',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`
-    );
+    // Defer window.open() to next tick to avoid React scheduler conflict
+    // ("Should not already be working") caused by synchronous focus events
+    const openTimer = setTimeout(() => {
+      // Open popup
+      const width = 460;
+      const height = 700;
+      const left = window.screenX + window.outerWidth - width - 20;
+      const top = window.screenY + 80;
+      const popup = window.open(
+        '',
+        'zn-panel',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`
+      );
 
-    if (!popup) {
-      useUIStore.getState().showToast('warning', 'Popup blocked by browser');
-      onCloseRef.current();
-      return;
-    }
-
-    popupRef.current = popup;
-
-    // Build stylesheet links from main document
-    const stylesheetTags: string[] = [];
-    const inlineStyles: string[] = [];
-    for (const sheet of Array.from(document.styleSheets)) {
-      try {
-        if (sheet.href) {
-          stylesheetTags.push(`<link rel="stylesheet" href="${sheet.href}">`);
-        } else if (sheet.cssRules) {
-          const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
-          inlineStyles.push(`<style>${rules}</style>`);
-        }
-      } catch {
-        // Cross-origin stylesheet, skip
+      if (!popup) {
+        useUIStore.getState().showToast('warning', 'Popup blocked by browser');
+        onCloseRef.current();
+        return;
       }
-    }
 
-    // Copy theme and class from main document
-    const theme = document.documentElement.getAttribute('data-theme') || '';
-    const htmlClass = document.documentElement.className;
-    const bodyClass = document.body.className;
+      popupRef.current = popup;
 
-    // Write a proper HTML document
-    const doc = popup.document;
-    doc.open();
-    doc.write(`<!DOCTYPE html>
+      // Build stylesheet links from main document
+      const stylesheetTags: string[] = [];
+      const inlineStyles: string[] = [];
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          if (sheet.href) {
+            stylesheetTags.push(`<link rel="stylesheet" href="${sheet.href}">`);
+          } else if (sheet.cssRules) {
+            const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+            inlineStyles.push(`<style>${rules}</style>`);
+          }
+        } catch {
+          // Cross-origin stylesheet, skip
+        }
+      }
+
+      // Copy theme and class from main document
+      const theme = document.documentElement.getAttribute('data-theme') || '';
+      const htmlClass = document.documentElement.className;
+      const bodyClass = document.body.className;
+
+      // Write a proper HTML document
+      const doc = popup.document;
+      doc.open();
+      doc.write(`<!DOCTYPE html>
 <html${htmlClass ? ` class="${htmlClass}"` : ''}${theme ? ` data-theme="${theme}"` : ''}>
 <head>
   <meta charset="utf-8">
@@ -92,49 +95,46 @@ export function useDetachedWindow(
   <div id="zn-panel-root"></div>
 </body>
 </html>`);
-    doc.close();
+      doc.close();
 
-    // Wait for stylesheets to load, then mount container
-    const linkElements = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
-    if (linkElements.length > 0) {
-      let loaded = 0;
-      const total = linkElements.length;
-      const onReady = () => {
-        loaded++;
-        if (loaded >= total) {
+      // Wait for stylesheets to load, then mount container
+      const linkElements = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
+      if (linkElements.length > 0) {
+        let loaded = 0;
+        const total = linkElements.length;
+        const onReady = () => {
+          loaded++;
+          if (loaded >= total) {
+            const div = doc.getElementById('zn-panel-root');
+            if (div) setContainer(div);
+          }
+        };
+        for (const link of linkElements) {
+          if ((link as HTMLLinkElement).sheet) {
+            onReady();
+          } else {
+            link.addEventListener('load', onReady);
+            link.addEventListener('error', onReady);
+          }
+        }
+        // Fallback: mount after 2s even if some stylesheets didn't load
+        setTimeout(() => {
           const div = doc.getElementById('zn-panel-root');
           if (div) setContainer(div);
-        }
-      };
-      for (const link of linkElements) {
-        if ((link as HTMLLinkElement).sheet) {
-          // Already loaded (cached)
-          onReady();
-        } else {
-          link.addEventListener('load', onReady);
-          link.addEventListener('error', onReady); // Don't block on failed loads
-        }
+        }, 2000);
+      } else {
+        const div = doc.getElementById('zn-panel-root');
+        if (div) setContainer(div);
       }
-      // Fallback: mount after 2s even if some stylesheets didn't load
-      setTimeout(() => {
-        if (!container) {
-          const div = doc.getElementById('zn-panel-root');
-          if (div) setContainer(div);
-        }
-      }, 2000);
-    } else {
-      // No external stylesheets, mount immediately
-      const div = doc.getElementById('zn-panel-root');
-      if (div) setContainer(div);
-    }
 
-    // Poll for manual close
-    pollRef.current = window.setInterval(() => {
-      if (popup.closed) {
-        cleanup();
-        onCloseRef.current();
-      }
-    }, 500);
+      // Poll for manual close
+      pollRef.current = window.setInterval(() => {
+        if (popup.closed) {
+          cleanup();
+          onCloseRef.current();
+        }
+      }, 500);
+    }, 0);
 
     // Close popup when main window unloads
     const handleUnload = () => {
@@ -143,6 +143,7 @@ export function useDetachedWindow(
     window.addEventListener('beforeunload', handleUnload);
 
     return () => {
+      clearTimeout(openTimer);
       window.removeEventListener('beforeunload', handleUnload);
       cleanup();
     };

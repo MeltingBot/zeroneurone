@@ -50,6 +50,18 @@ Use the sort selector to order your dossiers:
 - **Created** — By creation date
 - **Name** — Alphabetical
 
+### Archiving
+
+Archive completed or inactive dossiers to declutter the home page without deleting them.
+
+1. Click the **⋯** menu on a card
+2. Select **Archive**
+3. The dossier disappears from the list by default
+
+To show archived dossiers, click the **Archived (N)** button in the toolbar. Archived dossiers appear with reduced opacity and an "Archived" badge.
+
+To unarchive a dossier, open the **⋯** menu and select **Unarchive**.
+
 
 ## Dossier Actions
 
@@ -58,6 +70,7 @@ Click the **⋯** menu on a card to:
 - **Rename** — Edit the name and description
 - **Manage tags** — Add or remove tags
 - **Export ZIP** — Save as ZIP archive
+- **Archive / Unarchive** — Hide or restore a dossier
 - **Delete** — Permanently delete (with confirmation)
 
 {{< hint warning >}}

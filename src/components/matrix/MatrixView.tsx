@@ -4,6 +4,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateC
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
+import { CollaborationInfo } from '../collaboration';
 import type { Element, Confidence } from '../../types';
 
 type SortDirection = 'asc' | 'desc';
@@ -622,6 +623,8 @@ export function MatrixView() {
         showCommentBadgesToggle={false}
         leftContent={
           <div className="flex items-center gap-3">
+            <CollaborationInfo />
+            <div className="w-px h-4 bg-border-default" />
             <span className="text-xs text-text-secondary shrink-0">
               {t('matrix.count', { count: sortedElements.length, total: elementCount })}
               {' · '}

@@ -37,7 +37,10 @@
       "exportError": "Erreur lors de l'export",
       "favorite": "Ajouter aux favoris",
       "unfavorite": "Retirer des favoris",
-      "editTags": "Gérer les tags"
+      "editTags": "Gérer les tags",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "archived": "Archivé"
     },
     "landing": {
       "subtitle": "Tableau blanc pour analystes et enquêteurs",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Licence",
       "enablePlugin": "Activer l'extension",
       "disablePlugin": "Désactiver l'extension"
-    }
+    },
+    "showArchived": "Archivés ({{count}})",
+    "hideArchived": "Masquer archivés"
   },
   "dossier": {
     "loading": {

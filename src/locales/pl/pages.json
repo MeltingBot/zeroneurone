@@ -37,7 +37,10 @@
       "exportError": "Błąd podczas eksportu",
       "favorite": "Dodaj do ulubionych",
       "unfavorite": "Usuń z ulubionych",
-      "editTags": "Zarządzaj tagami"
+      "editTags": "Zarządzaj tagami",
+      "archive": "Archiwizuj",
+      "unarchive": "Przywróć",
+      "archived": "Zarchiwizowane"
     },
     "landing": {
       "subtitle": "Tablica dla analityków i śledczych",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Licencja",
       "enablePlugin": "Włącz rozszerzenie",
       "disablePlugin": "Wyłącz rozszerzenie"
-    }
+    },
+    "showArchived": "Zarchiwizowane ({{count}})",
+    "hideArchived": "Ukryj zarchiwizowane"
   },
   "dossier": {
     "loading": {
@@ -320,8 +325,7 @@
     "area": "Powierzchnia",
     "center": "Środek",
     "viewOnMap": "Zobacz na mapie",
-    "deleteVertex": "Usuń wierzchołek"
-    ,
+    "deleteVertex": "Usuń wierzchołek",
     "geoJsonSave": "Zastosuj",
     "geoJsonParseError": "Nieprawidłowy JSON",
     "geoJsonMinVertices": "Minimum 3 wierzchołki",

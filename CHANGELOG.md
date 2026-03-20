@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.32.0
+
+### Features
+- Dossier archiving: archive/unarchive dossiers from the card dropdown menu, archived dossiers hidden by default with toggle button to show them
+- Collaboration info (sync status, presence avatars, share button) now visible on all views (canvas, map, timeline, matrix), not just canvas
+- Tab delete confirmation: modal confirmation before deleting a tab, tooltip on long tab names
+- Compact header: DossierPage header reduced to h-10, view switcher shows text+icon labels, overflow menu on small screens
+- HomePage header restructured: New Dossier + Import centered, utilities on right
+
+### Fixes
+- Dropdown menus on dossier cards no longer hidden behind cards below (z-index via CSS `:has()`)
+- Archived dossier card opacity no longer affects dropdown menu
+- Detached panel: fix React scheduler conflict ("Should not already be working") by deferring `window.open()` to next tick
+- ImportModal: fix scoping error for `dossierId`/`createdNewDossier` in catch block
+- ViewToolbar: fix left content overflow on narrow screens
+
 ## 2.31.7
 
 ### Fixes

@@ -37,7 +37,10 @@
       "exportError": "Erro durante a exportação",
       "favorite": "Adicionar aos favoritos",
       "unfavorite": "Remover dos favoritos",
-      "editTags": "Gerir tags"
+      "editTags": "Gerir tags",
+      "archive": "Arquivar",
+      "unarchive": "Desarquivar",
+      "archived": "Arquivado"
     },
     "landing": {
       "subtitle": "Quadro branco para analistas e investigadores",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Licença",
       "enablePlugin": "Ativar extensão",
       "disablePlugin": "Desativar extensão"
-    }
+    },
+    "showArchived": "Arquivados ({{count}})",
+    "hideArchived": "Ocultar arquivados"
   },
   "dossier": {
     "loading": {

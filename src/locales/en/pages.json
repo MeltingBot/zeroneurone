@@ -37,7 +37,10 @@
       "exportError": "Export error",
       "favorite": "Add to favorites",
       "unfavorite": "Remove from favorites",
-      "editTags": "Manage tags"
+      "editTags": "Manage tags",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "archived": "Archived"
     },
     "landing": {
       "subtitle": "Whiteboard for analysts and investigators",
@@ -75,7 +78,9 @@
       "extensionsLicense": "License",
       "enablePlugin": "Enable extension",
       "disablePlugin": "Disable extension"
-    }
+    },
+    "showArchived": "Archived ({{count}})",
+    "hideArchived": "Hide archived"
   },
   "dossier": {
     "loading": {

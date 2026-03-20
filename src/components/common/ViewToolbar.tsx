@@ -34,21 +34,21 @@ export function ViewToolbar({
   const canRedoNow = canRedo();
 
   return (
-    <div className="h-10 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary shrink-0">
+    <div className="h-10 flex items-center justify-between px-3 border-b border-border-default bg-bg-primary shrink-0 gap-2">
       {/* Left side */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-2 min-w-0 shrink overflow-hidden">
         {leftContent}
       </div>
 
       {/* Center */}
       {centerContent && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {centerContent}
         </div>
       )}
 
       {/* Right side - view-specific + common controls */}
-      <div className="flex items-center gap-1 min-w-0 ml-2 justify-end">
+      <div className="flex items-center gap-1 shrink-0 justify-end">
         {rightContent}
 
         {/* Separator if there's right content */}

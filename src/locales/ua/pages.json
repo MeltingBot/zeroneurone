@@ -37,7 +37,10 @@
       "exportError": "Помилка під час експорту",
       "favorite": "Додати до обраного",
       "unfavorite": "Видалити з обраного",
-      "editTags": "Керувати тегами"
+      "editTags": "Керувати тегами",
+      "archive": "Архівувати",
+      "unarchive": "Розархівувати",
+      "archived": "Архівований"
     },
     "landing": {
       "subtitle": "Дошка для аналітиків та слідчих",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Ліцензія",
       "enablePlugin": "Увімкнути розширення",
       "disablePlugin": "Вимкнути розширення"
-    }
+    },
+    "showArchived": "Архівовані ({{count}})",
+    "hideArchived": "Сховати архівовані"
   },
   "dossier": {
     "loading": {
@@ -320,8 +325,7 @@
     "area": "Площа",
     "center": "Центр",
     "viewOnMap": "Показати на карті",
-    "deleteVertex": "Видалити вершину"
-    ,
+    "deleteVertex": "Видалити вершину",
     "geoJsonSave": "Застосувати",
     "geoJsonParseError": "Невалідний JSON",
     "geoJsonMinVertices": "Мінімум 3 вершини",

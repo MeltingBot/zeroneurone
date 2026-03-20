@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
 import { useTabStore, useViewStore, useDossierStore, useHistoryStore } from '../../stores';
+import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import type { TabId, DossierId } from '../../types';
 
 interface TabBarProps {
@@ -26,6 +27,7 @@ export function TabBar({ dossierId }: TabBarProps) {
   const [editingTabId, setEditingTabId] = useState<TabId | null>(null);
   const [editValue, setEditValue] = useState('');
   const [contextMenu, setContextMenu] = useState<{ tabId: TabId; x: number; y: number } | null>(null);
+  const [pendingDeleteTabId, setPendingDeleteTabId] = useState<TabId | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -92,17 +94,22 @@ export function TabBar({ dossierId }: TabBarProps) {
     setContextMenu({ tabId, x: e.clientX, y: e.clientY });
   };
 
+  const confirmDeleteTab = async (tabId: TabId) => {
+    const tab = tabs.find((t) => t.id === tabId);
+    if (tab) {
+      pushAction({
+        type: 'delete-tab',
+        undo: { snapshot: { ...tab } },
+        redo: { snapshot: tab.id },
+      });
+    }
+    deleteTab(tabId);
+    setPendingDeleteTabId(null);
+  };
+
   const handleDeleteFromContext = () => {
     if (contextMenu) {
-      const tab = tabs.find((t) => t.id === contextMenu.tabId);
-      if (tab) {
-        pushAction({
-          type: 'delete-tab',
-          undo: { snapshot: { ...tab } },
-          redo: { snapshot: tab.id },
-        });
-      }
-      deleteTab(contextMenu.tabId);
+      setPendingDeleteTabId(contextMenu.tabId);
     }
     setContextMenu(null);
   };
@@ -167,12 +174,7 @@ export function TabBar({ dossierId }: TabBarProps) {
               onEditCommit={commitRename}
               editInputRef={editingTabId === tab.id ? editInputRef : undefined}
               onClose={tabs.length > 1 ? () => {
-                pushAction({
-                  type: 'delete-tab',
-                  undo: { snapshot: { ...tab } },
-                  redo: { snapshot: tab.id },
-                });
-                deleteTab(tab.id);
+                setPendingDeleteTabId(tab.id);
               } : undefined}
             />
           ))}
@@ -201,6 +203,20 @@ export function TabBar({ dossierId }: TabBarProps) {
           t={t}
         />
       )}
+
+      {/* Delete confirmation modal */}
+      {pendingDeleteTabId && (() => {
+        const pendingTab = tabs.find((t) => t.id === pendingDeleteTabId);
+        return (
+          <ConfirmDeleteModal
+            isOpen={true}
+            onClose={() => setPendingDeleteTabId(null)}
+            onConfirm={() => confirmDeleteTab(pendingDeleteTabId)}
+            title={t('dossier.tabs.delete')}
+            message={t('dossier.tabs.deleteConfirm', { name: pendingTab?.name ?? '' })}
+          />
+        );
+      })()}
     </>
   );
 }
@@ -268,7 +284,7 @@ function TabButton({
         />
       ) : (
         <>
-          <span className="truncate max-w-[120px]">{label}</span>
+          <span className="truncate max-w-[120px]" title={label}>{label}</span>
         </>
       )}
       {/* Close button (visible on hover or when active, only if closable) */}

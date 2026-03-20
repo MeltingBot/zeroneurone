@@ -37,7 +37,10 @@
       "exportError": "Fout tijdens export",
       "favorite": "Aan favorieten toevoegen",
       "unfavorite": "Uit favorieten verwijderen",
-      "editTags": "Tags beheren"
+      "editTags": "Tags beheren",
+      "archive": "Archiveren",
+      "unarchive": "Dearchiveren",
+      "archived": "Gearchiveerd"
     },
     "landing": {
       "subtitle": "Whiteboard voor analisten en dossierers",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Licentie",
       "enablePlugin": "Extensie inschakelen",
       "disablePlugin": "Extensie uitschakelen"
-    }
+    },
+    "showArchived": "Gearchiveerd ({{count}})",
+    "hideArchived": "Gearchiveerde verbergen"
   },
   "dossier": {
     "loading": {
@@ -320,8 +325,7 @@
     "area": "Oppervlakte",
     "center": "Middelpunt",
     "viewOnMap": "Bekijk op kaart",
-    "deleteVertex": "Hoekpunt verwijderen"
-    ,
+    "deleteVertex": "Hoekpunt verwijderen",
     "geoJsonSave": "Toepassen",
     "geoJsonParseError": "Ongeldige JSON",
     "geoJsonMinVertices": "Minimaal 3 hoekpunten",

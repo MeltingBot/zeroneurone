@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Trash2, Edit2, Download, Star, Tag } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit2, Download, Star, Tag, Archive } from 'lucide-react';
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
 import { formatRelativeTime } from '../../utils';
 import type { Dossier } from '../../types';
@@ -16,6 +16,7 @@ interface DossierCardProps {
   onRename: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onEditTags: (id: string) => void;
+  onToggleArchive: (id: string) => void;
 }
 
 export function DossierCard({
@@ -24,6 +25,7 @@ export function DossierCard({
   onRename,
   onToggleFavorite,
   onEditTags,
+  onToggleArchive,
 }: DossierCardProps) {
   const { t, i18n } = useTranslation('pages');
   const navigate = useNavigate();
@@ -65,14 +67,15 @@ export function DossierCard({
     <div
       onClick={handleOpen}
       data-testid={`dossier-card-${dossier.id}`}
-      className="
+      className={`
         border border-border-default sketchy-border node-shadow
         hover:bg-bg-secondary hover:node-shadow-hover
         bg-bg-primary
         cursor-pointer
         transition-all
         relative
-      "
+        has-[[aria-expanded="true"]]:z-10
+      `}
     >
       {/* Favorite star - top right corner */}
       <button
@@ -81,7 +84,7 @@ export function DossierCard({
           dossier.isFavorite
             ? 'text-amber-500 hover:text-amber-600'
             : 'text-text-tertiary hover:text-text-secondary'
-        }`}
+        } ${dossier.isArchived ? 'opacity-60' : ''}`}
         title={dossier.isFavorite ? t('home.card.unfavorite') : t('home.card.favorite')}
       >
         <Star size={14} fill={dossier.isFavorite ? 'currentColor' : 'none'} />
@@ -89,10 +92,17 @@ export function DossierCard({
 
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 pr-6">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium text-text-primary truncate">
-              {dossier.name}
-            </h3>
+          <div className={`flex-1 min-w-0 ${dossier.isArchived ? 'opacity-60' : ''}`}>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-sm font-medium text-text-primary truncate">
+                {dossier.name}
+              </h3>
+              {dossier.isArchived && (
+                <span className="shrink-0 px-1 py-0.5 text-[10px] text-text-tertiary bg-bg-tertiary rounded border border-border-default">
+                  {t('home.card.archived')}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-text-secondary mt-1">
               {t('home.card.modified', { time: formatRelativeTime(dossier.updatedAt, i18n.language) })} •{' '}
               {t('home.card.elementCount', { count: stats.elementCount })}
@@ -125,6 +135,12 @@ export function DossierCard({
                   {t('home.card.exportZip')}
                 </span>
               </DropdownItem>
+              <DropdownItem onClick={() => onToggleArchive(dossier.id)} data-testid="archive-action">
+                <span className="flex items-center gap-2">
+                  <Archive size={14} />
+                  {dossier.isArchived ? t('home.card.unarchive') : t('home.card.archive')}
+                </span>
+              </DropdownItem>
               <DropdownItem destructive onClick={() => onDelete(dossier.id)} data-testid="delete-action">
                 <span className="flex items-center gap-2">
                   <Trash2 size={14} />
@@ -137,7 +153,7 @@ export function DossierCard({
 
         {/* Tags */}
         {Array.isArray(dossier.tags) && dossier.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
+          <div className={`flex flex-wrap gap-1 mt-2 ${dossier.isArchived ? 'opacity-60' : ''}`}>
             {dossier.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
@@ -156,7 +172,7 @@ export function DossierCard({
 
         {/* Description */}
         {dossier.description && (
-          <p className="text-xs text-text-tertiary mt-2 line-clamp-2">
+          <p className={`text-xs text-text-tertiary mt-2 line-clamp-2 ${dossier.isArchived ? 'opacity-60' : ''}`}>
             {dossier.description}
           </p>
         )}

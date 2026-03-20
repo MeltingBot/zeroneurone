@@ -20,7 +20,7 @@ import {
   type NodeChange,
 } from '@xyflow/react';
 
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Share2, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 
@@ -39,7 +39,7 @@ import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { SyncStatusIndicator, PresenceAvatars, ShareModal, LocalUserAvatar } from '../collaboration';
+import { CollaborationInfo } from '../collaboration';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
@@ -590,7 +590,6 @@ export function Canvas() {
   const [canvasContextMenu, setCanvasContextMenu] = useState<{ x: number; y: number; canvasX: number; canvasY: number } | null>(null);
 
   // Share modal state
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Merge modal state
   const [mergeElements, setMergeElements] = useState<{ el1: Element; el2: Element } | null>(null);
@@ -3898,17 +3897,7 @@ export function Canvas() {
           showFontToggle
           leftContent={
             <div className="flex items-center gap-3">
-              <LocalUserAvatar />
-              <div className="w-px h-4 bg-border-default" />
-              <SyncStatusIndicator />
-              <PresenceAvatars />
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded transition-colors"
-                title={tPages('dossier.toolbar.share')}
-              >
-                <Share2 size={16} />
-              </button>
+              <CollaborationInfo />
               <div className="w-px h-4 bg-border-default" />
               <div className="flex items-center gap-2 text-xs text-text-secondary">
                 <span className="flex items-center gap-1">
@@ -4204,12 +4193,6 @@ export function Canvas() {
           )}
 
         </div>
-
-        {/* Share Modal */}
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-        />
 
         {/* Merge Elements Modal */}
         {mergeElements && (

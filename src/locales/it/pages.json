@@ -37,7 +37,10 @@
       "exportError": "Errore durante l'esportazione",
       "favorite": "Aggiungi ai preferiti",
       "unfavorite": "Rimuovi dai preferiti",
-      "editTags": "Gestisci tag"
+      "editTags": "Gestisci tag",
+      "archive": "Archivia",
+      "unarchive": "Ripristina",
+      "archived": "Archiviato"
     },
     "landing": {
       "subtitle": "Lavagna per analisti e investigatori",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Licenza",
       "enablePlugin": "Attiva estensione",
       "disablePlugin": "Disattiva estensione"
-    }
+    },
+    "showArchived": "Archiviati ({{count}})",
+    "hideArchived": "Nascondi archiviati"
   },
   "dossier": {
     "loading": {
@@ -320,8 +325,7 @@
     "area": "Superficie",
     "center": "Centro",
     "viewOnMap": "Vedi sulla mappa",
-    "deleteVertex": "Elimina vertice"
-    ,
+    "deleteVertex": "Elimina vertice",
     "geoJsonSave": "Applica",
     "geoJsonParseError": "JSON non valido",
     "geoJsonMinVertices": "Minimo 3 vertici",

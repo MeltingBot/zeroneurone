@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink, MoreVertical } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
@@ -100,6 +100,21 @@ export function DossierPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const headerMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close header overflow menu on click outside
+  useEffect(() => {
+    if (!headerMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (headerMenuRef.current && !headerMenuRef.current.contains(e.target as Node)) {
+        setHeaderMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [headerMenuOpen]);
+
   const [collabLeaveWarning, setCollabLeaveWarning] = useState(false);
   const headerPlugins = usePlugins('header:right');
 
@@ -475,18 +490,18 @@ export function DossierPage() {
       </Modal>
 
       {/* Header */}
-      <header className="h-12 flex items-center justify-between px-4 border-b border-border-default bg-bg-primary">
-        <div className="flex items-center gap-3">
+      <header className="h-10 flex items-center justify-between px-3 border-b border-border-default bg-bg-primary gap-1">
+        <div className="flex items-center gap-2 min-w-0 shrink">
           <IconButton onClick={handleGoHome} data-testid="back-to-home">
             <ArrowLeft size={16} />
           </IconButton>
-          <h1 className="text-sm font-semibold text-text-primary">
+          <h1 className="text-sm font-semibold text-text-primary truncate">
             {currentDossier.name}
           </h1>
         </div>
 
         {/* View switcher */}
-        <div className="flex items-center gap-1 px-1 py-0.5 bg-bg-secondary rounded-lg">
+        <div className="flex items-center gap-0.5 px-1 py-0.5 bg-bg-secondary rounded shrink-0">
           {viewOptions.map((option) => {
             const Icon = option.icon;
             const isActive = displayMode === option.mode;
@@ -495,127 +510,199 @@ export function DossierPage() {
               <button
                 key={option.mode}
                 onClick={() => setDisplayMode(option.mode)}
-                className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded transition-colors ${
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
                   isActive
-                    ? 'bg-bg-primary text-text-primary shadow-sm'
+                    ? 'bg-bg-primary text-text-primary shadow-sm font-medium'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
                 title={`${label} (${option.shortcut})`}
               >
                 <Icon size={14} />
-                <span className="hidden md:inline">{label}</span>
+                <span>{label}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5 shrink-0">
           {/* Filter indicator */}
           {filtersActive && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs bg-accent/10 text-accent rounded hover:bg-accent/20 transition-colors"
+              className="p-1.5 text-accent hover:bg-accent/10 rounded transition-colors"
               title={t('dossier.header.clearFilters')}
             >
               <Filter size={14} />
-              <span>{t('dossier.header.activeFilters')}</span>
             </button>
           )}
           <button
             onClick={() => setSynthesisOpen(true)}
-            className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('dossier.header.generateReport')}
           >
             <FileText size={14} />
-            <span className="hidden sm:inline">{t('dossier.header.report')}</span>
           </button>
-          {/* Panel dock mode toggle */}
-          <button
-            onClick={togglePanelSide}
-            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-            title={
-              panelSide === 'right' ? t('dossier.header.panelDockBottom', 'Panneau en bas') :
-              panelSide === 'bottom' ? t('dossier.header.panelDockLeft', 'Panneau a gauche') :
-              panelSide === 'left' ? t('dossier.header.panelDetach', 'Detacher le panneau') :
-              t('dossier.header.panelDockRight', 'Panneau a droite')
-            }
-          >
-            {panelSide === 'right' ? <PanelBottom size={14} /> :
-             panelSide === 'bottom' ? <PanelLeft size={14} /> :
-             panelSide === 'left' ? <ExternalLink size={14} /> :
-             <PanelRight size={14} />}
-          </button>
-          {/* Dark mode toggle */}
-          <button
-            onClick={toggleThemeMode}
-            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-            title={themeMode === 'light' ? t('dossier.viewToolbar.darkMode') : t('dossier.viewToolbar.lightMode')}
-          >
-            {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-          </button>
-          {/* Language selector */}
-          <LanguageSwitcher size="sm" />
           <button
             onClick={() => setImportOpen(true)}
-            className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('dossier.header.import')}
           >
             <Upload size={14} />
-            <span className="hidden sm:inline">{t('dossier.header.import')}</span>
           </button>
           <button
             onClick={() => setExportOpen(true)}
-            className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('dossier.header.export')}
           >
             <Download size={14} />
-            <span className="hidden sm:inline">{t('dossier.header.export')}</span>
           </button>
           <button
             onClick={toggleSearch}
-            className="flex items-center gap-2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            title={`${t('dossier.header.search')} (Ctrl+K)`}
           >
             <Search size={14} />
-            <span className="hidden sm:inline">{t('dossier.header.search')}</span>
-            <kbd className="hidden sm:inline px-1 py-0.5 bg-bg-tertiary rounded text-text-tertiary text-[10px]">
-              Ctrl+K
-            </kbd>
           </button>
-          <button
-            onClick={() => setShortcutsOpen(true)}
-            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={`${t('dossier.header.shortcuts')} (?)`}
-          >
-            <Keyboard size={14} />
-          </button>
-          <a
-            href="https://doc.zeroneurone.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('dossier.header.documentation')}
-          >
-            <BookOpen size={14} />
-          </a>
-          <a
-            href="https://github.com/MeltingBot/zeroneurone"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title="GitHub"
-          >
-            <Github size={14} />
-          </a>
-          <a
-            href="https://ko-fi.com/yannpilpre"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            title={t('dossier.header.supportKofi')}
-          >
-            <Coffee size={14} />
-          </a>
+
+          {/* Secondary buttons — visible on large screens */}
+          <div className="hidden lg:flex items-center gap-1">
+            <div className="w-px h-4 bg-border-default mx-0.5" />
+            {/* Panel dock mode toggle */}
+            <button
+              onClick={togglePanelSide}
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
+              title={
+                panelSide === 'right' ? t('dossier.header.panelDockBottom', 'Panneau en bas') :
+                panelSide === 'bottom' ? t('dossier.header.panelDockLeft', 'Panneau a gauche') :
+                panelSide === 'left' ? t('dossier.header.panelDetach', 'Detacher le panneau') :
+                t('dossier.header.panelDockRight', 'Panneau a droite')
+              }
+            >
+              {panelSide === 'right' ? <PanelBottom size={14} /> :
+               panelSide === 'bottom' ? <PanelLeft size={14} /> :
+               panelSide === 'left' ? <ExternalLink size={14} /> :
+               <PanelRight size={14} />}
+            </button>
+            {/* Dark mode toggle */}
+            <button
+              onClick={toggleThemeMode}
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
+              title={themeMode === 'light' ? t('dossier.viewToolbar.darkMode') : t('dossier.viewToolbar.lightMode')}
+            >
+              {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+            </button>
+            <button
+              onClick={() => setShortcutsOpen(true)}
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+              title={`${t('dossier.header.shortcuts')} (?)`}
+            >
+              <Keyboard size={14} />
+            </button>
+            <a
+              href="https://doc.zeroneurone.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+              title={t('dossier.header.documentation')}
+            >
+              <BookOpen size={14} />
+            </a>
+            <a
+              href="https://github.com/MeltingBot/zeroneurone"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+              title="GitHub"
+            >
+              <Github size={14} />
+            </a>
+            <a
+              href="https://ko-fi.com/yannpilpre"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded"
+              title={t('dossier.header.supportKofi')}
+            >
+              <Coffee size={14} />
+            </a>
+          </div>
+
+          {/* Overflow menu — visible on small screens only */}
+          <div className="relative lg:hidden" ref={headerMenuRef}>
+            <button
+              onClick={() => setHeaderMenuOpen(v => !v)}
+              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
+              title={t('dossier.header.more', 'Plus')}
+            >
+              <MoreVertical size={14} />
+            </button>
+            {headerMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-bg-primary border border-border-default rounded shadow-lg z-50 py-1 min-w-[180px]">
+                <button
+                  onClick={() => { togglePanelSide(); setHeaderMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
+                >
+                  {panelSide === 'right' ? <PanelBottom size={14} /> :
+                   panelSide === 'bottom' ? <PanelLeft size={14} /> :
+                   panelSide === 'left' ? <ExternalLink size={14} /> :
+                   <PanelRight size={14} />}
+                  {panelSide === 'right' ? t('dossier.header.panelDockBottom', 'Panneau en bas') :
+                   panelSide === 'bottom' ? t('dossier.header.panelDockLeft', 'Panneau a gauche') :
+                   panelSide === 'left' ? t('dossier.header.panelDetach', 'Detacher le panneau') :
+                   t('dossier.header.panelDockRight', 'Panneau a droite')}
+                </button>
+                <button
+                  onClick={() => { toggleThemeMode(); setHeaderMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
+                >
+                  {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+                  {themeMode === 'light' ? t('dossier.viewToolbar.darkMode') : t('dossier.viewToolbar.lightMode')}
+                </button>
+                <div className="h-px bg-border-default my-1" />
+                <button
+                  onClick={() => { setShortcutsOpen(true); setHeaderMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
+                >
+                  <Keyboard size={14} />
+                  {t('dossier.header.shortcuts')}
+                </button>
+                <a
+                  href="https://doc.zeroneurone.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
+                  onClick={() => setHeaderMenuOpen(false)}
+                >
+                  <BookOpen size={14} />
+                  {t('dossier.header.documentation')}
+                </a>
+                <a
+                  href="https://github.com/MeltingBot/zeroneurone"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
+                  onClick={() => setHeaderMenuOpen(false)}
+                >
+                  <Github size={14} />
+                  GitHub
+                </a>
+                <a
+                  href="https://ko-fi.com/yannpilpre"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
+                  onClick={() => setHeaderMenuOpen(false)}
+                >
+                  <Coffee size={14} />
+                  {t('dossier.header.supportKofi')}
+                </a>
+              </div>
+            )}
+          </div>
+
           {headerPlugins.map((PluginComponent, i) => <PluginComponent key={`hp-${i}`} />)}
+
+          <LanguageSwitcher size="sm" />
         </div>
       </header>
 

@@ -37,7 +37,10 @@
       "exportError": "Error durante la exportación",
       "favorite": "Añadir a favoritos",
       "unfavorite": "Quitar de favoritos",
-      "editTags": "Gestionar tags"
+      "editTags": "Gestionar tags",
+      "archive": "Archivar",
+      "unarchive": "Desarchivar",
+      "archived": "Archivado"
     },
     "landing": {
       "subtitle": "Pizarra para analistas e investigadores",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Licencia",
       "enablePlugin": "Activar extensión",
       "disablePlugin": "Desactivar extensión"
-    }
+    },
+    "showArchived": "Archivados ({{count}})",
+    "hideArchived": "Ocultar archivados"
   },
   "dossier": {
     "loading": {
@@ -320,8 +325,7 @@
     "area": "Superficie",
     "center": "Centro",
     "viewOnMap": "Ver en el mapa",
-    "deleteVertex": "Eliminar vértice"
-    ,
+    "deleteVertex": "Eliminar vértice",
     "geoJsonSave": "Aplicar",
     "geoJsonParseError": "JSON no válido",
     "geoJsonMinVertices": "Mínimo 3 vértices",

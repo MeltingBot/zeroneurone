@@ -37,7 +37,10 @@
       "exportError": "Error durant l'exportació",
       "favorite": "Afegir als preferits",
       "unfavorite": "Treure dels preferits",
-      "editTags": "Gestionar etiquetes"
+      "editTags": "Gestionar etiquetes",
+      "archive": "Arxivar",
+      "unarchive": "Desarxivar",
+      "archived": "Arxivat"
     },
     "landing": {
       "subtitle": "Pissarra per a analistes i investigadors",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Llicència",
       "enablePlugin": "Activar extensió",
       "disablePlugin": "Desactivar extensió"
-    }
+    },
+    "showArchived": "Arxivats ({{count}})",
+    "hideArchived": "Amagar arxivats"
   },
   "dossier": {
     "loading": {

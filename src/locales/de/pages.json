@@ -37,7 +37,10 @@
       "exportError": "Fehler beim Export",
       "favorite": "Zu Favoriten hinzufügen",
       "unfavorite": "Aus Favoriten entfernen",
-      "editTags": "Tags verwalten"
+      "editTags": "Tags verwalten",
+      "archive": "Archivieren",
+      "unarchive": "Wiederherstellen",
+      "archived": "Archiviert"
     },
     "landing": {
       "subtitle": "Whiteboard für Analysten und Ermittler",
@@ -75,7 +78,9 @@
       "extensionsLicense": "Lizenz",
       "enablePlugin": "Erweiterung aktivieren",
       "disablePlugin": "Erweiterung deaktivieren"
-    }
+    },
+    "showArchived": "Archiviert ({{count}})",
+    "hideArchived": "Archivierte ausblenden"
   },
   "dossier": {
     "loading": {
@@ -320,8 +325,7 @@
     "area": "Fläche",
     "center": "Mittelpunkt",
     "viewOnMap": "Auf Karte anzeigen",
-    "deleteVertex": "Eckpunkt löschen"
-    ,
+    "deleteVertex": "Eckpunkt löschen",
     "geoJsonSave": "Anwenden",
     "geoJsonParseError": "Ungültiges JSON",
     "geoJsonMinVertices": "Mindestens 3 Eckpunkte",

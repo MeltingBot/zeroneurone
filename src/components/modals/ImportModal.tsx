@@ -26,7 +26,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [znzipError, setZnzipError] = useState<string | null>(null);
   const [showZnzipPassword, setShowZnzipPassword] = useState(false);
 
-  const { dossiers, createDossier, currentDossier } = useDossierStore();
+  const { dossiers, createDossier, deleteDossier, currentDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
@@ -75,9 +75,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setIsProcessing(true);
     setImportResult(null);
 
+    let dossierId = targetDossierId;
+    let createdNewDossier = false;
+
     try {
       // Determine target dossier
-      let dossierId = targetDossierId;
       const isImportingIntoExisting = targetDossierId !== 'new';
 
       if (targetDossierId === 'new') {
@@ -85,6 +87,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|xml|ged|gw)$/i, '');
         const dossier = await createDossier(name, '');
         dossierId = dossier.id;
+        createdNewDossier = true;
       }
 
       // Special case: importing ZIP into existing dossier while on canvas
@@ -185,8 +188,15 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           onClose();
           navigate(`/dossier/${dossierId}`);
         }, 1500);
+      } else if (createdNewDossier) {
+        // Import failed — delete the empty dossier we just created
+        await deleteDossier(dossierId);
       }
     } catch (error) {
+      // Delete the empty dossier if we created one before the error
+      if (createdNewDossier) {
+        await deleteDossier(dossierId).catch(() => {});
+      }
       setImportResult({
         success: false,
         elementsImported: 0,
@@ -202,7 +212,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetDossierId, createMissingElements, createDossier, navigate, onClose, t, isOnDossierPage, currentDossier, enterImportPlacementMode, requestFitView]);
+  }, [targetDossierId, createMissingElements, createDossier, deleteDossier, navigate, onClose, t, isOnDossierPage, currentDossier, enterImportPlacementMode, requestFitView]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();

@@ -201,6 +201,8 @@ export interface Dossier {
   settings: DossierSettings;
   /** Whether this dossier is pinned/favorited for quick access */
   isFavorite?: boolean;
+  /** Whether this dossier is archived (hidden from main list) */
+  isArchived?: boolean;
   /** Data retention duration in days (null = unlimited) */
   retentionDays?: number | null;
   /** Behavior when retention expires */

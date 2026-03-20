@@ -46,6 +46,7 @@ function rehydrateDossier(dossier: Dossier): Dossier {
     tags: dossier.tags ?? [],
     properties: dossier.properties ?? [],
     isFavorite: dossier.isFavorite ?? false,
+    isArchived: dossier.isArchived ?? false,
     settings: {
       ...dossier.settings,
       suggestedProperties: migratePropertyArray(dossier.settings?.suggestedProperties),
@@ -80,6 +81,7 @@ export const dossierRepository = {
         linkAnchorMode: 'auto',
       },
       isFavorite: false,
+      isArchived: false,
     };
 
     await db.dossiers.add(dossier);
@@ -121,6 +123,7 @@ export const dossierRepository = {
         linkAnchorMode: 'auto',
       },
       isFavorite: false,
+      isArchived: false,
     };
 
     await db.dossiers.add(dossier);
@@ -137,6 +140,21 @@ export const dossierRepository = {
     const newValue = !dossier.isFavorite;
     await db.dossiers.update(id, {
       isFavorite: newValue,
+      updatedAt: new Date(),
+    });
+    return newValue;
+  },
+
+  /**
+   * Toggle archive status of a dossier
+   */
+  async toggleArchive(id: DossierId): Promise<boolean> {
+    const dossier = await db.dossiers.get(id);
+    if (!dossier) return false;
+
+    const newValue = !(dossier.isArchived ?? false);
+    await db.dossiers.update(id, {
+      isArchived: newValue,
       updatedAt: new Date(),
     });
     return newValue;

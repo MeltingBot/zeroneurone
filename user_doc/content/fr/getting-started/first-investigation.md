@@ -50,6 +50,18 @@ Utilisez le sélecteur de tri pour ordonner vos dossiers :
 - **Créé** — Par date de création
 - **Nom** — Alphabétique
 
+### Archivage
+
+Archivez les dossiers terminés ou inactifs pour alléger la page d'accueil sans les supprimer.
+
+1. Cliquez sur le menu **⋯** d'une carte
+2. Sélectionnez **Archiver**
+3. Le dossier disparaît de la liste par défaut
+
+Pour afficher les dossiers archivés, cliquez sur le bouton **Archivés (N)** dans la barre d'outils. Les dossiers archivés apparaissent avec une opacité réduite et un badge « Archivé ».
+
+Pour désarchiver un dossier, ouvrez le menu **⋯** et sélectionnez **Désarchiver**.
+
 
 ## Actions sur un dossier
 
@@ -58,6 +70,7 @@ Cliquez sur le menu **⋯** d'une carte pour :
 - **Renommer** — Modifier le nom et la description
 - **Gérer les tags** — Ajouter ou supprimer des tags
 - **Exporter ZIP** — Sauvegarder en archive ZIP
+- **Archiver / Désarchiver** — Masquer ou rétablir un dossier
 - **Supprimer** — Supprimer définitivement (avec confirmation)
 
 {{< hint warning >}}
