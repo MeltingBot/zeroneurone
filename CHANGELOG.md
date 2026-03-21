@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.32.1
+
+### Fixes
+- Matrix: right-click context menu with copy cell, copy row, copy selection
+- Matrix: pin/unpin toggle to freeze/unfreeze first column
+- Matrix: columns dropdown no longer clipped by toolbar overflow (fixed positioning)
+- Map: 3D buildings toggle always visible, buildings preserved when disabling 3D terrain
+- Collaboration info (avatars, sync, share) moved from view toolbars to main header bar
+- Archive toggle no longer changes dossier modification date
+
 ## 2.32.0
 
 ### Features
