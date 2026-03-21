@@ -390,14 +390,19 @@
     "count": "{{count}}/{{total}} elements",
     "properties": "{{count}} properties",
     "search": "Search...",
-    "columns": "Columns",
+    "columns": "Show/hide columns",
     "noResults": "No results",
     "empty": "No elements with properties",
     "all": "All",
     "none": "None",
     "reset": "Reset view",
     "exportCsv": "Export as CSV",
-    "filter": "Filter..."
+    "filter": "Filter...",
+    "pinColumn": "Freeze column",
+    "unpinColumn": "Unfreeze column",
+    "copyCell": "Copy cell",
+    "copyRow": "Copy row",
+    "copySelection": "Copy selection ({{count}})"
   },
   "report": {
     "title": "Report",

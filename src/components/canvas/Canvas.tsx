@@ -39,7 +39,7 @@ import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { CollaborationInfo } from '../collaboration';
+
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
@@ -3897,8 +3897,6 @@ export function Canvas() {
           showFontToggle
           leftContent={
             <div className="flex items-center gap-3">
-              <CollaborationInfo />
-              <div className="w-px h-4 bg-border-default" />
               <div className="flex items-center gap-2 text-xs text-text-secondary">
                 <span className="flex items-center gap-1">
                   <Box size={12} />

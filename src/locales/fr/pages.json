@@ -391,14 +391,19 @@
     "count": "{{count}}/{{total}} éléments",
     "properties": "{{count}} propriétés",
     "search": "Rechercher...",
-    "columns": "Colonnes",
+    "columns": "Afficher/masquer les colonnes",
     "noResults": "Aucun résultat",
     "empty": "Aucun élément avec des propriétés",
     "all": "Tout",
     "none": "Aucun",
     "reset": "Réinitialiser la vue",
     "exportCsv": "Exporter en CSV",
-    "filter": "Filtrer..."
+    "filter": "Filtrer...",
+    "pinColumn": "Figer la colonne",
+    "unpinColumn": "Libérer la colonne",
+    "copyCell": "Copier la cellule",
+    "copyRow": "Copier la ligne",
+    "copySelection": "Copier la sélection ({{count}})"
   },
   "report": {
     "title": "Rapport",

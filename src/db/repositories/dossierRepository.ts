@@ -155,7 +155,6 @@ export const dossierRepository = {
     const newValue = !(dossier.isArchived ?? false);
     await db.dossiers.update(id, {
       isArchived: newValue,
-      updatedAt: new Date(),
     });
     return newValue;
   },

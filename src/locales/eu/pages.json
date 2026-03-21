@@ -375,14 +375,19 @@
     "count": "{{count}}/{{total}} elementu",
     "properties": "{{count}} propietate",
     "search": "Bilatu...",
-    "columns": "Zutabeak",
+    "columns": "Zutabeak erakutsi/ezkutatu",
     "noResults": "Emaitzarik ez",
     "empty": "Propietateak dituen elementurik ez",
     "all": "Denak",
     "none": "Bat ere ez",
     "reset": "Berrezarri ikuspegia",
     "exportCsv": "CSV gisa esportatu",
-    "filter": "Iragazi..."
+    "filter": "Iragazi...",
+    "pinColumn": "Zutabea finkatu",
+    "unpinColumn": "Zutabea askatu",
+    "copyCell": "Gelaxka kopiatu",
+    "copyRow": "Errenkada kopiatu",
+    "copySelection": "Hautapena kopiatu ({{count}})"
   },
   "report": {
     "title": "Txostena",

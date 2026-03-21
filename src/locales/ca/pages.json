@@ -375,14 +375,19 @@
     "count": "{{count}}/{{total}} elements",
     "properties": "{{count}} propietats",
     "search": "Cercar...",
-    "columns": "Columnes",
+    "columns": "Mostra/amaga columnes",
     "noResults": "Sense resultats",
     "empty": "Cap element amb propietats",
     "all": "Tot",
     "none": "Cap",
     "reset": "Restablir vista",
     "exportCsv": "Exportar com a CSV",
-    "filter": "Filtrar..."
+    "filter": "Filtrar...",
+    "pinColumn": "Fixar columna",
+    "unpinColumn": "Alliberar columna",
+    "copyCell": "Copiar cel·la",
+    "copyRow": "Copiar fila",
+    "copySelection": "Copiar selecció ({{count}})"
   },
   "report": {
     "title": "Informe",

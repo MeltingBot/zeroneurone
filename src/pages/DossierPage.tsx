@@ -5,6 +5,7 @@ import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, 
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
+import { CollaborationInfo } from '../components/collaboration';
 
 // Lazy load with auto-reload on chunk load failure (stale cache after deploy)
 function lazyWithRetry<T extends React.ComponentType<any>>(
@@ -498,6 +499,10 @@ export function DossierPage() {
           <h1 className="text-sm font-semibold text-text-primary truncate">
             {currentDossier.name}
           </h1>
+          <div className="w-px h-4 bg-border-default shrink-0" />
+          <div className="flex items-center gap-1 shrink-0">
+            <CollaborationInfo />
+          </div>
         </div>
 
         {/* View switcher */}

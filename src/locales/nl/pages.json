@@ -386,14 +386,19 @@
     "count": "{{count}}/{{total}} elementen",
     "properties": "{{count}} eigenschappen",
     "search": "Zoeken...",
-    "columns": "Kolommen",
+    "columns": "Kolommen tonen/verbergen",
     "noResults": "Geen resultaten",
     "empty": "Geen elementen met eigenschappen",
     "all": "Alles",
     "none": "Geen",
     "reset": "Weergave resetten",
     "exportCsv": "Exporteren als CSV",
-    "filter": "Filteren..."
+    "filter": "Filteren...",
+    "pinColumn": "Kolom vastzetten",
+    "unpinColumn": "Kolom losmaken",
+    "copyCell": "Cel kopiëren",
+    "copyRow": "Rij kopiëren",
+    "copySelection": "Selectie kopiëren ({{count}})"
   },
   "report": {
     "title": "Rapport",

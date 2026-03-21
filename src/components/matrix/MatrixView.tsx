@@ -1,10 +1,10 @@
-import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Download } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Download, Pin, Copy, Rows3 } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { CollaborationInfo } from '../collaboration';
+
 import type { Element, Confidence } from '../../types';
 
 type SortDirection = 'asc' | 'desc';
@@ -86,7 +86,9 @@ function getCellValue(el: Element, colKey: string): string {
 export function MatrixView() {
   const { t } = useTranslation('pages');
   const containerRef = useRef<HTMLDivElement>(null);
-  const columnsRef = useRef<HTMLDivElement>(null);
+  const columnsBtnRef = useRef<HTMLButtonElement>(null);
+  const columnsDropdownRef = useRef<HTMLDivElement>(null);
+  const [columnsDropdownPos, setColumnsDropdownPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const elements = useDossierStore((s) => s.elements);
   const links = useDossierStore((s) => s.links);
@@ -110,6 +112,10 @@ export function MatrixView() {
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [firstColumnPinned, setFirstColumnPinned] = useState(true);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; elementId: string; colKey: string } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const lastClickedRowRef = useRef<number>(-1);
 
   // Compute dimmed element IDs (same logic as Timeline/Map)
@@ -224,6 +230,7 @@ export function MatrixView() {
     setColumnOrder(['tags', 'confidence', 'source', ...propertyKeys]);
     setColumnWidths({});
     setColumnFilters({});
+    setFirstColumnPinned(true);
   }, [propertyKeys]);
 
   const hasActiveFilters = Object.values(columnFilters).some((v) => v.length > 0);
@@ -232,6 +239,7 @@ export function MatrixView() {
     || Object.keys(columnWidths).length > 0
     || sort.column !== 'label' || sort.direction !== 'asc'
     || hasActiveFilters
+    || !firstColumnPinned
     || (columnOrder.length > 0 && columnOrder.join(',') !== ['tags', 'confidence', 'source', ...propertyKeys].join(','));
 
   // Mouse-based column reorder on table headers with ghost
@@ -323,16 +331,18 @@ export function MatrixView() {
     };
   }, [resizingCol]);
 
-  // Close columns dropdown on outside click
-  useEffect(() => {
-    if (!columnsOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (columnsRef.current && !columnsRef.current.contains(e.target as Node)) {
-        setColumnsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+  // Position columns dropdown when opened
+  useLayoutEffect(() => {
+    if (!columnsOpen || !columnsDropdownRef.current || !columnsBtnRef.current) return;
+    const btnRect = columnsBtnRef.current.getBoundingClientRect();
+    const menu = columnsDropdownRef.current;
+    const menuRect = menu.getBoundingClientRect();
+    let x = btnRect.left;
+    let y = btnRect.bottom + 4;
+    if (x + menuRect.width > window.innerWidth - 8) x = window.innerWidth - menuRect.width - 8;
+    if (x < 8) x = 8;
+    if (y + menuRect.height > window.innerHeight - 8) y = btnRect.top - menuRect.height - 4;
+    setColumnsDropdownPos({ x, y });
   }, [columnsOpen]);
 
   // Filter by column values
@@ -531,6 +541,81 @@ export function MatrixView() {
     return [headers, ...rows].join('\n');
   }, [sortedElements, selectedElementIds, visibleCols]);
 
+  // Context menu handlers
+  const handleContextMenu = useCallback((e: React.MouseEvent, elementId: string, colKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Auto-select element if not already selected
+    if (!selectedElementIds.has(elementId)) {
+      selectElement(elementId);
+    }
+    setContextMenu({ x: e.clientX, y: e.clientY, elementId, colKey });
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+  }, [selectedElementIds, selectElement]);
+
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleCopyCell = useCallback(() => {
+    if (!contextMenu) return;
+    const el = elements.find((e) => e.id === contextMenu.elementId);
+    if (!el) return;
+    const value = getCellValue(el, contextMenu.colKey);
+    navigator.clipboard.writeText(value === '—' ? '' : value);
+    closeContextMenu();
+  }, [contextMenu, elements, closeContextMenu]);
+
+  const handleCopyRow = useCallback(() => {
+    if (!contextMenu) return;
+    const el = elements.find((e) => e.id === contextMenu.elementId);
+    if (!el) return;
+    const headers = visibleCols.map((c) => c.label).join('\t');
+    const row = visibleCols.map((col) => {
+      const v = getCellValue(el, col.key);
+      return v === '—' ? '' : v;
+    }).join('\t');
+    navigator.clipboard.writeText(`${headers}\n${row}`);
+    closeContextMenu();
+  }, [contextMenu, elements, visibleCols, closeContextMenu]);
+
+  const handleCopySelection = useCallback(() => {
+    const tsv = buildSelectedTSV();
+    if (tsv) navigator.clipboard.writeText(tsv);
+    closeContextMenu();
+  }, [buildSelectedTSV, closeContextMenu]);
+
+  // Viewport clamping for context menu
+  useLayoutEffect(() => {
+    if (!contextMenu || !contextMenuRef.current) return;
+    const rect = contextMenuRef.current.getBoundingClientRect();
+    const padding = 8;
+    let newX = contextMenu.x;
+    let newY = contextMenu.y;
+    if (newX + rect.width > window.innerWidth - padding) newX = window.innerWidth - rect.width - padding;
+    if (newY + rect.height > window.innerHeight - padding) newY = window.innerHeight - rect.height - padding;
+    if (newX < padding) newX = padding;
+    if (newY < padding) newY = padding;
+    if (newX !== contextMenuPos.x || newY !== contextMenuPos.y) {
+      setContextMenuPos({ x: newX, y: newY });
+    }
+  }, [contextMenu, contextMenuPos.x, contextMenuPos.y]);
+
+  // Close context menu on scroll
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleScroll = () => closeContextMenu();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeContextMenu();
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [contextMenu, closeContextMenu]);
+
   // Export CSV
   const handleExportCSV = useCallback(() => {
     const escape = (v: string) => {
@@ -623,8 +708,6 @@ export function MatrixView() {
         showCommentBadgesToggle={false}
         leftContent={
           <div className="flex items-center gap-3">
-            <CollaborationInfo />
-            <div className="w-px h-4 bg-border-default" />
             <span className="text-xs text-text-secondary shrink-0">
               {t('matrix.count', { count: sortedElements.length, total: elementCount })}
               {' · '}
@@ -632,8 +715,9 @@ export function MatrixView() {
             </span>
 
             {/* Column visibility toggle */}
-            <div ref={columnsRef} className="relative">
+            <div>
               <button
+                ref={columnsBtnRef}
                 onClick={() => setColumnsOpen((v) => !v)}
                 className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
                   columnsOpen || hiddenCount > 0
@@ -647,46 +731,6 @@ export function MatrixView() {
                   <span className="text-[10px]">({allColumns.length - hiddenCount - 1}/{allColumns.length - 1})</span>
                 )}
               </button>
-
-              {columnsOpen && (
-                <div className="absolute left-0 top-full mt-1 w-64 max-h-80 overflow-y-auto bg-bg-primary border border-border-default rounded shadow-md z-50">
-                  {/* Select all / none */}
-                  <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-default">
-                    <button
-                      onClick={showAllColumns}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      {t('matrix.all')}
-                    </button>
-                    <span className="text-text-tertiary text-xs">/</span>
-                    <button
-                      onClick={hideAllColumns}
-                      className="text-xs text-accent hover:underline"
-                    >
-                      {t('matrix.none')}
-                    </button>
-                  </div>
-                  {nonFixedColumns.map((col) => {
-                    const isVisible = !hiddenColumns.has(col.key);
-                    return (
-                      <button
-                        key={col.key}
-                        onClick={() => toggleColumn(col.key)}
-                        className="flex items-center gap-2 w-full px-3 py-1 text-xs hover:bg-bg-secondary text-left"
-                      >
-                        <span className={`w-4 h-4 flex items-center justify-center rounded border shrink-0 ${
-                          isVisible
-                            ? 'bg-accent border-accent text-white'
-                            : 'border-border-default'
-                        }`}>
-                          {isVisible && <Check size={10} />}
-                        </span>
-                        <span className="truncate text-text-primary">{col.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
             {/* Export CSV */}
@@ -742,7 +786,7 @@ export function MatrixView() {
                       onMouseDown={(e) => !col.fixed && handleHeaderMouseDown(e, col.key)}
                       onMouseEnter={() => !col.fixed && handleHeaderMouseEnter(col.key)}
                       className={`relative flex items-center gap-1 px-2 text-xs font-medium text-text-secondary shrink-0 border-r border-border-default ${
-                        col.fixed ? 'sticky left-0 z-20 bg-bg-secondary' : ''
+                        col.fixed && firstColumnPinned ? 'sticky left-0 z-20 bg-bg-secondary' : ''
                       } ${isDragged ? 'opacity-40' : ''} ${isOver ? 'border-l-2 border-l-accent' : ''}`}
                       style={{ width: w }}
                     >
@@ -761,6 +805,17 @@ export function MatrixView() {
                         <span className="truncate">{col.label}</span>
                         <SortIcon column={col.key} />
                       </button>
+                      {col.fixed && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setFirstColumnPinned((v) => !v); }}
+                          className={`shrink-0 p-0.5 rounded transition-colors ${
+                            firstColumnPinned ? 'text-accent' : 'text-text-tertiary hover:text-text-secondary'
+                          }`}
+                          title={firstColumnPinned ? t('matrix.unpinColumn') : t('matrix.pinColumn')}
+                        >
+                          <Pin size={12} />
+                        </button>
+                      )}
                       {/* Resize handle */}
                       <div
                         onMouseDown={(e) => handleResizeMouseDown(e, col)}
@@ -782,7 +837,7 @@ export function MatrixView() {
                   <div
                     key={col.key}
                     className={`shrink-0 border-r border-border-default ${
-                      col.fixed ? 'sticky left-0 z-20 bg-bg-primary' : ''
+                      col.fixed && firstColumnPinned ? 'sticky left-0 z-20 bg-bg-primary' : ''
                     }`}
                     style={{ width: getColWidth(col) }}
                   >
@@ -827,11 +882,12 @@ export function MatrixView() {
                       return (
                         <div
                           key={col.key}
+                          onContextMenu={(e) => handleContextMenu(e, el.id, col.key)}
                           onDoubleClick={(e) => { e.stopPropagation(); handleCellDoubleClick(el, col.key); }}
                           className={`flex items-center px-3 text-sm shrink-0 border-r border-border-default ${
                             isEditing ? 'bg-accent/20' : ''
                           } ${
-                            col.fixed ? 'sticky left-0 z-10 bg-inherit font-medium text-text-primary' : ''
+                            col.fixed ? `font-medium text-text-primary${firstColumnPinned ? ' sticky left-0 z-10 bg-inherit' : ''}` : ''
                           } ${col.alignRight ? 'justify-end' : ''} ${
                             isEmpty && !col.fixed ? 'text-text-tertiary' : ''
                           } ${!col.fixed && !isEmpty ? 'text-text-primary' : ''}`}
@@ -869,6 +925,97 @@ export function MatrixView() {
           </div>
         )}
       </div>
+
+      {/* Columns dropdown (fixed positioning to escape overflow clipping) */}
+      {columnsOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setColumnsOpen(false)}
+          />
+          <div
+            ref={columnsDropdownRef}
+            className="fixed z-50 w-max min-w-48 max-w-80 max-h-80 overflow-y-auto bg-bg-primary border border-border-default rounded shadow-md"
+            style={{ left: columnsDropdownPos.x, top: columnsDropdownPos.y }}
+          >
+            {/* Select all / none */}
+            <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-default">
+              <button
+                onClick={showAllColumns}
+                className="text-xs text-accent hover:underline"
+              >
+                {t('matrix.all')}
+              </button>
+              <span className="text-text-tertiary text-xs">/</span>
+              <button
+                onClick={hideAllColumns}
+                className="text-xs text-accent hover:underline"
+              >
+                {t('matrix.none')}
+              </button>
+            </div>
+            {nonFixedColumns.map((col) => {
+              const isVisible = !hiddenColumns.has(col.key);
+              return (
+                <button
+                  key={col.key}
+                  onClick={() => toggleColumn(col.key)}
+                  className="flex items-center gap-2 w-full px-3 py-1 text-xs hover:bg-bg-secondary text-left"
+                >
+                  <span className={`w-4 h-4 flex items-center justify-center rounded border shrink-0 ${
+                    isVisible
+                      ? 'bg-accent border-accent text-white'
+                      : 'border-border-default'
+                  }`}>
+                    {isVisible && <Check size={10} />}
+                  </span>
+                  <span className="truncate text-text-primary">{col.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Context menu */}
+      {contextMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={closeContextMenu}
+            onContextMenu={(e) => { e.preventDefault(); closeContextMenu(); }}
+          />
+          <div
+            ref={contextMenuRef}
+            className="fixed z-50 min-w-44 py-1 bg-bg-primary border border-border-default rounded shadow-md"
+            style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
+          >
+            <button
+              onClick={handleCopyCell}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+            >
+              <Copy size={14} className="text-text-secondary" />
+              {t('matrix.copyCell')}
+            </button>
+            <button
+              onClick={handleCopyRow}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+            >
+              <Rows3 size={14} className="text-text-secondary" />
+              {t('matrix.copyRow')}
+            </button>
+            {selectedElementIds.size > 1 && (
+              <button
+                onClick={handleCopySelection}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Copy size={14} className="text-text-secondary" />
+                {t('matrix.copySelection', { count: selectedElementIds.size })}
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Floating ghost while dragging a column */}
       {draggingCol && ghostPos && (() => {

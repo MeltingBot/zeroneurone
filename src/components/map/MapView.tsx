@@ -11,7 +11,7 @@ import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
 import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2 } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { CollaborationInfo } from '../collaboration';
+
 import { ZoneDrawTool } from './ZoneDrawTool';
 import { ZoneEditTool } from './ZoneEditTool';
 import { ZoneLayers, resolveCssColor } from './ZoneLayers';
@@ -740,12 +740,13 @@ export function MapView() {
       try { map.setTerrain(undefined as any); } catch { /* ignore */ }
       map.setProjection({ type: 'mercator' });
       map.easeTo({ pitch: 0, duration: 600 });
-      if (map.getLayer('3d-buildings')) {
+      // Remove terrain source to fully disable 3D terrain
+      try { if (map.getSource('terrain-dem')) map.removeSource('terrain-dem'); } catch { /* ignore */ }
+      // Keep 3D buildings if user has them enabled
+      if (!show3DBuildingsRef.current && map.getLayer('3d-buildings')) {
         map.removeLayer('3d-buildings');
         if (map.getSource('openmaptiles')) map.removeSource('openmaptiles');
       }
-      // Remove terrain source to fully disable 3D
-      try { if (map.getSource('terrain-dem')) map.removeSource('terrain-dem'); } catch { /* ignore */ }
     }
   }, [is3D]);
 
@@ -1777,8 +1778,6 @@ export function MapView() {
       <ViewToolbar
         leftContent={
           <div className="flex items-center gap-3">
-            <CollaborationInfo />
-            <div className="w-px h-4 bg-border-default" />
             <span className="text-xs text-text-secondary">
               {t('map.elementsLocated', { count: geoElements.length })}
               {geoLinks.length > 0 && (
@@ -1834,16 +1833,14 @@ export function MapView() {
             </button>
 
             {/* 3D buildings toggle */}
-            {is3D && (
-              <button
-                onClick={() => setShow3DBuildings(v => !v)}
-                className={`px-2 h-6 text-[10px] flex items-center gap-1 border border-border-default rounded mr-2 ${show3DBuildings ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                title={t('map.toggle3DBuildings')}
-              >
-                <Building size={11} />
-                {t('map.buildings')}
-              </button>
-            )}
+            <button
+              onClick={() => setShow3DBuildings(v => !v)}
+              className={`px-2 h-6 text-[10px] flex items-center gap-1 border border-border-default rounded mr-2 ${show3DBuildings ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+              title={t('map.toggle3DBuildings')}
+            >
+              <Building size={11} />
+              {t('map.buildings')}
+            </button>
 
             {/* Draw zone button with shape dropdown */}
             <div className="relative mr-2">

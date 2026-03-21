@@ -386,14 +386,19 @@
     "count": "{{count}}/{{total}} elementos",
     "properties": "{{count}} propriedades",
     "search": "Pesquisar...",
-    "columns": "Colunas",
+    "columns": "Mostrar/ocultar colunas",
     "noResults": "Sem resultados",
     "empty": "Nenhum elemento com propriedades",
     "all": "Tudo",
     "none": "Nenhum",
     "reset": "Redefinir vista",
     "exportCsv": "Exportar como CSV",
-    "filter": "Filtrar..."
+    "filter": "Filtrar...",
+    "pinColumn": "Fixar coluna",
+    "unpinColumn": "Libertar coluna",
+    "copyCell": "Copiar célula",
+    "copyRow": "Copiar linha",
+    "copySelection": "Copiar seleção ({{count}})"
   },
   "report": {
     "title": "Relatório",
