@@ -9,7 +9,7 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2 } from 'lucide-react';
+import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { ZoneDrawTool } from './ZoneDrawTool';
@@ -233,6 +233,9 @@ export function MapView() {
   const [temporalMode, setTemporalMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [temporalFollowCamera, setTemporalFollowCamera] = useState(false);
+  const isPlayingRef = useRef(false);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
 
   const { elements, links, assets, comments, updateElement, createElement, deleteElements, currentDossier } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
@@ -800,7 +803,7 @@ export function MapView() {
     // Build supercluster index
     const sc = new Supercluster<{ elementId: string }>({
       radius: 50,
-      maxZoom: 18,
+      maxZoom: 20,
     });
 
     const points: PointFeature[] = effectiveGeoElements.map(el => ({
@@ -1654,23 +1657,140 @@ export function MapView() {
     setSelectedDate(eventDates[newIndex]);
   };
 
-  // Play animation
+  // Play animation — fixed interval only when follow camera is OFF
+  // When follow camera is ON, advancement is chained via moveend below
+  // This interval handles the non-follow-camera case + kick-starts the chain
+  const advanceDate = useCallback(() => {
+    setSelectedDate((prev) => {
+      if (!prev) return eventDates[0];
+      let currentIdx = 0;
+      for (let i = 0; i < eventDates.length; i++) {
+        if (eventDates[i].getTime() <= prev.getTime()) currentIdx = i;
+      }
+      const nextIdx = currentIdx + 1;
+      if (nextIdx >= eventDates.length) { setIsPlaying(false); return eventDates[eventDates.length - 1]; }
+      return eventDates[nextIdx];
+    });
+  }, [eventDates]);
+
   useEffect(() => {
     if (!isPlaying || eventDates.length === 0) return;
-    const interval = setInterval(() => {
-      setSelectedDate((prev) => {
-        if (!prev) return eventDates[0];
-        let currentIdx = 0;
-        for (let i = 0; i < eventDates.length; i++) {
-          if (eventDates[i].getTime() <= prev.getTime()) currentIdx = i;
-        }
-        const nextIdx = currentIdx + 1;
-        if (nextIdx >= eventDates.length) { setIsPlaying(false); return eventDates[eventDates.length - 1]; }
-        return eventDates[nextIdx];
-      });
-    }, 800);
+    if (temporalFollowCamera) {
+      // Kick-start the moveend chain by advancing once
+      const kickstart = setTimeout(advanceDate, 200);
+      return () => clearTimeout(kickstart);
+    }
+    const interval = setInterval(advanceDate, 800);
     return () => clearInterval(interval);
-  }, [isPlaying, eventDates]);
+  }, [isPlaying, eventDates, temporalFollowCamera, advanceDate]);
+
+  // Temporal follow camera: animate to events, then chain to next date on moveend
+  useEffect(() => {
+    if (!temporalMode || !selectedDate || !temporalFollowCamera || !mapRef.current) return;
+    if (resolvedGeoElements.length === 0) return;
+
+    const map = mapRef.current;
+    const targetDay = dayStart(selectedDate);
+    let cancelled = false;
+    let advanceTimeout: ReturnType<typeof setTimeout>;
+
+    // Find elements that have an event specifically on this date
+    const activeCoords: [number, number][] = [];
+    for (const r of resolvedGeoElements) {
+      const el = r.element;
+      const hasEventToday = (el.events || []).some(e => e.date && dayStart(e.date) === targetDay);
+      const startsToday = (el.date && dayStart(el.date) === targetDay) ||
+        (el.dateRange?.start && dayStart(el.dateRange.start) === targetDay);
+      if (hasEventToday || startsToday) {
+        activeCoords.push([r.geo.lng, r.geo.lat]);
+      }
+    }
+
+    // No events at this date — advance quickly if playing
+    if (activeCoords.length === 0) {
+      if (isPlayingRef.current) {
+        advanceTimeout = setTimeout(() => { if (!cancelled) advanceDate(); }, 400);
+      }
+      return () => { cancelled = true; clearTimeout(advanceTimeout); };
+    }
+
+    // Check if all active coords are co-located (same spot, e.g. family house)
+    const allSameSpot = activeCoords.every(
+      c => Math.abs(c[0] - activeCoords[0][0]) < 0.001 && Math.abs(c[1] - activeCoords[0][1]) < 0.001
+    );
+    const targetCenter = allSameSpot
+      ? activeCoords[0]
+      : undefined;
+    // Count ALL geo elements near the target to detect if it will be a cluster
+    const nearbyTotal = targetCenter
+      ? resolvedGeoElements.filter(r =>
+          Math.abs(r.geo.lng - targetCenter[0]) < 0.001 && Math.abs(r.geo.lat - targetCenter[1]) < 0.001
+        ).length
+      : 0;
+    // Zoom 22 to guarantee Math.floor > Supercluster maxZoom (20), 16 for isolated point
+    const targetZoom = targetCenter && nearbyTotal > 1 ? 22 : 16;
+
+    // Check if camera is already at target — moveend won't fire, advance directly
+    if (targetCenter) {
+      const cur = map.getCenter();
+      const alreadyThere = Math.abs(cur.lng - targetCenter[0]) < 0.0005
+        && Math.abs(cur.lat - targetCenter[1]) < 0.0005
+        && Math.abs(map.getZoom() - targetZoom) < 0.5;
+      if (alreadyThere) {
+        if (isPlayingRef.current) {
+          advanceTimeout = setTimeout(() => { if (!cancelled) advanceDate(); }, 1200);
+        }
+        return () => { cancelled = true; clearTimeout(advanceTimeout); };
+      }
+    }
+
+    // After camera animation ends, pause for tiles to load, then advance
+    // Use timestamp to ignore spurious moveend from interrupted previous animation
+    const animStart = Date.now();
+    const onMoveEnd = () => {
+      if (cancelled) return;
+      if (Date.now() - animStart < 400) return;
+      map.off('moveend', onMoveEnd);
+      if (isPlayingRef.current) {
+        advanceTimeout = setTimeout(() => { if (!cancelled) advanceDate(); }, 800);
+      }
+    };
+
+    map.on('moveend', onMoveEnd);
+
+    // Animate: flyTo with natural arc — no maxDuration so long distances get full dezoom
+    if (targetCenter) {
+      map.flyTo({
+        center: targetCenter,
+        zoom: targetZoom,
+        speed: 0.6,
+        curve: 1.42,
+        essential: true,
+      });
+    } else {
+      const bounds = activeCoords.reduce(
+        (b, c) => b.extend(c),
+        new maplibregl.LngLatBounds(activeCoords[0], activeCoords[0])
+      );
+      map.fitBounds(bounds, { padding: 80, maxZoom: 17, duration: 3000 });
+    }
+
+    // Safety: if moveend doesn't fire within 15s, advance anyway
+    const safetyTimeout = setTimeout(() => {
+      if (cancelled) return;
+      map.off('moveend', onMoveEnd);
+      if (isPlayingRef.current) {
+        advanceTimeout = setTimeout(() => { if (!cancelled) advanceDate(); }, 800);
+      }
+    }, 15000);
+
+    return () => {
+      cancelled = true;
+      map.off('moveend', onMoveEnd);
+      clearTimeout(advanceTimeout);
+      clearTimeout(safetyTimeout);
+    };
+  }, [temporalMode, selectedDate, resolvedGeoElements, temporalFollowCamera, dayStart, advanceDate]);
 
   // ── Listen for flyToPolygon events from detail panel ──────────────
   useEffect(() => {
@@ -1966,6 +2086,13 @@ export function MapView() {
               title={t('map.stepForward')}
             >
               <SkipForward size={14} />
+            </button>
+            <button
+              onClick={() => setTemporalFollowCamera(!temporalFollowCamera)}
+              className={`p-1 rounded ${temporalFollowCamera ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
+              title={t('map.followCamera')}
+            >
+              <Crosshair size={14} />
             </button>
           </div>
           <span className="text-xs text-text-tertiary whitespace-nowrap">{formatDate(timeRange.min)}</span>

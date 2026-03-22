@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.33.0
+
+### Features
+- Map temporal follow camera: Crosshair toggle button during temporal playback that follows events with cinematic flyTo animations (adaptive speed, dezoom arc, moveend-chained advancement)
+- Hierarchy layout powered by dagre (Sugiyama algorithm): minimized edge crossings, greedy cycle breaking, adaptive node/rank spacing
+
+### Fixes
+- Hierarchy/force layout: `estimateNodeWidth` now matches ElementNode rendering dimensions, improved AABB overlap removal (15 passes, early exit, gap=24)
+- Map clustering: clusters properly break at high zoom (Supercluster maxZoom 20, follow camera zooms to 22 for co-located elements)
+- Map temporal follow camera: moveend-based chaining prevents animation interruption, timestamp guard ignores spurious moveend from interrupted previous flyTo
+
 ## 2.32.1
 
 ### Fixes

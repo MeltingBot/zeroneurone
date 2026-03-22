@@ -313,6 +313,7 @@
     "stepForward": "Avanti",
     "play": "Riproduci",
     "pause": "Pausa",
+    "followCamera": "Segui eventi",
     "unnamed": "Senza nome",
     "drawZone": "Disegnare una zona",
     "cancelDraw": "Annulla il disegno",

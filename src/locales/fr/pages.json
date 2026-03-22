@@ -314,6 +314,7 @@
     "stepForward": "Avancer",
     "play": "Lecture",
     "pause": "Pause",
+    "followCamera": "Suivre les événements",
     "unnamed": "Sans nom",
     "exportCSV": "Exporter en CSV",
     "drawZone": "Dessiner une zone",

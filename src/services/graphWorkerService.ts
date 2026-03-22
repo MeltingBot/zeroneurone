@@ -23,6 +23,7 @@ interface SerializedLink {
   fromId: string;
   toId: string;
   label?: string;
+  direction?: string;
 }
 
 export interface WorkerInsightsData {
@@ -113,6 +114,7 @@ class GraphWorkerService {
       fromId: l.fromId,
       toId: l.toId,
       label: l.label,
+      direction: l.direction,
     }));
   }
 

@@ -12,6 +12,7 @@ import { bidirectional } from 'graphology-shortest-path';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { circular, random } from 'graphology-layout';
+import dagre from '@dagrejs/dagre';
 
 // ============================================================================
 // TYPES
@@ -31,6 +32,7 @@ interface SerializedLink {
   toId: string;
   label?: string;
   confidence?: number | null;
+  direction?: string;
 }
 
 interface LayoutOptions {
@@ -318,7 +320,7 @@ function computeLayout(
 
   switch (options.layoutType) {
     case 'force':
-      return applyForceLayout(graph, center);
+      return applyForceLayout(graph, filteredElements, center);
     case 'circular':
       return applyCircularLayout(graph, center, filteredElements.length);
     case 'grid':
@@ -326,13 +328,19 @@ function computeLayout(
     case 'random':
       return applyRandomLayout(graph, center, filteredElements.length);
     case 'hierarchy':
-      return applyHierarchyLayout(graph, center, filteredElements.length);
+      return applyHierarchyLayout(graph, links, filteredElements, center, filteredElements.length);
     default:
       return {};
   }
 }
 
-function applyForceLayout(graph: Graph, center: { x: number; y: number }): Record<string, { x: number; y: number }> {
+function applyForceLayout(graph: Graph, elements: SerializedElement[], center: { x: number; y: number }): Record<string, { x: number; y: number }> {
+  // Build label lookup for per-node width estimation
+  const labelMap = new Map<string, string>();
+  for (const el of elements) {
+    labelMap.set(el.id, el.label || '');
+  }
+
   // Random initial positions for nodes without coordinates
   graph.forEachNode((node) => {
     if (!graph.getNodeAttribute(node, 'x')) {
@@ -357,40 +365,9 @@ function applyForceLayout(graph: Graph, center: { x: number; y: number }): Recor
     },
   });
 
-  postProgress(60, 'overlap removal');
+  postProgress(60, 'normalization');
 
-  // Overlap removal
-  const minNodeDistance = 280;
-  const nodes = graph.nodes();
-  for (let pass = 0; pass < 5; pass++) {
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const x1 = graph.getNodeAttribute(nodes[i], 'x') as number;
-        const y1 = graph.getNodeAttribute(nodes[i], 'y') as number;
-        const x2 = graph.getNodeAttribute(nodes[j], 'x') as number;
-        const y2 = graph.getNodeAttribute(nodes[j], 'y') as number;
-
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < minNodeDistance && dist > 0) {
-          const scale = (minNodeDistance - dist) / 2 / dist;
-          graph.setNodeAttribute(nodes[i], 'x', x1 - dx * scale);
-          graph.setNodeAttribute(nodes[i], 'y', y1 - dy * scale);
-          graph.setNodeAttribute(nodes[j], 'x', x2 + dx * scale);
-          graph.setNodeAttribute(nodes[j], 'y', y2 + dy * scale);
-        } else if (dist === 0) {
-          graph.setNodeAttribute(nodes[j], 'x', x2 + minNodeDistance * Math.random());
-          graph.setNodeAttribute(nodes[j], 'y', y2 + minNodeDistance * Math.random());
-        }
-      }
-    }
-  }
-
-  postProgress(90, 'normalization');
-
-  // Normalize and center
+  // Extract raw positions and compute bounding box
   const rawPositions: { node: string; x: number; y: number }[] = [];
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   graph.forEachNode((node) => {
@@ -409,12 +386,58 @@ function applyForceLayout(graph: Graph, center: { x: number; y: number }): Recor
   const centerX = (minX + maxX) / 2;
   const centerY = (minY + maxY) / 2;
 
-  const positions: Record<string, { x: number; y: number }> = {};
+  // Apply normalization, then overlap removal on final positions
+  const nodeData: { id: string; x: number; y: number; w: number; h: number }[] = [];
+
   for (const { node, x, y } of rawPositions) {
-    positions[node] = {
+    const label = labelMap.get(node) || '';
+    const w = estimateNodeWidth(label, 120);
+    nodeData.push({
+      id: node,
       x: (x - centerX) * scaleFactor + center.x,
       y: (y - centerY) * scaleFactor + center.y,
-    };
+      w,
+      h: ESTIMATED_NODE_HEIGHT,
+    });
+  }
+
+  postProgress(80, 'overlap removal');
+
+  // AABB overlap removal on final positions
+  const gap = 24;
+  for (let pass = 0; pass < 15; pass++) {
+    let hasOverlap = false;
+    for (let i = 0; i < nodeData.length; i++) {
+      for (let j = i + 1; j < nodeData.length; j++) {
+        const a = nodeData[i];
+        const b = nodeData[j];
+        const overlapX = (a.w / 2 + b.w / 2 + gap) - Math.abs(a.x - b.x);
+        const overlapY = (a.h / 2 + b.h / 2 + gap) - Math.abs(a.y - b.y);
+
+        if (overlapX > 0 && overlapY > 0) {
+          hasOverlap = true;
+          if (overlapX < overlapY) {
+            const push = overlapX / 2 + 1;
+            if (a.x < b.x) { a.x -= push; b.x += push; }
+            else { a.x += push; b.x -= push; }
+          } else {
+            const push = overlapY / 2 + 1;
+            if (a.y < b.y) { a.y -= push; b.y += push; }
+            else { a.y += push; b.y -= push; }
+          }
+        } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
+          hasOverlap = true;
+          b.x += (a.w / 2 + b.w / 2 + gap) * Math.random();
+          b.y += ESTIMATED_NODE_HEIGHT * Math.random();
+        }
+      }
+    }
+    if (!hasOverlap) break;
+  }
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const n of nodeData) {
+    positions[n.id] = { x: n.x, y: n.y };
   }
 
   postProgress(100, 'done');
@@ -477,112 +500,142 @@ function applyRandomLayout(graph: Graph, center: { x: number; y: number }, nodeC
   return positions;
 }
 
-function applyHierarchyLayout(graph: Graph, center: { x: number; y: number }, nodeCount: number): Record<string, { x: number; y: number }> {
+/**
+ * Estimate visual width of a node based on its label length.
+ * Mirrors ElementNode.getDefaultDimensions() for rectangles:
+ *   estimatedTextWidth = labelLength * 7 + 24
+ *   width = clamp(estimatedTextWidth * 1.2, 120, 280)
+ */
+function estimateNodeWidth(label: string, minWidth: number): number {
+  const estimatedTextWidth = label.length * 7 + 24;
+  const width = Math.max(estimatedTextWidth * 1.2, 120);
+  return Math.max(minWidth, Math.min(width, 280));
+}
+
+/** Node height matching ElementNode rectangle: max(baseSize * 0.5, 40) ≈ 40px */
+const ESTIMATED_NODE_HEIGHT = 40;
+
+function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: SerializedElement[], center: { x: number; y: number }, nodeCount: number): Record<string, { x: number; y: number }> {
   // Adaptive sizing based on node count
-  let nodeWidth: number, levelHeight: number, siblingGap: number;
+  let defaultNodeWidth: number, nodeHeight: number, nodesep: number, ranksep: number;
   if (nodeCount >= 1500) {
-    nodeWidth = 80; levelHeight = 65; siblingGap = 2;
+    defaultNodeWidth = 80; nodeHeight = 35; nodesep = 4; ranksep = 65;
   } else if (nodeCount >= 500) {
-    nodeWidth = 100; levelHeight = 80; siblingGap = 4;
+    defaultNodeWidth = 100; nodeHeight = 40; nodesep = 8; ranksep = 80;
   } else if (nodeCount >= 100) {
-    nodeWidth = 130; levelHeight = 100; siblingGap = 8;
+    defaultNodeWidth = 130; nodeHeight = 50; nodesep = 12; ranksep = 100;
   } else {
-    nodeWidth = 160; levelHeight = 120; siblingGap = 20;
+    defaultNodeWidth = 160; nodeHeight = 60; nodesep = 20; ranksep = 120;
   }
 
-  postProgress(20, 'finding roots');
+  // Build label lookup for per-node width estimation
+  const labelMap = new Map<string, string>();
+  for (const el of elements) {
+    labelMap.set(el.id, el.label || '');
+  }
 
-  // Find roots (nodes with no incoming edges)
-  const roots: string[] = [];
-  const hasIncoming = new Set<string>();
+  postProgress(20, 'building dagre graph');
 
-  graph.forEachEdge((_edge, _attrs, _source, target) => {
-    hasIncoming.add(target);
+  // Build dagre graph
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({
+    rankdir: 'TB',
+    nodesep,
+    ranksep,
+    edgesep: 10,
+    acyclicer: 'greedy',
+    ranker: 'network-simplex',
   });
+  g.setDefaultEdgeLabel(() => ({}));
 
+  // Add nodes with per-node width based on label
   graph.forEachNode((node) => {
-    if (!hasIncoming.has(node)) {
-      roots.push(node);
+    const label = labelMap.get(node) || '';
+    const width = estimateNodeWidth(label, defaultNodeWidth);
+    g.setNode(node, { width, height: nodeHeight });
+  });
+
+  postProgress(40, 'adding edges');
+
+  // Build direction lookup from links
+  const linkDirectionMap = new Map<string, string>();
+  for (const link of links) {
+    linkDirectionMap.set(`${link.fromId}->${link.toId}`, link.direction || 'forward');
+  }
+
+  // Add edges respecting direction
+  graph.forEachEdge((_edge, _attrs, source, target) => {
+    const dir = linkDirectionMap.get(`${source}->${target}`)
+             || linkDirectionMap.get(`${target}->${source}`);
+
+    if (dir === 'backward') {
+      g.setEdge(target, source);
+    } else {
+      g.setEdge(source, target);
     }
   });
 
-  // If no roots found, pick nodes with minimum in-degree
-  if (roots.length === 0) {
-    const inDegrees = new Map<string, number>();
-    graph.forEachNode((node) => {
-      inDegrees.set(node, graph.inDegree(node));
-    });
-    const minDegree = Math.min(...inDegrees.values());
-    graph.forEachNode((node) => {
-      if (inDegrees.get(node) === minDegree) {
-        roots.push(node);
-      }
-    });
-  }
+  postProgress(60, 'computing layout');
 
-  postProgress(40, 'assigning levels');
-
-  // BFS to assign levels
-  const levels = new Map<string, number>();
-  const queue: string[] = [...roots];
-  const visited = new Set<string>(roots);
-
-  for (const root of roots) {
-    levels.set(root, 0);
-  }
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const currentLevel = levels.get(current) || 0;
-
-    graph.forEachOutNeighbor(current, (neighbor) => {
-      if (!visited.has(neighbor)) {
-        visited.add(neighbor);
-        levels.set(neighbor, currentLevel + 1);
-        queue.push(neighbor);
-      }
-    });
-  }
-
-  // Handle unvisited nodes (disconnected components)
-  graph.forEachNode((node) => {
-    if (!levels.has(node)) {
-      levels.set(node, 0);
-    }
-  });
-
-  postProgress(60, 'grouping by level');
-
-  // Group nodes by level
-  const byLevel = new Map<number, string[]>();
-  let maxLevel = 0;
-
-  for (const [node, level] of levels) {
-    if (!byLevel.has(level)) {
-      byLevel.set(level, []);
-    }
-    byLevel.get(level)!.push(node);
-    maxLevel = Math.max(maxLevel, level);
-  }
+  // Run dagre layout
+  dagre.layout(g);
 
   postProgress(80, 'positioning');
 
-  // Position nodes
-  const positions: Record<string, { x: number; y: number }> = {};
+  // Extract positions and node widths for overlap check
+  const nodeData: { id: string; x: number; y: number; w: number; h: number }[] = [];
 
-  for (let level = 0; level <= maxLevel; level++) {
-    const nodesAtLevel = byLevel.get(level) || [];
-    const count = nodesAtLevel.length;
-    const totalWidth = count * nodeWidth + (count - 1) * siblingGap;
-    let x = center.x - totalWidth / 2;
-
-    for (const node of nodesAtLevel) {
-      positions[node] = {
-        x: x + nodeWidth / 2,
-        y: center.y + level * levelHeight,
-      };
-      x += nodeWidth + siblingGap;
+  g.nodes().forEach((nodeId) => {
+    const node = g.node(nodeId);
+    if (node) {
+      nodeData.push({ id: nodeId, x: node.x, y: node.y, w: node.width, h: node.height });
     }
+  });
+
+  // Post-process: resolve remaining overlaps (axis-aligned bounding box check)
+  const gap = 24;
+  for (let pass = 0; pass < 15; pass++) {
+    let hasOverlap = false;
+    for (let i = 0; i < nodeData.length; i++) {
+      for (let j = i + 1; j < nodeData.length; j++) {
+        const a = nodeData[i];
+        const b = nodeData[j];
+        const overlapX = (a.w / 2 + b.w / 2 + gap) - Math.abs(a.x - b.x);
+        const overlapY = (a.h / 2 + b.h / 2 + gap) - Math.abs(a.y - b.y);
+
+        if (overlapX > 0 && overlapY > 0) {
+          hasOverlap = true;
+          if (overlapX < overlapY) {
+            const push = overlapX / 2 + 1;
+            if (a.x < b.x) { a.x -= push; b.x += push; }
+            else { a.x += push; b.x -= push; }
+          } else {
+            const push = overlapY / 2 + 1;
+            if (a.y < b.y) { a.y -= push; b.y += push; }
+            else { a.y += push; b.y -= push; }
+          }
+        }
+      }
+    }
+    if (!hasOverlap) break;
+  }
+
+  // Center around target center
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const n of nodeData) {
+    minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
+    minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
+  }
+
+  const graphCenterX = (minX + maxX) / 2;
+  const graphCenterY = (minY + maxY) / 2;
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const n of nodeData) {
+    positions[n.id] = {
+      x: n.x - graphCenterX + center.x,
+      y: n.y - graphCenterY + center.y,
+    };
   }
 
   postProgress(100, 'done');

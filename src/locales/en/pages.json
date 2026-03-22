@@ -314,6 +314,7 @@
     "stepForward": "Step forward",
     "play": "Play",
     "pause": "Pause",
+    "followCamera": "Follow events",
     "unnamed": "Unnamed",
     "drawZone": "Draw a zone",
     "cancelDraw": "Cancel drawing",
