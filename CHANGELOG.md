@@ -1,16 +1,21 @@
 # Changelog
 
+## 2.33.3
+
+### Fixes
+- Production relay (Docker): port all v3 improvements — token hashing, TRUST_PROXY, backpressure, native Redis Buffer, partial buffer flush, JSON metrics health endpoint, orphaned room cleanup, improved graceful shutdown
+
 ## 2.33.2
 
 ### Fixes
-- Relay server v3: graceful shutdown (SIGTERM/SIGINT) for clean Docker restarts
-- Relay server: orphaned room cleanup after 24h inactivity (fixes memory leak on tokens/asyncRooms)
-- Relay server: health endpoint returns JSON metrics (rooms, clients, uptime, buffer stats)
-- Relay server: backpressure on relay — skip clients with >4MB send buffer
-- Relay server: X-Forwarded-For only trusted with `TRUST_PROXY=1` env var
-- Relay server: room tokens stored as SHA-256 hashes instead of plain text
-- Relay server: Redis buffer uses native Buffer instead of base64 (+33% overhead removed)
-- Relay server: partial buffer flush preserves unsent messages on client disconnect
+- Dev relay server v3: graceful shutdown (SIGTERM/SIGINT) for clean Docker restarts
+- Dev relay server: orphaned room cleanup after 24h inactivity (fixes memory leak on tokens/asyncRooms)
+- Dev relay server: health endpoint returns JSON metrics (rooms, clients, uptime, buffer stats)
+- Dev relay server: backpressure on relay — skip clients with >4MB send buffer
+- Dev relay server: X-Forwarded-For only trusted with `TRUST_PROXY=1` env var
+- Dev relay server: room tokens stored as SHA-256 hashes instead of plain text
+- Dev relay server: Redis buffer uses native Buffer instead of base64 (+33% overhead removed)
+- Dev relay server: partial buffer flush preserves unsent messages on client disconnect
 
 ## 2.33.1
 
