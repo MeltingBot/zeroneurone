@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.33.1
+
+### Fixes
+- WebSocket: graceful disconnect on page unload (prevents "connection interrupted" browser errors)
+- WebSocket: proactive reconnection on tab visibility change instead of waiting for backoff timer
+- WebSocket: 5-second grace period on initial connection suppresses transient error flashes
+- WebSocket: `isClosing` guard prevents event handlers from firing during teardown
+
 ## 2.33.0
 
 ### Features

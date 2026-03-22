@@ -36,16 +36,49 @@ class SyncService {
   private dossierId: string | null = null;
   private encryptionKey: string | null = null;
 
+  // Guards to suppress event handlers during teardown / page unload
+  private isClosing = false;
+
   private state: SyncState = { ...DEFAULT_SYNC_STATE };
   private stateListeners: Set<StateListener> = new Set();
 
   // Load server URL from localStorage (empty string if not configured)
   private serverUrl: string = '';
 
+  // Bound handlers for cleanup
+  private boundBeforeUnload = () => this.handleBeforeUnload();
+  private boundVisibilityChange = () => this.handleVisibilityChange();
+
   constructor() {
     // Load server URL from localStorage on initialization
     if (typeof localStorage !== 'undefined') {
       this.serverUrl = localStorage.getItem(STORAGE_KEY) || '';
+    }
+
+    // Gracefully close WebSocket on page unload to avoid browser "connection interrupted" errors
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', this.boundBeforeUnload);
+      document.addEventListener('visibilitychange', this.boundVisibilityChange);
+    }
+  }
+
+  /** Graceful disconnect before page unload — prevents browser console errors */
+  private handleBeforeUnload(): void {
+    if (this.websocketProvider) {
+      this.isClosing = true;
+      this.websocketProvider.disconnect();
+    }
+  }
+
+  /** Reconnect proactively when tab becomes visible again */
+  private handleVisibilityChange(): void {
+    if (document.visibilityState !== 'visible') return;
+    if (!this.websocketProvider || this.isClosing) return;
+    if (this.state.mode !== 'shared') return;
+
+    // If disconnected, force reconnect instead of waiting for backoff timer
+    if (!this.state.connected) {
+      this.websocketProvider.connect();
     }
   }
 
@@ -424,21 +457,24 @@ class SyncService {
       }
     );
 
-    // Track if we were previously connected (for reconnection detection)
+    // Track connection lifecycle
     let wasConnected = false;
+    this.isClosing = false;
+
+    // Grace period: suppress errors during initial connection (y-websocket will retry)
+    let initialGrace = true;
+    setTimeout(() => { initialGrace = false; }, 5000);
 
     // Set syncing to true while waiting for initial sync
     this.setState({ syncing: true });
 
     // Listen to connection status
     this.websocketProvider.on('status', (event: { status: string }) => {
+      if (this.isClosing) return;
       const connected = event.status === 'connected';
 
       if (connected) {
-        // Successfully connected or reconnected
-        if (wasConnected) {
-          // This was a reconnection - clear reconnecting state
-        }
+        initialGrace = false;
         this.setState({
           connected: true,
           reconnecting: false,
@@ -448,8 +484,8 @@ class SyncService {
 
         // After connection, check sync state after a short delay
         // This handles the case where 'sync' event isn't emitted (no peers, already synced)
-        // Also mark as synced if we're alone (peerCount === 0)
         setTimeout(() => {
+          if (this.isClosing) return;
           const currentState = this.getState();
           if (this.websocketProvider?.synced || currentState.peerCount === 0) {
             this.setState({ syncing: false });
@@ -458,15 +494,15 @@ class SyncService {
       } else {
         // Disconnected
         if (wasConnected) {
-          // We were connected before, now disconnected - entering reconnection mode
+          // We were connected before — enter reconnection mode (silent, y-websocket retries)
           this.setState({
             connected: false,
             reconnecting: true,
-            syncing: true, // Reset syncing state for reconnection
-            error: null, // Don't show error during reconnection attempts
+            syncing: true,
+            error: null,
           });
         } else {
-          // Never connected yet
+          // Still in initial connection phase
           this.setState({ connected: false });
         }
       }
@@ -474,6 +510,7 @@ class SyncService {
 
     // Listen to sync status
     this.websocketProvider.on('sync', (synced: boolean) => {
+      if (this.isClosing) return;
       // When alone (no peers), there's no one to sync with — never set syncing to true
       if (!synced && this.getState().peerCount === 0) return;
       this.setState({ syncing: !synced });
@@ -484,6 +521,7 @@ class SyncService {
       let previousPeerCount = 0;
 
       const updatePeerCount = () => {
+        if (this.isClosing) return;
         const awareness = this.websocketProvider?.awareness;
         if (!awareness) return;
 
@@ -493,15 +531,14 @@ class SyncService {
         this.setState({ peerCount });
 
         // When peer count drops to 0 (we're alone), mark sync as complete
-        // There's no one to sync with, so we're effectively synced
         if (peerCount === 0 && previousPeerCount > 0) {
           this.setState({ syncing: false });
         }
 
         // When peer count increases (someone joined), re-broadcast our state
-        // This helps new clients see existing clients with relay servers
         if (peerCount > previousPeerCount && awareness.getLocalState()) {
           setTimeout(() => {
+            if (this.isClosing) return;
             const currentAwareness = this.websocketProvider?.awareness;
             if (currentAwareness) {
               const state = currentAwareness.getLocalState();
@@ -518,21 +555,21 @@ class SyncService {
       updatePeerCount();
     }
 
-    // Handle connection errors (only show if not in reconnecting mode)
+    // Handle connection errors
     this.websocketProvider.on('connection-error', (event: Event | { message?: string }) => {
-      // Don't overwrite reconnecting state with error - let it keep trying
-      if (!this.state.reconnecting) {
-        const message = (event && typeof event === 'object' && 'message' in event)
-          ? (event as { message?: string }).message
-          : 'Erreur de connexion au serveur';
-        this.setState({ error: message || 'Erreur de connexion au serveur' });
-      }
+      if (this.isClosing) return;
+      // During initial grace period or reconnection, suppress errors — y-websocket retries automatically
+      if (initialGrace || this.state.reconnecting) return;
+      const message = (event && typeof event === 'object' && 'message' in event)
+        ? (event as { message?: string }).message
+        : 'Erreur de connexion au serveur';
+      this.setState({ error: message || 'Erreur de connexion au serveur' });
     });
 
     // Handle connection close
     this.websocketProvider.on('connection-close', () => {
+      if (this.isClosing) return;
       if (wasConnected && this.state.mode === 'shared') {
-        // Only set reconnecting if we're still supposed to be in shared mode
         this.setState({
           connected: false,
           reconnecting: true,
@@ -568,6 +605,9 @@ class SyncService {
    * Close the current dossier and clean up resources
    */
   async close(): Promise<void> {
+    // Suppress event handlers during teardown
+    this.isClosing = true;
+
     // Disconnect and destroy WebSocket provider
     if (this.websocketProvider) {
       this.websocketProvider.disconnect();
