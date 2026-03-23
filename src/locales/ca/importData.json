@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "atribuït a",
+      "uses": "utilitza",
+      "targets": "apunta a",
+      "indicates": "indica",
+      "mitigates": "mitiga",
+      "derivedFrom": "derivat de",
+      "duplicateOf": "duplicat de",
+      "relatedTo": "relacionat amb",
+      "drops": "desplega",
+      "delivers": "lliura",
+      "exploits": "explota",
+      "variantOf": "variant de",
+      "authoredBy": "autor",
+      "basedOn": "basat en",
+      "owns": "posseeix",
+      "hosts": "allotja",
+      "locatedAt": "ubicat a",
+      "communicatesWith": "comunica amb",
+      "controls": "controla",
+      "has": "té",
+      "compromises": "compromet",
+      "originatesFrom": "prové de",
+      "investigates": "investiga",
+      "remediates": "remedia",
+      "analysisOf": "anàlisi de",
+      "consistsOf": "compost de",
+      "impersonates": "suplanta",
+      "beaconsTo": "senyalitza cap a",
+      "exfiltratesTo": "exfiltra cap a",
+      "sighting": "observat"
+    },
+    "labels": {
+      "observedAt": "observat a",
+      "concerns": "concerneix",
+      "opinionOn": "opinió sobre",
+      "mentions": "menciona",
+      "note": "Nota",
+      "observation": "Observació"
+    },
+    "noteLabels": {
+      "objective": "Objectiu",
+      "pattern": "Patró",
+      "opinion": "Opinió"
+    },
+    "errors": {
+      "invalidBundle": "Bundle STIX no vàlid: sense objectes",
+      "missingRef": "Relació omesa: falta source_ref o target_ref ({{id}})",
+      "missingElement": "Relació omesa: element origen/destí no importat ({{type}})",
+      "noteNoRefs": "Nota omesa: sense object_refs ({{id}})",
+      "noteRefMissing": "Nota omesa: objecte referenciat no importat ({{label}})",
+      "importError": "Error d'importació STIX2: {{message}}",
+      "unknownError": "Error desconegut"
+    },
+    "meta": {
+      "importDescription": "Importació STIX 2.1 - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "casat/da amb",
+      "parentOf": "pare/mare de",
+      "siblingOf": "germà/na de"
+    },
+    "events": {
+      "birth": "Naixement",
+      "death": "Defunció",
+      "residence": "Residència"
+    },
+    "properties": {
+      "firstName": "Nom",
+      "lastName": "Cognom",
+      "sex": "Sexe",
+      "male": "Masculí",
+      "female": "Femení",
+      "unknown": "Desconegut",
+      "occupation": "Professió",
+      "nickname": "Sobrenom",
+      "title": "Títol",
+      "place": "Lloc",
+      "sourceId": "ID origen",
+      "marriageDate": "Data matrimoni",
+      "marriagePlace": "Lloc matrimoni",
+      "divorceDate": "Data divorci",
+      "familyId": "ID família",
+      "type": "Tipus",
+      "filiation": "Filiació",
+      "siblinghood": "Germandat"
+    },
+    "tags": {
+      "genealogy": "Genealogia",
+      "male": "Home",
+      "female": "Dona",
+      "marriage": "Matrimoni",
+      "filiation": "Filiació",
+      "siblinghood": "Germandat"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "Error d'anàlisi XML",
+      "invalidGexf": "Format GEXF no vàlid: falta element <gexf>",
+      "missingGraph": "Format GEXF no vàlid: falta element <graph>",
+      "invalidGephiLite": "Format Gephi Lite no vàlid: sense nodes",
+      "missingDataset": "Format Gephi Lite no vàlid: falten dades del graf",
+      "importError": "Error d'importació Gephi: {{message}}",
+      "unknownError": "Error desconegut"
+    },
+    "warnings": {
+      "nodeNoId": "Node sense ID omès",
+      "edgeNoSourceTarget": "Aresta sense origen/destí omesa",
+      "edgeMissingNode": "Aresta omesa: node origen/destí no trobat"
+    }
+  }
+}

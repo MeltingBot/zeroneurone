@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.34.0
+
+### Features
+- **Native Gephi import** (GEXF + Gephi Lite JSON): nodes with positions, colors, sizes (proportional scaling), shapes; edges with colors, thickness (ranking), direction; node/edge properties with auto type inference; appearance palettes (partition/fixed); metadata into dossier description
+- **STIX 2.1 import expanded**: full SCO support (IPv4/IPv6, domain, URL, email, file, network-traffic, MAC, user-account, process, software, directory, registry key, autonomous-system, x509-certificate, artifact), additional SDO fields (observed-data, opinion, first/last observed), object marking refs
+- **i18n `importData` namespace** (11 languages): all import services (STIX2, Gephi, GEDCOM) now use localized strings for labels, errors, and property names
+
 ## 2.33.4
 
 ### Fixes

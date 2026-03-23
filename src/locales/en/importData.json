@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "attributed to",
+      "uses": "uses",
+      "targets": "targets",
+      "indicates": "indicates",
+      "mitigates": "mitigates",
+      "derivedFrom": "derived from",
+      "duplicateOf": "duplicate of",
+      "relatedTo": "related to",
+      "drops": "drops",
+      "delivers": "delivers",
+      "exploits": "exploits",
+      "variantOf": "variant of",
+      "authoredBy": "authored by",
+      "basedOn": "based on",
+      "owns": "owns",
+      "hosts": "hosts",
+      "locatedAt": "located at",
+      "communicatesWith": "communicates with",
+      "controls": "controls",
+      "has": "has",
+      "compromises": "compromises",
+      "originatesFrom": "originates from",
+      "investigates": "investigates",
+      "remediates": "remediates",
+      "analysisOf": "analysis of",
+      "consistsOf": "consists of",
+      "impersonates": "impersonates",
+      "beaconsTo": "beacons to",
+      "exfiltratesTo": "exfiltrates to",
+      "sighting": "observed"
+    },
+    "labels": {
+      "observedAt": "observed at",
+      "concerns": "concerns",
+      "opinionOn": "opinion on",
+      "mentions": "mentions",
+      "note": "Note",
+      "observation": "Observation"
+    },
+    "noteLabels": {
+      "objective": "Objective",
+      "pattern": "Pattern",
+      "opinion": "Opinion"
+    },
+    "errors": {
+      "invalidBundle": "Invalid STIX bundle: no objects",
+      "missingRef": "Relation skipped: missing source_ref or target_ref ({{id}})",
+      "missingElement": "Relation skipped: source/target element not imported ({{type}})",
+      "noteNoRefs": "Note skipped: no object_refs ({{id}})",
+      "noteRefMissing": "Note skipped: referenced object not imported ({{label}})",
+      "importError": "STIX2 import error: {{message}}",
+      "unknownError": "Unknown error"
+    },
+    "meta": {
+      "importDescription": "STIX 2.1 Import - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "married to",
+      "parentOf": "parent of",
+      "siblingOf": "sibling of"
+    },
+    "events": {
+      "birth": "Birth",
+      "death": "Death",
+      "residence": "Residence"
+    },
+    "properties": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "sex": "Sex",
+      "male": "Male",
+      "female": "Female",
+      "unknown": "Unknown",
+      "occupation": "Occupation",
+      "nickname": "Nickname",
+      "title": "Title",
+      "place": "Place",
+      "sourceId": "Source ID",
+      "marriageDate": "Marriage date",
+      "marriagePlace": "Marriage place",
+      "divorceDate": "Divorce date",
+      "familyId": "Family ID",
+      "type": "Type",
+      "filiation": "Filiation",
+      "siblinghood": "Siblinghood"
+    },
+    "tags": {
+      "genealogy": "Genealogy",
+      "male": "Male",
+      "female": "Female",
+      "marriage": "Marriage",
+      "filiation": "Filiation",
+      "siblinghood": "Siblinghood"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "XML parsing error",
+      "invalidGexf": "Invalid GEXF format: missing <gexf> element",
+      "missingGraph": "Invalid GEXF format: missing <graph> element",
+      "invalidGephiLite": "Invalid Gephi Lite format: no nodes",
+      "missingDataset": "Invalid Gephi Lite format: missing graph data",
+      "importError": "Gephi import error: {{message}}",
+      "unknownError": "Unknown error"
+    },
+    "warnings": {
+      "nodeNoId": "Node without ID skipped",
+      "edgeNoSourceTarget": "Edge without source/target skipped",
+      "edgeMissingNode": "Edge skipped: source/target node not found"
+    }
+  }
+}

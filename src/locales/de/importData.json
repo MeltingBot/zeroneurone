@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "zugeschrieben",
+      "uses": "verwendet",
+      "targets": "zielt auf",
+      "indicates": "weist auf",
+      "mitigates": "mildert",
+      "derivedFrom": "abgeleitet von",
+      "duplicateOf": "Duplikat von",
+      "relatedTo": "verbunden mit",
+      "drops": "installiert",
+      "delivers": "liefert",
+      "exploits": "nutzt aus",
+      "variantOf": "Variante von",
+      "authoredBy": "Autor",
+      "basedOn": "basiert auf",
+      "owns": "besitzt",
+      "hosts": "hostet",
+      "locatedAt": "befindet sich in",
+      "communicatesWith": "kommuniziert mit",
+      "controls": "kontrolliert",
+      "has": "hat",
+      "compromises": "kompromittiert",
+      "originatesFrom": "stammt von",
+      "investigates": "untersucht",
+      "remediates": "behebt",
+      "analysisOf": "Analyse von",
+      "consistsOf": "besteht aus",
+      "impersonates": "gibt sich aus als",
+      "beaconsTo": "sendet Signal an",
+      "exfiltratesTo": "exfiltriert nach",
+      "sighting": "beobachtet"
+    },
+    "labels": {
+      "observedAt": "beobachtet bei",
+      "concerns": "betrifft",
+      "opinionOn": "Meinung zu",
+      "mentions": "erwähnt",
+      "note": "Notiz",
+      "observation": "Beobachtung"
+    },
+    "noteLabels": {
+      "objective": "Ziel",
+      "pattern": "Muster",
+      "opinion": "Meinung"
+    },
+    "errors": {
+      "invalidBundle": "Ungültiges STIX-Bundle: keine Objekte",
+      "missingRef": "Beziehung übersprungen: source_ref oder target_ref fehlt ({{id}})",
+      "missingElement": "Beziehung übersprungen: Quell-/Zielelement nicht importiert ({{type}})",
+      "noteNoRefs": "Notiz übersprungen: keine object_refs ({{id}})",
+      "noteRefMissing": "Notiz übersprungen: referenziertes Objekt nicht importiert ({{label}})",
+      "importError": "STIX2-Importfehler: {{message}}",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "meta": {
+      "importDescription": "STIX 2.1 Import - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "verheiratet mit",
+      "parentOf": "Elternteil von",
+      "siblingOf": "Geschwister von"
+    },
+    "events": {
+      "birth": "Geburt",
+      "death": "Tod",
+      "residence": "Wohnsitz"
+    },
+    "properties": {
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "sex": "Geschlecht",
+      "male": "Männlich",
+      "female": "Weiblich",
+      "unknown": "Unbekannt",
+      "occupation": "Beruf",
+      "nickname": "Spitzname",
+      "title": "Titel",
+      "place": "Ort",
+      "sourceId": "Quell-ID",
+      "marriageDate": "Heiratsdatum",
+      "marriagePlace": "Heiratsort",
+      "divorceDate": "Scheidungsdatum",
+      "familyId": "Familien-ID",
+      "type": "Typ",
+      "filiation": "Abstammung",
+      "siblinghood": "Geschwisterschaft"
+    },
+    "tags": {
+      "genealogy": "Genealogie",
+      "male": "Mann",
+      "female": "Frau",
+      "marriage": "Ehe",
+      "filiation": "Abstammung",
+      "siblinghood": "Geschwisterschaft"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "XML-Parsing-Fehler",
+      "invalidGexf": "Ungültiges GEXF-Format: <gexf>-Element fehlt",
+      "missingGraph": "Ungültiges GEXF-Format: <graph>-Element fehlt",
+      "invalidGephiLite": "Ungültiges Gephi-Lite-Format: keine Knoten",
+      "missingDataset": "Ungültiges Gephi-Lite-Format: Graphdaten fehlen",
+      "importError": "Gephi-Importfehler: {{message}}",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "warnings": {
+      "nodeNoId": "Knoten ohne ID übersprungen",
+      "edgeNoSourceTarget": "Kante ohne Quelle/Ziel übersprungen",
+      "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden"
+    }
+  }
+}

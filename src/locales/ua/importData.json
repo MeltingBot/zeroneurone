@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "приписано",
+      "uses": "використовує",
+      "targets": "націлений на",
+      "indicates": "вказує",
+      "mitigates": "пом'якшує",
+      "derivedFrom": "похідний від",
+      "duplicateOf": "дублікат",
+      "relatedTo": "пов'язаний з",
+      "drops": "розгортає",
+      "delivers": "доставляє",
+      "exploits": "експлуатує",
+      "variantOf": "варіант",
+      "authoredBy": "автор",
+      "basedOn": "засновано на",
+      "owns": "володіє",
+      "hosts": "хостить",
+      "locatedAt": "розташований у",
+      "communicatesWith": "спілкується з",
+      "controls": "контролює",
+      "has": "має",
+      "compromises": "компрометує",
+      "originatesFrom": "походить з",
+      "investigates": "розслідує",
+      "remediates": "виправляє",
+      "analysisOf": "аналіз",
+      "consistsOf": "складається з",
+      "impersonates": "видає себе за",
+      "beaconsTo": "сигналізує до",
+      "exfiltratesTo": "ексфільтрує до",
+      "sighting": "спостережений"
+    },
+    "labels": {
+      "observedAt": "спостережений у",
+      "concerns": "стосується",
+      "opinionOn": "думка про",
+      "mentions": "згадує",
+      "note": "Примітка",
+      "observation": "Спостереження"
+    },
+    "noteLabels": {
+      "objective": "Мета",
+      "pattern": "Шаблон",
+      "opinion": "Думка"
+    },
+    "errors": {
+      "invalidBundle": "Недійсний пакет STIX: немає об'єктів",
+      "missingRef": "Зв'язок пропущений: відсутній source_ref або target_ref ({{id}})",
+      "missingElement": "Зв'язок пропущений: елемент джерела/цілі не імпортований ({{type}})",
+      "noteNoRefs": "Примітка пропущена: немає object_refs ({{id}})",
+      "noteRefMissing": "Примітка пропущена: об'єкт посилання не імпортований ({{label}})",
+      "importError": "Помилка імпорту STIX2: {{message}}",
+      "unknownError": "Невідома помилка"
+    },
+    "meta": {
+      "importDescription": "Імпорт STIX 2.1 - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "одружений/а з",
+      "parentOf": "батько/мати",
+      "siblingOf": "брат/сестра"
+    },
+    "events": {
+      "birth": "Народження",
+      "death": "Смерть",
+      "residence": "Місце проживання"
+    },
+    "properties": {
+      "firstName": "Ім'я",
+      "lastName": "Прізвище",
+      "sex": "Стать",
+      "male": "Чоловіча",
+      "female": "Жіноча",
+      "unknown": "Невідомо",
+      "occupation": "Професія",
+      "nickname": "Прізвисько",
+      "title": "Титул",
+      "place": "Місце",
+      "sourceId": "ID джерела",
+      "marriageDate": "Дата шлюбу",
+      "marriagePlace": "Місце шлюбу",
+      "divorceDate": "Дата розлучення",
+      "familyId": "ID родини",
+      "type": "Тип",
+      "filiation": "Спорідненість",
+      "siblinghood": "Братство"
+    },
+    "tags": {
+      "genealogy": "Генеалогія",
+      "male": "Чоловік",
+      "female": "Жінка",
+      "marriage": "Шлюб",
+      "filiation": "Спорідненість",
+      "siblinghood": "Братство"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "Помилка аналізу XML",
+      "invalidGexf": "Недійсний формат GEXF: відсутній елемент <gexf>",
+      "missingGraph": "Недійсний формат GEXF: відсутній елемент <graph>",
+      "invalidGephiLite": "Недійсний формат Gephi Lite: немає вузлів",
+      "missingDataset": "Недійсний формат Gephi Lite: відсутні дані графа",
+      "importError": "Помилка імпорту Gephi: {{message}}",
+      "unknownError": "Невідома помилка"
+    },
+    "warnings": {
+      "nodeNoId": "Вузол без ID пропущено",
+      "edgeNoSourceTarget": "Ребро без джерела/цілі пропущено",
+      "edgeMissingNode": "Ребро пропущено: вузол джерела/цілі не знайдено"
+    }
+  }
+}

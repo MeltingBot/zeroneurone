@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
+import { importGEXF } from '../../services/importGephi';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 
@@ -84,7 +85,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetDossierId === 'new') {
         // Create new dossier with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|xml|ged|gw)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|ged|gw)$/i, '');
         const dossier = await createDossier(name, '');
         dossierId = dossier.id;
         createdNewDossier = true;
@@ -150,6 +151,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         result = await importService.importFromCSV(content, dossierId, {
           createMissingElements,
         });
+      } else if (file.name.endsWith('.gexf')) {
+        const content = await importService.readFileAsText(file);
+        result = await importGEXF(content, dossierId);
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, dossierId);
@@ -280,7 +284,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,.geojson,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.excalidraw,.ged,.gw,.geojson,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

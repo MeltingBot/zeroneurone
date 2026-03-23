@@ -3,6 +3,7 @@
  * Converts GenealogyData to ZeroNeurone Elements and Links
  */
 
+import i18next from 'i18next';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   Element,
@@ -20,6 +21,10 @@ import type {
   GenealogyDate,
   GenealogyImportOptions,
 } from './types';
+
+/** Shorthand for importData:genealogy namespace */
+const t = (key: string) =>
+  i18next.t(`importData:genealogy.${key}`) as string;
 
 interface ConversionResult {
   elements: Partial<Element>[];
@@ -80,12 +85,12 @@ function personToElement(
       id: uuidv4(),
       date: birthDate,
       dateEnd: birthDate, // Point-in-time event: same start and end
-      label: 'Naissance',
+      label: t('events.birth'),
       geo: person.birthPlace?.lat != null && person.birthPlace?.lng != null
         ? { type: 'point' as const, lat: person.birthPlace.lat, lng: person.birthPlace.lng }
         : undefined,
       properties: person.birthPlace
-        ? [{ key: 'Lieu', value: person.birthPlace.name, type: 'text' as const }]
+        ? [{ key: t('properties.place'), value: person.birthPlace.name, type: 'text' as const }]
         : [],
     });
   }
@@ -96,12 +101,12 @@ function personToElement(
       id: uuidv4(),
       date: deathDate,
       dateEnd: deathDate, // Point-in-time event: same start and end
-      label: 'Décès',
+      label: t('events.death'),
       geo: person.deathPlace?.lat != null && person.deathPlace?.lng != null
         ? { type: 'point' as const, lat: person.deathPlace.lat, lng: person.deathPlace.lng }
         : undefined,
       properties: person.deathPlace
-        ? [{ key: 'Lieu', value: person.deathPlace.name, type: 'text' as const }]
+        ? [{ key: t('properties.place'), value: person.deathPlace.name, type: 'text' as const }]
         : [],
     });
   }
@@ -113,12 +118,12 @@ function personToElement(
         id: uuidv4(),
         date: residence.startDate ? toDate(residence.startDate) : new Date(),
         dateEnd: residence.endDate ? toDate(residence.endDate) : undefined,
-        label: 'Résidence',
+        label: t('events.residence'),
         geo: residence.place?.lat != null && residence.place?.lng != null
           ? { type: 'point' as const, lat: residence.place.lat, lng: residence.place.lng }
           : undefined,
         properties: residence.place
-          ? [{ key: 'Lieu', value: residence.place.name, type: 'text' as const }]
+          ? [{ key: t('properties.place'), value: residence.place.name, type: 'text' as const }]
           : [],
       });
     }
@@ -126,37 +131,37 @@ function personToElement(
 
   // Build properties
   const properties: Property[] = [
-    { key: 'Prénom', value: person.firstName, type: 'text' },
-    { key: 'Nom', value: person.lastName, type: 'text' },
-    { key: 'Sexe', value: person.sex === 'M' ? 'Masculin' : person.sex === 'F' ? 'Féminin' : 'Inconnu', type: 'choice' },
+    { key: t('properties.firstName'), value: person.firstName, type: 'text' },
+    { key: t('properties.lastName'), value: person.lastName, type: 'text' },
+    { key: t('properties.sex'), value: person.sex === 'M' ? t('properties.male') : person.sex === 'F' ? t('properties.female') : t('properties.unknown'), type: 'choice' },
   ];
 
   if (options.importOccupation && person.occupation) {
-    properties.push({ key: 'Profession', value: person.occupation, type: 'text' });
+    properties.push({ key: t('properties.occupation'), value: person.occupation, type: 'text' });
   }
 
   if (person.nickname) {
-    properties.push({ key: 'Surnom', value: person.nickname, type: 'text' });
+    properties.push({ key: t('properties.nickname'), value: person.nickname, type: 'text' });
   }
 
   if (person.title) {
-    properties.push({ key: 'Titre', value: person.title, type: 'text' });
+    properties.push({ key: t('properties.title'), value: person.title, type: 'text' });
   }
 
-  // Note: Lieu de naissance/décès are stored in events, not as element properties
+  // Note: Birth/death places are stored in events, not as element properties
 
   // Add source ID for reference
-  properties.push({ key: 'ID source', value: person.id, type: 'text' });
+  properties.push({ key: t('properties.sourceId'), value: person.id, type: 'text' });
 
   // Build tags
   const tags: string[] = [];
   if (options.addGenealogyTag) {
-    tags.push('Généalogie');
+    tags.push(t('tags.genealogy'));
   }
   if (person.sex === 'M') {
-    tags.push('Homme');
+    tags.push(t('tags.male'));
   } else if (person.sex === 'F') {
-    tags.push('Femme');
+    tags.push(t('tags.female'));
   }
 
   // Determine visual appearance
@@ -260,7 +265,7 @@ function familyToLinks(
 
       if (family.marriageDate) {
         marriageProperties.push({
-          key: 'Date mariage',
+          key: t('properties.marriageDate'),
           value: formatDate(family.marriageDate),
           type: 'date',
         });
@@ -268,7 +273,7 @@ function familyToLinks(
 
       if (family.marriagePlace) {
         marriageProperties.push({
-          key: 'Lieu mariage',
+          key: t('properties.marriagePlace'),
           value: family.marriagePlace.name,
           type: 'text',
         });
@@ -276,16 +281,16 @@ function familyToLinks(
 
       if (family.divorceDate) {
         marriageProperties.push({
-          key: 'Date divorce',
+          key: t('properties.divorceDate'),
           value: formatDate(family.divorceDate),
           type: 'date',
         });
       }
 
-      marriageProperties.push({ key: 'ID famille', value: family.id, type: 'text' });
+      marriageProperties.push({ key: t('properties.familyId'), value: family.id, type: 'text' });
 
-      const tags: string[] = ['Mariage'];
-      if (options.addGenealogyTag) tags.push('Généalogie');
+      const tags: string[] = [t('tags.marriage')];
+      if (options.addGenealogyTag) tags.push(t('tags.genealogy'));
 
       // Calculate marriage end date:
       // Priority: divorce date > earliest death date of either spouse
@@ -316,7 +321,7 @@ function familyToLinks(
         toId: wifeElementId,
         sourceHandle: null,
         targetHandle: null,
-        label: 'marié(e) à',
+        label: t('links.marriedTo'),
         notes: family.notes || '',
         tags,
         properties: marriageProperties,
@@ -354,8 +359,8 @@ function familyToLinks(
       const childElementId = idMapping.get(childId);
       if (!childElementId) continue;
 
-      const tags: string[] = ['Filiation'];
-      if (options.addGenealogyTag) tags.push('Généalogie');
+      const tags: string[] = [t('tags.filiation')];
+      if (options.addGenealogyTag) tags.push(t('tags.genealogy'));
 
       links.push({
         id: uuidv4() as LinkId,
@@ -364,12 +369,12 @@ function familyToLinks(
         toId: childElementId,
         sourceHandle: null,
         targetHandle: null,
-        label: 'parent de',
+        label: t('links.parentOf'),
         notes: '',
         tags,
         properties: [
-          { key: 'Type', value: 'Filiation', type: 'text' },
-          { key: 'ID famille', value: family.id, type: 'text' },
+          { key: t('properties.type'), value: t('properties.filiation'), type: 'text' },
+          { key: t('properties.familyId'), value: family.id, type: 'text' },
         ],
         directed: true,
         direction: 'forward',
@@ -397,8 +402,8 @@ function familyToLinks(
         const sibling2Id = idMapping.get(family.childIds[j]);
 
         if (sibling1Id && sibling2Id) {
-          const tags: string[] = ['Fratrie'];
-          if (options.addGenealogyTag) tags.push('Généalogie');
+          const tags: string[] = [t('tags.siblinghood')];
+          if (options.addGenealogyTag) tags.push(t('tags.genealogy'));
 
           links.push({
             id: uuidv4() as LinkId,
@@ -407,12 +412,12 @@ function familyToLinks(
             toId: sibling2Id,
             sourceHandle: null,
             targetHandle: null,
-            label: 'frère/sœur de',
+            label: t('links.siblingOf'),
             notes: '',
             tags,
             properties: [
-              { key: 'Type', value: 'Fratrie', type: 'text' },
-              { key: 'ID famille', value: family.id, type: 'text' },
+              { key: t('properties.type'), value: t('properties.siblinghood'), type: 'text' },
+              { key: t('properties.familyId'), value: family.id, type: 'text' },
             ],
             directed: false,
             direction: 'none',

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { X, Download, Upload, FileJson, FileSpreadsheet, FileText, FileArchive, AlertCircle, CheckCircle } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { importService, type ImportResult } from '../../services/importService';
+import { importGEXF } from '../../services/importGephi';
 import { fileService } from '../../services/fileService';
 import { tabRepository } from '../../db/repositories';
 import { useDossierStore, useViewStore, toast } from '../../stores';
@@ -74,6 +75,9 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
         result = await importService.importFromCSV(content, currentDossier.id, {
           createMissingElements,
         });
+      } else if (file.name.endsWith('.gexf')) {
+        const content = await importService.readFileAsText(file);
+        result = await importGEXF(content, currentDossier.id);
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGraphML(content, currentDossier.id);
@@ -87,7 +91,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
           linksImported: 0,
           assetsImported: 0,
           reportImported: false,
-          errors: ['Format de fichier non supporte. Utilisez ZIP, JSON, CSV, GraphML ou GeoJSON.'],
+          errors: ['Format de fichier non supporte. Utilisez ZIP, JSON, CSV, GraphML, GEXF ou GeoJSON.'],
           warnings: [],
         };
       }
@@ -214,7 +218,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".zip,.json,.csv,.graphml,.xml,.geojson"
+                accept=".zip,.json,.csv,.graphml,.gexf,.xml,.geojson"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -231,7 +235,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                     {isProcessing ? 'Import en cours...' : 'Selectionner un fichier'}
                   </div>
                   <div className="text-xs text-text-tertiary mt-1">
-                    Formats supportes: ZIP, JSON, CSV, GraphML/XML
+                    Formats supportes: ZIP, JSON, CSV, GraphML/XML, GEXF
                   </div>
                 </div>
               </button>

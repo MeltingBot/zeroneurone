@@ -33,6 +33,7 @@ import { importOsintIndustries, isOsintIndustriesFormat } from './importOsintInd
 import { importOIPalette, isOIPaletteFormat } from './importOIPalette';
 import { importExcalidraw, isExcalidrawFormat } from './importExcalidraw';
 import { importSTIX2, isSTIX2Format } from './importSTIX2';
+import { importGephiLiteJSON, isGephiLiteFormat } from './importGephi';
 import { importGenealogyFile, detectGenealogyFormatFromName, type GenealogyImportOptions } from './genealogy';
 
 // ============================================================================
@@ -70,7 +71,7 @@ export class ImportValidationError extends Error {
   }
 }
 
-export type ImportFormat = 'json' | 'csv' | 'zip' | 'graphml';
+export type ImportFormat = 'json' | 'csv' | 'zip' | 'graphml' | 'gexf';
 
 export interface ImportResult {
   success: boolean;
@@ -417,11 +418,14 @@ class ImportService {
         case 'stix2':
           importResult = await importSTIX2(content, targetDossierId);
           break;
+        case 'gephi-lite':
+          importResult = await importGephiLiteJSON(content, targetDossierId);
+          break;
         case 'geojson':
           importResult = await this.importFromGeoJSON(content, targetDossierId);
           break;
         default:
-          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1, GeoJSON');
+          result.errors.push('Format JSON non reconnu. Formats supportés: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, STIX 2.1, Gephi Lite, GeoJSON');
           return result;
       }
 
@@ -439,7 +443,12 @@ class ImportService {
   /**
    * Detect the JSON format from parsed data
    */
-  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'stix2' | 'geojson' | 'unknown' {
+  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'stix2' | 'gephi-lite' | 'geojson' | 'unknown' {
+    // Gephi Lite: { type: "gephi-lite", graphDataset: {...} }
+    if (isGephiLiteFormat(data)) {
+      return 'gephi-lite';
+    }
+
     // Excalidraw: { type: "excalidraw", elements: [...] }
     if (isExcalidrawFormat(data)) {
       return 'excalidraw';

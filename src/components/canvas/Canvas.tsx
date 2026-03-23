@@ -2844,6 +2844,9 @@ export function Canvas() {
             result = await importService.importFromCSV(content, invId, {
               createMissingElements: importPlacementData.importOptions?.createMissingElements ?? true,
             });
+          } else if (fileName.endsWith('.gexf')) {
+            const { importGEXF } = await import('../../services/importGephi');
+            result = await importGEXF(content, invId);
           } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml')) {
             result = await importService.importFromGraphML(content, invId);
           } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {

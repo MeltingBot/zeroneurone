@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "atribuído a",
+      "uses": "utiliza",
+      "targets": "visa",
+      "indicates": "indica",
+      "mitigates": "mitiga",
+      "derivedFrom": "derivado de",
+      "duplicateOf": "duplicado de",
+      "relatedTo": "relacionado com",
+      "drops": "implanta",
+      "delivers": "entrega",
+      "exploits": "explora",
+      "variantOf": "variante de",
+      "authoredBy": "autor",
+      "basedOn": "baseado em",
+      "owns": "possui",
+      "hosts": "aloja",
+      "locatedAt": "localizado em",
+      "communicatesWith": "comunica com",
+      "controls": "controla",
+      "has": "tem",
+      "compromises": "compromete",
+      "originatesFrom": "origina-se de",
+      "investigates": "investiga",
+      "remediates": "remedia",
+      "analysisOf": "análise de",
+      "consistsOf": "composto por",
+      "impersonates": "personifica",
+      "beaconsTo": "sinaliza para",
+      "exfiltratesTo": "exfiltra para",
+      "sighting": "observado"
+    },
+    "labels": {
+      "observedAt": "observado em",
+      "concerns": "refere-se a",
+      "opinionOn": "opinião sobre",
+      "mentions": "menciona",
+      "note": "Nota",
+      "observation": "Observação"
+    },
+    "noteLabels": {
+      "objective": "Objetivo",
+      "pattern": "Padrão",
+      "opinion": "Opinião"
+    },
+    "errors": {
+      "invalidBundle": "Bundle STIX inválido: sem objetos",
+      "missingRef": "Relação ignorada: source_ref ou target_ref em falta ({{id}})",
+      "missingElement": "Relação ignorada: elemento origem/destino não importado ({{type}})",
+      "noteNoRefs": "Nota ignorada: sem object_refs ({{id}})",
+      "noteRefMissing": "Nota ignorada: objeto referenciado não importado ({{label}})",
+      "importError": "Erro de importação STIX2: {{message}}",
+      "unknownError": "Erro desconhecido"
+    },
+    "meta": {
+      "importDescription": "Importação STIX 2.1 - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "casado/a com",
+      "parentOf": "pai/mãe de",
+      "siblingOf": "irmão/irmã de"
+    },
+    "events": {
+      "birth": "Nascimento",
+      "death": "Óbito",
+      "residence": "Residência"
+    },
+    "properties": {
+      "firstName": "Nome próprio",
+      "lastName": "Apelido",
+      "sex": "Sexo",
+      "male": "Masculino",
+      "female": "Feminino",
+      "unknown": "Desconhecido",
+      "occupation": "Profissão",
+      "nickname": "Alcunha",
+      "title": "Título",
+      "place": "Local",
+      "sourceId": "ID origem",
+      "marriageDate": "Data casamento",
+      "marriagePlace": "Local casamento",
+      "divorceDate": "Data divórcio",
+      "familyId": "ID família",
+      "type": "Tipo",
+      "filiation": "Filiação",
+      "siblinghood": "Fraternidade"
+    },
+    "tags": {
+      "genealogy": "Genealogia",
+      "male": "Homem",
+      "female": "Mulher",
+      "marriage": "Casamento",
+      "filiation": "Filiação",
+      "siblinghood": "Fraternidade"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "Erro de análise XML",
+      "invalidGexf": "Formato GEXF inválido: elemento <gexf> em falta",
+      "missingGraph": "Formato GEXF inválido: elemento <graph> em falta",
+      "invalidGephiLite": "Formato Gephi Lite inválido: sem nós",
+      "missingDataset": "Formato Gephi Lite inválido: dados do grafo em falta",
+      "importError": "Erro de importação Gephi: {{message}}",
+      "unknownError": "Erro desconhecido"
+    },
+    "warnings": {
+      "nodeNoId": "Nó sem ID ignorado",
+      "edgeNoSourceTarget": "Aresta sem origem/destino ignorada",
+      "edgeMissingNode": "Aresta ignorada: nó origem/destino não encontrado"
+    }
+  }
+}

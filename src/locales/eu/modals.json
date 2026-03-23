@@ -30,8 +30,8 @@
   "import": {
     "title": "Espediente inportatu",
     "dropzone": "Jaregin fitxategia edo egin klik hautatzeko",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
-    "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
+    "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, Gephi Lite",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Hona inportatu",
     "newDossier": "Espediente berria",

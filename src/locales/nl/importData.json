@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "toegeschreven aan",
+      "uses": "gebruikt",
+      "targets": "richt zich op",
+      "indicates": "wijst op",
+      "mitigates": "verzacht",
+      "derivedFrom": "afgeleid van",
+      "duplicateOf": "duplicaat van",
+      "relatedTo": "gerelateerd aan",
+      "drops": "installeert",
+      "delivers": "levert",
+      "exploits": "misbruikt",
+      "variantOf": "variant van",
+      "authoredBy": "auteur",
+      "basedOn": "gebaseerd op",
+      "owns": "bezit",
+      "hosts": "host",
+      "locatedAt": "gevestigd in",
+      "communicatesWith": "communiceert met",
+      "controls": "controleert",
+      "has": "heeft",
+      "compromises": "compromitteert",
+      "originatesFrom": "afkomstig van",
+      "investigates": "onderzoekt",
+      "remediates": "verhelpt",
+      "analysisOf": "analyse van",
+      "consistsOf": "bestaat uit",
+      "impersonates": "doet zich voor als",
+      "beaconsTo": "signaleert naar",
+      "exfiltratesTo": "exfiltreert naar",
+      "sighting": "waargenomen"
+    },
+    "labels": {
+      "observedAt": "waargenomen bij",
+      "concerns": "betreft",
+      "opinionOn": "mening over",
+      "mentions": "vermeldt",
+      "note": "Notitie",
+      "observation": "Waarneming"
+    },
+    "noteLabels": {
+      "objective": "Doel",
+      "pattern": "Patroon",
+      "opinion": "Mening"
+    },
+    "errors": {
+      "invalidBundle": "Ongeldig STIX-bundle: geen objecten",
+      "missingRef": "Relatie overgeslagen: source_ref of target_ref ontbreekt ({{id}})",
+      "missingElement": "Relatie overgeslagen: bron-/doelelement niet geïmporteerd ({{type}})",
+      "noteNoRefs": "Notitie overgeslagen: geen object_refs ({{id}})",
+      "noteRefMissing": "Notitie overgeslagen: gerefereerd object niet geïmporteerd ({{label}})",
+      "importError": "STIX2-importfout: {{message}}",
+      "unknownError": "Onbekende fout"
+    },
+    "meta": {
+      "importDescription": "STIX 2.1 Import - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "getrouwd met",
+      "parentOf": "ouder van",
+      "siblingOf": "broer/zus van"
+    },
+    "events": {
+      "birth": "Geboorte",
+      "death": "Overlijden",
+      "residence": "Woonplaats"
+    },
+    "properties": {
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "sex": "Geslacht",
+      "male": "Mannelijk",
+      "female": "Vrouwelijk",
+      "unknown": "Onbekend",
+      "occupation": "Beroep",
+      "nickname": "Bijnaam",
+      "title": "Titel",
+      "place": "Plaats",
+      "sourceId": "Bron-ID",
+      "marriageDate": "Huwelijksdatum",
+      "marriagePlace": "Huwelijksplaats",
+      "divorceDate": "Scheidingsdatum",
+      "familyId": "Familie-ID",
+      "type": "Type",
+      "filiation": "Afstamming",
+      "siblinghood": "Broeder-/zusterschap"
+    },
+    "tags": {
+      "genealogy": "Genealogie",
+      "male": "Man",
+      "female": "Vrouw",
+      "marriage": "Huwelijk",
+      "filiation": "Afstamming",
+      "siblinghood": "Broeder-/zusterschap"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "XML-parseerfout",
+      "invalidGexf": "Ongeldig GEXF-formaat: <gexf>-element ontbreekt",
+      "missingGraph": "Ongeldig GEXF-formaat: <graph>-element ontbreekt",
+      "invalidGephiLite": "Ongeldig Gephi Lite-formaat: geen knooppunten",
+      "missingDataset": "Ongeldig Gephi Lite-formaat: graafgegevens ontbreken",
+      "importError": "Gephi-importfout: {{message}}",
+      "unknownError": "Onbekende fout"
+    },
+    "warnings": {
+      "nodeNoId": "Knooppunt zonder ID overgeslagen",
+      "edgeNoSourceTarget": "Rand zonder bron/doel overgeslagen",
+      "edgeMissingNode": "Rand overgeslagen: bron-/doelknooppunt niet gevonden"
+    }
+  }
+}

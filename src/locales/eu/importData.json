@@ -1,0 +1,117 @@
+{
+  "stix": {
+    "relationships": {
+      "attributedTo": "esleitua",
+      "uses": "erabiltzen du",
+      "targets": "helburua",
+      "indicates": "adierazten du",
+      "mitigates": "arintzen du",
+      "derivedFrom": "eratorria",
+      "duplicateOf": "bikoiztua",
+      "relatedTo": "erlazionatua",
+      "drops": "zabaltzen du",
+      "delivers": "entregatzen du",
+      "exploits": "ustiatzen du",
+      "variantOf": "aldaera",
+      "authoredBy": "egilea",
+      "basedOn": "oinarritua",
+      "owns": "jabea da",
+      "hosts": "ostatzen du",
+      "locatedAt": "kokatua",
+      "communicatesWith": "komunikatzen da",
+      "controls": "kontrolatzen du",
+      "has": "du",
+      "compromises": "arriskuan jartzen du",
+      "originatesFrom": "jatorria",
+      "investigates": "ikertzen du",
+      "remediates": "konpontzen du",
+      "analysisOf": "analisia",
+      "consistsOf": "osatua",
+      "impersonates": "ordezkatzen du",
+      "beaconsTo": "seinalea bidaltzen du",
+      "exfiltratesTo": "esfiltratzen du",
+      "sighting": "ikusita"
+    },
+    "labels": {
+      "observedAt": "ikusita non",
+      "concerns": "dagokio",
+      "opinionOn": "iritzia",
+      "mentions": "aipatzen du",
+      "note": "Oharra",
+      "observation": "Behaketa"
+    },
+    "noteLabels": {
+      "objective": "Helburua",
+      "pattern": "Eredua",
+      "opinion": "Iritzia"
+    },
+    "errors": {
+      "invalidBundle": "STIX bundle baliogabea: objekturik ez",
+      "missingRef": "Erlazioa baztertua: source_ref edo target_ref falta da ({{id}})",
+      "missingElement": "Erlazioa baztertua: jatorri/helburu elementua ez da inportatu ({{type}})",
+      "noteNoRefs": "Oharra baztertua: object_refs-ik ez ({{id}})",
+      "noteRefMissing": "Oharra baztertua: erreferentziatutako objektua ez da inportatu ({{label}})",
+      "importError": "STIX2 inportazio errorea: {{message}}",
+      "unknownError": "Errore ezezaguna"
+    },
+    "meta": {
+      "importDescription": "STIX 2.1 Inportazioa - {{bundleId}}"
+    }
+  },
+  "genealogy": {
+    "links": {
+      "marriedTo": "ezkondua",
+      "parentOf": "gurasoa",
+      "siblingOf": "anai-arreba"
+    },
+    "events": {
+      "birth": "Jaiotza",
+      "death": "Heriotza",
+      "residence": "Bizilekua"
+    },
+    "properties": {
+      "firstName": "Izena",
+      "lastName": "Abizena",
+      "sex": "Sexua",
+      "male": "Gizonezkoa",
+      "female": "Emakumezkoa",
+      "unknown": "Ezezaguna",
+      "occupation": "Lanbidea",
+      "nickname": "Ezizena",
+      "title": "Titulua",
+      "place": "Lekua",
+      "sourceId": "Jatorri ID",
+      "marriageDate": "Ezkontza data",
+      "marriagePlace": "Ezkontza lekua",
+      "divorceDate": "Dibortzio data",
+      "familyId": "Familia ID",
+      "type": "Mota",
+      "filiation": "Filiazioa",
+      "siblinghood": "Anai-arrebatasuna"
+    },
+    "tags": {
+      "genealogy": "Genealogia",
+      "male": "Gizona",
+      "female": "Emakumea",
+      "marriage": "Ezkontza",
+      "filiation": "Filiazioa",
+      "siblinghood": "Anai-arrebatasuna"
+    }
+  },
+  "gephi": {
+    "errors": {
+      "parseError": "XML analisi errorea",
+      "invalidGexf": "GEXF formatu baliogabea: <gexf> elementua falta da",
+      "missingGraph": "GEXF formatu baliogabea: <graph> elementua falta da",
+      "invalidGephiLite": "Gephi Lite formatu baliogabea: nodorik ez",
+      "missingDataset": "Gephi Lite formatu baliogabea: grafo datuak falta dira",
+      "importError": "Gephi inportazio errorea: {{message}}",
+      "unknownError": "Errore ezezaguna"
+    },
+    "warnings": {
+      "nodeNoId": "IDrik gabeko nodoa baztertua",
+      "edgeNoSourceTarget": "Iturri/helburuik gabeko ertza baztertua",
+      "edgeMissingNode": "Ertza baztertua: iturri/helburu nodoa ez da aurkitu"
+    }
+  }
+}

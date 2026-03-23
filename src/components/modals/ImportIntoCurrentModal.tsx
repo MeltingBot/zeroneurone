@@ -50,6 +50,12 @@ function estimateElementCount(file: File, content: string): number {
     return 10;
   }
 
+  if (name.endsWith('.gexf')) {
+    // Count <node> tags in GEXF
+    const matches = content.match(/<node[\s>]/g);
+    return matches ? matches.length : 10;
+  }
+
   if (name.endsWith('.graphml') || name.endsWith('.xml')) {
     // Count <node> tags
     const matches = content.match(/<node[\s>]/g);
@@ -224,7 +230,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.xml,.excalidraw,.ged,.gw,.geojson"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.excalidraw,.ged,.gw,.geojson"
             onChange={handleFileSelect}
             className="hidden"
           />

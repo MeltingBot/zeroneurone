@@ -7,7 +7,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // To add a new language:
 // 1. Add entry to /public/locales/languages.json
 // 2. Create translation files in /public/locales/{code}/
-//    (common.json, modals.json, panels.json, pages.json)
+//    (common.json, modals.json, panels.json, pages.json, importData.json)
 // That's it! No code changes needed.
 // =============================================================================
 
@@ -53,7 +53,7 @@ i18n
     resources,
     fallbackLng: 'fr',
     defaultNS: 'common',
-    ns: ['common', 'modals', 'panels', 'pages'],
+    ns: ['common', 'modals', 'panels', 'pages', 'importData'],
 
     detection: {
       order: ['localStorage', 'navigator'],
