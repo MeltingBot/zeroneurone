@@ -1,0 +1,1871 @@
+0 HEAD
+1 SOUR Claude
+2 VERS 3.0
+2 NAME Généalogie Napoléonienne étendue
+1 DEST ANY
+1 DATE 21 MAR 2026
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+1 LANG French
+1 NOTE Généalogie étendue de la famille Bonaparte. Sources, titres et fonctions documentés.
+
+0 @S1@ SOUR
+1 TITL Napoléon et sa famille
+1 AUTH Frédéric Masson
+1 PUBL Ollendorff, Paris, 1897-1919
+1 NOTE 13 volumes. Référence majeure sur la famille Bonaparte et son entourage.
+
+0 @S2@ SOUR
+1 TITL Dictionnaire Napoléon
+1 AUTH Jean Tulard (dir.)
+1 PUBL Fayard, Paris, 1999 (2e édition)
+1 NOTE Encyclopédie de référence sur l'époque napoléonienne, 1900 entrées.
+
+0 @S3@ SOUR
+1 TITL Nouvelle histoire du Premier Empire
+1 AUTH Thierry Lentz
+1 PUBL Fayard, Paris, 2002-2010
+1 NOTE 4 volumes couvrant le Consulat et l'Empire.
+
+0 @S4@ SOUR
+1 TITL Napoléon
+1 AUTH Jean Tulard
+1 PUBL Fayard, Paris, 1977 (rééd. 2005)
+
+0 @S5@ SOUR
+1 TITL Les Bonaparte
+1 AUTH Pierre Branda
+1 PUBL Perrin, Paris, 2018
+
+0 @S6@ SOUR
+1 TITL Joséphine, le paradoxe du cygne
+1 AUTH Pierre Branda
+1 PUBL Perrin, Paris, 2016
+
+0 @S7@ SOUR
+1 TITL Les Maréchaux de Napoléon
+1 AUTH Jean-Claude Damamme
+1 PUBL Perrin, Paris, 2004
+
+0 @S8@ SOUR
+1 TITL Bernadotte, un maréchal d'Empire sur le trône de Suède
+1 AUTH Franck Favier
+1 PUBL Ellipses, Paris, 2010
+
+0 @S9@ SOUR
+1 TITL Marie-Louise, l'otage de Napoléon
+1 AUTH Charles-Éloi Vial
+1 PUBL Perrin, Paris, 2017
+
+0 @S10@ SOUR
+1 TITL Napoléon III
+1 AUTH Pierre Milza
+1 PUBL Perrin, Paris, 2004
+
+0 @S11@ SOUR
+1 TITL L'Aiglon, Napoléon II
+1 AUTH Laetitia de Witt
+1 PUBL Tallandier, Paris, 2015
+
+0 @S12@ SOUR
+1 TITL Murat
+1 AUTH Jean Tulard
+1 PUBL Fayard, Paris, 1999
+
+0 @S13@ SOUR
+1 TITL Les Beauharnais
+1 AUTH Jean-Paul Desprat
+1 PUBL Perrin, Paris, 2016
+
+0 @S14@ SOUR
+1 TITL Almanach impérial
+1 PUBL Imprimerie impériale, Paris, 1804-1814
+1 NOTE Publication officielle annuelle de l'Empire français. État civil de la famille impériale.
+
+0 @S15@ SOUR
+1 TITL Registres d'état civil de la ville d'Ajaccio
+1 NOTE Archives départementales de la Corse-du-Sud
+
+0 @S16@ SOUR
+1 TITL Pauline Bonaparte, princesse Borghèse
+1 AUTH Flora Fraser
+1 PUBL Flammarion, Paris, 2010
+
+0 @S17@ SOUR
+1 TITL Letizia Bonaparte, mère de l'Empereur
+1 AUTH Enzo Russo
+1 PUBL Tallandier, Paris, 2006
+
+0 @S18@ SOUR
+1 TITL Lucien Bonaparte, le frère rebelle
+1 AUTH Cédric Lewandowski
+1 PUBL Perrin, Paris, 2019
+
+0 @S19@ SOUR
+1 TITL Le Roman des Bonaparte
+1 AUTH Michel de Decker
+1 PUBL Belfond, Paris, 2010
+
+0 @S20@ SOUR
+1 TITL Jérôme Bonaparte, le roi philosophe
+1 AUTH Jacques-Olivier Boudon
+1 PUBL Fayard, Paris, 2008
+
+0 @I1@ INDI
+1 NAME Napoléon /Bonaparte/
+2 GIVN Napoléon
+2 SURN Bonaparte
+1 TITL Empereur des Français
+1 SEX M
+1 BIRT
+2 DATE 15 AUG 1769
+2 PLAC Ajaccio, Corse, France
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+3 PAGE Acte de baptême, paroisse d'Ajaccio, 21 juillet 1771
+1 DEAT
+2 DATE 05 MAY 1821
+2 PLAC Longwood, Sainte-Hélène
+3 MAP
+4 LATI S15.9567
+4 LONG W5.6833
+2 SOUR @S4@
+1 BURI
+2 DATE 15 DEC 1840
+2 PLAC Hôtel des Invalides, Paris, France
+3 MAP
+4 LATI N48.8567
+4 LONG E2.3125
+2 NOTE Retour des Cendres organisé par le prince de Joinville
+1 OCCU Empereur des Français (1804-1814, 1815)
+1 SOUR @S4@
+1 SOUR @S2@
+1 SOUR @S3@
+1 FAMC @F1@
+1 FAMS @F10@
+1 FAMS @F11@
+1 FAMS @F30@
+1 FAMS @F31@
+
+0 @I2@ INDI
+1 NAME Carlo Maria /Buonaparte/
+2 GIVN Carlo Maria
+2 SURN Buonaparte
+1 TITL Noble des Douze, membre de la délégation corse aux États généraux
+1 SEX M
+1 BIRT
+2 DATE 27 MAR 1746
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 24 FEB 1785
+2 PLAC Montpellier, France
+3 MAP
+4 LATI N43.6108
+4 LONG E3.8767
+2 CAUS Cancer de l'estomac
+2 SOUR @S1@
+3 PAGE Volume I
+1 OCCU Avocat, assesseur du tribunal d'Ajaccio
+1 SOUR @S1@
+3 PAGE Volume I
+1 SOUR @S5@
+1 FAMC @F2@
+1 FAMS @F1@
+
+0 @I3@ INDI
+1 NAME Maria Letizia /Ramolino/
+2 GIVN Maria Letizia
+2 SURN Ramolino
+1 TITL Altesse Impériale, Madame Mère de Sa Majesté l'Empereur
+1 SEX F
+1 BIRT
+2 DATE 24 AUG 1750
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 02 FEB 1836
+2 PLAC Rome, Italie
+3 MAP
+4 LATI N41.9028
+4 LONG E12.4964
+2 SOUR @S17@
+1 SOUR @S17@
+1 SOUR @S1@
+3 PAGE Volume I
+1 FAMC @F3@
+1 FAMS @F1@
+
+0 @I50@ INDI
+1 NAME Giuseppe Maria /Buonaparte/
+2 GIVN Giuseppe Maria
+2 SURN Buonaparte
+1 TITL Notable corse, membre du Conseil des Anciens d'Ajaccio
+1 SEX M
+1 BIRT
+2 DATE 31 MAY 1713
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 DEAT
+2 DATE 13 DEC 1763
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 SOUR @S5@
+1 SOUR @S15@
+1 FAMS @F2@
+
+0 @I51@ INDI
+1 NAME Maria Saveria /Paravicini/
+2 GIVN Maria Saveria
+2 SURN Paravicini
+1 SEX F
+1 BIRT
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 DEAT
+2 DATE 17 OCT 1750
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 SOUR @S5@
+1 FAMS @F2@
+
+0 @I52@ INDI
+1 NAME Giovanni Geronimo /Ramolino/
+2 GIVN Giovanni Geronimo
+2 SURN Ramolino
+1 TITL Capitaine, inspecteur des ponts et chaussées de Corse
+1 SEX M
+1 BIRT
+2 DATE ABT 1723
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 DEAT
+2 DATE 1755
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 SOUR @S17@
+1 FAMS @F3@
+
+0 @I53@ INDI
+1 NAME Angela Maria /Pietrasanta/
+2 GIVN Angela Maria
+2 SURN Pietrasanta
+1 SEX F
+1 BIRT
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 DEAT
+2 DATE AFT 1790
+1 SOUR @S17@
+1 FAMS @F3@
+
+0 @F2@ FAM
+1 HUSB @I50@
+1 WIFE @I51@
+1 CHIL @I2@
+1 SOUR @S5@
+1 NOTE Grands-parents paternels de Napoléon
+
+0 @F3@ FAM
+1 HUSB @I52@
+1 WIFE @I53@
+1 CHIL @I3@
+1 SOUR @S17@
+1 NOTE Grands-parents maternels de Napoléon
+
+0 @F1@ FAM
+1 HUSB @I2@
+1 WIFE @I3@
+1 CHIL @I4@
+1 CHIL @I1@
+1 CHIL @I5@
+1 CHIL @I6@
+1 CHIL @I7@
+1 CHIL @I8@
+1 CHIL @I9@
+1 CHIL @I10@
+1 MARR
+2 DATE 02 JUN 1764
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 SOUR @S1@
+3 PAGE Volume I
+1 NOTE 13 enfants au total, 5 morts en bas âge non inclus ici
+
+0 @I4@ INDI
+1 NAME Joseph /Bonaparte/
+2 GIVN Joseph
+2 SURN Bonaparte
+1 TITL Roi de Naples
+1 TITL Roi d'Espagne
+1 TITL Comte de Survilliers
+1 TITL Prince français
+1 SEX M
+1 BIRT
+2 DATE 07 JAN 1768
+2 PLAC Corte, Corse
+3 MAP
+4 LATI N42.3059
+4 LONG E9.1500
+2 SOUR @S15@
+1 DEAT
+2 DATE 28 JUL 1844
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+2 SOUR @S5@
+1 OCCU Roi de Naples (1806-1808), Roi d'Espagne (1808-1813), lieutenant général de l'Empereur (1814)
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMC @F1@
+1 FAMS @F12@
+
+0 @I40@ INDI
+1 NAME Julie /Clary/
+2 GIVN Marie Julie
+2 SURN Clary
+1 TITL Reine consort de Naples
+1 TITL Reine consort d'Espagne
+1 SEX F
+1 BIRT
+2 DATE 26 DEC 1771
+2 PLAC Marseille, France
+3 MAP
+4 LATI N43.2965
+4 LONG E5.3698
+2 SOUR @S1@
+1 DEAT
+2 DATE 07 APR 1845
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+2 SOUR @S5@
+1 NOTE Soeur de Désirée Clary (future reine de Suède)
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMS @F12@
+
+0 @I41@ INDI
+1 NAME Zénaïde Laetitia Julie /Bonaparte/
+2 GIVN Zénaïde
+2 SURN Bonaparte
+1 TITL Princesse française
+1 SEX F
+1 BIRT
+2 DATE 08 JUL 1801
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 08 AUG 1854
+2 PLAC Naples, Italie
+3 MAP
+4 LATI N40.8518
+4 LONG E14.2681
+1 NOTE Épousa son cousin Charles Lucien Bonaparte (fils de Lucien)
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMC @F12@
+
+0 @I42@ INDI
+1 NAME Charlotte Napoléone /Bonaparte/
+2 GIVN Charlotte
+2 SURN Bonaparte
+1 TITL Princesse française
+1 SEX F
+1 BIRT
+2 DATE 31 OCT 1802
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 02 MAR 1839
+2 PLAC Sarzana, Italie
+3 MAP
+4 LATI N44.1114
+4 LONG E9.9625
+1 NOTE Épousa Napoléon Louis Bonaparte (fils de Louis)
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMC @F12@
+
+0 @F12@ FAM
+1 HUSB @I4@
+1 WIFE @I40@
+1 CHIL @I41@
+1 CHIL @I42@
+1 MARR
+2 DATE 01 AUG 1794
+2 PLAC Cuges-les-Pins, France
+3 MAP
+4 LATI N43.2775
+4 LONG E5.6892
+2 SOUR @S1@
+1 SOUR @S5@
+
+0 @I5@ INDI
+1 NAME Lucien /Bonaparte/
+2 GIVN Lucien
+2 SURN Bonaparte
+1 TITL Prince de Canino et Musignano
+1 TITL Prince français (1815)
+1 SEX M
+1 BIRT
+2 DATE 21 MAR 1775
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 29 JUN 1840
+2 PLAC Viterbe, Italie
+3 MAP
+4 LATI N42.4201
+4 LONG E12.1086
+2 SOUR @S18@
+1 OCCU Président du Conseil des Cinq-Cents, ministre de l'Intérieur
+1 SOUR @S18@
+1 SOUR @S5@
+1 FAMC @F1@
+1 FAMS @F13@
+1 FAMS @F14@
+
+0 @I43@ INDI
+1 NAME Christine /Boyer/
+2 GIVN Catherine Christine
+2 SURN Boyer
+1 SEX F
+1 BIRT
+2 DATE 1773
+2 PLAC Saint-Maximin-la-Sainte-Baume, France
+3 MAP
+4 LATI N43.4531
+4 LONG E5.8614
+1 DEAT
+2 DATE 14 MAY 1800
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 NOTE Fille d'un aubergiste. Seul mariage de la fratrie Bonaparte fait par amour selon Masson.
+1 SOUR @S18@
+1 SOUR @S1@
+1 FAMS @F13@
+
+0 @I44@ INDI
+1 NAME Charlotte /Bonaparte/
+2 GIVN Charlotte Christine Egypta
+2 SURN Bonaparte
+1 TITL Princesse de Canino
+1 SEX F
+1 BIRT
+2 DATE 1795
+2 PLAC Saint-Maximin-la-Sainte-Baume, France
+3 MAP
+4 LATI N43.4531
+4 LONG E5.8614
+1 DEAT
+2 DATE 1865
+2 PLAC Sarzana, Italie
+3 MAP
+4 LATI N44.1114
+4 LONG E9.9625
+1 SOUR @S18@
+1 FAMC @F13@
+
+0 @F13@ FAM
+1 HUSB @I5@
+1 WIFE @I43@
+1 CHIL @I44@
+1 MARR
+2 DATE 04 MAY 1794
+2 PLAC Saint-Maximin-la-Sainte-Baume, France
+3 MAP
+4 LATI N43.4531
+4 LONG E5.8614
+1 SOUR @S18@
+
+0 @I45@ INDI
+1 NAME Alexandrine /de Bleschamp/
+2 GIVN Alexandrine Laurence
+2 SURN de Bleschamp
+1 TITL Princesse de Canino
+1 SEX F
+1 BIRT
+2 DATE 23 FEB 1778
+2 PLAC Calais, France
+3 MAP
+4 LATI N50.9513
+4 LONG E1.8587
+1 DEAT
+2 DATE 12 JUL 1855
+2 PLAC Senigallia, Italie
+3 MAP
+4 LATI N43.7153
+4 LONG E13.2167
+1 SOUR @S18@
+1 FAMS @F14@
+
+0 @I46@ INDI
+1 NAME Charles Lucien Jules Laurent /Bonaparte/
+2 GIVN Charles Lucien
+2 SURN Bonaparte
+1 TITL 2e prince de Canino et Musignano
+1 SEX M
+1 BIRT
+2 DATE 24 MAY 1803
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 29 JUL 1857
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 OCCU Naturaliste, ornithologue, membre de l'Académie des sciences
+1 NOTE Auteur d'American Ornithology, poursuivant l'oeuvre d'Alexander Wilson. Épousa sa cousine Zénaïde Bonaparte.
+1 SOUR @S18@
+1 SOUR @S5@
+1 FAMC @F14@
+
+0 @F14@ FAM
+1 HUSB @I5@
+1 WIFE @I45@
+1 CHIL @I46@
+1 MARR
+2 DATE 26 OCT 1803
+2 PLAC Plasmon, France
+3 MAP
+4 LATI N43.3000
+4 LONG E5.3800
+1 NOTE Mariage désapprouvé par Napoléon, cause de la brouille entre les deux frères
+1 SOUR @S18@
+
+0 @I6@ INDI
+1 NAME Maria Anna (Elisa) /Bonaparte/
+2 GIVN Maria Anna
+2 NICK Elisa
+2 SURN Bonaparte
+1 TITL Princesse de Lucques et Piombino
+1 TITL Grande-duchesse de Toscane
+1 TITL Princesse française
+1 SEX F
+1 BIRT
+2 DATE 03 JAN 1777
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 07 AUG 1820
+2 PLAC Trieste, Autriche
+3 MAP
+4 LATI N45.6496
+4 LONG E13.7768
+2 SOUR @S1@
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMC @F1@
+1 FAMS @F15@
+
+0 @I54@ INDI
+1 NAME Félix /Bacciocchi/
+2 GIVN Félix Pascal
+2 SURN Bacciocchi
+1 TITL Prince de Lucques et Piombino
+1 TITL Prince français
+1 SEX M
+1 BIRT
+2 DATE 18 MAY 1762
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+1 DEAT
+2 DATE 27 APR 1841
+2 PLAC Bologne, Italie
+3 MAP
+4 LATI N44.4949
+4 LONG E11.3426
+1 OCCU Officier, sénateur
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMS @F15@
+
+0 @I55@ INDI
+1 NAME Napoléone Elisa /Bacciocchi/
+2 GIVN Napoléone Elisa
+2 SURN Bacciocchi
+1 TITL Comtesse Camerata
+1 SEX F
+1 BIRT
+2 DATE 03 JUN 1806
+2 PLAC Lucques, Italie
+3 MAP
+4 LATI N43.8429
+4 LONG E10.5027
+1 DEAT
+2 DATE 03 FEB 1869
+2 PLAC Villa Vicentina, Italie
+3 MAP
+4 LATI N45.8333
+4 LONG E13.4167
+1 SOUR @S1@
+1 FAMC @F15@
+
+0 @F15@ FAM
+1 HUSB @I54@
+1 WIFE @I6@
+1 CHIL @I55@
+1 MARR
+2 DATE 01 MAY 1797
+2 PLAC Marseille, France
+3 MAP
+4 LATI N43.2965
+4 LONG E5.3698
+1 SOUR @S1@
+
+0 @I7@ INDI
+1 NAME Louis /Bonaparte/
+2 GIVN Louis
+2 SURN Bonaparte
+1 TITL Roi de Hollande
+1 TITL Comte de Saint-Leu
+1 TITL Prince français
+1 SEX M
+1 BIRT
+2 DATE 02 SEP 1778
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 25 JUL 1846
+2 PLAC Livourne, Italie
+3 MAP
+4 LATI N43.5485
+4 LONG E10.3106
+2 SOUR @S5@
+1 OCCU Roi de Hollande (1806-1810)
+1 SOUR @S1@
+1 SOUR @S5@
+1 FAMC @F1@
+1 FAMS @F16@
+
+0 @I8@ INDI
+1 NAME Marie Paulette (Pauline) /Bonaparte/
+2 GIVN Marie Paulette
+2 NICK Pauline
+2 SURN Bonaparte
+1 TITL Princesse française
+1 TITL Duchesse de Guastalla
+1 SEX F
+1 BIRT
+2 DATE 20 OCT 1780
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 09 JUN 1825
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+2 SOUR @S16@
+1 NOTE Modèle de la Vénus Victrix sculptée par Canova (1808)
+1 SOUR @S16@
+1 SOUR @S1@
+1 FAMC @F1@
+1 FAMS @F17@
+1 FAMS @F18@
+
+0 @I56@ INDI
+1 NAME Charles Victor Emmanuel /Leclerc/
+2 GIVN Charles Victor Emmanuel
+2 SURN Leclerc
+1 TITL Général de division
+1 SEX M
+1 BIRT
+2 DATE 17 MAR 1772
+2 PLAC Pontoise, France
+3 MAP
+4 LATI N49.0511
+4 LONG E2.1008
+1 DEAT
+2 DATE 02 NOV 1802
+2 PLAC Cap-Haïtien, Saint-Domingue
+3 MAP
+4 LATI N19.7578
+4 LONG W72.2044
+2 CAUS Fièvre jaune
+1 OCCU Général de division, commandant en chef de l'expédition de Saint-Domingue
+1 SOUR @S7@
+1 SOUR @S16@
+1 FAMS @F17@
+
+0 @I57@ INDI
+1 NAME Dermide Louis Napoléon /Leclerc/
+2 GIVN Dermide Louis Napoléon
+2 SURN Leclerc
+1 SEX M
+1 BIRT
+2 DATE 20 APR 1798
+2 PLAC Milan, Italie
+3 MAP
+4 LATI N45.4642
+4 LONG E9.1900
+1 DEAT
+2 DATE 14 AUG 1804
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 SOUR @S16@
+1 FAMC @F17@
+
+0 @F17@ FAM
+1 HUSB @I56@
+1 WIFE @I8@
+1 CHIL @I57@
+1 MARR
+2 DATE 14 JUN 1797
+2 PLAC Milan, Italie
+3 MAP
+4 LATI N45.4642
+4 LONG E9.1900
+1 SOUR @S16@
+
+0 @I58@ INDI
+1 NAME Camille /Borghèse/
+2 GIVN Camillo Filippo Ludovico
+2 SURN Borghèse
+1 TITL Prince Borghèse
+1 TITL Duc de Guastalla
+1 TITL Prince français
+1 SEX M
+1 BIRT
+2 DATE 19 JUL 1775
+2 PLAC Rome, Italie
+3 MAP
+4 LATI N41.9028
+4 LONG E12.4964
+1 DEAT
+2 DATE 09 MAY 1832
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+1 OCCU Gouverneur général des départements au-delà des Alpes
+1 SOUR @S16@
+1 SOUR @S1@
+1 FAMS @F18@
+
+0 @F18@ FAM
+1 HUSB @I58@
+1 WIFE @I8@
+1 MARR
+2 DATE 06 NOV 1803
+2 PLAC Mortefontaine, France
+3 MAP
+4 LATI N49.1167
+4 LONG E2.6167
+1 NOTE Mariage sans descendance
+1 SOUR @S16@
+
+0 @I9@ INDI
+1 NAME Marie Annonciade (Caroline) /Bonaparte/
+2 GIVN Marie Annonciade
+2 NICK Caroline
+2 SURN Bonaparte
+1 TITL Reine de Naples
+1 TITL Grande-duchesse de Berg et de Clèves
+1 TITL Princesse française
+1 SEX F
+1 BIRT
+2 DATE 25 MAR 1782
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 18 MAY 1839
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+2 SOUR @S1@
+1 SOUR @S1@
+1 SOUR @S12@
+1 FAMC @F1@
+1 FAMS @F19@
+
+0 @I18@ INDI
+1 NAME Joachim /Murat/
+2 GIVN Joachim
+2 SURN Murat
+1 TITL Maréchal d'Empire
+1 TITL Grand-duc de Berg et de Clèves
+1 TITL Roi de Naples
+1 SEX M
+1 BIRT
+2 DATE 25 MAR 1767
+2 PLAC Labastide-Fortunière (Labastide-Murat), Lot, France
+3 MAP
+4 LATI N44.6478
+4 LONG E1.5728
+1 DEAT
+2 DATE 13 OCT 1815
+2 PLAC Pizzo, Calabre, Italie
+3 MAP
+4 LATI N38.7333
+4 LONG E16.1667
+2 CAUS Fusillé après condamnation par tribunal militaire
+2 SOUR @S12@
+1 OCCU Maréchal d'Empire (1804), commandant de la cavalerie de la Grande Armée
+1 SOUR @S12@
+1 SOUR @S7@
+1 FAMS @F19@
+
+0 @I60@ INDI
+1 NAME Achille Charles Louis Napoléon /Murat/
+2 GIVN Achille
+2 SURN Murat
+1 TITL 2e prince Murat
+1 SEX M
+1 BIRT
+2 DATE 21 JAN 1801
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 15 APR 1847
+2 PLAC Jefferson County, Floride, USA
+3 MAP
+4 LATI N30.4383
+4 LONG W83.8910
+1 OCCU Planteur en Floride, colonel de milice
+1 NOTE Épousa Catherine Daingerfield Willis, petite-nièce de George Washington
+1 SOUR @S12@
+1 SOUR @S19@
+1 FAMC @F19@
+
+0 @I61@ INDI
+1 NAME Napoléon Lucien Charles /Murat/
+2 GIVN Napoléon Lucien Charles
+2 SURN Murat
+1 TITL 3e prince Murat
+1 SEX M
+1 BIRT
+2 DATE 16 MAY 1803
+2 PLAC Milan, Italie
+3 MAP
+4 LATI N45.4642
+4 LONG E9.1900
+1 DEAT
+2 DATE 10 APR 1878
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 SOUR @S12@
+1 SOUR @S19@
+1 FAMC @F19@
+
+0 @I62@ INDI
+1 NAME Laetitia Joséphine /Murat/
+2 GIVN Laetitia Joséphine
+2 SURN Murat
+1 TITL Marquise Pepoli
+1 SEX F
+1 BIRT
+2 DATE 26 APR 1802
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 12 MAR 1859
+2 PLAC Ravenne, Italie
+3 MAP
+4 LATI N44.4184
+4 LONG E12.2035
+1 SOUR @S12@
+1 FAMC @F19@
+
+0 @I63@ INDI
+1 NAME Louise Julie Caroline /Murat/
+2 GIVN Louise Julie Caroline
+2 SURN Murat
+1 TITL Comtesse Rasponi
+1 SEX F
+1 BIRT
+2 DATE 21 MAR 1805
+2 PLAC Milan, Italie
+3 MAP
+4 LATI N45.4642
+4 LONG E9.1900
+1 DEAT
+2 DATE 01 NOV 1889
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+1 SOUR @S12@
+1 FAMC @F19@
+
+0 @F19@ FAM
+1 HUSB @I18@
+1 WIFE @I9@
+1 CHIL @I60@
+1 CHIL @I62@
+1 CHIL @I61@
+1 CHIL @I63@
+1 MARR
+2 DATE 20 JAN 1800
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S12@
+1 SOUR @S12@
+
+0 @I10@ INDI
+1 NAME Jérôme /Bonaparte/
+2 GIVN Jérôme Napoléon
+2 SURN Bonaparte
+1 TITL Roi de Westphalie
+1 TITL Prince français
+1 TITL Maréchal de France (1850)
+1 TITL Gouverneur des Invalides
+1 SEX M
+1 BIRT
+2 DATE 15 NOV 1784
+2 PLAC Ajaccio, Corse
+3 MAP
+4 LATI N41.9192
+4 LONG E8.7386
+2 SOUR @S15@
+1 DEAT
+2 DATE 24 JUN 1860
+2 PLAC Vilgénis, Massy, France
+3 MAP
+4 LATI N48.7310
+4 LONG E2.2728
+2 SOUR @S20@
+1 BURI
+2 PLAC Hôtel des Invalides, Paris, France
+3 MAP
+4 LATI N48.8567
+4 LONG E2.3125
+1 SOUR @S20@
+1 SOUR @S5@
+1 FAMC @F1@
+1 FAMS @F20@
+1 FAMS @F21@
+
+0 @I64@ INDI
+1 NAME Elizabeth /Patterson/
+2 GIVN Elizabeth
+2 SURN Patterson
+1 SEX F
+1 BIRT
+2 DATE 06 FEB 1785
+2 PLAC Baltimore, Maryland, USA
+3 MAP
+4 LATI N39.2904
+4 LONG W76.6122
+1 DEAT
+2 DATE 04 APR 1879
+2 PLAC Baltimore, Maryland, USA
+3 MAP
+4 LATI N39.2904
+4 LONG W76.6122
+1 NOTE Fille de William Patterson, riche armateur de Baltimore. Femme la plus riche du Maryland à sa mort.
+1 SOUR @S20@
+1 SOUR @S19@
+1 FAMS @F20@
+
+0 @I65@ INDI
+1 NAME Jérôme Napoléon /Bonaparte-Patterson/
+2 GIVN Jérôme Napoléon
+2 SURN Bonaparte-Patterson
+1 SEX M
+1 BIRT
+2 DATE 07 JUL 1805
+2 PLAC Camberwell, Angleterre
+3 MAP
+4 LATI N51.4740
+4 LONG W0.0934
+1 DEAT
+2 DATE 17 JUN 1870
+2 PLAC Baltimore, Maryland, USA
+3 MAP
+4 LATI N39.2904
+4 LONG W76.6122
+1 NOTE Fondateur de la branche américaine des Bonaparte
+1 SOUR @S20@
+1 SOUR @S19@
+1 FAMC @F20@
+
+0 @F20@ FAM
+1 HUSB @I10@
+1 WIFE @I64@
+1 CHIL @I65@
+1 MARR
+2 DATE 24 DEC 1803
+2 PLAC Baltimore, Maryland, USA
+3 MAP
+4 LATI N39.2904
+4 LONG W76.6122
+1 DIV
+2 DATE 1806
+1 NOTE Mariage annulé par Napoléon car non autorisé. Non reconnu en France.
+1 SOUR @S20@
+
+0 @I66@ INDI
+1 NAME Catherine /de Wurtemberg/
+2 GIVN Sophia Dorothea Friederike Katharina
+2 SURN de Wurtemberg
+1 TITL Reine de Westphalie
+1 TITL Princesse royale de Wurtemberg
+1 SEX F
+1 BIRT
+2 DATE 21 FEB 1783
+2 PLAC Saint-Pétersbourg, Russie
+3 MAP
+4 LATI N59.9343
+4 LONG E30.3351
+1 DEAT
+2 DATE 28 NOV 1835
+2 PLAC Lausanne, Suisse
+3 MAP
+4 LATI N46.5197
+4 LONG E6.6323
+1 NOTE Fille du roi Frédéric Ier de Wurtemberg
+1 SOUR @S20@
+1 FAMS @F21@
+
+0 @I67@ INDI
+1 NAME Jérôme Napoléon /Bonaparte/
+2 GIVN Jérôme Napoléon Charles
+2 SURN Bonaparte
+1 TITL Prince Napoléon
+1 NICK Plon-Plon
+1 SEX M
+1 BIRT
+2 DATE 09 SEP 1822
+2 PLAC Trieste, Autriche
+3 MAP
+4 LATI N45.6496
+4 LONG E13.7768
+1 DEAT
+2 DATE 17 MAR 1891
+2 PLAC Rome, Italie
+3 MAP
+4 LATI N41.9028
+4 LONG E12.4964
+1 OCCU Sénateur, prétendant bonapartiste, général de division
+1 NOTE Chef de la famille impériale après la mort du Prince impérial (1879). Épousa la princesse Marie-Clotilde de Savoie.
+1 SOUR @S20@
+1 SOUR @S10@
+1 FAMC @F21@
+
+0 @I68@ INDI
+1 NAME Mathilde Laetitia Wilhelmine /Bonaparte/
+2 GIVN Mathilde
+2 SURN Bonaparte
+1 TITL Princesse Mathilde
+1 TITL Princesse Demidoff
+1 SEX F
+1 BIRT
+2 DATE 27 MAY 1820
+2 PLAC Trieste, Autriche
+3 MAP
+4 LATI N45.6496
+4 LONG E13.7768
+1 DEAT
+2 DATE 02 JAN 1904
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 NOTE Grande figure des salons littéraires et artistiques du Second Empire. Protectrice de Flaubert, des Goncourt, de Sainte-Beuve.
+1 SOUR @S20@
+1 SOUR @S10@
+1 FAMC @F21@
+
+0 @F21@ FAM
+1 HUSB @I10@
+1 WIFE @I66@
+1 CHIL @I68@
+1 CHIL @I67@
+1 MARR
+2 DATE 22 AUG 1807
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S20@
+1 SOUR @S20@
+
+0 @I11@ INDI
+1 NAME Joséphine /de Beauharnais/
+2 GIVN Marie Josèphe Rose
+2 SURN de Beauharnais
+1 TITL Impératrice des Français
+1 TITL Vicomtesse de Beauharnais
+1 SEX F
+1 BIRT
+2 DATE 23 JUN 1763
+2 PLAC Les Trois-Îlets, Martinique
+3 MAP
+4 LATI N14.5247
+4 LONG W61.0383
+2 SOUR @S6@
+1 DEAT
+2 DATE 29 MAY 1814
+2 PLAC Château de Malmaison, Rueil-Malmaison, France
+3 MAP
+4 LATI N48.8708
+4 LONG E2.1672
+2 CAUS Pneumonie (diphtérie selon certaines sources)
+2 SOUR @S6@
+1 BURI
+2 PLAC Église Saint-Pierre-Saint-Paul, Rueil-Malmaison
+3 MAP
+4 LATI N48.8761
+4 LONG E2.1886
+1 NOTE Née Tascher de La Pagerie. Passionnée de botanique, fit de Malmaison un jardin remarquable.
+1 SOUR @S6@
+1 SOUR @S13@
+1 FAMS @F10@
+1 FAMS @F9@
+
+0 @I14@ INDI
+1 NAME Alexandre /de Beauharnais/
+2 GIVN Alexandre François Marie
+2 SURN de Beauharnais
+1 TITL Vicomte de Beauharnais
+1 SEX M
+1 BIRT
+2 DATE 28 MAY 1760
+2 PLAC Fort-Royal, Martinique
+3 MAP
+4 LATI N14.6065
+4 LONG W61.0717
+1 DEAT
+2 DATE 23 JUL 1794
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 CAUS Guillotiné durant la Terreur
+2 SOUR @S13@
+1 OCCU Général, président de l'Assemblée nationale constituante (1791)
+1 SOUR @S13@
+1 FAMS @F9@
+
+0 @F9@ FAM
+1 HUSB @I14@
+1 WIFE @I11@
+1 CHIL @I15@
+1 CHIL @I16@
+1 MARR
+2 DATE 13 DEC 1779
+2 PLAC Noisy-le-Grand, France
+3 MAP
+4 LATI N48.8484
+4 LONG E2.5528
+2 SOUR @S13@
+1 SOUR @S13@
+
+0 @F10@ FAM
+1 HUSB @I1@
+1 WIFE @I11@
+1 MARR
+2 DATE 09 MAR 1796
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S6@
+2 NOTE Mariage civil en mairie du IIe arrondissement
+1 DIV
+2 DATE 15 DEC 1809
+2 SOUR @S6@
+2 NOTE Divorce par sénatus-consulte, prononcé pour raison d'État (absence d'héritier)
+1 SOUR @S6@
+
+0 @I12@ INDI
+1 NAME Marie-Louise /de Habsbourg-Lorraine/
+2 GIVN Marie-Louise Léopoldine Françoise Thérèse Josèphe Lucie
+2 SURN de Habsbourg-Lorraine
+1 TITL Impératrice des Français
+1 TITL Duchesse de Parme, Plaisance et Guastalla
+1 TITL Archiduchesse d'Autriche
+1 SEX F
+1 BIRT
+2 DATE 12 DEC 1791
+2 PLAC Vienne, Autriche
+3 MAP
+4 LATI N48.2082
+4 LONG E16.3738
+2 SOUR @S9@
+1 DEAT
+2 DATE 17 DEC 1847
+2 PLAC Parme, Italie
+3 MAP
+4 LATI N44.8015
+4 LONG E10.3279
+2 SOUR @S9@
+1 NOTE Fille de l'empereur François Ier d'Autriche. Duchesse souveraine de Parme (1816-1847). Liaison puis mariage morganatique avec le comte de Neipperg après 1814.
+1 SOUR @S9@
+1 FAMS @F11@
+
+0 @I70@ INDI
+1 NAME François Ier /de Habsbourg-Lorraine/
+2 GIVN Franz Joseph Karl
+2 SURN de Habsbourg-Lorraine
+1 TITL Empereur d'Autriche
+1 TITL Roi de Hongrie et de Bohême
+1 TITL Dernier empereur du Saint-Empire romain germanique (sous le nom de François II)
+1 SEX M
+1 BIRT
+2 DATE 12 FEB 1768
+2 PLAC Florence, Italie
+3 MAP
+4 LATI N43.7696
+4 LONG E11.2558
+1 DEAT
+2 DATE 02 MAR 1835
+2 PLAC Vienne, Autriche
+3 MAP
+4 LATI N48.2082
+4 LONG E16.3738
+1 SOUR @S9@
+1 FAMS @F22@
+
+0 @I71@ INDI
+1 NAME Marie-Thérèse /de Bourbon-Siciles/
+2 GIVN Maria Teresa Carolina Giuseppina
+2 SURN de Bourbon-Siciles
+1 TITL Impératrice consort d'Autriche
+1 TITL Princesse royale de Naples et de Sicile
+1 SEX F
+1 BIRT
+2 DATE 06 JUN 1772
+2 PLAC Naples, Italie
+3 MAP
+4 LATI N40.8518
+4 LONG E14.2681
+1 DEAT
+2 DATE 13 APR 1807
+2 PLAC Vienne, Autriche
+3 MAP
+4 LATI N48.2082
+4 LONG E16.3738
+1 NOTE Fille du roi Ferdinand IV de Naples et de Marie-Caroline d'Autriche
+1 SOUR @S9@
+1 FAMS @F22@
+
+0 @F22@ FAM
+1 HUSB @I70@
+1 WIFE @I71@
+1 CHIL @I12@
+1 MARR
+2 DATE 15 SEP 1790
+2 PLAC Vienne, Autriche
+3 MAP
+4 LATI N48.2082
+4 LONG E16.3738
+1 NOTE Parents de Marie-Louise d'Autriche
+1 SOUR @S9@
+
+0 @F11@ FAM
+1 HUSB @I1@
+1 WIFE @I12@
+1 CHIL @I13@
+1 MARR
+2 DATE 02 APR 1810
+2 PLAC Saint-Cloud et Salon Carré du Louvre, Paris, France
+3 MAP
+4 LATI N48.8611
+4 LONG E2.3364
+2 NOTE Mariage civil à Saint-Cloud le 1er avril, mariage religieux au Louvre le 2 avril
+2 SOUR @S9@
+1 SOUR @S9@
+
+0 @I13@ INDI
+1 NAME Napoléon François Charles Joseph /Bonaparte/
+2 GIVN Napoléon François Charles Joseph
+2 SURN Bonaparte
+1 TITL Roi de Rome (1811-1814)
+1 TITL Prince de Parme (1814-1818)
+1 TITL Duc de Reichstadt (1818-1832)
+1 SEX M
+1 BIRT
+2 DATE 20 MAR 1811
+2 PLAC Palais des Tuileries, Paris, France
+3 MAP
+4 LATI N48.8636
+4 LONG E2.3333
+2 SOUR @S11@
+1 DEAT
+2 DATE 22 JUL 1832
+2 PLAC Château de Schönbrunn, Vienne, Autriche
+3 MAP
+4 LATI N48.1845
+4 LONG E16.3122
+2 CAUS Tuberculose
+2 SOUR @S11@
+1 BURI
+2 PLAC Crypte des Capucins, Vienne
+3 MAP
+4 LATI N48.2043
+4 LONG E16.3698
+2 NOTE Cendres transférées aux Invalides le 15 décembre 1940 sur ordre d'Hitler
+1 NOTE Connu comme Napoléon II ou l'Aiglon. N'a jamais régné de fait. Élevé à la cour autrichienne sous le nom de Franz, duc de Reichstadt. Sujet de la pièce L'Aiglon d'Edmond Rostand (1900).
+1 SOUR @S11@
+1 FAMC @F11@
+
+0 @I15@ INDI
+1 NAME Eugène /de Beauharnais/
+2 GIVN Eugène Rose
+2 SURN de Beauharnais
+1 TITL Prince de l'Empire
+1 TITL Vice-roi d'Italie
+1 TITL Duc de Leuchtenberg
+1 TITL Prince d'Eichstätt
+1 SEX M
+1 BIRT
+2 DATE 03 SEP 1781
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S13@
+1 DEAT
+2 DATE 21 FEB 1824
+2 PLAC Munich, Bavière
+3 MAP
+4 LATI N48.1351
+4 LONG E11.5820
+2 SOUR @S13@
+1 OCCU Vice-roi d'Italie (1805-1814)
+1 NOTE Fils adoptif de Napoléon Ier. Ancêtre de nombreuses familles royales européennes, dont les actuelles familles royales de Suède, Danemark, Norvège, Belgique et Luxembourg.
+1 SOUR @S13@
+1 FAMC @F9@
+1 FAMS @F23@
+
+0 @I72@ INDI
+1 NAME Augusta Amalia Ludovika Georgia /de Bavière/
+2 GIVN Augusta
+2 SURN de Bavière
+1 TITL Princesse royale de Bavière
+1 TITL Duchesse de Leuchtenberg
+1 SEX F
+1 BIRT
+2 DATE 21 JUN 1788
+2 PLAC Strasbourg, France
+3 MAP
+4 LATI N48.5734
+4 LONG E7.7521
+1 DEAT
+2 DATE 13 MAY 1851
+2 PLAC Munich, Bavière
+3 MAP
+4 LATI N48.1351
+4 LONG E11.5820
+1 NOTE Fille du roi Maximilien Ier de Bavière
+1 SOUR @S13@
+1 FAMS @F23@
+
+0 @I73@ INDI
+1 NAME Joséphine Maximilienne Eugénie Napoléone /de Beauharnais/
+2 GIVN Joséphine
+2 SURN de Beauharnais
+1 TITL Reine de Suède et de Norvège
+1 TITL Duchesse de Leuchtenberg
+1 SEX F
+1 BIRT
+2 DATE 14 MAR 1807
+2 PLAC Milan, Italie
+3 MAP
+4 LATI N45.4642
+4 LONG E9.1900
+1 DEAT
+2 DATE 07 JUN 1876
+2 PLAC Stockholm, Suède
+3 MAP
+4 LATI N59.3293
+4 LONG E18.0686
+1 NOTE Épouse du roi Oscar Ier de Suède. Par elle, la descendance de Joséphine de Beauharnais est présente dans toutes les familles royales scandinaves actuelles.
+1 SOUR @S13@
+1 SOUR @S8@
+1 FAMC @F23@
+
+0 @I74@ INDI
+1 NAME Maximilien /de Beauharnais/
+2 GIVN Maximilian Joseph Eugène Auguste Napoléon
+2 SURN de Beauharnais
+1 TITL 3e duc de Leuchtenberg
+1 TITL Prince Romanovsky
+1 SEX M
+1 BIRT
+2 DATE 02 OCT 1817
+2 PLAC Munich, Bavière
+3 MAP
+4 LATI N48.1351
+4 LONG E11.5820
+1 DEAT
+2 DATE 01 NOV 1852
+2 PLAC Saint-Pétersbourg, Russie
+3 MAP
+4 LATI N59.9343
+4 LONG E30.3351
+1 NOTE Épousa la grande-duchesse Maria Nikolaevna de Russie, fille du tsar Nicolas Ier
+1 SOUR @S13@
+1 FAMC @F23@
+
+0 @F23@ FAM
+1 HUSB @I15@
+1 WIFE @I72@
+1 CHIL @I73@
+1 CHIL @I74@
+1 MARR
+2 DATE 14 JAN 1806
+2 PLAC Munich, Bavière
+3 MAP
+4 LATI N48.1351
+4 LONG E11.5820
+2 SOUR @S13@
+1 SOUR @S13@
+
+0 @I16@ INDI
+1 NAME Hortense /de Beauharnais/
+2 GIVN Hortense Eugénie Cécile
+2 SURN de Beauharnais
+1 TITL Reine de Hollande
+1 TITL Duchesse de Saint-Leu
+1 TITL Princesse française
+1 SEX F
+1 BIRT
+2 DATE 10 APR 1783
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S13@
+1 DEAT
+2 DATE 05 OCT 1837
+2 PLAC Château d'Arenenberg, Thurgovie, Suisse
+3 MAP
+4 LATI N47.6450
+4 LONG E9.0694
+2 SOUR @S13@
+1 NOTE Compositrice (Partant pour la Syrie, devenu hymne semi-officiel du Second Empire). Mère de Napoléon III. Fille adoptive de Napoléon Ier.
+1 SOUR @S13@
+1 SOUR @S10@
+1 FAMC @F9@
+1 FAMS @F16@
+
+0 @F16@ FAM
+1 HUSB @I7@
+1 WIFE @I16@
+1 CHIL @I80@
+1 CHIL @I81@
+1 CHIL @I17@
+1 MARR
+2 DATE 04 JAN 1802
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S1@
+1 NOTE Mariage arrangé par Napoléon. Union malheureuse, séparation de fait en 1810.
+1 SOUR @S1@
+1 SOUR @S13@
+
+0 @I80@ INDI
+1 NAME Napoléon Charles /Bonaparte/
+2 GIVN Napoléon Charles
+2 SURN Bonaparte
+1 TITL Prince royal de Hollande
+1 SEX M
+1 BIRT
+2 DATE 10 OCT 1802
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 05 MAY 1807
+2 PLAC La Haye, Hollande
+3 MAP
+4 LATI N52.0705
+4 LONG E4.3007
+2 CAUS Croup
+1 NOTE Napoléon Ier avait envisagé de l'adopter comme héritier de l'Empire
+1 SOUR @S1@
+1 SOUR @S13@
+1 FAMC @F16@
+
+0 @I81@ INDI
+1 NAME Napoléon Louis /Bonaparte/
+2 GIVN Napoléon Louis
+2 SURN Bonaparte
+1 TITL Grand-duc de Berg et de Clèves (1809-1813)
+1 TITL Prince royal de Hollande
+1 SEX M
+1 BIRT
+2 DATE 11 OCT 1804
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 17 MAR 1831
+2 PLAC Forlì, Italie
+3 MAP
+4 LATI N44.2228
+4 LONG E12.0407
+2 CAUS Rougeole contractée lors de l'insurrection des Romagnes
+1 NOTE Épousa Charlotte Bonaparte (fille de Joseph) en 1827. Mort lors des insurrections italiennes aux côtés de son frère Louis-Napoléon.
+1 SOUR @S1@
+1 SOUR @S10@
+1 FAMC @F16@
+
+0 @I17@ INDI
+1 NAME Charles Louis Napoléon /Bonaparte/
+2 GIVN Charles Louis Napoléon
+2 SURN Bonaparte
+1 TITL Président de la République française (1848-1852)
+1 TITL Empereur des Français (Napoléon III, 1852-1870)
+1 SEX M
+1 BIRT
+2 DATE 20 APR 1808
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S10@
+1 DEAT
+2 DATE 09 JAN 1873
+2 PLAC Camden Place, Chislehurst, Kent, Angleterre
+3 MAP
+4 LATI N51.4106
+4 LONG E0.0689
+2 CAUS Complications post-opératoires (calculs rénaux)
+2 SOUR @S10@
+1 BURI
+2 PLAC Abbaye Saint-Michel, Farnborough, Hampshire, Angleterre
+3 MAP
+4 LATI N51.2833
+4 LONG W0.7556
+1 NOTE Neveu de Napoléon Ier. Dernier monarque français. Tentatives de coup d'État à Strasbourg (1836) et Boulogne (1840), emprisonné au fort de Ham, évasion (1846).
+1 SOUR @S10@
+1 FAMC @F16@
+1 FAMS @F24@
+
+0 @I82@ INDI
+1 NAME Eugénie /de Montijo/
+2 GIVN María Eugenia Ignacia Augustina
+2 SURN de Montijo
+1 TITL Impératrice des Français
+1 TITL Comtesse de Teba
+1 SEX F
+1 BIRT
+2 DATE 05 MAY 1826
+2 PLAC Grenade, Espagne
+3 MAP
+4 LATI N37.1773
+4 LONG W3.5986
+2 SOUR @S10@
+1 DEAT
+2 DATE 11 JUL 1920
+2 PLAC Palais de Liria, Madrid, Espagne
+3 MAP
+4 LATI N40.4278
+4 LONG W3.7117
+2 SOUR @S10@
+1 NOTE Dernière impératrice de France. Régente à plusieurs reprises. Survécut 50 ans à la chute de l'Empire.
+1 SOUR @S10@
+1 FAMS @F24@
+
+0 @I83@ INDI
+1 NAME Napoléon Eugène Louis Jean Joseph /Bonaparte/
+2 GIVN Louis Napoléon
+2 SURN Bonaparte
+1 TITL Prince impérial
+1 SEX M
+1 BIRT
+2 DATE 16 MAR 1856
+2 PLAC Palais des Tuileries, Paris, France
+3 MAP
+4 LATI N48.8636
+4 LONG E2.3333
+2 SOUR @S10@
+1 DEAT
+2 DATE 01 JUN 1879
+2 PLAC Ityotyozi, Zoulouland, Afrique du Sud
+3 MAP
+4 LATI S28.3300
+4 LONG E31.3500
+2 CAUS Tué par des guerriers zoulous lors d'une reconnaissance
+2 SOUR @S10@
+1 NOTE Mort sans descendance. Fin de la lignée directe de Napoléon III. Engagé volontaire dans l'armée britannique. Sa mort causa un scandale politique en Grande-Bretagne.
+1 SOUR @S10@
+1 FAMC @F24@
+
+0 @F24@ FAM
+1 HUSB @I17@
+1 WIFE @I82@
+1 CHIL @I83@
+1 MARR
+2 DATE 30 JAN 1853
+2 PLAC Cathédrale Notre-Dame de Paris
+3 MAP
+4 LATI N48.8530
+4 LONG E2.3499
+2 SOUR @S10@
+1 SOUR @S10@
+
+0 @I19@ INDI
+1 NAME Charles Léon /Denuelle/
+2 GIVN Charles Léon
+2 SURN Denuelle
+1 TITL Comte Léon (titre de courtoisie)
+1 SEX M
+1 BIRT
+2 DATE 13 DEC 1806
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 14 APR 1881
+2 PLAC Pontoise, France
+3 MAP
+4 LATI N49.0511
+4 LONG E2.1008
+1 NOTE Fils naturel de Napoléon Ier et d'Éléonore Denuelle de La Plaigne. Reconnu par Napoléon. Existence tumultueuse, dettes, duels. Sa naissance prouva la fertilité de l'Empereur et précipita le divorce avec Joséphine.
+1 SOUR @S1@
+1 SOUR @S4@
+1 FAMC @F30@
+
+0 @I20@ INDI
+1 NAME Éléonore /Denuelle de La Plaigne/
+2 GIVN Louise Catherine Éléonore
+2 SURN Denuelle de La Plaigne
+1 SEX F
+1 BIRT
+2 DATE 13 SEP 1787
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 DEAT
+2 DATE 30 JAN 1868
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 NOTE Lectrice de Caroline Murat, présentée à l'Empereur par Caroline elle-même
+1 SOUR @S1@
+1 FAMS @F30@
+
+0 @F30@ FAM
+1 HUSB @I1@
+1 WIFE @I20@
+1 CHIL @I19@
+1 NOTE Union illégitime (1806). La naissance de cet enfant prouve la fertilité de Napoléon.
+1 SOUR @S1@
+3 PAGE Volume IV
+
+0 @I21@ INDI
+1 NAME Alexandre Florian Joseph /Walewski/
+2 GIVN Alexandre Florian Joseph
+2 SURN Walewski
+1 TITL Comte Walewski
+1 TITL Sénateur
+1 SEX M
+1 BIRT
+2 DATE 04 MAY 1810
+2 PLAC Walewice, Pologne
+3 MAP
+4 LATI N52.0011
+4 LONG E19.6464
+2 SOUR @S1@
+1 DEAT
+2 DATE 27 SEP 1868
+2 PLAC Strasbourg, France
+3 MAP
+4 LATI N48.5734
+4 LONG E7.7521
+2 SOUR @S2@
+1 OCCU Diplomate, ambassadeur à Londres, ministre des Affaires étrangères (1855-1860), président du Corps législatif (1865-1867)
+1 NOTE Fils naturel de Napoléon Ier et de Marie Walewska. Brillante carrière diplomatique sous Napoléon III. Présida le congrès de Paris (1856).
+1 SOUR @S1@
+1 SOUR @S2@
+1 FAMC @F31@
+
+0 @I22@ INDI
+1 NAME Marie /Walewska/
+2 GIVN Maria Łączyńska
+2 SURN Walewska
+1 TITL Comtesse Walewska
+1 SEX F
+1 BIRT
+2 DATE 07 DEC 1786
+2 PLAC Brodne (Kiernozia), Pologne
+3 MAP
+4 LATI N52.0564
+4 LONG E19.9817
+1 DEAT
+2 DATE 11 DEC 1817
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+1 NOTE Surnommée "l'épouse polonaise" de Napoléon. Rendit visite à l'Empereur à l'île d'Elbe avec leur fils (1814).
+1 SOUR @S1@
+3 PAGE Volume V
+1 FAMS @F31@
+
+0 @F31@ FAM
+1 HUSB @I1@
+1 WIFE @I22@
+1 CHIL @I21@
+1 NOTE Union illégitime. Liaison de 1807 à 1812, rencontre à Varsovie.
+1 SOUR @S1@
+3 PAGE Volume V
+
+0 @I90@ INDI
+1 NAME Désirée /Clary/
+2 GIVN Bernardine Eugénie Désirée
+2 SURN Clary
+1 TITL Reine de Suède et de Norvège (sous le nom de Desideria)
+1 SEX F
+1 BIRT
+2 DATE 08 NOV 1777
+2 PLAC Marseille, France
+3 MAP
+4 LATI N43.2965
+4 LONG E5.3698
+2 SOUR @S8@
+1 DEAT
+2 DATE 17 DEC 1860
+2 PLAC Stockholm, Suède
+3 MAP
+4 LATI N59.3293
+4 LONG E18.0686
+2 SOUR @S8@
+1 NOTE Ancienne fiancée de Napoléon Bonaparte (fiançailles rompues en 1795). Soeur de Julie Clary (épouse de Joseph).
+1 SOUR @S8@
+1 FAMS @F25@
+
+0 @I91@ INDI
+1 NAME Jean-Baptiste /Bernadotte/
+2 GIVN Jean-Baptiste Jules
+2 SURN Bernadotte
+1 TITL Maréchal d'Empire
+1 TITL Prince de Pontecorvo
+1 TITL Roi de Suède et de Norvège (Charles XIV Jean)
+1 SEX M
+1 BIRT
+2 DATE 26 JAN 1763
+2 PLAC Pau, France
+3 MAP
+4 LATI N43.2951
+4 LONG W0.3708
+2 SOUR @S8@
+1 DEAT
+2 DATE 08 MAR 1844
+2 PLAC Stockholm, Suède
+3 MAP
+4 LATI N59.3293
+4 LONG E18.0686
+2 SOUR @S8@
+1 NOTE Ancien sergent devenu maréchal d'Empire. Élu prince héritier de Suède en 1810 par les États suédois. Fondateur de la dynastie Bernadotte, actuelle famille royale de Suède. Se retourna contre Napoléon en 1813.
+1 SOUR @S8@
+1 SOUR @S7@
+1 FAMS @F25@
+
+0 @I92@ INDI
+1 NAME Oscar Ier /Bernadotte/
+2 GIVN Joseph François Oscar
+2 SURN Bernadotte
+1 TITL Roi de Suède et de Norvège
+1 SEX M
+1 BIRT
+2 DATE 04 JUL 1799
+2 PLAC Paris, France
+3 MAP
+4 LATI N48.8566
+4 LONG E2.3522
+2 SOUR @S8@
+1 DEAT
+2 DATE 08 JUL 1859
+2 PLAC Stockholm, Suède
+3 MAP
+4 LATI N59.3293
+4 LONG E18.0686
+2 SOUR @S8@
+1 NOTE Épousa Joséphine de Beauharnais (petite-fille de l'impératrice Joséphine), unissant Bernadotte et Beauharnais. Son parrain fut Napoléon Bonaparte.
+1 SOUR @S8@
+1 FAMC @F25@
+
+0 @F25@ FAM
+1 HUSB @I91@
+1 WIFE @I90@
+1 CHIL @I92@
+1 MARR
+2 DATE 17 AUG 1798
+2 PLAC Sceaux, France
+3 MAP
+4 LATI N48.7784
+4 LONG E2.2941
+2 SOUR @S8@
+1 SOUR @S8@
+
+0 TRLR

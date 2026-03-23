@@ -1,0 +1,1010 @@
+{
+  "type": "bundle",
+  "id": "bundle--a1b2c3d4-5678-9abc-def0-123456789abc",
+  "spec_version": "2.1",
+  "created": "2026-03-18T14:30:00.000Z",
+  "objects": [
+    {
+      "type": "threat-actor",
+      "id": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-03-10T08:00:00.000Z",
+      "name": "NIGHTFALL SPIDER",
+      "description": "Groupe APT sophistiqué ciblant les infrastructures industrielles européennes, spécialisé dans l'exfiltration de données SCADA et le pré-positionnement sur les réseaux OT. Actif depuis au moins 2023. Utilise un arsenal custom avec des capacités de persistance avancées sur les systèmes Windows et Linux. Forte suspicion de lien étatique (nexus estimé : Europe de l'Est).",
+      "threat_actor_types": ["nation-state", "spy"],
+      "aliases": ["NF-SPIDER", "GhostValve", "APT-NF7"],
+      "first_seen": "2023-06-01T00:00:00.000Z",
+      "last_seen": "2026-03-01T00:00:00.000Z",
+      "roles": ["agent", "infrastructure-operator"],
+      "goals": [
+        "Exfiltration de schémas SCADA et configurations ICS",
+        "Pré-positionnement sur réseaux OT pour capacité de sabotage",
+        "Collecte de credentials d'opérateurs industriels",
+        "Cartographie des chaînes d'approvisionnement énergétiques"
+      ],
+      "sophistication": "expert",
+      "resource_level": "government",
+      "primary_motivation": "organizational-gain",
+      "secondary_motivations": ["dominance"],
+      "object_marking_refs": ["marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9"]
+    },
+    {
+      "type": "identity",
+      "id": "identity--d4e5f6a7-b8c9-0123-4567-89abcdef0123",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "Europipe Energy Group",
+      "description": "Opérateur européen de gazoducs et d'infrastructures de transport d'énergie. Siège à Rotterdam. 4500 employés. Exploite 12 000 km de pipelines cross-border.",
+      "identity_class": "organization",
+      "sectors": ["energy", "infrastructure"],
+      "contact_information": "CERT interne : cert@europipe-energy.example.com"
+    },
+    {
+      "type": "identity",
+      "id": "identity--aabbccdd-1122-3344-5566-778899aabbcc",
+      "spec_version": "2.1",
+      "created": "2026-02-01T10:00:00.000Z",
+      "modified": "2026-02-01T10:00:00.000Z",
+      "name": "NordValve Systems GmbH",
+      "description": "Sous-traitant de maintenance pour vannes industrielles et systèmes de contrôle de pression. Basé à Hambourg. 180 employés. Accès VPN permanent aux réseaux SCADA d'Europipe.",
+      "identity_class": "organization",
+      "sectors": ["infrastructure"]
+    },
+    {
+      "type": "campaign",
+      "id": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "spec_version": "2.1",
+      "created": "2026-02-20T09:00:00.000Z",
+      "modified": "2026-03-15T11:00:00.000Z",
+      "name": "Operation FROZEN PIPELINE",
+      "description": "Campagne d'intrusion multi-phases ciblant Europipe Energy Group via compromission initiale de la supply chain (NordValve Systems). Phase 1 : spearphishing sur NordValve. Phase 2 : mouvement latéral via tunnel VPN légitime vers réseau IT Europipe. Phase 3 : pivot IT-OT via jump server mal segmenté. Phase 4 : déploiement d'implant SCADA custom (GhostPLC). Phase 5 : exfiltration via DNS-over-HTTPS vers infrastructure C2.",
+      "aliases": ["FROZENP", "NF-Campaign-2025-12"],
+      "first_seen": "2025-09-15T00:00:00.000Z",
+      "last_seen": "2026-02-28T00:00:00.000Z",
+      "objective": "Pré-positionnement destructif et exfiltration de données SCADA critiques"
+    },
+    {
+      "type": "intrusion-set",
+      "id": "intrusion-set--11223344-5566-7788-99aa-bbccddeeff00",
+      "spec_version": "2.1",
+      "created": "2026-01-20T10:00:00.000Z",
+      "modified": "2026-03-10T08:00:00.000Z",
+      "name": "NIGHTFALL Toolset Cluster",
+      "description": "Cluster d'activité regroupant l'utilisation coordonnée des outils GhostPLC, NightLoader et ValveDrop, avec infrastructure C2 partagée et TTP cohérentes.",
+      "aliases": ["NF-Cluster-7"],
+      "first_seen": "2023-06-01T00:00:00.000Z",
+      "goals": ["Accès persistant aux réseaux OT industriels"],
+      "resource_level": "government",
+      "primary_motivation": "organizational-gain"
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--a1a1a1a1-b2b2-c3c3-d4d4-e5e5e5e5e5e5",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "Spearphishing Attachment - Macro-enabled DOCX",
+      "description": "Email de spearphishing ciblant les techniciens de maintenance de NordValve avec pièce jointe DOCX contenant macro VBA obfusquée. Le document usurpe un bon de commande Siemens pour des vannes de régulation. La macro exécute un PowerShell encodé qui télécharge NightLoader.",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1566.001",
+          "url": "https://attack.mitre.org/techniques/T1566/001/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "initial-access"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--b2b2b2b2-c3c3-d4d4-e5e5-f6f6f6f6f6f6",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "Trusted Relationship - VPN Abuse",
+      "description": "Exploitation du tunnel VPN site-to-site permanent entre NordValve et Europipe pour pivoter vers le réseau IT de la cible finale sans déclencher d'alerte réseau. L'attaquant utilise les credentials VPN légitimes volés sur le poste du technicien compromis.",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1199",
+          "url": "https://attack.mitre.org/techniques/T1199/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "initial-access"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--c3c3c3c3-d4d4-e5e5-f6f6-a7a7a7a7a7a7",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "OS Credential Dumping - LSASS Memory",
+      "description": "Extraction de credentials depuis la mémoire du processus LSASS sur les serveurs Windows du domaine Europipe via une variante custom de Mimikatz compilée en mémoire par NightLoader. Aucun binaire déposé sur disque.",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1003.001",
+          "url": "https://attack.mitre.org/techniques/T1003/001/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "credential-access"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--d4d4d4d4-e5e5-f6f6-a7a7-b8b8b8b8b8b8",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "Lateral Movement to OT - Jump Server Pivot",
+      "description": "Exploitation d'un serveur de rebond (jump server) dual-homed connecté à la fois au réseau IT et au réseau OT d'Europipe. Le serveur exécute un client RDP et un client OPC-UA. L'attaquant exploite une vulnérabilité de privilege escalation locale (CVE-2025-28714) pour obtenir SYSTEM et pivoter vers le segment SCADA.",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1021.001",
+          "url": "https://attack.mitre.org/techniques/T1021/001/"
+        },
+        {
+          "source_name": "mitre-ics-attack",
+          "external_id": "T0886",
+          "url": "https://attack.mitre.org/techniques/T0886/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "lateral-movement"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--e5e5e5e5-f6f6-a7a7-b8b8-c9c9c9c9c9c9",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "Exfiltration Over Alternative Protocol - DNS-over-HTTPS",
+      "description": "Exfiltration des données SCADA via requêtes DNS-over-HTTPS (DoH) vers un résolveur contrôlé par l'attaquant. Les données sont encodées en base32 dans les sous-domaines des requêtes TXT. Débit faible (environ 50 KB/h) mais quasi-indétectable par les solutions DPI classiques.",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1048.003",
+          "url": "https://attack.mitre.org/techniques/T1048/003/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "exfiltration"
+        }
+      ]
+    },
+    {
+      "type": "malware",
+      "id": "malware--11111111-2222-3333-4444-555555555555",
+      "spec_version": "2.1",
+      "created": "2026-01-20T10:00:00.000Z",
+      "modified": "2026-03-01T10:00:00.000Z",
+      "name": "NightLoader",
+      "description": "Loader initial multi-stage utilisé pour la phase de compromission initiale. Stage 1 : PowerShell encodé exécuté par macro VBA. Stage 2 : shellcode injecté dans svchost.exe via process hollowing. Stage 3 : téléchargement et exécution en mémoire du payload final depuis un bucket S3 compromis. Polymorphique : chaque build génère un hash unique. Anti-sandbox : vérifie le nombre de CPU, la RAM, la présence de processus de virtualisation, et attend 15 minutes avant exécution.",
+      "malware_types": ["loader", "downloader"],
+      "is_family": true,
+      "first_seen": "2023-08-01T00:00:00.000Z",
+      "last_seen": "2026-02-15T00:00:00.000Z",
+      "operating_system_refs": ["software--windows-10", "software--windows-11", "software--windows-server-2019"],
+      "capabilities": [
+        "persists-after-system-reboot",
+        "anti-debugging",
+        "anti-vm",
+        "evades-av"
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "execution"
+        }
+      ]
+    },
+    {
+      "type": "malware",
+      "id": "malware--22222222-3333-4444-5555-666666666666",
+      "spec_version": "2.1",
+      "created": "2026-02-01T10:00:00.000Z",
+      "modified": "2026-03-10T10:00:00.000Z",
+      "name": "GhostPLC",
+      "description": "Implant SCADA custom conçu pour les environnements Siemens S7 (protocole S7comm) et Schneider Modbus/TCP. Capable de lire/écrire des registres PLC, de modifier des setpoints de pression et de température, et d'intercepter les communications HMI-PLC pour masquer les modifications aux opérateurs (man-in-the-middle OT). Compilé en Golang avec support cross-platform. Communique via un canal C2 encapsulé dans des trames OPC-UA légitimes.",
+      "malware_types": ["backdoor", "remote-access-trojan"],
+      "is_family": true,
+      "first_seen": "2024-03-01T00:00:00.000Z",
+      "last_seen": "2026-02-28T00:00:00.000Z",
+      "capabilities": [
+        "communicates-with-c2",
+        "captures-input-peripherals",
+        "compromises-data-integrity"
+      ],
+      "architecture_execution_envs": ["x86-64", "arm"],
+      "implementation_languages": ["Go"],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-ics-attack",
+          "phase_name": "impair-process-control"
+        }
+      ]
+    },
+    {
+      "type": "malware",
+      "id": "malware--33333333-4444-5555-6666-777777777777",
+      "spec_version": "2.1",
+      "created": "2026-02-10T10:00:00.000Z",
+      "modified": "2026-03-05T10:00:00.000Z",
+      "name": "ValveDrop",
+      "description": "Module de persistance déployé sur les engineering workstations du réseau OT. Se greffe sur le processus TIA Portal de Siemens via DLL sideloading (tiap_helper.dll). Intercepte les projets PLC ouverts par les ingénieurs et y injecte silencieusement des blocs de code ST (Structured Text) malveillants qui survivront au prochain déploiement sur automate. Mécanisme de persistence croisée : même si GhostPLC est détecté et supprimé, le code malveillant est redéployé au prochain cycle de maintenance.",
+      "malware_types": ["backdoor"],
+      "is_family": false,
+      "first_seen": "2025-01-15T00:00:00.000Z",
+      "capabilities": [
+        "persists-after-system-reboot",
+        "compromises-data-integrity",
+        "compromises-data-availability"
+      ],
+      "implementation_languages": ["C++"],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "persistence"
+        },
+        {
+          "kill_chain_name": "mitre-ics-attack",
+          "phase_name": "impair-process-control"
+        }
+      ]
+    },
+    {
+      "type": "tool",
+      "id": "tool--44444444-5555-6666-7777-888888888888",
+      "spec_version": "2.1",
+      "created": "2026-01-15T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "NF-Recon",
+      "description": "Outil de reconnaissance réseau interne custom dérivé de Nmap et Masscan. Scan très lent (1 paquet/seconde) pour éviter la détection IDS. Intègre un module d'identification OPC-UA et Modbus pour cartographier les assets OT. Résultats exfiltrés en JSON compressé via le canal DoH.",
+      "tool_types": ["network-capture", "information-gathering"],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "discovery"
+        }
+      ]
+    },
+    {
+      "type": "infrastructure",
+      "id": "infrastructure--aaaa1111-bbbb-cccc-dddd-eeee2222ffff",
+      "spec_version": "2.1",
+      "created": "2026-02-01T10:00:00.000Z",
+      "modified": "2026-03-10T10:00:00.000Z",
+      "name": "NIGHTFALL C2 Tier 1 - Bulletproof VPS",
+      "description": "Premier niveau de l'infrastructure C2. Ensemble de 6 VPS chez des hébergeurs bulletproof (Moldavie, Belize, Seychelles). Rotation IP quotidienne. Reverse proxy Nginx avec certificats Let's Encrypt pour simuler des sites WordPress légitimes. Chaque VPS sert de relais vers le Tier 2.",
+      "infrastructure_types": ["command-and-control"],
+      "aliases": ["NF-C2-T1"]
+    },
+    {
+      "type": "infrastructure",
+      "id": "infrastructure--bbbb2222-cccc-dddd-eeee-ffff3333aaaa",
+      "spec_version": "2.1",
+      "created": "2026-02-01T10:00:00.000Z",
+      "modified": "2026-03-10T10:00:00.000Z",
+      "name": "NIGHTFALL C2 Tier 2 - Compromised IoT",
+      "description": "Deuxième niveau C2. Réseau de routeurs domestiques compromis (principalement TP-Link Archer et Netgear Nighthawk avec firmware vulnérable) servant de proxys SOCKS5 pour anonymiser le trafic entre le Tier 1 et les opérateurs. Environ 200 devices actifs répartis en Europe et Asie du Sud-Est.",
+      "infrastructure_types": ["command-and-control", "botnet"]
+    },
+    {
+      "type": "infrastructure",
+      "id": "infrastructure--cccc3333-dddd-eeee-ffff-aaaa4444bbbb",
+      "spec_version": "2.1",
+      "created": "2026-02-01T10:00:00.000Z",
+      "modified": "2026-03-10T10:00:00.000Z",
+      "name": "NIGHTFALL Exfil - DoH Resolver",
+      "description": "Résolveur DNS-over-HTTPS custom hébergé chez un CDN légitime (Cloudflare Workers). Reçoit les données exfiltrées encodées dans les requêtes DNS TXT et les stocke dans un bucket R2 chiffré. Utilise un nom de domaine imitant un service de monitoring réseau légitime.",
+      "infrastructure_types": ["exfiltration"]
+    },
+    {
+      "type": "infrastructure",
+      "id": "infrastructure--dddd4444-eeee-ffff-aaaa-bbbb5555cccc",
+      "spec_version": "2.1",
+      "created": "2025-09-20T10:00:00.000Z",
+      "modified": "2026-01-15T10:00:00.000Z",
+      "name": "Staging S3 Bucket",
+      "description": "Bucket AWS S3 avec accès public en lecture, créé avec des credentials AWS volées (compte personnel d'un développeur open-source). Utilisé pour héberger les payloads Stage 2 de NightLoader. Contenu chiffré AES-256, clé de déchiffrement transmise par le Stage 1.",
+      "infrastructure_types": ["hosting-malware"]
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--55555555-6666-7777-8888-999999999999",
+      "spec_version": "2.1",
+      "created": "2026-01-10T10:00:00.000Z",
+      "modified": "2026-01-10T10:00:00.000Z",
+      "name": "CVE-2025-28714",
+      "description": "Vulnérabilité de privilege escalation dans le service Windows Print Spooler permettant l'exécution de code en tant que SYSTEM via un appel RPC spécialement crafté. Score CVSS 3.1 : 7.8 (High). Exploitée par NIGHTFALL SPIDER sur le jump server dual-homed d'Europipe pour pivoter vers le réseau OT.",
+      "external_references": [
+        {
+          "source_name": "cve",
+          "external_id": "CVE-2025-28714",
+          "url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2025-28714"
+        }
+      ]
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--aaa11111-bbb2-ccc3-ddd4-eee555fff666",
+      "spec_version": "2.1",
+      "created": "2026-03-01T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "NightLoader Stage 1 - PowerShell pattern",
+      "description": "Pattern PowerShell caractéristique du Stage 1 de NightLoader : utilisation de [System.Runtime.InteropServices.Marshal] pour allocation mémoire suivie d'un appel à une URL S3 avec User-Agent spécifique.",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[process:command_line MATCHES '^.*\\\\powershell.*Marshal.*AllocHGlobal.*s3\\\\.amazonaws\\\\.com.*NightOwl-Agent.*$']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2025-09-15T00:00:00.000Z",
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "execution"
+        }
+      ]
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--bbb22222-ccc3-ddd4-eee5-fff666aaa777",
+      "spec_version": "2.1",
+      "created": "2026-03-01T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "NightLoader C2 Domains",
+      "description": "Domaines C2 utilisés par l'infrastructure Tier 1 de NIGHTFALL. Rotation régulière mais schéma de nommage identifiable (DGA basé sur la date + seed fixe).",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[domain-name:value = 'monitor-netflow.cloud' OR domain-name:value = 'cdn-analytics-eu.net' OR domain-name:value = 'wpstatic-content.org' OR domain-name:value = 'update-service-check.com' OR domain-name:value = 'telemetry-pipe.io']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2025-09-15T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--ccc33333-ddd4-eee5-fff6-aaa777bbb888",
+      "spec_version": "2.1",
+      "created": "2026-03-01T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "GhostPLC Binary Hashes",
+      "description": "Hashes des variantes connues de GhostPLC (versions Windows x64 et Linux ARM).",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:hashes.'SHA-256' = 'a3f2b8c91d4e7f0612345abcde6789f0a1b2c3d4e5f60718293a4b5c6d7e8f90' OR file:hashes.'SHA-256' = 'b4c3d9e02f5a8b1723456bcdef7890a1b2c3d4e5f6071829304a5b6c7d8e9f01' OR file:hashes.'SHA-256' = 'c5d4ea13a06b9c2834567cdef08901b2c3d4e5f607182930415a6b7c8d9e0a12']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2024-03-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--ddd44444-eee5-fff6-aaa7-bbb888ccc999",
+      "spec_version": "2.1",
+      "created": "2026-03-01T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "ValveDrop DLL Sideloading",
+      "description": "Indicateur de présence de ValveDrop : DLL non signée tiap_helper.dll dans le répertoire d'installation de TIA Portal avec taille anormale (> 2 MB) et timestamp de compilation dans le futur.",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:name = 'tiap_helper.dll' AND file:size > 2097152 AND file:hashes.'SHA-256' = 'd6e5fb24b17cad3945678def01a012c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f801']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--eee55555-fff6-aaa7-bbb8-ccc999ddd000",
+      "spec_version": "2.1",
+      "created": "2026-03-05T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "DoH Exfiltration DNS Pattern",
+      "description": "Pattern de trafic DNS-over-HTTPS caractéristique de l'exfiltration NIGHTFALL : requêtes TXT vers des sous-domaines de plus de 63 caractères encodés en base32, à intervalle régulier de 72 secondes.",
+      "indicator_types": ["exfiltration"],
+      "pattern": "[network-traffic:extensions.'dns-ext'.resolved_domain MATCHES '^[A-Z2-7]{63,}\\.telemetry-pipe\\.io$' AND network-traffic:dst_port = 443]",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2025-11-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--fff66666-aaa7-bbb8-ccc9-ddd000eee111",
+      "spec_version": "2.1",
+      "created": "2026-03-10T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "NF-Recon OPC-UA Discovery Scan",
+      "description": "Signature réseau de l'outil NF-Recon lors de la phase de découverte OPC-UA : requêtes GetEndpoints avec ApplicationName='OPC-Monitor-Service' et intervalle inter-paquet de 800-1200ms.",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[network-traffic:dst_port = 4840 AND network-traffic:extensions.'tcp-ext'.src_flags_hex = '00000002']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "type": "observed-data",
+      "id": "observed-data--12345678-abcd-ef01-2345-6789abcdef01",
+      "spec_version": "2.1",
+      "created": "2026-02-28T14:00:00.000Z",
+      "modified": "2026-02-28T14:00:00.000Z",
+      "first_observed": "2026-02-15T03:22:00.000Z",
+      "last_observed": "2026-02-15T03:22:00.000Z",
+      "number_observed": 1,
+      "object_refs": ["ipv4-addr--a1b1c1d1-e1f1-0101-1111-2222abcdef01", "network-traffic--a2b2c2d2-e2f2-0202-2222-3333abcdef02"]
+    },
+    {
+      "type": "ipv4-addr",
+      "id": "ipv4-addr--a1b1c1d1-e1f1-0101-1111-2222abcdef01",
+      "spec_version": "2.1",
+      "value": "185.227.134.52"
+    },
+    {
+      "type": "ipv4-addr",
+      "id": "ipv4-addr--b2c2d2e2-f202-1212-2323-4444bcdef012",
+      "spec_version": "2.1",
+      "value": "91.132.45.187"
+    },
+    {
+      "type": "ipv4-addr",
+      "id": "ipv4-addr--c3d3e3f3-0303-2323-3434-5555cdef0123",
+      "spec_version": "2.1",
+      "value": "45.88.97.214"
+    },
+    {
+      "type": "domain-name",
+      "id": "domain-name--d4e4f404-1414-3434-4545-6666def01234",
+      "spec_version": "2.1",
+      "value": "monitor-netflow.cloud"
+    },
+    {
+      "type": "domain-name",
+      "id": "domain-name--e5f50515-2525-4545-5656-7777ef012345",
+      "spec_version": "2.1",
+      "value": "telemetry-pipe.io"
+    },
+    {
+      "type": "domain-name",
+      "id": "domain-name--f6060626-3636-5656-6767-8888f0123456",
+      "spec_version": "2.1",
+      "value": "cdn-analytics-eu.net"
+    },
+    {
+      "type": "network-traffic",
+      "id": "network-traffic--a2b2c2d2-e2f2-0202-2222-3333abcdef02",
+      "spec_version": "2.1",
+      "src_ref": "ipv4-addr--a1b1c1d1-e1f1-0101-1111-2222abcdef01",
+      "dst_port": 443,
+      "protocols": ["tcp", "https", "dns-over-https"],
+      "extensions": {
+        "dns-ext": {
+          "resolved_domain": "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3T.telemetry-pipe.io",
+          "type": "TXT"
+        }
+      }
+    },
+    {
+      "type": "email-addr",
+      "id": "email-addr--11aa22bb-33cc-44dd-55ee-66ff77009988",
+      "spec_version": "2.1",
+      "value": "procurement@siemens-industrial.support",
+      "display_name": "Siemens Industrial Procurement"
+    },
+    {
+      "type": "file",
+      "id": "file--aabbccdd-eeff-0011-2233-445566778899",
+      "spec_version": "2.1",
+      "name": "PO-2025-NV-00847_Valve_Regulation_Kit.docx",
+      "hashes": {
+        "SHA-256": "e7f80a25c28dbe4a56789ef012ab34c5d6e7f8091a2b3c4d5e6f7a8b9c0d1e2f",
+        "MD5": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+      },
+      "size": 847523,
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    },
+    {
+      "type": "file",
+      "id": "file--99887766-5544-3322-1100-ffeeddccbbaa",
+      "spec_version": "2.1",
+      "name": "tiap_helper.dll",
+      "hashes": {
+        "SHA-256": "d6e5fb24b17cad3945678def01a012c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f801"
+      },
+      "size": 2359296,
+      "mime_type": "application/x-dosexec"
+    },
+    {
+      "type": "course-of-action",
+      "id": "course-of-action--coa11111-2222-3333-4444-555566667777",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "Segmentation IT/OT stricte",
+      "description": "Implémenter une DMZ industrielle avec pare-feu applicatif entre les réseaux IT et OT. Supprimer tout serveur dual-homed. Les flux OPC-UA et Modbus doivent transiter par un data diode ou un proxy unidirectionnel. Auditer trimestriellement les règles de filtrage."
+    },
+    {
+      "type": "course-of-action",
+      "id": "course-of-action--coa22222-3333-4444-5555-666677778888",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "Monitoring DoH et DNS exfiltration",
+      "description": "Déployer une solution de monitoring DNS capable d'inspecter le trafic DoH (décapsulation TLS via proxy ou endpoint agent). Alerter sur les requêtes DNS avec sous-domaines de longueur anormale (> 50 caractères) et sur les patterns d'intervalles réguliers. Bloquer les résolveurs DoH non autorisés."
+    },
+    {
+      "type": "course-of-action",
+      "id": "course-of-action--coa33333-4444-5555-6666-777788889999",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "Contrôle d'intégrité des projets PLC",
+      "description": "Mettre en place un contrôle d'intégrité cryptographique (hash SHA-256 + signature) de tous les projets TIA Portal avant déploiement sur automates. Comparer systématiquement le code ST déployé avec la version validée en configuration management. Alerter sur toute modification non tracée."
+    },
+    {
+      "type": "course-of-action",
+      "id": "course-of-action--coa44444-5555-6666-7777-88889999aaaa",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "name": "Audit des accès supply chain",
+      "description": "Réviser tous les accès VPN site-to-site accordés aux sous-traitants. Implémenter un accès just-in-time avec MFA obligatoire et enregistrement de session. Limiter les plages horaires d'accès. Monitorer les connexions VPN hors horaires de maintenance planifiés."
+    },
+    {
+      "type": "note",
+      "id": "note--99887766-5544-3322-1100-aabbccddeeff",
+      "spec_version": "2.1",
+      "created": "2026-03-15T14:00:00.000Z",
+      "modified": "2026-03-15T14:00:00.000Z",
+      "abstract": "Analyse de la chaîne d'attaque FROZEN PIPELINE",
+      "content": "L'opération FROZEN PIPELINE illustre une tendance croissante : les attaques sur les infrastructures OT passent désormais systématiquement par la supply chain IT. Le vecteur initial (spearphishing sur un sous-traitant) est classique, mais l'exploitation du tunnel VPN légitime pour pivoter sans déclencher d'alerte réseau démontre une connaissance préalable de l'architecture cible. La sophistication de GhostPLC (interception HMI-PLC en temps réel) et de ValveDrop (persistence via injection dans les projets TIA Portal) suggère un investissement R&D significatif et une expertise ICS rare. La combinaison des deux crée un mécanisme de persistence croisée particulièrement difficile à éradiquer : même après nettoyage complet des systèmes compromis, le code malveillant survit dans les projets PLC et sera redéployé au prochain cycle de maintenance. Recommandation : tout incident impliquant ces IOCs doit déclencher un audit complet des projets PLC, pas seulement un nettoyage des endpoints.",
+      "authors": ["CERT-FICTI"],
+      "object_refs": [
+        "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+        "malware--22222222-3333-4444-5555-666666666666",
+        "malware--33333333-4444-5555-6666-777777777777"
+      ]
+    },
+    {
+      "type": "opinion",
+      "id": "opinion--ffeeddcc-bbaa-9988-7766-554433221100",
+      "spec_version": "2.1",
+      "created": "2026-03-16T10:00:00.000Z",
+      "modified": "2026-03-16T10:00:00.000Z",
+      "opinion": "strongly-agree",
+      "explanation": "L'attribution à un acteur étatique est cohérente avec le niveau de sophistication observé, en particulier la connaissance approfondie des protocoles SCADA industriels et la capacité à développer un implant man-in-the-middle OT fonctionnel. Le pattern opérationnel (pré-positionnement sans action destructive immédiate) est caractéristique d'opérations de préparation du champ de bataille numérique.",
+      "authors": ["Analyste Senior CTI"],
+      "object_refs": ["threat-actor--e5f6a7b8-1234-5678-9abc-def012345678"]
+    },
+    {
+      "type": "report",
+      "id": "report--aabb1122-ccdd-3344-eeff-556677889900",
+      "spec_version": "2.1",
+      "created": "2026-03-18T14:30:00.000Z",
+      "modified": "2026-03-18T14:30:00.000Z",
+      "name": "NIGHTFALL SPIDER - Operation FROZEN PIPELINE - Full Threat Report",
+      "description": "Rapport complet sur l'opération FROZEN PIPELINE menée par le groupe APT NIGHTFALL SPIDER contre Europipe Energy Group via compromission de la supply chain (NordValve Systems). Couvre la chaîne d'attaque complète, l'arsenal malveillant, l'infrastructure C2, les indicateurs de compromission et les recommandations de remédiation.",
+      "report_types": ["threat-report", "attack-pattern"],
+      "published": "2026-03-18T14:30:00.000Z",
+      "object_refs": [
+        "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+        "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+        "intrusion-set--11223344-5566-7788-99aa-bbccddeeff00",
+        "identity--d4e5f6a7-b8c9-0123-4567-89abcdef0123",
+        "identity--aabbccdd-1122-3344-5566-778899aabbcc",
+        "malware--11111111-2222-3333-4444-555555555555",
+        "malware--22222222-3333-4444-5555-666666666666",
+        "malware--33333333-4444-5555-6666-777777777777",
+        "tool--44444444-5555-6666-7777-888888888888",
+        "infrastructure--aaaa1111-bbbb-cccc-dddd-eeee2222ffff",
+        "infrastructure--bbbb2222-cccc-dddd-eeee-ffff3333aaaa",
+        "infrastructure--cccc3333-dddd-eeee-ffff-aaaa4444bbbb",
+        "vulnerability--55555555-6666-7777-8888-999999999999",
+        "indicator--aaa11111-bbb2-ccc3-ddd4-eee555fff666",
+        "indicator--bbb22222-ccc3-ddd4-eee5-fff666aaa777",
+        "indicator--ccc33333-ddd4-eee5-fff6-aaa777bbb888",
+        "indicator--ddd44444-eee5-fff6-aaa7-bbb888ccc999",
+        "indicator--eee55555-fff6-aaa7-bbb8-ccc999ddd000",
+        "indicator--fff66666-aaa7-bbb8-ccc9-ddd000eee111",
+        "course-of-action--coa11111-2222-3333-4444-555566667777",
+        "course-of-action--coa22222-3333-4444-5555-666677778888",
+        "course-of-action--coa33333-4444-5555-6666-777788889999",
+        "course-of-action--coa44444-5555-6666-7777-88889999aaaa"
+      ]
+    },
+    {
+      "type": "marking-definition",
+      "id": "marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9",
+      "spec_version": "2.1",
+      "created": "2017-01-20T00:00:00.000Z",
+      "definition_type": "tlp",
+      "name": "TLP:AMBER",
+      "definition": {
+        "tlp": "amber"
+      }
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r001",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "attributed-to",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "description": "L'opération FROZEN PIPELINE est attribuée à NIGHTFALL SPIDER avec un niveau de confiance élevé."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r002",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "targets",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "identity--d4e5f6a7-b8c9-0123-4567-89abcdef0123",
+      "description": "FROZEN PIPELINE cible Europipe Energy Group comme objectif final."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r003",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "targets",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "identity--aabbccdd-1122-3344-5566-778899aabbcc",
+      "description": "NordValve Systems est ciblé comme vecteur d'accès initial (supply chain)."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r004",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "attack-pattern--a1a1a1a1-b2b2-c3c3-d4d4-e5e5e5e5e5e5",
+      "description": "Spearphishing avec document DOCX piégé comme vecteur initial."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r005",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "attack-pattern--b2b2b2b2-c3c3-d4d4-e5e5-f6f6f6f6f6f6",
+      "description": "Abus du VPN NordValve pour pivoter vers Europipe."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r006",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "attack-pattern--c3c3c3c3-d4d4-e5e5-f6f6-a7a7a7a7a7a7",
+      "description": "Credential dumping LSASS pour mouvement latéral dans le domaine."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r007",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "attack-pattern--d4d4d4d4-e5e5-f6f6-a7a7-b8b8b8b8b8b8",
+      "description": "Pivot IT-OT via jump server dual-homed."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r008",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "attack-pattern--e5e5e5e5-f6f6-a7a7-b8b8-c9c9c9c9c9c9",
+      "description": "Exfiltration SCADA via DNS-over-HTTPS."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r009",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "malware--11111111-2222-3333-4444-555555555555",
+      "description": "NIGHTFALL SPIDER utilise NightLoader pour l'accès initial."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r010",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "malware--22222222-3333-4444-5555-666666666666",
+      "description": "NIGHTFALL SPIDER utilise GhostPLC pour le contrôle des automates."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r011",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "malware--33333333-4444-5555-6666-777777777777",
+      "description": "NIGHTFALL SPIDER utilise ValveDrop pour la persistence OT."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r012",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "tool--44444444-5555-6666-7777-888888888888",
+      "description": "NIGHTFALL SPIDER utilise NF-Recon pour la découverte réseau OT."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r013",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "controls",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "infrastructure--aaaa1111-bbbb-cccc-dddd-eeee2222ffff",
+      "description": "NIGHTFALL SPIDER opère l'infrastructure C2 Tier 1."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r014",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "controls",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "infrastructure--bbbb2222-cccc-dddd-eeee-ffff3333aaaa",
+      "description": "NIGHTFALL SPIDER contrôle le botnet IoT servant de Tier 2 C2."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r015",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "target_ref": "infrastructure--cccc3333-dddd-eeee-ffff-aaaa4444bbbb",
+      "description": "NIGHTFALL SPIDER utilise le résolveur DoH pour l'exfiltration."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r016",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "malware--11111111-2222-3333-4444-555555555555",
+      "target_ref": "infrastructure--dddd4444-eeee-ffff-aaaa-bbbb5555cccc",
+      "description": "NightLoader télécharge ses payloads Stage 2 depuis le bucket S3 compromis."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r017",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "exploits",
+      "source_ref": "campaign--f0e1d2c3-b4a5-9687-7654-321fedcba098",
+      "target_ref": "vulnerability--55555555-6666-7777-8888-999999999999",
+      "description": "FROZEN PIPELINE exploite CVE-2025-28714 pour le pivot IT-OT."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r018",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--aaa11111-bbb2-ccc3-ddd4-eee555fff666",
+      "target_ref": "malware--11111111-2222-3333-4444-555555555555",
+      "description": "Le pattern PowerShell indique la présence de NightLoader Stage 1."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r019",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--bbb22222-ccc3-ddd4-eee5-fff666aaa777",
+      "target_ref": "infrastructure--aaaa1111-bbbb-cccc-dddd-eeee2222ffff",
+      "description": "Les domaines C2 identifient l'infrastructure Tier 1 de NIGHTFALL."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r020",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--ccc33333-ddd4-eee5-fff6-aaa777bbb888",
+      "target_ref": "malware--22222222-3333-4444-5555-666666666666",
+      "description": "Les hashes identifient les variantes connues de GhostPLC."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r021",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--ddd44444-eee5-fff6-aaa7-bbb888ccc999",
+      "target_ref": "malware--33333333-4444-5555-6666-777777777777",
+      "description": "La DLL tiap_helper.dll malveillante indique ValveDrop."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r022",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--eee55555-fff6-aaa7-bbb8-ccc999ddd000",
+      "target_ref": "infrastructure--cccc3333-dddd-eeee-ffff-aaaa4444bbbb",
+      "description": "Le pattern DNS identifie le canal d'exfiltration DoH."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r023",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "mitigates",
+      "source_ref": "course-of-action--coa11111-2222-3333-4444-555566667777",
+      "target_ref": "attack-pattern--d4d4d4d4-e5e5-f6f6-a7a7-b8b8b8b8b8b8",
+      "description": "La segmentation IT/OT stricte empêche le pivot via jump server."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r024",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "mitigates",
+      "source_ref": "course-of-action--coa22222-3333-4444-5555-666677778888",
+      "target_ref": "attack-pattern--e5e5e5e5-f6f6-a7a7-b8b8-c9c9c9c9c9c9",
+      "description": "Le monitoring DoH détecte et bloque l'exfiltration DNS."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r025",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "mitigates",
+      "source_ref": "course-of-action--coa33333-4444-5555-6666-777788889999",
+      "target_ref": "malware--33333333-4444-5555-6666-777777777777",
+      "description": "Le contrôle d'intégrité PLC détecte les injections de ValveDrop."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r026",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "mitigates",
+      "source_ref": "course-of-action--coa44444-5555-6666-7777-88889999aaaa",
+      "target_ref": "attack-pattern--b2b2b2b2-c3c3-d4d4-e5e5-f6f6f6f6f6f6",
+      "description": "L'audit des accès supply chain réduit le risque d'abus VPN."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r027",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "delivers",
+      "source_ref": "malware--11111111-2222-3333-4444-555555555555",
+      "target_ref": "malware--22222222-3333-4444-5555-666666666666",
+      "description": "NightLoader délivre GhostPLC sur les systèmes OT après le pivot."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r028",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "drops",
+      "source_ref": "malware--22222222-3333-4444-5555-666666666666",
+      "target_ref": "malware--33333333-4444-5555-6666-777777777777",
+      "description": "GhostPLC dépose ValveDrop sur les engineering workstations pour assurer la persistence croisée."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r029",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "attributed-to",
+      "source_ref": "intrusion-set--11223344-5566-7788-99aa-bbccddeeff00",
+      "target_ref": "threat-actor--e5f6a7b8-1234-5678-9abc-def012345678",
+      "description": "Le cluster NIGHTFALL Toolset est attribué à NIGHTFALL SPIDER."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--r030",
+      "spec_version": "2.1",
+      "created": "2026-03-15T10:00:00.000Z",
+      "modified": "2026-03-15T10:00:00.000Z",
+      "relationship_type": "communicates-with",
+      "source_ref": "malware--22222222-3333-4444-5555-666666666666",
+      "target_ref": "infrastructure--aaaa1111-bbbb-cccc-dddd-eeee2222ffff",
+      "description": "GhostPLC communique avec l'infrastructure C2 Tier 1 via OPC-UA encapsulé."
+    },
+    {
+      "type": "sighting",
+      "id": "sighting--s001",
+      "spec_version": "2.1",
+      "created": "2026-03-01T10:00:00.000Z",
+      "modified": "2026-03-01T10:00:00.000Z",
+      "first_seen": "2026-02-15T03:22:00.000Z",
+      "last_seen": "2026-02-15T03:22:00.000Z",
+      "count": 1,
+      "sighting_of_ref": "indicator--eee55555-fff6-aaa7-bbb8-ccc999ddd000",
+      "observed_data_refs": ["observed-data--12345678-abcd-ef01-2345-6789abcdef01"],
+      "where_sighted_refs": ["identity--d4e5f6a7-b8c9-0123-4567-89abcdef0123"],
+      "description": "Détection de trafic DoH exfiltration sur le segment DMZ d'Europipe Energy le 15/02/2026 à 03h22 UTC par le SOC interne."
+    },
+    {
+      "type": "observed-data",
+      "id": "observed-data--23456789-bcde-f012-3456-789abcdef012",
+      "spec_version": "2.1",
+      "created": "2025-11-20T15:00:00.000Z",
+      "modified": "2025-11-20T15:00:00.000Z",
+      "first_observed": "2025-11-20T14:45:00.000Z",
+      "last_observed": "2025-11-20T14:45:00.000Z",
+      "number_observed": 3,
+      "object_refs": ["file--99887766-5544-3322-1100-ffeeddccbbaa"]
+    },
+    {
+      "type": "sighting",
+      "id": "sighting--s002",
+      "spec_version": "2.1",
+      "created": "2026-03-05T10:00:00.000Z",
+      "modified": "2026-03-05T10:00:00.000Z",
+      "first_seen": "2025-11-20T14:45:00.000Z",
+      "last_seen": "2025-11-20T14:45:00.000Z",
+      "count": 3,
+      "sighting_of_ref": "indicator--ddd44444-eee5-fff6-aaa7-bbb888ccc999",
+      "observed_data_refs": ["observed-data--23456789-bcde-f012-3456-789abcdef012"],
+      "where_sighted_refs": ["identity--d4e5f6a7-b8c9-0123-4567-89abcdef0123"],
+      "description": "Trois instances de tiap_helper.dll malveillante découvertes sur les engineering workstations OT lors d'un audit post-incident le 20/11/2025."
+    }
+  ]
+}
