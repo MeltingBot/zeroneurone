@@ -33,7 +33,7 @@ interface TimelineItem {
 }
 
 // Constants
-const MIN_ZOOM = 0.1; // pixels per day (allows viewing many years)
+const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
 const MAX_ZOOM = 50; // pixels per day
 const DEFAULT_ZOOM = 5; // pixels per day (better initial view)
 const ROW_HEIGHT = 36;
@@ -43,10 +43,12 @@ const DENSITY_HEIGHT = 20;
 
 // Zoom presets (pixels per day) with approximate visible range at 800px width
 const ZOOM_PRESETS = [
-  { labelKey: 'timeline.zoomPreset1Year', zoom: 0.8 },    // ~3 years visible
-  { labelKey: 'timeline.zoomPreset6Months', zoom: 1.5 },  // ~1.5 years visible
-  { labelKey: 'timeline.zoomPreset1Month', zoom: 8 },    // ~3 months visible
-  { labelKey: 'timeline.zoomPreset1Week', zoom: 30 },   // ~3 weeks visible
+  { labelKey: 'timeline.zoomPresetCentury', zoom: 0.007 },  // ~300 years visible
+  { labelKey: 'timeline.zoomPresetDecade', zoom: 0.07 },    // ~30 years visible
+  { labelKey: 'timeline.zoomPreset1Year', zoom: 0.8 },      // ~3 years visible
+  { labelKey: 'timeline.zoomPreset6Months', zoom: 1.5 },    // ~1.5 years visible
+  { labelKey: 'timeline.zoomPreset1Month', zoom: 8 },       // ~3 months visible
+  { labelKey: 'timeline.zoomPreset1Week', zoom: 30 },       // ~3 weeks visible
 ] as const;
 
 export function TimelineView() {
@@ -537,7 +539,7 @@ export function TimelineView() {
     const containerWidth = getContainerWidth();
     const viewEnd = xToDate(containerWidth);
 
-    let step: 'day' | 'week' | 'month' | 'year';
+    let step: 'day' | 'week' | 'month' | 'year' | 'decade' | 'century';
     let format: Intl.DateTimeFormatOptions;
 
     // Pixel-based step selection for smooth transitions
@@ -547,36 +549,47 @@ export function TimelineView() {
     const daySpacing = zoom; // pixels per day
     const weekSpacing = zoom * 7; // pixels per week
     const monthSpacing = zoom * 30; // pixels per month (approx)
+    const yearSpacing = zoom * 365; // pixels per year
+    const decadeSpacing = zoom * 3652; // pixels per decade
 
     if (daySpacing >= MIN_LABEL_SPACING) {
-      // Enough space for daily labels
       step = 'day';
       format = { day: 'numeric', month: 'short' };
     } else if (weekSpacing >= MIN_LABEL_SPACING) {
-      // Enough space for weekly labels
       step = 'week';
       format = { day: 'numeric', month: 'short' };
     } else if (monthSpacing >= MIN_LABEL_SPACING) {
-      // Enough space for monthly labels
       step = 'month';
       format = { month: 'short', year: 'numeric' };
-    } else {
-      // Fall back to yearly
+    } else if (yearSpacing >= MIN_LABEL_SPACING) {
       step = 'year';
+      format = { year: 'numeric' };
+    } else if (decadeSpacing >= MIN_LABEL_SPACING) {
+      step = 'decade';
+      format = { year: 'numeric' };
+    } else {
+      step = 'century';
       format = { year: 'numeric' };
     }
 
     const current = new Date(viewStart);
 
     // Align to step boundary
-    if (step === 'year') {
+    if (step === 'century') {
+      current.setFullYear(Math.floor(current.getFullYear() / 100) * 100);
+      current.setMonth(0, 1);
+      current.setHours(0, 0, 0, 0);
+    } else if (step === 'decade') {
+      current.setFullYear(Math.floor(current.getFullYear() / 10) * 10);
+      current.setMonth(0, 1);
+      current.setHours(0, 0, 0, 0);
+    } else if (step === 'year') {
       current.setMonth(0, 1);
       current.setHours(0, 0, 0, 0);
     } else if (step === 'month') {
       current.setDate(1);
       current.setHours(0, 0, 0, 0);
     } else if (step === 'week') {
-      // Align to Monday
       const dayOfWeek = current.getDay();
       const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
       current.setDate(current.getDate() + daysToMonday);
@@ -588,26 +601,32 @@ export function TimelineView() {
     while (current <= viewEnd) {
       const x = dateToX(current);
       if (x >= -50 && x <= containerWidth + 50) {
-        const isMain = step === 'year' ||
+        const isMain = step === 'century' ||
+                       (step === 'decade' && current.getFullYear() % 100 === 0) ||
+                       step === 'year' ||
                        (step === 'month' && current.getMonth() === 0) ||
                        (step === 'week' && current.getDate() <= 7) ||
-                       (step === 'day' && (current.getDate() === 1 || current.getDay() === 1)); // 1st of month or Monday
-        labels.push({
-          x,
-          label: current.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', format),
-          isMain,
-        });
+                       (step === 'day' && (current.getDate() === 1 || current.getDay() === 1));
+        // For year/decade/century: use getFullYear() directly to show negative years (BC)
+        const label = (step === 'century' || step === 'decade' || step === 'year')
+          ? String(current.getFullYear())
+          : current.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', format);
+        labels.push({ x, label, isMain });
       }
 
       // Increment
-      if (step === 'year') {
+      if (step === 'century') {
+        current.setFullYear(current.getFullYear() + 100);
+      } else if (step === 'decade') {
+        current.setFullYear(current.getFullYear() + 10);
+      } else if (step === 'year') {
         current.setFullYear(current.getFullYear() + 1);
       } else if (step === 'month') {
         current.setMonth(current.getMonth() + 1);
       } else if (step === 'week') {
         current.setDate(current.getDate() + 7);
       } else {
-        current.setDate(current.getDate() + 1); // Daily
+        current.setDate(current.getDate() + 1);
       }
     }
 
@@ -628,7 +647,9 @@ export function TimelineView() {
     else if (minDays <= 14) bucketDays = 14;
     else if (minDays <= 30) bucketDays = 30;
     else if (minDays <= 90) bucketDays = 90;
-    else bucketDays = 365;
+    else if (minDays <= 365) bucketDays = 365;
+    else if (minDays <= 3652) bucketDays = 3652;
+    else bucketDays = 36525;
 
     const bucketMs = bucketDays * 24 * 60 * 60 * 1000;
     const start = timeBounds.min.getTime();
@@ -1269,7 +1290,7 @@ export function TimelineView() {
                 style={{ transform: `translate3d(${x}px, ${y}px, 0)` }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="text-xs font-medium text-text-primary mb-1">
+                <div className="text-xs font-medium text-text-primary mb-1 pr-4">
                   {expandedItem.label}
                 </div>
                 {expandedItem.sublabel && (

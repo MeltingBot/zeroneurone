@@ -634,6 +634,7 @@ export function MapView() {
       zoom: 6,
       pitch: init3D ? 45 : 0,
       maxPitch: 70,
+      renderWorldCopies: false,
       canvasContextAttributes: { preserveDrawingBuffer: true },
     });
 

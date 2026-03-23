@@ -330,6 +330,8 @@
     "addEventsToHistory": "Gehitu gertaerak elementuen historian",
     "eventsCount": "{{count}} gertaera",
     "zoomHint": "Ctrl+gurpila: zoom | Arrastatu: mugitu",
+    "zoomPresetCentury": "Mendea",
+    "zoomPresetDecade": "10 urte",
     "zoomPreset1Year": "Urte 1",
     "zoomPreset6Months": "6 hilabete",
     "zoomPreset1Month": "Hilabete 1",

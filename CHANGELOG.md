@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.33.4
+
+### Fixes
+- Timeline: century and decade zoom levels (presets "Siècle" / "10 ans", axis labels every 100/10 years)
+- Timeline: negative years (BC) displayed correctly on year/decade/century scales
+- Timeline: tooltip close button no longer hidden behind title text
+- Map: disable world wrapping in 2D mode (`renderWorldCopies: false`)
+
 ## 2.33.3
 
 ### Fixes

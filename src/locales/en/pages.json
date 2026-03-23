@@ -345,6 +345,8 @@
     "addEventsToHistory": "Add events in element history",
     "eventsCount": "{{count}} event(s)",
     "zoomHint": "Ctrl+wheel: zoom | Drag: pan",
+    "zoomPresetCentury": "Century",
+    "zoomPresetDecade": "10 years",
     "zoomPreset1Year": "1 year",
     "zoomPreset6Months": "6 months",
     "zoomPreset1Month": "1 month",

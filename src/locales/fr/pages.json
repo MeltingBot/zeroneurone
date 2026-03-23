@@ -346,6 +346,8 @@
     "addEventsToHistory": "Ajoutez des événements dans l'historique des éléments",
     "eventsCount": "{{count}} événement(s)",
     "zoomHint": "Ctrl+molette: zoom | Glisser: déplacer",
+    "zoomPresetCentury": "Siècle",
+    "zoomPresetDecade": "10 ans",
     "zoomPreset1Year": "1 an",
     "zoomPreset6Months": "6 mois",
     "zoomPreset1Month": "1 mois",

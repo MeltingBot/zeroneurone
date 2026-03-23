@@ -330,6 +330,8 @@
     "addEventsToHistory": "Afegiu esdeveniments a l'historial dels elements",
     "eventsCount": "{{count}} esdeveniment(s)",
     "zoomHint": "Ctrl+roda: zoom | Arrossegar: moure",
+    "zoomPresetCentury": "Segle",
+    "zoomPresetDecade": "10 anys",
     "zoomPreset1Year": "1 any",
     "zoomPreset6Months": "6 mesos",
     "zoomPreset1Month": "1 mes",
