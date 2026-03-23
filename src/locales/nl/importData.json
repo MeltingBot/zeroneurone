@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Rand zonder bron/doel overgeslagen",
       "edgeMissingNode": "Rand overgeslagen: bron-/doelknooppunt niet gevonden"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "XML-parseerfout",
+      "invalidChart": "Ongeldig ANX-formaat: Chart-element ontbreekt",
+      "importError": "i2 ANX-importfout: {{message}}",
+      "unknownError": "Onbekende fout"
+    },
+    "warnings": {
+      "entityNoId": "Entiteit zonder ID overgeslagen",
+      "linkNoEndpoints": "Verbinding zonder eindpunten overgeslagen",
+      "linkMissingEntity": "Verbinding overgeslagen: bron-/doelentiteit niet gevonden"
+    }
   }
 }

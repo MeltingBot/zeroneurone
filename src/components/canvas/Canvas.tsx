@@ -2847,8 +2847,17 @@ export function Canvas() {
           } else if (fileName.endsWith('.gexf')) {
             const { importGEXF } = await import('../../services/importGephi');
             result = await importGEXF(content, invId);
+          } else if (fileName.endsWith('.anx')) {
+            const { importANX } = await import('../../services/importANX');
+            result = await importANX(content, invId);
           } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml')) {
-            result = await importService.importFromGraphML(content, invId);
+            const { isANXFormat } = await import('../../services/importANX');
+            if (isANXFormat(content)) {
+              const { importANX } = await import('../../services/importANX');
+              result = await importANX(content, invId);
+            } else {
+              result = await importService.importFromGraphML(content, invId);
+            }
           } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {
             result = await importService.importFromGenealogy(importPlacementData.file, invId);
           } else if (fileName.endsWith('.json') || fileName.endsWith('.excalidraw')) {

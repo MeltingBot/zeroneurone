@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Kante ohne Quelle/Ziel übersprungen",
       "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "XML-Parsing-Fehler",
+      "invalidChart": "Ungültiges ANX-Format: Chart-Element fehlt",
+      "importError": "i2 ANX Import-Fehler: {{message}}",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "warnings": {
+      "entityNoId": "Entität ohne ID übersprungen",
+      "linkNoEndpoints": "Verbindung ohne Endpunkte übersprungen",
+      "linkMissingEntity": "Verbindung übersprungen: Quell-/Zielentität nicht gefunden"
+    }
   }
 }

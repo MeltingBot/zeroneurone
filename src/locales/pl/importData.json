@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Krawędź bez źródła/celu pominięta",
       "edgeMissingNode": "Krawędź pominięta: węzeł źródłowy/docelowy nie znaleziony"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "Błąd parsowania XML",
+      "invalidChart": "Nieprawidłowy format ANX: brak elementu Chart",
+      "importError": "Błąd importu i2 ANX: {{message}}",
+      "unknownError": "Nieznany błąd"
+    },
+    "warnings": {
+      "entityNoId": "Jednostka bez ID pominięta",
+      "linkNoEndpoints": "Połączenie bez punktów końcowych pominięte",
+      "linkMissingEntity": "Połączenie pominięte: jednostka źródłowa/docelowa nie znaleziona"
+    }
   }
 }

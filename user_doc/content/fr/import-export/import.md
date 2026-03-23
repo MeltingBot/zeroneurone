@@ -173,6 +173,85 @@ Menu **⋯** → **Importer** → **Télécharger le modèle CSV**
 
 ---
 
+### GEXF (Gephi)
+
+**Format natif Gephi** pour les graphes (.gexf).
+
+#### Données importées
+
+| Donnée GEXF | Propriété ZeroNeurone |
+|--------------|----------------------|
+| Label du noeud | Label de l'élément |
+| Attributs (tous) | Propriétés typées (text, number, date, boolean) |
+| viz:position (x, y) | Position sur le canvas |
+| viz:color (r, g, b) | Couleur de l'élément |
+| viz:size | Taille proportionnelle (small/medium/large) |
+| Attributs d'arête | Propriétés du lien |
+| viz:color sur arête | Couleur du lien |
+| viz:thickness | Épaisseur du lien |
+| edgedefault | Direction (directed/undirected) |
+
+#### Palettes de couleurs
+
+Les couleurs des attributs de partition Gephi sont importées automatiquement comme palette visuelle.
+
+---
+
+### Gephi Lite JSON
+
+**Format JSON** exporté depuis Gephi Lite.
+
+Structure attendue : objet avec `nodes` et `edges`, possédant des `attributes` et `viz` (position, couleur, taille).
+
+---
+
+### ANX (i2 Analyst's Notebook)
+
+**Format XML** exporté depuis i2 Analyst's Notebook (.anx).
+
+#### Données importées (Entités)
+
+| Donnée ANX | Propriété ZeroNeurone |
+|------------|----------------------|
+| Label / Identity | Label de l'élément |
+| Description | Notes |
+| Position (X, Y) | Position sur le canvas |
+| EntityType.Name | Tag (+ ancêtres via hiérarchie de types) |
+| EntityType.Colour (COLORREF) | Couleur |
+| IconStyle.Enlargement | Taille (small/medium/large) |
+| EntityType.IconFile | Icone Lucide |
+| DatabaseProperty[] | Propriétés typées |
+| Attribute[] | Propriétés typées |
+| GradeOneIndex (1-5) | Confiance (20-100) |
+| Card.DateTime | Date + Événement |
+| Card.SourceType + SourceReference | Source |
+| Card.Text | Notes (complément) |
+| Cards multiples | Événements |
+
+#### Données importées (Liens)
+
+| Donnée ANX | Propriété ZeroNeurone |
+|------------|----------------------|
+| Label | Label du lien |
+| ArrowStyle | Direction (forward/backward/both/none) |
+| LineWidth | Épaisseur |
+| LineColour / LinkType.Colour | Couleur |
+| Strength → DotStyle | Style (solid/dashed/dotted) |
+| LinkType.Name | Tag |
+| Strength.Name | Tag |
+| DatabaseProperty[] | Propriétés |
+| Card.DateTime | Date |
+
+#### Hiérarchie de types
+
+La hiérarchie `lcx:LibraryCatalogue` est analysée : les types ancêtres non-abstraits sont ajoutés comme tags supplémentaires (ex. Person → Legal Entity).
+
+#### Auto-détection
+
+Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
+
+---
+
 ### Excalidraw
 
 **Format de dessin** Excalidraw (.excalidraw ou JSON).
@@ -393,7 +472,7 @@ fam Dupont Jean + Martin Marie
 
 Depuis un dossier ouvert, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans le dossier en cours.
 
-**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
+**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
 
 ### Mode placement
 

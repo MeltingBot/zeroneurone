@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Ребро без джерела/цілі пропущено",
       "edgeMissingNode": "Ребро пропущено: вузол джерела/цілі не знайдено"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "Помилка парсингу XML",
+      "invalidChart": "Недійсний формат ANX: відсутній елемент Chart",
+      "importError": "Помилка імпорту i2 ANX: {{message}}",
+      "unknownError": "Невідома помилка"
+    },
+    "warnings": {
+      "entityNoId": "Сутність без ID пропущена",
+      "linkNoEndpoints": "Зв'язок без кінцевих точок пропущений",
+      "linkMissingEntity": "Зв'язок пропущений: сутність джерела/цілі не знайдена"
+    }
   }
 }

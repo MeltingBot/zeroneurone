@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Arête sans source/cible ignorée",
       "edgeMissingNode": "Arête ignorée : nœud source/cible non trouvé"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "Erreur de parsing XML",
+      "invalidChart": "Format ANX invalide : élément Chart manquant",
+      "importError": "Erreur d'import i2 ANX : {{message}}",
+      "unknownError": "Erreur inconnue"
+    },
+    "warnings": {
+      "entityNoId": "Entité sans ID ignorée",
+      "linkNoEndpoints": "Lien sans extrémités ignoré",
+      "linkMissingEntity": "Lien ignoré : entité source/cible non trouvée"
+    }
   }
 }

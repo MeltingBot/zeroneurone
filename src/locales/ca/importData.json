@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Aresta sense origen/destí omesa",
       "edgeMissingNode": "Aresta omesa: node origen/destí no trobat"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "Error d'anàlisi XML",
+      "invalidChart": "Format ANX no vàlid: falta element Chart",
+      "importError": "Error d'importació i2 ANX: {{message}}",
+      "unknownError": "Error desconegut"
+    },
+    "warnings": {
+      "entityNoId": "Entitat sense ID omesa",
+      "linkNoEndpoints": "Enllaç sense extrems omès",
+      "linkMissingEntity": "Enllaç omès: entitat origen/destí no trobada"
+    }
   }
 }

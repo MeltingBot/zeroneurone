@@ -30,7 +30,7 @@
   "import": {
     "title": "Import dossier",
     "dropzone": "Drop a file or click to select",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, OSINTracker, Excalidraw, GEDCOM, GeneWeb",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX (i2), OSINTracker, Excalidraw, GEDCOM, GeneWeb",
     "jsonFormats": "JSON: ZeroNeurone, OSINT Industries, Graph Palette, PredicaGraph, Excalidraw, Gephi Lite",
     "genealogyFormats": "Genealogy: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Import into",

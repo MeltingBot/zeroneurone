@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Arco senza origine/destinazione ignorato",
       "edgeMissingNode": "Arco ignorato: nodo origine/destinazione non trovato"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "Errore di parsing XML",
+      "invalidChart": "Formato ANX non valido: elemento Chart mancante",
+      "importError": "Errore di importazione i2 ANX: {{message}}",
+      "unknownError": "Errore sconosciuto"
+    },
+    "warnings": {
+      "entityNoId": "Entità senza ID ignorata",
+      "linkNoEndpoints": "Collegamento senza estremi ignorato",
+      "linkMissingEntity": "Collegamento ignorato: entità origine/destinazione non trovata"
+    }
   }
 }

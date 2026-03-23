@@ -173,6 +173,85 @@ Menu **⋯** → **Import** → **Download CSV template**
 
 ---
 
+### GEXF (Gephi)
+
+**Native Gephi format** for graphs (.gexf).
+
+#### Imported Data
+
+| GEXF Data | ZeroNeurone Property |
+|-----------|---------------------|
+| Node label | Element label |
+| Attributes (all) | Typed properties (text, number, date, boolean) |
+| viz:position (x, y) | Canvas position |
+| viz:color (r, g, b) | Element color |
+| viz:size | Proportional size (small/medium/large) |
+| Edge attributes | Link properties |
+| viz:color on edge | Link color |
+| viz:thickness | Link thickness |
+| edgedefault | Direction (directed/undirected) |
+
+#### Color Palettes
+
+Gephi partition attribute colors are automatically imported as visual palette.
+
+---
+
+### Gephi Lite JSON
+
+**JSON format** exported from Gephi Lite.
+
+Expected structure: object with `nodes` and `edges`, having `attributes` and `viz` (position, color, size).
+
+---
+
+### ANX (i2 Analyst's Notebook)
+
+**XML format** exported from i2 Analyst's Notebook (.anx).
+
+#### Imported Data (Entities)
+
+| ANX Data | ZeroNeurone Property |
+|----------|---------------------|
+| Label / Identity | Element label |
+| Description | Notes |
+| Position (X, Y) | Canvas position |
+| EntityType.Name | Tag (+ ancestors via type hierarchy) |
+| EntityType.Colour (COLORREF) | Color |
+| IconStyle.Enlargement | Size (small/medium/large) |
+| EntityType.IconFile | Lucide icon |
+| DatabaseProperty[] | Typed properties |
+| Attribute[] | Typed properties |
+| GradeOneIndex (1-5) | Confidence (20-100) |
+| Card.DateTime | Date + Event |
+| Card.SourceType + SourceReference | Source |
+| Card.Text | Notes (appended) |
+| Multiple Cards | Events |
+
+#### Imported Data (Links)
+
+| ANX Data | ZeroNeurone Property |
+|----------|---------------------|
+| Label | Link label |
+| ArrowStyle | Direction (forward/backward/both/none) |
+| LineWidth | Thickness |
+| LineColour / LinkType.Colour | Color |
+| Strength → DotStyle | Style (solid/dashed/dotted) |
+| LinkType.Name | Tag |
+| Strength.Name | Tag |
+| DatabaseProperty[] | Properties |
+| Card.DateTime | Date |
+
+#### Type Hierarchy
+
+The `lcx:LibraryCatalogue` hierarchy is parsed: non-abstract ancestor types are added as additional tags (e.g. Person → Legal Entity).
+
+#### Auto-detection
+
+`.xml` files containing ANX format are detected automatically.
+
+---
+
 ### Excalidraw
 
 **Drawing format** Excalidraw (.excalidraw or JSON).
@@ -393,7 +472,7 @@ fam Smith John + Johnson Mary
 
 From an open dossier, the **Import** button in the toolbar lets you add data directly into the current dossier.
 
-**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
+**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
 
 ### Placement Mode
 

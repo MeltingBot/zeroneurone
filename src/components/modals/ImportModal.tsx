@@ -4,6 +4,7 @@ import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, Ey
 import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
+import { importANX, isANXFormat } from '../../services/importANX';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 
@@ -85,7 +86,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetDossierId === 'new') {
         // Create new dossier with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|ged|gw)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|anx|ged|gw)$/i, '');
         const dossier = await createDossier(name, '');
         dossierId = dossier.id;
         createdNewDossier = true;
@@ -154,9 +155,16 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       } else if (file.name.endsWith('.gexf')) {
         const content = await importService.readFileAsText(file);
         result = await importGEXF(content, dossierId);
+      } else if (file.name.endsWith('.anx')) {
+        const content = await importService.readFileAsText(file);
+        result = await importANX(content, dossierId);
       } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
         const content = await importService.readFileAsText(file);
-        result = await importService.importFromGraphML(content, dossierId);
+        if (isANXFormat(content)) {
+          result = await importANX(content, dossierId);
+        } else {
+          result = await importService.importFromGraphML(content, dossierId);
+        }
       } else if (file.name.endsWith('.geojson')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGeoJSON(content, dossierId);
@@ -284,7 +292,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.excalidraw,.ged,.gw,.geojson,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.excalidraw,.ged,.gw,.geojson,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

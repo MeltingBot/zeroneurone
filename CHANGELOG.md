@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.35.0
+
+### Features
+- **i2 Analyst's Notebook import** (.anx): entities with labels, positions, typed properties (DatabaseProperty, Attribute), type hierarchy tags, COLORREF colors, icon mapping, confidence grades (1-5 → 20-100), intelligence cards as events, source attribution; links with direction, thickness, style (solid/dashed/dotted via Strength), colors; auto-detection of ANX content in .xml files; XML sanitization for malformed i2 exports
+- **User documentation**: GEXF, Gephi Lite JSON and ANX import sections added (FR + EN)
+
 ## 2.34.0
 
 ### Features

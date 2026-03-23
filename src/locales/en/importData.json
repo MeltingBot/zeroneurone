@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Edge without source/target skipped",
       "edgeMissingNode": "Edge skipped: source/target node not found"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "XML parsing error",
+      "invalidChart": "Invalid ANX format: missing Chart element",
+      "importError": "i2 ANX import error: {{message}}",
+      "unknownError": "Unknown error"
+    },
+    "warnings": {
+      "entityNoId": "Entity without ID skipped",
+      "linkNoEndpoints": "Link without endpoints skipped",
+      "linkMissingEntity": "Link skipped: source/target entity not found"
+    }
   }
 }

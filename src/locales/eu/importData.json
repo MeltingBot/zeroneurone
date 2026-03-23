@@ -113,5 +113,18 @@
       "edgeNoSourceTarget": "Iturri/helburuik gabeko ertza baztertua",
       "edgeMissingNode": "Ertza baztertua: iturri/helburu nodoa ez da aurkitu"
     }
+  },
+  "anx": {
+    "errors": {
+      "parseError": "XML analisi-errorea",
+      "invalidChart": "ANX formatu baliogabea: Chart elementua falta da",
+      "importError": "i2 ANX inportazio-errorea: {{message}}",
+      "unknownError": "Errore ezezaguna"
+    },
+    "warnings": {
+      "entityNoId": "IDrik gabeko entitatea baztertua",
+      "linkNoEndpoints": "Amaiera-punturik gabeko esteka baztertua",
+      "linkMissingEntity": "Esteka baztertua: iturri/helburu entitatea ez da aurkitu"
+    }
   }
 }
