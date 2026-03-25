@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.36.1
+
+### Fixes
+- **ANB import**: fix relational link type name extraction — scan before SIG pattern (offsets +192–224) instead of after (was picking up description text, causing misattributed link labels)
+
 ## 2.36.0
 
 ### Features

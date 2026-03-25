@@ -880,11 +880,14 @@ function parseRelationalLinks(
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const SIG = RELATIONAL_LINK_SIG;
 
-  // Step 1: collect entity record positions sorted by file offset
-  const entityByPos: Array<{ pos: number; guid: string }> = [];
+  // Step 1: collect ALL GUID records sorted by file offset (not just entities).
+  // Link endpoint IDs are file-order indices across ALL record types,
+  // so we must include entities + junctions + cards to get correct alignment.
+  const allRecords: Array<{ pos: number; guid: string; marker: number }> = [];
   for (let pos = 0; pos < bytes.length - 84; pos++) {
     if (!isGUIDStart(bytes, pos)) continue;
-    if (!entityMarkers.has(readU16LE(bytes, pos + 80))) { pos += 79; continue; }
+    const mk = readU16LE(bytes, pos + 80);
+    if (mk === linkMarker) { pos += 79; continue; } // skip link records themselves
     const afterMk = pos + 80 + 2 + 4;
     if (afterMk + 22 >= bytes.length) { pos += 79; continue; }
     let allZeros = true;
@@ -895,11 +898,19 @@ function parseRelationalLinks(
     const r = new ANBReader(bytes);
     r.pos = pos;
     const guid = r.readUSTR();
-    if (guid.startsWith('{')) entityByPos.push({ pos, guid });
+    if (guid.startsWith('{')) allRecords.push({ pos, guid, marker: mk });
     pos += 79;
   }
-  entityByPos.sort((a, b) => a.pos - b.pos);
-  if (entityByPos.length === 0) return [];
+  allRecords.sort((a, b) => a.pos - b.pos);
+  if (allRecords.length === 0) return [];
+
+  // Build entity GUID set for endpoint filtering
+  const entityGuids = new Set<string>();
+  for (const rec of allRecords) {
+    if (entityMarkers.has(rec.marker) || rec.marker === JUNCTION_MARKER) {
+      entityGuids.add(rec.guid);
+    }
+  }
 
   // Step 2: collect raw link endpoint IDs from link records
   const SKIP_STRS_REL = new Set(['Junction2StyleColour', 'Junction1StyleColour']);
@@ -918,7 +929,7 @@ function parseRelationalLinks(
     if (!allZeros) { pos += 79; continue; }
 
     // Find RELATIONAL_LINK_SIG
-    let fromId = 0, toId = 0, found = false;
+    let fromId = 0, toId = 0, sigPos = 0, found = false;
     const end = Math.min(pos + 900, bytes.length - 40);
     outer: for (let p = pos + 80; p < end; p++) {
       for (let i = 0; i < SIG.length; i++) {
@@ -926,16 +937,18 @@ function parseRelationalLinks(
       }
       fromId = view.getUint32(p + 24, true);
       toId   = view.getUint32(p + 28, true);
+      sigPos = p;
       found = true;
       break;
     }
     if (!found) { pos += 79; continue; }
 
-    // Find type name USTR (first non-style USTR after pos+200)
+    // Find type name USTR: scan from pos+200 (typeName appears BEFORE the SIG
+    // in link records, at offsets ~+192 to +224; SIG is at ~+244 to +272)
     let typeName = '';
     const r = new ANBReader(bytes);
     r.pos = pos + 200;
-    const scanEnd = Math.min(r.length, pos + 420);
+    const scanEnd = Math.min(r.length, sigPos);
     while (r.pos < scanEnd && !typeName) {
       if (!r.isUSTR()) { r.skip(1); continue; }
       const s = r.readUSTR();
@@ -953,11 +966,11 @@ function parseRelationalLinks(
 
   if (rawLinks.length === 0 || allIds.length === 0) return [];
 
-  // Step 3: compute base ID (ID of first entity = min referenced ID)
+  // Step 3: compute base ID (ID of first record = min referenced ID)
   const BASE_ID = Math.min(...allIds);
-  const N = entityByPos.length;
+  const N = allRecords.length;
 
-  // Step 4: build results
+  // Step 4: build results — resolve indices against ALL records, filter to entity endpoints
   const results: RelationalLink[] = [];
   const seen = new Set<string>();
   for (const { fromId, toId, typeName } of rawLinks) {
@@ -965,9 +978,11 @@ function parseRelationalLinks(
     const fromIdx = fromId - BASE_ID;
     const toIdx   = toId   - BASE_ID;
     if (fromIdx < 0 || fromIdx >= N || toIdx < 0 || toIdx >= N) continue;
-    const fromGuid = entityByPos[fromIdx].guid;
-    const toGuid   = entityByPos[toIdx].guid;
-    const pairKey = `${fromGuid}|${toGuid}`;
+    const fromGuid = allRecords[fromIdx].guid;
+    const toGuid   = allRecords[toIdx].guid;
+    if (!entityGuids.has(fromGuid) || !entityGuids.has(toGuid)) continue;
+    // Include typeName in dedup key: same entity pair can have multiple relationship types
+    const pairKey = `${fromGuid}|${toGuid}|${typeName}`;
     if (seen.has(pairKey)) continue;
     seen.add(pairKey);
     results.push({ fromGuid, toGuid, typeName });
