@@ -26,7 +26,11 @@ export function useSwimlaneGrouping(
   const datedElementIds = useMemo(() => {
     const ids = new Set<string>();
     for (const item of items) {
-      if (item.sourceId) ids.add(item.sourceId);
+      if (item.parentElementIds) {
+        for (const pid of item.parentElementIds) ids.add(pid);
+      } else if (item.sourceId) {
+        ids.add(item.sourceId);
+      }
     }
     return ids;
   }, [items]);
@@ -105,19 +109,8 @@ export function useSwimlaneGrouping(
       groups.get(key)!.push(item);
     };
 
-    for (const item of items) {
-      if (!item.sourceId) {
-        addToGroup('', item);
-        continue;
-      }
-      const el = elements.get(item.sourceId);
-      if (!el) {
-        addToGroup('', item);
-        continue;
-      }
-
+    const groupByElement = (el: Element, item: TimelineItem) => {
       if (criterion === 'tag') {
-        // Multi-tag: item appears in every active tag lane it belongs to
         const tags = el.tags.filter(t => t);
         const matchingTags = activeTagSet
           ? tags.filter(t => activeTagSet.has(t))
@@ -138,6 +131,33 @@ export function useSwimlaneGrouping(
       } else {
         addToGroup('', item);
       }
+    };
+
+    for (const item of items) {
+      // Links: use parentElementIds to group into parent element lanes
+      if (item.parentElementIds && item.parentElementIds.length > 0) {
+        let placed = false;
+        for (const pid of item.parentElementIds) {
+          const el = elements.get(pid);
+          if (el) {
+            groupByElement(el, item);
+            placed = true;
+          }
+        }
+        if (!placed) addToGroup('', item);
+        continue;
+      }
+
+      if (!item.sourceId) {
+        addToGroup('', item);
+        continue;
+      }
+      const el = elements.get(item.sourceId);
+      if (!el) {
+        addToGroup('', item);
+        continue;
+      }
+      groupByElement(el, item);
     }
 
     // Build lane array with labels

@@ -3,7 +3,7 @@
 ## 2.37.0
 
 ### Features
-- **Timeline swimlane mode**: new display mode grouping elements into horizontal lanes by criterion (tag, source, property); multi-tag grouping (elements appear in all matching lanes); tag filter dropdown with select/deselect all; drag & drop lane reordering with persistent custom order; collapsible lanes with item count; state persisted across view switches (canvas/map/timeline)
+- **Timeline swimlane mode**: new display mode grouping elements into horizontal lanes by criterion (tag, source, property); multi-tag grouping (elements appear in all matching lanes); tag filter dropdown with select/deselect all; drag & drop lane reordering with persistent custom order; collapsible lanes with item count; dated links appear in parent element lanes; state persisted across view switches (canvas/map/timeline)
 - **Timeline fit-all on first load**: timeline auto-fits all items on first visit in both scatter and swimlane modes
 - **User documentation**: timeline page rewritten with swimlane mode documentation (FR + EN)
 

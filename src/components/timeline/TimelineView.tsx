@@ -22,6 +22,7 @@ export interface TimelineItem {
   color: string;
   type: 'link' | 'event' | 'property';
   sourceId?: string; // For selection
+  parentElementIds?: string[]; // Element IDs this item belongs to (for swimlane grouping)
   isDimmed?: boolean; // For filter dimming
   unresolvedCommentCount?: number; // Number of unresolved comments
   // Thumbnail info from source element
@@ -230,6 +231,7 @@ export function TimelineView() {
         color: link.visual.color || '#6b7280',
         type: 'link',
         sourceId: link.id,
+        parentElementIds: [fromElement.id, toElement.id],
         isDimmed: isLinkDimmed,
         unresolvedCommentCount: getUnresolvedCommentCount(link.id, 'link'),
         thumbLetter: fromLabel.charAt(0).toUpperCase(),
@@ -464,12 +466,8 @@ export function TimelineView() {
     });
   }, [items, filterStartDate, filterEndDate]);
 
-  // Swimlane: exclude links, build elements map, compute grouping
-  // TODO: support dated links in swimlane mode
-  const swimlaneItems = useMemo(
-    () => filteredItems.filter(item => item.type !== 'link'),
-    [filteredItems],
-  );
+  // Swimlane: all items (links included, grouped via parentElementIds)
+  const swimlaneItems = filteredItems;
   const elementsMap = useMemo(
     () => new Map(elements.map(el => [el.id, el])) as Map<string, ZNElement>,
     [elements],
