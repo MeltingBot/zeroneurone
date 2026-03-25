@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.36.2
+
+### Fixes
+- **Import modal (ImportExportModal)**: add missing .anb file type to accept filter and processing branch
+
 ## 2.36.1
 
 ### Fixes

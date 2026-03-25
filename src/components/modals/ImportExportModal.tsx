@@ -4,6 +4,7 @@ import { exportService, type ExportFormat } from '../../services/exportService';
 import { importService, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
 import { importANX, isANXFormat } from '../../services/importANX';
+import { importANB } from '../../services/importANB';
 import { fileService } from '../../services/fileService';
 import { tabRepository } from '../../db/repositories';
 import { useDossierStore, useViewStore, toast } from '../../stores';
@@ -79,6 +80,9 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
       } else if (file.name.endsWith('.gexf')) {
         const content = await importService.readFileAsText(file);
         result = await importGEXF(content, currentDossier.id);
+      } else if (file.name.endsWith('.anb')) {
+        const buffer = await file.arrayBuffer();
+        result = await importANB(buffer, currentDossier.id);
       } else if (file.name.endsWith('.anx')) {
         const content = await importService.readFileAsText(file);
         result = await importANX(content, currentDossier.id);
@@ -226,7 +230,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".zip,.json,.csv,.graphml,.gexf,.xml,.anx,.geojson"
+                accept=".zip,.json,.csv,.graphml,.gexf,.xml,.anx,.anb,.geojson"
                 onChange={handleFileSelect}
                 className="hidden"
               />
