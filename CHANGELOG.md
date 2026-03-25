@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.36.0
+
+### Features
+- **i2 Analyst's Notebook binary import** (.anb): reverse-engineered OLE2/CFB binary format; entities with labels, positions (from binary coordinates), typed properties (DatabaseProperty, Attribute), COLORREF colors, icon mapping, confidence grades (1-5 → 20-100), intelligence cards (0x818D records) imported as linked events; links with direction, thickness, style (solid/dashed/dotted); real i2 spatial coordinates preserved via unified coordinate normalization across all record types
+- **User documentation**: ANB binary import section added (FR + EN) with limitations and reverse-engineering caveats
+
 ## 2.35.0
 
 ### Features

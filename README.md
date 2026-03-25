@@ -8,7 +8,7 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
-![Version](https://img.shields.io/badge/version-2.35.0-blue)
+![Version](https://img.shields.io/badge/version-2.36.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -79,8 +79,11 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Export CSV (avec positions/groupes)
 - Export HTML interactif (rapport + graphe navigable, theme clair/sombre, TOC, stats)
 - Import CSV pour donnees tabulaires
-- Import GraphML pour donnees de graphes
+- Import GraphML / GEXF (Gephi) / Gephi Lite JSON pour donnees de graphes
 - Import Excalidraw
+- Import ANX (i2 Analyst's Notebook - XML) et ANB (i2 Analyst's Notebook - binaire)
+- Import STIX 2.1 (cyber threat intelligence)
+- Import OSINT Industries, Graph Palette, PredicaGraph, OSINTracker
 - Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques (nom, dates, lieux, profession, surnom, titre, notes)
 - Import ZIP (restauration complete avec onglets)
 - Import dans dossier courante (merge avec placement visuel)

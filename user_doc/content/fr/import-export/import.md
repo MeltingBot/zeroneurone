@@ -252,6 +252,53 @@ Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
 
 ---
 
+### ANB (i2 Analyst's Notebook - binaire)
+
+**Format binaire propriétaire** i2 Analyst's Notebook (.anb).
+
+#### Données importées (Entités)
+
+| Donnée ANB | Propriété ZeroNeurone |
+|------------|----------------------|
+| Label / Identity | Label de l'élément |
+| Description | Notes |
+| Position X/Y (binaire) | Position sur le canvas |
+| EntityType.Name | Tag |
+| EntityType.Colour (COLORREF) | Couleur |
+| IconStyle.Enlargement | Taille (small/medium/large) |
+| EntityType.IconFile | Icône Lucide |
+| DatabaseProperty[] | Propriétés typées |
+| Attribute[] | Propriétés typées |
+| GradeOneIndex (1-5) | Confiance (20-100) |
+| Card.DateTime | Date + Événement |
+| Card.Text | Notes (complément) |
+| Cards multiples | Événements |
+
+#### Données importées (Liens)
+
+| Donnée ANB | Propriété ZeroNeurone |
+|------------|----------------------|
+| Label | Label du lien |
+| ArrowStyle | Direction |
+| LineWidth | Épaisseur |
+| LineColour / LinkType.Colour | Couleur |
+| Strength → DotStyle | Style (solid/dashed/dotted) |
+| LinkType.Name | Tag |
+
+#### Réserves
+
+{{< hint warning >}}
+L'import ANB est basé sur une analyse du format binaire propriétaire i2 (rétro-ingénierie). Les réserves suivantes s'appliquent :
+
+- **Compatibilité de version** : testé sur les exports ANB d'i2 AN 8.x — les versions antérieures ou postérieures peuvent présenter des différences structurelles.
+- **Cartes de renseignement (Cards)** : les fiches de type 0x818D sont importées comme éléments séparés liés à leur entité parente ; la correspondance parent est basée sur la proximité spatiale des coordonnées X.
+- **Images** : les images incorporées dans les entités ANB ne sont pas importées.
+- **Groupes** : les groupes visuels i2 ne sont pas importés.
+- **Icônes personnalisées** : seules les icônes i2 standard sont mappées vers Lucide React ; les icônes personnalisées sont ignorées.
+{{< /hint >}}
+
+---
+
 ### Excalidraw
 
 **Format de dessin** Excalidraw (.excalidraw ou JSON).

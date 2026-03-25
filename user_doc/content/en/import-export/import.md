@@ -252,6 +252,53 @@ The `lcx:LibraryCatalogue` hierarchy is parsed: non-abstract ancestor types are 
 
 ---
 
+### ANB (i2 Analyst's Notebook - binary)
+
+**Proprietary binary format** from i2 Analyst's Notebook (.anb).
+
+#### Imported Data (Entities)
+
+| ANB Data | ZeroNeurone Property |
+|----------|---------------------|
+| Label / Identity | Element label |
+| Description | Notes |
+| X/Y position (binary) | Canvas position |
+| EntityType.Name | Tag |
+| EntityType.Colour (COLORREF) | Color |
+| IconStyle.Enlargement | Size (small/medium/large) |
+| EntityType.IconFile | Lucide icon |
+| DatabaseProperty[] | Typed properties |
+| Attribute[] | Typed properties |
+| GradeOneIndex (1-5) | Confidence (20-100) |
+| Card.DateTime | Date + Event |
+| Card.Text | Notes (appended) |
+| Multiple Cards | Events |
+
+#### Imported Data (Links)
+
+| ANB Data | ZeroNeurone Property |
+|----------|---------------------|
+| Label | Link label |
+| ArrowStyle | Direction |
+| LineWidth | Thickness |
+| LineColour / LinkType.Colour | Color |
+| Strength → DotStyle | Style (solid/dashed/dotted) |
+| LinkType.Name | Tag |
+
+#### Limitations
+
+{{< hint warning >}}
+ANB import is based on reverse-engineering of i2's proprietary binary format. The following limitations apply:
+
+- **Version compatibility**: tested on ANB exports from i2 AN 8.x — earlier or later versions may have structural differences.
+- **Intelligence cards (Cards)**: 0x818D records are imported as separate elements linked to their parent entity; parent matching is based on spatial proximity of X coordinates.
+- **Images**: images embedded in ANB entities are not imported.
+- **Groups**: i2 visual groups are not imported.
+- **Custom icons**: only standard i2 icons are mapped to Lucide React; custom icons are ignored.
+{{< /hint >}}
+
+---
+
 ### Excalidraw
 
 **Drawing format** Excalidraw (.excalidraw or JSON).
