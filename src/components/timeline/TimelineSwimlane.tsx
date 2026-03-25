@@ -45,7 +45,7 @@ export function TimelineSwimlane({
   collapsedLanes,
   onToggleCollapse,
 }: TimelineSwimlaneProps) {
-  const layout = useSwimlaneLayout(lanes, dateToX, collapsedLanes);
+  const layout = useSwimlaneLayout(lanes, dateToX, collapsedLanes, containerWidth);
   const [dragSourceKey, setDragSourceKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 

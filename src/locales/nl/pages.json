@@ -392,7 +392,9 @@
     "groupByProperty": "{{key}}",
     "noTag": "Zonder tag",
     "noSource": "Zonder bron",
-    "notSet": "Niet ingevuld"
+    "notSet": "Niet ingevuld",
+    "links": "Links",
+    "showLinks": "Linkduur tonen"
   },
   "matrix": {
     "label": "Naam",

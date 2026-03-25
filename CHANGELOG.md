@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.37.1
+
+### Fixes
+- **Swimlane link rendering**: links toggle (off by default) in toolbar; adaptive display — thin 8px bars when zoomed in, full-height chips with label when wide enough (>150px visible); viewport-clipped collision stacking prevents massive lane heights at high zoom; visual distinction (dashed border, lighter background) from element items
+
 ## 2.37.0
 
 ### Features

@@ -19,6 +19,7 @@ interface TimelineState {
   groupingCriterion: string;
   activeTags: string[] | null; // null = all tags, [] = none, [...] = specific
   laneOrder: string[] | null; // null = default alphabetical, [...] = custom order of lane keys
+  showLinksInSwimlane: boolean;
   newestFirst: boolean;
   showDensity: boolean;
   showCausality: boolean;
@@ -32,6 +33,7 @@ const DEFAULT_TIMELINE: TimelineState = {
   groupingCriterion: 'tag',
   activeTags: null,
   laneOrder: null,
+  showLinksInSwimlane: false,
   newestFirst: false,
   showDensity: true,
   showCausality: false,

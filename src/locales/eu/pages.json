@@ -381,7 +381,9 @@
     "groupByProperty": "{{key}}",
     "noTag": "Etiketarik gabe",
     "noSource": "Iturririk gabe",
-    "notSet": "Zehaztu gabe"
+    "notSet": "Zehaztu gabe",
+    "links": "Loturak",
+    "showLinks": "Erakutsi loturen iraupena"
   },
   "matrix": {
     "label": "Izena",

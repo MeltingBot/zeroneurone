@@ -381,7 +381,9 @@
     "groupByProperty": "{{key}}",
     "noTag": "Sense etiqueta",
     "noSource": "Sense font",
-    "notSet": "No indicat"
+    "notSet": "No indicat",
+    "links": "Enllaços",
+    "showLinks": "Mostra la durada dels enllaços"
   },
   "matrix": {
     "label": "Nom",

@@ -152,6 +152,10 @@ export function TimelineView() {
   const setLaneOrder = useCallback((v: string[] | null) => {
     setTimeline({ laneOrder: v });
   }, [setTimeline]);
+  const showLinksInSwimlane = tl.showLinksInSwimlane;
+  const setShowLinksInSwimlane = useCallback((v: boolean) => {
+    setTimeline({ showLinksInSwimlane: v });
+  }, [setTimeline]);
 
   // Collapsed lanes (local, resets on remount)
   const [collapsedLanes, setCollapsedLanes] = useState<Set<string>>(new Set());
@@ -466,8 +470,11 @@ export function TimelineView() {
     });
   }, [items, filterStartDate, filterEndDate]);
 
-  // Swimlane: all items (links included, grouped via parentElementIds)
-  const swimlaneItems = filteredItems;
+  // Swimlane: optionally filter out links
+  const swimlaneItems = useMemo(
+    () => showLinksInSwimlane ? filteredItems : filteredItems.filter(i => i.type !== 'link'),
+    [filteredItems, showLinksInSwimlane],
+  );
   const elementsMap = useMemo(
     () => new Map(elements.map(el => [el.id, el])) as Map<string, ZNElement>,
     [elements],
@@ -1046,6 +1053,8 @@ export function TimelineView() {
             availableTags={availableTags}
             activeTags={activeTags}
             onActiveTagsChange={setActiveTags}
+            showLinks={showLinksInSwimlane}
+            onShowLinksChange={setShowLinksInSwimlane}
           />
         }
         rightContent={

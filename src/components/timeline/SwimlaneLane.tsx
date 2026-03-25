@@ -2,10 +2,9 @@ import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import type { LaneLayout, LayoutItem } from './useSwimlaneLayout';
 import type { TimelineItem } from './TimelineView';
 import {
-  SWIMLANE_ITEM_HEIGHT,
-  SWIMLANE_ROW_GAP,
   SWIMLANE_LANE_PADDING,
   SWIMLANE_LABEL_WIDTH,
+  SWIMLANE_LINK_HEIGHT_COMPACT,
 } from './useSwimlaneLayout';
 
 interface SwimlaneLaneProps {
@@ -136,10 +135,44 @@ export function SwimlaneLane({
           className="absolute top-0 bottom-0 overflow-hidden"
           style={{ left: SWIMLANE_LABEL_WIDTH, right: 0 }}
         >
-          {visibleItems.map(({ item, row, x, width }: LayoutItem & { item: TimelineItem }) => {
-            const itemY = SWIMLANE_LANE_PADDING + row * (SWIMLANE_ITEM_HEIGHT + SWIMLANE_ROW_GAP);
+          {visibleItems.map(({ item, rowY, x, width, itemHeight }: LayoutItem & { item: TimelineItem }) => {
+            const itemY = SWIMLANE_LANE_PADDING + rowY;
             const selected = isSelected(item);
             const adjustedX = x - SWIMLANE_LABEL_WIDTH;
+            const isLink = item.type === 'link';
+
+            if (isLink) {
+              const isCompact = itemHeight <= SWIMLANE_LINK_HEIGHT_COMPACT;
+              // Links: thin bar when compact, full chip with label when wide
+              return (
+                <div
+                  key={item.id}
+                  className={`absolute cursor-pointer ${
+                    selected ? (isCompact ? 'ring-1 ring-accent' : 'ring-2 ring-accent ring-offset-1') : ''
+                  }`}
+                  style={{
+                    transform: `translate3d(${adjustedX}px, ${itemY}px, 0)`,
+                    width,
+                    height: itemHeight,
+                    backgroundColor: isCompact ? `${item.color}40` : `${item.color}18`,
+                    border: isCompact ? 'none' : `0.5px dashed ${item.color}88`,
+                    borderRadius: isCompact ? 2 : 3,
+                    opacity: item.isDimmed ? 0.3 : 1,
+                  }}
+                  title={anonymousMode ? '***' : formatTooltip(item)}
+                  onClick={(e) => onItemClick(item, e)}
+                >
+                  {!isCompact && (
+                    <span
+                      className="block truncate px-1.5 text-text-secondary"
+                      style={{ fontSize: 10, lineHeight: `${itemHeight}px` }}
+                    >
+                      {anonymousMode ? '***' : item.label}
+                    </span>
+                  )}
+                </div>
+              );
+            }
 
             return (
               <div
@@ -150,7 +183,7 @@ export function SwimlaneLane({
                 style={{
                   transform: `translate3d(${adjustedX}px, ${itemY}px, 0)`,
                   width,
-                  height: SWIMLANE_ITEM_HEIGHT,
+                  height: itemHeight,
                   backgroundColor: `${item.color}26`,
                   border: `0.5px solid ${item.color}`,
                   borderRadius: 3,
@@ -161,7 +194,7 @@ export function SwimlaneLane({
               >
                 <span
                   className="block truncate px-1.5 text-text-primary"
-                  style={{ fontSize: 11, lineHeight: `${SWIMLANE_ITEM_HEIGHT}px` }}
+                  style={{ fontSize: 11, lineHeight: `${itemHeight}px` }}
                 >
                   {anonymousMode ? '***' : item.label}
                 </span>

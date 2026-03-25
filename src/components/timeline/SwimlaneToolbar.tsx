@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Rows3, LayoutList, ChevronDown, Check } from 'lucide-react';
+import { Rows3, LayoutList, ChevronDown, Check, Link2 } from 'lucide-react';
 import type { GroupingCriterion } from './useSwimlaneGrouping';
 
 interface SwimlaneToolbarProps {
@@ -12,6 +12,8 @@ interface SwimlaneToolbarProps {
   availableTags: string[];
   activeTags: string[] | null;
   onActiveTagsChange: (tags: string[] | null) => void;
+  showLinks: boolean;
+  onShowLinksChange: (show: boolean) => void;
 }
 
 export function SwimlaneToolbar({
@@ -23,6 +25,8 @@ export function SwimlaneToolbar({
   availableTags,
   activeTags,
   onActiveTagsChange,
+  showLinks,
+  onShowLinksChange,
 }: SwimlaneToolbarProps) {
   const { t } = useTranslation('pages');
   const [criterionDropdownOpen, setCriterionDropdownOpen] = useState(false);
@@ -164,6 +168,22 @@ export function SwimlaneToolbar({
             </div>
           )}
         </div>
+      )}
+
+      {/* Show links toggle (only in swimlane mode) */}
+      {mode === 'swimlane' && (
+        <button
+          onClick={() => onShowLinksChange(!showLinks)}
+          className={`flex items-center gap-1 px-2 h-6 text-[10px] rounded border ${
+            showLinks
+              ? 'bg-accent text-white border-accent'
+              : 'text-text-secondary hover:bg-bg-tertiary border-border-default'
+          }`}
+          title={t('timeline.showLinks')}
+        >
+          <Link2 size={10} />
+          {t('timeline.links')}
+        </button>
       )}
 
       {/* Tag filter dropdown (only in swimlane mode + tag criterion) */}

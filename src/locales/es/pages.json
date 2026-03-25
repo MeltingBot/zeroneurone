@@ -392,7 +392,9 @@
     "groupByProperty": "{{key}}",
     "noTag": "Sin etiqueta",
     "noSource": "Sin fuente",
-    "notSet": "No indicado"
+    "notSet": "No indicado",
+    "links": "Enlaces",
+    "showLinks": "Mostrar duración de enlaces"
   },
   "matrix": {
     "label": "Nombre",

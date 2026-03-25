@@ -392,7 +392,9 @@
     "groupByProperty": "{{key}}",
     "noTag": "Без тегу",
     "noSource": "Без джерела",
-    "notSet": "Не вказано"
+    "notSet": "Не вказано",
+    "links": "Зв'язки",
+    "showLinks": "Показати тривалість зв'язків"
   },
   "matrix": {
     "label": "Назва",
