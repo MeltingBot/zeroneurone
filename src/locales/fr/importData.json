@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Lien sans extrémités ignoré",
       "linkMissingEntity": "Lien ignoré : entité source/cible non trouvée"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Format ANB invalide : stream Contents manquant",
+      "importError": "Erreur d'import i2 ANB : {{message}}",
+      "unknownError": "Erreur inconnue"
+    },
+    "warnings": {
+      "entityNoId": "Entité sans ID ignorée",
+      "linkMissingEntity": "Lien ignoré : entité source/cible non trouvée"
+    }
   }
 }

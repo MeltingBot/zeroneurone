@@ -297,7 +297,8 @@ export async function importANX(
       const entityEl = endEl?.querySelector('Entity');
       if (!endEl || !entityEl) continue;
 
-      const entityId = entityEl.getAttribute('EntityId');
+      // EntityId is present in iBase exports; ChartItem.Id is used in standard exports
+      const entityId = entityEl.getAttribute('EntityId') || ci.getAttribute('Id');
       if (!entityId) {
         result.warnings.push(t('warnings.entityNoId'));
         continue;
@@ -489,8 +490,9 @@ export async function importANX(
       const linkEl = ci.querySelector('Link');
       if (!linkEl) continue;
 
-      const end1Id = linkEl.getAttribute('End1Id');
-      const end2Id = linkEl.getAttribute('End2Id');
+      // iBase: End1Id/End2Id (Entity.EntityId); Standard: End1Reference/End2Reference (ChartItem.Id)
+      const end1Id = linkEl.getAttribute('End1Id') || linkEl.getAttribute('End1Reference');
+      const end2Id = linkEl.getAttribute('End2Id') || linkEl.getAttribute('End2Reference');
       if (!end1Id || !end2Id) {
         result.warnings.push(t('warnings.linkNoEndpoints'));
         continue;

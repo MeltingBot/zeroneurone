@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Verbindung ohne Endpunkte übersprungen",
       "linkMissingEntity": "Verbindung übersprungen: Quell-/Zielentität nicht gefunden"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Ungültiges ANB-Format: Contents-Stream fehlt",
+      "importError": "i2 ANB-Importfehler: {{message}}",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "warnings": {
+      "entityNoId": "Entität ohne ID übersprungen",
+      "linkMissingEntity": "Link übersprungen: Quell-/Zielentität nicht gefunden"
+    }
   }
 }

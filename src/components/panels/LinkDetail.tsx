@@ -75,6 +75,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const elements = useDossierStore((s) => s.elements);
   const currentDossier = useDossierStore((s) => s.currentDossier);
   const addSuggestedProperty = useDossierStore((s) => s.addSuggestedProperty);
+  const updateSuggestedPropertyChoices = useDossierStore((s) => s.updateSuggestedPropertyChoices);
   const addExistingTag = useDossierStore((s) => s.addExistingTag);
   const pushAction = useHistoryStore((s) => s.pushAction);
   const comments = useDossierStore((s) => s.comments);
@@ -112,6 +113,12 @@ export function LinkDetail({ link }: LinkDetailProps) {
   // Find connected elements
   const fromElement = elements.find((el) => el.id === link.fromId);
   const toElement = elements.find((el) => el.id === link.toId);
+
+  // For display: when direction is backward, swap source/destination labels
+  const currentDirection = link.direction || (link.directed ? 'forward' : 'none');
+  const displayFrom = currentDirection === 'backward' ? toElement : fromElement;
+  const displayTo = currentDirection === 'backward' ? fromElement : toElement;
+  const arrowSymbol = currentDirection === 'none' ? '—' : currentDirection === 'both' ? '↔' : '→';
 
   // Reset local state AND refs when link changes
   useEffect(() => {
@@ -379,14 +386,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
           <div className="p-2 bg-bg-secondary rounded border border-border-default">
             <div className="text-xs text-text-tertiary mb-1">{t('detail.link.linkedElements')}</div>
             <div className="flex items-center gap-2 text-sm text-text-primary">
-              <span className="truncate flex-1">{fromElement?.label || t('detail.link.deletedElement')}</span>
-              <span className="text-text-tertiary flex-shrink-0">
-                {(link.direction || (link.directed ? 'forward' : 'none')) === 'none' && '—'}
-                {(link.direction || (link.directed ? 'forward' : 'none')) === 'forward' && '→'}
-                {(link.direction || (link.directed ? 'forward' : 'none')) === 'backward' && '←'}
-                {(link.direction || (link.directed ? 'forward' : 'none')) === 'both' && '↔'}
-              </span>
-              <span className="truncate flex-1 text-right">{toElement?.label || t('detail.link.deletedElement')}</span>
+              <span className="truncate flex-1">{displayFrom?.label || t('detail.link.deletedElement')}</span>
+              <span className="text-text-tertiary flex-shrink-0">{arrowSymbol}</span>
+              <span className="truncate flex-1 text-right">{displayTo?.label || t('detail.link.deletedElement')}</span>
             </div>
           </div>
 
@@ -603,6 +605,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
           onChange={handlePropertiesChange}
           suggestions={currentDossier?.settings.suggestedProperties}
           onNewProperty={handleNewProperty}
+          onUpdateChoices={updateSuggestedPropertyChoices}
         />
       </AccordionSection>
 

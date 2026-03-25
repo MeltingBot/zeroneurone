@@ -336,6 +336,8 @@
     "zoomPreset6Months": "6 mesos",
     "zoomPreset1Month": "1 mes",
     "zoomPreset1Week": "1 setm.",
+    "zoomPreset6h": "6h",
+    "zoomPreset1h": "1h",
     "zoomIn": "Apropar",
     "zoomOut": "Allunyar",
     "today": "Avui",

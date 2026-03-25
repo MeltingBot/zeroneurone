@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { X, Upload, AlertCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { importService } from '../../services/importService';
 import { exportService } from '../../services/exportService';
-import { useDossierStore, useUIStore } from '../../stores';
+import { importANB, isANBFormat } from '../../services/importANB';
+import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
@@ -94,6 +95,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
 
   const { currentDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
+  const requestFitView = useViewStore((state) => state.requestFitView);
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -105,6 +107,28 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
     setError(null);
 
     try {
+      // ANB (binary) → import directly without placement mode
+      if (file.name.toLowerCase().endsWith('.anb')) {
+        const buffer = await file.arrayBuffer();
+        if (!isANBFormat(buffer)) {
+          setError(t('import.unknownFormat'));
+          setIsProcessing(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+        const result = await importANB(buffer, dossierId);
+        if (result.success) {
+          toast.success(t('import.success'));
+          requestFitView();
+          onClose();
+        } else {
+          setError(result.errors[0] ?? t('import.unknownError'));
+        }
+        setIsProcessing(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
       if (file.name.toLowerCase().endsWith('.zip')) {
         // ZIP → parse for exact bounding box, then placement mode
         const parseResult = await importService.parseZipForPlacement(file);
@@ -184,7 +208,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
         fileInputRef.current.value = '';
       }
     }
-  }, [currentDossier, createMissingElements, enterImportPlacementMode, onClose, t]);
+  }, [currentDossier, createMissingElements, enterImportPlacementMode, onClose, t, requestFitView]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -236,7 +260,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.excalidraw,.ged,.gw,.geojson"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson"
             onChange={handleFileSelect}
             className="hidden"
           />

@@ -128,6 +128,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const currentDossier = useDossierStore((s) => s.currentDossier);
   const addExistingTag = useDossierStore((s) => s.addExistingTag);
   const addSuggestedProperty = useDossierStore((s) => s.addSuggestedProperty);
+  const updateSuggestedPropertyChoices = useDossierStore((s) => s.updateSuggestedPropertyChoices);
   const associatePropertyWithTags = useDossierStore((s) => s.associatePropertyWithTags);
   const comments = useDossierStore((s) => s.comments);
   const togglePropertyDisplay = useDossierStore((s) => s.togglePropertyDisplay);
@@ -1335,6 +1336,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           onChange={handlePropertiesChange}
           suggestions={propertySuggestions}
           onNewProperty={handleNewProperty}
+          onUpdateChoices={updateSuggestedPropertyChoices}
           displayedProperties={currentDossier?.settings.displayedProperties}
           onToggleDisplayProperty={togglePropertyDisplay}
           onExtractToElement={handleExtractProperty}

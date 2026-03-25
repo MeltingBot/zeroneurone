@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, ChevronDown, Check, ExternalLink, ArrowUpRight } from 'lucide-react';
+import { X, Plus, ChevronDown, Check, ExternalLink, ArrowUpRight, Settings2 } from 'lucide-react';
 import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
@@ -12,6 +12,8 @@ interface PropertiesEditorProps {
   suggestions?: PropertyDefinition[];
   /** Callback when a new property is created */
   onNewProperty?: (propertyDef: PropertyDefinition) => void;
+  /** Callback to update the choices of a choice-type property (dossier-level) */
+  onUpdateChoices?: (key: string, choices: string[]) => void;
   /** Properties to display on canvas (global setting) */
   displayedProperties?: string[];
   /** Callback to toggle a property display on canvas */
@@ -43,6 +45,7 @@ export function PropertiesEditor({
   onChange,
   suggestions = [],
   onNewProperty,
+  onUpdateChoices,
   displayedProperties = [],
   onToggleDisplayProperty,
   onExtractToElement,
@@ -371,6 +374,7 @@ export function PropertiesEditor({
                 isDisplayed={displayedProperties.includes(prop.key)}
                 onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
                 choices={choices}
+                onUpdateChoices={onUpdateChoices ? (c) => onUpdateChoices(prop.key, c) : undefined}
                 t={t}
                 locale={i18n.language}
               />
@@ -395,12 +399,26 @@ interface PropertyRowProps {
   isDisplayed?: boolean;
   onToggleDisplay?: () => void;
   choices?: string[];
+  onUpdateChoices?: (choices: string[]) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   locale: string;
 }
 
-function PropertyRow({ property, onUpdate, onRemove, onExtract, isDisplayed, onToggleDisplay, choices, t, locale }: PropertyRowProps) {
+function PropertyRow({ property, onUpdate, onRemove, onExtract, isDisplayed, onToggleDisplay, choices, onUpdateChoices, t, locale }: PropertyRowProps) {
   const type = property.type || 'text';
+  const [editingChoices, setEditingChoices] = useState(false);
+  const [choicesInput, setChoicesInput] = useState('');
+
+  const handleOpenChoicesEditor = useCallback(() => {
+    setChoicesInput((choices ?? []).join(', '));
+    setEditingChoices(true);
+  }, [choices]);
+
+  const handleSaveChoices = useCallback(() => {
+    const newChoices = choicesInput.split(',').map(c => c.trim()).filter(Boolean);
+    onUpdateChoices?.(newChoices);
+    setEditingChoices(false);
+  }, [choicesInput, onUpdateChoices]);
 
   return (
     <div className="flex items-start gap-2">
@@ -427,17 +445,42 @@ function PropertyRow({ property, onUpdate, onRemove, onExtract, isDisplayed, onT
             {t(`detail.properties.types.${type}`)}
           </span>
         </div>
-        <PropertyValueInput
-          type={type}
-          value={property.value}
-          onChange={onUpdate}
-          placeholder={t('detail.properties.valuePlaceholder')}
-          choices={choices}
-          compact
-          t={t}
-          locale={locale}
-        />
+        {editingChoices ? (
+          <div className="flex items-center gap-1 mt-1">
+            <input
+              type="text"
+              value={choicesInput}
+              onChange={e => setChoicesInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveChoices(); if (e.key === 'Escape') setEditingChoices(false); }}
+              className="flex-1 text-xs border border-accent rounded px-1.5 py-0.5 bg-bg-primary focus:outline-none"
+              placeholder={t('detail.properties.optionsPlaceholder')}
+              autoFocus
+            />
+            <button onClick={handleSaveChoices} className="p-0.5 text-accent hover:text-accent/80"><Check size={12} /></button>
+            <button onClick={() => setEditingChoices(false)} className="p-0.5 text-text-tertiary hover:text-text-secondary"><X size={12} /></button>
+          </div>
+        ) : (
+          <PropertyValueInput
+            type={type}
+            value={property.value}
+            onChange={onUpdate}
+            placeholder={t('detail.properties.valuePlaceholder')}
+            choices={choices}
+            compact
+            t={t}
+            locale={locale}
+          />
+        )}
       </div>
+      {type === 'choice' && onUpdateChoices && !editingChoices && (
+        <button
+          onClick={handleOpenChoicesEditor}
+          className="p-1 text-text-tertiary hover:text-text-secondary focus:outline-none"
+          title={t('detail.properties.editChoices')}
+        >
+          <Settings2 size={14} />
+        </button>
+      )}
       {onExtract && (
         <button
           onClick={onExtract}

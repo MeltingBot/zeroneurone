@@ -131,6 +131,7 @@ interface DossierState {
   // Actions - Settings (for reusable tags/properties)
   addExistingTag: (tag: string) => Promise<void>;
   addSuggestedProperty: (propertyDef: PropertyDefinition) => Promise<void>;
+  updateSuggestedPropertyChoices: (key: string, choices: string[]) => Promise<void>;
   associatePropertyWithTags: (propertyDef: PropertyDefinition, tags: string[]) => Promise<void>;
 
   // Actions - Display settings
@@ -1983,6 +1984,27 @@ export const useDossierStore = create<DossierState>((set, get) => ({
                 ...state.currentDossier.settings.suggestedProperties,
                 propertyDef,
               ],
+            },
+          }
+        : null,
+    }));
+  },
+
+  updateSuggestedPropertyChoices: async (key: string, choices: string[]) => {
+    const { currentDossier } = get();
+    if (!currentDossier) return;
+
+    await dossierRepository.updateSuggestedPropertyChoices(currentDossier.id, key, choices);
+
+    set((state) => ({
+      currentDossier: state.currentDossier
+        ? {
+            ...state.currentDossier,
+            settings: {
+              ...state.currentDossier.settings,
+              suggestedProperties: state.currentDossier.settings.suggestedProperties.map(p =>
+                p.key === key ? { ...p, choices } : p
+              ),
             },
           }
         : null,

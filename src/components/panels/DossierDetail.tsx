@@ -23,7 +23,7 @@ interface DossierDetailProps {
 export function DossierDetail({ dossier }: DossierDetailProps) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
-  const { updateDossier, addExistingTag, addSuggestedProperty } = useDossierStore();
+  const { updateDossier, addExistingTag, addSuggestedProperty, updateSuggestedPropertyChoices } = useDossierStore();
 
   // Description state - managed separately for MarkdownEditor
   const [description, setDescription] = useState(dossier.description);
@@ -263,6 +263,7 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
           onChange={handlePropertiesChange}
           suggestions={dossier.settings?.suggestedProperties}
           onNewProperty={handleNewProperty}
+          onUpdateChoices={updateSuggestedPropertyChoices}
         />
       </AccordionSection>
     </div>

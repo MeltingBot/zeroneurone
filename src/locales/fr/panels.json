@@ -167,6 +167,7 @@
       "valuePlaceholder": "Valeur",
       "typePlaceholder": "Type",
       "optionsPlaceholder": "Options séparées par des virgules",
+      "editChoices": "Modifier les options",
       "noProperties": "Aucune propriété",
       "namePlaceholder": "Ex: SIREN, Nationalité...",
       "noMatch": "Aucune correspondance",

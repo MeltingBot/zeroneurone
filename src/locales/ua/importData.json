@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Зв'язок без кінцевих точок пропущений",
       "linkMissingEntity": "Зв'язок пропущений: сутність джерела/цілі не знайдена"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Невірний формат ANB: відсутній потік Contents",
+      "importError": "Помилка імпорту i2 ANB: {{message}}",
+      "unknownError": "Невідома помилка"
+    },
+    "warnings": {
+      "entityNoId": "Пропущено об'єкт без ID",
+      "linkMissingEntity": "Зв'язок пропущено: об'єкт джерело/ціль не знайдено"
+    }
   }
 }

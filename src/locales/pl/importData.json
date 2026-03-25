@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Połączenie bez punktów końcowych pominięte",
       "linkMissingEntity": "Połączenie pominięte: jednostka źródłowa/docelowa nie znaleziona"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Nieprawidłowy format ANB: brak strumienia Contents",
+      "importError": "Błąd importu i2 ANB: {{message}}",
+      "unknownError": "Nieznany błąd"
+    },
+    "warnings": {
+      "entityNoId": "Pominięto encję bez ID",
+      "linkMissingEntity": "Pominięto łącze: nie znaleziono encji źródłowej/docelowej"
+    }
   }
 }

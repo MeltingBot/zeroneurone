@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Amaiera-punturik gabeko esteka baztertua",
       "linkMissingEntity": "Esteka baztertua: iturri/helburu entitatea ez da aurkitu"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "ANB formatu baliogabea: Contents korrontea falta da",
+      "importError": "i2 ANB inportazio-errorea: {{message}}",
+      "unknownError": "Errore ezezaguna"
+    },
+    "warnings": {
+      "entityNoId": "ID gabeko entitatea saltatu da",
+      "linkMissingEntity": "Lotura saltatu da: iturri/helburu entitatea ez da aurkitu"
+    }
   }
 }

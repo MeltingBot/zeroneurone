@@ -266,6 +266,20 @@ export const dossierRepository = {
     }
   },
 
+  async updateSuggestedPropertyChoices(id: DossierId, key: string, choices: string[]): Promise<void> {
+    const dossier = await db.dossiers.get(id);
+    if (!dossier) return;
+
+    const rehydrated = rehydrateDossier(dossier);
+    const suggestedProperties = rehydrated.settings.suggestedProperties.map(p =>
+      p.key === key ? { ...p, choices } : p
+    );
+    await db.dossiers.update(id, {
+      settings: { ...rehydrated.settings, suggestedProperties },
+      updatedAt: new Date(),
+    });
+  },
+
   async associatePropertyWithTags(
     id: DossierId,
     propertyDef: PropertyDefinition,

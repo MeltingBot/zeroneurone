@@ -301,9 +301,10 @@ export function MapView() {
   }, [comments]);
 
   // Normalize a date to noon local time
-  const toNoonLocal = useCallback((d: Date | string | number): Date => {
+  // Normalize to start of hour (preserves hour-level precision, unlike toNoonLocal)
+  const toHourStart = useCallback((d: Date | string | number): Date => {
     const date = new Date(d);
-    date.setHours(12, 0, 0, 0);
+    date.setMinutes(0, 0, 0);
     return date;
   }, []);
 
@@ -342,13 +343,13 @@ export function MapView() {
       if (link.dateRange?.end) allDates.push(new Date(link.dateRange.end));
     });
     if (allDates.length === 0) return { timeRange: null, eventDates: [] };
-    const uniqueTimestamps = [...new Set(allDates.map((d) => toNoonLocal(d).getTime()))].sort((a, b) => a - b);
+    const uniqueTimestamps = [...new Set(allDates.map((d) => toHourStart(d).getTime()))].sort((a, b) => a - b);
     const sortedDates = uniqueTimestamps.map((t) => new Date(t));
     return {
       timeRange: { min: sortedDates[0], max: sortedDates[sortedDates.length - 1] },
       eventDates: sortedDates,
     };
-  }, [elements, links, toNoonLocal]);
+  }, [elements, links, toHourStart]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
@@ -1606,11 +1607,32 @@ export function MapView() {
     return () => unregisterCaptureHandler('map');
   }, [geoElements, registerCaptureHandler, unregisterCaptureHandler]);
 
-  // Format date for display
+  // Format date for display (handles BC/negative years and hour precision)
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', {
+    const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+    const year = date.getFullYear();
+    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+    if (year <= 0) {
+      // BC date: getFullYear() gives the astronomical year (0 = 1 BC, -1 = 2 BC, etc.)
+      const monthDay = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(
+        new Date(2000, date.getMonth(), date.getDate())
+      );
+      const timePart = hasTime ? ` ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '';
+      return `${monthDay} ${year}${timePart}`;
+    }
+    return date.toLocaleDateString(locale, {
       day: '2-digit', month: 'short', year: 'numeric',
+      ...(hasTime ? { hour: '2-digit', minute: '2-digit' } : {}),
     });
+  };
+
+  // Format date for <input type="date"> — only supports years 1–9999
+  const formatDateForInput = (date: Date): string => {
+    const y = date.getFullYear();
+    if (y < 1 || y > 9999) return '';
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${String(y).padStart(4, '0')}-${m}-${d}`;
   };
 
   // Get current event index from selected date
@@ -2110,18 +2132,24 @@ export function MapView() {
             {currentEventIndex + 1}/{eventDates.length}
           </span>
           {selectedDate && (
-            <input
-              type="date"
-              value={selectedDate.toISOString().split('T')[0]}
-              onChange={(e) => {
-                const dateStr = e.target.value;
-                if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                  const newDate = new Date(dateStr + 'T12:00:00');
-                  if (!isNaN(newDate.getTime())) setSelectedDate(newDate);
-                }
-              }}
-              className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-28"
-            />
+            selectedDate.getFullYear() >= 1 && selectedDate.getFullYear() <= 9999 ? (
+              <input
+                type="date"
+                value={formatDateForInput(selectedDate)}
+                onChange={(e) => {
+                  const dateStr = e.target.value;
+                  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                    const newDate = new Date(dateStr + 'T12:00:00');
+                    if (!isNaN(newDate.getTime())) setSelectedDate(newDate);
+                  }
+                }}
+                className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-28"
+              />
+            ) : (
+              <span className="text-xs font-medium text-accent border border-border-default rounded px-2 py-0.5 whitespace-nowrap">
+                {formatDate(selectedDate)}
+              </span>
+            )
           )}
         </div>
       )}

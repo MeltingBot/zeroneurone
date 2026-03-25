@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Verbinding zonder eindpunten overgeslagen",
       "linkMissingEntity": "Verbinding overgeslagen: bron-/doelentiteit niet gevonden"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Ongeldig ANB-formaat: Contents-stream ontbreekt",
+      "importError": "i2 ANB importfout: {{message}}",
+      "unknownError": "Onbekende fout"
+    },
+    "warnings": {
+      "entityNoId": "Entiteit zonder ID overgeslagen",
+      "linkMissingEntity": "Koppeling overgeslagen: bron-/doelobject niet gevonden"
+    }
   }
 }

@@ -351,6 +351,8 @@
     "zoomPreset6Months": "6 months",
     "zoomPreset1Month": "1 month",
     "zoomPreset1Week": "1 week",
+    "zoomPreset6h": "6h",
+    "zoomPreset1h": "1h",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "today": "Today",

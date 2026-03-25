@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Link without endpoints skipped",
       "linkMissingEntity": "Link skipped: source/target entity not found"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Invalid ANB format: missing Contents stream",
+      "importError": "i2 ANB import error: {{message}}",
+      "unknownError": "Unknown error"
+    },
+    "warnings": {
+      "entityNoId": "Entity without ID skipped",
+      "linkMissingEntity": "Link skipped: source/target entity not found"
+    }
   }
 }

@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
 import { importANX, isANXFormat } from '../../services/importANX';
+import { importANB, isANBFormat } from '../../services/importANB';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 
@@ -86,7 +87,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetDossierId === 'new') {
         // Create new dossier with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|anx|ged|gw)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|anx|anb|ged|gw)$/i, '');
         const dossier = await createDossier(name, '');
         dossierId = dossier.id;
         createdNewDossier = true;
@@ -152,6 +153,13 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         result = await importService.importFromCSV(content, dossierId, {
           createMissingElements,
         });
+      } else if (file.name.endsWith('.anb')) {
+        const buffer = await file.arrayBuffer();
+        if (!isANBFormat(buffer)) {
+          result = { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: [t('import.unknownFormat')], warnings: [] };
+        } else {
+          result = await importANB(buffer, dossierId);
+        }
       } else if (file.name.endsWith('.gexf')) {
         const content = await importService.readFileAsText(file);
         result = await importGEXF(content, dossierId);
@@ -292,7 +300,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.excalidraw,.ged,.gw,.geojson,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

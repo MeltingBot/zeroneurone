@@ -126,5 +126,16 @@
       "linkNoEndpoints": "Enllaç sense extrems omès",
       "linkMissingEntity": "Enllaç omès: entitat origen/destí no trobada"
     }
+  },
+  "anb": {
+    "errors": {
+      "invalidChart": "Format ANB no vàlid: manca el stream Contents",
+      "importError": "Error d'importació i2 ANB: {{message}}",
+      "unknownError": "Error desconegut"
+    },
+    "warnings": {
+      "entityNoId": "Entitat sense ID omesa",
+      "linkMissingEntity": "Enllaç omès: entitat origen/destinació no trobada"
+    }
   }
 }

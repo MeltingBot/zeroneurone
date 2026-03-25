@@ -34,7 +34,7 @@ interface TimelineItem {
 
 // Constants
 const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
-const MAX_ZOOM = 50; // pixels per day
+const MAX_ZOOM = 1000; // pixels per day (900 = ~1h visible at 800px width)
 const DEFAULT_ZOOM = 5; // pixels per day (better initial view)
 const ROW_HEIGHT = 36;
 const ROW_GAP = 8;
@@ -49,6 +49,8 @@ const ZOOM_PRESETS = [
   { labelKey: 'timeline.zoomPreset6Months', zoom: 1.5 },    // ~1.5 years visible
   { labelKey: 'timeline.zoomPreset1Month', zoom: 8 },       // ~3 months visible
   { labelKey: 'timeline.zoomPreset1Week', zoom: 30 },       // ~3 weeks visible
+  { labelKey: 'timeline.zoomPreset6h', zoom: 200 },         // ~5 days visible, 6h labels
+  { labelKey: 'timeline.zoomPreset1h', zoom: 900 },         // ~1 day visible, 1h labels
 ] as const;
 
 export function TimelineView() {
@@ -539,20 +541,28 @@ export function TimelineView() {
     const containerWidth = getContainerWidth();
     const viewEnd = xToDate(containerWidth);
 
-    let step: 'day' | 'week' | 'month' | 'year' | 'decade' | 'century';
+    let step: 'hour' | 'hour6' | 'day' | 'week' | 'month' | 'year' | 'decade' | 'century';
     let format: Intl.DateTimeFormatOptions;
 
     // Pixel-based step selection for smooth transitions
     // Choose smallest time unit that gives adequate label spacing
     const MIN_LABEL_SPACING = 35; // minimum pixels between labels
 
+    const hourSpacing = zoom / 24; // pixels per hour
+    const hour6Spacing = zoom / 4; // pixels per 6 hours
     const daySpacing = zoom; // pixels per day
     const weekSpacing = zoom * 7; // pixels per week
     const monthSpacing = zoom * 30; // pixels per month (approx)
     const yearSpacing = zoom * 365; // pixels per year
     const decadeSpacing = zoom * 3652; // pixels per decade
 
-    if (daySpacing >= MIN_LABEL_SPACING) {
+    if (hourSpacing >= MIN_LABEL_SPACING) {
+      step = 'hour';
+      format = { hour: '2-digit', minute: '2-digit' };
+    } else if (hour6Spacing >= MIN_LABEL_SPACING) {
+      step = 'hour6';
+      format = { hour: '2-digit', minute: '2-digit' };
+    } else if (daySpacing >= MIN_LABEL_SPACING) {
       step = 'day';
       format = { day: 'numeric', month: 'short' };
     } else if (weekSpacing >= MIN_LABEL_SPACING) {
@@ -575,7 +585,11 @@ export function TimelineView() {
     const current = new Date(viewStart);
 
     // Align to step boundary
-    if (step === 'century') {
+    if (step === 'hour') {
+      current.setMinutes(0, 0, 0);
+    } else if (step === 'hour6') {
+      current.setHours(Math.floor(current.getHours() / 6) * 6, 0, 0, 0);
+    } else if (step === 'century') {
       current.setFullYear(Math.floor(current.getFullYear() / 100) * 100);
       current.setMonth(0, 1);
       current.setHours(0, 0, 0, 0);
@@ -606,16 +620,31 @@ export function TimelineView() {
                        step === 'year' ||
                        (step === 'month' && current.getMonth() === 0) ||
                        (step === 'week' && current.getDate() <= 7) ||
-                       (step === 'day' && (current.getDate() === 1 || current.getDay() === 1));
+                       (step === 'day' && (current.getDate() === 1 || current.getDay() === 1)) ||
+                       (step === 'hour6' && current.getHours() === 0) ||
+                       (step === 'hour' && current.getHours() % 6 === 0);
         // For year/decade/century: use getFullYear() directly to show negative years (BC)
-        const label = (step === 'century' || step === 'decade' || step === 'year')
-          ? String(current.getFullYear())
-          : current.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', format);
+        // For hour steps: show date at midnight ticks, time otherwise
+        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        let label: string;
+        if (step === 'century' || step === 'decade' || step === 'year') {
+          label = String(current.getFullYear());
+        } else if (step === 'hour' || step === 'hour6') {
+          label = isMain
+            ? current.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
+            : `${String(current.getHours()).padStart(2, '0')}:00`;
+        } else {
+          label = current.toLocaleDateString(locale, format);
+        }
         labels.push({ x, label, isMain });
       }
 
       // Increment
-      if (step === 'century') {
+      if (step === 'hour') {
+        current.setHours(current.getHours() + 1);
+      } else if (step === 'hour6') {
+        current.setHours(current.getHours() + 6);
+      } else if (step === 'century') {
         current.setFullYear(current.getFullYear() + 100);
       } else if (step === 'decade') {
         current.setFullYear(current.getFullYear() + 10);
@@ -651,10 +680,21 @@ export function TimelineView() {
     else if (minDays <= 3652) bucketDays = 3652;
     else bucketDays = 36525;
 
-    const bucketMs = bucketDays * 24 * 60 * 60 * 1000;
     const start = timeBounds.min.getTime();
     const end = timeBounds.max.getTime();
-    const numBuckets = Math.ceil((end - start) / bucketMs);
+    const rangeMs = end - start;
+    // Ensure at most 5000 buckets regardless of zoom level (avoids spread RangeError)
+    const minBucketDays = rangeMs / (5000 * 24 * 60 * 60 * 1000);
+    if (minBucketDays > bucketDays) {
+      if (minBucketDays <= 14) bucketDays = 14;
+      else if (minBucketDays <= 30) bucketDays = 30;
+      else if (minBucketDays <= 90) bucketDays = 90;
+      else if (minBucketDays <= 365) bucketDays = 365;
+      else if (minBucketDays <= 3652) bucketDays = 3652;
+      else bucketDays = 36525;
+    }
+    const bucketMs = bucketDays * 24 * 60 * 60 * 1000;
+    const numBuckets = Math.ceil(rangeMs / bucketMs);
 
     const counts = new Array(numBuckets).fill(0);
     for (const item of items) {
@@ -662,7 +702,7 @@ export function TimelineView() {
       if (idx >= 0 && idx < numBuckets) counts[idx]++;
     }
 
-    const maxCount = Math.max(1, ...counts);
+    const maxCount = counts.reduce((max, v) => v > max ? v : max, 1);
     const buckets = counts.map((count, i) => ({
       start: new Date(start + i * bucketMs),
       end: new Date(start + (i + 1) * bucketMs),
@@ -721,6 +761,11 @@ export function TimelineView() {
       // Adjust viewStart to keep mouse position stable
       const newDaysFromStart = mouseX / newZoom;
       const newViewStart = new Date(dateAtMouse.getTime() - newDaysFromStart * 24 * 60 * 60 * 1000);
+
+      // Update refs immediately so rapid successive wheel events accumulate correctly
+      // (the useEffect sync only runs after React re-renders, causing stale reads)
+      zoomRef.current = newZoom;
+      viewStartRef.current = newViewStart;
 
       setZoom(newZoom);
       setViewStart(newViewStart);
@@ -1559,10 +1604,16 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
 }
 
 function formatDateRange(start: Date, end?: Date, locale: string = 'en-US'): string {
-  const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
-  const startStr = start.toLocaleDateString(locale, opts);
-  if (!end) return startStr;
-  const endStr = end.toLocaleDateString(locale, opts);
+  const hasTime = (d: Date) => d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
+  const dateOpts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
+  const dateTimeOpts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+  const startOpts = hasTime(start) ? dateTimeOpts : dateOpts;
+  const startStr = start.toLocaleString(locale, startOpts);
+  if (!end || end.getTime() === start.getTime()) return startStr;
+
+  const endOpts = hasTime(end) ? dateTimeOpts : dateOpts;
+  const endStr = end.toLocaleString(locale, endOpts);
   return `${startStr} → ${endStr}`;
 }
 

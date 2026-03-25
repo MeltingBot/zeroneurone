@@ -167,6 +167,7 @@
       "valuePlaceholder": "Value",
       "typePlaceholder": "Type",
       "optionsPlaceholder": "Options separated by commas",
+      "editChoices": "Edit options",
       "noProperties": "No properties",
       "namePlaceholder": "Ex: SIREN, Nationality...",
       "noMatch": "No match",
