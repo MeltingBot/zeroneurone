@@ -12,7 +12,7 @@ Visualize the temporal dimension of your data with the chronological view.
 
 | Method | Action |
 |--------|--------|
-| Key **3** | Timeline mode |
+| Key **4** | Timeline mode |
 | View button | Click on the timeline icon |
 
 ---
@@ -34,6 +34,53 @@ Links having a **period** (start/end date) appear as **bars**:
 - Length = duration
 - Position = covered period
 
+
+---
+
+## Display Modes
+
+The timeline offers two modes via the toggle in the toolbar:
+
+### Scatter Mode (default)
+
+Each element occupies its own row. Suited for an overview of the chronology.
+
+| Control | Function |
+|---------|----------|
+| **Old/Recent** | Reverse vertical order |
+| **Causality** | Show temporal proximity links |
+
+### Swimlane Mode
+
+Elements are grouped into **horizontal bands** by criterion. Enables analytical reading of "who does what when" and comparison between categories.
+
+#### Grouping Criteria
+
+| Criterion | Description |
+|-----------|-------------|
+| **Tag** | One lane per tag (an element with multiple tags appears in each matching lane) |
+| **Source** | One lane per source |
+| **Property** | One lane per distinct value of a property |
+
+Only criteria with at least 2 distinct values are available.
+
+#### Tag Filtering
+
+When grouping by tag, a selector lets you choose which tags to display:
+
+- **All**: all tags visible (default)
+- **Selection**: check/uncheck individual tags
+- **None**: uncheck "All" to hide everything
+
+#### Reorder Lanes
+
+Each lane has a **drag handle** (⠿ icon) to the left of the label, visible on hover. Drag and drop to reorder lanes.
+
+The custom order is preserved as long as you don't change the grouping criterion.
+
+#### Collapse Lanes
+
+Click the **chevron** (▶/▼) to the left of the label to collapse/expand a lane. A collapsed lane displays a thin bar with the name and item count.
 
 ---
 
@@ -65,24 +112,13 @@ Zoom automatically adjusts the scale:
 | **Drag** | Move through time |
 | **Click axis** | Center on that date |
 
----
+### Zoom Shortcuts
 
-## Vertical Organization
-
-### Lanes (swimlanes)
-
-Elements are organized in **lanes** to avoid overlaps.
-
-
-### Grouping
-
-Option to group by:
-
-| Grouping | Organization |
-|----------|--------------|
-| **Auto** | Minimizes overlaps |
-| **By tag** | One lane per main tag |
-| **By color** | One lane per color |
+| Button | Result |
+|--------|--------|
+| **Today** | Center on today's date |
+| **Fit all** | Adjust zoom to show all elements |
+| **Presets** | Century, Decade, Year, Month, Week, Day, Hour |
 
 ---
 
@@ -94,24 +130,8 @@ Option to group by:
 |--------|--------|
 | **Click** | Selects element/link |
 | **Ctrl+click** | Adds to selection |
-| **Double-click** | Opens editing |
 
-### Date Modification
-
-**Drag** an element horizontally to change its date.
-
-**Drag** the ends of a link to modify the period.
-
-
----
-
-## Synchronization
-
-In timeline mode, selection stays synchronized with the canvas:
-
-- Select on timeline → selected on canvas
-- Filters also apply to timeline
-
+Selection is synchronized with the canvas: selecting on the timeline selects on the canvas, and vice versa.
 
 ---
 
@@ -179,6 +199,8 @@ When a filter is active, the counter displays "X / Y events" to indicate how man
 | **Dossier timeline** | Visualize the sequence of events |
 | **Relationship duration** | See when links exist |
 | **Temporal patterns** | Identify activity periods |
+| **Analysis by actor** | Swimlanes by tag to compare activity of each category |
+| **Source comparison** | Swimlanes by source to evaluate temporal coverage |
 | **Presentation** | Tell a story through time |
 
 ---

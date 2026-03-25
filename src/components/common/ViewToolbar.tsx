@@ -36,7 +36,7 @@ export function ViewToolbar({
   return (
     <div className="h-10 flex items-center justify-between px-3 border-b border-border-default bg-bg-primary shrink-0 gap-2">
       {/* Left side */}
-      <div className="flex items-center gap-2 min-w-0 shrink overflow-hidden">
+      <div className="flex items-center gap-2 min-w-0 shrink">
         {leftContent}
       </div>
 

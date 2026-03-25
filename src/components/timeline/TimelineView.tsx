@@ -8,8 +8,12 @@ import { ViewToolbar } from '../common/ViewToolbar';
 
 import { toPng } from 'html-to-image';
 import { TimelineRangeSlider } from './TimelineRangeSlider';
+import { SwimlaneToolbar } from './SwimlaneToolbar';
+import { TimelineSwimlane } from './TimelineSwimlane';
+import { useSwimlaneGrouping } from './useSwimlaneGrouping';
+import type { Element as ZNElement } from '../../types';
 
-interface TimelineItem {
+export interface TimelineItem {
   id: string;
   label: string;
   sublabel?: string;
@@ -35,7 +39,6 @@ interface TimelineItem {
 // Constants
 const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
 const MAX_ZOOM = 1000; // pixels per day (900 = ~1h visible at 800px width)
-const DEFAULT_ZOOM = 5; // pixels per day (better initial view)
 const ROW_HEIGHT = 36;
 const ROW_GAP = 8;
 const AXIS_HEIGHT = 28;
@@ -100,24 +103,71 @@ export function TimelineView() {
     return getDimmedElementIds(elements, filters, hiddenElementIds);
   }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
 
-  // View state
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM); // pixels per day
-  const [viewStart, setViewStart] = useState<Date>(() => {
-    // Center on today: show ~80 days before today (at default zoom ~400px width)
-    const d = new Date();
-    d.setDate(d.getDate() - 80);
-    return d;
-  });
+  // Persisted timeline state (survives view switches)
+  const tl = useViewStore((s) => s.timeline);
+  const setTimeline = useViewStore((s) => s.setTimeline);
+
+  // Derive zoom/viewStart from store
+  const zoom = tl.zoom;
+  const setZoom = useCallback((v: number | ((prev: number) => number)) => {
+    setTimeline({ zoom: typeof v === 'function' ? v(tl.zoom) : v });
+  }, [tl.zoom, setTimeline]);
+
+  const viewStart = useMemo(() => new Date(tl.viewStartMs || Date.now() - 80 * 24 * 60 * 60 * 1000), [tl.viewStartMs]);
+  const setViewStart = useCallback((d: Date) => {
+    setTimeline({ viewStartMs: d.getTime() });
+  }, [setTimeline]);
+
+  // Derive other persisted values
+  const newestFirst = tl.newestFirst;
+  const setNewestFirst = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
+    setTimeline({ newestFirst: typeof v === 'function' ? v(tl.newestFirst) : v });
+  }, [tl.newestFirst, setTimeline]);
+  const showDensity = tl.showDensity;
+  const setShowDensity = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
+    setTimeline({ showDensity: typeof v === 'function' ? v(tl.showDensity) : v });
+  }, [tl.showDensity, setTimeline]);
+  const showCausality = tl.showCausality;
+  const setShowCausality = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
+    setTimeline({ showCausality: typeof v === 'function' ? v(tl.showCausality) : v });
+  }, [tl.showCausality, setTimeline]);
+  const causalityMaxDays = tl.causalityMaxDays;
+  const setCausalityMaxDays = useCallback((v: number) => {
+    setTimeline({ causalityMaxDays: v });
+  }, [setTimeline]);
+  const timelineMode = tl.mode;
+  const setTimelineMode = useCallback((v: 'scatter' | 'swimlane') => {
+    setTimeline({ mode: v });
+  }, [setTimeline]);
+  const groupingCriterion = tl.groupingCriterion;
+  const setGroupingCriterion = useCallback((v: string) => {
+    setTimeline({ groupingCriterion: v });
+  }, [setTimeline]);
+  const activeTags = tl.activeTags;
+  const setActiveTags = useCallback((v: string[] | null) => {
+    setTimeline({ activeTags: v });
+  }, [setTimeline]);
+  const laneOrder = tl.laneOrder;
+  const setLaneOrder = useCallback((v: string[] | null) => {
+    setTimeline({ laneOrder: v });
+  }, [setTimeline]);
+
+  // Collapsed lanes (local, resets on remount)
+  const [collapsedLanes, setCollapsedLanes] = useState<Set<string>>(new Set());
+  const handleToggleCollapse = useCallback((key: string) => {
+    setCollapsedLanes(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // Local-only state (not worth persisting)
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartView, setDragStartView] = useState<Date>(new Date());
-  const [newestFirst, setNewestFirst] = useState(false); // false = oldest at top (default)
-  const [showDensity, setShowDensity] = useState(true); // Show density heatmap bar
-  const [showCausality, setShowCausality] = useState(false); // Show potential causal links
-  const [causalityMaxDays, setCausalityMaxDays] = useState(365); // Max days between events for causality
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(null); // Show info panel on click
-
-  // Temporal filter state
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [showTemporalFilter, setShowTemporalFilter] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState<Date | null>(null);
   const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
@@ -413,6 +463,57 @@ export function TimelineView() {
       return true;
     });
   }, [items, filterStartDate, filterEndDate]);
+
+  // Swimlane: exclude links, build elements map, compute grouping
+  // TODO: support dated links in swimlane mode
+  const swimlaneItems = useMemo(
+    () => filteredItems.filter(item => item.type !== 'link'),
+    [filteredItems],
+  );
+  const elementsMap = useMemo(
+    () => new Map(elements.map(el => [el.id, el])) as Map<string, ZNElement>,
+    [elements],
+  );
+  const { availableCriteria, lanes: rawSwimlanes, availableTags } = useSwimlaneGrouping(
+    swimlaneItems,
+    elementsMap,
+    groupingCriterion,
+    activeTags,
+  );
+
+  // Apply custom lane order if set
+  const swimlaneLanes = useMemo(() => {
+    if (!laneOrder || laneOrder.length === 0) return rawSwimlanes;
+    const orderMap = new Map(laneOrder.map((key, i) => [key, i]));
+    return [...rawSwimlanes].sort((a, b) => {
+      const ai = orderMap.get(a.key) ?? 9999;
+      const bi = orderMap.get(b.key) ?? 9999;
+      return ai - bi;
+    });
+  }, [rawSwimlanes, laneOrder]);
+
+  // Reset lane order when criterion changes
+  useEffect(() => {
+    setLaneOrder(null);
+  }, [groupingCriterion, setLaneOrder]);
+
+  // Lane reorder callback
+  const handleLaneReorder = useCallback((fromKey: string, toKey: string) => {
+    const keys = swimlaneLanes.map(l => l.key);
+    const fromIdx = keys.indexOf(fromKey);
+    const toIdx = keys.indexOf(toKey);
+    if (fromIdx === -1 || toIdx === -1) return;
+    keys.splice(fromIdx, 1);
+    keys.splice(toIdx, 0, fromKey);
+    setLaneOrder(keys);
+  }, [swimlaneLanes, setLaneOrder]);
+
+  // Auto-fallback: if current criterion produces no lanes, switch to first available
+  useEffect(() => {
+    if (timelineMode === 'swimlane' && swimlaneLanes.length === 0 && availableCriteria.length > 0) {
+      setGroupingCriterion(availableCriteria[0].id);
+    }
+  }, [timelineMode, swimlaneLanes.length, availableCriteria]);
 
   // Each item gets its own row for clarity
   // Sort order: oldest at top by default, or newest at top if newestFirst
@@ -891,14 +992,19 @@ export function TimelineView() {
     };
   }, []);
 
-  // Center on today at mount
+  // Fit all items on first-ever visit (viewStartMs === 0); otherwise keep persisted position
   useEffect(() => {
+    if (tl.viewStartMs !== 0) return; // Already has a persisted position
     if (!containerRef.current) return;
     const containerWidth = containerRef.current.clientWidth || 800;
-    const daysVisible = containerWidth / zoom;
-    const now = new Date();
-    setViewStart(new Date(now.getTime() - (daysVisible / 2) * 24 * 60 * 60 * 1000));
-  }, []); // Only on mount
+    const totalDays = (timeBounds.max.getTime() - timeBounds.min.getTime()) / (24 * 60 * 60 * 1000);
+    if (totalDays <= 0) return;
+    const paddedDays = totalDays * 1.2;
+    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, containerWidth / paddedDays));
+    const paddingMs = (timeBounds.max.getTime() - timeBounds.min.getTime()) * 0.1;
+    setZoom(newZoom);
+    setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- fit all on first mount only
 
   // Check if item is selected
   const isSelected = useCallback((item: TimelineItem): boolean => {
@@ -933,17 +1039,16 @@ export function TimelineView() {
       <ViewToolbar
         showFontToggle
         leftContent={
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-secondary">
-              {filterStartDate || filterEndDate
-                ? t('timeline.filteredEventsCount', { filtered: filteredItems.length, total: items.length })
-                : t('timeline.eventsCount', { count: items.length })
-              }
-            </span>
-            <span className="text-[10px] text-text-tertiary hidden sm:inline">
-              {t('timeline.zoomHint')}
-            </span>
-          </div>
+          <SwimlaneToolbar
+            mode={timelineMode}
+            onModeChange={setTimelineMode}
+            criterion={groupingCriterion}
+            onCriterionChange={setGroupingCriterion}
+            availableCriteria={availableCriteria}
+            availableTags={availableTags}
+            activeTags={activeTags}
+            onActiveTagsChange={setActiveTags}
+          />
         }
         rightContent={
           <>
@@ -978,6 +1083,8 @@ export function TimelineView() {
             <div className="w-px h-4 bg-border-default mx-1" />
             <button onClick={handleToday} className="px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default" title={t('timeline.centerOnToday')}>{t('timeline.todayShort')}</button>
             <button onClick={handleFitAll} className="px-2 h-6 text-[10px] text-text-secondary hover:bg-bg-tertiary rounded border border-border-default" title={t('timeline.viewAll')}>{t('timeline.fitAll')}</button>
+            {timelineMode === 'scatter' && (
+              <>
             <div className="w-px h-4 bg-border-default mx-1" />
             <button
               onClick={() => setNewestFirst(!newestFirst)}
@@ -1027,6 +1134,8 @@ export function TimelineView() {
                   </button>
                 ))}
               </div>
+            )}
+              </>
             )}
             <button
               onClick={() => setShowDensity(!showDensity)}
@@ -1152,7 +1261,37 @@ export function TimelineView() {
           )}
         </div>
 
-        {/* Content area */}
+        {/* Content area: scatter or swimlane */}
+        {timelineMode === 'swimlane' ? (
+          <TimelineSwimlane
+            lanes={swimlaneLanes}
+            dateToX={dateToX}
+            containerWidth={containerWidth}
+            scrollTop={scrollTop}
+            containerHeight={containerHeight}
+            axisLabels={axisLabels}
+            onItemClick={(item, e) => {
+              e.stopPropagation();
+              if (item.sourceId) {
+                if (item.type === 'link') {
+                  selectLink(item.sourceId);
+                } else {
+                  selectElement(item.sourceId);
+                }
+              }
+            }}
+            isSelected={(item) => {
+              if (!item.sourceId) return false;
+              return selectedElementIds.has(item.sourceId) || selectedLinkIds.has(item.sourceId);
+            }}
+            selectedElementIds={selectedElementIds}
+            anonymousMode={anonymousMode}
+            containerRef={containerRef}
+            onLaneReorder={handleLaneReorder}
+            collapsedLanes={collapsedLanes}
+            onToggleCollapse={handleToggleCollapse}
+          />
+        ) : (
         <div
           ref={contentRef}
           className="relative bg-bg-secondary"
@@ -1545,6 +1684,7 @@ export function TimelineView() {
             ))}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

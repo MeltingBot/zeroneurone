@@ -12,6 +12,32 @@ import { DEFAULT_FILTERS } from '../types';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
 
+interface TimelineState {
+  zoom: number;
+  viewStartMs: number; // store as ms to avoid Date serialization issues
+  mode: 'scatter' | 'swimlane';
+  groupingCriterion: string;
+  activeTags: string[] | null; // null = all tags, [] = none, [...] = specific
+  laneOrder: string[] | null; // null = default alphabetical, [...] = custom order of lane keys
+  newestFirst: boolean;
+  showDensity: boolean;
+  showCausality: boolean;
+  causalityMaxDays: number;
+}
+
+const DEFAULT_TIMELINE: TimelineState = {
+  zoom: 5,
+  viewStartMs: 0, // 0 = trigger fit-all on mount
+  mode: 'scatter',
+  groupingCriterion: 'tag',
+  activeTags: null,
+  laneOrder: null,
+  newestFirst: false,
+  showDensity: true,
+  showCausality: false,
+  causalityMaxDays: 365,
+};
+
 interface ViewState {
   // Viewport
   viewport: {
@@ -41,8 +67,14 @@ interface ViewState {
   focusElementId: ElementId | null;
   focusDepth: number;
 
+  // Timeline view state
+  timeline: TimelineState;
+
   // Saved views
   savedViews: View[];
+
+  // Actions - Timeline
+  setTimeline: (updates: Partial<TimelineState>) => void;
 
   // Actions - Viewport
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
@@ -99,7 +131,15 @@ export const useViewStore = create<ViewState>((set, get) => ({
   hiddenElementIds: new Set(),
   focusElementId: null,
   focusDepth: 1,
+  timeline: { ...DEFAULT_TIMELINE },
   savedViews: [],
+
+  // Timeline
+  setTimeline: (updates) => {
+    set((state) => ({
+      timeline: { ...state.timeline, ...updates },
+    }));
+  },
 
   // Viewport
   setViewport: (viewport) => {
@@ -356,6 +396,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
       focusDepth: 1,
       savedViews: [],
       displayMode: 'canvas',
+      timeline: { ...DEFAULT_TIMELINE },
     });
   },
 }));

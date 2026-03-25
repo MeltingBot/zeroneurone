@@ -381,7 +381,18 @@
     "pauseAnimation": "Pauze",
     "clearFilter": "Filter wissen",
     "dragToMoveRange": "Sleep om de periode te verplaatsen",
-    "exportCSV": "Exporteren naar CSV"
+    "exportCSV": "Exporteren naar CSV",
+    "modeScatter": "Spreiding",
+    "modeSwimlanes": "Banen",
+    "groupBy": "Groeperen op",
+    "groupByTag": "Tag",
+    "allTags": "Alle tags",
+    "properties": "Eigenschappen",
+    "groupBySource": "Bron",
+    "groupByProperty": "{{key}}",
+    "noTag": "Zonder tag",
+    "noSource": "Zonder bron",
+    "notSet": "Niet ingevuld"
   },
   "matrix": {
     "label": "Naam",

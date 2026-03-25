@@ -381,7 +381,18 @@
     "pauseAnimation": "Пауза",
     "clearFilter": "Очистити фільтр",
     "dragToMoveRange": "Перетягніть для переміщення періоду",
-    "exportCSV": "Експортувати в CSV"
+    "exportCSV": "Експортувати в CSV",
+    "modeScatter": "Розсіювання",
+    "modeSwimlanes": "Доріжки",
+    "groupBy": "Групувати за",
+    "groupByTag": "Тег",
+    "allTags": "Всі теги",
+    "properties": "Властивості",
+    "groupBySource": "Джерело",
+    "groupByProperty": "{{key}}",
+    "noTag": "Без тегу",
+    "noSource": "Без джерела",
+    "notSet": "Не вказано"
   },
   "matrix": {
     "label": "Назва",

@@ -381,7 +381,18 @@
     "pauseAnimation": "Pause",
     "clearFilter": "Filter löschen",
     "dragToMoveRange": "Ziehen um den Zeitraum zu verschieben",
-    "exportCSV": "Als CSV exportieren"
+    "exportCSV": "Als CSV exportieren",
+    "modeScatter": "Streuung",
+    "modeSwimlanes": "Bahnen",
+    "groupBy": "Gruppieren nach",
+    "groupByTag": "Tag",
+    "allTags": "Alle Tags",
+    "properties": "Eigenschaften",
+    "groupBySource": "Quelle",
+    "groupByProperty": "{{key}}",
+    "noTag": "Ohne Tag",
+    "noSource": "Ohne Quelle",
+    "notSet": "Nicht angegeben"
   },
   "matrix": {
     "label": "Name",

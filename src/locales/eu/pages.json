@@ -370,7 +370,18 @@
     "pauseAnimation": "Pausa",
     "clearFilter": "Iragazkia garbitu",
     "dragToMoveRange": "Arrastatu aldia mugitzeko",
-    "exportCSV": "CSV-ra esportatu"
+    "exportCSV": "CSV-ra esportatu",
+    "modeScatter": "Sakabanaketa",
+    "modeSwimlanes": "Errailak",
+    "groupBy": "Taldekatu",
+    "groupByTag": "Etiketa",
+    "allTags": "Etiketa guztiak",
+    "properties": "Propietateak",
+    "groupBySource": "Iturria",
+    "groupByProperty": "{{key}}",
+    "noTag": "Etiketarik gabe",
+    "noSource": "Iturririk gabe",
+    "notSet": "Zehaztu gabe"
   },
   "matrix": {
     "label": "Izena",

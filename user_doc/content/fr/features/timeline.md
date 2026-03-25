@@ -12,7 +12,7 @@ Visualisez la dimension temporelle de vos données avec la vue chronologique.
 
 | Méthode | Action |
 |---------|--------|
-| Touche **3** | Mode timeline |
+| Touche **4** | Mode timeline |
 | Bouton vue | Clic sur l'icône timeline |
 
 ---
@@ -34,6 +34,53 @@ Les liens ayant une **période** (date début/fin) apparaissent comme des **barr
 - Longueur = durée
 - Position = période couverte
 
+
+---
+
+## Modes d'affichage
+
+La timeline propose deux modes via le toggle dans la barre d'outils :
+
+### Mode Dispersion (par défaut)
+
+Chaque élément occupe sa propre ligne. Adapté pour une vue d'ensemble de la chronologie.
+
+| Contrôle | Fonction |
+|----------|----------|
+| **Ancien/Récent** | Inverser l'ordre vertical |
+| **Causalité** | Afficher les liens de proximité temporelle |
+
+### Mode Couloirs (swimlanes)
+
+Les éléments sont regroupés en **bandes horizontales** par critère. Permet une lecture analytique "qui fait quoi quand" et la comparaison entre catégories.
+
+#### Critères de groupement
+
+| Critère | Description |
+|---------|-------------|
+| **Tag** | Un couloir par tag (un élément avec plusieurs tags apparaît dans chaque couloir correspondant) |
+| **Source** | Un couloir par source |
+| **Propriété** | Un couloir par valeur distincte d'une propriété |
+
+Seuls les critères ayant au moins 2 valeurs distinctes sont proposés.
+
+#### Filtrage des tags
+
+En groupement par tag, un sélecteur permet de choisir quels tags afficher :
+
+- **Tous** : tous les tags visibles (par défaut)
+- **Sélection** : cocher/décocher les tags individuellement
+- **Aucun** : décocher "Tous" pour tout masquer
+
+#### Réorganiser les couloirs
+
+Chaque couloir a une **poignée de glissement** (icône ⠿) à gauche du label, visible au survol. Glissez-déposez pour réordonner les couloirs.
+
+L'ordre personnalisé est conservé tant que vous ne changez pas de critère de groupement.
+
+#### Replier les couloirs
+
+Cliquez sur le **chevron** (▶/▼) à gauche du label pour replier/déplier un couloir. Un couloir replié affiche une barre fine avec le nom et le nombre d'éléments.
 
 ---
 
@@ -65,24 +112,13 @@ Le zoom ajuste automatiquement l'échelle :
 | **Glisser** | Déplacer dans le temps |
 | **Clic axe** | Centrer sur cette date |
 
----
+### Raccourcis de zoom
 
-## Organisation verticale
-
-### Lignes (swimlanes)
-
-Les éléments sont organisés en **lignes** pour éviter les chevauchements.
-
-
-### Groupement
-
-Option de grouper par :
-
-| Groupement | Organisation |
-|------------|--------------|
-| **Auto** | Minimise les chevauchements |
-| **Par tag** | Une ligne par tag principal |
-| **Par couleur** | Une ligne par couleur |
+| Bouton | Résultat |
+|--------|----------|
+| **Auj.** | Centrer sur la date du jour |
+| **Tout** | Ajuster le zoom pour voir tous les éléments |
+| **Préréglages** | Siècle, Décennie, Année, Mois, Semaine, Jour, Heure |
 
 ---
 
@@ -94,24 +130,8 @@ Option de grouper par :
 |--------|----------|
 | **Clic** | Sélectionne l'élément/lien |
 | **Ctrl+clic** | Ajoute à la sélection |
-| **Double-clic** | Ouvre l'édition |
 
-### Modification de dates
-
-**Glisser** un élément horizontalement pour modifier sa date.
-
-**Glisser** les extrémités d'un lien pour modifier la période.
-
-
----
-
-## Synchronisation
-
-En mode timeline, la sélection reste synchronisée avec le canvas :
-
-- Sélectionner sur la timeline → sélectionné sur le canvas
-- Les filtres s'appliquent aussi à la timeline
-
+La sélection est synchronisée avec le canvas : sélectionner sur la timeline sélectionne sur le canvas, et inversement.
 
 ---
 
@@ -179,6 +199,8 @@ Quand un filtre est actif, le compteur affiche "X / Y événements" pour indique
 | **Chronologie du dossier** | Visualiser la séquence des événements |
 | **Durée des relations** | Voir quand des liens existent |
 | **Patterns temporels** | Identifier des périodes d'activité |
+| **Analyse par acteur** | Couloirs par tag pour comparer l'activité de chaque catégorie |
+| **Comparaison de sources** | Couloirs par source pour évaluer la couverture temporelle |
 | **Présentation** | Raconter une histoire dans le temps |
 
 ---
