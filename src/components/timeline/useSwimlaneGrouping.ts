@@ -103,9 +103,17 @@ export function useSwimlaneGrouping(
   // Group items into lanes based on active criterion
   const lanes = useMemo(() => {
     const groups = new Map<string, TimelineItem[]>();
+    const groupItemIds = new Map<string, Set<string>>();
 
     const addToGroup = (key: string, item: TimelineItem) => {
-      if (!groups.has(key)) groups.set(key, []);
+      if (!groups.has(key)) {
+        groups.set(key, []);
+        groupItemIds.set(key, new Set());
+      }
+      // Prevent duplicates: a link with parentElementIds [A, B] could be added
+      // twice to the same lane if both parents share the same tag/source/property
+      if (groupItemIds.get(key)!.has(item.id)) return;
+      groupItemIds.get(key)!.add(item.id);
       groups.get(key)!.push(item);
     };
 

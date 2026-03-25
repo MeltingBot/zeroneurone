@@ -140,6 +140,8 @@ export function SwimlaneLane({
             const selected = isSelected(item);
             const adjustedX = x - SWIMLANE_LABEL_WIDTH;
             const isLink = item.type === 'link';
+            // When an item starts off-screen left, shift label to the visible edge
+            const labelPad = adjustedX < 0 ? -adjustedX + 6 : 6;
 
             if (isLink) {
               const isCompact = itemHeight <= SWIMLANE_LINK_HEIGHT_COMPACT;
@@ -164,8 +166,8 @@ export function SwimlaneLane({
                 >
                   {!isCompact && (
                     <span
-                      className="block truncate px-1.5 text-text-secondary"
-                      style={{ fontSize: 10, lineHeight: `${itemHeight}px` }}
+                      className="block truncate text-text-secondary"
+                      style={{ fontSize: 10, lineHeight: `${itemHeight}px`, paddingLeft: labelPad, paddingRight: 6 }}
                     >
                       {anonymousMode ? '***' : item.label}
                     </span>
@@ -193,8 +195,8 @@ export function SwimlaneLane({
                 onClick={(e) => onItemClick(item, e)}
               >
                 <span
-                  className="block truncate px-1.5 text-text-primary"
-                  style={{ fontSize: 11, lineHeight: `${itemHeight}px` }}
+                  className="block truncate text-text-primary"
+                  style={{ fontSize: 11, lineHeight: `${itemHeight}px`, paddingLeft: labelPad, paddingRight: 6 }}
                 >
                   {anonymousMode ? '***' : item.label}
                 </span>

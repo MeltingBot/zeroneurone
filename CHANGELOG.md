@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.37.2
+
+### Fixes
+- **Swimlane link display**: zoom-based adaptive height (detailed above 0.5 px/day, compact below); label stays visible when item starts off-screen left; deduplicate links in lanes when both parent elements share the same grouping key
+
 ## 2.37.1
 
 ### Fixes

@@ -4,7 +4,7 @@ import type { TimelineItem } from './TimelineView';
 
 export const SWIMLANE_ITEM_HEIGHT = 28;
 export const SWIMLANE_LINK_HEIGHT_COMPACT = 8;
-export const SWIMLANE_LINK_WIDTH_THRESHOLD = 150; // px: above this, links get full height with label
+export const SWIMLANE_LINK_ZOOM_THRESHOLD = 0.5; // px/day: above this zoom level, all links get full height
 export const SWIMLANE_ROW_GAP = 4;
 export const SWIMLANE_LANE_PADDING = 8;
 export const SWIMLANE_MIN_LANE_HEIGHT = 44;
@@ -42,6 +42,12 @@ export function useSwimlaneLayout(
   return useMemo(() => {
     const result: LaneLayout[] = [];
     let yOffset = 0;
+
+    // Derive zoom level (px per day) from dateToX to decide link display mode
+    const refA = new Date(2000, 0, 1);
+    const refB = new Date(2000, 0, 2);
+    const pxPerDay = dateToX(refB) - dateToX(refA);
+    const linksDetailed = pxPerDay >= SWIMLANE_LINK_ZOOM_THRESHOLD;
 
     for (const lane of lanes) {
       const items = lane.items as TimelineItem[];
@@ -89,9 +95,9 @@ export function useSwimlaneLayout(
         const cx = Math.max(clipLeft, x);
         const cw = Math.min(clipRight, x + width) - cx;
 
-        // Links: compact (8px) when narrow, full height when wide enough for a label
+        // Links: compact (8px) at low zoom, full height (28px) when zoomed in enough
         const h = isLink
-          ? (cw >= SWIMLANE_LINK_WIDTH_THRESHOLD ? SWIMLANE_ITEM_HEIGHT : SWIMLANE_LINK_HEIGHT_COMPACT)
+          ? (linksDetailed ? SWIMLANE_ITEM_HEIGHT : SWIMLANE_LINK_HEIGHT_COMPACT)
           : SWIMLANE_ITEM_HEIGHT;
 
         if (cw <= 0) {
