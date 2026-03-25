@@ -24,6 +24,8 @@ ARG GIT_COMMIT=unknown
 WORKDIR /app
 
 # Copy package files first for better layer caching
+# In npm workspaces, the canonical lock file is the parent's.
+# The build script copies it into the build context before building.
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including devDependencies for build)
