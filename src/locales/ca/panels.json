@@ -3,6 +3,7 @@
     "detail": "Detall",
     "insights": "Anàlisis",
     "filters": "Filtres",
+    "query": "Consulta",
     "views": "Vistes",
     "report": "Informe",
     "collapsePanel": "Contraure el panell"
@@ -303,6 +304,35 @@
       "showAll": "Mostrar tot",
       "noHidden": "Cap element amagat"
     }
+  },
+  "query": {
+    "modeText": "Text",
+    "modeVisual": "Visual",
+    "execute": "Executar",
+    "clear": "Esborrar",
+    "elements": "elements",
+    "links": "enllaços",
+    "filterMode": "Filtre canvas",
+    "tableMode": "Taula",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Exemples de sintaxi:",
+    "selectField": "Camp...",
+    "systemFields": "Camps del sistema",
+    "properties": "Propietats",
+    "selectValue": "Valor...",
+    "valuePlaceholder": "Valor...",
+    "addCondition": "Afegir condició",
+    "allConditions": "Totes han de coincidir",
+    "anyCondition": "N'hi ha prou amb una",
+    "emptyVisual": "Afegeix condicions per construir la consulta",
+    "noResults": "Sense resultats",
+    "exportCSV": "Exportar CSV",
+    "savedQueries": "Consultes desades",
+    "saveCurrentQuery": "Desar consulta actual",
+    "queryName": "Nom de la consulta...",
+    "noSavedQueries": "Cap consulta desada",
+    "rename": "Reanomenar",
+    "deleteQuery": "Eliminar"
   },
   "insights": {
     "title": "Anàlisis",

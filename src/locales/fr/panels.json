@@ -3,6 +3,7 @@
     "detail": "Détail",
     "insights": "Analyses",
     "filters": "Filtres",
+    "query": "Requête",
     "views": "Vues",
     "report": "Rapport",
     "collapsePanel": "Réduire le panneau"
@@ -317,6 +318,35 @@
       "showAll": "Tout afficher",
       "noHidden": "Aucun élément masqué"
     }
+  },
+  "query": {
+    "modeText": "Texte",
+    "modeVisual": "Visuel",
+    "execute": "Exécuter",
+    "clear": "Effacer",
+    "elements": "éléments",
+    "links": "liens",
+    "filterMode": "Filtre canvas",
+    "tableMode": "Table",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Exemples de syntaxe :",
+    "selectField": "Champ...",
+    "systemFields": "Champs système",
+    "properties": "Propriétés",
+    "selectValue": "Valeur...",
+    "valuePlaceholder": "Valeur...",
+    "addCondition": "Ajouter une condition",
+    "allConditions": "Toutes les conditions doivent correspondre",
+    "anyCondition": "Au moins une condition suffit",
+    "emptyVisual": "Ajoutez des conditions pour construire votre requête",
+    "noResults": "Aucun résultat",
+    "exportCSV": "Exporter CSV",
+    "savedQueries": "Requêtes enregistrées",
+    "saveCurrentQuery": "Enregistrer la requête",
+    "queryName": "Nom de la requête...",
+    "noSavedQueries": "Aucune requête enregistrée",
+    "rename": "Renommer",
+    "deleteQuery": "Supprimer"
   },
   "insights": {
     "title": "Analyses",

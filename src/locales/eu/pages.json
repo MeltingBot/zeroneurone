@@ -149,7 +149,9 @@
       "lockPosition": "Posizioa blokeatu",
       "unlockPosition": "Posizioa desblokeatu",
       "setKeyObject": "Lerrokatze-erreferentzia gisa ezarri",
-      "clearKeyObject": "Lerrokatze-erreferentzia kendu"
+      "clearKeyObject": "Lerrokatze-erreferentzia kendu",
+      "findSimilar": "Antzekoak bilatu",
+      "queryFromSelection": "Kontsulta hautapenetik"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",

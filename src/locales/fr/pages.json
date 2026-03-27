@@ -149,7 +149,9 @@
       "lockPosition": "Verrouiller la position",
       "unlockPosition": "Déverrouiller la position",
       "setKeyObject": "Définir comme objet de référence",
-      "clearKeyObject": "Retirer l'objet de référence"
+      "clearKeyObject": "Retirer l'objet de référence",
+      "findSimilar": "Chercher les similaires",
+      "queryFromSelection": "Requête depuis sélection"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",

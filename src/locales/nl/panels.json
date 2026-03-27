@@ -3,6 +3,7 @@
     "detail": "Details",
     "insights": "Analyses",
     "filters": "Filters",
+    "query": "Zoekopdracht",
     "views": "Weergaven",
     "report": "Rapport",
     "collapsePanel": "Paneel inklappen"
@@ -303,6 +304,35 @@
       "showAll": "Alles tonen",
       "noHidden": "Geen verborgen elementen"
     }
+  },
+  "query": {
+    "modeText": "Tekst",
+    "modeVisual": "Visueel",
+    "execute": "Uitvoeren",
+    "clear": "Wissen",
+    "elements": "elementen",
+    "links": "verbindingen",
+    "filterMode": "Canvas filter",
+    "tableMode": "Tabel",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Syntaxvoorbeelden:",
+    "selectField": "Veld...",
+    "systemFields": "Systeemvelden",
+    "properties": "Eigenschappen",
+    "selectValue": "Waarde...",
+    "valuePlaceholder": "Waarde...",
+    "addCondition": "Voorwaarde toevoegen",
+    "allConditions": "Alle voorwaarden moeten overeenkomen",
+    "anyCondition": "Eén voorwaarde volstaat",
+    "emptyVisual": "Voorwaarden toevoegen om uw query samen te stellen",
+    "noResults": "Geen resultaten",
+    "exportCSV": "CSV exporteren",
+    "savedQueries": "Opgeslagen zoekopdrachten",
+    "saveCurrentQuery": "Huidige zoekopdracht opslaan",
+    "queryName": "Naam zoekopdracht...",
+    "noSavedQueries": "Geen opgeslagen zoekopdrachten",
+    "rename": "Hernoemen",
+    "deleteQuery": "Verwijderen"
   },
   "insights": {
     "title": "Analyses",

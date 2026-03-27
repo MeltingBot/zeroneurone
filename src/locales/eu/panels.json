@@ -3,6 +3,7 @@
     "detail": "Xehetasuna",
     "insights": "Analisiak",
     "filters": "Iragazkiak",
+    "query": "Kontsulta",
     "views": "Ikuspegiak",
     "report": "Txostena",
     "collapsePanel": "Panela tolestu"
@@ -303,6 +304,35 @@
       "showAll": "Dena erakutsi",
       "noHidden": "Ez dago elementu ezkutaturik"
     }
+  },
+  "query": {
+    "modeText": "Testua",
+    "modeVisual": "Bisuala",
+    "execute": "Exekutatu",
+    "clear": "Garbitu",
+    "elements": "elementuak",
+    "links": "loturak",
+    "filterMode": "Canvas iragazkia",
+    "tableMode": "Taula",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Sintaxi adibideak:",
+    "selectField": "Eremua...",
+    "systemFields": "Sistemako eremuak",
+    "properties": "Propietateak",
+    "selectValue": "Balioa...",
+    "valuePlaceholder": "Balioa...",
+    "addCondition": "Baldintza gehitu",
+    "allConditions": "Baldintza guztiek bat etorri behar dute",
+    "anyCondition": "Baldintza bat nahikoa da",
+    "emptyVisual": "Gehitu baldintzak kontsulta eraikitzeko",
+    "noResults": "Emaitzarik ez",
+    "exportCSV": "CSV esportatu",
+    "savedQueries": "Gordetako kontsultak",
+    "saveCurrentQuery": "Uneko kontsulta gorde",
+    "queryName": "Kontsultaren izena...",
+    "noSavedQueries": "Ez dago gordetako kontsultarik",
+    "rename": "Berrizendatu",
+    "deleteQuery": "Ezabatu"
   },
   "insights": {
     "title": "Analisiak",

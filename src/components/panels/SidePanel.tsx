@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useRef, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useSelectionStore, useDossierStore, useViewStore, useInsightsStore, useUIStore } from '../../stores';
+import { useSelectionStore, useDossierStore, useViewStore, useInsightsStore, useUIStore, useQueryStore } from '../../stores';
 import { ElementDetail } from './ElementDetail';
 import { LinkDetail } from './LinkDetail';
 import { MultiSelectionDetail } from './MultiSelectionDetail';
@@ -10,7 +10,8 @@ import { FiltersPanel } from './FiltersPanel';
 import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
 import { ReportPanel } from './ReportPanel';
-import { Info, Filter, Eye, Network, PanelRightClose, FileText, icons } from 'lucide-react';
+import { QueryPanel } from './QueryPanel';
+import { Info, Filter, Eye, Network, PanelRightClose, FileText, Search, icons } from 'lucide-react';
 import { IconButton } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { useDetachedWindow } from '../../hooks/useDetachedWindow';
@@ -25,7 +26,7 @@ const MAX_HEIGHT = 500;
 const DEFAULT_HEIGHT = 300;
 const HEIGHT_STORAGE_KEY = 'zeroneurone:sidepanel-height';
 
-type TabId = 'detail' | 'insights' | 'filters' | 'views' | 'report' | (string & {});
+type TabId = 'detail' | 'insights' | 'filters' | 'query' | 'views' | 'report' | (string & {});
 
 interface Tab {
   id: TabId;
@@ -45,10 +46,11 @@ export function SidePanel() {
   const hasActiveFilters = useViewStore((s) => s.hasActiveFilters);
   const displayMode = useViewStore((s) => s.displayMode);
   const highlightedElementIds = useInsightsStore((s) => s.highlightedElementIds);
+  const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const panelSide = useUIStore((s) => s.panelSide);
   const setPanelSide = useUIStore((s) => s.setPanelSide);
-
-  const [activeTab, setActiveTab] = useState<TabId>('detail');
+  const activeTab = useUIStore((s) => s.sidePanelTab) as TabId;
+  const setActiveTab = useUIStore((s) => s.setSidePanelTab);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [width, setWidth] = useState(() => {
     const stored = localStorage.getItem(WIDTH_STORAGE_KEY);
@@ -165,7 +167,7 @@ export function SidePanel() {
 
   // Switch away from removed plugin tabs
   useEffect(() => {
-    const builtinIds = ['detail', 'insights', 'filters', 'views', 'report'];
+    const builtinIds = ['detail', 'insights', 'filters', 'query', 'views', 'report'];
     if (!builtinIds.includes(activeTab) && !panelPlugins.some((p) => p.id === activeTab)) {
       setActiveTab('detail');
     }
@@ -175,6 +177,7 @@ export function SidePanel() {
     { id: 'detail', label: t('tabs.detail'), icon: Info },
     { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
     { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
+    { id: 'query', label: t('tabs.query'), icon: Search, badge: queryFilterActive },
     ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
     { id: 'report', label: t('tabs.report'), icon: FileText },
     ...panelPlugins.map((p) => ({
@@ -245,6 +248,12 @@ export function SidePanel() {
         return (
           <div className="flex-1 overflow-y-auto">
             <FiltersPanel />
+          </div>
+        );
+      case 'query':
+        return (
+          <div className="flex-1 overflow-y-auto">
+            <QueryPanel />
           </div>
         );
       case 'views':

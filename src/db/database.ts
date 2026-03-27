@@ -16,6 +16,8 @@ import type {
   TagSetId,
   CanvasTab,
   TabId,
+  SavedQuery,
+  SavedQueryId,
 } from '../types';
 import type { EncryptionMeta } from '../services/encryption/encryptionService';
 import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../services/encryption/dexieEncryptionMiddleware';
@@ -38,6 +40,7 @@ class DossierDatabase extends Dexie {
   reports!: Table<Report, UUID>;
   tagSets!: Table<TagSet, TagSetId>;
   canvasTabs!: Table<CanvasTab, TabId>;
+  savedQueries!: Table<SavedQuery, SavedQueryId>;
   pluginData!: Table<PluginDataRow, string>;
   _encryptionMeta!: Table<EncryptionMeta, 'main'>;
 
@@ -202,6 +205,11 @@ class DossierDatabase extends Dexie {
           el.geo = { type: 'point', lat: el.geo.lat, lng: el.geo.lng };
         }
       });
+    });
+
+    // ─── Version 11: Add savedQueries table for ZNQuery ─────────────────
+    this.version(11).stores({
+      savedQueries: 'id, dossierId, createdAt',
     });
   }
 

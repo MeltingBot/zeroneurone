@@ -247,6 +247,13 @@ export function DossierPage() {
         return;
       }
 
+      // Ctrl+Q for query panel
+      if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
+        e.preventDefault();
+        useUIStore.getState().setSidePanelTab('query');
+        return;
+      }
+
       // Tab cycling: Alt+Left/Right, Alt+0 for first tab
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {

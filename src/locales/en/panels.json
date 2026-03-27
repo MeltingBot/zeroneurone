@@ -3,6 +3,7 @@
     "detail": "Detail",
     "insights": "Insights",
     "filters": "Filters",
+    "query": "Query",
     "views": "Views",
     "report": "Report",
     "collapsePanel": "Collapse panel"
@@ -317,6 +318,35 @@
       "showAll": "Show all",
       "noHidden": "No hidden elements"
     }
+  },
+  "query": {
+    "modeText": "Text",
+    "modeVisual": "Visual",
+    "execute": "Execute",
+    "clear": "Clear",
+    "elements": "elements",
+    "links": "links",
+    "filterMode": "Canvas filter",
+    "tableMode": "Table",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Syntax examples:",
+    "selectField": "Select field...",
+    "systemFields": "System fields",
+    "properties": "Properties",
+    "selectValue": "Select value...",
+    "valuePlaceholder": "Value...",
+    "addCondition": "Add condition",
+    "allConditions": "All conditions must match",
+    "anyCondition": "Any condition can match",
+    "emptyVisual": "Add conditions to build your query",
+    "noResults": "No results",
+    "exportCSV": "Export CSV",
+    "savedQueries": "Saved queries",
+    "saveCurrentQuery": "Save current query",
+    "queryName": "Query name...",
+    "noSavedQueries": "No saved queries yet",
+    "rename": "Rename",
+    "deleteQuery": "Delete"
   },
   "insights": {
     "title": "Insights",

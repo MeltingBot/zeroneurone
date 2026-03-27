@@ -8,7 +8,8 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Box, Link2, X, Tag } from 'lucide-react';
-import { useDossierStore, useSelectionStore, useViewStore, useTabStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useTabStore, useUIStore } from '../../stores';
+import { useQueryStore } from '../../stores/queryStore';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
@@ -55,10 +56,21 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   }, [isOpen]);
 
-  // Debounced search
+  // Debounced search (with ? prefix to open query panel)
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
+      return;
+    }
+
+    // ? prefix → switch to query panel
+    if (query.startsWith('?') && query.length > 1) {
+      const queryText = query.slice(1).trim();
+      if (queryText) {
+        onClose();
+        useUIStore.getState().setSidePanelTab('query');
+        useQueryStore.getState().setText(queryText);
+      }
       return;
     }
 
@@ -69,7 +81,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, onClose]);
 
   // Scroll selected item into view
   useEffect(() => {
