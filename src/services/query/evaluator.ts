@@ -227,15 +227,79 @@ function matchValue(
   return false;
 }
 
+// ── Event field resolution ──
+
+/**
+ * Check if a field targets element events (event.date, event.label, etc.)
+ */
+function isEventField(field: string): boolean {
+  return field.toLowerCase().startsWith('event.');
+}
+
+/**
+ * Resolve an event sub-field from an ElementEvent.
+ */
+function resolveEventSubField(
+  event: import('../../types').ElementEvent,
+  subField: string,
+): unknown {
+  switch (subField) {
+    case 'date': return event.date;
+    case 'date.end': return event.dateEnd ?? null;
+    case 'label': return event.label;
+    case 'description': return event.description ?? null;
+    case 'source': return event.source ?? null;
+    case 'geo': return event.geo != null;
+    default: {
+      // Free property on event
+      const prop = event.properties?.find(p => p.key.toLowerCase() === subField);
+      return prop ? prop.value : undefined;
+    }
+  }
+}
+
 /**
  * Evaluate a condition node against a data item.
- * Special handling for tag/from.tag/to.tag: match if ANY tag matches.
+ * Special handling for:
+ * - tag/from.tag/to.tag: match if ANY tag matches
+ * - event.*: match if ANY event satisfies the condition
  */
 function evaluateCondition(
   cond: QueryCondition,
   item: DataItem,
   elements: Map<string, Element>,
 ): boolean {
+  // ── Event fields: ANY semantics over element.events[] ──
+  if (isEventField(cond.field)) {
+    // Links have no events
+    if (isLink(item)) return false;
+    const events = item.events;
+    if (!events || events.length === 0) {
+      return cond.operator === 'not_exists';
+    }
+    const subField = cond.field.toLowerCase().slice('event.'.length);
+
+    // EXISTS / NOT EXISTS on event fields: does any event have this sub-field?
+    if (cond.operator === 'exists') {
+      return events.some(ev => {
+        const v = resolveEventSubField(ev, subField);
+        return v !== undefined && v !== null && v !== '';
+      });
+    }
+    if (cond.operator === 'not_exists') {
+      return events.every(ev => {
+        const v = resolveEventSubField(ev, subField);
+        return v === undefined || v === null || v === '';
+      });
+    }
+
+    // Other operators: match if ANY event satisfies
+    return events.some(ev => {
+      const v = resolveEventSubField(ev, subField);
+      return matchValue(v, cond.operator, cond.value);
+    });
+  }
+
   const fieldValue = resolveField(item, cond.field, elements);
 
   // Multi-value fields (tags): match if ANY element matches

@@ -104,4 +104,7 @@ export const RESERVED_FIELDS = new Set([
   'type', 'has_geo', 'group',
   // Link-specific
   'from.label', 'from.tag', 'to.label', 'to.tag', 'directed',
+  // Element events (ANY semantics: matches if at least one event satisfies)
+  'event.date', 'event.date.end', 'event.label', 'event.description',
+  'event.source', 'event.geo',
 ]);

@@ -441,6 +441,175 @@ describe('evaluator — spec examples', () => {
   });
 });
 
+// ── Event fields ──
+
+describe('evaluator — event fields', () => {
+  it('event.label matches if any event has matching label', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-03-01'), label: 'Escale Marseille' },
+          { id: 'ev2', date: new Date('2024-04-01'), label: 'Escale Toulon' },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev3', date: new Date('2024-05-01'), label: 'Départ Paris' },
+        ],
+      }),
+      makeElement({ events: [] }),
+    ];
+    const r = query('event.label CONTAINS "Marseille"', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.date with range query', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-15'), label: 'Janvier' },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev2', date: new Date('2024-06-15'), label: 'Juin' },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev3', date: new Date('2023-12-01'), label: 'Décembre 2023' },
+        ],
+      }),
+    ];
+    const r = query('event.date >= 2024-01-01 AND event.date <= 2024-03-31', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.date.end checks end date of event', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-01'), dateEnd: new Date('2024-03-01'), label: 'Long event' },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev2', date: new Date('2024-01-01'), label: 'Ponctuel' },
+        ],
+      }),
+    ];
+    const r = query('event.date.end EXISTS', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.source filters by event source', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-01'), label: 'A', source: 'douanes' },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev2', date: new Date('2024-01-01'), label: 'B', source: 'police' },
+        ],
+      }),
+    ];
+    const r = query('event.source = "douanes"', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.geo checks if event has geo data', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-01'), label: 'A', geo: { type: 'point', lat: 43.3, lng: 5.4 } },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev2', date: new Date('2024-01-01'), label: 'B' },
+        ],
+      }),
+    ];
+    const r = query('event.geo = true', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.description CONTAINS', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-01'), label: 'A', description: 'Suspect vu au port de Marseille' },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev2', date: new Date('2024-01-01'), label: 'B', description: 'RAS' },
+        ],
+      }),
+    ];
+    const r = query('event.description CONTAINS "Marseille"', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.* NOT EXISTS on element without events', () => {
+    const els = [
+      makeElement({ events: [] }),
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-01'), label: 'A' },
+        ],
+      }),
+    ];
+    const r = query('event.label NOT EXISTS', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('event.* never matches on links', () => {
+    const el = makeElement({
+      events: [{ id: 'ev1', date: new Date('2024-01-01'), label: 'Event' }],
+    });
+    const link = makeLink({ fromId: el.id, toId: el.id });
+    const r = query('event.label = "Event"', [el], [link]);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.linkIds.size).toBe(0);
+  });
+
+  it('combined: tag + event.date range', () => {
+    const els = [
+      makeElement({
+        tags: ['navire'],
+        events: [
+          { id: 'ev1', date: new Date('2024-02-15'), label: 'Escale' },
+        ],
+      }),
+      makeElement({
+        tags: ['navire'],
+        events: [
+          { id: 'ev2', date: new Date('2024-08-15'), label: 'Escale' },
+        ],
+      }),
+      makeElement({
+        tags: ['personne'],
+        events: [
+          { id: 'ev3', date: new Date('2024-02-15'), label: 'Observation' },
+        ],
+      }),
+    ];
+    const r = query('tag = "navire" AND event.date >= 2024-01-01 AND event.date <= 2024-06-30', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+});
+
 // ── Performance ──
 
 describe('evaluator — performance', () => {

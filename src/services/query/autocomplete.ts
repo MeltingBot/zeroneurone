@@ -166,6 +166,13 @@ const FIELD_TYPES: Record<string, FieldType> = {
   'to.label': 'string',
   'to.tag': 'string',
   directed: 'boolean',
+  // Element events
+  'event.date': 'date',
+  'event.date.end': 'date',
+  'event.label': 'string',
+  'event.description': 'string',
+  'event.source': 'string',
+  'event.geo': 'boolean',
 };
 
 function operatorsForType(type: FieldType): { symbol: string; label: string }[] {
@@ -213,28 +220,49 @@ function collectFieldValues(
     values.set(s, (values.get(s) || 0) + 1);
   };
 
-  const processItems = (items: (Element | Link)[]) => {
-    for (const item of items) {
-      switch (lower) {
-        case 'label': addValue(item.label); break;
-        case 'source': addValue(item.source); break;
-        case 'tag':
-          for (const t of item.tags) if (t) addValue(t);
-          break;
-        case 'type':
-          addValue('fromId' in item ? 'link' : 'element');
-          break;
-        default: {
-          // Free property
-          const prop = item.properties.find(p => p.key.toLowerCase() === lower);
-          if (prop) addValue(prop.value);
+  // Event fields: collect from element events
+  if (lower.startsWith('event.')) {
+    const subField = lower.slice('event.'.length);
+    for (const el of elements) {
+      if (!el.events) continue;
+      for (const ev of el.events) {
+        switch (subField) {
+          case 'label': addValue(ev.label); break;
+          case 'description': addValue(ev.description); break;
+          case 'source': addValue(ev.source); break;
+          case 'date': addValue(ev.date); break;
+          case 'date.end': addValue(ev.dateEnd); break;
+          default: {
+            const prop = ev.properties?.find(p => p.key.toLowerCase() === subField);
+            if (prop) addValue(prop.value);
+          }
         }
       }
     }
-  };
+  } else {
+    const processItems = (items: (Element | Link)[]) => {
+      for (const item of items) {
+        switch (lower) {
+          case 'label': addValue(item.label); break;
+          case 'source': addValue(item.source); break;
+          case 'tag':
+            for (const t of item.tags) if (t) addValue(t);
+            break;
+          case 'type':
+            addValue('fromId' in item ? 'link' : 'element');
+            break;
+          default: {
+            // Free property
+            const prop = item.properties.find(p => p.key.toLowerCase() === lower);
+            if (prop) addValue(prop.value);
+          }
+        }
+      }
+    };
 
-  processItems(elements);
-  processItems(links);
+    processItems(elements);
+    processItems(links);
+  }
 
   // Sort by frequency desc, then alphabetical, limit to 50
   return [...values.entries()]
