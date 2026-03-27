@@ -610,6 +610,100 @@ describe('evaluator — event fields', () => {
   });
 });
 
+// ── Geo fields and NEAR ──
+
+describe('evaluator — geo fields', () => {
+  it('geo.lat and geo.lng for bounding box', () => {
+    const els = [
+      makeElement({ geo: { type: 'point', lat: 43.3, lng: 5.4 } }),  // Marseille
+      makeElement({ geo: { type: 'point', lat: 48.85, lng: 2.35 } }), // Paris
+      makeElement({ geo: null }),
+    ];
+    const r = query('geo.lat >= 43.0 AND geo.lat <= 44.0 AND geo.lng >= 5.0 AND geo.lng <= 6.0', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('geo NEAR with radius', () => {
+    const els = [
+      makeElement({ geo: { type: 'point', lat: 43.3, lng: 5.4 } }),   // Marseille
+      makeElement({ geo: { type: 'point', lat: 43.7, lng: 7.27 } }),  // Nice (~160km)
+      makeElement({ geo: { type: 'point', lat: 48.85, lng: 2.35 } }), // Paris (~660km)
+    ];
+    const r = query('geo NEAR 43.3,5.4 200km', els);
+    expect(r.elementIds.size).toBe(2); // Marseille + Nice
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+    expect(r.elementIds.has(els[1].id)).toBe(true);
+  });
+
+  it('geo NEAR small radius in meters', () => {
+    const els = [
+      makeElement({ geo: { type: 'point', lat: 43.2965, lng: 5.3698 } }), // Vieux-Port
+      makeElement({ geo: { type: 'point', lat: 43.3, lng: 5.4 } }),       // ~2.5km away
+    ];
+    const r = query('geo NEAR 43.2965,5.3698 500m', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('geo NEAR on element without geo returns no match', () => {
+    const els = [makeElement({ geo: null })];
+    const r = query('geo NEAR 43.3,5.4 100km', els);
+    expect(r.elementIds.size).toBe(0);
+  });
+
+  it('geo NEAR ignores links', () => {
+    const el = makeElement({ geo: { type: 'point', lat: 43.3, lng: 5.4 } });
+    const link = makeLink({ fromId: el.id, toId: el.id });
+    const r = query('geo NEAR 43.3,5.4 100km', [el], [link]);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.linkIds.size).toBe(0);
+  });
+
+  it('event.geo NEAR matches events within radius', () => {
+    const els = [
+      makeElement({
+        events: [
+          { id: 'ev1', date: new Date('2024-01-01'), label: 'Escale Marseille', geo: { type: 'point', lat: 43.3, lng: 5.4 } },
+        ],
+      }),
+      makeElement({
+        events: [
+          { id: 'ev2', date: new Date('2024-01-01'), label: 'Escale Paris', geo: { type: 'point', lat: 48.85, lng: 2.35 } },
+        ],
+      }),
+      makeElement({ events: [] }),
+    ];
+    const r = query('event.geo NEAR 43.3,5.4 50km', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('combined: tag + geo NEAR', () => {
+    const els = [
+      makeElement({ tags: ['navire'], geo: { type: 'point', lat: 43.3, lng: 5.4 } }),
+      makeElement({ tags: ['personne'], geo: { type: 'point', lat: 43.3, lng: 5.4 } }),
+    ];
+    const r = query('tag = "navire" AND geo NEAR 43.3,5.4 10km', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('geo.lat/geo.lng works with polygon center', () => {
+    const els = [
+      makeElement({
+        geo: {
+          type: 'polygon',
+          coordinates: [[5.3, 43.2], [5.5, 43.2], [5.5, 43.4], [5.3, 43.4]],
+          center: { lat: 43.3, lng: 5.4 },
+        },
+      }),
+    ];
+    const r = query('geo.lat >= 43.0 AND geo.lat <= 44.0', els);
+    expect(r.elementIds.size).toBe(1);
+  });
+});
+
 // ── Performance ──
 
 describe('evaluator — performance', () => {

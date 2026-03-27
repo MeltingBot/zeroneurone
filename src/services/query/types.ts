@@ -37,7 +37,8 @@ export type QueryOperator =
   | 'gt' | 'lt' | 'gte' | 'lte'
   | 'contains' | 'starts' | 'ends'
   | 'matches'
-  | 'exists' | 'not_exists';
+  | 'exists' | 'not_exists'
+  | 'near';
 
 // ── Values ──
 
@@ -78,6 +79,7 @@ export const OPERATOR_KEYWORDS: Record<string, QueryOperator> = {
   'MATCHES': 'matches',
   'EXISTS': 'exists',
   'NOT EXISTS': 'not_exists',
+  'NEAR': 'near',
 };
 
 export const OPERATOR_SYMBOLS: Record<QueryOperator, string> = {
@@ -93,6 +95,7 @@ export const OPERATOR_SYMBOLS: Record<QueryOperator, string> = {
   matches: 'MATCHES',
   exists: 'EXISTS',
   not_exists: 'NOT EXISTS',
+  near: 'NEAR',
 };
 
 // ── Reserved field names (case-insensitive) ──
@@ -104,7 +107,9 @@ export const RESERVED_FIELDS = new Set([
   'type', 'has_geo', 'group',
   // Link-specific
   'from.label', 'from.tag', 'to.label', 'to.tag', 'directed',
+  // Geo fields (numeric lat/lng for bounding box queries)
+  'geo.lat', 'geo.lng',
   // Element events (ANY semantics: matches if at least one event satisfies)
   'event.date', 'event.date.end', 'event.label', 'event.description',
-  'event.source', 'event.geo',
+  'event.source', 'event.geo', 'event.geo.lat', 'event.geo.lng',
 ]);

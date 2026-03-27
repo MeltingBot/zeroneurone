@@ -9,6 +9,7 @@
 //   condition := field OPERATOR value
 //              | field 'EXISTS'
 //              | field 'NOT EXISTS'
+//              | field 'NEAR' NUMBER ',' NUMBER NUMBER ('km'|'m')
 //   field     := IDENTIFIER | '"' STRING '"'
 //   value     := '"' STRING '"' | NUMBER | DATE | BOOLEAN | REGEX
 
@@ -25,6 +26,7 @@ type TokenType =
   | 'REGEX'        // /pattern/
   | 'LPAREN'       // (
   | 'RPAREN'       // )
+  | 'COMMA'        // ,
   | 'OP_EQ'        // =
   | 'OP_NEQ'       // !=
   | 'OP_GTE'       // >=
@@ -74,6 +76,11 @@ function tokenize(input: string): Token[] | ParseError {
     }
     if (input[i] === ')') {
       tokens.push({ type: 'RPAREN', value: ')', position: pos });
+      i++;
+      continue;
+    }
+    if (input[i] === ',') {
+      tokens.push({ type: 'COMMA', value: ',', position: pos });
       i++;
       continue;
     }
@@ -163,8 +170,8 @@ function tokenize(input: string): Token[] | ParseError {
     // is an operator or start of input (to avoid ambiguity with identifiers)
     if (input[i] === '-' && i + 1 < input.length && /\d/.test(input[i + 1])) {
       const prev = tokens[tokens.length - 1];
-      const isAfterOperator = !prev || prev.type.startsWith('OP_') || prev.type === 'LPAREN'
-        || (prev.type === 'IDENTIFIER' && ['CONTAINS', 'STARTS', 'ENDS', 'MATCHES'].includes(prev.value.toUpperCase()));
+      const isAfterOperator = !prev || prev.type.startsWith('OP_') || prev.type === 'LPAREN' || prev.type === 'COMMA'
+        || (prev.type === 'IDENTIFIER' && ['CONTAINS', 'STARTS', 'ENDS', 'MATCHES', 'NEAR'].includes(prev.value.toUpperCase()));
       if (isAfterOperator) {
         let num = '-';
         i++;
@@ -369,6 +376,10 @@ class Parser {
         this.advance();
         return this.buildCondition(field, 'matches');
       }
+      if (kw === 'NEAR') {
+        this.advance(); // consume NEAR
+        return this.parseNear(field);
+      }
       if (kw === 'EXISTS') {
         this.advance();
         return { type: 'condition', field: field.value, operator: 'exists', value: null } as QueryCondition;
@@ -387,8 +398,75 @@ class Parser {
     throw this.error(
       `Expected operator after field '${field.value}'`,
       t.position,
-      '=, !=, >, <, >=, <=, CONTAINS, STARTS, ENDS, MATCHES, EXISTS, NOT EXISTS',
+      '=, !=, >, <, >=, <=, CONTAINS, STARTS, ENDS, MATCHES, EXISTS, NOT EXISTS, NEAR',
     );
+  }
+
+  // NEAR lat,lng radiusUnit  →  value = "lat,lng,radiusKm"
+  private parseNear(field: { value: string; position: number }): QueryCondition {
+    // Parse latitude
+    const latToken = this.peek();
+    if (latToken.type !== 'NUMBER') {
+      throw this.error('Expected latitude after NEAR', latToken.position, 'number');
+    }
+    this.advance();
+    const lat = parseFloat(latToken.value);
+
+    // Expect comma
+    const comma = this.peek();
+    if (comma.type !== 'COMMA') {
+      throw this.error('Expected comma between latitude and longitude', comma.position, ',');
+    }
+    this.advance();
+
+    // Parse longitude (may be negative)
+    const lngToken = this.peek();
+    if (lngToken.type !== 'NUMBER') {
+      throw this.error('Expected longitude after comma', lngToken.position, 'number');
+    }
+    this.advance();
+    const lng = parseFloat(lngToken.value);
+
+    // Parse radius with unit: "10km" or "500m" — lexed as NUMBER + IDENTIFIER or single IDENTIFIER
+    const radiusToken = this.peek();
+    let radiusKm: number;
+
+    if (radiusToken.type === 'NUMBER') {
+      // Number followed by optional unit identifier
+      this.advance();
+      radiusKm = parseFloat(radiusToken.value);
+      const unitToken = this.peek();
+      if (unitToken.type === 'IDENTIFIER') {
+        const unit = unitToken.value.toLowerCase();
+        if (unit === 'km') {
+          this.advance();
+        } else if (unit === 'm') {
+          this.advance();
+          radiusKm = radiusKm / 1000;
+        } else {
+          // No unit — default to km
+        }
+      }
+    } else if (radiusToken.type === 'IDENTIFIER') {
+      // e.g. "10km" lexed as single identifier — extract number + unit
+      const match = radiusToken.value.match(/^(\d+(?:\.\d+)?)(km|m)$/i);
+      if (!match) {
+        throw this.error('Expected radius (e.g. 10km, 500m)', radiusToken.position, 'radius');
+      }
+      this.advance();
+      radiusKm = parseFloat(match[1]);
+      if (match[2].toLowerCase() === 'm') radiusKm /= 1000;
+    } else {
+      throw this.error('Expected radius after coordinates', radiusToken.position, 'radius (e.g. 10km)');
+    }
+
+    // Encode as "lat,lng,radiusKm" string value
+    return {
+      type: 'condition',
+      field: field.value,
+      operator: 'near',
+      value: `${lat},${lng},${radiusKm}`,
+    };
   }
 
   private parseField(): { value: string; position: number } {

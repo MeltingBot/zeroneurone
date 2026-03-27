@@ -60,6 +60,14 @@ function resolveField(
     }
     case 'has_geo':
       return isLink(item) ? false : item.geo != null;
+    case 'geo.lat': {
+      if (isLink(item) || !item.geo) return null;
+      return item.geo.type === 'point' ? item.geo.lat : item.geo.center.lat;
+    }
+    case 'geo.lng': {
+      if (isLink(item) || !item.geo) return null;
+      return item.geo.type === 'point' ? item.geo.lng : item.geo.center.lng;
+    }
     case 'group':
       return isLink(item) ? false : item.isGroup;
     case 'directed':
@@ -227,6 +235,43 @@ function matchValue(
   return false;
 }
 
+// ── Haversine distance (km) ──
+
+const EARTH_RADIUS_KM = 6371;
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (deg: number) => deg * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Extract lat/lng from an Element's geo field.
+ * Returns null if no geo data.
+ */
+function extractGeoPoint(item: DataItem): { lat: number; lng: number } | null {
+  if (isLink(item) || !item.geo) return null;
+  if (item.geo.type === 'point') return { lat: item.geo.lat, lng: item.geo.lng };
+  return { lat: item.geo.center.lat, lng: item.geo.center.lng };
+}
+
+/**
+ * Parse NEAR value string "lat,lng,radiusKm".
+ */
+function parseNearValue(value: string): { lat: number; lng: number; radiusKm: number } | null {
+  const parts = value.split(',');
+  if (parts.length !== 3) return null;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  const radiusKm = parseFloat(parts[2]);
+  if (isNaN(lat) || isNaN(lng) || isNaN(radiusKm)) return null;
+  return { lat, lng, radiusKm };
+}
+
 // ── Event field resolution ──
 
 /**
@@ -250,6 +295,14 @@ function resolveEventSubField(
     case 'description': return event.description ?? null;
     case 'source': return event.source ?? null;
     case 'geo': return event.geo != null;
+    case 'geo.lat': {
+      if (!event.geo) return null;
+      return event.geo.type === 'point' ? event.geo.lat : event.geo.center?.lat ?? null;
+    }
+    case 'geo.lng': {
+      if (!event.geo) return null;
+      return event.geo.type === 'point' ? event.geo.lng : event.geo.center?.lng ?? null;
+    }
     default: {
       // Free property on event
       const prop = event.properties?.find(p => p.key.toLowerCase() === subField);
@@ -269,6 +322,33 @@ function evaluateCondition(
   item: DataItem,
   elements: Map<string, Element>,
 ): boolean {
+  // ── NEAR operator: geo proximity ──
+  if (cond.operator === 'near' && typeof cond.value === 'string') {
+    const near = parseNearValue(cond.value);
+    if (!near) return false;
+
+    const fieldLower = cond.field.toLowerCase();
+
+    // event.geo NEAR — match if any event is within radius
+    if (fieldLower === 'event.geo') {
+      if (isLink(item)) return false;
+      const events = item.events;
+      if (!events || events.length === 0) return false;
+      return events.some(ev => {
+        if (!ev.geo) return false;
+        const evLat = ev.geo.type === 'point' ? ev.geo.lat : ev.geo.center?.lat;
+        const evLng = ev.geo.type === 'point' ? ev.geo.lng : ev.geo.center?.lng;
+        if (evLat == null || evLng == null) return false;
+        return haversineKm(near.lat, near.lng, evLat, evLng) <= near.radiusKm;
+      });
+    }
+
+    // geo NEAR / has_geo NEAR — element geo proximity
+    const point = extractGeoPoint(item);
+    if (!point) return false;
+    return haversineKm(near.lat, near.lng, point.lat, point.lng) <= near.radiusKm;
+  }
+
   // ── Event fields: ANY semantics over element.events[] ──
   if (isEventField(cond.field)) {
     // Links have no events

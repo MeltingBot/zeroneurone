@@ -328,6 +328,48 @@ describe('parser — errors', () => {
   });
 });
 
+// ── NEAR operator ──
+
+describe('parser — NEAR', () => {
+  it('geo NEAR lat,lng radiusKm', () => {
+    const ast = parse('geo NEAR 43.3,5.4 10km') as QueryCondition;
+    expect(ast.type).toBe('condition');
+    expect(ast.field).toBe('geo');
+    expect(ast.operator).toBe('near');
+    expect(ast.value).toBe('43.3,5.4,10');
+  });
+
+  it('NEAR with meters', () => {
+    const ast = parse('geo NEAR 48.85,2.35 500m') as QueryCondition;
+    expect(ast.operator).toBe('near');
+    expect(ast.value).toBe('48.85,2.35,0.5');
+  });
+
+  it('event.geo NEAR', () => {
+    const ast = parse('event.geo NEAR 43.3,5.4 25km') as QueryCondition;
+    expect(ast.field).toBe('event.geo');
+    expect(ast.operator).toBe('near');
+    expect(ast.value).toBe('43.3,5.4,25');
+  });
+
+  it('NEAR with negative longitude', () => {
+    const ast = parse('geo NEAR 40.7,-74.0 5km') as QueryCondition;
+    expect(ast.value).toBe('40.7,-74,5');
+  });
+
+  it('NEAR combined with AND', () => {
+    const ast = parse('tag = "navire" AND geo NEAR 43.3,5.4 10km') as QueryAnd;
+    expect(ast.type).toBe('and');
+    expect(ast.children).toHaveLength(2);
+    expect((ast.children[1] as QueryCondition).operator).toBe('near');
+  });
+
+  it('NEAR with number then separate unit', () => {
+    const ast = parse('geo NEAR 43.3,5.4 10 km') as QueryCondition;
+    expect(ast.value).toBe('43.3,5.4,10');
+  });
+});
+
 // ── Comments ──
 
 describe('parser — comments', () => {

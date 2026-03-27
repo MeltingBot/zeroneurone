@@ -178,4 +178,16 @@ describe('serializer — complex round-trips', () => {
   it('nested NOT', () => {
     roundTrip('NOT NOT tag = "test"');
   });
+
+  it('NEAR serialization round-trip', () => {
+    roundTrip('geo NEAR 43.3,5.4 10km');
+  });
+
+  it('NEAR with meters serialization', () => {
+    roundTrip('geo NEAR 48.85,2.35 500m');
+  });
+
+  it('event.geo NEAR round-trip', () => {
+    roundTrip('event.geo NEAR 43.3,5.4 25km');
+  });
 });

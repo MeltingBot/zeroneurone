@@ -166,6 +166,9 @@ const FIELD_TYPES: Record<string, FieldType> = {
   'to.label': 'string',
   'to.tag': 'string',
   directed: 'boolean',
+  // Geo fields
+  'geo.lat': 'number',
+  'geo.lng': 'number',
   // Element events
   'event.date': 'date',
   'event.date.end': 'date',
@@ -173,6 +176,8 @@ const FIELD_TYPES: Record<string, FieldType> = {
   'event.description': 'string',
   'event.source': 'string',
   'event.geo': 'boolean',
+  'event.geo.lat': 'number',
+  'event.geo.lng': 'number',
 };
 
 function operatorsForType(type: FieldType): { symbol: string; label: string }[] {
@@ -326,10 +331,15 @@ export function getAutocompleteSuggestions(
     }
 
     case 'operator': {
-      const fieldType = FIELD_TYPES[ctx.field.toLowerCase()] || 'any';
+      const fieldLower = ctx.field.toLowerCase();
+      const fieldType = FIELD_TYPES[fieldLower] || 'any';
       const ops = operatorsForType(fieldType);
       for (const op of ops) {
         suggestions.push({ text: op.symbol, type: 'operator', description: op.label });
+      }
+      // Add NEAR for geo-capable fields
+      if (fieldLower === 'geo' || fieldLower === 'has_geo' || fieldLower === 'event.geo') {
+        suggestions.push({ text: 'NEAR', type: 'operator', description: 'proximity (lat,lng radius)' });
       }
       break;
     }

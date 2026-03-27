@@ -52,6 +52,19 @@ function serializeNode(node: QueryNode, parent: ParentContext): string {
   switch (node.type) {
     case 'condition': {
       const field = serializeField(node.field);
+
+      // NEAR: value is "lat,lng,radiusKm" → serialize as "field NEAR lat,lng radiusKm"
+      if (node.operator === 'near' && typeof node.value === 'string') {
+        const parts = node.value.split(',');
+        const lat = parts[0];
+        const lng = parts[1];
+        const radiusKm = parseFloat(parts[2]);
+        const radiusStr = radiusKm < 1
+          ? `${Math.round(radiusKm * 1000)}m`
+          : `${radiusKm}km`;
+        return `${field} NEAR ${lat},${lng} ${radiusStr}`;
+      }
+
       const op = OPERATOR_SYMBOLS[node.operator];
       if (node.operator === 'exists' || node.operator === 'not_exists') {
         return `${field} ${op}`;
