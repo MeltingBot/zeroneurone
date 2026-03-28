@@ -151,6 +151,7 @@
       "setKeyObject": "Set as alignment reference",
       "clearKeyObject": "Clear alignment reference",
       "findSimilar": "Find similar",
+      "findSimilarNoTags": "This element has no tags for similarity search",
       "queryFromSelection": "Query from selection"
     },
     "viewToolbar": {

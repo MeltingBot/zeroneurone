@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.38.3
+
+### Fixes
+- **Visual builder NOT support**: NOT toggle per condition/group with border-left indicator, no layout overflow
+- **Visual builder nested groups**: recursive AND/OR sub-groups (max depth 2), combinator toggle
+- **Visual builder NEAR layout**: NEAR inputs (lat, lng, radius, unit) on dedicated row to prevent overflow
+- **IN operator**: parser, serializer, evaluator support for `field IN ("a", "b", "c")`
+- **Query history**: last 5 queries tracked in-session, reapply from history section
+- **Select all results**: button to select all matching elements/links on canvas
+- **Save as View**: create a saved view from current query results
+- **Zero results feedback**: visual indicator when query matches nothing
+- **Auto re-execute**: query re-runs automatically when dossier data changes
+- **Viewport navigation**: click table row to navigate canvas to element position
+- **Find Similar feedback**: toast warning when element has no tags
+- **i18n syntax examples**: hardcoded French examples replaced with i18n keys (11 languages)
+- **Search modal query hint**: `?` prefix hint in Ctrl+K footer
+
 ## 2.38.2
 
 ### Fixes

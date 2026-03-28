@@ -109,7 +109,8 @@
     "navigate": "navigieren",
     "select": "auswählen",
     "close": "schließen",
-    "showTags": "Tags anzeigen"
+    "showTags": "Tags anzeigen",
+    "queryHint": "Abfrage"
   },
   "shortcuts": {
     "title": "Tastenkürzel",

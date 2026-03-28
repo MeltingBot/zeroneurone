@@ -2245,7 +2245,11 @@ export function Canvas() {
   const handleFindSimilar = useCallback(() => {
     if (!contextMenu) return;
     const el = elements.find(e => e.id === contextMenu.elementId);
-    if (!el || el.tags.length === 0) return;
+    if (!el) return;
+    if (el.tags.filter(Boolean).length === 0) {
+      useUIStore.getState().showToast('warning', tPages('dossier.findSimilarNoTags'));
+      return;
+    }
 
     const conditions: import('../../services/query/types').QueryCondition[] = el.tags.filter(Boolean).map(tag => ({
       type: 'condition' as const,

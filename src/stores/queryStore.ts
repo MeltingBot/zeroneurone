@@ -6,6 +6,7 @@ import { serializeQuery } from '../services/query/serializer';
 import { evaluateQuery } from '../services/query/evaluator';
 import { queryRepository } from '../db/repositories/queryRepository';
 import { useDossierStore } from './dossierStore';
+import { useSelectionStore } from './selectionStore';
 
 interface QueryState {
   // Current query
@@ -33,6 +34,9 @@ interface QueryState {
   // Table columns
   tableColumns: string[];
 
+  // Recent queries (in-session history, max 5)
+  recentQueries: string[];
+
   // Actions
   setText: (text: string) => void;
   setAst: (ast: QueryNode | null) => void;
@@ -41,6 +45,7 @@ interface QueryState {
   execute: () => void;
   clear: () => void;
   toggleFilter: () => void;
+  selectAllResults: () => void;
 
   // Saved queries
   loadSavedQueries: (dossierId: DossierId) => Promise<void>;
@@ -64,6 +69,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   matchingLinkIds: new Set(),
   savedQueries: [],
   tableColumns: ['label', 'tags', 'confidence', 'date'],
+  recentQueries: [],
 
   setText: (text: string) => {
     const result = text.trim() ? parseQuery(text) : { ast: null, error: null };
@@ -109,7 +115,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   },
 
   execute: () => {
-    const { currentAst, outputMode } = get();
+    const { currentAst, currentText, outputMode } = get();
     if (!currentAst) {
       set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set() });
       return;
@@ -122,12 +128,32 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     const results = evaluateQuery(currentAst, elements, links);
     const isActive = outputMode === 'canvas' || outputMode === 'both';
 
+    // Track in recent queries (deduplicate, max 5)
+    const trimmed = currentText.trim();
+    const recentUpdate: Partial<{ recentQueries: string[] }> = {};
+    if (trimmed) {
+      const { recentQueries } = get();
+      if (recentQueries[0] !== trimmed) {
+        recentUpdate.recentQueries = [trimmed, ...recentQueries.filter(q => q !== trimmed)].slice(0, 5);
+      }
+    }
+
     set({
       results,
       matchingElementIds: isActive ? results.elementIds : new Set(),
       matchingLinkIds: isActive ? results.linkIds : new Set(),
       isFilterActive: isActive,
+      ...recentUpdate,
     });
+  },
+
+  selectAllResults: () => {
+    const { results } = get();
+    if (!results) return;
+    useSelectionStore.getState().selectBoth(
+      [...results.elementIds],
+      [...results.linkIds],
+    );
   },
 
   clear: () => {
@@ -195,3 +221,13 @@ export const useQueryStore = create<QueryState>((set, get) => ({
 
   setTableColumns: (columns: string[]) => set({ tableColumns: columns }),
 }));
+
+// Re-execute query when dossier data changes (#5)
+useDossierStore.subscribe((state, prevState) => {
+  if (state.elements !== prevState.elements || state.links !== prevState.links) {
+    const { currentAst } = useQueryStore.getState();
+    if (currentAst) {
+      useQueryStore.getState().execute();
+    }
+  }
+});

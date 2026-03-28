@@ -109,7 +109,8 @@
     "navigate": "navigeren",
     "select": "selecteren",
     "close": "sluiten",
-    "showTags": "Tags tonen"
+    "showTags": "Tags tonen",
+    "queryHint": "query"
   },
   "shortcuts": {
     "title": "Sneltoetsen",

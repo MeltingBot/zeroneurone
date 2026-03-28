@@ -181,10 +181,10 @@ export function QueryBuilderText() {
       {/* Syntax help */}
       <div className="mt-3 text-[10px] text-text-tertiary leading-relaxed">
         <p className="font-medium mb-1">{t('query.syntaxHelp')}</p>
-        <p className="font-mono">tag = &quot;personne&quot; AND ville = &quot;Paris&quot;</p>
-        <p className="font-mono">confidence &gt; 60 AND date &gt;= 2024-01-01</p>
-        <p className="font-mono">notes CONTAINS &quot;blanchiment&quot;</p>
-        <p className="font-mono">email EXISTS</p>
+        <p className="font-mono">{t('query.syntaxExample1')}</p>
+        <p className="font-mono">{t('query.syntaxExample2')}</p>
+        <p className="font-mono">{t('query.syntaxExample3')}</p>
+        <p className="font-mono">{t('query.syntaxExample4')}</p>
       </div>
     </div>
   );

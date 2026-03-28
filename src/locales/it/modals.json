@@ -109,7 +109,8 @@
     "navigate": "naviga",
     "select": "seleziona",
     "close": "chiudi",
-    "showTags": "Mostra tag"
+    "showTags": "Mostra tag",
+    "queryHint": "query"
   },
   "shortcuts": {
     "title": "Scorciatoie da tastiera",

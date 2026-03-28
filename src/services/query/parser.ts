@@ -376,6 +376,10 @@ class Parser {
         this.advance();
         return this.buildCondition(field, 'matches');
       }
+      if (kw === 'IN') {
+        this.advance(); // consume IN
+        return this.parseIn(field);
+      }
       if (kw === 'NEAR') {
         this.advance(); // consume NEAR
         return this.parseNear(field);
@@ -398,8 +402,54 @@ class Parser {
     throw this.error(
       `Expected operator after field '${field.value}'`,
       t.position,
-      '=, !=, >, <, >=, <=, CONTAINS, STARTS, ENDS, MATCHES, EXISTS, NOT EXISTS, NEAR',
+      '=, !=, >, <, >=, <=, CONTAINS, STARTS, ENDS, MATCHES, EXISTS, NOT EXISTS, IN, NEAR',
     );
+  }
+
+  // IN ["a", "b", "c"]  →  value = string[]
+  private parseIn(field: { value: string; position: number }): QueryCondition {
+    // Expect [ as IDENTIFIER "[" or LPAREN — we use "[" which lexes as unknown char
+    // Since '[' is not in our lexer, we'll accept parentheses or just a list of strings
+    // Syntax: field IN ["a", "b"] or field IN ("a", "b")
+    const opener = this.peek();
+    const useParen = opener.type === 'LPAREN';
+    // For bracket syntax, we consume the IDENTIFIER that starts with "["
+    // Actually our lexer doesn't handle "[", so let's use parentheses: field IN ("a", "b", "c")
+    if (!useParen) {
+      throw this.error('Expected ( after IN', opener.position, '(');
+    }
+    this.advance(); // consume (
+
+    const values: string[] = [];
+    while (this.peek().type !== 'RPAREN' && this.peek().type !== 'EOF') {
+      const vt = this.peek();
+      if (vt.type === 'STRING') {
+        values.push(vt.value);
+        this.advance();
+      } else if (vt.type === 'NUMBER') {
+        values.push(vt.value);
+        this.advance();
+      } else if (vt.type === 'IDENTIFIER') {
+        values.push(vt.value);
+        this.advance();
+      } else if (vt.type === 'COMMA') {
+        this.advance(); // skip comma separators
+      } else {
+        throw this.error(`Unexpected token in IN list: '${vt.value}'`, vt.position);
+      }
+    }
+    this.expect('RPAREN');
+
+    if (values.length === 0) {
+      throw this.error('IN list cannot be empty', opener.position);
+    }
+
+    return {
+      type: 'condition',
+      field: field.value,
+      operator: 'in',
+      value: values,
+    };
   }
 
   // NEAR lat,lng radiusUnit  →  value = "lat,lng,radiusKm"

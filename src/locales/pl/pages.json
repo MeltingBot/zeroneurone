@@ -151,6 +151,7 @@
       "setKeyObject": "Ustaw jako odniesienie wyrównania",
       "clearKeyObject": "Usuń odniesienie wyrównania",
       "findSimilar": "Znajdź podobne",
+      "findSimilarNoTags": "Ten element nie ma tagów do wyszukiwania podobnych",
       "queryFromSelection": "Zapytanie z zaznaczenia"
     },
     "viewToolbar": {

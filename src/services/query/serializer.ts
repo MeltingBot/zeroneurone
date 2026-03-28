@@ -41,7 +41,8 @@ function serializeValue(value: QueryCondition['value'], operator: QueryCondition
   }
 
   // Regular string: quote it
-  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  const str = typeof value === 'string' ? value : String(value);
+  return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
 // ── Node serialization ──
@@ -52,6 +53,12 @@ function serializeNode(node: QueryNode, parent: ParentContext): string {
   switch (node.type) {
     case 'condition': {
       const field = serializeField(node.field);
+
+      // IN: value is string[] → serialize as "field IN ("a", "b")"
+      if (node.operator === 'in' && Array.isArray(node.value)) {
+        const items = node.value.map(v => `"${String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
+        return `${field} IN (${items.join(', ')})`;
+      }
 
       // NEAR: value is "lat,lng,radiusKm" → serialize as "field NEAR lat,lng radiusKm"
       if (node.operator === 'near' && typeof node.value === 'string') {

@@ -40,6 +40,14 @@ Quand plusieurs conditions sont présentes, un bouton **AND/OR** permet de bascu
 - **AND** : toutes les conditions doivent être satisfaites
 - **OR** : au moins une condition doit être satisfaite
 
+### Groupes imbriqués
+
+Cliquez sur **Ajouter un groupe** pour créer un sous-groupe avec le combinateur opposé (AND dans un groupe OR, et inversement). La profondeur maximale est de 2 niveaux.
+
+### Négation (NOT)
+
+Chaque condition ou groupe dispose d'un bouton **NOT** pour inverser son résultat. Quand actif, la condition est bordée d'orange à gauche.
+
 Le mode visuel exécute automatiquement la requête à chaque modification.
 
 ---
@@ -165,6 +173,17 @@ ville = "Paris"
 | `ENDS` | Termine par |
 | `MATCHES` | Expression régulière |
 
+### Ensemble
+
+| Opérateur | Syntaxe | Description |
+|-----------|---------|-------------|
+| `IN` | `champ IN ("a", "b", "c")` | Le champ correspond à l'une des valeurs listées |
+
+```
+tag IN ("personne", "entreprise", "organisation")
+country IN ("FR", "DE", "ES")
+```
+
 ### Existence
 
 | Opérateur | Description |
@@ -199,6 +218,22 @@ Après exécution, deux modes d'affichage sont disponibles (cumulables) :
 
 Les boutons de mode se trouvent en bas du panneau requêtes, à côté du compteur de résultats.
 
+### Actions sur les résultats
+
+- **Tout sélectionner** : sélectionne tous les éléments et liens correspondants sur le canvas
+- **Sauvegarder comme vue** : crée une vue sauvegardée à partir des résultats de la requête
+- **Clic sur une ligne** (mode table) : sélectionne l'élément et centre la vue dessus
+
+### Actualisation automatique
+
+La requête se ré-exécute automatiquement lorsque les données du dossier changent (ajout, modification ou suppression d'éléments/liens).
+
+---
+
+## Historique des requêtes
+
+Les 5 dernières requêtes exécutées sont mémorisées pendant la session. Cliquez sur l'icône horloge pour afficher l'historique et réappliquer une requête précédente.
+
 ---
 
 ## Requêtes sauvegardées
@@ -231,6 +266,12 @@ event.date >= 2024-01-01 AND event.geo NEAR 43.3,5.4 50km
 
 ```
 type = "link" AND from.tag = "entreprise" AND confidence < 40
+```
+
+### Éléments de plusieurs types
+
+```
+tag IN ("personne", "entreprise") AND confidence > 50
 ```
 
 ### Éléments sans source

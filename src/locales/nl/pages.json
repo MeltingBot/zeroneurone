@@ -151,6 +151,7 @@
       "setKeyObject": "Instellen als uitlijnreferentie",
       "clearKeyObject": "Uitlijnreferentie verwijderen",
       "findSimilar": "Vergelijkbare zoeken",
+      "findSimilarNoTags": "Dit element heeft geen tags voor vergelijkbare zoekopdracht",
       "queryFromSelection": "Zoekopdracht uit selectie"
     },
     "viewToolbar": {

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
 import { RESERVED_FIELDS, OPERATOR_SYMBOLS } from '../../services/query/types';
-import type { QueryCondition, QueryOperator } from '../../services/query/types';
+import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot } from '../../services/query/types';
 import { Plus, X, ToggleLeft, ToggleRight } from 'lucide-react';
 
 // ── Condition Row ──
@@ -41,15 +41,15 @@ function getOperatorsForField(field: string): QueryOperator[] {
   switch (cat) {
     case 'number':
     case 'date':
-      return [...base, 'gt', 'lt', 'gte', 'lte'];
+      return [...base, 'gt', 'lt', 'gte', 'lte', 'in'];
     case 'string':
-      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'matches'];
+      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'matches', 'in'];
     case 'boolean':
       return base;
     case 'geo':
       return [...base, 'near'];
     default:
-      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'matches'];
+      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'matches', 'in'];
   }
 }
 
@@ -238,54 +238,232 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
   };
 
   return (
-    <div className="flex items-center gap-1 py-1 flex-wrap">
-      {/* Field select */}
-      <select
-        value={condition.field}
-        onChange={handleFieldChange}
-        className="flex-1 min-w-0 px-2 py-1 text-xs rounded border border-border-default bg-bg-primary text-text-primary outline-none focus:border-accent"
-      >
-        <option value="">{t('query.selectField')}</option>
-        <optgroup label={t('query.systemFields')}>
-          {[...RESERVED_FIELDS].map(f => (
-            <option key={f} value={f}>{f}</option>
-          ))}
-        </optgroup>
-        {availableFields.length > 0 && (
-          <optgroup label={t('query.properties')}>
-            {availableFields.map(f => (
+    <div className="py-1">
+      <div className="flex items-center gap-1">
+        {/* Field select */}
+        <select
+          value={condition.field}
+          onChange={handleFieldChange}
+          className="flex-1 min-w-0 px-2 py-1 text-xs rounded border border-border-default bg-bg-primary text-text-primary outline-none focus:border-accent"
+        >
+          <option value="">{t('query.selectField')}</option>
+          <optgroup label={t('query.systemFields')}>
+            {[...RESERVED_FIELDS].map(f => (
               <option key={f} value={f}>{f}</option>
             ))}
           </optgroup>
-        )}
-      </select>
+          {availableFields.length > 0 && (
+            <optgroup label={t('query.properties')}>
+              {availableFields.map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </optgroup>
+          )}
+        </select>
 
-      {/* Operator select */}
-      <select
-        value={condition.operator}
-        onChange={handleOperatorChange}
-        className="w-20 px-1 py-1 text-xs rounded border border-border-default bg-bg-primary text-text-primary outline-none focus:border-accent"
-      >
-        {operators.map(op => (
-          <option key={op} value={op}>{OPERATOR_SYMBOLS[op]}</option>
-        ))}
-      </select>
+        {/* Operator select */}
+        <select
+          value={condition.operator}
+          onChange={handleOperatorChange}
+          className="w-20 shrink-0 px-1 py-1 text-xs rounded border border-border-default bg-bg-primary text-text-primary outline-none focus:border-accent"
+        >
+          {operators.map(op => (
+            <option key={op} value={op}>{OPERATOR_SYMBOLS[op]}</option>
+          ))}
+        </select>
 
-      {/* Value input — adapts to field type */}
-      {renderValueInput()}
+        {/* Value input — inline for simple types */}
+        {!isNear && renderValueInput()}
 
-      {/* Remove button */}
-      <button
-        onClick={onRemove}
-        className="p-1 text-text-tertiary hover:text-error rounded hover:bg-bg-secondary transition-colors"
-      >
-        <X size={12} />
-      </button>
+        {/* Remove button */}
+        <button
+          onClick={onRemove}
+          className="shrink-0 p-1 text-text-tertiary hover:text-error rounded hover:bg-bg-secondary transition-colors"
+        >
+          <X size={12} />
+        </button>
+      </div>
+
+      {/* NEAR: value inputs on second row to avoid overflow */}
+      {isNear && (
+        <div className="mt-1 pl-1">
+          {renderValueInput()}
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Visual Builder ──
+// ── Visual Group (recursive AND/OR with NOT support) ──
+
+const MAX_GROUP_DEPTH = 2;
+
+interface VisualGroupProps {
+  node: QueryAnd | QueryOr;
+  onChange: (node: QueryNode) => void;
+  onRemove?: () => void;
+  depth: number;
+  availableFields: string[];
+  availableTags: string[];
+}
+
+function VisualGroup({ node, onChange, onRemove, depth, availableFields, availableTags }: VisualGroupProps) {
+  const { t } = useTranslation('panels');
+  const combinator = node.type;
+
+  const toggleCombinator = useCallback(() => {
+    const newType = combinator === 'and' ? 'or' : 'and';
+    onChange({ ...node, type: newType } as QueryAnd | QueryOr);
+  }, [node, combinator, onChange]);
+
+  const updateChild = useCallback((index: number, newChild: QueryNode) => {
+    const newChildren = [...node.children];
+    newChildren[index] = newChild;
+    onChange({ ...node, children: newChildren });
+  }, [node, onChange]);
+
+  const removeChild = useCallback((index: number) => {
+    const newChildren = node.children.filter((_, i) => i !== index);
+    if (newChildren.length === 0) {
+      if (onRemove) onRemove();
+      else onChange({ type: 'and', children: [] });
+    } else if (newChildren.length === 1 && depth > 0) {
+      onChange(newChildren[0]); // unwrap single-child sub-group
+    } else {
+      onChange({ ...node, children: newChildren });
+    }
+  }, [node, onChange, onRemove, depth]);
+
+  const addCondition = useCallback(() => {
+    const newCond: QueryCondition = { type: 'condition', field: '', operator: 'eq', value: '' };
+    onChange({ ...node, children: [...node.children, newCond] });
+  }, [node, onChange]);
+
+  const addGroup = useCallback(() => {
+    const subType = combinator === 'and' ? 'or' : 'and';
+    const subGroup: QueryNode = {
+      type: subType,
+      children: [{ type: 'condition', field: '', operator: 'eq', value: '' }],
+    };
+    onChange({ ...node, children: [...node.children, subGroup] });
+  }, [node, combinator, onChange]);
+
+  const toggleNot = useCallback((index: number) => {
+    const child = node.children[index];
+    if (child.type === 'not') {
+      updateChild(index, (child as QueryNot).child);
+    } else {
+      updateChild(index, { type: 'not', child } as QueryNot);
+    }
+  }, [node.children, updateChild]);
+
+  return (
+    <div className={depth > 0 ? 'border-l-2 border-accent/20 pl-2 ml-1' : ''}>
+      {/* Combinator toggle + group controls */}
+      <div className="flex items-center gap-2 mb-1">
+        {node.children.length > 1 && (
+          <>
+            <button
+              onClick={toggleCombinator}
+              className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border border-border-default hover:bg-bg-secondary transition-colors"
+            >
+              {combinator === 'and' ? (
+                <><ToggleLeft size={12} /> AND</>
+              ) : (
+                <><ToggleRight size={12} /> OR</>
+              )}
+            </button>
+            <span className="text-[10px] text-text-tertiary">
+              {combinator === 'and' ? t('query.allConditions') : t('query.anyCondition')}
+            </span>
+          </>
+        )}
+        {depth > 0 && onRemove && (
+          <button
+            onClick={onRemove}
+            className="ml-auto p-0.5 text-text-tertiary hover:text-error rounded hover:bg-bg-secondary transition-colors"
+            title={t('query.removeGroup')}
+          >
+            <X size={10} />
+          </button>
+        )}
+      </div>
+
+      {/* Children */}
+      <div className="space-y-0.5">
+        {node.children.map((child, i) => {
+          const isNegated = child.type === 'not';
+          const innerNode = isNegated ? (child as QueryNot).child : child;
+          const isGroup = innerNode.type === 'and' || innerNode.type === 'or';
+
+          return (
+            <div key={i}>
+              {i > 0 && (
+                <div className="text-[10px] text-text-tertiary uppercase font-medium py-0.5 px-1">
+                  {combinator.toUpperCase()}
+                </div>
+              )}
+              <div className={isNegated ? 'border-l-2 border-warning/40 pl-1' : ''}>
+                {/* NOT toggle — compact, on its own line */}
+                <button
+                  onClick={() => toggleNot(i)}
+                  className={`px-1.5 py-0 text-[10px] font-bold rounded transition-colors ${
+                    isNegated
+                      ? 'bg-warning/15 text-warning hover:bg-warning/25'
+                      : 'text-text-tertiary hover:text-warning hover:bg-warning/10'
+                  }`}
+                  title={isNegated ? t('query.removeNot') : t('query.addNot')}
+                >
+                  {isNegated ? '✕ NOT' : '+ NOT'}
+                </button>
+                {isGroup ? (
+                  <VisualGroup
+                    node={innerNode as QueryAnd | QueryOr}
+                    onChange={(n) => updateChild(i, isNegated ? { type: 'not', child: n } as QueryNot : n)}
+                    onRemove={() => removeChild(i)}
+                    depth={depth + 1}
+                    availableFields={availableFields}
+                    availableTags={availableTags}
+                  />
+                ) : innerNode.type === 'condition' ? (
+                  <ConditionRow
+                    condition={innerNode}
+                    onChange={(c) => updateChild(i, isNegated ? { type: 'not', child: c } as QueryNot : c)}
+                    onRemove={() => removeChild(i)}
+                    availableFields={availableFields}
+                    availableTags={availableTags}
+                  />
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add buttons */}
+      <div className="flex items-center gap-1 mt-1.5">
+        <button
+          onClick={addCondition}
+          className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary rounded border border-dashed border-border-default hover:border-accent hover:bg-bg-secondary transition-colors"
+        >
+          <Plus size={12} />
+          {t('query.addCondition')}
+        </button>
+        {depth < MAX_GROUP_DEPTH && (
+          <button
+            onClick={addGroup}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary rounded border border-dashed border-border-default hover:border-accent hover:bg-bg-secondary transition-colors"
+          >
+            <Plus size={12} />
+            {t('query.addGroup')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Visual Builder (main entry) ──
 
 export function QueryBuilderVisual() {
   const { t } = useTranslation('panels');
@@ -294,7 +472,6 @@ export function QueryBuilderVisual() {
   const elements = useDossierStore((s) => s.elements);
   const links = useDossierStore((s) => s.links);
 
-  // Collect available property keys
   const availableFields = useMemo(() => {
     const keys = new Set<string>();
     for (const el of elements.values()) {
@@ -306,7 +483,6 @@ export function QueryBuilderVisual() {
     return [...keys].sort();
   }, [elements, links]);
 
-  // Collect available tags
   const availableTags = useMemo(() => {
     const tags = new Set<string>();
     for (const el of elements.values()) {
@@ -315,105 +491,37 @@ export function QueryBuilderVisual() {
     return [...tags].sort();
   }, [elements]);
 
-  // Parse AST into flat conditions with combinator
-  // Default: AND group with conditions
-  const { combinator, conditions } = useMemo(() => {
-    if (!currentAst) return { combinator: 'and' as const, conditions: [] as QueryCondition[] };
-
-    if (currentAst.type === 'condition') {
-      return { combinator: 'and' as const, conditions: [currentAst] };
-    }
-    if (currentAst.type === 'and' || currentAst.type === 'or') {
-      const conds = currentAst.children.filter((c): c is QueryCondition => c.type === 'condition');
-      return { combinator: currentAst.type, conditions: conds };
-    }
-    // Complex AST: show as single condition group (lossy for deeply nested)
-    return { combinator: 'and' as const, conditions: [] as QueryCondition[] };
+  // Normalize AST to a root group for the visual editor
+  const rootGroup = useMemo((): QueryAnd | QueryOr => {
+    if (!currentAst) return { type: 'and', children: [] };
+    if (currentAst.type === 'and' || currentAst.type === 'or') return currentAst;
+    // Single condition or NOT: wrap in AND group
+    return { type: 'and', children: [currentAst] };
   }, [currentAst]);
 
-  const rebuildAst = useCallback((conds: QueryCondition[], comb: 'and' | 'or') => {
-    if (conds.length === 0) {
+  const handleRootChange = useCallback((node: QueryNode) => {
+    // Simplify: unwrap single-child root group
+    if ((node.type === 'and' || node.type === 'or') && node.children.length === 1) {
+      setAst(node.children[0]);
+    } else if ((node.type === 'and' || node.type === 'or') && node.children.length === 0) {
       setAst(null);
-    } else if (conds.length === 1) {
-      setAst(conds[0]);
     } else {
-      setAst({ type: comb, children: conds });
+      setAst(node);
     }
   }, [setAst]);
 
-  const handleConditionChange = useCallback((index: number, cond: QueryCondition) => {
-    const newConds = [...conditions];
-    newConds[index] = cond;
-    rebuildAst(newConds, combinator);
-  }, [conditions, combinator, rebuildAst]);
-
-  const handleRemoveCondition = useCallback((index: number) => {
-    const newConds = conditions.filter((_, i) => i !== index);
-    rebuildAst(newConds, combinator);
-  }, [conditions, combinator, rebuildAst]);
-
-  const handleAddCondition = useCallback(() => {
-    const newCond: QueryCondition = { type: 'condition', field: '', operator: 'eq', value: '' };
-    rebuildAst([...conditions, newCond], combinator);
-  }, [conditions, combinator, rebuildAst]);
-
-  const handleToggleCombinator = useCallback(() => {
-    const newComb = combinator === 'and' ? 'or' : 'and';
-    rebuildAst(conditions, newComb);
-  }, [conditions, combinator, rebuildAst]);
-
   return (
     <div className="p-3">
-      {/* Combinator toggle */}
-      {conditions.length > 1 && (
-        <div className="flex items-center gap-2 mb-2">
-          <button
-            onClick={handleToggleCombinator}
-            className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-border-default hover:bg-bg-secondary transition-colors"
-          >
-            {combinator === 'and' ? (
-              <><ToggleLeft size={12} /> AND</>
-            ) : (
-              <><ToggleRight size={12} /> OR</>
-            )}
-          </button>
-          <span className="text-xs text-text-tertiary">
-            {combinator === 'and' ? t('query.allConditions') : t('query.anyCondition')}
-          </span>
-        </div>
-      )}
-
-      {/* Conditions */}
-      <div className="space-y-0.5">
-        {conditions.map((cond, i) => (
-          <div key={i}>
-            {i > 0 && (
-              <div className="text-[10px] text-text-tertiary uppercase font-medium py-0.5 px-1">
-                {combinator.toUpperCase()}
-              </div>
-            )}
-            <ConditionRow
-              condition={cond}
-              onChange={(c) => handleConditionChange(i, c)}
-              onRemove={() => handleRemoveCondition(i)}
-              availableFields={availableFields}
-              availableTags={availableTags}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Add condition */}
-      <button
-        onClick={handleAddCondition}
-        className="flex items-center gap-1 mt-2 px-2 py-1.5 text-xs text-text-secondary hover:text-text-primary rounded border border-dashed border-border-default hover:border-accent hover:bg-bg-secondary transition-colors w-full justify-center"
-      >
-        <Plus size={12} />
-        {t('query.addCondition')}
-      </button>
+      <VisualGroup
+        node={rootGroup}
+        onChange={handleRootChange}
+        depth={0}
+        availableFields={availableFields}
+        availableTags={availableTags}
+      />
 
       {/* Empty state */}
-      {conditions.length === 0 && (
+      {rootGroup.children.length === 0 && (
         <p className="mt-4 text-xs text-text-tertiary text-center">
           {t('query.emptyVisual')}
         </p>

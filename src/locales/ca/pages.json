@@ -151,6 +151,7 @@
       "setKeyObject": "Definir com a referència d'alineació",
       "clearKeyObject": "Treure referència d'alineació",
       "findSimilar": "Cercar similars",
+      "findSimilarNoTags": "Aquest element no té tags per cercar similars",
       "queryFromSelection": "Consulta des de selecció"
     },
     "viewToolbar": {

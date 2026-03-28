@@ -38,11 +38,12 @@ export type QueryOperator =
   | 'contains' | 'starts' | 'ends'
   | 'matches'
   | 'exists' | 'not_exists'
+  | 'in'
   | 'near';
 
 // ── Values ──
 
-export type QueryValue = string | number | boolean | Date;
+export type QueryValue = string | number | boolean | Date | string[];
 
 // ── Parse result ──
 
@@ -79,6 +80,7 @@ export const OPERATOR_KEYWORDS: Record<string, QueryOperator> = {
   'MATCHES': 'matches',
   'EXISTS': 'exists',
   'NOT EXISTS': 'not_exists',
+  'IN': 'in',
   'NEAR': 'near',
 };
 
@@ -95,6 +97,7 @@ export const OPERATOR_SYMBOLS: Record<QueryOperator, string> = {
   matches: 'MATCHES',
   exists: 'EXISTS',
   not_exists: 'NOT EXISTS',
+  in: 'IN',
   near: 'NEAR',
 };
 

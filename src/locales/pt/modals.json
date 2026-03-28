@@ -109,7 +109,8 @@
     "navigate": "navegar",
     "select": "selecionar",
     "close": "fechar",
-    "showTags": "Mostrar tags"
+    "showTags": "Mostrar tags",
+    "queryHint": "consulta"
   },
   "shortcuts": {
     "title": "Atalhos de teclado",

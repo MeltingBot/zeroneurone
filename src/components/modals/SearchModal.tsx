@@ -530,6 +530,9 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               <span>
                 <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">Esc</kbd> {t('search.close')}
               </span>
+              <span>
+                <kbd className="px-1 py-0.5 bg-bg-tertiary rounded">?</kbd> {t('search.queryHint')}
+              </span>
             </div>
             <button
               onClick={(e) => {

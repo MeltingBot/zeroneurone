@@ -109,7 +109,8 @@
     "navigate": "naviguer",
     "select": "sélectionner",
     "close": "fermer",
-    "showTags": "Afficher les tags"
+    "showTags": "Afficher les tags",
+    "queryHint": "requête"
   },
   "shortcuts": {
     "title": "Raccourcis clavier",

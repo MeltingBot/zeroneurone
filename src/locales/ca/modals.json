@@ -109,7 +109,8 @@
     "navigate": "navegar",
     "select": "seleccionar",
     "close": "tancar",
-    "showTags": "Mostrar etiquetes"
+    "showTags": "Mostrar etiquetes",
+    "queryHint": "consulta"
   },
   "shortcuts": {
     "title": "Dreceres de teclat",

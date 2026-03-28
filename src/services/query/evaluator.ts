@@ -223,6 +223,12 @@ function matchValue(
     }
   }
 
+  // IN — set membership (case-insensitive string match)
+  if (operator === 'in' && Array.isArray(queryValue)) {
+    const fStr = toString(fieldValue).toLowerCase();
+    return queryValue.some(v => String(v).toLowerCase() === fStr);
+  }
+
   // MATCHES — regex
   if (operator === 'matches') {
     const fStr = toString(fieldValue);

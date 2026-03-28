@@ -151,6 +151,7 @@
       "setKeyObject": "Definir como referencia de alineación",
       "clearKeyObject": "Quitar referencia de alineación",
       "findSimilar": "Buscar similares",
+      "findSimilarNoTags": "Este elemento no tiene tags para buscar similares",
       "queryFromSelection": "Consulta desde selección"
     },
     "viewToolbar": {

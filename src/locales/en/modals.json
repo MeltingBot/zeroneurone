@@ -109,7 +109,8 @@
     "navigate": "navigate",
     "select": "select",
     "close": "close",
-    "showTags": "Show tags"
+    "showTags": "Show tags",
+    "queryHint": "query"
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",

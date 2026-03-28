@@ -151,6 +151,7 @@
       "setKeyObject": "Als Ausrichtungsreferenz festlegen",
       "clearKeyObject": "Ausrichtungsreferenz entfernen",
       "findSimilar": "Ähnliche finden",
+      "findSimilarNoTags": "Dieses Element hat keine Tags für die Ähnlichkeitssuche",
       "queryFromSelection": "Abfrage aus Auswahl"
     },
     "viewToolbar": {

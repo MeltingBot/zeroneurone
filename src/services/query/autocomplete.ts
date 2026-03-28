@@ -195,6 +195,7 @@ function operatorsForType(type: FieldType): { symbol: string; label: string }[] 
       { symbol: '<', label: 'less than' },
       { symbol: '>=', label: 'greater or equal' },
       { symbol: '<=', label: 'less or equal' },
+      { symbol: 'IN', label: 'in set' },
     ];
   }
   if (type === 'string') {
@@ -204,10 +205,11 @@ function operatorsForType(type: FieldType): { symbol: string; label: string }[] 
       { symbol: 'STARTS', label: 'starts with' },
       { symbol: 'ENDS', label: 'ends with' },
       { symbol: 'MATCHES', label: 'regex' },
+      { symbol: 'IN', label: 'in set' },
     ];
   }
-  // boolean or any: base operators
-  return base;
+  // boolean or any: base operators + IN
+  return [...base, { symbol: 'IN', label: 'in set' }];
 }
 
 // ── Value collection ──

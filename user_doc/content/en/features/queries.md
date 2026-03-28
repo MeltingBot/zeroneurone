@@ -40,6 +40,14 @@ When multiple conditions are present, an **AND/OR** button lets you toggle betwe
 - **AND**: all conditions must be satisfied
 - **OR**: at least one condition must be satisfied
 
+### Nested groups
+
+Click **Add group** to create a sub-group with the opposite combinator (AND inside an OR group, and vice versa). Maximum nesting depth is 2 levels.
+
+### Negation (NOT)
+
+Each condition or group has a **NOT** button to negate its result. When active, the condition is bordered in orange on the left.
+
 Visual mode automatically executes the query on every change.
 
 ---
@@ -165,6 +173,17 @@ city = "Paris"
 | `ENDS` | Ends with |
 | `MATCHES` | Regular expression |
 
+### Set membership
+
+| Operator | Syntax | Description |
+|----------|--------|-------------|
+| `IN` | `field IN ("a", "b", "c")` | Field matches one of the listed values |
+
+```
+tag IN ("person", "company", "organization")
+country IN ("FR", "DE", "ES")
+```
+
 ### Existence
 
 | Operator | Description |
@@ -199,6 +218,22 @@ After execution, two display modes are available (can be combined):
 
 Mode buttons are at the bottom of the queries panel, next to the results counter.
 
+### Result actions
+
+- **Select all**: selects all matching elements and links on the canvas
+- **Save as view**: creates a saved view from the current query results
+- **Click a row** (table mode): selects the element and centers the viewport on it
+
+### Automatic refresh
+
+The query automatically re-executes when dossier data changes (element/link additions, modifications, or deletions).
+
+---
+
+## Query history
+
+The last 5 executed queries are remembered during the session. Click the clock icon to show the history and reapply a previous query.
+
 ---
 
 ## Saved queries
@@ -231,6 +266,12 @@ event.date >= 2024-01-01 AND event.geo NEAR 43.3,5.4 50km
 
 ```
 type = "link" AND from.tag = "company" AND confidence < 40
+```
+
+### Elements of multiple types
+
+```
+tag IN ("person", "company") AND confidence > 50
 ```
 
 ### Elements without a source

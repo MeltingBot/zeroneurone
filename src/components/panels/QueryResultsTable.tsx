@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
 import { useSelectionStore } from '../../stores/selectionStore';
+import { useViewStore } from '../../stores/viewStore';
 import type { Element, Link } from '../../types';
 import { ArrowUpDown, ArrowUp, ArrowDown, Download, Box, Link2 } from 'lucide-react';
 
@@ -68,6 +69,7 @@ export function QueryResultsTable() {
   const elementsMap = useDossierStore((s) => s.elements);
   const linksMap = useDossierStore((s) => s.links);
   const selectElement = useSelectionStore((s) => s.selectElement);
+  const requestViewportChange = useViewStore((s) => s.requestViewportChange);
 
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
@@ -127,8 +129,13 @@ export function QueryResultsTable() {
   const handleRowClick = useCallback((row: TableRow) => {
     if (row.type === 'element') {
       selectElement(row.id);
+      // Navigate viewport to element position (#8)
+      const el = [...elementsMap.values()].find(e => e.id === row.id);
+      if (el) {
+        requestViewportChange({ x: el.position.x, y: el.position.y, zoom: 1 });
+      }
     }
-  }, [selectElement]);
+  }, [selectElement, requestViewportChange]);
 
   const handleExportCSV = useCallback(() => {
     if (sortedRows.length === 0) return;
@@ -193,7 +200,7 @@ export function QueryResultsTable() {
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-default">
         <span className="text-xs text-text-secondary">
-          {sortedRows.length} {t('query.noResults').includes('Aucun') ? 'résultats' : 'results'}
+          {sortedRows.length} {t('query.resultCount')}
         </span>
         <button
           onClick={handleExportCSV}

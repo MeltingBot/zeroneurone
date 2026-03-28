@@ -109,7 +109,8 @@
     "navigate": "nawiguj",
     "select": "wybierz",
     "close": "zamknij",
-    "showTags": "Pokaż tagi"
+    "showTags": "Pokaż tagi",
+    "queryHint": "zapytanie"
   },
   "shortcuts": {
     "title": "Skróty klawiszowe",
