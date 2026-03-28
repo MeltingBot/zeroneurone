@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.38.0
+
+### Features
+- **ZNQuery structured query system**: mini-language textuel + builder visuel with shared AST, autocompletion, saved queries, and two result modes (canvas filter + table)
+- **Query text mode**: recursive descent parser supporting AND/OR/NOT/parentheses, all operators (=, !=, >, <, >=, <=, CONTAINS, STARTS_WITH, ENDS_WITH, MATCHES, EXISTS, NOT EXISTS, IN, NEAR), reserved fields (label, notes, tag, confidence, source, date, type, group, country, has_geo, geo.lat, geo.lng, from.*, to.*, event.*, directed), free-form properties, date literals, regex literals
+- **Query visual mode**: chainable condition rows with typed inputs (date picker, boolean select, number input, tag dropdown, NEAR lat/lng/radius/unit), AND/OR combinator, auto-execution on change
+- **Query results**: canvas filter mode (dim non-matching elements), table mode with dynamic columns, sorting, CSV export, click-to-select
+- **Saved queries**: persist, load, rename, delete queries per dossier (IndexedDB v11)
+- **Query filtering across all views**: Canvas, Map (with cluster dimming and active count), Timeline, and Matrix views all support query-based dimming
+- **Link dimming exception**: links matching the query stay visible even when their endpoints are dimmed
+- **Context menu integration**: "Find similar" (single selection) and "Query from selection" (multi) in canvas right-click menu
+- **Search integration**: `?` prefix in Ctrl+K search opens the query panel with pre-filled text
+- **Autocompletion**: context-aware suggestions for fields, operators, values, and keywords at cursor position
+- **User documentation**: complete query system documentation (FR + EN)
+
 ## 2.37.2
 
 ### Fixes
