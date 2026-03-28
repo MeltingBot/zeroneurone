@@ -55,7 +55,8 @@ export function QueryBuilderText() {
     // Find the start of the current token to replace
     let tokenStart = pos;
     // Walk back to find the start of the partial token
-    while (tokenStart > 0 && !/[\s(]/.test(text[tokenStart - 1])) {
+    // Stop at whitespace, parens, and operator characters
+    while (tokenStart > 0 && !/[\s(=<>!]/.test(text[tokenStart - 1])) {
       tokenStart--;
     }
     // Special case: if the partial starts with a quote, include it

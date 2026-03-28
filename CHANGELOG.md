@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.38.2
+
+### Fixes
+- **Docker build speed**: add BuildKit cache mount for `npm ci` — reuses npm download cache across builds even when package.json changes
+- **Query auto-execution**: remove redundant Execute button in text mode (queries auto-execute on valid parse); fix regression where removing the button broke canvas filter activation
+- **Autocomplete operator preservation**: fix token walk-back regex so applying a tag/value suggestion no longer eats the preceding operator (`=`, `>`, etc.)
+
 ## 2.38.1
 
 ### Fixes

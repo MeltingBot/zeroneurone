@@ -6,7 +6,7 @@ import { QueryBuilderText } from './QueryBuilderText';
 import { QueryBuilderVisual } from './QueryBuilderVisual';
 import { QueryResultsTable } from './QueryResultsTable';
 import { SavedQueriesList } from './SavedQueriesList';
-import { Play, X, Type, LayoutList, Filter, Table2 } from 'lucide-react';
+import { X, Type, LayoutList, Filter, Table2 } from 'lucide-react';
 
 export function QueryPanel() {
   const { t } = useTranslation('panels');
@@ -17,7 +17,6 @@ export function QueryPanel() {
   const setOutputMode = useQueryStore((s) => s.setOutputMode);
   const results = useQueryStore((s) => s.results);
   const clear = useQueryStore((s) => s.clear);
-  const execute = useQueryStore((s) => s.execute);
   const currentAst = useQueryStore((s) => s.currentAst);
   const loadSavedQueries = useQueryStore((s) => s.loadSavedQueries);
   const currentDossier = useDossierStore((s) => s.currentDossier);
@@ -30,13 +29,6 @@ export function QueryPanel() {
   }, [currentDossier, loadSavedQueries]);
 
   const showTable = results && (outputMode === 'table' || outputMode === 'both');
-
-  const handleExecute = useCallback(() => {
-    execute();
-    if (outputMode === 'none') {
-      setOutputMode('canvas');
-    }
-  }, [execute, outputMode, setOutputMode]);
 
   const handleClear = useCallback(() => {
     clear();
@@ -99,18 +91,6 @@ export function QueryPanel() {
 
       {/* Results bar */}
       <div className="border-t border-border-default px-3 py-2 flex items-center gap-2">
-        {/* Execute button — only in text mode (visual auto-executes) */}
-        {editorMode === 'text' && (
-          <button
-            onClick={handleExecute}
-            disabled={!currentAst}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <Play size={12} />
-            {t('query.execute')}
-          </button>
-        )}
-
         {/* Clear button */}
         {currentAst && (
           <button

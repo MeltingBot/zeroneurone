@@ -29,7 +29,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci
+# Mount cache: reuses npm cache across builds even when package.json changes
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Copy source code
 COPY . .

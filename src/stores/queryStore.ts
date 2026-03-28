@@ -74,6 +74,9 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     });
     // Auto-execute if we have a valid AST
     if (result.ast) {
+      if (get().outputMode === 'none') {
+        set({ outputMode: 'canvas' });
+      }
       get().execute();
     } else {
       set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set(), isFilterActive: false });
