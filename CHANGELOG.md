@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.38.1
+
+### Fixes
+- **Query context menu**: "Find similar" and "Query from selection" actions now appear in the element context menu (right-click on a node), not only in the canvas-level context menu
+
 ## 2.38.0
 
 ### Features
