@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.38.4
+
+### Fixes
+- **NEAR map picker**: interactive map modal for the NEAR operator — click to place center, live circle preview with adjustable radius, Nominatim geocoding search, pre-populated from existing values
+- **i18n**: 4 new keys for the map picker across 11 languages
+
 ## 2.38.3
 
 ### Fixes

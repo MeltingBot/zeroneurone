@@ -1,10 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
 import { RESERVED_FIELDS, OPERATOR_SYMBOLS } from '../../services/query/types';
 import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot } from '../../services/query/types';
-import { Plus, X, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, X, ToggleLeft, ToggleRight, MapPin } from 'lucide-react';
+import { GeoRadiusPicker } from './GeoRadiusPicker';
 
 // ── Condition Row ──
 
@@ -86,6 +87,7 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
   const isExistence = condition.operator === 'exists' || condition.operator === 'not_exists';
   const isNear = condition.operator === 'near';
   const geoField = isGeoField(condition.field);
+  const [showGeoRadiusPicker, setShowGeoRadiusPicker] = useState(false);
 
   const handleFieldChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newField = e.target.value;
@@ -284,11 +286,39 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
         </button>
       </div>
 
-      {/* NEAR: value inputs on second row to avoid overflow */}
+      {/* NEAR: value inputs on second row + map picker button */}
       {isNear && (
-        <div className="mt-1 pl-1">
-          {renderValueInput()}
+        <div className="mt-1 pl-1 flex items-center gap-1">
+          <div className="flex-1 min-w-0">{renderValueInput()}</div>
+          <button
+            onClick={() => setShowGeoRadiusPicker(true)}
+            className="shrink-0 p-1 text-text-secondary hover:text-accent rounded hover:bg-bg-secondary transition-colors"
+            title={t('query.pickOnMap')}
+          >
+            <MapPin size={14} />
+          </button>
         </div>
+      )}
+
+      {/* Geo radius picker modal */}
+      {showGeoRadiusPicker && nearParts && (
+        <GeoRadiusPicker
+          initialLat={parseFloat(nearParts.lat) || undefined}
+          initialLng={parseFloat(nearParts.lng) || undefined}
+          initialRadiusKm={(() => {
+            const r = parseFloat(nearParts.radius) || 10;
+            return nearParts.unit === 'm' ? r / 1000 : r;
+          })()}
+          initialUnit={nearParts.unit as 'km' | 'm'}
+          onConfirm={(lat, lng, radiusKm) => {
+            onChange({
+              ...condition,
+              value: buildNearValue(String(lat), String(lng), nearParts.unit === 'm' ? String(Math.round(radiusKm * 1000)) : String(radiusKm), nearParts.unit),
+            });
+            setShowGeoRadiusPicker(false);
+          }}
+          onCancel={() => setShowGeoRadiusPicker(false)}
+        />
       )}
     </div>
   );
