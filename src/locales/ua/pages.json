@@ -149,7 +149,9 @@
       "lockPosition": "Заблокувати позицію",
       "unlockPosition": "Розблокувати позицію",
       "setKeyObject": "Встановити як орієнтир вирівнювання",
-      "clearKeyObject": "Прибрати орієнтир вирівнювання"
+      "clearKeyObject": "Прибрати орієнтир вирівнювання",
+      "findSimilar": "Знайти подібні",
+      "queryFromSelection": "Запит з виділення"
     },
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",

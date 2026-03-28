@@ -149,7 +149,9 @@
       "lockPosition": "Lock position",
       "unlockPosition": "Unlock position",
       "setKeyObject": "Set as alignment reference",
-      "clearKeyObject": "Clear alignment reference"
+      "clearKeyObject": "Clear alignment reference",
+      "findSimilar": "Find similar",
+      "queryFromSelection": "Query from selection"
     },
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",

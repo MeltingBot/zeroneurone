@@ -149,7 +149,9 @@
       "lockPosition": "Zablokuj pozycję",
       "unlockPosition": "Odblokuj pozycję",
       "setKeyObject": "Ustaw jako odniesienie wyrównania",
-      "clearKeyObject": "Usuń odniesienie wyrównania"
+      "clearKeyObject": "Usuń odniesienie wyrównania",
+      "findSimilar": "Znajdź podobne",
+      "queryFromSelection": "Zapytanie z zaznaczenia"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",

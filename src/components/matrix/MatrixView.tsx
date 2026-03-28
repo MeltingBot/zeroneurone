@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Download, Pin, Copy, Rows3 } from 'lucide-react';
-import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
 
@@ -100,6 +100,8 @@ export function MatrixView() {
   const historyRedo = useHistoryStore((s) => s.redo);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const queryFilterActive = useQueryStore((s) => s.isFilterActive);
+  const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const anonymousMode = useUIStore((s) => s.anonymousMode);
@@ -118,25 +120,33 @@ export function MatrixView() {
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const lastClickedRowRef = useRef<number>(-1);
 
-  // Compute dimmed element IDs (same logic as Timeline/Map)
+  // Compute dimmed element IDs (same logic as Timeline/Map/Canvas)
   const dimmedElementIds = useMemo(() => {
+    let dimmed: Set<string>;
     if (insightsHighlightedIds.size > 0) {
-      const dimmed = new Set<string>();
+      dimmed = new Set<string>();
       elements.forEach((el) => {
         if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
-      return dimmed;
-    }
-    if (focusElementId) {
+    } else if (focusElementId) {
       const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      const dimmed = new Set<string>();
+      dimmed = new Set<string>();
       elements.forEach((el) => {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
-      return dimmed;
+    } else {
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
     }
-    return getDimmedElementIds(elements, filters, hiddenElementIds);
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
+    // ZNQuery filter: dim elements not matching the query
+    if (queryFilterActive && queryMatchElementIds.size > 0) {
+      for (const el of elements) {
+        if (!queryMatchElementIds.has(el.id)) {
+          dimmed.add(el.id);
+        }
+      }
+    }
+    return dimmed;
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
 
   // Filter elements: exclude groups, annotations, hidden; respect tabs
   const visibleElements = useMemo(() => {

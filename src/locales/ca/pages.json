@@ -149,7 +149,9 @@
       "lockPosition": "Bloquejar posició",
       "unlockPosition": "Desbloquejar posició",
       "setKeyObject": "Definir com a referència d'alineació",
-      "clearKeyObject": "Treure referència d'alineació"
+      "clearKeyObject": "Treure referència d'alineació",
+      "findSimilar": "Cercar similars",
+      "queryFromSelection": "Consulta des de selecció"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",

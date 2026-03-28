@@ -5,3 +5,4 @@ export { linkRepository } from './linkRepository';
 export { tagSetRepository } from './tagSetRepository';
 export { reportRepository } from './reportRepository';
 export { tabRepository } from './tabRepository';
+export { queryRepository } from './queryRepository';

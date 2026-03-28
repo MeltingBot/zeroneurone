@@ -149,7 +149,9 @@
       "lockPosition": "Position sperren",
       "unlockPosition": "Position entsperren",
       "setKeyObject": "Als Ausrichtungsreferenz festlegen",
-      "clearKeyObject": "Ausrichtungsreferenz entfernen"
+      "clearKeyObject": "Ausrichtungsreferenz entfernen",
+      "findSimilar": "Ähnliche finden",
+      "queryFromSelection": "Abfrage aus Auswahl"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",

@@ -3,6 +3,7 @@
     "detail": "Деталі",
     "insights": "Аналітика",
     "filters": "Фільтри",
+    "query": "Запит",
     "views": "Види",
     "report": "Звіт",
     "collapsePanel": "Згорнути панель"
@@ -303,6 +304,35 @@
       "showAll": "Показати все",
       "noHidden": "Немає прихованих елементів"
     }
+  },
+  "query": {
+    "modeText": "Текст",
+    "modeVisual": "Візуальний",
+    "execute": "Виконати",
+    "clear": "Очистити",
+    "elements": "елементів",
+    "links": "зв'язків",
+    "filterMode": "Фільтр полотна",
+    "tableMode": "Таблиця",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Приклади синтаксису:",
+    "selectField": "Поле...",
+    "systemFields": "Системні поля",
+    "properties": "Властивості",
+    "selectValue": "Значення...",
+    "valuePlaceholder": "Значення...",
+    "addCondition": "Додати умову",
+    "allConditions": "Усі умови мають збігатися",
+    "anyCondition": "Достатньо однієї умови",
+    "emptyVisual": "Додайте умови для побудови запиту",
+    "noResults": "Немає результатів",
+    "exportCSV": "Експорт CSV",
+    "savedQueries": "Збережені запити",
+    "saveCurrentQuery": "Зберегти поточний запит",
+    "queryName": "Назва запиту...",
+    "noSavedQueries": "Немає збережених запитів",
+    "rename": "Перейменувати",
+    "deleteQuery": "Видалити"
   },
   "insights": {
     "title": "Аналітика",

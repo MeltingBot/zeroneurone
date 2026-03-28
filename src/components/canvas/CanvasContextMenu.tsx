@@ -1,7 +1,12 @@
 import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, icons } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
+import { useQueryStore } from '../../stores/queryStore';
+import { useDossierStore } from '../../stores/dossierStore';
+import { useUIStore } from '../../stores/uiStore';
+import { serializeQuery } from '../../services/query/serializer';
+import type { QueryCondition, QueryOr } from '../../services/query/types';
 
 interface CanvasContextMenuProps {
   x: number;
@@ -52,6 +57,60 @@ function CanvasContextMenuComponent({
     if (!pluginExtensions || !menuContext) return [];
     return pluginExtensions.filter(ext => !ext.visible || ext.visible(menuContext));
   }, [pluginExtensions, menuContext]);
+
+  // Query from selection handlers
+  const handleFindSimilar = () => {
+    if (!menuContext || menuContext.elementIds.length !== 1) return;
+    const elements = useDossierStore.getState().elements;
+    const el = elements.find(e => e.id === menuContext.elementIds[0]);
+    if (!el || el.tags.length === 0) return;
+
+    // Build query: tag = "X" OR tag = "Y"
+    const conditions: QueryCondition[] = el.tags.filter(Boolean).map(tag => ({
+      type: 'condition' as const,
+      field: 'tag',
+      operator: 'eq' as const,
+      value: tag,
+    }));
+
+    const ast = conditions.length === 1
+      ? conditions[0]
+      : { type: 'or' as const, children: conditions } as QueryOr;
+
+    const text = serializeQuery(ast);
+    useQueryStore.getState().setText(text);
+    useQueryStore.getState().execute();
+    useUIStore.getState().setSidePanelTab('query');
+    onClose();
+  };
+
+  const handleQueryFromSelection = () => {
+    if (!menuContext || menuContext.elementIds.length < 2) return;
+    const elements = useDossierStore.getState().elements;
+
+    // Build query: label = "A" OR label = "B" OR ...
+    const conditions: QueryCondition[] = menuContext.elementIds
+      .map(id => elements.find(e => e.id === id))
+      .filter(Boolean)
+      .map(el => ({
+        type: 'condition' as const,
+        field: 'label',
+        operator: 'eq' as const,
+        value: el!.label,
+      }));
+
+    if (conditions.length === 0) return;
+
+    const ast = conditions.length === 1
+      ? conditions[0]
+      : { type: 'or' as const, children: conditions } as QueryOr;
+
+    const text = serializeQuery(ast);
+    useQueryStore.getState().setText(text);
+    useQueryStore.getState().execute();
+    useUIStore.getState().setSidePanelTab('query');
+    onClose();
+  };
 
   // Adjust position to keep menu within viewport
   useLayoutEffect(() => {
@@ -194,6 +253,30 @@ function CanvasContextMenuComponent({
               )}
             </div>
           </>
+        )}
+
+        {/* Query actions */}
+        {hasSelection && (
+          <div className="py-1 border-b border-border-default">
+            {selectedCount === 1 && (
+              <button
+                onClick={handleFindSimilar}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Search size={14} />
+                {cm('findSimilar')}
+              </button>
+            )}
+            {selectedCount > 1 && (
+              <button
+                onClick={handleQueryFromSelection}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Search size={14} />
+                {cm('queryFromSelection')}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Create new element */}

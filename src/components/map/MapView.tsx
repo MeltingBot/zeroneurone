@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Supercluster from 'supercluster';
-import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
@@ -248,29 +248,40 @@ export function MapView() {
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const queryFilterActive = useQueryStore((s) => s.isFilterActive);
+  const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
+  const queryMatchLinkIds = useQueryStore((s) => s.matchingLinkIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const tabGhostIds = useTabStore((s) => s.ghostIds);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   const dimmedElementIds = useMemo(() => {
+    let dimmed: Set<string>;
     if (insightsHighlightedIds.size > 0) {
-      const dimmed = new Set<string>();
+      dimmed = new Set<string>();
       elements.forEach((el) => {
         if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
-      return dimmed;
-    }
-    if (focusElementId) {
+    } else if (focusElementId) {
       const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      const dimmed = new Set<string>();
+      dimmed = new Set<string>();
       elements.forEach((el) => {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
-      return dimmed;
+    } else {
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
     }
-    return getDimmedElementIds(elements, filters, hiddenElementIds);
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
+    // ZNQuery canvas filter: dim elements not matching the query
+    if (queryFilterActive && queryMatchElementIds.size > 0) {
+      for (const el of elements) {
+        if (!queryMatchElementIds.has(el.id)) {
+          dimmed.add(el.id);
+        }
+      }
+    }
+    return dimmed;
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
 
   // Extend dimming: tab ghost elements appear dimmed on map
   const effectiveDimmedIds = useMemo(() => {
@@ -822,7 +833,7 @@ export function MapView() {
 
     // Build cluster state lookup
     const newClusterState = new Map<string, ClusterState>();
-    const activeClusters = new Map<number, { center: [number, number]; count: number }>();
+    const activeClusters = new Map<number, { center: [number, number]; count: number; activeCount: number }>();
 
     clusters.forEach(feature => {
       const props = feature.properties as Record<string, unknown>;
@@ -830,17 +841,21 @@ export function MapView() {
         const clusterId = props.cluster_id as number;
         const center = feature.geometry.coordinates as [number, number];
         const count = props.point_count as number;
-        activeClusters.set(clusterId, { center, count });
 
         // Get all leaves (element IDs) in this cluster
         const leaves = sc.getLeaves(clusterId, Infinity);
+        let activeCount = 0;
         leaves.forEach(leaf => {
           newClusterState.set(leaf.properties.elementId, {
             clustered: true,
             clusterCenter: center,
             clusterId,
           });
+          if (!effectiveDimmedIds.has(leaf.properties.elementId)) {
+            activeCount++;
+          }
         });
+        activeClusters.set(clusterId, { center, count, activeCount });
       } else {
         newClusterState.set(feature.properties.elementId, { clustered: false });
       }
@@ -1030,21 +1045,24 @@ export function MapView() {
     });
 
     // Add/update cluster markers
-    activeClusters.forEach(({ center, count }, clusterId) => {
+    activeClusters.forEach(({ center, count, activeCount }, clusterId) => {
+      const allDimmed = activeCount === 0;
+      const displayCount = activeCount > 0 && activeCount < count ? activeCount : count;
       let size = 'small';
       let dimension = 30;
-      if (count >= 10) { size = 'large'; dimension = 44; }
-      else if (count >= 5) { size = 'medium'; dimension = 36; }
+      if (displayCount >= 10) { size = 'large'; dimension = 44; }
+      else if (displayCount >= 5) { size = 'medium'; dimension = 36; }
+      const dimStyle = allDimmed ? 'opacity:0.3;' : '';
 
       const existingCluster = existingClusterMarkers.get(clusterId);
       if (existingCluster) {
         existingCluster.setLngLat(center);
         const el = existingCluster.getElement();
-        el.innerHTML = `<div class="cluster-icon cluster-${size}" style="width:${dimension}px;height:${dimension}px;"><span>${count}</span></div>`;
+        el.innerHTML = `<div class="cluster-icon cluster-${size}" style="width:${dimension}px;height:${dimension}px;${dimStyle}"><span>${displayCount}</span></div>`;
       } else {
         const el = document.createElement('div');
         el.className = 'custom-cluster-icon';
-        el.innerHTML = `<div class="cluster-icon cluster-${size}" style="width:${dimension}px;height:${dimension}px;"><span>${count}</span></div>`;
+        el.innerHTML = `<div class="cluster-icon cluster-${size}" style="width:${dimension}px;height:${dimension}px;${dimStyle}"><span>${displayCount}</span></div>`;
         el.style.cursor = 'pointer';
 
         el.addEventListener('click', (e) => {
@@ -1150,7 +1168,8 @@ export function MapView() {
         }
       }
 
-      const isLinkDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
+      const endpointDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
+      const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
       const linkOpacity = isLinkDimmed ? 0.3 : 1;
 
       // Skip if both in same cluster
@@ -1334,7 +1353,7 @@ export function MapView() {
         existingLinkLayers.set(link.id, { sourceId, outlineLayerId, lineLayerId, labelMarker, arrowStart, arrowEnd });
       }
     });
-  }, [geoLinks, selectLink, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, createArrowElement, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements]);
+  }, [geoLinks, selectLink, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, createArrowElement, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements, queryFilterActive, queryMatchLinkIds]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {

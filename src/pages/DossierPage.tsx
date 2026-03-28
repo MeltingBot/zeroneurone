@@ -247,6 +247,7 @@ export function DossierPage() {
         return;
       }
 
+
       // Tab cycling: Alt+Left/Right, Alt+0 for first tab
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {

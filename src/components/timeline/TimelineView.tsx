@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Download } from 'lucide-react';
 import { fileService } from '../../services/fileService';
@@ -71,38 +71,40 @@ export function TimelineView() {
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
+  const queryFilterActive = useQueryStore((s) => s.isFilterActive);
+  const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
+  const queryMatchLinkIds = useQueryStore((s) => s.matchingLinkIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const tabGhostIds = useTabStore((s) => s.ghostIds);
 
-  // Calculate dimmed element IDs based on filters, focus, and insights highlighting
+  // Calculate dimmed element IDs based on filters, focus, insights, and query
   const dimmedElementIds = useMemo(() => {
-    // If insights highlighting is active, dim everything except highlighted elements
+    let dimmed: Set<string>;
     if (insightsHighlightedIds.size > 0) {
-      const dimmed = new Set<string>();
+      dimmed = new Set<string>();
       elements.forEach((el) => {
-        if (!insightsHighlightedIds.has(el.id)) {
-          dimmed.add(el.id);
-        }
+        if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
-      return dimmed;
-    }
-
-    // If in focus mode, dim everything except focus element and neighbors
-    if (focusElementId) {
+    } else if (focusElementId) {
       const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      const dimmed = new Set<string>();
+      dimmed = new Set<string>();
       elements.forEach((el) => {
-        if (!visibleIds.has(el.id)) {
+        if (!visibleIds.has(el.id)) dimmed.add(el.id);
+      });
+    } else {
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
+    }
+    // ZNQuery filter: dim elements not matching the query
+    if (queryFilterActive && queryMatchElementIds.size > 0) {
+      for (const el of elements) {
+        if (!queryMatchElementIds.has(el.id)) {
           dimmed.add(el.id);
         }
-      });
-      return dimmed;
+      }
     }
-
-    // Otherwise use filter-based dimming
-    return getDimmedElementIds(elements, filters, hiddenElementIds);
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds]);
+    return dimmed;
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
 
   // Persisted timeline state (survives view switches)
   const tl = useViewStore((s) => s.timeline);
@@ -223,8 +225,10 @@ export function TimelineView() {
       const linkLabel = link.label || t('timeline.relation');
 
       // Check if link should be dimmed (either connected element is dimmed, or ghost in active tab)
-      const isLinkDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id)
+      // Exception: if the link itself matches the active query, keep it visible
+      const endpointDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id)
         || (activeTabId !== null && (tabGhostIds.has(fromElement.id) || tabGhostIds.has(toElement.id)));
+      const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
 
       itemsList.push({
         id: `link-${link.id}`,
@@ -377,7 +381,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds]);
+  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});

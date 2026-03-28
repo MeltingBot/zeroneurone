@@ -149,7 +149,9 @@
       "lockPosition": "Bloquear posição",
       "unlockPosition": "Desbloquear posição",
       "setKeyObject": "Definir como referência de alinhamento",
-      "clearKeyObject": "Remover referência de alinhamento"
+      "clearKeyObject": "Remover referência de alinhamento",
+      "findSimilar": "Encontrar semelhantes",
+      "queryFromSelection": "Consulta da seleção"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",

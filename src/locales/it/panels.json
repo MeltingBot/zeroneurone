@@ -3,6 +3,7 @@
     "detail": "Dettaglio",
     "insights": "Analisi",
     "filters": "Filtri",
+    "query": "Query",
     "views": "Viste",
     "report": "Rapporto",
     "collapsePanel": "Riduci pannello"
@@ -303,6 +304,35 @@
       "showAll": "Mostra tutto",
       "noHidden": "Nessun elemento nascosto"
     }
+  },
+  "query": {
+    "modeText": "Testo",
+    "modeVisual": "Visuale",
+    "execute": "Esegui",
+    "clear": "Cancella",
+    "elements": "elementi",
+    "links": "collegamenti",
+    "filterMode": "Filtro canvas",
+    "tableMode": "Tabella",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Esempi di sintassi:",
+    "selectField": "Campo...",
+    "systemFields": "Campi sistema",
+    "properties": "Proprietà",
+    "selectValue": "Valore...",
+    "valuePlaceholder": "Valore...",
+    "addCondition": "Aggiungi condizione",
+    "allConditions": "Tutte le condizioni devono corrispondere",
+    "anyCondition": "Basta una condizione",
+    "emptyVisual": "Aggiungi condizioni per costruire la query",
+    "noResults": "Nessun risultato",
+    "exportCSV": "Esporta CSV",
+    "savedQueries": "Query salvate",
+    "saveCurrentQuery": "Salva query corrente",
+    "queryName": "Nome della query...",
+    "noSavedQueries": "Nessuna query salvata",
+    "rename": "Rinomina",
+    "deleteQuery": "Elimina"
   },
   "insights": {
     "title": "Analisi",

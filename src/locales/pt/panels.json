@@ -3,6 +3,7 @@
     "detail": "Detalhe",
     "insights": "Análises",
     "filters": "Filtros",
+    "query": "Consulta",
     "views": "Vistas",
     "report": "Relatório",
     "collapsePanel": "Recolher painel"
@@ -303,6 +304,35 @@
       "showAll": "Mostrar tudo",
       "noHidden": "Nenhum elemento oculto"
     }
+  },
+  "query": {
+    "modeText": "Texto",
+    "modeVisual": "Visual",
+    "execute": "Executar",
+    "clear": "Limpar",
+    "elements": "elementos",
+    "links": "ligações",
+    "filterMode": "Filtro canvas",
+    "tableMode": "Tabela",
+    "placeholder": "tag = \"personne\" AND ville = \"Paris\"",
+    "syntaxHelp": "Exemplos de sintaxe:",
+    "selectField": "Campo...",
+    "systemFields": "Campos do sistema",
+    "properties": "Propriedades",
+    "selectValue": "Valor...",
+    "valuePlaceholder": "Valor...",
+    "addCondition": "Adicionar condição",
+    "allConditions": "Todas devem corresponder",
+    "anyCondition": "Basta uma condição",
+    "emptyVisual": "Adicione condições para construir a consulta",
+    "noResults": "Sem resultados",
+    "exportCSV": "Exportar CSV",
+    "savedQueries": "Consultas guardadas",
+    "saveCurrentQuery": "Guardar consulta atual",
+    "queryName": "Nome da consulta...",
+    "noSavedQueries": "Sem consultas guardadas",
+    "rename": "Renomear",
+    "deleteQuery": "Eliminar"
   },
   "insights": {
     "title": "Análises",

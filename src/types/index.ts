@@ -292,6 +292,29 @@ export interface Link {
 }
 
 // ============================================================================
+// SAVED QUERY
+// ============================================================================
+
+export type SavedQueryId = UUID;
+
+export interface SavedQuery {
+  id: SavedQueryId;
+  dossierId: DossierId;
+  name: string;
+  description: string;
+  /** AST serialized as JSON */
+  ast: unknown;
+  /** ZNQuery text (for quick display without deserialization) */
+  queryText: string;
+  /** Default output mode */
+  defaultOutput: 'canvas' | 'table' | 'both';
+  /** Custom table columns (null = auto) */
+  tableColumns: string[] | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================================
 // COMMENT
 // ============================================================================
 
@@ -484,7 +507,7 @@ export interface Toast {
 
 export type ToolType = 'select' | 'create-element' | 'create-link';
 
-export type SidePanelTab = 'detail' | 'insights' | 'views' | 'filters';
+export type SidePanelTab = 'detail' | 'insights' | 'views' | 'filters' | 'query' | 'report' | (string & {});
 
 // ============================================================================
 // DEFAULT VALUES

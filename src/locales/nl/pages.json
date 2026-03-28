@@ -149,7 +149,9 @@
       "lockPosition": "Positie vergrendelen",
       "unlockPosition": "Positie ontgrendelen",
       "setKeyObject": "Instellen als uitlijnreferentie",
-      "clearKeyObject": "Uitlijnreferentie verwijderen"
+      "clearKeyObject": "Uitlijnreferentie verwijderen",
+      "findSimilar": "Vergelijkbare zoeken",
+      "queryFromSelection": "Zoekopdracht uit selectie"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
