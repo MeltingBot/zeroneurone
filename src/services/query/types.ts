@@ -104,7 +104,7 @@ export const RESERVED_FIELDS = new Set([
   'label', 'notes', 'tag', 'confidence', 'source',
   'date', 'date.start', 'date.end',
   'created', 'updated',
-  'type', 'has_geo', 'group',
+  'type', 'has_geo', 'group', 'country',
   // Link-specific
   'from.label', 'from.tag', 'to.label', 'to.tag', 'directed',
   // Geo fields (numeric lat/lng for bounding box queries)

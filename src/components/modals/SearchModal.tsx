@@ -64,11 +64,11 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
 
     // ? prefix → switch to query panel
-    if (query.startsWith('?') && query.length > 1) {
+    if (query.startsWith('?')) {
       const queryText = query.slice(1).trim();
+      onClose();
+      useUIStore.getState().setSidePanelTab('query');
       if (queryText) {
-        onClose();
-        useUIStore.getState().setSidePanelTab('query');
         useQueryStore.getState().setText(queryText);
       }
       return;

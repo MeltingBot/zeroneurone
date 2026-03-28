@@ -161,6 +161,7 @@ const FIELD_TYPES: Record<string, FieldType> = {
   type: 'string',
   has_geo: 'boolean',
   group: 'boolean',
+  country: 'string',
   'from.label': 'string',
   'from.tag': 'string',
   'to.label': 'string',
@@ -255,6 +256,11 @@ function collectFieldValues(
             break;
           case 'type':
             addValue('fromId' in item ? 'link' : 'element');
+            break;
+          case 'country':
+            for (const p of item.properties) {
+              if (p.type === 'country' && p.value) addValue(p.value);
+            }
             break;
           default: {
             // Free property

@@ -11,6 +11,7 @@ Explorez les fonctionnalités principales de ZeroNeurone.
 - [Éléments et liens]({{< relref "elements-links" >}}) — Créer et manipuler le graphe
 - [Tags et propriétés]({{< relref "tags-properties" >}}) — Enrichir vos données
 - [Filtres et vues]({{< relref "filters-views" >}}) — Organiser l'affichage
+- [Requêtes avancées]({{< relref "queries" >}}) — Langage de requêtes structuré (ZNQuery)
 - [Onglets du canvas]({{< relref "canvas-tabs" >}}) — Organiser le dossier en axes thématiques
 - [Analyse de graphe]({{< relref "graph-analysis" >}}) — Clusters, centralité, chemins
 - [Vue carte]({{< relref "map-view" >}}) — Géolocalisation

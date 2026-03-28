@@ -704,6 +704,74 @@ describe('evaluator — geo fields', () => {
   });
 });
 
+// ── Country field ──
+
+describe('evaluator — country field', () => {
+  it('country = "FR" matches element with country property', () => {
+    const els = [
+      makeElement({ properties: [{ key: 'Pays', value: 'FR', type: 'country' }] }),
+      makeElement({ properties: [{ key: 'Pays', value: 'US', type: 'country' }] }),
+      makeElement({ properties: [{ key: 'ville', value: 'Paris' }] }),
+    ];
+    const r = query('country = "FR"', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('country multi-value: matches if ANY country property matches', () => {
+    const els = [
+      makeElement({
+        properties: [
+          { key: 'Nationalité', value: 'FR', type: 'country' },
+          { key: 'Résidence', value: 'CH', type: 'country' },
+        ],
+      }),
+    ];
+    const r1 = query('country = "FR"', els);
+    expect(r1.elementIds.size).toBe(1);
+    const r2 = query('country = "CH"', els);
+    expect(r2.elementIds.size).toBe(1);
+    const r3 = query('country = "US"', els);
+    expect(r3.elementIds.size).toBe(0);
+  });
+
+  it('country EXISTS / NOT EXISTS', () => {
+    const els = [
+      makeElement({ properties: [{ key: 'Pays', value: 'FR', type: 'country' }] }),
+      makeElement({ properties: [{ key: 'ville', value: 'Paris' }] }),
+    ];
+    const rExists = query('country EXISTS', els);
+    expect(rExists.elementIds.size).toBe(1);
+    expect(rExists.elementIds.has(els[0].id)).toBe(true);
+
+    const rNotExists = query('country NOT EXISTS', els);
+    expect(rNotExists.elementIds.size).toBe(1);
+    expect(rNotExists.elementIds.has(els[1].id)).toBe(true);
+  });
+
+  it('country != excludes specific country', () => {
+    const els = [
+      makeElement({ properties: [{ key: 'Pays', value: 'FR', type: 'country' }] }),
+      makeElement({ properties: [{ key: 'Pays', value: 'US', type: 'country' }] }),
+    ];
+    const r = query('country != "FR"', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[1].id)).toBe(true);
+  });
+
+  it('country works on links too', () => {
+    const el = makeElement();
+    const link = makeLink({
+      fromId: el.id, toId: el.id,
+      properties: [{ key: 'Juridiction', value: 'DE', type: 'country' }],
+    });
+    const r = query('country = "DE"', [el], [link]);
+    expect(r.linkIds.size).toBe(1);
+    expect(r.linkIds.has(link.id)).toBe(true);
+    expect(r.elementIds.size).toBe(0);
+  });
+});
+
 // ── Performance ──
 
 describe('evaluator — performance', () => {

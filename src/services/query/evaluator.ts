@@ -90,6 +90,13 @@ function resolveField(
       if (!isLink(item)) return null;
       return elements.get(item.toId)?.tags ?? null;
     }
+    case 'country': {
+      // Multi-value: all properties of type 'country'
+      const countries = item.properties
+        .filter(p => p.type === 'country' && p.value)
+        .map(p => String(p.value));
+      return countries;
+    }
   }
 
   // ── Free property lookup (case-insensitive) ──

@@ -730,6 +730,7 @@ export function Canvas() {
   // Query store for ZNQuery canvas filter
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
+  const queryMatchLinkIds = useQueryStore((s) => s.matchingLinkIds);
 
   // Sync store for collaboration presence
   const { updateSelection, updateLinkSelection, updateDragging, updateEditing, updateEditingLink } = useSyncStore();
@@ -1555,7 +1556,8 @@ export function Canvas() {
     const newCache = new Map<string, Edge>();
     const result = cappedLinks.map(link => {
       const isSelected = selectedLinkIds.has(link.id);
-      const isLinkDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
+      const endpointDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
+      const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
       const simplified = useSimpleEdges && !isSelected;
 
       // Reuse cached edge if visual state is unchanged (same reference → memo skip)
@@ -1666,7 +1668,7 @@ export function Canvas() {
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.

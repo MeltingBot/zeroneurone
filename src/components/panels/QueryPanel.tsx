@@ -99,15 +99,17 @@ export function QueryPanel() {
 
       {/* Results bar */}
       <div className="border-t border-border-default px-3 py-2 flex items-center gap-2">
-        {/* Execute button */}
-        <button
-          onClick={handleExecute}
-          disabled={!currentAst}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          <Play size={12} />
-          {t('query.execute')}
-        </button>
+        {/* Execute button — only in text mode (visual auto-executes) */}
+        {editorMode === 'text' && (
+          <button
+            onClick={handleExecute}
+            disabled={!currentAst}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Play size={12} />
+            {t('query.execute')}
+          </button>
+        )}
 
         {/* Clear button */}
         {currentAst && (

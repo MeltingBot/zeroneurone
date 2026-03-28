@@ -76,7 +76,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     if (result.ast) {
       get().execute();
     } else {
-      set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set() });
+      set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set(), isFilterActive: false });
     }
   },
 
@@ -88,9 +88,13 @@ export const useQueryStore = create<QueryState>((set, get) => ({
       parseError: null,
     });
     if (ast) {
+      // Auto-activate canvas filter when building visually
+      if (get().outputMode === 'none') {
+        set({ outputMode: 'canvas' });
+      }
       get().execute();
     } else {
-      set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set() });
+      set({ results: null, matchingElementIds: new Set(), matchingLinkIds: new Set(), isFilterActive: false });
     }
   },
 
