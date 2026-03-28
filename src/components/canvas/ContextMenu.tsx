@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 
 interface ContextMenuProps {
@@ -45,6 +45,9 @@ interface ContextMenuProps {
   isGhostElement: boolean;
   elementTabIds: TabId[];
   onGoToTab: (tabId: TabId) => void;
+  // Query actions
+  onFindSimilar?: () => void;
+  onQueryFromSelection?: () => void;
   onClose: () => void;
 }
 
@@ -92,6 +95,8 @@ function ContextMenuComponent({
   isGhostElement,
   elementTabIds,
   onGoToTab,
+  onFindSimilar,
+  onQueryFromSelection,
   onClose,
 }: ContextMenuProps) {
   const { t } = useTranslation('pages');
@@ -252,6 +257,36 @@ function ContextMenuComponent({
               >
                 <Combine size={14} />
                 {t('dossier.contextMenu.merge')}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Query actions */}
+        {(onFindSimilar || onQueryFromSelection) && (
+          <div className="py-1 border-b border-border-default">
+            {onFindSimilar && (
+              <button
+                onClick={() => {
+                  onFindSimilar();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Search size={14} />
+                {t('dossier.contextMenu.findSimilar')}
+              </button>
+            )}
+            {onQueryFromSelection && (
+              <button
+                onClick={() => {
+                  onQueryFromSelection();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Search size={14} />
+                {t('dossier.contextMenu.queryFromSelection')}
               </button>
             )}
           </div>

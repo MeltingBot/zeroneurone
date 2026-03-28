@@ -47,6 +47,7 @@ import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { serializeQuery } from '../../services/query/serializer';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
@@ -2240,6 +2241,56 @@ export function Canvas() {
     clearSelection();
   }, [getSelectedElementIds, hideElements, clearSelection]);
 
+  // Query: Find similar (single element — search by tags)
+  const handleFindSimilar = useCallback(() => {
+    if (!contextMenu) return;
+    const el = elements.find(e => e.id === contextMenu.elementId);
+    if (!el || el.tags.length === 0) return;
+
+    const conditions: import('../../services/query/types').QueryCondition[] = el.tags.filter(Boolean).map(tag => ({
+      type: 'condition' as const,
+      field: 'tag',
+      operator: 'eq' as const,
+      value: tag,
+    }));
+
+    const ast = conditions.length === 1
+      ? conditions[0]
+      : { type: 'or' as const, children: conditions } as import('../../services/query/types').QueryOr;
+
+    const text = serializeQuery(ast);
+    useQueryStore.getState().setText(text);
+    useQueryStore.getState().execute();
+    useUIStore.getState().setSidePanelTab('query');
+  }, [contextMenu, elements]);
+
+  // Query: Query from selection (multiple elements — search by labels)
+  const handleQueryFromSelection = useCallback(() => {
+    const selectedEls = getSelectedElementIds();
+    if (selectedEls.length < 2) return;
+
+    const conditions: import('../../services/query/types').QueryCondition[] = selectedEls
+      .map(id => elements.find(e => e.id === id))
+      .filter(Boolean)
+      .map(el => ({
+        type: 'condition' as const,
+        field: 'label',
+        operator: 'eq' as const,
+        value: el!.label,
+      }));
+
+    if (conditions.length === 0) return;
+
+    const ast = conditions.length === 1
+      ? conditions[0]
+      : { type: 'or' as const, children: conditions } as import('../../services/query/types').QueryOr;
+
+    const text = serializeQuery(ast);
+    useQueryStore.getState().setText(text);
+    useQueryStore.getState().execute();
+    useUIStore.getState().setSidePanelTab('query');
+  }, [getSelectedElementIds, elements]);
+
   // Paste from canvas context menu (at cursor position)
   const handleCanvasContextMenuPaste = useCallback(async () => {
     if (!canvasContextMenu) return;
@@ -4169,6 +4220,8 @@ export function Canvas() {
                 setActiveTab(tabId);
                 closeContextMenu();
               }}
+              onFindSimilar={selectedElementIds.size === 1 ? handleFindSimilar : undefined}
+              onQueryFromSelection={selectedElementIds.size > 1 ? handleQueryFromSelection : undefined}
               onClose={closeContextMenu}
             />
           )}
