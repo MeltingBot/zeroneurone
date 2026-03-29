@@ -31,6 +31,12 @@ import type {
   ReportSection,
   View,
   Comment,
+  TagSet,
+  TagSetId,
+  SuggestedProperty,
+  CanvasTab,
+  TabId,
+  Toast,
 } from './index';
 import type {
   PluginSlots,
@@ -67,6 +73,12 @@ export type {
   ReportSection,
   View,
   Comment,
+  TagSet,
+  TagSetId,
+  SuggestedProperty,
+  CanvasTab,
+  TabId,
+  Toast,
   PluginSlots,
   MenuContext,
   ContextMenuExtension,
@@ -138,6 +150,38 @@ export interface InsightsStoreAPI {
   betweennessCentrality: Map<string, number> | null;
 }
 
+/** Subset of useTagSetStore relevant to plugins */
+export interface TagSetStoreAPI {
+  tagSets: Map<TagSetId, TagSet>;
+  getByName: (name: string) => TagSet | undefined;
+  getAll: () => TagSet[];
+  create: (data: Omit<TagSet, 'id' | 'createdAt' | 'updatedAt'>) => Promise<TagSet>;
+  update: (id: TagSetId, changes: Partial<Omit<TagSet, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
+  getSuggestedProperties: (tagName: string) => SuggestedProperty[];
+}
+
+/** Subset of useTabStore relevant to plugins */
+export interface TabStoreAPI {
+  tabs: CanvasTab[];
+  activeTabId: TabId | null;
+  loadTabs: (dossierId: DossierId) => Promise<void>;
+  createTab: (dossierId: DossierId, name: string) => Promise<CanvasTab>;
+  renameTab: (tabId: TabId, name: string) => Promise<void>;
+  deleteTab: (tabId: TabId) => Promise<void>;
+  setActiveTab: (tabId: TabId | null) => void;
+  addMembers: (tabId: TabId, elementIds: ElementId[]) => Promise<void>;
+  removeMembers: (tabId: TabId, elementIds: ElementId[]) => Promise<void>;
+}
+
+/** Subset of useUIStore relevant to plugins */
+export interface UIStoreAPI {
+  toasts: Toast[];
+  showToast: (type: Toast['type'], message: string, duration?: number) => string;
+  dismissToast: (id: string) => void;
+  openModal: (type: string, data?: unknown) => void;
+  closeModal: () => void;
+}
+
 // ─── Repository types ─────────────────────────────────────────
 
 export interface ElementRepositoryAPI {
@@ -167,6 +211,91 @@ export interface PluginDataAPI {
   get: (pluginId: string, dossierId: string, key: string) => Promise<any>;
   set: (pluginId: string, dossierId: string, key: string, value: any) => Promise<void>;
   remove: (pluginId: string, dossierId: string, key: string) => Promise<void>;
+
+  /** Get global plugin data (not tied to any dossier). */
+  getGlobal: (pluginId: string, key: string) => Promise<any>;
+  /** Set global plugin data (not tied to any dossier). */
+  setGlobal: (pluginId: string, key: string, value: any) => Promise<void>;
+  /** Remove global plugin data (not tied to any dossier). */
+  removeGlobal: (pluginId: string, key: string) => Promise<void>;
+}
+
+// ─── Event bus ────────────────────────────────────────────────
+
+export type PluginEventType =
+  | 'dossier:created'
+  | 'dossier:updated'
+  | 'dossier:deleted'
+  | 'dossier:opened'
+  | 'dossier:closed'
+  | 'element:created'
+  | 'element:updated'
+  | 'element:deleted'
+  | 'link:created'
+  | 'link:updated'
+  | 'link:deleted'
+  | 'asset:created'
+  | 'asset:deleted';
+
+export interface PluginEvent {
+  type: PluginEventType;
+  dossierId: string;
+  entityId?: string;
+  timestamp: number;
+}
+
+export type PluginEventCallback = (event: PluginEvent) => void;
+
+export interface EventsAPI {
+  /**
+   * Subscribe to a plugin event. Returns an unsubscribe function.
+   */
+  on: (eventType: PluginEventType, cb: PluginEventCallback) => () => void;
+}
+
+// ─── Toast API ────────────────────────────────────────────────
+
+export interface ToastAPI {
+  success: (message: string, options?: { duration?: number; id?: string }) => string;
+  error: (message: string, options?: { duration?: number; id?: string }) => string;
+  warning: (message: string, options?: { duration?: number; id?: string }) => string;
+  info: (message: string, options?: { duration?: number; id?: string }) => string;
+  dismiss: (id: string) => void;
+}
+
+// ─── Services API ─────────────────────────────────────────────
+
+export interface ServicesAPI {
+  /**
+   * Produce a complete ZIP snapshot of a dossier (same as manual export).
+   */
+  exportDossier: (dossierId: string) => Promise<Blob>;
+
+  /**
+   * Import a ZIP blob into a dossier.
+   */
+  importDossier: (
+    blob: Blob,
+    options?: {
+      targetDossierId?: string;
+      positionOffset?: { x: number; y: number };
+      suffix?: string;
+    },
+  ) => Promise<{
+    success: boolean;
+    elementsImported: number;
+    linksImported: number;
+    assetsImported: number;
+    errors: string[];
+    warnings: string[];
+    dossierId: string;
+  }>;
+
+  /**
+   * Navigate to a route within ZeroNeurone.
+   * Common routes: '/' (home), '/dossier/:id' (open dossier).
+   */
+  navigateTo: (path: string) => void;
 }
 
 // ─── Main API type ────────────────────────────────────────────
@@ -197,6 +326,9 @@ export interface PluginAPI {
     useViewStore: () => ViewStoreAPI;
     useReportStore: () => ReportStoreAPI;
     useInsightsStore: () => InsightsStoreAPI;
+    useTagSetStore: () => TagSetStoreAPI;
+    useTabStore: () => TabStoreAPI;
+    useUIStore: () => UIStoreAPI;
   };
 
   // Database repositories
@@ -218,6 +350,15 @@ export interface PluginAPI {
 
   // Utilities
   generateUUID: () => string;
+
+  // Services (export, import, navigation)
+  services: ServicesAPI;
+
+  // Event bus (subscribe to data changes)
+  events: EventsAPI;
+
+  // Toast / Notifications
+  toast: ToastAPI;
 
   // Plugin data persistence
   pluginData: PluginDataAPI;
@@ -253,6 +394,21 @@ export interface EncryptionPluginAPI {
 
   /** Vrai si le chiffrement at-rest est activé dans ZeroNeurone. */
   isEnabled(): boolean;
+
+  /** Vrai si la DEK est déverrouillée (disponible en mémoire). */
+  isUnlocked(): boolean;
+
+  /**
+   * Chiffre un ArrayBuffer avec la DEK de ZN (AES-256-GCM).
+   * Rejette si la session est verrouillée.
+   */
+  encrypt(plaintext: ArrayBuffer): Promise<ArrayBuffer>;
+
+  /**
+   * Déchiffre un ArrayBuffer produit par encrypt().
+   * Rejette si la session est verrouillée.
+   */
+  decrypt(ciphertext: ArrayBuffer): Promise<ArrayBuffer>;
 
   /**
    * S'abonne à l'événement "désactivation imminente du chiffrement".

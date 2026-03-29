@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { HomePage, DossierPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
 import { useTagSetStore } from './stores';
@@ -12,6 +12,7 @@ import type { EncryptionMeta } from './services/encryption/encryptionService';
 import { isWebAuthnAvailable, unlockWithWebAuthn } from './services/encryption/webauthnService';
 import { db, cleanOrphanedOpfs } from './db/database';
 import { syncService } from './services/syncService';
+import { setPluginNavigate } from './plugins/pluginAPI';
 
 /**
  * Lit _encryptionMeta directement via l'API IndexedDB native, sans passer par
@@ -290,6 +291,13 @@ function LegacyInvestigationRedirect() {
   return <Navigate to={`/dossier/${id}`} replace />;
 }
 
+/** Injects react-router navigate into pluginAPI.services.navigateTo */
+function NavigateRef() {
+  const navigate = useNavigate();
+  useEffect(() => { setPluginNavigate(navigate); }, [navigate]);
+  return null;
+}
+
 function App() {
   const loadTagSets = useTagSetStore((state) => state.load);
   const isReady = useEncryptionStore((state) => state.isReady);
@@ -313,6 +321,7 @@ function App() {
       <MinResolutionGuard>
         <EncryptionGate>
           <BrowserRouter>
+            <NavigateRef />
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/dossier/:id" element={<DossierPage />} />

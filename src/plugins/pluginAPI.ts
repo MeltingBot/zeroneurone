@@ -48,6 +48,9 @@ import { useSelectionStore } from '../stores/selectionStore';
 import { useViewStore } from '../stores/viewStore';
 import { useReportStore } from '../stores/reportStore';
 import { useInsightsStore } from '../stores/insightsStore';
+import { useTagSetStore } from '../stores/tagSetStore';
+import { useTabStore } from '../stores/tabStore';
+import { useUIStore } from '../stores/uiStore';
 
 // ─── Repositories ──────────────────────────────────────────────
 import { elementRepository } from '../db/repositories/elementRepository';
@@ -56,12 +59,29 @@ import { dossierRepository } from '../db/repositories/dossierRepository';
 
 // ─── Services & utils ──────────────────────────────────────────
 import { fileService } from '../services/fileService';
+import { exportService } from '../services/exportService';
+import { importService } from '../services/importService';
 import { generateUUID } from '../utils';
 
 // ─── Encryption ────────────────────────────────────────────────
 import { useEncryptionStore } from '../stores/encryptionStore';
 import { createEncryptionMiddlewareForDexie, decryptObject } from '../services/encryption/dexieEncryptionMiddleware';
+import { encryptOpfsBuffer, decryptOpfsBuffer } from '../services/encryption/opfsEncryption';
 
+// ─── Event bus ─────────────────────────────────────────────────
+import { onPluginEvent } from './pluginEventBus';
+
+// ─── Navigation ────────────────────────────────────────────────
+// react-router navigate function is set at runtime by NavigateRef in App.tsx
+type NavigateFn = (path: string) => void;
+let _navigate: NavigateFn | null = null;
+
+/** Called from App.tsx to inject the react-router navigate function. */
+export function setPluginNavigate(fn: NavigateFn): void {
+  _navigate = fn;
+}
+
+// ─── Before-disable callbacks ──────────────────────────────────
 // Registre des callbacks "avant désactivation du chiffrement".
 // Fermé — non exposé dans pluginAPI, consommé uniquement par migrationService.
 const _beforeDisableCallbacks = new Set<(dek: Uint8Array | null) => Promise<void>>();
@@ -75,6 +95,9 @@ const _beforeDisableCallbacks = new Set<(dek: Uint8Array | null) => Promise<void
 export async function runBeforeDisableHooks(dek: Uint8Array | null): Promise<void> {
   await Promise.allSettled([..._beforeDisableCallbacks].map(cb => cb(dek)));
 }
+
+// ─── Global pluginData sentinel ────────────────────────────────
+const GLOBAL_DOSSIER_ID = '__global__';
 
 /**
  * API surface exposed to external plugins loaded from /plugins/.
@@ -107,6 +130,9 @@ export const pluginAPI = {
     useViewStore,
     useReportStore,
     useInsightsStore,
+    useTagSetStore,
+    useTabStore,
+    useUIStore,
   },
 
   // ─── Database repositories ──────────────────────────────────
@@ -125,6 +151,104 @@ export const pluginAPI = {
 
   // ─── Utilities ──────────────────────────────────────────────
   generateUUID,
+
+  // ─── Services (export, import, navigation) ──────────────────
+  services: {
+    /**
+     * Produce a complete ZIP snapshot of a dossier (same as manual export).
+     * Resolves all data from Dexie + OPFS, calls export:hooks plugins.
+     */
+    async exportDossier(dossierId: string): Promise<Blob> {
+      const state = _useDossierStore.getState();
+      const dossier = state.dossiers.find((d: any) => d.id === dossierId) ?? await dossierRepository.getById(dossierId);
+      if (!dossier) throw new Error(`Dossier ${dossierId} not found`);
+
+      const elements = await elementRepository.getByDossier(dossierId);
+      const links = await linkRepository.getByDossier(dossierId);
+      const assets = await db.assets.where({ dossierId }).toArray();
+      const report = (await db.reports.where({ dossierId }).first()) ?? null;
+      const tabs = await db.canvasTabs.where({ dossierId }).toArray();
+
+      return exportService.exportToZip(dossier, elements, links, assets, report, tabs);
+    },
+
+    /**
+     * Import a ZIP blob into a dossier.
+     * @param blob  ZIP blob (same format as manual export)
+     * @param options  Import options
+     * @returns  Import result with counts and errors
+     */
+    async importDossier(
+      blob: Blob,
+      options?: { targetDossierId?: string; positionOffset?: { x: number; y: number }; suffix?: string },
+    ): Promise<{
+      success: boolean;
+      elementsImported: number;
+      linksImported: number;
+      assetsImported: number;
+      errors: string[];
+      warnings: string[];
+      dossierId: string;
+    }> {
+      // If no target, create a new dossier
+      let dossierId = options?.targetDossierId;
+      if (!dossierId) {
+        const newDossier = await dossierRepository.create(
+          `Import${options?.suffix ?? ''}`,
+        );
+        dossierId = newDossier.id;
+      }
+      const file = new File([blob], 'import.zip', { type: 'application/zip' });
+      const result = await importService.importFromZip(file, dossierId, options?.positionOffset);
+      return { ...result, dossierId };
+    },
+
+    /**
+     * Navigate to a route within ZeroNeurone.
+     * Common routes: '/' (home), '/dossier/:id' (open dossier).
+     */
+    navigateTo(path: string): void {
+      if (_navigate) {
+        _navigate(path);
+      } else {
+        window.location.href = path;
+      }
+    },
+  },
+
+  // ─── Event bus (subscribe to data changes) ──────────────────
+  events: {
+    /**
+     * Subscribe to a plugin event. Returns an unsubscribe function.
+     *
+     * Available events:
+     *   dossier:created, dossier:updated, dossier:deleted,
+     *   dossier:opened, dossier:closed,
+     *   element:created, element:updated, element:deleted,
+     *   link:created, link:updated, link:deleted,
+     *   asset:created, asset:deleted
+     */
+    on: onPluginEvent,
+  },
+
+  // ─── Toast / Notifications ──────────────────────────────────
+  toast: {
+    success(message: string, options?: { duration?: number; id?: string }): string {
+      return useUIStore.getState().showToast('success', message, options?.duration);
+    },
+    error(message: string, options?: { duration?: number; id?: string }): string {
+      return useUIStore.getState().showToast('error', message, options?.duration ?? 0);
+    },
+    warning(message: string, options?: { duration?: number; id?: string }): string {
+      return useUIStore.getState().showToast('warning', message, options?.duration);
+    },
+    info(message: string, options?: { duration?: number; id?: string }): string {
+      return useUIStore.getState().showToast('info', message, options?.duration);
+    },
+    dismiss(id: string): void {
+      useUIStore.getState().dismissToast(id);
+    },
+  },
 
   // ─── Chiffrement at-rest (partage de la DEK avec les plugins) ──
   encryption: {
@@ -188,6 +312,32 @@ export const pluginAPI = {
       return useEncryptionStore.getState().isEnabled;
     },
 
+    /** Vrai si la DEK est déverrouillée (disponible en mémoire). */
+    isUnlocked(): boolean {
+      return useEncryptionStore.getState().dek !== null;
+    },
+
+    /**
+     * Chiffre un ArrayBuffer avec la DEK de ZN (AES-256-GCM).
+     * Format de sortie : [magic 0xE3E3] [iv 12 bytes] [ciphertext].
+     * Rejette si la session est verrouillée.
+     */
+    async encrypt(plaintext: ArrayBuffer): Promise<ArrayBuffer> {
+      const dek = useEncryptionStore.getState().dek;
+      if (!dek) throw new Error('Encryption session is locked — DEK not available');
+      return encryptOpfsBuffer(dek, plaintext);
+    },
+
+    /**
+     * Déchiffre un ArrayBuffer produit par encrypt().
+     * Rejette si la session est verrouillée.
+     */
+    async decrypt(ciphertext: ArrayBuffer): Promise<ArrayBuffer> {
+      const dek = useEncryptionStore.getState().dek;
+      if (!dek) throw new Error('Encryption session is locked — DEK not available');
+      return decryptOpfsBuffer(dek, ciphertext);
+    },
+
     /**
      * S'abonne à l'événement "désactivation imminente du chiffrement".
      * Le callback est awaité par ZN avant window.location.reload().
@@ -224,6 +374,28 @@ export const pluginAPI = {
     async remove(pluginId: string, dossierId: string, key: string): Promise<void> {
       await db.pluginData
         .where({ pluginId, investigationId: dossierId, key })
+        .delete();
+    },
+
+    // ─── Global data (not tied to any dossier) ────────────────
+    async getGlobal(pluginId: string, key: string): Promise<any> {
+      const row = await db.pluginData.get({ pluginId, investigationId: GLOBAL_DOSSIER_ID, key });
+      return row?.value;
+    },
+
+    async setGlobal(pluginId: string, key: string, value: any): Promise<void> {
+      await db.pluginData.put({
+        pluginId,
+        investigationId: GLOBAL_DOSSIER_ID,
+        dossierId: GLOBAL_DOSSIER_ID,
+        key,
+        value,
+      });
+    },
+
+    async removeGlobal(pluginId: string, key: string): Promise<void> {
+      await db.pluginData
+        .where({ pluginId, investigationId: GLOBAL_DOSSIER_ID, key })
         .delete();
     },
   },
