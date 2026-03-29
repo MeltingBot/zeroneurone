@@ -453,6 +453,139 @@ const allRows = await db.pluginData
 await db.pluginData.delete(['my-plugin', 'inv-123', 'settings']);
 ```
 
+### Global data (not tied to a dossier)
+
+For data not tied to any dossier (server credentials, preferences, license), use the global methods:
+
+```javascript
+// Write
+await api.pluginData.setGlobal('my-plugin', 'serverUrl', 'https://...');
+await api.pluginData.setGlobal('my-plugin', 'apiKey', 'xxx');
+
+// Read
+const url = await api.pluginData.getGlobal('my-plugin', 'serverUrl');
+
+// Delete
+await api.pluginData.removeGlobal('my-plugin', 'serverUrl');
+```
+
+**Note:** Global data is NOT affected by dossier deletion.
+
+### Automatic cleanup
+
+When a dossier is deleted, ZN automatically cleans up all `pluginData` associated with that dossier. No need to handle this case in your plugin.
+
+## Event Bus (`api.events`)
+
+Plugins can react to data changes via a pub/sub event bus. Callbacks are always wrapped in try/catch — a failing plugin never crashes ZN.
+
+```javascript
+// Subscribe to an event — returns an unsubscribe function
+const unsub = api.events.on('element:created', (event) => {
+  console.log('New element:', event.entityId, 'in', event.dossierId);
+});
+
+// Unsubscribe
+unsub();
+```
+
+### Available events
+
+| Event | entityId | Fired when |
+|-------|----------|------------|
+| `dossier:created` | — | New dossier created |
+| `dossier:updated` | — | Dossier metadata modified |
+| `dossier:deleted` | — | Dossier deleted (fired BEFORE deletion) |
+| `dossier:opened` | — | User opens a dossier |
+| `dossier:closed` | — | User closes a dossier |
+| `element:created` | elementId | Element created on canvas |
+| `element:updated` | elementId | Element modified |
+| `element:deleted` | elementId | Element deleted |
+| `link:created` | linkId | Link created |
+| `link:updated` | linkId | Link modified |
+| `link:deleted` | linkId | Link deleted |
+| `asset:created` | assetId | File attached to an element |
+| `asset:deleted` | assetId | File removed |
+
+### Event structure
+
+```typescript
+interface PluginEvent {
+  type: PluginEventType;
+  dossierId: string;
+  entityId?: string;
+  timestamp: number;  // Date.now()
+}
+```
+
+### Example: event-driven mode
+
+```javascript
+// Replace polling with a listener
+api.events.on('dossier:updated', (event) => {
+  markDossierDirty(event.dossierId);
+  maybeScheduleBackup(event.dossierId);
+});
+
+// React to every element modification
+api.events.on('element:updated', (event) => {
+  refreshAnalysis(event.dossierId, event.entityId);
+});
+```
+
+## Services (`api.services`)
+
+### `exportDossier(dossierId)`
+
+Produces a complete ZIP snapshot of a dossier (same format as manual export). Calls `export:hooks` plugins.
+
+```javascript
+const blob = await api.services.exportDossier(dossierId);
+// blob is a ZIP Blob ready to be uploaded or saved
+```
+
+### `importDossier(blob, options?)`
+
+Imports a ZIP into an existing or new dossier.
+
+```javascript
+const result = await api.services.importDossier(blob, {
+  targetDossierId: existingId,      // optional — if absent, creates a new dossier
+  positionOffset: { x: 100, y: 0 }, // optional — offset for merge
+  suffix: ' (restored)',             // optional — suffix for new dossier name
+});
+
+console.log(result.dossierId, result.elementsImported, result.success);
+```
+
+### `navigateTo(path)`
+
+Internal react-router navigation. Available routes:
+- `/` — Home page
+- `/dossier/:id` — Open a dossier
+
+```javascript
+api.services.navigateTo(`/dossier/${newDossierId}`);
+```
+
+## Toast / Notifications (`api.toast`)
+
+Simplified API for user notifications. Preferred over direct UI store access.
+
+```javascript
+api.toast.success('Backup completed');
+api.toast.error('Connection failed', { duration: 0 });  // persistent
+api.toast.warning('Low disk space');
+api.toast.info('Syncing...');
+
+// Dismiss a toast by ID
+const id = api.toast.info('Processing...', { duration: 0 });
+// ... later
+api.toast.dismiss(id);
+```
+
+**Default durations:** `error` = 0 (persistent), others = 3000ms.
+
 ## At-Rest Encryption
 
 If ZeroNeurone has at-rest encryption enabled, plugins that store their own sensitive data in a Dexie database can participate in the same encryption. The DEK (Data Encryption Key) is never handed to them raw — the API exposes an opaque middleware to apply to their Dexie instance.
@@ -934,6 +1067,9 @@ The `api` object passed to `register()` provides:
 | `stores.useViewStore` | Current dossier ID, viewport, filters |
 | `stores.useReportStore` | Report sections, add/update/delete |
 | `stores.useInsightsStore` | Graph analysis: clusters, centrality, bridges |
+| `stores.useTagSetStore` | TagSets: create, update, suggested properties |
+| `stores.useTabStore` | Canvas tabs: create, rename, members |
+| `stores.useUIStore` | UI state: toasts, modals (prefer `api.toast` for notifications) |
 
 **Database repositories (direct DB access):**
 
@@ -953,6 +1089,33 @@ The `api` object passed to `register()` provides:
 | `pluginData.get(pluginId, dossierId, key)` | Read from persistent plugin storage |
 | `pluginData.set(pluginId, dossierId, key, value)` | Write to persistent plugin storage |
 | `pluginData.remove(pluginId, dossierId, key)` | Delete from persistent plugin storage |
+| `pluginData.getGlobal(pluginId, key)` | Read global data (not tied to a dossier) |
+| `pluginData.setGlobal(pluginId, key, value)` | Write global data |
+| `pluginData.removeGlobal(pluginId, key)` | Delete global data |
+
+**Services (export, import, navigation):**
+
+| Property | Description |
+|----------|-------------|
+| `services.exportDossier(dossierId)` | Produce a complete ZIP snapshot of a dossier (returns `Promise<Blob>`) |
+| `services.importDossier(blob, options?)` | Import a ZIP into an existing or new dossier |
+| `services.navigateTo(path)` | Internal react-router navigation (`/`, `/dossier/:id`) |
+
+**Event bus (react to data changes):**
+
+| Property | Description |
+|----------|-------------|
+| `events.on(eventType, callback)` | Subscribe to an event. Returns an unsubscribe function |
+
+**Toast / Notifications:**
+
+| Property | Description |
+|----------|-------------|
+| `toast.success(message, options?)` | Success notification (default duration: 3000ms) |
+| `toast.error(message, options?)` | Error notification (default duration: persistent) |
+| `toast.warning(message, options?)` | Warning notification |
+| `toast.info(message, options?)` | Info notification |
+| `toast.dismiss(id)` | Dismiss a toast by its ID |
 
 **At-rest encryption:**
 
@@ -962,6 +1125,9 @@ The `api` object passed to `register()` provides:
 | `encryption.onReady(cb)` | Callback when DEK is available. Returns unlisten |
 | `encryption.onLock(cb)` | Callback when session is locked. Returns unlisten |
 | `encryption.isEnabled()` | True if encryption is active |
+| `encryption.isUnlocked()` | True if the DEK is unlocked (available in memory) |
+| `encryption.encrypt(plaintext)` | Encrypt an ArrayBuffer with the ZN DEK (AES-256-GCM). Rejects if session is locked |
+| `encryption.decrypt(ciphertext)` | Decrypt an ArrayBuffer produced by `encrypt()`. Rejects if session is locked |
 | `encryption.onBeforeDisable(cb)` | Callback before encryption is disabled (to decrypt plugin data) |
 
 **TypeScript types:** Copy `src/types/plugin-api.d.ts` into your plugin project for full type definitions (`PluginAPI`, `Element`, `Link`, `ReportSection`, etc.).

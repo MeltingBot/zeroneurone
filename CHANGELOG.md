@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.38.5
+
+### Fixes
+- **Plugin API evolutions**: event bus (`api.events.on()`), services (`exportDossier`, `importDossier`, `navigateTo`), toast notifications (`api.toast.*`), global pluginData (`getGlobal`/`setGlobal`/`removeGlobal`), encryption utilities (`encrypt`/`decrypt`/`isUnlocked`), 3 new stores (`useTagSetStore`, `useTabStore`, `useUIStore`)
+- **pluginData cleanup**: automatic cleanup of `pluginData` and `canvasTabs` when a dossier is deleted
+- **Plugin docs**: updated FR + EN plugin development guides with all new APIs
+
 ## 2.38.4
 
 ### Fixes

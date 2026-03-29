@@ -453,6 +453,139 @@ const allRows = await db.pluginData
 await db.pluginData.delete(['my-plugin', 'inv-123', 'settings']);
 ```
 
+### Donnees globales (hors dossier)
+
+Pour les donnees non liees a un dossier (credentials serveur, preferences, licence), utilisez les methodes globales :
+
+```javascript
+// Ecriture
+await api.pluginData.setGlobal('my-plugin', 'serverUrl', 'https://...');
+await api.pluginData.setGlobal('my-plugin', 'apiKey', 'xxx');
+
+// Lecture
+const url = await api.pluginData.getGlobal('my-plugin', 'serverUrl');
+
+// Suppression
+await api.pluginData.removeGlobal('my-plugin', 'serverUrl');
+```
+
+**Note :** Les donnees globales ne sont PAS affectees par la suppression d'un dossier.
+
+### Nettoyage automatique
+
+Quand un dossier est supprime, ZN nettoie automatiquement les `pluginData` associees a ce dossier. Plus besoin de gerer ce cas cote plugin.
+
+## Bus d'evenements (`api.events`)
+
+Les plugins peuvent reagir aux changements de donnees via un bus d'evenements pub/sub. Les callbacks sont toujours encapsules dans un try/catch — un plugin defaillant ne plante jamais ZN.
+
+```javascript
+// S'abonner a un evenement — retourne une fonction unsubscribe
+const unsub = api.events.on('element:created', (event) => {
+  console.log('Nouvel element:', event.entityId, 'dans', event.dossierId);
+});
+
+// Se desabonner
+unsub();
+```
+
+### Evenements disponibles
+
+| Evenement | entityId | Declenche quand |
+|-----------|----------|--------------------|
+| `dossier:created` | — | Nouveau dossier cree |
+| `dossier:updated` | — | Metadonnees dossier modifiees |
+| `dossier:deleted` | — | Dossier supprime (emis AVANT la suppression) |
+| `dossier:opened` | — | Utilisateur ouvre un dossier |
+| `dossier:closed` | — | Utilisateur ferme un dossier |
+| `element:created` | elementId | Element cree sur le canvas |
+| `element:updated` | elementId | Element modifie |
+| `element:deleted` | elementId | Element supprime |
+| `link:created` | linkId | Lien cree |
+| `link:updated` | linkId | Lien modifie |
+| `link:deleted` | linkId | Lien supprime |
+| `asset:created` | assetId | Fichier attache a un element |
+| `asset:deleted` | assetId | Fichier supprime |
+
+### Structure de l'evenement
+
+```typescript
+interface PluginEvent {
+  type: PluginEventType;
+  dossierId: string;
+  entityId?: string;
+  timestamp: number;  // Date.now()
+}
+```
+
+### Exemple : mode event-driven
+
+```javascript
+// Remplacer le polling par un listener
+api.events.on('dossier:updated', (event) => {
+  markDossierDirty(event.dossierId);
+  maybeScheduleBackup(event.dossierId);
+});
+
+// Reagir a chaque modification d'element
+api.events.on('element:updated', (event) => {
+  refreshAnalysis(event.dossierId, event.entityId);
+});
+```
+
+## Services (`api.services`)
+
+### `exportDossier(dossierId)`
+
+Produit un ZIP complet du dossier (meme format que l'export manuel). Appelle les `export:hooks` des plugins.
+
+```javascript
+const blob = await api.services.exportDossier(dossierId);
+// blob est un Blob ZIP pret a etre uploade ou sauvegarde
+```
+
+### `importDossier(blob, options?)`
+
+Importe un ZIP dans un dossier existant ou nouveau.
+
+```javascript
+const result = await api.services.importDossier(blob, {
+  targetDossierId: existingId,      // optionnel — si absent, cree un nouveau dossier
+  positionOffset: { x: 100, y: 0 }, // optionnel — offset pour le merge
+  suffix: ' (restauration)',         // optionnel — suffixe au nom du nouveau dossier
+});
+
+console.log(result.dossierId, result.elementsImported, result.success);
+```
+
+### `navigateTo(path)`
+
+Navigation interne react-router. Routes disponibles :
+- `/` — Page d'accueil
+- `/dossier/:id` — Ouvrir un dossier
+
+```javascript
+api.services.navigateTo(`/dossier/${newDossierId}`);
+```
+
+## Toast / Notifications (`api.toast`)
+
+API simplifiee pour les notifications utilisateur. Preferable a l'acces direct au store UI.
+
+```javascript
+api.toast.success('Sauvegarde terminee');
+api.toast.error('Echec de la connexion', { duration: 0 });  // persistant
+api.toast.warning('Espace disque faible');
+api.toast.info('Synchronisation en cours...');
+
+// Fermer un toast par ID
+const id = api.toast.info('Traitement...', { duration: 0 });
+// ... plus tard
+api.toast.dismiss(id);
+```
+
+**Durees par defaut :** `error` = 0 (persistant), les autres = 3000ms.
+
 ## Chiffrement at-rest
 
 Si ZeroNeurone a le chiffrement at-rest activé, les plugins qui stockent leurs propres données sensibles dans une base Dexie peuvent participer au même chiffrement. La DEK (Data Encryption Key) ne leur est jamais transmise brute — l'API expose un middleware opaque à appliquer sur leur instance Dexie.
@@ -934,6 +1067,9 @@ L'objet `api` passe a `register()` fournit :
 | `stores.useViewStore` | ID dossier courante, viewport, filtres |
 | `stores.useReportStore` | Sections de rapport, ajout/modification/suppression |
 | `stores.useInsightsStore` | Analyse de graphe : clusters, centralite, ponts |
+| `stores.useTagSetStore` | TagSets : creation, modification, proprietes suggerees |
+| `stores.useTabStore` | Onglets canvas : creation, renommage, membres |
+| `stores.useUIStore` | Etat UI : toasts, modales (preferer `api.toast` pour les notifications) |
 
 **Repositories base de donnees (acces DB direct) :**
 
@@ -953,6 +1089,33 @@ L'objet `api` passe a `register()` fournit :
 | `pluginData.get(pluginId, dossierId, key)` | Lire depuis le stockage persistant |
 | `pluginData.set(pluginId, dossierId, key, value)` | Ecrire dans le stockage persistant |
 | `pluginData.remove(pluginId, dossierId, key)` | Supprimer du stockage persistant |
+| `pluginData.getGlobal(pluginId, key)` | Lire une donnee globale (hors dossier) |
+| `pluginData.setGlobal(pluginId, key, value)` | Ecrire une donnee globale |
+| `pluginData.removeGlobal(pluginId, key)` | Supprimer une donnee globale |
+
+**Services (export, import, navigation) :**
+
+| Propriete | Description |
+|-----------|-------------|
+| `services.exportDossier(dossierId)` | Produit un ZIP complet du dossier (retourne `Promise<Blob>`) |
+| `services.importDossier(blob, options?)` | Importe un ZIP dans un dossier existant ou nouveau |
+| `services.navigateTo(path)` | Navigation interne react-router (`/`, `/dossier/:id`) |
+
+**Bus d'evenements (reagir aux changements de donnees) :**
+
+| Propriete | Description |
+|-----------|-------------|
+| `events.on(eventType, callback)` | S'abonner a un evenement. Retourne une fonction unsubscribe |
+
+**Toast / Notifications :**
+
+| Propriete | Description |
+|-----------|-------------|
+| `toast.success(message, options?)` | Notification de succes (duree par defaut : 3000ms) |
+| `toast.error(message, options?)` | Notification d'erreur (duree par defaut : persistant) |
+| `toast.warning(message, options?)` | Notification d'avertissement |
+| `toast.info(message, options?)` | Notification d'information |
+| `toast.dismiss(id)` | Fermer un toast par son ID |
 
 **Chiffrement at-rest :**
 
@@ -962,6 +1125,9 @@ L'objet `api` passe a `register()` fournit :
 | `encryption.onReady(cb)` | Callback quand la DEK est disponible. Retourne unlisten |
 | `encryption.onLock(cb)` | Callback quand la session est verrouillée. Retourne unlisten |
 | `encryption.isEnabled()` | Vrai si le chiffrement est actif |
+| `encryption.isUnlocked()` | Vrai si la DEK est deverrouillee (disponible en memoire) |
+| `encryption.encrypt(plaintext)` | Chiffre un ArrayBuffer avec la DEK (AES-256-GCM). Rejette si session verrouillee |
+| `encryption.decrypt(ciphertext)` | Dechiffre un ArrayBuffer produit par `encrypt()`. Rejette si session verrouillee |
 | `encryption.onBeforeDisable(cb)` | Callback avant désactivation du chiffrement (pour déchiffrer les données du plugin) |
 
 **Types TypeScript :** Copiez `src/types/plugin-api.d.ts` dans votre projet plugin pour les definitions de types completes (`PluginAPI`, `Element`, `Link`, `ReportSection`, etc.).

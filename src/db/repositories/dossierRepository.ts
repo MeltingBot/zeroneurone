@@ -208,13 +208,15 @@ export const dossierRepository = {
   async delete(id: DossierId): Promise<void> {
     await db.transaction(
       'rw',
-      [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports],
+      [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports, db.canvasTabs, db.pluginData],
       async () => {
         await db.elements.where({ dossierId: id }).delete();
         await db.links.where({ dossierId: id }).delete();
         await db.assets.where({ dossierId: id }).delete();
         await db.views.where({ dossierId: id }).delete();
         await db.reports.where({ dossierId: id }).delete();
+        await db.canvasTabs.where({ dossierId: id }).delete();
+        await db.pluginData.where({ dossierId: id }).delete();
         await db.dossiers.delete(id);
       }
     );

@@ -54,6 +54,7 @@ import { useTabStore } from './tabStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
 import { arrayBufferToBase64 } from '../utils';
+import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
 
 interface DossierState {
   // Current dossier
@@ -548,6 +549,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         loadingProgress: 100,
       });
 
+      emitPluginEvent('dossier:opened', id);
+
       // In shared mode, schedule safety re-syncs to catch data that arrives
       // after the initial Y.Doc read. This covers:
       // - Async buffer delivery (data arrives after initial connection)
@@ -626,6 +629,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     set((state) => ({
       dossiers: [dossier, ...state.dossiers],
     }));
+    emitPluginEvent('dossier:created', dossier.id);
     return dossier;
   },
 
@@ -641,6 +645,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         dossiers: [dossier, ...state.dossiers],
       };
     });
+    emitPluginEvent('dossier:created', dossier.id);
     return dossier;
   },
 
@@ -678,9 +683,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Persist to IndexedDB (async, can happen after UI is updated)
     await dossierRepository.update(id, changes);
+    emitPluginEvent('dossier:updated', id);
   },
 
   deleteDossier: async (id: DossierId) => {
+    emitPluginEvent('dossier:deleted', id);
     await fileService.deleteDossierAssets(id);
     await syncService.deleteLocalData(id);
     await dossierRepository.delete(id);
@@ -692,6 +699,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   unloadDossier: () => {
+    const closingId = get().currentDossier?.id;
+
     // Cleanup Y.Doc observer
     if (ydocObserverCleanup) {
       ydocObserverCleanup();
@@ -711,6 +720,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       assets: [],
       isReadOnly: false,
     });
+
+    if (closingId) emitPluginEvent('dossier:closed', closingId);
   },
 
   // ============================================================================
@@ -788,6 +799,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     });
 
+    emitPluginEvent('element:created', currentDossier.id, element.id);
     return element;
   },
 
@@ -826,6 +838,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     await elementRepository.update(id, changes as any).catch(() => {
       // Ignore Dexie errors - Y.Doc is source of truth
     });
+
+    const dossierId = get().currentDossier?.id;
+    if (dossierId) emitPluginEvent('element:updated', dossierId, id);
   },
 
   deleteElement: async (id: ElementId) => {
@@ -869,6 +884,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       import('./tabStore').then(({ useTabStore }) => {
         useTabStore.getState().removeElementFromAllTabs(invId, id);
       });
+      emitPluginEvent('element:deleted', invId, id);
     }
   },
 
@@ -917,6 +933,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         const tabStore = useTabStore.getState();
         ids.forEach(id => tabStore.removeElementFromAllTabs(invId, id));
       });
+      ids.forEach(id => emitPluginEvent('element:deleted', invId, id));
     }
   },
 
@@ -1050,6 +1067,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       { ...options, id: link.id }
     ).catch(() => {});
 
+    emitPluginEvent('link:created', currentDossier.id, link.id);
     return link;
   },
 
@@ -1086,6 +1104,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also update Dexie
     await linkRepository.update(id, changes as any).catch(() => {});
+
+    const dossierId = get().currentDossier?.id;
+    if (dossierId) emitPluginEvent('link:updated', dossierId, id);
   },
 
   deleteLink: async (id: LinkId) => {
@@ -1107,6 +1128,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also delete from Dexie
     await linkRepository.delete(id).catch(() => {});
+
+    const dossierId = get().currentDossier?.id;
+    if (dossierId) emitPluginEvent('link:deleted', dossierId, id);
   },
 
   deleteLinks: async (ids: LinkId[]) => {
@@ -1129,6 +1153,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also delete from Dexie
     await linkRepository.deleteMany(ids).catch(() => {});
+
+    const dossierId = get().currentDossier?.id;
+    if (dossierId) ids.forEach(id => emitPluginEvent('link:deleted', dossierId, id));
   },
 
   // ============================================================================
@@ -1764,6 +1791,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }).catch(() => {});
     }
 
+    emitPluginEvent('asset:created', currentDossier.id, asset.id);
     return asset;
   },
 
@@ -1792,6 +1820,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     set((state) => ({
       assets: state.assets.filter((a) => a.id !== assetId),
     }));
+
+    const dossierId = get().currentDossier?.id;
+    if (dossierId) emitPluginEvent('asset:deleted', dossierId, assetId);
   },
 
   clearAssetText: async (assetId: string) => {
