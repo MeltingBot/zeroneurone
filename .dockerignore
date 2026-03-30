@@ -44,6 +44,9 @@ docker-compose*.yml
 claudedocs
 CLAUDE.md
 
+# External plugin symlinks (resolved outside repo)
+public/plugins/vaultneurone.js
+
 # Other
 *.log
 *.tmp
