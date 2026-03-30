@@ -3,6 +3,9 @@
   "private": true,
   "version": "2.38.6",
   "license": "MIT",
+  "overrides": {
+    "serialize-javascript": "7.0.5"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
