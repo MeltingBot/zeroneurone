@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.38.6
+
+### Fixes
+- **Security: XSS interactive report** — sanitiseHtml() whitelist strips unauthorized HTML tags after markdown conversion, protocol validation on links (https/mailto/# only), meta CSP in exported HTML
+- **Security: CSP nginx** — Content-Security-Policy header added to nginx.conf (script-src, img-src, connect-src, worker-src, frame-ancestors, base-uri)
+- **Security: PDF iframe sandbox** — `sandbox="allow-same-origin"` on PDF preview iframes (Canvas, AssetsPanel)
+- **Security: WebAuthn logs** — removed debug console.log/debug from webauthnService (PRF material no longer exposed)
+- **Security: sync asset hash** — SHA-256 re-verification on assets received via sync
+- **Security: URL validation** — toUrl() / isUrl() guard against dangerous protocols (ElementDetail, LinkDetail)
+- **Security: element references** — quote/angle bracket escaping in parseElementReferences (interactive report)
+- **Security: Vite config** — removed allowedHosts tunnel domain
+- **Plugin API**: scoped pluginData methods (getForDossier/setForDossier/removeForDossier), plugin manifest integrity field, updated plugin-api.d.ts typings
+- **Plugin docs**: updated FR + EN guides with scoped pluginData and integrity verification
+
 ## 2.38.5
 
 ### Fixes

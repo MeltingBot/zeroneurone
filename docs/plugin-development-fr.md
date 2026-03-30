@@ -453,20 +453,40 @@ const allRows = await db.pluginData
 await db.pluginData.delete(['my-plugin', 'inv-123', 'settings']);
 ```
 
+### API scopee (plugins externes)
+
+Les plugins externes charges via `manifest.json` recoivent une API **scopee** ou le `pluginId` est injecte automatiquement. Inutile de le passer :
+
+```javascript
+// Dans register(api) :
+// api.pluginId est disponible (ex: "my-plugin")
+
+// Ecriture (dossierId, key, value — pas de pluginId necessaire)
+await api.pluginData.set(dossierId, 'settings', { threshold: 0.5 });
+
+// Lecture
+const settings = await api.pluginData.get(dossierId, 'settings');
+
+// Suppression
+await api.pluginData.remove(dossierId, 'settings');
+```
+
+Cela empeche un plugin de lire ou ecrire les donnees d'un autre plugin.
+
 ### Donnees globales (hors dossier)
 
 Pour les donnees non liees a un dossier (credentials serveur, preferences, licence), utilisez les methodes globales :
 
 ```javascript
-// Ecriture
-await api.pluginData.setGlobal('my-plugin', 'serverUrl', 'https://...');
-await api.pluginData.setGlobal('my-plugin', 'apiKey', 'xxx');
+// Ecriture (key, value — pas de pluginId pour les plugins externes)
+await api.pluginData.setGlobal('serverUrl', 'https://...');
+await api.pluginData.setGlobal('apiKey', 'xxx');
 
 // Lecture
-const url = await api.pluginData.getGlobal('my-plugin', 'serverUrl');
+const url = await api.pluginData.getGlobal('serverUrl');
 
 // Suppression
-await api.pluginData.removeGlobal('my-plugin', 'serverUrl');
+await api.pluginData.removeGlobal('serverUrl');
 ```
 
 **Note :** Les donnees globales ne sont PAS affectees par la suppression d'un dossier.
@@ -553,10 +573,13 @@ const result = await api.services.importDossier(blob, {
   targetDossierId: existingId,      // optionnel — si absent, cree un nouveau dossier
   positionOffset: { x: 100, y: 0 }, // optionnel — offset pour le merge
   suffix: ' (restauration)',         // optionnel — suffixe au nom du nouveau dossier
+  replace: true,                     // optionnel — vide le contenu existant avant d'importer
 });
 
 console.log(result.dossierId, result.elementsImported, result.success);
 ```
+
+Avec `replace: true`, tout le contenu existant (elements, liens, assets, onglets, rapports, vues, pluginData) est supprime avant l'import. La coquille du dossier (ID, nom, metadonnees) est conservee.
 
 ### `navigateTo(path)`
 
@@ -1001,10 +1024,25 @@ Si `manifest.json` est absent ou vide, l'application demarre normalement sans im
 ```json
 {
   "plugins": [
-    { "id": "my-plugin", "file": "my-plugin.js" },
+    { "id": "my-plugin", "file": "my-plugin.js", "integrity": "a1b2c3..." },
     { "id": "other-plugin", "file": "other-plugin.js" }
   ]
 }
+```
+
+| Champ | Requis | Description |
+|-------|--------|-------------|
+| `id` | Oui | Identifiant unique du plugin |
+| `file` | Oui | Nom du fichier JS relatif a `/plugins/` |
+| `name` | Non | Nom d'affichage (utilise dans la carte auto-generee) |
+| `description` | Non | Description courte |
+| `integrity` | Non | Hash SHA-256 hexadecimal du fichier JS. Si defini, ZN verifie le contenu du fichier avant execution. Les fichiers non conformes sont ignores avec un avertissement. |
+
+**Generer le hash d'integrite :**
+```bash
+sha256sum plugins/my-plugin.js | cut -d' ' -f1
+# ou en Node.js :
+node -e "const fs=require('fs');const c=require('crypto');console.log(c.createHash('sha256').update(fs.readFileSync('plugins/my-plugin.js')).digest('hex'))"
 ```
 
 Placez ce fichier dans `dist/plugins/manifest.json` (ou `public/plugins/manifest.json` en developpement).
@@ -1086,12 +1124,13 @@ L'objet `api` passe a `register()` fournit :
 | `db` | Instance Dexie (acces direct IndexedDB) |
 | `fileService` | Gestion fichiers OPFS (`getAssetFile`, `getAssetUrl`, `extractAssetText`) |
 | `generateUUID()` | Generer un UUID v4 |
-| `pluginData.get(pluginId, dossierId, key)` | Lire depuis le stockage persistant |
-| `pluginData.set(pluginId, dossierId, key, value)` | Ecrire dans le stockage persistant |
-| `pluginData.remove(pluginId, dossierId, key)` | Supprimer du stockage persistant |
-| `pluginData.getGlobal(pluginId, key)` | Lire une donnee globale (hors dossier) |
-| `pluginData.setGlobal(pluginId, key, value)` | Ecrire une donnee globale |
-| `pluginData.removeGlobal(pluginId, key)` | Supprimer une donnee globale |
+| `pluginData.get(dossierId, key)` | Lire depuis le stockage persistant (pluginId auto-injecte) |
+| `pluginData.set(dossierId, key, value)` | Ecrire dans le stockage persistant |
+| `pluginData.remove(dossierId, key)` | Supprimer du stockage persistant |
+| `pluginData.getGlobal(key)` | Lire une donnee globale (hors dossier) |
+| `pluginData.setGlobal(key, value)` | Ecrire une donnee globale |
+| `pluginData.removeGlobal(key)` | Supprimer une donnee globale |
+| `pluginId` | L'ID du plugin (depuis le manifeste) |
 
 **Services (export, import, navigation) :**
 

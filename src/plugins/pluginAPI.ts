@@ -180,7 +180,12 @@ export const pluginAPI = {
      */
     async importDossier(
       blob: Blob,
-      options?: { targetDossierId?: string; positionOffset?: { x: number; y: number }; suffix?: string },
+      options?: {
+        targetDossierId?: string;
+        positionOffset?: { x: number; y: number };
+        suffix?: string;
+        replace?: boolean;
+      },
     ): Promise<{
       success: boolean;
       elementsImported: number;
@@ -197,6 +202,15 @@ export const pluginAPI = {
           `Import${options?.suffix ?? ''}`,
         );
         dossierId = newDossier.id;
+      } else if (options?.replace) {
+        // Clear existing content but keep the dossier shell (same ID)
+        await db.elements.where({ dossierId }).delete();
+        await db.links.where({ dossierId }).delete();
+        await fileService.deleteDossierAssets(dossierId);
+        await db.canvasTabs.where({ dossierId }).delete();
+        await db.reports.where({ dossierId }).delete();
+        await db.views.where({ dossierId }).delete();
+        await db.pluginData.where({ dossierId }).delete();
       }
       const file = new File([blob], 'import.zip', { type: 'application/zip' });
       const result = await importService.importFromZip(file, dossierId, options?.positionOffset);
@@ -208,6 +222,10 @@ export const pluginAPI = {
      * Common routes: '/' (home), '/dossier/:id' (open dossier).
      */
     navigateTo(path: string): void {
+      if (!path.startsWith('/')) {
+        console.warn(`[Plugin] navigateTo refused non-relative path: "${path}"`);
+        return;
+      }
       if (_navigate) {
         _navigate(path);
       } else {
@@ -400,3 +418,51 @@ export const pluginAPI = {
     },
   },
 };
+
+/**
+ * Create a scoped version of pluginAPI where pluginData methods
+ * automatically inject the pluginId. This prevents a plugin from
+ * reading/writing another plugin's data.
+ *
+ * Backward-compatible: if a plugin still passes pluginId as the first
+ * argument (old 3-arg signature), the wrapper detects it and strips it,
+ * enforcing the scoped pluginId regardless.
+ */
+export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pluginId: string } {
+  return {
+    ...pluginAPI,
+    pluginId,
+    pluginData: {
+      // get: new(dossierId, key) or legacy(pluginId, dossierId, key)
+      async get(...args: any[]): Promise<any> {
+        const [dossierId, key] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+        return pluginAPI.pluginData.get(pluginId, dossierId, key);
+      },
+      // set: new(dossierId, key, value) or legacy(pluginId, dossierId, key, value)
+      async set(...args: any[]): Promise<void> {
+        const [dossierId, key, value] = args.length >= 4 ? [args[1], args[2], args[3]] : [args[0], args[1], args[2]];
+        return pluginAPI.pluginData.set(pluginId, dossierId, key, value);
+      },
+      // remove: new(dossierId, key) or legacy(pluginId, dossierId, key)
+      async remove(...args: any[]): Promise<void> {
+        const [dossierId, key] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+        return pluginAPI.pluginData.remove(pluginId, dossierId, key);
+      },
+      // getGlobal: new(key) or legacy(pluginId, key)
+      async getGlobal(...args: any[]): Promise<any> {
+        const key = args.length >= 2 ? args[1] : args[0];
+        return pluginAPI.pluginData.getGlobal(pluginId, key);
+      },
+      // setGlobal: new(key, value) or legacy(pluginId, key, value)
+      async setGlobal(...args: any[]): Promise<void> {
+        const [key, value] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+        return pluginAPI.pluginData.setGlobal(pluginId, key, value);
+      },
+      // removeGlobal: new(key) or legacy(pluginId, key)
+      async removeGlobal(...args: any[]): Promise<void> {
+        const key = args.length >= 2 ? args[1] : args[0];
+        return pluginAPI.pluginData.removeGlobal(pluginId, key);
+      },
+    },
+  };
+}

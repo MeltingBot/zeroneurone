@@ -1,0 +1,1 @@
+/home/yann/RetD/neurone/vaultneurone/dist-plugin/vaultneurone.js

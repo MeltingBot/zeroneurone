@@ -97,9 +97,7 @@ export default defineConfig({
       }
     })
   ],
-  server: {
-    allowedHosts: ['magic-zeppelin-snake.p0rt.xyz'],
-  },
+  server: {},
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),

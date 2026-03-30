@@ -38,6 +38,22 @@ export function bufferToHex(buffer: ArrayBuffer): string {
 }
 
 /**
+ * Validate that a URL is safe for external fetch (anti-SSRF).
+ * Rejects private/loopback IPs, non-http(s) protocols.
+ */
+export function isSafeExternalUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    const h = parsed.hostname;
+    if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|0\.0\.0\.0|localhost|\[::1\])/.test(h)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get file extension from filename
  */
 export function getExtension(filename: string): string {

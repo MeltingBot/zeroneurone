@@ -207,6 +207,7 @@ export interface DossierRepositoryAPI {
 
 // ─── Plugin data ──────────────────────────────────────────────
 
+/** Raw pluginData API (requires explicit pluginId — internal use). */
 export interface PluginDataAPI {
   get: (pluginId: string, dossierId: string, key: string) => Promise<any>;
   set: (pluginId: string, dossierId: string, key: string, value: any) => Promise<void>;
@@ -218,6 +219,19 @@ export interface PluginDataAPI {
   setGlobal: (pluginId: string, key: string, value: any) => Promise<void>;
   /** Remove global plugin data (not tied to any dossier). */
   removeGlobal: (pluginId: string, key: string) => Promise<void>;
+}
+
+/**
+ * Scoped pluginData API — pluginId is injected automatically.
+ * This is what external plugins receive via `register(api)`.
+ */
+export interface ScopedPluginDataAPI {
+  get: (dossierId: string, key: string) => Promise<any>;
+  set: (dossierId: string, key: string, value: any) => Promise<void>;
+  remove: (dossierId: string, key: string) => Promise<void>;
+  getGlobal: (key: string) => Promise<any>;
+  setGlobal: (key: string, value: any) => Promise<void>;
+  removeGlobal: (key: string) => Promise<void>;
 }
 
 // ─── Event bus ────────────────────────────────────────────────
@@ -280,6 +294,8 @@ export interface ServicesAPI {
       targetDossierId?: string;
       positionOffset?: { x: number; y: number };
       suffix?: string;
+      /** Clear all existing content before importing. Keeps the dossier shell (same ID). */
+      replace?: boolean;
     },
   ) => Promise<{
     success: boolean;
@@ -360,11 +376,23 @@ export interface PluginAPI {
   // Toast / Notifications
   toast: ToastAPI;
 
-  // Plugin data persistence
+  // Plugin data persistence (raw — requires pluginId in each call)
   pluginData: PluginDataAPI;
 
   // At-rest encryption sharing
   encryption: EncryptionPluginAPI;
+}
+
+/**
+ * Scoped version of PluginAPI passed to external plugins.
+ * pluginData methods auto-inject the plugin's ID, preventing
+ * cross-plugin data access.
+ */
+export interface ScopedPluginAPI extends Omit<PluginAPI, 'pluginData'> {
+  /** The ID of this plugin (from manifest). */
+  pluginId: string;
+  /** Scoped data API — pluginId is injected automatically. */
+  pluginData: ScopedPluginDataAPI;
 }
 
 /**

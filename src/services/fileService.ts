@@ -365,6 +365,14 @@ class FileService {
     }
     const arrayBuffer = bytes.buffer;
 
+    // Verify integrity of synced asset
+    const verifyHashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const verifyHash = bufferToHex(verifyHashBuffer);
+    if (verifyHash !== assetData.hash) {
+      console.warn(`[FileService] Hash mismatch for synced asset "${assetData.filename}": expected ${assetData.hash}, got ${verifyHash}`);
+      return null;
+    }
+
     // Create OPFS path and write file (chiffré si DEK disponible)
     const dirHandle = await this.getAssetDirectory(assetData.dossierId);
     const extension = getExtension(assetData.filename);

@@ -607,11 +607,17 @@ function setupWebSocketRelay(wss) {
 // ============================================================================
 
 // Create HTTP server
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const server = createServer((req, res) => {
-  // CORS headers for flexibility
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);

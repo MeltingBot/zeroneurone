@@ -174,7 +174,6 @@ export async function registerWebAuthnCredential(
   if (!credential) throw new Error('Registration cancelled');
 
   const extensions = credential.getClientExtensionResults() as any;
-  console.debug('[WebAuthn] create() extensions:', extensions);
 
   const prfResult = extensions?.prf;
   if (!prfResult?.enabled) {
@@ -205,22 +204,10 @@ export async function registerWebAuthnCredential(
     },
   };
 
-  console.debug('[WebAuthn] get() for PRF eval, options:', getOptions);
-
   const assertion = await navigator.credentials.get(getOptions) as PublicKeyCredential | null;
   if (!assertion) throw new Error('PRF evaluation cancelled');
 
   const getExtensions = assertion.getClientExtensionResults() as any;
-  console.debug('[WebAuthn] get() extensions:', JSON.stringify(Object.keys(getExtensions)));
-  console.debug('[WebAuthn] get() prf:', getExtensions?.prf);
-  console.debug('[WebAuthn] get() prf.results:', getExtensions?.prf?.results);
-  if (getExtensions?.prf) {
-    console.debug('[WebAuthn] get() prf keys:', Object.keys(getExtensions.prf));
-    if (getExtensions.prf.results) {
-      console.debug('[WebAuthn] get() prf.results keys:', Object.keys(getExtensions.prf.results));
-      console.debug('[WebAuthn] get() prf.results.first type:', typeof getExtensions.prf.results.first, getExtensions.prf.results.first);
-    }
-  }
 
   const evalResult = getExtensions?.prf?.results?.first;
   if (!evalResult) throw new Error('PRF evaluation failed: no prf.results.first in extensions. Got: ' + JSON.stringify(Object.keys(getExtensions?.prf ?? {})));

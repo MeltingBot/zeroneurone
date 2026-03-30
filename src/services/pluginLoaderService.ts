@@ -1,4 +1,4 @@
-import { pluginAPI } from '../plugins/pluginAPI';
+import { createScopedPluginAPI } from '../plugins/pluginAPI';
 import { getPlugins, registerPlugin } from '../plugins/pluginRegistry';
 
 interface PluginManifestEntry {
@@ -6,6 +6,8 @@ interface PluginManifestEntry {
   file: string;
   name?: string;
   description?: string;
+  /** SHA-256 hex hash of the plugin file. If set, integrity is verified before execution. */
+  integrity?: string;
 }
 
 interface PluginManifest {
@@ -94,6 +96,23 @@ export async function loadExternalPlugins(): Promise<void> {
       }
       const source = await fileRes.text();
 
+      // Verify integrity if hash is declared in manifest
+      if (entry.integrity) {
+        const hashBuffer = await crypto.subtle.digest(
+          'SHA-256',
+          new TextEncoder().encode(source),
+        );
+        const hashHex = Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+        if (hashHex !== entry.integrity.toLowerCase()) {
+          console.warn(
+            `[ZN] Plugin "${entry.id}": integrity mismatch (expected ${entry.integrity}, got ${hashHex}). Skipping.`,
+          );
+          continue;
+        }
+      }
+
       // Rewrite bare React imports → Blob URL shims
       const rewritten = rewriteBareImports(source);
 
@@ -107,7 +126,7 @@ export async function loadExternalPlugins(): Promise<void> {
       URL.revokeObjectURL(blobUrl);
 
       if (typeof mod.register === 'function') {
-        await mod.register(pluginAPI);
+        await mod.register(createScopedPluginAPI(entry.id));
         loaded++;
         console.log(`[ZN] Plugin "${entry.id}" registered`);
 

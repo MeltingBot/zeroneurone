@@ -554,7 +554,11 @@ class ExportService {
   }
 
   private escapeCSV(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    // Prevent spreadsheet formula injection (=, +, -, @, tab, carriage return)
+    if (/^[=+\-@\t\r]/.test(value)) {
+      value = "'" + value;
+    }
+    if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes("'")) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;

@@ -1,4 +1,4 @@
-import { generateUUID } from '../utils';
+import { generateUUID, isSafeExternalUrl } from '../utils';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type {
   DossierId,
@@ -198,7 +198,7 @@ export async function importPredicaGraph(
           imageUrl = node.data.pfp_image.url;
         }
 
-        if (imageUrl && imageUrl.startsWith('http')) {
+        if (imageUrl && isSafeExternalUrl(imageUrl)) {
           try {
             const response = await fetch(imageUrl);
             if (response.ok) {

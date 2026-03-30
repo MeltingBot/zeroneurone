@@ -337,8 +337,9 @@ const cleanupInterval = setInterval(cleanupBuffers, 60 * 60 * 1000);
 // HTTP SERVER (health + metrics endpoint)
 // ============================================================================
 
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const server = createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

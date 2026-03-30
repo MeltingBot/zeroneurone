@@ -586,14 +586,15 @@ export function MapView() {
 
   // Create custom marker HTML
   const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number): string => {
-    const color = element.visual.color || '#f5f5f4';
-    const borderColor = element.visual.borderColor || '#a8a29e';
+    const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const color = escHtml(element.visual.color || '#f5f5f4');
+    const borderColor = escHtml(element.visual.borderColor || '#a8a29e');
     const thumbnail = getThumbnail(element);
     const label = element.label || t('map.unnamed');
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
     const displayLabel = anonymousMode
       ? '<span style="display:inline-block;background:var(--color-text-primary,#3d3833);border-radius:2px;width:2.5em;height:0.8em;"></span>'
-      : isSelected ? label : truncatedLabel;
+      : escHtml(isSelected ? label : truncatedLabel);
     const selectedStyle = isSelected
       ? 'box-shadow: 0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3);'
       : 'box-shadow: 0 1px 4px rgba(0,0,0,0.2);';

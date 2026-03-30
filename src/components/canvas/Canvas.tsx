@@ -4400,6 +4400,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           ) : isPdf && fileUrl ? (
             <iframe
               src={fileUrl}
+              sandbox="allow-same-origin"
               className="w-full h-full border-0"
               title={asset.filename}
             />

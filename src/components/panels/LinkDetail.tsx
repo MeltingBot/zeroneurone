@@ -22,11 +22,12 @@ function isUrl(str: string): boolean {
   return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('www.');
 }
 
-// Get a proper URL (add https:// if needed)
+// Get a proper URL (only http/https allowed)
 function toUrl(str: string): string {
   const trimmed = str.trim();
   if (trimmed.startsWith('www.')) return `https://${trimmed}`;
-  return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
 }
 
 // Debounce hook

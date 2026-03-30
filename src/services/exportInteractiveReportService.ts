@@ -36,6 +36,19 @@ const CSS_VAR_MAP: Record<string, string> = {
   '--color-node-lime': '#bef264',
 };
 
+// Allowed HTML tags in markdown output (whitelist for sanitisation)
+const ALLOWED_TAGS = new Set([
+  'h1', 'h2', 'h3', 'strong', 'em', 'pre', 'code', 'blockquote',
+  'hr', 'li', 'ul', 'a', 'br', 'p', 'dl', 'dt', 'dd',
+]);
+
+// Strip any HTML tag not in the whitelist (defense-in-depth after markdown conversion)
+function sanitiseHtml(html: string): string {
+  return html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
+    return ALLOWED_TAGS.has(tag.toLowerCase()) ? match : '';
+  });
+}
+
 // Simple Markdown to HTML converter (no external dependency)
 function markdownToHtml(md: string): string {
   let html = md
@@ -65,8 +78,14 @@ function markdownToHtml(md: string): string {
     // Unordered lists
     .replace(/^\* (.+)$/gm, '<li>$1</li>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    // Links (only safe protocols: http, https, mailto, fragment)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_: string, text: string, url: string) => {
+      const trimUrl = url.trim().toLowerCase();
+      if (/^(https?:|mailto:|#)/.test(trimUrl)) {
+        return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
+      }
+      return text;
+    })
     // Line breaks (two spaces or explicit)
     .replace(/  \n/g, '<br>\n')
     // Paragraphs
@@ -77,14 +96,20 @@ function markdownToHtml(md: string): string {
   // Clean up adjacent blockquotes
   html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
 
-  return `<p>${html}</p>`.replace(/<p><\/p>/g, '').replace(/<p>(<h[1-6]>)/g, '$1').replace(/(<\/h[1-6]>)<\/p>/g, '$1');
+  html = `<p>${html}</p>`.replace(/<p><\/p>/g, '').replace(/<p>(<h[1-6]>)/g, '$1').replace(/(<\/h[1-6]>)<\/p>/g, '$1');
+
+  // Sanitise: strip any tag not in the whitelist
+  return sanitiseHtml(html);
 }
 
 // Convert element references [[Label|uuid]] to clickable links
 function parseElementReferences(html: string): string {
   return html.replace(
     /\[\[([^\]|]+)\|([a-f0-9-]+)\]\]/g,
-    '<a href="#" class="element-ref" data-element-id="$2" title="$1">$1</a>'
+    (_: string, label: string, id: string) => {
+      const safeLabel = label.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<a href="#" class="element-ref" data-element-id="${id}" title="${safeLabel}">${safeLabel}</a>`;
+    }
   );
 }
 
@@ -582,7 +607,7 @@ interface HTMLParams {
 function buildFullHTML(params: HTMLParams): string {
   const s = params.i18n;
   return `<!DOCTYPE html>
-<html lang="${s.lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${escapeXml(params.title)} - ${escapeXml(s.report)}</title>
+<html lang="${s.lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:;"><title>${escapeXml(params.title)} - ${escapeXml(s.report)}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg-primary:#ffffff;--bg-secondary:#f9fafb;--bg-tertiary:#f3f4f6;--text-primary:#111827;--text-secondary:#6b7280;--text-tertiary:#9ca3af;--border-default:#e5e7eb;--accent:#2563eb;--graph-bg:#f9fafb}
@@ -724,6 +749,7 @@ main[data-active-tab="graph"] #graph-panel{display:block;width:100%;height:100%}
 </main></div>
 <script>(function(){
 var D=document,Q=function(s){return D.querySelector(s)},QA=function(s){return D.querySelectorAll(s)};
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 var elementDetails=${params.elementDetails};
 var reportMarkdown=${JSON.stringify(params.reportMarkdown)};
 var infoModal=Q('#info-modal'),infoBtn=Q('#info-btn'),modalClose=Q('#modal-close');
@@ -776,11 +802,11 @@ searchBtn.addEventListener('click',openSearch);
 D.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openSearch()}if(e.key==='Escape'&&searchOverlay.classList.contains('visible'))closeSearch()});
 searchOverlay.addEventListener('click',function(e){if(e.target===searchOverlay)closeSearch()});
 function navigateToElement(id){closeSearch();if(window.innerWidth<=768){QA('#mobile-tabs .tab').forEach(function(t){t.classList.remove('active')});Q('#mobile-tabs [data-tab="graph"]').classList.add('active');mainEl.setAttribute('data-active-tab','graph')}QA('#graph-svg .node,#graph-svg .group,#graph-svg .link').forEach(function(n){n.classList.remove('highlighted')});var nd=Q('#graph-svg .node[data-element-id="'+id+'"]')||Q('#graph-svg .group[data-element-id="'+id+'"]');if(nd){nd.classList.add('highlighted');var c=getNodeCenter(nd);if(c)focusOnPoint(c.x,c.y,2);showTooltip(id,container.getBoundingClientRect().left+container.clientWidth/2,container.getBoundingClientRect().top+container.clientHeight/2)}var refs=QA('.element-ref[data-element-id="'+id+'"]');QA('.element-ref').forEach(function(r){r.classList.remove('highlighted')});refs.forEach(function(r){r.classList.add('highlighted')});if(refs.length>0)refs[0].scrollIntoView({behavior:'smooth',block:'center'})}
-searchInput.addEventListener('input',function(){var q=searchInput.value.toLowerCase().trim();if(!q){searchResultsEl.innerHTML='';ari=-1;return}var m=searchIndex.filter(function(it){return it.label.toLowerCase().includes(q)||it.tags.some(function(t){return t.toLowerCase().includes(q)})}).slice(0,20);ari=-1;searchResultsEl.innerHTML=m.map(function(it,i){return'<div class="search-result" data-idx="'+i+'" data-id="'+it.id+'"><span>'+it.label+'</span>'+(it.tags.length?'<span class="sr-tags">'+it.tags.join(', ')+'</span>':'')+'</div>'}).join('');searchResultsEl.querySelectorAll('.search-result').forEach(function(r){r.addEventListener('click',function(){navigateToElement(r.dataset.id)})})});
+searchInput.addEventListener('input',function(){var q=searchInput.value.toLowerCase().trim();if(!q){searchResultsEl.innerHTML='';ari=-1;return}var m=searchIndex.filter(function(it){return it.label.toLowerCase().includes(q)||it.tags.some(function(t){return t.toLowerCase().includes(q)})}).slice(0,20);ari=-1;searchResultsEl.innerHTML=m.map(function(it,i){return'<div class="search-result" data-idx="'+i+'" data-id="'+it.id+'"><span>'+esc(it.label)+'</span>'+(it.tags.length?'<span class="sr-tags">'+it.tags.map(function(t){return esc(t)}).join(', ')+'</span>':'')+'</div>'}).join('');searchResultsEl.querySelectorAll('.search-result').forEach(function(r){r.addEventListener('click',function(){navigateToElement(r.dataset.id)})})});
 searchInput.addEventListener('keydown',function(e){var res=searchResultsEl.querySelectorAll('.search-result');if(!res.length)return;if(e.key==='ArrowDown'){e.preventDefault();ari=Math.min(ari+1,res.length-1);res.forEach(function(r,i){r.classList.toggle('active',i===ari)});res[ari].scrollIntoView({block:'nearest'})}else if(e.key==='ArrowUp'){e.preventDefault();ari=Math.max(ari-1,0);res.forEach(function(r,i){r.classList.toggle('active',i===ari)});res[ari].scrollIntoView({block:'nearest'})}else if(e.key==='Enter'&&ari>=0){e.preventDefault();navigateToElement(res[ari].dataset.id)}});
 var tagBtn=Q('#tag-btn'),tagPopover=Q('#tag-popover'),allTags=new Set();
 searchIndex.forEach(function(it){it.tags.forEach(function(t){allTags.add(t)})});
-if(allTags.size>0){tagBtn.style.display='';tagPopover.innerHTML=Array.from(allTags).sort().map(function(t){return'<button class="tag-chip" data-tag="'+t.replace(/"/g,'&quot;')+'">'+t+'</button>'}).join('');var activeTags=new Set();tagBtn.addEventListener('click',function(e){e.stopPropagation();tagPopover.classList.toggle('visible')});D.addEventListener('click',function(e){if(!e.target.closest('.tag-filter-wrap'))tagPopover.classList.remove('visible')});tagPopover.querySelectorAll('.tag-chip').forEach(function(ch){ch.addEventListener('click',function(e){e.stopPropagation();var tg=ch.dataset.tag;if(activeTags.has(tg)){activeTags.delete(tg);ch.classList.remove('active')}else{activeTags.add(tg);ch.classList.add('active')}tagBtn.classList.toggle('has-active',activeTags.size>0);applyTagFilter()})});function applyTagFilter(){if(activeTags.size===0){QA('#graph-svg .node,#graph-svg .group,#graph-svg .link').forEach(function(n){n.classList.remove('tag-hidden')});return}var vis=new Set();QA('#graph-svg .node,#graph-svg .group').forEach(function(nd){var nt=nd.dataset.tags?nd.dataset.tags.split(','):[],ok=nt.some(function(t){return activeTags.has(t)});nd.classList.toggle('tag-hidden',!ok);if(ok)vis.add(nd.dataset.elementId)});QA('#graph-svg .link').forEach(function(lk){var v=vis.has(lk.dataset.from)||vis.has(lk.dataset.to);lk.classList.toggle('tag-hidden',!v)})}}
+if(allTags.size>0){tagBtn.style.display='';tagPopover.innerHTML=Array.from(allTags).sort().map(function(t){return'<button class="tag-chip" data-tag="'+t.replace(/"/g,'&quot;')+'">'+esc(t)+'</button>'}).join('');var activeTags=new Set();tagBtn.addEventListener('click',function(e){e.stopPropagation();tagPopover.classList.toggle('visible')});D.addEventListener('click',function(e){if(!e.target.closest('.tag-filter-wrap'))tagPopover.classList.remove('visible')});tagPopover.querySelectorAll('.tag-chip').forEach(function(ch){ch.addEventListener('click',function(e){e.stopPropagation();var tg=ch.dataset.tag;if(activeTags.has(tg)){activeTags.delete(tg);ch.classList.remove('active')}else{activeTags.add(tg);ch.classList.add('active')}tagBtn.classList.toggle('has-active',activeTags.size>0);applyTagFilter()})});function applyTagFilter(){if(activeTags.size===0){QA('#graph-svg .node,#graph-svg .group,#graph-svg .link').forEach(function(n){n.classList.remove('tag-hidden')});return}var vis=new Set();QA('#graph-svg .node,#graph-svg .group').forEach(function(nd){var nt=nd.dataset.tags?nd.dataset.tags.split(','):[],ok=nt.some(function(t){return activeTags.has(t)});nd.classList.toggle('tag-hidden',!ok);if(ok)vis.add(nd.dataset.elementId)});QA('#graph-svg .link').forEach(function(lk){var v=vis.has(lk.dataset.from)||vis.has(lk.dataset.to);lk.classList.toggle('tag-hidden',!v)})}}
 Q('#layout-toggle').addEventListener('click',function(){mainEl.classList.toggle('layout-reversed');localStorage.setItem('layout',mainEl.classList.contains('layout-reversed')?'reversed':'normal')});
 if(localStorage.getItem('layout')==='reversed')mainEl.classList.add('layout-reversed');
 var resizeHandle=Q('#resize-handle'),reportPanel=Q('#report-panel'),graphPanel=Q('#graph-panel'),resizing=false;
