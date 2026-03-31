@@ -16,6 +16,8 @@ export type PluginEventType =
   | 'element:created'
   | 'element:updated'
   | 'element:deleted'
+  | 'element:tagAdded'
+  | 'element:tagRemoved'
   | 'link:created'
   | 'link:updated'
   | 'link:deleted'
@@ -27,6 +29,8 @@ export interface PluginEvent {
   dossierId: string;
   entityId?: string;
   timestamp: number;
+  /** Extra payload for specific events (e.g. tagName for element:tagAdded/tagRemoved). */
+  meta?: Record<string, unknown>;
 }
 
 export type PluginEventCallback = (event: PluginEvent) => void;
@@ -76,6 +80,7 @@ export function emit(
   type: PluginEventType,
   dossierId: string,
   entityId?: string,
+  meta?: Record<string, unknown>,
 ): void {
-  emitPluginEvent({ type, dossierId, entityId, timestamp: Date.now() });
+  emitPluginEvent({ type, dossierId, entityId, timestamp: Date.now(), meta });
 }

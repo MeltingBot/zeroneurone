@@ -218,6 +218,29 @@ export const pluginAPI = {
     },
 
     /**
+     * Import JSON content into a dossier.
+     * Accepts ZeroNeurone native format and auto-detects other supported
+     * formats (OSINT Industries, PredicaGraph, Excalidraw, STIX2, etc.).
+     *
+     * @param jsonString  Raw JSON string to import
+     * @param targetDossierId  Dossier to import into
+     * @param positionOffset  Optional offset for imported element positions
+     */
+    async importJSON(
+      jsonString: string,
+      targetDossierId: string,
+    ): Promise<{
+      success: boolean;
+      elementsImported: number;
+      linksImported: number;
+      assetsImported: number;
+      errors: string[];
+      warnings: string[];
+    }> {
+      return importService.importFromJSON(jsonString, targetDossierId);
+    },
+
+    /**
      * Navigate to a route within ZeroNeurone.
      * Common routes: '/' (home), '/dossier/:id' (open dossier).
      */
@@ -243,8 +266,11 @@ export const pluginAPI = {
      *   dossier:created, dossier:updated, dossier:deleted,
      *   dossier:opened, dossier:closed,
      *   element:created, element:updated, element:deleted,
+     *   element:tagAdded, element:tagRemoved,
      *   link:created, link:updated, link:deleted,
      *   asset:created, asset:deleted
+     *
+     * Tag events carry `meta.tagName` (the tag that was added/removed).
      */
     on: onPluginEvent,
   },

@@ -1,10 +1,11 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.38.7",
+  "version": "2.38.8",
   "license": "MIT",
   "overrides": {
-    "serialize-javascript": "7.0.5"
+    "serialize-javascript": "7.0.5",
+    "lodash": "4.17.21"
   },
   "type": "module",
   "scripts": {

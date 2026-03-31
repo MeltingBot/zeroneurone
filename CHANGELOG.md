@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.38.8
+
+### Fixes
+- **Plugin API**: `api.services.importJSON(jsonString, dossierId)` — direct JSON import for plugins (auto-detects ZN native, OSINT Industries, PredicaGraph, Excalidraw, STIX2, Gephi Lite formats)
+- **Plugin API**: `element:tagAdded` / `element:tagRemoved` events on `api.events.on()` — granular tag change notifications with `meta.tagName` payload
+
 ## 2.38.7
 
 ### Fixes

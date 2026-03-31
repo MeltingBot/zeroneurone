@@ -817,6 +817,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       throw new Error('Element not found');
     }
 
+    // Snapshot tags before mutation for granular tag change events
+    const prevTags = changes.tags !== undefined
+      ? (get().elements.find(el => el.id === id)?.tags ?? [])
+      : [];
+
     // Update Zustand FIRST (synchronous) for instant UI response
     // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
     localOpPending = true;
@@ -840,7 +845,25 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     const dossierId = get().currentDossier?.id;
-    if (dossierId) emitPluginEvent('element:updated', dossierId, id);
+    if (dossierId) {
+      emitPluginEvent('element:updated', dossierId, id);
+
+      // Emit granular tag events so plugins can react to tag changes
+      if (changes.tags !== undefined) {
+        const oldTags = new Set(prevTags);
+        const newTags = new Set(changes.tags);
+        for (const tag of changes.tags) {
+          if (!oldTags.has(tag)) {
+            emitPluginEvent('element:tagAdded', dossierId, id, { tagName: tag });
+          }
+        }
+        for (const tag of prevTags) {
+          if (!newTags.has(tag)) {
+            emitPluginEvent('element:tagRemoved', dossierId, id, { tagName: tag });
+          }
+        }
+      }
+    }
   },
 
   deleteElement: async (id: ElementId) => {
