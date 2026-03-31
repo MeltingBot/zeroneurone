@@ -357,6 +357,45 @@ export const pluginAPI = {
     },
 
     /**
+     * Returns encryption metadata needed for offline backup recovery.
+     * All fields are already encrypted or non-secret:
+     *   - salt: not secret (needed for PBKDF2 derivation)
+     *   - encryptedDEK: encrypted with KEK (requires master password to decrypt)
+     *   - dekIV: not secret (nonce for AES-GCM)
+     *   - version: determines PBKDF2 iteration count
+     *
+     * Returns null if encryption is not enabled or metadata is unavailable.
+     */
+    async getRecoveryMeta(): Promise<{
+      salt: string;
+      encryptedDEK: string;
+      dekIV: string;
+      version: number;
+    } | null> {
+      if (!useEncryptionStore.getState().isEnabled) return null;
+      try {
+        const meta = await db._encryptionMeta.get('main');
+        if (!meta) return null;
+
+        const toBase64 = (buf: ArrayBuffer) => {
+          const bytes = new Uint8Array(buf);
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+          return btoa(binary);
+        };
+
+        return {
+          salt: toBase64(meta.salt),
+          encryptedDEK: toBase64(meta.encryptedDEK),
+          dekIV: toBase64(meta.dekIV),
+          version: meta.version,
+        };
+      } catch {
+        return null;
+      }
+    },
+
+    /**
      * S'abonne à l'événement "désactivation imminente du chiffrement".
      * Le callback est awaité par ZN avant window.location.reload().
      * Permet aux plugins de déchiffrer leurs données avant redémarrage.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.38.7
+
+### Fixes
+- **Plugin API**: `api.encryption.getRecoveryMeta()` — exposes encryption metadata (salt, encryptedDEK, dekIV, version) as base64 strings for offline backup recovery tools (read-only, no security reduction)
+
 ## 2.38.6
 
 ### Fixes
