@@ -247,7 +247,7 @@ export function LandingSection({
         )}
 
         {/* Footer Links */}
-        <div className="flex items-center justify-center gap-4 border-t border-border-default pt-6">
+        <div className="flex items-center justify-center gap-3 border-t border-border-default pt-6">
           {/* Plugin-provided actions */}
           {homePlugins.map((Plugin, i) => (
             <Plugin key={i} context="landing" />
@@ -268,46 +268,45 @@ export function LandingSection({
           </button>
           <button
             onClick={onToggleTheme}
-            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
             title={themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
           >
             {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-            {themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
           </button>
-          <LanguageSwitcher size="sm" showLabel direction="up" />
+          <LanguageSwitcher size="sm" direction="up" />
           <button
             onClick={onAbout}
-            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+            title={t('home.about')}
           >
             <Info size={14} />
-            {t('home.about')}
           </button>
           <a
             href="https://doc.zeroneurone.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+            title={t('home.documentation')}
           >
             <BookOpen size={14} />
-            {t('home.documentation')}
           </a>
           <a
             href="https://github.com/MeltingBot/zeroneurone"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+            title="GitHub"
           >
             <Github size={14} />
-            GitHub
           </a>
           <a
             href="https://ko-fi.com/yannpilpre"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+            title="Ko-fi"
           >
             <Coffee size={14} />
-            Ko-fi
           </a>
         </div>
       </div>

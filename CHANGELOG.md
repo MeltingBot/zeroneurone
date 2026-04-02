@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.38.10
+
+### Fixes
+- **Landing footer** — icon-only for secondary items (theme toggle, about, documentation, GitHub, Ko-fi, language) to reduce clutter; functional items (encryption, storage) keep labels
+
 ## 2.38.9
 
 ### Fixes
