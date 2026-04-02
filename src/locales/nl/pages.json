@@ -152,7 +152,11 @@
       "clearKeyObject": "Uitlijnreferentie verwijderen",
       "findSimilar": "Vergelijkbare zoeken",
       "findSimilarNoTags": "Dit element heeft geen tags voor vergelijkbare zoekopdracht",
-      "queryFromSelection": "Zoekopdracht uit selectie"
+      "queryFromSelection": "Zoekopdracht uit selectie",
+      "editLinkLabel": "Label bewerken",
+      "reverseLink": "Richting omkeren",
+      "deleteLink": "Verbinding verwijderen",
+      "noLabel": "Zonder label"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",

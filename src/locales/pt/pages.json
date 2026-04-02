@@ -152,7 +152,11 @@
       "clearKeyObject": "Remover referência de alinhamento",
       "findSimilar": "Encontrar semelhantes",
       "findSimilarNoTags": "Este elemento não tem tags para pesquisa de similares",
-      "queryFromSelection": "Consulta da seleção"
+      "queryFromSelection": "Consulta da seleção",
+      "editLinkLabel": "Editar rótulo",
+      "reverseLink": "Inverter direção",
+      "deleteLink": "Eliminar ligação",
+      "noLabel": "Sem rótulo"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",

@@ -152,7 +152,11 @@
       "clearKeyObject": "Rimuovi riferimento allineamento",
       "findSimilar": "Trova simili",
       "findSimilarNoTags": "Questo elemento non ha tag per la ricerca di simili",
-      "queryFromSelection": "Query dalla selezione"
+      "queryFromSelection": "Query dalla selezione",
+      "editLinkLabel": "Modifica etichetta",
+      "reverseLink": "Inverti direzione",
+      "deleteLink": "Elimina collegamento",
+      "noLabel": "Senza etichetta"
     },
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",

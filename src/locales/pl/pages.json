@@ -152,7 +152,11 @@
       "clearKeyObject": "Usuń odniesienie wyrównania",
       "findSimilar": "Znajdź podobne",
       "findSimilarNoTags": "Ten element nie ma tagów do wyszukiwania podobnych",
-      "queryFromSelection": "Zapytanie z zaznaczenia"
+      "queryFromSelection": "Zapytanie z zaznaczenia",
+      "editLinkLabel": "Edytuj etykietę",
+      "reverseLink": "Odwróć kierunek",
+      "deleteLink": "Usuń połączenie",
+      "noLabel": "Bez etykiety"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",

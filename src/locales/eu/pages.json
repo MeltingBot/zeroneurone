@@ -152,7 +152,11 @@
       "clearKeyObject": "Lerrokatze-erreferentzia kendu",
       "findSimilar": "Antzekoak bilatu",
       "findSimilarNoTags": "Elementu honek ez du etiketarik antzekoen bilaketarako",
-      "queryFromSelection": "Kontsulta hautapenetik"
+      "queryFromSelection": "Kontsulta hautapenetik",
+      "editLinkLabel": "Etiketa editatu",
+      "reverseLink": "Noranzkoa alderantzikatu",
+      "deleteLink": "Lotura ezabatu",
+      "noLabel": "Etiketarik gabe"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",

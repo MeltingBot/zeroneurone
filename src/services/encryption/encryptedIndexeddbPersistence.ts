@@ -143,7 +143,7 @@ function storeStateEncrypted(
         snapshot = wrapEncryptedUpdate(encrypted);
       }
 
-      idb.addAutoKey(updatesStore, snapshot as unknown as ArrayBuffer)
+      return idb.addAutoKey(updatesStore, snapshot as unknown as ArrayBuffer)
         .then(() => idb.del(updatesStore, idb.createIDBKeyRangeUpperBound(persistence._dbref, true)))
         .then(() => idb.count(updatesStore).then((cnt: number) => {
           persistence._dbsize = cnt;

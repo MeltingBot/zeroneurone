@@ -33,6 +33,7 @@ import { CustomEdge } from './CustomEdge';
 import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
+import { LinkContextMenu } from './LinkContextMenu';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { usePlugins } from '../../plugins/usePlugins';
 import { AlignDropdown } from './AlignDropdown';
@@ -75,6 +76,13 @@ interface ContextMenuState {
   elementId: string;
   elementLabel: string;
   previewAsset: Asset | null;
+}
+
+interface LinkContextMenuState {
+  x: number;
+  y: number;
+  linkId: string;
+  linkLabel: string;
 }
 
 const nodeTypes = {
@@ -595,9 +603,13 @@ export function Canvas() {
   // Merge modal state
   const [mergeElements, setMergeElements] = useState<{ el1: Element; el2: Element } | null>(null);
 
+  // Link context menu state
+  const [linkContextMenu, setLinkContextMenu] = useState<LinkContextMenuState | null>(null);
+
   // Plugin context menu extensions
   const canvasPlugins = usePlugins('contextMenu:canvas');
   const elementPlugins = usePlugins('contextMenu:element');
+  const linkPlugins = usePlugins('contextMenu:link');
 
   // Asset preview modal state
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
@@ -959,9 +971,17 @@ export function Canvas() {
   // Handle link label change (inline editing)
   const handleLinkLabelChange = useCallback(
     (linkId: string, newLabel: string) => {
+      const oldLink = links.find((l) => l.id === linkId);
+      if (oldLink && oldLink.label !== newLabel) {
+        pushAction({
+          type: 'update-link',
+          undo: { linkId, linkChanges: { label: oldLink.label } },
+          redo: { linkId, linkChanges: { label: newLabel } },
+        });
+      }
       updateLink(linkId, { label: newLabel });
     },
-    [updateLink]
+    [links, updateLink, pushAction]
   );
 
   // Get display settings from dossier using specific selectors for reactivity
@@ -1997,8 +2017,9 @@ export function Canvas() {
   const handleNodeContextMenu: NodeMouseHandler = useCallback(
     (event, node) => {
       event.preventDefault();
-      // Close canvas context menu if open
+      // Close other context menus
       setCanvasContextMenu(null);
+      setLinkContextMenu(null);
 
       const element = elementMap.get(node.id);
       if (element) {
@@ -2036,12 +2057,39 @@ export function Canvas() {
     setCanvasContextMenu(null);
   }, []);
 
+  // Close link context menu
+  const closeLinkContextMenu = useCallback(() => {
+    setLinkContextMenu(null);
+  }, []);
+
+  // Handle right-click on a link (edge)
+  const handleEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+
+      // Close other context menus
+      setContextMenu(null);
+      setCanvasContextMenu(null);
+
+      const link = links.find((l) => l.id === edge.id);
+
+      setLinkContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        linkId: edge.id,
+        linkLabel: link?.label || '',
+      });
+    },
+    [links]
+  );
+
   // Handle right-click on empty canvas
   const handlePaneContextMenu = useCallback(
     (event: MouseEvent | React.MouseEvent<globalThis.Element, MouseEvent>) => {
       event.preventDefault();
-      // Close element context menu if open
+      // Close other context menus
       setContextMenu(null);
+      setLinkContextMenu(null);
 
       // Calculate canvas position from screen position (same formula as double-click)
       const bounds = reactFlowWrapper.current?.getBoundingClientRect();
@@ -3237,6 +3285,18 @@ export function Canvas() {
         }
         break;
 
+      case 'delete-link':
+        // Restore deleted links
+        if (action.undo.links) {
+          for (const link of action.undo.links) {
+            await createLink(link.fromId, link.toId, {
+              ...link,
+              id: link.id,
+            });
+          }
+        }
+        break;
+
       case 'update-link':
         // Restore previous link values
         if (action.undo.linkId && action.undo.linkChanges) {
@@ -3375,6 +3435,13 @@ export function Canvas() {
         // Re-apply changes
         if (action.redo.elementId && action.redo.changes) {
           await updateElement(action.redo.elementId, action.redo.changes);
+        }
+        break;
+
+      case 'delete-link':
+        // Re-delete links
+        if (action.redo.linkIds) {
+          await deleteLinks(action.redo.linkIds);
         }
         break;
 
@@ -4101,6 +4168,7 @@ export function Canvas() {
             onNodeContextMenu={handleNodeContextMenu}
             onEdgeClick={handleEdgeClick}
             onEdgeDoubleClick={handleEdgeDoubleClick}
+            onEdgeContextMenu={handleEdgeContextMenu}
             onPaneClick={handlePaneClick}
             onPaneContextMenu={handlePaneContextMenu}
             onDoubleClick={handlePaneDoubleClick}
@@ -4257,6 +4325,40 @@ export function Canvas() {
                 canvasPosition: { x: canvasContextMenu.canvasX, y: canvasContextMenu.canvasY },
                 hasTextAssets: false,
                 dossierId: currentDossier?.id || '',
+              }}
+            />
+          )}
+
+          {/* Context menu for links */}
+          {linkContextMenu && (
+            <LinkContextMenu
+              x={linkContextMenu.x}
+              y={linkContextMenu.y}
+              linkId={linkContextMenu.linkId}
+              linkLabel={linkContextMenu.linkLabel}
+              onEditLabel={() => {
+                startEditingLink(linkContextMenu.linkId);
+                closeLinkContextMenu();
+              }}
+              onDelete={() => {
+                const linkToDelete = links.find((l) => l.id === linkContextMenu.linkId);
+                if (linkToDelete) {
+                  pushAction({
+                    type: 'delete-link',
+                    undo: { links: [linkToDelete] },
+                    redo: { linkIds: [linkContextMenu.linkId] },
+                  });
+                }
+                deleteLinks([linkContextMenu.linkId]);
+                closeLinkContextMenu();
+              }}
+              onClose={closeLinkContextMenu}
+              pluginExtensions={linkPlugins}
+              menuContext={{
+                elementIds: [],
+                linkIds: [linkContextMenu.linkId],
+                dossierId: currentDossier?.id || '',
+                hasTextAssets: false,
               }}
             />
           )}

@@ -12,13 +12,21 @@ export interface MenuContext {
 
 // ─── Context menu extensions ────────────────────────────────
 
+export interface ContextMenuChild {
+  id: string;
+  label: string;
+  icon?: string;
+  action: () => void | Promise<void>;
+}
+
 export interface ContextMenuExtension {
   id: string;
   label: string;
   icon: string;
   separator?: boolean;
-  action: (context: MenuContext) => void;
-  visible?: (context: MenuContext) => boolean;
+  action: (context: MenuContext) => void | Promise<void>;
+  visible?: (context: MenuContext) => boolean | Promise<boolean>;
+  children?: (context: MenuContext) => Promise<ContextMenuChild[]>;
   pluginId?: string;
 }
 

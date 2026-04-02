@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.38.9
+
+### Fixes
+- **Link context menu** — right-click on links: edit label, delete with undo/redo, plugin extensions support (`contextMenu:link` slot)
+- **Undo/redo link deletion** — `delete-link` action with full restore on undo (Canvas + historyStore)
+- **Undo/redo link label edit** — label changes are now recorded in the history stack
+- **Y.js compaction fix** — open dossiers compact via active provider to avoid IndexedDB lock conflicts (no more `deleteDatabase blocked` warnings)
+- **encryptedIndexeddbPersistence** — fix missing `return` in compact promise chain
+- **Plugin API** — `ContextMenuChild` interface, async `visible()` and `children()` on `ContextMenuExtension` for dynamic submenus
+- **GoNeurone** added to plugins manifest
+- **i18n** — link context menu translations (11 languages)
+
 ## 2.38.8
 
 ### Fixes

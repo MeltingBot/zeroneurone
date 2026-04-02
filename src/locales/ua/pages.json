@@ -152,7 +152,11 @@
       "clearKeyObject": "Прибрати орієнтир вирівнювання",
       "findSimilar": "Знайти подібні",
       "findSimilarNoTags": "Цей елемент не має тегів для пошуку подібних",
-      "queryFromSelection": "Запит з виділення"
+      "queryFromSelection": "Запит з виділення",
+      "editLinkLabel": "Редагувати мітку",
+      "reverseLink": "Змінити напрямок",
+      "deleteLink": "Видалити зв'язок",
+      "noLabel": "Без мітки"
     },
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",

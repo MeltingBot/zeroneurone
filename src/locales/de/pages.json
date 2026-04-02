@@ -152,7 +152,11 @@
       "clearKeyObject": "Ausrichtungsreferenz entfernen",
       "findSimilar": "Ähnliche finden",
       "findSimilarNoTags": "Dieses Element hat keine Tags für die Ähnlichkeitssuche",
-      "queryFromSelection": "Abfrage aus Auswahl"
+      "queryFromSelection": "Abfrage aus Auswahl",
+      "editLinkLabel": "Label bearbeiten",
+      "reverseLink": "Richtung umkehren",
+      "deleteLink": "Verbindung löschen",
+      "noLabel": "Ohne Label"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",

@@ -152,7 +152,11 @@
       "clearKeyObject": "Clear alignment reference",
       "findSimilar": "Find similar",
       "findSimilarNoTags": "This element has no tags for similarity search",
-      "queryFromSelection": "Query from selection"
+      "queryFromSelection": "Query from selection",
+      "editLinkLabel": "Edit label",
+      "reverseLink": "Reverse direction",
+      "deleteLink": "Delete link",
+      "noLabel": "No label"
     },
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",

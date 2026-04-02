@@ -166,6 +166,18 @@ class SyncService {
   }
 
   /**
+   * Compact the IndexedDB persistence for the currently open dossier.
+   * This uses the existing provider connection, avoiding IDB lock conflicts.
+   */
+  async compactCurrentDossier(): Promise<boolean> {
+    if (this.indexeddbProvider) {
+      await this.indexeddbProvider.compact();
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Wait for the WebSocket provider to complete initial Y.js sync.
    * Resolves immediately if already synced, not connected, or no provider.
    * Rejects after timeout to avoid blocking forever.

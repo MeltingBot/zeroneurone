@@ -152,7 +152,11 @@
       "clearKeyObject": "Retirer l'objet de référence",
       "findSimilar": "Chercher les similaires",
       "findSimilarNoTags": "Cet élément n'a aucun tag pour la recherche de similaires",
-      "queryFromSelection": "Requête depuis sélection"
+      "queryFromSelection": "Requête depuis sélection",
+      "editLinkLabel": "Editer le label",
+      "reverseLink": "Inverser la direction",
+      "deleteLink": "Supprimer le lien",
+      "noLabel": "Sans label"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",

@@ -664,6 +664,19 @@ export async function purgeYjsDatabases(): Promise<{ deleted: number; errors: st
  * Falls back to clear+rewrite if deleteDatabase is blocked (dossier open).
  */
 export async function compactYjsDatabase(dbName: string): Promise<void> {
+  const { syncService } = await import('../services/syncService');
+
+  // If this dossier is currently open, use the existing provider to avoid IDB lock conflicts
+  const dossierId = dbName.replace('zeroneurone-ydoc-', '');
+  if (syncService.getDossierId() === dossierId && syncService.isOpen()) {
+    const compacted = await syncService.compactCurrentDossier();
+    if (compacted) {
+      console.log(`[compact] ${dbName}: compacted via active provider`);
+      return;
+    }
+  }
+
+  // Dossier is not open — safe to use delete+recreate strategy
   const { EncryptedIndexeddbPersistence } = await import(
     '../services/encryption/encryptedIndexeddbPersistence'
   );
@@ -685,43 +698,24 @@ export async function compactYjsDatabase(dbName: string): Promise<void> {
   await provider.destroy();
   ydoc.destroy();
 
-  // 4. Try to delete the database entirely (frees disk space)
-  const deleted = await new Promise<boolean>((resolve) => {
+  // 4. Delete the database entirely and recreate with just the snapshot
+  await new Promise<void>((resolve) => {
     const req = indexedDB.deleteDatabase(dbName);
-    req.onsuccess = () => resolve(true);
-    req.onerror = () => resolve(false);
+    req.onsuccess = () => resolve();
+    req.onerror = () => resolve();
     req.onblocked = () => {
-      console.warn(`[compact] ${dbName}: deleteDatabase blocked, falling back to clear`);
-      resolve(false);
+      console.warn(`[compact] ${dbName}: deleteDatabase blocked (unexpected — dossier should be closed)`);
+      resolve();
     };
   });
 
-  if (deleted) {
-    // 5a. Recreate with just the snapshot
-    const ydoc2 = new Y.Doc();
-    Y.applyUpdate(ydoc2, snapshot);
-    const provider2 = new EncryptedIndexeddbPersistence(dbName, ydoc2, dek || undefined);
-    await provider2.whenSynced;
-    await provider2.destroy();
-    ydoc2.destroy();
-    console.log(`[compact] ${dbName}: delete+recreate OK`);
-  } else {
-    // 5b. Fallback: clear and rewrite in-place
-    const rawDb = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open(dbName);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    await new Promise<void>((resolve, reject) => {
-      const tx = rawDb.transaction('updates', 'readwrite');
-      const store = tx.objectStore('updates');
-      store.clear().onsuccess = () => store.add(snapshot);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-    rawDb.close();
-    console.log(`[compact] ${dbName}: clear+rewrite fallback OK`);
-  }
+  const ydoc2 = new Y.Doc();
+  Y.applyUpdate(ydoc2, snapshot);
+  const provider2 = new EncryptedIndexeddbPersistence(dbName, ydoc2, dek || undefined);
+  await provider2.whenSynced;
+  await provider2.destroy();
+  ydoc2.destroy();
+  console.log(`[compact] ${dbName}: delete+recreate OK`);
 }
 
 /**

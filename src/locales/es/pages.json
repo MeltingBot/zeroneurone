@@ -152,7 +152,11 @@
       "clearKeyObject": "Quitar referencia de alineación",
       "findSimilar": "Buscar similares",
       "findSimilarNoTags": "Este elemento no tiene tags para buscar similares",
-      "queryFromSelection": "Consulta desde selección"
+      "queryFromSelection": "Consulta desde selección",
+      "editLinkLabel": "Editar etiqueta",
+      "reverseLink": "Invertir dirección",
+      "deleteLink": "Eliminar enlace",
+      "noLabel": "Sin etiqueta"
     },
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",

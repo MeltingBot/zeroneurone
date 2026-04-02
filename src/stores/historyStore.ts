@@ -160,6 +160,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         }
         break;
 
+      case 'delete-link':
+        // Restore deleted links
+        if (action.undo.links) {
+          store.pasteElements([], action.undo.links);
+        }
+        break;
+
       case 'update-link':
         // Restore previous link values
         if (action.undo.linkId && action.undo.linkChanges) {
@@ -315,6 +322,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         // Re-apply changes
         if (action.redo.elementId && action.redo.changes) {
           await store.updateElement(action.redo.elementId, action.redo.changes);
+        }
+        break;
+
+      case 'delete-link':
+        // Re-delete links
+        if (action.redo.linkIds) {
+          await store.deleteLinks(action.redo.linkIds);
         }
         break;
 
