@@ -4320,6 +4320,15 @@ export function Canvas() {
               }}
               onFindSimilar={selectedElementIds.size === 1 ? handleFindSimilar : undefined}
               onQueryFromSelection={selectedElementIds.size > 1 ? handleQueryFromSelection : undefined}
+              pluginExtensions={elementPlugins}
+              menuContext={{
+                elementIds: selectedElementIds.size > 1
+                  ? Array.from(selectedElementIds)
+                  : [contextMenu.elementId],
+                linkIds: [],
+                dossierId: currentDossier?.id || '',
+                hasTextAssets: !!contextMenu.previewAsset,
+              }}
               onClose={closeContextMenu}
             />
           )}

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.38.12
+
+### Fixes
+- **Element context menu** — `contextMenu:element` plugin extensions now rendered in element right-click menu (same pattern as CanvasContextMenu), with dynamic icon resolution and visibility filtering
+
 ## 2.38.11
 
 ### Fixes

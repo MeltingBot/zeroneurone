@@ -1,7 +1,8 @@
-import { memo, useRef, useState, useLayoutEffect } from 'react';
+import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, icons } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
+import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 
 interface ContextMenuProps {
   x: number;
@@ -48,6 +49,9 @@ interface ContextMenuProps {
   // Query actions
   onFindSimilar?: () => void;
   onQueryFromSelection?: () => void;
+  // Plugin extensions
+  pluginExtensions?: readonly ContextMenuExtension[];
+  menuContext?: MenuContext;
   onClose: () => void;
 }
 
@@ -97,12 +101,19 @@ function ContextMenuComponent({
   onGoToTab,
   onFindSimilar,
   onQueryFromSelection,
+  pluginExtensions,
+  menuContext,
   onClose,
 }: ContextMenuProps) {
   const { t } = useTranslation('pages');
   const hasTwoSelected = !!otherSelectedId && !!otherSelectedLabel;
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x, y });
+
+  const visibleExtensions = useMemo(() => {
+    if (!pluginExtensions || !menuContext) return [];
+    return pluginExtensions.filter(ext => !ext.visible || ext.visible(menuContext));
+  }, [pluginExtensions, menuContext]);
 
   // Adjust position to keep menu within viewport
   useLayoutEffect(() => {
@@ -478,6 +489,28 @@ function ContextMenuComponent({
             </button>
           )}
         </div>
+
+        {/* Plugin extensions */}
+        {visibleExtensions.length > 0 && (
+          <div className="py-1 border-t border-border-default">
+            {visibleExtensions.map((ext) => {
+              const Icon = icons[ext.icon as keyof typeof icons];
+              return (
+                <button
+                  key={ext.id}
+                  onClick={() => {
+                    if (menuContext) ext.action(menuContext);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  {Icon && <Icon size={14} />}
+                  {ext.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Delete */}
         <div className="py-1 border-t border-border-default">
