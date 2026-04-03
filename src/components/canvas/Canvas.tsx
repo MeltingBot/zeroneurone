@@ -1969,6 +1969,10 @@ export function Canvas() {
   );
 
   // Handle connection (link creation)
+  // In ConnectionMode.Loose, React Flow always assigns the node owning the
+  // "source"-type handle as connection.source, regardless of which node the
+  // user started dragging from.  When the drag starts from a target-type
+  // handle, the real origin (fromId) is connection.target, so we swap.
   const handleConnect: OnConnect = useCallback(
     async (connection: Connection) => {
       if (
@@ -1976,9 +1980,20 @@ export function Canvas() {
         connection.target &&
         connection.source !== connection.target
       ) {
-        await createLink(connection.source, connection.target, {
-          sourceHandle: connection.sourceHandle ?? null,
-          targetHandle: connection.targetHandle ?? null,
+        const startedFromTarget =
+          connection.sourceHandle?.startsWith('target-') ||
+          connection.targetHandle?.startsWith('source-');
+
+        const fromId = startedFromTarget ? connection.target : connection.source;
+        const toId = startedFromTarget ? connection.source : connection.target;
+
+        await createLink(fromId, toId, {
+          sourceHandle: startedFromTarget
+            ? (connection.targetHandle ?? null)
+            : (connection.sourceHandle ?? null),
+          targetHandle: startedFromTarget
+            ? (connection.sourceHandle ?? null)
+            : (connection.targetHandle ?? null),
         });
       }
     },
@@ -1993,11 +2008,22 @@ export function Canvas() {
         newConnection.target &&
         newConnection.source !== newConnection.target
       ) {
+        const startedFromTarget =
+          newConnection.sourceHandle?.startsWith('target-') ||
+          newConnection.targetHandle?.startsWith('source-');
+
+        const fromId = startedFromTarget ? newConnection.target : newConnection.source;
+        const toId = startedFromTarget ? newConnection.source : newConnection.target;
+
         await updateLink(oldEdge.id, {
-          fromId: newConnection.source,
-          toId: newConnection.target,
-          sourceHandle: newConnection.sourceHandle ?? null,
-          targetHandle: newConnection.targetHandle ?? null,
+          fromId,
+          toId,
+          sourceHandle: startedFromTarget
+            ? (newConnection.targetHandle ?? null)
+            : (newConnection.sourceHandle ?? null),
+          targetHandle: startedFromTarget
+            ? (newConnection.sourceHandle ?? null)
+            : (newConnection.targetHandle ?? null),
         });
       }
     },

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.38.11
+
+### Fixes
+- **Link direction bug** — fix inverted fromId/toId when dragging from a target-type handle in ConnectionMode.Loose (React Flow normalizes source/target by handle type, not drag origin); also fixes reconnect
+
 ## 2.38.10
 
 ### Fixes
