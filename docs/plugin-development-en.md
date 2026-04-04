@@ -262,10 +262,19 @@ Add entries to the right-click context menu. Three separate slots depending on w
 interface ContextMenuExtension {
   id: string;                                    // Unique identifier
   label: string;                                 // Display label
-  icon: string;                                  // Lucide icon name
+  icon: string;                                  // Lucide icon name (PascalCase)
   separator?: boolean;                           // Add horizontal line before
-  action: (context: MenuContext) => void;        // Click handler
-  visible?: (context: MenuContext) => boolean;   // Visibility condition
+  action: (context: MenuContext) => void | Promise<void>;        // Click handler (sync or async)
+  visible?: (context: MenuContext) => boolean | Promise<boolean>; // Visibility condition
+  children?: (context: MenuContext) => Promise<ContextMenuChild[]>; // Dynamic submenu
+  pluginId?: string;                             // Auto-filled by registerPlugin
+}
+
+interface ContextMenuChild {
+  id: string;                                    // Unique sub-item identifier
+  label: string;                                 // Display label
+  icon?: string;                                 // Lucide icon name (optional)
+  action: () => void | Promise<void>;           // Click handler
 }
 
 interface MenuContext {
@@ -273,9 +282,14 @@ interface MenuContext {
   linkIds: string[];                             // Selected link IDs
   canvasPosition?: { x: number; y: number };     // Right-click position
   hasTextAssets: boolean;                        // Has extractable text
-  dossierId: string;                       // Current dossier
+  dossierId: string;                             // Current dossier
 }
 ```
+
+All three slots are active in their respective context menus:
+- `contextMenu:element` — right-click on an element (or a selection)
+- `contextMenu:link` — right-click on a link
+- `contextMenu:canvas` — right-click on the canvas (empty or with selection)
 
 **Example: element action visible only with single selection**
 
@@ -285,7 +299,7 @@ registerPlugin('contextMenu:element', {
   label: 'OSINT Enrichment',
   icon: 'Search',
   separator: true,
-  action: (ctx) => {
+  action: async (ctx) => {
     const elementId = ctx.elementIds[0];
     // Call your enrichment API...
   },
@@ -302,6 +316,24 @@ registerPlugin('contextMenu:canvas', {
   icon: 'Clock',
   action: (ctx) => {
     console.log('Canvas position:', ctx.canvasPosition);
+  },
+});
+```
+
+**Example: dynamic submenu on a link**
+
+```typescript
+registerPlugin('contextMenu:link', {
+  id: 'link-actions',
+  label: 'Link Actions',
+  icon: 'Workflow',
+  action: () => {},  // Parent does nothing, children handle actions
+  children: async (ctx) => {
+    const linkId = ctx.linkIds[0];
+    return [
+      { id: 'tag-link', label: 'Tag Link', action: () => tagLink(linkId) },
+      { id: 'export-link', label: 'Export', icon: 'Download', action: () => exportLink(linkId) },
+    ];
   },
 });
 ```

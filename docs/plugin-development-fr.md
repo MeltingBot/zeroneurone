@@ -262,10 +262,19 @@ Ajoutez des entrees au menu contextuel (clic droit). Trois slots separes selon c
 interface ContextMenuExtension {
   id: string;                                    // Identifiant unique
   label: string;                                 // Label affiche
-  icon: string;                                  // Nom d'icone Lucide
+  icon: string;                                  // Nom d'icone Lucide (PascalCase)
   separator?: boolean;                           // Ligne horizontale avant
-  action: (context: MenuContext) => void;        // Handler de clic
-  visible?: (context: MenuContext) => boolean;   // Condition de visibilite
+  action: (context: MenuContext) => void | Promise<void>;        // Handler de clic (sync ou async)
+  visible?: (context: MenuContext) => boolean | Promise<boolean>; // Condition de visibilite
+  children?: (context: MenuContext) => Promise<ContextMenuChild[]>; // Sous-menu dynamique
+  pluginId?: string;                             // Auto-rempli par registerPlugin
+}
+
+interface ContextMenuChild {
+  id: string;                                    // Identifiant unique du sous-item
+  label: string;                                 // Label affiche
+  icon?: string;                                 // Nom d'icone Lucide (optionnel)
+  action: () => void | Promise<void>;           // Handler de clic
 }
 
 interface MenuContext {
@@ -273,9 +282,14 @@ interface MenuContext {
   linkIds: string[];                             // IDs des liens selectionnes
   canvasPosition?: { x: number; y: number };     // Position du clic droit
   hasTextAssets: boolean;                        // A du texte extractible
-  dossierId: string;                       // Dossier courante
+  dossierId: string;                             // Dossier courant
 }
 ```
+
+Les trois slots sont actifs dans les trois menus contextuels :
+- `contextMenu:element` — clic droit sur un element (ou une selection)
+- `contextMenu:link` — clic droit sur un lien
+- `contextMenu:canvas` — clic droit sur le canvas (vide ou avec selection)
 
 **Exemple : action sur element visible uniquement en selection simple**
 
@@ -285,7 +299,7 @@ registerPlugin('contextMenu:element', {
   label: 'Enrichissement OSINT',
   icon: 'Search',
   separator: true,
-  action: (ctx) => {
+  action: async (ctx) => {
     const elementId = ctx.elementIds[0];
     // Appel a votre API d'enrichissement...
   },
@@ -302,6 +316,24 @@ registerPlugin('contextMenu:canvas', {
   icon: 'Clock',
   action: (ctx) => {
     console.log('Position canvas:', ctx.canvasPosition);
+  },
+});
+```
+
+**Exemple : sous-menu dynamique sur un lien**
+
+```typescript
+registerPlugin('contextMenu:link', {
+  id: 'link-actions',
+  label: 'Actions sur le lien',
+  icon: 'Workflow',
+  action: () => {},  // Parent ne fait rien, les enfants gerent
+  children: async (ctx) => {
+    const linkId = ctx.linkIds[0];
+    return [
+      { id: 'tag-link', label: 'Taguer le lien', action: () => tagLink(linkId) },
+      { id: 'export-link', label: 'Exporter', icon: 'Download', action: () => exportLink(linkId) },
+    ];
   },
 });
 ```

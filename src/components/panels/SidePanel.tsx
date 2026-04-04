@@ -375,7 +375,7 @@ export function SidePanel() {
       {/* Header with tabs */}
       <header className="border-b border-border-default shrink-0">
         <div className="flex items-center h-10 px-1 overflow-hidden">
-          <div className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-0.5 flex-1 min-w-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -383,14 +383,15 @@ export function SidePanel() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                  title={tab.label}
+                  className={`relative flex items-center gap-1 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                     isActive
-                      ? 'bg-accent/10 text-accent'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                      ? 'bg-accent/10 text-accent px-2'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary px-1.5'
                   }`}
                 >
                   <Icon size={14} />
-                  {tab.label}
+                  {isActive && tab.label}
                   {tab.badge && (
                     <span className="w-1.5 h-1.5 bg-accent rounded-full" />
                   )}

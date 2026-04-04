@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.38.13
+
+### Fixes
+- **Side panel tabs** — icon-only for inactive tabs (label shown only on active tab) to prevent hidden horizontal scroll with many plugins
+- **Plugin docs** — updated FR + EN: async `action`/`visible`, `ContextMenuChild` interface, `children()` submenu, all 3 context menu slots documented
+
 ## 2.38.12
 
 ### Fixes
