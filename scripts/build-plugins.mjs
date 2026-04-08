@@ -139,5 +139,21 @@ for (const plugin of builtPlugins) {
   console.log(`    ${plugin.id}: ${integrity.slice(0, 16)}...`);
 }
 
-writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-console.log(`\n  ✓ Manifest generated (${manifest.plugins.length} plugins)\n`);
+const manifestJson = JSON.stringify(manifest, null, 2) + '\n';
+writeFileSync(manifestPath, manifestJson);
+
+// Also write to dist/plugins/ if it exists (after npm run build)
+const distPluginsDir = resolve(znRoot, 'dist/plugins');
+if (existsSync(distPluginsDir)) {
+  const distManifestPath = resolve(distPluginsDir, 'manifest.json');
+  writeFileSync(distManifestPath, manifestJson);
+  // Copy plugin .js files to dist/ too
+  for (const plugin of builtPlugins) {
+    const src = join(pluginsDir, plugin.output);
+    const dest = join(distPluginsDir, plugin.output);
+    if (existsSync(src)) copyFileSync(src, dest);
+  }
+  console.log(`\n  ✓ Manifest + plugins copied to dist/plugins/`);
+}
+
+console.log(`  ✓ Manifest generated (${manifest.plugins.length} plugins)\n`);
