@@ -1053,28 +1053,90 @@ If `manifest.json` is missing or empty, the app boots normally with zero overhea
 
 ### Manifest Format
 
+Since v2.39.0, ZN supports **manifest v2** with trust levels and permissions. Manifest v1 (without `manifestVersion`) remains fully compatible — all plugins receive the complete API.
+
+#### Manifest v2
+
 ```json
 {
+  "manifestVersion": "2",
   "plugins": [
-    { "id": "my-plugin", "file": "my-plugin.js", "integrity": "a1b2c3..." },
-    { "id": "other-plugin", "file": "other-plugin.js" }
+    {
+      "id": "my-plugin",
+      "file": "my-plugin.js",
+      "integrity": "a1b2c3d4...",
+      "trust": "community",
+      "permissions": [
+        "stores:dossier:read",
+        "stores:selection:read",
+        "pluginData:readwrite",
+        "events:subscribe",
+        "toast",
+        "slots:ui"
+      ]
+    }
   ]
 }
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
+| `manifestVersion` | No | `"2"` to enable trust levels. Absent = v1 (backward compatible). |
 | `id` | Yes | Unique plugin identifier |
 | `file` | Yes | JS filename relative to `/plugins/` |
 | `name` | No | Display name (used in auto-generated home card) |
 | `description` | No | Short description |
-| `integrity` | No | SHA-256 hex hash of the JS file. If set, ZN verifies the file content before execution. Mismatched files are skipped with a warning. |
+| `integrity` | No | SHA-256 hex hash of the JS file. If set, ZN verifies the file content before execution. |
+| `trust` | No | `"trusted"` (full API) or `"community"` (filtered API). Absent = `"community"`. |
+| `permissions` | No | Requested permissions (only relevant for `community`). Absent = minimal default set. |
 
-**Generating the integrity hash:**
+#### Trust Levels
+
+| Level | Behavior |
+|-------|----------|
+| `trusted` | Full API, no filtering. Reserved for YPSI-signed plugins. |
+| `community` | API filtered by declared `permissions`. Unauthorized members are absent from the `api` object. |
+
+#### Available Permissions
+
+**Stores (read-only):** `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:report:read`, `stores:insights:read`, `stores:tagSet:read`, `stores:tab:read`, `stores:ui:read`
+
+**Stores (read + write):** `stores:dossier:write`, `stores:report:write`, `stores:tagSet:write`, `stores:tab:write`, `stores:ui:write`
+
+**Data:** `repositories:read`, `repositories:write`, `pluginData:readwrite`, `db:direct`
+
+**Events & notifications:** `events:subscribe`, `toast`
+
+**Services:** `services:export`, `services:import`, `services:navigate`
+
+**Advanced access:** `fileService`, `encryption`, `network:fetch`
+
+**UI slots:** `slots:ui`, `slots:contextMenu`, `slots:keyboard`, `slots:exportImport`
+
+A `community` plugin without a `permissions` field receives the minimal default set: `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:ui:write`, `pluginData:readwrite`, `events:subscribe`, `toast`, `slots:ui`, `slots:contextMenu`.
+
+A plugin with `stores:dossier:read` (without `write`) receives a read-only store — actions (like `createElement`, `deleteElement`) are replaced by no-ops that log an error to console.
+
+#### Manifest v1 (backward compatible)
+
+```json
+{
+  "plugins": [
+    { "id": "my-plugin", "file": "my-plugin.js" }
+  ]
+}
+```
+
+A manifest without `manifestVersion` is treated as v1. All plugins receive the full API (identical behavior to ZN < 2.39.0). A console warning encourages migration to v2.
+
+#### Generating the integrity hash
+
 ```bash
+# With the ZN script:
+node scripts/plugin-hash.mjs plugins/my-plugin.js
+
+# Or directly:
 sha256sum plugins/my-plugin.js | cut -d' ' -f1
-# or in Node.js:
-node -e "const fs=require('fs');const c=require('crypto');console.log(c.createHash('sha256').update(fs.readFileSync('plugins/my-plugin.js')).digest('hex'))"
 ```
 
 Place this file at `dist/plugins/manifest.json` (or `public/plugins/manifest.json` during development).
@@ -1296,10 +1358,18 @@ export function register(api: any) {
 
 ### Deployment
 
-1. Build or write your plugin as a `.js` ES module
+1. Build your plugin as an ES module `.js`
 2. Copy it to `dist/plugins/` (next to the ZN app)
-3. Add an entry to `dist/plugins/manifest.json`
-4. Reload the app
+3. Add an entry to `dist/plugins/manifest.json` (see "Manifest Format" for v1 or v2)
+4. If using integrity verification, generate the hash: `node scripts/plugin-hash.mjs dist/plugins/my-plugin.js`
+5. Reload the app
+
+For YPSI plugins in the monorepo:
+```bash
+npm run build:plugins    # Build all plugins + copy + generate manifest v2
+npm run dev:plugins      # Build plugins + start dev server
+npm run rehash:plugins   # Copy + rehash without rebuild (if already built)
+```
 
 ### Error Handling
 
@@ -1352,9 +1422,15 @@ Since v2.20.0, ZN renamed "Investigation" to "Dossier" everywhere. To avoid brea
 
 > **These aliases will be removed in a future major version.** Migrate your code to the new names as soon as possible. In particular, any filtering on `element.investigationId` returns `undefined` — use `element.dossierId`.
 
-### Security
+### Security and Permissions (v2.39.0+)
 
-- Plugins run in the same JS context as the app (no sandbox)
-- Only the server administrator can place files in `dist/plugins/`
-- No plugin downloading or remote loading — files are served locally
+Since v2.39.0, ZN implements a three-level security system for external plugins:
+
+**Integrity verification** — If an `integrity` field is present in the manifest, ZN computes the SHA-256 hash of the downloaded file and compares it. On mismatch, the plugin is rejected.
+
+**Trust levels** — Each plugin is either `trusted` (full API) or `community` (API filtered by permissions). See the "Manifest Format" section for details.
+
+**Permission sandbox** — `community` plugins receive a filtered `api` object. Unauthorized members are absent (not `undefined`, but absent). Test for them with `if (api.stores?.useDossierStore)`.
+
+**Limitations** — This is not a strict sandbox (memory/process isolation). A determined `community` plugin can still access browser globals (`window.indexedDB`, `fetch`). The system protects against accidental misuse and opportunistic abuse, not deliberately malicious code. Only the server administrator can place files in `dist/plugins/`.
 - Review plugin code before deployment, as plugins have full access to the ZN API and IndexedDB data
