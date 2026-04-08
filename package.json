@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.38.13",
+  "version": "2.39.0",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -10,6 +10,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:plugins": "node scripts/build-plugins.mjs && vite",
+    "build:plugins": "node scripts/build-plugins.mjs",
+    "rehash:plugins": "node scripts/build-plugins.mjs --skip-build",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

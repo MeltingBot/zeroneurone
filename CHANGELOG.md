@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.39.0
+
+### Features
+- **Plugin security** — integrity verification (SHA-256) and permission sandbox for external plugins
+  - **Manifest v2** — new format with `trust` levels (`trusted` / `community`) and `permissions` declaration
+  - **Integrity check** — SHA-256 hash verification of plugin files before loading (extracted from inline to `pluginIntegrity.ts`)
+  - **Permission sandbox** — community plugins receive a filtered API based on declared permissions; undeclared API members are absent
+  - **Read-only store proxy** — Zustand stores exposed in read-only mode preserve selector optimization and referential stability
+  - **Slot filtering** — community plugins can only register into slots their permissions allow
+  - **Legacy aliases** — `useInvestigationStore` and `investigationRepository` propagated through the sandbox
+  - **Default permissions** — community plugins without declared permissions get a safe minimal set (read graph, UI slots, plugin data, events, toast)
+  - **Backward compatible** — manifest v1 (no `manifestVersion` field) works as before with full permissions granted
+- **Plugin build tooling** — `npm run dev:plugins` / `build:plugins` / `rehash:plugins` to build YPSI plugins, copy to `public/plugins/`, and generate manifest v2 with integrity hashes
+- **CLI hash tool** — `scripts/plugin-hash.mjs` for standalone hash generation
+
 ## 2.38.13
 
 ### Fixes

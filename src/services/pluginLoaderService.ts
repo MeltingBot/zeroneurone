@@ -1,18 +1,9 @@
 import { createScopedPluginAPI } from '../plugins/pluginAPI';
 import { getPlugins, registerPlugin } from '../plugins/pluginRegistry';
-
-interface PluginManifestEntry {
-  id: string;
-  file: string;
-  name?: string;
-  description?: string;
-  /** SHA-256 hex hash of the plugin file. If set, integrity is verified before execution. */
-  integrity?: string;
-}
-
-interface PluginManifest {
-  plugins: PluginManifestEntry[];
-}
+import { verifyIntegrity } from '../plugins/pluginIntegrity';
+import { buildSandboxedAPI } from '../plugins/pluginSandbox';
+import type { PluginManifestV2, PluginEntry, TrustLevel, Permission } from '../plugins/pluginManifest';
+import { DEFAULT_COMMUNITY_PERMISSIONS } from '../plugins/pluginManifest';
 
 // ─── React shim Blob URLs ───────────────────────────────────
 // Plugins loaded via Blob URL can't resolve bare specifiers like
@@ -64,9 +55,13 @@ function rewriteBareImports(source: string): string {
  *
  * Plugins that don't register a home:card get an auto-generated one
  * so they always appear in the Extensions section for enable/disable.
+ *
+ * Manifest v2 adds trust levels and permissions for community plugins.
+ * Manifest v1 (no manifestVersion field) is fully backward-compatible:
+ * all plugins are treated as community with all permissions granted.
  */
 export async function loadExternalPlugins(): Promise<void> {
-  let manifest: PluginManifest;
+  let manifest: PluginManifestV2;
 
   try {
     const res = await fetch('/plugins/manifest.json');
@@ -78,6 +73,16 @@ export async function loadExternalPlugins(): Promise<void> {
 
   if (!Array.isArray(manifest?.plugins) || manifest.plugins.length === 0) {
     return;
+  }
+
+  // Detect manifest version
+  const isV2 = manifest.manifestVersion === '2';
+  if (!isV2) {
+    console.warn(
+      '[ZN] Plugin manifest has no manifestVersion field — treating as v1. ' +
+      'Consider migrating to manifest v2 for trust levels and permissions. ' +
+      'See: plugin-development-fr.md'
+    );
   }
 
   let loaded = 0;
@@ -96,21 +101,9 @@ export async function loadExternalPlugins(): Promise<void> {
       }
       const source = await fileRes.text();
 
-      // Verify integrity if hash is declared in manifest
-      if (entry.integrity) {
-        const hashBuffer = await crypto.subtle.digest(
-          'SHA-256',
-          new TextEncoder().encode(source),
-        );
-        const hashHex = Array.from(new Uint8Array(hashBuffer))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-        if (hashHex !== entry.integrity.toLowerCase()) {
-          console.warn(
-            `[ZN] Plugin "${entry.id}": integrity mismatch (expected ${entry.integrity}, got ${hashHex}). Skipping.`,
-          );
-          continue;
-        }
+      // Verify integrity
+      if (!await verifyIntegrity(source, entry.integrity, entry.id)) {
+        continue;
       }
 
       // Rewrite bare React imports → Blob URL shims
@@ -126,9 +119,16 @@ export async function loadExternalPlugins(): Promise<void> {
       URL.revokeObjectURL(blobUrl);
 
       if (typeof mod.register === 'function') {
-        await mod.register(createScopedPluginAPI(entry.id));
+        // Build API with trust level and permissions
+        const scopedAPI = createScopedPluginAPI(entry.id);
+        const { trust, permissions } = resolvePermissions(entry, isV2);
+        const api = buildSandboxedAPI(scopedAPI, trust, permissions);
+
+        await mod.register(api);
         loaded++;
-        console.log(`[ZN] Plugin "${entry.id}" registered`);
+
+        const trustLabel = trust === 'trusted' ? '(trusted)' : '(community)';
+        console.log(`[ZN] Plugin "${entry.id}" registered ${trustLabel}`);
 
         // Auto-register a basic home:card if the plugin didn't create one.
         // This ensures every external plugin is visible in the Extensions
@@ -140,7 +140,8 @@ export async function loadExternalPlugins(): Promise<void> {
             name: entry.name || entry.id,
             description: entry.description || `Plugin: ${entry.id}`,
             icon: 'Puzzle',
-          }, entry.id);
+            trust,
+          } as any, entry.id);
         }
       } else {
         console.warn(`[ZN] Plugin "${entry.id}" has no register() export, skipping`);
@@ -154,3 +155,56 @@ export async function loadExternalPlugins(): Promise<void> {
     console.log(`[ZN] Loaded ${loaded} external plugin(s)`);
   }
 }
+
+// ─── Permission resolution ──────────────────────────────────
+
+/**
+ * Determine the effective trust level and permissions for a plugin entry.
+ *
+ * - Manifest v1: all plugins get community trust with ALL permissions (backward compat).
+ * - Manifest v2, trusted: all permissions.
+ * - Manifest v2, community: declared permissions or DEFAULT_COMMUNITY_PERMISSIONS.
+ */
+function resolvePermissions(entry: PluginEntry, isV2: boolean): {
+  trust: TrustLevel;
+  permissions: Permission[];
+} {
+  if (!isV2) {
+    // v1 backward compat: community trust but all permissions granted
+    // This ensures existing plugins keep working exactly as before.
+    return { trust: 'community', permissions: ALL_PERMISSIONS };
+  }
+
+  const trust: TrustLevel = entry.trust === 'trusted' ? 'trusted' : 'community';
+
+  if (trust === 'trusted') {
+    return { trust, permissions: ALL_PERMISSIONS };
+  }
+
+  return {
+    trust,
+    permissions: entry.permissions ?? DEFAULT_COMMUNITY_PERMISSIONS,
+  };
+}
+
+/** All possible permissions — used for trusted plugins and v1 backward compat. */
+const ALL_PERMISSIONS: Permission[] = [
+  'stores:dossier:read', 'stores:dossier:write',
+  'stores:selection:read',
+  'stores:view:read',
+  'stores:report:read', 'stores:report:write',
+  'stores:insights:read',
+  'stores:tagSet:read', 'stores:tagSet:write',
+  'stores:tab:read', 'stores:tab:write',
+  'stores:ui:read', 'stores:ui:write',
+  'repositories:read', 'repositories:write',
+  'pluginData:readwrite',
+  'events:subscribe',
+  'toast',
+  'services:export', 'services:import', 'services:navigate',
+  'db:direct',
+  'fileService',
+  'encryption',
+  'network:fetch',
+  'slots:ui', 'slots:contextMenu', 'slots:keyboard', 'slots:exportImport',
+];
