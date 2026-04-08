@@ -106,6 +106,8 @@ export interface HomeCardRegistration {
   features?: string[];
   onConfigure?: () => void;
   actions?: CardAction[];
+  /** Trust level from manifest v2. Used to display a verified badge. */
+  trust?: 'trusted' | 'community';
 }
 
 // ─── The complete slot registry ─────────────────────────────

@@ -142,6 +142,14 @@ export async function loadExternalPlugins(): Promise<void> {
             icon: 'Puzzle',
             trust,
           } as any, entry.id);
+        } else {
+          // Inject trust level into plugin-registered cards
+          const allCards = getPlugins('home:card', { includeDisabled: true });
+          for (const card of allCards) {
+            if (card.id === entry.id && !(card as any).trust) {
+              (card as any).trust = trust;
+            }
+          }
         }
       } else {
         console.warn(`[ZN] Plugin "${entry.id}" has no register() export, skipping`);

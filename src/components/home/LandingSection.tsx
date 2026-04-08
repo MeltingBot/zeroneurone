@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Upload, Map, Clock, Network, Search, Shield, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
+import { Plus, Upload, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
@@ -164,6 +164,11 @@ export function LandingSection({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-sm font-semibold text-text-primary">{card.name}</h3>
+                            {card.trust === 'trusted' && (
+                              <span title={t('home.landing.verifiedPlugin')}>
+                                <ShieldCheck size={13} className="text-accent shrink-0" />
+                              </span>
+                            )}
                             {card.version && (
                               <span className="text-[10px] text-text-tertiary">{card.version}</span>
                             )}

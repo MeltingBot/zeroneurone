@@ -77,7 +77,8 @@
       "extensions": "Extensões",
       "extensionsLicense": "Licença",
       "enablePlugin": "Ativar extensão",
-      "disablePlugin": "Desativar extensão"
+      "disablePlugin": "Desativar extensão",
+      "verifiedPlugin": "Extensão verificada"
     },
     "showArchived": "Arquivados ({{count}})",
     "hideArchived": "Ocultar arquivados"

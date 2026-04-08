@@ -28,7 +28,7 @@ const skipBuild = process.argv.includes('--skip-build');
 
 const PLUGINS = [
   {
-    id: 'one-neurone',
+    id: 'oneneurone',
     workspace: 'oneneurone',
     output: 'oneneurone.js',
     name: 'OneNeurone',
@@ -36,7 +36,7 @@ const PLUGINS = [
     trust: 'trusted',
   },
   {
-    id: 'vault-neurone',
+    id: 'vaultneurone',
     workspace: 'vaultneurone',
     output: 'vaultneurone.js',
     name: 'VaultNeurone',

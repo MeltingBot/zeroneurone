@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.39.1
+
+### Fixes
+- **Trusted badge** — verified shield icon on trusted plugin cards (home:card), injected by the loader after plugin registration
+- **Manifest plugin IDs** — aligned `oneneurone` / `vaultneurone` IDs with actual plugin card IDs (was `one-neurone` / `vault-neurone`)
+
 ## 2.39.0
 
 ### Features

@@ -77,7 +77,8 @@
       "extensions": "Estensioni",
       "extensionsLicense": "Licenza",
       "enablePlugin": "Attiva estensione",
-      "disablePlugin": "Disattiva estensione"
+      "disablePlugin": "Disattiva estensione",
+      "verifiedPlugin": "Estensione verificata"
     },
     "showArchived": "Archiviati ({{count}})",
     "hideArchived": "Nascondi archiviati"
