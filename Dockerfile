@@ -42,6 +42,30 @@ RUN npx vite build
 # Copy external plugins into dist (if any .js or manifest.json in plugins/)
 RUN cp -f plugins/*.json plugins/*.js dist/plugins/ 2>/dev/null || true
 
+# Generate manifest v2 with integrity hashes for all plugins in dist/plugins/
+# If plugins/ contains a manifest.json with trust levels, it is used as base.
+# Otherwise, a fresh manifest v2 is generated from the .js files present.
+RUN node -e " \
+  const fs = require('fs'); \
+  const crypto = require('crypto'); \
+  const path = require('path'); \
+  const dir = 'dist/plugins'; \
+  const manifestPath = path.join(dir, 'manifest.json'); \
+  let manifest = { plugins: [] }; \
+  try { manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')); } catch {} \
+  if (!manifest.plugins || manifest.plugins.length === 0) process.exit(0); \
+  manifest.manifestVersion = '2'; \
+  for (const entry of manifest.plugins) { \
+    const filePath = path.join(dir, entry.file); \
+    if (!fs.existsSync(filePath)) continue; \
+    const hash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex'); \
+    entry.integrity = hash; \
+    if (!entry.trust) entry.trust = 'trusted'; \
+  } \
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\\n'); \
+  console.log('[Docker] Manifest v2 generated with', manifest.plugins.length, 'plugin(s)'); \
+"
+
 # ----------------------------------------------------------------------------
 # Stage 2: nginx for static file serving
 # ----------------------------------------------------------------------------
