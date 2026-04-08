@@ -142,18 +142,19 @@ for (const plugin of builtPlugins) {
 const manifestJson = JSON.stringify(manifest, null, 2) + '\n';
 writeFileSync(manifestPath, manifestJson);
 
-// Also write to dist/plugins/ if it exists (after npm run build)
-const distPluginsDir = resolve(znRoot, 'dist/plugins');
-if (existsSync(distPluginsDir)) {
-  const distManifestPath = resolve(distPluginsDir, 'manifest.json');
-  writeFileSync(distManifestPath, manifestJson);
-  // Copy plugin .js files to dist/ too
+// Also write to extra output dirs if they exist
+for (const extraDir of [
+  resolve(znRoot, 'dist/plugins'),   // after npm run build
+  resolve(znRoot, 'plugins'),        // for Docker build context
+]) {
+  if (!existsSync(extraDir)) continue;
+  writeFileSync(join(extraDir, 'manifest.json'), manifestJson);
   for (const plugin of builtPlugins) {
     const src = join(pluginsDir, plugin.output);
-    const dest = join(distPluginsDir, plugin.output);
+    const dest = join(extraDir, plugin.output);
     if (existsSync(src)) copyFileSync(src, dest);
   }
-  console.log(`\n  ✓ Manifest + plugins copied to dist/plugins/`);
+  console.log(`  ✓ Manifest + plugins copied to ${extraDir.replace(znRoot + '/', '')}/`);
 }
 
 console.log(`  ✓ Manifest generated (${manifest.plugins.length} plugins)\n`);
