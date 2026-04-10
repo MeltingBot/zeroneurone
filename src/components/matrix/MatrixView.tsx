@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Download, Pin, Copy, Rows3 } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3 } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -749,7 +749,7 @@ export function MatrixView() {
               className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors hover:bg-bg-tertiary text-text-secondary"
               title={t('matrix.exportCsv')}
             >
-              <Download size={14} />
+              <Upload size={14} />
             </button>
 
             {/* Reset view */}

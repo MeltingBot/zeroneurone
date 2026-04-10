@@ -9,7 +9,7 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Download, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair } from 'lucide-react';
+import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { ZoneDrawTool } from './ZoneDrawTool';
@@ -2099,7 +2099,7 @@ export function MapView() {
               className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded disabled:opacity-50 disabled:cursor-not-allowed"
               title={t('map.exportCSV')}
             >
-              <Download size={16} />
+              <Upload size={16} />
             </button>
           </>
         }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Upload, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive } from 'lucide-react';
+import { Plus, FolderOpen, Download, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
 import { DossierCard, LandingSection } from '../components/home';
@@ -233,7 +233,7 @@ export function HomePage() {
               onClick={() => setIsImportModalOpen(true)}
               data-testid="import-button"
             >
-              <Upload size={16} />
+              <Download size={16} />
               {t('home.import')}
             </Button>
           </div>

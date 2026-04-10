@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Upload, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
@@ -362,7 +362,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             disabled={isProcessing}
             className="w-full flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-dashed border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
           >
-            <Upload size={32} className="text-text-tertiary" />
+            <Download size={32} className="text-text-tertiary" />
             <div className="text-center">
               <div className="text-sm font-medium text-text-primary">
                 {isProcessing ? t('import.importing') : t('import.selectFile')}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Upload, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
+import { Plus, Download, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
@@ -100,7 +100,7 @@ export function LandingSection({
               {t('home.landing.startNew')}
             </Button>
             <Button variant="secondary" size="md" onClick={onImport} data-testid="import-button">
-              <Upload size={18} />
+              <Download size={18} />
               {t('home.landing.importExisting')}
             </Button>
           </div>

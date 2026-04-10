@@ -174,7 +174,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                 : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            <Download size={16} />
+            <Upload size={16} />
             Exporter
           </button>
           <button
@@ -185,7 +185,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                 : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            <Upload size={16} />
+            <Download size={16} />
             Importer
           </button>
         </div>
@@ -241,7 +241,7 @@ export function ImportExportModal({ isOpen, onClose }: ImportExportModalProps) {
                 disabled={isProcessing}
                 className="w-full flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-dashed border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
               >
-                <Upload size={32} className="text-text-tertiary" />
+                <Download size={32} className="text-text-tertiary" />
                 <div className="text-center">
                   <div className="text-sm font-medium text-text-primary">
                     {isProcessing ? 'Import en cours...' : 'Selectionner un fichier'}

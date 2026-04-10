@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Upload, AlertCircle, Download, FileSpreadsheet } from 'lucide-react';
+import { X, AlertCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { importService } from '../../services/importService';
 import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
@@ -271,7 +271,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
             disabled={isProcessing}
             className="w-full flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-dashed border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
           >
-            <Upload size={32} className="text-text-tertiary" />
+            <Download size={32} className="text-text-tertiary" />
             <div className="text-center">
               <div className="text-sm font-medium text-text-primary">
                 {isProcessing ? t('import.importing') : t('importIntoCurrent.selectFile')}

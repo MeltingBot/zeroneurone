@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Trash2, Edit2, Download, Star, Tag, Archive } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit2, Upload, Star, Tag, Archive } from 'lucide-react';
 import { IconButton, DropdownMenu, DropdownItem } from '../common';
 import { formatRelativeTime } from '../../utils';
 import type { Dossier } from '../../types';
@@ -131,7 +131,7 @@ export function DossierCard({
               </DropdownItem>
               <DropdownItem onClick={handleExport} data-testid="export-action">
                 <span className="flex items-center gap-2">
-                  <Download size={14} />
+                  <Upload size={14} />
                   {t('home.card.exportZip')}
                 </span>
               </DropdownItem>

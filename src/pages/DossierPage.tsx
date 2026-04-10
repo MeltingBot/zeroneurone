@@ -553,14 +553,14 @@ export function DossierPage() {
             className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('dossier.header.import')}
           >
-            <Upload size={14} />
+            <Download size={14} />
           </button>
           <button
             onClick={() => setExportOpen(true)}
             className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
             title={t('dossier.header.export')}
           >
-            <Download size={14} />
+            <Upload size={14} />
           </button>
           <button
             onClick={toggleSearch}

@@ -364,15 +364,15 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={handleImportClick}>
-                <Upload size={14} />
+                <Download size={14} />
                 {t('common:actions.import')}
               </Button>
               <Button variant="secondary" onClick={handleExportCSV}>
-                <Download size={14} />
+                <Upload size={14} />
                 CSV
               </Button>
               <Button variant="secondary" onClick={handleExportJSON}>
-                <Download size={14} />
+                <Upload size={14} />
                 JSON
               </Button>
               <Button variant="secondary" onClick={onClose}>

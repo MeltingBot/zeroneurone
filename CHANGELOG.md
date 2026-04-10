@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.39.2
+
+### Fixes
+- **Import/Export icons** — swapped `Upload` / `Download` icons so Import uses the downward arrow (incoming data) and Export uses the upward arrow (outgoing data); applied across DossierPage header, HomePage, LandingSection, DossierCard, TagSetManagerModal, StorageModal backup tab, Import/Export modals, AssetsPanel dropzone, MapView/TimelineView/MatrixView CSV export, ReportPanel, QueryResultsTable
+- **ViewToolbar wrapping** — toolbar buttons now wrap cleanly onto multiple lines when the view is resized narrow (via side panel), instead of overflowing horizontally; applies to Canvas, Map, Matrix and Timeline views
+
 ## 2.39.1
 
 ### Fixes

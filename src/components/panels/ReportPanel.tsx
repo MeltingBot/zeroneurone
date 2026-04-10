@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Plus, Loader2, Download, Link2, Link2Off, Globe } from 'lucide-react';
+import { FileText, Plus, Loader2, Upload, Link2, Link2Off, Globe } from 'lucide-react';
 import { useDossierStore, useReportStore, useHistoryStore } from '../../stores';
 import { usePlugins } from '../../plugins/usePlugins';
 import { ReportSectionEditor } from '../report/ReportSectionEditor';
@@ -222,7 +222,7 @@ export function ReportPanel() {
           title={t('report.exportMd')}
           className="text-text-secondary hover:text-accent"
         >
-          <Download size={14} />
+          <Upload size={14} />
         </IconButton>
         <IconButton
           onClick={handleExportHTML}

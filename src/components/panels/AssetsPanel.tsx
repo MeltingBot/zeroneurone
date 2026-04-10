@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, File, Image, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
+import { File, Image, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
 import { useDossierStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
@@ -285,7 +285,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         `}
       >
         <div className="flex flex-col items-center gap-2 text-center">
-          <Upload size={20} className="text-text-tertiary" />
+          <Download size={20} className="text-text-tertiary" />
           <p className="text-xs text-text-secondary">
             {isUploading
               ? 'Téléchargement...'

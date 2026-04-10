@@ -5,7 +5,7 @@ import { useDossierStore } from '../../stores/dossierStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useViewStore } from '../../stores/viewStore';
 import type { Element, Link } from '../../types';
-import { ArrowUpDown, ArrowUp, ArrowDown, Download, Box, Link2 } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Upload, Box, Link2 } from 'lucide-react';
 
 interface TableRow {
   id: string;
@@ -206,7 +206,7 @@ export function QueryResultsTable() {
           onClick={handleExportCSV}
           className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
         >
-          <Download size={12} />
+          <Upload size={12} />
           {t('query.exportCSV')}
         </button>
       </div>
