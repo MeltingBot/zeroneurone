@@ -24,6 +24,7 @@ interface TimelineState {
   showDensity: boolean;
   showCausality: boolean;
   causalityMaxDays: number;
+  showCreatedAt: boolean;
 }
 
 const DEFAULT_TIMELINE: TimelineState = {
@@ -38,6 +39,7 @@ const DEFAULT_TIMELINE: TimelineState = {
   showDensity: true,
   showCausality: false,
   causalityMaxDays: 365,
+  showCreatedAt: false,
 };
 
 interface ViewState {

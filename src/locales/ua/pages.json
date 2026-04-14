@@ -390,6 +390,8 @@
     "clearFilter": "Очистити фільтр",
     "dragToMoveRange": "Перетягніть для переміщення періоду",
     "exportCSV": "Експортувати в CSV",
+    "createdAt": "Додані",
+    "createdAtHint": "Показати коли були додані елементи та зв'язки",
     "modeScatter": "Розсіювання",
     "modeSwimlanes": "Доріжки",
     "groupBy": "Групувати за",

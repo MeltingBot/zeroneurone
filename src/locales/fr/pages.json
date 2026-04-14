@@ -395,6 +395,8 @@
     "clearFilter": "Effacer le filtre",
     "dragToMoveRange": "Glisser pour déplacer la période",
     "exportCSV": "Exporter en CSV",
+    "createdAt": "Ajouts",
+    "createdAtHint": "Afficher les dates d'ajout des éléments et liens",
     "modeScatter": "Dispersion",
     "modeSwimlanes": "Couloirs",
     "groupBy": "Grouper par",

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Upload } from 'lucide-react';
+import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Upload, Clock } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
 
@@ -20,7 +20,7 @@ export interface TimelineItem {
   start: Date;
   end?: Date;
   color: string;
-  type: 'link' | 'event' | 'property';
+  type: 'link' | 'event' | 'property' | 'created';
   sourceId?: string; // For selection
   parentElementIds?: string[]; // Element IDs this item belongs to (for swimlane grouping)
   isDimmed?: boolean; // For filter dimming
@@ -158,6 +158,10 @@ export function TimelineView() {
   const setShowLinksInSwimlane = useCallback((v: boolean) => {
     setTimeline({ showLinksInSwimlane: v });
   }, [setTimeline]);
+  const showCreatedAt = tl.showCreatedAt;
+  const setShowCreatedAt = useCallback((v: boolean) => {
+    setTimeline({ showCreatedAt: v });
+  }, [setTimeline]);
 
   // Collapsed lanes (local, resets on remount)
   const [collapsedLanes, setCollapsedLanes] = useState<Set<string>>(new Set());
@@ -192,6 +196,106 @@ export function TimelineView() {
         c => c.targetId === targetId && c.targetType === targetType && !c.resolved
       ).length;
     };
+
+    // === Mode "Investigation chronology": show elements & links by createdAt ===
+    if (showCreatedAt) {
+      // Elements by createdAt
+      elements.forEach((element) => {
+        if (hiddenElementIds.has(element.id)) return;
+        if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
+
+        const createdDate = new Date(element.createdAt);
+        if (isNaN(createdDate.getTime())) return;
+
+        const createdTime = createdDate.getTime();
+        if (createdTime < minTime) minTime = createdTime;
+        if (createdTime > maxTime) maxTime = createdTime;
+
+        const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
+        const elementLabel = element.label || t('timeline.unnamed');
+
+        itemsList.push({
+          id: `created-el-${element.id}`,
+          label: elementLabel,
+          start: createdDate,
+          end: undefined,
+          color: element.visual.color,
+          type: 'created',
+          sourceId: element.id,
+          isDimmed: isElementDimmed,
+          unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
+          thumbLetter: elementLabel.charAt(0).toUpperCase(),
+          thumbColor: element.visual.color,
+          thumbShape: element.visual.shape || 'circle',
+          thumbImageId: element.assetIds?.[0] || undefined,
+        });
+      });
+
+      // Links by createdAt
+      links.forEach((link) => {
+        const fromElement = elements.find(el => el.id === link.fromId);
+        const toElement = elements.find(el => el.id === link.toId);
+        if (!fromElement || !toElement) return;
+        if (hiddenElementIds.has(fromElement.id) || hiddenElementIds.has(toElement.id)) return;
+        if (activeTabId !== null) {
+          const fromVisible = tabMemberSet.has(fromElement.id) || tabGhostIds.has(fromElement.id);
+          const toVisible = tabMemberSet.has(toElement.id) || tabGhostIds.has(toElement.id);
+          if (!fromVisible || !toVisible) return;
+        }
+
+        const createdDate = new Date(link.createdAt);
+        if (isNaN(createdDate.getTime())) return;
+
+        const createdTime = createdDate.getTime();
+        if (createdTime < minTime) minTime = createdTime;
+        if (createdTime > maxTime) maxTime = createdTime;
+
+        const fromLabel = fromElement.label || t('timeline.unnamed');
+        const toLabel = toElement.label || t('timeline.unnamed');
+        const linkLabel = link.label || t('timeline.relation');
+
+        const endpointDimmed = dimmedElementIds.has(fromElement.id) || dimmedElementIds.has(toElement.id)
+          || (activeTabId !== null && (tabGhostIds.has(fromElement.id) || tabGhostIds.has(toElement.id)));
+        const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
+
+        itemsList.push({
+          id: `created-lk-${link.id}`,
+          label: `${fromLabel} → ${linkLabel} → ${toLabel}`,
+          start: createdDate,
+          end: undefined,
+          color: link.visual.color || '#6b7280',
+          type: 'created',
+          sourceId: link.id,
+          parentElementIds: [fromElement.id, toElement.id],
+          isDimmed: isLinkDimmed,
+          unresolvedCommentCount: getUnresolvedCommentCount(link.id, 'link'),
+          thumbLetter: fromLabel.charAt(0).toUpperCase(),
+          thumbColor: fromElement.visual.color,
+          thumbShape: fromElement.visual.shape || 'circle',
+          thumbImageId: fromElement.assetIds?.[0] || undefined,
+          destThumbLetter: toLabel.charAt(0).toUpperCase(),
+          destThumbColor: toElement.visual.color,
+          destThumbShape: toElement.visual.shape || 'circle',
+          destThumbImageId: toElement.assetIds?.[0] || undefined,
+        });
+      });
+
+      // Sort, bounds and return
+      itemsList.sort((a, b) => a.start.getTime() - b.start.getTime());
+      if (minTime === Infinity) {
+        const nowMs = Date.now();
+        minTime = nowMs - 365 * 24 * 60 * 60 * 1000;
+        maxTime = nowMs + 30 * 24 * 60 * 60 * 1000;
+      }
+      const range = maxTime - minTime || 365 * 24 * 60 * 60 * 1000;
+      const padding = range * 0.1;
+      return {
+        items: itemsList,
+        timeBounds: { min: new Date(minTime - padding), max: new Date(maxTime + padding) },
+      };
+    }
+
+    // === Normal mode: links dateRange, element events, date properties ===
 
     // 1. Process links with dateRange
     links.forEach((link) => {
@@ -381,7 +485,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds]);
+  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -930,9 +1034,10 @@ export function TimelineView() {
     // Toggle info panel
     setExpandedItemId(prev => prev === item.id ? null : item.id);
     // Also select the element/link
-    if (item.type === 'link' && item.sourceId) {
+    if (!item.sourceId) return;
+    if (item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) {
       selectLink(item.sourceId);
-    } else if ((item.type === 'event' || item.type === 'property') && item.sourceId) {
+    } else {
       selectElement(item.sourceId);
     }
   }, [selectElement, selectLink]);
@@ -1017,12 +1122,11 @@ export function TimelineView() {
 
   // Check if item is selected
   const isSelected = useCallback((item: TimelineItem): boolean => {
-    if (item.type === 'link' && item.sourceId) {
+    if (!item.sourceId) return false;
+    if (item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) {
       return selectedLinkIds.has(item.sourceId);
-    } else if ((item.type === 'event' || item.type === 'property') && item.sourceId) {
-      return selectedElementIds.has(item.sourceId);
     }
-    return false;
+    return selectedElementIds.has(item.sourceId);
   }, [selectedElementIds, selectedLinkIds]);
 
   // Empty state
@@ -1109,6 +1213,8 @@ export function TimelineView() {
               <ArrowUpDown size={10} />
               {newestFirst ? t('timeline.recentUp') : t('timeline.oldUp')}
             </button>
+            {!showCreatedAt && (
+              <>
             <div className="w-px h-4 bg-border-default mx-1" />
             <button
               onClick={() => setShowCausality(!showCausality)}
@@ -1148,6 +1254,20 @@ export function TimelineView() {
             )}
               </>
             )}
+              </>
+            )}
+            <button
+              onClick={() => setShowCreatedAt(!showCreatedAt)}
+              className={`px-2 h-6 text-[10px] rounded border flex items-center gap-1 ${
+                showCreatedAt
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-text-secondary hover:bg-bg-tertiary border-border-default'
+              }`}
+              title={t('timeline.createdAtHint')}
+            >
+              <Clock size={10} />
+              {t('timeline.createdAt')}
+            </button>
             <button
               onClick={() => setShowDensity(!showDensity)}
               className={`px-2 h-6 text-[10px] rounded border flex items-center gap-1 ${
@@ -1284,7 +1404,7 @@ export function TimelineView() {
             onItemClick={(item, e) => {
               e.stopPropagation();
               if (item.sourceId) {
-                if (item.type === 'link') {
+                if (item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) {
                   selectLink(item.sourceId);
                 } else {
                   selectElement(item.sourceId);
@@ -1444,7 +1564,7 @@ export function TimelineView() {
                     </div>
                   )}
                   {/* Destination thumbnail for links */}
-                  {item.type === 'link' && item.destThumbLetter && (
+                  {(item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) && item.destThumbLetter && (
                     <ItemThumbnail
                       imageUrl={item.destThumbImageId ? thumbnails[item.destThumbImageId] : undefined}
                       shape={item.destThumbShape || 'circle'}
@@ -1776,7 +1896,7 @@ function escapeCSV(value: string): string {
 }
 
 function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
-  const typeLabels: Record<string, string> = { link: 'lien', event: 'evenement', property: 'propriete' };
+  const typeLabels: Record<string, string> = { link: 'lien', event: 'evenement', property: 'propriete', created: 'ajout' };
   const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 
   const sorted = [...items].sort((a, b) => a.start.getTime() - b.start.getTime());

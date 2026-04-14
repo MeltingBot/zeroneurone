@@ -379,6 +379,8 @@
     "clearFilter": "Iragazkia garbitu",
     "dragToMoveRange": "Arrastatu aldia mugitzeko",
     "exportCSV": "CSV-ra esportatu",
+    "createdAt": "Gehituta",
+    "createdAtHint": "Erakutsi elementuak eta loturak noiz gehitu ziren",
     "modeScatter": "Sakabanaketa",
     "modeSwimlanes": "Errailak",
     "groupBy": "Taldekatu",

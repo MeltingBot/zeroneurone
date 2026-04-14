@@ -390,6 +390,8 @@
     "clearFilter": "Filter wissen",
     "dragToMoveRange": "Sleep om de periode te verplaatsen",
     "exportCSV": "Exporteren naar CSV",
+    "createdAt": "Toegevoegd",
+    "createdAtHint": "Toon wanneer elementen en koppelingen zijn toegevoegd",
     "modeScatter": "Spreiding",
     "modeSwimlanes": "Banen",
     "groupBy": "Groeperen op",

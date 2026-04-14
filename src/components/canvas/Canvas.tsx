@@ -1156,9 +1156,12 @@ export function Canvas() {
   const prevTagSizeRef = useRef(tagDisplaySize);
   const prevThemeRef = useRef(themeMode);
   const prevTabMemberSetRef = useRef(tabMemberSet);
+  const prevActiveTabIdRef = useRef(activeTabId);
 
   const nodes = useMemo(() => {
+    const activeTabChanged = prevActiveTabIdRef.current !== activeTabId;
     const globalSettingsChanged =
+      activeTabChanged ||
       prevShowConfRef.current !== showConfidenceIndicator ||
       prevTagModeRef.current !== tagDisplayMode ||
       prevTagSizeRef.current !== tagDisplaySize ||
@@ -1230,6 +1233,8 @@ export function Canvas() {
       prevTagModeRef.current = tagDisplayMode;
       prevTagSizeRef.current = tagDisplaySize;
       prevThemeRef.current = themeMode;
+      prevTabMemberSetRef.current = tabMemberSet;
+      prevActiveTabIdRef.current = activeTabId;
       return result;
     }
 
@@ -1303,6 +1308,7 @@ export function Canvas() {
     prevEditingIdRef.current = editingElementId;
     prevRemoteUsersRef.current = remoteUsersByElement;
     prevTabMemberSetRef.current = tabMemberSet;
+    prevActiveTabIdRef.current = activeTabId;
 
     // Detect additions/removals by comparing count
     const hasAdditionsOrRemovals = nodeStructures.length !== prevNodesRef.current.length;

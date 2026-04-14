@@ -379,6 +379,8 @@
     "clearFilter": "Esborrar filtre",
     "dragToMoveRange": "Arrossega per moure el període",
     "exportCSV": "Exporta a CSV",
+    "createdAt": "Afegits",
+    "createdAtHint": "Mostrar quan es van afegir els elements i els enllaços",
     "modeScatter": "Dispersió",
     "modeSwimlanes": "Carrils",
     "groupBy": "Agrupar per",

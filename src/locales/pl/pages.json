@@ -390,6 +390,8 @@
     "clearFilter": "Wyczyść filtr",
     "dragToMoveRange": "Przeciągnij, aby przesunąć okres",
     "exportCSV": "Eksportuj do CSV",
+    "createdAt": "Dodane",
+    "createdAtHint": "Pokaż kiedy elementy i powiązania zostały dodane",
     "modeScatter": "Rozproszenie",
     "modeSwimlanes": "Tory",
     "groupBy": "Grupuj wg",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.39.3
+
+### Fixes
+- **Timeline "Added" mode** — new toggle in timeline toolbar to display elements and links by their creation date (createdAt) instead of investigation dates, showing how the inquiry was built over time; causality controls are hidden in this mode since they don't apply to system timestamps
+- **Tab ghost visual stuck** — switching back to "Tous" tab no longer leaves elements with ghost appearance (dashed border, hatch overlay); the incremental node cache now detects activeTabId changes and forces a full rebuild
+
 ## 2.39.2
 
 ### Fixes

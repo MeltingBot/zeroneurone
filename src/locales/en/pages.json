@@ -394,6 +394,8 @@
     "clearFilter": "Clear filter",
     "dragToMoveRange": "Drag to move the time range",
     "exportCSV": "Export to CSV",
+    "createdAt": "Added",
+    "createdAtHint": "Show when elements and links were added",
     "modeScatter": "Scatter",
     "modeSwimlanes": "Swimlanes",
     "groupBy": "Group by",
