@@ -1,5 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { X, Plus, ChevronDown, Check, ExternalLink, ArrowUpRight, Settings2 } from 'lucide-react';
 import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
@@ -61,6 +62,23 @@ export function PropertiesEditor({
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const typeButtonRef = useRef<HTMLButtonElement>(null);
+  const scrollParentRef = useRef<HTMLDivElement>(null);
+
+  // Virtualize property rows: elements can carry thousands of properties (e.g. imported CSV rows).
+  const rowVirtualizer = useVirtualizer({
+    count: properties.length,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => 40,
+    overscan: 6,
+    getItemKey: (index) => properties[index].key,
+  });
+
+  // Precompute choices lookup to avoid O(n*m) suggestion scans inside the virtualized map
+  const suggestionByKey = useMemo(() => {
+    const map = new Map<string, PropertyDefinition>();
+    for (const s of suggestions) map.set(s.key, s);
+    return map;
+  }, [suggestions]);
 
   const getTypeLabel = useCallback((type: PropertyType): string => {
     return t(`detail.properties.types.${type}`);
@@ -357,29 +375,49 @@ export function PropertiesEditor({
         </button>
       )}
 
-      {/* Properties list - scrollable when many */}
+      {/* Properties list - virtualized when many */}
       {properties.length > 0 && (
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {properties.map((prop) => {
-            // Find choices from suggestions if this is a choice type property
-            const suggestion = suggestions.find((s) => s.key === prop.key);
-            const choices = suggestion?.choices;
-            return (
-              <PropertyRow
-                key={prop.key}
-                property={prop}
-                onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
-                onRemove={() => handleRemoveProperty(prop.key)}
-                onExtract={onExtractToElement ? () => onExtractToElement(prop) : undefined}
-                isDisplayed={displayedProperties.includes(prop.key)}
-                onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
-                choices={choices}
-                onUpdateChoices={onUpdateChoices ? (c) => onUpdateChoices(prop.key, c) : undefined}
-                t={t}
-                locale={i18n.language}
-              />
-            );
-          })}
+        <div ref={scrollParentRef} className="max-h-[400px] overflow-y-auto">
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: 'relative',
+              width: '100%',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const prop = properties[virtualRow.index];
+              const choices = suggestionByKey.get(prop.key)?.choices;
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: 8,
+                  }}
+                >
+                  <PropertyRow
+                    property={prop}
+                    onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
+                    onRemove={() => handleRemoveProperty(prop.key)}
+                    onExtract={onExtractToElement ? () => onExtractToElement(prop) : undefined}
+                    isDisplayed={displayedProperties.includes(prop.key)}
+                    onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}
+                    choices={choices}
+                    onUpdateChoices={onUpdateChoices ? (c) => onUpdateChoices(prop.key, c) : undefined}
+                    t={t}
+                    locale={i18n.language}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.6
+
+### Fixes
+- **Side panel perf — thousands of events/properties** — `EventsEditor` and `PropertiesEditor` now virtualize their rows via `@tanstack/react-virtual`. Only visible rows are mounted, so opening the detail panel of an element carrying 6k+ events/properties is now instant instead of freezing for several seconds. Dynamic row measurement preserves the expand/collapse UX for events. Sort is memoized; suggestion lookup in `PropertiesEditor` switched from O(n²) `find` to a `Map`.
+
 ## 2.39.5
 
 ### Fixes

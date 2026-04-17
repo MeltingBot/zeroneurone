@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight, Hexagon, Copy, PenTool, Code, Check, X } from 'lucide-react';
 import type { ElementEvent, PropertyDefinition, GeoData, GeoPolygon } from '../../types';
 import { generateUUID } from '../../utils';
@@ -41,7 +42,7 @@ interface EventItemProps {
   onDrawZone?: () => void;
 }
 
-function EventItem({
+const EventItem = memo(function EventItem({
   event,
   isExpanded,
   onToggleExpand,
@@ -550,7 +551,7 @@ function EventItem({
       )}
     </div>
   );
-}
+});
 
 export function EventsEditor({
   events,
@@ -565,11 +566,23 @@ export function EventsEditor({
 }: EventsEditorProps) {
   const { t } = useTranslation('panels');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const scrollParentRef = useRef<HTMLDivElement>(null);
 
-  // Sort events by date (most recent first)
-  const sortedEvents = [...events].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  // Sort events by date (most recent first). Memoized: sorting 6k+ events each render is expensive.
+  const sortedEvents = useMemo(
+    () => [...events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [events]
   );
+
+  // Virtualize the list: only render visible rows (needed for dossiers with thousands of events).
+  // estimateSize = collapsed height; measureElement picks up the real height (incl. expanded state).
+  const rowVirtualizer = useVirtualizer({
+    count: sortedEvents.length,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => 96,
+    overscan: 4,
+    getItemKey: (index) => sortedEvents[index].id,
+  });
 
   // Add new event
   const handleAdd = useCallback(() => {
@@ -681,29 +694,56 @@ export function EventsEditor({
         {t('detail.events.add')}
       </button>
 
-      {/* Events list - scrollable when many */}
+      {/* Events list - virtualized when many */}
       {sortedEvents.length === 0 ? (
         <p className="text-xs text-text-tertiary">{t('detail.events.noEvents')}</p>
       ) : (
-        <div className="space-y-2 pl-2 border-l-2 border-border-default max-h-[400px] overflow-y-auto">
-          {sortedEvents.map((event) => (
-            <EventItem
-              key={event.id}
-              event={event}
-              isExpanded={expandedEventId === event.id}
-              onToggleExpand={() => toggleEventExpand(event.id)}
-              onUpdate={(updates) => handleUpdate(event.id, updates)}
-              onRemove={() => handleRemove(event.id)}
-              onExtract={onExtractToElement ? () => onExtractToElement(event) : undefined}
-              onPickLocation={() => handlePickLocation(event.id)}
-              onClearGeo={() => handleClearGeo(event.id)}
-              suggestions={suggestions}
-              onNewProperty={onNewProperty}
-              isZone={isZone}
-              onInheritZone={isZone && currentZoneGeo ? () => handleInheritZone(event.id) : undefined}
-              onDrawZone={onDrawZone ? () => handleDrawZone(event.id) : undefined}
-            />
-          ))}
+        <div
+          ref={scrollParentRef}
+          className="pl-2 border-l-2 border-border-default max-h-[400px] overflow-y-auto"
+        >
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: 'relative',
+              width: '100%',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const event = sortedEvents[virtualRow.index];
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: 8,
+                  }}
+                >
+                  <EventItem
+                    event={event}
+                    isExpanded={expandedEventId === event.id}
+                    onToggleExpand={() => toggleEventExpand(event.id)}
+                    onUpdate={(updates) => handleUpdate(event.id, updates)}
+                    onRemove={() => handleRemove(event.id)}
+                    onExtract={onExtractToElement ? () => onExtractToElement(event) : undefined}
+                    onPickLocation={() => handlePickLocation(event.id)}
+                    onClearGeo={() => handleClearGeo(event.id)}
+                    suggestions={suggestions}
+                    onNewProperty={onNewProperty}
+                    isZone={isZone}
+                    onInheritZone={isZone && currentZoneGeo ? () => handleInheritZone(event.id) : undefined}
+                    onDrawZone={onDrawZone ? () => handleDrawZone(event.id) : undefined}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
