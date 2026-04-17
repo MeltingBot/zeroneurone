@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.39.3",
+  "version": "2.39.4",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -31,6 +31,7 @@
     "docker:build:app": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; npm run build:plugins && npm run docker:generate-lock && docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t ${DOCKER_REGISTRY:-zeroneurone}:latest . ; rm -f package-lock.json",
     "docker:build:relay": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; docker build -t ${DOCKER_REGISTRY:-zeroneurone}-relay:latest ./relay",
     "docker:build:combined": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; npm run build:plugins && npm run docker:generate-lock && docker build -f Dockerfile.combined --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t ${DOCKER_REGISTRY:-zeroneurone}:combined . ; rm -f package-lock.json",
+    "doc:build": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; docker build -t ${DOCKER_REGISTRY:-zeroneurone}-doc:latest ./user_doc",
     "docker:run": "docker run -p 80:80 --rm zeroneurone",
     "docker:run:relay": "docker run -p 4444:4444 --rm zeroneurone-relay",
     "docker:up": "docker compose up -d",

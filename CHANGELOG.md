@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.4
+
+### Fixes
+- **Map temporal precision** — the temporal slider and position filters now work at minute precision instead of snapping to the day. Events with time-of-day (e.g. 14:30 vs 14:45) are correctly distinguished, enabling minute-by-minute movement tracking from geolocated events. Dates saved without a time still represent a full day for backward compatibility. The manual date input in the temporal slider is now `datetime-local`.
+
 ## 2.39.3
 
 ### Fixes

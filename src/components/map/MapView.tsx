@@ -311,18 +311,20 @@ export function MapView() {
     return counts;
   }, [comments]);
 
-  // Normalize a date to noon local time
-  // Normalize to start of hour (preserves hour-level precision, unlike toNoonLocal)
-  const toHourStart = useCallback((d: Date | string | number): Date => {
+  // Normalize to start of minute (preserves minute-level precision for the temporal slider)
+  const toMinuteStart = useCallback((d: Date | string | number): Date => {
     const date = new Date(d);
-    date.setMinutes(0, 0, 0);
+    date.setSeconds(0, 0);
     return date;
   }, []);
 
-  // Compare two dates at day level
-  const dayStart = useCallback((d: Date | string | number): number => {
+  // Inclusive end timestamp for a date used as a bound.
+  // Dates without time-of-day (hh=mm=ss=ms=0) are treated as a full day, for backward compat
+  // with dossiers that only recorded days. Dates with a time are used as exact instants.
+  const dateEndInclusive = useCallback((d: Date | string | number): number => {
     const date = new Date(d);
-    date.setHours(0, 0, 0, 0);
+    const isDayOnly = date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
+    if (isDayOnly) return date.getTime() + 24 * 60 * 60 * 1000 - 1;
     return date.getTime();
   }, []);
 
@@ -354,13 +356,13 @@ export function MapView() {
       if (link.dateRange?.end) allDates.push(new Date(link.dateRange.end));
     });
     if (allDates.length === 0) return { timeRange: null, eventDates: [] };
-    const uniqueTimestamps = [...new Set(allDates.map((d) => toHourStart(d).getTime()))].sort((a, b) => a - b);
+    const uniqueTimestamps = [...new Set(allDates.map((d) => toMinuteStart(d).getTime()))].sort((a, b) => a - b);
     const sortedDates = uniqueTimestamps.map((t) => new Date(t));
     return {
       timeRange: { min: sortedDates[0], max: sortedDates[sortedDates.length - 1] },
       eventDates: sortedDates,
     };
-  }, [elements, links, toHourStart]);
+  }, [elements, links, toMinuteStart]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
@@ -384,17 +386,17 @@ export function MapView() {
         }
         return null;
       }
-      const targetDay = dayStart(date);
+      const targetTime = date.getTime();
       const hasBaseGeo = !!element.geo;
       const datedEvents = (element.events || [])
         .filter((e) => e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       if (datedEvents.length > 0) {
-        const firstEventDay = dayStart(datedEvents[0].date);
-        if (targetDay < firstEventDay) return null;
+        const firstEventTime = new Date(datedEvents[0].date).getTime();
+        if (targetTime < firstEventTime) return null;
         let activeEvent = datedEvents[0];
         for (const event of datedEvents) {
-          if (dayStart(event.date) <= targetDay) activeEvent = event;
+          if (new Date(event.date).getTime() <= targetTime) activeEvent = event;
           else break;
         }
         const eventGeo = activeEvent.geo;
@@ -404,17 +406,19 @@ export function MapView() {
       }
       if (hasBaseGeo) {
         if (element.dateRange?.start) {
-          const elStartDay = dayStart(element.dateRange.start);
-          const elEndDay = element.dateRange.end ? dayStart(element.dateRange.end) : Infinity;
-          if (targetDay < elStartDay || targetDay > elEndDay) return null;
+          const elStart = new Date(element.dateRange.start).getTime();
+          const elEnd = element.dateRange.end ? dateEndInclusive(element.dateRange.end) : Infinity;
+          if (targetTime < elStart || targetTime > elEnd) return null;
         } else if (element.date) {
-          if (targetDay !== dayStart(element.date)) return null;
+          const elStart = new Date(element.date).getTime();
+          const elEnd = dateEndInclusive(element.date);
+          if (targetTime < elStart || targetTime > elEnd) return null;
         }
         return element.geo ? { geo: getGeoCenter(element.geo), geoData: element.geo } : null;
       }
       return null;
     },
-    [temporalMode, dayStart]
+    [temporalMode, dateEndInclusive]
   );
 
   // Get any geo position for an element (for link-pulled visibility)
@@ -450,18 +454,18 @@ export function MapView() {
       const targetTime = selectedDate.getTime();
       if (link.date) {
         const linkDate = new Date(link.date).getTime();
-        const linkEnd = linkDate + 24 * 60 * 60 * 1000 - 1;
+        const linkEnd = dateEndInclusive(link.date);
         if (targetTime >= linkDate && targetTime <= linkEnd) return true;
       }
       if (link.dateRange?.start) {
         const linkStart = new Date(link.dateRange.start).getTime();
-        const linkEnd = link.dateRange.end ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity;
+        const linkEnd = link.dateRange.end ? dateEndInclusive(link.dateRange.end) : Infinity;
         if (targetTime >= linkStart && targetTime <= linkEnd) return true;
         return false;
       }
       return true;
     },
-    [temporalMode, selectedDate]
+    [temporalMode, selectedDate, dateEndInclusive]
   );
 
   // Calculate visibility windows for each element based on links
@@ -472,11 +476,11 @@ export function MapView() {
       let linkUntil: number | null = null;
       if (link.date) {
         linkFrom = new Date(link.date).getTime();
-        linkUntil = linkFrom + 24 * 60 * 60 * 1000 - 1;
+        linkUntil = dateEndInclusive(link.date);
       }
       if (link.dateRange?.start) {
         const rangeStart = new Date(link.dateRange.start).getTime();
-        const rangeEnd = link.dateRange.end ? new Date(link.dateRange.end).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity;
+        const rangeEnd = link.dateRange.end ? dateEndInclusive(link.dateRange.end) : Infinity;
         if (linkFrom !== null) {
           linkFrom = Math.min(linkFrom, rangeStart);
           linkUntil = Math.max(linkUntil!, rangeEnd);
@@ -494,7 +498,7 @@ export function MapView() {
       }
     });
     return visibilityMap;
-  }, [links]);
+  }, [links, dateEndInclusive]);
 
   // Check if element is visible via any link at a given time
   const isVisibleViaLink = useCallback(
@@ -520,24 +524,26 @@ export function MapView() {
       });
       return result;
     }
-    const targetDay = dayStart(selectedDate);
+    const targetTime = selectedDate.getTime();
     elements.forEach((el) => {
       if (hiddenElementIds.has(el.id)) return;
       if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
-      const visibleViaActiveLink = isVisibleViaLink(el.id, selectedDate.getTime());
+      const visibleViaActiveLink = isVisibleViaLink(el.id, targetTime);
       const datedEvents = (el.events || []).filter((e) => e.date).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       let visibleByOwnData = false;
       if (datedEvents.length > 0) {
-        const firstEventDay = dayStart(datedEvents[0].date);
-        const lastEventDay = dayStart(datedEvents[datedEvents.length - 1].date);
-        if (targetDay >= firstEventDay && targetDay <= lastEventDay) visibleByOwnData = true;
+        const firstEventTime = new Date(datedEvents[0].date).getTime();
+        const lastEventEnd = dateEndInclusive(datedEvents[datedEvents.length - 1].date);
+        if (targetTime >= firstEventTime && targetTime <= lastEventEnd) visibleByOwnData = true;
       } else if (el.geo) {
         if (el.dateRange?.start) {
-          const elStartDay = dayStart(el.dateRange.start);
-          const elEndDay = el.dateRange.end ? dayStart(el.dateRange.end) : Infinity;
-          if (targetDay >= elStartDay && targetDay <= elEndDay) visibleByOwnData = true;
+          const elStart = new Date(el.dateRange.start).getTime();
+          const elEnd = el.dateRange.end ? dateEndInclusive(el.dateRange.end) : Infinity;
+          if (targetTime >= elStart && targetTime <= elEnd) visibleByOwnData = true;
         } else if (el.date) {
-          if (targetDay === dayStart(el.date)) visibleByOwnData = true;
+          const elStart = new Date(el.date).getTime();
+          const elEnd = dateEndInclusive(el.date);
+          if (targetTime >= elStart && targetTime <= elEnd) visibleByOwnData = true;
         }
       }
       if (visibleByOwnData || visibleViaActiveLink) {
@@ -548,7 +554,7 @@ export function MapView() {
       }
     });
     return result;
-  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dayStart, activeTabId, tabMemberSet, tabGhostIds]);
+  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dateEndInclusive, activeTabId, tabMemberSet, tabGhostIds]);
 
   // Legacy geoElements for compatibility (preserves full GeoData including polygons)
   const geoElements = useMemo(() => {
@@ -1646,13 +1652,15 @@ export function MapView() {
     });
   };
 
-  // Format date for <input type="date"> — only supports years 1–9999
+  // Format date for <input type="datetime-local"> — only supports years 1–9999
   const formatDateForInput = (date: Date): string => {
     const y = date.getFullYear();
     if (y < 1 || y > 9999) return '';
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
-    return `${String(y).padStart(4, '0')}-${m}-${d}`;
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${String(y).padStart(4, '0')}-${m}-${d}T${hh}:${mm}`;
   };
 
   // Get current event index from selected date
@@ -1733,18 +1741,18 @@ export function MapView() {
     if (resolvedGeoElements.length === 0) return;
 
     const map = mapRef.current;
-    const targetDay = dayStart(selectedDate);
+    const targetMinute = toMinuteStart(selectedDate).getTime();
     let cancelled = false;
     let advanceTimeout: ReturnType<typeof setTimeout>;
 
-    // Find elements that have an event specifically on this date
+    // Find elements that have an event specifically at this minute
     const activeCoords: [number, number][] = [];
     for (const r of resolvedGeoElements) {
       const el = r.element;
-      const hasEventToday = (el.events || []).some(e => e.date && dayStart(e.date) === targetDay);
-      const startsToday = (el.date && dayStart(el.date) === targetDay) ||
-        (el.dateRange?.start && dayStart(el.dateRange.start) === targetDay);
-      if (hasEventToday || startsToday) {
+      const hasEventNow = (el.events || []).some(e => e.date && toMinuteStart(e.date).getTime() === targetMinute);
+      const startsNow = (el.date && toMinuteStart(el.date).getTime() === targetMinute) ||
+        (el.dateRange?.start && toMinuteStart(el.dateRange.start).getTime() === targetMinute);
+      if (hasEventNow || startsNow) {
         activeCoords.push([r.geo.lng, r.geo.lat]);
       }
     }
@@ -1833,7 +1841,7 @@ export function MapView() {
       clearTimeout(advanceTimeout);
       clearTimeout(safetyTimeout);
     };
-  }, [temporalMode, selectedDate, resolvedGeoElements, temporalFollowCamera, dayStart, advanceDate]);
+  }, [temporalMode, selectedDate, resolvedGeoElements, temporalFollowCamera, toMinuteStart, advanceDate]);
 
   // ── Listen for flyToPolygon events from detail panel ──────────────
   useEffect(() => {
@@ -2154,16 +2162,16 @@ export function MapView() {
           {selectedDate && (
             selectedDate.getFullYear() >= 1 && selectedDate.getFullYear() <= 9999 ? (
               <input
-                type="date"
+                type="datetime-local"
                 value={formatDateForInput(selectedDate)}
                 onChange={(e) => {
                   const dateStr = e.target.value;
-                  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                    const newDate = new Date(dateStr + 'T12:00:00');
+                  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dateStr)) {
+                    const newDate = new Date(dateStr);
                     if (!isNaN(newDate.getTime())) setSelectedDate(newDate);
                   }
                 }}
-                className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-28"
+                className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-[10rem]"
               />
             ) : (
               <span className="text-xs font-medium text-accent border border-border-default rounded px-2 py-0.5 whitespace-nowrap">
