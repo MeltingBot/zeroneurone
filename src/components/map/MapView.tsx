@@ -386,17 +386,17 @@ export function MapView() {
         }
         return null;
       }
-      const targetTime = date.getTime();
+      const targetTime = toMinuteStart(date).getTime();
       const hasBaseGeo = !!element.geo;
       const datedEvents = (element.events || [])
         .filter((e) => e.date)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       if (datedEvents.length > 0) {
-        const firstEventTime = new Date(datedEvents[0].date).getTime();
+        const firstEventTime = toMinuteStart(datedEvents[0].date).getTime();
         if (targetTime < firstEventTime) return null;
         let activeEvent = datedEvents[0];
         for (const event of datedEvents) {
-          if (new Date(event.date).getTime() <= targetTime) activeEvent = event;
+          if (toMinuteStart(event.date).getTime() <= targetTime) activeEvent = event;
           else break;
         }
         const eventGeo = activeEvent.geo;
@@ -406,19 +406,19 @@ export function MapView() {
       }
       if (hasBaseGeo) {
         if (element.dateRange?.start) {
-          const elStart = new Date(element.dateRange.start).getTime();
-          const elEnd = element.dateRange.end ? dateEndInclusive(element.dateRange.end) : Infinity;
+          const elStart = toMinuteStart(element.dateRange.start).getTime();
+          const elEnd = element.dateRange.end ? dateEndInclusive(toMinuteStart(element.dateRange.end)) : Infinity;
           if (targetTime < elStart || targetTime > elEnd) return null;
         } else if (element.date) {
-          const elStart = new Date(element.date).getTime();
-          const elEnd = dateEndInclusive(element.date);
+          const elStart = toMinuteStart(element.date).getTime();
+          const elEnd = dateEndInclusive(toMinuteStart(element.date));
           if (targetTime < elStart || targetTime > elEnd) return null;
         }
         return element.geo ? { geo: getGeoCenter(element.geo), geoData: element.geo } : null;
       }
       return null;
     },
-    [temporalMode, dateEndInclusive]
+    [temporalMode, toMinuteStart, dateEndInclusive]
   );
 
   // Get any geo position for an element (for link-pulled visibility)
@@ -451,21 +451,21 @@ export function MapView() {
   const isLinkActiveAtTime = useCallback(
     (link: typeof links[0]): boolean => {
       if (!temporalMode || !selectedDate) return true;
-      const targetTime = selectedDate.getTime();
+      const targetTime = toMinuteStart(selectedDate).getTime();
       if (link.date) {
-        const linkDate = new Date(link.date).getTime();
-        const linkEnd = dateEndInclusive(link.date);
+        const linkDate = toMinuteStart(link.date).getTime();
+        const linkEnd = dateEndInclusive(toMinuteStart(link.date));
         if (targetTime >= linkDate && targetTime <= linkEnd) return true;
       }
       if (link.dateRange?.start) {
-        const linkStart = new Date(link.dateRange.start).getTime();
-        const linkEnd = link.dateRange.end ? dateEndInclusive(link.dateRange.end) : Infinity;
+        const linkStart = toMinuteStart(link.dateRange.start).getTime();
+        const linkEnd = link.dateRange.end ? dateEndInclusive(toMinuteStart(link.dateRange.end)) : Infinity;
         if (targetTime >= linkStart && targetTime <= linkEnd) return true;
         return false;
       }
       return true;
     },
-    [temporalMode, selectedDate, dateEndInclusive]
+    [temporalMode, selectedDate, toMinuteStart, dateEndInclusive]
   );
 
   // Calculate visibility windows for each element based on links
@@ -475,12 +475,12 @@ export function MapView() {
       let linkFrom: number | null = null;
       let linkUntil: number | null = null;
       if (link.date) {
-        linkFrom = new Date(link.date).getTime();
-        linkUntil = dateEndInclusive(link.date);
+        linkFrom = toMinuteStart(link.date).getTime();
+        linkUntil = dateEndInclusive(toMinuteStart(link.date));
       }
       if (link.dateRange?.start) {
-        const rangeStart = new Date(link.dateRange.start).getTime();
-        const rangeEnd = link.dateRange.end ? dateEndInclusive(link.dateRange.end) : Infinity;
+        const rangeStart = toMinuteStart(link.dateRange.start).getTime();
+        const rangeEnd = link.dateRange.end ? dateEndInclusive(toMinuteStart(link.dateRange.end)) : Infinity;
         if (linkFrom !== null) {
           linkFrom = Math.min(linkFrom, rangeStart);
           linkUntil = Math.max(linkUntil!, rangeEnd);
@@ -498,7 +498,7 @@ export function MapView() {
       }
     });
     return visibilityMap;
-  }, [links, dateEndInclusive]);
+  }, [links, toMinuteStart, dateEndInclusive]);
 
   // Check if element is visible via any link at a given time
   const isVisibleViaLink = useCallback(
@@ -524,7 +524,7 @@ export function MapView() {
       });
       return result;
     }
-    const targetTime = selectedDate.getTime();
+    const targetTime = toMinuteStart(selectedDate).getTime();
     elements.forEach((el) => {
       if (hiddenElementIds.has(el.id)) return;
       if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
@@ -532,17 +532,18 @@ export function MapView() {
       const datedEvents = (el.events || []).filter((e) => e.date).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       let visibleByOwnData = false;
       if (datedEvents.length > 0) {
-        const firstEventTime = new Date(datedEvents[0].date).getTime();
-        const lastEventEnd = dateEndInclusive(datedEvents[datedEvents.length - 1].date);
-        if (targetTime >= firstEventTime && targetTime <= lastEventEnd) visibleByOwnData = true;
+        // Once an element has appeared (first event), keep it visible at its last known position
+        // until the end of the timeline — matches "movement tracking" semantics (GPS breadcrumbs).
+        const firstEventTime = toMinuteStart(datedEvents[0].date).getTime();
+        if (targetTime >= firstEventTime) visibleByOwnData = true;
       } else if (el.geo) {
         if (el.dateRange?.start) {
-          const elStart = new Date(el.dateRange.start).getTime();
-          const elEnd = el.dateRange.end ? dateEndInclusive(el.dateRange.end) : Infinity;
+          const elStart = toMinuteStart(el.dateRange.start).getTime();
+          const elEnd = el.dateRange.end ? dateEndInclusive(toMinuteStart(el.dateRange.end)) : Infinity;
           if (targetTime >= elStart && targetTime <= elEnd) visibleByOwnData = true;
         } else if (el.date) {
-          const elStart = new Date(el.date).getTime();
-          const elEnd = dateEndInclusive(el.date);
+          const elStart = toMinuteStart(el.date).getTime();
+          const elEnd = dateEndInclusive(toMinuteStart(el.date));
           if (targetTime >= elStart && targetTime <= elEnd) visibleByOwnData = true;
         }
       }
@@ -554,7 +555,7 @@ export function MapView() {
       }
     });
     return result;
-  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, dateEndInclusive, activeTabId, tabMemberSet, tabGhostIds]);
+  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, toMinuteStart, dateEndInclusive, activeTabId, tabMemberSet, tabGhostIds]);
 
   // Legacy geoElements for compatibility (preserves full GeoData including polygons)
   const geoElements = useMemo(() => {

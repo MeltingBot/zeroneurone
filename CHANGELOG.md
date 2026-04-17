@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.39.5
+
+### Fixes
+- **Map temporal — last known position** — elements with events now stay visible at their last known position once their first event is reached, instead of disappearing after their own last event. This matches GPS-breadcrumb semantics for movement tracking when several elements have different event end dates on the same timeline
+- **Minute-precision comparisons** — all visibility comparisons (element position, link activity, link-pulled visibility) now round to the minute, so the slider reliably reaches every event even when original dates include seconds or milliseconds
+
 ## 2.39.4
 
 ### Fixes
