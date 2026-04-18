@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.39.8
+
+### Features
+- **Timeline — focus event on click** — clicking an event item in the timeline (scatter or swimlane mode) now selects the parent element and auto-expands + scrolls to the exact underlying event in the side panel, mirroring the map marker behaviour. `TimelineItem` now carries `eventId` for event-type items
+
+### Fixes
+- **Map marker thumbnail** — card markers now render their image thumbnail as a 48×48 square (was 48×36), reducing the aggressive top/bottom crop on square and portrait-oriented medias
+
 ## 2.39.7
 
 ### Features

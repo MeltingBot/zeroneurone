@@ -689,7 +689,7 @@ export function MapView() {
       return `
         <div class="map-marker-card" style="position:relative;background:var(--color-bg-primary, #ffffff);border:1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};border-radius:4px;overflow:visible;${selectedStyle}${dimmedStyle}${cardWidth};">
           ${commentBadge}
-          <div style="width:100%;min-width:48px;height:36px;background-image:url(${thumbnail});background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
+          <div style="width:100%;min-width:48px;height:48px;background-image:url(${thumbnail});background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
           <div style="padding:2px 3px;background:var(--color-bg-primary, #ffffff);border-top:1px solid var(--color-border-default, #e8e3db);">
             <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;${labelOverflow}">${displayLabel}</span>
           </div>

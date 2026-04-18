@@ -22,6 +22,7 @@ export interface TimelineItem {
   color: string;
   type: 'link' | 'event' | 'property' | 'created';
   sourceId?: string; // For selection
+  eventId?: string; // For type === 'event': the ElementEvent.id, used to focus the event in the side panel
   parentElementIds?: string[]; // Element IDs this item belongs to (for swimlane grouping)
   isDimmed?: boolean; // For filter dimming
   unresolvedCommentCount?: number; // Number of unresolved comments
@@ -63,7 +64,7 @@ export function TimelineView() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { elements, links, comments, currentDossier } = useDossierStore();
-  const { selectElement, selectLink, selectedElementIds, selectedLinkIds } = useSelectionStore();
+  const { selectElement, selectLink, selectedElementIds, selectedLinkIds, setFocusedEventId } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
@@ -416,6 +417,7 @@ export function TimelineView() {
           color: element.visual.color,
           type: 'event',
           sourceId: element.id,
+          eventId: event.id,
           isDimmed: isElementDimmed,
           unresolvedCommentCount: getUnresolvedCommentCount(element.id, 'element'),
           thumbLetter: elementLabel.charAt(0).toUpperCase(),
@@ -1039,8 +1041,10 @@ export function TimelineView() {
       selectLink(item.sourceId);
     } else {
       selectElement(item.sourceId);
+      // For event items, focus the underlying event in the side panel (auto-expand + scroll)
+      setFocusedEventId(item.type === 'event' && item.eventId ? item.eventId : null);
     }
-  }, [selectElement, selectLink]);
+  }, [selectElement, selectLink, setFocusedEventId]);
 
   // Navigation handlers
   const handleZoomIn = useCallback(() => {
@@ -1408,6 +1412,7 @@ export function TimelineView() {
                   selectLink(item.sourceId);
                 } else {
                   selectElement(item.sourceId);
+                  setFocusedEventId(item.type === 'event' && item.eventId ? item.eventId : null);
                 }
               }
             }}
