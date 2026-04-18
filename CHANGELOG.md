@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.39.7
+
+### Features
+- **Map — focus event on marker click** — clicking a marker on the map now selects the parent element and auto-expands + scrolls to the exact underlying event in the side panel. Works across static and temporal mode (new `focusedEventId` on the selection store)
+- **Map — co-temporal event markers** — when multiple events share the same minute but carry different coordinates (e.g. GSM multi-cell pings at the same second), each becomes its own marker instead of collapsing into the "active" one. Event markers use a composite `elementId::eventId` key internally and are never clustered, so a vehicle's trajectory no longer disappears into a single cluster
+- **Map — temporal trace toggle** — new `Route` button next to follow-camera: when enabled, every past event with geo stays visible as a lightweight breadcrumb, drawing the movement path up to the slider's current time. Off by default (snapshot mode)
+
+### Fixes
+- **Static map — latest point event wins** — when an element has both a base geo and more recent point events, the marker now sits on the latest event (movement-tracking semantics) instead of being stuck on an outdated base position. Polygon event overrides for zones are preserved (marker on base, shape from the latest polygon event)
+
 ## 2.39.6
 
 ### Fixes

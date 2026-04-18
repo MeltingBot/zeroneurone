@@ -16,9 +16,12 @@ interface SelectionState {
   editingLinkId: LinkId | null;
   /** Last individually clicked element (key object for alignment) */
   lastClickedElementId: ElementId | null;
+  /** Event to focus inside the element detail panel (scroll + expand) */
+  focusedEventId: string | null;
 
   // Actions
   selectElement: (id: ElementId, addToSelection?: boolean) => void;
+  setFocusedEventId: (eventId: string | null) => void;
   selectElements: (ids: ElementId[], addToSelection?: boolean) => void;
   deselectElement: (id: ElementId) => void;
   toggleElement: (id: ElementId) => void;
@@ -52,6 +55,9 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
   editingElementId: null,
   editingLinkId: null,
   lastClickedElementId: null,
+  focusedEventId: null,
+
+  setFocusedEventId: (eventId: string | null) => set({ focusedEventId: eventId }),
 
   selectElement: (id: ElementId, addToSelection = false) => {
     set((state) => {

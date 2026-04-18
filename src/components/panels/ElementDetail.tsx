@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers, Code } from 'lucide-react';
-import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore } from '../../stores';
+import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore, useSelectionStore } from '../../stores';
 import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
 import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter } from '../../utils/geo';
 import { syncService } from '../../services/syncService';
@@ -136,6 +136,11 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const pushAction = useHistoryStore((s) => s.pushAction);
   const canvasTabs = useTabStore((s) => s.tabs);
   const setActiveTab = useTabStore((s) => s.setActiveTab);
+  const focusedEventId = useSelectionStore((s) => s.focusedEventId);
+  const [eventsSectionOpen, setEventsSectionOpen] = useState(false);
+  useEffect(() => {
+    if (focusedEventId) setEventsSectionOpen(true);
+  }, [focusedEventId]);
 
   // Element's tab membership
   const elementTabs = useMemo(() => {
@@ -1132,6 +1137,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
         icon={<Calendar size={12} />}
         badge={eventsBadge}
         defaultOpen={false}
+        isOpen={eventsSectionOpen}
+        onToggle={(_, open) => setEventsSectionOpen(open)}
       >
         <div className="space-y-2">
           <p className="text-[10px] text-text-tertiary">
@@ -1146,6 +1153,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
             onExtractToElement={handleExtractEvent}
             isZone={isGeoPolygon(element.geo)}
             currentZoneGeo={element.geo}
+            focusedEventId={focusedEventId}
             onDrawZone={(callback, existingGeo) => {
               const currentMode = useViewStore.getState().displayMode;
               if (currentMode === 'map') {

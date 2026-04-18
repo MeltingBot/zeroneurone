@@ -23,6 +23,8 @@ interface EventsEditorProps {
   currentZoneGeo?: GeoData | null;
   /** Callback to draw/edit a zone on the map */
   onDrawZone?: (callback: (geo: GeoData) => void, existingGeo?: GeoPolygon) => void;
+  /** Event id to auto-expand and scroll into view (driven by side-panel/map interactions) */
+  focusedEventId?: string | null;
 }
 
 // Sub-component for a single event - manages local state for text fields
@@ -563,6 +565,7 @@ export function EventsEditor({
   isZone,
   currentZoneGeo,
   onDrawZone,
+  focusedEventId,
 }: EventsEditorProps) {
   const { t } = useTranslation('panels');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -583,6 +586,18 @@ export function EventsEditor({
     overscan: 4,
     getItemKey: (index) => sortedEvents[index].id,
   });
+
+  // External focus (e.g. clicking a marker on the map): expand and scroll the event into view.
+  useEffect(() => {
+    if (!focusedEventId) return;
+    const index = sortedEvents.findIndex((e) => e.id === focusedEventId);
+    if (index < 0) return;
+    setExpandedEventId(focusedEventId);
+    // rAF lets the virtualizer commit the row before we scroll (measureElement needs a frame).
+    requestAnimationFrame(() => {
+      rowVirtualizer.scrollToIndex(index, { align: 'start' });
+    });
+  }, [focusedEventId, sortedEvents, rowVirtualizer]);
 
   // Add new event
   const handleAdd = useCallback(() => {

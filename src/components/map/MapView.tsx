@@ -9,7 +9,7 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { toPng } from 'html-to-image';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair } from 'lucide-react';
+import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { ZoneDrawTool } from './ZoneDrawTool';
@@ -24,6 +24,10 @@ interface ResolvedGeoElement {
   geoData?: GeoData;
   fromEvent: boolean;
   eventLabel?: string;
+  /** Event id that produced the current position (set when `fromEvent` is true) */
+  eventId?: string;
+  /** Rendered as a light breadcrumb (past event in trace mode) rather than the active marker */
+  isBreadcrumb?: boolean;
 }
 
 // Link layer managed via MapLibre layers + markers
@@ -40,7 +44,7 @@ interface LinkLayer {
 interface PointFeature {
   type: 'Feature';
   geometry: { type: 'Point'; coordinates: [number, number] };
-  properties: { elementId: string };
+  properties: { elementId: string; markerKey: string };
 }
 
 // Cluster lookup: for each element, where it visually appears
@@ -196,6 +200,7 @@ export function MapView() {
   const linkLayersRef = useRef<Map<string, LinkLayer>>(new Map());
   const superclusterRef = useRef<Supercluster<{ elementId: string }, Supercluster.AnyProps> | null>(null);
   const clusterStateRef = useRef<Map<string, ClusterState>>(new Map());
+  const elementIdToFirstMarkerKeyRef = useRef<Map<string, string>>(new Map());
   const mapLoadedRef = useRef(false);
 
   // Track clustering state for dynamic link positioning
@@ -234,12 +239,13 @@ export function MapView() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [temporalFollowCamera, setTemporalFollowCamera] = useState(false);
+  const [temporalTrace, setTemporalTrace] = useState(false);
   const isPlayingRef = useRef(false);
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
 
   const { elements, links, assets, comments, updateElement, createElement, deleteElements, currentDossier } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
-  const { selectedElementIds, selectElement, selectLink, clearSelection } = useSelectionStore();
+  const { selectedElementIds, selectElement, selectLink, clearSelection, setFocusedEventId } = useSelectionStore();
   const themeMode = useUIStore((state) => state.themeMode);
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
@@ -366,23 +372,35 @@ export function MapView() {
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
-    (element: Element, date: Date | null): { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string } | null => {
+    (element: Element, date: Date | null): { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string; eventId?: string } | null => {
       if (!date || !temporalMode) {
-        // Check events for the most recent polygon geo (zone evolution)
+        // Static mode: show the most recent known position — i.e. prefer the latest event over
+        // the base geo when the event carries a POINT (movement tracking). Polygon events stay
+        // treated as zone overrides: marker stays on the base, but geoData reflects the latest shape.
         const geoEvents = (element.events || [])
           .filter((e) => e.geo && e.date)
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         const mostRecentEventGeo = geoEvents.length > 0 ? geoEvents[geoEvents.length - 1] : null;
+        const mostRecentIsPoint = !!(mostRecentEventGeo?.geo && !isGeoPolygon(mostRecentEventGeo.geo));
 
+        if (mostRecentIsPoint) {
+          // Latest point event wins — reflects the element's last known position.
+          return {
+            geo: getGeoCenter(mostRecentEventGeo!.geo!),
+            geoData: mostRecentEventGeo!.geo!,
+            label: mostRecentEventGeo!.label,
+            eventId: mostRecentEventGeo!.id,
+          };
+        }
         if (element.geo) {
-          // If an event has polygon geo, use it for zone rendering (geoData) while keeping marker at element position
+          // Base geo (with optional polygon event override for zone rendering).
           const effectiveGeoData = (mostRecentEventGeo?.geo && isGeoPolygon(mostRecentEventGeo.geo))
             ? mostRecentEventGeo.geo
             : element.geo;
           return { geo: getGeoCenter(element.geo), geoData: effectiveGeoData };
         }
         if (mostRecentEventGeo) {
-          return { geo: getGeoCenter(mostRecentEventGeo.geo!), geoData: mostRecentEventGeo.geo!, label: mostRecentEventGeo.label };
+          return { geo: getGeoCenter(mostRecentEventGeo.geo!), geoData: mostRecentEventGeo.geo!, label: mostRecentEventGeo.label, eventId: mostRecentEventGeo.id };
         }
         return null;
       }
@@ -400,8 +418,8 @@ export function MapView() {
           else break;
         }
         const eventGeo = activeEvent.geo;
-        if (eventGeo) return { geo: getGeoCenter(eventGeo), geoData: eventGeo, label: activeEvent.label };
-        if (element.geo) return { geo: getGeoCenter(element.geo), geoData: element.geo, label: activeEvent.label };
+        if (eventGeo) return { geo: getGeoCenter(eventGeo), geoData: eventGeo, label: activeEvent.label, eventId: activeEvent.id };
+        if (element.geo) return { geo: getGeoCenter(element.geo), geoData: element.geo, label: activeEvent.label, eventId: activeEvent.id };
         return null;
       }
       if (hasBaseGeo) {
@@ -423,7 +441,7 @@ export function MapView() {
 
   // Get any geo position for an element (for link-pulled visibility)
   const getAnyGeoPosition = useCallback(
-    (element: Element): { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string } | null => {
+    (element: Element): { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string; eventId?: string } | null => {
       if (element.geo) return { geo: getGeoCenter(element.geo), geoData: element.geo };
       const geoEvents = (element.events || [])
         .filter((e) => e.geo && e.date)
@@ -437,10 +455,10 @@ export function MapView() {
             const diff = Math.abs(new Date(event.date).getTime() - targetTime);
             if (diff < closestDiff) { closestDiff = diff; closest = event; }
           }
-          return { geo: getGeoCenter(closest.geo!), geoData: closest.geo!, label: closest.label };
+          return { geo: getGeoCenter(closest.geo!), geoData: closest.geo!, label: closest.label, eventId: closest.id };
         }
         const mostRecent = geoEvents[geoEvents.length - 1];
-        return { geo: getGeoCenter(mostRecent.geo!), geoData: mostRecent.geo!, label: mostRecent.label };
+        return { geo: getGeoCenter(mostRecent.geo!), geoData: mostRecent.geo!, label: mostRecent.label, eventId: mostRecent.id };
       }
       return null;
     },
@@ -519,7 +537,7 @@ export function MapView() {
         if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
         const position = getPositionAtTime(el, null);
         if (position) {
-          result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label });
+          result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
         }
       });
       return result;
@@ -550,16 +568,63 @@ export function MapView() {
       if (visibleByOwnData || visibleViaActiveLink) {
         const position = getPositionAtTime(el, selectedDate) || getAnyGeoPosition(el);
         if (position) {
-          result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label });
+          result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
+
+          if (temporalTrace) {
+            // Trace mode: every past event carrying its own geo persists as a lightweight breadcrumb,
+            // drawing the movement path up to targetTime.
+            for (const past of el.events || []) {
+              if (past.id === position.eventId) continue;
+              if (!past.geo || !past.date) continue;
+              if (toMinuteStart(past.date).getTime() > targetTime) continue;
+              result.push({
+                element: el,
+                geo: getGeoCenter(past.geo),
+                geoData: past.geo,
+                fromEvent: true,
+                eventLabel: past.label,
+                eventId: past.id,
+                isBreadcrumb: true,
+              });
+            }
+          } else if (position.eventId) {
+            // Snapshot mode: only the events sharing the active minute (co-temporal burst) are
+            // shown alongside the active marker — e.g. GSM multi-cell pings at the same second.
+            const activeEvt = (el.events || []).find((e) => e.id === position.eventId);
+            const activeMinute = activeEvt ? toMinuteStart(activeEvt.date).getTime() : NaN;
+            if (Number.isFinite(activeMinute) && activeMinute === targetTime) {
+              for (const sibling of el.events || []) {
+                if (sibling.id === position.eventId) continue;
+                if (!sibling.geo || !sibling.date) continue;
+                if (toMinuteStart(sibling.date).getTime() !== activeMinute) continue;
+                result.push({
+                  element: el,
+                  geo: getGeoCenter(sibling.geo),
+                  geoData: sibling.geo,
+                  fromEvent: true,
+                  eventLabel: sibling.label,
+                  eventId: sibling.id,
+                });
+              }
+            }
+          }
         }
       }
     });
     return result;
-  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, isVisibleViaLink, toMinuteStart, dateEndInclusive, activeTabId, tabMemberSet, tabGhostIds]);
+  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, temporalTrace, isVisibleViaLink, toMinuteStart, dateEndInclusive, activeTabId, tabMemberSet, tabGhostIds]);
 
-  // Legacy geoElements for compatibility (preserves full GeoData including polygons)
+  // Legacy geoElements for compatibility (preserves full GeoData including polygons).
+  // Enriched with _markerKey/_eventId so a single element can produce several markers
+  // (co-temporal events at different coordinates — e.g. GSM multi-cell pings).
   const geoElements = useMemo(() => {
-    return resolvedGeoElements.map((r) => ({ ...r.element, geo: r.geoData || { type: 'point' as const, ...r.geo } }));
+    return resolvedGeoElements.map((r) => ({
+      ...r.element,
+      geo: r.geoData || { type: 'point' as const, ...r.geo },
+      _markerKey: r.eventId ? `${r.element.id}::${r.eventId}` : r.element.id,
+      _eventId: r.eventId,
+      _isBreadcrumb: !!r.isBreadcrumb,
+    }));
   }, [resolvedGeoElements]);
 
   // Elements whose displayed zone polygon comes from an event (not draggable)
@@ -592,10 +657,17 @@ export function MapView() {
   }, [assetMap]);
 
   // Create custom marker HTML
-  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number): string => {
+  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number, isBreadcrumb?: boolean): string => {
     const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const color = escHtml(element.visual.color || '#f5f5f4');
     const borderColor = escHtml(element.visual.borderColor || '#a8a29e');
+
+    // Breadcrumb markers (past events in trace mode): a small coloured dot, no label/card.
+    // Cheap to render for hundreds/thousands of them.
+    if (isBreadcrumb) {
+      const dimmedStyle = isDimmed ? 'opacity:0.25;' : 'opacity:0.6;';
+      return `<div class="map-breadcrumb" style="width:8px;height:8px;border-radius:50%;background:${color};border:1.5px solid ${borderColor};${dimmedStyle}cursor:pointer;"></div>`;
+    }
     const thumbnail = getThumbnail(element);
     const label = element.label || t('map.unnamed');
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
@@ -635,9 +707,9 @@ export function MapView() {
   }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges, t]);
 
   // Create marker DOM element
-  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number): HTMLDivElement => {
+  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number, isBreadcrumb?: boolean): HTMLDivElement => {
     const el = document.createElement('div');
-    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount);
+    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, isBreadcrumb);
     el.style.cursor = 'pointer';
     return el;
   }, [createMarkerHtml]);
@@ -822,25 +894,36 @@ export function MapView() {
     const zoom = Math.floor(map.getZoom());
 
     // Build supercluster index
-    const sc = new Supercluster<{ elementId: string }>({
+    const sc = new Supercluster<{ elementId: string; markerKey: string }>({
       radius: 50,
       maxZoom: 20,
     });
 
-    const points: PointFeature[] = effectiveGeoElements.map(el => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] },
-      properties: { elementId: el.id },
-    }));
+    // Event markers (co-temporal GSM pings, trajectory breadcrumbs, latest-event point markers…)
+    // stay visible individually so trajectories don't collapse into a single cluster.
+    const basePoints: PointFeature[] = [];
+    for (const el of effectiveGeoElements) {
+      if (el._eventId) continue;
+      basePoints.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] },
+        properties: { elementId: el.id, markerKey: el._markerKey },
+      });
+    }
 
-    sc.load(points);
+    sc.load(basePoints);
     superclusterRef.current = sc;
 
     // Get clusters at current zoom
     const clusters = sc.getClusters([-180, -90, 180, 90], zoom);
 
-    // Build cluster state lookup
+    // Build cluster state lookup — keyed by markerKey, with parallel elementId→firstMarkerKey
+    // so consumers that still reason per-element (link layers) can resolve to a state entry.
     const newClusterState = new Map<string, ClusterState>();
+    const elementIdToFirstMarkerKey = new Map<string, string>();
+    for (const el of effectiveGeoElements) {
+      if (!elementIdToFirstMarkerKey.has(el.id)) elementIdToFirstMarkerKey.set(el.id, el._markerKey);
+    }
     const activeClusters = new Map<number, { center: [number, number]; count: number; activeCount: number }>();
 
     clusters.forEach(feature => {
@@ -850,59 +933,72 @@ export function MapView() {
         const center = feature.geometry.coordinates as [number, number];
         const count = props.point_count as number;
 
-        // Get all leaves (element IDs) in this cluster
+        // Get all leaves (markerKeys) in this cluster
         const leaves = sc.getLeaves(clusterId, Infinity);
         let activeCount = 0;
         leaves.forEach(leaf => {
-          newClusterState.set(leaf.properties.elementId, {
+          const leafProps = leaf.properties as { elementId: string; markerKey: string };
+          newClusterState.set(leafProps.markerKey, {
             clustered: true,
             clusterCenter: center,
             clusterId,
           });
-          if (!effectiveDimmedIds.has(leaf.properties.elementId)) {
+          if (!effectiveDimmedIds.has(leafProps.elementId)) {
             activeCount++;
           }
         });
         activeClusters.set(clusterId, { center, count, activeCount });
       } else {
-        newClusterState.set(feature.properties.elementId, { clustered: false });
+        const leafProps = feature.properties as { elementId: string; markerKey: string };
+        newClusterState.set(leafProps.markerKey, { clustered: false });
       }
     });
 
-    clusterStateRef.current = newClusterState;
+    // Event markers are never clustered — register them with unclustered state so downstream
+    // spiderfy/visibility logic treats them uniformly.
+    for (const el of effectiveGeoElements) {
+      if (el._eventId && !newClusterState.has(el._markerKey)) {
+        newClusterState.set(el._markerKey, { clustered: false });
+      }
+    }
 
-    // Compute spiderfy offsets for unclustered elements at same position
+    clusterStateRef.current = newClusterState;
+    elementIdToFirstMarkerKeyRef.current = elementIdToFirstMarkerKey;
+
+    // Compute spiderfy offsets for unclustered markers at same position
     const unclusteredElements = effectiveGeoElements.filter(el => {
-      const state = newClusterState.get(el.id);
+      const state = newClusterState.get(el._markerKey);
       return state && !state.clustered;
     });
     const spiderfyOffsets = computeSpiderfyOffsets(
-      unclusteredElements.map(el => { const c = getGeoCenter(el.geo); return { id: el.id, lng: c.lng, lat: c.lat }; }),
+      unclusteredElements.map(el => { const c = getGeoCenter(el.geo); return { id: el._markerKey, lng: c.lng, lat: c.lat }; }),
       zoom
     );
 
     // Update element markers
     const existingMarkers = markersRef.current;
-    const currentIds = new Set(effectiveGeoElements.map(el => el.id));
+    const currentKeys = new Set(effectiveGeoElements.map(el => el._markerKey));
 
-    // Remove markers for elements no longer present
-    existingMarkers.forEach((marker, id) => {
-      if (!currentIds.has(id)) {
+    // Remove markers no longer present
+    existingMarkers.forEach((marker, key) => {
+      if (!currentKeys.has(key)) {
         marker.remove();
-        existingMarkers.delete(id);
+        existingMarkers.delete(key);
       }
     });
 
     // Add/update element markers
     effectiveGeoElements.forEach((element) => {
+      const markerKey = element._markerKey;
+      const isEventMarker = !!element._eventId;
       const isSelected = selectedElementIds.has(element.id);
       const isDimmed = effectiveDimmedIds.has(element.id);
       const commentCount = unresolvedCommentCounts.get(element.id);
-      const state = newClusterState.get(element.id);
+      const state = newClusterState.get(markerKey);
       const isClustered = state?.clustered ?? false;
 
-      const existingMarker = existingMarkers.get(element.id);
-      const offset = spiderfyOffsets.get(element.id);
+      const existingMarker = existingMarkers.get(markerKey);
+      const offset = spiderfyOffsets.get(markerKey);
       const center = getGeoCenter(element.geo);
       const lng = center.lng + (offset ? offset[0] : 0);
       const lat = center.lat + (offset ? offset[1] : 0);
@@ -911,30 +1007,35 @@ export function MapView() {
         // Update position
         existingMarker.setLngLat([lng, lat]);
         // Update draggability
-        existingMarker.setDraggable(!element.isPositionLocked && !eventZoneIds.has(element.id));
+        existingMarker.setDraggable(!isEventMarker && !element.isPositionLocked && !eventZoneIds.has(element.id));
         // Update visibility (hide if clustered)
         const el = existingMarker.getElement();
         const isBeingEdited = editingZoneId === element.id;
         el.style.display = (isClustered || isBeingEdited) ? 'none' : '';
-        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount);
+        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, element._isBreadcrumb);
         el.setAttribute('title', anonymousMode ? '' : (element.label || ''));
       } else {
         // Create new marker
-        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount);
+        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount, element._isBreadcrumb);
         const isBeingEdited = editingZoneId === element.id;
         markerEl.style.display = (isClustered || isBeingEdited) ? 'none' : '';
         markerEl.setAttribute('title', anonymousMode ? '' : (element.label || ''));
 
-        const isDraggable = !element.isPositionLocked && !eventZoneIds.has(element.id);
+        // Event-sourced markers are not draggable: dragging them would ambiguously move the element
+        // vs. the event, so we only allow drag on the primary (base-geo) marker.
+        const isDraggable = !isEventMarker && !element.isPositionLocked && !eventZoneIds.has(element.id);
         const marker = new maplibregl.Marker({ element: markerEl, anchor: 'top', offset: [0, -8], draggable: isDraggable })
           .setLngLat([lng, lat])
           .addTo(map);
 
-        // Click to select
+        // Click to select — also focus the underlying event in the side panel when the marker
+        // represents a specific event (temporal mode, or element whose position comes from an event)
         const markerId = element.id;
+        const markerEventId = element._eventId;
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
           selectElement(markerId);
+          setFocusedEventId(markerEventId ?? null);
         });
 
         // Drag handlers
@@ -1036,7 +1137,7 @@ export function MapView() {
           setClusteringVersion(v => v + 1);
         });
 
-        existingMarkers.set(element.id, marker);
+        existingMarkers.set(markerKey, marker);
       }
     });
 
@@ -1086,21 +1187,26 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds]);
 
-  // Get visible position for an element (considering clustering)
+  // Get visible position for an element (considering clustering). Cluster state is keyed by
+  // markerKey (one element can produce multiple markers for co-temporal events); we pick the
+  // element's first/base marker as the representative for link layers.
   const getVisibleLngLat = useCallback((elementId: string): [number, number] | null => {
-    const state = clusterStateRef.current.get(elementId);
+    const firstKey = elementIdToFirstMarkerKeyRef.current.get(elementId) ?? elementId;
+    const state = clusterStateRef.current.get(firstKey);
     if (state?.clustered && state.clusterCenter) return state.clusterCenter;
     const el = effectiveGeoElements.find(e => e.id === elementId);
     if (!el) return null;
     return [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat];
   }, [effectiveGeoElements]);
 
-  // Check if two elements are in the same cluster
+  // Check if two elements are in the same cluster (via their representative marker)
   const areInSameCluster = useCallback((id1: string, id2: string): boolean => {
-    const s1 = clusterStateRef.current.get(id1);
-    const s2 = clusterStateRef.current.get(id2);
+    const k1 = elementIdToFirstMarkerKeyRef.current.get(id1) ?? id1;
+    const k2 = elementIdToFirstMarkerKeyRef.current.get(id2) ?? id2;
+    const s1 = clusterStateRef.current.get(k1);
+    const s2 = clusterStateRef.current.get(k2);
     if (!s1 || !s2) return false;
     return s1.clustered && s2.clustered && s1.clusterId === s2.clusterId;
   }, []);
@@ -2145,6 +2251,13 @@ export function MapView() {
               title={t('map.followCamera')}
             >
               <Crosshair size={14} />
+            </button>
+            <button
+              onClick={() => setTemporalTrace(!temporalTrace)}
+              className={`p-1 rounded ${temporalTrace ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
+              title={t('map.temporalTrace', 'Afficher la trace (événements passés)')}
+            >
+              <Route size={14} />
             </button>
           </div>
           <span className="text-xs text-text-tertiary whitespace-nowrap">{formatDate(timeRange.min)}</span>
