@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.9
+
+### Fixes
+- **Timeline — theme-aware event borders** — events in light mode now render with a darkened border (`color-mix` with black) instead of the raw element color. Dense lanes with pastel-colored elements (e.g. 5k GPS events on a white background) used to blend into near-invisibility unless the owning element was selected; they're now visible at rest. Dark mode is untouched.
+
 ## 2.39.8
 
 ### Features

@@ -69,6 +69,7 @@ export function TimelineView() {
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
+  const themeMode = useUIStore((state) => state.themeMode);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
@@ -1521,8 +1522,10 @@ export function TimelineView() {
                 <div
                   className="absolute inset-0 rounded"
                   style={{
-                    backgroundColor: `${item.color}25`,
-                    border: selected ? 'none' : `1.5px solid ${item.color}`,
+                    backgroundColor: `${item.color}${themeMode === 'light' ? '40' : '25'}`,
+                    border: selected
+                      ? 'none'
+                      : `1.5px solid ${themeMode === 'light' ? `color-mix(in srgb, ${item.color}, black 30%)` : item.color}`,
                     boxShadow: selected ? undefined : `inset 0 0 0 1px ${item.color}30`,
                   }}
                 />

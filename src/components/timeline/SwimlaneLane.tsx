@@ -6,6 +6,19 @@ import {
   SWIMLANE_LABEL_WIDTH,
   SWIMLANE_LINK_HEIGHT_COMPACT,
 } from './useSwimlaneLayout';
+import { useUIStore } from '../../stores/uiStore';
+
+/** Darken a color for light-theme borders so pastel swatches stay visible on white. */
+function borderForTheme(color: string, themeMode: 'light' | 'dark'): string {
+  return themeMode === 'light'
+    ? `color-mix(in srgb, ${color}, black 30%)`
+    : color;
+}
+
+/** Opacity suffix for the item fill — light theme needs more opacity to break from white bg. */
+function fillAlphaForTheme(themeMode: 'light' | 'dark'): string {
+  return themeMode === 'light' ? '40' : '26'; // 25% vs 15%
+}
 
 interface SwimlaneLaneProps {
   lane: LaneLayout;
@@ -51,8 +64,10 @@ export function SwimlaneLane({
   onDragEnd,
   onToggleCollapse,
 }: SwimlaneLaneProps) {
+  const themeMode = useUIStore((s) => s.themeMode);
   const bgColor = isEven ? 'var(--color-bg-primary)' : 'var(--color-bg-secondary)';
   const BUFFER = 200;
+  const fillAlpha = fillAlphaForTheme(themeMode);
 
   // Horizontal virtualization: only render visible items
   const visibleItems = lane.collapsed ? [] : lane.items.filter(
@@ -145,6 +160,7 @@ export function SwimlaneLane({
 
             if (isLink) {
               const isCompact = itemHeight <= SWIMLANE_LINK_HEIGHT_COMPACT;
+              const linkBorder = borderForTheme(item.color, themeMode);
               // Links: thin bar when compact, full chip with label when wide
               return (
                 <div
@@ -157,7 +173,7 @@ export function SwimlaneLane({
                     width,
                     height: itemHeight,
                     backgroundColor: isCompact ? `${item.color}40` : `${item.color}18`,
-                    border: isCompact ? 'none' : `0.5px dashed ${item.color}88`,
+                    border: isCompact ? 'none' : `0.5px dashed ${linkBorder}`,
                     borderRadius: isCompact ? 2 : 3,
                     opacity: item.isDimmed ? 0.3 : 1,
                   }}
@@ -186,8 +202,8 @@ export function SwimlaneLane({
                   transform: `translate3d(${adjustedX}px, ${itemY}px, 0)`,
                   width,
                   height: itemHeight,
-                  backgroundColor: `${item.color}26`,
-                  border: `0.5px solid ${item.color}`,
+                  backgroundColor: `${item.color}${fillAlpha}`,
+                  border: `1px solid ${borderForTheme(item.color, themeMode)}`,
                   borderRadius: 3,
                   opacity: item.isDimmed ? 0.3 : 1,
                 }}
