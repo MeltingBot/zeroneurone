@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.10
+
+### Fixes
+- **Query tab icon** — the Query side panel tab now uses the `Code2` icon (`</>`) instead of the magnifying glass, making it visually distinct from the global search (Ctrl+K) and the adjacent Filters tab.
+
 ## 2.39.9
 
 ### Fixes

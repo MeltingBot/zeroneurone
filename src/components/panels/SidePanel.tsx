@@ -11,7 +11,7 @@ import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
 import { ReportPanel } from './ReportPanel';
 import { QueryPanel } from './QueryPanel';
-import { Info, Filter, Eye, Network, PanelRightClose, FileText, Search, icons } from 'lucide-react';
+import { Info, Filter, Eye, Network, PanelRightClose, FileText, Code2, icons } from 'lucide-react';
 import { IconButton } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { useDetachedWindow } from '../../hooks/useDetachedWindow';
@@ -177,7 +177,7 @@ export function SidePanel() {
     { id: 'detail', label: t('tabs.detail'), icon: Info },
     { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
     { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
-    { id: 'query', label: t('tabs.query'), icon: Search, badge: queryFilterActive },
+    { id: 'query', label: t('tabs.query'), icon: Code2, badge: queryFilterActive },
     ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
     { id: 'report', label: t('tabs.report'), icon: FileText },
     ...panelPlugins.map((p) => ({
