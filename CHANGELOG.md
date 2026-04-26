@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.13
+
+### Fixes
+- **nginx — fix `.mjs` MIME without breaking everything else** — v2.39.12 used a `types {}` block at server scope, which (contrary to expectation) **replaces** the inherited mapping instead of merging it; every non-`.mjs` asset was served as `application/octet-stream` and downloaded instead of rendered. Reverted, and instead patch `/etc/nginx/mime.types` directly in the Dockerfile to add `mjs` to the existing `application/javascript` mapping.
+
 ## 2.39.12
 
 ### Fixes
