@@ -45,10 +45,7 @@ async function extractPdfMetadata(arrayBuffer: ArrayBuffer): Promise<ExtractedMe
   const pdfjsLib = await import('pdfjs-dist');
   // Ensure worker is configured
   if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).toString();
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
   }
 
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;

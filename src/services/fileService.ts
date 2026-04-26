@@ -6,9 +6,8 @@ import type { Asset, AssetId, DossierId } from '../types';
 import { useEncryptionStore } from '../stores/encryptionStore';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
 
-// Configure pdf.js worker
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Configure pdf.js worker (stable URL from public/ — survives SW cache mismatches across deploys)
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 // ============================================================================
 // SECURITY LIMITS FOR FILE UPLOADS

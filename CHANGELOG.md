@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.11
+
+### Fixes
+- **PDF worker — stable URL across deploys** — `pdf.worker.min.mjs` is now served from `/pdf.worker.min.mjs` (stable, unhashed) instead of `/assets/pdf.worker.min-<hash>.mjs`. Stale service workers from a previous deploy were intercepting requests for the new hashed file, failing, and forcing pdf.js to fall back to its inline (slower) fake worker. The unhashed URL survives SW cache mismatches across deploys. New `prebuild`/`predev` hook (`sync:pdf-worker`) keeps the file in sync with `pdfjs-dist` automatically.
+
 ## 2.39.10
 
 ### Fixes
