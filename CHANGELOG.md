@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.39.12
+
+### Fixes
+- **nginx — `.mjs` MIME type** — nginx's default mime.types doesn't map `.mjs`, so the new unhashed `/pdf.worker.min.mjs` was served as `application/octet-stream` and blocked by the browser (CSP `nosniff`). Added `application/javascript mjs;` to the server's `types` block.
+
 ## 2.39.11
 
 ### Fixes
