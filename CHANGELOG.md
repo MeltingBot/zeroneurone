@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.40.1
+
+### Fixes
+- **Suppression en collab qui revient au refresh** — quand un client distant recevait une suppression d'élément/lien via Y.js, la mise à jour Dexie passait par `bulkUpsert(elements)` qui ne supprime rien : l'élément restait dans Dexie. Si l'utilisateur rafraîchissait, deux cas se présentaient : (a) Y.Doc.elementsMap se retrouvait vide (suppression du dernier élément), la migration Dexie → Y.Doc se déclenchait et ressuscitait toutes les suppressions reçues en collab ; (b) plus généralement, Dexie restait désynchronisée du Y.Doc, créant un risque de migration parasite ou de divergence ultérieure. `_syncFromYDoc` calcule maintenant les IDs disparus via `elIdsChanged \ newIds` et appelle `deleteMany` avant le `bulkUpsert`. Idem pour les liens.
+- **Auto-clear du badge de synchro média qui efface des transferts en cours** — quand un asset se finalisait sur un client distant, un timer de 1,5 s effaçait `mediaAssets`. Si un autre asset arrivait dans cet intervalle (rare mais possible avec des uploads en rafale), il était wipé. Le timer est maintenant annulé à chaque `registerMediaAsset` et revérifie l'état avant d'effacer.
+
 ## 2.40.0
 
 ### Features

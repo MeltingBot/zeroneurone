@@ -161,11 +161,30 @@ function computeAggregate(assets: Record<string, MediaAssetState>): MediaSyncPro
 }
 
 let clearTimer: ReturnType<typeof setTimeout> | null = null;
-function scheduleProgressClear(setStore: (partial: any) => void): void {
-  if (clearTimer) clearTimeout(clearTimer);
+
+function cancelProgressClear(): void {
+  if (clearTimer) {
+    clearTimeout(clearTimer);
+    clearTimer = null;
+  }
+}
+
+function scheduleProgressClear(
+  setStore: (partial: any) => void,
+  getStore: () => { mediaAssets: Record<string, MediaAssetState> },
+): void {
+  cancelProgressClear();
   clearTimer = setTimeout(() => {
     clearTimer = null;
-    setStore({ mediaAssets: {}, mediaSyncProgress: null });
+    // Race guard: a new asset may have been registered during the 1.5s wait.
+    // Only clear if everything is still settled.
+    const current = getStore().mediaAssets;
+    const entries = Object.values(current);
+    const stillSettled = entries.length === 0 ||
+      entries.every((e) => e.status === 'done' || e.status === 'failed');
+    if (stillSettled) {
+      setStore({ mediaAssets: {}, mediaSyncProgress: null });
+    }
   }, 1500);
 }
 
@@ -458,6 +477,9 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
     // Register an asset for progress tracking (idempotent — won't downgrade status)
     registerMediaAsset: (id, filename, totalSize) => {
+      // A new asset is starting: cancel any pending auto-clear so a freshly
+      // registered asset isn't wiped by a timer scheduled from a previous batch.
+      cancelProgressClear();
       set((state) => {
         const existing = state.mediaAssets[id];
         if (existing && existing.status !== 'pending') return state;
@@ -502,7 +524,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         const aggregate = computeAggregate(next);
         // Auto-clear progress once everything settled (all done or failed)
         if (aggregate && aggregate.completed + aggregate.failed === aggregate.total) {
-          scheduleProgressClear(set);
+          scheduleProgressClear(set, get);
         }
         return { mediaAssets: next, mediaSyncProgress: aggregate };
       });
@@ -518,13 +540,14 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
         };
         const aggregate = computeAggregate(next);
         if (aggregate && aggregate.completed + aggregate.failed === aggregate.total) {
-          scheduleProgressClear(set);
+          scheduleProgressClear(set, get);
         }
         return { mediaAssets: next, mediaSyncProgress: aggregate };
       });
     },
 
     resetMediaSync: () => {
+      cancelProgressClear();
       set({ mediaAssets: {}, mediaSyncProgress: null });
     },
 

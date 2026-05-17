@@ -2686,28 +2686,40 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       comments,
     });
 
-    // Persist to IndexedDB — only changed collections
+    // Persist to IndexedDB — only changed collections.
+    // For structural changes (add/remove), we must also DELETE entries that
+    // disappeared from Y.Doc: bulkUpsert alone leaves stale rows in Dexie,
+    // which then resurrect on next loadDossier if Y.Doc happens to be empty
+    // (e.g. last element deleted via collab) and migration kicks in.
     const dossierId = currentDossier.id;
     const dbPromises: Promise<any>[] = [];
     if (elementsDidChange) {
       if (structuralElChange) {
-        // Full rebuild — upsert all
-        dbPromises.push(elementRepository.bulkUpsert(elements.map(el => ({ ...el, dossierId }))));
+        const newIds = new Set(elements.map((el) => el.id));
+        const deletedIds = Array.from(elIdsChanged).filter((id) => !newIds.has(id));
+        if (deletedIds.length > 0) {
+          dbPromises.push(elementRepository.deleteMany(deletedIds));
+        }
+        dbPromises.push(elementRepository.bulkUpsert(elements.map((el) => ({ ...el, dossierId }))));
       } else {
-        // Incremental — only upsert changed elements
-        const changedEls = elements.filter(el => elIdsChanged.has(el.id));
+        const changedEls = elements.filter((el) => elIdsChanged.has(el.id));
         if (changedEls.length > 0) {
-          dbPromises.push(elementRepository.bulkUpsert(changedEls.map(el => ({ ...el, dossierId }))));
+          dbPromises.push(elementRepository.bulkUpsert(changedEls.map((el) => ({ ...el, dossierId }))));
         }
       }
     }
     if (linksDidChange) {
       if (structuralLkChange) {
-        dbPromises.push(linkRepository.bulkUpsert(links.map(lk => ({ ...lk, dossierId }))));
+        const newIds = new Set(links.map((lk) => lk.id));
+        const deletedIds = Array.from(lkIdsChanged).filter((id) => !newIds.has(id));
+        if (deletedIds.length > 0) {
+          dbPromises.push(linkRepository.deleteMany(deletedIds));
+        }
+        dbPromises.push(linkRepository.bulkUpsert(links.map((lk) => ({ ...lk, dossierId }))));
       } else {
-        const changedLks = links.filter(lk => lkIdsChanged.has(lk.id));
+        const changedLks = links.filter((lk) => lkIdsChanged.has(lk.id));
         if (changedLks.length > 0) {
-          dbPromises.push(linkRepository.bulkUpsert(changedLks.map(lk => ({ ...lk, dossierId }))));
+          dbPromises.push(linkRepository.bulkUpsert(changedLks.map((lk) => ({ ...lk, dossierId }))));
         }
       }
     }
