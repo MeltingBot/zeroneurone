@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.40.2
+
+### Internals
+- Suppression des `console.warn` bruyants ajoutés en v2.40 dans les chemins de synchronisation d'assets. Les erreurs restent reflétées via `syncStore.markMediaAssetFailed` (état dans le badge) et les toasts utilisateur ; la console reste propre en production.
+
 ## 2.40.1
 
 ### Fixes

@@ -190,8 +190,7 @@ async function saveAssembledAsset(map: Y.Map<any>, meta: AssetMeta): Promise<Ass
     const saved = await fileService.saveAssetFromBinary(meta, data);
     syncStore.markMediaAssetDone(meta.id);
     return saved;
-  } catch (err) {
-    console.warn(`[AssetSync] Failed to save asset "${meta.filename}":`, err);
+  } catch {
     syncStore.markMediaAssetFailed(meta.id);
     return null;
   }
@@ -698,12 +697,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
           for (const asset of srcAssets) {
             if (deferredAssetsMap.has(asset.id)) continue;
-            if (asset.size > MAX_SHARED_ASSET_SIZE) {
-              console.warn(
-                `[AssetSync] Skipping "${asset.filename}" (${Math.round(asset.size / 1024 / 1024)} Mo > 50 Mo)`,
-              );
-              continue;
-            }
+            if (asset.size > MAX_SHARED_ASSET_SIZE) continue;
             try {
               const file = await fileService.getAssetFile(asset);
               const arrayBuffer = await file.arrayBuffer();
@@ -1932,8 +1926,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             },
           );
           if (isShared) syncStore.markMediaAssetDone(asset.id);
-        } catch (err) {
-          console.warn('[AssetSync] Failed to push asset chunks:', asset.id, err);
+        } catch {
           if (isShared) syncStore.markMediaAssetFailed(asset.id);
         }
       }).catch(() => {
@@ -2673,7 +2666,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
                 ? state.assets
                 : [...state.assets, saved],
             }));
-          }).catch((err) => console.warn('[AssetSync] processAssetMap failed:', err));
+          }).catch(() => {});
         } catch {}
       });
     }
