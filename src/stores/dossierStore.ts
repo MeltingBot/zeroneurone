@@ -49,12 +49,20 @@ import {
   yMapToTab,
 } from '../services/yjs/tabMapper';
 import { useSyncStore } from './syncStore';
-import { useUIStore } from './uiStore';
 import { useTabStore } from './tabStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
-import { arrayBufferToBase64 } from '../utils';
 import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
+import {
+  MAX_SHARED_ASSET_SIZE,
+  pushAssetChunked,
+  readAssetMeta,
+  getChunksArray,
+  getReceivedBytes,
+  isAssetComplete,
+  assembleChunks,
+  type AssetMeta,
+} from '../services/assetSync';
 
 interface DossierState {
   // Current dossier
@@ -153,6 +161,91 @@ interface DossierState {
 // ============================================================================
 
 let ydocObserverCleanup: (() => void) | null = null;
+
+// ============================================================================
+// ASSET CHUNK SYNC
+// ============================================================================
+
+/**
+ * Registry of active chunks-array observers, keyed by assetId.
+ * Each entry is an unobserve function. Cleared on dossier unload.
+ */
+const assetChunkObservers = new Map<string, () => void>();
+
+function clearAssetChunkObservers(): void {
+  assetChunkObservers.forEach((unobserve) => {
+    try { unobserve(); } catch { /* ignore */ }
+  });
+  assetChunkObservers.clear();
+}
+
+/**
+ * Save a fully-received asset to OPFS and update sync progress.
+ * Returns the saved Asset (or null if dedup/hash-mismatch/error).
+ */
+async function saveAssembledAsset(map: Y.Map<any>, meta: AssetMeta): Promise<Asset | null> {
+  const syncStore = useSyncStore.getState();
+  try {
+    const data = assembleChunks(map);
+    const saved = await fileService.saveAssetFromBinary(meta, data);
+    syncStore.markMediaAssetDone(meta.id);
+    return saved;
+  } catch (err) {
+    console.warn(`[AssetSync] Failed to save asset "${meta.filename}":`, err);
+    syncStore.markMediaAssetFailed(meta.id);
+    return null;
+  }
+}
+
+/**
+ * Process an asset Y.Map. If complete, save and return the asset. If incomplete,
+ * register a chunks observer that will save once all chunks have arrived.
+ * Idempotent — calling twice for the same asset is a no-op.
+ *
+ * @param onLateSave  Called asynchronously when an incomplete asset finishes
+ *                    transferring and is saved to OPFS. Use this to push the
+ *                    saved Asset into the dossierStore state.
+ * @returns the saved Asset if it could be saved synchronously, else null.
+ */
+async function processAssetMap(
+  map: Y.Map<any>,
+  fallbackDossierId: string,
+  onLateSave: (asset: Asset) => void,
+): Promise<Asset | null> {
+  const meta = readAssetMeta(map, fallbackDossierId);
+  if (!meta.id) return null;
+  if (assetChunkObservers.has(meta.id)) return null;
+
+  const chunksArray = getChunksArray(map);
+  if (!chunksArray) return null; // No chunked structure — peer must be on old version
+
+  const syncStore = useSyncStore.getState();
+  syncStore.registerMediaAsset(meta.id, meta.filename, meta.size);
+  syncStore.updateMediaAssetBytes(meta.id, getReceivedBytes(map));
+
+  if (isAssetComplete(map)) {
+    return await saveAssembledAsset(map, meta);
+  }
+
+  // Incomplete — observe chunk arrivals
+  const handler = () => {
+    const received = getReceivedBytes(map);
+    syncStore.updateMediaAssetBytes(meta.id, received);
+    if (isAssetComplete(map)) {
+      const unobserve = assetChunkObservers.get(meta.id);
+      if (unobserve) {
+        unobserve();
+        assetChunkObservers.delete(meta.id);
+      }
+      saveAssembledAsset(map, meta).then((saved) => {
+        if (saved) onLateSave(saved);
+      });
+    }
+  };
+  chunksArray.observe(handler);
+  assetChunkObservers.set(meta.id, () => chunksArray.unobserve(handler));
+  return null;
+}
 
 // Skip mechanism for local operations that already updated Zustand
 // When a local delete/update updates Zustand first, the next _syncFromYDoc
@@ -332,6 +425,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   loadDossier: async (id: DossierId) => {
+    // Drop any chunk observers from a previously-open dossier; they hold
+    // references to the old Y.Doc which is about to be replaced.
+    clearAssetChunkObservers();
+    useSyncStore.getState().resetMediaSync();
     set({ isLoading: true, loadingPhase: 'opening', loadingDetail: '', loadingProgress: 10, error: null });
     try {
       // Load dossier metadata from Dexie
@@ -427,11 +524,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       // Source path (meta broadcast + asset upload) deferred to after
       // initial render to avoid blocking during main thread contention.
       if (isJoiner) {
-        // Sync assets from Y.Doc to local storage
+        // Sync assets from Y.Doc to local storage.
+        // Assets transit as chunked binary in Y.Arrays. We:
+        //  - Save complete assets immediately (await)
+        //  - Register observers on incomplete assets so they save in background
+        // The canvas can render without all assets present; the progress badge
+        // shows ongoing transfers.
         const { assets: assetsMap } = getYMaps(ydoc);
         const assetsFromYDoc: Asset[] = [];
+        const existingIds = new Set(assets.map((a) => a.id));
 
-        // Collect assets to process
         const assetEntries: Y.Map<any>[] = [];
         assetsMap.forEach((ymap) => {
           assetEntries.push(ymap as Y.Map<any>);
@@ -441,34 +543,23 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         set({ loadingPhase: 'files', loadingDetail: totalAssets > 0 ? `0 / ${totalAssets}` : '', loadingProgress: 55 });
 
         let assetsDone = 0;
+        // Reset progress tracking before re-registering
+        useSyncStore.getState().resetMediaSync();
         for (const map of assetEntries) {
           try {
             const assetId = map.get('id') as string;
-            const base64Data = map.get('data') as string;
-
-            if (assetId && base64Data) {
-              // Check if we already have this asset locally
-              const existingAsset = assets.find(a => a.id === assetId);
-              if (!existingAsset) {
-                const savedAsset = await fileService.saveAssetFromBase64({
-                  id: assetId,
-                  dossierId: map.get('dossierId') || dossier.id,
-                  filename: map.get('filename') || 'unknown',
-                  mimeType: map.get('mimeType') || 'application/octet-stream',
-                  size: map.get('size') || 0,
-                  hash: map.get('hash') || '',
-                  thumbnailDataUrl: map.get('thumbnailDataUrl') || null,
-                  extractedText: map.get('extractedText') || null,
-                  createdAt: map.get('createdAt') ? new Date(map.get('createdAt')) : new Date(),
-                }, base64Data);
-
-                if (savedAsset) {
-                  assetsFromYDoc.push(savedAsset);
-                }
-              }
+            if (assetId && !existingIds.has(assetId)) {
+              const saved = await processAssetMap(map, dossier.id, (lateSaved) => {
+                set((state) => ({
+                  assets: state.assets.some((a) => a.id === lateSaved.id)
+                    ? state.assets
+                    : [...state.assets, lateSaved],
+                }));
+              });
+              if (saved) assetsFromYDoc.push(saved);
             }
           } catch (error) {
-            console.warn('Failed to load asset from Y.Doc:', error);
+            console.warn('Failed to process asset from Y.Doc:', error);
           }
           assetsDone++;
           if (totalAssets > 3) {
@@ -476,7 +567,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           }
         }
 
-        // Add synced assets to local assets list
+        // Add synchronously-saved assets to local assets list. Late-arriving
+        // ones (still transferring) will be pushed by the onLateSave callback.
         assets = [...assets, ...assetsFromYDoc];
 
         // Sync tabs from Y.Doc to local Dexie (joiner gets shared tabs)
@@ -594,27 +686,38 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             deferredMeta.set('description', srcDossier.description || '');
           });
 
+          const syncStore = useSyncStore.getState();
+          // Register all to-be-uploaded assets in the progress aggregate first,
+          // so the badge shows the total upfront instead of growing one by one.
+          const toUpload = srcAssets.filter(
+            (a) => !deferredAssetsMap.has(a.id) && a.size <= MAX_SHARED_ASSET_SIZE,
+          );
+          for (const a of toUpload) {
+            syncStore.registerMediaAsset(a.id, a.filename, a.size);
+          }
+
           for (const asset of srcAssets) {
-            if (!deferredAssetsMap.has(asset.id)) {
-              try {
-                const file = await fileService.getAssetFile(asset);
-                const arrayBuffer = await file.arrayBuffer();
-                const base64 = arrayBufferToBase64(arrayBuffer);
-                const assetYMap = new Y.Map();
-                assetYMap.set('id', asset.id);
-                assetYMap.set('dossierId', asset.dossierId);
-                assetYMap.set('filename', asset.filename);
-                assetYMap.set('mimeType', asset.mimeType);
-                assetYMap.set('size', asset.size);
-                assetYMap.set('hash', asset.hash);
-                assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
-                assetYMap.set('extractedText', asset.extractedText);
-                assetYMap.set('createdAt', asset.createdAt.toISOString());
-                assetYMap.set('data', base64);
-                deferredAssetsMap.set(asset.id, assetYMap);
-              } catch (error) {
-                console.warn('Failed to sync asset to Y.Doc:', asset.id, error);
-              }
+            if (deferredAssetsMap.has(asset.id)) continue;
+            if (asset.size > MAX_SHARED_ASSET_SIZE) {
+              console.warn(
+                `[AssetSync] Skipping "${asset.filename}" (${Math.round(asset.size / 1024 / 1024)} Mo > 50 Mo)`,
+              );
+              continue;
+            }
+            try {
+              const file = await fileService.getAssetFile(asset);
+              const arrayBuffer = await file.arrayBuffer();
+              await pushAssetChunked(
+                deferredYdoc,
+                deferredAssetsMap,
+                asset,
+                arrayBuffer,
+                (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
+              );
+              syncStore.markMediaAssetDone(asset.id);
+            } catch (error) {
+              console.warn('Failed to sync asset to Y.Doc:', asset.id, error);
+              syncStore.markMediaAssetFailed(asset.id);
             }
           }
         }, 200);
@@ -706,6 +809,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       ydocObserverCleanup();
       ydocObserverCleanup = null;
     }
+
+    // Cleanup chunk observers and reset progress badge
+    clearAssetChunkObservers();
+    useSyncStore.getState().resetMediaSync();
 
     // Don't close sync connection here - it breaks React StrictMode
     // and shared mode. The connection is closed explicitly via:
@@ -1758,14 +1865,23 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       throw new Error('No dossier loaded');
     }
 
-    // Warn about large files in shared mode (sync can be slow or fail)
-    const LARGE_FILE_WARNING_SIZE = 10 * 1024 * 1024; // 10 MB
+    // Shared-mode size policies:
+    //  - Hard cap at 50 MB: the file is saved locally but NOT broadcast to peers.
+    //  - Warning at 10 MB: file syncs but the user is told it may be slow.
     const syncState = syncService.getState();
-    if (syncState.mode === 'shared' && file.size > LARGE_FILE_WARNING_SIZE) {
+    const isShared = syncState.mode === 'shared';
+    const exceedsSharedCap = isShared && file.size > MAX_SHARED_ASSET_SIZE;
+    if (exceedsSharedCap) {
       const { toast } = await import('./toastStore');
       toast.warning(
-        `Fichier volumineux (${Math.round(file.size / 1024 / 1024)} MB). La synchronisation peut être lente ou échouer.`,
-        8000
+        `Fichier trop volumineux pour la synchronisation (${Math.round(file.size / 1024 / 1024)} Mo > 50 Mo). Il reste accessible localement mais ne sera pas partagé avec les pairs.`,
+        10000,
+      );
+    } else if (isShared && file.size > 10 * 1024 * 1024) {
+      const { toast } = await import('./toastStore');
+      toast.warning(
+        `Fichier volumineux (${Math.round(file.size / 1024 / 1024)} Mo). La synchronisation peut être lente.`,
+        6000,
       );
     }
 
@@ -1794,24 +1910,35 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }));
     elementRepository.addAsset(elementId, asset.id).catch(() => {});
 
-    // Store asset binary in Y.Doc for peer sync (deferred — base64 conversion is slow)
-    if (ydoc) {
+    // Push the asset binary to the Y.Doc as chunks so peers receive it
+    // progressively (one WS message per chunk). Skip when over the shared-mode
+    // hard cap — the file stays local but other peers won't see it.
+    if (ydoc && !exceedsSharedCap) {
       const { assets: assetsMap } = getYMaps(ydoc);
-      file.arrayBuffer().then(arrayBuffer => {
-        const base64 = arrayBufferToBase64(arrayBuffer);
-        const assetYMap = new Y.Map();
-        assetYMap.set('id', asset.id);
-        assetYMap.set('dossierId', asset.dossierId);
-        assetYMap.set('filename', asset.filename);
-        assetYMap.set('mimeType', asset.mimeType);
-        assetYMap.set('size', asset.size);
-        assetYMap.set('hash', asset.hash);
-        assetYMap.set('thumbnailDataUrl', asset.thumbnailDataUrl);
-        assetYMap.set('extractedText', asset.extractedText);
-        assetYMap.set('createdAt', asset.createdAt.toISOString());
-        assetYMap.set('data', base64);
-        assetsMap.set(asset.id, assetYMap);
-      }).catch(() => {});
+      const syncStore = useSyncStore.getState();
+      // Pre-register so the progress badge appears immediately
+      if (isShared) {
+        syncStore.registerMediaAsset(asset.id, asset.filename, asset.size);
+      }
+      file.arrayBuffer().then(async (arrayBuffer) => {
+        try {
+          await pushAssetChunked(
+            ydoc,
+            assetsMap,
+            asset,
+            arrayBuffer,
+            (bytesSent) => {
+              if (isShared) syncStore.updateMediaAssetBytes(asset.id, bytesSent);
+            },
+          );
+          if (isShared) syncStore.markMediaAssetDone(asset.id);
+        } catch (err) {
+          console.warn('[AssetSync] Failed to push asset chunks:', asset.id, err);
+          if (isShared) syncStore.markMediaAssetFailed(asset.id);
+        }
+      }).catch(() => {
+        if (isShared) syncStore.markMediaAssetFailed(asset.id);
+      });
     }
 
     emitPluginEvent('asset:created', currentDossier.id, asset.id);
@@ -2529,74 +2656,26 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       return;
     }
 
-    // --- ASSETS: only process when observer detected changes ---
+    // --- ASSETS: register/observe newly-appeared asset maps ---
+    // processAssetMap is idempotent: it will skip assets already being observed
+    // or already saved. Chunks that arrive later are picked up by the observer
+    // registered here.
     if (assetsNeedSync) {
-      const currentAssetIds = new Set(currentAssets.map(a => a.id));
-      const newAssetsToSave: Array<{ assetData: any; base64Data: string }> = [];
-
+      const currentAssetIds = new Set(currentAssets.map((a) => a.id));
       assetsMap.forEach((ymap) => {
         try {
           const map = ymap as Y.Map<any>;
           const assetId = map.get('id') as string;
-
-          if (assetId && !currentAssetIds.has(assetId)) {
-            const base64Data = map.get('data') as string;
-            if (base64Data) {
-              newAssetsToSave.push({
-                assetData: {
-                  id: assetId,
-                  dossierId: map.get('dossierId') || currentDossier.id,
-                  filename: map.get('filename') || 'unknown',
-                  mimeType: map.get('mimeType') || 'application/octet-stream',
-                  size: map.get('size') || 0,
-                  hash: map.get('hash') || '',
-                  thumbnailDataUrl: map.get('thumbnailDataUrl') || null,
-                  extractedText: map.get('extractedText') || null,
-                  createdAt: map.get('createdAt') ? new Date(map.get('createdAt')) : new Date(),
-                },
-                base64Data,
-              });
-            }
-          }
+          if (!assetId || currentAssetIds.has(assetId)) return;
+          processAssetMap(map, currentDossier.id, (saved) => {
+            set((state) => ({
+              assets: state.assets.some((a) => a.id === saved.id)
+                ? state.assets
+                : [...state.assets, saved],
+            }));
+          }).catch((err) => console.warn('[AssetSync] processAssetMap failed:', err));
         } catch {}
       });
-
-      if (newAssetsToSave.length > 0) {
-        const totalSize = newAssetsToSave.reduce((sum, item) => sum + (item.assetData.size || 0), 0);
-        const syncStore = useSyncStore.getState();
-        syncStore.startMediaSync(newAssetsToSave.length, totalSize);
-
-        // Sequential saves for predictable progress feedback
-        (async () => {
-          let completedCount = 0;
-          let completedSize = 0;
-
-          for (const { assetData, base64Data } of newAssetsToSave) {
-            syncStore.updateMediaSyncProgress(completedCount, completedSize, assetData.filename);
-            try {
-              const savedAsset = await fileService.saveAssetFromBase64(assetData, base64Data);
-              if (savedAsset) {
-                set((state) => ({
-                  assets: [...state.assets.filter(a => a.id !== savedAsset.id), savedAsset],
-                }));
-              }
-              completedSize += assetData.size || 0;
-            } catch (error) {
-              console.warn(`[Sync] Failed to save asset ${assetData.filename}:`, error);
-              syncStore.incrementMediaSyncFailed();
-              useUIStore.getState().showToast(
-                'error',
-                `${assetData.filename}`,
-                5000,
-              );
-            }
-            completedCount++;
-          }
-
-          syncStore.updateMediaSyncProgress(completedCount, completedSize, null);
-          setTimeout(() => syncStore.completeMediaSync(), 500);
-        })();
-      }
     }
 
     // Update Zustand state

@@ -45,19 +45,32 @@ function getOrCreateLocalUser(): LocalUser {
 // STORE INTERFACE
 // ============================================================================
 
-/** Media sync progress tracking */
+/** Per-asset sync state. */
+export type MediaAssetStatus = 'pending' | 'transferring' | 'done' | 'failed';
+
+export interface MediaAssetState {
+  id: string;
+  filename: string;
+  totalSize: number;
+  receivedSize: number;
+  status: MediaAssetStatus;
+}
+
+/** Aggregate media sync progress (derived from per-asset states). */
 export interface MediaSyncProgress {
-  /** Total number of assets to sync */
+  /** Total number of assets being tracked */
   total: number;
-  /** Number of assets completed */
+  /** Number of assets fully saved locally */
   completed: number;
   /** Number of assets that failed */
   failed: number;
-  /** Total size in bytes */
+  /** Number of assets currently transferring (received chunks but not yet done) */
+  inFlight: number;
+  /** Sum of declared sizes (bytes) */
   totalSize: number;
-  /** Completed size in bytes */
-  completedSize: number;
-  /** Currently syncing asset filename */
+  /** Sum of bytes received across all assets (incl. partial transfers) */
+  receivedSize: number;
+  /** Filename of the asset currently transferring (largest pending), null if none */
   currentAsset: string | null;
 }
 
@@ -89,14 +102,71 @@ interface SyncStoreState extends SyncState {
   updateEditingLink: (linkId: string | null) => void;
   updateEditingReportSection: (sectionId: string | null) => void;
 
-  /** Media sync progress updates */
-  startMediaSync: (total: number, totalSize: number) => void;
-  updateMediaSyncProgress: (completed: number, completedSize: number, currentAsset: string | null) => void;
-  incrementMediaSyncFailed: () => void;
-  completeMediaSync: () => void;
+  /** Per-asset progress registry (source of truth) */
+  mediaAssets: Record<string, MediaAssetState>;
+
+  /** Media sync progress actions (chunk-based, per-asset) */
+  registerMediaAsset: (id: string, filename: string, totalSize: number) => void;
+  updateMediaAssetBytes: (id: string, receivedSize: number) => void;
+  markMediaAssetDone: (id: string) => void;
+  markMediaAssetFailed: (id: string) => void;
+  resetMediaSync: () => void;
 
   /** Internal: called by syncService state changes */
   _syncStateChanged: (state: SyncState) => void;
+}
+
+// ============================================================================
+// AGGREGATE COMPUTATION
+// ============================================================================
+
+function computeAggregate(assets: Record<string, MediaAssetState>): MediaSyncProgress | null {
+  const entries = Object.values(assets);
+  if (entries.length === 0) return null;
+
+  let completed = 0;
+  let failed = 0;
+  let inFlight = 0;
+  let totalSize = 0;
+  let receivedSize = 0;
+  let currentAsset: MediaAssetState | null = null;
+
+  for (const a of entries) {
+    totalSize += a.totalSize;
+    if (a.status === 'done') {
+      completed++;
+      receivedSize += a.totalSize;
+    } else if (a.status === 'failed') {
+      failed++;
+    } else {
+      receivedSize += a.receivedSize;
+      if (a.status === 'transferring') inFlight++;
+      // Pick the largest currently-transferring asset as "current" — gives the
+      // most informative filename for the UI.
+      if (a.status === 'transferring') {
+        if (!currentAsset || a.totalSize > currentAsset.totalSize) currentAsset = a;
+      }
+    }
+  }
+
+  return {
+    total: entries.length,
+    completed,
+    failed,
+    inFlight,
+    totalSize,
+    receivedSize,
+    currentAsset: currentAsset?.filename ?? null,
+  };
+}
+
+let clearTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleProgressClear(setStore: (partial: any) => void): void {
+  if (clearTimer) clearTimeout(clearTimer);
+  clearTimer = setTimeout(() => {
+    clearTimer = null;
+    setStore({ mediaAssets: {}, mediaSyncProgress: null });
+  }, 1500);
 }
 
 // ============================================================================
@@ -261,6 +331,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
     remoteUsers: [],
     encryptionKey: null,
     mediaSyncProgress: null,
+    mediaAssets: {},
 
     // Share the current dossier
     // Uses the dossier UUID as room ID and generates a new encryption key
@@ -385,46 +456,76 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awareness.setLocalState({ ...state, editingReportSection: sectionId });
     },
 
-    // Start tracking media sync progress
-    startMediaSync: (total, totalSize) => {
-      set({
-        mediaSyncProgress: {
-          total,
-          completed: 0,
-          failed: 0,
-          totalSize,
-          completedSize: 0,
-          currentAsset: null,
-        },
+    // Register an asset for progress tracking (idempotent — won't downgrade status)
+    registerMediaAsset: (id, filename, totalSize) => {
+      set((state) => {
+        const existing = state.mediaAssets[id];
+        if (existing && existing.status !== 'pending') return state;
+        const next: Record<string, MediaAssetState> = {
+          ...state.mediaAssets,
+          [id]: existing ?? {
+            id,
+            filename,
+            totalSize,
+            receivedSize: 0,
+            status: 'pending',
+          },
+        };
+        return { mediaAssets: next, mediaSyncProgress: computeAggregate(next) };
       });
     },
 
-    // Update media sync progress
-    updateMediaSyncProgress: (completed, completedSize, currentAsset) => {
-      set((state) => ({
-        mediaSyncProgress: state.mediaSyncProgress
-          ? {
-              ...state.mediaSyncProgress,
-              completed,
-              completedSize,
-              currentAsset,
-            }
-          : null,
-      }));
+    // Update bytes received/sent for an asset. Auto-promotes to 'transferring'.
+    updateMediaAssetBytes: (id, receivedSize) => {
+      set((state) => {
+        const entry = state.mediaAssets[id];
+        if (!entry || entry.status === 'done' || entry.status === 'failed') return state;
+        const clamped = Math.min(receivedSize, entry.totalSize || receivedSize);
+        if (clamped === entry.receivedSize && entry.status === 'transferring') return state;
+        const next: Record<string, MediaAssetState> = {
+          ...state.mediaAssets,
+          [id]: { ...entry, receivedSize: clamped, status: 'transferring' },
+        };
+        return { mediaAssets: next, mediaSyncProgress: computeAggregate(next) };
+      });
     },
 
-    // Increment failed count
-    incrementMediaSyncFailed: () => {
-      set((state) => ({
-        mediaSyncProgress: state.mediaSyncProgress
-          ? { ...state.mediaSyncProgress, failed: state.mediaSyncProgress.failed + 1 }
-          : null,
-      }));
+    // Mark asset as fully saved locally
+    markMediaAssetDone: (id) => {
+      set((state) => {
+        const entry = state.mediaAssets[id];
+        if (!entry) return state;
+        const next: Record<string, MediaAssetState> = {
+          ...state.mediaAssets,
+          [id]: { ...entry, receivedSize: entry.totalSize, status: 'done' },
+        };
+        const aggregate = computeAggregate(next);
+        // Auto-clear progress once everything settled (all done or failed)
+        if (aggregate && aggregate.completed + aggregate.failed === aggregate.total) {
+          scheduleProgressClear(set);
+        }
+        return { mediaAssets: next, mediaSyncProgress: aggregate };
+      });
     },
 
-    // Complete media sync (clear progress)
-    completeMediaSync: () => {
-      set({ mediaSyncProgress: null });
+    markMediaAssetFailed: (id) => {
+      set((state) => {
+        const entry = state.mediaAssets[id];
+        if (!entry) return state;
+        const next: Record<string, MediaAssetState> = {
+          ...state.mediaAssets,
+          [id]: { ...entry, status: 'failed' },
+        };
+        const aggregate = computeAggregate(next);
+        if (aggregate && aggregate.completed + aggregate.failed === aggregate.total) {
+          scheduleProgressClear(set);
+        }
+        return { mediaAssets: next, mediaSyncProgress: aggregate };
+      });
+    },
+
+    resetMediaSync: () => {
+      set({ mediaAssets: {}, mediaSyncProgress: null });
     },
 
     // Internal: handle sync state changes from service

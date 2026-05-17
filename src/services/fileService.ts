@@ -16,9 +16,6 @@ const FILE_LIMITS = {
   // Maximum file size: 100 MB
   MAX_FILE_SIZE: 100 * 1024 * 1024,
 
-  // Maximum base64 payload size from sync: 150 MB (accounts for base64 overhead)
-  MAX_BASE64_SIZE: 150 * 1024 * 1024,
-
   // Allowed MIME types whitelist
   ALLOWED_MIME_TYPES: new Set([
     // Images
@@ -150,36 +147,31 @@ class FileService {
   }
 
   /**
-   * Validate base64 data from sync before saving
-   * @throws FileValidationError if data is invalid
+   * Validate synced asset metadata + binary size before writing to OPFS.
+   * @throws FileValidationError if invalid.
    */
-  private validateBase64Data(
-    base64Data: string,
+  private validateSyncedAsset(
+    binarySize: number,
     mimeType: string,
     filename: string,
-    size: number
+    declaredSize: number,
   ): void {
-    // Check base64 payload size
-    if (base64Data.length > FILE_LIMITS.MAX_BASE64_SIZE) {
-      throw new FileValidationError('Fichier synchronise trop volumineux');
+    if (binarySize > FILE_LIMITS.MAX_FILE_SIZE) {
+      const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
+      throw new FileValidationError(`Fichier synchronisé trop volumineux. Taille max: ${maxMB} Mo`);
     }
-
-    // Check declared size
-    if (size > FILE_LIMITS.MAX_FILE_SIZE) {
+    if (declaredSize > FILE_LIMITS.MAX_FILE_SIZE) {
       const maxMB = (FILE_LIMITS.MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
       throw new FileValidationError(`Fichier trop volumineux. Taille max: ${maxMB} Mo`);
     }
 
-    // Check MIME type
     const mimeAllowed = FILE_LIMITS.ALLOWED_MIME_TYPES.has(mimeType);
-
-    // Check extension as fallback
     const ext = '.' + getExtension(filename).toLowerCase();
     const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
 
     if (!mimeAllowed && !extAllowed) {
       throw new FileValidationError(
-        `Type de fichier non autorise: ${mimeType || 'inconnu'} (${ext})`
+        `Type de fichier non autorisé: ${mimeType || 'inconnu'} (${ext})`,
       );
     }
   }
@@ -325,10 +317,10 @@ class FileService {
   }
 
   /**
-   * Save an asset from base64 data (used for receiving assets from peers via sync)
-   * Returns null if asset already exists locally
+   * Save an asset from raw binary data received via chunked sync.
+   * Returns null if asset already exists locally (dedup by hash) or if hash mismatch.
    */
-  async saveAssetFromBase64(
+  async saveAssetFromBinary(
     assetData: {
       id: string;
       dossierId: DossierId;
@@ -340,53 +332,42 @@ class FileService {
       extractedText: string | null;
       createdAt: Date;
     },
-    base64Data: string
+    data: Uint8Array,
   ): Promise<Asset | null> {
     await this.ensureInitialized();
 
-    // Validate before processing (security check for synced files)
-    this.validateBase64Data(base64Data, assetData.mimeType, assetData.filename, assetData.size);
+    this.validateSyncedAsset(data.byteLength, assetData.mimeType, assetData.filename, assetData.size);
 
-    // Check if already exists locally (by hash for deduplication)
     const existing = await db.assets
       .where({ dossierId: assetData.dossierId, hash: assetData.hash })
       .first();
+    if (existing) return null;
 
-    if (existing) {
-      return null; // Already have this file
-    }
+    // Copy into a standalone ArrayBuffer (the Uint8Array may be a Y.js view).
+    const arrayBuffer = new ArrayBuffer(data.byteLength);
+    new Uint8Array(arrayBuffer).set(data);
 
-    // Decode base64 to ArrayBuffer
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const arrayBuffer = bytes.buffer;
-
-    // Verify integrity of synced asset
+    // Verify integrity against the announced hash.
     const verifyHashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
     const verifyHash = bufferToHex(verifyHashBuffer);
     if (verifyHash !== assetData.hash) {
-      console.warn(`[FileService] Hash mismatch for synced asset "${assetData.filename}": expected ${assetData.hash}, got ${verifyHash}`);
+      console.warn(
+        `[FileService] Hash mismatch for synced asset "${assetData.filename}": expected ${assetData.hash}, got ${verifyHash}`,
+      );
       return null;
     }
 
-    // Create OPFS path and write file (chiffré si DEK disponible)
     const dirHandle = await this.getAssetDirectory(assetData.dossierId);
     const extension = getExtension(assetData.filename);
     const filename = `${assetData.hash}.${extension}`;
 
-    const dek2 = this.getDek();
-    const bufToWrite = dek2
-      ? await encryptOpfsBuffer(dek2, arrayBuffer)
-      : arrayBuffer;
+    const dek = this.getDek();
+    const bufToWrite = dek ? await encryptOpfsBuffer(dek, arrayBuffer) : arrayBuffer;
     const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(bufToWrite);
     await writable.close();
 
-    // Create Asset entry
     const asset: Asset = {
       id: assetData.id,
       dossierId: assetData.dossierId,
@@ -400,7 +381,6 @@ class FileService {
       createdAt: assetData.createdAt,
     };
 
-    // Use put() instead of add() to handle potential duplicate IDs from sync
     await db.assets.put(asset);
     return asset;
   }

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.40.0
+
+### Features
+- **Synchronisation des médias par chunks (256 Ko)** — les assets transitent désormais en binaire natif (`Uint8Array`) découpés en chunks via `Y.Array`, au lieu d'un base64 monolithique dans un champ unique. Sur lien bas débit, un fichier de 10 Mo ne bloque plus le pair pendant 100 s d'un seul tenant : les chunks arrivent un par un (un message WebSocket par chunk), le pair les assemble à la volée, et une microcoupure ne reprovoque plus la retransmission complète. Gain ~33 % de payload (plus d'encodage base64), conversion `btoa/atob` éliminée des hot paths.
+- **Suivi d'avancement des synchros média cohérent** — la progression est maintenant pilotée au niveau byte (`receivedSize / totalSize`) au lieu du compte d'assets, et chaque asset a son propre état (`pending | transferring | done | failed`) dans le `syncStore`. Le badge affiche un pourcentage qui progresse en continu pendant le transfert d'un gros fichier, plus le saut 0 → 100 % à la complétion. Le badge reste visible tant que des chunks arrivent — le statut "synchronisé" de la connexion ne ment plus quand les médias ne sont pas encore tous reçus.
+- **Cap dur de 50 Mo en mode partagé** — au-delà, le fichier est conservé localement mais n'est pas broadcasté aux pairs (warning utilisateur). Évite de saturer une connexion lente pendant 20 minutes avec un asset unique. Warning conservé à partir de 10 Mo (synchro lente mais possible).
+
+### Fixes
+- **Miniatures qui n'apparaissaient pas après synchro média** — le cache `nodeStructureCacheRef` de `Canvas.tsx` ne se réactualisait que sur changement de référence d'élément ou de compte de commentaires. Quand un asset arrivait après le rendu initial (via chunks tardifs), l'élément qui le référençait gardait sa miniature "loading" tant qu'on ne le touchait pas. La comparaison de cache inclut maintenant `thumbnail` et `isLoadingAsset`, donc le re-render se déclenche dès que `onLateSave` pousse l'asset dans `state.assets`.
+
+### Internals
+- Nouveau module `src/services/assetSync.ts` : centralise la logique de chunked transfer (taille de chunk, helpers `pushAssetChunked` / `readAssetMeta` / `assembleChunks` / `getReceivedBytes` / `isAssetComplete`).
+- `fileService.saveAssetFromBase64` → `saveAssetFromBinary` (prend une `Uint8Array`, vérifie le hash SHA-256, écrit en OPFS).
+- `syncStore.mediaAssets: Record<id, MediaAssetState>` comme source de vérité par asset ; `mediaSyncProgress` est désormais un agrégat dérivé (incluant `receivedSize` et `inFlight`).
+- Registry `assetChunkObservers` au niveau module dans `dossierStore` : pour chaque asset en cours, un observateur `Y.Array.observe` met à jour le progress et déclenche la sauvegarde OPFS dès que toutes les chunks sont là. Cleanup au `unloadDossier` et au début de chaque `loadDossier`.
+
 ## 2.39.13
 
 ### Fixes

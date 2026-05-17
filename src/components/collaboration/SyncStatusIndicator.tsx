@@ -30,23 +30,29 @@ function truncateFilename(name: string, maxLen = 20): string {
   return name.slice(0, maxLen - 1) + '\u2026';
 }
 
-/** Media sync progress badge - shown independently of connection status */
+/** Media sync progress badge - shown independently of connection status.
+ *  Drives off byte-level progress (chunked transfer) for a coherent ETA. */
 function MediaSyncBadge({ progress }: { progress: MediaSyncProgress }) {
   const { t } = useTranslation('panels');
-  const progressPercent = Math.round((progress.completed / progress.total) * 100);
+  // Byte-based percentage gives smooth progress while large files transfer,
+  // instead of jumping from 0 to 100 when a single asset completes.
+  const bytePercent = progress.totalSize > 0
+    ? Math.min(100, Math.round((progress.receivedSize / progress.totalSize) * 100))
+    : 0;
+  const allDone = progress.completed + progress.failed === progress.total;
 
   return (
     <div
       className="flex items-center gap-1.5 px-2 py-1 text-xs text-warning bg-bg-secondary rounded border border-border-default"
       title={t('collaboration.filesProgress', { completed: progress.completed, total: progress.total })}
     >
-      <Download size={14} className="animate-pulse flex-shrink-0" />
+      <Download size={14} className={allDone ? 'flex-shrink-0' : 'animate-pulse flex-shrink-0'} />
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-1">
           <span className="font-medium">
             {progress.completed}/{progress.total}
           </span>
-          <span className="text-text-tertiary">({progressPercent}%)</span>
+          <span className="text-text-tertiary">({bytePercent}%)</span>
           {progress.failed > 0 && (
             <span className="text-error font-medium" title={t('collaboration.filesFailed', { count: progress.failed })}>
               {progress.failed} err
@@ -59,7 +65,7 @@ function MediaSyncBadge({ progress }: { progress: MediaSyncProgress }) {
           </span>
         )}
         <span className="text-text-tertiary text-[10px]">
-          {formatBytes(progress.completedSize)} / {formatBytes(progress.totalSize)}
+          {formatBytes(progress.receivedSize)} / {formatBytes(progress.totalSize)}
         </span>
       </div>
     </div>

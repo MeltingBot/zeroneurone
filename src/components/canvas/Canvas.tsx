@@ -1110,10 +1110,17 @@ export function Canvas() {
     });
 
     const result = visible.map(el => {
-      // Reuse cached structure if element reference AND comment count are unchanged
+      // Reuse cached structure only when nothing affecting its output has changed.
+      // Important: asset thumbnail availability can flip mid-session when chunks
+      // finish arriving over a low-bandwidth link, so we must compare it too.
       const cached = cache.get(el.id);
+      const firstAssetId = el.assetIds?.[0];
+      const currentThumbnail = firstAssetId ? assetMap.get(firstAssetId) ?? null : null;
+      const currentIsLoadingAsset = Boolean(firstAssetId) && !assetMap.has(firstAssetId);
       if (cached && prevElements.get(el.id) === el &&
-          cached.unresolvedCommentCount === (commentCountMap.get(el.id) || 0)) {
+          cached.unresolvedCommentCount === (commentCountMap.get(el.id) || 0) &&
+          cached.thumbnail === currentThumbnail &&
+          cached.isLoadingAsset === currentIsLoadingAsset) {
         return cached;
       }
       const ns = buildStructure(el);
