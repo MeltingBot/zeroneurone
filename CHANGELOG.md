@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.40.4
+
+### Fixes
+- **Création d'une propriété `date/heure` (datetime) avec valeur vide** — deux bugs cumulés dans `PropertiesEditor.handleAddProperty` :
+  1. **Absence de case `datetime`** : la valeur tombait dans le `else` final qui faisait `String(newValue)`. Un `Date` était converti en `"Fri May 22 2026 14:30:00 GMT+0200…"` (toString non-ISO), stocké comme string. Au re-render, `String(value).split('T')[0]` ne donnait pas un format exploitable par l'input → champ affiché vide.
+  2. **Closure stale sur `newValue`** : même avec un `onChange` synchrone du champ datetime, React batche le `setNewValue` et le `click` sur « Ajouter » lisait l'ancienne closure (`newValue === ''`).
+- Fix : `newValueRef` synchronisé dans le même tick que `setNewValue`, lu directement par `handleAddProperty` ; case unifié `'date' | 'datetime'` qui préserve l'objet `Date` (plus de round-trip via string).
+
 ## 2.40.3
 
 ### Fixes

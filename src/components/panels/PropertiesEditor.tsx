@@ -57,6 +57,14 @@ export function PropertiesEditor({
   const [newValue, setNewValue] = useState<string | number | boolean | Date | null>('');
   const [newType, setNewType] = useState<PropertyType>('text');
   const [newChoices, setNewChoices] = useState(''); // Comma-separated choices for 'choice' type
+  // Mirror newValue in a ref so handleAddProperty reads the latest value even when
+  // the user picks a date and clicks "Add" in the same React batch (the click handler
+  // would otherwise capture the stale newValue from the previous render's closure).
+  const newValueRef = useRef<string | number | boolean | Date | null>('');
+  const setNewValueSync = useCallback((v: string | number | boolean | Date | null) => {
+    newValueRef.current = v;
+    setNewValue(v);
+  }, []);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -97,6 +105,7 @@ export function PropertiesEditor({
 
   const resetForm = useCallback(() => {
     setNewKey('');
+    newValueRef.current = '';
     setNewValue('');
     setNewType('text');
     setNewChoices('');
@@ -109,19 +118,30 @@ export function PropertiesEditor({
   const handleAddProperty = useCallback((keyToAdd?: string, typeToUse?: PropertyType, choicesToUse?: string[]) => {
     const trimmedKey = (keyToAdd || newKey).trim();
     const finalType = typeToUse || newType;
+    // Read from the ref to avoid stale-closure when the user picks a date and clicks
+    // "Add" in the same React batch (the state update from onChange may not have
+    // committed yet by the time this handler runs).
+    const currentValue = newValueRef.current;
 
     if (trimmedKey) {
       // Convert value to appropriate type
       let finalValue: Property['value'] = null;
       if (finalType === 'boolean') {
-        finalValue = newValue === true || newValue === 'true';
+        finalValue = currentValue === true || currentValue === 'true';
       } else if (finalType === 'number') {
-        const num = typeof newValue === 'number' ? newValue : parseFloat(String(newValue));
+        const num = typeof currentValue === 'number' ? currentValue : parseFloat(String(currentValue));
         finalValue = isNaN(num) ? null : num;
-      } else if (finalType === 'date') {
-        finalValue = newValue ? new Date(String(newValue)) : null;
+      } else if (finalType === 'date' || finalType === 'datetime') {
+        if (currentValue instanceof Date) {
+          finalValue = isNaN(currentValue.getTime()) ? null : currentValue;
+        } else if (typeof currentValue === 'string' && currentValue) {
+          const d = new Date(currentValue);
+          finalValue = isNaN(d.getTime()) ? null : d;
+        } else {
+          finalValue = null;
+        }
       } else {
-        finalValue = newValue !== '' ? String(newValue) : null;
+        finalValue = currentValue !== '' ? String(currentValue) : null;
       }
 
       onChange([...properties, { key: trimmedKey, value: finalValue, type: finalType }]);
@@ -340,7 +360,7 @@ export function PropertiesEditor({
             <PropertyValueInput
               type={newType}
               value={newValue}
-              onChange={setNewValue}
+              onChange={setNewValueSync}
               onKeyDown={handleValueKeyPress}
               placeholder={t('detail.properties.valuePlaceholder')}
               t={t}
