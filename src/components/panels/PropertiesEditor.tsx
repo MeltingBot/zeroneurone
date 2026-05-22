@@ -637,16 +637,16 @@ function PropertyValueInput({
         <input
           type="date"
           value={localDate}
-          onChange={(e) => setLocalDate(e.target.value)}
-          onBlur={() => {
-            // Sync to parent on blur with valid date or null
-            if (!localDate) {
+          onChange={(e) => {
+            const next = e.target.value;
+            setLocalDate(next);
+            // Propagate immediately so the value isn't lost when the user clicks
+            // a button (e.g. "Add") before onBlur has flushed.
+            if (!next) {
               if (value !== null) onChange(null);
-            } else if (/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
-              const parsed = new Date(localDate + 'T12:00:00');
-              if (!isNaN(parsed.getTime())) {
-                onChange(parsed);
-              }
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(next)) {
+              const parsed = new Date(next + 'T12:00:00');
+              if (!isNaN(parsed.getTime())) onChange(parsed);
             }
           }}
           onKeyDown={onKeyDown}

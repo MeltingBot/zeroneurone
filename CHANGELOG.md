@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.40.3
+
+### Fixes
+- **Saisie d'une valeur date/heure perdue à la première utilisation** — dans `PropertiesEditor`, le champ `date` ne propageait la valeur au parent qu'au `onBlur`. Quand l'utilisateur cliquait sur « Ajouter » juste après avoir choisi une date, la séquence `mousedown → blur → click` exécutait `handleAddProperty` avec la closure stale (`newValue === ''`), et la propriété était créée avec `value: null`. Idem à l'édition d'une propriété date existante si le `blur` ne se déclenchait pas proprement. La propagation se fait maintenant directement dans `onChange`, comme le faisait déjà le champ `date` du type `datetime` et `ElementDetail.tsx`.
+
 ## 2.40.2
 
 ### Internals
