@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.40.5
+
+### Fixes
+- **Import CSV robuste aux formats Excel** — `importFromCSV` / `importElementsFromCSV` / `importLinksFromCSV` détectent maintenant automatiquement le délimiteur (`,`, `;` ou tab) à partir de la première ligne hors guillemets, et normalisent le contenu en amont : BOM UTF-8 retiré et fins de ligne CRLF/CR converties en `\n` (sinon le `\r` traînant polluait silencieusement le dernier champ de chaque ligne sur les fichiers Windows). La gestion des champs entre `"..."` (avec `""` échappé) existait déjà dans `parseCSVLine` et fonctionne désormais avec n'importe quel délimiteur détecté.
+- **Modèle CSV téléchargeable au format Excel-FR** — `generateCSVTemplate` (téléchargé depuis l'`ImportModal`) produit maintenant un CSV de style export Excel : délimiteur `;`, tous les champs entre `"..."`, fins de ligne CRLF. L'exemple inclut une note avec `;` et `"` internes pour exercer l'échappement.
+
 ## 2.40.4
 
 ### Fixes

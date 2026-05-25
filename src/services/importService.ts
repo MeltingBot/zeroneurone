@@ -1499,9 +1499,10 @@ class ImportService {
     targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
+    content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
-      delimiter: ',',
+      delimiter: options.delimiter ?? this.detectCSVDelimiter(content),
       createMissingElements: true,
       ...options,
     };
@@ -1894,9 +1895,10 @@ class ImportService {
     targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
+    content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
-      delimiter: ',',
+      delimiter: options.delimiter ?? this.detectCSVDelimiter(content),
       createMissingElements: true,
       ...options,
     };
@@ -2065,9 +2067,10 @@ class ImportService {
     targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
+    content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
-      delimiter: ',',
+      delimiter: options.delimiter ?? this.detectCSVDelimiter(content),
       createMissingElements: false,
       ...options,
     };
@@ -2372,6 +2375,54 @@ class ImportService {
       reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
       reader.readAsText(file);
     });
+  }
+
+  /**
+   * Normalise le contenu CSV : retire le BOM UTF-8 et harmonise les fins de ligne.
+   */
+  private normalizeCSVContent(content: string): string {
+    let normalized = content;
+    if (normalized.charCodeAt(0) === 0xfeff) {
+      normalized = normalized.slice(1);
+    }
+    return normalized.replace(/\r\n?/g, '\n');
+  }
+
+  /**
+   * Détecte le délimiteur d'un CSV à partir de la première ligne non vide.
+   * Compte les occurrences hors guillemets pour `,`, `;` et `\t`.
+   */
+  private detectCSVDelimiter(content: string): string {
+    const candidates = [',', ';', '\t'];
+    const lines = content.split('\n');
+    const firstLine = lines.find((l) => l.trim().length > 0) ?? '';
+
+    let inQuotes = false;
+    const counts: Record<string, number> = { ',': 0, ';': 0, '\t': 0 };
+    for (let i = 0; i < firstLine.length; i++) {
+      const ch = firstLine[i];
+      if (ch === '"') {
+        if (inQuotes && firstLine[i + 1] === '"') {
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (!inQuotes && candidates.includes(ch)) {
+        counts[ch]++;
+      }
+    }
+
+    let best = ',';
+    let bestCount = -1;
+    for (const c of candidates) {
+      if (counts[c] > bestCount) {
+        best = c;
+        bestCount = counts[c];
+      }
+    }
+    return bestCount > 0 ? best : ',';
   }
 
   private parseCSVLine(line: string, delimiter: string): string[] {

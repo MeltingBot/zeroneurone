@@ -301,13 +301,16 @@ class ExportService {
     // Base headers + example custom properties
     const headers = ['type', 'label', 'de', 'vers', 'notes', 'tags', 'confiance', 'source', 'date', 'date_debut', 'date_fin', 'latitude', 'longitude', 'position_x', 'position_y', 'dirige', 'couleur', 'forme', 'style', 'est_groupe', 'groupe_parent', 'prenom', 'nom', 'telephone'];
     const examples = [
-      ['element', 'Jean Dupont', '', '', 'Suspect principal', 'personne;suspect', '80', 'Enquete', '2024-01-15', '', '', '48.8566', '2.3522', '100', '200', '', '#fef3c7', 'circle', '', 'non', '', 'Jean', 'Dupont', '06 11 22 33 44'],
+      ['element', 'Jean Dupont', '', '', 'Suspect principal ; alias "Le Chat"', 'personne;suspect', '80', 'Enquete', '2024-01-15', '', '', '48.8566', '2.3522', '100', '200', '', '#fef3c7', 'circle', '', 'non', '', 'Jean', 'Dupont', '06 11 22 33 44'],
       ['element', 'Marie Martin', '', '', 'Temoin', 'personne;temoin', '60', '', '', '', '', '', '', '300', '200', '', '#dbeafe', 'circle', '', 'non', '', 'Marie', 'Martin', ''],
       ['element', '06 12 34 56 78', '', '', 'Telephone prepaye', 'telephone', '', '', '', '', '', '', '', '200', '400', '', '#dcfce7', 'square', '', 'non', '', '', '', ''],
       ['lien', 'Appel', 'Jean Dupont', 'Marie Martin', 'Duree 5 min', '', '90', '', '', '2024-01-15', '2024-01-15', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', '', '', ''],
       ['lien', 'Proprietaire', 'Jean Dupont', '06 12 34 56 78', '', '', '100', '', '', '', '', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', '', '', ''],
     ];
-    return [headers.join(','), ...examples.map((row) => row.join(','))].join('\n');
+    // Excel-style CSV : delimiter ';', tous les champs entre guillemets (avec "" pour échapper), lignes terminées en CRLF
+    const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const formatRow = (row: string[]) => row.map(quote).join(';');
+    return [formatRow(headers), ...examples.map(formatRow)].join('\r\n') + '\r\n';
   }
 
   /**
