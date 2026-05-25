@@ -7,10 +7,27 @@
  */
 
 import * as Y from 'yjs';
-import type { Element, ElementVisual, ElementEvent, Property } from '../../types';
+import type { Element, ElementVisual, ElementEvent, Property, Position } from '../../types';
 import { normalizeGeo } from '../../utils/geo';
 import { DEFAULT_ELEMENT_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
+
+/**
+ * Thrown by yMapToElement when no valid position can be read from the Y.Map.
+ * Callers must catch this and decide: skip the update (preserve existing state)
+ * or fall back to a known-good position. NEVER silently default to (0, 0):
+ * doing so would silently overwrite a correct local position with junk during
+ * a partial-sync window, which is exactly what caused the "all elements
+ * pile up at origin during collab" bug.
+ */
+export class MissingPositionError extends Error {
+  elementId: string;
+  constructor(elementId: string) {
+    super(`Element ${elementId} has no valid position in Y.Map`);
+    this.name = 'MissingPositionError';
+    this.elementId = elementId;
+  }
+}
 
 // ============================================================================
 // ELEMENT -> Y.MAP (FOR MIGRATION - uses primitive values)
@@ -144,30 +161,34 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     properties = propsRaw.map(parsePropertyFromPlain);
   }
 
-  // Handle position - prefer separate fields for CRDT, fallback to nested object
-  // This ensures better conflict resolution during collaborative editing
+  // Handle position - prefer separate fields for CRDT, fallback to nested object.
+  // If none yields a valid (finite numeric) pair, throw MissingPositionError so
+  // callers can decide how to recover. Returning {0,0} silently is what made
+  // the collab race destructive (see MissingPositionError docstring).
   const posX = ymap.get('positionX');
   const posY = ymap.get('positionY');
-  let position = { x: 0, y: 0 };
+  let position: Position | null = null;
 
-  // Use separate fields if available and valid (new format)
   if (typeof posX === 'number' && typeof posY === 'number' &&
       Number.isFinite(posX) && Number.isFinite(posY)) {
     position = { x: posX, y: posY };
-  }
-  // Fallback to nested object (legacy format or if separate fields are invalid)
-  else if (posRaw instanceof Y.Map) {
+  } else if (posRaw instanceof Y.Map) {
     const x = posRaw.get('x');
     const y = posRaw.get('y');
     if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
       position = { x, y };
     }
   } else if (posRaw && typeof posRaw === 'object') {
-    const x = posRaw.x;
-    const y = posRaw.y;
+    const x = (posRaw as { x?: unknown }).x;
+    const y = (posRaw as { y?: unknown }).y;
     if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
       position = { x, y };
     }
+  }
+
+  if (position === null) {
+    const id = (ymap.get('id') as string | undefined) ?? 'unknown';
+    throw new MissingPositionError(id);
   }
 
   // Handle dateRange - can be Y.Map, plain object, or null
@@ -343,12 +364,18 @@ export function updateElementYMap(
       })));
     }
 
-    if (changes.position !== undefined) {
-      // Update separate fields for CRDT conflict resolution
-      ymap.set('positionX', changes.position.x);
-      ymap.set('positionY', changes.position.y);
-      // Also update legacy nested object for backwards compatibility
-      ymap.set('position', { x: changes.position.x, y: changes.position.y });
+    if (changes.position !== undefined && changes.position !== null) {
+      // Guard against partial / malformed position payloads. Writing NaN or
+      // undefined to positionX/Y would propagate via CRDT and later read back
+      // as MissingPositionError on every peer.
+      const px = changes.position.x;
+      const py = changes.position.y;
+      if (typeof px === 'number' && typeof py === 'number' &&
+          Number.isFinite(px) && Number.isFinite(py)) {
+        ymap.set('positionX', px);
+        ymap.set('positionY', py);
+        ymap.set('position', { x: px, y: py });
+      }
     }
 
     if (changes.geo !== undefined) {

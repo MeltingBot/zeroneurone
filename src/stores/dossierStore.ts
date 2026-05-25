@@ -32,6 +32,7 @@ import { getYMaps } from '../types/yjs';
 import {
   elementToYMap,
   yMapToElement,
+  MissingPositionError,
   updateElementYMap,
 } from '../services/yjs/elementMapper';
 import {
@@ -485,14 +486,35 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         await dossierRepository.update(id, joinerChanges);
       }
 
-      // Migrate data from Dexie if Y.Doc is empty
-      if (elementsMap.size === 0) {
+      // Migrate Dexie → Y.Doc only when safe.
+      //
+      // The Dexie→Y.Doc migration was the source of the "elements pile up at
+      // (0,0) during collab" bug: a joiner whose local Dexie still held stale
+      // copies of these elements (from a prior session, or from an importer
+      // that defaulted missing positions to (0,0)) would push those stale
+      // rows into the shared Y.Doc. CRDT last-writer-wins on positionX/Y
+      // then propagated (0,0) to every peer, overwriting the correct
+      // positions the originating peer had set.
+      //
+      // Two safeguards:
+      //  1. Never migrate in shared mode. Once a dossier is collaborative,
+      //     the Y.Doc is the source of truth — we trust what the network
+      //     delivered after waitForSync(), not local Dexie.
+      //  2. Record a `_dexieMigrated` flag inside metaMap after a successful
+      //     local-mode migration. This flag rides with the Y.Doc (replicates
+      //     via CRDT), so even if a peer later opens the same dossier in
+      //     local mode, the flag is visible and the migration is skipped.
+      const isSharedModeAtLoad = initialSyncState.mode === 'shared';
+      const alreadyMigrated = metaMap.get('_dexieMigrated') === true;
+      const shouldMigrateElements =
+        !isSharedModeAtLoad && !alreadyMigrated && elementsMap.size === 0;
+
+      if (shouldMigrateElements) {
         const [dexieElements, dexieLinks] = await Promise.all([
           elementRepository.getByDossier(id),
           linkRepository.getByDossier(id),
         ]);
 
-        // Migrate elements to Y.Doc
         ydoc.transact(() => {
           dexieElements.forEach(element => {
             const ymap = elementToYMap(element);
@@ -503,18 +525,36 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             const ymap = linkToYMap(link);
             linksMap.set(link.id, ymap);
           });
+
+          metaMap.set('_dexieMigrated', true);
         });
+      } else if (!isSharedModeAtLoad && elementsMap.size === 0 && alreadyMigrated) {
+        // Edge case: Y.Doc was wiped (e.g., IndexedDB cleared) but the flag
+        // survived in a previous session's metaMap that was just re-loaded.
+        // In practice flag and content live in the same Y.Doc, so they're
+        // either both present or both absent. This branch is defensive.
       }
 
-      // Migrate tabs from Dexie to Y.Doc if Y.Doc tabs map is empty
+      // Same guard for the tabs migration.
       const { tabs: tabsYMap } = getYMaps(ydoc);
-      if (tabsYMap.size === 0) {
+      const tabsAlreadyMigrated = metaMap.get('_tabsMigrated') === true;
+      const shouldMigrateTabs =
+        !isSharedModeAtLoad && !tabsAlreadyMigrated && tabsYMap.size === 0;
+
+      if (shouldMigrateTabs) {
         const dexieTabs = await tabRepository.getByDossier(id);
         if (dexieTabs.length > 0) {
           ydoc.transact(() => {
             dexieTabs.forEach(tab => {
               tabsYMap.set(tab.id, tabToYMap(tab));
             });
+            metaMap.set('_tabsMigrated', true);
+          });
+        } else {
+          // No tabs to migrate, still record the flag so we don't re-check
+          // every subsequent load.
+          ydoc.transact(() => {
+            metaMap.set('_tabsMigrated', true);
           });
         }
       }
@@ -603,14 +643,25 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       // Initial sync from Y.Doc to Zustand (with deduplication)
       const elementsById = new Map<string, Element>();
-      elementsMap.forEach((ymap) => {
+      elementsMap.forEach((ymap, key) => {
         try {
           const element = yMapToElement(ymap as Y.Map<any>);
           if (element.id) {
             elementsById.set(element.id, element);
           }
-        } catch {
-          // Skip invalid elements
+        } catch (err) {
+          if (err instanceof MissingPositionError) {
+            // Element has no valid position in Y.Doc. We have no prior local
+            // state on initial load, so we can't preserve a known-good value.
+            // Log loudly so the issue is visible, and skip the element rather
+            // than fabricating (0,0) which would silently corrupt the canvas.
+            console.warn(
+              '[loadDossier] Skipping element',
+              key.slice(0, 8),
+              '— no valid position in Y.Doc. This usually means an upstream',
+              'sync race wrote undefined positionX/Y.',
+            );
+          }
         }
       });
 
@@ -2515,11 +2566,28 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     if (structuralElChange) {
       const elementsById = new Map<string, Element>();
-      elementsMap.forEach((ymap) => {
+      const stateElementsById = new Map(stateElements.map((e) => [e.id, e]));
+      elementsMap.forEach((ymap, key) => {
         try {
           const element = yMapToElement(ymap as Y.Map<any>);
           if (element.id) elementsById.set(element.id, element);
-        } catch {}
+        } catch (err) {
+          // Parse failure (typically MissingPositionError during a partial-sync
+          // window). Preserve the last-known element from Zustand state so it
+          // doesn't vanish from the canvas, rather than silently dropping it.
+          const fallback = stateElementsById.get(key);
+          if (fallback) {
+            elementsById.set(key, fallback);
+            if (err instanceof MissingPositionError) {
+              console.warn(
+                '[_syncFromYDoc] Element',
+                key.slice(0, 8),
+                'has invalid position in Y.Doc — preserving local position',
+                fallback.position,
+              );
+            }
+          }
+        }
       });
       const newElements = Array.from(elementsById.values());
       // Defensive: don't wipe state if Y.Doc parsing failed
@@ -2542,7 +2610,18 @@ export const useDossierStore = create<DossierState>((set, get) => ({
               stateMap.set(updated.id, updated);
               changed = true;
             }
-          } catch {}
+          } catch (err) {
+            // MissingPositionError or similar: skip the update silently —
+            // stateMap already holds the previous (valid) value for this id,
+            // so it stays on the canvas with its known-good position.
+            if (err instanceof MissingPositionError) {
+              console.warn(
+                '[_syncFromYDoc] Skipped position-less update for',
+                id.slice(0, 8),
+                '— keeping local state',
+              );
+            }
+          }
         }
       }
       if (changed) {
