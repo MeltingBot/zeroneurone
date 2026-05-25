@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.1
+
+### Fixes
+- **Label illisible sur un losange avec image** — le corps du losange utilise `rotate-45`, donc sa pointe basse dépasse le bounding box du wrapper de `height × (√2-1)/2 ≈ 0.207 × height`. Le label externe était positionné à `top: 100% + 2px` du wrapper, donc il tombait pile sur la pointe inférieure du losange (texte par-dessus l'image). `ElementNode.tsx` décale désormais le label uniquement pour la forme `diamond` de cet overshoot calculé à partir de `height`, pour qu'il atterrisse sous la pointe réelle. Circle/hexagon inchangés.
+
 ## 2.41.0
 
 ### Features

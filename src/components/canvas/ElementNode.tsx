@@ -650,9 +650,18 @@ function ElementNodeComponent({ data }: NodeProps) {
         )}
       </div>
 
-      {/* External label for circle/hexagon/diamond with thumbnail — rendered outside the clipped node body */}
+      {/* External label for circle/hexagon/diamond with thumbnail — rendered outside the clipped node body.
+          Diamond is `rotate-45`, so its bottom corner extends height*(√2-1)/2 below the wrapper bbox;
+          shift the label past that overhang so the text never overlaps the diamond tip. */}
       {hasThumbnail && (element.visual.shape === 'circle' || element.visual.shape === 'hexagon' || element.visual.shape === 'diamond') && (
-        <div className="absolute left-1/2 -translate-x-1/2 max-w-[150%] text-center" style={{ top: 'calc(100% + 2px)' }}>
+        <div
+          className="absolute left-1/2 -translate-x-1/2 max-w-[150%] text-center"
+          style={{
+            top: element.visual.shape === 'diamond'
+              ? `calc(100% + ${(height * (Math.SQRT2 - 1)) / 2 + 4}px)`
+              : 'calc(100% + 2px)',
+          }}
+        >
           {isEditing ? (
             <input
               ref={inputRef}
