@@ -51,6 +51,7 @@ import {
 } from '../services/yjs/tabMapper';
 import { useSyncStore } from './syncStore';
 import { useTabStore } from './tabStore';
+import { useTagSetStore } from './tagSetStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
 import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
@@ -387,6 +388,54 @@ function assertWritable(get: () => DossierState) {
   if (get().isReadOnly) {
     throw new Error('Dossier is read-only (retention expired)');
   }
+}
+
+/**
+ * When an element transitions from "no tags" to "at least one tag", inherit
+ * the first-added tag's TagSet `defaultVisual` (color / shape / icon).
+ *
+ * Rules:
+ *  - Only triggers when `prevTags` is empty AND new tag list is non-empty
+ *    (i.e. truly the first tag) — subsequent tag additions never alter visual.
+ *  - Skips fields the TagSet leaves null (e.g. tag with no shape preference).
+ *  - Visual fields already present in `changes.visual` take precedence — if the
+ *    caller is editing color in the same transaction, the user's intent wins.
+ *  - Returns `changes` unchanged when no TagSet matches or nothing to overlay.
+ */
+function applyFirstTagVisual(
+  changes: ElementChanges,
+  prevTags: string[],
+): ElementChanges {
+  if (changes.tags === undefined) return changes;
+  if (prevTags.length !== 0) return changes;
+  if (changes.tags.length === 0) return changes;
+
+  const firstTagName = changes.tags[0];
+  if (!firstTagName) return changes;
+
+  const tagDef = useTagSetStore.getState().getByName(firstTagName);
+  const dv = tagDef?.defaultVisual;
+  if (!dv) return changes;
+
+  const explicitVisual = changes.visual ?? {};
+  const overlay: Partial<ElementVisual> = {};
+  if (dv.color !== null && explicitVisual.color === undefined) {
+    overlay.color = dv.color;
+  }
+  if (dv.shape !== null && explicitVisual.shape === undefined) {
+    overlay.shape = dv.shape;
+  }
+  if (dv.icon !== null && explicitVisual.icon === undefined) {
+    overlay.icon = dv.icon;
+  }
+
+  if (Object.keys(overlay).length === 0) return changes;
+
+  return {
+    ...changes,
+    // overlay sits behind explicitVisual so user-supplied visual fields win
+    visual: { ...overlay, ...explicitVisual },
+  };
 }
 
 // ============================================================================
@@ -926,6 +975,26 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       ...options,
     };
 
+    // First-tag visual: if the element is created with tags but no explicit
+    // visual override for a given field, inherit the first tag's TagSet
+    // defaultVisual. Same semantics as updateElement's first-tag handling.
+    if (element.tags.length > 0) {
+      const tagDef = useTagSetStore.getState().getByName(element.tags[0]);
+      const dv = tagDef?.defaultVisual;
+      const explicitVisual: Partial<ElementVisual> = options?.visual ?? {};
+      if (dv) {
+        if (dv.color !== null && explicitVisual.color === undefined) {
+          element.visual.color = dv.color;
+        }
+        if (dv.shape !== null && explicitVisual.shape === undefined) {
+          element.visual.shape = dv.shape;
+        }
+        if (dv.icon !== null && explicitVisual.icon === undefined) {
+          element.visual.icon = dv.icon;
+        }
+      }
+    }
+
     // Add to Y.Doc
     const { elements: elementsMap } = getYMaps(ydoc);
     ydoc.transact(() => {
@@ -974,6 +1043,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       ? (get().elements.find(el => el.id === id)?.tags ?? [])
       : [];
 
+    // First-tag visual: when an element goes from "no tags" to "at least one
+    // tag", inherit the TagSet's defaultVisual (color / shape / icon) from the
+    // first tag added. Subsequent tags do NOT mutate visual.
+    // The visual fields explicitly set in `changes.visual` always win.
+    const effectiveChanges = applyFirstTagVisual(changes, prevTags);
+
     // Update Zustand FIRST (synchronous) for instant UI response
     // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
     localOpPending = true;
@@ -981,18 +1056,18 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       elements: state.elements.map((el) => {
         if (el.id !== id) return el;
         // Merge partial visual with existing visual to avoid overwriting concurrent remote changes
-        const mergedVisual = changes.visual !== undefined
-          ? { ...el.visual, ...changes.visual }
+        const mergedVisual = effectiveChanges.visual !== undefined
+          ? { ...el.visual, ...effectiveChanges.visual }
           : el.visual;
-        return { ...el, ...changes, visual: mergedVisual, updatedAt: new Date() };
+        return { ...el, ...effectiveChanges, visual: mergedVisual, updatedAt: new Date() };
       }),
     }));
 
     // Update Y.Doc for collaborative sync
-    updateElementYMap(ymap, changes, ydoc);
+    updateElementYMap(ymap, effectiveChanges, ydoc);
 
     // Also update Dexie for backwards compatibility
-    await elementRepository.update(id, changes as any).catch(() => {
+    await elementRepository.update(id, effectiveChanges as any).catch(() => {
       // Ignore Dexie errors - Y.Doc is source of truth
     });
 

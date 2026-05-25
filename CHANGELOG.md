@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.41.2
+
+### Fixes
+- **TagSet `defaultVisual` désormais appliqué au premier tag** — quand un élément passe de "aucun tag" à "au moins un tag", il hérite désormais des `color` / `shape` / `icon` stockés dans le TagSet du **premier** tag ajouté. Les ajouts de tags suivants n'altèrent plus l'apparence (comportement demandé). Les fields visuels édités simultanément par l'utilisateur restent prioritaires sur l'héritage. Couvre les deux chemins de création : `updateElement` (ajout de tag via le panneau de détail) et `createElement` (élément créé directement avec des tags initiaux, ex: paste/import sémantique).
+- **Race de synchro collaborative qui empilait les éléments à (0, 0)** — la migration Dexie→Y.Doc dans `loadDossier` n'est plus déclenchée en mode partagé (le Y.Doc est la source de vérité après `waitForSync`), et un flag `_dexieMigrated` dans `metaMap` empêche la migration de se rejouer même si la Dexie locale change après coup. `yMapToElement` lève désormais `MissingPositionError` au lieu de retomber silencieusement sur `{x:0, y:0}` quand `positionX/Y` sont absents — une fenêtre de sync partielle ne peut plus écraser une position correcte. `updateElementYMap` valide les coordonnées avant écriture (refus NaN/undefined). `_syncFromYDoc` conserve l'élément Zustand existant en cas d'échec de parse, plutôt que de le faire disparaître du canvas. Tests vitest sur `elementMapper` (round-trip, position manquante, partiel, fallback legacy, refus NaN).
+
 ## 2.41.1
 
 ### Fixes
