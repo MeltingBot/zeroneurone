@@ -206,6 +206,10 @@
       "buttonTitle": "Automatic graph rearrangement",
       "undoHint": "Ctrl+Z to undo after applying",
       "types": {
+        "clusters": {
+          "name": "Clusters (islands)",
+          "description": "Groups each community into a separate island"
+        },
         "force": {
           "name": "Force (clusters)",
           "description": "Groups connected elements, separates clusters"
@@ -226,7 +230,8 @@
           "name": "Hierarchy",
           "description": "Organizes elements by levels (trees, org charts)"
         }
-      }
+      },
+      "scopeSelection": "Applies to {{count}} selected elements only"
     },
     "align": {
       "button": "Align",

@@ -206,6 +206,10 @@
       "buttonTitle": "Grafoaren antolamendu automatikoa",
       "undoHint": "Ctrl+Z aplikatu ondoren desegiteko",
       "types": {
+        "clusters": {
+          "name": "Klusterrak (uharteak)",
+          "description": "Komunitate bakoitza uharte bereizi batean taldekatzen du"
+        },
         "force": {
           "name": "Indarra (cluster)",
           "description": "Konektatutako elementuak taldekatu, clusterrak banatu"
@@ -226,7 +230,8 @@
           "name": "Hierarkia",
           "description": "Elementuak mailaka antolatu (zuhaitzak, organogramak)"
         }
-      }
+      },
+      "scopeSelection": "{{count}} hautatutako elementuetan bakarrik aplikatzen da"
     },
     "align": {
       "button": "Lerrokatu",

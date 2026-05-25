@@ -34,7 +34,7 @@ export interface WorkerInsightsData {
   similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
 }
 
-export type LayoutType = 'force' | 'circular' | 'grid' | 'random' | 'hierarchy';
+export type LayoutType = 'force' | 'clusters' | 'circular' | 'grid' | 'random' | 'hierarchy';
 
 export interface LayoutOptions {
   layoutType: LayoutType;

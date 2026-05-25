@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { graphWorkerService } from '../../services/graphWorkerService';
-import { useDossierStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useHistoryStore, useSelectionStore } from '../../stores';
 import type { Position } from '../../types';
 
 export function LayoutDropdown() {
@@ -14,6 +14,7 @@ export function LayoutDropdown() {
 
   const { elements, links, updateElementPositions } = useDossierStore();
   const { pushAction } = useHistoryStore();
+  const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -39,20 +40,31 @@ export function LayoutDropdown() {
     setIsOpen(false);
 
     try {
-      // Save old positions for undo
-      const oldPositions: { id: string; position: Position }[] = elements.map(el => ({
+      // Scope: if >= 2 elements selected, layout only the induced sub-graph;
+      // otherwise layout the whole dossier.
+      const useSelection = selectedElementIds.size >= 2;
+      const scopedElements = useSelection
+        ? elements.filter((el) => selectedElementIds.has(el.id))
+        : elements;
+      const scopedIds = new Set(scopedElements.map((el) => el.id));
+      const scopedLinks = useSelection
+        ? links.filter((l) => scopedIds.has(l.fromId) && scopedIds.has(l.toId))
+        : links;
+
+      // Save old positions for undo (only scoped elements move)
+      const oldPositions: { id: string; position: Position }[] = scopedElements.map(el => ({
         id: el.id,
         position: { ...el.position },
       }));
 
-      // Calculate center from current positions
-      const centerX = elements.reduce((sum, el) => sum + el.position.x, 0) / elements.length;
-      const centerY = elements.reduce((sum, el) => sum + el.position.y, 0) / elements.length;
+      // Center: centroid of the scoped elements
+      const centerX = scopedElements.reduce((sum, el) => sum + el.position.x, 0) / scopedElements.length;
+      const centerY = scopedElements.reduce((sum, el) => sum + el.position.y, 0) / scopedElements.length;
 
       // Apply layout in Web Worker (non-blocking)
       const positions = await graphWorkerService.computeLayout(
-        elements,
-        links,
+        scopedElements,
+        scopedLinks,
         { layoutType, center: { x: centerX, y: centerY } }
       );
 
@@ -75,9 +87,21 @@ export function LayoutDropdown() {
       }
     } catch (error) {
       console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
-      // Fallback to main-thread computation
-      const oldPositions = elements.map((el) => ({ id: el.id, position: { ...el.position } }));
-      const result = layoutService.applyLayout(layoutType, elements, links);
+      // Fallback to main-thread computation (same scoping)
+      const useSelection = selectedElementIds.size >= 2;
+      const scopedElements = useSelection
+        ? elements.filter((el) => selectedElementIds.has(el.id))
+        : elements;
+      const scopedIds = new Set(scopedElements.map((el) => el.id));
+      const scopedLinks = useSelection
+        ? links.filter((l) => scopedIds.has(l.fromId) && scopedIds.has(l.toId))
+        : links;
+      const centerX = scopedElements.reduce((sum, el) => sum + el.position.x, 0) / scopedElements.length;
+      const centerY = scopedElements.reduce((sum, el) => sum + el.position.y, 0) / scopedElements.length;
+      const oldPositions = scopedElements.map((el) => ({ id: el.id, position: { ...el.position } }));
+      const result = layoutService.applyLayout(layoutType, scopedElements, scopedLinks, {
+        center: { x: centerX, y: centerY },
+      });
       const newPositions: { id: string; position: Position }[] = [];
       for (const [id, position] of result.positions) {
         newPositions.push({ id, position });
@@ -93,7 +117,7 @@ export function LayoutDropdown() {
     } finally {
       setIsApplying(false);
     }
-  }, [elements, links, updateElementPositions, pushAction]);
+  }, [elements, links, updateElementPositions, pushAction, selectedElementIds]);
 
   const layouts = layoutService.getAvailableLayouts();
 
@@ -120,6 +144,11 @@ export function LayoutDropdown() {
             <div className="px-3 py-1.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
               {t('dossier.layout.title')}
             </div>
+            {selectedElementIds.size >= 2 && (
+              <div className="px-3 pb-1.5 text-[10px] text-accent">
+                {t('dossier.layout.scopeSelection', { count: selectedElementIds.size })}
+              </div>
+            )}
             {layouts.map((layoutType) => (
               <button
                 key={layoutType}

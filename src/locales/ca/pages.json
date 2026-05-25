@@ -206,6 +206,10 @@
       "buttonTitle": "Reorganització automàtica del graf",
       "undoHint": "Ctrl+Z per desfer després d'aplicar",
       "types": {
+        "clusters": {
+          "name": "Clústers (illes)",
+          "description": "Agrupa cada comunitat en una illa separada"
+        },
         "force": {
           "name": "Força (clústers)",
           "description": "Agrupa elements connectats, separa clústers"
@@ -226,7 +230,8 @@
           "name": "Jerarquia",
           "description": "Organitza els elements per nivells (arbres, organigrames)"
         }
-      }
+      },
+      "scopeSelection": "Aplica només a {{count}} elements seleccionats"
     },
     "align": {
       "button": "Alinear",

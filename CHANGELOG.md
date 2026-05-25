@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.41.0
+
+### Features
+- **Nouvel arrangement « Clusters (îlots) »** — disponible en tête du menu Layout. Approche compound : Louvain détecte les communautés, chaque cluster est layouté indépendamment avec ForceAtlas2 sur son sous-graphe induit (mode `strongGravityMode` + `adjustSizes: true` pour que la simulation tienne compte de la taille des nœuds), puis les disques englobants des clusters sont packés via une spirale d'Archimède avec marge proportionnelle. Garantit la séparation visuelle inter-cluster indépendamment de la convergence du solver. Les nœuds isolés (singletons) sont regroupés en grille latérale calibrée sur le label le plus large.
+- **Anti-overlap renforcé pour le mode Clusters** — diamètre cible du sous-layout calculé sur l'aire totale des rectangles (`sqrt(totalArea/π) × 2 × 1.4`) au lieu du nombre de nœuds, anti-overlap intra-cluster sur 60 passes (avec jitter pour les nœuds parfaitement superposés), rayon de cluster calculé sur les coins des nœuds (et non leur centre).
+- **Layout scopé à la sélection** — si ≥2 éléments sont sélectionnés au moment de l'application d'un arrangement, le layout n'opère que sur le sous-graphe induit (liens intra-sélection uniquement) et se recentre sur le centroïde de la sélection. Sinon, comportement inchangé : tout le dossier est réarrangé. Un indicateur visuel dans le dropdown rappelle la portée active. L'undo ne touche que les éléments réellement déplacés.
+
 ## 2.40.5
 
 ### Fixes

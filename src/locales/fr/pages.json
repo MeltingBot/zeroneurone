@@ -206,6 +206,10 @@
       "buttonTitle": "Réarrangement automatique du graphe",
       "undoHint": "Ctrl+Z pour annuler après application",
       "types": {
+        "clusters": {
+          "name": "Clusters (îlots)",
+          "description": "Regroupe chaque communauté en îlot séparé"
+        },
         "force": {
           "name": "Force (clusters)",
           "description": "Regroupe les éléments connectés, sépare les clusters"
@@ -226,7 +230,8 @@
           "name": "Hiérarchie",
           "description": "Organise les éléments par niveaux (arbres, organigrammes)"
         }
-      }
+      },
+      "scopeSelection": "Appliqué uniquement à {{count}} éléments sélectionnés"
     },
     "align": {
       "button": "Aligner",

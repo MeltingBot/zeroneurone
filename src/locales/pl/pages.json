@@ -206,6 +206,10 @@
       "buttonTitle": "Automatyczne rozmieszczenie grafu",
       "undoHint": "Ctrl+Z, aby cofnąć po zastosowaniu",
       "types": {
+        "clusters": {
+          "name": "Klastry (wyspy)",
+          "description": "Grupuje każdą społeczność w oddzielną wyspę"
+        },
         "force": {
           "name": "Siła (klastry)",
           "description": "Grupuje połączone elementy, rozdziela klastry"
@@ -226,7 +230,8 @@
           "name": "Hierarchia",
           "description": "Organizuje elementy według poziomów (drzewa, schematy organizacyjne)"
         }
-      }
+      },
+      "scopeSelection": "Stosowane tylko do {{count}} wybranych elementów"
     },
     "align": {
       "button": "Wyrównaj",

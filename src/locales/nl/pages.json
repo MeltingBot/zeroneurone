@@ -206,6 +206,10 @@
       "buttonTitle": "Automatische herindeling van de graaf",
       "undoHint": "Ctrl+Z om ongedaan te maken na toepassing",
       "types": {
+        "clusters": {
+          "name": "Clusters (eilanden)",
+          "description": "Groepeert elke community in een apart eiland"
+        },
         "force": {
           "name": "Kracht (clusters)",
           "description": "Groepeert verbonden elementen, scheidt clusters"
@@ -226,7 +230,8 @@
           "name": "Hiërarchie",
           "description": "Rangschikt elementen per niveau (bomen, organogrammen)"
         }
-      }
+      },
+      "scopeSelection": "Toegepast op alleen {{count}} geselecteerde elementen"
     },
     "align": {
       "button": "Uitlijnen",

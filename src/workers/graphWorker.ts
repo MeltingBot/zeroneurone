@@ -39,7 +39,7 @@ interface LayoutOptions {
   padding?: number;
   center?: { x: number; y: number };
   scale?: number;
-  layoutType: 'force' | 'circular' | 'grid' | 'random' | 'hierarchy';
+  layoutType: 'force' | 'clusters' | 'circular' | 'grid' | 'random' | 'hierarchy';
 }
 
 interface InsightsData {
@@ -321,6 +321,8 @@ function computeLayout(
   switch (options.layoutType) {
     case 'force':
       return applyForceLayout(graph, filteredElements, center);
+    case 'clusters':
+      return applyClustersLayout(graph, filteredElements, center);
     case 'circular':
       return applyCircularLayout(graph, center, filteredElements.length);
     case 'grid':
@@ -438,6 +440,244 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
   const positions: Record<string, { x: number; y: number }> = {};
   for (const n of nodeData) {
     positions[n.id] = { x: n.x, y: n.y };
+  }
+
+  postProgress(100, 'done');
+  return positions;
+}
+
+function applyClustersLayout(
+  graph: Graph,
+  elements: SerializedElement[],
+  center: { x: number; y: number },
+): Record<string, { x: number; y: number }> {
+  const labelMap = new Map<string, string>();
+  for (const el of elements) labelMap.set(el.id, el.label || '');
+
+  postProgress(15, 'detecting communities');
+
+  let communities: Record<string, number> = {};
+  try {
+    communities = louvain(graph);
+  } catch {
+    graph.forEachNode((n) => { communities[n] = 0; });
+  }
+
+  const clusterMap = new Map<number, string[]>();
+  for (const [nodeId, cid] of Object.entries(communities)) {
+    const arr = clusterMap.get(cid);
+    if (arr) arr.push(nodeId);
+    else clusterMap.set(cid, [nodeId]);
+  }
+  let unassignedId = -1;
+  graph.forEachNode((n) => {
+    if (!(n in communities)) clusterMap.set(unassignedId--, [n]);
+  });
+
+  const realClusters: string[][] = [];
+  const singletons: string[] = [];
+  for (const nodes of clusterMap.values()) {
+    if (nodes.length >= 2) realClusters.push(nodes);
+    else singletons.push(nodes[0]);
+  }
+
+  type ClusterLayout = {
+    nodes: { id: string; x: number; y: number; w: number; h: number }[];
+    radius: number;
+    cx: number;
+    cy: number;
+  };
+  const layouts: ClusterLayout[] = [];
+
+  postProgress(35, 'laying out sub-clusters');
+
+  const GAP = 32;
+
+  for (const nodes of realClusters) {
+    const dims = new Map<string, { w: number; h: number }>();
+    let totalArea = 0;
+    let maxNodeSize = 0;
+    for (const n of nodes) {
+      const w = estimateNodeWidth(labelMap.get(n) || '', 120);
+      const h = ESTIMATED_NODE_HEIGHT;
+      dims.set(n, { w, h });
+      totalArea += (w + GAP) * (h + GAP);
+      maxNodeSize = Math.max(maxNodeSize, Math.max(w, h));
+    }
+
+    const sub = new Graph();
+    for (const n of nodes) {
+      const d = dims.get(n)!;
+      sub.addNode(n, {
+        x: Math.random() * 200 - 100,
+        y: Math.random() * 200 - 100,
+        size: Math.max(d.w, d.h) / 2,
+      });
+    }
+    for (const n of nodes) {
+      graph.forEachNeighbor(n, (m) => {
+        if (sub.hasNode(m) && !sub.hasEdge(n, m)) {
+          try { sub.addEdge(n, m); } catch { /* dup */ }
+        }
+      });
+    }
+
+    forceAtlas2.assign(sub, {
+      iterations: 400,
+      settings: {
+        gravity: 3,
+        scalingRatio: 120,
+        strongGravityMode: true,
+        slowDown: 2,
+        barnesHutOptimize: sub.order > 100,
+        barnesHutTheta: 0.5,
+        linLogMode: false,
+        adjustSizes: true,
+      },
+    });
+
+    const nodeArr: { id: string; x: number; y: number; w: number; h: number }[] = [];
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    sub.forEachNode((id) => {
+      const x = sub.getNodeAttribute(id, 'x') as number;
+      const y = sub.getNodeAttribute(id, 'y') as number;
+      const d = dims.get(id)!;
+      nodeArr.push({ id, x, y, w: d.w, h: d.h });
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    });
+
+    const minDiameter = Math.sqrt(totalArea / Math.PI) * 2 * 1.4;
+    const targetSize = Math.max(minDiameter, maxNodeSize * 2);
+    const sw = (maxX - minX) || 1;
+    const sh = (maxY - minY) || 1;
+    const scale = targetSize / Math.max(sw, sh);
+    const subCx = (minX + maxX) / 2;
+    const subCy = (minY + maxY) / 2;
+    for (const n of nodeArr) {
+      n.x = (n.x - subCx) * scale;
+      n.y = (n.y - subCy) * scale;
+    }
+
+    for (let pass = 0; pass < 60; pass++) {
+      let any = false;
+      for (let i = 0; i < nodeArr.length; i++) {
+        for (let j = i + 1; j < nodeArr.length; j++) {
+          const a = nodeArr[i], b = nodeArr[j];
+          const ox = (a.w / 2 + b.w / 2 + GAP) - Math.abs(a.x - b.x);
+          const oy = (a.h / 2 + b.h / 2 + GAP) - Math.abs(a.y - b.y);
+          if (ox > 0 && oy > 0) {
+            any = true;
+            if (ox < oy) {
+              const push = ox / 2 + 1;
+              if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+            } else {
+              const push = oy / 2 + 1;
+              if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
+            }
+          } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
+            any = true;
+            b.x += (a.w / 2 + b.w / 2 + GAP) * (Math.random() - 0.5) * 2;
+            b.y += (a.h / 2 + b.h / 2 + GAP) * (Math.random() - 0.5) * 2;
+          }
+        }
+      }
+      if (!any) break;
+    }
+
+    let radius = 0;
+    for (const n of nodeArr) {
+      const corner = Math.hypot(Math.abs(n.x) + n.w / 2, Math.abs(n.y) + n.h / 2);
+      if (corner > radius) radius = corner;
+    }
+    layouts.push({ nodes: nodeArr, radius, cx: 0, cy: 0 });
+  }
+
+  if (singletons.length > 0) {
+    let maxW = 0;
+    for (const id of singletons) {
+      maxW = Math.max(maxW, estimateNodeWidth(labelMap.get(id) || '', 120));
+    }
+    const cellW = maxW + GAP;
+    const cellH = ESTIMATED_NODE_HEIGHT + GAP;
+    const cols = Math.max(1, Math.ceil(Math.sqrt(singletons.length)));
+    const rows = Math.ceil(singletons.length / cols);
+    const offX = ((cols - 1) * cellW) / 2;
+    const offY = ((rows - 1) * cellH) / 2;
+    const nodeArr: { id: string; x: number; y: number; w: number; h: number }[] = [];
+    singletons.forEach((id, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      nodeArr.push({
+        id,
+        x: col * cellW - offX,
+        y: row * cellH - offY,
+        w: estimateNodeWidth(labelMap.get(id) || '', 120),
+        h: ESTIMATED_NODE_HEIGHT,
+      });
+    });
+    let radius = 0;
+    for (const n of nodeArr) {
+      const corner = Math.hypot(Math.abs(n.x) + n.w / 2, Math.abs(n.y) + n.h / 2);
+      if (corner > radius) radius = corner;
+    }
+    layouts.push({ nodes: nodeArr, radius, cx: 0, cy: 0 });
+  }
+
+  postProgress(80, 'packing clusters');
+
+  layouts.sort((a, b) => b.radius - a.radius);
+  const placed: { cx: number; cy: number; r: number }[] = [];
+  for (const L of layouts) {
+    if (placed.length === 0) {
+      placed.push({ cx: 0, cy: 0, r: L.radius });
+      continue;
+    }
+    let fx = 0, fy = 0, found = false;
+    const step = 0.25;
+    const b = 25;
+    for (let theta = 0; theta < 400; theta += step) {
+      const r = b * theta;
+      const x = r * Math.cos(theta);
+      const y = r * Math.sin(theta);
+      let ok = true;
+      for (const p of placed) {
+        const margin = Math.max(80, 0.12 * (L.radius + p.r));
+        const minDist = L.radius + p.r + margin;
+        const dx = x - p.cx;
+        const dy = y - p.cy;
+        if (dx * dx + dy * dy < minDist * minDist) { ok = false; break; }
+      }
+      if (ok) { fx = x; fy = y; found = true; break; }
+    }
+    if (!found) {
+      fx = placed.reduce((m, p) => Math.max(m, p.cx + p.r), 0) + L.radius + 200;
+      fy = 0;
+    }
+    L.cx = fx; L.cy = fy;
+    placed.push({ cx: fx, cy: fy, r: L.radius });
+  }
+
+  let gMinX = Infinity, gMaxX = -Infinity, gMinY = Infinity, gMaxY = -Infinity;
+  for (const L of layouts) {
+    for (const n of L.nodes) {
+      const x = n.x + L.cx;
+      const y = n.y + L.cy;
+      gMinX = Math.min(gMinX, x); gMaxX = Math.max(gMaxX, x);
+      gMinY = Math.min(gMinY, y); gMaxY = Math.max(gMaxY, y);
+    }
+  }
+  const gCx = Number.isFinite(gMinX) ? (gMinX + gMaxX) / 2 : 0;
+  const gCy = Number.isFinite(gMinY) ? (gMinY + gMaxY) / 2 : 0;
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const L of layouts) {
+    for (const n of L.nodes) {
+      positions[n.id] = {
+        x: n.x + L.cx - gCx + center.x,
+        y: n.y + L.cy - gCy + center.y,
+      };
+    }
   }
 
   postProgress(100, 'done');

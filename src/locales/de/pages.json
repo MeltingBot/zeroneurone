@@ -206,6 +206,10 @@
       "buttonTitle": "Automatische Graphenanordnung",
       "undoHint": "Strg+Z zum Rückgängigmachen nach Anwendung",
       "types": {
+        "clusters": {
+          "name": "Cluster (Inseln)",
+          "description": "Gruppiert jede Community zu einer separaten Insel"
+        },
         "force": {
           "name": "Kraft (Cluster)",
           "description": "Gruppiert verbundene Elemente, trennt Cluster"
@@ -226,7 +230,8 @@
           "name": "Hierarchie",
           "description": "Ordnet Elemente nach Ebenen (Bäume, Organigramme)"
         }
-      }
+      },
+      "scopeSelection": "Wird nur auf {{count}} ausgewählte Elemente angewendet"
     },
     "align": {
       "button": "Ausrichten",

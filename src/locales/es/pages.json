@@ -206,6 +206,10 @@
       "buttonTitle": "Reorganización automática del grafo",
       "undoHint": "Ctrl+Z para deshacer después de aplicar",
       "types": {
+        "clusters": {
+          "name": "Clusters (islas)",
+          "description": "Agrupa cada comunidad en una isla separada"
+        },
         "force": {
           "name": "Fuerza (clusters)",
           "description": "Agrupa elementos conectados, separa clusters"
@@ -226,7 +230,8 @@
           "name": "Jerarquía",
           "description": "Organiza los elementos por niveles (árboles, organigramas)"
         }
-      }
+      },
+      "scopeSelection": "Se aplica solo a {{count}} elementos seleccionados"
     },
     "align": {
       "button": "Alinear",

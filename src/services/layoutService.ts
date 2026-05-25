@@ -7,6 +7,7 @@
 import Graph from 'graphology';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { circular, random } from 'graphology-layout';
+import louvain from 'graphology-communities-louvain';
 import dagre from '@dagrejs/dagre';
 import type { Element, Link, Position } from '../types';
 
@@ -14,7 +15,7 @@ import type { Element, Link, Position } from '../types';
 // TYPES
 // ============================================================================
 
-export type LayoutType = 'force' | 'circular' | 'grid' | 'random' | 'hierarchy';
+export type LayoutType = 'force' | 'clusters' | 'circular' | 'grid' | 'random' | 'hierarchy';
 
 export interface LayoutOptions {
   /** Padding around the layout bounds */
@@ -150,6 +151,266 @@ function applyForceLayout(
     positions.set(n.id, { x: n.x, y: n.y });
   }
 
+  return positions;
+}
+
+/**
+ * Apply cluster-aware compound layout:
+ *  1. Detect communities (Louvain)
+ *  2. Layout each cluster independently with ForceAtlas2 on its induced sub-graph
+ *  3. Pack cluster bounding-circles via spiral placement
+ *  4. Singletons are gathered in a side grid
+ *
+ * Guarantees inter-cluster separation (does not rely on solver convergence).
+ */
+function applyClustersLayout(
+  graph: Graph,
+  elements: Element[],
+  options: LayoutOptions
+): Map<string, Position> {
+  const { center = { x: 0, y: 0 } } = options;
+
+  const labelMap = new Map<string, string>();
+  for (const el of elements) labelMap.set(el.id, el.label || '');
+
+  // Step 1: detect communities. Louvain only assigns nodes that participate
+  // in the modularity optimization; we treat the rest as singletons.
+  let communities: Record<string, number> = {};
+  try {
+    communities = louvain(graph);
+  } catch {
+    // Fallback: all in one community
+    graph.forEachNode((n) => { communities[n] = 0; });
+  }
+
+  const clusterMap = new Map<number, string[]>();
+  for (const [nodeId, cid] of Object.entries(communities)) {
+    const arr = clusterMap.get(cid);
+    if (arr) arr.push(nodeId);
+    else clusterMap.set(cid, [nodeId]);
+  }
+  // Catch unassigned nodes
+  let unassignedId = -1;
+  graph.forEachNode((n) => {
+    if (!(n in communities)) {
+      clusterMap.set(unassignedId--, [n]);
+    }
+  });
+
+  const realClusters: string[][] = [];
+  const singletons: string[] = [];
+  for (const nodes of clusterMap.values()) {
+    if (nodes.length >= 2) realClusters.push(nodes);
+    else singletons.push(nodes[0]);
+  }
+
+  type ClusterLayout = {
+    nodes: { id: string; x: number; y: number; w: number; h: number }[];
+    radius: number;
+    cx: number;
+    cy: number;
+  };
+  const layouts: ClusterLayout[] = [];
+
+  // Step 2: layout each real cluster independently on its induced sub-graph
+  const GAP = 32;
+
+  for (const nodes of realClusters) {
+    // Pre-compute per-node dimensions so FA2 can use them via `size` attribute
+    const dims = new Map<string, { w: number; h: number }>();
+    let totalArea = 0;
+    let maxNodeSize = 0;
+    for (const n of nodes) {
+      const w = estimateNodeWidth(labelMap.get(n) || '', 120);
+      const h = ESTIMATED_NODE_HEIGHT;
+      dims.set(n, { w, h });
+      totalArea += (w + GAP) * (h + GAP);
+      maxNodeSize = Math.max(maxNodeSize, Math.max(w, h));
+    }
+
+    const sub = new Graph();
+    for (const n of nodes) {
+      const d = dims.get(n)!;
+      sub.addNode(n, {
+        x: Math.random() * 200 - 100,
+        y: Math.random() * 200 - 100,
+        // FA2 size attribute: half the largest dimension (treats node as a disc)
+        size: Math.max(d.w, d.h) / 2,
+      });
+    }
+    for (const n of nodes) {
+      graph.forEachNeighbor(n, (m) => {
+        if (sub.hasNode(m) && !sub.hasEdge(n, m)) {
+          try { sub.addEdge(n, m); } catch { /* duplicate */ }
+        }
+      });
+    }
+
+    forceAtlas2.assign(sub, {
+      iterations: 400,
+      settings: {
+        gravity: 3,
+        scalingRatio: 120,
+        strongGravityMode: true,
+        slowDown: 2,
+        barnesHutOptimize: sub.order > 100,
+        barnesHutTheta: 0.5,
+        linLogMode: false,
+        adjustSizes: true, // prevent node overlap during simulation using size attribute
+      },
+    });
+
+    const nodeArr: { id: string; x: number; y: number; w: number; h: number }[] = [];
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    sub.forEachNode((id) => {
+      const x = sub.getNodeAttribute(id, 'x') as number;
+      const y = sub.getNodeAttribute(id, 'y') as number;
+      const d = dims.get(id)!;
+      nodeArr.push({ id, x, y, w: d.w, h: d.h });
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    });
+
+    // Target diameter sized to hold the total node area with breathing room
+    // (1.4 = packing factor accounting for circle-vs-rectangle inefficiency)
+    const minDiameter = Math.sqrt(totalArea / Math.PI) * 2 * 1.4;
+    const targetSize = Math.max(minDiameter, maxNodeSize * 2);
+    const sw = (maxX - minX) || 1;
+    const sh = (maxY - minY) || 1;
+    const scale = targetSize / Math.max(sw, sh);
+    const subCx = (minX + maxX) / 2;
+    const subCy = (minY + maxY) / 2;
+    for (const n of nodeArr) {
+      n.x = (n.x - subCx) * scale;
+      n.y = (n.y - subCy) * scale;
+    }
+
+    // Intra-cluster overlap removal (more passes for convergence)
+    for (let pass = 0; pass < 60; pass++) {
+      let any = false;
+      for (let i = 0; i < nodeArr.length; i++) {
+        for (let j = i + 1; j < nodeArr.length; j++) {
+          const a = nodeArr[i], b = nodeArr[j];
+          const ox = (a.w / 2 + b.w / 2 + GAP) - Math.abs(a.x - b.x);
+          const oy = (a.h / 2 + b.h / 2 + GAP) - Math.abs(a.y - b.y);
+          if (ox > 0 && oy > 0) {
+            any = true;
+            if (ox < oy) {
+              const push = ox / 2 + 1;
+              if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+            } else {
+              const push = oy / 2 + 1;
+              if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
+            }
+          } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
+            any = true;
+            b.x += (a.w / 2 + b.w / 2 + GAP) * (Math.random() - 0.5) * 2;
+            b.y += (a.h / 2 + b.h / 2 + GAP) * (Math.random() - 0.5) * 2;
+          }
+        }
+      }
+      if (!any) break;
+    }
+
+    // Cluster bounding radius: max distance from origin to any node's corner
+    let radius = 0;
+    for (const n of nodeArr) {
+      const corner = Math.hypot(Math.abs(n.x) + n.w / 2, Math.abs(n.y) + n.h / 2);
+      if (corner > radius) radius = corner;
+    }
+
+    layouts.push({ nodes: nodeArr, radius, cx: 0, cy: 0 });
+  }
+
+  // Step 3: bundle singletons as one "cluster" arranged in a compact grid.
+  // Cell size based on the widest singleton label to prevent inter-cell overlap.
+  if (singletons.length > 0) {
+    let maxW = 0;
+    for (const id of singletons) {
+      maxW = Math.max(maxW, estimateNodeWidth(labelMap.get(id) || '', 120));
+    }
+    const cellW = maxW + GAP;
+    const cellH = ESTIMATED_NODE_HEIGHT + GAP;
+    const cols = Math.max(1, Math.ceil(Math.sqrt(singletons.length)));
+    const rows = Math.ceil(singletons.length / cols);
+    const offX = ((cols - 1) * cellW) / 2;
+    const offY = ((rows - 1) * cellH) / 2;
+    const nodeArr: { id: string; x: number; y: number; w: number; h: number }[] = [];
+    singletons.forEach((id, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      nodeArr.push({
+        id,
+        x: col * cellW - offX,
+        y: row * cellH - offY,
+        w: estimateNodeWidth(labelMap.get(id) || '', 120),
+        h: ESTIMATED_NODE_HEIGHT,
+      });
+    });
+    let radius = 0;
+    for (const n of nodeArr) {
+      const corner = Math.hypot(Math.abs(n.x) + n.w / 2, Math.abs(n.y) + n.h / 2);
+      if (corner > radius) radius = corner;
+    }
+    layouts.push({ nodes: nodeArr, radius, cx: 0, cy: 0 });
+  }
+
+  // Step 4: pack cluster bounding-circles. Largest at origin, others placed
+  // on an Archimedean spiral at the first non-overlapping position.
+  layouts.sort((a, b) => b.radius - a.radius);
+  const placed: { cx: number; cy: number; r: number }[] = [];
+  for (const L of layouts) {
+    if (placed.length === 0) {
+      placed.push({ cx: 0, cy: 0, r: L.radius });
+      continue;
+    }
+    let fx = 0, fy = 0, found = false;
+    const step = 0.25;
+    const b = 25;
+    for (let theta = 0; theta < 400; theta += step) {
+      const r = b * theta;
+      const x = r * Math.cos(theta);
+      const y = r * Math.sin(theta);
+      let ok = true;
+      for (const p of placed) {
+        const margin = Math.max(80, 0.12 * (L.radius + p.r));
+        const minDist = L.radius + p.r + margin;
+        const dx = x - p.cx;
+        const dy = y - p.cy;
+        if (dx * dx + dy * dy < minDist * minDist) { ok = false; break; }
+      }
+      if (ok) { fx = x; fy = y; found = true; break; }
+    }
+    if (!found) {
+      fx = placed.reduce((m, p) => Math.max(m, p.cx + p.r), 0) + L.radius + 200;
+      fy = 0;
+    }
+    L.cx = fx; L.cy = fy;
+    placed.push({ cx: fx, cy: fy, r: L.radius });
+  }
+
+  // Step 5: recenter overall bbox onto requested center
+  let gMinX = Infinity, gMaxX = -Infinity, gMinY = Infinity, gMaxY = -Infinity;
+  for (const L of layouts) {
+    for (const n of L.nodes) {
+      const x = n.x + L.cx;
+      const y = n.y + L.cy;
+      gMinX = Math.min(gMinX, x); gMaxX = Math.max(gMaxX, x);
+      gMinY = Math.min(gMinY, y); gMaxY = Math.max(gMaxY, y);
+    }
+  }
+  const gCx = Number.isFinite(gMinX) ? (gMinX + gMaxX) / 2 : 0;
+  const gCy = Number.isFinite(gMinY) ? (gMinY + gMaxY) / 2 : 0;
+
+  const positions = new Map<string, Position>();
+  for (const L of layouts) {
+    for (const n of L.nodes) {
+      positions.set(n.id, {
+        x: n.x + L.cx - gCx + center.x,
+        y: n.y + L.cy - gCy + center.y,
+      });
+    }
+  }
   return positions;
 }
 
@@ -461,6 +722,9 @@ class LayoutService {
       case 'force':
         positions = applyForceLayout(graph, elements, { ...options, center });
         break;
+      case 'clusters':
+        positions = applyClustersLayout(graph, elements, { ...options, center });
+        break;
       case 'circular':
         // Scale based on number of nodes - need circumference >= nodeCount * nodeWidth
         // Circumference = 2πr, so r >= (n * nodeWidth) / 2π ≈ n * 45 for 280px nodes
@@ -492,6 +756,8 @@ class LayoutService {
     switch (layoutType) {
       case 'force':
         return 'Force (clusters)';
+      case 'clusters':
+        return 'Clusters (îlots)';
       case 'circular':
         return 'Circulaire';
       case 'grid':
@@ -510,6 +776,8 @@ class LayoutService {
     switch (layoutType) {
       case 'force':
         return 'Regroupe les elements connectes, separe les clusters';
+      case 'clusters':
+        return 'Regroupe chaque communaute en ilot separe';
       case 'circular':
         return 'Dispose les elements en cercle';
       case 'grid':
@@ -525,7 +793,7 @@ class LayoutService {
    * Get all available layout types
    */
   getAvailableLayouts(): LayoutType[] {
-    return ['force', 'hierarchy', 'circular', 'grid', 'random'];
+    return ['clusters', 'force', 'hierarchy', 'circular', 'grid', 'random'];
   }
 }
 
