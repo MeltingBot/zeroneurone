@@ -28,6 +28,7 @@ import {
 } from '../db/repositories';
 import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
+import { deriveRoomId } from '../services/cryptoService';
 import { getYMaps } from '../types/yjs';
 import {
   elementToYMap,
@@ -92,7 +93,7 @@ interface DossierState {
   loadDossiers: () => Promise<void>;
   loadDossier: (id: DossierId) => Promise<void>;
   createDossier: (name: string, description?: string) => Promise<Dossier>;
-  createDossierWithId: (id: DossierId, name: string, description?: string) => Promise<Dossier>;
+  createDossierWithId: (id: DossierId, name: string, description?: string, origin?: 'created' | 'joined') => Promise<Dossier>;
   updateDossier: (id: DossierId, changes: Partial<Dossier>) => Promise<void>;
   deleteDossier: (id: DossierId) => Promise<void>;
   unloadDossier: () => void;
@@ -498,8 +499,36 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const currentDossierId = syncService.getDossierId();
 
       if (!ydoc || currentDossierId !== id) {
-        // Open Y.Doc in local mode (creates or loads from IndexedDB)
-        ydoc = await syncService.openLocal(id);
+        // Auto-resume shared session if we have credentials persisted on
+        // the dossier (set by JoinPage or by `Share` in syncStore). Without
+        // this, opening `/dossier/{uuid}` directly falls into local-only
+        // mode and the user sees their IndexedDB Y.Doc — which may be stale
+        // or incomplete relative to the live shared session — instead of
+        // re-syncing with peers. The keys are local-only (Dexie at-rest
+        // encrypted via DEK), never broadcast.
+        const canAutoResume =
+          dossier.lastSharedKey &&
+          syncService.isServerConfigured();
+        if (canAutoResume) {
+          try {
+            const roomId = await deriveRoomId(id, dossier.lastSharedKey!);
+            ydoc = await syncService.openShared(
+              id,
+              dossier.lastSharedKey!,
+              roomId,
+              dossier.lastSharedAsync ?? false,
+            );
+          } catch (err) {
+            console.warn(
+              '[loadDossier] Auto-resume of shared session failed, falling back to local mode:',
+              err,
+            );
+            ydoc = await syncService.openLocal(id);
+          }
+        } else {
+          // Open Y.Doc in local mode (creates or loads from IndexedDB)
+          ydoc = await syncService.openLocal(id);
+        }
       }
 
       // If in shared mode, wait for initial WebSocket sync before reading Y.Doc.
@@ -518,8 +547,33 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const metaDescription = metaMap.get('description') as string | undefined;
 
       // Capture joiner status BEFORE updating description (used later for
-      // deciding whether to broadcast meta/assets or receive them)
-      const isJoiner = dossier.description?.startsWith('Session partagée rejointe') ?? false;
+      // deciding whether to broadcast meta/assets or receive them, AND
+      // whether to push local Dexie into the shared Y.Doc).
+      //
+      // Authoritative signal: `dossier.origin === 'joined'`. This field is
+      // set explicitly by JoinPage at the moment the local dossier is
+      // created. It is i18n- and edit-proof.
+      //
+      // Legacy fallback: dossiers created before this field existed have
+      // `origin === undefined`. For those we look at the description prefix
+      // that JoinPage used to set ("Session partagée rejointe …"). This is
+      // best-effort — if the user has localised the string or edited the
+      // description, the fallback misses and the dossier is treated as
+      // 'created'. To self-heal, when we DO detect the prefix on a dossier
+      // with no `origin`, we backfill `origin = 'joined'` so subsequent
+      // loads use the robust path.
+      const descriptionLooksLikeJoin =
+        dossier.description?.startsWith('Session partagée rejointe') ?? false;
+      const isJoiner =
+        dossier.origin === 'joined' ||
+        (dossier.origin === undefined && descriptionLooksLikeJoin);
+
+      if (isJoiner && dossier.origin === undefined) {
+        // Backfill the durable flag so future loads don't depend on the
+        // description string (which we're about to overwrite below).
+        await dossierRepository.update(id, { origin: 'joined' });
+        dossier = { ...dossier, origin: 'joined' };
+      }
 
       // If Y.Doc has meta but local dossier has default values, update local
       if (metaName && isJoiner) {
@@ -537,26 +591,34 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
       // Migrate Dexie → Y.Doc only when safe.
       //
-      // The Dexie→Y.Doc migration was the source of the "elements pile up at
-      // (0,0) during collab" bug: a joiner whose local Dexie still held stale
-      // copies of these elements (from a prior session, or from an importer
-      // that defaulted missing positions to (0,0)) would push those stale
-      // rows into the shared Y.Doc. CRDT last-writer-wins on positionX/Y
-      // then propagated (0,0) to every peer, overwriting the correct
-      // positions the originating peer had set.
+      // The original collab bug ("elements pile up at (0,0)") came from a
+      // *joiner* whose local Dexie held stale or default-position rows for
+      // the dossier being joined: the joiner pushed those rows into the
+      // shared Y.Doc, and CRDT last-writer-wins on positionX/Y propagated
+      // (0,0) to every peer, overwriting the originator's correct
+      // positions.
       //
-      // Two safeguards:
-      //  1. Never migrate in shared mode. Once a dossier is collaborative,
-      //     the Y.Doc is the source of truth — we trust what the network
-      //     delivered after waitForSync(), not local Dexie.
-      //  2. Record a `_dexieMigrated` flag inside metaMap after a successful
-      //     local-mode migration. This flag rides with the Y.Doc (replicates
-      //     via CRDT), so even if a peer later opens the same dossier in
-      //     local mode, the flag is visible and the migration is skipped.
-      const isSharedModeAtLoad = initialSyncState.mode === 'shared';
+      // Safeguards:
+      //  1. Joiners NEVER migrate from Dexie. A joiner is identified by the
+      //     durable `dossier.origin === 'joined'` flag set by JoinPage at
+      //     dossier creation time (with a description-prefix fallback for
+      //     dossiers created before that field existed; that fallback also
+      //     backfills the flag above so it self-heals).
+      //  2. The originator (local mode, OR shared mode if they own the
+      //     dossier) keeps the ability to migrate, so a dossier created in
+      //     local mode and immediately shared still pushes its Dexie
+      //     content to the Y.Doc. v2.41.2 broke this by blocking migration
+      //     in shared mode for everyone — including the originator, whose
+      //     Y.Doc could be empty (e.g. fresh IndexedDB on a new device) and
+      //     who was the only peer with the data.
+      //  3. A `_dexieMigrated` flag is recorded inside metaMap after a
+      //     successful migration so it never re-runs. The flag rides with
+      //     the Y.Doc via CRDT, so even if a joiner is misidentified as an
+      //     originator (e.g. fallback misses), they still see the flag set
+      //     by the real originator and skip the migration.
       const alreadyMigrated = metaMap.get('_dexieMigrated') === true;
       const shouldMigrateElements =
-        !isSharedModeAtLoad && !alreadyMigrated && elementsMap.size === 0;
+        !isJoiner && !alreadyMigrated && elementsMap.size === 0;
 
       if (shouldMigrateElements) {
         const [dexieElements, dexieLinks] = await Promise.all([
@@ -577,18 +639,14 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
           metaMap.set('_dexieMigrated', true);
         });
-      } else if (!isSharedModeAtLoad && elementsMap.size === 0 && alreadyMigrated) {
-        // Edge case: Y.Doc was wiped (e.g., IndexedDB cleared) but the flag
-        // survived in a previous session's metaMap that was just re-loaded.
-        // In practice flag and content live in the same Y.Doc, so they're
-        // either both present or both absent. This branch is defensive.
       }
 
-      // Same guard for the tabs migration.
+      // Same guard for the tabs migration: joiners never push their local
+      // tabs into the shared Y.Doc, originators can.
       const { tabs: tabsYMap } = getYMaps(ydoc);
       const tabsAlreadyMigrated = metaMap.get('_tabsMigrated') === true;
       const shouldMigrateTabs =
-        !isSharedModeAtLoad && !tabsAlreadyMigrated && tabsYMap.size === 0;
+        !isJoiner && !tabsAlreadyMigrated && tabsYMap.size === 0;
 
       if (shouldMigrateTabs) {
         const dexieTabs = await tabRepository.getByDossier(id);
@@ -600,8 +658,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             metaMap.set('_tabsMigrated', true);
           });
         } else {
-          // No tabs to migrate, still record the flag so we don't re-check
-          // every subsequent load.
           ydoc.transact(() => {
             metaMap.set('_tabsMigrated', true);
           });
@@ -830,8 +886,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     return dossier;
   },
 
-  createDossierWithId: async (id: DossierId, name: string, description?: string) => {
-    const dossier = await dossierRepository.createWithId(id, name, description);
+  createDossierWithId: async (id: DossierId, name: string, description?: string, origin: 'created' | 'joined' = 'joined') => {
+    const dossier = await dossierRepository.createWithId(id, name, description, origin);
     // Only add to list if it's not already there
     set((state) => {
       const exists = state.dossiers.some(inv => inv.id === id);

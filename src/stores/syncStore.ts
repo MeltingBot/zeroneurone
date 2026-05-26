@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { syncService } from '../services/syncService';
+import { dossierRepository } from '../db/repositories';
 import type { SyncState, UserPresence } from '../types/yjs';
 import { DEFAULT_SYNC_STATE, getRandomUserColor, generateUserName } from '../types/yjs';
 
@@ -366,6 +367,16 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       // Build the share URL with encryption key in fragment (async for hash computation)
       const shareUrl = await syncService.buildShareUrl(dossierId, encryptionKey, dossierName, asyncEnabled);
 
+      // Persist key + async flag on the dossier (Dexie-local only) so the
+      // user can reopen `/dossier/{uuid}` in shared mode without re-clicking
+      // the share link. NEVER written to the Y.Doc metaMap.
+      await dossierRepository.update(dossierId, {
+        lastSharedKey: encryptionKey,
+        lastSharedAsync: asyncEnabled,
+      }).catch((err) => {
+        console.warn('[syncStore.share] Failed to persist share config:', err);
+      });
+
       set({ encryptionKey });
 
       return { shareUrl, encryptionKey };
@@ -373,6 +384,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
     // Stop sharing
     unshare: async () => {
+      const dossierId = syncService.getDossierId();
       if (awarenessUnsubscribe) {
         awarenessUnsubscribe();
         awarenessUnsubscribe = null;
@@ -380,6 +392,17 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       awarenessSetUp = false;
       await syncService.unshare();
       set({ remoteUsers: [], encryptionKey: null });
+
+      // Clear the persisted share config so the dossier reopens in local
+      // mode next time. Use undefined (not null) so Dexie strips the field.
+      if (dossierId) {
+        await dossierRepository.update(dossierId, {
+          lastSharedKey: undefined,
+          lastSharedAsync: undefined,
+        }).catch((err) => {
+          console.warn('[syncStore.unshare] Failed to clear share config:', err);
+        });
+      }
     },
 
     // Update local user name

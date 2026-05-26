@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.41.3
+
+### Fixes
+- **Régression collab v2.41.2 : peers distants voyaient un projet vide** — la garde anti-race était trop large : v2.41.2 bloquait la migration Dexie→Y.Doc pour **tout le monde** en mode shared, alors qu'il fallait seulement la bloquer pour les *joiners*. Un originator qui partage un dossier dont le Y.Doc local est vide (premier partage, nouveau device, IndexedDB nettoyée) ne pouvait plus pousser sa Dexie. Le contrôle d'identité « joiner » repose désormais sur un champ stable `dossier.origin: 'created' | 'joined'`, défini explicitement par `JoinPage` à la création du dossier local — i18n-proof et edit-proof (l'ancien check string-based via préfixe `Session partagée rejointe` est conservé en fallback uniquement pour les dossiers créés avant ce champ, et déclenche un backfill du flag persistant pour s'auto-réparer).
+- **Ouvrir directement `/dossier/{uuid}` reprenait la session en mode local au lieu de rejoindre la collab partagée** — quand un dossier a déjà été partagé (originator) ou rejoint (joiner), la clé E2E et le flag async sont désormais persistés **localement** sur le dossier (Dexie, chiffré au repos via la DEK existante — **jamais** broadcastés dans le Y.Doc). À l'ouverture, `loadDossier` re-déclenche automatiquement `syncService.openShared()` avec ces credentials, déduisant le roomId via `deriveRoomId(dossierId, key)`. En cas d'échec d'auto-resume (clé tournée par l'originator, serveur indisponible…), fallback transparent en mode local avec un `console.warn`. Les credentials sont effacés à l'`unshare`.
+
 ## 2.41.2
 
 ### Fixes

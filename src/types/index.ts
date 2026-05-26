@@ -207,6 +207,33 @@ export interface Dossier {
   retentionDays?: number | null;
   /** Behavior when retention expires */
   retentionPolicy?: 'warn' | 'readonly' | 'delete' | 'redact';
+  /**
+   * How this dossier appeared on this device.
+   * - 'created': the user created the dossier locally (HomePage / import / API). They own the data and may push their Dexie to the Y.Doc.
+   * - 'joined':  the user obtained the dossier via a shared link (JoinPage). They MUST NOT push their local Dexie to the shared Y.Doc — its content is authoritative on the network.
+   *
+   * Absent on dossiers created before this field existed; in that case
+   * loadDossier falls back to inspecting the description prefix that
+   * JoinPage used to set ("Session partagée rejointe ...").
+   */
+  origin?: 'created' | 'joined';
+  /**
+   * E2E encryption key of the most recent shared session for this dossier,
+   * persisted **locally only** (Dexie at-rest encryption applies via DEK).
+   * Used by loadDossier to auto-resume the shared session when the user opens
+   * `/dossier/{uuid}` directly, instead of falling back to local-only mode
+   * and missing peer sync.
+   *
+   * MUST NEVER be written to the Y.Doc metaMap or otherwise broadcast — that
+   * would defeat the E2E security model.
+   *
+   * Cleared on explicit unshare(). May become stale if the originator
+   * re-shares (rotates the key); in that case auto-resume fails and falls
+   * back to local mode with a console warning.
+   */
+  lastSharedKey?: string;
+  /** Async buffering flag for the last shared session (paired with lastSharedKey). */
+  lastSharedAsync?: boolean;
 }
 
 export interface DossierSettings {

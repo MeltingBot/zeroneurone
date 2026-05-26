@@ -82,6 +82,7 @@ export const dossierRepository = {
       },
       isFavorite: false,
       isArchived: false,
+      origin: 'created',
     };
 
     await db.dossiers.add(dossier);
@@ -92,7 +93,12 @@ export const dossierRepository = {
    * Create an dossier with a specific UUID
    * Used when joining a shared dossier to maintain the same ID across clients
    */
-  async createWithId(id: DossierId, name: string, description: string = ''): Promise<Dossier> {
+  async createWithId(
+    id: DossierId,
+    name: string,
+    description: string = '',
+    origin: 'created' | 'joined' = 'joined',
+  ): Promise<Dossier> {
     // Check if dossier with this ID already exists
     const existing = await db.dossiers.get(id);
     if (existing) {
@@ -124,6 +130,7 @@ export const dossierRepository = {
       },
       isFavorite: false,
       isArchived: false,
+      origin,
     };
 
     await db.dossiers.add(dossier);

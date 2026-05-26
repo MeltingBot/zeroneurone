@@ -186,12 +186,29 @@ export function JoinPage() {
 
       if (!existingDossier) {
         const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-        // Create dossier with the specific UUID from the share link
+        // Create dossier with the specific UUID from the share link.
+        // Mark origin = 'joined' so loadDossier never pushes our local Dexie
+        // into the shared Y.Doc (this caused the (0,0) pile-up bug). The
+        // shared Y.Doc is authoritative.
         existingDossier = await createDossierWithId(
           dossierId,
           dossierName || t('join.defaultSessionName'),
-          t('join.sharedSessionJoined', { date: new Date().toLocaleDateString(locale) })
+          t('join.sharedSessionJoined', { date: new Date().toLocaleDateString(locale) }),
+          'joined',
         );
+      }
+
+      // Persist the share credentials on the dossier so opening
+      // `/dossier/{uuid}` later auto-resumes the shared session instead of
+      // falling back to a local-only view that may be missing data. Local
+      // Dexie only — never broadcast.
+      if (encryptionKeyFromUrl) {
+        await dossierRepository.update(dossierId, {
+          lastSharedKey: encryptionKeyFromUrl,
+          lastSharedAsync: urlParams.current?.asyncEnabled ?? false,
+        }).catch((err) => {
+          console.warn('[JoinPage] Failed to persist share config:', err);
+        });
       }
 
       // Close any existing Y.Doc first
