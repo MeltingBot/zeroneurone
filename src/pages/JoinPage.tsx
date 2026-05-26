@@ -26,6 +26,7 @@ import { useDossierStore, useSyncStore } from '../stores';
 import { syncService } from '../services/syncService';
 import { isValidKeyString } from '../services/cryptoService';
 import { dossierRepository } from '../db/repositories';
+import type { Dossier } from '../types';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
@@ -202,11 +203,22 @@ export function JoinPage() {
       // `/dossier/{uuid}` later auto-resumes the shared session instead of
       // falling back to a local-only view that may be missing data. Local
       // Dexie only — never broadcast.
+      //
+      // Also backfill `origin = 'joined'` for legacy dossiers that were
+      // joined before this field existed (their description prefix was
+      // overwritten on first successful sync, so the fallback heuristic in
+      // loadDossier can no longer detect them). Don't override an explicit
+      // 'created' — that would be the originator opening their own share
+      // link, which is rare but legitimate.
       if (encryptionKeyFromUrl) {
-        await dossierRepository.update(dossierId, {
+        const updates: Partial<Dossier> = {
           lastSharedKey: encryptionKeyFromUrl,
           lastSharedAsync: urlParams.current?.asyncEnabled ?? false,
-        }).catch((err) => {
+        };
+        if (existingDossier.origin === undefined) {
+          updates.origin = 'joined';
+        }
+        await dossierRepository.update(dossierId, updates).catch((err) => {
           console.warn('[JoinPage] Failed to persist share config:', err);
         });
       }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.4
+
+### Fixes
+- **Backfill `dossier.origin = 'joined'` lors d'un re-join d'un dossier legacy** — un joiner qui avait rejoint un dossier avant v2.41.3 a `origin === undefined` ; sa description a été écrasée à la première sync, donc le fallback prefix dans `loadDossier` ne le détecte plus. Au re-clic du lien `/join/...`, [JoinPage](src/pages/JoinPage.tsx) backfille désormais `origin = 'joined'` sur le dossier existant (uniquement si `origin` est encore `undefined`, pour ne pas écraser un `'created'` légitime d'un originator cliquant son propre lien). Sans ce fix, l'auto-resume de v2.41.3 ramenait bien le joiner en shared mode, mais le check `isJoiner` retombait à `false` et autorisait une migration Dexie→Y.Doc en cas de timeout de sync — exactement le scénario que v2.41.2 cherchait à bloquer.
+
 ## 2.41.3
 
 ### Fixes
