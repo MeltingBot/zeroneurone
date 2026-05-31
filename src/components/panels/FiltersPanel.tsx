@@ -12,8 +12,10 @@ import {
   Calendar,
   AlertCircle,
   MessageSquare,
+  MousePointer2,
+  SquareDashed,
 } from 'lucide-react';
-import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useSelectionStore } from '../../stores';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence, Element, Comment, ViewFilters } from '../../types';
 import { getGeoCenter } from '../../utils/geo';
@@ -192,11 +194,13 @@ export function FiltersPanel() {
     showAllElements,
   } = useViewStore();
   const { isolated } = useInsightsStore();
+  const selectElements = useSelectionStore((s) => s.selectElements);
+  const deselectElement = useSelectionStore((s) => s.deselectElement);
 
   const isActive = hasActiveFilters();
 
-  // Count elements matching current filters
-  const matchingCount = useMemo(() => {
+  // IDs of elements matching current filters (visible + matching all active criteria)
+  const matchingIds = useMemo(() => {
     return elements.filter((el) => {
       // Check hidden
       if (hiddenElementIds.has(el.id)) return false;
@@ -227,8 +231,19 @@ export function FiltersPanel() {
       }
 
       return true;
-    }).length;
+    }).map((el) => el.id);
   }, [elements, hiddenElementIds, filters]);
+
+  const matchingCount = matchingIds.length;
+
+  const handleSelectMatching = useCallback(() => {
+    if (matchingIds.length === 0) return;
+    selectElements(matchingIds, true);
+  }, [matchingIds, selectElements]);
+
+  const handleDeselectMatching = useCallback(() => {
+    matchingIds.forEach((id) => deselectElement(id));
+  }, [matchingIds, deselectElement]);
 
   // Get all unique tags from elements with counts
   const tagsWithCounts = useMemo(() => {
@@ -310,23 +325,45 @@ export function FiltersPanel() {
               {t('filters.elementsCount', { matching: matchingCount, total: elements.length })}
             </span>
           </div>
-          {(isActive || hiddenElementIds.size > 0) && (
-            <button
-              onClick={() => {
-                useHistoryStore.getState().pushAction({
-                  type: 'clear-filters',
-                  undo: { snapshot: { filters: { ...filters }, hiddenElementIds: Array.from(hiddenElementIds) } },
-                  redo: {},
-                });
-                clearFilters();
-                showAllElements();
-              }}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-            >
-              <RotateCcw size={12} />
-              {t('filters.clearAll')}
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {matchingCount > 0 && (
+              <>
+                <button
+                  onClick={handleSelectMatching}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+                  title={t('filters.selectMatchingDesc')}
+                >
+                  <MousePointer2 size={12} />
+                  {t('filters.selectMatching')}
+                </button>
+                <button
+                  onClick={handleDeselectMatching}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+                  title={t('filters.deselectMatchingDesc')}
+                >
+                  <SquareDashed size={12} />
+                  {t('filters.deselectMatching')}
+                </button>
+              </>
+            )}
+            {(isActive || hiddenElementIds.size > 0) && (
+              <button
+                onClick={() => {
+                  useHistoryStore.getState().pushAction({
+                    type: 'clear-filters',
+                    undo: { snapshot: { filters: { ...filters }, hiddenElementIds: Array.from(hiddenElementIds) } },
+                    redo: {},
+                  });
+                  clearFilters();
+                  showAllElements();
+                }}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+              >
+                <RotateCcw size={12} />
+                {t('filters.clearAll')}
+              </button>
+            )}
+          </div>
         </div>
         {hiddenElementIds.size > 0 && (
           <p className="text-[10px] text-text-tertiary mt-1">

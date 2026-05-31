@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.5
+
+### Fixes
+- **Sélectionner/désélectionner le résultat d'un filtre** — deux nouveaux boutons dans le header du panneau Filtres (à côté de "Tout effacer") permettent d'ajouter à la sélection courante tous les éléments correspondant aux filtres actifs, ou de les en retirer. Les boutons n'apparaissent que quand au moins un élément correspond. Mode additif (`addToSelection: true`) pour rester composable avec une sélection manuelle existante. i18n : 11 langues.
+
 ## 2.41.4
 
 ### Fixes
