@@ -349,6 +349,8 @@
     "selectAll": "Sélectionner tous les résultats",
     "saveAsView": "Enregistrer comme vue",
     "recentQueries": "Récentes",
+    "deselectAll": "Désélectionner tous les résultats",
+    "clearHistory": "Effacer l'historique",
     "syntaxExample1": "tag = \"personne\" AND ville = \"Paris\"",
     "syntaxExample2": "confidence > 60 AND date >= 2024-01-01",
     "syntaxExample3": "notes CONTAINS \"blanchiment\"",

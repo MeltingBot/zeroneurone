@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.6
+
+### Fixes
+- **ZNQuery : désélection des résultats + effacer l'historique** — le bouton "Sélectionner tous les résultats" du panneau Query passe en mode additif (`addToSelection: true`), cohérent avec les filtres v2.41.5. Nouveau bouton "Désélectionner" (`SquareDashed`) à côté qui retire uniquement les éléments/liens résultats de la sélection courante. Bouton "Effacer l'historique" (`Trash2`) dans le header de la liste des requêtes récentes — l'historique reste in-session (max 5). i18n : 11 langues.
+
 ## 2.41.5
 
 ### Fixes

@@ -335,6 +335,8 @@
     "selectAll": "Seleccionar tots",
     "saveAsView": "Desar com a vista",
     "recentQueries": "Recents",
+    "deselectAll": "Desseleccionar tots els resultats",
+    "clearHistory": "Esborrar historial",
     "syntaxExample1": "tag = \"persona\" AND ciutat = \"París\"",
     "syntaxExample2": "confidence > 60 AND date >= 2024-01-01",
     "syntaxExample3": "notes CONTAINS \"frau\"",

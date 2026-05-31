@@ -7,7 +7,7 @@ import { QueryBuilderText } from './QueryBuilderText';
 import { QueryBuilderVisual } from './QueryBuilderVisual';
 import { QueryResultsTable } from './QueryResultsTable';
 import { SavedQueriesList } from './SavedQueriesList';
-import { X, Type, LayoutList, Filter, Table2, CheckSquare, Eye, History, SearchX } from 'lucide-react';
+import { X, Type, LayoutList, Filter, Table2, CheckSquare, SquareDashed, Eye, History, SearchX, Trash2 } from 'lucide-react';
 
 export function QueryPanel() {
   const { t } = useTranslation('panels');
@@ -22,7 +22,9 @@ export function QueryPanel() {
   const currentAst = useQueryStore((s) => s.currentAst);
   const loadSavedQueries = useQueryStore((s) => s.loadSavedQueries);
   const selectAllResults = useQueryStore((s) => s.selectAllResults);
+  const deselectAllResults = useQueryStore((s) => s.deselectAllResults);
   const recentQueries = useQueryStore((s) => s.recentQueries);
+  const clearRecentQueries = useQueryStore((s) => s.clearRecentQueries);
   const currentDossier = useDossierStore((s) => s.currentDossier);
   const saveView = useViewStore((s) => s.saveView);
   const [showHistory, setShowHistory] = useState(false);
@@ -117,9 +119,22 @@ export function QueryPanel() {
       {/* Recent queries (#12) */}
       {showHistory && recentQueries.length > 0 && (
         <div className="border-t border-border-default px-3 py-2">
-          <div className="flex items-center gap-1 mb-1.5">
-            <History size={12} className="text-text-tertiary" />
-            <span className="text-[10px] font-medium text-text-tertiary uppercase">{t('query.recentQueries')}</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1">
+              <History size={12} className="text-text-tertiary" />
+              <span className="text-[10px] font-medium text-text-tertiary uppercase">{t('query.recentQueries')}</span>
+            </div>
+            <button
+              onClick={() => {
+                clearRecentQueries();
+                setShowHistory(false);
+              }}
+              className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-text-tertiary hover:text-text-primary hover:bg-bg-secondary rounded transition-colors"
+              title={t('query.clearHistory')}
+            >
+              <Trash2 size={10} />
+              {t('query.clearHistory')}
+            </button>
           </div>
           {recentQueries.map((q, i) => (
             <button
@@ -170,13 +185,22 @@ export function QueryPanel() {
 
             {/* Select all (#6) */}
             {(results.elementIds.size > 0 || results.linkIds.size > 0) && (
-              <button
-                onClick={selectAllResults}
-                className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
-                title={t('query.selectAll')}
-              >
-                <CheckSquare size={12} />
-              </button>
+              <>
+                <button
+                  onClick={selectAllResults}
+                  className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
+                  title={t('query.selectAll')}
+                >
+                  <CheckSquare size={12} />
+                </button>
+                <button
+                  onClick={deselectAllResults}
+                  className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
+                  title={t('query.deselectAll')}
+                >
+                  <SquareDashed size={12} />
+                </button>
+              </>
             )}
 
             {/* Save as View (#13) */}

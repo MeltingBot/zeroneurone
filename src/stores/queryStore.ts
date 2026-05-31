@@ -46,6 +46,8 @@ interface QueryState {
   clear: () => void;
   toggleFilter: () => void;
   selectAllResults: () => void;
+  deselectAllResults: () => void;
+  clearRecentQueries: () => void;
 
   // Saved queries
   loadSavedQueries: (dossierId: DossierId) => Promise<void>;
@@ -153,8 +155,19 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     useSelectionStore.getState().selectBoth(
       [...results.elementIds],
       [...results.linkIds],
+      true,
     );
   },
+
+  deselectAllResults: () => {
+    const { results } = get();
+    if (!results) return;
+    const sel = useSelectionStore.getState();
+    results.elementIds.forEach((id) => sel.deselectElement(id));
+    results.linkIds.forEach((id) => sel.deselectLink(id));
+  },
+
+  clearRecentQueries: () => set({ recentQueries: [] }),
 
   clear: () => {
     set({

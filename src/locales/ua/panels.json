@@ -335,6 +335,8 @@
     "selectAll": "Вибрати все",
     "saveAsView": "Зберегти як вигляд",
     "recentQueries": "Нещодавні",
+    "deselectAll": "Зняти вибір з усіх результатів",
+    "clearHistory": "Очистити історію",
     "syntaxExample1": "tag = \"особа\" AND місто = \"Париж\"",
     "syntaxExample2": "confidence > 60 AND date >= 2024-01-01",
     "syntaxExample3": "notes CONTAINS \"шахрайство\"",

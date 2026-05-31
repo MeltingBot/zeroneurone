@@ -335,6 +335,8 @@
     "selectAll": "Zaznacz wszystkie",
     "saveAsView": "Zapisz jako widok",
     "recentQueries": "Ostatnie",
+    "deselectAll": "Odznacz wszystkie wyniki",
+    "clearHistory": "Wyczyść historię",
     "syntaxExample1": "tag = \"osoba\" AND miasto = \"Paryż\"",
     "syntaxExample2": "confidence > 60 AND date >= 2024-01-01",
     "syntaxExample3": "notes CONTAINS \"oszustwo\"",
