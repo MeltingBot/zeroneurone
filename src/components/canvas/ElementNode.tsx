@@ -7,6 +7,7 @@ import type { Element } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import { useUIStore, useTagSetStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
+import { computeElementDimensions, getBaseSize } from '../../utils/elementDimensions';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -152,78 +153,20 @@ function ElementNodeComponent({ data }: NodeProps) {
   };
 
   // Use custom dimensions if set, otherwise calculate from base size
-  const sizeMap = {
-    small: 40,
-    medium: 56,
-    large: 72,
-  };
-  const baseSize =
-    typeof element.visual.size === 'number'
-      ? element.visual.size
-      : sizeMap[element.visual.size];
+  const baseSize = getBaseSize(element.visual.size);
 
   // Calculate default dimensions
   // Note: hasThumbnail doesn't depend on hideMedia - we still show thumbnail but blur it
   const hasThumbnail = Boolean(thumbnail);
 
-  const getDefaultDimensions = () => {
-    if (element.visual.customWidth && element.visual.customHeight) {
-      return {
-        width: element.visual.customWidth,
-        height: element.visual.customHeight,
-      };
-    }
-    if (hasThumbnail) {
-      return {
-        width: Math.max(baseSize * 1.2, 96),
-        height: Math.max(baseSize * 1.2, 96),
-      };
-    }
-
-    // Calculate size based on label
-    const label = element.label || t('empty.unnamed');
-    const labelLength = label.length;
-
-    // Estimate text width (average 7px per character + padding)
-    const estimatedTextWidth = labelLength * 7 + 24;
-
-    const shape = element.visual.shape;
-
-    if (shape === 'rectangle') {
-      // Rectangle: clearly wider than tall, horizontal card-like shape
-      const width = Math.max(estimatedTextWidth * 1.2, 120);
-      const height = Math.max(baseSize * 0.5, 40);
-      return { width: Math.min(width, 280), height };
-    }
-
-    if (shape === 'square') {
-      // Square: equal width and height, compact
-      const size = Math.max(baseSize, 60);
-      return { width: size, height: size };
-    }
-
-    if (shape === 'circle') {
-      // Circle: need to be big enough to contain text
-      // Diameter should accommodate text width with some margin
-      const size = Math.max(estimatedTextWidth * 0.8, baseSize, 50);
-      return { width: Math.min(size, 150), height: Math.min(size, 150) };
-    }
-
-    if (shape === 'diamond') {
-      // Diamond: rotated 45°, needs more space
-      const size = Math.max(estimatedTextWidth * 0.9, baseSize, 60);
-      return { width: Math.min(size, 150), height: Math.min(size, 150) };
-    }
-
-    if (shape === 'hexagon') {
-      // Hexagon: clip-path clips corners, needs slightly more space than circle
-      const size = Math.max(estimatedTextWidth * 0.85, baseSize, 55);
-      return { width: Math.min(size, 150), height: Math.min(size, 150) };
-    }
-
-    // Default fallback
-    return { width: baseSize, height: baseSize };
-  };
+  // Shared with the auto-layout engine (graphWorker / layoutService) so that
+  // anti-collision spacing matches the actual rendered footprint.
+  const getDefaultDimensions = () =>
+    computeElementDimensions(
+      element.visual,
+      element.label || t('empty.unnamed'),
+      hasThumbnail,
+    );
 
   const defaultDimensions = getDefaultDimensions();
 

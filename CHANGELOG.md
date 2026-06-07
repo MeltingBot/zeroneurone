@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.7
+
+### Fixes
+- **Ré-arrangement : fin des chevauchements de formes** — les algorithmes de layout (force, clusters, hiérarchie, circulaire, grille, dispersion) prennent désormais en compte la **taille réelle** de chaque élément (forme, taille, dimensions personnalisées, vignette image) au lieu d'une estimation basée sur la longueur du label avec une hauteur fixe de 40px. Nouvelle source unique de vérité (`utils/elementDimensions.ts`) partagée entre le rendu (`ElementNode`) et le moteur de layout (`graphWorker` + `layoutService`), avec transmission des propriétés visuelles au worker. Les layouts circulaire, grille et dispersion gagnent un espacement / anti-collision basé sur la taille (ils n'en avaient aucun).
+
 ## 2.41.6
 
 ### Fixes

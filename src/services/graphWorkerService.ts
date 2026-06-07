@@ -5,7 +5,7 @@
  * Provides async methods for insights, layout, and path computations.
  */
 
-import type { Element, Link } from '../types';
+import type { Element, ElementShape, ElementSize, Link } from '../types';
 
 // ============================================================================
 // TYPES
@@ -16,6 +16,11 @@ interface SerializedElement {
   label: string;
   isGroup?: boolean;
   position: { x: number; y: number };
+  shape?: ElementShape;
+  size?: ElementSize;
+  customWidth?: number;
+  customHeight?: number;
+  hasImage?: boolean;
 }
 
 interface SerializedLink {
@@ -105,6 +110,12 @@ class GraphWorkerService {
       label: el.label,
       isGroup: el.isGroup,
       position: el.position,
+      // Visual props so the worker can compute real footprints for layout
+      shape: el.visual?.shape,
+      size: el.visual?.size,
+      customWidth: el.visual?.customWidth,
+      customHeight: el.visual?.customHeight,
+      hasImage: Boolean(el.visual?.image),
     }));
   }
 

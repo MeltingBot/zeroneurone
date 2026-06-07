@@ -11,8 +11,10 @@ import louvain from 'graphology-communities-louvain';
 import { bidirectional } from 'graphology-shortest-path';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
-import { circular, random } from 'graphology-layout';
+import { random } from 'graphology-layout';
 import dagre from '@dagrejs/dagre';
+import { computeElementDimensions } from '../utils/elementDimensions';
+import type { ElementShape, ElementSize } from '../types';
 
 // ============================================================================
 // TYPES
@@ -24,6 +26,12 @@ interface SerializedElement {
   isGroup?: boolean;
   position: { x: number; y: number };
   properties?: { key: string; value: unknown }[];
+  /** Visual props used to compute the real rendered footprint for layout. */
+  shape?: ElementShape;
+  size?: ElementSize;
+  customWidth?: number;
+  customHeight?: number;
+  hasImage?: boolean;
 }
 
 interface SerializedLink {
@@ -324,11 +332,11 @@ function computeLayout(
     case 'clusters':
       return applyClustersLayout(graph, filteredElements, center);
     case 'circular':
-      return applyCircularLayout(graph, center, filteredElements.length);
+      return applyCircularLayout(graph, filteredElements, center);
     case 'grid':
-      return applyGridLayout(graph, center);
+      return applyGridLayout(graph, filteredElements, center);
     case 'random':
-      return applyRandomLayout(graph, center, filteredElements.length);
+      return applyRandomLayout(graph, filteredElements, center);
     case 'hierarchy':
       return applyHierarchyLayout(graph, links, filteredElements, center, filteredElements.length);
     default:
@@ -337,11 +345,8 @@ function computeLayout(
 }
 
 function applyForceLayout(graph: Graph, elements: SerializedElement[], center: { x: number; y: number }): Record<string, { x: number; y: number }> {
-  // Build label lookup for per-node width estimation
-  const labelMap = new Map<string, string>();
-  for (const el of elements) {
-    labelMap.set(el.id, el.label || '');
-  }
+  // Per-node real dimensions for size-aware spacing
+  const dimsMap = buildDimsMap(elements);
 
   // Random initial positions for nodes without coordinates
   graph.forEachNode((node) => {
@@ -392,14 +397,13 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
   const nodeData: { id: string; x: number; y: number; w: number; h: number }[] = [];
 
   for (const { node, x, y } of rawPositions) {
-    const label = labelMap.get(node) || '';
-    const w = estimateNodeWidth(label, 120);
+    const d = dimsFor(dimsMap, node);
     nodeData.push({
       id: node,
       x: (x - centerX) * scaleFactor + center.x,
       y: (y - centerY) * scaleFactor + center.y,
-      w,
-      h: ESTIMATED_NODE_HEIGHT,
+      w: d.w,
+      h: d.h,
     });
   }
 
@@ -430,7 +434,7 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
         } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
           hasOverlap = true;
           b.x += (a.w / 2 + b.w / 2 + gap) * Math.random();
-          b.y += ESTIMATED_NODE_HEIGHT * Math.random();
+          b.y += (a.h / 2 + b.h / 2 + gap) * Math.random();
         }
       }
     }
@@ -451,8 +455,7 @@ function applyClustersLayout(
   elements: SerializedElement[],
   center: { x: number; y: number },
 ): Record<string, { x: number; y: number }> {
-  const labelMap = new Map<string, string>();
-  for (const el of elements) labelMap.set(el.id, el.label || '');
+  const dimsMap = buildDimsMap(elements);
 
   postProgress(15, 'detecting communities');
 
@@ -498,8 +501,7 @@ function applyClustersLayout(
     let totalArea = 0;
     let maxNodeSize = 0;
     for (const n of nodes) {
-      const w = estimateNodeWidth(labelMap.get(n) || '', 120);
-      const h = ESTIMATED_NODE_HEIGHT;
+      const { w, h } = dimsFor(dimsMap, n);
       dims.set(n, { w, h });
       totalArea += (w + GAP) * (h + GAP);
       maxNodeSize = Math.max(maxNodeSize, Math.max(w, h));
@@ -594,12 +596,15 @@ function applyClustersLayout(
   }
 
   if (singletons.length > 0) {
-    let maxW = 0;
+    // Cell sized to the largest singleton footprint to avoid inter-cell overlap
+    let maxW = 0, maxH = 0;
     for (const id of singletons) {
-      maxW = Math.max(maxW, estimateNodeWidth(labelMap.get(id) || '', 120));
+      const d = dimsFor(dimsMap, id);
+      maxW = Math.max(maxW, d.w);
+      maxH = Math.max(maxH, d.h);
     }
     const cellW = maxW + GAP;
-    const cellH = ESTIMATED_NODE_HEIGHT + GAP;
+    const cellH = maxH + GAP;
     const cols = Math.max(1, Math.ceil(Math.sqrt(singletons.length)));
     const rows = Math.ceil(singletons.length / cols);
     const offX = ((cols - 1) * cellW) / 2;
@@ -608,12 +613,13 @@ function applyClustersLayout(
     singletons.forEach((id, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
+      const d = dimsFor(dimsMap, id);
       nodeArr.push({
         id,
         x: col * cellW - offX,
         y: row * cellH - offY,
-        w: estimateNodeWidth(labelMap.get(id) || '', 120),
-        h: ESTIMATED_NODE_HEIGHT,
+        w: d.w,
+        h: d.h,
       });
     });
     let radius = 0;
@@ -684,15 +690,27 @@ function applyClustersLayout(
   return positions;
 }
 
-function applyCircularLayout(graph: Graph, center: { x: number; y: number }, nodeCount: number): Record<string, { x: number; y: number }> {
-  const scale = Math.max(300, nodeCount * 50);
-  circular.assign(graph, { scale });
+function applyCircularLayout(graph: Graph, elements: SerializedElement[], center: { x: number; y: number }): Record<string, { x: number; y: number }> {
+  const dimsMap = buildDimsMap(elements);
+  const nodes = graph.nodes();
+  const n = nodes.length;
+  const gap = 24;
+
+  // Radius large enough that the arc between adjacent nodes fits the widest
+  // node footprint — guarantees no overlap on the ring.
+  let maxStep = 0;
+  for (const id of nodes) {
+    const d = dimsFor(dimsMap, id);
+    maxStep = Math.max(maxStep, Math.max(d.w, d.h) + gap);
+  }
+  const radius = Math.max(300, (n * maxStep) / (2 * Math.PI));
 
   const positions: Record<string, { x: number; y: number }> = {};
-  graph.forEachNode((node) => {
-    positions[node] = {
-      x: (graph.getNodeAttribute(node, 'x') as number) + center.x,
-      y: (graph.getNodeAttribute(node, 'y') as number) + center.y,
+  nodes.forEach((id, i) => {
+    const angle = (2 * Math.PI * i) / n;
+    positions[id] = {
+      x: Math.cos(angle) * radius + center.x,
+      y: Math.sin(angle) * radius + center.y,
     };
   });
 
@@ -700,79 +718,154 @@ function applyCircularLayout(graph: Graph, center: { x: number; y: number }, nod
   return positions;
 }
 
-function applyGridLayout(graph: Graph, center: { x: number; y: number }): Record<string, { x: number; y: number }> {
-  const scale = 120;
-  const nodeCount = graph.order;
-  const cols = Math.ceil(Math.sqrt(nodeCount));
-  const rows = Math.ceil(nodeCount / cols);
-  const offsetX = ((cols - 1) * scale) / 2;
-  const offsetY = ((rows - 1) * scale) / 2;
+function applyGridLayout(graph: Graph, elements: SerializedElement[], center: { x: number; y: number }): Record<string, { x: number; y: number }> {
+  const dimsMap = buildDimsMap(elements);
+  const nodes = graph.nodes();
+  const gap = 32;
+
+  // Uniform cell sized to the largest footprint so no two cells overlap.
+  let maxW = 0, maxH = 0;
+  for (const id of nodes) {
+    const d = dimsFor(dimsMap, id);
+    maxW = Math.max(maxW, d.w);
+    maxH = Math.max(maxH, d.h);
+  }
+  const cellW = maxW + gap;
+  const cellH = maxH + gap;
+
+  const cols = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
+  const rows = Math.ceil(nodes.length / cols);
+  const offsetX = ((cols - 1) * cellW) / 2;
+  const offsetY = ((rows - 1) * cellH) / 2;
 
   const positions: Record<string, { x: number; y: number }> = {};
-  let index = 0;
-  graph.forEachNode((node) => {
+  nodes.forEach((id, index) => {
     const col = index % cols;
     const row = Math.floor(index / cols);
-    positions[node] = {
-      x: col * scale - offsetX + center.x,
-      y: row * scale - offsetY + center.y,
+    positions[id] = {
+      x: col * cellW - offsetX + center.x,
+      y: row * cellH - offsetY + center.y,
     };
-    index++;
   });
 
   postProgress(100, 'done');
   return positions;
 }
 
-function applyRandomLayout(graph: Graph, center: { x: number; y: number }, nodeCount: number): Record<string, { x: number; y: number }> {
+function applyRandomLayout(graph: Graph, elements: SerializedElement[], center: { x: number; y: number }): Record<string, { x: number; y: number }> {
+  const dimsMap = buildDimsMap(elements);
+  const nodeCount = graph.order;
   const scale = Math.max(400, Math.sqrt(nodeCount) * 100);
   random.assign(graph, { scale });
 
-  const positions: Record<string, { x: number; y: number }> = {};
+  // Collect scattered positions with real dimensions, then resolve overlaps.
+  const nodeData: { id: string; x: number; y: number; w: number; h: number }[] = [];
   graph.forEachNode((node) => {
-    positions[node] = {
-      x: (graph.getNodeAttribute(node, 'x') as number) + center.x - scale / 2,
-      y: (graph.getNodeAttribute(node, 'y') as number) + center.y - scale / 2,
-    };
+    const d = dimsFor(dimsMap, node);
+    nodeData.push({
+      id: node,
+      x: (graph.getNodeAttribute(node, 'x') as number) - scale / 2,
+      y: (graph.getNodeAttribute(node, 'y') as number) - scale / 2,
+      w: d.w,
+      h: d.h,
+    });
   });
+
+  removeOverlaps(nodeData, 24, 20);
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const n of nodeData) {
+    positions[n.id] = { x: n.x + center.x, y: n.y + center.y };
+  }
 
   postProgress(100, 'done');
   return positions;
 }
 
 /**
- * Estimate visual width of a node based on its label length.
- * Mirrors ElementNode.getDefaultDimensions() for rectangles:
- *   estimatedTextWidth = labelLength * 7 + 24
- *   width = clamp(estimatedTextWidth * 1.2, 120, 280)
+ * AABB overlap removal: iteratively push apart any pair whose bounding boxes
+ * (plus gap) intersect, on the axis of least overlap. Mutates nodeData in place.
  */
-function estimateNodeWidth(label: string, minWidth: number): number {
-  const estimatedTextWidth = label.length * 7 + 24;
-  const width = Math.max(estimatedTextWidth * 1.2, 120);
-  return Math.max(minWidth, Math.min(width, 280));
+function removeOverlaps(
+  nodeData: { id: string; x: number; y: number; w: number; h: number }[],
+  gap: number,
+  passes: number,
+): void {
+  for (let pass = 0; pass < passes; pass++) {
+    let hasOverlap = false;
+    for (let i = 0; i < nodeData.length; i++) {
+      for (let j = i + 1; j < nodeData.length; j++) {
+        const a = nodeData[i];
+        const b = nodeData[j];
+        const overlapX = (a.w / 2 + b.w / 2 + gap) - Math.abs(a.x - b.x);
+        const overlapY = (a.h / 2 + b.h / 2 + gap) - Math.abs(a.y - b.y);
+        if (overlapX > 0 && overlapY > 0) {
+          hasOverlap = true;
+          if (overlapX < overlapY) {
+            const push = overlapX / 2 + 1;
+            if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+          } else {
+            const push = overlapY / 2 + 1;
+            if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
+          }
+        } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
+          hasOverlap = true;
+          b.x += (a.w / 2 + b.w / 2 + gap) * Math.random();
+          b.y += (a.h / 2 + b.h / 2 + gap) * Math.random();
+        }
+      }
+    }
+    if (!hasOverlap) break;
+  }
 }
 
-/** Node height matching ElementNode rectangle: max(baseSize * 0.5, 40) ≈ 40px */
-const ESTIMATED_NODE_HEIGHT = 40;
+/**
+ * Real rendered footprint of a node, derived from its visual props.
+ * Shares ElementNode's dimension logic so anti-collision spacing matches what
+ * is actually drawn (circles, squares, diamonds, images are far larger than a
+ * label-width estimate). Falls back to sane defaults when props are missing.
+ */
+function nodeDimensions(el: SerializedElement): { w: number; h: number } {
+  const { width, height } = computeElementDimensions(
+    {
+      shape: el.shape ?? 'circle',
+      size: el.size ?? 'medium',
+      customWidth: el.customWidth,
+      customHeight: el.customHeight,
+    },
+    el.label || '',
+    Boolean(el.hasImage),
+  );
+  return { w: width, h: height };
+}
+
+/** Build an id → {w,h} lookup for a set of elements. */
+function buildDimsMap(elements: SerializedElement[]): Map<string, { w: number; h: number }> {
+  const map = new Map<string, { w: number; h: number }>();
+  for (const el of elements) map.set(el.id, nodeDimensions(el));
+  return map;
+}
+
+/** Resolve dimensions for a node id, with a default if absent. */
+function dimsFor(map: Map<string, { w: number; h: number }>, id: string): { w: number; h: number } {
+  return map.get(id) ?? { w: 120, h: 40 };
+}
 
 function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: SerializedElement[], center: { x: number; y: number }, nodeCount: number): Record<string, { x: number; y: number }> {
-  // Adaptive sizing based on node count
-  let defaultNodeWidth: number, nodeHeight: number, nodesep: number, ranksep: number;
+  // Adaptive separation based on node count (denser graphs pack tighter)
+  let nodesep: number, ranksep: number;
   if (nodeCount >= 1500) {
-    defaultNodeWidth = 80; nodeHeight = 35; nodesep = 4; ranksep = 65;
+    nodesep = 4; ranksep = 65;
   } else if (nodeCount >= 500) {
-    defaultNodeWidth = 100; nodeHeight = 40; nodesep = 8; ranksep = 80;
+    nodesep = 8; ranksep = 80;
   } else if (nodeCount >= 100) {
-    defaultNodeWidth = 130; nodeHeight = 50; nodesep = 12; ranksep = 100;
+    nodesep = 12; ranksep = 100;
   } else {
-    defaultNodeWidth = 160; nodeHeight = 60; nodesep = 20; ranksep = 120;
+    nodesep = 20; ranksep = 120;
   }
 
-  // Build label lookup for per-node width estimation
-  const labelMap = new Map<string, string>();
-  for (const el of elements) {
-    labelMap.set(el.id, el.label || '');
-  }
+  // Per-node real dimensions (dagre reserves space per node)
+  const dimsMap = buildDimsMap(elements);
 
   postProgress(20, 'building dagre graph');
 
@@ -788,11 +881,10 @@ function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: S
   });
   g.setDefaultEdgeLabel(() => ({}));
 
-  // Add nodes with per-node width based on label
+  // Add nodes with their real rendered footprint
   graph.forEachNode((node) => {
-    const label = labelMap.get(node) || '';
-    const width = estimateNodeWidth(label, defaultNodeWidth);
-    g.setNode(node, { width, height: nodeHeight });
+    const { w, h } = dimsFor(dimsMap, node);
+    g.setNode(node, { width: w, height: h });
   });
 
   postProgress(40, 'adding edges');
