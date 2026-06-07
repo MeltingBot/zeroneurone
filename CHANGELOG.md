@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.8
+
+### Fixes
+- **Lisibilité du nom sous les éléments avec média** — pour les formes cercle / hexagone / losange portant une vignette, le nom est affiché à l'extérieur du node (sous la forme). Lorsque des propriétés étaient également affichées, elles se positionnaient au même niveau et recouvraient le nom, le rendant illisible. Les propriétés réservent désormais la hauteur du label externe (avec prise en compte du débord de la pointe inférieure pour le losange) et s'empilent **sous** le nom.
+
 ## 2.41.7
 
 ### Fixes

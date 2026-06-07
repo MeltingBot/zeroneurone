@@ -205,6 +205,16 @@ function ElementNodeComponent({ data }: NodeProps) {
 
   const { width, height } = dimensions;
 
+  // When the label is rendered OUTSIDE the node body (circle/hexagon/diamond with a
+  // thumbnail), reserve vertical space for it so the displayed properties don't overlap
+  // the name. Diamond's bottom corner overhangs the wrapper bbox, so it needs extra room.
+  const hasExternalLabel =
+    hasThumbnail &&
+    (element.visual.shape === 'circle' || element.visual.shape === 'hexagon' || element.visual.shape === 'diamond');
+  const externalLabelReserve = hasExternalLabel
+    ? (element.visual.shape === 'diamond' ? (height * (Math.SQRT2 - 1)) / 2 + 4 : 2) + 18
+    : 0;
+
   // HD image LOD: load full-resolution from OPFS when node is large enough on screen
   // Skip HD loading when media is hidden — thumbnail is enough for pixelated display
   const firstAssetId = (hasThumbnail && !hideMedia) ? element.assetIds?.[0] : undefined;
@@ -402,7 +412,7 @@ function ElementNodeComponent({ data }: NodeProps) {
       {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
         <div
           className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10"
-          style={{ top: badgeProperty ? 'calc(100% + 28px)' : 'calc(100% + 6px)' }}
+          style={{ top: `calc(100% + ${(badgeProperty ? 28 : 6) + externalLabelReserve}px)` }}
         >
           {displayedPropertyValues.slice(0, 3).map(({ key, value }) => {
             const isCountry = isLikelyCountryCode(value);
