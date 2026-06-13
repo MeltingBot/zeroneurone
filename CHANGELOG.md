@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.41.9
+
+### Fixes
+- **Carte : positionnement des marqueurs au zoom** — l'écartement des marqueurs superposés (spiderfy, typiquement des événements à la même position) était calculé en degrés à partir du zoom courant et n'était recalculé qu'au `zoomend` : pendant le zoom, les marqueurs co-localisés dérivaient de leur vraie position puis se recalaient brutalement (avec en prime une distorsion liée à la latitude et une corruption de la position sauvegardée en cas de drag). L'écartement est désormais un offset en **pixels** appliqué via l'option `offset` du marqueur MapLibre — constant à tous les niveaux de zoom, sans distorsion.
+- **Carte : clustering des éléments positionnés sur un événement** — le clustering excluait tout marqueur dont la position venait d'un événement, ce qui empêchait quasiment tout regroupement (la position « dernier point connu » d'un élément daté étant elle-même un événement). Seuls les marqueurs **secondaires** (breadcrumbs de trace, événements co-temporels) sont désormais exclus ; le marqueur principal de chaque élément se regroupe normalement.
+- **Carte : éclatement des clusters co-localisés** — un cluster de marqueurs à la même coordonnée ne pouvait jamais être séparé par le zoom (il fallait atteindre le zoom max pour les voir empilés). Le clic sur un cluster zoome désormais s'il est séparable, sinon il **étale les marqueurs sur place** (spiderfy) ; clic sur le fond ou zoom referme l'éclatement.
+
 ## 2.41.8
 
 ### Fixes

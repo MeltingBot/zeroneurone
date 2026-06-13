@@ -28,6 +28,10 @@ interface ResolvedGeoElement {
   eventId?: string;
   /** Rendered as a light breadcrumb (past event in trace mode) rather than the active marker */
   isBreadcrumb?: boolean;
+  /** Extra marker beyond the element's primary one (breadcrumb or co-temporal sibling event).
+      Excluded from clustering so trajectories/bursts don't collapse, while the primary
+      marker of each element still clusters normally. */
+  secondaryEvent?: boolean;
 }
 
 // Link layer managed via MapLibre layers + markers
@@ -160,8 +164,13 @@ function add3DBuildingsLayer(map: maplibregl.Map) {
   );
 }
 
-// Spiderfy: offset markers at the same position
-function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number }[], zoom: number): Map<string, [number, number]> {
+// Spiderfy: offset markers at the same position.
+// Offsets are expressed in SCREEN PIXELS and applied via the MapLibre Marker `offset` option,
+// which is added after projection — so the spread stays constant across zoom levels and does
+// not distort with latitude. (A previous version perturbed lng/lat in degrees, which made
+// co-located markers drift away from their true position during zoom and only snap back on
+// zoomend, and corrupted the saved position when such a marker was dragged.)
+function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number }[]): Map<string, [number, number]> {
   const offsets = new Map<string, [number, number]>();
   const groups = new Map<string, string[]>();
 
@@ -173,11 +182,10 @@ function computeSpiderfyOffsets(elements: { id: string; lng: number; lat: number
     groups.set(key, group);
   });
 
-  // For groups with >1 element, apply spiral offset
-  const pixelToDeg = 360 / (256 * Math.pow(2, zoom)); // approximate degrees per pixel at this zoom
+  // For groups with >1 element, apply spiral offset (in pixels)
   groups.forEach(ids => {
     if (ids.length <= 1) return;
-    const radius = 25 * pixelToDeg; // 25px radius
+    const radius = 25; // px
     ids.forEach((id, i) => {
       if (i === 0) return; // keep first at original position
       const angle = (2 * Math.PI * i) / ids.length;
@@ -201,6 +209,11 @@ export function MapView() {
   const superclusterRef = useRef<Supercluster<{ elementId: string }, Supercluster.AnyProps> | null>(null);
   const clusterStateRef = useRef<Map<string, ClusterState>>(new Map());
   const elementIdToFirstMarkerKeyRef = useRef<Map<string, string>>(new Map());
+  // Per-cluster metadata for click handling (center, member keys, whether the members are
+  // co-located so that zooming can never separate them — in which case we spiderfy instead).
+  const clusterMetaRef = useRef<Map<number, { center: [number, number]; leafKeys: string[]; degenerate: boolean }>>(new Map());
+  // Member markerKeys the user explicitly expanded (spiderfied) by clicking a co-located cluster.
+  const forceSpiderfyKeysRef = useRef<Set<string>>(new Set());
   const mapLoadedRef = useRef(false);
 
   // Track clustering state for dynamic link positioning
@@ -585,6 +598,7 @@ export function MapView() {
                 eventLabel: past.label,
                 eventId: past.id,
                 isBreadcrumb: true,
+                secondaryEvent: true,
               });
             }
           } else if (position.eventId) {
@@ -604,6 +618,7 @@ export function MapView() {
                   fromEvent: true,
                   eventLabel: sibling.label,
                   eventId: sibling.id,
+                  secondaryEvent: true,
                 });
               }
             }
@@ -624,6 +639,10 @@ export function MapView() {
       _markerKey: r.eventId ? `${r.element.id}::${r.eventId}` : r.element.id,
       _eventId: r.eventId,
       _isBreadcrumb: !!r.isBreadcrumb,
+      // Only secondary markers (breadcrumbs / co-temporal siblings) bypass clustering.
+      // The primary marker of an element clusters normally even when its position is
+      // derived from an event (e.g. "latest known point" in static mode).
+      _clusterExclude: !!r.secondaryEvent,
     }));
   }, [resolvedGeoElements]);
 
@@ -736,10 +755,17 @@ export function MapView() {
       // Only clear selection if clicking on the map background (not a marker)
       if (!(e.originalEvent.target as HTMLElement).closest('.map-marker-card, .map-marker-simple, .cluster-icon')) {
         clearSelection();
+        // Collapse any force-expanded (spiderfied) cluster
+        if (forceSpiderfyKeysRef.current.size > 0) {
+          forceSpiderfyKeysRef.current = new Set();
+          setClusteringVersion(v => v + 1);
+        }
       }
     });
 
     map.on('zoomend', () => {
+      // Zooming re-clusters from scratch — drop any manual spiderfy expansion.
+      forceSpiderfyKeysRef.current = new Set();
       setClusteringVersion(v => v + 1);
     });
 
@@ -899,11 +925,12 @@ export function MapView() {
       maxZoom: 20,
     });
 
-    // Event markers (co-temporal GSM pings, trajectory breadcrumbs, latest-event point markers…)
-    // stay visible individually so trajectories don't collapse into a single cluster.
+    // Secondary event markers (trajectory breadcrumbs, co-temporal sibling pings) stay visible
+    // individually so trajectories/bursts don't collapse into a single cluster. The primary
+    // marker of each element clusters normally — even when its position comes from an event.
     const basePoints: PointFeature[] = [];
     for (const el of effectiveGeoElements) {
-      if (el._eventId) continue;
+      if (el._clusterExclude) continue;
       basePoints.push({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat] },
@@ -925,6 +952,8 @@ export function MapView() {
       if (!elementIdToFirstMarkerKey.has(el.id)) elementIdToFirstMarkerKey.set(el.id, el._markerKey);
     }
     const activeClusters = new Map<number, { center: [number, number]; count: number; activeCount: number }>();
+    const clusterMeta = new Map<number, { center: [number, number]; leafKeys: string[]; degenerate: boolean }>();
+    const forced = forceSpiderfyKeysRef.current;
 
     clusters.forEach(feature => {
       const props = feature.properties as Record<string, unknown>;
@@ -933,8 +962,33 @@ export function MapView() {
         const center = feature.geometry.coordinates as [number, number];
         const count = props.point_count as number;
 
-        // Get all leaves (markerKeys) in this cluster
+        // Get all leaves (markerKeys + coords) in this cluster
         const leaves = sc.getLeaves(clusterId, Infinity);
+        const leafKeys: string[] = [];
+        let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+        leaves.forEach(leaf => {
+          const leafProps = leaf.properties as { elementId: string; markerKey: string };
+          leafKeys.push(leafProps.markerKey);
+          const [lng, lat] = leaf.geometry.coordinates;
+          if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+        });
+        // Co-located if the members span a negligible geographic extent (~10m): zooming can
+        // never split them, so a click spiderfies instead of zooming.
+        const degenerate = (maxLng - minLng) < 1e-4 && (maxLat - minLat) < 1e-4;
+        clusterMeta.set(clusterId, { center, leafKeys, degenerate });
+
+        // If the user explicitly expanded this (co-located) cluster, render its members
+        // spiderfied instead of as a single pastille.
+        const isForceExpanded = forced.size > 0 && leafKeys.every(k => forced.has(k));
+        if (isForceExpanded) {
+          leaves.forEach(leaf => {
+            const leafProps = leaf.properties as { elementId: string; markerKey: string };
+            newClusterState.set(leafProps.markerKey, { clustered: false });
+          });
+          return;
+        }
+
         let activeCount = 0;
         leaves.forEach(leaf => {
           const leafProps = leaf.properties as { elementId: string; markerKey: string };
@@ -953,11 +1007,12 @@ export function MapView() {
         newClusterState.set(leafProps.markerKey, { clustered: false });
       }
     });
+    clusterMetaRef.current = clusterMeta;
 
-    // Event markers are never clustered — register them with unclustered state so downstream
-    // spiderfy/visibility logic treats them uniformly.
+    // Secondary event markers are never clustered — register them with unclustered state so
+    // downstream spiderfy/visibility logic treats them uniformly.
     for (const el of effectiveGeoElements) {
-      if (el._eventId && !newClusterState.has(el._markerKey)) {
+      if (el._clusterExclude && !newClusterState.has(el._markerKey)) {
         newClusterState.set(el._markerKey, { clustered: false });
       }
     }
@@ -972,8 +1027,19 @@ export function MapView() {
     });
     const spiderfyOffsets = computeSpiderfyOffsets(
       unclusteredElements.map(el => { const c = getGeoCenter(el.geo); return { id: el._markerKey, lng: c.lng, lat: c.lat }; }),
-      zoom
     );
+
+    // Members of a cluster the user force-expanded are spread explicitly around the cluster
+    // center (they may not share the exact coordinate that the automatic spiderfy groups by).
+    if (forced.size > 0) {
+      const forcedKeys = effectiveGeoElements.map(el => el._markerKey).filter(k => forced.has(k));
+      forcedKeys.forEach((key, i) => {
+        if (i === 0) { spiderfyOffsets.set(key, [0, 0]); return; }
+        const angle = (2 * Math.PI * i) / forcedKeys.length;
+        const spiralRadius = 28 * (1 + i * 0.18); // px
+        spiderfyOffsets.set(key, [Math.cos(angle) * spiralRadius, Math.sin(angle) * spiralRadius]);
+      });
+    }
 
     // Update element markers
     const existingMarkers = markersRef.current;
@@ -1000,12 +1066,14 @@ export function MapView() {
       const existingMarker = existingMarkers.get(markerKey);
       const offset = spiderfyOffsets.get(markerKey);
       const center = getGeoCenter(element.geo);
-      const lng = center.lng + (offset ? offset[0] : 0);
-      const lat = center.lat + (offset ? offset[1] : 0);
+      // Keep the marker at its true geographic position; the spiderfy spread is a pixel
+      // offset combined with the base anchor offset ([0, -8]) so it stays constant on zoom.
+      const markerOffset: [number, number] = offset ? [offset[0], offset[1] - 8] : [0, -8];
 
       if (existingMarker) {
-        // Update position
-        existingMarker.setLngLat([lng, lat]);
+        // Update position (true center) and spiderfy spread (pixel offset)
+        existingMarker.setLngLat([center.lng, center.lat]);
+        existingMarker.setOffset(markerOffset);
         // Update draggability
         existingMarker.setDraggable(!isEventMarker && !element.isPositionLocked && !eventZoneIds.has(element.id));
         // Update visibility (hide if clustered)
@@ -1024,8 +1092,8 @@ export function MapView() {
         // Event-sourced markers are not draggable: dragging them would ambiguously move the element
         // vs. the event, so we only allow drag on the primary (base-geo) marker.
         const isDraggable = !isEventMarker && !element.isPositionLocked && !eventZoneIds.has(element.id);
-        const marker = new maplibregl.Marker({ element: markerEl, anchor: 'top', offset: [0, -8], draggable: isDraggable })
-          .setLngLat([lng, lat])
+        const marker = new maplibregl.Marker({ element: markerEl, anchor: 'top', offset: markerOffset, draggable: isDraggable })
+          .setLngLat([center.lng, center.lat])
           .addTo(map);
 
         // Click to select — also focus the underlying event in the side panel when the marker
@@ -1176,8 +1244,17 @@ export function MapView() {
 
         el.addEventListener('click', (e) => {
           e.stopPropagation();
-          const expansionZoom = sc.getClusterExpansionZoom(clusterId);
-          map.flyTo({ center: center as [number, number], zoom: expansionZoom });
+          const meta = clusterMetaRef.current.get(clusterId);
+          const scNow = superclusterRef.current;
+          if (!meta || !scNow) return;
+          if (meta.degenerate) {
+            // Co-located members: zooming can't separate them — spiderfy in place instead.
+            forceSpiderfyKeysRef.current = new Set(meta.leafKeys);
+            setClusteringVersion(v => v + 1);
+          } else {
+            const expansionZoom = scNow.getClusterExpansionZoom(clusterId);
+            map.flyTo({ center: meta.center, zoom: expansionZoom });
+          }
         });
 
         const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
