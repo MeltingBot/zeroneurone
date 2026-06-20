@@ -142,7 +142,9 @@
       "clearLocation": "Garbitu",
       "removeLocation": "Kokapena ezabatu",
       "saveLocation": "Gorde",
-      "noLocation": "Ez dago posiziorik definituta"
+      "noLocation": "Ez dago posiziorik definituta",
+      "copyCoordinates": "Koordenatuak kopiatu",
+      "coordinatesCopied": "Koordenatuak kopiatu dira"
     },
     "properties": {
       "title": "Propietateak",

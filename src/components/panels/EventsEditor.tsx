@@ -4,8 +4,9 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight, Hexagon, Copy, PenTool, Code, Check, X } from 'lucide-react';
 import type { ElementEvent, PropertyDefinition, GeoData, GeoPolygon } from '../../types';
 import { generateUUID } from '../../utils';
+import { useUIStore } from '../../stores';
 import { PropertiesEditor } from './PropertiesEditor';
-import { isGeoPolygon, getGeoCenter, computePolygonAreaKm2, computePolygonCenter } from '../../utils/geo';
+import { isGeoPolygon, getGeoCenter, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 
 interface EventsEditorProps {
   events: ElementEvent[];
@@ -163,6 +164,25 @@ const EventItem = memo(function EventItem({
           onUpdate({ geo: { type: 'point', lat: eventCenter?.lat ?? 0, lng, ...(altitude !== undefined ? { altitude } : {}) } });
         }
       }
+    }
+  };
+
+  // Pasting a full "lat, lng" string into either field fills both at once.
+  const handleCoordPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pair = parseLatLngPair(e.clipboardData.getData('text'));
+    if (!pair) return; // single value or unparseable → default paste
+    e.preventDefault();
+    setLatStr(pair.lat.toFixed(6));
+    setLngStr(pair.lng.toFixed(6));
+    if (eventGeoIsPolygon) {
+      const poly = event.geo as GeoPolygon;
+      const dLat = pair.lat - (eventCenter?.lat ?? 0);
+      const dLng = pair.lng - (eventCenter?.lng ?? 0);
+      const newCoords = poly.coordinates.map(([ln, lt]) => [ln + dLng, lt + dLat] as [number, number]);
+      onUpdate({ geo: { ...poly, coordinates: newCoords, center: computePolygonCenter(newCoords) } });
+    } else {
+      const altitude = event.geo?.altitude;
+      onUpdate({ geo: { type: 'point', lat: pair.lat, lng: pair.lng, ...(altitude !== undefined ? { altitude } : {}) } });
     }
   };
 
@@ -486,6 +506,7 @@ const EventItem = memo(function EventItem({
                   value={latStr}
                   onChange={(e) => setLatStr(e.target.value)}
                   onBlur={handleLatBlur}
+                  onPaste={handleCoordPaste}
                   className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
                   placeholder={t('detail.location.latitude')}
                 />
@@ -494,6 +515,7 @@ const EventItem = memo(function EventItem({
                   value={lngStr}
                   onChange={(e) => setLngStr(e.target.value)}
                   onBlur={handleLngBlur}
+                  onPaste={handleCoordPaste}
                   className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
                   placeholder={t('detail.location.longitude')}
                 />
@@ -504,6 +526,23 @@ const EventItem = memo(function EventItem({
                 >
                   {t('detail.events.pickOnMap')}
                 </button>
+                {event.geo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const center = event.geo ? getGeoCenter(event.geo) : null;
+                      if (!center) return;
+                      navigator.clipboard
+                        .writeText(`${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`)
+                        .then(() => useUIStore.getState().showToast('success', t('detail.location.coordinatesCopied')))
+                        .catch(() => {});
+                    }}
+                    className="p-1 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-border-default"
+                    title={t('detail.location.copyCoordinates')}
+                  >
+                    <Copy size={12} />
+                  </button>
+                )}
               </div>
 
             {/* Altitude + 3D toggle (shown when event has any geo) */}

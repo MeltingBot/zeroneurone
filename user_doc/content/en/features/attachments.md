@@ -35,6 +35,15 @@ Attach documents, images, and files to your elements to enrich your documentatio
 4. Select the file
 
 
+### Paste an Image
+
+1. Copy an image (screenshot, web image…)
+2. Select an element
+3. **Ctrl+V**: the image is attached to the element
+
+> Any file addition (paste, drag-and-drop, button) can be undone with **Ctrl+Z**; **Ctrl+Y** redoes it.
+
+
 ---
 
 ## Preview

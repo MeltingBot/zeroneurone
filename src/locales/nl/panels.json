@@ -142,7 +142,9 @@
       "clearLocation": "Wissen",
       "removeLocation": "Locatie verwijderen",
       "saveLocation": "Opslaan",
-      "noLocation": "Geen positie gedefinieerd"
+      "noLocation": "Geen positie gedefinieerd",
+      "copyCoordinates": "Coördinaten kopiëren",
+      "coordinatesCopied": "Coördinaten gekopieerd"
     },
     "properties": {
       "title": "Eigenschappen",

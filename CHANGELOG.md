@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.41.10
+
+### Features
+- **Copier / coller les coordonnées GPS** — un bouton de copie placé à côté de « Coordonnées GPS » (panneau Localisation et coordonnées de chaque événement) copie la position au format `latitude, longitude`, directement collable dans Google Maps. À l'inverse, coller une paire `latitude, longitude` dans l'un des deux champs remplit automatiquement les deux (séparateurs virgule/point-virgule/espace et points cardinaux reconnus).
+
+### Fixes
+- **Annulation des médias ajoutés à un élément** — coller (Ctrl+V), glisser-déposer ou ajouter un fichier à un élément existant n'était pas pris en compte par l'historique : un Ctrl+Z laissait l'image en place. L'ajout d'un média est désormais annulable (Ctrl+Z le retire, Ctrl+Y le rétablit), y compris lors d'un dépôt directement sur un élément du canvas. Le dépôt d'un fichier sur le canvas vide (qui crée un nouvel élément) est lui aussi annulable.
+
 ## 2.41.9
 
 ### Fixes

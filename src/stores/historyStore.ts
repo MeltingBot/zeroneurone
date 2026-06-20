@@ -6,7 +6,8 @@ interface HistoryAction {
         'create-link' | 'delete-link' | 'update-link' |
         'create-elements' | 'delete-elements' | 'move-elements' |
         'extract-to-element' | 'dissolve-group' | 'remove-from-group' |
-        'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters';
+        'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters' |
+        'add-asset';
   // Data for undoing the action
   undo: {
     elements?: Element[];
@@ -275,6 +276,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           }
         }
         break;
+
+      case 'add-asset':
+        // Undo asset attachment: detach + remove the asset
+        if (action.undo.snapshot?.elementId && action.undo.snapshot?.assetId) {
+          await store.removeAsset(action.undo.snapshot.elementId, action.undo.snapshot.assetId);
+        }
+        break;
     }
   },
 
@@ -446,6 +454,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
             vs.clearFilters();
             vs.showAllElements();
           }
+        }
+        break;
+
+      case 'add-asset':
+        // Redo asset attachment: re-add the file (saveAsset dedups by hash → same id)
+        if (action.redo.snapshot?.elementId && action.redo.snapshot?.file) {
+          await store.addAsset(action.redo.snapshot.elementId, action.redo.snapshot.file);
         }
         break;
     }

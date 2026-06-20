@@ -3209,7 +3209,13 @@ export function Canvas() {
         if (elementId) {
           const targetElement = elementMap.get(elementId);
           for (const file of files) {
-            await addAsset(elementId, file);
+            const asset = await addAsset(elementId, file);
+            // Record in history so the attachment can be undone
+            pushAction({
+              type: 'add-asset',
+              undo: { snapshot: { elementId, assetId: asset.id } },
+              redo: { snapshot: { elementId, file } },
+            });
             try {
               const buffer = await file.arrayBuffer();
               const metadata = await metadataService.extractMetadata(file, buffer);
@@ -3230,6 +3236,7 @@ export function Canvas() {
       }
 
       // Dropped on empty canvas - create new elements with files
+      const createdElements: Element[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const position = {
@@ -3240,6 +3247,7 @@ export function Canvas() {
         // Use filename as element label
         const label = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
         const newElement = await createElement(label, position, { date: new Date() });
+        createdElements.push(newElement);
         // Auto-add to active tab
         if (activeTabId) {
           addTabMembers(activeTabId, [newElement.id]);
@@ -3260,8 +3268,17 @@ export function Canvas() {
           console.error('Metadata extraction failed:', err);
         }
       }
+
+      // Record creation so the dropped element(s) can be undone (undo deletes them).
+      if (createdElements.length > 0) {
+        pushAction({
+          type: 'create-elements',
+          undo: {},
+          redo: { elements: createdElements, elementIds: createdElements.map((e) => e.id) },
+        });
+      }
     },
-    [createElement, addAsset, viewport, elementMap, pushMetadataImport, activeTabId, addTabMembers]
+    [createElement, addAsset, viewport, elementMap, pushMetadataImport, activeTabId, addTabMembers, pushAction]
   );
 
   const handleFileDragOver = useCallback((event: React.DragEvent) => {

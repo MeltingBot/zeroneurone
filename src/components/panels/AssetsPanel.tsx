@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { File, Image, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
-import { useDossierStore } from '../../stores';
+import { useDossierStore, useHistoryStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
@@ -15,7 +15,22 @@ interface AssetsPanelProps {
 export function AssetsPanel({ element }: AssetsPanelProps) {
   const { t } = useTranslation(['panels', 'modals']);
   const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText } = useDossierStore();
+  const pushAction = useHistoryStore((s) => s.pushAction);
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
+
+  // Attach an asset and record it in history so it can be undone (Ctrl+Z removes the asset).
+  const addAssetWithHistory = useCallback(
+    async (file: File): Promise<Asset> => {
+      const asset = await addAsset(element.id, file);
+      pushAction({
+        type: 'add-asset',
+        undo: { snapshot: { elementId: element.id, assetId: asset.id } },
+        redo: { snapshot: { elementId: element.id, file } },
+      });
+      return asset;
+    },
+    [addAsset, element.id, pushAction]
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -85,7 +100,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
             const blob = file.slice(0, file.size, file.type);
             uploadedFile = new window.File([blob], `pasted-${Date.now()}.${ext}`, { type: file.type });
           }
-          await addAsset(element.id, uploadedFile);
+          await addAssetWithHistory(uploadedFile);
           await extractAndQueueMetadata(uploadedFile);
         }
       } catch (error) {
@@ -94,7 +109,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         setIsUploading(false);
       }
     },
-    [element.id, addAsset, extractAndQueueMetadata]
+    [addAssetWithHistory, extractAndQueueMetadata]
   );
 
   // Listen for paste events when this element is selected
@@ -114,7 +129,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       setIsUploading(true);
       try {
         for (const file of files) {
-          await addAsset(element.id, file);
+          await addAssetWithHistory(file);
           await extractAndQueueMetadata(file);
         }
       } catch (error) {
@@ -123,7 +138,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
         setIsUploading(false);
       }
     },
-    [element.id, addAsset, extractAndQueueMetadata]
+    [addAssetWithHistory, extractAndQueueMetadata]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -144,7 +159,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       setIsUploading(true);
       try {
         for (const file of Array.from(files)) {
-          await addAsset(element.id, file);
+          await addAssetWithHistory(file);
           await extractAndQueueMetadata(file);
         }
       } catch (error) {
@@ -156,7 +171,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       // Reset input
       e.target.value = '';
     },
-    [element.id, addAsset, extractAndQueueMetadata]
+    [addAssetWithHistory, extractAndQueueMetadata]
   );
 
   const handleRemove = useCallback(

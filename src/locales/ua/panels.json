@@ -142,7 +142,9 @@
       "clearLocation": "Очистити",
       "removeLocation": "Видалити розташування",
       "saveLocation": "Зберегти",
-      "noLocation": "Позицію не визначено"
+      "noLocation": "Позицію не визначено",
+      "copyCoordinates": "Копіювати координати",
+      "coordinatesCopied": "Координати скопійовано"
     },
     "properties": {
       "title": "Властивості",

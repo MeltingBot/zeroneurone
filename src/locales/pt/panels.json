@@ -142,7 +142,9 @@
       "clearLocation": "Limpar",
       "removeLocation": "Remover a localização",
       "saveLocation": "Salvar",
-      "noLocation": "Nenhuma posição definida"
+      "noLocation": "Nenhuma posição definida",
+      "copyCoordinates": "Copiar coordenadas",
+      "coordinatesCopied": "Coordenadas copiadas"
     },
     "properties": {
       "title": "Propriedades",

@@ -155,7 +155,9 @@
       "noLocation": "No location set",
       "altitude": "Altitude",
       "altUnit": "meters",
-      "extrude": "3D Extrusion"
+      "extrude": "3D Extrusion",
+      "copyCoordinates": "Copy coordinates",
+      "coordinatesCopied": "Coordinates copied"
     },
     "properties": {
       "title": "Properties",

@@ -28,6 +28,15 @@ Visualize your geolocated elements on an interactive 3D map.
 
 The marker is draggable: drag it to adjust the position.
 
+### Copy / Paste GPS Coordinates
+
+The **Location** section shows the GPS coordinates (latitude, longitude), editable directly.
+
+- **Copy**: the copy button next to "GPS coordinates" puts the coordinates on the clipboard as `latitude, longitude` (ready to paste into Google Maps, etc.).
+- **Paste**: paste a `latitude, longitude` pair into either field — both fill in automatically. Separators (comma, semicolon, space) and cardinal points are recognized (`48.8566 N, 2.3522 E`).
+
+Both actions are also available on the coordinates of each **event** of an element.
+
 ---
 
 ## Map Interactions

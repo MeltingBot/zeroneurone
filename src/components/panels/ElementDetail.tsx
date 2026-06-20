@@ -1,10 +1,10 @@
 import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers, Code } from 'lucide-react';
+import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers, Code, Copy } from 'lucide-react';
 import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore, useSelectionStore } from '../../stores';
 import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
-import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter } from '../../utils/geo';
+import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { syncService } from '../../services/syncService';
 import { getYMaps } from '../../types/yjs';
 import { yMapToElement } from '../../services/yjs/elementMapper';
@@ -1189,9 +1189,28 @@ export function ElementDetail({ element }: ElementDetailProps) {
           {/* Current position */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-text-secondary">
-                {t('detail.location.gpsCoordinates')}
-              </label>
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs font-medium text-text-secondary">
+                  {t('detail.location.gpsCoordinates')}
+                </label>
+                {hasGeo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const center = element.geo ? getGeoCenter(element.geo) : null;
+                      if (!center) return;
+                      navigator.clipboard
+                        .writeText(`${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`)
+                        .then(() => useUIStore.getState().showToast('success', t('detail.location.coordinatesCopied')))
+                        .catch(() => {});
+                    }}
+                    className="p-0.5 rounded text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary transition-colors"
+                    title={t('detail.location.copyCoordinates')}
+                  >
+                    <Copy size={12} />
+                  </button>
+                )}
+              </div>
               {hasGeoToClear && (
                 <div className="flex items-center gap-2">
                   <button
@@ -1226,6 +1245,14 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   type="text"
                   value={geoLat}
                   onChange={(e) => setGeoLat(e.target.value)}
+                  onPaste={(e) => {
+                    const pair = parseLatLngPair(e.clipboardData.getData('text'));
+                    if (pair) {
+                      e.preventDefault();
+                      setGeoLat(pair.lat.toString());
+                      setGeoLng(pair.lng.toString());
+                    }
+                  }}
                   placeholder={t('detail.location.latitude')}
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
@@ -1236,6 +1263,14 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   type="text"
                   value={geoLng}
                   onChange={(e) => setGeoLng(e.target.value)}
+                  onPaste={(e) => {
+                    const pair = parseLatLngPair(e.clipboardData.getData('text'));
+                    if (pair) {
+                      e.preventDefault();
+                      setGeoLat(pair.lat.toString());
+                      setGeoLng(pair.lng.toString());
+                    }
+                  }}
                   placeholder={t('detail.location.longitude')}
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />

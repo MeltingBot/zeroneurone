@@ -142,7 +142,9 @@
       "clearLocation": "Esborrar",
       "removeLocation": "Eliminar la localització",
       "saveLocation": "Desar",
-      "noLocation": "Cap posició definida"
+      "noLocation": "Cap posició definida",
+      "copyCoordinates": "Copiar les coordenades",
+      "coordinatesCopied": "Coordenades copiades"
     },
     "properties": {
       "title": "Propietats",

@@ -35,6 +35,15 @@ Attachez des documents, images et fichiers à vos éléments pour enrichir votre
 4. Sélectionnez le fichier
 
 
+### Coller une image
+
+1. Copiez une image (capture d'écran, image web…)
+2. Sélectionnez un élément
+3. **Ctrl+V** : l'image est attachée à l'élément
+
+> Tout ajout de fichier (collage, glisser-déposer, bouton) est annulable avec **Ctrl+Z** ; **Ctrl+Y** le rétablit.
+
+
 ---
 
 ## Prévisualisation

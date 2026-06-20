@@ -4,6 +4,33 @@ export function isGeoPoint(geo: GeoData | null | undefined): geo is GeoPoint {
   return !!geo && geo.type === 'point';
 }
 
+/**
+ * Parse a pasted GPS string in decimal degrees into a lat/lng pair, so a single
+ * paste like "46.603354, 1.888334" fills both fields at once. Accepts comma,
+ * semicolon or whitespace separators, an optional degree sign, and an optional
+ * N/S/E/W cardinal per value ("46.6N 1.8E"). Decimal separator is the dot.
+ * Returns null when the text doesn't contain a valid pair (e.g. a single number),
+ * letting callers fall back to default paste behaviour.
+ */
+export function parseLatLngPair(text: string): { lat: number; lng: number } | null {
+  if (!text) return null;
+  const re = /([+-]?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?/g;
+  const nums: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null && nums.length < 2) {
+    let v = parseFloat(m[1]);
+    if (Number.isNaN(v)) continue;
+    const card = m[2]?.toUpperCase();
+    if (card === 'S' || card === 'W') v = -Math.abs(v);
+    else if (card === 'N' || card === 'E') v = Math.abs(v);
+    nums.push(v);
+  }
+  if (nums.length < 2) return null;
+  const [lat, lng] = nums;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
+
 export function isGeoPolygon(geo: GeoData | null | undefined): geo is GeoPolygon {
   return !!geo && geo.type === 'polygon';
 }

@@ -28,6 +28,15 @@ Visualisez vos éléments géolocalisés sur une carte interactive avec rendu 3D
 
 Le marqueur est déplaçable : glissez-le pour ajuster la position.
 
+### Copier / coller les coordonnées GPS
+
+La section **Localisation** affiche les coordonnées GPS (latitude, longitude) éditables directement.
+
+- **Copier** : le bouton de copie à côté de « Coordonnées GPS » place les coordonnées dans le presse-papier au format `latitude, longitude` (directement collable dans Google Maps, etc.).
+- **Coller** : collez une paire `latitude, longitude` dans l'un des deux champs — les deux se remplissent automatiquement. Les séparateurs (virgule, point-virgule, espace) et les points cardinaux sont reconnus (`48.8566 N, 2.3522 E`).
+
+Ces deux actions sont également disponibles sur les coordonnées de chaque **événement** d'un élément.
+
 ---
 
 ## Interactions sur la carte
