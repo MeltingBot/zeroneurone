@@ -265,7 +265,8 @@
       "setTextSizeAll": "Définir la taille du texte pour tous",
       "elementsSection": "Éléments ({{count}})",
       "linksSection": "Liens ({{count}})"
-    }
+    },
+    "copyDate": "Copier la date"
   },
   "filters": {
     "title": "Filtres",

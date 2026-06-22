@@ -251,7 +251,8 @@
       "setTextSizeAll": "Definir mida del text per a tots",
       "elementsSection": "Elements ({{count}})",
       "linksSection": "Enllaços ({{count}})"
-    }
+    },
+    "copyDate": "Copiar la data"
   },
   "filters": {
     "title": "Filtres",

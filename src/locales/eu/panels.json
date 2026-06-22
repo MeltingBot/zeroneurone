@@ -251,7 +251,8 @@
       "setTextSizeAll": "Testuaren tamaina guztientzat ezarri",
       "elementsSection": "Elementuak ({{count}})",
       "linksSection": "Loturak ({{count}})"
-    }
+    },
+    "copyDate": "Data kopiatu"
   },
   "filters": {
     "title": "Iragazkiak",

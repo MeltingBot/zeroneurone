@@ -251,7 +251,8 @@
       "setTextSizeAll": "Tekstgrootte voor alles instellen",
       "elementsSection": "Elementen ({{count}})",
       "linksSection": "Verbindingen ({{count}})"
-    }
+    },
+    "copyDate": "Datum kopiëren"
   },
   "filters": {
     "title": "Filters",

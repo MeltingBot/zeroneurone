@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.41.11
+
+### Features
+- **Copier / coller des dates** — les champs date acceptent désormais le collage d'une date en texte (`18/04/2000`, `2000-04-18`, `18.04.2000`, avec heure optionnelle), avec désambiguïsation jour/mois et rejet des dates impossibles. Un bouton de copie placé à côté de chaque date renseignée copie la valeur au format `JJ/MM/AAAA` (ou `JJ/MM/AAAA HH:MM`), directement re-collable. Disponible sur les propriétés (date et datetime), les dates de début/fin d'événement et la date de référence de l'élément.
+
 ## 2.41.10
 
 ### Features

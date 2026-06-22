@@ -5,6 +5,7 @@ import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Pap
 import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore, useSelectionStore } from '../../stores';
 import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
 import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
+import { parseFlexibleDate, formatDateForCopy } from '../../utils';
 import { syncService } from '../../services/syncService';
 import { getYMaps } from '../../types/yjs';
 import { yMapToElement } from '../../services/yjs/elementMapper';
@@ -1113,6 +1114,17 @@ export function ElementDetail({ element }: ElementDetailProps) {
                 type="date"
                 value={dateDate}
                 onChange={(e) => handleDateDateChange(e.target.value)}
+                onPaste={(e) => {
+                  const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+                  if (parsed) {
+                    e.preventDefault();
+                    const d = formatDateForInput(parsed);
+                    const tm = formatTimeForInput(parsed);
+                    setDateDate(d);
+                    setDateTime(tm);
+                    commitDate(d, tm);
+                  }
+                }}
                 className="flex-1 px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
               />
               <input
@@ -1122,6 +1134,16 @@ export function ElementDetail({ element }: ElementDetailProps) {
                 placeholder="00:00"
                 className="w-24 px-2 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
               />
+              {element.date && (
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(formatDateForCopy(element.date!, true)).catch(() => {})}
+                  className="p-1.5 shrink-0 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+                  title={t('detail.copyDate')}
+                >
+                  <Copy size={14} />
+                </button>
+              )}
             </div>
             <p className="text-[10px] text-text-tertiary">
               {t('detail.labels.dateCollectedHelp')}. {t('detail.labels.useEventsForDates')}

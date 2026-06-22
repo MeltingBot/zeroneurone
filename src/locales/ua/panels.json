@@ -251,7 +251,8 @@
       "setTextSizeAll": "Встановити розмір тексту для всіх",
       "elementsSection": "Елементи ({{count}})",
       "linksSection": "Зв'язки ({{count}})"
-    }
+    },
+    "copyDate": "Копіювати дату"
   },
   "filters": {
     "title": "Фільтри",

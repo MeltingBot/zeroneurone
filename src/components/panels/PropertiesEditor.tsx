@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { X, Plus, ChevronDown, Check, ExternalLink, ArrowUpRight, Settings2 } from 'lucide-react';
+import { X, Plus, ChevronDown, Check, ExternalLink, ArrowUpRight, Settings2, Copy } from 'lucide-react';
 import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
+import { parseFlexibleDate, formatDateForCopy } from '../../utils';
 
 interface PropertiesEditorProps {
   properties: Property[];
@@ -654,24 +655,44 @@ function PropertyValueInput({
 
     case 'date':
       return (
-        <input
-          type="date"
-          value={localDate}
-          onChange={(e) => {
-            const next = e.target.value;
-            setLocalDate(next);
-            // Propagate immediately so the value isn't lost when the user clicks
-            // a button (e.g. "Add") before onBlur has flushed.
-            if (!next) {
-              if (value !== null) onChange(null);
-            } else if (/^\d{4}-\d{2}-\d{2}$/.test(next)) {
-              const parsed = new Date(next + 'T12:00:00');
-              if (!isNaN(parsed.getTime())) onChange(parsed);
-            }
-          }}
-          onKeyDown={onKeyDown}
-          className={baseInputClass}
-        />
+        <div className="flex items-center gap-1">
+          <input
+            type="date"
+            value={localDate}
+            onChange={(e) => {
+              const next = e.target.value;
+              setLocalDate(next);
+              // Propagate immediately so the value isn't lost when the user clicks
+              // a button (e.g. "Add") before onBlur has flushed.
+              if (!next) {
+                if (value !== null) onChange(null);
+              } else if (/^\d{4}-\d{2}-\d{2}$/.test(next)) {
+                const parsed = new Date(next + 'T12:00:00');
+                if (!isNaN(parsed.getTime())) onChange(parsed);
+              }
+            }}
+            onPaste={(e) => {
+              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+              if (parsed) {
+                e.preventDefault();
+                setLocalDate(formatDateForInput(parsed));
+                onChange(parsed);
+              }
+            }}
+            onKeyDown={onKeyDown}
+            className={baseInputClass}
+          />
+          {value instanceof Date && (
+            <button
+              type="button"
+              onClick={() => navigator.clipboard.writeText(formatDateForCopy(value)).catch(() => {})}
+              className="p-1 shrink-0 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+              title={t('detail.copyDate')}
+            >
+              <Copy size={12} />
+            </button>
+          )}
+        </div>
       );
 
     case 'datetime':
@@ -690,6 +711,15 @@ function PropertyValueInput({
                 if (!isNaN(parsed.getTime())) onChange(parsed);
               }
             }}
+            onPaste={(e) => {
+              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+              if (parsed) {
+                e.preventDefault();
+                setLocalDateTimeDate(formatDateForInput(parsed));
+                setLocalDateTimeTime(formatTimeForInput(parsed));
+                onChange(parsed);
+              }
+            }}
             onKeyDown={onKeyDown}
             className={baseInputClass}
           />
@@ -706,6 +736,16 @@ function PropertyValueInput({
             onKeyDown={onKeyDown}
             className={`w-20 ${baseInputClass}`}
           />
+          {value instanceof Date && (
+            <button
+              type="button"
+              onClick={() => navigator.clipboard.writeText(formatDateForCopy(value, true)).catch(() => {})}
+              className="p-1 shrink-0 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+              title={t('detail.copyDate')}
+            >
+              <Copy size={12} />
+            </button>
+          )}
         </div>
       );
 

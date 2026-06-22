@@ -22,6 +22,66 @@ export function deserializeDate(str: string | null): Date | null {
 }
 
 /**
+ * Parse a pasted date string in common formats into a Date, so dates can be
+ * pasted into native date inputs (which otherwise reject free text).
+ * Accepts ISO (2000-04-18), and slash/dot/dash separated values, day-first by
+ * default (18/04/2000) — matching the European display — but disambiguates when
+ * a part is > 12 (handles 04/18/2000 too). An optional trailing time (HH:MM[:SS])
+ * is parsed as well; date-only values default to local noon to avoid TZ drift.
+ * Returns null when the text isn't a recognizable date.
+ */
+export function parseFlexibleDate(text: string): Date | null {
+  if (!text) return null;
+  const s = text.trim();
+  if (!s) return null;
+
+  const timeMatch = s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  const hasTime = !!timeMatch;
+  const hours = hasTime ? parseInt(timeMatch![1], 10) : 12;
+  const minutes = hasTime ? parseInt(timeMatch![2], 10) : 0;
+  const seconds = hasTime && timeMatch![3] ? parseInt(timeMatch![3], 10) : 0;
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+
+  let year: number, month: number, day: number;
+  const iso = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) {
+    year = +iso[1]; month = +iso[2]; day = +iso[3];
+  } else {
+    const dmy = s.match(/(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})/);
+    if (!dmy) return null;
+    const a = +dmy[1], b = +dmy[2];
+    year = +dmy[3];
+    if (year < 100) year += year < 50 ? 2000 : 1900;
+    if (a > 12 && b <= 12) { day = a; month = b; }
+    else if (b > 12 && a <= 12) { month = a; day = b; }
+    else { day = a; month = b; } // default day-first (European)
+  }
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const date = new Date(year, month - 1, day, hours, minutes, seconds, 0);
+  // Reject impossible dates (e.g. 31/02 rolled over by the Date constructor).
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return date;
+}
+
+/**
+ * Format a Date for copying to the clipboard as `DD/MM/YYYY` (optionally with
+ * ` HH:MM`). The result round-trips through {@link parseFlexibleDate}.
+ */
+export function formatDateForCopy(date: Date, withTime = false): string {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  let out = `${d}/${m}/${y}`;
+  if (withTime) {
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    out += ` ${hh}:${mm}`;
+  }
+  return out;
+}
+
+/**
  * Get a random color from the default palette
  */
 export function getRandomColor(): string {

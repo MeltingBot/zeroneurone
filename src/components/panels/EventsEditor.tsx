@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight, Hexagon, Copy, PenTool, Code, Check, X } from 'lucide-react';
 import type { ElementEvent, PropertyDefinition, GeoData, GeoPolygon } from '../../types';
-import { generateUUID } from '../../utils';
+import { generateUUID, parseFlexibleDate, formatDateForCopy } from '../../utils';
 import { useUIStore } from '../../stores';
 import { PropertiesEditor } from './PropertiesEditor';
 import { isGeoPolygon, getGeoCenter, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
@@ -304,6 +304,14 @@ const EventItem = memo(function EventItem({
               const existingTime = formatTimeForInput(new Date(localDate));
               setLocalDate(new Date(`${e.target.value}T${existingTime}`));
             }}
+            onPaste={(e) => {
+              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+              if (parsed) {
+                e.preventDefault();
+                setLocalDate(parsed);
+                onUpdate({ date: parsed });
+              }
+            }}
             onBlur={() => {
               const d = new Date(localDate);
               if (!isNaN(d.getTime()) && d.getTime() !== new Date(event.date).getTime()) {
@@ -327,6 +335,17 @@ const EventItem = memo(function EventItem({
             }}
             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
+          <button
+            type="button"
+            onClick={() => {
+              const d = new Date(localDate);
+              if (!isNaN(d.getTime())) navigator.clipboard.writeText(formatDateForCopy(d, true)).catch(() => {});
+            }}
+            className="p-1 shrink-0 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+            title={t('detail.copyDate')}
+          >
+            <Copy size={12} />
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3" /> {/* Spacer to align with calendar icon */}
@@ -342,6 +361,14 @@ const EventItem = memo(function EventItem({
               }
               const existingTime = localDateEnd ? formatTimeForInput(new Date(localDateEnd)) : '00:00';
               setLocalDateEnd(new Date(`${e.target.value}T${existingTime}`));
+            }}
+            onPaste={(e) => {
+              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+              if (parsed) {
+                e.preventDefault();
+                setLocalDateEnd(parsed);
+                onUpdate({ dateEnd: parsed });
+              }
             }}
             onBlur={() => {
               if (!localDateEnd) return;
@@ -371,6 +398,19 @@ const EventItem = memo(function EventItem({
             }}
             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
+          {localDateEnd && (
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date(localDateEnd);
+                if (!isNaN(d.getTime())) navigator.clipboard.writeText(formatDateForCopy(d, true)).catch(() => {});
+              }}
+              className="p-1 shrink-0 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+              title={t('detail.copyDate')}
+            >
+              <Copy size={12} />
+            </button>
+          )}
         </div>
       </div>
 
