@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink, MoreVertical } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
-import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal } from '../components/modals';
+import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal, JsonMappingImportModal } from '../components/modals';
 import { CollaborationInfo } from '../components/collaboration';
 
 // Lazy load with auto-reload on chunk load failure (stale cache after deploy)
@@ -99,6 +99,20 @@ export function DossierPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [redactConfirmOpen, setRedactConfirmOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [jsonMappingOpen, setJsonMappingOpen] = useState(false);
+  const [jsonMappingInitial, setJsonMappingInitial] = useState<string | undefined>(undefined);
+
+  // Open the JSON mapper pre-filled when raw JSON is pasted onto the canvas
+  useEffect(() => {
+    const onJsonPaste = (e: Event) => {
+      const text = (e as CustomEvent<{ text: string }>).detail?.text;
+      if (!text) return;
+      setJsonMappingInitial(text);
+      setJsonMappingOpen(true);
+    };
+    window.addEventListener('zn:json-mapping-paste', onJsonPaste);
+    return () => window.removeEventListener('zn:json-mapping-paste', onJsonPaste);
+  }, []);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
@@ -746,6 +760,12 @@ export function DossierPage() {
       <ImportIntoCurrentModal
         isOpen={importOpen}
         onClose={() => setImportOpen(false)}
+        onOpenJsonMapping={() => setJsonMappingOpen(true)}
+      />
+      <JsonMappingImportModal
+        isOpen={jsonMappingOpen}
+        onClose={() => { setJsonMappingOpen(false); setJsonMappingInitial(undefined); }}
+        initialJson={jsonMappingInitial}
       />
 
       {/* Synthesis modal */}
