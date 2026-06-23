@@ -656,6 +656,12 @@
     },
     "wholeObject": "(objeto entero = 1 elemento)",
     "toggleAll": "Activar/desactivar todo",
-    "enabledCount": "{{enabled}}/{{total}} campos activados"
+    "enabledCount": "{{enabled}}/{{total}} campos activados",
+    "subElements": "Subelementos vinculados",
+    "subElementsHint": "Cada lista de objetos puede convertirse en elementos hijos vinculados al padre.",
+    "subElementsCount": "{{count}} subelementos",
+    "childTag": "Etiqueta hijo",
+    "childLabel": "Etiqueta del hijo",
+    "linkLabel": "Etiqueta del enlace"
   }
 }

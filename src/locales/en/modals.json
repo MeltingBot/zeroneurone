@@ -673,6 +673,12 @@
     },
     "wholeObject": "(whole object = 1 element)",
     "toggleAll": "Toggle all",
-    "enabledCount": "{{enabled}}/{{total}} fields enabled"
+    "enabledCount": "{{enabled}}/{{total}} fields enabled",
+    "subElements": "Linked sub-elements",
+    "subElementsHint": "Each array of objects can become child elements linked to the parent.",
+    "subElementsCount": "{{count}} sub-elements",
+    "childTag": "Child tag",
+    "childLabel": "Child label",
+    "linkLabel": "Link label"
   }
 }

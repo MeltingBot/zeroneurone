@@ -656,6 +656,12 @@
     },
     "wholeObject": "(cały obiekt = 1 element)",
     "toggleAll": "Przełącz wszystko",
-    "enabledCount": "{{enabled}}/{{total}} pól włączonych"
+    "enabledCount": "{{enabled}}/{{total}} pól włączonych",
+    "subElements": "Połączone podelementy",
+    "subElementsHint": "Każda tablica obiektów może stać się elementami podrzędnymi połączonymi z rodzicem.",
+    "subElementsCount": "{{count}} podelementów",
+    "childTag": "Tag podrzędny",
+    "childLabel": "Etykieta podrzędna",
+    "linkLabel": "Etykieta połączenia"
   }
 }

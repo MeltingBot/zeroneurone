@@ -656,6 +656,12 @@
     },
     "wholeObject": "(objecte sencer = 1 element)",
     "toggleAll": "Activa/desactiva tot",
-    "enabledCount": "{{enabled}}/{{total}} camps activats"
+    "enabledCount": "{{enabled}}/{{total}} camps activats",
+    "subElements": "Subelements enllaçats",
+    "subElementsHint": "Cada llista d'objectes pot convertir-se en elements fills enllaçats amb el pare.",
+    "subElementsCount": "{{count}} subelements",
+    "childTag": "Etiqueta fill",
+    "childLabel": "Etiqueta del fill",
+    "linkLabel": "Etiqueta de l'enllaç"
   }
 }

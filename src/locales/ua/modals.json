@@ -656,6 +656,12 @@
     },
     "wholeObject": "(весь об'єкт = 1 елемент)",
     "toggleAll": "Перемкнути всі",
-    "enabledCount": "{{enabled}}/{{total}} полів увімкнено"
+    "enabledCount": "{{enabled}}/{{total}} полів увімкнено",
+    "subElements": "Пов'язані піделементи",
+    "subElementsHint": "Кожен масив об'єктів може стати дочірніми елементами, пов'язаними з батьківським.",
+    "subElementsCount": "{{count}} піделементів",
+    "childTag": "Тег дочірнього",
+    "childLabel": "Підпис дочірнього",
+    "linkLabel": "Підпис зв'язку"
   }
 }

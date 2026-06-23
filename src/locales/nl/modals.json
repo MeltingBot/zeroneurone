@@ -656,6 +656,12 @@
     },
     "wholeObject": "(heel object = 1 element)",
     "toggleAll": "Alles in-/uitschakelen",
-    "enabledCount": "{{enabled}}/{{total}} velden ingeschakeld"
+    "enabledCount": "{{enabled}}/{{total}} velden ingeschakeld",
+    "subElements": "Gekoppelde subelementen",
+    "subElementsHint": "Elke array van objecten kan onderliggende elementen worden die aan het bovenliggende zijn gekoppeld.",
+    "subElementsCount": "{{count}} subelementen",
+    "childTag": "Onderliggende tag",
+    "childLabel": "Onderliggend label",
+    "linkLabel": "Koppelingslabel"
   }
 }

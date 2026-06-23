@@ -656,6 +656,12 @@
     },
     "wholeObject": "(ganzes Objekt = 1 Element)",
     "toggleAll": "Alle umschalten",
-    "enabledCount": "{{enabled}}/{{total}} Felder aktiviert"
+    "enabledCount": "{{enabled}}/{{total}} Felder aktiviert",
+    "subElements": "Verknüpfte Unterelemente",
+    "subElementsHint": "Jedes Array von Objekten kann zu mit dem Elternelement verknüpften Kindelementen werden.",
+    "subElementsCount": "{{count}} Unterelemente",
+    "childTag": "Kind-Tag",
+    "childLabel": "Kind-Bezeichnung",
+    "linkLabel": "Verknüpfungsbezeichnung"
   }
 }

@@ -656,6 +656,12 @@
     },
     "wholeObject": "(objektu osoa = 1 elementu)",
     "toggleAll": "Guztiak txandakatu",
-    "enabledCount": "{{enabled}}/{{total}} eremu aktibatuta"
+    "enabledCount": "{{enabled}}/{{total}} eremu aktibatuta",
+    "subElements": "Lotutako azpielementuak",
+    "subElementsHint": "Objektu-array bakoitza gurasoarekin lotutako elementu umeak bihur daiteke.",
+    "subElementsCount": "{{count}} azpielementu",
+    "childTag": "Ume-etiketa",
+    "childLabel": "Umearen etiketa",
+    "linkLabel": "Estekaren etiketa"
   }
 }

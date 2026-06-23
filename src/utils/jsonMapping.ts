@@ -147,20 +147,57 @@ export function valueToString(v: unknown, join = ', '): string {
   return String(v);
 }
 
+export interface FieldInfo {
+  key: string;
+  sample: string;
+  /** 'objectArray' = array of objects (a candidate for linked sub-elements). */
+  kind: 'scalar' | 'objectArray';
+}
+
+/** True when a value is an array containing at least one object. */
+export function isObjectArray(v: unknown): boolean {
+  return Array.isArray(v) && v.some((it) => isPlainObject(it));
+}
+
 /**
  * Collect the union of field paths across all records, with a representative
- * (first non-blank) sample value for each.
+ * (first non-blank) sample value and a kind (scalar vs array-of-objects).
  */
-export function collectFields(records: Record<string, unknown>[]): { key: string; sample: string }[] {
+export function collectFields(records: Record<string, unknown>[]): FieldInfo[] {
   const order: string[] = [];
   const samples = new Map<string, string>();
+  const objArr = new Map<string, boolean>();
   for (const rec of records) {
     for (const [k, v] of Object.entries(rec)) {
-      if (!samples.has(k)) { order.push(k); samples.set(k, ''); }
+      if (!samples.has(k)) { order.push(k); samples.set(k, ''); objArr.set(k, false); }
+      if (isObjectArray(v)) objArr.set(k, true);
       if (samples.get(k) === '' && !isBlank(v)) samples.set(k, valueToString(v));
     }
   }
-  return order.map((k) => ({ key: k, sample: samples.get(k) ?? '' }));
+  return order.map((k) => ({ key: k, sample: samples.get(k) ?? '', kind: objArr.get(k) ? 'objectArray' as const : 'scalar' as const }));
+}
+
+/** Flattened sub-fields of the items inside an array-of-objects field, across all records. */
+export function childFieldsOf(records: Record<string, unknown>[], fieldKey: string): FieldInfo[] {
+  const items: Record<string, unknown>[] = [];
+  for (const rec of records) {
+    const v = rec[fieldKey];
+    if (Array.isArray(v)) for (const it of v) if (isPlainObject(it)) items.push(flattenRecord(it));
+  }
+  return collectFields(items);
+}
+
+/** Guess a `{path}` label template from a field set (first/last name, name-like, else first text field). */
+export function guessLabelTemplate(fields: FieldInfo[]): string {
+  const find = (re: RegExp) => fields.find((f) => re.test(f.key))?.key;
+  const fn = find(/(^|\.)first[_]?name$/i);
+  const ln = find(/(^|\.)last[_]?name$/i);
+  const nameKey = find(/(^|\.)(display_?name|full_?name|name|username|title|label|activity)$/i);
+  if (fn && ln) return `{${fn}} {${ln}}`;
+  if (fn) return `{${fn}}`;
+  if (nameKey) return `{${nameKey}}`;
+  const firstText = fields.find((f) => f.kind === 'scalar' && guessTarget(f.key) === 'property' && f.sample);
+  return firstText ? `{${firstText.key}}` : fields[0] ? `{${fields[0].key}}` : '';
 }
 
 /** Last segment of a dot-path, used as the default property key. */
