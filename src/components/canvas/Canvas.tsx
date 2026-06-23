@@ -48,6 +48,7 @@ import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { isMappableJson } from '../../utils/jsonMapping';
 import { serializeQuery } from '../../services/query/serializer';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
@@ -2980,6 +2981,30 @@ export function Canvas() {
         const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
         const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
 
+        // ── Pre-built elements/links (e.g. JSON mapping import): shift to click + paste ──
+        if (importPlacementData.prebuilt) {
+          const shifted = importPlacementData.prebuilt.elements.map((el) => ({
+            ...el,
+            position: { x: el.position.x + offsetX, y: el.position.y + offsetY },
+          }));
+          const placedLinks = importPlacementData.prebuilt.links;
+          pasteElements(shifted, placedLinks);
+          const placedIds = shifted.map((e) => e.id);
+          if (activeTabId) addTabMembers(activeTabId, placedIds);
+          pushAction({
+            type: 'create-elements',
+            undo: {},
+            redo: { elements: shifted, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
+          });
+          selectElements(placedIds);
+          toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
+          importPlacementData.onComplete?.();
+          setIsImportingPlacement(false);
+          exitImportPlacementMode();
+          return;
+        }
+
+        if (!importPlacementData.file) { setIsImportingPlacement(false); exitImportPlacementMode(); return; }
         let result: Awaited<ReturnType<typeof importService.importFromZip>>;
         const fileName = importPlacementData.file.name.toLowerCase();
         // Snapshot element IDs before import (for tab assignment after reload)
@@ -3120,7 +3145,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -3935,6 +3960,45 @@ export function Canvas() {
             files = [files[0]];
           }
         }
+      }
+
+      // PRIORITY 0: External JSON text. A recognized format (ZN native, GeoJSON,
+      // STIX2, Excalidraw, OSINT Industries…) goes through the standard import
+      // (placement mode); otherwise, generic JSON opens the field mapper.
+      const trimmedClip = clipboardText.trim();
+      if (!hasInternalCopyMarker && files.length === 0 && (trimmedClip.startsWith('{') || trimmedClip.startsWith('['))) {
+        try {
+          const data = JSON.parse(trimmedClip);
+          const format = importService.detectJsonFormat(data);
+          if (format !== 'unknown') {
+            // Known format → enter import placement mode with the pasted content
+            event.preventDefault();
+            if (currentDossier) {
+              const count = Array.isArray(data) ? data.length
+                : Array.isArray((data as { elements?: unknown[] }).elements) ? (data as { elements: unknown[] }).elements.length
+                : Array.isArray((data as { features?: unknown[] }).features) ? (data as { features: unknown[] }).features.length
+                : Array.isArray((data as { objects?: unknown[] }).objects) ? (data as { objects: unknown[] }).objects.length
+                : Array.isArray((data as { nodes?: unknown[] }).nodes) ? (data as { nodes: unknown[] }).nodes.length
+                : 10;
+              const grid = Math.ceil(Math.sqrt(Math.max(count, 1)));
+              const w = grid * 200, h = grid * 150;
+              useUIStore.getState().enterImportPlacementMode({
+                boundingBox: { minX: 0, minY: 0, maxX: w, maxY: h, width: w, height: h, elementCount: count },
+                file: new File([trimmedClip], 'pasted.json', { type: 'application/json' }),
+                dossierId: currentDossier.id,
+                fileContent: trimmedClip,
+                importOptions: { createMissingElements: true },
+              });
+            }
+            return;
+          }
+          if (isMappableJson(data)) {
+            // Unknown format but mappable → open the generic field mapper
+            event.preventDefault();
+            window.dispatchEvent(new CustomEvent('zn:json-mapping-paste', { detail: { text: trimmedClip } }));
+            return;
+          }
+        } catch { /* not JSON — fall through to normal paste handling */ }
       }
 
       // PRIORITY 1: External files (no internal marker means user copied externally)

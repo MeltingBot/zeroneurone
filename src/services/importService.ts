@@ -443,7 +443,7 @@ class ImportService {
   /**
    * Detect the JSON format from parsed data
    */
-  private detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'stix2' | 'gephi-lite' | 'geojson' | 'unknown' {
+  detectJsonFormat(data: unknown): 'zeroneurone' | 'osint-industries' | 'oi-palette' | 'predicagraph' | 'excalidraw' | 'stix2' | 'gephi-lite' | 'geojson' | 'unknown' {
     // Gephi Lite: { type: "gephi-lite", graphDataset: {...} }
     if (isGephiLiteFormat(data)) {
       return 'gephi-lite';

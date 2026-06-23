@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, AlertCircle, Download, FileSpreadsheet } from 'lucide-react';
+import { X, AlertCircle, Download, FileSpreadsheet, FileJson } from 'lucide-react';
 import { importService } from '../../services/importService';
 import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
@@ -9,6 +9,8 @@ import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Open the advanced "map a custom JSON" modal (closes this one first). */
+  onOpenJsonMapping?: () => void;
 }
 
 /**
@@ -86,7 +88,7 @@ function estimateElementCount(file: File, content: string): number {
  * Supports all formats: ZIP, CSV, JSON, GraphML, GEDCOM, etc.
  * All imports go through placement mode so the user can choose where to place elements.
  */
-export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentModalProps) {
+export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: ImportIntoCurrentModalProps) {
   const { t, i18n } = useTranslation('modals');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -322,6 +324,20 @@ export function ImportIntoCurrentModal({ isOpen, onClose }: ImportIntoCurrentMod
               <p>{t('import.csvTemplate.description')}</p>
             </div>
           </div>
+
+          {/* Advanced: custom JSON mapping */}
+          {onOpenJsonMapping && (
+            <button
+              onClick={() => { onClose(); onOpenJsonMapping(); }}
+              className="w-full flex items-center gap-2 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors text-left"
+            >
+              <FileJson size={16} className="text-text-secondary shrink-0" />
+              <div>
+                <div className="text-xs font-medium text-text-primary">{t('importJsonMapping.entryTitle')}</div>
+                <div className="text-[11px] text-text-tertiary">{t('importJsonMapping.entryDescription')}</div>
+              </div>
+            </button>
+          )}
 
           {/* Error message */}
           {error && (

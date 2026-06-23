@@ -77,6 +77,29 @@ enquete.zip
 
 ---
 
+### JSON par mapping (collage)
+
+Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne suit pas le schéma natif, un assistant de **mapping** permet de relier ses champs aux éléments ZeroNeurone.
+
+**Ouvrir :** import → *Mapper un JSON custom*, ou **coller (Ctrl+V) du JSON brut directement sur le canvas**. Un format reconnu (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) est importé normalement ; un JSON générique ouvre le mapping.
+
+**Détection automatique :**
+- la **source d'enregistrements** (un tableau d'objets comme `records`, ou l'objet entier = 1 élément) ;
+- un **modèle de libellé** (ex. `{first_name} {last_name}`) ;
+- les champs **date**, **pays**, **latitude/longitude** (point géo), et les **identifiants** ;
+- les **références** : un champ contenant les id d'autres enregistrements crée les **liens** correspondants (orientés ; réciproques → bidirectionnels) ;
+- les **zones (polygones)** : un tableau de coordonnées devient une zone géo (ordre lat/lng ajustable).
+
+**Réglages :**
+- **activer / désactiver** chaque champ (les champs bruités — id, hash, score… — sont décochés par défaut) ;
+- **tag** appliqué à tous les éléments + option *ignorer les valeurs vides* ;
+- **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien ;
+- **disposition** du graphe importé (force, clusters, hiérarchie…) avant de **cliquer pour le positionner** sur le canvas.
+
+L'import se fait en un seul lot **annulable** (Ctrl+Z).
+
+---
+
 ### CSV
 
 **Import tabulaire** d'éléments et liens.
