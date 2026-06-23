@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.42.5
+
+### Features
+- **Import JSON par mapping — filtre multi-conditions** : le filtre d'import accepte désormais **plusieurs conditions** (champ *contient / égale / non vide*), combinées en **ET** ou **OU**, en plus du plafond.
+
 ## 2.42.4
 
 ### Features

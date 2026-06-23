@@ -100,7 +100,7 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 - **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien (case *tout activer/désactiver*) ;
 - **disposition** du graphe importé (force, clusters, hiérarchie…) avant de **cliquer pour le positionner** sur le canvas.
 
-**Filtrer / limiter l'import :** on peut ne garder que les enregistrements dont un champ *contient / égale / est non vide*, et fixer un **plafond** (par défaut 2000 ; `0` = illimité). Utile pour les très gros jeux : on importe un sous-ensemble exploitable plutôt que des dizaines de milliers de nœuds.
+**Filtrer / limiter l'import :** on peut ne garder que les enregistrements satisfaisant une ou **plusieurs conditions** (champ *contient / égale / est non vide*), combinées en **ET** ou **OU**, et fixer un **plafond** (par défaut 2000 ; `0` = illimité). Utile pour les très gros jeux : on importe un sous-ensemble exploitable plutôt que des dizaines de milliers de nœuds.
 
 Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que les enregistrements retenus sont tous importés.
 

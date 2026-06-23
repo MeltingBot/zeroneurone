@@ -704,6 +704,10 @@
     "max": "Geh.",
     "maxHint": "Inportatzeko gehienezko elementuak (0 = mugagabea)",
     "matchedOf": "{{total}}-tik {{matched}} bat datoz",
-    "capped": "{{max}}-era mugatua"
+    "capped": "{{max}}-era mugatua",
+    "filterAll": "guztiak (ETA)",
+    "filterAny": "gutxienez bat (EDO)",
+    "addCondition": "baldintza bat gehitu",
+    "filterField": "(eremua)"
   }
 }

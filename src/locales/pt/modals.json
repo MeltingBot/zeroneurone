@@ -704,6 +704,10 @@
     "max": "Máx",
     "maxHint": "Máx. de elementos a importar (0 = ilimitado)",
     "matchedOf": "{{matched}} de {{total}} correspondem",
-    "capped": "limitado a {{max}}"
+    "capped": "limitado a {{max}}",
+    "filterAll": "todas (E)",
+    "filterAny": "pelo menos uma (OU)",
+    "addCondition": "adicionar uma condição",
+    "filterField": "(campo)"
   }
 }

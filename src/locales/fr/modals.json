@@ -721,6 +721,10 @@
     "max": "Max",
     "maxHint": "Nombre max d'éléments à importer (0 = illimité)",
     "matchedOf": "{{matched}} filtrés sur {{total}}",
-    "capped": "plafonné à {{max}}"
+    "capped": "plafonné à {{max}}",
+    "filterAll": "toutes (ET)",
+    "filterAny": "au moins une (OU)",
+    "addCondition": "ajouter une condition",
+    "filterField": "(champ)"
   }
 }

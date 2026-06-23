@@ -56,6 +56,21 @@ const SAMPLE = 2000;           // records used for field detection / preview
 const LAYOUT_CAP = 3000;       // skip auto-layout above this element count (force layout too slow)
 const LARGE_TEXT = 1_000_000;  // chars: above this, don't render the JSON in the textarea
 
+type FilterOp = 'contains' | 'equals' | 'nonempty';
+interface FilterCond { field: string; op: FilterOp; value: string }
+
+/** Whether a condition is usable (has a field, and a value unless 'nonempty'). */
+const condActive = (c: FilterCond) => !!c.field && (c.op === 'nonempty' || c.value.trim() !== '');
+
+/** Evaluate one filter condition against a raw record. */
+function evalCond(raw: Record<string, unknown>, c: FilterCond): boolean {
+  const v = getAtPath(raw, c.field);
+  if (c.op === 'nonempty') return !isBlank(v);
+  const s = valueToString(v).toLowerCase();
+  const q = c.value.trim().toLowerCase();
+  return c.op === 'equals' ? s === q : s.includes(q);
+}
+
 export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMappingImportModalProps) {
   const { t } = useTranslation('modals');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,10 +88,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [layout, setLayout] = useState<LayoutType>('force');
   const [creating, setCreating] = useState(false);
 
-  // Import filter + cap (to keep large datasets manageable on the canvas)
-  const [filterField, setFilterField] = useState('');
-  const [filterOp, setFilterOp] = useState<'contains' | 'equals' | 'nonempty'>('contains');
-  const [filterValue, setFilterValue] = useState('');
+  // Import filter (multi-condition) + cap (to keep large datasets manageable)
+  const [filters, setFilters] = useState<FilterCond[]>([]);
+  const [filterMode, setFilterMode] = useState<'all' | 'any'>('all');
   const [maxImport, setMaxImport] = useState(2000);
 
   // Saved templates (phase 2a)
@@ -94,7 +108,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     setText(''); setParsed(null); setError(null); setLoadedInfo(null); setSrcKey('');
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
-    setFilterField(''); setFilterOp('contains'); setFilterValue(''); setMaxImport(2000);
+    setFilters([]); setFilterMode('all'); setMaxImport(2000);
   }, []);
 
   const handleClose = useCallback(() => { reset(); onClose(); }, [reset, onClose]);
@@ -112,18 +126,15 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const recordCount = rawRecords.length;
   const records = useMemo(() => rawRecords.slice(0, SAMPLE).map((r) => flattenRecord(r)), [rawRecords]);
 
-  // Import filter (by field value) + cap. Field discovery stays on the unfiltered
-  // sample; only the records actually imported are filtered/capped.
-  const matchFilter = useCallback((raw: Record<string, unknown>) => {
-    if (!filterField) return true;
-    const v = getAtPath(raw, filterField);
-    if (filterOp === 'nonempty') return !isBlank(v);
-    const q = filterValue.trim().toLowerCase();
-    if (!q) return true;
-    const s = valueToString(v).toLowerCase();
-    return filterOp === 'equals' ? s === q : s.includes(q);
-  }, [filterField, filterOp, filterValue]);
-  const filteredRaw = useMemo(() => (filterField ? rawRecords.filter(matchFilter) : rawRecords), [rawRecords, filterField, matchFilter]);
+  // Import filter (multi-condition, ET/OU) + cap. Field discovery stays on the
+  // unfiltered sample; only the records actually imported are filtered/capped.
+  const filteredRaw = useMemo(() => {
+    const active = filters.filter(condActive);
+    if (active.length === 0) return rawRecords;
+    return rawRecords.filter((raw) =>
+      filterMode === 'all' ? active.every((c) => evalCond(raw, c)) : active.some((c) => evalCond(raw, c)),
+    );
+  }, [rawRecords, filters, filterMode]);
   const matchedCount = filteredRaw.length;
   const importCount = maxImport > 0 ? Math.min(matchedCount, maxImport) : matchedCount;
 
@@ -289,6 +300,10 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     setMapping((m) => ({ ...m, [key]: { ...m[key], coordOrder } }));
   const setChild = (key: string, patch: Partial<ChildMapping>) =>
     setChildMappings((c) => ({ ...c, [key]: { ...c[key], ...patch } }));
+  const addFilter = () => setFilters((f) => [...f, { field: '', op: 'contains', value: '' }]);
+  const updateFilter = (i: number, patch: Partial<FilterCond>) =>
+    setFilters((f) => f.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  const removeFilter = (i: number) => setFilters((f) => f.filter((_, idx) => idx !== i));
   const allChildrenEnabled = childArrayFields.length > 0 && childArrayFields.every((f) => childMappings[f.key]?.enabled);
   const toggleAllChildren = () =>
     setChildMappings((c) => {
@@ -732,50 +747,61 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                 </div>
               </div>
 
-              {/* Import filter + cap */}
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.filter')}</label>
-                <select
-                  value={filterField}
-                  onChange={(e) => setFilterField(e.target.value)}
-                  className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary max-w-[160px]"
-                >
-                  <option value="">{t('importJsonMapping.filterNone')}</option>
-                  {scalarFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
-                </select>
-                {filterField && (
-                  <>
+              {/* Import filter (multi-condition) + cap */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.filter')}</label>
+                  {filters.length > 1 && (
                     <select
-                      value={filterOp}
-                      onChange={(e) => setFilterOp(e.target.value as 'contains' | 'equals' | 'nonempty')}
+                      value={filterMode}
+                      onChange={(e) => setFilterMode(e.target.value as 'all' | 'any')}
+                      className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                    >
+                      <option value="all">{t('importJsonMapping.filterAll')}</option>
+                      <option value="any">{t('importJsonMapping.filterAny')}</option>
+                    </select>
+                  )}
+                  <button onClick={addFilter} className="text-xs text-text-secondary hover:text-accent">+ {t('importJsonMapping.addCondition')}</button>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.max')}</label>
+                    <input
+                      type="number" min={0} value={maxImport}
+                      onChange={(e) => setMaxImport(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                      className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                      title={t('importJsonMapping.maxHint')}
+                    />
+                  </div>
+                </div>
+                {filters.map((c, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <select
+                      value={c.field}
+                      onChange={(e) => updateFilter(i, { field: e.target.value })}
+                      className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary max-w-[180px]"
+                    >
+                      <option value="">{t('importJsonMapping.filterField')}</option>
+                      {scalarFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
+                    </select>
+                    <select
+                      value={c.op}
+                      onChange={(e) => updateFilter(i, { op: e.target.value as FilterOp })}
                       className="px-1 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
                     >
                       <option value="contains">{t('importJsonMapping.filterContains')}</option>
                       <option value="equals">{t('importJsonMapping.filterEquals')}</option>
                       <option value="nonempty">{t('importJsonMapping.filterNonEmpty')}</option>
                     </select>
-                    {filterOp !== 'nonempty' && (
+                    {c.op !== 'nonempty' && (
                       <input
-                        type="text"
-                        value={filterValue}
-                        onChange={(e) => setFilterValue(e.target.value)}
+                        type="text" value={c.value}
+                        onChange={(e) => updateFilter(i, { value: e.target.value })}
                         placeholder={t('importJsonMapping.filterValue')}
-                        className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                        className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
                       />
                     )}
-                  </>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.max')}</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={maxImport}
-                    onChange={(e) => setMaxImport(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                    className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
-                    title={t('importJsonMapping.maxHint')}
-                  />
-                </div>
+                    <button onClick={() => removeFilter(i)} className="p-1 text-text-tertiary hover:text-error shrink-0"><X size={14} /></button>
+                  </div>
+                ))}
               </div>
 
               {/* Mapping table */}

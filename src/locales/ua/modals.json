@@ -704,6 +704,10 @@
     "max": "Макс",
     "maxHint": "Макс. елементів для імпорту (0 = без обмежень)",
     "matchedOf": "{{matched}} з {{total}} збігаються",
-    "capped": "обмежено до {{max}}"
+    "capped": "обмежено до {{max}}",
+    "filterAll": "усі (І)",
+    "filterAny": "хоча б одна (АБО)",
+    "addCondition": "додати умову",
+    "filterField": "(поле)"
   }
 }

@@ -100,7 +100,7 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label (with a *toggle all* checkbox);
 - the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
 
-**Filter / limit the import:** you can keep only records whose field *contains / equals / is non-empty*, and set a **cap** (default 2000; `0` = unlimited). Useful for very large datasets: import a usable subset instead of tens of thousands of nodes.
+**Filter / limit the import:** you can keep only records matching one or **several conditions** (field *contains / equals / is non-empty*), combined with **AND** or **OR**, and set a **cap** (default 2000; `0` = unlimited). Useful for very large datasets: import a usable subset instead of tens of thousands of nodes.
 
 **Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while the retained records are all imported.
 

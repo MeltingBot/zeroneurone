@@ -704,6 +704,10 @@
     "max": "Max",
     "maxHint": "Max. te importeren elementen (0 = onbeperkt)",
     "matchedOf": "{{matched}} van {{total}} komen overeen",
-    "capped": "beperkt tot {{max}}"
+    "capped": "beperkt tot {{max}}",
+    "filterAll": "alle (EN)",
+    "filterAny": "ten minste één (OF)",
+    "addCondition": "voorwaarde toevoegen",
+    "filterField": "(veld)"
   }
 }

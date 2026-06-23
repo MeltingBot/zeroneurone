@@ -704,6 +704,10 @@
     "max": "Màx",
     "maxHint": "Màx. d'elements a importar (0 = il·limitat)",
     "matchedOf": "{{matched}} de {{total}} coincideixen",
-    "capped": "limitat a {{max}}"
+    "capped": "limitat a {{max}}",
+    "filterAll": "totes (I)",
+    "filterAny": "almenys una (O)",
+    "addCondition": "afegeix una condició",
+    "filterField": "(camp)"
   }
 }

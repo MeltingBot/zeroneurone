@@ -704,6 +704,10 @@
     "max": "Maks",
     "maxHint": "Maks. elementów do importu (0 = bez limitu)",
     "matchedOf": "{{matched}} z {{total}} pasuje",
-    "capped": "ograniczono do {{max}}"
+    "capped": "ograniczono do {{max}}",
+    "filterAll": "wszystkie (I)",
+    "filterAny": "co najmniej jeden (LUB)",
+    "addCondition": "dodaj warunek",
+    "filterField": "(pole)"
   }
 }
