@@ -8,6 +8,8 @@
 
 Un tableau blanc infini avec des capacites d'analyse de graphe.
 
+*Langue : Francais | [English](README.en.md)*
+
 ![Version](https://img.shields.io/badge/version-2.42.5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
@@ -87,6 +89,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques (nom, dates, lieux, profession, surnom, titre, notes)
 - Import ZIP (restauration complete avec onglets)
 - Import dans dossier courante (merge avec placement visuel)
+- **Import JSON par mapping** : assistant pour relier les champs d'un JSON quelconque aux elements — detection auto (source, libelle, date/pays/geo/identifiants), sous-elements lies, liens par reference d'ID et **noeuds pivots** (valeur partagee), medias en pieces jointes, polygones geo, **filtre multi-conditions** + plafond, **modeles reutilisables** exportables ; aussi par collage direct (Ctrl+V) sur le canvas
 - Panel Rapport (redaction Markdown avec references aux elements)
 - Generation de synthese (rapport automatique avec analyse du graphe)
 - [Format JSON d'import documente](docs/json-import-format-fr.md) ([EN](docs/json-import-format-en.md))
@@ -435,9 +438,21 @@ Ou deployer votre propre serveur y-websocket.
 - [x] API de chiffrement pour plugins externes
 - [x] i18n complet (11 langues) avec avertissements de risque
 
+### v2.42 — Import JSON par mapping ✓
+- [x] Assistant de mapping : JSON quelconque (collage ou fichier) → elements
+- [x] Detection auto (source d'enregistrements, libelle, date/pays/geo/identifiants, references, polygones, URLs)
+- [x] Champ combine `lat, lng`, type lien (URL), media en piece jointe (telechargement)
+- [x] Sous-elements lies (tableaux d'objets imbriques) et noeuds pivots (valeur partagee)
+- [x] Liens par reference d'ID (orientes ; reciproques → bidirectionnels)
+- [x] Activer/desactiver les champs, layout du sous-graphe, placement au clic
+- [x] Filtre multi-conditions (ET/OU) + plafond, gestion des gros fichiers
+- [x] Modeles de mapping reutilisables (enregistrer/charger/gerer, suggestion auto, export/import)
+- [x] Reconnaissance des formats natifs au collage (ZN, GeoJSON, STIX2, Excalidraw, Gephi, PredicaGraph, OSINT Industries)
+
 ### Idees futures
 - [ ] Theming personnalisable
 - [ ] Mode presentation
+- [ ] Vue grand graphe WebGL (Sigma + graphology) pour tres gros volumes
 
 ## Contribuer
 
