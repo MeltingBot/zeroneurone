@@ -77,6 +77,29 @@ dossier.zip
 
 ---
 
+### JSON via mapping (paste)
+
+For **arbitrary JSON** (an API export, another tool's output…) that doesn't follow the native schema, a **mapping** assistant connects its fields to ZeroNeurone elements.
+
+**Open it:** import → *Map a custom JSON*, or **paste (Ctrl+V) raw JSON directly onto the canvas**. A recognized format (ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph) is imported normally; generic JSON opens the mapper.
+
+**Auto-detection:**
+- the **record source** (an array of objects like `records`, or the whole object = 1 element);
+- a **label template** (e.g. `{first_name} {last_name}`);
+- **date**, **country**, **latitude/longitude** (geo point) and **identifier** fields;
+- **references**: a field holding the ids of other records creates the matching **links** (directed; reciprocal → bidirectional);
+- **zones (polygons)**: an array of coordinates becomes a geo zone (lat/lng order adjustable).
+
+**Settings:**
+- **enable / disable** each field (noisy fields — id, hash, score… — are off by default);
+- a **tag** applied to all elements + an *ignore empty values* option;
+- **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label;
+- the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
+
+The import happens as a single **undoable** batch (Ctrl+Z).
+
+---
+
 ### CSV
 
 **Tabular import** of elements and links.
