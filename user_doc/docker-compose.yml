@@ -9,7 +9,7 @@ services:
         if [ ! -d /src/themes/hugo-book ]; then
           echo "Downloading hugo-book theme..."
           mkdir -p /src/themes
-          git clone --depth 1 https://github.com/alex-shpak/hugo-book.git /src/themes/hugo-book
+          git clone --depth 1 --branch v13 https://github.com/alex-shpak/hugo-book.git /src/themes/hugo-book
         fi
         hugo server --bind 0.0.0.0 --buildDrafts --buildFuture
     working_dir: /src
@@ -30,7 +30,7 @@ services:
         if [ ! -d /src/themes/hugo-book ]; then
           echo "Downloading hugo-book theme..."
           mkdir -p /src/themes
-          git clone --depth 1 https://github.com/alex-shpak/hugo-book.git /src/themes/hugo-book
+          git clone --depth 1 --branch v13 https://github.com/alex-shpak/hugo-book.git /src/themes/hugo-book
         fi
         hugo --minify
     working_dir: /src

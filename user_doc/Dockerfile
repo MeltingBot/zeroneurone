@@ -14,7 +14,7 @@ COPY assets/ assets/
 
 # Install hugo-book theme
 RUN mkdir -p themes && \
-    git clone --depth 1 https://github.com/alex-shpak/hugo-book.git themes/hugo-book
+    git clone --depth 1 --branch v13 https://github.com/alex-shpak/hugo-book.git themes/hugo-book
 
 # Build the static site
 RUN hugo --minify
