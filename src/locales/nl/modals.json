@@ -655,7 +655,10 @@
       "lng": "Lengtegraad",
       "id": "Identificator",
       "ref": "Referentie (koppeling)",
-      "polygon": "Zone (polygoon)"
+      "polygon": "Zone (polygoon)",
+      "link": "Koppeling (URL)",
+      "latlng": "Punt (lat, lng)",
+      "asset": "Media (bijlage)"
     },
     "wholeObject": "(heel object = 1 element)",
     "toggleAll": "Alles in-/uitschakelen",
@@ -688,6 +691,8 @@
     "exportAll": "Alles exporteren",
     "importTemplates": "Importeren",
     "importedTemplates": "{{count}} sjabl(o)on(en) geïmporteerd",
-    "importTemplatesError": "Ongeldig sjabloonbestand"
+    "importTemplatesError": "Ongeldig sjabloonbestand",
+    "clear": "Wissen",
+    "largeNotice": "Detectie op basis van de eerste {{sample}} records; alle {{count}} worden geïmporteerd."
   }
 }

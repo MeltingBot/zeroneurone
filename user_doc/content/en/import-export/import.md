@@ -87,14 +87,19 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - the **record source** (an array of objects like `records`, or the whole object = 1 element);
 - a **label template** (e.g. `{first_name} {last_name}`);
 - **date**, **country**, **latitude/longitude** (geo point) and **identifier** fields;
+- a single combined **`lat, lng`** field → geo point;
+- **URLs** → **link**-typed property;
 - **references**: a field holding the ids of other records creates the matching **links** (directed; reciprocal → bidirectional);
 - **zones (polygons)**: an array of coordinates becomes a geo zone (lat/lng order adjustable).
 
 **Settings:**
 - **enable / disable** each field (noisy fields — id, hash, score… — are off by default);
 - a **tag** applied to all elements + an *ignore empty values* option;
-- **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label;
+- **Media (attachment)** target: a media URL is **downloaded and attached** to the element (subject to what the remote server allows — some sources block downloads; failures are reported);
+- **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label (with a *toggle all* checkbox);
 - the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
+
+**Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while **all** are imported.
 
 **Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users.
 

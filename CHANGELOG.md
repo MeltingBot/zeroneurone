@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.42.3
+
+### Features
+- **Import JSON par mapping — améliorations** :
+  - cible **Lien (URL)** (propriété de type lien) et **Point (lat, lng)** pour un champ unique contenant les deux coordonnées (détection automatique des deux) ;
+  - cible **Média (pièce jointe)** : télécharge une URL de média et l'attache comme pièce jointe à l'élément (selon les autorisations CORS du serveur distant ; échecs rapportés) ;
+  - case **tout activer / désactiver** pour les sous-éléments liés ;
+  - **gestion des gros fichiers JSON** : contenu non rendu dans la zone de texte au-delà de ~1 Mo, détection sur un échantillon (2000 premiers enregistrements) avec import de la totalité, et layout automatique désactivé au-delà de 3000 éléments.
+
 ## 2.42.2
 
 ### Features

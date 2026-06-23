@@ -3001,6 +3001,29 @@ export function Canvas() {
           importPlacementData.onComplete?.();
           setIsImportingPlacement(false);
           exitImportPlacementMode();
+
+          // Download + attach media assets (after creation). Network-dependent (CORS):
+          // attach what succeeds, report failures. Runs async; doesn't block placement.
+          const assetJobs = importPlacementData.prebuilt.assets ?? [];
+          if (assetJobs.length > 0) {
+            void (async () => {
+              let ok = 0, fail = 0;
+              for (const job of assetJobs) {
+                for (const url of job.urls) {
+                  try {
+                    const res = await fetch(url);
+                    if (!res.ok) { fail++; continue; }
+                    const blob = await res.blob();
+                    if (blob.size > 50 * 1024 * 1024) { fail++; continue; } // 50 MB hard cap
+                    const name = (url.split('/').pop() || 'media').split('?')[0] || 'media';
+                    await addAsset(job.elementId, new File([blob], name, { type: blob.type || 'application/octet-stream' }));
+                    ok++;
+                  } catch { fail++; }
+                }
+              }
+              if (ok > 0 || fail > 0) toast.success(tPages('dossier.importPlacement.mediaResult', { ok, fail }));
+            })();
+          }
           return;
         }
 
@@ -3145,7 +3168,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(

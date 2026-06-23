@@ -36,8 +36,9 @@ export interface ImportPlacementData {
     createMissingElements?: boolean;
   };
   /** Pre-built elements/links to place directly (e.g. JSON mapping import).
-      Positions are relative to boundingBox.min and shifted to the click point. */
-  prebuilt?: { elements: Element[]; links: Link[] };
+      Positions are relative to boundingBox.min and shifted to the click point.
+      `assets` lists media URLs to download and attach to each element after creation. */
+  prebuilt?: { elements: Element[]; links: Link[]; assets?: { elementId: string; urls: string[] }[] };
 }
 
 export type FontMode = 'readable' | 'handwritten';

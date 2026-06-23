@@ -655,7 +655,10 @@
       "lng": "Längengrad",
       "id": "Bezeichner",
       "ref": "Referenz (Verknüpfung)",
-      "polygon": "Zone (Polygon)"
+      "polygon": "Zone (Polygon)",
+      "link": "Link (URL)",
+      "latlng": "Punkt (lat, lng)",
+      "asset": "Medium (Anhang)"
     },
     "wholeObject": "(ganzes Objekt = 1 Element)",
     "toggleAll": "Alle umschalten",
@@ -688,6 +691,8 @@
     "exportAll": "Alle exportieren",
     "importTemplates": "Importieren",
     "importedTemplates": "{{count}} Vorlage(n) importiert",
-    "importTemplatesError": "Ungültige Vorlagendatei"
+    "importTemplatesError": "Ungültige Vorlagendatei",
+    "clear": "Löschen",
+    "largeNotice": "Erkennung anhand der ersten {{sample}} Datensätze; alle {{count}} werden importiert."
   }
 }

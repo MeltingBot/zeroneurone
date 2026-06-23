@@ -198,7 +198,8 @@
       "cancel": "Anuluj (Esc)",
       "elements": "{{count}} element(ów)",
       "success": "{{count}} element(ów) zaimportowano",
-      "error": "Import nie powiódł się"
+      "error": "Import nie powiódł się",
+      "mediaResult": "Załączono {{ok}} mediów, {{fail}} nieudanych"
     },
     "layout": {
       "title": "Algorytmy układu",

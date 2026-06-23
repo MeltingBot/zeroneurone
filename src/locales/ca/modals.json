@@ -655,7 +655,10 @@
       "lng": "Longitud",
       "id": "Identificador",
       "ref": "Referència (enllaç)",
-      "polygon": "Zona (polígon)"
+      "polygon": "Zona (polígon)",
+      "link": "Enllaç (URL)",
+      "latlng": "Punt (lat, lng)",
+      "asset": "Mèdia (adjunt)"
     },
     "wholeObject": "(objecte sencer = 1 element)",
     "toggleAll": "Activa/desactiva tot",
@@ -688,6 +691,8 @@
     "exportAll": "Exporta-ho tot",
     "importTemplates": "Importa",
     "importedTemplates": "{{count}} plantilla/es importada/es",
-    "importTemplatesError": "Fitxer de plantilles no vàlid"
+    "importTemplatesError": "Fitxer de plantilles no vàlid",
+    "clear": "Esborra",
+    "largeNotice": "Detecció basada en els primers {{sample}} registres; s'importaran tots els {{count}}."
   }
 }

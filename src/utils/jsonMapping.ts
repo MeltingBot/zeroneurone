@@ -1,4 +1,5 @@
 import { parseFlexibleDate } from './index';
+import { parseLatLngPair } from './geo';
 
 /**
  * Pure helpers for the "Import JSON (mapping)" feature: turn an arbitrary JSON
@@ -19,7 +20,13 @@ export type MappingTarget =
   /** Reference(s) to other records' id → creates links between the created elements. */
   | 'ref'
   /** Array of coordinate pairs → element geo zone (GeoPolygon). */
-  | 'polygon';
+  | 'polygon'
+  /** URL → property of type 'link'. */
+  | 'link'
+  /** Single field holding "lat, lng" → element geo point. */
+  | 'latlng'
+  /** URL(s) to media → downloaded and attached as element assets. */
+  | 'asset';
 
 export type CoordOrder = 'latlng' | 'lnglat';
 
@@ -90,6 +97,37 @@ export function detectPolygonFields(records: Record<string, unknown>[], fields: 
     if (records.some((r) => isCoordPairArray(r[f.key]))) out.add(f.key);
   }
   return out;
+}
+
+/** True when a string value looks like a URL. */
+export function isUrl(v: unknown): boolean {
+  return typeof v === 'string' && /^(https?:\/\/|www\.)\S+$/i.test(v.trim());
+}
+
+/** Generic value-ratio detector: fields where ≥50% of non-blank values satisfy `test`. */
+function detectByValue(records: Record<string, unknown>[], fields: FieldInfo[], test: (v: unknown) => boolean): Set<string> {
+  const out = new Set<string>();
+  for (const f of fields) {
+    let total = 0, match = 0;
+    for (const r of records) {
+      const v = r[f.key];
+      if (isBlank(v)) continue;
+      total++;
+      if (test(v)) match++;
+    }
+    if (total > 0 && match / total >= 0.5) out.add(f.key);
+  }
+  return out;
+}
+
+/** Detect fields whose values are mostly URLs (→ link properties). */
+export function detectLinkFields(records: Record<string, unknown>[], fields: FieldInfo[]): Set<string> {
+  return detectByValue(records, fields, isUrl);
+}
+
+/** Detect fields whose values are a single "lat, lng" string (→ geo point). */
+export function detectLatLngFields(records: Record<string, unknown>[], fields: FieldInfo[]): Set<string> {
+  return detectByValue(records, fields, (v) => typeof v === 'string' && /[,;\s]/.test(v) && parseLatLngPair(v) !== null);
 }
 
 /** Guess coordinate order: a value out of latitude range (±90) on the 1st/2nd slot reveals lng position; default lat,lng. */
@@ -186,16 +224,21 @@ export function pickDefaultSource(sources: RecordSource[]): RecordSource | undef
   return sources.find((s) => s.kind === 'array');
 }
 
-/** Extract the flattened records for a chosen source. */
-export function recordsForSource(data: unknown, source: RecordSource | undefined): Record<string, unknown>[] {
+/** Raw (unflattened) record objects for a chosen source — cheap, no per-record flatten. */
+export function rawRecordsForSource(data: unknown, source: RecordSource | undefined): Record<string, unknown>[] {
   if (!source) return [];
   if (source.kind === 'single') {
     const obj = getAtPath(data, source.path);
-    return isPlainObject(obj) ? [flattenRecord(obj)] : [];
+    return isPlainObject(obj) ? [obj] : [];
   }
   const arr = getAtPath(data, source.path);
   if (!Array.isArray(arr)) return [];
-  return arr.filter((it) => it != null && typeof it === 'object').map((it) => flattenRecord(it));
+  return arr.filter((it): it is Record<string, unknown> => it != null && typeof it === 'object');
+}
+
+/** Extract the flattened records for a chosen source. */
+export function recordsForSource(data: unknown, source: RecordSource | undefined): Record<string, unknown>[] {
+  return rawRecordsForSource(data, source).map((it) => flattenRecord(it));
 }
 
 /**

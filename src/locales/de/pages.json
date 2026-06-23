@@ -198,7 +198,8 @@
       "cancel": "Abbrechen (Esc)",
       "elements": "{{count}} Element(e)",
       "success": "{{count}} Element(e) importiert",
-      "error": "Import fehlgeschlagen"
+      "error": "Import fehlgeschlagen",
+      "mediaResult": "{{ok}} Medien angehängt, {{fail}} fehlgeschlagen"
     },
     "layout": {
       "title": "Layout-Algorithmen",

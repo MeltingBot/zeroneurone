@@ -198,7 +198,8 @@
       "cancel": "Cancel·lar (Esc)",
       "elements": "{{count}} element(s)",
       "success": "{{count}} element(s) importat(s)",
-      "error": "Error d'importació"
+      "error": "Error d'importació",
+      "mediaResult": "{{ok}} mèdia adjuntats, {{fail}} fallits"
     },
     "layout": {
       "title": "Algoritmes de disposició",

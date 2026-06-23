@@ -198,7 +198,8 @@
       "cancel": "Annulla (Esc)",
       "elements": "{{count}} elemento/i",
       "success": "{{count}} elemento/i importato/i",
-      "error": "Importazione fallita"
+      "error": "Importazione fallita",
+      "mediaResult": "{{ok}} media allegati, {{fail}} falliti"
     },
     "layout": {
       "title": "Algoritmi di disposizione",

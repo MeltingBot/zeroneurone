@@ -655,7 +655,10 @@
       "lng": "Longitudea",
       "id": "Identifikatzailea",
       "ref": "Erreferentzia (esteka)",
-      "polygon": "Eremua (poligonoa)"
+      "polygon": "Eremua (poligonoa)",
+      "link": "Esteka (URL)",
+      "latlng": "Puntua (lat, lng)",
+      "asset": "Media (eranskina)"
     },
     "wholeObject": "(objektu osoa = 1 elementu)",
     "toggleAll": "Guztiak txandakatu",
@@ -688,6 +691,8 @@
     "exportAll": "Esportatu dena",
     "importTemplates": "Inportatu",
     "importedTemplates": "{{count}} txantiloi inportatuta",
-    "importTemplatesError": "Txantiloi-fitxategi baliogabea"
+    "importTemplatesError": "Txantiloi-fitxategi baliogabea",
+    "clear": "Garbitu",
+    "largeNotice": "Detekzioa lehen {{sample}} erregistroetan oinarrituta; {{count}} guztiak inportatuko dira."
   }
 }

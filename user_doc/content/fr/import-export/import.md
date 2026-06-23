@@ -87,14 +87,19 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 - la **source d'enregistrements** (un tableau d'objets comme `records`, ou l'objet entier = 1 élément) ;
 - un **modèle de libellé** (ex. `{first_name} {last_name}`) ;
 - les champs **date**, **pays**, **latitude/longitude** (point géo), et les **identifiants** ;
+- un champ unique **`lat, lng`** combiné → point géo ;
+- les **URL** → propriété de type **lien** ;
 - les **références** : un champ contenant les id d'autres enregistrements crée les **liens** correspondants (orientés ; réciproques → bidirectionnels) ;
 - les **zones (polygones)** : un tableau de coordonnées devient une zone géo (ordre lat/lng ajustable).
 
 **Réglages :**
 - **activer / désactiver** chaque champ (les champs bruités — id, hash, score… — sont décochés par défaut) ;
 - **tag** appliqué à tous les éléments + option *ignorer les valeurs vides* ;
-- **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien ;
+- cible **Média (pièce jointe)** : une URL de média est **téléchargée et attachée** comme pièce jointe à l'élément (selon ce que le serveur distant autorise — certaines sources bloquent le téléchargement ; les échecs sont rapportés) ;
+- **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien (case *tout activer/désactiver*) ;
 - **disposition** du graphe importé (force, clusters, hiérarchie…) avant de **cliquer pour le positionner** sur le canvas.
+
+Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que **tous** sont importés.
 
 **Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**. Les modèles peuvent aussi être **exportés / importés** en fichier `.json` pour les **partager** entre postes ou utilisateurs.
 

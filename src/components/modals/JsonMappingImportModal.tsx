@@ -7,12 +7,15 @@ import type { Element, ElementVisual, Property, GeoData, Link } from '../../type
 import {
   findRecordSources,
   pickDefaultSource,
-  recordsForSource,
+  rawRecordsForSource,
   sourceKey,
   collectFields,
   childFieldsOf,
   detectReferenceFields,
   detectPolygonFields,
+  detectLinkFields,
+  detectLatLngFields,
+  isUrl,
   guessCoordOrder,
   toLngLatCoords,
   guessLabelTemplate,
@@ -31,7 +34,7 @@ import {
   type ChildMapping,
   type MappingConfig,
 } from '../../utils/jsonMapping';
-import { computePolygonCenter } from '../../utils/geo';
+import { computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { JsonMappingManagerModal } from './JsonMappingManagerModal';
 
@@ -45,7 +48,12 @@ interface JsonMappingImportModalProps {
   initialJson?: string;
 }
 
-const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'source', 'lat', 'lng', 'id', 'ref', 'polygon'];
+const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'link', 'asset', 'source', 'lat', 'lng', 'latlng', 'id', 'ref', 'polygon'];
+
+// Large-file handling: sample records for the UI (detection/preview), but import them all.
+const SAMPLE = 2000;           // records used for field detection / preview
+const LAYOUT_CAP = 3000;       // skip auto-layout above this element count (force layout too slow)
+const LARGE_TEXT = 1_000_000;  // chars: above this, don't render the JSON in the textarea
 
 export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMappingImportModalProps) {
   const { t } = useTranslation('modals');
@@ -54,6 +62,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [text, setText] = useState('');
   const [parsed, setParsed] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadedInfo, setLoadedInfo] = useState<string | null>(null);
   const [srcKey, setSrcKey] = useState('');
   const [mapping, setMapping] = useState<Record<string, FieldMapping>>({});
   const [childMappings, setChildMappings] = useState<Record<string, ChildMapping>>({});
@@ -75,7 +84,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   useEffect(() => { if (isOpen) loadTemplates(); }, [isOpen, loadTemplates]);
 
   const reset = useCallback(() => {
-    setText(''); setParsed(null); setError(null); setSrcKey('');
+    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setSrcKey('');
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
   }, []);
@@ -89,8 +98,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     [sources, srcKey],
   );
 
-  // Flattened records for the chosen source
-  const records = useMemo(() => recordsForSource(parsed, selectedSource), [parsed, selectedSource]);
+  // Raw records (all, cheap) + a flattened SAMPLE for the UI (detection/preview).
+  // The import flattens and processes ALL raw records.
+  const rawRecords = useMemo(() => rawRecordsForSource(parsed, selectedSource), [parsed, selectedSource]);
+  const recordCount = rawRecords.length;
+  const records = useMemo(() => rawRecords.slice(0, SAMPLE).map((r) => flattenRecord(r)), [rawRecords]);
 
   const fields = useMemo(() => collectFields(records), [records]);
   // Scalar fields map to the parent element; array-of-objects fields can become linked children.
@@ -105,14 +117,22 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     const idFieldKey = scalarFields.find((f) => guessTarget(f.key) === 'id')?.key;
     const refSet = detectReferenceFields(records, scalarFields, idFieldKey);
     const polySet = detectPolygonFields(records, scalarFields);
+    const latlngSet = detectLatLngFields(records, scalarFields);
+    const linkSet = detectLinkFields(records, scalarFields);
     const next: Record<string, FieldMapping> = {};
     for (const f of scalarFields) {
       const g = guessTarget(f.key);
       if (polySet.has(f.key)) {
         next[f.key] = { enabled: true, target: 'polygon', propKey: lastSegment(f.key), coordOrder: guessCoordOrder(records, f.key) };
+      } else if (latlngSet.has(f.key)) {
+        // Single field holding "lat, lng" → geo point.
+        next[f.key] = { enabled: true, target: 'latlng', propKey: lastSegment(f.key) };
       } else if (refSet.has(f.key)) {
         // Reference field → create links; empty label by default (cleaner than the field name).
         next[f.key] = { enabled: true, target: 'ref', propKey: '' };
+      } else if (linkSet.has(f.key)) {
+        // URL → link-typed property.
+        next[f.key] = { enabled: true, target: 'link', propKey: lastSegment(f.key) };
       } else {
         // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
         next[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
@@ -196,17 +216,28 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     }
   }, [t]);
 
-  const handleFile = useCallback(async (file: File) => {
-    const content = await file.text();
-    setText(content);
+  // Load content: above LARGE_TEXT, keep it OUT of the textarea (10 MB in a
+  // controlled textarea freezes the UI) — show an info banner instead.
+  const loadContent = useCallback((content: string, label: string | null) => {
+    if (content.length > LARGE_TEXT) {
+      setText('');
+      setLoadedInfo(label ?? `${(content.length / 1048576).toFixed(1)} Mo`);
+    } else {
+      setText(content);
+      setLoadedInfo(null);
+    }
     parse(content);
   }, [parse]);
+
+  const handleFile = useCallback(async (file: File) => {
+    const content = await file.text();
+    loadContent(content, `${file.name} — ${(file.size / 1048576).toFixed(1)} Mo`);
+  }, [loadContent]);
 
   // Pre-fill from a paste when the modal opens
   useEffect(() => {
     if (isOpen && initialJson) {
-      setText(initialJson);
-      parse(initialJson);
+      loadContent(initialJson, null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialJson]);
@@ -235,11 +266,21 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     setMapping((m) => ({ ...m, [key]: { ...m[key], coordOrder } }));
   const setChild = (key: string, patch: Partial<ChildMapping>) =>
     setChildMappings((c) => ({ ...c, [key]: { ...c[key], ...patch } }));
+  const allChildrenEnabled = childArrayFields.length > 0 && childArrayFields.every((f) => childMappings[f.key]?.enabled);
+  const toggleAllChildren = () =>
+    setChildMappings((c) => {
+      const target = !allChildrenEnabled;
+      const next = { ...c };
+      for (const f of childArrayFields) if (next[f.key]) next[f.key] = { ...next[f.key], enabled: target };
+      return next;
+    });
 
   const handleImport = useCallback(async () => {
     const dossier = useDossierStore.getState().currentDossier;
-    if (!dossier || records.length === 0) return;
+    if (!dossier || rawRecords.length === 0) return;
     setCreating(true);
+    // Flatten ALL records for the import (the UI only used a sample).
+    const allRecords = rawRecords.map((r) => flattenRecord(r));
     try {
       const tagStore = useTagSetStore.getState();
       // Ensure a tag exists and return a base visual derived from it.
@@ -267,7 +308,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       for (const f of enabledChildren) childVisuals[f.key] = await ensureVisual(childMappings[f.key].tag);
 
       const now = new Date();
-      const cols = Math.max(1, Math.ceil(Math.sqrt(records.length)));
+      const cols = Math.max(1, Math.ceil(Math.sqrt(allRecords.length)));
       const elements: Element[] = [];
       const links: Link[] = [];
 
@@ -284,12 +325,13 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           if (coerced === null) continue;
           const propKey = m.propKey.trim() || lastSegment(f.key);
           switch (m.target) {
-            case 'id': case 'ref': case 'polygon': break; // handled separately (key / links / geo zone)
+            case 'id': case 'ref': case 'polygon': case 'latlng': case 'asset': break; // handled separately (key / links / geo / media)
             case 'source': source = source ? `${source} | ${coerced}` : String(coerced); break;
             case 'lat': lat = coerced as number; break;
             case 'lng': lng = coerced as number; break;
             case 'date': properties.push({ key: propKey, value: coerced as Date, type: 'date' }); break;
             case 'country': properties.push({ key: propKey, value: coerced as string, type: 'country' }); break;
+            case 'link': properties.push({ key: propKey, value: coerced as string, type: 'link' }); break;
             default: properties.push({ key: propKey, value: coerced as string, type: 'text' });
           }
         }
@@ -310,15 +352,22 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       const refFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'ref');
       const polyFieldKey = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'polygon')?.key;
       const polyOrder: CoordOrder = polyFieldKey ? (mapping[polyFieldKey]?.coordOrder ?? 'latlng') : 'latlng';
+      const latlngFieldKey = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'latlng')?.key;
+      const assetFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'asset');
       const idToElement = new Map<string, string>();
       const parentEls: Element[] = [];
+      const assetDownloads: { elementId: string; urls: string[] }[] = [];
 
-      records.forEach((flat, i) => {
+      allRecords.forEach((flat, i) => {
         const { properties, source, lat, lng } = buildProps(flat, scalarFields, (k) => mapping[k]);
         let geo: GeoData | null = null;
         if (polyFieldKey) {
           const coords = toLngLatCoords(flat[polyFieldKey], polyOrder);
           if (coords.length >= 3) geo = { type: 'polygon', coordinates: coords, center: computePolygonCenter(coords) };
+        }
+        if (!geo && latlngFieldKey) {
+          const p = parseLatLngPair(valueToString(flat[latlngFieldKey]));
+          if (p) geo = { type: 'point', lat: p.lat, lng: p.lng };
         }
         if (!geo && lat != null && lng != null) geo = { type: 'point', lat, lng };
         const parent = mkElement({
@@ -332,6 +381,16 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         if (idField) {
           const idv = valueToString(flat[idField]).trim();
           if (idv && !idToElement.has(idv)) idToElement.set(idv, parent.id);
+        }
+        // Collect media URLs to download + attach after the element is created.
+        if (assetFields.length > 0) {
+          const urls: string[] = [];
+          for (const af of assetFields) {
+            const raw = flat[af.key];
+            const vals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
+            for (const v of vals) { const s = valueToString(v).trim(); if (isUrl(s)) urls.push(s); }
+          }
+          if (urls.length) assetDownloads.push({ elementId: parent.id, urls });
         }
 
         // Linked children from array-of-objects fields
@@ -371,7 +430,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       if (idField && refFields.length > 0) {
         const edgeSet = new Set<string>();
         const edges: { from: string; to: string; label: string }[] = [];
-        records.forEach((flat, i) => {
+        allRecords.forEach((flat, i) => {
           const fromId = parentEls[i].id;
           for (const rf of refFields) {
             const raw = flat[rf.key];
@@ -406,8 +465,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       }
 
       // Lay the subgraph out properly (force/hierarchy/… respecting the links)
-      // instead of the naive build-order grid.
-      if (elements.length > 1) {
+      // instead of the naive build-order grid. Skipped for very large imports
+      // (force layout would freeze) — the build-order grid is kept.
+      if (elements.length > 1 && elements.length <= LAYOUT_CAP) {
         const { positions } = layoutService.applyLayout(layout, elements, links);
         for (const el of elements) {
           const p = positions.get(el.id);
@@ -426,7 +486,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       }
       useUIStore.getState().enterImportPlacementMode({
         boundingBox: { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, elementCount: elements.length },
-        prebuilt: { elements, links },
+        prebuilt: { elements, links, assets: assetDownloads },
         dossierId: dossier.id,
       });
       handleClose();
@@ -435,7 +495,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       setError(String(e));
       setCreating(false);
     }
-  }, [records, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
+  }, [rawRecords, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
 
   if (!isOpen) return null;
 
@@ -476,13 +536,20 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                 className="hidden"
               />
             </div>
-            <textarea
-              value={text}
-              onChange={(e) => { setText(e.target.value); parse(e.target.value); }}
-              placeholder={t('importJsonMapping.pastePlaceholder')}
-              spellCheck={false}
-              className="w-full h-28 px-2 py-1.5 text-xs font-mono bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary resize-y"
-            />
+            {loadedInfo ? (
+              <div className="flex items-center justify-between gap-2 px-2 py-2 text-xs bg-bg-secondary border border-border-default rounded">
+                <span className="text-text-secondary truncate"><FileJson size={12} className="inline mr-1 text-text-tertiary" />{loadedInfo}</span>
+                <button onClick={() => { setText(''); setParsed(null); setLoadedInfo(null); }} className="text-text-tertiary hover:text-text-secondary shrink-0">{t('importJsonMapping.clear')}</button>
+              </div>
+            ) : (
+              <textarea
+                value={text}
+                onChange={(e) => { setText(e.target.value); parse(e.target.value); }}
+                placeholder={t('importJsonMapping.pastePlaceholder')}
+                spellCheck={false}
+                className="w-full h-28 px-2 py-1.5 text-xs font-mono bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary resize-y"
+              />
+            )}
           </div>
 
           {error && (
@@ -620,7 +687,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                   {scalarFields.map((f) => {
                     const m = mapping[f.key];
                     if (!m) return null;
-                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref';
+                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref' || m.target === 'link';
                     return (
                       <div key={f.key} className={`grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1 items-center ${m.enabled ? '' : 'opacity-45'}`}>
                         <input
@@ -669,7 +736,15 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
               {/* Linked sub-elements (array-of-objects fields) */}
               {childArrayFields.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.subElements')}</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.subElements')}</label>
+                    {childArrayFields.length > 1 && (
+                      <label className="flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer">
+                        <input type="checkbox" checked={allChildrenEnabled} onChange={toggleAllChildren} className="rounded border-border-default" />
+                        {t('importJsonMapping.toggleAll')}
+                      </label>
+                    )}
+                  </div>
                   <p className="text-[10px] text-text-tertiary">{t('importJsonMapping.subElementsHint')}</p>
                   {childArrayFields.map((f) => {
                     const cm = childMappings[f.key];
@@ -704,9 +779,13 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                 </div>
               )}
 
+              {recordCount > SAMPLE && (
+                <p className="text-[10px] text-warning">{t('importJsonMapping.largeNotice', { sample: SAMPLE, count: recordCount })}</p>
+              )}
+
               {/* Preview */}
               <div className="text-xs text-text-secondary">
-                {t('importJsonMapping.willCreate', { count: records.length })}
+                {t('importJsonMapping.willCreate', { count: recordCount })}
                 {previewLabel && (
                   <span className="text-text-tertiary"> — {t('importJsonMapping.previewLabel')} <span className="text-text-primary font-medium">{previewLabel}</span></span>
                 )}

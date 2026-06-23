@@ -198,7 +198,8 @@
       "cancel": "Annuleren (Esc)",
       "elements": "{{count}} element(en)",
       "success": "{{count}} element(en) geïmporteerd",
-      "error": "Import mislukt"
+      "error": "Import mislukt",
+      "mediaResult": "{{ok}} media bijgevoegd, {{fail}} mislukt"
     },
     "layout": {
       "title": "Indelingsalgoritmen",

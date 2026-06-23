@@ -655,7 +655,10 @@
       "lng": "Długość",
       "id": "Identyfikator",
       "ref": "Odniesienie (połączenie)",
-      "polygon": "Strefa (wielokąt)"
+      "polygon": "Strefa (wielokąt)",
+      "link": "Łącze (URL)",
+      "latlng": "Punkt (lat, lng)",
+      "asset": "Media (załącznik)"
     },
     "wholeObject": "(cały obiekt = 1 element)",
     "toggleAll": "Przełącz wszystko",
@@ -688,6 +691,8 @@
     "exportAll": "Eksportuj wszystko",
     "importTemplates": "Importuj",
     "importedTemplates": "Zaimportowano {{count}} szablon(ów)",
-    "importTemplatesError": "Nieprawidłowy plik szablonów"
+    "importTemplatesError": "Nieprawidłowy plik szablonów",
+    "clear": "Wyczyść",
+    "largeNotice": "Wykrywanie na podstawie pierwszych {{sample}} rekordów; zaimportowane zostaną wszystkie {{count}}."
   }
 }

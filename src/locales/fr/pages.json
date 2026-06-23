@@ -198,7 +198,8 @@
       "cancel": "Annuler (Esc)",
       "elements": "{{count}} élément(s)",
       "success": "{{count}} élément(s) importé(s)",
-      "error": "Échec de l'import"
+      "error": "Échec de l'import",
+      "mediaResult": "{{ok}} média(s) attaché(s), {{fail}} échec(s)"
     },
     "layout": {
       "title": "Algorithmes de layout",

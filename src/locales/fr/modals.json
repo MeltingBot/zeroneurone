@@ -672,7 +672,10 @@
       "lng": "Longitude",
       "id": "Identifiant",
       "ref": "Référence (lien)",
-      "polygon": "Zone (polygone)"
+      "polygon": "Zone (polygone)",
+      "link": "Lien (URL)",
+      "latlng": "Point (lat, lng)",
+      "asset": "Média (pièce jointe)"
     },
     "wholeObject": "(objet entier = 1 élément)",
     "toggleAll": "Tout activer / désactiver",
@@ -705,6 +708,8 @@
     "exportAll": "Tout exporter",
     "importTemplates": "Importer",
     "importedTemplates": "{{count}} modèle(s) importé(s)",
-    "importTemplatesError": "Fichier de modèles invalide"
+    "importTemplatesError": "Fichier de modèles invalide",
+    "clear": "Effacer",
+    "largeNotice": "Détection basée sur les {{sample}} premiers enregistrements ; les {{count}} seront tous importés."
   }
 }

@@ -198,7 +198,8 @@
       "cancel": "Cancelar (Esc)",
       "elements": "{{count}} elemento(s)",
       "success": "{{count}} elemento(s) importado(s)",
-      "error": "Importação falhou"
+      "error": "Importação falhou",
+      "mediaResult": "{{ok}} média(s) anexada(s), {{fail}} falha(s)"
     },
     "layout": {
       "title": "Algoritmos de disposição",

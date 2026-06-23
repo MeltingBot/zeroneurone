@@ -672,7 +672,10 @@
       "lng": "Longitude",
       "id": "Identifier",
       "ref": "Reference (link)",
-      "polygon": "Zone (polygon)"
+      "polygon": "Zone (polygon)",
+      "link": "Link (URL)",
+      "latlng": "Point (lat, lng)",
+      "asset": "Media (attachment)"
     },
     "wholeObject": "(whole object = 1 element)",
     "toggleAll": "Toggle all",
@@ -705,6 +708,8 @@
     "exportAll": "Export all",
     "importTemplates": "Import",
     "importedTemplates": "{{count}} template(s) imported",
-    "importTemplatesError": "Invalid templates file"
+    "importTemplatesError": "Invalid templates file",
+    "clear": "Clear",
+    "largeNotice": "Detection based on the first {{sample}} records; all {{count}} will be imported."
   }
 }
