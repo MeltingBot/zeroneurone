@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.42.0
+
+### Features
+- **Import JSON par mapping** — un assistant permet d'importer du JSON quelconque (export d'API, sortie d'un autre outil…) en reliant ses champs aux éléments ZeroNeurone. Accessible via l'import (*Mapper un JSON custom*) ou en **collant (Ctrl+V) du JSON brut sur le canvas** (un format reconnu — ZeroNeurone, GeoJSON, STIX 2.1, Excalidraw, OSINT Industries, Gephi, PredicaGraph — est importé directement ; un JSON générique ouvre le mapper).
+  - **Détection automatique** : source d'enregistrements (tableau d'objets ou objet entier), modèle de libellé, champs date / pays / latitude-longitude (point géo) / identifiant.
+  - **Liens par référence** : un champ contenant les id d'autres enregistrements crée les liens correspondants (orientés ; paires réciproques → bidirectionnel).
+  - **Zones (polygones)** : un tableau de coordonnées devient une zone géo (ordre lat/lng deviné et ajustable).
+  - **Sous-éléments liés** : un tableau d'objets imbriqués (contacts, adresses, observations…) devient des éléments enfants reliés au parent, avec leur propre tag, libellé et libellé de lien.
+  - **Réglages** : activer/désactiver chaque champ (bruit décoché par défaut), tag global, ignorer les valeurs vides, et **disposition** du graphe importé (force, clusters, hiérarchie…) avant de cliquer pour le **positionner** sur le canvas. Import en un lot **annulable**.
+
 ## 2.41.11
 
 ### Features
