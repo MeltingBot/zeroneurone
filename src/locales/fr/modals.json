@@ -684,6 +684,22 @@
     "childLabel": "Libellé enfant",
     "linkLabel": "Libellé du lien",
     "coordOrder": "Ordre des coordonnées",
-    "layout": "Disposition"
+    "layout": "Disposition",
+    "template": "Modèle",
+    "loadTemplate": "Charger un modèle…",
+    "noTemplates": "Aucun modèle",
+    "saveTemplate": "Enregistrer",
+    "templateName": "Nom du modèle",
+    "manage": "Gérer",
+    "suggestion": "Format reconnu : modèle « {{name}} ».",
+    "apply": "Appliquer",
+    "dismiss": "Ignorer",
+    "manageTitle": "Modèles de mapping",
+    "templateFields": "{{count}} champs",
+    "rename": "Renommer",
+    "confirmDelete": "Confirmer",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "saveTemplateError": "Échec de l'enregistrement du modèle (rechargez la page pour mettre à jour la base)."
   }
 }

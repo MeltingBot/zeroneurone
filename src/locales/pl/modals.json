@@ -667,6 +667,22 @@
     "childLabel": "Etykieta podrzędna",
     "linkLabel": "Etykieta połączenia",
     "coordOrder": "Kolejność współrzędnych",
-    "layout": "Układ"
+    "layout": "Układ",
+    "template": "Szablon",
+    "loadTemplate": "Wczytaj szablon…",
+    "noTemplates": "Brak szablonów",
+    "saveTemplate": "Zapisz",
+    "templateName": "Nazwa szablonu",
+    "manage": "Zarządzaj",
+    "suggestion": "Rozpoznany format: szablon „{{name}}\".",
+    "apply": "Zastosuj",
+    "dismiss": "Odrzuć",
+    "manageTitle": "Szablony mapowania",
+    "templateFields": "{{count}} pól",
+    "rename": "Zmień nazwę",
+    "confirmDelete": "Potwierdź",
+    "delete": "Usuń",
+    "close": "Zamknij",
+    "saveTemplateError": "Nie udało się zapisać szablonu (odśwież stronę, aby zaktualizować bazę danych)."
   }
 }

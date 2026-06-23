@@ -667,6 +667,22 @@
     "childLabel": "Umearen etiketa",
     "linkLabel": "Estekaren etiketa",
     "coordOrder": "Koordenatuen ordena",
-    "layout": "Antolaketa"
+    "layout": "Antolaketa",
+    "template": "Txantiloia",
+    "loadTemplate": "Kargatu txantiloi bat…",
+    "noTemplates": "Txantiloirik ez",
+    "saveTemplate": "Gorde",
+    "templateName": "Txantiloiaren izena",
+    "manage": "Kudeatu",
+    "suggestion": "Formatu ezaguna: «{{name}}» txantiloia.",
+    "apply": "Aplikatu",
+    "dismiss": "Baztertu",
+    "manageTitle": "Mapatze-txantiloiak",
+    "templateFields": "{{count}} eremu",
+    "rename": "Berrizendatu",
+    "confirmDelete": "Berretsi",
+    "delete": "Ezabatu",
+    "close": "Itxi",
+    "saveTemplateError": "Ezin izan da txantiloia gorde (kargatu orria datu-basea eguneratzeko)."
   }
 }

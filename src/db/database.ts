@@ -19,6 +19,7 @@ import type {
   SavedQuery,
   SavedQueryId,
 } from '../types';
+import type { JsonMappingTemplate } from '../utils/jsonMapping';
 import type { EncryptionMeta } from '../services/encryption/encryptionService';
 import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../services/encryption/dexieEncryptionMiddleware';
 
@@ -42,6 +43,7 @@ class DossierDatabase extends Dexie {
   canvasTabs!: Table<CanvasTab, TabId>;
   savedQueries!: Table<SavedQuery, SavedQueryId>;
   pluginData!: Table<PluginDataRow, string>;
+  jsonMappings!: Table<JsonMappingTemplate, string>;
   _encryptionMeta!: Table<EncryptionMeta, 'main'>;
 
   constructor() {
@@ -210,6 +212,11 @@ class DossierDatabase extends Dexie {
     // ─── Version 11: Add savedQueries table for ZNQuery ─────────────────
     this.version(11).stores({
       savedQueries: 'id, dossierId, createdAt',
+    });
+
+    // ─── Version 12: Add jsonMappings table (global, reusable JSON import templates) ─
+    this.version(12).stores({
+      jsonMappings: 'id, name',
     });
   }
 

@@ -667,6 +667,22 @@
     "childLabel": "Etichetta figlio",
     "linkLabel": "Etichetta del collegamento",
     "coordOrder": "Ordine delle coordinate",
-    "layout": "Disposizione"
+    "layout": "Disposizione",
+    "template": "Modello",
+    "loadTemplate": "Carica un modello…",
+    "noTemplates": "Nessun modello",
+    "saveTemplate": "Salva",
+    "templateName": "Nome del modello",
+    "manage": "Gestisci",
+    "suggestion": "Formato riconosciuto: modello «{{name}}».",
+    "apply": "Applica",
+    "dismiss": "Ignora",
+    "manageTitle": "Modelli di mappatura",
+    "templateFields": "{{count}} campi",
+    "rename": "Rinomina",
+    "confirmDelete": "Conferma",
+    "delete": "Elimina",
+    "close": "Chiudi",
+    "saveTemplateError": "Salvataggio del modello non riuscito (ricarica la pagina per aggiornare il database)."
   }
 }

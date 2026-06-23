@@ -11,3 +11,4 @@ export { useSyncStore } from './syncStore';
 export { useReportStore } from './reportStore';
 export { useTabStore } from './tabStore';
 export { useQueryStore } from './queryStore';
+export { useJsonMappingStore } from './jsonMappingStore';

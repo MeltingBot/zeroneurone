@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, AlertCircle } from 'lucide-react';
-import { useDossierStore, useTagSetStore } from '../../stores';
+import { X, FileJson, AlertCircle, Save, FolderOpen, Check } from 'lucide-react';
+import { useDossierStore, useTagSetStore, useJsonMappingStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, ElementVisual, Property, GeoData, Link } from '../../types';
 import {
@@ -23,23 +23,20 @@ import {
   isBlank,
   valueToString,
   flattenRecord,
+  computeSignature,
+  signatureOverlap,
   type FieldMapping,
   type MappingTarget,
   type CoordOrder,
+  type ChildMapping,
+  type MappingConfig,
 } from '../../utils/jsonMapping';
 import { computePolygonCenter } from '../../utils/geo';
 import { layoutService, type LayoutType } from '../../services/layoutService';
+import { JsonMappingManagerModal } from './JsonMappingManagerModal';
 
 const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
 const layoutLabel = (l: LayoutType): string => (l === 'hierarchy' ? 'Hiérarchie' : layoutService.getLayoutName(l));
-
-/** Config for turning an array-of-objects field into linked child elements. */
-interface ChildMapping {
-  enabled: boolean;
-  tag: string;
-  labelTemplate: string;
-  linkLabel: string;
-}
 
 interface JsonMappingImportModalProps {
   isOpen: boolean;
@@ -66,9 +63,21 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [layout, setLayout] = useState<LayoutType>('force');
   const [creating, setCreating] = useState(false);
 
+  // Saved templates (phase 2a)
+  const templates = useJsonMappingStore((s) => s.templates);
+  const loadTemplates = useJsonMappingStore((s) => s.load);
+  const saveTemplate = useJsonMappingStore((s) => s.save);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [savingName, setSavingName] = useState<string | null>(null);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+
+  useEffect(() => { if (isOpen) loadTemplates(); }, [isOpen, loadTemplates]);
+
   const reset = useCallback(() => {
     setText(''); setParsed(null); setError(null); setSrcKey('');
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
+    setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
   }, []);
 
   const handleClose = useCallback(() => { reset(); onClose(); }, [reset, onClose]);
@@ -119,8 +128,57 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     }
     setChildMappings(childNext);
     setLabelTemplate(guessLabelTemplate(scalarFields));
+    setSuggestionDismissed(false);
+    setSelectedTemplateId('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldSig]);
+
+  // Signature of the current shape + best-matching saved template (suggestion).
+  const signature = useMemo(() => computeSignature(fields), [fields]);
+  const suggestion = useMemo(() => {
+    if (suggestionDismissed || fields.length === 0) return null;
+    let best: typeof templates[number] | null = null;
+    let score = 0;
+    for (const tpl of templates) {
+      const s = signatureOverlap(tpl.signature, signature);
+      if (s > score) { score = s; best = tpl; }
+    }
+    return best && score >= 0.6 ? best : null;
+  }, [templates, signature, fields.length, suggestionDismissed]);
+
+  // Apply a saved config: only fields present in the current shape are overridden.
+  const applyConfig = useCallback((cfg: MappingConfig) => {
+    setLabelTemplate(cfg.labelTemplate);
+    setTagName(cfg.tagName);
+    setIgnoreEmpty(cfg.ignoreEmpty);
+    setLayout((LAYOUTS.includes(cfg.layout as LayoutType) ? cfg.layout : 'force') as LayoutType);
+    setMapping((prev) => {
+      const nxt = { ...prev };
+      for (const k of Object.keys(cfg.mapping)) if (nxt[k]) nxt[k] = cfg.mapping[k];
+      return nxt;
+    });
+    setChildMappings((prev) => {
+      const nxt = { ...prev };
+      for (const k of Object.keys(cfg.childMappings)) if (nxt[k]) nxt[k] = cfg.childMappings[k];
+      return nxt;
+    });
+    setSuggestionDismissed(true);
+  }, []);
+
+  const handleSaveTemplate = useCallback(async (name: string) => {
+    const n = name.trim();
+    if (!n) return;
+    const config: MappingConfig = { labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings };
+    try {
+      const tpl = await saveTemplate(n, signature, config);
+      setSelectedTemplateId(tpl.id);
+      setSavingName(null);
+      setError(null);
+    } catch (e) {
+      console.error('Save mapping template failed', e);
+      setError(t('importJsonMapping.saveTemplateError'));
+    }
+  }, [labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings, signature, saveTemplate, t]);
 
   const parse = useCallback((raw: string) => {
     if (!raw.trim()) { setError(null); setParsed(null); return; }
@@ -384,6 +442,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const canImport = records.length > 0 && labelTemplate.trim().length > 0 && !creating;
 
   return (
+    <>
     <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40">
       <div className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[92vw] max-w-3xl max-h-[88vh] flex flex-col">
         {/* Header */}
@@ -435,6 +494,52 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
           {records.length > 0 && (
             <>
+              {/* Templates (save / load / manage) */}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.template')}</label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => {
+                    const tpl = templates.find((x) => x.id === e.target.value);
+                    setSelectedTemplateId(e.target.value);
+                    if (tpl) applyConfig(tpl.config);
+                  }}
+                  className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                >
+                  <option value="">{templates.length ? t('importJsonMapping.loadTemplate') : t('importJsonMapping.noTemplates')}</option>
+                  {templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.name}</option>)}
+                </select>
+                {savingName === null ? (
+                  <button onClick={() => setSavingName('')} className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default">
+                    <Save size={12} /> {t('importJsonMapping.saveTemplate')}
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    <input
+                      type="text" value={savingName} autoFocus
+                      onChange={(e) => setSavingName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveTemplate(savingName); if (e.key === 'Escape') setSavingName(null); }}
+                      placeholder={t('importJsonMapping.templateName')}
+                      className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                    />
+                    <button onClick={() => handleSaveTemplate(savingName)} disabled={!savingName.trim()} className="p-1 text-success hover:bg-bg-tertiary rounded disabled:opacity-40"><Check size={14} /></button>
+                    <button onClick={() => setSavingName(null)} className="p-1 text-text-tertiary hover:bg-bg-tertiary rounded"><X size={14} /></button>
+                  </span>
+                )}
+                <button onClick={() => setManagerOpen(true)} className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default">
+                  <FolderOpen size={12} /> {t('importJsonMapping.manage')}
+                </button>
+              </div>
+
+              {/* Suggestion banner */}
+              {suggestion && (
+                <div className="flex items-center gap-2 p-2 rounded bg-accent/10 border border-accent/30">
+                  <span className="text-xs text-text-primary flex-1">{t('importJsonMapping.suggestion', { name: suggestion.name })}</span>
+                  <button onClick={() => { applyConfig(suggestion.config); setSelectedTemplateId(suggestion.id); }} className="px-2 py-1 text-xs bg-accent text-white rounded hover:bg-accent-hover">{t('importJsonMapping.apply')}</button>
+                  <button onClick={() => setSuggestionDismissed(true)} className="px-2 py-1 text-xs text-text-secondary hover:bg-bg-tertiary rounded">{t('importJsonMapping.dismiss')}</button>
+                </div>
+              )}
+
               {/* Record source */}
               {sources.length > 1 && (
                 <div className="flex items-center gap-2">
@@ -625,5 +730,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         </div>
       </div>
     </div>
+    <JsonMappingManagerModal isOpen={managerOpen} onClose={() => setManagerOpen(false)} />
+    </>
   );
 }

@@ -684,6 +684,22 @@
     "childLabel": "Child label",
     "linkLabel": "Link label",
     "coordOrder": "Coordinate order",
-    "layout": "Layout"
+    "layout": "Layout",
+    "template": "Template",
+    "loadTemplate": "Load a template…",
+    "noTemplates": "No templates",
+    "saveTemplate": "Save",
+    "templateName": "Template name",
+    "manage": "Manage",
+    "suggestion": "Recognized format: template \"{{name}}\".",
+    "apply": "Apply",
+    "dismiss": "Dismiss",
+    "manageTitle": "Mapping templates",
+    "templateFields": "{{count}} fields",
+    "rename": "Rename",
+    "confirmDelete": "Confirm",
+    "delete": "Delete",
+    "close": "Close",
+    "saveTemplateError": "Failed to save template (reload the page to update the database)."
   }
 }
