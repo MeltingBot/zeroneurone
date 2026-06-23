@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.42.6
+
+### Features
+- **Redimensionnement à proportions conservées** — maintenir **Alt (⌥)** pendant le glissement d'une poignée de redimensionnement d'un élément conserve son ratio largeur/hauteur. (Ctrl/⌘ et Maj sont réservés par le canvas à la multi-sélection.)
+
 ## 2.42.5
 
 ### Features

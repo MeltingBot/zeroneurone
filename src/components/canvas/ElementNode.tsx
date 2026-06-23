@@ -87,6 +87,9 @@ function ElementNodeComponent({ data }: NodeProps) {
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
+  // Hold Alt (⌥) while dragging a resize handle to keep the element's aspect ratio.
+  // (Ctrl/⌘ and Shift are reserved by React Flow for multi-selection / selection box.)
+  const [keepAspect, setKeepAspect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fontMode = useUIStore((state) => state.fontMode);
   // Get themeMode from data (passed from Canvas) for proper memo comparison
@@ -133,6 +136,20 @@ function ElementNodeComponent({ data }: NodeProps) {
       inputRef.current.select();
     }
   }, [isEditing, element.label]);
+
+  // Track Alt (⌥) to lock aspect ratio on resize — only while this node is selected
+  // (so only the visible resizer node(s) attach listeners).
+  useEffect(() => {
+    if (!isSelected) return;
+    const sync = (e: KeyboardEvent) => setKeepAspect(e.altKey);
+    window.addEventListener('keydown', sync);
+    window.addEventListener('keyup', sync);
+    return () => {
+      window.removeEventListener('keydown', sync);
+      window.removeEventListener('keyup', sync);
+      setKeepAspect(false);
+    };
+  }, [isSelected]);
 
   // Handle input key events
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -265,6 +282,7 @@ function ElementNodeComponent({ data }: NodeProps) {
         minWidth={MIN_WIDTH}
         minHeight={MIN_HEIGHT}
         isVisible={isSelected}
+        keepAspectRatio={keepAspect}
         lineClassName="!border-accent"
         handleClassName="!w-3 !h-3 !bg-accent !border-2 !border-white !rounded"
         onResize={handleResize}

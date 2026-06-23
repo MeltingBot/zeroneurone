@@ -40,6 +40,8 @@ Personnalisez l'apparence de chaque élément :
 | **Taille** | Petit, moyen, grand |
 | **Taille du texte** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
+Sélectionnez un élément pour afficher ses poignées de redimensionnement. Maintenez **Alt (⌥)** pendant le glissement d'une poignée pour **conserver les proportions**.
+
 ### Verrouillage de position
 
 Empêchez les déplacements accidentels en verrouillant la position d'un élément.

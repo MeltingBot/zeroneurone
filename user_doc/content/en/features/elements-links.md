@@ -40,6 +40,8 @@ Customize the appearance of each element:
 | **Size** | Small, medium, large |
 | **Text size** | XS (8px), S (12px), M (14px), L (18px), XL (22px) |
 
+Select an element to show its resize handles. Hold **Alt (⌥)** while dragging a handle to **keep the aspect ratio**.
+
 ### Position Lock
 
 Prevent accidental moves by locking an element's position.
