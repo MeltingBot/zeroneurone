@@ -654,7 +654,8 @@
       "lat": "Breedtegraad",
       "lng": "Lengtegraad",
       "id": "Identificator",
-      "ref": "Referentie (koppeling)"
+      "ref": "Referentie (koppeling)",
+      "polygon": "Zone (polygoon)"
     },
     "wholeObject": "(heel object = 1 element)",
     "toggleAll": "Alles in-/uitschakelen",
@@ -664,6 +665,8 @@
     "subElementsCount": "{{count}} subelementen",
     "childTag": "Onderliggende tag",
     "childLabel": "Onderliggend label",
-    "linkLabel": "Koppelingslabel"
+    "linkLabel": "Koppelingslabel",
+    "coordOrder": "Coördinatenvolgorde",
+    "layout": "Indeling"
   }
 }

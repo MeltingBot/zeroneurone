@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, FileJson, AlertCircle } from 'lucide-react';
-import { useDossierStore, useTagSetStore, useHistoryStore, useSelectionStore, useTabStore, useViewStore } from '../../stores';
+import { useDossierStore, useTagSetStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, ElementVisual, Property, GeoData, Link } from '../../types';
 import {
@@ -11,6 +11,10 @@ import {
   sourceKey,
   collectFields,
   childFieldsOf,
+  detectReferenceFields,
+  detectPolygonFields,
+  guessCoordOrder,
+  toLngLatCoords,
   guessLabelTemplate,
   guessTarget,
   lastSegment,
@@ -21,7 +25,13 @@ import {
   flattenRecord,
   type FieldMapping,
   type MappingTarget,
+  type CoordOrder,
 } from '../../utils/jsonMapping';
+import { computePolygonCenter } from '../../utils/geo';
+import { layoutService, type LayoutType } from '../../services/layoutService';
+
+const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
+const layoutLabel = (l: LayoutType): string => (l === 'hierarchy' ? 'Hiérarchie' : layoutService.getLayoutName(l));
 
 /** Config for turning an array-of-objects field into linked child elements. */
 interface ChildMapping {
@@ -38,7 +48,7 @@ interface JsonMappingImportModalProps {
   initialJson?: string;
 }
 
-const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'source', 'lat', 'lng', 'id', 'ref'];
+const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'source', 'lat', 'lng', 'id', 'ref', 'polygon'];
 
 export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMappingImportModalProps) {
   const { t } = useTranslation('modals');
@@ -53,11 +63,12 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [labelTemplate, setLabelTemplate] = useState('');
   const [tagName, setTagName] = useState('');
   const [ignoreEmpty, setIgnoreEmpty] = useState(true);
+  const [layout, setLayout] = useState<LayoutType>('force');
   const [creating, setCreating] = useState(false);
 
   const reset = useCallback(() => {
     setText(''); setParsed(null); setError(null); setSrcKey('');
-    setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setCreating(false);
+    setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
   }, []);
 
   const handleClose = useCallback(() => { reset(); onClose(); }, [reset, onClose]);
@@ -81,11 +92,22 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const fieldSig = fields.map((f) => `${f.key}:${f.kind}`).join('|');
   useEffect(() => {
     if (fields.length === 0) { setMapping({}); setChildMappings({}); return; }
+    // Auto-detect the id field, reference fields, and polygon fields.
+    const idFieldKey = scalarFields.find((f) => guessTarget(f.key) === 'id')?.key;
+    const refSet = detectReferenceFields(records, scalarFields, idFieldKey);
+    const polySet = detectPolygonFields(records, scalarFields);
     const next: Record<string, FieldMapping> = {};
     for (const f of scalarFields) {
       const g = guessTarget(f.key);
-      // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
-      next[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
+      if (polySet.has(f.key)) {
+        next[f.key] = { enabled: true, target: 'polygon', propKey: lastSegment(f.key), coordOrder: guessCoordOrder(records, f.key) };
+      } else if (refSet.has(f.key)) {
+        // Reference field → create links; empty label by default (cleaner than the field name).
+        next[f.key] = { enabled: true, target: 'ref', propKey: '' };
+      } else {
+        // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
+        next[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
+      }
     }
     setMapping(next);
     // Child (linked sub-element) config per array-of-objects field — disabled by default.
@@ -151,6 +173,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       for (const f of scalarFields) if (next[f.key]) next[f.key] = { ...next[f.key], enabled: target };
       return next;
     });
+  const setFieldOrder = (key: string, coordOrder: CoordOrder) =>
+    setMapping((m) => ({ ...m, [key]: { ...m[key], coordOrder } }));
   const setChild = (key: string, patch: Partial<ChildMapping>) =>
     setChildMappings((c) => ({ ...c, [key]: { ...c[key], ...patch } }));
 
@@ -202,7 +226,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           if (coerced === null) continue;
           const propKey = m.propKey.trim() || lastSegment(f.key);
           switch (m.target) {
-            case 'id': case 'ref': break; // handled separately (key / reference links)
+            case 'id': case 'ref': case 'polygon': break; // handled separately (key / links / geo zone)
             case 'source': source = source ? `${source} | ${coerced}` : String(coerced); break;
             case 'lat': lat = coerced as number; break;
             case 'lng': lng = coerced as number; break;
@@ -226,17 +250,24 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       // whose value(s) are ids of other records (→ links between created elements).
       const idField = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'id')?.key;
       const refFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'ref');
+      const polyFieldKey = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'polygon')?.key;
+      const polyOrder: CoordOrder = polyFieldKey ? (mapping[polyFieldKey]?.coordOrder ?? 'latlng') : 'latlng';
       const idToElement = new Map<string, string>();
       const parentEls: Element[] = [];
 
       records.forEach((flat, i) => {
         const { properties, source, lat, lng } = buildProps(flat, scalarFields, (k) => mapping[k]);
-        const geo: GeoData | null = lat != null && lng != null ? { type: 'point', lat, lng } : null;
+        let geo: GeoData | null = null;
+        if (polyFieldKey) {
+          const coords = toLngLatCoords(flat[polyFieldKey], polyOrder);
+          if (coords.length >= 3) geo = { type: 'polygon', coordinates: coords, center: computePolygonCenter(coords) };
+        }
+        if (!geo && lat != null && lng != null) geo = { type: 'point', lat, lng };
         const parent = mkElement({
           label: applyTemplate(labelTemplate, flat) || t('importJsonMapping.noLabel'),
           tags: tn ? [tn] : [], properties, source, geo,
           visual: { ...parentVisual },
-          position: { x: (i % cols) * 280, y: Math.floor(i / cols) * 220 },
+          position: { x: (i % cols) * 380, y: Math.floor(i / cols) * 320 },
         });
         elements.push(parent);
         parentEls.push(parent);
@@ -260,7 +291,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
               label: applyTemplate(cm.labelTemplate, childFlat) || t('importJsonMapping.noLabel'),
               tags: cm.tag.trim() ? [cm.tag.trim()] : [], properties: cp.properties, source: cp.source,
               visual: { ...childVisuals[f.key] },
-              position: { x: parent.position.x + 160 + (childIdx % 3) * 150, y: parent.position.y + 90 + Math.floor(childIdx / 3) * 90 },
+              position: { x: parent.position.x + (childIdx % 3) * 175, y: parent.position.y + 160 + Math.floor(childIdx / 3) * 110 },
             });
             elements.push(child);
             links.push({
@@ -277,9 +308,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         }
       });
 
-      // Second pass: resolve reference fields (ids of other records) into links.
+      // Second pass: resolve reference fields (ids of other records) into DIRECTED links.
+      // Reciprocal references (A→B and B→A) collapse into a single bidirectional link.
       if (idField && refFields.length > 0) {
-        const linkedPairs = new Set<string>();
+        const edgeSet = new Set<string>();
+        const edges: { from: string; to: string; label: string }[] = [];
         records.forEach((flat, i) => {
           const fromId = parentEls[i].id;
           for (const rf of refFields) {
@@ -289,47 +322,62 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
             for (const rv of refVals) {
               const targetId = idToElement.get(valueToString(rv).trim());
               if (!targetId || targetId === fromId) continue;
-              const pairKey = [fromId, targetId].sort().join('|');
-              if (linkedPairs.has(pairKey)) continue; // one (undirected) link per pair
-              linkedPairs.add(pairKey);
-              links.push({
-                id: crypto.randomUUID(), dossierId: dossier.id, fromId, toId: targetId,
-                sourceHandle: null, targetHandle: null,
-                label, notes: '', tags: [], properties: [],
-                directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
-                visual: { color: '#6b7280', style: 'solid', thickness: 2 },
-                curveOffset: { x: 0, y: 0 },
-                createdAt: now, updatedAt: now,
-              });
+              const key = `${fromId}|${targetId}`;
+              if (edgeSet.has(key)) continue;
+              edgeSet.add(key);
+              edges.push({ from: fromId, to: targetId, label });
             }
           }
         });
+        const donePairs = new Set<string>();
+        for (const e of edges) {
+          const pair = [e.from, e.to].sort().join('|');
+          if (donePairs.has(pair)) continue; // emit one link per unordered pair
+          donePairs.add(pair);
+          const bidi = edgeSet.has(`${e.to}|${e.from}`);
+          links.push({
+            id: crypto.randomUUID(), dossierId: dossier.id, fromId: e.from, toId: e.to,
+            sourceHandle: null, targetHandle: null,
+            label: e.label, notes: '', tags: [], properties: [],
+            directed: true, direction: bidi ? 'both' : 'forward', confidence: null, source: '', date: null, dateRange: null,
+            visual: { color: '#6b7280', style: 'solid', thickness: 2 },
+            curveOffset: { x: 0, y: 0 },
+            createdAt: now, updatedAt: now,
+          });
+        }
       }
 
-      useDossierStore.getState().pasteElements(elements, links);
-      const elementIds = elements.map((e) => e.id);
-      const linkIds = links.map((l) => l.id);
-      const parentIds = parentEls.map((e) => e.id);
+      // Lay the subgraph out properly (force/hierarchy/… respecting the links)
+      // instead of the naive build-order grid.
+      if (elements.length > 1) {
+        const { positions } = layoutService.applyLayout(layout, elements, links);
+        for (const el of elements) {
+          const p = positions.get(el.id);
+          if (p) el.position = p;
+        }
+      }
 
-      const activeTabId = useTabStore.getState().activeTabId;
-      if (activeTabId) await useTabStore.getState().addMembers(activeTabId, elementIds);
-
-      useHistoryStore.getState().pushAction({
-        type: 'create-elements',
-        undo: {},
-        redo: { elements, elementIds, linkIds },
+      // Hand the built elements/links to placement mode: the user clicks on the
+      // canvas to position the block (same UX as file import). Positions are
+      // relative to the bounding box and shifted to the click point.
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const el of elements) {
+        const { x, y } = el.position;
+        if (x < minX) minX = x; if (y < minY) minY = y;
+        if (x > maxX) maxX = x; if (y > maxY) maxY = y;
+      }
+      useUIStore.getState().enterImportPlacementMode({
+        boundingBox: { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, elementCount: elements.length },
+        prebuilt: { elements, links },
+        dossierId: dossier.id,
       });
-
-      useSelectionStore.getState().selectElements(parentIds);
-      useViewStore.getState().requestFitView();
-      useUIStore.getState().showToast('success', t('importJsonMapping.created', { count: elementIds.length }));
       handleClose();
     } catch (e) {
       console.error('JSON mapping import failed', e);
       setError(String(e));
       setCreating(false);
     }
-  }, [records, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, t, handleClose]);
+  }, [records, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
 
   if (!isOpen) return null;
 
@@ -434,6 +482,18 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                   <input type="checkbox" checked={ignoreEmpty} onChange={(e) => setIgnoreEmpty(e.target.checked)} className="rounded border-border-default" />
                   {t('importJsonMapping.ignoreEmpty')}
                 </label>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.layout')}</label>
+                  <select
+                    value={layout}
+                    onChange={(e) => setLayout(e.target.value as LayoutType)}
+                    className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                  >
+                    {LAYOUTS.map((l) => (
+                      <option key={l} value={l}>{layoutLabel(l)}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Mapping table */}
@@ -476,7 +536,17 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                             <option key={tg} value={tg}>{t(`importJsonMapping.targets.${tg}`)}</option>
                           ))}
                         </select>
-                        {showKey && m.enabled ? (
+                        {m.enabled && m.target === 'polygon' ? (
+                          <select
+                            value={m.coordOrder ?? 'latlng'}
+                            onChange={(e) => setFieldOrder(f.key, e.target.value as CoordOrder)}
+                            className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                            title={t('importJsonMapping.coordOrder')}
+                          >
+                            <option value="latlng">lat, lng</option>
+                            <option value="lnglat">lng, lat</option>
+                          </select>
+                        ) : showKey && m.enabled ? (
                           <input
                             type="text"
                             value={m.propKey}

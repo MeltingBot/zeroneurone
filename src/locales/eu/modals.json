@@ -654,7 +654,8 @@
       "lat": "Latitudea",
       "lng": "Longitudea",
       "id": "Identifikatzailea",
-      "ref": "Erreferentzia (esteka)"
+      "ref": "Erreferentzia (esteka)",
+      "polygon": "Eremua (poligonoa)"
     },
     "wholeObject": "(objektu osoa = 1 elementu)",
     "toggleAll": "Guztiak txandakatu",
@@ -664,6 +665,8 @@
     "subElementsCount": "{{count}} azpielementu",
     "childTag": "Ume-etiketa",
     "childLabel": "Umearen etiketa",
-    "linkLabel": "Estekaren etiketa"
+    "linkLabel": "Estekaren etiketa",
+    "coordOrder": "Koordenatuen ordena",
+    "layout": "Antolaketa"
   }
 }

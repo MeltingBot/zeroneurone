@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode, GeoData, GeoPolygon } from '../types';
+import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode, GeoData, GeoPolygon, Element, Link } from '../types';
 import type { ExtractedMetadata } from '../services/metadataService';
 import { generateUUID } from '../utils';
 
@@ -23,8 +23,8 @@ export interface ImportPlacementData {
     height: number;
     elementCount: number;
   };
-  /** The file to import */
-  file: File;
+  /** The file to import (omitted for pre-built placements). */
+  file?: File;
   /** Target dossier ID */
   dossierId: string;
   /** Callback after successful import */
@@ -35,6 +35,9 @@ export interface ImportPlacementData {
   importOptions?: {
     createMissingElements?: boolean;
   };
+  /** Pre-built elements/links to place directly (e.g. JSON mapping import).
+      Positions are relative to boundingBox.min and shifted to the click point. */
+  prebuilt?: { elements: Element[]; links: Link[] };
 }
 
 export type FontMode = 'readable' | 'handwritten';

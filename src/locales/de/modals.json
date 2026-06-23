@@ -654,7 +654,8 @@
       "lat": "Breitengrad",
       "lng": "Längengrad",
       "id": "Bezeichner",
-      "ref": "Referenz (Verknüpfung)"
+      "ref": "Referenz (Verknüpfung)",
+      "polygon": "Zone (Polygon)"
     },
     "wholeObject": "(ganzes Objekt = 1 Element)",
     "toggleAll": "Alle umschalten",
@@ -664,6 +665,8 @@
     "subElementsCount": "{{count}} Unterelemente",
     "childTag": "Kind-Tag",
     "childLabel": "Kind-Bezeichnung",
-    "linkLabel": "Verknüpfungsbezeichnung"
+    "linkLabel": "Verknüpfungsbezeichnung",
+    "coordOrder": "Koordinatenreihenfolge",
+    "layout": "Anordnung"
   }
 }

@@ -2981,6 +2981,30 @@ export function Canvas() {
         const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
         const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
 
+        // ── Pre-built elements/links (e.g. JSON mapping import): shift to click + paste ──
+        if (importPlacementData.prebuilt) {
+          const shifted = importPlacementData.prebuilt.elements.map((el) => ({
+            ...el,
+            position: { x: el.position.x + offsetX, y: el.position.y + offsetY },
+          }));
+          const placedLinks = importPlacementData.prebuilt.links;
+          pasteElements(shifted, placedLinks);
+          const placedIds = shifted.map((e) => e.id);
+          if (activeTabId) addTabMembers(activeTabId, placedIds);
+          pushAction({
+            type: 'create-elements',
+            undo: {},
+            redo: { elements: shifted, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
+          });
+          selectElements(placedIds);
+          toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
+          importPlacementData.onComplete?.();
+          setIsImportingPlacement(false);
+          exitImportPlacementMode();
+          return;
+        }
+
+        if (!importPlacementData.file) { setIsImportingPlacement(false); exitImportPlacementMode(); return; }
         let result: Awaited<ReturnType<typeof importService.importFromZip>>;
         const fileName = importPlacementData.file.name.toLowerCase();
         // Snapshot element IDs before import (for tab assignment after reload)
@@ -3121,7 +3145,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers]);
+  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(

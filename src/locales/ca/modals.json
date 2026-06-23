@@ -654,7 +654,8 @@
       "lat": "Latitud",
       "lng": "Longitud",
       "id": "Identificador",
-      "ref": "Referència (enllaç)"
+      "ref": "Referència (enllaç)",
+      "polygon": "Zona (polígon)"
     },
     "wholeObject": "(objecte sencer = 1 element)",
     "toggleAll": "Activa/desactiva tot",
@@ -664,6 +665,8 @@
     "subElementsCount": "{{count}} subelements",
     "childTag": "Etiqueta fill",
     "childLabel": "Etiqueta del fill",
-    "linkLabel": "Etiqueta de l'enllaç"
+    "linkLabel": "Etiqueta de l'enllaç",
+    "coordOrder": "Ordre de coordenades",
+    "layout": "Disposició"
   }
 }

@@ -654,7 +654,8 @@
       "lat": "Latitude",
       "lng": "Longitude",
       "id": "Identificador",
-      "ref": "Referência (ligação)"
+      "ref": "Referência (ligação)",
+      "polygon": "Zona (polígono)"
     },
     "wholeObject": "(objeto inteiro = 1 elemento)",
     "toggleAll": "Ativar/desativar tudo",
@@ -664,6 +665,8 @@
     "subElementsCount": "{{count}} subelementos",
     "childTag": "Etiqueta filho",
     "childLabel": "Rótulo do filho",
-    "linkLabel": "Rótulo da ligação"
+    "linkLabel": "Rótulo da ligação",
+    "coordOrder": "Ordem das coordenadas",
+    "layout": "Disposição"
   }
 }

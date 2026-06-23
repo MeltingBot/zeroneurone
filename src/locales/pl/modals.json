@@ -654,7 +654,8 @@
       "lat": "Szerokość",
       "lng": "Długość",
       "id": "Identyfikator",
-      "ref": "Odniesienie (połączenie)"
+      "ref": "Odniesienie (połączenie)",
+      "polygon": "Strefa (wielokąt)"
     },
     "wholeObject": "(cały obiekt = 1 element)",
     "toggleAll": "Przełącz wszystko",
@@ -664,6 +665,8 @@
     "subElementsCount": "{{count}} podelementów",
     "childTag": "Tag podrzędny",
     "childLabel": "Etykieta podrzędna",
-    "linkLabel": "Etykieta połączenia"
+    "linkLabel": "Etykieta połączenia",
+    "coordOrder": "Kolejność współrzędnych",
+    "layout": "Układ"
   }
 }

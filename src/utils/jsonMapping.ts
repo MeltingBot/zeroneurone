@@ -17,7 +17,11 @@ export type MappingTarget =
   /** Record identifier — used as the key that {@link MappingTarget} 'ref' fields point to. */
   | 'id'
   /** Reference(s) to other records' id → creates links between the created elements. */
-  | 'ref';
+  | 'ref'
+  /** Array of coordinate pairs → element geo zone (GeoPolygon). */
+  | 'polygon';
+
+export type CoordOrder = 'latlng' | 'lnglat';
 
 export interface FieldMapping {
   /** Whether this field is imported at all (unchecked = excluded). */
@@ -25,6 +29,42 @@ export interface FieldMapping {
   target: MappingTarget;
   /** Display key used for property/source targets (defaults to the field path). */
   propKey: string;
+  /** Coordinate order for 'polygon' targets. */
+  coordOrder?: CoordOrder;
+}
+
+/** True when a value looks like a polygon: an array of ≥3 [number, number] pairs. */
+export function isCoordPairArray(v: unknown): boolean {
+  if (!Array.isArray(v) || v.length < 3) return false;
+  return v.every((p) => Array.isArray(p) && p.length === 2 && typeof p[0] === 'number' && typeof p[1] === 'number' && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+}
+
+/** Detect fields whose value is a polygon coordinate array. */
+export function detectPolygonFields(records: Record<string, unknown>[], fields: FieldInfo[]): Set<string> {
+  const out = new Set<string>();
+  for (const f of fields) {
+    if (records.some((r) => isCoordPairArray(r[f.key]))) out.add(f.key);
+  }
+  return out;
+}
+
+/** Guess coordinate order: a value out of latitude range (±90) on the 1st/2nd slot reveals lng position; default lat,lng. */
+export function guessCoordOrder(records: Record<string, unknown>[], key: string): CoordOrder {
+  for (const r of records) {
+    const v = r[key];
+    if (!isCoordPairArray(v)) continue;
+    for (const [a, b] of v as [number, number][]) {
+      if (Math.abs(a) > 90) return 'lnglat';
+      if (Math.abs(b) > 90) return 'latlng';
+    }
+  }
+  return 'latlng';
+}
+
+/** Convert a polygon coordinate array to GeoJSON [lng, lat][] given the source order. */
+export function toLngLatCoords(v: unknown, order: CoordOrder): [number, number][] {
+  if (!isCoordPairArray(v)) return [];
+  return (v as [number, number][]).map(([a, b]) => (order === 'latlng' ? [b, a] : [a, b]) as [number, number]);
 }
 
 export interface RecordSource {
@@ -189,6 +229,43 @@ export function childFieldsOf(records: Record<string, unknown>[], fieldKey: stri
     if (Array.isArray(v)) for (const it of v) if (isPlainObject(it)) items.push(flattenRecord(it));
   }
   return collectFields(items);
+}
+
+/**
+ * Auto-detect reference fields: scalar fields whose values are (mostly) ids of
+ * other records — i.e. they point into the set of values held by the id field.
+ * Returns the set of such field keys, so links can be created without the user
+ * manually designating them.
+ */
+export function detectReferenceFields(
+  records: Record<string, unknown>[],
+  fields: FieldInfo[],
+  idFieldKey: string | undefined,
+): Set<string> {
+  const refs = new Set<string>();
+  if (!idFieldKey) return refs;
+  const idSet = new Set<string>();
+  for (const r of records) {
+    const v = r[idFieldKey];
+    if (!isBlank(v)) idSet.add(valueToString(v).trim());
+  }
+  if (idSet.size === 0) return refs;
+  for (const f of fields) {
+    if (f.key === idFieldKey || f.kind !== 'scalar') continue;
+    let total = 0, match = 0;
+    for (const r of records) {
+      const v = r[f.key];
+      const vals = Array.isArray(v) ? v : (isBlank(v) ? [] : [v]);
+      for (const x of vals) {
+        const s = valueToString(x).trim();
+        if (!s) continue;
+        total++;
+        if (idSet.has(s)) match++;
+      }
+    }
+    if (total > 0 && match / total >= 0.5) refs.add(f.key);
+  }
+  return refs;
 }
 
 /** Guess a `{path}` label template from a field set (first/last name, name-like, else first text field). */
