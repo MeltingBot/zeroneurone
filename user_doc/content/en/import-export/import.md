@@ -90,6 +90,7 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - a single combined **`lat, lng`** field → geo point;
 - **URLs** → **link**-typed property;
 - **references**: a field holding the ids of other records creates the matching **links** (directed; reciprocal → bidirectional);
+- **pivot nodes**: a field can be turned into a **shared node** — each distinct value becomes a single node linking every record that has it (e.g. a shared email/phone reveals connections), deduplicated within the batch;
 - **zones (polygons)**: an array of coordinates becomes a geo zone (lat/lng order adjustable).
 
 **Settings:**
@@ -99,7 +100,9 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label (with a *toggle all* checkbox);
 - the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
 
-**Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while **all** are imported.
+**Filter / limit the import:** you can keep only records whose field *contains / equals / is non-empty*, and set a **cap** (default 2000; `0` = unlimited). Useful for very large datasets: import a usable subset instead of tens of thousands of nodes.
+
+**Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while the retained records are all imported.
 
 **Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users.
 

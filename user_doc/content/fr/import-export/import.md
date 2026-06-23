@@ -90,6 +90,7 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 - un champ unique **`lat, lng`** combiné → point géo ;
 - les **URL** → propriété de type **lien** ;
 - les **références** : un champ contenant les id d'autres enregistrements crée les **liens** correspondants (orientés ; réciproques → bidirectionnels) ;
+- les **nœuds pivots** : un champ peut être transformé en **nœud partagé** — chaque valeur distincte devient un nœud unique auquel sont reliés tous les enregistrements qui la portent (ex. un email/téléphone partagé révèle les connexions), dédupliqué au sein du lot ;
 - les **zones (polygones)** : un tableau de coordonnées devient une zone géo (ordre lat/lng ajustable).
 
 **Réglages :**
@@ -99,7 +100,9 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 - **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien (case *tout activer/désactiver*) ;
 - **disposition** du graphe importé (force, clusters, hiérarchie…) avant de **cliquer pour le positionner** sur le canvas.
 
-Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que **tous** sont importés.
+**Filtrer / limiter l'import :** on peut ne garder que les enregistrements dont un champ *contient / égale / est non vide*, et fixer un **plafond** (par défaut 2000 ; `0` = illimité). Utile pour les très gros jeux : on importe un sous-ensemble exploitable plutôt que des dizaines de milliers de nœuds.
+
+Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que les enregistrements retenus sont tous importés.
 
 **Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**. Les modèles peuvent aussi être **exportés / importés** en fichier `.json` pour les **partager** entre postes ou utilisateurs.
 

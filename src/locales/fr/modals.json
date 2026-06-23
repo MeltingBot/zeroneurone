@@ -675,7 +675,8 @@
       "polygon": "Zone (polygone)",
       "link": "Lien (URL)",
       "latlng": "Point (lat, lng)",
-      "asset": "Média (pièce jointe)"
+      "asset": "Média (pièce jointe)",
+      "pivot": "Nœud pivot (valeur partagée)"
     },
     "wholeObject": "(objet entier = 1 élément)",
     "toggleAll": "Tout activer / désactiver",
@@ -710,6 +711,16 @@
     "importedTemplates": "{{count}} modèle(s) importé(s)",
     "importTemplatesError": "Fichier de modèles invalide",
     "clear": "Effacer",
-    "largeNotice": "Détection basée sur les {{sample}} premiers enregistrements ; les {{count}} seront tous importés."
+    "largeNotice": "Détection basée sur les {{sample}} premiers enregistrements ; les {{count}} seront tous importés.",
+    "filter": "Filtre",
+    "filterNone": "(aucun)",
+    "filterContains": "contient",
+    "filterEquals": "égale",
+    "filterNonEmpty": "non vide",
+    "filterValue": "valeur",
+    "max": "Max",
+    "maxHint": "Nombre max d'éléments à importer (0 = illimité)",
+    "matchedOf": "{{matched}} filtrés sur {{total}}",
+    "capped": "plafonné à {{max}}"
   }
 }

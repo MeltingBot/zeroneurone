@@ -658,7 +658,8 @@
       "polygon": "Zone (Polygon)",
       "link": "Link (URL)",
       "latlng": "Punkt (lat, lng)",
-      "asset": "Medium (Anhang)"
+      "asset": "Medium (Anhang)",
+      "pivot": "Pivot-Knoten (geteilter Wert)"
     },
     "wholeObject": "(ganzes Objekt = 1 Element)",
     "toggleAll": "Alle umschalten",
@@ -693,6 +694,16 @@
     "importedTemplates": "{{count}} Vorlage(n) importiert",
     "importTemplatesError": "Ungültige Vorlagendatei",
     "clear": "Löschen",
-    "largeNotice": "Erkennung anhand der ersten {{sample}} Datensätze; alle {{count}} werden importiert."
+    "largeNotice": "Erkennung anhand der ersten {{sample}} Datensätze; alle {{count}} werden importiert.",
+    "filter": "Filter",
+    "filterNone": "(keiner)",
+    "filterContains": "enthält",
+    "filterEquals": "gleich",
+    "filterNonEmpty": "nicht leer",
+    "filterValue": "Wert",
+    "max": "Max",
+    "maxHint": "Max. zu importierende Elemente (0 = unbegrenzt)",
+    "matchedOf": "{{matched}} von {{total}} passend",
+    "capped": "begrenzt auf {{max}}"
   }
 }

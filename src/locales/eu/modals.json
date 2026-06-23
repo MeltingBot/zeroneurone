@@ -658,7 +658,8 @@
       "polygon": "Eremua (poligonoa)",
       "link": "Esteka (URL)",
       "latlng": "Puntua (lat, lng)",
-      "asset": "Media (eranskina)"
+      "asset": "Media (eranskina)",
+      "pivot": "Pibot-nodoa (balio partekatua)"
     },
     "wholeObject": "(objektu osoa = 1 elementu)",
     "toggleAll": "Guztiak txandakatu",
@@ -693,6 +694,16 @@
     "importedTemplates": "{{count}} txantiloi inportatuta",
     "importTemplatesError": "Txantiloi-fitxategi baliogabea",
     "clear": "Garbitu",
-    "largeNotice": "Detekzioa lehen {{sample}} erregistroetan oinarrituta; {{count}} guztiak inportatuko dira."
+    "largeNotice": "Detekzioa lehen {{sample}} erregistroetan oinarrituta; {{count}} guztiak inportatuko dira.",
+    "filter": "Iragazkia",
+    "filterNone": "(bat ere ez)",
+    "filterContains": "dauka",
+    "filterEquals": "berdina",
+    "filterNonEmpty": "ez hutsa",
+    "filterValue": "balioa",
+    "max": "Geh.",
+    "maxHint": "Inportatzeko gehienezko elementuak (0 = mugagabea)",
+    "matchedOf": "{{total}}-tik {{matched}} bat datoz",
+    "capped": "{{max}}-era mugatua"
   }
 }

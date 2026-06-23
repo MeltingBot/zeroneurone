@@ -658,7 +658,8 @@
       "polygon": "Zona (polígon)",
       "link": "Enllaç (URL)",
       "latlng": "Punt (lat, lng)",
-      "asset": "Mèdia (adjunt)"
+      "asset": "Mèdia (adjunt)",
+      "pivot": "Node pivot (valor compartit)"
     },
     "wholeObject": "(objecte sencer = 1 element)",
     "toggleAll": "Activa/desactiva tot",
@@ -693,6 +694,16 @@
     "importedTemplates": "{{count}} plantilla/es importada/es",
     "importTemplatesError": "Fitxer de plantilles no vàlid",
     "clear": "Esborra",
-    "largeNotice": "Detecció basada en els primers {{sample}} registres; s'importaran tots els {{count}}."
+    "largeNotice": "Detecció basada en els primers {{sample}} registres; s'importaran tots els {{count}}.",
+    "filter": "Filtre",
+    "filterNone": "(cap)",
+    "filterContains": "conté",
+    "filterEquals": "igual a",
+    "filterNonEmpty": "no buit",
+    "filterValue": "valor",
+    "max": "Màx",
+    "maxHint": "Màx. d'elements a importar (0 = il·limitat)",
+    "matchedOf": "{{matched}} de {{total}} coincideixen",
+    "capped": "limitat a {{max}}"
   }
 }

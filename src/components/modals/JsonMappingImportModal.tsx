@@ -8,6 +8,7 @@ import {
   findRecordSources,
   pickDefaultSource,
   rawRecordsForSource,
+  getAtPath,
   sourceKey,
   collectFields,
   childFieldsOf,
@@ -48,7 +49,7 @@ interface JsonMappingImportModalProps {
   initialJson?: string;
 }
 
-const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'link', 'asset', 'source', 'lat', 'lng', 'latlng', 'id', 'ref', 'polygon'];
+const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'link', 'asset', 'source', 'lat', 'lng', 'latlng', 'id', 'ref', 'pivot', 'polygon'];
 
 // Large-file handling: sample records for the UI (detection/preview), but import them all.
 const SAMPLE = 2000;           // records used for field detection / preview
@@ -72,6 +73,12 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [layout, setLayout] = useState<LayoutType>('force');
   const [creating, setCreating] = useState(false);
 
+  // Import filter + cap (to keep large datasets manageable on the canvas)
+  const [filterField, setFilterField] = useState('');
+  const [filterOp, setFilterOp] = useState<'contains' | 'equals' | 'nonempty'>('contains');
+  const [filterValue, setFilterValue] = useState('');
+  const [maxImport, setMaxImport] = useState(2000);
+
   // Saved templates (phase 2a)
   const templates = useJsonMappingStore((s) => s.templates);
   const loadTemplates = useJsonMappingStore((s) => s.load);
@@ -87,6 +94,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     setText(''); setParsed(null); setError(null); setLoadedInfo(null); setSrcKey('');
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
+    setFilterField(''); setFilterOp('contains'); setFilterValue(''); setMaxImport(2000);
   }, []);
 
   const handleClose = useCallback(() => { reset(); onClose(); }, [reset, onClose]);
@@ -103,6 +111,21 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const rawRecords = useMemo(() => rawRecordsForSource(parsed, selectedSource), [parsed, selectedSource]);
   const recordCount = rawRecords.length;
   const records = useMemo(() => rawRecords.slice(0, SAMPLE).map((r) => flattenRecord(r)), [rawRecords]);
+
+  // Import filter (by field value) + cap. Field discovery stays on the unfiltered
+  // sample; only the records actually imported are filtered/capped.
+  const matchFilter = useCallback((raw: Record<string, unknown>) => {
+    if (!filterField) return true;
+    const v = getAtPath(raw, filterField);
+    if (filterOp === 'nonempty') return !isBlank(v);
+    const q = filterValue.trim().toLowerCase();
+    if (!q) return true;
+    const s = valueToString(v).toLowerCase();
+    return filterOp === 'equals' ? s === q : s.includes(q);
+  }, [filterField, filterOp, filterValue]);
+  const filteredRaw = useMemo(() => (filterField ? rawRecords.filter(matchFilter) : rawRecords), [rawRecords, filterField, matchFilter]);
+  const matchedCount = filteredRaw.length;
+  const importCount = maxImport > 0 ? Math.min(matchedCount, maxImport) : matchedCount;
 
   const fields = useMemo(() => collectFields(records), [records]);
   // Scalar fields map to the parent element; array-of-objects fields can become linked children.
@@ -244,9 +267,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
   // Preview of the first record's computed label
   const previewLabel = useMemo(() => {
-    if (records.length === 0) return '';
-    return applyTemplate(labelTemplate, records[0]) || t('importJsonMapping.noLabel');
-  }, [records, labelTemplate, t]);
+    if (filteredRaw.length === 0) return '';
+    return applyTemplate(labelTemplate, flattenRecord(filteredRaw[0])) || t('importJsonMapping.noLabel');
+  }, [filteredRaw, labelTemplate, t]);
 
   const setFieldTarget = (key: string, target: MappingTarget) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], target } }));
@@ -277,10 +300,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
   const handleImport = useCallback(async () => {
     const dossier = useDossierStore.getState().currentDossier;
-    if (!dossier || rawRecords.length === 0) return;
+    if (!dossier || importCount === 0) return;
     setCreating(true);
-    // Flatten ALL records for the import (the UI only used a sample).
-    const allRecords = rawRecords.map((r) => flattenRecord(r));
+    // Apply filter + cap, then flatten the records to import.
+    const toImport = maxImport > 0 ? filteredRaw.slice(0, maxImport) : filteredRaw;
+    const allRecords = toImport.map((r) => flattenRecord(r));
     try {
       const tagStore = useTagSetStore.getState();
       // Ensure a tag exists and return a base visual derived from it.
@@ -307,6 +331,14 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       const childVisuals: Record<string, ElementVisual> = {};
       for (const f of enabledChildren) childVisuals[f.key] = await ensureVisual(childMappings[f.key].tag);
 
+      // Pivot fields: a shared value → one dedup'd node linking every record that has it.
+      const pivotFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'pivot');
+      const pivotTagOf = (key: string) => (mapping[key]?.propKey.trim() || lastSegment(key));
+      const pivotVisuals: Record<string, ElementVisual> = {};
+      for (const f of pivotFields) pivotVisuals[f.key] = await ensureVisual(pivotTagOf(f.key));
+      const pivotByKey = new Map<string, Element>();
+      let pivotIdx = 0;
+
       const now = new Date();
       const cols = Math.max(1, Math.ceil(Math.sqrt(allRecords.length)));
       const elements: Element[] = [];
@@ -325,7 +357,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           if (coerced === null) continue;
           const propKey = m.propKey.trim() || lastSegment(f.key);
           switch (m.target) {
-            case 'id': case 'ref': case 'polygon': case 'latlng': case 'asset': break; // handled separately (key / links / geo / media)
+            case 'id': case 'ref': case 'polygon': case 'latlng': case 'asset': case 'pivot': break; // handled separately
             case 'source': source = source ? `${source} | ${coerced}` : String(coerced); break;
             case 'lat': lat = coerced as number; break;
             case 'lng': lng = coerced as number; break;
@@ -391,6 +423,38 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
             for (const v of vals) { const s = valueToString(v).trim(); if (isUrl(s)) urls.push(s); }
           }
           if (urls.length) assetDownloads.push({ elementId: parent.id, urls });
+        }
+
+        // Pivot nodes: link this record to a dedup'd node per shared value.
+        for (const pf of pivotFields) {
+          const tag = pivotTagOf(pf.key);
+          const raw = flat[pf.key];
+          const vals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
+          for (const v of vals) {
+            const val = valueToString(v).trim();
+            if (!val) continue;
+            const key = `${tag} ${val}`;
+            let pivot = pivotByKey.get(key);
+            if (!pivot) {
+              pivot = mkElement({
+                label: val,
+                tags: tag ? [tag] : [],
+                visual: { ...pivotVisuals[pf.key] },
+                position: { x: -360, y: (pivotIdx++) * 130 },
+              });
+              elements.push(pivot);
+              pivotByKey.set(key, pivot);
+            }
+            links.push({
+              id: crypto.randomUUID(), dossierId: dossier.id, fromId: parent.id, toId: pivot.id,
+              sourceHandle: null, targetHandle: null,
+              label: '', notes: '', tags: [], properties: [],
+              directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
+              visual: { color: '#9ca3af', style: 'dashed', thickness: 2 },
+              curveOffset: { x: 0, y: 0 },
+              createdAt: now, updatedAt: now,
+            });
+          }
         }
 
         // Linked children from array-of-objects fields
@@ -495,11 +559,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       setError(String(e));
       setCreating(false);
     }
-  }, [rawRecords, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
+  }, [filteredRaw, maxImport, importCount, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
 
   if (!isOpen) return null;
 
-  const canImport = records.length > 0 && labelTemplate.trim().length > 0 && !creating;
+  const canImport = importCount > 0 && labelTemplate.trim().length > 0 && !creating;
 
   return (
     <>
@@ -668,6 +732,52 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                 </div>
               </div>
 
+              {/* Import filter + cap */}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.filter')}</label>
+                <select
+                  value={filterField}
+                  onChange={(e) => setFilterField(e.target.value)}
+                  className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary max-w-[160px]"
+                >
+                  <option value="">{t('importJsonMapping.filterNone')}</option>
+                  {scalarFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
+                </select>
+                {filterField && (
+                  <>
+                    <select
+                      value={filterOp}
+                      onChange={(e) => setFilterOp(e.target.value as 'contains' | 'equals' | 'nonempty')}
+                      className="px-1 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                    >
+                      <option value="contains">{t('importJsonMapping.filterContains')}</option>
+                      <option value="equals">{t('importJsonMapping.filterEquals')}</option>
+                      <option value="nonempty">{t('importJsonMapping.filterNonEmpty')}</option>
+                    </select>
+                    {filterOp !== 'nonempty' && (
+                      <input
+                        type="text"
+                        value={filterValue}
+                        onChange={(e) => setFilterValue(e.target.value)}
+                        placeholder={t('importJsonMapping.filterValue')}
+                        className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                      />
+                    )}
+                  </>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.max')}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={maxImport}
+                    onChange={(e) => setMaxImport(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                    title={t('importJsonMapping.maxHint')}
+                  />
+                </div>
+              </div>
+
               {/* Mapping table */}
               <div className="border border-border-default rounded overflow-hidden">
                 <div className="grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1.5 bg-bg-secondary text-[10px] font-medium text-text-secondary uppercase tracking-wider items-center">
@@ -687,7 +797,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                   {scalarFields.map((f) => {
                     const m = mapping[f.key];
                     if (!m) return null;
-                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref' || m.target === 'link';
+                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref' || m.target === 'link' || m.target === 'pivot';
                     return (
                       <div key={f.key} className={`grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1 items-center ${m.enabled ? '' : 'opacity-45'}`}>
                         <input
@@ -785,7 +895,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
               {/* Preview */}
               <div className="text-xs text-text-secondary">
-                {t('importJsonMapping.willCreate', { count: recordCount })}
+                {t('importJsonMapping.willCreate', { count: importCount })}
+                {matchedCount !== recordCount && <span className="text-text-tertiary"> ({t('importJsonMapping.matchedOf', { matched: matchedCount, total: recordCount })})</span>}
+                {importCount < matchedCount && <span className="text-warning"> — {t('importJsonMapping.capped', { max: maxImport })}</span>}
                 {previewLabel && (
                   <span className="text-text-tertiary"> — {t('importJsonMapping.previewLabel')} <span className="text-text-primary font-medium">{previewLabel}</span></span>
                 )}

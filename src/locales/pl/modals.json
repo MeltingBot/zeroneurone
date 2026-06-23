@@ -658,7 +658,8 @@
       "polygon": "Strefa (wielokąt)",
       "link": "Łącze (URL)",
       "latlng": "Punkt (lat, lng)",
-      "asset": "Media (załącznik)"
+      "asset": "Media (załącznik)",
+      "pivot": "Węzeł pivot (wspólna wartość)"
     },
     "wholeObject": "(cały obiekt = 1 element)",
     "toggleAll": "Przełącz wszystko",
@@ -693,6 +694,16 @@
     "importedTemplates": "Zaimportowano {{count}} szablon(ów)",
     "importTemplatesError": "Nieprawidłowy plik szablonów",
     "clear": "Wyczyść",
-    "largeNotice": "Wykrywanie na podstawie pierwszych {{sample}} rekordów; zaimportowane zostaną wszystkie {{count}}."
+    "largeNotice": "Wykrywanie na podstawie pierwszych {{sample}} rekordów; zaimportowane zostaną wszystkie {{count}}.",
+    "filter": "Filtr",
+    "filterNone": "(brak)",
+    "filterContains": "zawiera",
+    "filterEquals": "równa się",
+    "filterNonEmpty": "niepuste",
+    "filterValue": "wartość",
+    "max": "Maks",
+    "maxHint": "Maks. elementów do importu (0 = bez limitu)",
+    "matchedOf": "{{matched}} z {{total}} pasuje",
+    "capped": "ograniczono do {{max}}"
   }
 }

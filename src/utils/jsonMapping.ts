@@ -26,7 +26,9 @@ export type MappingTarget =
   /** Single field holding "lat, lng" → element geo point. */
   | 'latlng'
   /** URL(s) to media → downloaded and attached as element assets. */
-  | 'asset';
+  | 'asset'
+  /** Shared value → a dedup'd "pivot" node that links every record sharing it. */
+  | 'pivot';
 
 export type CoordOrder = 'latlng' | 'lnglat';
 

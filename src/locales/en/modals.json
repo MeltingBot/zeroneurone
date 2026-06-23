@@ -675,7 +675,8 @@
       "polygon": "Zone (polygon)",
       "link": "Link (URL)",
       "latlng": "Point (lat, lng)",
-      "asset": "Media (attachment)"
+      "asset": "Media (attachment)",
+      "pivot": "Pivot node (shared value)"
     },
     "wholeObject": "(whole object = 1 element)",
     "toggleAll": "Toggle all",
@@ -710,6 +711,16 @@
     "importedTemplates": "{{count}} template(s) imported",
     "importTemplatesError": "Invalid templates file",
     "clear": "Clear",
-    "largeNotice": "Detection based on the first {{sample}} records; all {{count}} will be imported."
+    "largeNotice": "Detection based on the first {{sample}} records; all {{count}} will be imported.",
+    "filter": "Filter",
+    "filterNone": "(none)",
+    "filterContains": "contains",
+    "filterEquals": "equals",
+    "filterNonEmpty": "non-empty",
+    "filterValue": "value",
+    "max": "Max",
+    "maxHint": "Max elements to import (0 = unlimited)",
+    "matchedOf": "{{matched}} of {{total}} matched",
+    "capped": "capped at {{max}}"
   }
 }

@@ -658,7 +658,8 @@
       "polygon": "Зона (полігон)",
       "link": "Посилання (URL)",
       "latlng": "Точка (lat, lng)",
-      "asset": "Медіа (вкладення)"
+      "asset": "Медіа (вкладення)",
+      "pivot": "Вузол-півот (спільне значення)"
     },
     "wholeObject": "(весь об'єкт = 1 елемент)",
     "toggleAll": "Перемкнути всі",
@@ -693,6 +694,16 @@
     "importedTemplates": "Імпортовано {{count}} шаблон(ів)",
     "importTemplatesError": "Недійсний файл шаблонів",
     "clear": "Очистити",
-    "largeNotice": "Виявлення на основі перших {{sample}} записів; буде імпортовано всі {{count}}."
+    "largeNotice": "Виявлення на основі перших {{sample}} записів; буде імпортовано всі {{count}}.",
+    "filter": "Фільтр",
+    "filterNone": "(немає)",
+    "filterContains": "містить",
+    "filterEquals": "дорівнює",
+    "filterNonEmpty": "непорожнє",
+    "filterValue": "значення",
+    "max": "Макс",
+    "maxHint": "Макс. елементів для імпорту (0 = без обмежень)",
+    "matchedOf": "{{matched}} з {{total}} збігаються",
+    "capped": "обмежено до {{max}}"
   }
 }

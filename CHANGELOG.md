@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.42.4
+
+### Features
+- **Import JSON par mapping — nœuds pivots & filtre d'import** :
+  - cible **Nœud pivot (valeur partagée)** : un champ devient un nœud unique par valeur distincte, relié à tous les enregistrements qui la portent (dédup au sein du lot) — un sélecteur partagé (email, téléphone…) devient un point de pivot révélant les connexions ;
+  - **filtre d'import** (champ *contient / égale / non vide*) et **plafond** (défaut 2000) appliqués avant la construction, pour garder les très gros jeux exploitables sur le canvas.
+
 ## 2.42.3
 
 ### Features
