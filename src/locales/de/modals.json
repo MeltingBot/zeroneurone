@@ -667,6 +667,22 @@
     "childLabel": "Kind-Bezeichnung",
     "linkLabel": "Verknüpfungsbezeichnung",
     "coordOrder": "Koordinatenreihenfolge",
-    "layout": "Anordnung"
+    "layout": "Anordnung",
+    "template": "Vorlage",
+    "loadTemplate": "Vorlage laden…",
+    "noTemplates": "Keine Vorlagen",
+    "saveTemplate": "Speichern",
+    "templateName": "Vorlagenname",
+    "manage": "Verwalten",
+    "suggestion": "Erkanntes Format: Vorlage „{{name}}\".",
+    "apply": "Anwenden",
+    "dismiss": "Verwerfen",
+    "manageTitle": "Zuordnungsvorlagen",
+    "templateFields": "{{count}} Felder",
+    "rename": "Umbenennen",
+    "confirmDelete": "Bestätigen",
+    "delete": "Löschen",
+    "close": "Schließen",
+    "saveTemplateError": "Vorlage konnte nicht gespeichert werden (Seite neu laden, um die Datenbank zu aktualisieren)."
   }
 }

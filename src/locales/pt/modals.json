@@ -667,6 +667,22 @@
     "childLabel": "Rótulo do filho",
     "linkLabel": "Rótulo da ligação",
     "coordOrder": "Ordem das coordenadas",
-    "layout": "Disposição"
+    "layout": "Disposição",
+    "template": "Modelo",
+    "loadTemplate": "Carregar um modelo…",
+    "noTemplates": "Sem modelos",
+    "saveTemplate": "Guardar",
+    "templateName": "Nome do modelo",
+    "manage": "Gerir",
+    "suggestion": "Formato reconhecido: modelo «{{name}}».",
+    "apply": "Aplicar",
+    "dismiss": "Ignorar",
+    "manageTitle": "Modelos de mapeamento",
+    "templateFields": "{{count}} campos",
+    "rename": "Renomear",
+    "confirmDelete": "Confirmar",
+    "delete": "Eliminar",
+    "close": "Fechar",
+    "saveTemplateError": "Falha ao guardar o modelo (recarregue a página para atualizar a base de dados)."
   }
 }

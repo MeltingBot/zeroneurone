@@ -33,6 +33,50 @@ export interface FieldMapping {
   coordOrder?: CoordOrder;
 }
 
+/** Config for turning an array-of-objects field into linked child elements. */
+export interface ChildMapping {
+  enabled: boolean;
+  tag: string;
+  labelTemplate: string;
+  linkLabel: string;
+}
+
+/** Reusable mapping config (everything except the JSON data itself). */
+export interface MappingConfig {
+  labelTemplate: string;
+  tagName: string;
+  ignoreEmpty: boolean;
+  layout: string;
+  mapping: Record<string, FieldMapping>;
+  childMappings: Record<string, ChildMapping>;
+}
+
+/** A saved, named mapping template, matched to incoming JSON by field signature. */
+export interface JsonMappingTemplate {
+  id: string;
+  name: string;
+  /** Sorted field keys captured at save time — used to match similar JSON shapes. */
+  signature: string[];
+  config: MappingConfig;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Field-key signature of a record set (sorted), used to match saved templates. */
+export function computeSignature(fields: FieldInfo[]): string[] {
+  return fields.map((f) => f.key).sort();
+}
+
+/** Overlap ratio between two signatures (intersection / union), 0..1. */
+export function signatureOverlap(a: string[], b: string[]): number {
+  if (a.length === 0 && b.length === 0) return 1;
+  const sa = new Set(a), sb = new Set(b);
+  let inter = 0;
+  for (const k of sa) if (sb.has(k)) inter++;
+  const union = sa.size + sb.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
 /** True when a value looks like a polygon: an array of ≥3 [number, number] pairs. */
 export function isCoordPairArray(v: unknown): boolean {
   if (!Array.isArray(v) || v.length < 3) return false;

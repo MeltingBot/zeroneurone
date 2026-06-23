@@ -96,6 +96,8 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 - **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien ;
 - **disposition** du graphe importé (force, clusters, hiérarchie…) avant de **cliquer pour le positionner** sur le canvas.
 
+**Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**.
+
 L'import se fait en un seul lot **annulable** (Ctrl+Z).
 
 ---

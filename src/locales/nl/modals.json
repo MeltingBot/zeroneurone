@@ -667,6 +667,22 @@
     "childLabel": "Onderliggend label",
     "linkLabel": "Koppelingslabel",
     "coordOrder": "Coördinatenvolgorde",
-    "layout": "Indeling"
+    "layout": "Indeling",
+    "template": "Sjabloon",
+    "loadTemplate": "Een sjabloon laden…",
+    "noTemplates": "Geen sjablonen",
+    "saveTemplate": "Opslaan",
+    "templateName": "Sjabloonnaam",
+    "manage": "Beheren",
+    "suggestion": "Herkend formaat: sjabloon \"{{name}}\".",
+    "apply": "Toepassen",
+    "dismiss": "Negeren",
+    "manageTitle": "Toewijzingssjablonen",
+    "templateFields": "{{count}} velden",
+    "rename": "Hernoemen",
+    "confirmDelete": "Bevestigen",
+    "delete": "Verwijderen",
+    "close": "Sluiten",
+    "saveTemplateError": "Sjabloon opslaan mislukt (herlaad de pagina om de database bij te werken)."
   }
 }

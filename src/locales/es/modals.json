@@ -667,6 +667,22 @@
     "childLabel": "Etiqueta del hijo",
     "linkLabel": "Etiqueta del enlace",
     "coordOrder": "Orden de coordenadas",
-    "layout": "Disposición"
+    "layout": "Disposición",
+    "template": "Plantilla",
+    "loadTemplate": "Cargar una plantilla…",
+    "noTemplates": "Sin plantillas",
+    "saveTemplate": "Guardar",
+    "templateName": "Nombre de la plantilla",
+    "manage": "Gestionar",
+    "suggestion": "Formato reconocido: plantilla «{{name}}».",
+    "apply": "Aplicar",
+    "dismiss": "Descartar",
+    "manageTitle": "Plantillas de mapeo",
+    "templateFields": "{{count}} campos",
+    "rename": "Renombrar",
+    "confirmDelete": "Confirmar",
+    "delete": "Eliminar",
+    "close": "Cerrar",
+    "saveTemplateError": "Error al guardar la plantilla (recargue la página para actualizar la base de datos)."
   }
 }

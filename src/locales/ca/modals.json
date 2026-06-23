@@ -667,6 +667,22 @@
     "childLabel": "Etiqueta del fill",
     "linkLabel": "Etiqueta de l'enllaç",
     "coordOrder": "Ordre de coordenades",
-    "layout": "Disposició"
+    "layout": "Disposició",
+    "template": "Plantilla",
+    "loadTemplate": "Carrega una plantilla…",
+    "noTemplates": "Cap plantilla",
+    "saveTemplate": "Desa",
+    "templateName": "Nom de la plantilla",
+    "manage": "Gestiona",
+    "suggestion": "Format reconegut: plantilla «{{name}}».",
+    "apply": "Aplica",
+    "dismiss": "Descarta",
+    "manageTitle": "Plantilles de mapatge",
+    "templateFields": "{{count}} camps",
+    "rename": "Reanomena",
+    "confirmDelete": "Confirma",
+    "delete": "Elimina",
+    "close": "Tanca",
+    "saveTemplateError": "No s'ha pogut desar la plantilla (recarrega la pàgina per actualitzar la base de dades)."
   }
 }
