@@ -683,6 +683,11 @@
     "confirmDelete": "Berretsi",
     "delete": "Ezabatu",
     "close": "Itxi",
-    "saveTemplateError": "Ezin izan da txantiloia gorde (kargatu orria datu-basea eguneratzeko)."
+    "saveTemplateError": "Ezin izan da txantiloia gorde (kargatu orria datu-basea eguneratzeko).",
+    "exportTemplate": "Esportatu txantiloi hau",
+    "exportAll": "Esportatu dena",
+    "importTemplates": "Inportatu",
+    "importedTemplates": "{{count}} txantiloi inportatuta",
+    "importTemplatesError": "Txantiloi-fitxategi baliogabea"
   }
 }

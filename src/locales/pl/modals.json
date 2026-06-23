@@ -683,6 +683,11 @@
     "confirmDelete": "Potwierdź",
     "delete": "Usuń",
     "close": "Zamknij",
-    "saveTemplateError": "Nie udało się zapisać szablonu (odśwież stronę, aby zaktualizować bazę danych)."
+    "saveTemplateError": "Nie udało się zapisać szablonu (odśwież stronę, aby zaktualizować bazę danych).",
+    "exportTemplate": "Eksportuj ten szablon",
+    "exportAll": "Eksportuj wszystko",
+    "importTemplates": "Importuj",
+    "importedTemplates": "Zaimportowano {{count}} szablon(ów)",
+    "importTemplatesError": "Nieprawidłowy plik szablonów"
   }
 }

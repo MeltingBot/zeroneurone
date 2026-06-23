@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.42.2
+
+### Features
+- **Partage des modèles de mapping JSON** — les modèles d'import JSON peuvent être **exportés** (un seul ou tous) et **importés** sous forme de fichier `.json`, depuis l'écran de gestion des modèles, afin de les partager entre postes ou utilisateurs.
+
 ## 2.42.1
 
 ### Features

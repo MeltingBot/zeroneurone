@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Trash2, Check, Pencil } from 'lucide-react';
+import { X, Trash2, Check, Pencil, Download, Upload } from 'lucide-react';
 import { useJsonMappingStore } from '../../stores';
+import { exportService } from '../../services/exportService';
+import type { JsonMappingTemplate } from '../../utils/jsonMapping';
+
+const FILE_TYPE = 'zeroneurone-mapping-templates';
 
 interface JsonMappingManagerModalProps {
   isOpen: boolean;
@@ -13,12 +17,15 @@ export function JsonMappingManagerModal({ isOpen, onClose }: JsonMappingManagerM
   const { t } = useTranslation('modals');
   const templates = useJsonMappingStore((s) => s.templates);
   const load = useJsonMappingStore((s) => s.load);
+  const save = useJsonMappingStore((s) => s.save);
   const rename = useJsonMappingStore((s) => s.rename);
   const remove = useJsonMappingStore((s) => s.remove);
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (isOpen) load(); }, [isOpen, load]);
 
@@ -28,6 +35,37 @@ export function JsonMappingManagerModal({ isOpen, onClose }: JsonMappingManagerM
     const n = editName.trim();
     if (n) rename(id, n);
     setEditId(null);
+  };
+
+  const exportTemplates = (list: JsonMappingTemplate[]) => {
+    if (list.length === 0) return;
+    const payload = {
+      type: FILE_TYPE,
+      version: 1,
+      templates: list.map((tpl) => ({ name: tpl.name, signature: tpl.signature, config: tpl.config })),
+    };
+    const filename = list.length === 1 ? `mapping-${list[0].name}.json` : 'mappings-zeroneurone.json';
+    exportService.download(JSON.stringify(payload, null, 2), filename, 'application/json');
+  };
+
+  const handleImportFile = async (file: File) => {
+    setNotice(null);
+    try {
+      const data = JSON.parse(await file.text());
+      if (data?.type !== FILE_TYPE || !Array.isArray(data.templates)) {
+        setNotice(t('importJsonMapping.importTemplatesError'));
+        return;
+      }
+      let count = 0;
+      for (const tpl of data.templates) {
+        if (!tpl?.name || !tpl?.config || !Array.isArray(tpl?.signature)) continue;
+        await save(String(tpl.name), tpl.signature, tpl.config);
+        count++;
+      }
+      setNotice(t('importJsonMapping.importedTemplates', { count }));
+    } catch {
+      setNotice(t('importJsonMapping.importTemplatesError'));
+    }
   };
 
   return (
@@ -70,13 +108,22 @@ export function JsonMappingManagerModal({ isOpen, onClose }: JsonMappingManagerM
                     )}
                   </div>
                   {editId !== tpl.id && (
-                    <button
-                      onClick={() => { setEditId(tpl.id); setEditName(tpl.name); }}
-                      className="p-1 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
-                      title={t('importJsonMapping.rename')}
-                    >
-                      <Pencil size={14} />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => { setEditId(tpl.id); setEditName(tpl.name); }}
+                        className="p-1 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+                        title={t('importJsonMapping.rename')}
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => exportTemplates([tpl])}
+                        className="p-1 text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded"
+                        title={t('importJsonMapping.exportTemplate')}
+                      >
+                        <Download size={14} />
+                      </button>
+                    </>
                   )}
                   {confirmDelete === tpl.id ? (
                     <button
@@ -100,7 +147,31 @@ export function JsonMappingManagerModal({ isOpen, onClose }: JsonMappingManagerM
           )}
         </div>
 
-        <div className="flex justify-end px-4 py-3 border-t border-border-default bg-bg-secondary">
+        {notice && <p className="px-4 pb-1 text-[11px] text-text-secondary">{notice}</p>}
+
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+            >
+              <Upload size={12} /> {t('importJsonMapping.importTemplates')}
+            </button>
+            <button
+              onClick={() => exportTemplates(templates)}
+              disabled={templates.length === 0}
+              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default disabled:opacity-40"
+            >
+              <Download size={12} /> {t('importJsonMapping.exportAll')}
+            </button>
+          </div>
           <button onClick={onClose} className="px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary rounded">
             {t('importJsonMapping.close')}
           </button>

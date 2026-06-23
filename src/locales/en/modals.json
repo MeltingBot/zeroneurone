@@ -700,6 +700,11 @@
     "confirmDelete": "Confirm",
     "delete": "Delete",
     "close": "Close",
-    "saveTemplateError": "Failed to save template (reload the page to update the database)."
+    "saveTemplateError": "Failed to save template (reload the page to update the database).",
+    "exportTemplate": "Export this template",
+    "exportAll": "Export all",
+    "importTemplates": "Import",
+    "importedTemplates": "{{count}} template(s) imported",
+    "importTemplatesError": "Invalid templates file"
   }
 }

@@ -683,6 +683,11 @@
     "confirmDelete": "Bestätigen",
     "delete": "Löschen",
     "close": "Schließen",
-    "saveTemplateError": "Vorlage konnte nicht gespeichert werden (Seite neu laden, um die Datenbank zu aktualisieren)."
+    "saveTemplateError": "Vorlage konnte nicht gespeichert werden (Seite neu laden, um die Datenbank zu aktualisieren).",
+    "exportTemplate": "Diese Vorlage exportieren",
+    "exportAll": "Alle exportieren",
+    "importTemplates": "Importieren",
+    "importedTemplates": "{{count}} Vorlage(n) importiert",
+    "importTemplatesError": "Ungültige Vorlagendatei"
   }
 }

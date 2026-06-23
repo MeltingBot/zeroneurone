@@ -683,6 +683,11 @@
     "confirmDelete": "Conferma",
     "delete": "Elimina",
     "close": "Chiudi",
-    "saveTemplateError": "Salvataggio del modello non riuscito (ricarica la pagina per aggiornare il database)."
+    "saveTemplateError": "Salvataggio del modello non riuscito (ricarica la pagina per aggiornare il database).",
+    "exportTemplate": "Esporta questo modello",
+    "exportAll": "Esporta tutto",
+    "importTemplates": "Importa",
+    "importedTemplates": "{{count}} modello/i importato/i",
+    "importTemplatesError": "File di modelli non valido"
   }
 }

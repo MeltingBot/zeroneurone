@@ -700,6 +700,11 @@
     "confirmDelete": "Confirmer",
     "delete": "Supprimer",
     "close": "Fermer",
-    "saveTemplateError": "Échec de l'enregistrement du modèle (rechargez la page pour mettre à jour la base)."
+    "saveTemplateError": "Échec de l'enregistrement du modèle (rechargez la page pour mettre à jour la base).",
+    "exportTemplate": "Exporter ce modèle",
+    "exportAll": "Tout exporter",
+    "importTemplates": "Importer",
+    "importedTemplates": "{{count}} modèle(s) importé(s)",
+    "importTemplatesError": "Fichier de modèles invalide"
   }
 }

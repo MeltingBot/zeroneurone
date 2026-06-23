@@ -96,7 +96,7 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label;
 - the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
 
-**Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**.
+**Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users.
 
 The import happens as a single **undoable** batch (Ctrl+Z).
 

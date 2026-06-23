@@ -683,6 +683,11 @@
     "confirmDelete": "Bevestigen",
     "delete": "Verwijderen",
     "close": "Sluiten",
-    "saveTemplateError": "Sjabloon opslaan mislukt (herlaad de pagina om de database bij te werken)."
+    "saveTemplateError": "Sjabloon opslaan mislukt (herlaad de pagina om de database bij te werken).",
+    "exportTemplate": "Dit sjabloon exporteren",
+    "exportAll": "Alles exporteren",
+    "importTemplates": "Importeren",
+    "importedTemplates": "{{count}} sjabl(o)on(en) geïmporteerd",
+    "importTemplatesError": "Ongeldig sjabloonbestand"
   }
 }

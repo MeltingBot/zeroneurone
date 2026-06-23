@@ -683,6 +683,11 @@
     "confirmDelete": "Confirmar",
     "delete": "Eliminar",
     "close": "Cerrar",
-    "saveTemplateError": "Error al guardar la plantilla (recargue la página para actualizar la base de datos)."
+    "saveTemplateError": "Error al guardar la plantilla (recargue la página para actualizar la base de datos).",
+    "exportTemplate": "Exportar esta plantilla",
+    "exportAll": "Exportar todo",
+    "importTemplates": "Importar",
+    "importedTemplates": "{{count}} plantilla(s) importada(s)",
+    "importTemplatesError": "Archivo de plantillas no válido"
   }
 }

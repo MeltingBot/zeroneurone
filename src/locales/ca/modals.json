@@ -683,6 +683,11 @@
     "confirmDelete": "Confirma",
     "delete": "Elimina",
     "close": "Tanca",
-    "saveTemplateError": "No s'ha pogut desar la plantilla (recarrega la pàgina per actualitzar la base de dades)."
+    "saveTemplateError": "No s'ha pogut desar la plantilla (recarrega la pàgina per actualitzar la base de dades).",
+    "exportTemplate": "Exporta aquesta plantilla",
+    "exportAll": "Exporta-ho tot",
+    "importTemplates": "Importa",
+    "importedTemplates": "{{count}} plantilla/es importada/es",
+    "importTemplatesError": "Fitxer de plantilles no vàlid"
   }
 }

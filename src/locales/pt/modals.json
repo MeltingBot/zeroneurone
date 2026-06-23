@@ -683,6 +683,11 @@
     "confirmDelete": "Confirmar",
     "delete": "Eliminar",
     "close": "Fechar",
-    "saveTemplateError": "Falha ao guardar o modelo (recarregue a página para atualizar a base de dados)."
+    "saveTemplateError": "Falha ao guardar o modelo (recarregue a página para atualizar a base de dados).",
+    "exportTemplate": "Exportar este modelo",
+    "exportAll": "Exportar tudo",
+    "importTemplates": "Importar",
+    "importedTemplates": "{{count}} modelo(s) importado(s)",
+    "importTemplatesError": "Ficheiro de modelos inválido"
   }
 }
