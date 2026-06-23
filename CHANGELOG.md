@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.42.1
+
+### Features
+- **Modèles de mapping JSON réutilisables** — un mapping configuré dans l'assistant d'import JSON peut être **enregistré** comme modèle nommé, réutilisable entre tous les dossiers. Rechargement depuis une liste, **suggestion automatique** quand la signature des champs d'un JSON collé correspond à un modèle enregistré (bannière Appliquer/Ignorer), et écran de **gestion** (renommer / supprimer).
+
 ## 2.42.0
 
 ### Features
