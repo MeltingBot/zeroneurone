@@ -652,7 +652,9 @@
       "country": "Propriedade (país)",
       "source": "Fonte",
       "lat": "Latitude",
-      "lng": "Longitude"
+      "lng": "Longitude",
+      "id": "Identificador",
+      "ref": "Referência (ligação)"
     },
     "wholeObject": "(objeto inteiro = 1 elemento)",
     "toggleAll": "Ativar/desativar tudo",

@@ -652,7 +652,9 @@
       "country": "Eigenschaft (Land)",
       "source": "Quelle",
       "lat": "Breitengrad",
-      "lng": "Längengrad"
+      "lng": "Längengrad",
+      "id": "Bezeichner",
+      "ref": "Referenz (Verknüpfung)"
     },
     "wholeObject": "(ganzes Objekt = 1 Element)",
     "toggleAll": "Alle umschalten",

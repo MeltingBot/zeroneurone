@@ -652,7 +652,9 @@
       "country": "Propietatea (herrialdea)",
       "source": "Iturria",
       "lat": "Latitudea",
-      "lng": "Longitudea"
+      "lng": "Longitudea",
+      "id": "Identifikatzailea",
+      "ref": "Erreferentzia (esteka)"
     },
     "wholeObject": "(objektu osoa = 1 elementu)",
     "toggleAll": "Guztiak txandakatu",

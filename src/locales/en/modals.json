@@ -669,7 +669,9 @@
       "country": "Property (country)",
       "source": "Source",
       "lat": "Latitude",
-      "lng": "Longitude"
+      "lng": "Longitude",
+      "id": "Identifier",
+      "ref": "Reference (link)"
     },
     "wholeObject": "(whole object = 1 element)",
     "toggleAll": "Toggle all",

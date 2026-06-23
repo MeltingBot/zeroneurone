@@ -652,7 +652,9 @@
       "country": "Eigenschap (land)",
       "source": "Bron",
       "lat": "Breedtegraad",
-      "lng": "Lengtegraad"
+      "lng": "Lengtegraad",
+      "id": "Identificator",
+      "ref": "Referentie (koppeling)"
     },
     "wholeObject": "(heel object = 1 element)",
     "toggleAll": "Alles in-/uitschakelen",

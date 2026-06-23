@@ -13,7 +13,11 @@ export type MappingTarget =
   | 'country'
   | 'source'
   | 'lat'
-  | 'lng';
+  | 'lng'
+  /** Record identifier — used as the key that {@link MappingTarget} 'ref' fields point to. */
+  | 'id'
+  /** Reference(s) to other records' id → creates links between the created elements. */
+  | 'ref';
 
 export interface FieldMapping {
   /** Whether this field is imported at all (unchecked = excluded). */
@@ -213,6 +217,7 @@ export function guessTarget(key: string): MappingTarget {
   if (/(^|\.)(lng|lon|longitude)$/.test(k)) return 'lng';
   if (/(date|birth.?date|naissance|dob|timestamp|datetime|(^|\.)(created|updated)(_?at)?$)/.test(k)) return 'date';
   if (/(country|pays|nationalit)/.test(k)) return 'country';
+  if (/^id$/i.test(key)) return 'id'; // top-level record id → key for reference links
   if (/(^_|(^|\.)(id|score|offset|file|salt|hash|hashed_password|uid|vin)$)/.test(k)) return 'ignore';
   return 'property';
 }

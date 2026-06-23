@@ -652,7 +652,9 @@
       "country": "Propietat (país)",
       "source": "Font",
       "lat": "Latitud",
-      "lng": "Longitud"
+      "lng": "Longitud",
+      "id": "Identificador",
+      "ref": "Referència (enllaç)"
     },
     "wholeObject": "(objecte sencer = 1 element)",
     "toggleAll": "Activa/desactiva tot",

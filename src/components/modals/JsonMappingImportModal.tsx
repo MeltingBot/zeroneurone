@@ -17,6 +17,7 @@ import {
   applyTemplate,
   coerceForTarget,
   isBlank,
+  valueToString,
   flattenRecord,
   type FieldMapping,
   type MappingTarget,
@@ -37,7 +38,7 @@ interface JsonMappingImportModalProps {
   initialJson?: string;
 }
 
-const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'source', 'lat', 'lng'];
+const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'source', 'lat', 'lng', 'id', 'ref'];
 
 export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMappingImportModalProps) {
   const { t } = useTranslation('modals');
@@ -201,6 +202,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           if (coerced === null) continue;
           const propKey = m.propKey.trim() || lastSegment(f.key);
           switch (m.target) {
+            case 'id': case 'ref': break; // handled separately (key / reference links)
             case 'source': source = source ? `${source} | ${coerced}` : String(coerced); break;
             case 'lat': lat = coerced as number; break;
             case 'lng': lng = coerced as number; break;
@@ -220,6 +222,13 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         createdAt: now, updatedAt: now,
       });
 
+      // Reference-link config: the field that holds each record's id, and the fields
+      // whose value(s) are ids of other records (→ links between created elements).
+      const idField = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'id')?.key;
+      const refFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'ref');
+      const idToElement = new Map<string, string>();
+      const parentEls: Element[] = [];
+
       records.forEach((flat, i) => {
         const { properties, source, lat, lng } = buildProps(flat, scalarFields, (k) => mapping[k]);
         const geo: GeoData | null = lat != null && lng != null ? { type: 'point', lat, lng } : null;
@@ -230,6 +239,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           position: { x: (i % cols) * 280, y: Math.floor(i / cols) * 220 },
         });
         elements.push(parent);
+        parentEls.push(parent);
+        if (idField) {
+          const idv = valueToString(flat[idField]).trim();
+          if (idv && !idToElement.has(idv)) idToElement.set(idv, parent.id);
+        }
 
         // Linked children from array-of-objects fields
         let childIdx = 0;
@@ -263,10 +277,39 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         }
       });
 
+      // Second pass: resolve reference fields (ids of other records) into links.
+      if (idField && refFields.length > 0) {
+        const linkedPairs = new Set<string>();
+        records.forEach((flat, i) => {
+          const fromId = parentEls[i].id;
+          for (const rf of refFields) {
+            const raw = flat[rf.key];
+            const refVals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
+            const label = (mapping[rf.key]?.propKey ?? '').trim();
+            for (const rv of refVals) {
+              const targetId = idToElement.get(valueToString(rv).trim());
+              if (!targetId || targetId === fromId) continue;
+              const pairKey = [fromId, targetId].sort().join('|');
+              if (linkedPairs.has(pairKey)) continue; // one (undirected) link per pair
+              linkedPairs.add(pairKey);
+              links.push({
+                id: crypto.randomUUID(), dossierId: dossier.id, fromId, toId: targetId,
+                sourceHandle: null, targetHandle: null,
+                label, notes: '', tags: [], properties: [],
+                directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
+                visual: { color: '#6b7280', style: 'solid', thickness: 2 },
+                curveOffset: { x: 0, y: 0 },
+                createdAt: now, updatedAt: now,
+              });
+            }
+          }
+        });
+      }
+
       useDossierStore.getState().pasteElements(elements, links);
       const elementIds = elements.map((e) => e.id);
       const linkIds = links.map((l) => l.id);
-      const parentIds = elements.slice(0, records.length).map((e) => e.id);
+      const parentIds = parentEls.map((e) => e.id);
 
       const activeTabId = useTabStore.getState().activeTabId;
       if (activeTabId) await useTabStore.getState().addMembers(activeTabId, elementIds);
@@ -412,7 +455,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                   {scalarFields.map((f) => {
                     const m = mapping[f.key];
                     if (!m) return null;
-                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country';
+                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref';
                     return (
                       <div key={f.key} className={`grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1 items-center ${m.enabled ? '' : 'opacity-45'}`}>
                         <input

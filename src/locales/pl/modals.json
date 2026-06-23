@@ -652,7 +652,9 @@
       "country": "Właściwość (kraj)",
       "source": "Źródło",
       "lat": "Szerokość",
-      "lng": "Długość"
+      "lng": "Długość",
+      "id": "Identyfikator",
+      "ref": "Odniesienie (połączenie)"
     },
     "wholeObject": "(cały obiekt = 1 element)",
     "toggleAll": "Przełącz wszystko",
