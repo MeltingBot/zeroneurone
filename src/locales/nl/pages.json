@@ -81,7 +81,30 @@
       "verifiedPlugin": "Geverifieerde extensie"
     },
     "showArchived": "Gearchiveerd ({{count}})",
-    "hideArchived": "Gearchiveerde verbergen"
+    "hideArchived": "Gearchiveerde verbergen",
+    "onboarding": {
+      "welcome": "Welkom bij ZeroNeurone. Maak een onderzoek of verken een voorbeeld.",
+      "tryExample": "Verken een voorbeeld",
+      "creating": "Bezig met maken…",
+      "dismiss": "Verbergen",
+      "canvasHint": "Dubbelklik: een element maken · Sleep van het ene element naar het andere: een koppeling maken · Ctrl+K: zoeken · ?: sneltoetsen",
+      "sampleName": "Voorbeeld — Netwerk",
+      "sampleDescription": "Demo-onderzoek: verken het canvas, de kaart, de tijdlijn en de analyses.",
+      "tags": {
+        "person": "Persoon",
+        "org": "Bedrijf",
+        "place": "Plaats",
+        "account": "Rekening",
+        "document": "Document"
+      },
+      "links": {
+        "worksAt": "werkt bij",
+        "locatedIn": "gevestigd in",
+        "owns": "bezit",
+        "contacts": "in contact met",
+        "signed": "ondertekende"
+      }
+    }
   },
   "dossier": {
     "loading": {

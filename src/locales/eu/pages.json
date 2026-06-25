@@ -81,7 +81,30 @@
       "verifiedPlugin": "Egiaztatutako hedapena"
     },
     "showArchived": "Artxibatuta ({{count}})",
-    "hideArchived": "Artxibatutakoak ezkutatu"
+    "hideArchived": "Artxibatutakoak ezkutatu",
+    "onboarding": {
+      "welcome": "Ongi etorri ZeroNeuronera. Sortu ikerketa bat edo arakatu adibide bat.",
+      "tryExample": "Arakatu adibide bat",
+      "creating": "Sortzen…",
+      "dismiss": "Ezkutatu",
+      "canvasHint": "Klik bikoitza: elementua sortu · Elementu batetik bestera arrastatu: lotura sortu · Ctrl+K: bilatu · ?: lasterbideak",
+      "sampleName": "Adibidea — Sarea",
+      "sampleDescription": "Demostrazio-ikerketa: arakatu oihala, mapa, kronologia eta analisiak.",
+      "tags": {
+        "person": "Pertsona",
+        "org": "Enpresa",
+        "place": "Lekua",
+        "account": "Kontua",
+        "document": "Dokumentua"
+      },
+      "links": {
+        "worksAt": "hemen lan egiten du",
+        "locatedIn": "hemen kokatua",
+        "owns": "jabea da",
+        "contacts": "harremanetan",
+        "signed": "sinatu du"
+      }
+    }
   },
   "dossier": {
     "loading": {

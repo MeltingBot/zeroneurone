@@ -81,7 +81,30 @@
       "verifiedPlugin": "Extensão verificada"
     },
     "showArchived": "Arquivados ({{count}})",
-    "hideArchived": "Ocultar arquivados"
+    "hideArchived": "Ocultar arquivados",
+    "onboarding": {
+      "welcome": "Bem-vindo ao ZeroNeurone. Crie uma investigação ou explore um exemplo.",
+      "tryExample": "Explorar um exemplo",
+      "creating": "A criar…",
+      "dismiss": "Ocultar",
+      "canvasHint": "Duplo clique: criar um elemento · Arrastar de um elemento para outro: criar uma ligação · Ctrl+K: pesquisar · ?: atalhos",
+      "sampleName": "Exemplo — Rede",
+      "sampleDescription": "Investigação de demonstração: explore a tela, o mapa, a cronologia e as análises.",
+      "tags": {
+        "person": "Pessoa",
+        "org": "Empresa",
+        "place": "Local",
+        "account": "Conta",
+        "document": "Documento"
+      },
+      "links": {
+        "worksAt": "trabalha em",
+        "locatedIn": "localizado em",
+        "owns": "detém",
+        "contacts": "em contacto com",
+        "signed": "assinou"
+      }
+    }
   },
   "dossier": {
     "loading": {

@@ -76,7 +76,7 @@ export function DossierPage() {
   } = useDossierStore();
 
   const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide, togglePanelSide } = useUIStore();
-  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetDossierState: resetViewState, loadViewportForDossier, saveViewportForDossier } = useViewStore();
+  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetDossierState: resetViewState, loadViewportForDossier, saveViewportForDossier, requestFitView } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
@@ -152,8 +152,13 @@ export function DossierPage() {
   useEffect(() => {
     if (id) {
       loadDossier(id);
-      // Load saved viewport for this dossier
-      loadViewportForDossier(id);
+      // Restore the saved viewport for this dossier; if none (first time the
+      // dossier is opened — e.g. a freshly imported one), fit the view to its
+      // content instead of landing on the default origin.
+      const hadViewport = loadViewportForDossier(id);
+      if (!hadViewport) {
+        requestFitView();
+      }
       // Load canvas tabs
       loadTabs(id);
     }
@@ -171,7 +176,7 @@ export function DossierPage() {
       resetViewState();
       resetTabState();
     };
-  }, [id, loadDossier, unloadDossier, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForDossier, saveViewportForDossier, loadTabs]);
+  }, [id, loadDossier, unloadDossier, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForDossier, saveViewportForDossier, loadTabs, requestFitView]);
 
   // Retention expiration check
   const retentionExpiredDays = (() => {

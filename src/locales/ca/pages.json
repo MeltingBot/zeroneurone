@@ -81,7 +81,30 @@
       "verifiedPlugin": "Extensió verificada"
     },
     "showArchived": "Arxivats ({{count}})",
-    "hideArchived": "Amagar arxivats"
+    "hideArchived": "Amagar arxivats",
+    "onboarding": {
+      "welcome": "Benvingut a ZeroNeurone. Creeu una investigació o exploreu un exemple.",
+      "tryExample": "Explorar un exemple",
+      "creating": "S'està creant…",
+      "dismiss": "Amaga",
+      "canvasHint": "Doble clic: crear un element · Arrossegar d'un element a un altre: crear un enllaç · Ctrl+K: cercar · ?: dreceres",
+      "sampleName": "Exemple — Xarxa",
+      "sampleDescription": "Investigació de demostració: exploreu el llenç, el mapa, la cronologia i les anàlisis.",
+      "tags": {
+        "person": "Persona",
+        "org": "Empresa",
+        "place": "Lloc",
+        "account": "Compte",
+        "document": "Document"
+      },
+      "links": {
+        "worksAt": "treballa a",
+        "locatedIn": "situat a",
+        "owns": "posseeix",
+        "contacts": "en contacte amb",
+        "signed": "ha signat"
+      }
+    }
   },
   "dossier": {
     "loading": {

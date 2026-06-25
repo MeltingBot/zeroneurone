@@ -81,7 +81,30 @@
       "verifiedPlugin": "Estensione verificata"
     },
     "showArchived": "Archiviati ({{count}})",
-    "hideArchived": "Nascondi archiviati"
+    "hideArchived": "Nascondi archiviati",
+    "onboarding": {
+      "welcome": "Benvenuto in ZeroNeurone. Crea un'indagine o esplora un esempio.",
+      "tryExample": "Esplora un esempio",
+      "creating": "Creazione…",
+      "dismiss": "Nascondi",
+      "canvasHint": "Doppio clic: crea un elemento · Trascina da un elemento all'altro: crea un collegamento · Ctrl+K: cerca · ?: scorciatoie",
+      "sampleName": "Esempio — Rete",
+      "sampleDescription": "Indagine dimostrativa: esplora il canvas, la mappa, la cronologia e le analisi.",
+      "tags": {
+        "person": "Persona",
+        "org": "Azienda",
+        "place": "Luogo",
+        "account": "Conto",
+        "document": "Documento"
+      },
+      "links": {
+        "worksAt": "lavora presso",
+        "locatedIn": "situato a",
+        "owns": "possiede",
+        "contacts": "in contatto con",
+        "signed": "ha firmato"
+      }
+    }
   },
   "dossier": {
     "loading": {

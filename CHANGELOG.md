@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.43.0
+
+### Features
+- **Onboarding** pour les nouveaux utilisateurs, sans alourdir l'application :
+  - **Bandeau de bienvenue** sur l'accueil (affiché une fois, masquable), avec lien vers la documentation.
+  - **Enquête-exemple** en un clic : graphe réaliste (personnes, société, compte, lieux) qui peuple le canvas, la **carte** (Paris, Lyon, Marseille, Luxembourg, Genève), la **chronologie** (événements datés avec durées) et les **analyses**. Crée un dossier supprimable, jamais dupliqué (réouvre l'exemple existant).
+  - **États vides explicites** : lien « Découvrir avec un exemple » sur la liste vide, et indice discret sur le canvas vide (double-clic, glisser pour lier, Ctrl+K, ?).
+- **Cadrage automatique à l'ouverture** — un dossier ouvert pour la première fois (sans position mémorisée) est cadré sur son contenu au lieu de s'ouvrir sur l'origine ; les réouvertures restaurent la position sauvegardée.
+
 ## 2.42.6
 
 ### Features

@@ -18,12 +18,18 @@ import {
   EncryptionModal,
 } from '../components/modals';
 import { useEncryptionStore } from '../stores/encryptionStore';
-import { useDossierStore, useUIStore } from '../stores';
+import { useDossierStore, useUIStore, useViewStore } from '../stores';
 import { dossierRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
+import { importService } from '../services/importService';
+import { buildSampleZipFile } from '../components/onboarding/sampleDossier';
 
 type ViewMode = 'landing' | 'list';
 type SortMode = 'updated' | 'created' | 'name';
+
+// Remembers the onboarding example dossier so repeated clicks open it
+// instead of creating duplicates.
+const EXAMPLE_ID_KEY = 'zeroneurone:onboarding-example-id';
 
 export function HomePage() {
   const { t } = useTranslation('pages');
@@ -50,6 +56,8 @@ export function HomePage() {
   const [isEncryptionModalOpen, setIsEncryptionModalOpen] = useState(false);
   const { isEnabled: isEncryptionEnabled } = useEncryptionStore();
   const [isDisclaimerModalOpen, setIsDisclaimerModalOpen] = useState(false);
+  const [creatingExample, setCreatingExample] = useState(false);
+  const [pendingExample, setPendingExample] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<string | null>(null);
   const [tagsTarget, setTagsTarget] = useState<string | null>(null);
@@ -76,10 +84,75 @@ export function HomePage() {
     }
   };
 
-  // Handle disclaimer acceptance - proceed to create modal
+  // Create the sample dossier (onboarding) and open it
+  const runExample = useCallback(async () => {
+    // Don't duplicate: if the example dossier still exists, just open it.
+    const existingId = localStorage.getItem(EXAMPLE_ID_KEY);
+    if (existingId && useDossierStore.getState().dossiers.some((d) => d.id === existingId)) {
+      // Always re-center the demo when opened from onboarding, even if a
+      // viewport was saved from a previous visit.
+      useViewStore.getState().requestFitView();
+      navigate(`/dossier/${existingId}`);
+      return;
+    }
+    if (existingId) localStorage.removeItem(EXAMPLE_ID_KEY); // stale → recreate
+
+    setCreatingExample(true);
+    try {
+      const name = t('home.onboarding.sampleName');
+      const dossier = await createDossier(name, t('home.onboarding.sampleDescription'));
+      const file = await buildSampleZipFile({
+        name,
+        description: t('home.onboarding.sampleDescription'),
+        tag: {
+          person: t('home.onboarding.tags.person'),
+          org: t('home.onboarding.tags.org'),
+          place: t('home.onboarding.tags.place'),
+          account: t('home.onboarding.tags.account'),
+          document: t('home.onboarding.tags.document'),
+        },
+        link: {
+          worksAt: t('home.onboarding.links.worksAt'),
+          locatedIn: t('home.onboarding.links.locatedIn'),
+          owns: t('home.onboarding.links.owns'),
+          contacts: t('home.onboarding.links.contacts'),
+          signed: t('home.onboarding.links.signed'),
+        },
+      });
+      const res = await importService.importFromZip(file, dossier.id);
+      if (res.success) {
+        localStorage.setItem(EXAMPLE_ID_KEY, dossier.id);
+        useViewStore.getState().requestFitView();
+        navigate(`/dossier/${dossier.id}`);
+      } else {
+        // Roll back the empty dossier so the user isn't left with a broken one
+        await deleteDossier(dossier.id).catch(() => { /* best-effort */ });
+        console.warn('[onboarding] sample import failed', res.errors);
+      }
+    } finally {
+      setCreatingExample(false);
+    }
+  }, [createDossier, deleteDossier, navigate, t]);
+
+  // "Try example" entry point — gated by the storage disclaimer like create
+  const handleTryExample = useCallback(() => {
+    if (hasAcknowledgedLocalStorage()) {
+      runExample();
+    } else {
+      setPendingExample(true);
+      setIsDisclaimerModalOpen(true);
+    }
+  }, [runExample]);
+
+  // Handle disclaimer acceptance - proceed to the pending action
   const handleDisclaimerAccept = () => {
     setIsDisclaimerModalOpen(false);
-    setIsCreateModalOpen(true);
+    if (pendingExample) {
+      setPendingExample(false);
+      runExample();
+    } else {
+      setIsCreateModalOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -318,6 +391,7 @@ export function HomePage() {
           onViewDossiers={() => setViewMode('list')}
           themeMode={themeMode}
           onToggleTheme={toggleThemeMode}
+          onTryExample={handleTryExample}
         />
       ) : (
         <main className="flex-1 overflow-y-auto" data-testid="dossier-list">
@@ -332,13 +406,22 @@ export function HomePage() {
               title={t('home.noDossiers')}
               description={t('home.createFirst')}
               action={
-                <Button
-                  variant="primary"
-                  onClick={handleOpenCreateModal}
-                >
-                  <Plus size={16} />
-                  {t('home.newDossier')}
-                </Button>
+                <div className="flex flex-col items-center gap-3">
+                  <Button
+                    variant="primary"
+                    onClick={handleOpenCreateModal}
+                  >
+                    <Plus size={16} />
+                    {t('home.newDossier')}
+                  </Button>
+                  <button
+                    onClick={handleTryExample}
+                    disabled={creatingExample}
+                    className="text-xs text-text-tertiary hover:text-text-secondary disabled:opacity-50"
+                  >
+                    {creatingExample ? t('home.onboarding.creating') : t('home.onboarding.tryExample')}
+                  </button>
+                </div>
               }
             />
           ) : (

@@ -4377,6 +4377,15 @@ export function Canvas() {
             </div>
           )}
 
+          {/* Empty-canvas hint (onboarding) — fades out once content exists */}
+          {elements.length === 0 && !isDraggingFile && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <p className="text-xs text-text-tertiary text-center px-4 max-w-md leading-relaxed">
+                {tPages('home.onboarding.canvasHint')}
+              </p>
+            </div>
+          )}
+
           {/* Context menu for elements */}
           {contextMenu && (
             <ContextMenu

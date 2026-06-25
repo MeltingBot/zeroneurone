@@ -81,7 +81,30 @@
       "verifiedPlugin": "Verifizierte Erweiterung"
     },
     "showArchived": "Archiviert ({{count}})",
-    "hideArchived": "Archivierte ausblenden"
+    "hideArchived": "Archivierte ausblenden",
+    "onboarding": {
+      "welcome": "Willkommen bei ZeroNeurone. Erstellen Sie eine Untersuchung oder erkunden Sie ein Beispiel.",
+      "tryExample": "Beispiel erkunden",
+      "creating": "Wird erstellt…",
+      "dismiss": "Ausblenden",
+      "canvasHint": "Doppelklick: Element erstellen · Von einem Element zum anderen ziehen: Verbindung erstellen · Strg+K: suchen · ?: Tastenkürzel",
+      "sampleName": "Beispiel — Netzwerk",
+      "sampleDescription": "Demo-Untersuchung: Erkunden Sie Canvas, Karte, Zeitleiste und Analysen.",
+      "tags": {
+        "person": "Person",
+        "org": "Unternehmen",
+        "place": "Ort",
+        "account": "Konto",
+        "document": "Dokument"
+      },
+      "links": {
+        "worksAt": "arbeitet bei",
+        "locatedIn": "befindet sich in",
+        "owns": "besitzt",
+        "contacts": "in Kontakt mit",
+        "signed": "hat unterzeichnet"
+      }
+    }
   },
   "dossier": {
     "loading": {

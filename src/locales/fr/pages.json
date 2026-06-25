@@ -81,7 +81,30 @@
       "verifiedPlugin": "Extension vérifiée"
     },
     "showArchived": "Archivés ({{count}})",
-    "hideArchived": "Masquer archivés"
+    "hideArchived": "Masquer archivés",
+    "onboarding": {
+      "welcome": "Bienvenue dans ZeroNeurone. Créez une enquête, ou explorez un exemple.",
+      "tryExample": "Découvrir avec un exemple",
+      "creating": "Création…",
+      "dismiss": "Masquer",
+      "canvasHint": "Double-clic : créer un élément · Glisser d'un élément à un autre : créer un lien · Ctrl+K : rechercher · ? : raccourcis",
+      "sampleName": "Exemple — Réseau",
+      "sampleDescription": "Enquête de démonstration : explorez le canvas, la carte, la chronologie et les analyses.",
+      "tags": {
+        "person": "Personne",
+        "org": "Société",
+        "place": "Lieu",
+        "account": "Compte",
+        "document": "Document"
+      },
+      "links": {
+        "worksAt": "travaille chez",
+        "locatedIn": "situé à",
+        "owns": "détient",
+        "contacts": "en contact avec",
+        "signed": "a signé"
+      }
+    }
   },
   "dossier": {
     "loading": {

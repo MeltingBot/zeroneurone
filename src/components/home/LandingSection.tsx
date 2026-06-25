@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Download, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
+import { WelcomeBanner } from '../onboarding/WelcomeBanner';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
 import type { HomeCardRegistration } from '../../types/plugins';
@@ -17,6 +18,7 @@ interface LandingSectionProps {
   onViewDossiers: () => void;
   themeMode: 'light' | 'dark';
   onToggleTheme: () => void;
+  onTryExample: () => void;
 }
 
 const EXPANDED_KEY = 'zeroneurone:extensions-expanded';
@@ -32,6 +34,7 @@ export function LandingSection({
   onViewDossiers,
   themeMode,
   onToggleTheme,
+  onTryExample,
 }: LandingSectionProps) {
   const { t } = useTranslation('pages');
   const homePlugins = usePlugins('home:actions');
@@ -70,6 +73,9 @@ export function LandingSection({
 
   return (
     <div className="flex-1 overflow-y-auto" data-testid="landing-section">
+      {/* Onboarding welcome banner (one-time, dismissible) */}
+      <WelcomeBanner onTryExample={onTryExample} />
+
       {/* Plugin banners */}
       {bannerPlugins.map((Banner, i) => (
         <Banner key={i} />

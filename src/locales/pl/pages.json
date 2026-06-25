@@ -81,7 +81,30 @@
       "verifiedPlugin": "Zweryfikowane rozszerzenie"
     },
     "showArchived": "Zarchiwizowane ({{count}})",
-    "hideArchived": "Ukryj zarchiwizowane"
+    "hideArchived": "Ukryj zarchiwizowane",
+    "onboarding": {
+      "welcome": "Witamy w ZeroNeurone. Utwórz dochodzenie lub poznaj przykład.",
+      "tryExample": "Zobacz przykład",
+      "creating": "Tworzenie…",
+      "dismiss": "Ukryj",
+      "canvasHint": "Podwójne kliknięcie: utwórz element · Przeciągnij od jednego elementu do drugiego: utwórz powiązanie · Ctrl+K: szukaj · ?: skróty",
+      "sampleName": "Przykład — Sieć",
+      "sampleDescription": "Dochodzenie demonstracyjne: poznaj kanwę, mapę, oś czasu i analizy.",
+      "tags": {
+        "person": "Osoba",
+        "org": "Firma",
+        "place": "Miejsce",
+        "account": "Konto",
+        "document": "Dokument"
+      },
+      "links": {
+        "worksAt": "pracuje w",
+        "locatedIn": "znajduje się w",
+        "owns": "posiada",
+        "contacts": "w kontakcie z",
+        "signed": "podpisał"
+      }
+    }
   },
   "dossier": {
     "loading": {

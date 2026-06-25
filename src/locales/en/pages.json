@@ -81,7 +81,30 @@
       "verifiedPlugin": "Verified extension"
     },
     "showArchived": "Archived ({{count}})",
-    "hideArchived": "Hide archived"
+    "hideArchived": "Hide archived",
+    "onboarding": {
+      "welcome": "Welcome to ZeroNeurone. Create an investigation, or explore an example.",
+      "tryExample": "Explore an example",
+      "creating": "Creating…",
+      "dismiss": "Dismiss",
+      "canvasHint": "Double-click: create an element · Drag from one element to another: create a link · Ctrl+K: search · ?: shortcuts",
+      "sampleName": "Example — Network",
+      "sampleDescription": "Demo investigation: explore the canvas, map, timeline and analysis.",
+      "tags": {
+        "person": "Person",
+        "org": "Company",
+        "place": "Place",
+        "account": "Account",
+        "document": "Document"
+      },
+      "links": {
+        "worksAt": "works at",
+        "locatedIn": "located in",
+        "owns": "owns",
+        "contacts": "in contact with",
+        "signed": "signed"
+      }
+    }
   },
   "dossier": {
     "loading": {
