@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.43.1
+
+### Fixes
+- **Insights** — un clic sur le canvas vide réinitialise désormais la mise en évidence (ponts, clusters, centralité, isolés, chemins), en plus de la sélection. Corrige l'affichage figé après avoir sélectionné un pont.
+
 ## 2.43.0
 
 ### Features

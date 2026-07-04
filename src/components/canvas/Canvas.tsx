@@ -739,6 +739,7 @@ export function Canvas() {
   const {
     highlightedElementIds: insightsHighlightedIds,
     findPaths,
+    clearHighlight,
   } = useInsightsStore();
 
   // Query store for ZNQuery canvas filter
@@ -3168,7 +3169,10 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [clearSelection, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
+    // Also reset any Insights highlight (bridges, clusters, centrality…) so a
+    // click on empty canvas restores the normal display.
+    clearHighlight();
+  }, [clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
