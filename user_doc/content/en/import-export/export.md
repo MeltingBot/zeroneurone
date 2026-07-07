@@ -71,7 +71,7 @@ Content:
 
 ### CSV
 
-**Spreadsheet** with elements and links in tabular format.
+**Spreadsheet** with elements, links and events in tabular format.
 
 | Property | Value |
 |----------|-------|
@@ -84,13 +84,16 @@ Columns:
 
 | Column | Description |
 |--------|-------------|
-| type | "element" or "link" |
-| label | Name |
-| from / to | Source/target (links) |
-| notes | Notes |
+| type | "element", "link" or "event" |
+| label | Name (event label for "event") |
+| from / to | Source/target (links); for "event", `from` = parent element |
+| notes | Notes / description |
 | tags | Tags separated by ; |
 | confidence | 0-100 |
+| date / end_date | Event date and optional end |
 | ... | Custom properties |
+
+**Events** attached to elements are exported as `type=event` rows: an export → import round-trip rebuilds the timeline identically.
 
 
 ---

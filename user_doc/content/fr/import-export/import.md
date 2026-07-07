@@ -133,10 +133,10 @@ L'import se fait en un seul lot **annulable** (Ctrl+Z).
 | confiance | 0-100 |
 | source | Source de l'information |
 | date | Date (YYYY-MM-DD) |
-| date_debut | Début de période (liens) |
-| date_fin | Fin de période (liens) |
-| latitude | Coordonnée lat |
-| longitude | Coordonnée lng |
+| date_debut | Début de période (liens, events) |
+| date_fin | Fin de période (liens, events) |
+| latitude | Coordonnée lat (éléments, events — pas les liens) |
+| longitude | Coordonnée lng (éléments, events — pas les liens) |
 | couleur | Code couleur (#hex) |
 | forme | circle, square, diamond, hexagon |
 | dirige | oui/non (liens) |

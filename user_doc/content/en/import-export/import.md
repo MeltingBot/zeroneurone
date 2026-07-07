@@ -133,10 +133,10 @@ The import happens as a single **undoable** batch (Ctrl+Z).
 | confidence | 0-100 |
 | source | Information source |
 | date | Date (YYYY-MM-DD) |
-| start_date | Period start (links) |
-| end_date | Period end (links) |
-| latitude | Lat coordinate |
-| longitude | Lng coordinate |
+| start_date | Period start (links, events) |
+| end_date | Period end (links, events) |
+| latitude | Lat coordinate (elements, events — not links) |
+| longitude | Lng coordinate (elements, events — not links) |
 | color | Color code (#hex) |
 | shape | circle, square, diamond, hexagon |
 | directed | yes/no (links) |

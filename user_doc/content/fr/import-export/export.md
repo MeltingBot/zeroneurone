@@ -71,7 +71,7 @@ Contenu :
 
 ### CSV
 
-**Tableur** avec éléments et liens dans un format tabulaire.
+**Tableur** avec éléments, liens et événements dans un format tabulaire.
 
 | Propriété | Valeur |
 |-----------|--------|
@@ -84,13 +84,16 @@ Colonnes :
 
 | Colonne | Description |
 |---------|-------------|
-| type | "element" ou "lien" |
-| label | Nom |
-| de / vers | Source/cible (liens) |
-| notes | Notes |
+| type | "element", "lien" ou "event" |
+| label | Nom (libellé de l'événement pour "event") |
+| de / vers | Source/cible (liens) ; pour "event", `de` = élément parent |
+| notes | Notes / description |
 | tags | Tags séparés par ; |
 | confiance | 0-100 |
+| date / date_fin | Date de l'événement et fin éventuelle |
 | ... | Propriétés personnalisées |
+
+Les **événements** rattachés aux éléments sont exportés en lignes `type=event` : un aller-retour export → import reconstruit la chronologie à l'identique.
 
 
 ---

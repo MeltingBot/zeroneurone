@@ -191,10 +191,11 @@ class ExportService {
     const elementLabels = new Map<string, string>();
     elements.forEach((el) => elementLabels.set(el.id, el.label));
 
-    // Collect all unique property keys from elements and links
+    // Collect all unique property keys from elements, links and element events
     const propertyKeys = new Set<string>();
     elements.forEach((el) => el.properties?.forEach((p) => propertyKeys.add(p.key)));
     links.forEach((link) => link.properties?.forEach((p) => propertyKeys.add(p.key)));
+    elements.forEach((el) => el.events?.forEach((ev) => ev.properties?.forEach((p) => propertyKeys.add(p.key))));
     const sortedPropertyKeys = Array.from(propertyKeys).sort((a, b) => a.localeCompare(b, 'fr'));
 
     const baseHeaders = [
@@ -288,6 +289,41 @@ class ExportService {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }
       rows.push(baseRow);
+    }
+
+    // Add events (one row per event, attached to its parent element via "de")
+    for (const el of elements) {
+      for (const ev of el.events ?? []) {
+        const baseRow = [
+          'event',
+          this.escapeCSV(ev.label),
+          this.escapeCSV(el.label), // de = parent element
+          '', // vers
+          this.escapeCSV(ev.description ?? ''),
+          '', // tags
+          '', // confiance
+          this.escapeCSV(ev.source ?? ''),
+          ev.date ? new Date(ev.date).toISOString().slice(0, 10) : '',
+          '', // date_debut
+          ev.dateEnd ? new Date(ev.dateEnd).toISOString().slice(0, 10) : '',
+          ev.geo ? getGeoCenter(ev.geo).lat.toString() : '',
+          ev.geo ? getGeoCenter(ev.geo).lng.toString() : '',
+          '', // position_x
+          '', // position_y
+          '', // dirige
+          '', // couleur
+          '', // forme
+          '', // style
+          '', // est_groupe
+          '', // groupe_parent
+        ];
+        // Add property values
+        const propsMap = new Map(ev.properties?.map((p) => [p.key, String(p.value)]) ?? []);
+        for (const key of sortedPropertyKeys) {
+          baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
+        }
+        rows.push(baseRow);
+      }
     }
 
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');

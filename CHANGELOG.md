@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.44.1
+
+### Features
+- **Export CSV — événements** : l'export CSV inclut désormais les **événements** attachés aux éléments (lignes `type=event`, parent via `de`, `date`/`date_fin`, description, géo, source, propriétés). L'aller-retour **export → import** reconstruit la chronologie à l'identique (symétrie avec l'import `type=event` de 2.44.0).
+
+### Docs
+- Précision : les coordonnées `latitude`/`longitude` en CSV s'appliquent aux **éléments et événements**, pas aux liens (les liens n'ont pas de géo).
+
 ## 2.44.0
 
 ### Features
