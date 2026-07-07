@@ -491,7 +491,9 @@
     "noAssets": "Sem ficheiros",
     "drop": "Largue ficheiros",
     "deleteConfirm": "Eliminar este ficheiro?",
-    "usedBy": "Usado por {{count}} elemento(s)"
+    "usedBy": "Usado por {{count}} elemento(s)",
+    "hideMediaOnNode": "Ocultar a mídia no nó",
+    "showMediaOnNode": "Mostrar a mídia no nó"
   },
   "history": {
     "title": "Histórico",

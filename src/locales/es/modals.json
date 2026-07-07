@@ -40,6 +40,7 @@
     "success": "Importación exitosa",
     "successElements": "{{count}} elemento(s) importado(s)",
     "successLinks": "{{count}} enlace(s) importado(s)",
+    "successEvents": "{{count}} evento(s) importado(s)",
     "successAssets": "{{count}} archivo(s) importado(s)",
     "error": "Error de importación",
     "unknownFormat": "Formato de archivo no reconocido. Formatos soportados: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "Plantilla CSV",
       "download": "Descargar",
-      "format": "<strong>Formato unificado:</strong> tipo (elemento/enlace), etiqueta, de, a, notas, tags, confianza...",
-      "description": "Los enlaces referencian los elementos por su etiqueta en las columnas \"de\" y \"a\""
+      "format": "<strong>Formato unificado:</strong> tipo (elemento/enlace/event), etiqueta, de, a, notas, tags, confianza...",
+      "description": "Los enlaces referencian los elementos por su etiqueta en las columnas \"de\" y \"a\". Las filas type=event adjuntan un evento a un elemento mediante la columna \"de\"/\"from\" (fecha obligatoria)"
     },
     "retentionExpired": "Documento fuente expirado (retención superada en {{days}} día(s))",
     "warnings": "Advertencias:",

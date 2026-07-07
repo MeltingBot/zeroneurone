@@ -40,6 +40,7 @@
     "success": "Importazione riuscita",
     "successElements": "{{count}} elemento/i importato/i",
     "successLinks": "{{count}} collegamento/i importato/i",
+    "successEvents": "{{count}} evento/i importato/i",
     "successAssets": "{{count}} file importato/i",
     "error": "Errore di importazione",
     "unknownFormat": "Formato file non riconosciuto. Formati supportati: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "Modello CSV",
       "download": "Scarica",
-      "format": "<strong>Formato unificato:</strong> tipo (elemento/collegamento), etichetta, da, a, note, tag, affidabilità...",
-      "description": "I collegamenti fanno riferimento agli elementi per etichetta nelle colonne \"da\" e \"a\""
+      "format": "<strong>Formato unificato:</strong> tipo (elemento/collegamento/event), etichetta, da, a, note, tag, affidabilità...",
+      "description": "I collegamenti fanno riferimento agli elementi per etichetta nelle colonne \"da\" e \"a\". Le righe type=event collegano un evento a un elemento tramite la colonna \"de\"/\"from\" (data obbligatoria)"
     },
     "retentionExpired": "Documento sorgente scaduto (conservazione superata di {{days}} giorno/i)",
     "warnings": "Avvisi:",

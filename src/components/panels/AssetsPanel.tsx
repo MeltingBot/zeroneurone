@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { File, Image, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
+import { File, Image, ImageOff, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
 import { useDossierStore, useHistoryStore } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
@@ -14,8 +14,20 @@ interface AssetsPanelProps {
 
 export function AssetsPanel({ element }: AssetsPanelProps) {
   const { t } = useTranslation(['panels', 'modals']);
-  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText } = useDossierStore();
+  const { assets, addAsset, removeAsset, reorderAssets, clearAssetText, extractAssetText, updateElement } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
+
+  // Per-element toggle: hide attached media on the canvas node, keeping the label.
+  const hideMedia = element.visual.hideMedia === true;
+  const handleToggleHideMedia = useCallback(() => {
+    const next = !hideMedia;
+    updateElement(element.id, { visual: { hideMedia: next } });
+    pushAction({
+      type: 'update-element',
+      undo: { elementId: element.id, changes: { visual: { hideMedia } as Element['visual'] } },
+      redo: { elementId: element.id, changes: { visual: { hideMedia: next } as Element['visual'] } },
+    });
+  }, [element.id, hideMedia, updateElement, pushAction]);
   const pushMetadataImport = useUIStore((s) => s.pushMetadataImport);
 
   // Attach an asset and record it in history so it can be undone (Ctrl+Z removes the asset).
@@ -349,6 +361,22 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
             />
           ))}
         </div>
+      )}
+
+      {/* Per-element toggle: hide media on the canvas node, keep the label */}
+      {elementAssets.some((a) => a.thumbnailDataUrl) && (
+        <button
+          type="button"
+          onClick={handleToggleHideMedia}
+          className="inline-flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+        >
+          {hideMedia ? (
+            <Image size={13} className="flex-shrink-0" />
+          ) : (
+            <ImageOff size={13} className="flex-shrink-0" />
+          )}
+          <span>{hideMedia ? t('assets.showMediaOnNode') : t('assets.hideMediaOnNode')}</span>
+        </button>
       )}
 
       {elementAssets.length === 0 && (

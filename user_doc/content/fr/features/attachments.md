@@ -52,6 +52,8 @@ Attachez des documents, images et fichiers à vos éléments pour enrichir votre
 
 Les images s'affichent en miniature sur le canvas. Lorsque vous zoomez ou redimensionnez un noeud au-dela de 250px a l'ecran, l'image en pleine resolution se charge automatiquement depuis le stockage local. Un retour au dezoom revient a la miniature legere. Jusqu'a 30 images HD sont mises en cache simultanement.
 
+**Masquer le média sur un élément** — dans le panneau **Fichiers**, le lien « Masquer le média sur le nœud » affiche le **label** de l'élément à la place de son image sur le canvas. Le fichier reste attaché ; seul l'affichage change. Ce réglage est propre à l'élément (distinct du bouton global « flouter les médias » de la barre d'outils).
+
 
 ### PDF
 

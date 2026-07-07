@@ -306,6 +306,8 @@ class ExportService {
       ['element', '06 12 34 56 78', '', '', 'Telephone prepaye', 'telephone', '', '', '', '', '', '', '', '200', '400', '', '#dcfce7', 'square', '', 'non', '', '', '', ''],
       ['lien', 'Appel', 'Jean Dupont', 'Marie Martin', 'Duree 5 min', '', '90', '', '', '2024-01-15', '2024-01-15', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', '', '', ''],
       ['lien', 'Proprietaire', 'Jean Dupont', '06 12 34 56 78', '', '', '100', '', '', '', '', '', '', '', '', 'oui', '#d4cec4', '', 'solid', '', '', '', '', ''],
+      ['event', 'Escale Marseille', 'Jean Dupont', '', 'Vu au port', '', '', 'Filature', '2024-01-20', '', '2024-01-21', '43.2965', '5.3698', '', '', '', '', '', '', '', '', '', '', ''],
+      ['event', 'Changement de vehicule', 'Jean Dupont', '', '', '', '', 'Enquete', '2024-02-03', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
     ];
     // Excel-style CSV : delimiter ';', tous les champs entre guillemets (avec "" pour échapper), lignes terminées en CRLF
     const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;

@@ -40,6 +40,7 @@
     "success": "Importació reeixida",
     "successElements": "{{count}} element(s) importat(s)",
     "successLinks": "{{count}} enllaç(os) importat(s)",
+    "successEvents": "{{count}} esdeveniment(s) importat(s)",
     "successAssets": "{{count}} fitxer(s) importat(s)",
     "error": "Error d'importació",
     "unknownFormat": "Format de fitxer no reconegut. Formats suportats: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "Plantilla CSV",
       "download": "Descarregar",
-      "format": "<strong>Format unificat:</strong> tipus (element/enllaç), etiqueta, de, a, notes, etiquetes, confiança...",
-      "description": "Els enllaços referencien els elements per la seva etiqueta a les columnes \"de\" i \"a\""
+      "format": "<strong>Format unificat:</strong> tipus (element/enllaç/event), etiqueta, de, a, notes, etiquetes, confiança...",
+      "description": "Els enllaços referencien els elements per la seva etiqueta a les columnes \"de\" i \"a\". Les files type=event adjunten un esdeveniment a un element mitjançant la columna \"de\"/\"from\" (data obligatòria)"
     },
     "retentionExpired": "Document font expirat (retenció superada en {{days}} dia/es)",
     "warnings": "Advertències:",

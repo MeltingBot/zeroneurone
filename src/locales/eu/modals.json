@@ -40,6 +40,7 @@
     "success": "Inportazioa arrakastatsua",
     "successElements": "{{count}} elementu inportatuta",
     "successLinks": "{{count}} lotura inportatuta",
+    "successEvents": "{{count}} gertaera inportatuta",
     "successAssets": "{{count}} fitxategi inportatuta",
     "error": "Inportazio errorea",
     "unknownFormat": "Fitxategi formatua ez da ezagutzen. Onartutako formatuak: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "CSV txantiloia",
       "download": "Deskargatu",
-      "format": "<strong>Formatu bateratua:</strong> mota (elementua/lotura), etiketa, nondik, nora, oharrak, etiketak, konfiantza...",
-      "description": "Loturek elementuak erreferentziatzen dituzte haien etiketaren bidez \"nondik\" eta \"nora\" zutabeetan"
+      "format": "<strong>Formatu bateratua:</strong> mota (elementua/lotura/event), etiketa, nondik, nora, oharrak, etiketak, konfiantza...",
+      "description": "Loturek elementuak erreferentziatzen dituzte haien etiketaren bidez \"nondik\" eta \"nora\" zutabeetan. type=event lerroek gertaera bat elementu bati lotzen diote \"de\"/\"from\" zutabearen bidez (data beharrezkoa)"
     },
     "retentionExpired": "Iturburu-dokumentua iraungita (atxikipena {{days}} egunez gainditua)",
     "warnings": "Abisuak:",

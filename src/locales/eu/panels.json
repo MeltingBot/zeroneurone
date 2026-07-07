@@ -491,7 +491,9 @@
     "noAssets": "Fitxategirik ez",
     "drop": "Fitxategiak jaregin",
     "deleteConfirm": "Fitxategi hau ezabatu?",
-    "usedBy": "{{count}} elementuk erabiltzen du"
+    "usedBy": "{{count}} elementuk erabiltzen du",
+    "hideMediaOnNode": "Ezkutatu multimedia nodoan",
+    "showMediaOnNode": "Erakutsi multimedia nodoan"
   },
   "history": {
     "title": "Historia",

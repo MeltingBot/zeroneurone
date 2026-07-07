@@ -14,6 +14,7 @@ import type {
   GeoData,
   Confidence,
   ElementShape,
+  ElementEvent,
   LinkStyle,
   Property,
   Report,
@@ -77,6 +78,7 @@ export interface ImportResult {
   success: boolean;
   elementsImported: number;
   linksImported: number;
+  eventsImported?: number;
   assetsImported: number;
   reportImported: boolean;
   errors: string[];
@@ -1871,12 +1873,144 @@ class ImportService {
         rowNum++;
       }
 
+      // Third pass: create events attached to elements (type=event)
+      // An event row references its parent element via the `de`/`from`/`source` column
+      // and reuses date / date_fin / label / notes / latitude / longitude / source columns.
+      const eventsByElementId = new Map<string, ElementEvent[]>();
+      rowNum = 2;
+      for (const line of dataLines) {
+        const values = this.parseCSVLine(line, opts.delimiter);
+        if (values.length === 0) {
+          rowNum++;
+          continue;
+        }
+
+        const type = values[typeIdx]?.toLowerCase().trim();
+        if (type !== 'event' && type !== 'evenement' && type !== 'événement') {
+          rowNum++;
+          continue;
+        }
+
+        const parentValue = deIdx >= 0 ? values[deIdx]?.trim().toLowerCase() : '';
+        if (!parentValue) {
+          result.warnings.push(`Ligne ${rowNum}: élément parent (de) vide, événement ignoré`);
+          rowNum++;
+          continue;
+        }
+
+        let parentElement = elementsByLabel.get(parentValue);
+        if (!parentElement && opts.createMissingElements) {
+          parentElement = {
+            id: generateUUID(),
+            dossierId: targetDossierId,
+            label: values[deIdx].trim(),
+            notes: '',
+            tags: [],
+            properties: [],
+            confidence: null,
+            source: '',
+            date: null,
+            dateRange: null,
+            position: { x: Math.random() * 500, y: Math.random() * 500 },
+            isPositionLocked: false,
+            geo: null,
+            visual: { ...DEFAULT_ELEMENT_VISUAL },
+            assetIds: [],
+            parentGroupId: null,
+            isGroup: false,
+            isAnnotation: false,
+            childIds: [],
+            events: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          await db.elements.add(parentElement);
+          elementsByLabel.set(parentValue, parentElement);
+          result.elementsImported++;
+        }
+
+        if (!parentElement) {
+          result.warnings.push(`Ligne ${rowNum}: élément parent introuvable: ${parentValue}`);
+          rowNum++;
+          continue;
+        }
+
+        // Parse event date (required) — prefer `date`, fallback to `date_debut`
+        let eventDate: Date | null = null;
+        if (dateIdx >= 0 && values[dateIdx]) {
+          const parsed = new Date(values[dateIdx]);
+          if (!isNaN(parsed.getTime())) eventDate = parsed;
+        }
+        if (!eventDate && dateStartIdx >= 0 && values[dateStartIdx]) {
+          const parsed = new Date(values[dateStartIdx]);
+          if (!isNaN(parsed.getTime())) eventDate = parsed;
+        }
+        if (!eventDate) {
+          result.warnings.push(`Ligne ${rowNum}: date manquante ou invalide, événement ignoré`);
+          rowNum++;
+          continue;
+        }
+
+        // Parse optional end date
+        let eventDateEnd: Date | undefined;
+        if (dateEndIdx >= 0 && values[dateEndIdx]) {
+          const parsed = new Date(values[dateEndIdx]);
+          if (!isNaN(parsed.getTime())) eventDateEnd = parsed;
+        }
+
+        // Parse geo coordinates
+        let eventGeo: GeoData | undefined;
+        if (latIdx >= 0 && lngIdx >= 0 && values[latIdx] && values[lngIdx]) {
+          const lat = parseFloat(values[latIdx]);
+          const lng = parseFloat(values[lngIdx]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            eventGeo = { type: 'point', lat, lng };
+          }
+        }
+
+        // Parse custom properties from additional columns
+        const eventProperties: Property[] = [];
+        for (const { index, name } of customPropertyIndices) {
+          const value = values[index]?.trim();
+          if (value) {
+            eventProperties.push({ key: name, value });
+          }
+        }
+
+        const event: ElementEvent = {
+          id: generateUUID(),
+          date: eventDate,
+          ...(eventDateEnd ? { dateEnd: eventDateEnd } : {}),
+          label: labelIdx >= 0 ? values[labelIdx]?.trim() || '' : '',
+          ...(notesIdx >= 0 && values[notesIdx]?.trim() ? { description: values[notesIdx].trim() } : {}),
+          ...(eventGeo ? { geo: eventGeo } : {}),
+          ...(eventProperties.length > 0 ? { properties: eventProperties } : {}),
+          ...(sourceIdx >= 0 && values[sourceIdx]?.trim() ? { source: values[sourceIdx].trim() } : {}),
+        };
+
+        const list = eventsByElementId.get(parentElement.id) ?? [];
+        list.push(event);
+        eventsByElementId.set(parentElement.id, list);
+        result.eventsImported = (result.eventsImported ?? 0) + 1;
+        rowNum++;
+      }
+
+      // Persist accumulated events onto their parent elements
+      for (const [elementId, newEvents] of eventsByElementId) {
+        const parent = await db.elements.get(elementId as ElementId);
+        if (!parent) continue;
+        await db.elements.update(elementId as ElementId, {
+          events: [...(parent.events ?? []), ...newEvents],
+          updatedAt: new Date(),
+        });
+      }
+
       // Update dossier timestamp
       await db.dossiers.update(targetDossierId, {
         updatedAt: new Date(),
       });
 
-      result.success = result.elementsImported > 0 || result.linksImported > 0;
+      result.success = result.elementsImported > 0 || result.linksImported > 0 || (result.eventsImported ?? 0) > 0;
       if (result.linksImported > 0) {
         await this.applyImportDisplaySettings(targetDossierId);
       }

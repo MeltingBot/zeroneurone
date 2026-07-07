@@ -491,7 +491,9 @@
     "noAssets": "Sense fitxers",
     "drop": "Deixeu anar fitxers",
     "deleteConfirm": "Eliminar aquest fitxer?",
-    "usedBy": "Utilitzat per {{count}} element(s)"
+    "usedBy": "Utilitzat per {{count}} element(s)",
+    "hideMediaOnNode": "Amaga el mèdia al node",
+    "showMediaOnNode": "Mostra el mèdia al node"
   },
   "history": {
     "title": "Historial",

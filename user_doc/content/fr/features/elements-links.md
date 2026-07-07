@@ -133,6 +133,12 @@ Avec plusieurs éléments sélectionnés :
 - Aligner les éléments
 - Distribuer les éléments
 
+### Copier / coller
+
+**Ctrl+C** copie les éléments sélectionnés (et les liens qui les relient), **Ctrl+V** les colle (nouveaux identifiants, position sous le curseur). Le copier/couper/coller est aussi disponible dans le menu contextuel.
+
+Le collage fonctionne **d'une enquête à l'autre** : copiez dans un dossier, ouvrez un autre dossier, collez. Le presse-papiers est conservé en mémoire uniquement (rien n'est écrit sur disque, effacé au rechargement). En collage inter-enquêtes, les **pièces jointes** ne sont pas recopiées (elles restent propres à leur dossier d'origine).
+
 ### Alignement et distribution
 
 Quand 2 éléments ou plus sont sélectionnés, un bouton **Aligner** apparaît dans la barre d'outils du canvas.

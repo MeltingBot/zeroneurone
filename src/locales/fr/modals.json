@@ -40,6 +40,7 @@
     "success": "Import réussi",
     "successElements": "{{count}} élément(s) importé(s)",
     "successLinks": "{{count}} lien(s) importé(s)",
+    "successEvents": "{{count}} événement(s) importé(s)",
     "successAssets": "{{count}} fichier(s) importé(s)",
     "error": "Erreur d'import",
     "unknownFormat": "Format de fichier non reconnu. Formats supportés: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "Modèle CSV",
       "download": "Télécharger",
-      "format": "<strong>Format unifié:</strong> type (element/lien), label, de, vers, notes, tags, confiance...",
-      "description": "Les liens référencent les éléments par leur label dans les colonnes \"de\" et \"vers\""
+      "format": "<strong>Format unifié:</strong> type (element/lien/event), label, de, vers, notes, tags, confiance...",
+      "description": "Les liens référencent les éléments par leur label dans les colonnes \"de\" et \"vers\". Les lignes type=event rattachent un événement à un élément via la colonne \"de\" (date requise)"
     },
     "retentionExpired": "Document source expiré (rétention dépassée de {{days}} jour(s))",
     "warnings": "Avertissements:",

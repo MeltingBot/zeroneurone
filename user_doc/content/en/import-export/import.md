@@ -119,9 +119,9 @@ The import happens as a single **undoable** batch (Ctrl+Z).
 
 | Column | Required | Description |
 |--------|----------|-------------|
-| type | ✅ | "element" or "link" |
-| label | ✅ | Element/link name |
-| from | For links | Source element label |
+| type | ✅ | "element", "link" or "event" |
+| label | ✅ | Element/link name (event label for "event") |
+| from | For links and events | Links: source element label. Events: parent element label |
 | to | For links | Target element label |
 
 #### Optional Columns
@@ -150,6 +150,32 @@ element,John Smith,,,Main suspect,person;suspect,80
 element,Mary Johnson,,,Witness,person;witness,60
 link,Knows,John Smith,Mary Johnson,Work colleagues,,90
 ```
+
+#### Events (type=event)
+
+An `type=event` row attaches a **dated event** to an existing element (shown in its detail panel, on the **timeline**, and — if geolocated — on the **map**). A single element can hold several events.
+
+The event reuses the unified-format columns:
+
+| Column | Role for the event |
+|--------|--------------------|
+| from | Parent element label (**required**) |
+| date | Event date (**required**) |
+| end_date | Optional end (event with duration) |
+| label | Event label |
+| notes | Description |
+| latitude / longitude | Geolocation (shows on the map) |
+| source | Information source |
+| * | Custom columns = event properties |
+
+```csv
+type,label,from,date,end_date,latitude,longitude,source
+element,John Smith,,2024-01-10,,,,Case
+event,Marseille stopover,John Smith,2024-01-20,2024-01-21,43.2965,5.3698,Surveillance
+event,Vehicle change,John Smith,2024-02-03,,,,Case
+```
+
+An `event` row with no valid date or no parent element is skipped (a warning is reported).
 
 #### Download Template
 

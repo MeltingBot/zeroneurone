@@ -491,7 +491,9 @@
     "noAssets": "Brak plików",
     "drop": "Upuść pliki",
     "deleteConfirm": "Usunąć ten plik?",
-    "usedBy": "Używany przez {{count}} elementów"
+    "usedBy": "Używany przez {{count}} elementów",
+    "hideMediaOnNode": "Ukryj media na węźle",
+    "showMediaOnNode": "Pokaż media na węźle"
   },
   "history": {
     "title": "Historia",

@@ -52,6 +52,8 @@ Attach documents, images, and files to your elements to enrich your documentatio
 
 Images display as thumbnails on the canvas. When you zoom in or resize a node beyond 250px on screen, the full-resolution image loads automatically from local storage. Zooming back out reverts to the lightweight thumbnail. Up to 30 HD images are cached simultaneously.
 
+**Hide media on an element** — in the **Files** panel, the "Hide media on node" link shows the element's **label** instead of its image on the canvas. The file stays attached; only the display changes. This setting is per-element (distinct from the global "blur media" toolbar button).
+
 
 ### PDF
 

@@ -505,7 +505,9 @@
     "noAssets": "Aucun fichier",
     "drop": "Déposez des fichiers",
     "deleteConfirm": "Supprimer ce fichier ?",
-    "usedBy": "Utilisé par {{count}} élément(s)"
+    "usedBy": "Utilisé par {{count}} élément(s)",
+    "hideMediaOnNode": "Masquer le média sur le nœud",
+    "showMediaOnNode": "Afficher le média sur le nœud"
   },
   "history": {
     "title": "Historique",

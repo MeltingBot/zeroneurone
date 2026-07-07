@@ -41,7 +41,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, toast } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
@@ -69,6 +69,57 @@ function captureTabMembership(elementIds: string[]): Record<string, string[]> | 
     }
   }
   return hasAny ? membership : undefined;
+}
+
+/**
+ * Clone clipboard elements + links into the target dossier, anchored at (anchorX, anchorY).
+ * Elements get fresh UUIDs and the target dossierId; internal links are remapped to the
+ * new ids. On a cross-dossier paste, asset references are dropped (assets live per-dossier
+ * in OPFS/Dexie, so keeping their ids would dangle).
+ */
+function cloneClipboardForPaste(
+  clip: { elements: Element[]; links: Link[]; sourceDossierId: string | null },
+  dossierId: string,
+  anchorX: number,
+  anchorY: number,
+): { newElements: Element[]; newLinks: Link[] } {
+  const now = new Date();
+  const oldToNewIdMap = new Map<string, string>();
+  const crossDossier = clip.sourceDossierId !== dossierId;
+
+  const sumX = clip.elements.reduce((s, el) => s + el.position.x, 0);
+  const sumY = clip.elements.reduce((s, el) => s + el.position.y, 0);
+  const centerX = sumX / clip.elements.length;
+  const centerY = sumY / clip.elements.length;
+
+  const newElements: Element[] = clip.elements.map((el) => {
+    const newId = generateUUID();
+    oldToNewIdMap.set(el.id, newId);
+    return {
+      ...el,
+      id: newId,
+      dossierId: dossierId as Element['dossierId'],
+      position: { x: anchorX + (el.position.x - centerX), y: anchorY + (el.position.y - centerY) },
+      parentGroupId: null,
+      assetIds: crossDossier ? [] : el.assetIds,
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
+
+  const newLinks: Link[] = clip.links
+    .map((link) => ({
+      ...link,
+      id: generateUUID(),
+      dossierId: dossierId as Link['dossierId'],
+      fromId: oldToNewIdMap.get(link.fromId)!,
+      toId: oldToNewIdMap.get(link.toId)!,
+      createdAt: now,
+      updatedAt: now,
+    }))
+    .filter((l) => l.fromId && l.toId);
+
+  return { newElements, newLinks };
 }
 
 interface ContextMenuState {
@@ -615,8 +666,9 @@ export function Canvas() {
   // Asset preview modal state
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
 
-  // Clipboard for copy/paste of elements
-  const copiedElementsRef = useRef<Element[]>([]);
+  // Global in-memory clipboard (module-level store) — survives dossier switch,
+  // which is what enables cross-dossier paste. See clipboardStore.
+  const setClipboard = useClipboardStore((s) => s.setClipboard);
   // Marker to write to system clipboard when copying elements internally
   // This allows detecting if user copied something else externally since then
   const CLIPBOARD_MARKER = '__ZERONEURONE_INTERNAL_COPY__';
@@ -644,11 +696,23 @@ export function Canvas() {
     return `${CLIPBOARD_MARKER}:${JSON.stringify(data)}`;
   }, [elements, links]);
 
+  // Write elements (and the links between them) to the global clipboard + system
+  // clipboard marker. Links are captured now (not rebuilt at paste time) so paste
+  // works even in another dossier where the source links are no longer loaded.
+  const writeClipboard = useCallback((elsToCopy: Element[], linkIds: string[] = []) => {
+    if (elsToCopy.length === 0) return;
+    const idSet = new Set(elsToCopy.map((el) => el.id));
+    const linksToCopy = links.filter((l) => idSet.has(l.fromId) && idSet.has(l.toId));
+    setClipboard(elsToCopy, linksToCopy, currentDossier?.id ?? null);
+    const clipboardData = buildClipboardData(elsToCopy.map((el) => el.id), linkIds);
+    navigator.clipboard.writeText(clipboardData).catch(() => {});
+  }, [links, currentDossier, setClipboard, buildClipboardData]);
+
   // History store for undo/redo
   const { pushAction, popUndo, popRedo } = useHistoryStore();
 
-  // State for copied elements indicator
-  const [hasCopiedElements, setHasCopiedElements] = useState(false);
+  // Whether the global clipboard currently holds elements (enables paste in menus)
+  const hasCopiedElements = useClipboardStore((s) => s.elements.length > 0);
 
   // Selection store — individual selectors prevent re-renders when unrelated selection state changes
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
@@ -2229,22 +2293,16 @@ export function Canvas() {
     if (selectedEls.length === 0) return;
     const elsToCopy = elements.filter(el => selectedEls.includes(el.id));
     if (elsToCopy.length > 0) {
-      copiedElementsRef.current = elsToCopy;
-      setHasCopiedElements(true);
-      const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
-      navigator.clipboard.writeText(clipboardData).catch(() => {});
+      writeClipboard(elsToCopy, [...selectedLinkIds]);
     }
-  }, [elements, getSelectedElementIds, selectedLinkIds, buildClipboardData]);
+  }, [elements, getSelectedElementIds, selectedLinkIds, writeClipboard]);
 
   const handleSelectionCut = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length === 0) return;
     const elsToCut = elements.filter(el => selectedEls.includes(el.id));
     if (elsToCut.length > 0) {
-      copiedElementsRef.current = elsToCut;
-      setHasCopiedElements(true);
-      const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
-      navigator.clipboard.writeText(clipboardData).catch(() => {});
+      writeClipboard(elsToCut, [...selectedLinkIds]);
       // Save for undo
       const relevantLinks = links.filter(l => selectedEls.includes(l.fromId) || selectedEls.includes(l.toId));
       const tabMembership = captureTabMembership(selectedEls);
@@ -2256,7 +2314,7 @@ export function Canvas() {
       await deleteElements(selectedEls);
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, selectedLinkIds, deleteElements, clearSelection, pushAction, buildClipboardData]);
+  }, [elements, links, getSelectedElementIds, selectedLinkIds, deleteElements, clearSelection, pushAction, writeClipboard]);
 
   const handleSelectionDuplicate = useCallback(async () => {
     const selectedEls = getSelectedElementIds();
@@ -2441,49 +2499,10 @@ export function Canvas() {
     }
 
     // Fall back to internal copied elements (only if we didn't paste from clipboard)
-    if (pastedFromClipboard || copiedElementsRef.current.length === 0) return;
+    const clip = useClipboardStore.getState();
+    if (pastedFromClipboard || clip.elements.length === 0 || !currentDossier) return;
 
-    const now = new Date();
-    const oldToNewIdMap = new Map<string, string>();
-
-    // Calculate center of copied elements and offset to paste position
-    const sumX = copiedElementsRef.current.reduce((sum, el) => sum + el.position.x, 0);
-    const sumY = copiedElementsRef.current.reduce((sum, el) => sum + el.position.y, 0);
-    const centerX = sumX / copiedElementsRef.current.length;
-    const centerY = sumY / copiedElementsRef.current.length;
-
-    // Build all elements centered at paste position
-    const newElements: Element[] = copiedElementsRef.current.map(el => {
-      const newId = generateUUID();
-      oldToNewIdMap.set(el.id, newId);
-      return {
-        ...el,
-        id: newId,
-        dossierId: currentDossier!.id,
-        position: {
-          x: canvasX + (el.position.x - centerX),
-          y: canvasY + (el.position.y - centerY),
-        },
-        parentGroupId: null,
-        createdAt: now,
-        updatedAt: now,
-      };
-    });
-
-    // Build all links between copied elements
-    const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
-    const relevantLinks = links.filter(l =>
-      copiedIds.has(l.fromId) && copiedIds.has(l.toId)
-    );
-    const newLinks: Link[] = relevantLinks.map(link => ({
-      ...link,
-      id: generateUUID(),
-      dossierId: currentDossier!.id,
-      fromId: oldToNewIdMap.get(link.fromId)!,
-      toId: oldToNewIdMap.get(link.toId)!,
-      createdAt: now,
-      updatedAt: now,
-    })).filter(l => l.fromId && l.toId);
+    const { newElements, newLinks } = cloneClipboardForPaste(clip, currentDossier.id, canvasX, canvasY);
 
     // Single Y.js transaction
     pasteElements(newElements, newLinks);
@@ -2567,13 +2586,9 @@ export function Canvas() {
         : [];
 
     if (elsToCopy.length > 0) {
-      copiedElementsRef.current = elsToCopy;
-      setHasCopiedElements(true);
-      const elementIds = elsToCopy.map(el => el.id);
-      const clipboardData = buildClipboardData(elementIds, [...selectedLinkIds]);
-      navigator.clipboard.writeText(clipboardData).catch(() => {});
+      writeClipboard(elsToCopy, [...selectedLinkIds]);
     }
-  }, [elements, getSelectedElementIds, contextMenu, selectedLinkIds, buildClipboardData]);
+  }, [elements, getSelectedElementIds, contextMenu, selectedLinkIds, writeClipboard]);
 
   // Cut handler for context menu
   const handleContextMenuCut = useCallback(async () => {
@@ -2586,11 +2601,7 @@ export function Canvas() {
 
     if (elsToCut.length > 0) {
       // Copy first
-      copiedElementsRef.current = elsToCut;
-      setHasCopiedElements(true);
-      const elementIds = elsToCut.map(el => el.id);
-      const clipboardData = buildClipboardData(elementIds, [...selectedLinkIds]);
-      navigator.clipboard.writeText(clipboardData).catch(() => {});
+      writeClipboard(elsToCut, [...selectedLinkIds]);
 
       // Then delete
       const idsToDelete = elsToCut.map(el => el.id);
@@ -2608,59 +2619,20 @@ export function Canvas() {
       await deleteElements(idsToDelete);
       clearSelection();
     }
-  }, [elements, links, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElements, clearSelection, pushAction, buildClipboardData]);
+  }, [elements, links, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElements, clearSelection, pushAction, writeClipboard]);
 
   // Paste handler for context menu (paste at context menu position)
   const handleContextMenuPaste = useCallback(() => {
-    if (copiedElementsRef.current.length === 0) return;
-    if (!reactFlowWrapper.current || !contextMenu) return;
-
-    const now = new Date();
-    const oldToNewIdMap = new Map<string, string>();
+    const clip = useClipboardStore.getState();
+    if (clip.elements.length === 0) return;
+    if (!reactFlowWrapper.current || !contextMenu || !currentDossier) return;
 
     // Calculate paste position relative to context menu click
     const bounds = reactFlowWrapper.current.getBoundingClientRect();
     const pasteX = (contextMenu.x - bounds.left - viewport.x) / viewport.zoom;
     const pasteY = (contextMenu.y - bounds.top - viewport.y) / viewport.zoom;
 
-    // Calculate center of copied elements
-    const sumX = copiedElementsRef.current.reduce((sum, el) => sum + el.position.x, 0);
-    const sumY = copiedElementsRef.current.reduce((sum, el) => sum + el.position.y, 0);
-    const centerX = sumX / copiedElementsRef.current.length;
-    const centerY = sumY / copiedElementsRef.current.length;
-
-    // Build all elements with positions centered at paste position
-    const newElements: Element[] = copiedElementsRef.current.map(el => {
-      const newId = generateUUID();
-      oldToNewIdMap.set(el.id, newId);
-      return {
-        ...el,
-        id: newId,
-        dossierId: currentDossier!.id,
-        position: {
-          x: pasteX + (el.position.x - centerX),
-          y: pasteY + (el.position.y - centerY),
-        },
-        parentGroupId: null,
-        createdAt: now,
-        updatedAt: now,
-      };
-    });
-
-    // Build all links between copied elements
-    const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
-    const relevantLinks = links.filter(l =>
-      copiedIds.has(l.fromId) && copiedIds.has(l.toId)
-    );
-    const newLinks: Link[] = relevantLinks.map(link => ({
-      ...link,
-      id: generateUUID(),
-      dossierId: currentDossier!.id,
-      fromId: oldToNewIdMap.get(link.fromId)!,
-      toId: oldToNewIdMap.get(link.toId)!,
-      createdAt: now,
-      updatedAt: now,
-    })).filter(l => l.fromId && l.toId);
+    const { newElements, newLinks } = cloneClipboardForPaste(clip, currentDossier.id, pasteX, pasteY);
 
     // Single Y.js transaction for all elements + links
     pasteElements(newElements, newLinks);
@@ -2679,7 +2651,7 @@ export function Canvas() {
 
     // Select all pasted elements
     selectElements(newElementIds);
-  }, [contextMenu, viewport, currentDossier, pasteElements, links, selectElements, pushAction, activeTabId, addTabMembers]);
+  }, [contextMenu, viewport, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Duplicate handler for context menu
   const handleContextMenuDuplicate = useCallback(() => {
@@ -3759,10 +3731,7 @@ export function Canvas() {
       if (event.key === 'c' && isCtrlOrMeta) {
         const selectedEls = getSelectedElementIds();
         if (selectedEls.length > 0) {
-          copiedElementsRef.current = elements.filter(el => selectedEls.includes(el.id));
-          setHasCopiedElements(true);
-          const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
-          navigator.clipboard.writeText(clipboardData).catch(() => {});
+          writeClipboard(elements.filter(el => selectedEls.includes(el.id)), [...selectedLinkIds]);
         }
       }
 
@@ -3772,10 +3741,7 @@ export function Canvas() {
         const selectedEls = getSelectedElementIds();
         if (selectedEls.length > 0) {
           const elsToCut = elements.filter(el => selectedEls.includes(el.id));
-          copiedElementsRef.current = elsToCut;
-          setHasCopiedElements(true);
-          const clipboardData = buildClipboardData(selectedEls, [...selectedLinkIds]);
-          navigator.clipboard.writeText(clipboardData).catch(() => {});
+          writeClipboard(elsToCut, [...selectedLinkIds]);
 
           // Delete the cut elements
           const linksToDelete = links.filter(l =>
@@ -3932,7 +3898,7 @@ export function Canvas() {
     pushAction,
     handleUndo,
     handleRedo,
-    buildClipboardData,
+    writeClipboard,
     activeTabId,
     tabMemberSet,
     addTabMembers,
@@ -4068,50 +4034,11 @@ export function Canvas() {
       }
 
       // PRIORITY 2: Internal copied elements (marker present)
-      if (copiedElementsRef.current.length > 0) {
+      const clip = useClipboardStore.getState();
+      if (clip.elements.length > 0 && currentDossier) {
         event.preventDefault();
 
-        const now = new Date();
-        const oldToNewIdMap = new Map<string, string>();
-
-        // Calculate center of copied elements
-        const sumX = copiedElementsRef.current.reduce((sum, el) => sum + el.position.x, 0);
-        const sumY = copiedElementsRef.current.reduce((sum, el) => sum + el.position.y, 0);
-        const copiedCenterX = sumX / copiedElementsRef.current.length;
-        const copiedCenterY = sumY / copiedElementsRef.current.length;
-
-        // Build all elements with positions centered at viewport center
-        const newElements: Element[] = copiedElementsRef.current.map(el => {
-          const newId = generateUUID();
-          oldToNewIdMap.set(el.id, newId);
-          return {
-            ...el,
-            id: newId,
-            dossierId: currentDossier!.id,
-            position: {
-              x: centerX + (el.position.x - copiedCenterX),
-              y: centerY + (el.position.y - copiedCenterY),
-            },
-            parentGroupId: null,
-            createdAt: now,
-            updatedAt: now,
-          };
-        });
-
-        // Build all links between copied elements
-        const copiedIds = new Set(copiedElementsRef.current.map(el => el.id));
-        const relevantLinks = links.filter(l =>
-          copiedIds.has(l.fromId) && copiedIds.has(l.toId)
-        );
-        const newLinks: Link[] = relevantLinks.map(link => ({
-          ...link,
-          id: generateUUID(),
-          dossierId: currentDossier!.id,
-          fromId: oldToNewIdMap.get(link.fromId)!,
-          toId: oldToNewIdMap.get(link.toId)!,
-          createdAt: now,
-          updatedAt: now,
-        })).filter(l => l.fromId && l.toId);
+        const { newElements, newLinks } = cloneClipboardForPaste(clip, currentDossier.id, centerX, centerY);
 
         // Single Y.js transaction for all elements + links
         pasteElements(newElements, newLinks);
@@ -4339,6 +4266,7 @@ export function Canvas() {
             panOnDrag
             selectionKeyCode="Shift"
             deleteKeyCode={null}
+            disableKeyboardA11y
             panOnScroll
             zoomOnScroll
             zoomOnDoubleClick={false}

@@ -40,6 +40,7 @@
     "success": "Import geslaagd",
     "successElements": "{{count}} element(en) geïmporteerd",
     "successLinks": "{{count}} verbinding(en) geïmporteerd",
+    "successEvents": "{{count}} gebeurtenis(sen) geïmporteerd",
     "successAssets": "{{count}} bestand(en) geïmporteerd",
     "error": "Importfout",
     "unknownFormat": "Onbekend bestandsformaat. Ondersteunde formaten: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "CSV-sjabloon",
       "download": "Downloaden",
-      "format": "<strong>Uniform formaat:</strong> type (element/verbinding), label, van, naar, notities, tags, betrouwbaarheid...",
-      "description": "Verbindingen verwijzen naar elementen via hun label in de kolommen \"van\" en \"naar\""
+      "format": "<strong>Uniform formaat:</strong> type (element/verbinding/event), label, van, naar, notities, tags, betrouwbaarheid...",
+      "description": "Verbindingen verwijzen naar elementen via hun label in de kolommen \"van\" en \"naar\". type=event-rijen koppelen een gebeurtenis aan een element via de kolom \"de\"/\"from\" (datum vereist)"
     },
     "retentionExpired": "Brondocument verlopen (bewaring overschreden met {{days}} dag(en))",
     "warnings": "Waarschuwingen:",

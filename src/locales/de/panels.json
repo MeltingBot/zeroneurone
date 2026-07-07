@@ -491,7 +491,9 @@
     "noAssets": "Keine Dateien",
     "drop": "Dateien ablegen",
     "deleteConfirm": "Diese Datei löschen?",
-    "usedBy": "Verwendet von {{count}} Element(en)"
+    "usedBy": "Verwendet von {{count}} Element(en)",
+    "hideMediaOnNode": "Medien am Knoten ausblenden",
+    "showMediaOnNode": "Medien am Knoten anzeigen"
   },
   "history": {
     "title": "Verlauf",

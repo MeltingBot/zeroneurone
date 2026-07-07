@@ -505,7 +505,9 @@
     "noAssets": "No files",
     "drop": "Drop files",
     "deleteConfirm": "Delete this file?",
-    "usedBy": "Used by {{count}} element(s)"
+    "usedBy": "Used by {{count}} element(s)",
+    "hideMediaOnNode": "Hide media on node",
+    "showMediaOnNode": "Show media on node"
   },
   "history": {
     "title": "History",

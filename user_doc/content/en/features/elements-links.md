@@ -133,6 +133,12 @@ With multiple elements selected:
 - Align elements
 - Distribute elements
 
+### Copy / Paste
+
+**Ctrl+C** copies the selected elements (and the links between them), **Ctrl+V** pastes them (fresh ids, positioned under the cursor). Copy/cut/paste is also available from the context menu.
+
+Paste works **across dossiers**: copy in one case, open another case, paste. The clipboard is kept in memory only (nothing written to disk, cleared on reload). On a cross-dossier paste, **attachments** are not copied over (they stay tied to their original dossier).
+
 ### Alignment and Distribution
 
 When 2 or more elements are selected, an **Align** button appears in the canvas toolbar.

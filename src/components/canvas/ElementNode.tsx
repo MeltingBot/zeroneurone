@@ -173,8 +173,9 @@ function ElementNodeComponent({ data }: NodeProps) {
   const baseSize = getBaseSize(element.visual.size);
 
   // Calculate default dimensions
-  // Note: hasThumbnail doesn't depend on hideMedia - we still show thumbnail but blur it
-  const hasThumbnail = Boolean(thumbnail);
+  // Note: the global hideMedia flag still shows the thumbnail (blurred); the per-element
+  // visual.hideMedia flag hides media entirely, rendering the node as label-only.
+  const hasThumbnail = Boolean(thumbnail) && element.visual.hideMedia !== true;
 
   // Shared with the auto-layout engine (graphWorker / layoutService) so that
   // anti-collision spacing matches the actual rendered footprint.
@@ -778,6 +779,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.visual.size !== nextEl.visual.size) return false;
   if (prevEl.visual.icon !== nextEl.visual.icon) return false;
   if (prevEl.visual.image !== nextEl.visual.image) return false;
+  if (prevEl.visual.hideMedia !== nextEl.visual.hideMedia) return false;
   if (prevEl.visual.customWidth !== nextEl.visual.customWidth) return false;
   if (prevEl.visual.customHeight !== nextEl.visual.customHeight) return false;
   if (prevEl.visual.fontSize !== nextEl.visual.fontSize) return false;

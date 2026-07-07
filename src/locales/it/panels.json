@@ -491,7 +491,9 @@
     "noAssets": "Nessun file",
     "drop": "Trascina file",
     "deleteConfirm": "Eliminare questo file?",
-    "usedBy": "Usato da {{count}} elemento/i"
+    "usedBy": "Usato da {{count}} elemento/i",
+    "hideMediaOnNode": "Nascondi il media sul nodo",
+    "showMediaOnNode": "Mostra il media sul nodo"
   },
   "history": {
     "title": "Cronologia",

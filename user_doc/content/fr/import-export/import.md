@@ -119,9 +119,9 @@ L'import se fait en un seul lot **annulable** (Ctrl+Z).
 
 | Colonne | Obligatoire | Description |
 |---------|-------------|-------------|
-| type | ✅ | "element" ou "lien" |
-| label | ✅ | Nom de l'élément/lien |
-| de | Pour liens | Label de l'élément source |
+| type | ✅ | "element", "lien" ou "event" |
+| label | ✅ | Nom de l'élément/lien (libellé de l'événement pour "event") |
+| de | Pour liens et events | Liens : label de l'élément source. Events : label de l'élément parent |
 | vers | Pour liens | Label de l'élément cible |
 
 #### Colonnes optionnelles
@@ -150,6 +150,32 @@ element,Jean Dupont,,,Suspect principal,personne;suspect,80
 element,Marie Martin,,,Témoin,personne;temoin,60
 lien,Connaît,Jean Dupont,Marie Martin,Collègues de travail,,90
 ```
+
+#### Événements (type=event)
+
+Une ligne `type=event` attache un **événement daté** à un élément existant (visible dans son panneau détail, sur la **chronologie** et, s'il est géolocalisé, sur la **carte**). Un même élément peut recevoir plusieurs événements.
+
+L'événement réutilise les colonnes du format unifié :
+
+| Colonne | Rôle pour l'événement |
+|---------|-----------------------|
+| de | Label de l'élément parent (**obligatoire**) |
+| date | Date de l'événement (**obligatoire**) |
+| date_fin | Fin optionnelle (événement avec durée) |
+| label | Libellé de l'événement |
+| notes | Description |
+| latitude / longitude | Géolocalisation (apparaît sur la carte) |
+| source | Source de l'information |
+| * | Colonnes personnalisées = propriétés de l'événement |
+
+```csv
+type,label,de,date,date_fin,latitude,longitude,source
+element,Jean Dupont,,2024-01-10,,,,Enquête
+event,Escale Marseille,Jean Dupont,2024-01-20,2024-01-21,43.2965,5.3698,Filature
+event,Changement de véhicule,Jean Dupont,2024-02-03,,,,Enquête
+```
+
+Une ligne `event` sans date valide ou sans élément parent est ignorée (un avertissement est remonté).
 
 #### Télécharger le modèle
 

@@ -446,6 +446,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                   {importResult.linksImported > 0 && (
                     <p>{t('import.successLinks', { count: importResult.linksImported })}</p>
                   )}
+                  {(importResult.eventsImported ?? 0) > 0 && (
+                    <p>{t('import.successEvents', { count: importResult.eventsImported })}</p>
+                  )}
                   {importResult.assetsImported > 0 && (
                     <p>{t('import.successAssets', { count: importResult.assetsImported })}</p>
                   )}

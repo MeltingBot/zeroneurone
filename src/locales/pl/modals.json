@@ -40,6 +40,7 @@
     "success": "Import zakończony pomyślnie",
     "successElements": "{{count}} elementów zaimportowano",
     "successLinks": "{{count}} połączeń zaimportowano",
+    "successEvents": "Zaimportowano zdarzenia: {{count}}",
     "successAssets": "{{count}} plików zaimportowano",
     "error": "Błąd importu",
     "unknownFormat": "Nierozpoznany format pliku. Obsługiwane formaty: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "Szablon CSV",
       "download": "Pobierz",
-      "format": "<strong>Format zunifikowany:</strong> typ (element/połączenie), etykieta, od, do, notatki, tagi, pewność...",
-      "description": "Połączenia odwołują się do elementów po etykiecie w kolumnach \"od\" i \"do\""
+      "format": "<strong>Format zunifikowany:</strong> typ (element/połączenie/event), etykieta, od, do, notatki, tagi, pewność...",
+      "description": "Połączenia odwołują się do elementów po etykiecie w kolumnach \"od\" i \"do\". Wiersze type=event dołączają zdarzenie do elementu przez kolumnę \"de\"/\"from\" (data wymagana)"
     },
     "retentionExpired": "Dokument źródłowy wygasł (retencja przekroczona o {{days}} dni)",
     "warnings": "Ostrzeżenia:",

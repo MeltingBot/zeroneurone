@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.44.0
+
+### Features
+- **Import CSV — événements (`type=event`)** : une ligne `type=event` attache un **événement daté** à un élément existant (référencé par la colonne `de`), visible dans son panneau détail, sur la **chronologie** et — s'il est géolocalisé — sur la **carte**. Réutilise les colonnes existantes (`date`, `date_fin`, `label`, `notes`, `latitude`/`longitude`, `source`, colonnes personnalisées → propriétés). Un même élément peut recevoir plusieurs événements.
+- **Copier/coller inter-enquêtes** : les éléments (et les liens qui les relient) copiés dans un dossier peuvent être collés dans un **autre dossier**. Le presse-papiers est conservé en mémoire uniquement (rien sur disque, effacé au rechargement). Les pièces jointes ne sont pas recopiées lors d'un collage inter-enquêtes.
+- **Masquer le média sur un élément** : dans le panneau **Fichiers**, une option par élément affiche le **label** à la place de l'image sur le canvas (le fichier reste attaché). Distinct du bouton global « flouter les médias ».
+
+### Fixes
+- **Copier/coller après sélection multiple** : le collage (Ctrl+V) ne fonctionnait plus après une sélection multiple, l'overlay de sélection de React Flow captant le focus et bloquant l'événement de collage natif. Corrigé via `disableKeyboardA11y` (les raccourcis clavier restent gérés par l'application).
+
 ## 2.43.1
 
 ### Fixes

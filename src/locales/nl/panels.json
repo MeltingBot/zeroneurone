@@ -491,7 +491,9 @@
     "noAssets": "Geen bestanden",
     "drop": "Sleep bestanden",
     "deleteConfirm": "Dit bestand verwijderen?",
-    "usedBy": "Gebruikt door {{count}} element(en)"
+    "usedBy": "Gebruikt door {{count}} element(en)",
+    "hideMediaOnNode": "Media op knooppunt verbergen",
+    "showMediaOnNode": "Media op knooppunt tonen"
   },
   "history": {
     "title": "Geschiedenis",

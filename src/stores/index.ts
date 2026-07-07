@@ -12,3 +12,4 @@ export { useReportStore } from './reportStore';
 export { useTabStore } from './tabStore';
 export { useQueryStore } from './queryStore';
 export { useJsonMappingStore } from './jsonMappingStore';
+export { useClipboardStore } from './clipboardStore';

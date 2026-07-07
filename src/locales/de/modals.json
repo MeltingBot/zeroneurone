@@ -40,6 +40,7 @@
     "success": "Import erfolgreich",
     "successElements": "{{count}} Element(e) importiert",
     "successLinks": "{{count}} Verbindung(en) importiert",
+    "successEvents": "{{count}} Ereignis(se) importiert",
     "successAssets": "{{count}} Datei(en) importiert",
     "error": "Importfehler",
     "unknownFormat": "Unbekanntes Dateiformat. Unterstützte Formate: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
@@ -48,8 +49,8 @@
     "csvTemplate": {
       "title": "CSV-Vorlage",
       "download": "Herunterladen",
-      "format": "<strong>Einheitliches Format:</strong> Typ (Element/Verbindung), Bezeichnung, von, nach, Notizen, Tags, Vertrauen...",
-      "description": "Verbindungen referenzieren Elemente über ihre Bezeichnung in den Spalten \"von\" und \"nach\""
+      "format": "<strong>Einheitliches Format:</strong> Typ (Element/Verbindung/event), Bezeichnung, von, nach, Notizen, Tags, Vertrauen...",
+      "description": "Verbindungen referenzieren Elemente über ihre Bezeichnung in den Spalten \"von\" und \"nach\". type=event-Zeilen hängen ein Ereignis über die Spalte \"de\"/\"from\" an ein Element an (Datum erforderlich)"
     },
     "retentionExpired": "Quelldokument abgelaufen (Aufbewahrung um {{days}} Tag(e) überschritten)",
     "warnings": "Warnungen:",

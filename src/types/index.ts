@@ -154,6 +154,8 @@ export interface ElementVisual {
   size: ElementSize;
   icon: string | null;
   image: AssetId | null;
+  /** Hide attached media on the canvas node, showing only the label (media stays attached) */
+  hideMedia?: boolean;
   customWidth?: number;
   customHeight?: number;
   fontSize?: FontSize;
