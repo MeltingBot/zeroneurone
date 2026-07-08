@@ -803,6 +803,7 @@ export function Canvas() {
   const {
     highlightedElementIds: insightsHighlightedIds,
     findPaths,
+    findAllPaths,
     clearHighlight,
   } = useInsightsStore();
 
@@ -2856,6 +2857,13 @@ export function Canvas() {
     [findPaths]
   );
 
+  const handleFindAllPaths = useCallback(
+    (fromId: string, toId: string) => {
+      findAllPaths(fromId, toId);
+    },
+    [findAllPaths]
+  );
+
   const handleMergeElements = useCallback(() => {
     if (!contextMenu || selectedElementIds.size !== 2) return;
     const ids = Array.from(selectedElementIds);
@@ -4342,6 +4350,7 @@ export function Canvas() {
               onDuplicate={handleContextMenuDuplicate}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
+              onFindAllPaths={handleFindAllPaths}
               onMerge={selectedElementIds.size === 2 ? handleMergeElements : undefined}
               isGroup={!!elementMap.get(contextMenu.elementId)?.isGroup}
               isInGroup={!!elementMap.get(contextMenu.elementId)?.parentGroupId}

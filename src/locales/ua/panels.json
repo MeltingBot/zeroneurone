@@ -437,6 +437,10 @@
       "to": "До",
       "searchPlaceholder": "Пошук елемента...",
       "pathFound": "Шлях знайдено ({{count}} кроків)",
+      "pathsFound": "Знайдено {{count}} шлях(ів)",
+      "allPaths": "Усі шляхи",
+      "maxDepth": "Макс. глибина",
+      "highlightThisPath": "Підсвітити цей шлях",
       "noPath": "Шлях між цими елементами не знайдено",
       "pathLength": "{{count}} кроків"
     }

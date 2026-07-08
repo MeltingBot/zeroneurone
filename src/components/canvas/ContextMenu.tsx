@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, icons } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, icons } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 
@@ -27,6 +27,7 @@ interface ContextMenuProps {
   onDuplicate: () => void;
   onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
+  onFindAllPaths?: (fromId: string, toId: string) => void;
   onMerge?: () => void;
   // Group actions
   isGroup: boolean;
@@ -83,6 +84,7 @@ function ContextMenuComponent({
   onDuplicate,
   onPreview,
   onFindPaths,
+  onFindAllPaths,
   onMerge,
   isGroup,
   isInGroup,
@@ -244,7 +246,7 @@ function ContextMenuComponent({
         </div>
 
         {/* Path finding & merge (when 2 elements selected) */}
-        {hasTwoSelected && (onFindPaths || onMerge) && (
+        {hasTwoSelected && (onFindPaths || onFindAllPaths || onMerge) && (
           <div className="py-1 border-b border-border-default">
             {onFindPaths && (
               <button
@@ -256,6 +258,18 @@ function ContextMenuComponent({
               >
                 <Route size={14} />
                 {t('dossier.contextMenu.findPaths')}
+              </button>
+            )}
+            {onFindAllPaths && (
+              <button
+                onClick={() => {
+                  onFindAllPaths(elementId, otherSelectedId);
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Waypoints size={14} />
+                {t('dossier.contextMenu.findAllPaths')}
               </button>
             )}
             {onMerge && (

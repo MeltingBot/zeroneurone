@@ -33,6 +33,7 @@ interface InsightsState {
   highlightIsolated: () => void;
   highlightSimilarPair: (elementId1: ElementId, elementId2: ElementId) => void;
   findPaths: (fromId: ElementId, toId: ElementId) => void;
+  findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number) => void;
   highlightPath: (pathIndex: number) => void;
   clearHighlight: () => void;
   clearPaths: () => void;
@@ -163,6 +164,28 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     if (paths.length > 0) {
       set({
         highlightedElementIds: new Set(paths[0].path),
+        highlightType: 'path',
+        selectedClusterId: null,
+      });
+    }
+  },
+
+  findAllPaths: (fromId, toId, maxDepth = 5) => {
+    const paths = insightsService.findAllPaths(fromId, toId, maxDepth);
+    set({
+      pathResults: paths,
+      pathFromId: fromId,
+      pathToId: toId,
+    });
+
+    // Highlight the union of every path so all routes are visible at once.
+    if (paths.length > 0) {
+      const union = new Set<ElementId>();
+      for (const p of paths) {
+        for (const nodeId of p.path) union.add(nodeId);
+      }
+      set({
+        highlightedElementIds: union,
         highlightType: 'path',
         selectedClusterId: null,
       });

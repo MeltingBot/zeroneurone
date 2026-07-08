@@ -115,6 +115,10 @@ Trouvez le **plus court chemin** entre deux éléments.
 - **Chemin long** : éléments éloignés, peu de liens directs
 - **Pas de chemin** : éléments dans des composantes séparées
 
+### Tous les chemins
+
+Activez **Tous les chemins** pour énumérer **toutes les routes** entre les deux éléments, et non plus seulement la plus courte. Réglez la **profondeur maximale** (nombre de liens, 1 à 8) pour borner la recherche et éviter l'explosion combinatoire sur les réseaux denses. Chaque chemin trouvé est listé (trié du plus court au plus long) ; l'ensemble des routes est surligné sur le canvas, et un clic sur un chemin de la liste met en évidence celui-ci uniquement. Accessible aussi via clic droit sur deux éléments → **Tous les chemins**.
+
 ---
 
 ## Métriques globales

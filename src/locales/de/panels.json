@@ -437,6 +437,10 @@
       "to": "Nach",
       "searchPlaceholder": "Element suchen...",
       "pathFound": "Pfad gefunden ({{count}} Schritte)",
+      "pathsFound": "{{count}} Pfad(e) gefunden",
+      "allPaths": "Alle Pfade",
+      "maxDepth": "Max. Tiefe",
+      "highlightThisPath": "Diesen Pfad hervorheben",
       "noPath": "Kein Pfad zwischen diesen Elementen gefunden",
       "pathLength": "{{count}} Schritt(e)"
     }

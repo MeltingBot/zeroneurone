@@ -115,6 +115,10 @@ Find the **shortest path** between two elements.
 - **Long path**: distant elements, few direct links
 - **No path**: elements in separate components
 
+### All paths
+
+Enable **All paths** to enumerate **every route** between the two elements, not just the shortest one. Set the **maximum depth** (number of links, 1 to 8) to bound the search and avoid combinatorial explosion on dense networks. Every path found is listed (sorted shortest to longest); the union of all routes is highlighted on the canvas, and clicking a path in the list highlights that one only. Also available via right-click on two elements → **All paths**.
+
 ---
 
 ## Global Metrics

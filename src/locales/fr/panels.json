@@ -451,6 +451,10 @@
       "to": "Vers",
       "searchPlaceholder": "Rechercher un élément...",
       "pathFound": "Chemin trouvé ({{count}} étapes)",
+      "pathsFound": "{{count}} chemin(s) trouvé(s)",
+      "allPaths": "Tous les chemins",
+      "maxDepth": "Profondeur max",
+      "highlightThisPath": "Mettre ce chemin en évidence",
       "noPath": "Aucun chemin trouvé entre ces éléments",
       "pathLength": "{{count}} étape(s)"
     }

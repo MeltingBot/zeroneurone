@@ -55,6 +55,8 @@ export function InsightsPanel() {
     highlightIsolated,
     highlightSimilarPair,
     findPaths,
+    findAllPaths,
+    highlightPath,
     clearHighlight,
     clearPaths,
   } = useInsightsStore();
@@ -70,6 +72,9 @@ export function InsightsPanel() {
   const [pathMode, setPathMode] = useState(false);
   const [pathFrom, setPathFrom] = useState<string | null>(null);
   const [pathTo, setPathTo] = useState<string | null>(null);
+  // All-paths mode: enumerate every simple path (bounded depth) instead of the shortest
+  const [allPathsMode, setAllPathsMode] = useState(false);
+  const [pathMaxDepth, setPathMaxDepth] = useState(5);
 
   // Auto-compute insights when data changes (debounced)
   useEffect(() => {
@@ -335,17 +340,37 @@ export function InsightsPanel() {
     clearHighlight();
   }, [clearPaths, clearHighlight]);
 
+  // Run shortest-path or all-paths search depending on the active mode.
+  const runPathSearch = useCallback(
+    (fromId: string, toId: string) => {
+      if (allPathsMode) {
+        findAllPaths(fromId, toId, pathMaxDepth);
+      } else {
+        findPaths(fromId, toId);
+      }
+    },
+    [allPathsMode, pathMaxDepth, findAllPaths, findPaths]
+  );
+
   const handleSelectPathElement = useCallback(
     (elementId: string) => {
       if (!pathFrom) {
         setPathFrom(elementId);
       } else if (!pathTo && elementId !== pathFrom) {
         setPathTo(elementId);
-        findPaths(pathFrom, elementId);
+        runPathSearch(pathFrom, elementId);
       }
     },
-    [pathFrom, pathTo, findPaths]
+    [pathFrom, pathTo, runPathSearch]
   );
+
+  // Re-run the search when the mode or depth changes and both endpoints are set.
+  useEffect(() => {
+    if (pathFrom && pathTo) {
+      runPathSearch(pathFrom, pathTo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allPathsMode, pathMaxDepth]);
 
   // Get element label by ID
   const getElementLabel = useCallback(
@@ -456,7 +481,7 @@ export function InsightsPanel() {
                     onChange={(id) => {
                       if (pathFrom && id) {
                         setPathTo(id);
-                        findPaths(pathFrom, id);
+                        runPathSearch(pathFrom, id);
                       } else {
                         setPathTo(null);
                         clearPaths();
@@ -469,8 +494,69 @@ export function InsightsPanel() {
                   />
                 </div>
 
-                {/* Path results */}
-                {pathResults.length > 0 && (
+                {/* Mode: shortest path vs all bounded paths */}
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <label className="flex items-center gap-1.5 text-[10px] text-text-secondary cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allPathsMode}
+                      onChange={(e) => setAllPathsMode(e.target.checked)}
+                      className="accent-accent"
+                    />
+                    {t('insights.paths.allPaths')}
+                  </label>
+                  {allPathsMode && (
+                    <label className="flex items-center gap-1 text-[10px] text-text-tertiary">
+                      {t('insights.paths.maxDepth')}
+                      <input
+                        type="number"
+                        min={1}
+                        max={8}
+                        value={pathMaxDepth}
+                        onChange={(e) =>
+                          setPathMaxDepth(Math.max(1, Math.min(8, Number(e.target.value) || 1)))
+                        }
+                        className="w-12 px-1 py-0.5 rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Path results — all-paths mode: list every route (click to highlight) */}
+                {pathResults.length > 0 && allPathsMode && (
+                  <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded space-y-1">
+                    <div className="text-xs text-accent font-medium mb-1">
+                      {t('insights.paths.pathsFound', { count: pathResults.length })}
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {pathResults.map((result, pathIdx) => (
+                        <div
+                          key={pathIdx}
+                          className="flex flex-wrap items-center gap-1 text-xs text-text-secondary px-1 py-0.5 rounded cursor-pointer hover:bg-bg-secondary"
+                          onClick={() => highlightPath(pathIdx)}
+                          title={t('insights.paths.highlightThisPath')}
+                        >
+                          <span className="text-text-tertiary tabular-nums mr-1">
+                            {result.length}
+                          </span>
+                          {result.path.map((nodeId, idx) => (
+                            <span key={nodeId} className="flex items-center gap-1">
+                              <span className="px-1.5 py-0.5 bg-bg-primary rounded">
+                                {getElementLabel(nodeId)}
+                              </span>
+                              {idx < result.path.length - 1 && (
+                                <ArrowRight size={10} className="text-text-tertiary" />
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Path results — shortest path mode: single route */}
+                {pathResults.length > 0 && !allPathsMode && (
                   <div className="mt-2 p-2 bg-accent/10 border border-accent/30 rounded">
                     <div className="text-xs text-accent font-medium mb-1">
                       {t('insights.paths.pathFound', { count: pathResults[0].length })}

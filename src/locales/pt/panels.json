@@ -437,6 +437,10 @@
       "to": "Para",
       "searchPlaceholder": "Pesquisar um elemento...",
       "pathFound": "Caminho encontrado ({{count}} passos)",
+      "pathsFound": "{{count}} caminho(s) encontrado(s)",
+      "allPaths": "Todos os caminhos",
+      "maxDepth": "Profundidade máx.",
+      "highlightThisPath": "Realçar este caminho",
       "noPath": "Nenhum caminho encontrado entre estes elementos",
       "pathLength": "{{count}} passo(s)"
     }

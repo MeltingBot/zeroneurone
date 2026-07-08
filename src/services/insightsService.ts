@@ -251,6 +251,56 @@ class InsightsService {
   }
 
   /**
+   * Enumerate all simple paths (no repeated node) between two elements, bounded
+   * by a maximum number of edges (`maxDepth`) and capped in count (`maxPaths`)
+   * to avoid combinatorial explosion on dense graphs. Results are sorted by
+   * length (shortest first). Traversal is undirected, like {@link findPaths}.
+   */
+  findAllPaths(
+    fromId: ElementId,
+    toId: ElementId,
+    maxDepth = 5,
+    maxPaths = 200
+  ): PathResult[] {
+    if (!this.graph) return [];
+    const graph = this.graph;
+    if (!graph.hasNode(fromId) || !graph.hasNode(toId) || fromId === toId) {
+      return [];
+    }
+
+    const results: PathResult[] = [];
+    const visited = new Set<ElementId>();
+    const stack: ElementId[] = [];
+
+    const dfs = (node: ElementId): void => {
+      if (results.length >= maxPaths) return;
+      visited.add(node);
+      stack.push(node);
+
+      if (node === toId) {
+        // Reached target (stack has at least 2 nodes since fromId !== toId).
+        results.push({ path: [...stack], length: stack.length - 1 });
+      } else if (stack.length - 1 < maxDepth) {
+        graph.forEachNeighbor(node, (neighbor: string) => {
+          if (results.length >= maxPaths) return;
+          if (!visited.has(neighbor)) dfs(neighbor);
+        });
+      }
+
+      stack.pop();
+      visited.delete(node);
+    };
+
+    try {
+      dfs(fromId);
+    } catch {
+      return results.sort((a, b) => a.length - b.length);
+    }
+
+    return results.sort((a, b) => a.length - b.length);
+  }
+
+  /**
    * Calculate Levenshtein similarity between two strings
    */
   private calculateSimilarity(s1: string, s2: string): number {

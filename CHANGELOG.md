@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.45.0
+
+### Features
+- **Tous les chemins entre deux éléments (borné)** — en complément du plus-court-chemin, un mode **Tous les chemins** énumère toutes les routes simples (sans nœud répété) entre deux éléments, borné par une **profondeur maximale** réglable (1 à 8 liens) et un plafond de résultats pour éviter l'explosion combinatoire. Les chemins sont listés du plus court au plus long ; l'union est surlignée sur le canvas, un clic sur un chemin met en évidence celui-ci seul. Accessible depuis le panneau Insights (case « Tous les chemins » + profondeur) et via clic droit sur deux éléments → « Tous les chemins ». DFS borné sur le thread principal (graphe non orienté). i18n : 11 langues.
+
 ## 2.44.3
 
 ### Features

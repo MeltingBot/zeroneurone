@@ -437,6 +437,10 @@
       "to": "Naar",
       "searchPlaceholder": "Element zoeken...",
       "pathFound": "Pad gevonden ({{count}} stappen)",
+      "pathsFound": "{{count}} pad(en) gevonden",
+      "allPaths": "Alle paden",
+      "maxDepth": "Max. diepte",
+      "highlightThisPath": "Dit pad markeren",
       "noPath": "Geen pad gevonden tussen deze elementen",
       "pathLength": "{{count}} stap(pen)"
     }

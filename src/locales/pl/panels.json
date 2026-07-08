@@ -437,6 +437,10 @@
       "to": "Do",
       "searchPlaceholder": "Szukaj elementu...",
       "pathFound": "Ścieżka znaleziona ({{count}} kroków)",
+      "pathsFound": "Znaleziono {{count}} ścieżek",
+      "allPaths": "Wszystkie ścieżki",
+      "maxDepth": "Maks. głębokość",
+      "highlightThisPath": "Podświetl tę ścieżkę",
       "noPath": "Nie znaleziono ścieżki między tymi elementami",
       "pathLength": "{{count}} kroków"
     }

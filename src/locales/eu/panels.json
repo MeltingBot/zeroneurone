@@ -437,6 +437,10 @@
       "to": "Nora",
       "searchPlaceholder": "Elementua bilatu...",
       "pathFound": "Bidea aurkituta ({{count}} urrats)",
+      "pathsFound": "{{count}} bide aurkitu dira",
+      "allPaths": "Bide guztiak",
+      "maxDepth": "Gehieneko sakonera",
+      "highlightThisPath": "Nabarmendu bide hau",
       "noPath": "Ez da biderik aurkitu elementu hauen artean",
       "pathLength": "{{count}} urrats"
     }

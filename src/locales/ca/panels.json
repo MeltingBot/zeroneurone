@@ -437,6 +437,10 @@
       "to": "A",
       "searchPlaceholder": "Cercar un element...",
       "pathFound": "Camí trobat ({{count}} passos)",
+      "pathsFound": "{{count}} camí(ns) trobat(s)",
+      "allPaths": "Tots els camins",
+      "maxDepth": "Profunditat màx.",
+      "highlightThisPath": "Ressaltar aquest camí",
       "noPath": "Cap camí trobat entre aquests elements",
       "pathLength": "{{count}} pas(sos)"
     }

@@ -451,6 +451,10 @@
       "to": "To",
       "searchPlaceholder": "Search an element...",
       "pathFound": "Path found ({{count}} steps)",
+      "pathsFound": "{{count}} path(s) found",
+      "allPaths": "All paths",
+      "maxDepth": "Max depth",
+      "highlightThisPath": "Highlight this path",
       "noPath": "No path found between these elements",
       "pathLength": "{{count}} step(s)"
     }

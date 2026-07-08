@@ -437,6 +437,10 @@
       "to": "A",
       "searchPlaceholder": "Cerca un elemento...",
       "pathFound": "Percorso trovato ({{count}} passi)",
+      "pathsFound": "{{count}} percorso/i trovato/i",
+      "allPaths": "Tutti i percorsi",
+      "maxDepth": "Profondità max",
+      "highlightThisPath": "Evidenzia questo percorso",
       "noPath": "Nessun percorso trovato tra questi elementi",
       "pathLength": "{{count}} passo/i"
     }
