@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.44.2
+
+### Sécurité / Maintenance
+- **Mises à jour de sécurité des dépendances** : correction de 14 vulnérabilités (6 hautes) — `dompurify` 3.4.11 (bypass XSS), `react-router-dom` 7.18.1 (RCE/CSRF/DoS), `ws` 8.21.0 (fuite mémoire/DoS), `vite` 7.3.6, `postcss` 8.5.16, et divers transitifs. `npm audit` : 0 vulnérabilité.
+- **React Flow** (`@xyflow/react`) mis à jour en 12.11.2.
+
 ## 2.44.1
 
 ### Features
