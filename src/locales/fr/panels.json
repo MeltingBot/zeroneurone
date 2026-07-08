@@ -464,7 +464,8 @@
       "maxLength": "Longueur max",
       "found": "{{count}} cycle(s) trouvé(s)",
       "none": "Aucun cycle détecté",
-      "highlightThisCycle": "Mettre ce cycle en évidence"
+      "highlightThisCycle": "Mettre ce cycle en évidence",
+      "respectDirection": "Respecter le sens des liens"
     }
   },
   "views": {

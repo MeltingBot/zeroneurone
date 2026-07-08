@@ -450,7 +450,8 @@
       "maxLength": "Maks. długość",
       "found": "Znaleziono {{count}} cykli",
       "none": "Nie wykryto cykli",
-      "highlightThisCycle": "Podświetl ten cykl"
+      "highlightThisCycle": "Podświetl ten cykl",
+      "respectDirection": "Uwzględnij kierunek połączeń"
     }
   },
   "views": {

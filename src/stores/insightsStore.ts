@@ -38,7 +38,7 @@ interface InsightsState {
   findPaths: (fromId: ElementId, toId: ElementId) => void;
   findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number) => void;
   highlightPath: (pathIndex: number) => void;
-  findCycles: (maxLength?: number) => void;
+  findCycles: (maxLength?: number, directed?: boolean) => void;
   highlightCycle: (cycleIndex: number) => void;
   clearCycles: () => void;
   clearHighlight: () => void;
@@ -211,8 +211,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     }
   },
 
-  findCycles: (maxLength = 6) => {
-    const cycles = insightsService.findCycles(maxLength);
+  findCycles: (maxLength = 6, directed = false) => {
+    const cycles = insightsService.findCycles(maxLength, 100, directed);
     set({ cycles });
 
     // Highlight the union of every cycle so all loops are visible at once.

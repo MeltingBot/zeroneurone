@@ -83,6 +83,8 @@ export function InsightsPanel() {
   // Cycle detection
   const [cycleMode, setCycleMode] = useState(false);
   const [cycleMaxLength, setCycleMaxLength] = useState(6);
+  // Respect link direction: only directed circuits (forward/backward), neutral links stay bidirectional
+  const [cycleDirected, setCycleDirected] = useState(false);
 
   // Auto-compute insights when data changes (debounced)
   useEffect(() => {
@@ -351,8 +353,8 @@ export function InsightsPanel() {
   // Cycle detection
   const handleStartCycles = useCallback(() => {
     setCycleMode(true);
-    findCycles(cycleMaxLength);
-  }, [findCycles, cycleMaxLength]);
+    findCycles(cycleMaxLength, cycleDirected);
+  }, [findCycles, cycleMaxLength, cycleDirected]);
 
   const handleCancelCycles = useCallback(() => {
     setCycleMode(false);
@@ -360,13 +362,13 @@ export function InsightsPanel() {
     clearHighlight();
   }, [clearCycles, clearHighlight]);
 
-  // Re-run cycle detection when the max length changes while active.
+  // Re-run cycle detection when the max length or direction mode changes.
   useEffect(() => {
     if (cycleMode) {
-      findCycles(cycleMaxLength);
+      findCycles(cycleMaxLength, cycleDirected);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cycleMaxLength]);
+  }, [cycleMaxLength, cycleDirected]);
 
   // Run shortest-path or all-paths search depending on the active mode.
   const runPathSearch = useCallback(
@@ -657,6 +659,16 @@ export function InsightsPanel() {
                     }
                     className="w-12 px-1 py-0.5 rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
                   />
+                </label>
+
+                <label className="flex items-center gap-1.5 text-[10px] text-text-secondary cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cycleDirected}
+                    onChange={(e) => setCycleDirected(e.target.checked)}
+                    className="accent-accent"
+                  />
+                  {t('insights.cycles.respectDirection')}
                 </label>
 
                 {cycles.length > 0 ? (

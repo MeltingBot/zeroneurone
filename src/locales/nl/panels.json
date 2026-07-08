@@ -450,7 +450,8 @@
       "maxLength": "Max. lengte",
       "found": "{{count}} cyclus/cycli gevonden",
       "none": "Geen cyclus gevonden",
-      "highlightThisCycle": "Deze cyclus markeren"
+      "highlightThisCycle": "Deze cyclus markeren",
+      "respectDirection": "Richting van koppelingen respecteren"
     }
   },
   "views": {

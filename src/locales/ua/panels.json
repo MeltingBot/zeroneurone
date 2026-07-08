@@ -450,7 +450,8 @@
       "maxLength": "Макс. довжина",
       "found": "Знайдено {{count}} цикл(ів)",
       "none": "Циклів не виявлено",
-      "highlightThisCycle": "Підсвітити цей цикл"
+      "highlightThisCycle": "Підсвітити цей цикл",
+      "respectDirection": "Враховувати напрямок зв'язків"
     }
   },
   "views": {

@@ -131,7 +131,9 @@ Détectez les **cycles** (boucles fermées de relations, sans élément répét�
 2. Réglez la **longueur maximale** (nombre d'éléments dans la boucle, 3 à 10) pour borner la recherche
 3. Les cycles trouvés sont listés (triés du plus court au plus long) ; l'ensemble est surligné sur le canvas, un clic sur un cycle met en évidence celui-ci seul
 
-Chaque cycle n'est listé qu'une fois (les rotations et le sens de parcours équivalents sont dédupliqués). La recherche est non orientée : la boucle existe indépendamment du sens des liens.
+Chaque cycle n'est listé qu'une fois (les rotations et le sens de parcours équivalents sont dédupliqués). Par défaut la recherche est **non orientée** : la boucle existe indépendamment du sens des liens.
+
+Cochez **Respecter le sens des liens** pour ne garder que les **circuits dirigés** — chaque lien doit être franchi dans son sens (A→B→C→A en suivant les flèches). C'est le mode pertinent pour les circuits financiers ou les flux. Un lien `forward` n'est franchissable que de la source vers la cible, un lien `backward` que dans l'autre sens ; les liens **sans direction** (ou bidirectionnels) restent franchissables dans les deux sens et ne bloquent donc pas un circuit.
 
 ---
 

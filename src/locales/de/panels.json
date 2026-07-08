@@ -450,7 +450,8 @@
       "maxLength": "Max. Länge",
       "found": "{{count}} Zyklus/Zyklen gefunden",
       "none": "Kein Zyklus erkannt",
-      "highlightThisCycle": "Diesen Zyklus hervorheben"
+      "highlightThisCycle": "Diesen Zyklus hervorheben",
+      "respectDirection": "Kantenrichtung beachten"
     }
   },
   "views": {

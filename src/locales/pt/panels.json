@@ -450,7 +450,8 @@
       "maxLength": "Comprimento máx.",
       "found": "{{count}} ciclo(s) encontrado(s)",
       "none": "Nenhum ciclo detetado",
-      "highlightThisCycle": "Realçar este ciclo"
+      "highlightThisCycle": "Realçar este ciclo",
+      "respectDirection": "Respeitar a direção das ligações"
     }
   },
   "views": {

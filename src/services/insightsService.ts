@@ -42,11 +42,13 @@ class InsightsService {
       this.graph.addNode(element.id, { label: element.label });
     }
 
-    // Add edges
+    // Add edges. Store the link direction so cycle detection can optionally
+    // respect it (forward: from→to, backward: to→from, both/none: either way).
     for (const link of links) {
       // Only add edge if both nodes exist
       if (this.graph.hasNode(link.fromId) && this.graph.hasNode(link.toId)) {
-        this.graph.addEdge(link.fromId, link.toId, { id: link.id });
+        const direction = link.direction ?? (link.directed ? 'forward' : 'none');
+        this.graph.addEdge(link.fromId, link.toId, { id: link.id, direction });
       }
     }
   }
@@ -315,14 +317,32 @@ class InsightsService {
    * Each cycle is reported once: enumeration starts only from the cycle's
    * lowest-indexed node, and a mirror guard (second node < last node) discards
    * the reverse traversal of the same loop.
+   *
+   * When `directed` is true, an edge is only traversable in the direction of the
+   * link: `forward` (from→to), `backward` (to→from), while `both`/`none` stay
+   * bidirectional (a neutral link does not block a circuit). The mirror guard is
+   * dropped in that case since a directed cycle has a single traversal sense.
    */
-  findCycles(maxLength = 6, maxCycles = 100): CycleResult[] {
+  findCycles(maxLength = 6, maxCycles = 100, directed = false): CycleResult[] {
     if (!this.graph) return [];
     const graph = this.graph;
 
     const nodes = graph.nodes();
     const indexOf = new Map<string, number>();
     nodes.forEach((n, i) => indexOf.set(n, i));
+
+    // In directed mode, can we step from `from` to `to` following link direction?
+    const canTraverse = (from: ElementId, to: ElementId): boolean => {
+      let ok = false;
+      graph.forEachEdge(from, to, (_edge, attrs, source, target) => {
+        if (ok) return;
+        const d = (attrs as { direction?: string }).direction;
+        if (d === 'both' || d === 'none' || d == null) ok = true;
+        else if (d === 'forward' && source === from && target === to) ok = true;
+        else if (d === 'backward' && source === to && target === from) ok = true;
+      });
+      return ok;
+    };
 
     const results: CycleResult[] = [];
     const path: ElementId[] = [];
@@ -333,12 +353,18 @@ class InsightsService {
       graph.forEachNeighbor(current, (neighbor: string) => {
         if (results.length >= maxCycles) return;
         if (neighbor === start && path.length >= 3) {
-          // Closed the loop back to start. Keep only one of the two mirror
-          // traversals by requiring the second node to precede the last node.
-          const second = indexOf.get(path[1]) ?? 0;
-          const last = indexOf.get(path[path.length - 1]) ?? 0;
-          if (second < last) {
-            results.push({ cycle: [...path], length: path.length });
+          if (directed) {
+            // Directed cycle: the closing edge must follow the link direction.
+            if (canTraverse(current, start)) {
+              results.push({ cycle: [...path], length: path.length });
+            }
+          } else {
+            // Undirected: keep only one of the two mirror traversals.
+            const second = indexOf.get(path[1]) ?? 0;
+            const last = indexOf.get(path[path.length - 1]) ?? 0;
+            if (second < last) {
+              results.push({ cycle: [...path], length: path.length });
+            }
           }
           return;
         }
@@ -347,6 +373,7 @@ class InsightsService {
         const startIdx = indexOf.get(start) ?? 0;
         const nbIdx = indexOf.get(neighbor) ?? 0;
         if (nbIdx > startIdx && !onPath.has(neighbor) && path.length < maxLength) {
+          if (directed && !canTraverse(current, neighbor)) return;
           path.push(neighbor);
           onPath.add(neighbor);
           dfs(start, neighbor);

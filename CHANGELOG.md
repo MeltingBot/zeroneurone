@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.47.0
+
+### Features
+- **Cycles orientés (circuits dirigés)** — la détection de cycles gagne une option **Respecter le sens des liens**. Décochée (défaut), comportement inchangé (boucles non orientées). Cochée, seuls les **circuits dirigés** sont retenus : chaque lien doit être franchi dans son sens (`forward` source→cible, `backward` cible→source), tandis que les liens sans direction ou bidirectionnels restent franchissables dans les deux sens (un lien neutre ne bloque pas un circuit). Mode pertinent pour les circuits financiers/flux. La direction des liens est désormais stockée sur le graphe d'analyse. Doc FR/EN + i18n 11 langues.
+
 ## 2.46.0
 
 ### Features

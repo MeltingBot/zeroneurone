@@ -450,7 +450,8 @@
       "maxLength": "Gehieneko luzera",
       "found": "{{count}} ziklo aurkitu dira",
       "none": "Ez da ziklorik detektatu",
-      "highlightThisCycle": "Nabarmendu ziklo hau"
+      "highlightThisCycle": "Nabarmendu ziklo hau",
+      "respectDirection": "Errespetatu esteken norabidea"
     }
   },
   "views": {

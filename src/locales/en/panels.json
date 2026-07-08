@@ -464,7 +464,8 @@
       "maxLength": "Max length",
       "found": "{{count}} cycle(s) found",
       "none": "No cycle detected",
-      "highlightThisCycle": "Highlight this cycle"
+      "highlightThisCycle": "Highlight this cycle",
+      "respectDirection": "Respect link direction"
     }
   },
   "views": {

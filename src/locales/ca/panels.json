@@ -450,7 +450,8 @@
       "maxLength": "Longitud màx.",
       "found": "{{count}} cicle(s) trobat(s)",
       "none": "Cap cicle detectat",
-      "highlightThisCycle": "Ressaltar aquest cicle"
+      "highlightThisCycle": "Ressaltar aquest cicle",
+      "respectDirection": "Respectar el sentit dels enllaços"
     }
   },
   "views": {
