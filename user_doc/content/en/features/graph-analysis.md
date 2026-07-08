@@ -121,6 +121,20 @@ Enable **All paths** to enumerate **every route** between the two elements, not 
 
 ---
 
+## Cycles
+
+Detect **cycles** (closed loops of relationships, with no repeated element) in the network. Useful for spotting **circuits** — circular transaction chains, cross-shareholding structures, looping relationships.
+
+### Usage
+
+1. **Insights** → **Detect cycles**
+2. Set the **maximum length** (number of elements in the loop, 3 to 10) to bound the search
+3. Cycles found are listed (sorted shortest to longest); the union is highlighted on the canvas, clicking a cycle highlights that one only
+
+Each cycle is listed once (equivalent rotations and traversal directions are deduplicated). The search is undirected: the loop exists regardless of link direction.
+
+---
+
 ## Global Metrics
 
 | Metric | Description |

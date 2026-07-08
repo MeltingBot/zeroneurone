@@ -443,6 +443,14 @@
       "highlightThisPath": "Підсвітити цей шлях",
       "noPath": "Шлях між цими елементами не знайдено",
       "pathLength": "{{count}} кроків"
+    },
+    "cycles": {
+      "button": "Виявити цикли",
+      "title": "Цикли",
+      "maxLength": "Макс. довжина",
+      "found": "Знайдено {{count}} цикл(ів)",
+      "none": "Циклів не виявлено",
+      "highlightThisCycle": "Підсвітити цей цикл"
     }
   },
   "views": {

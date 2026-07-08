@@ -443,6 +443,14 @@
       "highlightThisPath": "Ressaltar aquest camí",
       "noPath": "Cap camí trobat entre aquests elements",
       "pathLength": "{{count}} pas(sos)"
+    },
+    "cycles": {
+      "button": "Detectar cicles",
+      "title": "Cicles",
+      "maxLength": "Longitud màx.",
+      "found": "{{count}} cicle(s) trobat(s)",
+      "none": "Cap cicle detectat",
+      "highlightThisCycle": "Ressaltar aquest cicle"
     }
   },
   "views": {

@@ -443,6 +443,14 @@
       "highlightThisPath": "Realçar este caminho",
       "noPath": "Nenhum caminho encontrado entre estes elementos",
       "pathLength": "{{count}} passo(s)"
+    },
+    "cycles": {
+      "button": "Detetar ciclos",
+      "title": "Ciclos",
+      "maxLength": "Comprimento máx.",
+      "found": "{{count}} ciclo(s) encontrado(s)",
+      "none": "Nenhum ciclo detetado",
+      "highlightThisCycle": "Realçar este ciclo"
     }
   },
   "views": {

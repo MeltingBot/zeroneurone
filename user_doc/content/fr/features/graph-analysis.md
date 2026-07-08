@@ -121,6 +121,20 @@ Activez **Tous les chemins** pour énumérer **toutes les routes** entre les deu
 
 ---
 
+## Cycles
+
+Détectez les **cycles** (boucles fermées de relations, sans élément répété) dans le réseau. Utile pour repérer des **circuits** — chaînes de transactions circulaires, structures de participations croisées, relations en boucle.
+
+### Utilisation
+
+1. **Insights** → **Détecter les cycles**
+2. Réglez la **longueur maximale** (nombre d'éléments dans la boucle, 3 à 10) pour borner la recherche
+3. Les cycles trouvés sont listés (triés du plus court au plus long) ; l'ensemble est surligné sur le canvas, un clic sur un cycle met en évidence celui-ci seul
+
+Chaque cycle n'est listé qu'une fois (les rotations et le sens de parcours équivalents sont dédupliqués). La recherche est non orientée : la boucle existe indépendamment du sens des liens.
+
+---
+
 ## Métriques globales
 
 | Métrique | Description |

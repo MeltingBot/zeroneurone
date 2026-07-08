@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.46.0
+
+### Features
+- **Détection de cycles** — nouvelle analyse dans le panneau Insights qui énumère les **cycles** (boucles fermées de relations, sans élément répété) du réseau, utile pour repérer des circuits (transactions circulaires, participations croisées). Recherche non orientée bornée par une **longueur maximale** réglable (3 à 10) et un plafond de résultats. Chaque cycle est dédupliqué (rotations et sens de parcours équivalents fusionnés) et listé du plus court au plus long ; l'union est surlignée sur le canvas, un clic sur un cycle met en évidence celui-ci seul. Doc FR/EN + i18n 11 langues.
+
 ## 2.45.0
 
 ### Features

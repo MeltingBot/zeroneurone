@@ -443,6 +443,14 @@
       "highlightThisPath": "Podświetl tę ścieżkę",
       "noPath": "Nie znaleziono ścieżki między tymi elementami",
       "pathLength": "{{count}} kroków"
+    },
+    "cycles": {
+      "button": "Wykryj cykle",
+      "title": "Cykle",
+      "maxLength": "Maks. długość",
+      "found": "Znaleziono {{count}} cykli",
+      "none": "Nie wykryto cykli",
+      "highlightThisCycle": "Podświetl ten cykl"
     }
   },
   "views": {

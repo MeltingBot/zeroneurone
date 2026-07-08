@@ -443,6 +443,14 @@
       "highlightThisPath": "Nabarmendu bide hau",
       "noPath": "Ez da biderik aurkitu elementu hauen artean",
       "pathLength": "{{count}} urrats"
+    },
+    "cycles": {
+      "button": "Zikloak detektatu",
+      "title": "Zikloak",
+      "maxLength": "Gehieneko luzera",
+      "found": "{{count}} ziklo aurkitu dira",
+      "none": "Ez da ziklorik detektatu",
+      "highlightThisCycle": "Nabarmendu ziklo hau"
     }
   },
   "views": {

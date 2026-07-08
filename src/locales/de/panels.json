@@ -443,6 +443,14 @@
       "highlightThisPath": "Diesen Pfad hervorheben",
       "noPath": "Kein Pfad zwischen diesen Elementen gefunden",
       "pathLength": "{{count}} Schritt(e)"
+    },
+    "cycles": {
+      "button": "Zyklen erkennen",
+      "title": "Zyklen",
+      "maxLength": "Max. Länge",
+      "found": "{{count}} Zyklus/Zyklen gefunden",
+      "none": "Kein Zyklus erkannt",
+      "highlightThisCycle": "Diesen Zyklus hervorheben"
     }
   },
   "views": {

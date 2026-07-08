@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
-import { insightsService, type PathResult } from '../services/insightsService';
+import { insightsService, type PathResult, type CycleResult } from '../services/insightsService';
 import { graphWorkerService } from '../services/graphWorkerService';
 
 interface InsightsState {
@@ -17,13 +17,16 @@ interface InsightsState {
   computeProgress: number;
   computePhase: string;
   highlightedElementIds: Set<ElementId>;
-  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | null;
+  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | null;
   selectedClusterId: number | null;
 
   // Path finding
   pathResults: PathResult[];
   pathFromId: ElementId | null;
   pathToId: ElementId | null;
+
+  // Cycle detection
+  cycles: CycleResult[];
 
   // Actions
   computeInsights: (elements: Element[], links: Link[]) => void;
@@ -35,6 +38,9 @@ interface InsightsState {
   findPaths: (fromId: ElementId, toId: ElementId) => void;
   findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number) => void;
   highlightPath: (pathIndex: number) => void;
+  findCycles: (maxLength?: number) => void;
+  highlightCycle: (cycleIndex: number) => void;
+  clearCycles: () => void;
   clearHighlight: () => void;
   clearPaths: () => void;
   clear: () => void;
@@ -59,6 +65,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   pathResults: [],
   pathFromId: null,
   pathToId: null,
+
+  cycles: [],
 
   // Actions
   computeInsights: (elements, links) => {
@@ -203,6 +211,41 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     }
   },
 
+  findCycles: (maxLength = 6) => {
+    const cycles = insightsService.findCycles(maxLength);
+    set({ cycles });
+
+    // Highlight the union of every cycle so all loops are visible at once.
+    if (cycles.length > 0) {
+      const union = new Set<ElementId>();
+      for (const c of cycles) {
+        for (const nodeId of c.cycle) union.add(nodeId);
+      }
+      set({
+        highlightedElementIds: union,
+        highlightType: 'cycle',
+        selectedClusterId: null,
+      });
+    } else {
+      set({ highlightedElementIds: new Set(), highlightType: null });
+    }
+  },
+
+  highlightCycle: (cycleIndex) => {
+    const { cycles } = get();
+    if (cycles[cycleIndex]) {
+      set({
+        highlightedElementIds: new Set(cycles[cycleIndex].cycle),
+        highlightType: 'cycle',
+        selectedClusterId: null,
+      });
+    }
+  },
+
+  clearCycles: () => {
+    set({ cycles: [] });
+  },
+
   clearHighlight: () => {
     set({
       highlightedElementIds: new Set(),
@@ -237,6 +280,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathResults: [],
       pathFromId: null,
       pathToId: null,
+      cycles: [],
     });
   },
 }));

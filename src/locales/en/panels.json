@@ -457,6 +457,14 @@
       "highlightThisPath": "Highlight this path",
       "noPath": "No path found between these elements",
       "pathLength": "{{count}} step(s)"
+    },
+    "cycles": {
+      "button": "Detect cycles",
+      "title": "Cycles",
+      "maxLength": "Max length",
+      "found": "{{count}} cycle(s) found",
+      "none": "No cycle detected",
+      "highlightThisCycle": "Highlight this cycle"
     }
   },
   "views": {

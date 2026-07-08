@@ -18,6 +18,13 @@ export interface PathResult {
   length: number;
 }
 
+export interface CycleResult {
+  /** Node sequence of the cycle (start node not repeated at the end) */
+  cycle: ElementId[];
+  /** Number of nodes/edges in the cycle */
+  length: number;
+}
+
 class InsightsService {
   private graph: Graph | null = null;
   private elements: Element[] = [];
@@ -293,6 +300,71 @@ class InsightsService {
 
     try {
       dfs(fromId);
+    } catch {
+      return results.sort((a, b) => a.length - b.length);
+    }
+
+    return results.sort((a, b) => a.length - b.length);
+  }
+
+  /**
+   * Enumerate simple cycles (closed loops with no repeated node) in the graph,
+   * bounded by `maxLength` nodes and capped by `maxCycles`. Useful for spotting
+   * circular relationships (e.g. financial circuits). Traversal is undirected.
+   *
+   * Each cycle is reported once: enumeration starts only from the cycle's
+   * lowest-indexed node, and a mirror guard (second node < last node) discards
+   * the reverse traversal of the same loop.
+   */
+  findCycles(maxLength = 6, maxCycles = 100): CycleResult[] {
+    if (!this.graph) return [];
+    const graph = this.graph;
+
+    const nodes = graph.nodes();
+    const indexOf = new Map<string, number>();
+    nodes.forEach((n, i) => indexOf.set(n, i));
+
+    const results: CycleResult[] = [];
+    const path: ElementId[] = [];
+    const onPath = new Set<ElementId>();
+
+    const dfs = (start: ElementId, current: ElementId): void => {
+      if (results.length >= maxCycles) return;
+      graph.forEachNeighbor(current, (neighbor: string) => {
+        if (results.length >= maxCycles) return;
+        if (neighbor === start && path.length >= 3) {
+          // Closed the loop back to start. Keep only one of the two mirror
+          // traversals by requiring the second node to precede the last node.
+          const second = indexOf.get(path[1]) ?? 0;
+          const last = indexOf.get(path[path.length - 1]) ?? 0;
+          if (second < last) {
+            results.push({ cycle: [...path], length: path.length });
+          }
+          return;
+        }
+        // Extend only to higher-indexed, unvisited nodes so `start` stays the
+        // cycle's minimum and each simple cycle is enumerated a single time.
+        const startIdx = indexOf.get(start) ?? 0;
+        const nbIdx = indexOf.get(neighbor) ?? 0;
+        if (nbIdx > startIdx && !onPath.has(neighbor) && path.length < maxLength) {
+          path.push(neighbor);
+          onPath.add(neighbor);
+          dfs(start, neighbor);
+          path.pop();
+          onPath.delete(neighbor);
+        }
+      });
+    };
+
+    try {
+      for (const start of nodes) {
+        if (results.length >= maxCycles) break;
+        path.length = 0;
+        onPath.clear();
+        path.push(start);
+        onPath.add(start);
+        dfs(start, start);
+      }
     } catch {
       return results.sort((a, b) => a.length - b.length);
     }

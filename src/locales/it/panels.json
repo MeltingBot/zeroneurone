@@ -443,6 +443,14 @@
       "highlightThisPath": "Evidenzia questo percorso",
       "noPath": "Nessun percorso trovato tra questi elementi",
       "pathLength": "{{count}} passo/i"
+    },
+    "cycles": {
+      "button": "Rileva cicli",
+      "title": "Cicli",
+      "maxLength": "Lunghezza max",
+      "found": "{{count}} ciclo/i trovato/i",
+      "none": "Nessun ciclo rilevato",
+      "highlightThisCycle": "Evidenzia questo ciclo"
     }
   },
   "views": {

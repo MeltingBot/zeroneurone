@@ -443,6 +443,14 @@
       "highlightThisPath": "Dit pad markeren",
       "noPath": "Geen pad gevonden tussen deze elementen",
       "pathLength": "{{count}} stap(pen)"
+    },
+    "cycles": {
+      "button": "Cycli detecteren",
+      "title": "Cycli",
+      "maxLength": "Max. lengte",
+      "found": "{{count}} cyclus/cycli gevonden",
+      "none": "Geen cyclus gevonden",
+      "highlightThisCycle": "Deze cyclus markeren"
     }
   },
   "views": {

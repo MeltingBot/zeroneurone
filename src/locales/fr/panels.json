@@ -457,6 +457,14 @@
       "highlightThisPath": "Mettre ce chemin en évidence",
       "noPath": "Aucun chemin trouvé entre ces éléments",
       "pathLength": "{{count}} étape(s)"
+    },
+    "cycles": {
+      "button": "Détecter les cycles",
+      "title": "Cycles",
+      "maxLength": "Longueur max",
+      "found": "{{count}} cycle(s) trouvé(s)",
+      "none": "Aucun cycle détecté",
+      "highlightThisCycle": "Mettre ce cycle en évidence"
     }
   },
   "views": {

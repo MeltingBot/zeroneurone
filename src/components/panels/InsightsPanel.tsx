@@ -14,6 +14,7 @@ import {
   Eye,
   Filter,
   Route,
+  RotateCw,
   X,
   ArrowRight,
   Merge,
@@ -57,6 +58,10 @@ export function InsightsPanel() {
     findPaths,
     findAllPaths,
     highlightPath,
+    cycles,
+    findCycles,
+    highlightCycle,
+    clearCycles,
     clearHighlight,
     clearPaths,
   } = useInsightsStore();
@@ -75,6 +80,9 @@ export function InsightsPanel() {
   // All-paths mode: enumerate every simple path (bounded depth) instead of the shortest
   const [allPathsMode, setAllPathsMode] = useState(false);
   const [pathMaxDepth, setPathMaxDepth] = useState(5);
+  // Cycle detection
+  const [cycleMode, setCycleMode] = useState(false);
+  const [cycleMaxLength, setCycleMaxLength] = useState(6);
 
   // Auto-compute insights when data changes (debounced)
   useEffect(() => {
@@ -340,6 +348,26 @@ export function InsightsPanel() {
     clearHighlight();
   }, [clearPaths, clearHighlight]);
 
+  // Cycle detection
+  const handleStartCycles = useCallback(() => {
+    setCycleMode(true);
+    findCycles(cycleMaxLength);
+  }, [findCycles, cycleMaxLength]);
+
+  const handleCancelCycles = useCallback(() => {
+    setCycleMode(false);
+    clearCycles();
+    clearHighlight();
+  }, [clearCycles, clearHighlight]);
+
+  // Re-run cycle detection when the max length changes while active.
+  useEffect(() => {
+    if (cycleMode) {
+      findCycles(cycleMaxLength);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cycleMaxLength]);
+
   // Run shortest-path or all-paths search depending on the active mode.
   const runPathSearch = useCallback(
     (fromId: string, toId: string) => {
@@ -583,6 +611,89 @@ export function InsightsPanel() {
                   <div className="mt-2 p-2 bg-warning/10 border border-warning/30 rounded">
                     <div className="text-xs text-warning">
                       {t('insights.paths.noPath')}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Cycle Detection Section */}
+        <div className="border-b border-border-default">
+          <div className="p-3">
+            {!cycleMode ? (
+              <button
+                onClick={handleStartCycles}
+                disabled={elements.length < 3}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-bg-secondary hover:bg-bg-tertiary border border-border-default rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RotateCw size={14} />
+                {t('insights.cycles.button')}
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-text-secondary">
+                    {t('insights.cycles.title')}
+                  </span>
+                  <button
+                    onClick={handleCancelCycles}
+                    className="p-1 text-text-tertiary hover:text-text-primary"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+
+                <label className="flex items-center justify-between gap-1 text-[10px] text-text-tertiary">
+                  {t('insights.cycles.maxLength')}
+                  <input
+                    type="number"
+                    min={3}
+                    max={10}
+                    value={cycleMaxLength}
+                    onChange={(e) =>
+                      setCycleMaxLength(Math.max(3, Math.min(10, Number(e.target.value) || 3)))
+                    }
+                    className="w-12 px-1 py-0.5 rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+                  />
+                </label>
+
+                {cycles.length > 0 ? (
+                  <div className="mt-1 p-2 bg-accent/10 border border-accent/30 rounded space-y-1">
+                    <div className="text-xs text-accent font-medium mb-1">
+                      {t('insights.cycles.found', { count: cycles.length })}
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {cycles.map((result, cycleIdx) => (
+                        <div
+                          key={cycleIdx}
+                          className="flex flex-wrap items-center gap-1 text-xs text-text-secondary px-1 py-0.5 rounded cursor-pointer hover:bg-bg-secondary"
+                          onClick={() => highlightCycle(cycleIdx)}
+                          title={t('insights.cycles.highlightThisCycle')}
+                        >
+                          <span className="text-text-tertiary tabular-nums mr-1">
+                            {result.length}
+                          </span>
+                          {result.cycle.map((nodeId) => (
+                            <span key={nodeId} className="flex items-center gap-1">
+                              <span className="px-1.5 py-0.5 bg-bg-primary rounded">
+                                {getElementLabel(nodeId)}
+                              </span>
+                              <ArrowRight size={10} className="text-text-tertiary" />
+                            </span>
+                          ))}
+                          <span className="px-1.5 py-0.5 bg-bg-primary rounded">
+                            {getElementLabel(result.cycle[0])}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-1 p-2 bg-warning/10 border border-warning/30 rounded">
+                    <div className="text-xs text-warning">
+                      {t('insights.cycles.none')}
                     </div>
                   </div>
                 )}
