@@ -69,6 +69,8 @@
       "csvDesc": "Elementu eta lotura taulak bereizita",
       "graphml": "GraphML",
       "graphmlDesc": "Grafo formatu estandarra (Gephi, yEd)",
+      "gexf": "GEXF",
+      "gexfDesc": "Gephi formatu natiboa (posizioak, koloreak)",
       "geojson": "GeoJSON",
       "geojsonDesc": "GIS formatu geografikoa (QGIS, ArcGIS)",
       "png": "PNG (arbelaren irudia)",

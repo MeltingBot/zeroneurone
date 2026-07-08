@@ -69,6 +69,8 @@
       "csvDesc": "Separate elements and links tables",
       "graphml": "GraphML",
       "graphmlDesc": "Standard graph format (Gephi, yEd)",
+      "gexf": "GEXF",
+      "gexfDesc": "Native Gephi format (positions, colors)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Geographic format for GIS (QGIS, ArcGIS)",
       "png": "PNG (canvas image)",

@@ -69,6 +69,8 @@
       "csvDesc": "Gescheiden tabellen voor elementen en verbindingen",
       "graphml": "GraphML",
       "graphmlDesc": "Standaard graafformaat (Gephi, yEd)",
+      "gexf": "GEXF",
+      "gexfDesc": "Native Gephi-formaat (posities, kleuren)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Geografisch formaat voor GIS (QGIS, ArcGIS)",
       "png": "PNG (afbeelding van canvas)",

@@ -17,6 +17,7 @@ const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; 
   { format: 'json', labelKey: 'json', descKey: 'jsonDesc', icon: FileJson },
   { format: 'csv', labelKey: 'csv', descKey: 'csvDesc', icon: FileSpreadsheet },
   { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
+  { format: 'gexf', labelKey: 'gexf', descKey: 'gexfDesc', icon: FileText },
   { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
 ];
 

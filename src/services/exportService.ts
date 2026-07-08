@@ -6,7 +6,7 @@ import { generateUUID, getExtension } from '../utils';
 import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { encryptZip } from './encryption/zipEncryption';
 
-export type ExportFormat = 'json' | 'csv' | 'graphml' | 'geojson' | 'zip';
+export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'zip';
 
 /** Asset metadata for export (without binary data) */
 export interface ExportedAssetMeta {
@@ -395,6 +395,113 @@ class ExportService {
   }
 
   /**
+   * Export to GEXF 1.3 format (Gephi native), including visual attributes
+   * (position, color, size) via the viz namespace so the graph opens in Gephi
+   * with the same layout and colors as on the canvas.
+   */
+  exportToGEXF(
+    dossier: Dossier,
+    elements: Element[],
+    links: Link[]
+  ): string {
+    const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
+    const gexfOpen =
+      '<gexf xmlns="http://gexf.net/1.3" xmlns:viz="http://gexf.net/1.3/viz" version="1.3">';
+
+    const meta = `  <meta>
+    <creator>ZeroNeurone</creator>
+    <description>${this.escapeXML(dossier.name ?? '')}</description>
+  </meta>`;
+
+    const graphOpen = `  <graph defaultedgetype="directed" mode="static">`;
+
+    const nodeAttrs = `    <attributes class="node">
+      <attribute id="notes" title="notes" type="string"/>
+      <attribute id="tags" title="tags" type="string"/>
+    </attributes>`;
+    const edgeAttrs = `    <attributes class="edge">
+      <attribute id="confidence" title="confidence" type="integer"/>
+    </attributes>`;
+
+    const nodes = elements
+      .map((el) => {
+        const rgb = this.hexToRgb(el.visual?.color);
+        const size = this.sizeToNumber(el.visual?.size, el.visual?.customWidth);
+        const tags = Array.isArray(el.tags) ? el.tags.join(', ') : '';
+        return `      <node id="${el.id}" label="${this.escapeXML(el.label)}">
+        <attvalues>
+          <attvalue for="notes" value="${this.escapeXML(el.notes ?? '')}"/>
+          <attvalue for="tags" value="${this.escapeXML(tags)}"/>
+        </attvalues>
+        <viz:color r="${rgb.r}" g="${rgb.g}" b="${rgb.b}"/>
+        <viz:position x="${el.position.x}" y="${-el.position.y}" z="0"/>
+        <viz:size value="${size}"/>
+      </node>`;
+      })
+      .join('\n');
+
+    const edges = links
+      .map((link) => {
+        // Map ZN direction to GEXF edge type; 'backward' swaps endpoints.
+        const dir = link.direction ?? (link.directed ? 'forward' : 'none');
+        let source = link.fromId;
+        let target = link.toId;
+        let type = 'directed';
+        if (dir === 'none') type = 'undirected';
+        else if (dir === 'both') type = 'mutual';
+        else if (dir === 'backward') {
+          source = link.toId;
+          target = link.fromId;
+        }
+        const label = link.label ? ` label="${this.escapeXML(link.label)}"` : '';
+        const confidence =
+          typeof link.confidence === 'number'
+            ? `
+        <attvalues><attvalue for="confidence" value="${Math.round(link.confidence)}"/></attvalues>`
+            : '';
+        return `      <edge id="${link.id}" source="${source}" target="${target}" type="${type}"${label}>${confidence}
+      </edge>`;
+      })
+      .join('\n');
+
+    const body = `${graphOpen}
+${nodeAttrs}
+${edgeAttrs}
+    <nodes>
+${nodes}
+    </nodes>
+    <edges>
+${edges}
+    </edges>
+  </graph>`;
+
+    return [xmlHeader, gexfOpen, meta, body, '</gexf>'].join('\n');
+  }
+
+  /** Convert a hex color (#RGB or #RRGGBB) to 0-255 RGB, fallback to grey. */
+  private hexToRgb(hex: string | null | undefined): { r: number; g: number; b: number } {
+    const fallback = { r: 153, g: 153, b: 153 };
+    if (!hex || typeof hex !== 'string') return fallback;
+    let h = hex.trim().replace(/^#/, '');
+    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) return fallback;
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+    };
+  }
+
+  /** Map an ElementSize (preset or number) to a numeric GEXF viz:size. */
+  private sizeToNumber(size: unknown, customWidth?: number): number {
+    if (typeof customWidth === 'number' && customWidth > 0) return customWidth / 4;
+    if (typeof size === 'number' && size > 0) return size;
+    if (size === 'small') return 10;
+    if (size === 'large') return 30;
+    return 20; // medium / default
+  }
+
+  /**
    * Export to GeoJSON format for GIS tools
    * Only includes elements with valid geo coordinates
    * Links are exported as LineStrings if both endpoints have geo
@@ -584,6 +691,11 @@ class ExportService {
       case 'graphml': {
         const graphml = this.exportToGraphML(dossier, elements, links);
         this.download(graphml, `${baseName}.graphml`, 'application/xml');
+        break;
+      }
+      case 'gexf': {
+        const gexf = this.exportToGEXF(dossier, elements, links);
+        this.download(gexf, `${baseName}.gexf`, 'application/xml');
         break;
       }
       case 'geojson': {

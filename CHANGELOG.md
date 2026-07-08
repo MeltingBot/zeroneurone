@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.44.3
+
+### Features
+- **Export GEXF** (Gephi natif) — nouveau format d'export aux côtés de GraphML/GeoJSON. Génère du GEXF 1.3 avec le namespace `viz` : positions des nœuds (préservées, axe Y inversé pour un rendu à l'endroit dans Gephi), couleurs (converties en RGB), tailles, plus les notes/tags en attributs de nœud et la confiance en attribut d'arête. La direction des liens est mappée (`none`→undirected, `both`→mutual, `backward`→inversion source/cible). Symétrie avec l'import Gephi existant. i18n : 11 langues.
+
 ## 2.44.2
 
 ### Sécurité / Maintenance
