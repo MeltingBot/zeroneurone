@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.1 — Glow Edition
+
+### Fixes
+- **Glow étendu aux résultats de requête et de filtres** — la mise en évidence par halo (glow) ne se limite plus aux analyses Insights : les correspondances d'une **requête ZNQuery** et les éléments passant les **filtres** du panneau reçoivent désormais le même glow (nœuds et liens), en plus de l'atténuation des autres. Unifié via un ensemble « résultat » (éléments non atténués tant qu'un filtrage est actif) ; le mode focus seul reste sans glow (navigation). Rétro-compatible avec l'emphase Insights.
+
 ## 2.48.0
 
 ### Features

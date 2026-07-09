@@ -975,6 +975,41 @@ export function Canvas() {
     return newDimmed;
   }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
 
+  // Emphasized (glow) element IDs: the positive "result set" of an active
+  // narrowing — insights highlight, ZNQuery filter, or view filters. These are
+  // the non-dimmed elements, so they pop with a glow instead of relying only on
+  // the others being faded. Focus mode alone does not emphasize (navigational).
+  const filtersActive = useViewStore((s) => s.hasActiveFilters());
+  const prevEmphasizedRef = useRef(new Set<string>());
+  const emphasizedElementIds = useMemo(() => {
+    const narrowingActive =
+      insightsHighlightedIds.size > 0 ||
+      (queryFilterActive && queryMatchElementIds.size > 0) ||
+      filtersActive;
+
+    let next: Set<string>;
+    if (!narrowingActive) {
+      next = new Set<string>();
+    } else {
+      next = new Set<string>();
+      for (const el of elements) {
+        if (!dimmedElementIds.has(el.id)) next.add(el.id);
+      }
+    }
+
+    // Stabilize reference to avoid cascading re-renders when unchanged
+    const prev = prevEmphasizedRef.current;
+    if (next.size === prev.size) {
+      let same = true;
+      for (const id of next) {
+        if (!prev.has(id)) { same = false; break; }
+      }
+      if (same) return prev;
+    }
+    prevEmphasizedRef.current = next;
+    return next;
+  }, [elements, dimmedElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, filtersActive]);
+
   // Pre-compute comment counts per element (O(c) instead of O(n*c))
   const commentCountMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -1227,7 +1262,7 @@ export function Canvas() {
   const prevNodesByIdRef = useRef(new Map<string, Node>());
   const prevSelectedIdsRef = useRef(selectedElementIds);
   const prevDimmedIdsRef = useRef(dimmedElementIds);
-  const prevHighlightedIdsRef = useRef(insightsHighlightedIds);
+  const prevHighlightedIdsRef = useRef(emphasizedElementIds);
   const prevEditingIdRef = useRef(editingElementId);
   const prevRemoteUsersRef = useRef(remoteUsersByElement);
   const prevShowConfRef = useRef(showConfidenceIndicator);
@@ -1278,7 +1313,7 @@ export function Canvas() {
         tagDisplaySize,
         themeMode,
         isGhostNode,
-        insightsHighlightedIds.has(ns.el.id),
+        emphasizedElementIds.has(ns.el.id),
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1307,7 +1342,7 @@ export function Canvas() {
       prevNodesByIdRef.current = newNodeMap;
       prevSelectedIdsRef.current = selectedElementIds;
       prevDimmedIdsRef.current = dimmedElementIds;
-      prevHighlightedIdsRef.current = insightsHighlightedIds;
+      prevHighlightedIdsRef.current = emphasizedElementIds;
       prevEditingIdRef.current = editingElementId;
       prevRemoteUsersRef.current = remoteUsersByElement;
       prevShowConfRef.current = showConfidenceIndicator;
@@ -1355,13 +1390,13 @@ export function Canvas() {
       }
     }
 
-    // Highlighted diff (insights emphasis): rebuild nodes entering/leaving the set
-    if (prevHighlightedIdsRef.current !== insightsHighlightedIds) {
-      for (const id of insightsHighlightedIds) {
+    // Emphasis diff (glow): rebuild nodes entering/leaving the result set
+    if (prevHighlightedIdsRef.current !== emphasizedElementIds) {
+      for (const id of emphasizedElementIds) {
         if (!prevHighlightedIdsRef.current.has(id)) needsRebuild.add(id);
       }
       for (const id of prevHighlightedIdsRef.current) {
-        if (!insightsHighlightedIds.has(id)) needsRebuild.add(id);
+        if (!emphasizedElementIds.has(id)) needsRebuild.add(id);
       }
     }
 
@@ -1396,7 +1431,7 @@ export function Canvas() {
     // Update visual state refs
     prevSelectedIdsRef.current = selectedElementIds;
     prevDimmedIdsRef.current = dimmedElementIds;
-    prevHighlightedIdsRef.current = insightsHighlightedIds;
+    prevHighlightedIdsRef.current = emphasizedElementIds;
     prevEditingIdRef.current = editingElementId;
     prevRemoteUsersRef.current = remoteUsersByElement;
     prevTabMemberSetRef.current = tabMemberSet;
@@ -1450,7 +1485,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, insightsHighlightedIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -1677,10 +1712,9 @@ export function Canvas() {
       const isSelected = selectedLinkIds.has(link.id);
       const endpointDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
       const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
-      // Insights emphasis: link belongs to the highlighted structure (both endpoints highlighted)
-      const isLinkHighlighted = insightsHighlightedIds.size > 0
-        && insightsHighlightedIds.has(link.fromId)
-        && insightsHighlightedIds.has(link.toId);
+      // Emphasis (glow): link is part of the active result set — kept (not dimmed)
+      // while a narrowing is active (insights, query, or filters).
+      const isLinkHighlighted = emphasizedElementIds.size > 0 && !isLinkDimmed;
       const simplified = useSimpleEdges && !isSelected;
 
       // Reuse cached edge if visual state is unchanged (same reference → memo skip)
@@ -1793,7 +1827,7 @@ export function Canvas() {
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, insightsHighlightedIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.
