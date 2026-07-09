@@ -317,6 +317,10 @@ export function getAutocompleteSuggestions(
     case 'field':
     case 'empty': {
       const partial = ctx.kind === 'field' ? ctx.partial.toLowerCase() : '';
+      // WITHIN graph predicate (starts a clause)
+      if (!partial || 'within'.startsWith(partial)) {
+        suggestions.push({ text: 'WITHIN', type: 'keyword', description: 'n HOPS OF (…) — graph reachability' });
+      }
       // Reserved fields
       for (const f of RESERVED_FIELDS) {
         if (!partial || f.includes(partial)) {

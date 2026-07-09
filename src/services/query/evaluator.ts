@@ -2,7 +2,15 @@
 // Runs entirely in-memory on Zustand data. No IndexedDB calls.
 
 import type { Element, Link } from '../../types';
-import type { QueryNode, QueryCondition, QueryOperator, QueryValue, QueryResult } from './types';
+import type { QueryNode, QueryCondition, QueryWithin, QueryOperator, QueryValue, QueryResult } from './types';
+
+// ── Evaluation context ──
+// WITHIN is a global graph predicate: unlike per-item conditions, it needs the
+// full anchor set + adjacency. Its reachable element set is precomputed once
+// (see computeWithinSets) and looked up per item during evaluation.
+interface EvalContext {
+  withinSets: Map<QueryWithin, Set<string>>;
+}
 
 // ── Field resolution ──
 
@@ -416,20 +424,112 @@ function evaluateNode(
   node: QueryNode,
   item: DataItem,
   elements: Map<string, Element>,
+  ctx: EvalContext,
 ): boolean {
   switch (node.type) {
     case 'condition':
       return evaluateCondition(node, item, elements);
 
     case 'and':
-      return node.children.every(child => evaluateNode(child, item, elements));
+      return node.children.every(child => evaluateNode(child, item, elements, ctx));
 
     case 'or':
-      return node.children.some(child => evaluateNode(child, item, elements));
+      return node.children.some(child => evaluateNode(child, item, elements, ctx));
 
     case 'not':
-      return !evaluateNode(node.child, item, elements);
+      return !evaluateNode(node.child, item, elements, ctx);
+
+    case 'within': {
+      const reachable = ctx.withinSets.get(node);
+      if (!reachable) return false;
+      if (isLink(item)) {
+        // A link is within range when both of its endpoints are.
+        return reachable.has(item.fromId) && reachable.has(item.toId);
+      }
+      return reachable.has(item.id);
+    }
   }
+}
+
+// ── WITHIN precomputation ──
+
+/**
+ * Build an undirected adjacency map (elementId → neighbor elementIds) from links.
+ */
+function buildAdjacency(links: Link[]): Map<string, Set<string>> {
+  const adj = new Map<string, Set<string>>();
+  const add = (a: string, b: string) => {
+    let set = adj.get(a);
+    if (!set) { set = new Set(); adj.set(a, set); }
+    set.add(b);
+  };
+  for (const link of links) {
+    add(link.fromId, link.toId);
+    add(link.toId, link.fromId);
+  }
+  return adj;
+}
+
+/**
+ * BFS from every anchor up to `hops` levels over the adjacency map.
+ * Returns the set of reachable element ids (anchors included, hop 0).
+ */
+function reachableWithin(anchors: Set<string>, adj: Map<string, Set<string>>, hops: number): Set<string> {
+  const visited = new Set<string>(anchors);
+  let frontier = [...anchors];
+  for (let level = 0; level < hops && frontier.length > 0; level++) {
+    const next: string[] = [];
+    for (const node of frontier) {
+      const neighbors = adj.get(node);
+      if (!neighbors) continue;
+      for (const nb of neighbors) {
+        if (!visited.has(nb)) {
+          visited.add(nb);
+          next.push(nb);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return visited;
+}
+
+/**
+ * Precompute the reachable element set for every WITHIN node in the AST.
+ * Processed post-order so a WITHIN nested inside another's target already has
+ * its own set available when the outer anchor set is evaluated.
+ */
+function computeWithinSets(
+  ast: QueryNode,
+  elements: Element[],
+  adj: Map<string, Set<string>>,
+  elMap: Map<string, Element>,
+  ctx: EvalContext,
+): void {
+  const visit = (node: QueryNode): void => {
+    switch (node.type) {
+      case 'and':
+      case 'or':
+        node.children.forEach(visit);
+        break;
+      case 'not':
+        visit(node.child);
+        break;
+      case 'within': {
+        // Compute inner WITHIN sets first (target may contain nested WITHINs).
+        visit(node.target);
+        const anchors = new Set<string>();
+        for (const el of elements) {
+          if (evaluateNode(node.target, el, elMap, ctx)) anchors.add(el.id);
+        }
+        ctx.withinSets.set(node, reachableWithin(anchors, adj, node.hops));
+        break;
+      }
+      case 'condition':
+        break;
+    }
+  };
+  visit(ast);
 }
 
 // ── Public API ──
@@ -445,17 +545,22 @@ export function evaluateQuery(
   // Build element map if not provided
   const elMap = elementMap ?? new Map(elements.map(e => [e.id, e]));
 
+  // Precompute graph-reachability sets for any WITHIN predicates.
+  const ctx: EvalContext = { withinSets: new Map() };
+  const adj = buildAdjacency(links);
+  computeWithinSets(ast, elements, adj, elMap, ctx);
+
   const matchingElements = new Set<string>();
   const matchingLinks = new Set<string>();
 
   for (const el of elements) {
-    if (evaluateNode(ast, el, elMap)) {
+    if (evaluateNode(ast, el, elMap, ctx)) {
       matchingElements.add(el.id);
     }
   }
 
   for (const link of links) {
-    if (evaluateNode(ast, link, elMap)) {
+    if (evaluateNode(ast, link, elMap, ctx)) {
       matchingLinks.add(link.id);
     }
   }

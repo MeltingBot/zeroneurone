@@ -358,7 +358,9 @@
     "queryName": "Kontsultaren izena...",
     "noSavedQueries": "Ez dago gordetako kontsultarik",
     "rename": "Berrizendatu",
-    "deleteQuery": "Ezabatu"
+    "deleteQuery": "Ezabatu",
+    "withinTextOnly": "Grafo-predikatua — testu moduan editatu",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"susmagarria\""
   },
   "insights": {
     "title": "Analisiak",

@@ -19,6 +19,19 @@ export interface QueryNot {
   child: QueryNode;
 }
 
+// ── Graph predicate node ──
+
+/**
+ * Matches elements within `hops` links of any element matching the `target`
+ * sub-query (graph reachability, undirected). A link matches when both of its
+ * endpoints are in range. `hops: 0` matches exactly the target set.
+ */
+export interface QueryWithin {
+  type: 'within';
+  hops: number;
+  target: QueryNode;
+}
+
 // ── Condition node ──
 
 export interface QueryCondition {
@@ -28,7 +41,7 @@ export interface QueryCondition {
   value: QueryValue | null; // null for EXISTS / NOT EXISTS
 }
 
-export type QueryNode = QueryAnd | QueryOr | QueryNot | QueryCondition;
+export type QueryNode = QueryAnd | QueryOr | QueryNot | QueryWithin | QueryCondition;
 
 // ── Operators ──
 

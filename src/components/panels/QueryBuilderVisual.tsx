@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
 import { RESERVED_FIELDS, OPERATOR_SYMBOLS } from '../../services/query/types';
-import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot } from '../../services/query/types';
-import { Plus, X, ToggleLeft, ToggleRight, MapPin } from 'lucide-react';
+import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot, QueryWithin } from '../../services/query/types';
+import { serializeQuery } from '../../services/query/serializer';
+import { Plus, X, ToggleLeft, ToggleRight, MapPin, Waypoints } from 'lucide-react';
 import { GeoRadiusPicker } from './GeoRadiusPicker';
 
 // ── Condition Row ──
@@ -324,6 +325,31 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
   );
 }
 
+// ── WITHIN chip (read-only; authored in text mode) ──
+
+function WithinChip({ node, onRemove }: { node: QueryWithin; onRemove: () => void }) {
+  const { t } = useTranslation('panels');
+  const target = serializeQuery(node.target);
+  return (
+    <div
+      className="flex items-center gap-1.5 px-2 py-1 text-xs rounded border border-border-default bg-bg-secondary text-text-secondary"
+      title={t('query.withinTextOnly')}
+    >
+      <Waypoints size={12} className="text-text-tertiary shrink-0" />
+      <span className="truncate">
+        <span className="font-medium text-text-primary">WITHIN {node.hops} HOPS OF</span> {target}
+      </span>
+      <button
+        onClick={onRemove}
+        className="ml-auto p-0.5 text-text-tertiary hover:text-error rounded hover:bg-bg-secondary transition-colors shrink-0"
+        title={t('query.removeGroup')}
+      >
+        <X size={10} />
+      </button>
+    </div>
+  );
+}
+
 // ── Visual Group (recursive AND/OR with NOT support) ──
 
 const MAX_GROUP_DEPTH = 2;
@@ -463,6 +489,8 @@ function VisualGroup({ node, onChange, onRemove, depth, availableFields, availab
                     availableFields={availableFields}
                     availableTags={availableTags}
                   />
+                ) : innerNode.type === 'within' ? (
+                  <WithinChip node={innerNode} onRemove={() => removeChild(i)} />
                 ) : null}
               </div>
             </div>

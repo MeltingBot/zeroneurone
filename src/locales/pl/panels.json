@@ -358,7 +358,9 @@
     "queryName": "Nazwa zapytania...",
     "noSavedQueries": "Brak zapisanych zapytań",
     "rename": "Zmień nazwę",
-    "deleteQuery": "Usuń"
+    "deleteQuery": "Usuń",
+    "withinTextOnly": "Predykat grafu — edytuj w trybie tekstowym",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"podejrzany\""
   },
   "insights": {
     "title": "Analizy",

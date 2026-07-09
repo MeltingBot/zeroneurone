@@ -789,3 +789,87 @@ describe('evaluator — performance', () => {
     expect(r.elementIds.size).toBeGreaterThan(0);
   });
 });
+
+// ── WITHIN n HOPS OF (graph reachability) ──
+
+describe('WITHIN n HOPS OF', () => {
+  // Chain: A — B — C — D  (A tagged "suspect")
+  function chain() {
+    const a = makeElement({ id: 'A', label: 'A', tags: ['suspect'] });
+    const b = makeElement({ id: 'B', label: 'B' });
+    const c = makeElement({ id: 'C', label: 'C' });
+    const d = makeElement({ id: 'D', label: 'D' });
+    const links = [
+      makeLink({ id: 'AB', fromId: 'A', toId: 'B' }),
+      makeLink({ id: 'BC', fromId: 'B', toId: 'C' }),
+      makeLink({ id: 'CD', fromId: 'C', toId: 'D' }),
+    ];
+    return { elements: [a, b, c, d], links };
+  }
+
+  it('0 hops = the target set only', () => {
+    const { elements, links } = chain();
+    const r = query('WITHIN 0 HOPS OF tag = "suspect"', elements, links);
+    expect([...r.elementIds].sort()).toEqual(['A']);
+  });
+
+  it('1 hop = target + direct neighbors', () => {
+    const { elements, links } = chain();
+    const r = query('WITHIN 1 HOPS OF tag = "suspect"', elements, links);
+    expect([...r.elementIds].sort()).toEqual(['A', 'B']);
+  });
+
+  it('2 hops reaches two levels out', () => {
+    const { elements, links } = chain();
+    const r = query('WITHIN 2 HOPS OF tag = "suspect"', elements, links);
+    expect([...r.elementIds].sort()).toEqual(['A', 'B', 'C']);
+  });
+
+  it('undirected traversal (ignores link direction)', () => {
+    const a = makeElement({ id: 'A', label: 'A', tags: ['suspect'] });
+    const b = makeElement({ id: 'B', label: 'B' });
+    // Link points B → A, but reachability is undirected
+    const links = [makeLink({ id: 'BA', fromId: 'B', toId: 'A', direction: 'forward' })];
+    const r = query('WITHIN 1 HOPS OF tag = "suspect"', [a, b], links);
+    expect([...r.elementIds].sort()).toEqual(['A', 'B']);
+  });
+
+  it('links match when both endpoints are in range', () => {
+    const { elements, links } = chain();
+    const r = query('WITHIN 1 HOPS OF tag = "suspect"', elements, links);
+    // A,B in range → link AB matches; BC/CD do not (C,D out of range)
+    expect([...r.linkIds].sort()).toEqual(['AB']);
+  });
+
+  it('combines with AND to restrict the reachable set', () => {
+    const { elements, links } = chain();
+    // Within 2 hops of suspect, keep only C
+    const r = query('WITHIN 2 HOPS OF tag = "suspect" AND label = "C"', elements, links);
+    expect([...r.elementIds].sort()).toEqual(['C']);
+  });
+
+  it('NOT WITHIN excludes the reachable set', () => {
+    const { elements, links } = chain();
+    const r = query('NOT WITHIN 1 HOPS OF tag = "suspect"', elements, links);
+    expect([...r.elementIds].sort()).toEqual(['C', 'D']);
+  });
+
+  it('parenthesized compound target', () => {
+    const a = makeElement({ id: 'A', label: 'A', tags: ['suspect'], properties: [{ key: 'city', value: 'Paris', type: 'text' }] as any });
+    const x = makeElement({ id: 'X', label: 'X', tags: ['suspect'] });
+    const b = makeElement({ id: 'B', label: 'B' });
+    const links = [
+      makeLink({ id: 'AB', fromId: 'A', toId: 'B' }),
+      makeLink({ id: 'XB', fromId: 'X', toId: 'B' }),
+    ];
+    // Anchor only A (suspect AND city=Paris), so 1 hop = A, B (not X)
+    const r = query('WITHIN 1 HOPS OF (tag = "suspect" AND city = "Paris")', [a, x, b], links);
+    expect([...r.elementIds].sort()).toEqual(['A', 'B']);
+  });
+
+  it('empty target set yields nothing', () => {
+    const { elements, links } = chain();
+    const r = query('WITHIN 3 HOPS OF tag = "nobody"', elements, links);
+    expect(r.elementIds.size).toBe(0);
+  });
+});

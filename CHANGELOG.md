@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.0
+
+### Features
+- **ZNQuery — opérateur `WITHIN n HOPS OF`** : nouveau prédicat de graphe qui sélectionne tous les éléments situés à **au plus n liens** d'un élément correspondant à une **sous-requête cible**. Exemple : `WITHIN 2 HOPS OF tag = "suspect"` → tout ce qui est à 2 sauts d'un suspect. La cible peut être composée (`WITHIN 1 HOPS OF (tag = "suspect" AND ville = "Paris")`), le parcours est non orienté (un lien est retenu si ses deux extrémités sont dans le rayon), `0 HOPS` = ensemble cible exact, et l'opérateur se combine avec AND/OR/NOT. Évalué via un pré-calcul BFS avant la boucle par-item (les autres prédicats restent par-item). Supporté en **mode texte** (parser, sérialiseur, autocomplétion) ; le builder visuel l'affiche en lecture seule. 21 tests (parser/évaluateur/sérialiseur), doc FR/EN, i18n 11 langues.
+
 ## 2.47.1
 
 ### Fixes

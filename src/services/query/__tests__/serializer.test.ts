@@ -191,3 +191,23 @@ describe('serializer — complex round-trips', () => {
     roundTrip('event.geo NEAR 43.3,5.4 25km');
   });
 });
+
+// ── WITHIN n HOPS OF round-trip ──
+
+describe('WITHIN round-trip', () => {
+  it('serializes a simple within', () => {
+    roundTrip('WITHIN 2 HOPS OF tag = "suspect"', 'WITHIN 2 HOPS OF tag = "suspect"');
+  });
+
+  it('wraps a compound target in parens', () => {
+    roundTrip('WITHIN 3 HOPS OF (tag = "a" AND label = "b")', 'WITHIN 3 HOPS OF (tag = "a" AND label = "b")');
+  });
+
+  it('round-trips within combined with AND', () => {
+    roundTrip('type = "element" AND WITHIN 1 HOPS OF tag = "x"');
+  });
+
+  it('round-trips NOT within', () => {
+    roundTrip('NOT WITHIN 2 HOPS OF tag = "x"');
+  });
+});

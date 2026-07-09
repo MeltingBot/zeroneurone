@@ -378,3 +378,49 @@ describe('parser — comments', () => {
     expect(ast.field).toBe('tag');
   });
 });
+
+// ── WITHIN n HOPS OF ──
+
+describe('WITHIN n HOPS OF', () => {
+  it('parses a simple within predicate', () => {
+    const ast = parse('WITHIN 2 HOPS OF tag = "suspect"');
+    expect(ast.type).toBe('within');
+    if (ast.type === 'within') {
+      expect(ast.hops).toBe(2);
+      expect(ast.target.type).toBe('condition');
+    }
+  });
+
+  it('accepts singular HOP', () => {
+    const ast = parse('WITHIN 1 HOP OF tag = "x"');
+    expect(ast.type).toBe('within');
+  });
+
+  it('parses a parenthesized compound target', () => {
+    const ast = parse('WITHIN 3 HOPS OF (tag = "a" AND label = "b")');
+    expect(ast.type).toBe('within');
+    if (ast.type === 'within') expect(ast.target.type).toBe('and');
+  });
+
+  it('combines with AND at the clause level', () => {
+    const ast = parse('type = "element" AND WITHIN 2 HOPS OF tag = "x"');
+    expect(ast.type).toBe('and');
+  });
+
+  it('is case-insensitive', () => {
+    const ast = parse('within 2 hops of tag = "x"');
+    expect(ast.type).toBe('within');
+  });
+
+  it('rejects a missing hop count', () => {
+    parseError('WITHIN HOPS OF tag = "x"');
+  });
+
+  it('rejects a negative hop count', () => {
+    parseError('WITHIN -1 HOPS OF tag = "x"');
+  });
+
+  it('rejects a missing OF', () => {
+    parseError('WITHIN 2 HOPS tag = "x"');
+  });
+});

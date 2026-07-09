@@ -358,7 +358,9 @@
     "queryName": "Nome della query...",
     "noSavedQueries": "Nessuna query salvata",
     "rename": "Rinomina",
-    "deleteQuery": "Elimina"
+    "deleteQuery": "Elimina",
+    "withinTextOnly": "Predicato di grafo — modificabile in modalità testo",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"sospetto\""
   },
   "insights": {
     "title": "Analisi",

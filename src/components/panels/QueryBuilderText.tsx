@@ -185,6 +185,7 @@ export function QueryBuilderText() {
         <p className="font-mono">{t('query.syntaxExample2')}</p>
         <p className="font-mono">{t('query.syntaxExample3')}</p>
         <p className="font-mono">{t('query.syntaxExample4')}</p>
+        <p className="font-mono">{t('query.syntaxExample5')}</p>
       </div>
     </div>
   );

@@ -358,7 +358,9 @@
     "queryName": "Naam zoekopdracht...",
     "noSavedQueries": "Geen opgeslagen zoekopdrachten",
     "rename": "Hernoemen",
-    "deleteQuery": "Verwijderen"
+    "deleteQuery": "Verwijderen",
+    "withinTextOnly": "Graafpredicaat — bewerk in tekstmodus",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"verdachte\""
   },
   "insights": {
     "title": "Analyses",

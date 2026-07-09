@@ -358,7 +358,9 @@
     "queryName": "Abfragename...",
     "noSavedQueries": "Keine gespeicherten Abfragen",
     "rename": "Umbenennen",
-    "deleteQuery": "Löschen"
+    "deleteQuery": "Löschen",
+    "withinTextOnly": "Graphprädikat — im Textmodus bearbeiten",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"verdächtig\""
   },
   "insights": {
     "title": "Analysen",

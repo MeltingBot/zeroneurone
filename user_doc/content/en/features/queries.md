@@ -85,6 +85,20 @@ NOT (tag = "archived")
 | **NOT** | Negates the condition |
 | **( )** | Grouping to control precedence |
 
+### Graph predicate: `WITHIN n HOPS OF`
+
+Selects every element within **at most `n` links** of an element matching a **target sub-query**. Useful for neighborhood exploration: "everything within 2 hops of a suspect".
+
+```
+WITHIN 2 HOPS OF tag = "suspect"
+```
+
+- The target is a parenthesized query for compound conditions: `WITHIN 1 HOPS OF (tag = "suspect" AND city = "Paris")`.
+- `WITHIN 0 HOPS OF …` matches exactly the target set.
+- Traversal is **undirected** (link direction is ignored). A link is kept when both of its endpoints are in range.
+- Combines with other operators: `type = "element" AND WITHIN 2 HOPS OF tag = "suspect"`, or `NOT WITHIN 1 HOPS OF tag = "suspect"`.
+- Authored in **text mode** (the visual builder shows it read-only).
+
 ---
 
 ## Available fields

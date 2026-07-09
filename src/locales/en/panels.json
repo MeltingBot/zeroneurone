@@ -372,7 +372,9 @@
     "queryName": "Query name...",
     "noSavedQueries": "No saved queries yet",
     "rename": "Rename",
-    "deleteQuery": "Delete"
+    "deleteQuery": "Delete",
+    "withinTextOnly": "Graph predicate — edit in text mode",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"suspect\""
   },
   "insights": {
     "title": "Insights",

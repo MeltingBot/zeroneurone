@@ -104,6 +104,15 @@ function serializeNode(node: QueryNode, parent: ParentContext): string {
       const inner = serializeNode(node.child, 'not');
       return `NOT ${inner}`;
     }
+
+    case 'within': {
+      // Target is parsed as a single clause; wrap compound targets in parens so
+      // the query round-trips (WITHIN 2 HOPS OF (a AND b)).
+      const needsParens = node.target.type === 'and' || node.target.type === 'or';
+      const inner = serializeNode(node.target, needsParens ? 'root' : 'not');
+      const targetStr = needsParens ? `(${inner})` : inner;
+      return `WITHIN ${node.hops} HOPS OF ${targetStr}`;
+    }
   }
 }
 

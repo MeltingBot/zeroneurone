@@ -358,7 +358,9 @@
     "queryName": "Назва запиту...",
     "noSavedQueries": "Немає збережених запитів",
     "rename": "Перейменувати",
-    "deleteQuery": "Видалити"
+    "deleteQuery": "Видалити",
+    "withinTextOnly": "Предикат графа — редагується в текстовому режимі",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"підозрюваний\""
   },
   "insights": {
     "title": "Аналітика",

@@ -358,7 +358,9 @@
     "queryName": "Nombre de consulta...",
     "noSavedQueries": "Sin consultas guardadas",
     "rename": "Renombrar",
-    "deleteQuery": "Eliminar"
+    "deleteQuery": "Eliminar",
+    "withinTextOnly": "Predicado de grafo — editar en modo texto",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"sospechoso\""
   },
   "insights": {
     "title": "Análisis",

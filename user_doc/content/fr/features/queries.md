@@ -85,6 +85,20 @@ NOT (tag = "archivé")
 | **NOT** | Inverse la condition |
 | **( )** | Groupement pour contrôler la priorité |
 
+### Prédicat de graphe : `WITHIN n HOPS OF`
+
+Sélectionne tous les éléments situés à **au plus `n` liens** d'un élément correspondant à une **sous-requête cible**. Utile pour explorer le voisinage : « tout ce qui est à 2 sauts d'un suspect ».
+
+```
+WITHIN 2 HOPS OF tag = "suspect"
+```
+
+- La cible est une requête entre parenthèses pour les conditions composées : `WITHIN 1 HOPS OF (tag = "suspect" AND ville = "Paris")`.
+- `WITHIN 0 HOPS OF …` correspond exactement à l'ensemble cible.
+- Le parcours est **non orienté** (le sens des liens est ignoré). Un lien est retenu quand ses deux extrémités sont dans le rayon.
+- Se combine avec les autres opérateurs : `type = "element" AND WITHIN 2 HOPS OF tag = "suspect"`, ou `NOT WITHIN 1 HOPS OF tag = "suspect"`.
+- S'écrit en **mode texte** (le builder visuel l'affiche en lecture seule).
+
 ---
 
 ## Champs disponibles

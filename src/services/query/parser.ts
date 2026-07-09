@@ -3,7 +3,8 @@
 //
 // Grammar:
 //   query     := clause (LOGIC clause)*
-//   clause    := '(' query ')' | NOT clause | condition
+//   clause    := '(' query ')' | NOT clause | within | condition
+//   within    := 'WITHIN' NUMBER ('HOPS'|'HOP') 'OF' clause
 //   LOGIC     := 'AND' | 'OR'
 //   NOT       := 'NOT'
 //   condition := field OPERATOR value
@@ -13,7 +14,7 @@
 //   field     := IDENTIFIER | '"' STRING '"'
 //   value     := '"' STRING '"' | NUMBER | DATE | BOOLEAN | REGEX
 
-import type { QueryNode, QueryCondition, QueryOperator, QueryValue, ParseResult, ParseError } from './types';
+import type { QueryNode, QueryCondition, QueryWithin, QueryOperator, QueryValue, ParseResult, ParseError } from './types';
 
 // ── Token types ──
 
@@ -306,6 +307,11 @@ class Parser {
       return node;
     }
 
+    // WITHIN n HOPS OF clause — graph reachability predicate
+    if (t.type === 'IDENTIFIER' && t.value.toUpperCase() === 'WITHIN') {
+      return this.parseWithin();
+    }
+
     // NOT clause
     if (t.type === 'IDENTIFIER' && t.value.toUpperCase() === 'NOT') {
       // Check if this is "NOT EXISTS" (part of a condition) or standalone NOT
@@ -321,6 +327,41 @@ class Parser {
 
     // Condition
     return this.parseCondition();
+  }
+
+  // within := 'WITHIN' NUMBER 'HOPS' 'OF' clause
+  private parseWithin(): QueryWithin {
+    this.advance(); // consume WITHIN
+
+    // Hops count (non-negative integer)
+    const hopsTok = this.peek();
+    if (hopsTok.type !== 'NUMBER') {
+      throw this.error('Expected a number of hops after WITHIN', hopsTok.position, 'number');
+    }
+    this.advance();
+    const hops = parseInt(hopsTok.value, 10);
+    if (isNaN(hops) || hops < 0 || !Number.isInteger(Number(hopsTok.value))) {
+      throw this.error('Hops must be a non-negative integer', hopsTok.position, 'integer >= 0');
+    }
+
+    // HOPS keyword (also accept singular HOP)
+    const hopsKw = this.peek();
+    if (hopsKw.type !== 'IDENTIFIER' || (hopsKw.value.toUpperCase() !== 'HOPS' && hopsKw.value.toUpperCase() !== 'HOP')) {
+      throw this.error("Expected 'HOPS' after the hop count", hopsKw.position, 'HOPS');
+    }
+    this.advance();
+
+    // OF keyword
+    const ofKw = this.peek();
+    if (ofKw.type !== 'IDENTIFIER' || ofKw.value.toUpperCase() !== 'OF') {
+      throw this.error("Expected 'OF' after HOPS", ofKw.position, 'OF');
+    }
+    this.advance();
+
+    // Target: a single clause (parenthesized group for complex targets)
+    const target = this.parseClause();
+
+    return { type: 'within', hops, target };
   }
 
   // condition := field OPERATOR value | field EXISTS | field NOT EXISTS

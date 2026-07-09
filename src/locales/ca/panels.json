@@ -358,7 +358,9 @@
     "queryName": "Nom de la consulta...",
     "noSavedQueries": "Cap consulta desada",
     "rename": "Reanomenar",
-    "deleteQuery": "Eliminar"
+    "deleteQuery": "Eliminar",
+    "withinTextOnly": "Predicat de graf — edita en mode text",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"sospitós\""
   },
   "insights": {
     "title": "Anàlisis",

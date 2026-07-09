@@ -372,7 +372,9 @@
     "queryName": "Nom de la requête...",
     "noSavedQueries": "Aucune requête enregistrée",
     "rename": "Renommer",
-    "deleteQuery": "Supprimer"
+    "deleteQuery": "Supprimer",
+    "withinTextOnly": "Prédicat de graphe — modifiable en mode texte",
+    "syntaxExample5": "WITHIN 2 HOPS OF tag = \"suspect\""
   },
   "insights": {
     "title": "Analyses",
