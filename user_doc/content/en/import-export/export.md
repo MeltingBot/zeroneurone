@@ -112,6 +112,21 @@ Columns:
 
 ---
 
+### GEXF
+
+**Native Gephi format** with visual attributes (positions, colors, sizes).
+
+| Property | Value |
+|----------|-------|
+| Extension | `.gexf` |
+| Content | XML graph (GEXF 1.3, `viz` namespace) |
+| Attached files | ❌ Not included |
+| Usage | Gephi |
+
+The graph opens in Gephi with the same layout and colors as on the canvas. Positions preserved (Y axis adjusted for an upright rendering), colors converted to RGB, notes and tags as node attributes, confidence as an edge attribute. Link direction is preserved (`forward`/`backward`/bidirectional).
+
+---
+
 ### GeoJSON
 
 **Geographic format** for GIS tools.

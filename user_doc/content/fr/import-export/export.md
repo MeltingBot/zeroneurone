@@ -112,6 +112,21 @@ Les **événements** rattachés aux éléments sont exportés en lignes `type=ev
 
 ---
 
+### GEXF
+
+**Format natif Gephi** avec attributs visuels (positions, couleurs, tailles).
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.gexf` |
+| Contenu | XML graphe (GEXF 1.3, namespace `viz`) |
+| Fichiers joints | ❌ Non inclus |
+| Usage | Gephi |
+
+Le graphe s'ouvre dans Gephi avec la même disposition et les mêmes couleurs que sur le canvas. Positions préservées (axe Y adapté pour un rendu à l'endroit), couleurs converties en RGB, notes et tags en attributs de nœud, confiance en attribut d'arête. La direction des liens est conservée (`forward`/`backward`/bidirectionnel).
+
+---
+
 ### GeoJSON
 
 **Format géographique** pour outils SIG.
