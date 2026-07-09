@@ -18,6 +18,7 @@ interface CustomEdgeData {
   hasEndArrow: boolean;
   isSelected?: boolean;
   isDimmed?: boolean;
+  isHighlighted?: boolean;
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
@@ -91,6 +92,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   // Use React Flow's selected prop OR our custom isSelected
   const isSelected = selected || (edgeData?.isSelected ?? false);
   const isDimmed = edgeData?.isDimmed ?? false;
+  const isHighlighted = edgeData?.isHighlighted ?? false;
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
@@ -491,9 +493,13 @@ function CustomEdgeComponent(props: EdgeProps) {
 
   // Apply dimmed opacity
   const edgeOpacity = isDimmed ? 0.3 : 1;
+  // Insights emphasis: glow the links belonging to the highlighted structure
+  const edgeFilter = isHighlighted && !isDimmed
+    ? 'drop-shadow(0 0 3px var(--color-accent)) drop-shadow(0 0 1px var(--color-accent))'
+    : undefined;
 
   return (
-    <g className="react-flow__edge" style={{ opacity: edgeOpacity, cursor: 'pointer' }}>
+    <g className="react-flow__edge" style={{ opacity: edgeOpacity, cursor: 'pointer', filter: edgeFilter }}>
       {/* Selection halo - rendered behind the main line */}
       {isSelected && (
         <path
@@ -773,6 +779,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
 
   if (prevData.isSelected !== nextData.isSelected) return false;
   if (prevData.isDimmed !== nextData.isDimmed) return false;
+  if (prevData.isHighlighted !== nextData.isHighlighted) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.color !== nextData.color) return false;
   if (prevData.thickness !== nextData.thickness) return false;

@@ -50,6 +50,7 @@ import { generateUUID, sanitizeLinkLabel } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { isMappableJson } from '../../utils/jsonMapping';
 import { serializeQuery } from '../../services/query/serializer';
+import { insightsService } from '../../services/insightsService';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
@@ -307,6 +308,7 @@ function elementToNode(
   tagDisplaySize?: 'small' | 'medium' | 'large',
   themeMode?: 'light' | 'dark',
   isGhost?: boolean,
+  isHighlighted?: boolean,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -384,6 +386,7 @@ function elementToNode(
       element,
       isSelected: isGhost ? false : isSelected,
       isDimmed: isGhost || isDimmed,
+      isHighlighted: !isGhost && !!isHighlighted,
       isGhost,
       thumbnail,
       onResize: isGhost ? undefined : onResize,
@@ -906,6 +909,7 @@ export function Canvas() {
 
   // UI store for theme mode and canvas settings
   const pushMetadataImport = useUIStore((state) => state.pushMetadataImport);
+  const setSidePanelTab = useUIStore((state) => state.setSidePanelTab);
   const themeMode = useUIStore((state) => state.themeMode);
   const snapToGrid = useUIStore((state) => state.snapToGrid);
   const showAlignGuides = useUIStore((state) => state.showAlignGuides);
@@ -1223,6 +1227,7 @@ export function Canvas() {
   const prevNodesByIdRef = useRef(new Map<string, Node>());
   const prevSelectedIdsRef = useRef(selectedElementIds);
   const prevDimmedIdsRef = useRef(dimmedElementIds);
+  const prevHighlightedIdsRef = useRef(insightsHighlightedIds);
   const prevEditingIdRef = useRef(editingElementId);
   const prevRemoteUsersRef = useRef(remoteUsersByElement);
   const prevShowConfRef = useRef(showConfidenceIndicator);
@@ -1273,6 +1278,7 @@ export function Canvas() {
         tagDisplaySize,
         themeMode,
         isGhostNode,
+        insightsHighlightedIds.has(ns.el.id),
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1301,6 +1307,7 @@ export function Canvas() {
       prevNodesByIdRef.current = newNodeMap;
       prevSelectedIdsRef.current = selectedElementIds;
       prevDimmedIdsRef.current = dimmedElementIds;
+      prevHighlightedIdsRef.current = insightsHighlightedIds;
       prevEditingIdRef.current = editingElementId;
       prevRemoteUsersRef.current = remoteUsersByElement;
       prevShowConfRef.current = showConfidenceIndicator;
@@ -1348,6 +1355,16 @@ export function Canvas() {
       }
     }
 
+    // Highlighted diff (insights emphasis): rebuild nodes entering/leaving the set
+    if (prevHighlightedIdsRef.current !== insightsHighlightedIds) {
+      for (const id of insightsHighlightedIds) {
+        if (!prevHighlightedIdsRef.current.has(id)) needsRebuild.add(id);
+      }
+      for (const id of prevHighlightedIdsRef.current) {
+        if (!insightsHighlightedIds.has(id)) needsRebuild.add(id);
+      }
+    }
+
     // Editing diff
     if (prevEditingIdRef.current !== editingElementId) {
       if (prevEditingIdRef.current) needsRebuild.add(prevEditingIdRef.current);
@@ -1379,6 +1396,7 @@ export function Canvas() {
     // Update visual state refs
     prevSelectedIdsRef.current = selectedElementIds;
     prevDimmedIdsRef.current = dimmedElementIds;
+    prevHighlightedIdsRef.current = insightsHighlightedIds;
     prevEditingIdRef.current = editingElementId;
     prevRemoteUsersRef.current = remoteUsersByElement;
     prevTabMemberSetRef.current = tabMemberSet;
@@ -1432,7 +1450,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, insightsHighlightedIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -1659,6 +1677,10 @@ export function Canvas() {
       const isSelected = selectedLinkIds.has(link.id);
       const endpointDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
       const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
+      // Insights emphasis: link belongs to the highlighted structure (both endpoints highlighted)
+      const isLinkHighlighted = insightsHighlightedIds.size > 0
+        && insightsHighlightedIds.has(link.fromId)
+        && insightsHighlightedIds.has(link.toId);
       const simplified = useSimpleEdges && !isSelected;
 
       // Reuse cached edge if visual state is unchanged (same reference → memo skip)
@@ -1674,6 +1696,7 @@ export function Canvas() {
         if (linkUnchanged && globalsUnchanged) {
           const sameVisuals = cached.selected === isSelected
             && cd?.isDimmed === isLinkDimmed
+            && cd?.isHighlighted === isLinkHighlighted
             && (cached.type === 'simple') === simplified;
           if (sameVisuals) {
             // In auto anchor mode, verify handles are still optimal for current positions
@@ -1749,6 +1772,7 @@ export function Canvas() {
       edgeData._curveMode = linkCurveMode;
       edgeData._anchorMode = linkAnchorMode;
       edgeData._showConfidence = showConfidenceIndicator;
+      edgeData.isHighlighted = isLinkHighlighted;
       if (!simplified) {
         const parallel = parallelLookup.get(link.id);
         edgeData._parallelIndex = parallel?.index;
@@ -1769,7 +1793,7 @@ export function Canvas() {
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, insightsHighlightedIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.
@@ -2852,16 +2876,23 @@ export function Canvas() {
 
   const handleFindPaths = useCallback(
     (fromId: string, toId: string) => {
+      // Ensure the analysis graph reflects current data (the Insights panel may
+      // never have been opened, so its graph would be stale/absent), then show
+      // the result in the Insights panel.
+      insightsService.buildGraph(elements, links);
       findPaths(fromId, toId);
+      setSidePanelTab('insights');
     },
-    [findPaths]
+    [findPaths, elements, links, setSidePanelTab]
   );
 
   const handleFindAllPaths = useCallback(
     (fromId: string, toId: string) => {
+      insightsService.buildGraph(elements, links);
       findAllPaths(fromId, toId);
+      setSidePanelTab('insights');
     },
-    [findAllPaths]
+    [findAllPaths, elements, links, setSidePanelTab]
   );
 
   const handleMergeElements = useCallback(() => {

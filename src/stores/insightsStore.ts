@@ -24,6 +24,8 @@ interface InsightsState {
   pathResults: PathResult[];
   pathFromId: ElementId | null;
   pathToId: ElementId | null;
+  /** Which path search produced the current results (drives the panel UI) */
+  pathSearchMode: 'shortest' | 'all' | null;
 
   // Cycle detection
   cycles: CycleResult[];
@@ -65,6 +67,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   pathResults: [],
   pathFromId: null,
   pathToId: null,
+  pathSearchMode: null,
 
   cycles: [],
 
@@ -166,6 +169,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathResults: paths,
       pathFromId: fromId,
       pathToId: toId,
+      pathSearchMode: 'shortest',
     });
 
     // Auto-highlight first path if found
@@ -184,6 +188,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathResults: paths,
       pathFromId: fromId,
       pathToId: toId,
+      pathSearchMode: 'all',
     });
 
     // Highlight the union of every path so all routes are visible at once.
@@ -259,6 +264,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathResults: [],
       pathFromId: null,
       pathToId: null,
+      pathSearchMode: null,
     });
   },
 
@@ -280,6 +286,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       pathResults: [],
       pathFromId: null,
       pathToId: null,
+      pathSearchMode: null,
       cycles: [],
     });
   },

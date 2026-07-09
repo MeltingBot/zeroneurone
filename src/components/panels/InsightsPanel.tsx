@@ -47,8 +47,9 @@ export function InsightsPanel() {
     highlightType,
     selectedClusterId,
     pathResults,
-    // pathFromId, // Currently unused - for path finding UI
-    // pathToId,
+    pathFromId,
+    pathToId,
+    pathSearchMode,
     computeInsights,
     highlightCluster,
     highlightCentralElement,
@@ -401,6 +402,19 @@ export function InsightsPanel() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPathsMode, pathMaxDepth]);
+
+  // Reflect a path search triggered from outside the panel (e.g. the canvas
+  // context menu): open the path UI with the right mode and endpoints so the
+  // result list is visible here too, not only highlighted on the canvas.
+  useEffect(() => {
+    if (pathSearchMode && pathFromId && pathToId) {
+      setPathMode(true);
+      setAllPathsMode(pathSearchMode === 'all');
+      setPathFrom(pathFromId);
+      setPathTo(pathToId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathSearchMode, pathFromId, pathToId]);
 
   // Get element label by ID
   const getElementLabel = useCallback(

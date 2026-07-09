@@ -14,11 +14,15 @@ function SimpleEdgeComponent(props: EdgeProps) {
   const dashArray = (data as any)?.dashArray as string | undefined;
   const isDimmed = (data as any)?.isDimmed ?? false;
   const isSelected = (data as any)?.isSelected ?? false;
+  const isHighlighted = (data as any)?.isHighlighted ?? false;
 
   const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
 
   return (
-    <g style={{ opacity: isDimmed ? 0.15 : 1 }}>
+    <g style={{
+      opacity: isDimmed ? 0.15 : 1,
+      filter: isHighlighted && !isDimmed ? 'drop-shadow(0 0 3px var(--color-accent))' : undefined,
+    }}>
       {isSelected && (
         <path
           d={path}
@@ -58,6 +62,7 @@ function areSimpleEdgePropsEqual(prev: EdgeProps, next: EdgeProps): boolean {
   if (pd?.thickness !== nd?.thickness) return false;
   if (pd?.dashArray !== nd?.dashArray) return false;
   if (pd?.isDimmed !== nd?.isDimmed) return false;
+  if (pd?.isHighlighted !== nd?.isHighlighted) return false;
   if (pd?.isSelected !== nd?.isSelected) return false;
   return true;
 }

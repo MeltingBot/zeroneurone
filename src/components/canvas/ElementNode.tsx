@@ -35,6 +35,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   element: Element;
   isSelected: boolean;
   isDimmed: boolean;
+  /** Insights emphasis (path/cycle/cluster highlight) — renders a glow */
+  isHighlighted?: boolean;
   isGhost?: boolean;
   thumbnail: string | null;
   onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
@@ -83,7 +85,7 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -249,7 +251,13 @@ function ElementNodeComponent({ data }: NodeProps) {
           e.stopPropagation();
         }
       }}
-      style={{ width, height }}
+      style={{
+        width,
+        height,
+        ...(isHighlighted && !isDimmed
+          ? { filter: 'drop-shadow(0 0 6px var(--color-accent)) drop-shadow(0 0 2px var(--color-accent))' }
+          : {}),
+      }}
     >
       {/* Remote user selection/dragging indicators - circles with initials */}
       {remoteSelectors && remoteSelectors.length > 0 && (
@@ -733,6 +741,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   // Compare essential props that affect rendering
   if (prevData.isSelected !== nextData.isSelected) return false;
   if (prevData.isDimmed !== nextData.isDimmed) return false;
+  if (prevData.isHighlighted !== nextData.isHighlighted) return false;
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;

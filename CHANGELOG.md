@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.47.1
+
+### Fixes
+- **Mise en évidence des chemins et cycles plus lisible** — les éléments *et* les liens correspondant à une recherche de chemin/cycle (et plus largement à toute mise en évidence Insights : clusters, ponts…) reçoivent désormais un **glow** (halo accent), en plus de l'atténuation des autres éléments. Un lien est mis en avant quand ses deux extrémités le sont.
+- **Recherche de chemins depuis le menu contextuel** — le clic droit sur deux éléments (« Chemins » / « Tous les chemins ») construit désormais le graphe d'analyse à la volée (il n'était bâti que si l'onglet Analyse avait été ouvert), **ouvre l'onglet Analyse** et y **affiche la liste des résultats**. Auparavant, hors de l'onglet Analyse, la recherche restait sans effet et les résultats n'apparaissaient pas dans le panneau.
+
 ## 2.47.0
 
 ### Features
