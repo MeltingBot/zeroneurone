@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Eliminar permanentemente",
     "retentionReadonly": "Investigación en solo lectura (retención vencida)",
     "retentionRedactConfirm": "La redacción eliminará permanentemente todo el contenido textual (nombres, notas, propiedades). Se conservará la estructura del grafo. Esta acción es irreversible.",
-    "retentionRedactAction": "Redactar definitivamente"
+    "retentionRedactAction": "Redactar definitivamente",
+    "opfsUnavailable": "Este navegador (o el modo privado) impide el almacenamiento local de medios: las imágenes no se mostrarán. Abre el expediente en una ventana normal."
   },
   "map": {
     "noGeoElements": "Ningún elemento geolocalizado",

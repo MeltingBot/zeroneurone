@@ -61,7 +61,7 @@ const port = process.argv[2] || 4444;
 const LIMITS = {
   MAX_MESSAGE_SIZE: 50 * 1024 * 1024,   // 50 MB max per message
   RATE_WINDOW_MS: 1000,                  // 1 second window
-  MAX_MESSAGES_PER_WINDOW: 500,          // Max messages per window per client
+  MAX_MESSAGES_PER_WINDOW: 1500,         // Max messages per window per client
   MAX_CONNECTIONS_PER_IP: 10,            // Max concurrent connections per IP
   MAX_CLIENTS_PER_ROOM: 50,             // Max clients in a room
   MAX_ROOMS: 1000,                       // Max concurrent rooms

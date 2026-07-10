@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Usuń na stałe",
     "retentionReadonly": "Dochodzenie tylko do odczytu (retencja wygasła)",
     "retentionRedactConfirm": "Redakcja trwale usunie całą zawartość tekstową (nazwy, notatki, właściwości). Struktura grafu zostanie zachowana. Ta akcja jest nieodwracalna.",
-    "retentionRedactAction": "Zredagować na stałe"
+    "retentionRedactAction": "Zredagować na stałe",
+    "opfsUnavailable": "Ta przeglądarka (lub tryb prywatny) blokuje lokalne przechowywanie multimediów: obrazy nie będą wyświetlane. Otwórz teczkę w zwykłym oknie."
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

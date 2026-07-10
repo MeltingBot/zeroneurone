@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Endgültig löschen",
     "retentionReadonly": "Akte ist schreibgeschützt (Aufbewahrung abgelaufen)",
     "retentionRedactConfirm": "Die Schwärzung löscht dauerhaft alle Textinhalte (Namen, Notizen, Eigenschaften). Die Graphstruktur bleibt erhalten. Diese Aktion ist unwiderruflich.",
-    "retentionRedactAction": "Endgültig schwärzen"
+    "retentionRedactAction": "Endgültig schwärzen",
+    "opfsUnavailable": "Dieser Browser (oder der private Modus) blockiert die lokale Medienspeicherung: Bilder werden nicht angezeigt. Öffnen Sie die Akte in einem normalen Fenster."
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",

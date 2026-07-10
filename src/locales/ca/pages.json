@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Eliminar definitivament",
     "retentionReadonly": "Investigació en només lectura (retenció expirada)",
     "retentionRedactConfirm": "La redacció eliminarà permanentment tot el contingut textual (noms, notes, propietats). L'estructura del graf es conservarà. Aquesta acció és irreversible.",
-    "retentionRedactAction": "Redactar definitivament"
+    "retentionRedactAction": "Redactar definitivament",
+    "opfsUnavailable": "Aquest navegador (o el mode privat) impedeix l'emmagatzematge local dels mitjans: les imatges no es mostraran. Obre l'expedient en una finestra normal."
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

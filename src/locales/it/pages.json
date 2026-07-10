@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Elimina definitivamente",
     "retentionReadonly": "Indagine in sola lettura (conservazione scaduta)",
     "retentionRedactConfirm": "L'oscuramento cancellerà definitivamente tutti i contenuti testuali (nomi, note, proprietà). La struttura del grafo sarà conservata. Questa azione è irreversibile.",
-    "retentionRedactAction": "Oscurare definitivamente"
+    "retentionRedactAction": "Oscurare definitivamente",
+    "opfsUnavailable": "Questo browser (o la modalità privata) impedisce l'archiviazione locale dei media: le immagini non verranno visualizzate. Apri il fascicolo in una finestra normale."
   },
   "map": {
     "noGeoElements": "Nessun elemento geolocalizzato",

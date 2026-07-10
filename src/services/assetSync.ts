@@ -12,8 +12,15 @@
 import * as Y from 'yjs';
 import type { Asset } from '../types';
 
-/** Chunk size for asset binary transfer (256 KB). */
-export const ASSET_CHUNK_SIZE = 256 * 1024;
+/** Chunk size for asset binary transfer (512 KB). Larger chunks mean fewer
+ *  WebSocket messages, keeping asset transfers well under the relay's per-second
+ *  message rate limit (exceeding it makes the relay silently drop updates,
+ *  which leaves media stuck mid-transfer). */
+export const ASSET_CHUNK_SIZE = 512 * 1024;
+
+/** Delay between chunk pushes (ms). Throttles the message rate so a burst of
+ *  chunks (several media at once) never trips the relay rate limit. */
+export const ASSET_CHUNK_SEND_DELAY_MS = 12;
 
 /** Hard cap on asset size in shared mode. Larger files are refused. */
 export const MAX_SHARED_ASSET_SIZE = 50 * 1024 * 1024;
@@ -141,8 +148,9 @@ export async function pushAssetChunked(
     const chunk = new Uint8Array(arrayBuffer.slice(start, end));
     chunksArray.push([chunk]);
     onChunkSent?.(end, totalSize);
-    // Yield: lets Y.js flush its update (one WS message per chunk), lets the
-    // event loop paint and the WebSocket drain.
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    // Throttle: one WS message per chunk. A short delay keeps the message rate
+    // under the relay's per-second cap (over it, updates are dropped and the
+    // asset never assembles), and lets the WebSocket drain between chunks.
+    await new Promise<void>((resolve) => setTimeout(resolve, ASSET_CHUNK_SEND_DELAY_MS));
   }
 }

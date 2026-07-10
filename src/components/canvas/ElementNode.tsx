@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { Element } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
-import { useUIStore, useTagSetStore } from '../../stores';
+import { useUIStore, useTagSetStore, useSyncStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
 import { computeElementDimensions, getBaseSize } from '../../utils/elementDimensions';
 
@@ -99,6 +99,14 @@ function ElementNodeComponent({ data }: NodeProps) {
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
+
+  // Media sync progress for this element's asset (only while it's loading, so
+  // non-loading nodes never re-render on sync progress updates).
+  const mediaProgress = useSyncStore((s) => {
+    if (!isLoadingAsset) return undefined;
+    const id = element.assetIds?.[0];
+    return id ? s.mediaAssets[id] : undefined;
+  });
 
   // Font size from visual properties (default: 'sm' = 12px, same as text-xs)
   const labelFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
@@ -506,8 +514,19 @@ function ElementNodeComponent({ data }: NodeProps) {
         {isLoadingAsset ? (
           /* Loading state - asset expected but not yet loaded */
           <>
-            <div className="flex-1 w-full flex items-center justify-center bg-bg-secondary">
-              <Loader2 size={24} className="animate-spin text-text-tertiary" />
+            <div className="flex-1 w-full flex flex-col items-center justify-center gap-1 bg-bg-secondary">
+              {mediaProgress?.status === 'failed' ? (
+                <span className="text-[11px] font-medium text-error">{t('status.error')}</span>
+              ) : (
+                <>
+                  <Loader2 size={24} className="animate-spin text-text-tertiary" />
+                  {mediaProgress && mediaProgress.totalSize > 0 && (
+                    <span className="text-[10px] tabular-nums text-text-secondary font-medium">
+                      {Math.min(100, Math.floor((mediaProgress.receivedSize / mediaProgress.totalSize) * 100))}%
+                    </span>
+                  )}
+                </>
+              )}
             </div>
             <div className="w-full px-1 py-0.5 bg-bg-secondary border-t border-border-default flex-shrink-0">
               <span

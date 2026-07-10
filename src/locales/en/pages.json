@@ -330,7 +330,8 @@
     "retentionDeleteAction": "Delete permanently",
     "retentionReadonly": "Dossier is read-only (retention expired)",
     "retentionRedactConfirm": "Redaction will permanently erase all text content (names, notes, properties). The graph structure will be preserved. This action is irreversible.",
-    "retentionRedactAction": "Redact permanently"
+    "retentionRedactAction": "Redact permanently",
+    "opfsUnavailable": "This browser (or private mode) blocks local media storage: images won't display. Open the dossier in a normal window."
   },
   "map": {
     "noGeoElements": "No geolocated elements",

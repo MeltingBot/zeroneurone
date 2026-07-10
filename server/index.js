@@ -59,7 +59,7 @@ const LIMITS = {
 
   // Rate limiting (relaxed for media sync)
   RATE_WINDOW_MS: 1000,                  // 1 second window
-  MAX_MESSAGES_PER_WINDOW: 500,          // Max messages per window per client
+  MAX_MESSAGES_PER_WINDOW: 1500,         // Max messages per window per client
 
   // Connection limits
   MAX_CONNECTIONS_PER_IP: 10,            // Max concurrent connections per IP

@@ -330,7 +330,8 @@
     "retentionDeleteAction": "Supprimer définitivement",
     "retentionReadonly": "Dossier en lecture seule (rétention expirée)",
     "retentionRedactConfirm": "Le caviardage va effacer définitivement tous les contenus textuels (noms, notes, propriétés). La structure du graphe sera conservée. Cette action est irréversible.",
-    "retentionRedactAction": "Caviarder définitivement"
+    "retentionRedactAction": "Caviarder définitivement",
+    "opfsUnavailable": "Ce navigateur (ou le mode privé) empêche le stockage local des médias : les images ne s'afficheront pas. Ouvrez le dossier dans une fenêtre normale."
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

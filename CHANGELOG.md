@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.48.3
+
+### Fixes
+- **Médias en collaboration — anciens assets illisibles** : les dossiers portant des médias au format antérieur à la v2.40 (binaire en base64 monolithique dans le Y.Doc, sans chunks) restaient bloqués en chargement infini côté pair, car le refactor de sync par chunks avait retiré ce chemin de lecture. La rétro-compatibilité est restaurée (décodage base64 → sauvegarde OPFS).
+- **Fenêtre pré-observer à la sync** : les onglets et les assets qui arrivaient dans le Y.Doc entre la lecture initiale et l'attachement de l'observer (ou après un timeout de sync) n'étaient jamais appliqués — d'où onglets vides / médias bloqués jusqu'à un F5. Les re-syncs de sécurité forcent désormais la réconciliation des onglets et le retraitement des assets.
+- **Avancement de chargement des médias** : les nœuds en cours de réception affichent le **pourcentage** reçu (et « Erreur » en cas d'échec) au lieu d'un spinner opaque.
+- **Stockage local indisponible (navigation privée)** : détection de l'inscriptibilité de l'OPFS (probe d'écriture réel) et **toast d'avertissement** si un dossier contient des médias mais que le stockage est bloqué — au lieu d'images bloquées sans explication. i18n 11 langues.
+
+### Internals
+- Transfert des médias : chunks de 512 Ko (au lieu de 256) et throttle entre chunks, pour rester sous la limite de débit du relais (au-delà, le relais jette silencieusement les updates Y.js). Défaut `RATE_LIMIT` du relais relevé de 500 à 1500 (surchargeable par variable d'environnement).
+
 ## 2.48.2
 
 ### Fixes

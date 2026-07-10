@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Ezabatu behin betiko",
     "retentionReadonly": "Espediente irakurtzeko soilik (atxikipena iraungita)",
     "retentionRedactConfirm": "Zentzurak testu-eduki guztiak betiko ezabatuko ditu (izenak, oharrak, propietateak). Grafoaren egitura mantenduko da. Ekintza hau itzulezina da.",
-    "retentionRedactAction": "Behin betiko zentzuratu"
+    "retentionRedactAction": "Behin betiko zentzuratu",
+    "opfsUnavailable": "Nabigatzaile honek (edo modu pribatuak) tokiko multimedia-biltegiratzea eragozten du: irudiak ez dira bistaratuko. Ireki espedientea leiho normal batean."
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

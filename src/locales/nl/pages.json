@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Definitief verwijderen",
     "retentionReadonly": "Dossier is alleen-lezen (bewaring verlopen)",
     "retentionRedactConfirm": "Censuur zal alle tekstinhoud permanent wissen (namen, notities, eigenschappen). De grafiekstructuur blijft behouden. Deze actie is onomkeerbaar.",
-    "retentionRedactAction": "Definitief censureren"
+    "retentionRedactAction": "Definitief censureren",
+    "opfsUnavailable": "Deze browser (of privémodus) blokkeert lokale media-opslag: afbeeldingen worden niet weergegeven. Open het dossier in een normaal venster."
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

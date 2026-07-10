@@ -199,6 +199,36 @@ async function saveAssembledAsset(map: Y.Map<any>, meta: AssetMeta): Promise<Ass
   }
 }
 
+/** Decode a base64 string to bytes (charCode loop — atob handles the decoding). */
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * Save an asset stored in the legacy pre-v2.40 format: the binary lives in a
+ * single base64 `data` field instead of a chunked Y.Array. The chunking
+ * refactor dropped this read path, so peers/dossiers still carrying old-format
+ * asset maps left the media unreadable (stuck loading spinner). This restores
+ * backward compatibility.
+ */
+async function saveLegacyBase64Asset(map: Y.Map<any>, meta: AssetMeta): Promise<Asset | null> {
+  const syncStore = useSyncStore.getState();
+  try {
+    const base64 = map.get('data') as string;
+    if (!base64) return null;
+    const data = base64ToUint8Array(base64);
+    const saved = await fileService.saveAssetFromBinary(meta, data);
+    syncStore.markMediaAssetDone(meta.id);
+    return saved;
+  } catch {
+    syncStore.markMediaAssetFailed(meta.id);
+    return null;
+  }
+}
+
 /**
  * Process an asset Y.Map. If complete, save and return the asset. If incomplete,
  * register a chunks observer that will save once all chunks have arrived.
@@ -219,7 +249,17 @@ async function processAssetMap(
   if (assetChunkObservers.has(meta.id)) return null;
 
   const chunksArray = getChunksArray(map);
-  if (!chunksArray) return null; // No chunked structure — peer must be on old version
+  if (!chunksArray) {
+    // Legacy pre-v2.40 format: binary in a single base64 'data' field.
+    const legacyData = map.get('data');
+    if (typeof legacyData === 'string' && legacyData.length > 0) {
+      const syncStore = useSyncStore.getState();
+      syncStore.registerMediaAsset(meta.id, meta.filename, meta.size);
+      syncStore.updateMediaAssetBytes(meta.id, meta.size);
+      return await saveLegacyBase64Asset(map, meta);
+    }
+    return null; // Unknown/empty asset structure
+  }
 
   const syncStore = useSyncStore.getState();
   syncStore.registerMediaAsset(meta.id, meta.filename, meta.size);
@@ -272,6 +312,14 @@ let assetsChangedFlag = false;
 let changedTabIds = new Set<string>();
 let structuralTabChange = false;
 let tabsChangedFlag = false;
+// Forces the next _syncFromYDoc to (re)process every asset map regardless of
+// observer flags. Set by the shared-mode safety re-syncs so assets that landed
+// before the observer was attached (or were missed) get their chunk observer
+// registered — otherwise their media never assembles and the node keeps
+// spinning until a manual reload.
+let forceAssetResync = false;
+/** Exported so loadDossier's safety re-syncs can force asset reprocessing. */
+export function setForceAssetResync() { forceAssetResync = true; }
 
 function setupYDocObserver(
   ydoc: Y.Doc,
@@ -389,6 +437,53 @@ function assertWritable(get: () => DossierState) {
   if (get().isReadOnly) {
     throw new Error('Dossier is read-only (retention expired)');
   }
+}
+
+/**
+ * Force-reconcile canvas tabs from the Y.Doc into the tab store.
+ *
+ * The incremental tab sync in `_syncFromYDoc` only runs when the Y.js observer
+ * flagged a change. Tabs that land in the Y.Doc *before* the observer is
+ * attached (the window between `waitForSync` and observer setup), or that were
+ * missed by a timed-out initial sync, are otherwise never applied — leaving a
+ * joiner with empty tabs until a manual reload (F5). The safety re-syncs call
+ * this to read the current tabs unconditionally and push them if they differ.
+ */
+async function reconcileSharedTabs(ydoc: Y.Doc): Promise<void> {
+  try {
+    const tabsMap = getYMaps(ydoc).tabs;
+    if (tabsMap.size === 0) return;
+
+    const remoteTabs: import('../types').CanvasTab[] = [];
+    tabsMap.forEach((ymap) => {
+      try {
+        const tab = yMapToTab(ymap as Y.Map<any>);
+        if (tab.id) remoteTabs.push(tab);
+      } catch { /* skip malformed */ }
+    });
+    if (remoteTabs.length === 0) return;
+
+    // Only touch the store when the remote tabs actually differ from what we
+    // already have, to avoid needless re-renders during collaboration.
+    const current = useTabStore.getState().tabs;
+    const currentById = new Map(current.map((t) => [t.id, t]));
+    const differs =
+      current.length !== remoteTabs.length ||
+      remoteTabs.some((rt) => {
+        const c = currentById.get(rt.id);
+        return (
+          !c ||
+          c.memberElementIds.length !== rt.memberElementIds.length ||
+          c.excludedElementIds.length !== rt.excludedElementIds.length ||
+          new Date(c.updatedAt).getTime() !== new Date(rt.updatedAt).getTime()
+        );
+      });
+
+    if (differs) {
+      await tabRepository.bulkUpsert(remoteTabs);
+      useTabStore.getState()._syncTabsFromYDoc(remoteTabs);
+    }
+  } catch { /* best-effort */ }
 }
 
 /**
@@ -805,9 +900,15 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       // - Late WebSocket sync (initial read happened before sync completed)
       const syncState = syncService.getState();
       if (syncState.mode === 'shared') {
+        // Catch tabs + assets that landed in the Y.Doc before the observer was
+        // attached (or were missed): force asset reprocessing so their chunk
+        // observers get registered, and reconcile tabs directly.
+        reconcileSharedTabs(ydoc);
+        setForceAssetResync();
+        get()._syncFromYDoc();
         // Immediate safety re-sync if already connected
         if (syncState.connected) {
-          setTimeout(() => get()._syncFromYDoc(), 2500);
+          setTimeout(() => { setForceAssetResync(); get()._syncFromYDoc(); reconcileSharedTabs(ydoc); }, 2500);
         }
         // Also listen for future connection/sync events to trigger re-sync.
         // This handles the case where WebSocket connects AFTER initial load.
@@ -820,7 +921,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           if (state.connected && !state.syncing) {
             // Connection established and sync complete — re-sync from Y.Doc
             unsubSyncWatch?.();
-            setTimeout(() => get()._syncFromYDoc(), 500);
+            setTimeout(() => { setForceAssetResync(); get()._syncFromYDoc(); reconcileSharedTabs(ydoc); }, 500);
           }
         });
       }
@@ -2629,7 +2730,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const structuralLkChange = structuralLinkChange;
     const metaChanged = metaChangedFlag;
     const commentsNeedSync = commentsChangedFlag;
-    const assetsNeedSync = assetsChangedFlag;
+    const assetsNeedSync = assetsChangedFlag || forceAssetResync;
     const tabIdsChanged = changedTabIds;
     const structuralTbChange = structuralTabChange;
     const tabsNeedSync = tabsChangedFlag;
@@ -2641,6 +2742,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     metaChangedFlag = false;
     commentsChangedFlag = false;
     assetsChangedFlag = false;
+    forceAssetResync = false;
     changedTabIds = new Set<string>();
     structuralTabChange = false;
     tabsChangedFlag = false;

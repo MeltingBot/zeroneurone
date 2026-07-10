@@ -329,7 +329,8 @@
     "retentionDeleteAction": "Excluir permanentemente",
     "retentionReadonly": "Investigação em somente leitura (retenção expirada)",
     "retentionRedactConfirm": "A redação apagará permanentemente todo o conteúdo textual (nomes, notas, propriedades). A estrutura do grafo será preservada. Esta ação é irreversível.",
-    "retentionRedactAction": "Redatar definitivamente"
+    "retentionRedactAction": "Redatar definitivamente",
+    "opfsUnavailable": "Este navegador (ou o modo privado) impede o armazenamento local de mídia: as imagens não serão exibidas. Abra o dossiê numa janela normal."
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",

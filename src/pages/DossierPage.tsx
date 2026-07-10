@@ -31,10 +31,11 @@ const Canvas = lazyWithRetry(() => import('../components/canvas').then(m => ({ d
 const TimelineView = lazyWithRetry(() => import('../components/timeline').then(m => ({ default: m.TimelineView })));
 const MapView = lazyWithRetry(() => import('../components/map').then(m => ({ default: m.MapView })));
 const MatrixView = lazyWithRetry(() => import('../components/matrix').then(m => ({ default: m.MatrixView })));
-import { useDossierStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore } from '../stores';
+import { useDossierStore, useUIStore, useViewStore, useSyncStore, useSelectionStore, useInsightsStore, useTabStore, toast } from '../stores';
 import { TabBar } from '../components/canvas/TabBar';
 import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
+import { fileService } from '../services/fileService';
 import type { DisplayMode } from '../types';
 import { usePlugins } from '../plugins/usePlugins';
 import { getPlugins } from '../plugins/pluginRegistry';
@@ -177,6 +178,22 @@ export function DossierPage() {
       resetTabState();
     };
   }, [id, loadDossier, unloadDossier, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForDossier, saveViewportForDossier, loadTabs, requestFitView]);
+
+  // Warn once per dossier if the browser can't write media to OPFS (typically
+  // a private/incognito window) and the dossier actually has media — otherwise
+  // those assets silently stay stuck loading.
+  const opfsWarnedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!id || isLoading || opfsWarnedRef.current === id) return;
+    const hasMedia = elements.some((e) => e.assetIds && e.assetIds.length > 0);
+    if (!hasMedia) return;
+    opfsWarnedRef.current = id;
+    fileService.isOpfsWritable().then((writable) => {
+      // Use toastStore.toast (the one actually rendered by ToastContainer);
+      // uiStore.showToast writes to a different, unrendered store.
+      if (!writable) toast.warning(t('dossier.opfsUnavailable'), 8000);
+    });
+  }, [id, isLoading, elements, t]);
 
   // Retention expiration check
   const retentionExpiredDays = (() => {

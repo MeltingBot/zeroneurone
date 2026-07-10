@@ -97,6 +97,30 @@ export class FileValidationError extends Error {
 class FileService {
   private root: FileSystemDirectoryHandle | null = null;
   private initialized = false;
+  private opfsWritable: boolean | null = null;
+
+  /**
+   * Probe whether OPFS is actually writable — not just present. Some contexts
+   * (notably private/incognito windows, restricted storage, or unsupported
+   * browsers) expose `navigator.storage.getDirectory()` but fail on write, which
+   * silently breaks media storage (assets stay stuck loading). Result is cached.
+   */
+  async isOpfsWritable(): Promise<boolean> {
+    if (this.opfsWritable !== null) return this.opfsWritable;
+    try {
+      const root = await navigator.storage.getDirectory();
+      const name = `.opfs-write-probe-${Date.now()}`;
+      const handle = await root.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(new Uint8Array([1]));
+      await writable.close();
+      await root.removeEntry(name).catch(() => { /* best-effort cleanup */ });
+      this.opfsWritable = true;
+    } catch {
+      this.opfsWritable = false;
+    }
+    return this.opfsWritable;
+  }
 
   /** Retourne la DEK si le chiffrement est actif, null sinon */
   private getDek(): Uint8Array | null {
