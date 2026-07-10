@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode, GeoData, GeoPolygon, Element, Link } from '../types';
 import type { ExtractedMetadata } from '../services/metadataService';
-import { generateUUID } from '../utils';
+import { useToastStore } from './toastStore';
 
 export interface MetadataImportItem {
   elementId: string;
@@ -281,32 +281,20 @@ export const useUIStore = create<UIState>()(
     set({ activeTool: tool });
   },
 
-  // Toasts
+  // Toasts — delegated to toastStore, the store the rendered ToastContainer
+  // reads. (uiStore.toasts is kept for type/back-compat but is no longer the
+  // source of truth.) This makes every showToast caller — including plugins via
+  // pluginAPI.toast — actually render.
   showToast: (type, message, duration = 3000) => {
-    const id = generateUUID();
-    const toast: Toast = { id, type, message, duration };
-
-    set((state) => ({
-      toasts: [...state.toasts, toast],
-    }));
-
-    if (duration > 0) {
-      setTimeout(() => {
-        get().dismissToast(id);
-      }, duration);
-    }
-
-    return id;
+    return useToastStore.getState().addToast(type, message, duration);
   },
 
   dismissToast: (id) => {
-    set((state) => ({
-      toasts: state.toasts.filter((t) => t.id !== id),
-    }));
+    useToastStore.getState().removeToast(id);
   },
 
   clearToasts: () => {
-    set({ toasts: [] });
+    useToastStore.getState().clearToasts();
   },
 
   // Search

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.2
+
+### Fixes
+- **Toasts enfin affichés** — `uiStore.showToast` écrivait dans un store que le `ToastContainer` rendu ne lisait pas (il lit `toastStore`), si bien que **tous** les toasts déclenchés via `showToast` étaient invisibles : notifications internes de l'app (dont l'avertissement d'expiration de rétention) **et** les toasts des plugins (`pluginAPI.toast.*`). `uiStore.showToast` / `dismissToast` / `clearToasts` délèguent désormais à `toastStore` (le store réellement rendu), en préservant le contrat `showToast → id → dismissToast(id)`. Les plugins récupèrent leurs toasts sans changement de code.
+
 ## 2.48.1 — Glow Edition
 
 ### Fixes

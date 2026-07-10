@@ -11,7 +11,7 @@ export interface Toast {
 
 interface ToastState {
   toasts: Toast[];
-  addToast: (type: ToastType, message: string, duration?: number) => void;
+  addToast: (type: ToastType, message: string, duration?: number) => string;
   removeToast: (id: string) => void;
   clearToasts: () => void;
 }
@@ -37,6 +37,8 @@ export const useToastStore = create<ToastState>((set) => ({
         }));
       }, duration);
     }
+
+    return id;
   },
 
   removeToast: (id) => {
