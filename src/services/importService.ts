@@ -22,6 +22,8 @@ import type {
   ReportSectionId,
   CanvasTab,
   TabId,
+  View,
+  ViewId,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import { normalizeGeo, computePolygonCenter } from '../utils/geo';
@@ -1365,6 +1367,37 @@ class ImportService {
         };
 
         await db.canvasTabs.add(tab);
+      }
+    }
+
+    // Import saved views with remapped element IDs (new dossier only, not merge)
+    if (data.views && data.views.length > 0 && !positionOffset) {
+      for (const importedView of data.views) {
+        const newHidden = (importedView.hiddenElementIds || [])
+          .map((oldId: ElementId) => elementIdMap.get(oldId))
+          .filter((id): id is ElementId => id !== undefined);
+        const newPositions = (importedView.elementPositions || [])
+          .map((p) => {
+            const newId = elementIdMap.get(p.id);
+            return newId ? { id: newId, position: p.position } : null;
+          })
+          .filter((p): p is { id: ElementId; position: Position } => p !== null);
+
+        const view: View = {
+          ...importedView,
+          id: generateUUID() as ViewId,
+          dossierId: targetDossierId,
+          hiddenElementIds: newHidden,
+          elementPositions: newPositions.length > 0 ? newPositions : undefined,
+          // Tab IDs are regenerated on import and not tracked, so reset to the
+          // global "All" view rather than dangle on a stale tab id.
+          activeTabId: null,
+          viewport: { x: 0, y: 0, zoom: 1 }, // Viewport is local, reset on import
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await db.views.add(view);
       }
     }
 

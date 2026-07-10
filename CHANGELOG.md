@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.4
+
+### Fixes
+- **Vues sauvegardées absentes de l'export** — l'export d'un dossier (JSON, ZIP, ZIP chiffré) n'incluait pas les **vues sauvegardées** (filtres, éléments masqués, disposition mémorisée) : le champ `views` manquait à la structure d'export. Elles sont désormais exportées et **restaurées à l'import** avec remap des identifiants d'éléments (`hiddenElementIds`, positions sauvegardées), viewport réinitialisé et `activeTabId` remis à zéro (les onglets étant ré-générés à l'import). Import JSON et ZIP couverts. Le backup complet (toutes enquêtes) gérait déjà les vues ; le trou concernait l'export par dossier.
+
 ## 2.48.3
 
 ### Fixes

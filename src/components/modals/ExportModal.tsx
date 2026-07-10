@@ -5,6 +5,7 @@ import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
 import { reportRepository, tabRepository } from '../../db/repositories';
+import { db } from '../../db/database';
 import { useDossierStore, toast } from '../../stores';
 
 interface ExportModalProps {
@@ -54,11 +55,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         // Use getByDossierWithYDoc to check both Dexie and Y.Doc storage
         report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
       }
-      const tabs = (format === 'zip' || format === 'json')
+      const includeStructure = format === 'zip' || format === 'json';
+      const tabs = includeStructure
         ? await tabRepository.getByDossier(currentDossier.id)
         : undefined;
+      const views = includeStructure
+        ? await db.views.where({ dossierId: currentDossier.id }).toArray()
+        : undefined;
 
-      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs);
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
@@ -75,6 +80,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const assets = await fileService.getAssetsByDossier(currentDossier.id);
       const report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
       const tabs = await tabRepository.getByDossier(currentDossier.id);
+      const views = await db.views.where({ dossierId: currentDossier.id }).toArray();
 
       const encBlob = await exportService.exportToEncryptedZip(
         zipPassword,
@@ -83,7 +89,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         links,
         assets,
         report,
-        tabs
+        tabs,
+        views
       );
 
       const now = new Date();
