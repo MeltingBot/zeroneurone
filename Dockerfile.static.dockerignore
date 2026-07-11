@@ -1,0 +1,5 @@
+# Per-Dockerfile ignore (BuildKit): only ship the pre-built dist/ + nginx.conf.
+# Everything else is excluded so the build context stays tiny.
+*
+!dist
+!nginx.conf

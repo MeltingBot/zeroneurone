@@ -29,7 +29,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including devDependencies for build)
-# Mount cache: reuses npm cache across builds even when package.json changes
+# Mount cache: reuses npm cache across builds even when package.json changes.
+# On a slow connection, prefer `npm run docker:build:local` (builds on the host,
+# copies only dist/ — no npm ci here). See Dockerfile.static.
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Copy source code

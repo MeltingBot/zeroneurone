@@ -1,0 +1,43 @@
+# ============================================================================
+# zeroneurone - Local image build (no npm ci inside Docker)
+# ============================================================================
+#
+# Packages a `dist/` that was ALREADY built on the host into an nginx image.
+# This avoids re-downloading all dependencies inside the container — ideal when
+# building the image on a dev machine with a slow connection (the host already
+# has node_modules and builds in seconds).
+#
+# Build the app first, then this image:
+#   npm run build:plugins && npm run build
+#   docker build -f Dockerfile.static -t zeroneurone .
+#
+# Or in one shot:
+#   npm run docker:build:local
+#
+# A dedicated Dockerfile.static.dockerignore keeps the build context to just
+# dist/ + nginx.conf. For clean CI builds (good connection), use the regular
+# Dockerfile, which builds from source inside the container.
+# ============================================================================
+
+FROM nginx:alpine AS production
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Copy the pre-built static files (built on the host)
+COPY dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Add .mjs to the JavaScript MIME mapping (nginx's default mime.types omits it,
+# so .mjs files would be served as application/octet-stream and blocked by
+# browsers under X-Content-Type-Options: nosniff)
+RUN sed -i 's|application/javascript[[:space:]]\+js;|application/javascript js mjs;|' /etc/nginx/mime.types
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:80/health || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
