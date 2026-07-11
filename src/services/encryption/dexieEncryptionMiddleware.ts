@@ -303,4 +303,5 @@ export const DEFAULT_ENCRYPTED_TABLES = new Set([
   'reports',
   'canvasTabs',
   'pluginData',
+  'comments',
 ]);

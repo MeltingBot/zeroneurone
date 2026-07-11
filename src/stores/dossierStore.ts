@@ -759,6 +759,23 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         }
       }
 
+      // Comments migration: comments are normally Y.Doc-only, but imports stage
+      // them in Dexie (db.comments). Migrate them into the Y.Doc once, like tabs.
+      const { comments: commentsYMap } = getYMaps(ydoc);
+      const commentsAlreadyMigrated = metaMap.get('_commentsMigrated') === true;
+      const shouldMigrateComments =
+        !isJoiner && !commentsAlreadyMigrated && commentsYMap.size === 0;
+
+      if (shouldMigrateComments) {
+        const dexieComments = await db.comments.where('dossierId').equals(id).toArray();
+        ydoc.transact(() => {
+          dexieComments.forEach((comment) => {
+            commentsYMap.set(comment.id, commentToYMap(comment));
+          });
+          metaMap.set('_commentsMigrated', true);
+        });
+      }
+
       // Joiner: download assets from Y.Doc before canvas renders.
       // Source path (meta broadcast + asset upload) deferred to after
       // initial render to avoid blocking during main thread contention.
@@ -877,6 +894,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         }
       });
 
+      const loadedComments: Comment[] = [];
+      commentsYMap.forEach((ymap) => {
+        try {
+          const comment = yMapToComment(ymap as Y.Map<any>);
+          if (comment.id) loadedComments.push(comment);
+        } catch {
+          // Skip invalid comments
+        }
+      });
+
       const loadedElements = Array.from(elementsById.values());
       const loadedLinks = Array.from(linksById.values());
 
@@ -884,6 +911,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         currentDossier: dossier,
         elements: loadedElements,
         links: loadedLinks,
+        comments: loadedComments,
         assets,
         isLoading: false,
         loadingPhase: '',

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.6
+
+### Fixes
+- **Commentaires absents de l'export** — les commentaires (annotations sur éléments/liens) ne figuraient pas dans l'export par dossier. Ils sont désormais exportés (JSON, ZIP, ZIP chiffré) et **restaurés à l'import** avec remap de la cible (`targetId` élément/lien ; un commentaire dont la cible n'a pas survécu à l'import est ignoré). Techniquement : les commentaires étant stockés dans le Y.Doc, une table Dexie `comments` (chiffrée au repos) sert de staging à l'import, migrée vers le Y.Doc au premier chargement (comme les onglets). Corrige aussi un point pré-existant : les commentaires n'étaient pas lus dans l'état à l'ouverture d'un dossier (ils n'apparaissaient qu'après une interaction).
+
 ## 2.48.5
 
 ### Fixes

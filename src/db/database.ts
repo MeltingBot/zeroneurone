@@ -18,6 +18,8 @@ import type {
   TabId,
   SavedQuery,
   SavedQueryId,
+  Comment,
+  CommentId,
 } from '../types';
 import type { JsonMappingTemplate } from '../utils/jsonMapping';
 import type { EncryptionMeta } from '../services/encryption/encryptionService';
@@ -44,6 +46,8 @@ class DossierDatabase extends Dexie {
   savedQueries!: Table<SavedQuery, SavedQueryId>;
   pluginData!: Table<PluginDataRow, string>;
   jsonMappings!: Table<JsonMappingTemplate, string>;
+  /** Import-staging for comments (normally Y.Doc-only); migrated to the Y.Doc on first load. */
+  comments!: Table<Comment, CommentId>;
   _encryptionMeta!: Table<EncryptionMeta, 'main'>;
 
   constructor() {
@@ -217,6 +221,11 @@ class DossierDatabase extends Dexie {
     // ─── Version 12: Add jsonMappings table (global, reusable JSON import templates) ─
     this.version(12).stores({
       jsonMappings: 'id, name',
+    });
+
+    // ─── Version 13: comments table (import-staging → migrated to Y.Doc) ───
+    this.version(13).stores({
+      comments: 'id, dossierId, targetId, createdAt',
     });
   }
 

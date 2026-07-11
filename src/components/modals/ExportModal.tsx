@@ -40,7 +40,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [showZipPassword, setShowZipPassword] = useState(false);
   const zipPasswordRef = useRef<HTMLInputElement>(null);
 
-  const { currentDossier, elements, links } = useDossierStore();
+  const { currentDossier, elements, links, comments } = useDossierStore();
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     if (!currentDossier) return;
@@ -68,8 +68,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const queryHistory = includeStructure
         ? useQueryStore.getState().recentQueries
         : undefined;
+      const exportComments = includeStructure ? comments : undefined;
 
-      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory);
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
@@ -100,7 +101,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         tabs,
         views,
         queries,
-        queryHistory
+        queryHistory,
+        comments
       );
 
       const now = new Date();

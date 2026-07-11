@@ -26,6 +26,8 @@ import type {
   ViewId,
   SavedQuery,
   SavedQueryId,
+  Comment,
+  CommentId,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import { useQueryStore } from '../stores/queryStore';
@@ -1416,6 +1418,26 @@ class ImportService {
           updatedAt: new Date(),
         };
         await db.savedQueries.add(query);
+      }
+    }
+
+    // Import comments (new dossier only) with remapped targets. Comments are
+    // normally Y.Doc-only; they're staged in Dexie here and migrated to the
+    // Y.Doc on first load (see the comments migration in loadDossier).
+    if (data.comments && data.comments.length > 0 && !positionOffset) {
+      for (const importedComment of data.comments) {
+        const newTargetId = importedComment.targetType === 'link'
+          ? linkIdMap.get(importedComment.targetId)
+          : elementIdMap.get(importedComment.targetId);
+        if (!newTargetId) continue; // target didn't survive import — drop the comment
+
+        const comment: Comment = {
+          ...importedComment,
+          id: generateUUID() as CommentId,
+          dossierId: targetDossierId,
+          targetId: newTargetId,
+        };
+        await db.comments.add(comment);
       }
     }
 
