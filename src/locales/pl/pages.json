@@ -181,7 +181,10 @@
       "editLinkLabel": "Edytuj etykietę",
       "reverseLink": "Odwróć kierunek",
       "deleteLink": "Usuń połączenie",
-      "noLabel": "Bez etykiety"
+      "noLabel": "Bez etykiety",
+      "openUrl": "Otwórz URL",
+      "copyUrl": "Kopiuj URL",
+      "links": "Linki ({{count}})"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Dochodzenie tylko do odczytu (retencja wygasła)",
     "retentionRedactConfirm": "Redakcja trwale usunie całą zawartość tekstową (nazwy, notatki, właściwości). Struktura grafu zostanie zachowana. Ta akcja jest nieodwracalna.",
     "retentionRedactAction": "Zredagować na stałe",
-    "opfsUnavailable": "Ta przeglądarka (lub tryb prywatny) blokuje lokalne przechowywanie multimediów: obrazy nie będą wyświetlane. Otwórz teczkę w zwykłym oknie."
+    "opfsUnavailable": "Ta przeglądarka (lub tryb prywatny) blokuje lokalne przechowywanie multimediów: obrazy nie będą wyświetlane. Otwórz teczkę w zwykłym oknie.",
+    "urlCopied": "Skopiowano URL",
+    "urlCopyFailed": "Nie udało się skopiować URL"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

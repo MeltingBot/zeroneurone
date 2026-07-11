@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.7
+
+### Features
+- **Ouvrir / copier une URL depuis le menu contextuel** — clic droit sur un élément portant une propriété URL (type `link` ou toute valeur ressemblant à une URL — `http(s)://`, `www.`) propose **Ouvrir l'URL** (nouvel onglet) et **Copier l'URL** (presse-papier). Pratique en enquête. Fonctionne même si la propriété est en type texte. Plusieurs liens → sous-menu **« Liens (N) »** au survol, chaque lien étiqueté par sa propriété, avec bascule à gauche près du bord de l'écran. i18n 11 langues.
+
 ## 2.48.6
 
 ### Fixes

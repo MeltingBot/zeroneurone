@@ -216,3 +216,18 @@ export function unsanitizeLinkLabel(label: string): string {
     .replace(/\u2223/g, '|')
     .replace(/\u3015/g, ']]');
 }
+
+/** True if the string looks like an http(s) or www URL. */
+export function isUrl(str: unknown): boolean {
+  if (typeof str !== 'string' || !str) return false;
+  const t = str.trim();
+  return t.startsWith('http://') || t.startsWith('https://') || t.startsWith('www.');
+}
+
+/** Normalize a URL-ish string to a safe http(s) URL (adds https:// when missing). */
+export function toUrl(str: string): string {
+  const t = str.trim();
+  if (t.startsWith('www.')) return `https://${t}`;
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t}`;
+}

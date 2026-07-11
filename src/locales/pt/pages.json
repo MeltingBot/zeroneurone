@@ -181,7 +181,10 @@
       "editLinkLabel": "Editar rótulo",
       "reverseLink": "Inverter direção",
       "deleteLink": "Eliminar ligação",
-      "noLabel": "Sem rótulo"
+      "noLabel": "Sem rótulo",
+      "openUrl": "Abrir URL",
+      "copyUrl": "Copiar URL",
+      "links": "Ligações ({{count}})"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Investigação em somente leitura (retenção expirada)",
     "retentionRedactConfirm": "A redação apagará permanentemente todo o conteúdo textual (nomes, notas, propriedades). A estrutura do grafo será preservada. Esta ação é irreversível.",
     "retentionRedactAction": "Redatar definitivamente",
-    "opfsUnavailable": "Este navegador (ou o modo privado) impede o armazenamento local de mídia: as imagens não serão exibidas. Abra o dossiê numa janela normal."
+    "opfsUnavailable": "Este navegador (ou o modo privado) impede o armazenamento local de mídia: as imagens não serão exibidas. Abra o dossiê numa janela normal.",
+    "urlCopied": "URL copiado",
+    "urlCopyFailed": "Falha ao copiar o URL"
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",

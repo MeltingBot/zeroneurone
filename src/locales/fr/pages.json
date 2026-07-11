@@ -181,7 +181,10 @@
       "editLinkLabel": "Editer le label",
       "reverseLink": "Inverser la direction",
       "deleteLink": "Supprimer le lien",
-      "noLabel": "Sans label"
+      "noLabel": "Sans label",
+      "openUrl": "Ouvrir l'URL",
+      "copyUrl": "Copier l'URL",
+      "links": "Liens ({{count}})"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",
@@ -331,7 +334,9 @@
     "retentionReadonly": "Dossier en lecture seule (rétention expirée)",
     "retentionRedactConfirm": "Le caviardage va effacer définitivement tous les contenus textuels (noms, notes, propriétés). La structure du graphe sera conservée. Cette action est irréversible.",
     "retentionRedactAction": "Caviarder définitivement",
-    "opfsUnavailable": "Ce navigateur (ou le mode privé) empêche le stockage local des médias : les images ne s'afficheront pas. Ouvrez le dossier dans une fenêtre normale."
+    "opfsUnavailable": "Ce navigateur (ou le mode privé) empêche le stockage local des médias : les images ne s'afficheront pas. Ouvrez le dossier dans une fenêtre normale.",
+    "urlCopied": "URL copiée",
+    "urlCopyFailed": "Échec de la copie de l'URL"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

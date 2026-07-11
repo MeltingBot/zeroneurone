@@ -181,7 +181,10 @@
       "editLinkLabel": "Label bewerken",
       "reverseLink": "Richting omkeren",
       "deleteLink": "Verbinding verwijderen",
-      "noLabel": "Zonder label"
+      "noLabel": "Zonder label",
+      "openUrl": "URL openen",
+      "copyUrl": "URL kopiëren",
+      "links": "Links ({{count}})"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Dossier is alleen-lezen (bewaring verlopen)",
     "retentionRedactConfirm": "Censuur zal alle tekstinhoud permanent wissen (namen, notities, eigenschappen). De grafiekstructuur blijft behouden. Deze actie is onomkeerbaar.",
     "retentionRedactAction": "Definitief censureren",
-    "opfsUnavailable": "Deze browser (of privémodus) blokkeert lokale media-opslag: afbeeldingen worden niet weergegeven. Open het dossier in een normaal venster."
+    "opfsUnavailable": "Deze browser (of privémodus) blokkeert lokale media-opslag: afbeeldingen worden niet weergegeven. Open het dossier in een normaal venster.",
+    "urlCopied": "URL gekopieerd",
+    "urlCopyFailed": "Kopiëren van URL mislukt"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

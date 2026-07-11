@@ -181,7 +181,10 @@
       "editLinkLabel": "Modifica etichetta",
       "reverseLink": "Inverti direzione",
       "deleteLink": "Elimina collegamento",
-      "noLabel": "Senza etichetta"
+      "noLabel": "Senza etichetta",
+      "openUrl": "Apri URL",
+      "copyUrl": "Copia URL",
+      "links": "Link ({{count}})"
     },
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Indagine in sola lettura (conservazione scaduta)",
     "retentionRedactConfirm": "L'oscuramento cancellerà definitivamente tutti i contenuti testuali (nomi, note, proprietà). La struttura del grafo sarà conservata. Questa azione è irreversibile.",
     "retentionRedactAction": "Oscurare definitivamente",
-    "opfsUnavailable": "Questo browser (o la modalità privata) impedisce l'archiviazione locale dei media: le immagini non verranno visualizzate. Apri il fascicolo in una finestra normale."
+    "opfsUnavailable": "Questo browser (o la modalità privata) impedisce l'archiviazione locale dei media: le immagini non verranno visualizzate. Apri il fascicolo in una finestra normale.",
+    "urlCopied": "URL copiato",
+    "urlCopyFailed": "Impossibile copiare l'URL"
   },
   "map": {
     "noGeoElements": "Nessun elemento geolocalizzato",

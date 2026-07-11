@@ -181,7 +181,10 @@
       "editLinkLabel": "Etiketa editatu",
       "reverseLink": "Noranzkoa alderantzikatu",
       "deleteLink": "Lotura ezabatu",
-      "noLabel": "Etiketarik gabe"
+      "noLabel": "Etiketarik gabe",
+      "openUrl": "Ireki URLa",
+      "copyUrl": "Kopiatu URLa",
+      "links": "Estekak ({{count}})"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Espediente irakurtzeko soilik (atxikipena iraungita)",
     "retentionRedactConfirm": "Zentzurak testu-eduki guztiak betiko ezabatuko ditu (izenak, oharrak, propietateak). Grafoaren egitura mantenduko da. Ekintza hau itzulezina da.",
     "retentionRedactAction": "Behin betiko zentzuratu",
-    "opfsUnavailable": "Nabigatzaile honek (edo modu pribatuak) tokiko multimedia-biltegiratzea eragozten du: irudiak ez dira bistaratuko. Ireki espedientea leiho normal batean."
+    "opfsUnavailable": "Nabigatzaile honek (edo modu pribatuak) tokiko multimedia-biltegiratzea eragozten du: irudiak ez dira bistaratuko. Ireki espedientea leiho normal batean.",
+    "urlCopied": "URLa kopiatu da",
+    "urlCopyFailed": "Ezin izan da URLa kopiatu"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

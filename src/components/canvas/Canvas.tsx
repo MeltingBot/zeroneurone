@@ -46,7 +46,7 @@ import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
-import { generateUUID, sanitizeLinkLabel } from '../../utils';
+import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { isMappableJson } from '../../utils/jsonMapping';
 import { serializeQuery } from '../../services/query/serializer';
@@ -2474,6 +2474,20 @@ export function Canvas() {
     useUIStore.getState().setSidePanelTab('query');
   }, [contextMenu, elements]);
 
+  // Open a URL from an element property in a new tab.
+  const handleOpenUrl = useCallback((url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    closeContextMenu();
+  }, [closeContextMenu]);
+
+  // Copy a URL from an element property to the clipboard.
+  const handleCopyUrl = useCallback((url: string) => {
+    navigator.clipboard.writeText(url)
+      .then(() => toast.success(tPages('dossier.urlCopied')))
+      .catch(() => toast.error(tPages('dossier.urlCopyFailed')));
+    closeContextMenu();
+  }, [closeContextMenu, tPages]);
+
   // Query: Query from selection (multiple elements — search by labels)
   const handleQueryFromSelection = useCallback(() => {
     const selectedEls = getSelectedElementIds();
@@ -4392,7 +4406,17 @@ export function Canvas() {
           )}
 
           {/* Context menu for elements */}
-          {contextMenu && (
+          {contextMenu && (() => {
+            // URL properties of the right-clicked element (single selection):
+            // type 'link' or any value that looks like a URL.
+            const ctxEl = selectedElementIds.size <= 1 ? elementMap.get(contextMenu.elementId) : undefined;
+            const elementUrls = (ctxEl?.properties ?? [])
+              .filter(p => {
+                const v = String(p.value ?? '').trim();
+                return v.length > 0 && (p.type === 'link' || isUrl(v));
+              })
+              .map(p => ({ key: p.key, url: toUrl(String(p.value)) }));
+            return (
             <ContextMenu
               x={contextMenu.x}
               y={contextMenu.y}
@@ -4452,6 +4476,9 @@ export function Canvas() {
               }}
               onFindSimilar={selectedElementIds.size === 1 ? handleFindSimilar : undefined}
               onQueryFromSelection={selectedElementIds.size > 1 ? handleQueryFromSelection : undefined}
+              urls={elementUrls}
+              onOpenUrl={handleOpenUrl}
+              onCopyUrl={handleCopyUrl}
               pluginExtensions={elementPlugins}
               menuContext={{
                 elementIds: selectedElementIds.size > 1
@@ -4463,7 +4490,8 @@ export function Canvas() {
               }}
               onClose={closeContextMenu}
             />
-          )}
+            );
+          })()}
 
           {/* Context menu for canvas (empty space) */}
           {canvasContextMenu && (

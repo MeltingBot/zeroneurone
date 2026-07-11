@@ -181,7 +181,10 @@
       "editLinkLabel": "Label bearbeiten",
       "reverseLink": "Richtung umkehren",
       "deleteLink": "Verbindung löschen",
-      "noLabel": "Ohne Label"
+      "noLabel": "Ohne Label",
+      "openUrl": "URL öffnen",
+      "copyUrl": "URL kopieren",
+      "links": "Links ({{count}})"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Akte ist schreibgeschützt (Aufbewahrung abgelaufen)",
     "retentionRedactConfirm": "Die Schwärzung löscht dauerhaft alle Textinhalte (Namen, Notizen, Eigenschaften). Die Graphstruktur bleibt erhalten. Diese Aktion ist unwiderruflich.",
     "retentionRedactAction": "Endgültig schwärzen",
-    "opfsUnavailable": "Dieser Browser (oder der private Modus) blockiert die lokale Medienspeicherung: Bilder werden nicht angezeigt. Öffnen Sie die Akte in einem normalen Fenster."
+    "opfsUnavailable": "Dieser Browser (oder der private Modus) blockiert die lokale Medienspeicherung: Bilder werden nicht angezeigt. Öffnen Sie die Akte in einem normalen Fenster.",
+    "urlCopied": "URL kopiert",
+    "urlCopyFailed": "URL konnte nicht kopiert werden"
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",

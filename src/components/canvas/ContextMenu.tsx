@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, icons } from 'lucide-react';
+import { Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, ExternalLink, Link2, ChevronRight, icons } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 
@@ -50,6 +50,10 @@ interface ContextMenuProps {
   // Query actions
   onFindSimilar?: () => void;
   onQueryFromSelection?: () => void;
+  /** URL properties on the element (open / copy from the context menu) */
+  urls?: { key: string; url: string }[];
+  onOpenUrl?: (url: string) => void;
+  onCopyUrl?: (url: string) => void;
   // Plugin extensions
   pluginExtensions?: readonly ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -103,6 +107,9 @@ function ContextMenuComponent({
   onGoToTab,
   onFindSimilar,
   onQueryFromSelection,
+  urls,
+  onOpenUrl,
+  onCopyUrl,
   pluginExtensions,
   menuContext,
   onClose,
@@ -314,6 +321,70 @@ function ContextMenuComponent({
                 {t('dossier.contextMenu.queryFromSelection')}
               </button>
             )}
+          </div>
+        )}
+
+        {/* URL actions (element has one or more URL properties) */}
+        {urls && urls.length === 1 && onOpenUrl && (
+          <div className="py-1 border-b border-border-default">
+            <button
+              onClick={() => onOpenUrl(urls[0].url)}
+              title={urls[0].url}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+            >
+              <ExternalLink size={14} />
+              {t('dossier.contextMenu.openUrl')}
+            </button>
+            {onCopyUrl && (
+              <button
+                onClick={() => onCopyUrl(urls[0].url)}
+                title={urls[0].url}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+              >
+                <Link2 size={14} />
+                {t('dossier.contextMenu.copyUrl')}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Multiple URLs → hover submenu grouped under "Links (N)" */}
+        {urls && urls.length > 1 && onOpenUrl && (
+          <div className="py-1 border-b border-border-default">
+            <div className="relative group">
+              <button className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors">
+                <Link2 size={14} />
+                <span className="truncate">{t('dossier.contextMenu.links', { count: urls.length })}</span>
+                <ChevronRight size={14} className="ml-auto text-text-tertiary" />
+              </button>
+              <div
+                className={`absolute top-0 ${position.x + 440 > (typeof window !== 'undefined' ? window.innerWidth : 99999) ? 'right-full' : 'left-full'} hidden group-hover:block min-w-56 max-h-80 overflow-y-auto py-1 bg-bg-primary border border-border-default sketchy-border-soft panel-shadow z-50`}
+              >
+                {urls.map((u, i) => (
+                  <div key={`${u.key}-${i}`} className="border-b border-border-default last:border-b-0 py-0.5">
+                    <div className="px-3 py-0.5 text-xs text-text-tertiary truncate" title={u.url}>{u.key}</div>
+                    <button
+                      onClick={() => onOpenUrl(u.url)}
+                      title={u.url}
+                      className="w-full flex items-center gap-2 px-3 py-1 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                    >
+                      <ExternalLink size={14} />
+                      {t('dossier.contextMenu.openUrl')}
+                    </button>
+                    {onCopyUrl && (
+                      <button
+                        onClick={() => onCopyUrl(u.url)}
+                        title={u.url}
+                        className="w-full flex items-center gap-2 px-3 py-1 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                      >
+                        <Link2 size={14} />
+                        {t('dossier.contextMenu.copyUrl')}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

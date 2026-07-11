@@ -181,7 +181,10 @@
       "editLinkLabel": "Edit label",
       "reverseLink": "Reverse direction",
       "deleteLink": "Delete link",
-      "noLabel": "No label"
+      "noLabel": "No label",
+      "openUrl": "Open URL",
+      "copyUrl": "Copy URL",
+      "links": "Links ({{count}})"
     },
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",
@@ -331,7 +334,9 @@
     "retentionReadonly": "Dossier is read-only (retention expired)",
     "retentionRedactConfirm": "Redaction will permanently erase all text content (names, notes, properties). The graph structure will be preserved. This action is irreversible.",
     "retentionRedactAction": "Redact permanently",
-    "opfsUnavailable": "This browser (or private mode) blocks local media storage: images won't display. Open the dossier in a normal window."
+    "opfsUnavailable": "This browser (or private mode) blocks local media storage: images won't display. Open the dossier in a normal window.",
+    "urlCopied": "URL copied",
+    "urlCopyFailed": "Failed to copy URL"
   },
   "map": {
     "noGeoElements": "No geolocated elements",

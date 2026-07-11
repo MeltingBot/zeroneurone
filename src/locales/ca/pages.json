@@ -181,7 +181,10 @@
       "editLinkLabel": "Editar etiqueta",
       "reverseLink": "Invertir direcció",
       "deleteLink": "Eliminar enllaç",
-      "noLabel": "Sense etiqueta"
+      "noLabel": "Sense etiqueta",
+      "openUrl": "Obrir l'URL",
+      "copyUrl": "Copiar l'URL",
+      "links": "Enllaços ({{count}})"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
@@ -330,7 +333,9 @@
     "retentionReadonly": "Investigació en només lectura (retenció expirada)",
     "retentionRedactConfirm": "La redacció eliminarà permanentment tot el contingut textual (noms, notes, propietats). L'estructura del graf es conservarà. Aquesta acció és irreversible.",
     "retentionRedactAction": "Redactar definitivament",
-    "opfsUnavailable": "Aquest navegador (o el mode privat) impedeix l'emmagatzematge local dels mitjans: les imatges no es mostraran. Obre l'expedient en una finestra normal."
+    "opfsUnavailable": "Aquest navegador (o el mode privat) impedeix l'emmagatzematge local dels mitjans: les imatges no es mostraran. Obre l'expedient en una finestra normal.",
+    "urlCopied": "URL copiada",
+    "urlCopyFailed": "No s'ha pogut copiar l'URL"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",
