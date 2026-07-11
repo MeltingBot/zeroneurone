@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Dossier, Element, Link, Asset, Report, CanvasTab, View } from '../types';
+import type { Dossier, Element, Link, Asset, Report, CanvasTab, View, SavedQuery } from '../types';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
@@ -32,6 +32,10 @@ export interface ExportData {
   tabs?: CanvasTab[];
   /** Saved views (filters, hidden elements, saved layout) */
   views?: View[];
+  /** Saved ZNQuery queries (per dossier) */
+  queries?: SavedQuery[];
+  /** Recent ZNQuery history (query text strings, session-level) */
+  queryHistory?: string[];
 }
 
 class ExportService {
@@ -47,7 +51,9 @@ class ExportService {
     assetsMeta?: ExportedAssetMeta[],
     report?: Report | null,
     tabs?: CanvasTab[],
-    views?: View[]
+    views?: View[],
+    queries?: SavedQuery[],
+    queryHistory?: string[]
   ): string {
     // Strip local-only viewport from tabs before export
     const exportTabs = tabs?.map(({ viewport: _v, ...rest }) => rest);
@@ -61,6 +67,8 @@ class ExportService {
       report: report || null,
       tabs: exportTabs && exportTabs.length > 0 ? exportTabs as CanvasTab[] : undefined,
       views: views && views.length > 0 ? views : undefined,
+      queries: queries && queries.length > 0 ? queries : undefined,
+      queryHistory: queryHistory && queryHistory.length > 0 ? queryHistory : undefined,
     };
     return JSON.stringify(data, null, 2);
   }
@@ -75,7 +83,9 @@ class ExportService {
     assets: Asset[],
     report?: Report | null,
     tabs?: CanvasTab[],
-    views?: View[]
+    views?: View[],
+    queries?: SavedQuery[],
+    queryHistory?: string[]
   ): Promise<Blob> {
     const zip = new JSZip();
 
@@ -108,7 +118,7 @@ class ExportService {
     }
 
     // Add JSON metadata (includes report data for import)
-    const jsonContent = this.exportToJSON(dossier, elements, links, assetsMeta, report, tabs, views);
+    const jsonContent = this.exportToJSON(dossier, elements, links, assetsMeta, report, tabs, views, queries, queryHistory);
     zip.file('dossier.json', jsonContent);
 
     // Add report Markdown if present (human-readable version)
@@ -143,9 +153,11 @@ class ExportService {
     assets: Asset[],
     report?: Report | null,
     tabs?: CanvasTab[],
-    views?: View[]
+    views?: View[],
+    queries?: SavedQuery[],
+    queryHistory?: string[]
   ): Promise<Blob> {
-    const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs, views);
+    const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs, views, queries, queryHistory);
     const encBuf = await encryptZip(zipBlob, password);
     return new Blob([encBuf], { type: 'application/octet-stream' });
   }
@@ -672,7 +684,9 @@ ${edges}
     assets?: Asset[],
     report?: Report | null,
     tabs?: CanvasTab[],
-    views?: View[]
+    views?: View[],
+    queries?: SavedQuery[],
+    queryHistory?: string[]
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
@@ -680,12 +694,12 @@ ${edges}
 
     switch (format) {
       case 'zip': {
-        const zipBlob = await this.exportToZip(dossier, elements, links, assets || [], report, tabs, views);
+        const zipBlob = await this.exportToZip(dossier, elements, links, assets || [], report, tabs, views, queries, queryHistory);
         this.downloadBlob(zipBlob, `${baseName}.zip`);
         break;
       }
       case 'json': {
-        const json = this.exportToJSON(dossier, elements, links, undefined, undefined, tabs, views);
+        const json = this.exportToJSON(dossier, elements, links, undefined, undefined, tabs, views, queries, queryHistory);
         this.download(json, `${baseName}.json`, 'application/json');
         break;
       }

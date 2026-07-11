@@ -6,7 +6,7 @@ import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
 import { reportRepository, tabRepository } from '../../db/repositories';
 import { db } from '../../db/database';
-import { useDossierStore, toast } from '../../stores';
+import { useDossierStore, useQueryStore, toast } from '../../stores';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -62,8 +62,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const views = includeStructure
         ? await db.views.where({ dossierId: currentDossier.id }).toArray()
         : undefined;
+      const queries = includeStructure
+        ? await db.savedQueries.where({ dossierId: currentDossier.id }).toArray()
+        : undefined;
+      const queryHistory = includeStructure
+        ? useQueryStore.getState().recentQueries
+        : undefined;
 
-      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views);
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
@@ -81,6 +87,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
       const tabs = await tabRepository.getByDossier(currentDossier.id);
       const views = await db.views.where({ dossierId: currentDossier.id }).toArray();
+      const queries = await db.savedQueries.where({ dossierId: currentDossier.id }).toArray();
+      const queryHistory = useQueryStore.getState().recentQueries;
 
       const encBlob = await exportService.exportToEncryptedZip(
         zipPassword,
@@ -90,7 +98,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         assets,
         report,
         tabs,
-        views
+        views,
+        queries,
+        queryHistory
       );
 
       const now = new Date();

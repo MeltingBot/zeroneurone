@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.5
+
+### Fixes
+- **Requêtes ZNQuery absentes de l'export** — l'export d'un dossier (JSON, ZIP, ZIP chiffré) n'incluait pas les **requêtes sauvegardées** ni l'**historique récent** ZNQuery. Ajout des champs `queries` (requêtes sauvegardées) et `queryHistory` (5 dernières) à la structure d'export, et **restauration à l'import** : requêtes recréées en base (nouvel id, pas de remap d'éléments car basées sur champ/tag/valeur), historique fusionné dans la liste récente (dédupliqué, plafonné à 5). Import JSON et ZIP couverts, nouveau dossier uniquement.
+
 ## 2.48.4
 
 ### Fixes

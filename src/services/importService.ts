@@ -24,8 +24,11 @@ import type {
   TabId,
   View,
   ViewId,
+  SavedQuery,
+  SavedQueryId,
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
+import { useQueryStore } from '../stores/queryStore';
 import { normalizeGeo, computePolygonCenter } from '../utils/geo';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
@@ -1399,6 +1402,31 @@ class ImportService {
 
         await db.views.add(view);
       }
+    }
+
+    // Import saved ZNQuery queries (new dossier only). Queries are field/tag/value
+    // based (no element IDs), so only id + dossierId are regenerated.
+    if (data.queries && data.queries.length > 0 && !positionOffset) {
+      for (const importedQuery of data.queries) {
+        const query: SavedQuery = {
+          ...importedQuery,
+          id: generateUUID() as SavedQueryId,
+          dossierId: targetDossierId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        await db.savedQueries.add(query);
+      }
+    }
+
+    // Restore recent ZNQuery history (session-level): merge into the current
+    // recent list, most-recent-first, deduplicated, capped at 5.
+    if (data.queryHistory && data.queryHistory.length > 0 && !positionOffset) {
+      const existing = useQueryStore.getState().recentQueries;
+      const merged = [...data.queryHistory, ...existing]
+        .filter((q, i, arr) => q && arr.indexOf(q) === i)
+        .slice(0, 5);
+      useQueryStore.setState({ recentQueries: merged });
     }
 
     // Update dossier timestamp
