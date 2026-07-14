@@ -15,6 +15,7 @@ import {
 import { useDossierStore, useSelectionStore, useTagSetStore } from '../../stores';
 import type {
   ElementShape,
+  ElementVisual,
   LinkDirection,
   LinkStyle,
   Confidence,
@@ -111,6 +112,9 @@ export function MultiSelectionDetail() {
   // HANDLERS - Tags
   // ============================================================================
 
+  // Suggested-properties popup (shown after adding a TagSet tag to the selection)
+  const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
+
   const handleAddTag = useCallback(
     async (tag: string) => {
       const elementIds = Array.from(selectedElementIds);
@@ -142,29 +146,42 @@ export function MultiSelectionDetail() {
       // Save to dossier suggestions
       addExistingTag(tag);
 
-      // If the tag maps to a TagSet with suggested properties, offer to add
-      // them to every selected item (same UX as single-element tagging).
+      // If the tag maps to a TagSet with suggested properties or a defaultVisual,
+      // offer to apply them to every selected item (same UX as single-element).
       const tagSet = useTagSetStore.getState().getByName(tag);
-      if (tagSet && tagSet.suggestedProperties.length > 0) {
+      const dv = tagSet?.defaultVisual;
+      const hasVisual = !!(dv && (dv.color || dv.shape || dv.icon));
+      if (tagSet && (tagSet.suggestedProperties.length > 0 || hasVisual)) {
         setSuggestedPropsTagSet(tag);
       }
     },
     [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks, addExistingTag]
   );
 
-  // Suggested-properties popup (shown after adding a TagSet tag to the selection)
-  const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
-
-  // Apply chosen suggested properties to every selected element/link, skipping
-  // any item that already has a property with the same key.
+  // Apply chosen suggested properties to every selected element/link (skipping
+  // items that already have a property with the same key). Optionally also apply
+  // the tag's appearance (color/shape/icon) to every selected element.
   const handleApplySuggestedProperties = useCallback(
-    async (properties: Property[]) => {
+    async (properties: Property[], applyVisual?: boolean) => {
+      const dv = applyVisual
+        ? useTagSetStore.getState().getByName(suggestedPropsTagSet ?? '')?.defaultVisual
+        : null;
+      const overlay: Partial<ElementVisual> = {};
+      if (dv?.color) overlay.color = dv.color;
+      if (dv?.shape) overlay.shape = dv.shape;
+      if (dv?.icon) overlay.icon = dv.icon;
+      const hasOverlay = Object.keys(overlay).length > 0;
+
       for (const el of selectedElements) {
         const toAdd = properties.filter(p => !el.properties.some(ep => ep.key === p.key));
-        if (toAdd.length > 0) {
-          await updateElements([el.id], { properties: [...el.properties, ...toAdd] });
+        const changes: Record<string, unknown> = {};
+        if (toAdd.length > 0) changes.properties = [...el.properties, ...toAdd];
+        if (hasOverlay) changes.visual = { ...el.visual, ...overlay };
+        if (Object.keys(changes).length > 0) {
+          await updateElements([el.id], changes);
         }
       }
+      // Links only receive properties (they have no shape/icon).
       for (const link of selectedLinks) {
         const toAdd = properties.filter(p => !link.properties.some(lp => lp.key === p.key));
         if (toAdd.length > 0) {
@@ -172,7 +189,7 @@ export function MultiSelectionDetail() {
         }
       }
     },
-    [selectedElements, selectedLinks, updateElements, updateLinks]
+    [selectedElements, selectedLinks, updateElements, updateLinks, suggestedPropsTagSet]
   );
 
   const handleRemoveTag = useCallback(
@@ -676,6 +693,7 @@ export function MultiSelectionDetail() {
           onApply={handleApplySuggestedProperties}
           onClose={() => setSuggestedPropsTagSet(null)}
           targetCount={selectedElements.length + selectedLinks.length}
+          showApplyVisual
         />
       )}
     </div>

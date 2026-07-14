@@ -7,10 +7,12 @@ import type { Property } from '../../types';
 interface SuggestedPropertiesPopupProps {
   tagSetName: string;
   existingPropertyKeys: string[];
-  onApply: (properties: Property[]) => void;
+  onApply: (properties: Property[], applyVisual?: boolean) => void;
   onClose: () => void;
   /** When set (>1), shows how many selected items the properties apply to */
   targetCount?: number;
+  /** Offer a checkbox to also apply the tag's appearance (color/shape/icon) */
+  showApplyVisual?: boolean;
 }
 
 export function SuggestedPropertiesPopup({
@@ -19,9 +21,16 @@ export function SuggestedPropertiesPopup({
   onApply,
   onClose,
   targetCount,
+  showApplyVisual,
 }: SuggestedPropertiesPopupProps) {
   const { t } = useTranslation('panels');
   const tagSet = useTagSetStore((state) => state.getByName(tagSetName));
+
+  // Does this TagSet carry a visual (color/shape/icon) worth offering?
+  const dv = tagSet?.defaultVisual;
+  const hasVisual = !!(dv && (dv.color || dv.shape || dv.icon));
+  const canApplyVisual = !!showApplyVisual && hasVisual;
+  const [applyVisual, setApplyVisual] = useState(true);
 
   // Filter out properties that already exist on the element
   const availableProperties = useMemo(() => {
@@ -68,17 +77,18 @@ export function SuggestedPropertiesPopup({
         type: p.type,
       }));
 
-    onApply(propertiesToAdd);
+    onApply(propertiesToAdd, canApplyVisual && applyVisual);
     onClose();
-  }, [tagSet, selectedKeys, onApply, onClose]);
+  }, [tagSet, selectedKeys, onApply, onClose, canApplyVisual, applyVisual]);
 
-  // Don't show if no TagSet found or no available properties
-  if (!tagSet || availableProperties.length === 0) {
+  // Don't show if no TagSet, nor anything to offer (no properties AND no visual)
+  if (!tagSet || (availableProperties.length === 0 && !canApplyVisual)) {
     return null;
   }
 
   const allSelected = selectedKeys.size === availableProperties.length;
-  const noneSelected = selectedKeys.size === 0;
+  // Nothing to apply: no property selected and (no visual, or visual unchecked)
+  const nothingToApply = selectedKeys.size === 0 && !(canApplyVisual && applyVisual);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -108,32 +118,49 @@ export function SuggestedPropertiesPopup({
         )}
 
         {/* Properties list */}
-        <div className="p-2 max-h-64 overflow-y-auto">
-          {availableProperties.map((prop) => (
-            <label
-              key={prop.key}
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-bg-secondary rounded cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={selectedKeys.has(prop.key)}
-                onChange={() => handleToggle(prop.key)}
-                className="w-3.5 h-3.5 rounded border-border-default accent-accent"
-              />
-              <span className="text-xs text-text-primary flex-1">{prop.key}</span>
-              <span className="text-[10px] text-text-tertiary">{t(`detail.properties.types.${prop.type}`, { defaultValue: prop.type })}</span>
-            </label>
-          ))}
-        </div>
+        {availableProperties.length > 0 && (
+          <div className="p-2 max-h-64 overflow-y-auto">
+            {availableProperties.map((prop) => (
+              <label
+                key={prop.key}
+                className="flex items-center gap-2 px-2 py-1.5 hover:bg-bg-secondary rounded cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedKeys.has(prop.key)}
+                  onChange={() => handleToggle(prop.key)}
+                  className="w-3.5 h-3.5 rounded border-border-default accent-accent"
+                />
+                <span className="text-xs text-text-primary flex-1">{prop.key}</span>
+                <span className="text-[10px] text-text-tertiary">{t(`detail.properties.types.${prop.type}`, { defaultValue: prop.type })}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        {/* Apply appearance (color/shape/icon) — multi-selection only */}
+        {canApplyVisual && (
+          <label className="flex items-center gap-2 px-3 py-2 border-t border-border-default hover:bg-bg-secondary cursor-pointer">
+            <input
+              type="checkbox"
+              checked={applyVisual}
+              onChange={(e) => setApplyVisual(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-border-default accent-accent"
+            />
+            <span className="text-xs text-text-primary">{t('detail.properties.applyTagVisual')}</span>
+          </label>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between px-3 py-2 border-t border-border-default bg-bg-secondary">
-          <button
-            onClick={handleToggleAll}
-            className="text-xs text-text-secondary hover:text-text-primary transition-colors"
-          >
-            {allSelected ? t('detail.properties.deselectAll') : t('detail.properties.selectAll')}
-          </button>
+          {availableProperties.length > 0 ? (
+            <button
+              onClick={handleToggleAll}
+              className="text-xs text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {allSelected ? t('detail.properties.deselectAll') : t('detail.properties.selectAll')}
+            </button>
+          ) : <span />}
           <div className="flex gap-2">
             <button
               onClick={onClose}
@@ -143,11 +170,11 @@ export function SuggestedPropertiesPopup({
             </button>
             <button
               onClick={handleApply}
-              disabled={noneSelected}
+              disabled={nothingToApply}
               className="px-3 py-1 text-xs bg-accent text-white rounded hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
             >
               <Check size={12} />
-              {t('detail.properties.add')} ({selectedKeys.size})
+              {t('detail.properties.apply')}{selectedKeys.size > 0 ? ` (${selectedKeys.size})` : ''}
             </button>
           </div>
         </div>

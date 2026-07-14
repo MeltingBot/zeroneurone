@@ -184,7 +184,9 @@
       "booleanNo": "Ні",
       "selectOption": "Оберіть опцію...",
       "extractToElement": "Витягнути як елемент",
-      "applyToCount": "Буде застосовано до {{count}} вибраних об'єктів"
+      "applyToCount": "Буде застосовано до {{count}} вибраних об'єктів",
+      "apply": "Застосувати",
+      "applyTagVisual": "Застосувати вигляд тегу (форма, колір, іконка)"
     },
     "appearance": {
       "title": "Вигляд",

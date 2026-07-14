@@ -198,7 +198,9 @@
       "booleanNo": "No",
       "selectOption": "Select an option...",
       "extractToElement": "Extract to element",
-      "applyToCount": "Will be applied to {{count}} selected items"
+      "applyToCount": "Will be applied to {{count}} selected items",
+      "apply": "Apply",
+      "applyTagVisual": "Apply the tag's appearance (color, shape, icon)"
     },
     "appearance": {
       "title": "Appearance",

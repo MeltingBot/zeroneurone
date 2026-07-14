@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.10
+
+### Features
+- **Appliquer l'apparence d'un tag en multi-sélection** — en complément des propriétés suggérées (v2.48.9), le popup d'ajout de tag en multi-sélection propose une case **« Appliquer l'apparence du tag (forme, couleur, icône) »** (cochée par défaut). Cochée, l'apparence du TagSet (`defaultVisual`) est appliquée à tous les éléments sélectionnés — comble l'écart avec le mono-sélection où le premier tag applique déjà l'apparence. Le popup s'affiche désormais même pour un tag sans propriété suggérée mais avec une apparence. i18n 11 langues.
+
 ## 2.48.9
 
 ### Features

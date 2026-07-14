@@ -184,7 +184,9 @@
       "booleanNo": "Ez",
       "selectOption": "Aukeratu aukera bat...",
       "extractToElement": "Elementu gisa erauzi",
-      "applyToCount": "Hautatutako {{count}} elementuri aplikatuko zaie"
+      "applyToCount": "Hautatutako {{count}} elementuri aplikatuko zaie",
+      "apply": "Aplikatu",
+      "applyTagVisual": "Aplikatu etiketaren itxura (forma, kolorea, ikonoa)"
     },
     "appearance": {
       "title": "Itxura",

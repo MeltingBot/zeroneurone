@@ -184,7 +184,9 @@
       "booleanNo": "Nee",
       "selectOption": "Selecteer een optie...",
       "extractToElement": "Extraheren als element",
-      "applyToCount": "Wordt toegepast op {{count}} geselecteerde items"
+      "applyToCount": "Wordt toegepast op {{count}} geselecteerde items",
+      "apply": "Toepassen",
+      "applyTagVisual": "Uiterlijk van de tag toepassen (vorm, kleur, pictogram)"
     },
     "appearance": {
       "title": "Weergave",
