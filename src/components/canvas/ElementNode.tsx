@@ -734,6 +734,11 @@ function darkenColor(color: string, amount: number = 0.6): string {
 function getThemeAwareColor(color: string, isDarkMode: boolean): string {
   if (!isDarkMode) return color;
 
+  // Respect an explicit white choice: the auto-darkening below is meant for the
+  // neutral default light-gray, not a deliberate white background the user set.
+  const c = color.trim().toLowerCase();
+  if (c === '#ffffff' || c === '#fff' || c === 'white') return color;
+
   // In dark mode, invert very light colors to darker equivalents
   // This ensures elements remain visible on dark canvas
   const brightness = getColorBrightness(color);

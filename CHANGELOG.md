@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.8
+
+### Fixes
+- **Fond blanc impossible en thème sombre** — l'adaptation automatique des couleurs claires au thème sombre (qui assombrit les couleurs très claires pour qu'elles restent visibles) attrapait aussi le **blanc choisi explicitement**, empêchant de mettre un fond blanc sur un élément en thème sombre. Le blanc pur (`#ffffff`) est désormais respecté tel quel ; la couleur par défaut et les autres couleurs claires restent adaptées comme avant.
+
 ## 2.48.7
 
 ### Features
