@@ -197,7 +197,8 @@
       "booleanYes": "Yes",
       "booleanNo": "No",
       "selectOption": "Select an option...",
-      "extractToElement": "Extract to element"
+      "extractToElement": "Extract to element",
+      "applyToCount": "Will be applied to {{count}} selected items"
     },
     "appearance": {
       "title": "Appearance",

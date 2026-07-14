@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Layers,
@@ -12,7 +12,7 @@ import {
   Minus,
   X,
 } from 'lucide-react';
-import { useDossierStore, useSelectionStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useTagSetStore } from '../../stores';
 import type {
   ElementShape,
   LinkDirection,
@@ -25,6 +25,7 @@ import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
 import { AccordionSection } from '../common';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
+import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 
 const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
   { value: 'circle', label: '○' },
@@ -140,8 +141,38 @@ export function MultiSelectionDetail() {
 
       // Save to dossier suggestions
       addExistingTag(tag);
+
+      // If the tag maps to a TagSet with suggested properties, offer to add
+      // them to every selected item (same UX as single-element tagging).
+      const tagSet = useTagSetStore.getState().getByName(tag);
+      if (tagSet && tagSet.suggestedProperties.length > 0) {
+        setSuggestedPropsTagSet(tag);
+      }
     },
     [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks, addExistingTag]
+  );
+
+  // Suggested-properties popup (shown after adding a TagSet tag to the selection)
+  const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
+
+  // Apply chosen suggested properties to every selected element/link, skipping
+  // any item that already has a property with the same key.
+  const handleApplySuggestedProperties = useCallback(
+    async (properties: Property[]) => {
+      for (const el of selectedElements) {
+        const toAdd = properties.filter(p => !el.properties.some(ep => ep.key === p.key));
+        if (toAdd.length > 0) {
+          await updateElements([el.id], { properties: [...el.properties, ...toAdd] });
+        }
+      }
+      for (const link of selectedLinks) {
+        const toAdd = properties.filter(p => !link.properties.some(lp => lp.key === p.key));
+        if (toAdd.length > 0) {
+          await updateLinks([link.id], { properties: [...link.properties, ...toAdd] });
+        }
+      }
+    },
+    [selectedElements, selectedLinks, updateElements, updateLinks]
   );
 
   const handleRemoveTag = useCallback(
@@ -635,6 +666,17 @@ export function MultiSelectionDetail() {
             </div>
           </div>
         </AccordionSection>
+      )}
+
+      {/* Suggested properties from the added TagSet → apply to all selected items */}
+      {suggestedPropsTagSet && (
+        <SuggestedPropertiesPopup
+          tagSetName={suggestedPropsTagSet}
+          existingPropertyKeys={[]}
+          onApply={handleApplySuggestedProperties}
+          onClose={() => setSuggestedPropsTagSet(null)}
+          targetCount={selectedElements.length + selectedLinks.length}
+        />
       )}
     </div>
   );

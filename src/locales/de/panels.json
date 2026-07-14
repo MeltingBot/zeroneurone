@@ -183,7 +183,8 @@
       "booleanYes": "Ja",
       "booleanNo": "Nein",
       "selectOption": "Option auswählen...",
-      "extractToElement": "Als Element extrahieren"
+      "extractToElement": "Als Element extrahieren",
+      "applyToCount": "Wird auf {{count}} ausgewählte Objekte angewendet"
     },
     "appearance": {
       "title": "Darstellung",

@@ -183,7 +183,8 @@
       "booleanYes": "Tak",
       "booleanNo": "Nie",
       "selectOption": "Wybierz opcję...",
-      "extractToElement": "Wyodrębnij jako element"
+      "extractToElement": "Wyodrębnij jako element",
+      "applyToCount": "Zostanie zastosowane do {{count}} zaznaczonych elementów"
     },
     "appearance": {
       "title": "Wygląd",

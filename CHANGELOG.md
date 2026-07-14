@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.48.9
+
+### Features
+- **Propriétés suggérées d'un tag en multi-sélection** — appliquer un tag à plusieurs éléments/liens à la fois propose désormais, comme sur un élément seul, le popup des **propriétés suggérées** du TagSet (ex. le tag « Site web » suggère la propriété URL). Les propriétés choisies sont ajoutées à **tous** les objets sélectionnés (en sautant ceux qui ont déjà une propriété du même nom). Le popup indique **sur combien d'éléments** l'ajout va s'appliquer (compte, sans les nommer). i18n 11 langues.
+
 ## 2.48.8
 
 ### Fixes

@@ -183,7 +183,8 @@
       "booleanYes": "Так",
       "booleanNo": "Ні",
       "selectOption": "Оберіть опцію...",
-      "extractToElement": "Витягнути як елемент"
+      "extractToElement": "Витягнути як елемент",
+      "applyToCount": "Буде застосовано до {{count}} вибраних об'єктів"
     },
     "appearance": {
       "title": "Вигляд",

@@ -183,7 +183,8 @@
       "booleanYes": "Bai",
       "booleanNo": "Ez",
       "selectOption": "Aukeratu aukera bat...",
-      "extractToElement": "Elementu gisa erauzi"
+      "extractToElement": "Elementu gisa erauzi",
+      "applyToCount": "Hautatutako {{count}} elementuri aplikatuko zaie"
     },
     "appearance": {
       "title": "Itxura",

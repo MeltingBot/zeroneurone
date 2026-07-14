@@ -183,7 +183,8 @@
       "booleanYes": "Ja",
       "booleanNo": "Nee",
       "selectOption": "Selecteer een optie...",
-      "extractToElement": "Extraheren als element"
+      "extractToElement": "Extraheren als element",
+      "applyToCount": "Wordt toegepast op {{count}} geselecteerde items"
     },
     "appearance": {
       "title": "Weergave",

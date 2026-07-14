@@ -9,6 +9,8 @@ interface SuggestedPropertiesPopupProps {
   existingPropertyKeys: string[];
   onApply: (properties: Property[]) => void;
   onClose: () => void;
+  /** When set (>1), shows how many selected items the properties apply to */
+  targetCount?: number;
 }
 
 export function SuggestedPropertiesPopup({
@@ -16,6 +18,7 @@ export function SuggestedPropertiesPopup({
   existingPropertyKeys,
   onApply,
   onClose,
+  targetCount,
 }: SuggestedPropertiesPopupProps) {
   const { t } = useTranslation('panels');
   const tagSet = useTagSetStore((state) => state.getByName(tagSetName));
@@ -96,6 +99,13 @@ export function SuggestedPropertiesPopup({
             <X size={14} className="text-text-tertiary" />
           </button>
         </div>
+
+        {/* Applies-to indicator (multi-selection) */}
+        {targetCount != null && targetCount > 1 && (
+          <div className="px-3 py-1.5 text-[10px] text-text-secondary bg-bg-secondary border-b border-border-default">
+            {t('detail.properties.applyToCount', { count: targetCount })}
+          </div>
+        )}
 
         {/* Properties list */}
         <div className="p-2 max-h-64 overflow-y-auto">
