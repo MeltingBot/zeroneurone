@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.48.11
+
+### Fixes
+- **Sens des liens à la création** — tracer une relation d'un élément A vers un élément B créait le lien **B→A** (inversé) selon le point de départ du drag. En cause : chaque côté d'un élément expose des points de connexion source et cible superposés, et React Flow normalisait la connexion sans refléter l'origine réelle du glisser. Le sens est désormais capturé à l'origine du drag (`onConnectStart`) : A→B crée bien **A→B** (le sens reste modifiable ensuite via les directions).
+
+### Features
+- **Ouvrir/copier l'URL de la source** — le menu contextuel d'un élément propose désormais d'ouvrir ou copier l'URL présente dans le champ **Source** des métadonnées (en plus des propriétés), lorsque celle-ci est bien une URL. Complète l'ouverture d'URL introduite en v2.48.7.
+
 ## 2.48.10
 
 ### Features

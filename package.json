@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.48.10",
+  "version": "2.48.11",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",

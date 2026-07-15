@@ -14,6 +14,7 @@ import {
   type OnEdgesChange,
   type NodeMouseHandler,
   type OnConnect,
+  type OnConnectStart,
   type OnReconnect,
   SelectionMode,
   ConnectionMode,
@@ -2106,11 +2107,17 @@ export function Canvas() {
     []
   );
 
-  // Handle connection (link creation)
-  // In ConnectionMode.Loose, React Flow always assigns the node owning the
-  // "source"-type handle as connection.source, regardless of which node the
-  // user started dragging from.  When the drag starts from a target-type
-  // handle, the real origin (fromId) is connection.target, so we swap.
+  // Track the node the user actually started dragging from. In ConnectionMode.Loose
+  // each side has overlapping source+target handles, so React Flow's normalized
+  // connection.source/target don't reliably reflect the drag origin — the true
+  // origin is what onConnectStart reports.
+  const connectStartNodeRef = useRef<string | null>(null);
+  const handleConnectStart: OnConnectStart = useCallback((_event, params) => {
+    connectStartNodeRef.current = params.nodeId ?? null;
+  }, []);
+
+  // Handle connection (link creation). The relation goes from the drag origin
+  // (fromId) to the drop target (toId), so a link drawn A→B is stored A→B.
   const handleConnect: OnConnect = useCallback(
     async (connection: Connection) => {
       if (
@@ -2118,21 +2125,23 @@ export function Canvas() {
         connection.target &&
         connection.source !== connection.target
       ) {
-        const startedFromTarget =
-          connection.sourceHandle?.startsWith('target-') ||
-          connection.targetHandle?.startsWith('source-');
+        // If the drag started from the node React Flow labeled as `target`, swap
+        // so the origin becomes fromId. Fall back to source when origin unknown.
+        const origin = connectStartNodeRef.current;
+        const swap = origin === connection.target && origin !== connection.source;
 
-        const fromId = startedFromTarget ? connection.target : connection.source;
-        const toId = startedFromTarget ? connection.source : connection.target;
+        const fromId = swap ? connection.target : connection.source;
+        const toId = swap ? connection.source : connection.target;
 
         await createLink(fromId, toId, {
-          sourceHandle: startedFromTarget
+          sourceHandle: swap
             ? (connection.targetHandle ?? null)
             : (connection.sourceHandle ?? null),
-          targetHandle: startedFromTarget
+          targetHandle: swap
             ? (connection.sourceHandle ?? null)
             : (connection.targetHandle ?? null),
         });
+        connectStartNodeRef.current = null;
       }
     },
     [createLink]
@@ -4322,6 +4331,7 @@ export function Canvas() {
             edges={edges}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
+            onConnectStart={handleConnectStart}
             onConnect={handleConnect}
             onReconnect={handleReconnect}
             onNodeClick={handleNodeClick}
@@ -4407,15 +4417,20 @@ export function Canvas() {
 
           {/* Context menu for elements */}
           {contextMenu && (() => {
-            // URL properties of the right-clicked element (single selection):
-            // type 'link' or any value that looks like a URL.
+            // URLs of the right-clicked element (single selection): the source
+            // metadata field if it's a URL, plus any URL property (type 'link'
+            // or a value that looks like a URL).
             const ctxEl = selectedElementIds.size <= 1 ? elementMap.get(contextMenu.elementId) : undefined;
-            const elementUrls = (ctxEl?.properties ?? [])
+            const propertyUrls = (ctxEl?.properties ?? [])
               .filter(p => {
                 const v = String(p.value ?? '').trim();
                 return v.length > 0 && (p.type === 'link' || isUrl(v));
               })
               .map(p => ({ key: p.key, url: toUrl(String(p.value)) }));
+            const sourceUrls = ctxEl?.source && isUrl(ctxEl.source)
+              ? [{ key: t('labels.source'), url: toUrl(ctxEl.source) }]
+              : [];
+            const elementUrls = [...sourceUrls, ...propertyUrls];
             return (
             <ContextMenu
               x={contextMenu.x}
