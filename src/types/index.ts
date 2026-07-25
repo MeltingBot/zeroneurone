@@ -303,6 +303,13 @@ export interface Link {
   toId: ElementId;
   sourceHandle: string | null;
   targetHandle: string | null;
+  /**
+   * Per-link anchor override. When undefined, the dossier setting
+   * (`DossierSettings.linkAnchorMode`) applies. Set to 'manual' when the user
+   * drags an endpoint, so the chosen handles survive an auto-mode dossier.
+   * `null` explicitly clears the override (used when resetting the dossier mode).
+   */
+  anchorMode?: 'auto' | 'manual' | null;
   label: string;
   notes: string;
   tags: string[];

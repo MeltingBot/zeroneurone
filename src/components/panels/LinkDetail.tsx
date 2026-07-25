@@ -121,6 +121,13 @@ export function LinkDetail({ link }: LinkDetailProps) {
   const displayTo = currentDirection === 'backward' ? fromElement : toElement;
   const arrowSymbol = currentDirection === 'none' ? '—' : currentDirection === 'both' ? '↔' : '→';
 
+  // An element that exists but has no label isn't a deleted one — only a missing
+  // element gets the "deleted" wording.
+  const endpointLabel = (element: typeof fromElement) =>
+    element
+      ? element.label || t('detail.link.unnamedElement')
+      : t('detail.link.deletedElement');
+
   // Reset local state AND refs when link changes
   useEffect(() => {
     editingLinkIdRef.current = null;
@@ -387,9 +394,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
           <div className="p-2 bg-bg-secondary rounded border border-border-default">
             <div className="text-xs text-text-tertiary mb-1">{t('detail.link.linkedElements')}</div>
             <div className="flex items-center gap-2 text-sm text-text-primary">
-              <span className="truncate flex-1">{displayFrom?.label || t('detail.link.deletedElement')}</span>
+              <span className="truncate flex-1">{endpointLabel(displayFrom)}</span>
               <span className="text-text-tertiary flex-shrink-0">{arrowSymbol}</span>
-              <span className="truncate flex-1 text-right">{displayTo?.label || t('detail.link.deletedElement')}</span>
+              <span className="truncate flex-1 text-right">{endpointLabel(displayTo)}</span>
             </div>
           </div>
 

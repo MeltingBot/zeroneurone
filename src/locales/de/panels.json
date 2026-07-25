@@ -47,6 +47,7 @@
     "link": {
       "linkedElements": "Verbundene Elemente",
       "deletedElement": "Gelöschtes Element",
+      "unnamedElement": "Ohne Namen",
       "relationPeriod": "Beziehungszeitraum",
       "periodStart": "Beginn",
       "periodEnd": "Ende (leer lassen wenn laufend)"

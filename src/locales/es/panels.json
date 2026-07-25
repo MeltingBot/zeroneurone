@@ -47,6 +47,7 @@
     "link": {
       "linkedElements": "Elementos enlazados",
       "deletedElement": "Elemento eliminado",
+      "unnamedElement": "Sin nombre",
       "relationPeriod": "Período de la relación",
       "periodStart": "Inicio",
       "periodEnd": "Fin (dejar vacío si en curso)"

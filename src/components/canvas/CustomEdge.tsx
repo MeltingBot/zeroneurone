@@ -724,6 +724,29 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
+      {/* Endpoint anchors - visual affordance only. React Flow's own reconnect
+          zones sit on top and handle the drag, so these stay non-interactive. */}
+      {isSelected && !isEditing && (
+        <g style={{ pointerEvents: 'none' }}>
+          <circle
+            cx={sourceX}
+            cy={sourceY}
+            r={5}
+            fill="#ffffff"
+            stroke="#2563eb"
+            strokeWidth={2}
+          />
+          <circle
+            cx={targetX}
+            cy={targetY}
+            r={5}
+            fill="#ffffff"
+            stroke="#2563eb"
+            strokeWidth={2}
+          />
+        </g>
+      )}
+
       {/* Draggable control point - hidden during label editing, straight mode, or orthogonal mode, only interactive when selected */}
       {!isEditing && !isStraight && !isOrthogonal && (
         <g style={{ pointerEvents: 'none' }}>

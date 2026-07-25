@@ -16,6 +16,7 @@ import {
   type OnConnect,
   type OnConnectStart,
   type OnReconnect,
+  type HandleType,
   SelectionMode,
   ConnectionMode,
   type NodeChange,
@@ -491,11 +492,13 @@ function linkToEdge(
     return `${type}-${handle}`;
   };
 
-  // Calculate handles based on anchor mode
+  // Calculate handles based on anchor mode.
+  // A per-link override (set when the user drags an endpoint) wins over the dossier setting.
   let sourceHandle: string;
   let targetHandle: string;
+  const effectiveAnchorMode = link.anchorMode ?? linkAnchorMode;
 
-  if (linkAnchorMode === 'auto') {
+  if (effectiveAnchorMode === 'auto') {
     // Auto mode: calculate optimal handles based on element positions
     const sourcePos = nodePositions.get(link.fromId);
     const targetPos = nodePositions.get(link.toId);
@@ -1736,7 +1739,7 @@ export function Canvas() {
           if (sameVisuals) {
             // In auto anchor mode, verify handles are still optimal for current positions
             let handlesStale = false;
-            if (linkAnchorMode === 'auto') {
+            if ((link.anchorMode ?? linkAnchorMode) === 'auto') {
               const sourcePos = nodePositions.get(link.fromId);
               const targetPos = nodePositions.get(link.toId);
               if (sourcePos && targetPos) {
@@ -2147,32 +2150,82 @@ export function Canvas() {
     [createLink]
   );
 
+  // Which endpoint stayed put during a reconnect. In ConnectionMode.Loose every
+  // node exposes overlapping source+target handles, so React Flow's normalized
+  // connection.source/target don't say which end moved — onReconnectStart does.
+  // Careful: it reports the type of the OPPOSITE (anchored) handle, so grabbing
+  // the tail (source) yields 'target' here.
+  const reconnectFixedEndRef = useRef<HandleType | null>(null);
+  const handleReconnectStart = useCallback(
+    (_event: React.MouseEvent | React.TouchEvent, _edge: Edge, fixedEndType: HandleType) => {
+      reconnectFixedEndRef.current = fixedEndType;
+    },
+    []
+  );
+
   // Handle edge reconnection (moving edge endpoints)
   const handleReconnect: OnReconnect = useCallback(
     async (oldEdge: Edge, newConnection: Connection) => {
+      const fixedEnd = reconnectFixedEndRef.current;
+      reconnectFixedEndRef.current = null;
+
       if (
-        newConnection.source &&
-        newConnection.target &&
-        newConnection.source !== newConnection.target
+        !newConnection.source ||
+        !newConnection.target ||
+        newConnection.source === newConnection.target
       ) {
-        const startedFromTarget =
-          newConnection.sourceHandle?.startsWith('target-') ||
-          newConnection.targetHandle?.startsWith('source-');
-
-        const fromId = startedFromTarget ? newConnection.target : newConnection.source;
-        const toId = startedFromTarget ? newConnection.source : newConnection.target;
-
-        await updateLink(oldEdge.id, {
-          fromId,
-          toId,
-          sourceHandle: startedFromTarget
-            ? (newConnection.targetHandle ?? null)
-            : (newConnection.sourceHandle ?? null),
-          targetHandle: startedFromTarget
-            ? (newConnection.sourceHandle ?? null)
-            : (newConnection.targetHandle ?? null),
-        });
+        return;
       }
+
+      // The head (target) moved when the anchored end is the source.
+      // Fall back to the old prefix heuristic if the drag origin is unknown.
+      const startedFromTarget =
+        fixedEnd !== null
+          ? fixedEnd === 'source'
+          : (newConnection.sourceHandle?.startsWith('target-') ||
+             newConnection.targetHandle?.startsWith('source-')) ?? false;
+
+      // The end that stayed put keeps the node + handle it was rendered with.
+      const fixedNodeId = startedFromTarget ? oldEdge.source : oldEdge.target;
+      const fixedHandleId = startedFromTarget
+        ? (oldEdge.sourceHandle ?? null)
+        : (oldEdge.targetHandle ?? null);
+
+      // Identify the moved end by elimination: whichever side of the new
+      // connection isn't the untouched one.
+      const sourceSideIsFixed =
+        newConnection.source === fixedNodeId &&
+        (newConnection.sourceHandle ?? null) === fixedHandleId;
+      const movedNodeId = sourceSideIsFixed ? newConnection.target : newConnection.source;
+      const movedHandleId = sourceSideIsFixed
+        ? (newConnection.targetHandle ?? null)
+        : (newConnection.sourceHandle ?? null);
+
+      // Loose mode can report a handle of the opposite type (e.g. 'target-left'
+      // grabbed while moving the tail) — realign the prefix with the role.
+      const alignHandle = (handle: string | null, type: 'source' | 'target'): string | null => {
+        if (!handle) return null;
+        const position = handle.split('-')[1];
+        return position ? `${type}-${position}` : handle;
+      };
+
+      const fromId = startedFromTarget ? fixedNodeId : movedNodeId;
+      const toId = startedFromTarget ? movedNodeId : fixedNodeId;
+      if (!fromId || !toId || fromId === toId) return;
+
+      // Dropping an endpoint back on the node it already sat on means the user is
+      // repositioning the anchor, not rewiring the link — pin it to 'manual' so the
+      // chosen handle survives an auto-mode dossier. Rewiring to another node keeps
+      // the existing mode, letting auto placement resume.
+      const isReanchor = oldEdge.source === fromId && oldEdge.target === toId;
+
+      await updateLink(oldEdge.id, {
+        fromId,
+        toId,
+        sourceHandle: alignHandle(startedFromTarget ? fixedHandleId : movedHandleId, 'source'),
+        targetHandle: alignHandle(startedFromTarget ? movedHandleId : fixedHandleId, 'target'),
+        ...(isReanchor ? { anchorMode: 'manual' as const } : {}),
+      });
     },
     [updateLink]
   );
@@ -4333,6 +4386,7 @@ export function Canvas() {
             onEdgesChange={handleEdgesChange}
             onConnectStart={handleConnectStart}
             onConnect={handleConnect}
+            onReconnectStart={handleReconnectStart}
             onReconnect={handleReconnect}
             onNodeClick={handleNodeClick}
             onNodeDoubleClick={handleNodeDoubleClick}

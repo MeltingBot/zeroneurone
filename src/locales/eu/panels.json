@@ -47,6 +47,7 @@
     "link": {
       "linkedElements": "Lotutako elementuak",
       "deletedElement": "Ezabatutako elementua",
+      "unnamedElement": "Izenik gabe",
       "relationPeriod": "Erlazioaren epealdia",
       "periodStart": "Hasiera",
       "periodEnd": "Amaiera (hutsik utzi oraindik aktibo bada)"

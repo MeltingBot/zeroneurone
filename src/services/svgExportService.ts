@@ -657,7 +657,7 @@ export function buildSVGExport(
     // Determine handles
     let sourceHandle = link.sourceHandle;
     let targetHandle = link.targetHandle;
-    if (settings.linkAnchorMode === 'auto') {
+    if ((link.anchorMode ?? settings.linkAnchorMode) === 'auto') {
       const best = calculateBestHandles(
         { x: sourcePos.x + sourceDims.width / 2, y: sourcePos.y + sourceDims.height / 2 },
         { x: targetPos.x + targetDims.width / 2, y: targetPos.y + targetDims.height / 2 }

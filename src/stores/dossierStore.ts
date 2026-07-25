@@ -2678,6 +2678,17 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const { currentDossier } = get();
     if (!currentDossier) return;
 
+    // Switching the dossier-wide mode clears per-link overrides (set by dragging
+    // an endpoint), so the setting acts as a reset for the whole graph.
+    const pinnedLinks = get().links.filter((lk) => lk.anchorMode != null);
+    for (const lk of pinnedLinks) {
+      try {
+        await get().updateLink(lk.id, { anchorMode: null });
+      } catch {
+        // Read-only dossier or missing Y.Map — setting still applies globally
+      }
+    }
+
     await dossierRepository.update(currentDossier.id, {
       settings: {
         ...currentDossier.settings,

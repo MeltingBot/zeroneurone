@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.49.0
+
+### Features
+- **Ancrage d'un lien par extrémité** — le point d'attache d'un lien se déplace en glissant son extrémité sur le côté voulu de l'élément (haut, bas, gauche, droite). Le lien concerné passe alors en ancrage manuel et conserve le côté choisi, même si le dossier est en ancrage automatique : l'arbitrage ne se fait plus globalement, lien par lien. Rebrancher une extrémité vers un **autre** élément reste un recâblage et laisse le placement automatique reprendre la main. Le bouton **Ancrage → Automatique** du panneau Vues libère tous les liens épinglés. L'ancrage retenu est respecté à l'export SVG et synchronisé en collaboration.
+- **Extrémités visibles à la sélection** — sélectionner un lien fait apparaître une pastille à chacune de ses extrémités, pour signaler qu'elles sont saisissables.
+
+### Fixes
+- **Déplacement de la queue d'un lien sans effet** — glisser l'extrémité de départ ne produisait rien, alors que l'extrémité d'arrivée fonctionnait. React Flow rapporte le type de l'extrémité **restée ancrée** (et non celle que l'on saisit) : l'interprétation inverse faisait converger départ et arrivée sur le même élément, et la mise à jour était abandonnée en silence. L'extrémité déplacée est désormais identifiée par élimination, sans jamais inverser le sens du lien.
+- **Élément sans nom affiché comme supprimé** — dans le panneau de détail d'un lien, une extrémité dont le libellé était vide s'affichait « Élément supprimé ». Un élément existant mais sans nom affiche désormais « Sans nom » ; la mention « supprimé » est réservée aux éléments réellement absents. i18n 11 langues.
+
 ## 2.48.11
 
 ### Fixes

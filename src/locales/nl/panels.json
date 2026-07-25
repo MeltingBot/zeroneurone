@@ -47,6 +47,7 @@
     "link": {
       "linkedElements": "Verbonden elementen",
       "deletedElement": "Verwijderd element",
+      "unnamedElement": "Naamloos",
       "relationPeriod": "Relatieperiode",
       "periodStart": "Start",
       "periodEnd": "Einde (leeg laten indien lopend)"

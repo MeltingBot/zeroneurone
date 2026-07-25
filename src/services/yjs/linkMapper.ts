@@ -29,6 +29,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
   map.set('toId', link.toId);
   map.set('sourceHandle', link.sourceHandle);
   map.set('targetHandle', link.targetHandle);
+  map.set('anchorMode', link.anchorMode ?? null);
   map.set('label', link.label);
   map.set('directed', link.directed);
   map.set('direction', link.direction);
@@ -177,6 +178,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
     toId: ymap.get('toId') || '',
     sourceHandle: ymap.get('sourceHandle') ?? null,
     targetHandle: ymap.get('targetHandle') ?? null,
+    anchorMode: ymap.get('anchorMode') ?? undefined,
     label: ymap.get('label') || '',
     notes,
     tags,
@@ -222,6 +224,10 @@ export function updateLinkYMap(
 
     if (changes.targetHandle !== undefined) {
       ymap.set('targetHandle', changes.targetHandle);
+    }
+
+    if (changes.anchorMode !== undefined) {
+      ymap.set('anchorMode', changes.anchorMode);
     }
 
     if (changes.label !== undefined) {

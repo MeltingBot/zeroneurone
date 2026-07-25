@@ -47,6 +47,7 @@
     "link": {
       "linkedElements": "Пов'язані елементи",
       "deletedElement": "Видалений елемент",
+      "unnamedElement": "Без назви",
       "relationPeriod": "Період зв'язку",
       "periodStart": "Початок",
       "periodEnd": "Кінець (порожнє, якщо триває)"
