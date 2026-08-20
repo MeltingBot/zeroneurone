@@ -248,7 +248,8 @@
     "license": {
       "title": "Ліцензія",
       "text": "Це програмне забезпечення розповсюджується за ліцензією MIT.",
-      "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
+      "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
+      "thirdParty": "Ліцензії сторонніх компонентів"
     },
     "footer": "Зроблено з любов'ю для слідчих з усього світу"
   },

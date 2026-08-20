@@ -248,7 +248,8 @@
     "license": {
       "title": "License",
       "text": "This software is distributed under the MIT license.",
-      "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
+      "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
+      "thirdParty": "Third-party licenses"
     },
     "footer": "Made with love for analysts worldwide"
   },

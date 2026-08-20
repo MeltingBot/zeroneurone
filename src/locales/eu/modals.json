@@ -248,7 +248,8 @@
     "license": {
       "title": "Lizentzia",
       "text": "Software hau MIT lizentziapean banatzen da.",
-      "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
+      "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
+      "thirdParty": "Hirugarrenen lizentziak"
     },
     "footer": "Maitasunez egina mundu osoko ikertzaileentzat"
   },

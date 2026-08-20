@@ -248,7 +248,8 @@
     "license": {
       "title": "Licentie",
       "text": "Deze software wordt gedistribueerd onder de MIT-licentie.",
-      "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
+      "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
+      "thirdParty": "Licenties van derden"
     },
     "footer": "Met liefde gemaakt voor dossierers wereldwijd"
   },

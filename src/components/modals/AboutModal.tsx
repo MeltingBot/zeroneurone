@@ -142,6 +142,15 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
                 without restriction, including without limitation the rights to use, copy,
                 modify, merge, publish, distribute, sublicense, and/or sell copies.
               </p>
+              <a
+                href={`${import.meta.env.BASE_URL}THIRD_PARTY_LICENSES.txt`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-3 text-xs text-text-secondary hover:text-text-primary transition-colors"
+              >
+                {t('about.license.thirdParty')}
+                <ExternalLink size={12} />
+              </a>
             </div>
           </div>
 

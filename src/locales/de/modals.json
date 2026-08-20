@@ -248,7 +248,8 @@
     "license": {
       "title": "Lizenz",
       "text": "Diese Software wird unter der MIT-Lizenz verteilt.",
-      "copyright": "Copyright (c) {{year}} Yann PILPRÉ"
+      "copyright": "Copyright (c) {{year}} Yann PILPRÉ",
+      "thirdParty": "Lizenzen von Drittanbietern"
     },
     "footer": "Mit Liebe gemacht für Ermittler weltweit"
   },
