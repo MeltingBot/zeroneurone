@@ -17,3 +17,4 @@ export { IconPicker, IconPickerCompact } from './IconPicker';
 export { LanguageSwitcher } from './LanguageSwitcher';
 export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
 export { ProgressiveList } from './ProgressiveList';
+export { PdfPreview } from './PdfPreview';

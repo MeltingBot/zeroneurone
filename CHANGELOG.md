@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.49.1
+
+### Fixes
+- **Aperçu PDF vide** — l'aperçu d'un fichier PDF (panneau Fichiers et depuis le nœud sur le canvas) restait vide. Chrome refuse d'exécuter son lecteur PDF interne dans une iframe portant l'attribut `sandbox` (ajouté en v2.38.6 pour le durcissement sécurité), quels que soient les flags. L'aperçu passe désormais par `pdfjs-dist` (déjà utilisé pour l'extraction de texte), rendu sur un `<canvas>` avec pagination et zoom — plus robuste, cohérent entre navigateurs, et sans dépendre ni du lecteur PDF natif ni de l'attribut `sandbox`.
+
 ## 2.49.0
 
 ### Features

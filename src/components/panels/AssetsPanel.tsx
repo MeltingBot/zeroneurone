@@ -7,6 +7,7 @@ import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
+import { PdfPreview } from '../common/PdfPreview';
 
 interface AssetsPanelProps {
   element: Element;
@@ -688,13 +689,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
               </div>
             </div>
           ) : isPdf && fileUrl ? (
-            /* PDF Viewer using iframe with browser's native PDF viewer */
-            <iframe
-              src={fileUrl}
-              sandbox="allow-same-origin"
-              className="w-full h-full border-0"
-              title={asset.filename}
-            />
+            <PdfPreview url={fileUrl} />
           ) : (isText || isDoc) && textContent !== null ? (
             <pre className="w-full h-full overflow-auto p-4 text-xs text-text-primary font-mono whitespace-pre-wrap leading-relaxed">
               {textContent}

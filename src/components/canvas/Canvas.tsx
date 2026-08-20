@@ -42,6 +42,7 @@ import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
+import { PdfPreview } from '../common/PdfPreview';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
 import { toPng } from 'html-to-image';
@@ -4764,12 +4765,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
               </div>
             </div>
           ) : isPdf && fileUrl ? (
-            <iframe
-              src={fileUrl}
-              sandbox="allow-same-origin"
-              className="w-full h-full border-0"
-              title={asset.filename}
-            />
+            <PdfPreview url={fileUrl} />
           ) : isImage && fileUrl ? (
             <div className="p-4 text-center">
               <img
