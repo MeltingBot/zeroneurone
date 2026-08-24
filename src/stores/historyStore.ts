@@ -161,6 +161,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         }
         break;
 
+      case 'create-link':
+        // Remove the link that was just created
+        if (action.redo.linkIds) {
+          await store.deleteLinks(action.redo.linkIds);
+        }
+        break;
+
       case 'delete-link':
         // Restore deleted links
         if (action.undo.links) {
@@ -283,6 +290,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           await store.removeAsset(action.undo.snapshot.elementId, action.undo.snapshot.assetId);
         }
         break;
+
+      default:
+        // The entry has already left `past`, so an unhandled type is silently
+        // skipped: the user presses Ctrl+Z, nothing happens, and the next one
+        // jumps to an older, unrelated action. Surface it instead of hiding it.
+        console.warn(`[history] no undo handler for action type "${action.type}"`);
     }
   },
 
@@ -331,6 +344,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         if (action.redo.elementId && action.redo.changes) {
           await store.updateElement(action.redo.elementId, action.redo.changes);
         }
+        break;
+
+      case 'create-link':
+        // Re-create the link
+        store.pasteElements([], action.redo.links || []);
         break;
 
       case 'delete-link':
@@ -463,6 +481,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           await store.addAsset(action.redo.snapshot.elementId, action.redo.snapshot.file);
         }
         break;
+
+      default:
+        console.warn(`[history] no redo handler for action type "${action.type}"`);
     }
   },
 

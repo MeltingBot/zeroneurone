@@ -2137,7 +2137,7 @@ export function Canvas() {
         const fromId = swap ? connection.target : connection.source;
         const toId = swap ? connection.source : connection.target;
 
-        await createLink(fromId, toId, {
+        const created = await createLink(fromId, toId, {
           sourceHandle: swap
             ? (connection.targetHandle ?? null)
             : (connection.sourceHandle ?? null),
@@ -2145,10 +2145,15 @@ export function Canvas() {
             ? (connection.sourceHandle ?? null)
             : (connection.targetHandle ?? null),
         });
+        pushAction({
+          type: 'create-link',
+          undo: {},
+          redo: { linkIds: [created.id], links: [created] },
+        });
         connectStartNodeRef.current = null;
       }
     },
-    [createLink]
+    [createLink, pushAction]
   );
 
   // Which endpoint stayed put during a reconnect. In ConnectionMode.Loose every
@@ -2220,15 +2225,35 @@ export function Canvas() {
       // the existing mode, letting auto placement resume.
       const isReanchor = oldEdge.source === fromId && oldEdge.target === toId;
 
-      await updateLink(oldEdge.id, {
+      const previous = links.find((l) => l.id === oldEdge.id);
+      const changes = {
         fromId,
         toId,
         sourceHandle: alignHandle(startedFromTarget ? fixedHandleId : movedHandleId, 'source'),
         targetHandle: alignHandle(startedFromTarget ? movedHandleId : fixedHandleId, 'target'),
         ...(isReanchor ? { anchorMode: 'manual' as const } : {}),
-      });
+      };
+
+      await updateLink(oldEdge.id, changes);
+
+      if (previous) {
+        pushAction({
+          type: 'update-link',
+          undo: {
+            linkId: oldEdge.id,
+            linkChanges: {
+              fromId: previous.fromId,
+              toId: previous.toId,
+              sourceHandle: previous.sourceHandle ?? null,
+              targetHandle: previous.targetHandle ?? null,
+              ...(isReanchor ? { anchorMode: previous.anchorMode } : {}),
+            },
+          },
+          redo: { linkId: oldEdge.id, linkChanges: changes },
+        });
+      }
     },
-    [updateLink]
+    [updateLink, links, pushAction]
   );
 
   // Handle node click (Shift or Ctrl for multi-select)

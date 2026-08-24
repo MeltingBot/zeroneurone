@@ -26,6 +26,8 @@ const viewStore = {
   restoreView: vi.fn(),
   setFilters: vi.fn(),
   hideElements: vi.fn(),
+  clearFilters: vi.fn(),
+  showAllElements: vi.fn(),
 };
 
 const reportStore = { restoreSection: vi.fn().mockResolvedValue(undefined) };
@@ -250,28 +252,52 @@ describe('undo / redo dispatch', () => {
   });
 });
 
-// These pin down gaps the audit found. They are expected to change with lot R1,
-// which moves history recording into the stores and adds the missing cases.
-describe('known gaps (lot R1)', () => {
-  it("'create-link' is a declared action type with no undo handler", async () => {
-    push({ type: 'create-link', undo: {}, redo: { linkIds: ['l1'] } });
+describe('link creation', () => {
+  it('removes the created link on undo and puts it back on redo', async () => {
+    const created = [link('l1')];
+    push({ type: 'create-link', undo: {}, redo: { linkIds: ['l1'], links: created } });
+
+    await history().undo();
+    expect(dossierStore.deleteLinks).toHaveBeenCalledWith(['l1']);
+
+    await history().redo();
+    expect(dossierStore.pasteElements).toHaveBeenCalledWith([], created);
+  });
+});
+
+describe('unhandled action types', () => {
+  it('warns instead of skipping silently', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    push({ type: 'not-a-real-type', undo: {}, redo: {} });
 
     await history().undo();
 
-    // Nothing happens: the link stays on the canvas even though the user
-    // pressed Ctrl+Z. Canvas.tsx never pushes this action today either.
-    expect(dossierStore.deleteLinks).not.toHaveBeenCalled();
-    expect(dossierStore.pasteElements).not.toHaveBeenCalled();
+    // The entry still leaves `past` — leaving it would make Ctrl+Z a no-op
+    // that never advances — but it no longer disappears without a trace.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('not-a-real-type'));
+    expect(history().past).toHaveLength(0);
+    warn.mockRestore();
   });
 
-  it('an unhandled action is still consumed from the stack', async () => {
-    push({ type: 'create-link', undo: {}, redo: {} });
+  it('every declared action type has both an undo and a redo handler', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const declared = [
+      'create-element', 'delete-element', 'update-element', 'move-element',
+      'create-link', 'delete-link', 'update-link',
+      'create-elements', 'delete-elements', 'move-elements',
+      'extract-to-element', 'dissolve-group', 'remove-from-group',
+      'create-group', 'delete-tab', 'delete-view', 'delete-section',
+      'clear-filters', 'add-asset',
+    ];
 
-    await history().undo();
+    for (const type of declared) {
+      useHistoryStore.setState({ past: [], future: [] });
+      push({ type, undo: {}, redo: {} });
+      await history().undo();
+      await history().redo();
+    }
 
-    // The entry is gone from `past` without anything having been undone, so a
-    // second Ctrl+Z skips past it to an older, unrelated action.
-    expect(history().past).toHaveLength(0);
-    expect(history().future).toHaveLength(1);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
