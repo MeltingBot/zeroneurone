@@ -104,7 +104,8 @@
         "contacts": "en contacto con",
         "signed": "firmó"
       }
-    }
+    },
+    "cardActions": "Acciones del expediente"
   },
   "dossier": {
     "loading": {

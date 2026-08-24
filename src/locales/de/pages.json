@@ -104,7 +104,8 @@
         "contacts": "in Kontakt mit",
         "signed": "hat unterzeichnet"
       }
-    }
+    },
+    "cardActions": "Fallaktionen"
   },
   "dossier": {
     "loading": {

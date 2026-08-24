@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, FileJson, AlertCircle, Save, FolderOpen, Check } from 'lucide-react';
 import { useDossierStore, useTagSetStore, useJsonMappingStore } from '../../stores';
@@ -38,6 +38,7 @@ import {
 import { computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { JsonMappingManagerModal } from './JsonMappingManagerModal';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
 const layoutLabel = (l: LayoutType): string => (l === 'hierarchy' ? 'Hiérarchie' : layoutService.getLayoutName(l));
@@ -576,6 +577,10 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     }
   }, [filteredRaw, maxImport, importCount, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(isOpen, dialogRef, handleClose);
+
   if (!isOpen) return null;
 
   const canImport = importCount > 0 && labelTemplate.trim().length > 0 && !creating;
@@ -583,14 +588,20 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   return (
     <>
     <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40">
-      <div className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[92vw] max-w-3xl max-h-[88vh] flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[92vw] max-w-3xl max-h-[88vh] flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <div className="flex items-center gap-2">
             <FileJson size={16} className="text-text-secondary" />
-            <h2 className="text-sm font-semibold text-text-primary">{t('importJsonMapping.title')}</h2>
+            <h2 id={titleId} className="text-sm font-semibold text-text-primary">{t('importJsonMapping.title')}</h2>
           </div>
-          <button onClick={handleClose} className="p-1 hover:bg-bg-tertiary rounded transition-colors">
+          <button onClick={handleClose} aria-label={t('common:actions.close')} className="p-1 hover:bg-bg-tertiary rounded transition-colors">
             <X size={18} className="text-text-secondary" />
           </button>
         </div>

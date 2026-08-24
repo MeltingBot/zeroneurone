@@ -104,7 +104,8 @@
         "contacts": "у контакті з",
         "signed": "підписав"
       }
-    }
+    },
+    "cardActions": "Дії зі справою"
   },
   "dossier": {
     "loading": {

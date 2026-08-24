@@ -104,7 +104,8 @@
         "contacts": "in contact met",
         "signed": "ondertekende"
       }
-    }
+    },
+    "cardActions": "Dossieracties"
   },
   "dossier": {
     "loading": {

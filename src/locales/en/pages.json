@@ -104,7 +104,8 @@
         "contacts": "in contact with",
         "signed": "signed"
       }
-    }
+    },
+    "cardActions": "Dossier actions"
   },
   "dossier": {
     "loading": {

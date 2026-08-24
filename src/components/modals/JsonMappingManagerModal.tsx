@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Trash2, Check, Pencil, Download, Upload } from 'lucide-react';
 import { useJsonMappingStore } from '../../stores';
 import { exportService } from '../../services/exportService';
 import type { JsonMappingTemplate } from '../../utils/jsonMapping';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 const FILE_TYPE = 'zeroneurone-mapping-templates';
 
@@ -28,6 +29,10 @@ export function JsonMappingManagerModal({ isOpen, onClose }: JsonMappingManagerM
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (isOpen) load(); }, [isOpen, load]);
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(isOpen, dialogRef, onClose);
 
   if (!isOpen) return null;
 
@@ -70,10 +75,16 @@ export function JsonMappingManagerModal({ isOpen, onClose }: JsonMappingManagerM
 
   return (
     <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/40">
-      <div className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[90vw] max-w-lg max-h-[80vh] flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-bg-primary border border-border-default sketchy-border-soft modal-shadow w-[90vw] max-w-lg max-h-[80vh] flex flex-col"
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
-          <h2 className="text-sm font-semibold text-text-primary">{t('importJsonMapping.manageTitle')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-bg-tertiary rounded transition-colors">
+          <h2 id={titleId} className="text-sm font-semibold text-text-primary">{t('importJsonMapping.manageTitle')}</h2>
+          <button onClick={onClose} aria-label={t('common:actions.close')} className="p-1 hover:bg-bg-tertiary rounded transition-colors">
             <X size={18} className="text-text-secondary" />
           </button>
         </div>

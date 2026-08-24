@@ -104,7 +104,8 @@
         "contacts": "w kontakcie z",
         "signed": "podpisał"
       }
-    }
+    },
+    "cardActions": "Akcje sprawy"
   },
   "dossier": {
     "loading": {

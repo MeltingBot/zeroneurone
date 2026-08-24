@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Lock, Eye, EyeOff, AlertTriangle, TriangleAlert, KeyRound } from 'lucide-react';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface PasswordModalProps {
   /** Appelé avec le mot de passe quand l'utilisateur soumet */
@@ -72,12 +73,18 @@ export function PasswordModal({ onUnlock, error, isVerifying = false, hasWebAuth
     }
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Modale bloquante : l'application est inaccessible tant que le mot de passe
+  // n'est pas valide, donc Escape ne ferme rien. Seul le piege de focus compte.
+  useDialogA11y(true, dialogRef, () => {});
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       role="dialog"
       aria-modal="true"
       aria-labelledby="password-modal-title"
+      ref={dialogRef}
     >
       <div className="bg-bg-primary border border-border-default shadow-lg w-full max-w-sm mx-4 p-6 rounded">
         {/* En-tête */}

@@ -104,7 +104,8 @@
         "contacts": "en contact avec",
         "signed": "a signé"
       }
-    }
+    },
+    "cardActions": "Actions du dossier"
   },
   "dossier": {
     "loading": {

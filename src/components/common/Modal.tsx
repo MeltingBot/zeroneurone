@@ -1,7 +1,8 @@
-import { useEffect, useRef, useId, type ReactNode } from 'react';
+import { useRef, useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { IconButton } from './IconButton';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface ModalProps {
   isOpen: boolean;
@@ -18,20 +19,6 @@ const widthStyles = {
   lg: 'w-[640px]',
 };
 
-// Get all focusable elements within a container
-function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  const focusableSelectors = [
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    'a[href]',
-    '[tabindex]:not([tabindex="-1"])',
-  ].join(', ');
-
-  return Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors));
-}
-
 export function Modal({
   isOpen,
   onClose,
@@ -43,73 +30,8 @@ export function Modal({
   const { t } = useTranslation('common');
   const titleId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Use a ref for onClose to avoid re-running the effect when the callback changes
-  // This prevents focus stealing when parent components re-render
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  // Handle escape key and focus trap
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Store the previously focused element
-    previousActiveElement.current = document.activeElement as HTMLElement;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCloseRef.current();
-        return;
-      }
-
-      // Focus trap with Tab key
-      if (e.key === 'Tab' && modalRef.current) {
-        const focusableElements = getFocusableElements(modalRef.current);
-        if (focusableElements.length === 0) return;
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey) {
-          // Shift + Tab: going backwards
-          if (document.activeElement === firstElement) {
-            e.preventDefault();
-            lastElement.focus();
-          }
-        } else {
-          // Tab: going forward
-          if (document.activeElement === lastElement) {
-            e.preventDefault();
-            firstElement.focus();
-          }
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-
-    // Focus the first focusable element in the modal
-    setTimeout(() => {
-      if (modalRef.current) {
-        const focusableElements = getFocusableElements(modalRef.current);
-        if (focusableElements.length > 0) {
-          focusableElements[0].focus();
-        }
-      }
-    }, 0);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-
-      // Restore focus to the previously focused element
-      if (previousActiveElement.current) {
-        previousActiveElement.current.focus();
-      }
-    };
-  }, [isOpen]);
+  useDialogA11y(isOpen, modalRef, onClose);
 
   if (!isOpen) return null;
 

@@ -104,7 +104,8 @@
         "contacts": "harremanetan",
         "signed": "sinatu du"
       }
-    }
+    },
+    "cardActions": "Espedientearen ekintzak"
   },
   "dossier": {
     "loading": {

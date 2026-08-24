@@ -1,11 +1,4 @@
-import {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useMemo,
-  type KeyboardEvent,
-} from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Box, Link2, X, Tag } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useTabStore, useUIStore } from '../../stores';
@@ -13,6 +6,7 @@ import { useQueryStore } from '../../stores/queryStore';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
 import { getCountryByCode, getCountryName } from '../../data/countries';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -45,6 +39,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     () => new Map(links.map((link) => [link.id, link])),
     [links]
   );
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // autoFocus desactive : le composant met deja le focus dans le champ de saisie.
+  useDialogA11y(isOpen, dialogRef, onClose, { autoFocus: false });
 
   // Focus input when opened
   useEffect(() => {
@@ -388,6 +386,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('search.title')}
         className="bg-bg-primary rounded shadow-lg w-full max-w-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >

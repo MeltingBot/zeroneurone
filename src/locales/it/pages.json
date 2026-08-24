@@ -104,7 +104,8 @@
         "contacts": "in contatto con",
         "signed": "ha firmato"
       }
-    }
+    },
+    "cardActions": "Azioni del fascicolo"
   },
   "dossier": {
     "loading": {

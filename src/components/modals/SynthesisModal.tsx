@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, FileText, Download, Printer, FileCode, Camera, Loader, Braces } from 'lucide-react';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../services/reportService';
 import { useDossierStore, useViewStore, useUIStore } from '../../stores';
 import type { DisplayMode } from '../../types';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface SynthesisModalProps {
   isOpen: boolean;
@@ -171,6 +172,10 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
     }
   }, [currentDossier, elements, links, assets, options, screenshotOptions, displayMode, setDisplayMode, themeMode, setThemeMode, captureView, captureHandlers]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(isOpen, dialogRef, onClose);
+
   if (!isOpen) return null;
 
   return (
@@ -194,18 +199,26 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-bg-primary rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-bg-primary sketchy-border-soft modal-shadow max-h-[90vh] overflow-hidden flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
-          <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+          <h2 id={titleId} className="text-sm font-semibold text-text-primary flex items-center gap-2">
             <FileText size={16} />
             {t('synthesis.title')}
           </h2>
           <button
             onClick={onClose}
+            aria-label={t('common:actions.close')}
             className="p-1 text-text-tertiary hover:text-text-primary rounded"
             disabled={isGenerating}
           >

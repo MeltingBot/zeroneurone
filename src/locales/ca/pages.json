@@ -104,7 +104,8 @@
         "contacts": "en contacte amb",
         "signed": "ha signat"
       }
-    }
+    },
+    "cardActions": "Accions de l'expedient"
   },
   "dossier": {
     "loading": {

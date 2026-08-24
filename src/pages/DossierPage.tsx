@@ -530,7 +530,7 @@ export function DossierPage() {
       {/* Header */}
       <header className="h-10 flex items-center justify-between px-3 border-b border-border-default bg-bg-primary gap-1">
         <div className="flex items-center gap-2 min-w-0 shrink">
-          <IconButton onClick={handleGoHome} data-testid="back-to-home">
+          <IconButton onClick={handleGoHome} data-testid="back-to-home" aria-label={t('home.backToHome')}>
             <ArrowLeft size={16} />
           </IconButton>
           <h1 className="text-sm font-semibold text-text-primary truncate">

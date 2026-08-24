@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { X, Plus, Tag } from 'lucide-react';
 import type { Dossier } from '../../types';
 
@@ -63,6 +64,10 @@ export function DossierTagsModal({
   // Suggestions: existing tags not already selected
   const suggestions = allTags.filter((t) => !tags.includes(t));
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(isOpen, dialogRef, onClose);
+
   if (!isOpen || !dossier) return null;
 
   return (
@@ -71,20 +76,28 @@ export function DossierTagsModal({
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary rounded-lg shadow-xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <div className="flex items-center gap-2">
             <Tag size={16} className="text-text-secondary" />
-            <h2 className="text-sm font-semibold text-text-primary">
+            <h2 id={titleId} className="text-sm font-semibold text-text-primary">
               {t('dossierTags.title')}
             </h2>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:actions.close')}
             className="p-1 text-text-tertiary hover:text-text-primary rounded"
           >
             <X size={16} />

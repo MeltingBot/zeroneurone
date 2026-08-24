@@ -104,7 +104,8 @@
         "contacts": "em contacto com",
         "signed": "assinou"
       }
-    }
+    },
+    "cardActions": "Ações do processo"
   },
   "dossier": {
     "loading": {

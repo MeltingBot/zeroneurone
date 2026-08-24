@@ -78,6 +78,7 @@ export function ViewToolbar({
         {showFontToggle && (
           <button
             onClick={toggleFontMode}
+            aria-pressed={fontMode === 'handwritten'}
             className={`p-1.5 rounded transition-colors ${fontMode === 'handwritten' ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
             title={fontMode === 'handwritten' ? t('dossier.viewToolbar.readableFont') : t('dossier.viewToolbar.handwrittenFont')}
           >
@@ -89,6 +90,7 @@ export function ViewToolbar({
         {showMediaToggle && (
           <button
             onClick={toggleHideMedia}
+            aria-pressed={hideMedia}
             className={`p-1.5 rounded transition-colors ${hideMedia ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
             title={hideMedia ? t('dossier.viewToolbar.showMedia') : t('dossier.viewToolbar.blurMedia')}
           >
@@ -99,6 +101,7 @@ export function ViewToolbar({
         {/* Anonymous mode toggle */}
         <button
           onClick={toggleAnonymousMode}
+          aria-pressed={anonymousMode}
           className={`p-1.5 rounded transition-colors ${anonymousMode ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
           title={anonymousMode ? t('dossier.viewToolbar.showNames') : t('dossier.viewToolbar.anonymousMode')}
         >
@@ -109,6 +112,7 @@ export function ViewToolbar({
         {showCommentBadgesToggle && (
           <button
             onClick={toggleShowCommentBadges}
+            aria-pressed={showCommentBadges}
             className={`p-1.5 rounded transition-colors ${showCommentBadges ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
             title={showCommentBadges ? t('dossier.viewToolbar.hideCommentBadges') : t('dossier.viewToolbar.showCommentBadges')}
           >
