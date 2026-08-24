@@ -43,7 +43,8 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "lock:refresh": "node -e \"const fs=require('fs'),{execSync}=require('child_process'),d=fs.mkdtempSync('/tmp/zn-lock-');fs.copyFileSync('package.json',d+'/package.json');execSync('npm install --package-lock-only',{cwd:d,stdio:'inherit'});fs.copyFileSync(d+'/package-lock.json','package-lock.json');fs.rmSync(d,{recursive:true});\"",
-    "check": "tsc -b && vitest run && npm run build"
+    "check": "tsc -b && vitest run && npm run build",
+    "bench": "vitest run --config vitest.bench.config.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",

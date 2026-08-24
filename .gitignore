@@ -58,6 +58,7 @@ public/plugins/manifest.json
 .plan
 plan-cours-zn.md
 
-# Test and lint reports
+# Test, lint and benchmark reports
 coverage/
 eslint-report.json
+bench-results.json

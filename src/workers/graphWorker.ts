@@ -15,6 +15,7 @@ import { random } from 'graphology-layout';
 import dagre from '@dagrejs/dagre';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import type { ElementShape, ElementSize } from '../types';
+import { findArticulationPoints, detectSimilarLabels } from '../services/graph/algorithms';
 
 // ============================================================================
 // TYPES
@@ -96,125 +97,6 @@ function buildGraph(elements: SerializedElement[], links: SerializedLink[]): Gra
 // BRIDGE DETECTION — Tarjan's Algorithm O(V+E)
 // ============================================================================
 
-function findBridgeNodes(graph: Graph): string[] {
-  const visited = new Set<string>();
-  const disc = new Map<string, number>();
-  const low = new Map<string, number>();
-  const parent = new Map<string, string | null>();
-  const articulationPoints = new Set<string>();
-  let timer = 0;
-
-  function dfs(u: string) {
-    visited.add(u);
-    disc.set(u, timer);
-    low.set(u, timer);
-    timer++;
-    let children = 0;
-
-    graph.forEachNeighbor(u, (v) => {
-      if (!visited.has(v)) {
-        children++;
-        parent.set(v, u);
-        dfs(v);
-        low.set(u, Math.min(low.get(u)!, low.get(v)!));
-
-        // u is articulation point if:
-        // 1) u is root of DFS tree and has two or more children
-        if (parent.get(u) === null && children > 1) {
-          articulationPoints.add(u);
-        }
-        // 2) u is not root and low value of one of its child is >= discovery value of u
-        if (parent.get(u) !== null && low.get(v)! >= disc.get(u)!) {
-          articulationPoints.add(u);
-        }
-      } else if (v !== parent.get(u)) {
-        low.set(u, Math.min(low.get(u)!, disc.get(v)!));
-      }
-    });
-  }
-
-  graph.forEachNode((node) => {
-    if (!visited.has(node)) {
-      parent.set(node, null);
-      dfs(node);
-    }
-  });
-
-  return Array.from(articulationPoints);
-}
-
-// ============================================================================
-// SIMILAR LABELS — Sorted + Sliding Window O(n log n * L)
-// ============================================================================
-
-function detectSimilarLabels(
-  elements: SerializedElement[],
-  threshold: number = 0.7,
-  windowSize: number = 5,
-  maxResults: number = 20
-): { elementId1: string; elementId2: string; similarity: number }[] {
-  // Filter elements with non-empty labels
-  const labeled = elements
-    .filter(el => el.label && el.label.trim().length > 0 && !el.isGroup)
-    .map(el => ({ id: el.id, normalized: el.label.toLowerCase().trim() }));
-
-  if (labeled.length < 2) return [];
-
-  // Sort by normalized label
-  labeled.sort((a, b) => a.normalized.localeCompare(b.normalized));
-
-  const pairs: { elementId1: string; elementId2: string; similarity: number }[] = [];
-
-  // Compare each element with the next `windowSize` elements in sorted order
-  for (let i = 0; i < labeled.length; i++) {
-    const limit = Math.min(i + windowSize + 1, labeled.length);
-    for (let j = i + 1; j < limit; j++) {
-      const similarity = calculateSimilarity(labeled[i].normalized, labeled[j].normalized);
-      if (similarity >= threshold) {
-        pairs.push({
-          elementId1: labeled[i].id,
-          elementId2: labeled[j].id,
-          similarity,
-        });
-      }
-    }
-  }
-
-  // Sort by similarity descending and limit results
-  return pairs.sort((a, b) => b.similarity - a.similarity).slice(0, maxResults);
-}
-
-function calculateSimilarity(s1: string, s2: string): number {
-  const longer = s1.length > s2.length ? s1 : s2;
-  const shorter = s1.length > s2.length ? s2 : s1;
-  if (longer.length === 0) return 1.0;
-  const editDistance = levenshteinDistance(longer, shorter);
-  return (longer.length - editDistance) / longer.length;
-}
-
-function levenshteinDistance(s1: string, s2: string): number {
-  const costs: number[] = [];
-  for (let i = 0; i <= s1.length; i++) {
-    let lastValue = i;
-    for (let j = 0; j <= s2.length; j++) {
-      if (i === 0) {
-        costs[j] = j;
-      } else if (j > 0) {
-        let newValue = costs[j - 1];
-        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-          newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-        }
-        costs[j - 1] = lastValue;
-        lastValue = newValue;
-      }
-    }
-    if (i > 0) {
-      costs[s2.length] = lastValue;
-    }
-  }
-  return costs[s2.length];
-}
-
 // ============================================================================
 // INSIGHTS COMPUTATION
 // ============================================================================
@@ -278,7 +160,7 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
   postProgress(50, 'bridges');
 
   // Bridges (Tarjan — O(V+E))
-  const bridges = graph.order > 2 ? findBridgeNodes(graph) : [];
+  const bridges = graph.order > 2 ? findArticulationPoints(graph) : [];
 
   postProgress(70, 'isolated');
 

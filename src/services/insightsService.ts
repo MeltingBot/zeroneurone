@@ -3,6 +3,10 @@ import louvain from 'graphology-communities-louvain';
 import { bidirectional } from 'graphology-shortest-path';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
 import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
+import {
+  findArticulationPoints,
+  detectSimilarLabels as detectSimilarLabelsShared,
+} from './graph/algorithms';
 
 export interface InsightsResult {
   clusters: Cluster[];
@@ -153,30 +157,9 @@ class InsightsService {
    */
   getBridges(): ElementId[] {
     if (!this.graph || this.graph.order <= 2) return [];
-
-    const bridges: ElementId[] = [];
-    const originalComponents = this.countConnectedComponents();
-
-    // For each node, check if removing it increases the number of components
-    this.graph.forEachNode((nodeId) => {
-      const neighbors = this.graph!.neighbors(nodeId);
-
-      // Only potential bridges have at least 2 neighbors
-      if (neighbors.length < 2) return;
-
-      // Temporarily remove the node and check connectivity
-      const tempGraph = this.graph!.copy();
-      tempGraph.dropNode(nodeId);
-
-      const newComponents = this.countConnectedComponentsInGraph(tempGraph);
-
-      if (newComponents > originalComponents) {
-        bridges.push(nodeId);
-      }
-    });
-
-    return bridges;
+    return findArticulationPoints(this.graph);
   }
+
 
   /**
    * Find isolated nodes (degree 0)
@@ -199,34 +182,7 @@ class InsightsService {
    * Detect elements with similar labels (potential duplicates)
    */
   detectSimilarLabels(): SimilarPair[] {
-    const pairs: SimilarPair[] = [];
-    const threshold = 0.7; // Similarity threshold
-
-    for (let i = 0; i < this.elements.length; i++) {
-      for (let j = i + 1; j < this.elements.length; j++) {
-        const el1 = this.elements[i];
-        const el2 = this.elements[j];
-
-        // Skip empty labels
-        if (!el1.label || !el2.label) continue;
-
-        const similarity = this.calculateSimilarity(
-          el1.label.toLowerCase(),
-          el2.label.toLowerCase()
-        );
-
-        if (similarity >= threshold) {
-          pairs.push({
-            elementId1: el1.id,
-            elementId2: el2.id,
-            similarity,
-          });
-        }
-      }
-    }
-
-    // Sort by similarity descending
-    return pairs.sort((a, b) => b.similarity - a.similarity).slice(0, 20);
+    return detectSimilarLabelsShared(this.elements) as SimilarPair[];
   }
 
   /**
@@ -397,72 +353,6 @@ class InsightsService {
     }
 
     return results.sort((a, b) => a.length - b.length);
-  }
-
-  /**
-   * Calculate Levenshtein similarity between two strings
-   */
-  private calculateSimilarity(s1: string, s2: string): number {
-    const longer = s1.length > s2.length ? s1 : s2;
-    const shorter = s1.length > s2.length ? s2 : s1;
-
-    if (longer.length === 0) return 1.0;
-
-    const editDistance = this.levenshteinDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
-  }
-
-  /**
-   * Calculate Levenshtein distance between two strings
-   */
-  private levenshteinDistance(s1: string, s2: string): number {
-    const costs: number[] = [];
-
-    for (let i = 0; i <= s1.length; i++) {
-      let lastValue = i;
-      for (let j = 0; j <= s2.length; j++) {
-        if (i === 0) {
-          costs[j] = j;
-        } else if (j > 0) {
-          let newValue = costs[j - 1];
-          if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-          }
-          costs[j - 1] = lastValue;
-          lastValue = newValue;
-        }
-      }
-      if (i > 0) {
-        costs[s2.length] = lastValue;
-      }
-    }
-
-    return costs[s2.length];
-  }
-
-  /**
-   * Count connected components in the current graph
-   */
-  private countConnectedComponents(): number {
-    if (!this.graph) return 0;
-    return this.countConnectedComponentsInGraph(this.graph);
-  }
-
-  /**
-   * Count connected components in a given graph
-   */
-  private countConnectedComponentsInGraph(graph: Graph): number {
-    const visited = new Set<string>();
-    let components = 0;
-
-    graph.forEachNode((nodeId) => {
-      if (!visited.has(nodeId)) {
-        components++;
-        this.dfs(graph, nodeId, visited);
-      }
-    });
-
-    return components;
   }
 
   /**

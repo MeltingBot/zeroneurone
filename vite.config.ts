@@ -129,6 +129,8 @@ export default defineConfig({
     // (jsdom, not happy-dom: DOMPurify misbehaves under happy-dom).
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
+    // Benchmarks are opt-in (npm run bench): they run for minutes.
+    exclude: ['**/node_modules/**', '**/__benchmarks__/**'],
     coverage: {
       provider: 'v8',
       include: ['src/services/**', 'src/db/**', 'src/stores/**', 'src/utils/**'],
