@@ -215,7 +215,10 @@
       "clearText": "Extrahierten Text löschen",
       "extractText": "Text extrahieren",
       "reExtractText": "Text erneut extrahieren",
-      "toggleText": "Text ein-/ausblenden"
+      "toggleText": "Text ein-/ausblenden",
+      "extractMetadata": "Metadaten extrahieren",
+      "noMetadata": "Keine Metadaten in dieser Datei gefunden",
+      "metadataFailed": "Extraktion der Metadaten fehlgeschlagen"
     },
     "timestamps": {
       "createdAt": "Erstellt am",

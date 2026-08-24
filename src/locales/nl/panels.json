@@ -215,7 +215,10 @@
       "clearText": "Geëxtraheerde tekst wissen",
       "extractText": "Tekst extraheren",
       "reExtractText": "Tekst opnieuw extraheren",
-      "toggleText": "Tekst tonen/verbergen"
+      "toggleText": "Tekst tonen/verbergen",
+      "extractMetadata": "Metadata extraheren",
+      "noMetadata": "Geen metadata gevonden in dit bestand",
+      "metadataFailed": "Extraheren van metadata mislukt"
     },
     "timestamps": {
       "createdAt": "Aangemaakt op",

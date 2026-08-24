@@ -43,6 +43,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { PdfPreview } from '../common/PdfPreview';
+import { ImagePreview } from '../common/ImagePreview';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
 import type { Element, Link, Position, Asset } from '../../types';
@@ -4801,7 +4802,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     >
       <div
         className={`bg-bg-primary rounded shadow-lg ${
-          isPdf ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
+          isPdf || isImage ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -4821,7 +4822,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         </div>
 
         {/* Content */}
-        <div className={isPdf ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
+        <div className={isPdf || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <div className="flex flex-col items-center gap-2">
@@ -4832,13 +4833,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           ) : isPdf && fileUrl ? (
             <PdfPreview url={fileUrl} />
           ) : isImage && fileUrl ? (
-            <div className="p-4 text-center">
-              <img
-                src={fileUrl}
-                alt={asset.filename}
-                className="max-w-full inline-block"
-              />
-            </div>
+            <ImagePreview key={fileUrl} url={fileUrl} alt={asset.filename} />
           ) : asset.thumbnailDataUrl ? (
             <div className="p-4 text-center">
               <img

@@ -215,7 +215,10 @@
       "clearText": "Очистити витягнутий текст",
       "extractText": "Vytiahnuty tekst",
       "reExtractText": "Povtorno vytiahnuty tekst",
-      "toggleText": "Pokazaty/skhovaty tekst"
+      "toggleText": "Pokazaty/skhovaty tekst",
+      "extractMetadata": "Витягти метадані",
+      "noMetadata": "У цьому файлі метаданих не знайдено",
+      "metadataFailed": "Не вдалося витягти метадані"
     },
     "timestamps": {
       "createdAt": "Створено",

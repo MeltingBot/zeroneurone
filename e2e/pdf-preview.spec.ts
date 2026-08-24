@@ -69,4 +69,34 @@ test.describe('PDF preview', () => {
     expect(errors.filter((e) => e.includes('sendWithPromise'))).toEqual([]);
     expect(errors.filter((e) => e.includes('Erreur de rendu'))).toEqual([]);
   });
+
+  test('offers metadata re-extraction on an attached file', async ({ page }) => {
+    await createTestDossier(page, 'Dossier metadonnees');
+    await createElementOnCanvas(page, 400, 300);
+
+    const dir = mkdtempSync(join(tmpdir(), 'zn-meta-'));
+    const file = join(dir, 'document.pdf');
+    writeFileSync(file, buildMinimalPdf());
+    await page.setInputFiles('input[type="file"]', file);
+
+    const ignore = page.getByRole('button', { name: 'Ignorer' });
+    await ignore.waitFor({ state: 'visible', timeout: 20_000 }).catch(() => { /* none found */ });
+    if (await ignore.isVisible().catch(() => false)) {
+      await ignore.click();
+      await expect(ignore).toBeHidden({ timeout: 10_000 });
+    }
+
+    await page.getByRole('button', { name: /files|fichiers/i }).first().click();
+    const row = page.getByText('document.pdf').first();
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    await row.hover();
+
+    // The whole point: extraction used to be reachable only at attach time.
+    await page.getByTestId('extract-metadata').first().click();
+
+    // Either the proposal reappears, or a toast says there was nothing to find.
+    await expect(
+      page.getByRole('button', { name: 'Ignorer' }).or(page.getByRole('alert'))
+    ).toBeVisible({ timeout: 30_000 });
+  });
 });

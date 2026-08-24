@@ -215,7 +215,10 @@
       "clearText": "Wyczyść wyodrębniony tekst",
       "extractText": "Wyodrebnij tekst",
       "reExtractText": "Ponownie wyodrebnij tekst",
-      "toggleText": "Pokaz/ukryj tekst"
+      "toggleText": "Pokaz/ukryj tekst",
+      "extractMetadata": "Wyodrębnij metadane",
+      "noMetadata": "Nie znaleziono metadanych w tym pliku",
+      "metadataFailed": "Nie udało się wyodrębnić metadanych"
     },
     "timestamps": {
       "createdAt": "Utworzono",

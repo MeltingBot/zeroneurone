@@ -55,6 +55,9 @@ Images display as thumbnails on the canvas. When you zoom in or resize a node be
 **Hide media on an element** — in the **Files** panel, the "Hide media on node" link shows the element's **label** instead of its image on the canvas. The file stays attached; only the display changes. This setting is per-element (distinct from the global "blur media" toolbar button).
 
 
+**Full-screen preview** — the eye icon on the file row opens the image with zoom controls, from 40% to 300%. It opens fitted to width and the window scrolls around it once enlarged: useful for reading a scanned document or examining a detail on a scene photograph. The same controls apply to the PDF preview.
+
+
 ### PDF
 
 PDFs open in an integrated viewer.
@@ -135,6 +138,10 @@ When you add a file containing metadata:
 3. Click **Import** or **Ignore**
 
 Imported metadata become element properties.
+
+### Re-running extraction
+
+If you clicked **Ignore**, or simply want to revisit it later, the **Extract metadata** button (information icon) on the file row runs the analysis again. It is available on every file type, images included, where it recovers a photograph's GPS coordinates after the fact. When a file holds none, a message says so.
 
 ### Automatic Geolocation
 

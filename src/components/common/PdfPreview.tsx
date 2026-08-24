@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask } from 'pdfjs-dist';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileWarning } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileWarning } from 'lucide-react';
+import { ZoomControls } from './ZoomControls';
+import { ZOOM_STEP, clampScale } from './zoom';
 import { loadPdfjs } from '../../services/pdfjsLoader';
 
-const MIN_SCALE = 0.4;
-const MAX_SCALE = 3;
-const ZOOM_STEP = 0.25;
 const CONTAINER_PADDING = 32;
-
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 interface PdfPreviewProps {
   url: string;
@@ -63,7 +60,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
         const firstPage = await doc.getPage(1);
         const baseViewport = firstPage.getViewport({ scale: 1 });
         const containerWidth = containerRef.current?.clientWidth || baseViewport.width;
-        const fitScale = clamp((containerWidth - CONTAINER_PADDING) / baseViewport.width, MIN_SCALE, MAX_SCALE);
+        const fitScale = clampScale((containerWidth - CONTAINER_PADDING) / baseViewport.width);
         if (cancelled) return;
         setNumPages(doc.numPages);
         setScale(fitScale);
@@ -123,8 +120,8 @@ export function PdfPreview({ url }: PdfPreviewProps) {
 
   const goPrev = () => setPageNum((p) => Math.max(1, p - 1));
   const goNext = () => setPageNum((p) => Math.min(numPages, p + 1));
-  const zoomOut = () => setScale((s) => clamp((s ?? 1) - ZOOM_STEP, MIN_SCALE, MAX_SCALE));
-  const zoomIn = () => setScale((s) => clamp((s ?? 1) + ZOOM_STEP, MIN_SCALE, MAX_SCALE));
+  const zoomOut = () => setScale((s) => clampScale((s ?? 1) - ZOOM_STEP));
+  const zoomIn = () => setScale((s) => clampScale((s ?? 1) + ZOOM_STEP));
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -150,27 +147,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
             <ChevronRight size={14} />
           </button>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={zoomOut}
-            disabled={scale === null || scale <= MIN_SCALE}
-            className="p-1 text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:hover:text-text-tertiary"
-            title="Zoom arrière"
-          >
-            <ZoomOut size={14} />
-          </button>
-          <span className="text-text-secondary tabular-nums w-10 text-center">
-            {scale !== null ? `${Math.round(scale * 100)}%` : '—'}
-          </span>
-          <button
-            onClick={zoomIn}
-            disabled={scale === null || scale >= MAX_SCALE}
-            className="p-1 text-text-tertiary hover:text-text-primary disabled:opacity-30 disabled:hover:text-text-tertiary"
-            title="Zoom avant"
-          >
-            <ZoomIn size={14} />
-          </button>
-        </div>
+        <ZoomControls scale={scale} onZoomIn={zoomIn} onZoomOut={zoomOut} />
       </div>
       <div ref={containerRef} className="flex-1 overflow-auto bg-bg-tertiary flex items-start justify-center p-4">
         {error ? (

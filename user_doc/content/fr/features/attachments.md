@@ -54,6 +54,8 @@ Les images s'affichent en miniature sur le canvas. Lorsque vous zoomez ou redime
 
 **Masquer le média sur un élément** — dans le panneau **Fichiers**, le lien « Masquer le média sur le nœud » affiche le **label** de l'élément à la place de son image sur le canvas. Le fichier reste attaché ; seul l'affichage change. Ce réglage est propre à l'élément (distinct du bouton global « flouter les médias » de la barre d'outils).
 
+**Aperçu plein écran** — l'icône œil de la ligne du fichier ouvre l'image avec des contrôles de zoom, de 40 % à 300 %. L'image s'ouvre ajustée à la largeur et la fenêtre défile autour d'elle une fois agrandie : utile pour lire un document scanné ou examiner un détail sur une photo de scène. Les mêmes contrôles s'appliquent à l'aperçu PDF.
+
 
 ### PDF
 
@@ -135,6 +137,10 @@ Lorsque vous ajoutez un fichier contenant des métadonnées :
 3. Cliquez **Importer** ou **Ignorer**
 
 Les métadonnées importées deviennent des propriétés de l'élément.
+
+### Relancer l'extraction
+
+Si vous avez cliqué **Ignorer**, ou si vous souhaitez simplement y revenir plus tard, le bouton **Extraire les métadonnées** (icône information) de la ligne du fichier relance l'analyse. Il est disponible sur tous les types de fichiers, y compris les images, où il permet de récupérer les coordonnées GPS d'une photo après coup. Si le fichier n'en contient aucune, un message vous le signale.
 
 ### Géolocalisation automatique
 

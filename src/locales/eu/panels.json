@@ -215,7 +215,10 @@
       "clearText": "Ezabatu ateratako testua",
       "extractText": "Testua atera",
       "reExtractText": "Testua berriro atera",
-      "toggleText": "Testua erakutsi/ezkutatu"
+      "toggleText": "Testua erakutsi/ezkutatu",
+      "extractMetadata": "Atera metadatuak",
+      "noMetadata": "Ez da metadaturik aurkitu fitxategi honetan",
+      "metadataFailed": "Metadatuak ateratzeak huts egin du"
     },
     "timestamps": {
       "createdAt": "Sortze data",

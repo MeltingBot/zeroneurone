@@ -1,13 +1,15 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { File, Image, ImageOff, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp } from 'lucide-react';
+import { File, Image, ImageOff, FileText, FileX2, X, Download, Eye, GripVertical, ScanText, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useDossierStore, useHistoryStore } from '../../stores';
+import { toast } from '../../stores';
 import { useUIStore } from '../../stores/uiStore';
 import type { Element, Asset } from '../../types';
 import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { PdfPreview } from '../common/PdfPreview';
+import { ImagePreview } from '../common/ImagePreview';
 
 interface AssetsPanelProps {
   element: Element;
@@ -74,9 +76,12 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
             filename: file.name,
             metadata,
           });
+          return true;
         }
+        return false;
       } catch (error) {
         console.error('Metadata extraction failed:', error);
+        return false;
       }
     },
     [element.id, element.label, pushMetadataImport]
@@ -223,6 +228,29 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
     [extractAssetText]
   );
 
+  const [extractingMetadataId, setExtractingMetadataId] = useState<string | null>(null);
+
+  // Re-run metadata extraction on an already-attached file. Extraction only
+  // ever happened at attach time, so dismissing the proposal — or simply
+  // wanting to revisit it — used to mean detaching and re-adding the file.
+  const handleExtractMetadata = useCallback(
+    async (asset: Asset) => {
+      setExtractingMetadataId(asset.id);
+      try {
+        const file = await fileService.getAssetFile(asset);
+        const found = await extractAndQueueMetadata(file);
+        // A user-initiated action must say something even when it finds nothing.
+        if (!found) toast.info(t('detail.files.noMetadata'));
+      } catch (error) {
+        console.error('Metadata extraction failed:', error);
+        toast.error(t('detail.files.metadataFailed'));
+      } finally {
+        setExtractingMetadataId(null);
+      }
+    },
+    [extractAndQueueMetadata, t]
+  );
+
   // Drag-and-drop reordering handlers
   const handleReorderDragStart = useCallback((assetId: string) => {
     setDraggingAssetId(assetId);
@@ -350,6 +378,8 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
                   : undefined
               }
               isExtracting={extractingAssetId === asset.id}
+              onExtractMetadata={() => handleExtractMetadata(asset)}
+              isExtractingMetadata={extractingMetadataId === asset.id}
               onDownload={() => handleDownload(asset)}
               onPreview={() => setPreviewAsset(asset)}
               isDragging={draggingAssetId === asset.id}
@@ -413,6 +443,8 @@ interface AssetItemProps {
   onClearText?: () => void;
   onExtractText?: () => void;
   isExtracting: boolean;
+  onExtractMetadata: () => void;
+  isExtractingMetadata: boolean;
   onDownload: () => void;
   onPreview: () => void;
   isDragging: boolean;
@@ -431,6 +463,8 @@ function AssetItem({
   onClearText,
   onExtractText,
   isExtracting,
+  onExtractMetadata,
+  isExtractingMetadata,
   onDownload,
   onPreview,
   isDragging,
@@ -541,6 +575,15 @@ function AssetItem({
               <Eye size={14} />
             </button>
           )}
+          <button
+            onClick={onExtractMetadata}
+            disabled={isExtractingMetadata}
+            data-testid="extract-metadata"
+            className="p-1 text-text-tertiary hover:text-text-primary disabled:opacity-40"
+            title={tPanels('detail.files.extractMetadata')}
+          >
+            <Info size={14} className={isExtractingMetadata ? 'animate-pulse' : ''} />
+          </button>
           <button
             onClick={onDownload}
             className="p-1 text-text-tertiary hover:text-text-primary"
@@ -662,7 +705,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     >
       <div
         className={`bg-bg-primary rounded shadow-lg ${
-          isPdf || isText || isDoc ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
+          isPdf || isText || isDoc || isImage ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -681,7 +724,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         </div>
 
         {/* Content */}
-        <div className={isPdf || isText || isDoc ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
+        <div className={isPdf || isText || isDoc || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <div className="flex flex-col items-center gap-2">
@@ -701,13 +744,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
               <p className="text-sm">Extraire le texte pour afficher l'apercu</p>
             </div>
           ) : isImage && fileUrl ? (
-            <div className="p-4 text-center">
-              <img
-                src={fileUrl}
-                alt={asset.filename}
-                className="max-w-full inline-block"
-              />
-            </div>
+            <ImagePreview key={fileUrl} url={fileUrl} alt={asset.filename} />
           ) : asset.thumbnailDataUrl ? (
             <div className="p-4 text-center">
               <img

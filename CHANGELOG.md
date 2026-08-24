@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.51.0
+
+### Features
+- **Relancer l'extraction des métadonnées** — l'extraction n'avait lieu qu'au moment où le fichier était attaché. Cliquer « Ignorer » sur la proposition, ou vouloir simplement y revenir plus tard, obligeait à détacher puis rattacher le fichier. Un bouton sur la ligne du fichier relance l'analyse à tout moment. Il est disponible sur **tous** les types de fichiers, images comprises — c'est justement là qu'il sert le plus, une photo portant ses coordonnées GPS. Quand un fichier ne contient aucune métadonnée, un message le dit : une action déclenchée par l'utilisateur ne doit pas rester sans réponse.
+- **Zoom sur l'aperçu d'image** — une image s'affichait dans une simple balise dimensionnée par la fenêtre, sans moyen de l'agrandir. Elle dispose désormais des mêmes contrôles que l'aperçu PDF : de 40 % à 300 %, par pas de 25 %, avec ajustement initial à la largeur et défilement autour de l'image agrandie. Utile pour lire un document scanné ou examiner un détail sur une photo de scène. Les contrôles sont partagés entre les deux aperçus, qui se comportent donc à l'identique.
+
+### Fixes
+- Les libellés de zoom de l'aperçu PDF étaient codés en dur en français ; ils passent par les traductions.
+
 ## 2.50.3
 
 ### Fixes

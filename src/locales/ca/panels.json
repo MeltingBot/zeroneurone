@@ -215,7 +215,10 @@
       "clearText": "Esborrar text extret",
       "extractText": "Extreure text",
       "reExtractText": "Re-extreure text",
-      "toggleText": "Mostra/amaga text"
+      "toggleText": "Mostra/amaga text",
+      "extractMetadata": "Extreu les metadades",
+      "noMetadata": "No s'han trobat metadades en aquest fitxer",
+      "metadataFailed": "Ha fallat l'extracció de metadades"
     },
     "timestamps": {
       "createdAt": "Creat el",

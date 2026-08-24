@@ -229,7 +229,10 @@
       "clearText": "Clear extracted text",
       "extractText": "Extract text",
       "reExtractText": "Re-extract text",
-      "toggleText": "Show/hide text"
+      "toggleText": "Show/hide text",
+      "extractMetadata": "Extract metadata",
+      "noMetadata": "No metadata found in this file",
+      "metadataFailed": "Metadata extraction failed"
     },
     "timestamps": {
       "createdAt": "Created",

@@ -215,7 +215,10 @@
       "clearText": "Borrar texto extraído",
       "extractText": "Extraer texto",
       "reExtractText": "Re-extraer texto",
-      "toggleText": "Mostrar/ocultar texto"
+      "toggleText": "Mostrar/ocultar texto",
+      "extractMetadata": "Extraer metadatos",
+      "noMetadata": "No se han encontrado metadatos en este archivo",
+      "metadataFailed": "Error al extraer los metadatos"
     },
     "timestamps": {
       "createdAt": "Creado el",

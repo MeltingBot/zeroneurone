@@ -1,5 +1,5 @@
 ==============================================================================
-ZeroNeurone 2.50.3 — Licences des composants tiers
+ZeroNeurone 2.51.0 — Licences des composants tiers
 ==============================================================================
 
 ZeroNeurone est distribué sous licence MIT (voir le fichier LICENSE).
@@ -245,7 +245,7 @@ Sommaire
   y-protocols@1.0.7 — MIT
   y-websocket@3.0.0 — MIT
   yjs@13.6.31 — MIT
-  zeroneurone-app@2.50.3 — MIT
+  zeroneurone-app@2.51.0 — MIT
   zustand@5.0.14 — MIT
   zwitch@2.0.4 — MIT
 
@@ -8598,7 +8598,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-zeroneurone-app@2.50.3
+zeroneurone-app@2.51.0
 ==============================================================================
 
 Licence déclarée : MIT
