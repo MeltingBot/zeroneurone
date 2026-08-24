@@ -105,7 +105,9 @@ export default defineConfig({
         // often than application code, so a release no longer invalidates them
         // in the browser cache.
         manualChunks(id) {
-          if (id.includes('/src/locales/')) return 'locales';
+          // Locales are deliberately left alone: each is imported on demand by
+          // i18n.ts, so grouping them would pull all eleven back into one
+          // eagerly-loaded chunk.
           if (!id.includes('/node_modules/')) return undefined;
           if (id.includes('/@xyflow/')) return 'xyflow';
           if (id.includes('/graphology') || id.includes('/@dagrejs/')) return 'graph';

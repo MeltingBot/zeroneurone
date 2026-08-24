@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { DropdownMenu, DropdownItem } from './DropdownMenu';
-import { SUPPORTED_LANGUAGES } from '../../i18n';
+import { SUPPORTED_LANGUAGES, changeLanguage } from '../../i18n';
 
 interface LanguageSwitcherProps {
   size?: 'sm' | 'md';
@@ -37,7 +37,7 @@ export function LanguageSwitcher({ size = 'sm', showLabel = false, direction = '
       {SUPPORTED_LANGUAGES.map((lang) => (
         <DropdownItem
           key={lang.code}
-          onClick={() => i18n.changeLanguage(lang.code)}
+          onClick={() => void changeLanguage(lang.code)}
         >
           <span className="flex items-center gap-2 w-full">
             <span>{lang.flag}</span>

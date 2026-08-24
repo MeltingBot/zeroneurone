@@ -1,16 +1,21 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './i18n' // Initialize i18n before app
+import { initI18n } from './i18n'
 import './index.css'
 import App from './App.tsx'
 import { loadExternalPlugins } from './services/pluginLoaderService'
 
-// Load external plugins from /plugins/manifest.json before mounting React.
-// This ensures usePlugins() returns the correct data from the first render.
-loadExternalPlugins().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  )
-})
+// Order matters: plugins call api.i18n.addResourceBundle() while registering,
+// which needs an initialised instance. i18n used to be set up synchronously at
+// import time, so this keeps the same sequence. Both must settle before the
+// first render — plugins so usePlugins() is correct from the start,
+// translations so the UI never flashes raw keys.
+initI18n()
+  .then(loadExternalPlugins)
+  .then(() => {
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    )
+  })
