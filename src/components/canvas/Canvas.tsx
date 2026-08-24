@@ -232,6 +232,7 @@ function CanvasZoomControls() {
       <div className="w-px h-4 bg-border-default mx-1" />
       <button
         onClick={handleFitView}
+        data-testid="fit-view"
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
         title={t('dossier.toolbar.fitView')}
       >

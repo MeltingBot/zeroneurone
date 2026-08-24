@@ -62,3 +62,4 @@ plan-cours-zn.md
 coverage/
 eslint-report.json
 bench-results.json
+render-bench-*.json
