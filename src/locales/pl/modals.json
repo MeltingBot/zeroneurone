@@ -125,7 +125,8 @@
       "canvas": "Tablica",
       "editing": "Edycja",
       "zoom": "Zoom",
-      "selection": "Zaznaczenie"
+      "selection": "Zaznaczenie",
+      "security": "Bezpieczeństwo"
     },
     "shortcuts": {
       "canvasView": "Widok Tablica",
@@ -157,7 +158,10 @@
       "escape": "Odznacz / Zamknij",
       "prevTab": "Poprzednia karta",
       "nextTab": "Następna karta",
-      "firstTab": "Pierwsza karta"
+      "firstTab": "Pierwsza karta",
+      "matrixView": "Widok macierzy",
+      "cut": "Wytnij",
+      "lockSession": "Zablokuj sesję"
     }
   },
   "tagSetManager": {

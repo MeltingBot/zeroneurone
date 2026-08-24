@@ -374,7 +374,8 @@
     "geoJsonSave": "Toepassen",
     "geoJsonParseError": "Ongeldige JSON",
     "geoJsonMinVertices": "Minimaal 3 hoekpunten",
-    "geoJsonInvalidCoord": "Ongeldige coördinaat: [lng, lat]"
+    "geoJsonInvalidCoord": "Ongeldige coördinaat: [lng, lat]",
+    "searchPlaceExternal": "Zoekt via OpenStreetMap (Nominatim): deze zoekopdracht verlaat uw apparaat."
   },
   "timeline": {
     "noEvents": "Geen gedateerde gebeurtenissen",

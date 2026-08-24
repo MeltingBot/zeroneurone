@@ -363,7 +363,8 @@
     "cancelDraw": "Cancel·lar el dibuix",
     "zone": "Zona",
     "newZone": "Nova zona",
-    "deleteSelection": "Eliminar la selecció"
+    "deleteSelection": "Eliminar la selecció",
+    "searchPlaceExternal": "Cerca mitjançant OpenStreetMap (Nominatim): aquesta consulta surt del dispositiu."
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

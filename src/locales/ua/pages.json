@@ -374,7 +374,8 @@
     "geoJsonSave": "Застосувати",
     "geoJsonParseError": "Невалідний JSON",
     "geoJsonMinVertices": "Мінімум 3 вершини",
-    "geoJsonInvalidCoord": "Невалідна координата: [lng, lat]"
+    "geoJsonInvalidCoord": "Невалідна координата: [lng, lat]",
+    "searchPlaceExternal": "Пошук через OpenStreetMap (Nominatim): цей запит залишає ваш пристрій."
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

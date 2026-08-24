@@ -374,7 +374,8 @@
     "geoJsonSave": "Aplicar",
     "geoJsonParseError": "JSON no válido",
     "geoJsonMinVertices": "Mínimo 3 vértices",
-    "geoJsonInvalidCoord": "Coordenada inválida: [lng, lat]"
+    "geoJsonInvalidCoord": "Coordenada inválida: [lng, lat]",
+    "searchPlaceExternal": "Busca a través de OpenStreetMap (Nominatim): esta consulta sale de su dispositivo."
   },
   "timeline": {
     "noEvents": "Ningún evento fechado",

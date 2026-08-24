@@ -363,7 +363,8 @@
     "cancelDraw": "Marrazketa ezeztatu",
     "zone": "Zona",
     "newZone": "Zona berria",
-    "deleteSelection": "Hautapena ezabatu"
+    "deleteSelection": "Hautapena ezabatu",
+    "searchPlaceExternal": "OpenStreetMap (Nominatim) bidez bilatzen du: kontsulta hau zure gailutik ateratzen da."
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

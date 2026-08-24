@@ -125,7 +125,8 @@
       "canvas": "Lavagna",
       "editing": "Modifica",
       "zoom": "Zoom",
-      "selection": "Selezione"
+      "selection": "Selezione",
+      "security": "Sicurezza"
     },
     "shortcuts": {
       "canvasView": "Vista Lavagna",
@@ -157,7 +158,10 @@
       "escape": "Deseleziona / Chiudi",
       "prevTab": "Scheda precedente",
       "nextTab": "Scheda successiva",
-      "firstTab": "Prima scheda"
+      "firstTab": "Prima scheda",
+      "matrixView": "Vista matrice",
+      "cut": "Taglia",
+      "lockSession": "Blocca la sessione"
     }
   },
   "tagSetManager": {

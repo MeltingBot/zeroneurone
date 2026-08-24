@@ -125,7 +125,8 @@
       "canvas": "Tela",
       "editing": "Edição",
       "zoom": "Zoom",
-      "selection": "Seleção"
+      "selection": "Seleção",
+      "security": "Segurança"
     },
     "shortcuts": {
       "canvasView": "Vista Tela",
@@ -157,7 +158,10 @@
       "escape": "Desselecionar / Fechar",
       "prevTab": "Aba anterior",
       "nextTab": "Próxima aba",
-      "firstTab": "Primeira aba"
+      "firstTab": "Primeira aba",
+      "matrixView": "Vista matriz",
+      "cut": "Cortar",
+      "lockSession": "Bloquear a sessão"
     }
   },
   "tagSetManager": {

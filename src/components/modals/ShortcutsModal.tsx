@@ -6,6 +6,9 @@ interface ShortcutsModalProps {
   onClose: () => void;
 }
 
+// Every entry below is bound in the code. Anything removed from a handler must
+// be removed here too: a help panel that lists a shortcut which does nothing is
+// worse than one that omits it.
 const shortcutsByCategory = [
   {
     categoryKey: 'navigation',
@@ -13,6 +16,7 @@ const shortcutsByCategory = [
       { keys: ['1'], descKey: 'canvasView' },
       { keys: ['2'], descKey: 'mapView' },
       { keys: ['3'], descKey: 'timelineView' },
+      { keys: ['4'], descKey: 'matrixView' },
     ],
   },
   {
@@ -33,25 +37,32 @@ const shortcutsByCategory = [
   {
     categoryKey: 'canvas',
     items: [
+      { keys: ['E'], descKey: 'newElement' },
+      { keys: ['N'], descKey: 'newAnnotation' },
+      { keys: ['G'], descKey: 'newGroup' },
       { keys: ['Del'], descKey: 'delete' },
       { keys: ['Ctrl', 'A'], descKey: 'selectAll' },
       { keys: ['Escape'], descKey: 'cancelSelection' },
-      { keys: ['→'], descKey: 'contextMenu' },
     ],
   },
   {
     categoryKey: 'editing',
     items: [
+      { keys: ['Ctrl', 'Z'], descKey: 'undo' },
+      { keys: ['Ctrl', 'Shift', 'Z'], descKey: 'redo' },
+      { keys: ['Ctrl', 'C'], descKey: 'copy' },
+      { keys: ['Ctrl', 'X'], descKey: 'cut' },
+      { keys: ['Ctrl', 'V'], descKey: 'paste' },
+      { keys: ['Ctrl', 'D'], descKey: 'duplicate' },
       { keys: ['⏬⏬'], descKey: 'editElement' },
       { keys: ['Shift', '⏬'], descKey: 'multiSelect' },
       { keys: ['⌖'], descKey: 'moveElements' },
     ],
   },
   {
-    categoryKey: 'zoom',
+    categoryKey: 'security',
     items: [
-      { keys: ['⟳'], descKey: 'zoomOut' },
-      { keys: ['Ctrl', '0'], descKey: 'resetZoom' },
+      { keys: ['Alt', 'L'], descKey: 'lockSession' },
     ],
   },
 ];

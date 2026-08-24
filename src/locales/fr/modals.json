@@ -125,7 +125,8 @@
       "canvas": "Canvas",
       "editing": "Édition",
       "zoom": "Zoom",
-      "selection": "Sélection"
+      "selection": "Sélection",
+      "security": "Sécurité"
     },
     "shortcuts": {
       "canvasView": "Vue Canvas",
@@ -157,7 +158,10 @@
       "escape": "Désélectionner / Fermer",
       "prevTab": "Onglet précédent",
       "nextTab": "Onglet suivant",
-      "firstTab": "Premier onglet"
+      "firstTab": "Premier onglet",
+      "matrixView": "Vue matrice",
+      "cut": "Couper",
+      "lockSession": "Verrouiller la session"
     }
   },
   "tagSetManager": {

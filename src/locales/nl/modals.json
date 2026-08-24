@@ -125,7 +125,8 @@
       "canvas": "Canvas",
       "editing": "Bewerken",
       "zoom": "Zoom",
-      "selection": "Selectie"
+      "selection": "Selectie",
+      "security": "Beveiliging"
     },
     "shortcuts": {
       "canvasView": "Canvas-weergave",
@@ -157,7 +158,10 @@
       "escape": "Selectie opheffen / Sluiten",
       "prevTab": "Vorig tabblad",
       "nextTab": "Volgend tabblad",
-      "firstTab": "Eerste tabblad"
+      "firstTab": "Eerste tabblad",
+      "matrixView": "Matrixweergave",
+      "cut": "Knippen",
+      "lockSession": "Sessie vergrendelen"
     }
   },
   "tagSetManager": {

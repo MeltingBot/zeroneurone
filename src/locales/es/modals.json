@@ -125,7 +125,8 @@
       "canvas": "Lienzo",
       "editing": "Edición",
       "zoom": "Zoom",
-      "selection": "Selección"
+      "selection": "Selección",
+      "security": "Seguridad"
     },
     "shortcuts": {
       "canvasView": "Vista Lienzo",
@@ -157,7 +158,10 @@
       "escape": "Deseleccionar / Cerrar",
       "prevTab": "Pestaña anterior",
       "nextTab": "Pestaña siguiente",
-      "firstTab": "Primera pestaña"
+      "firstTab": "Primera pestaña",
+      "matrixView": "Vista matriz",
+      "cut": "Cortar",
+      "lockSession": "Bloquear la sesión"
     }
   },
   "tagSetManager": {

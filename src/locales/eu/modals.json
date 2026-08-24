@@ -125,7 +125,8 @@
       "canvas": "Arbela",
       "editing": "Edizioa",
       "zoom": "Zooma",
-      "selection": "Hautapena"
+      "selection": "Hautapena",
+      "security": "Segurtasuna"
     },
     "shortcuts": {
       "canvasView": "Arbel ikuspegia",
@@ -157,7 +158,10 @@
       "escape": "Deshautatu / Itxi",
       "prevTab": "Aurreko fitxa",
       "nextTab": "Hurrengo fitxa",
-      "firstTab": "Lehen fitxa"
+      "firstTab": "Lehen fitxa",
+      "matrixView": "Matrize ikuspegia",
+      "cut": "Ebaki",
+      "lockSession": "Blokeatu saioa"
     }
   },
   "tagSetManager": {

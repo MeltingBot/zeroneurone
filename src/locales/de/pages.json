@@ -374,7 +374,8 @@
     "geoJsonSave": "Anwenden",
     "geoJsonParseError": "Ungültiges JSON",
     "geoJsonMinVertices": "Mindestens 3 Eckpunkte",
-    "geoJsonInvalidCoord": "Ungültige Koordinate: [lng, lat]"
+    "geoJsonInvalidCoord": "Ungültige Koordinate: [lng, lat]",
+    "searchPlaceExternal": "Sucht über OpenStreetMap (Nominatim): Diese Anfrage verlässt Ihr Gerät."
   },
   "timeline": {
     "noEvents": "Keine datierten Ereignisse",

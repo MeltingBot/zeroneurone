@@ -2155,6 +2155,7 @@ export function MapView() {
                 value={placeQuery}
                 onChange={(e) => setPlaceQuery(e.target.value)}
                 placeholder={t('map.searchPlace')}
+                title={t('map.searchPlaceExternal')}
                 className="h-6 w-36 px-2 text-[10px] border border-border-default rounded-l bg-bg-primary text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
               />
               <button

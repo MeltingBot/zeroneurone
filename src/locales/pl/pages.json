@@ -374,7 +374,8 @@
     "geoJsonSave": "Zastosuj",
     "geoJsonParseError": "Nieprawidłowy JSON",
     "geoJsonMinVertices": "Minimum 3 wierzchołki",
-    "geoJsonInvalidCoord": "Nieprawidłowa współrzędna: [lng, lat]"
+    "geoJsonInvalidCoord": "Nieprawidłowa współrzędna: [lng, lat]",
+    "searchPlaceExternal": "Wyszukiwanie przez OpenStreetMap (Nominatim): to zapytanie opuszcza urządzenie."
   },
   "timeline": {
     "noEvents": "Brak datowanych zdarzeń",

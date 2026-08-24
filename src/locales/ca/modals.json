@@ -125,7 +125,8 @@
       "canvas": "Llenç",
       "editing": "Edició",
       "zoom": "Zoom",
-      "selection": "Selecció"
+      "selection": "Selecció",
+      "security": "Seguretat"
     },
     "shortcuts": {
       "canvasView": "Vista Llenç",
@@ -157,7 +158,10 @@
       "escape": "Desseleccionar / Tancar",
       "prevTab": "Pestanya anterior",
       "nextTab": "Pestanya següent",
-      "firstTab": "Primera pestanya"
+      "firstTab": "Primera pestanya",
+      "matrixView": "Vista matriu",
+      "cut": "Retalla",
+      "lockSession": "Bloqueja la sessió"
     }
   },
   "tagSetManager": {
