@@ -29,6 +29,8 @@ import {
 import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
 import { deriveRoomId } from '../services/cryptoService';
+import { onPersistFailure } from '../utils/persistError';
+import { useHistoryStore } from './historyStore';
 import { getYMaps } from '../types/yjs';
 import {
   elementToYMap,
@@ -66,6 +68,24 @@ import {
   assembleChunks,
   type AssetMeta,
 } from '../services/assetSync';
+
+/**
+ * State captured before a merge, so the operation can be undone.
+ *
+ * A merge deletes the source element, retargets its links, drops the ones that
+ * became self-links or duplicates, and folds the dropped links' metadata into
+ * the survivors. Reverting that needs the previous state of every entity it
+ * touched, not just the two elements.
+ */
+export interface MergeSnapshot {
+  targetId: ElementId;
+  sourceId: ElementId;
+  sourceElement: Element;
+  targetBefore: Partial<Element>;
+  /** Full previous state of every link the merge retargeted, deleted or rewrote. */
+  linksBefore: Link[];
+  deletedLinkIds: LinkId[];
+}
 
 interface DossierState {
   // Current dossier
@@ -124,7 +144,7 @@ interface DossierState {
   dissolveGroup: (groupId: ElementId) => Promise<void>;
 
   // Actions - Merge
-  mergeElements: (targetId: ElementId, sourceId: ElementId) => Promise<void>;
+  mergeElements: (targetId: ElementId, sourceId: ElementId) => Promise<MergeSnapshot>;
 
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
@@ -570,6 +590,14 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   loadDossier: async (id: DossierId) => {
+    // Undo entries reference elements by id, so replaying one recorded against
+    // another dossier would apply it here. Only drop the stack when the dossier
+    // actually changes: loadDossier is also re-run on the current one after an
+    // import, and that history is still valid.
+    if (get().currentDossier?.id !== id) {
+      useHistoryStore.getState().clear();
+    }
+
     // Drop any chunk observers from a previously-open dossier; they hold
     // references to the old Y.Doc which is about to be replaced.
     clearAssetChunkObservers();
@@ -1311,7 +1339,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Also delete from Dexie for backwards compatibility
-    await elementRepository.delete(id).catch(() => {});
+    await elementRepository.delete(id).catch((err) => onPersistFailure(err, 'element.delete'));
 
     // Cascade: remove from all canvas tabs
     const invId = get().currentDossier?.id;
@@ -1359,7 +1387,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Also delete from Dexie for backwards compatibility
-    await elementRepository.deleteMany(ids).catch(() => {});
+    await elementRepository.deleteMany(ids).catch((err) => onPersistFailure(err, 'element.deleteMany'));
 
     // Cascade: remove from all canvas tabs
     const invId = get().currentDossier?.id;
@@ -1397,7 +1425,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     updateElementYMap(ymap, { position }, ydoc);
 
     // Also update Dexie
-    await elementRepository.updatePosition(id, position).catch(() => {});
+    await elementRepository.updatePosition(id, position).catch((err) => onPersistFailure(err, 'element.updatePosition'));
   },
 
   updateElementPositions: async (updates: { id: ElementId; position: Position }[]) => {
@@ -1439,7 +1467,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Also update Dexie
-    await elementRepository.updatePositions(updates).catch(() => {});
+    await elementRepository.updatePositions(updates).catch((err) => onPersistFailure(err, 'element.updatePositions'));
   },
 
   // ============================================================================
@@ -1500,7 +1528,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       fromId,
       toId,
       { ...options, id: link.id }
-    ).catch(() => {});
+    ).catch((err) => onPersistFailure(err, 'link.create'));
 
     emitPluginEvent('link:created', currentDossier.id, link.id);
     return link;
@@ -1538,7 +1566,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     updateLinkYMap(ymap, changes, ydoc);
 
     // Also update Dexie
-    await linkRepository.update(id, changes as any).catch(() => {});
+    await linkRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'link.update'));
 
     const dossierId = get().currentDossier?.id;
     if (dossierId) emitPluginEvent('link:updated', dossierId, id);
@@ -1562,7 +1590,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Also delete from Dexie
-    await linkRepository.delete(id).catch(() => {});
+    await linkRepository.delete(id).catch((err) => onPersistFailure(err, 'link.delete'));
 
     const dossierId = get().currentDossier?.id;
     if (dossierId) emitPluginEvent('link:deleted', dossierId, id);
@@ -1587,7 +1615,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Also delete from Dexie
-    await linkRepository.deleteMany(ids).catch(() => {});
+    await linkRepository.deleteMany(ids).catch((err) => onPersistFailure(err, 'link.deleteMany'));
 
     const dossierId = get().currentDossier?.id;
     if (dossierId) ids.forEach(id => emitPluginEvent('link:deleted', dossierId, id));
@@ -1617,7 +1645,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also update Dexie for backwards compatibility
     await Promise.all(
-      ids.map(id => elementRepository.update(id, changes as any).catch(() => {}))
+      ids.map(id => elementRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'element.updateMany')))
     );
   },
 
@@ -1641,7 +1669,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Also update Dexie
     await Promise.all(
-      ids.map(id => linkRepository.update(id, changes as any).catch(() => {}))
+      ids.map(id => linkRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'link.updateMany')))
     );
   },
 
@@ -1668,10 +1696,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     const invId = get().currentDossier?.id;
     if (invId) {
       for (const el of newElements) {
-        elementRepository.create(invId, el.label, el.position, { ...el }).catch(() => {});
+        elementRepository.create(invId, el.label, el.position, { ...el }).catch((err) => onPersistFailure(err, 'element.create'));
       }
       for (const link of newLinks) {
-        linkRepository.create(invId, link.fromId, link.toId, { ...link }).catch(() => {});
+        linkRepository.create(invId, link.fromId, link.toId, { ...link }).catch((err) => onPersistFailure(err, 'link.create'));
       }
     }
 
@@ -1734,7 +1762,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
                 x: child.position.x - position.x,
                 y: child.position.y - position.y,
               },
-            }).catch(() => {});
+            }).catch((err) => onPersistFailure(err, 'element.update(group)'));
           }
         }
       }
@@ -1887,9 +1915,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       elementRepository.update(childId, {
         parentGroupId: null,
         position: absPos,
-      }).catch(() => {});
+      }).catch((err) => onPersistFailure(err, 'element.update(ungroup)'));
     }
-    elementRepository.delete(groupId).catch(() => {});
+    elementRepository.delete(groupId).catch((err) => onPersistFailure(err, 'element.delete(group)'));
   },
 
   // ============================================================================
@@ -2003,6 +2031,35 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         linksToDelete.push(...dupeIds);
       }
     }
+
+    // Snapshot everything the merge is about to change, so the caller can make
+    // it undoable. Taken before any mutation, and covering every touched link:
+    // retargeted, deleted, and those absorbing a duplicate's metadata.
+    const touchedLinkIds = new Set<string>([
+      ...linksToRetarget.map(r => r.id),
+      ...linksToDelete,
+      ...linksToMergeInto.keys(),
+    ]);
+    const mergeSnapshot: MergeSnapshot = {
+      targetId,
+      sourceId,
+      sourceElement: source,
+      targetBefore: {
+        notes: target.notes,
+        tags: target.tags,
+        properties: target.properties,
+        events: target.events,
+        assetIds: target.assetIds,
+        confidence: target.confidence,
+        source: target.source,
+        geo: target.geo,
+        date: target.date,
+        dateRange: target.dateRange,
+        childIds: target.childIds,
+      },
+      linksBefore: links.filter(l => touchedLinkIds.has(l.id)),
+      deletedLinkIds: [...linksToDelete],
+    };
 
     // --- Apply everything in one Y.Doc transaction ---
     localOpPending = true;
@@ -2145,9 +2202,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     });
 
     // Dexie cleanup
-    await elementRepository.delete(sourceId).catch(() => {});
+    await elementRepository.delete(sourceId).catch((err) => onPersistFailure(err, 'element.delete(merge)'));
     for (const linkId of linksToDelete) {
-      await linkRepository.delete(linkId).catch(() => {});
+      await linkRepository.delete(linkId).catch((err) => onPersistFailure(err, 'link.delete(merge)'));
     }
 
     // Cascade: remove source from all canvas tabs
@@ -2157,6 +2214,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         useTabStore.getState().removeElementFromAllTabs(invId, sourceId);
       });
     }
+
+    return mergeSnapshot;
   },
 
   // ============================================================================
@@ -2213,7 +2272,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         ? state.assets.map((a) => (a.id === asset.id ? asset : a))
         : [...state.assets, asset],
     }));
-    elementRepository.addAsset(elementId, asset.id).catch(() => {});
+    elementRepository.addAsset(elementId, asset.id).catch((err) => onPersistFailure(err, 'element.addAsset'));
 
     // Push the asset binary to the Y.Doc as chunks so peers receive it
     // progressively (one WS message per chunk). Skip when over the shared-mode
@@ -2268,7 +2327,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     // Also update Dexie
-    await elementRepository.removeAsset(elementId, assetId).catch(() => {});
+    await elementRepository.removeAsset(elementId, assetId).catch((err) => onPersistFailure(err, 'element.removeAsset'));
 
     // Remove from local state
     set((state) => ({
@@ -2313,7 +2372,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     // Also update Dexie
-    await elementRepository.update(elementId, { assetIds }).catch(() => {});
+    await elementRepository.update(elementId, { assetIds }).catch((err) => onPersistFailure(err, 'element.update(assets)'));
 
     // Update local Zustand state
     set((state) => ({
@@ -2825,7 +2884,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           ...currentDossier,
           ...changes,
         };
-        dossierRepository.update(currentDossier.id, changes).catch(() => {});
+        dossierRepository.update(currentDossier.id, changes).catch((err) => onPersistFailure(err, 'dossier.update'));
       }
     }
 
@@ -2990,7 +3049,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (remoteTabs.length > 0 || structuralTbChange) {
         useTabStore.getState()._syncTabsFromYDoc(remoteTabs);
         // Persist to Dexie
-        tabRepository.bulkUpsert(remoteTabs).catch(() => {});
+        tabRepository.bulkUpsert(remoteTabs).catch((err) => onPersistFailure(err, 'tab.bulkUpsert'));
       }
     }
 
@@ -3017,7 +3076,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
                 ? state.assets
                 : [...state.assets, saved],
             }));
-          }).catch(() => {});
+          }).catch((err) => onPersistFailure(err, 'asset.process'));
         } catch {}
       });
     }
@@ -3068,7 +3127,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     }
     if (dbPromises.length > 0) {
-      Promise.all(dbPromises).catch(() => {});
+      Promise.all(dbPromises).catch((err) => onPersistFailure(err, 'sync.bulkUpsert'));
     }
   },
 }));

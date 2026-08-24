@@ -16,14 +16,14 @@ Key philosophy:
 
 | Layer | Technology |
 |-------|------------|
-| Framework | React 18 + TypeScript + Vite |
+| Framework | React 19 + TypeScript + Vite |
 | State | Zustand |
 | Storage | Dexie.js (IndexedDB) + OPFS |
 | Canvas | React Flow |
 | Map | MapLibre GL JS + Supercluster |
 | Graph Analysis | Graphology |
 | Search | MiniSearch |
-| Export | JSZip, jsPDF, html2canvas |
+| Export | JSZip, html-to-image (PNG), SVG maison ; impression via le navigateur |
 | Style | Tailwind CSS |
 
 ## Project Structure
@@ -56,7 +56,7 @@ src/
 ├── types/index.ts              # TypeScript types
 ├── utils/                      # Utilities
 ├── hooks/                      # Custom React hooks
-└── user_doc/                   # User Documentation
+└── (doc utilisateur : voir user_doc/ a la racine du depot, site Hugo)
 ```
 
 ## Key Domain Concepts
@@ -177,8 +177,7 @@ The project follows a phased implementation (see `guide-implementation-v1.md`):
 | Ctrl+K | Open search |
 | Delete/Backspace | Delete selection |
 | Ctrl+Z / Ctrl+Shift+Z | Undo/Redo |
-| F | Focus mode (neighborhood) |
-| 1/2/3/4 | Switch view (Canvas/Map/Split/Timeline) |
+| 1/2/3/4 | Switch view (Canvas/Map/Timeline/Matrix) |
 
 ## Data Model Highlights
 

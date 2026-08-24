@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Modal, Button } from '../common';
+import { Modal, Button, SafeHtml } from '../common';
 import { HardDrive, AlertTriangle, Download } from 'lucide-react';
 
 const STORAGE_KEY = 'zeroneurone_local_storage_acknowledged';
@@ -49,15 +49,15 @@ export function LocalStorageDisclaimerModal({
           <ul className="text-sm text-text-secondary space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-warning mt-0.5">•</span>
-              <span dangerouslySetInnerHTML={{ __html: t('localStorage.bullets.deleted') }} />
+              <SafeHtml html={t('localStorage.bullets.deleted')} />
             </li>
             <li className="flex items-start gap-2">
               <span className="text-warning mt-0.5">•</span>
-              <span dangerouslySetInnerHTML={{ __html: t('localStorage.bullets.notSynced') }} />
+              <SafeHtml html={t('localStorage.bullets.notSynced')} />
             </li>
             <li className="flex items-start gap-2">
               <span className="text-warning mt-0.5">•</span>
-              <span dangerouslySetInnerHTML={{ __html: t('localStorage.bullets.privateMode') }} />
+              <SafeHtml html={t('localStorage.bullets.privateMode')} />
             </li>
           </ul>
         </div>
@@ -65,9 +65,10 @@ export function LocalStorageDisclaimerModal({
         {/* Recommendation */}
         <div className="flex items-start gap-3 p-3 bg-bg-secondary rounded">
           <Download size={18} className="text-accent mt-0.5 flex-shrink-0" />
-          <p
+          <SafeHtml
+            as="p"
             className="text-sm text-text-secondary"
-            dangerouslySetInnerHTML={{ __html: t('localStorage.recommendation') }}
+            html={t('localStorage.recommendation')}
           />
         </div>
 

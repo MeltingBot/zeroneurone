@@ -125,7 +125,8 @@
       "canvas": "Arbeitsfläche",
       "editing": "Bearbeitung",
       "zoom": "Zoom",
-      "selection": "Auswahl"
+      "selection": "Auswahl",
+      "security": "Sicherheit"
     },
     "shortcuts": {
       "canvasView": "Arbeitsflächenansicht",
@@ -157,7 +158,10 @@
       "escape": "Auswahl aufheben / Schließen",
       "prevTab": "Vorheriger Tab",
       "nextTab": "Nächster Tab",
-      "firstTab": "Erster Tab"
+      "firstTab": "Erster Tab",
+      "matrixView": "Matrixansicht",
+      "cut": "Ausschneiden",
+      "lockSession": "Sitzung sperren"
     }
   },
   "tagSetManager": {
@@ -576,7 +580,10 @@
       "passwordLabel": "Mit Ihrem aktuellen Passwort bestätigen",
       "cancel": "Abbrechen",
       "submit": "Deaktivieren",
-      "busy": "Migriere…"
+      "busy": "Migriere…",
+      "dataLossWarning": "{{count}} von {{total}} gespeicherten Änderungen können nicht entschlüsselt werden und gehen beim Fortfahren endgültig verloren. Exportieren Sie Ihre Fälle vorher, wenn Sie sie behalten möchten.",
+      "dataLossCancel": "Abbrechen",
+      "dataLossConfirm": "Deaktivieren und Daten verlieren"
     },
     "changePassword": {
       "oldLabel": "Aktuelles Passwort",

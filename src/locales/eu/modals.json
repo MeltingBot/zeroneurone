@@ -125,7 +125,8 @@
       "canvas": "Arbela",
       "editing": "Edizioa",
       "zoom": "Zooma",
-      "selection": "Hautapena"
+      "selection": "Hautapena",
+      "security": "Segurtasuna"
     },
     "shortcuts": {
       "canvasView": "Arbel ikuspegia",
@@ -157,7 +158,10 @@
       "escape": "Deshautatu / Itxi",
       "prevTab": "Aurreko fitxa",
       "nextTab": "Hurrengo fitxa",
-      "firstTab": "Lehen fitxa"
+      "firstTab": "Lehen fitxa",
+      "matrixView": "Matrize ikuspegia",
+      "cut": "Ebaki",
+      "lockSession": "Blokeatu saioa"
     }
   },
   "tagSetManager": {
@@ -576,7 +580,10 @@
       "passwordLabel": "Berretsi zure oraingo pasahitzarekin",
       "cancel": "Utzi",
       "submit": "Desgaitu",
-      "busy": "Migratzen…"
+      "busy": "Migratzen…",
+      "dataLossWarning": "Gordetako {{total}} aldaketetatik {{count}} ezin dira deszifratu eta betiko galduko dira jarraitzen baduzu. Esportatu zure espedienteak lehenik gorde nahi badituzu.",
+      "dataLossCancel": "Utzi",
+      "dataLossConfirm": "Desaktibatu eta galdu datu hauek"
     },
     "changePassword": {
       "oldLabel": "Oraingo pasahitza",

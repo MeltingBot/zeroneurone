@@ -112,7 +112,7 @@ export function DossierCard({
           <div onClick={handleMenuClick}>
             <DropdownMenu
               trigger={
-                <IconButton size="sm" data-testid="card-menu">
+                <IconButton size="sm" data-testid="card-menu" aria-label={t('home.cardActions')}>
                   <MoreHorizontal size={14} />
                 </IconButton>
               }

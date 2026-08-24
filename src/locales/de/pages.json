@@ -104,7 +104,8 @@
         "contacts": "in Kontakt mit",
         "signed": "hat unterzeichnet"
       }
-    }
+    },
+    "cardActions": "Fallaktionen"
   },
   "dossier": {
     "loading": {
@@ -189,8 +190,6 @@
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",
       "redo": "Wiederholen (Strg+Umschalt+Z)",
-      "readableFont": "Lesbare Schrift",
-      "handwrittenFont": "Handschrift",
       "darkMode": "Dunkler Modus",
       "lightMode": "Heller Modus",
       "showMedia": "Medien anzeigen",
@@ -374,7 +373,8 @@
     "geoJsonSave": "Anwenden",
     "geoJsonParseError": "Ungültiges JSON",
     "geoJsonMinVertices": "Mindestens 3 Eckpunkte",
-    "geoJsonInvalidCoord": "Ungültige Koordinate: [lng, lat]"
+    "geoJsonInvalidCoord": "Ungültige Koordinate: [lng, lat]",
+    "searchPlaceExternal": "Sucht über OpenStreetMap (Nominatim): Diese Anfrage verlässt Ihr Gerät."
   },
   "timeline": {
     "noEvents": "Keine datierten Ereignisse",

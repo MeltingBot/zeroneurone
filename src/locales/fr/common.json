@@ -111,7 +111,9 @@
     "required": "Ce champ est requis",
     "networkError": "Erreur réseau",
     "importFailed": "Erreur lors de l'import",
-    "exportFailed": "Erreur lors de l'export"
+    "exportFailed": "Erreur lors de l'export",
+    "persistFailed": "Certaines modifications n'ont pas pu être enregistrées sur cet appareil.",
+    "storageFull": "Le stockage est saturé : les modifications ne peuvent plus être enregistrées. Libérez de l'espace ou exportez votre enquête."
   },
   "confirm": {
     "delete": "Êtes-vous sûr de vouloir supprimer ?",

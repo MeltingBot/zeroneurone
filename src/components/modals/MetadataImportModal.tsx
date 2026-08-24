@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useId } from 'react';
 import { X } from 'lucide-react';
 import { useUIStore } from '../../stores/uiStore';
 import { useDossierStore } from '../../stores';
 import type { Property, Element } from '../../types';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 function formatPropertyValue(prop: Property): string {
   if (prop.value == null) return '';
@@ -53,6 +54,12 @@ export function MetadataImportModal() {
     const allGeo = !current.metadata.geo || geoSelected;
     return allProps && allGeo;
   }, [current, selectedKeys, geoSelected]);
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  // Appele inconditionnellement : les hooks doivent preceder tout return.
+  // Echap revient a ignorer l'element courant de la file.
+  useDialogA11y(Boolean(current), dialogRef, shiftMetadataImport);
 
   if (!current) return null;
 
@@ -123,13 +130,17 @@ export function MetadataImportModal() {
       onClick={handleIgnore}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="bg-bg-primary rounded shadow-lg w-full max-w-md max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border-default">
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-text-primary">
+            <h3 id={titleId} className="text-sm font-semibold text-text-primary">
               Métadonnées détectées
             </h3>
             <p className="text-xs text-text-secondary mt-0.5 truncate">

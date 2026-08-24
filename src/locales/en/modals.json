@@ -125,7 +125,8 @@
       "canvas": "Canvas",
       "editing": "Editing",
       "zoom": "Zoom",
-      "selection": "Selection"
+      "selection": "Selection",
+      "security": "Security"
     },
     "shortcuts": {
       "canvasView": "Canvas view",
@@ -157,7 +158,10 @@
       "escape": "Deselect / Close",
       "prevTab": "Previous tab",
       "nextTab": "Next tab",
-      "firstTab": "First tab"
+      "firstTab": "First tab",
+      "matrixView": "Matrix view",
+      "cut": "Cut",
+      "lockSession": "Lock session"
     }
   },
   "tagSetManager": {
@@ -593,7 +597,10 @@
       "passwordLabel": "Confirm with your current password",
       "cancel": "Cancel",
       "submit": "Disable",
-      "busy": "Migrating…"
+      "busy": "Migrating…",
+      "dataLossWarning": "{{count}} of {{total}} saved changes cannot be decrypted and will be permanently lost if you continue. Export your dossiers first if you want to keep them.",
+      "dataLossCancel": "Cancel",
+      "dataLossConfirm": "Disable and lose this data"
     },
     "changePassword": {
       "oldLabel": "Current password",

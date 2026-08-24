@@ -770,6 +770,10 @@ export function MatrixView() {
       {/* Table container with both horizontal and vertical scroll */}
       <div
         ref={containerRef}
+        role="grid"
+        aria-label={t('dossier.views.matrix')}
+        aria-rowcount={sortedElements.length + 1}
+        aria-colcount={visibleCols.length}
         className="flex-1 overflow-auto"
         onScroll={handleScroll}
       >
@@ -783,6 +787,8 @@ export function MatrixView() {
             <div className="sticky top-0 z-10" style={{ width: totalRowWidth }}>
               {/* Column headers */}
               <div
+                role="row"
+                aria-rowindex={1}
                 className="flex bg-bg-secondary border-b border-border-default"
                 style={{ height: HEADER_HEIGHT, width: totalRowWidth }}
               >
@@ -793,6 +799,12 @@ export function MatrixView() {
                   return (
                     <div
                       key={col.key}
+                      role="columnheader"
+                      aria-sort={
+                        sort.column === col.key
+                          ? (sort.direction === 'asc' ? 'ascending' : 'descending')
+                          : 'none'
+                      }
                       onMouseDown={(e) => !col.fixed && handleHeaderMouseDown(e, col.key)}
                       onMouseEnter={() => !col.fixed && handleHeaderMouseEnter(col.key)}
                       className={`relative flex items-center gap-1 px-2 text-xs font-medium text-text-secondary shrink-0 border-r border-border-default ${
@@ -873,6 +885,9 @@ export function MatrixView() {
                 return (
                   <div
                     key={el.id}
+                    role="row"
+                    aria-rowindex={rowIndex + 2}
+                    aria-selected={isSelected}
                     onClick={(e) => handleRowClick(e, el.id, rowIndex)}
                     className={`flex cursor-pointer select-none border-b border-border-default transition-colors ${
                       isSelected ? 'bg-accent-light' : 'bg-bg-primary hover:bg-bg-secondary'
@@ -892,6 +907,7 @@ export function MatrixView() {
                       return (
                         <div
                           key={col.key}
+                          role="gridcell"
                           onContextMenu={(e) => handleContextMenu(e, el.id, col.key)}
                           onDoubleClick={(e) => { e.stopPropagation(); handleCellDoubleClick(el, col.key); }}
                           className={`flex items-center px-3 text-sm shrink-0 border-r border-border-default ${

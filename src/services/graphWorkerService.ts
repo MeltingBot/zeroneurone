@@ -7,6 +7,17 @@
 
 import type { Element, ElementShape, ElementSize, Link } from '../types';
 
+/**
+ * A request was replaced by a newer one before the worker answered. Not a
+ * failure: the caller simply no longer needs the result.
+ */
+export class SupersededError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SupersededError';
+  }
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -140,6 +151,12 @@ class GraphWorkerService {
     this.progressCallback = onProgress ?? null;
     const worker = this.getWorker();
 
+    // A single pending slot means a new request used to overwrite the previous
+    // one, leaving its promise unsettled for ever while the worker kept
+    // chewing on the superseded message. Reject the old one explicitly so its
+    // caller can stop waiting.
+    this.supersedePending('computeInsights superseded by a newer request');
+
     return new Promise((resolve, reject) => {
       this.pendingResolve = resolve;
       this.pendingReject = reject;
@@ -149,6 +166,14 @@ class GraphWorkerService {
         links: this.serializeLinks(links),
       });
     });
+  }
+
+  /** Settle whatever request is still in flight before starting another. */
+  private supersedePending(reason: string): void {
+    const reject = this.pendingReject;
+    this.pendingResolve = null;
+    this.pendingReject = null;
+    reject?.(new SupersededError(reason));
   }
 
   /**
@@ -162,6 +187,7 @@ class GraphWorkerService {
   ): Promise<Record<string, { x: number; y: number }>> {
     this.progressCallback = onProgress ?? null;
     const worker = this.getWorker();
+    this.supersedePending('computeLayout superseded by a newer request');
 
     return new Promise((resolve, reject) => {
       this.pendingResolve = resolve;
@@ -186,6 +212,7 @@ class GraphWorkerService {
   ): Promise<{ path: string[]; length: number }[]> {
     this.progressCallback = null;
     const worker = this.getWorker();
+    this.supersedePending('findPaths superseded by a newer request');
 
     return new Promise((resolve, reject) => {
       this.pendingResolve = resolve;

@@ -212,10 +212,13 @@ export const dossierRepository = {
     });
   },
 
+  // Every table holding rows scoped to a dossier must be listed here, otherwise
+  // deleting the dossier leaves rows behind that nothing will ever collect.
   async delete(id: DossierId): Promise<void> {
     await db.transaction(
       'rw',
-      [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports, db.canvasTabs, db.pluginData],
+      [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports, db.canvasTabs,
+       db.pluginData, db.savedQueries, db.comments],
       async () => {
         await db.elements.where({ dossierId: id }).delete();
         await db.links.where({ dossierId: id }).delete();
@@ -224,6 +227,8 @@ export const dossierRepository = {
         await db.reports.where({ dossierId: id }).delete();
         await db.canvasTabs.where({ dossierId: id }).delete();
         await db.pluginData.where({ dossierId: id }).delete();
+        await db.savedQueries.where({ dossierId: id }).delete();
+        await db.comments.where({ dossierId: id }).delete();
         await db.dossiers.delete(id);
       }
     );

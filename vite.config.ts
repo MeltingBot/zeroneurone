@@ -98,17 +98,43 @@ export default defineConfig({
     })
   ],
   server: {},
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the heavy vendors out of the entry chunk. They change far less
+        // often than application code, so a release no longer invalidates them
+        // in the browser cache.
+        manualChunks(id) {
+          // Locales are deliberately left alone: each is imported on demand by
+          // i18n.ts, so grouping them would pull all eleven back into one
+          // eagerly-loaded chunk.
+          if (!id.includes('/node_modules/')) return undefined;
+          if (id.includes('/@xyflow/')) return 'xyflow';
+          if (id.includes('/graphology') || id.includes('/@dagrejs/')) return 'graph';
+          if (/\/(yjs|y-websocket|y-indexeddb|lib0)\//.test(id)) return 'yjs';
+          if (id.includes('/jszip/')) return 'jszip';
+          return undefined;
+        },
+      },
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
   },
   test: {
+    // Node by default: most suites are pure logic and start faster without a
+    // DOM. Suites that need one opt in with `// @vitest-environment jsdom`
+    // (jsdom, not happy-dom: DOMPurify misbehaves under happy-dom).
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    // Benchmarks are opt-in (npm run bench): they run for minutes.
+    exclude: ['**/node_modules/**', '**/__benchmarks__/**'],
     coverage: {
       provider: 'v8',
-      include: ['src/services/encryption/**'],
+      include: ['src/services/**', 'src/db/**', 'src/stores/**', 'src/utils/**'],
+      exclude: ['**/*.test.{ts,tsx}', '**/__tests__/**'],
     },
   },
 })

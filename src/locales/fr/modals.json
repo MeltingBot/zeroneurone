@@ -125,7 +125,8 @@
       "canvas": "Canvas",
       "editing": "Édition",
       "zoom": "Zoom",
-      "selection": "Sélection"
+      "selection": "Sélection",
+      "security": "Sécurité"
     },
     "shortcuts": {
       "canvasView": "Vue Canvas",
@@ -157,7 +158,10 @@
       "escape": "Désélectionner / Fermer",
       "prevTab": "Onglet précédent",
       "nextTab": "Onglet suivant",
-      "firstTab": "Premier onglet"
+      "firstTab": "Premier onglet",
+      "matrixView": "Vue matrice",
+      "cut": "Couper",
+      "lockSession": "Verrouiller la session"
     }
   },
   "tagSetManager": {
@@ -593,7 +597,10 @@
       "passwordLabel": "Confirmez avec votre mot de passe actuel",
       "cancel": "Annuler",
       "submit": "Désactiver",
-      "busy": "Migration…"
+      "busy": "Migration…",
+      "dataLossWarning": "{{count}} modifications enregistrées sur {{total}} ne peuvent pas être déchiffrées et seront définitivement perdues si vous continuez. Exportez vos enquêtes d'abord si vous souhaitez les conserver.",
+      "dataLossCancel": "Annuler",
+      "dataLossConfirm": "Désactiver et perdre ces données"
     },
     "changePassword": {
       "oldLabel": "Mot de passe actuel",

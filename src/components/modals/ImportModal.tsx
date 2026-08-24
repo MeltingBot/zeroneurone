@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,6 +8,8 @@ import { importANX, isANXFormat } from '../../services/importANX';
 import { importANB, isANBFormat } from '../../services/importANB';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
+import { SafeHtml } from '../common/SafeHtml';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -250,6 +252,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     exportService.download(template, filename, 'text/csv');
   }, [i18n.language]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialogA11y(isOpen, dialogRef, handleClose);
+
   if (!isOpen) return null;
 
   return (
@@ -258,17 +264,25 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       <div
         className="fixed inset-0 z-[1000] bg-black/50"
         onClick={handleClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary rounded-lg shadow-xl" data-testid="import-modal">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow" data-testid="import-modal"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
-          <h2 className="text-sm font-semibold text-text-primary">
+          <h2 id={titleId} className="text-sm font-semibold text-text-primary">
             {t('import.title')}
           </h2>
           <button
             onClick={handleClose}
+            aria-label={t('common:actions.close')}
             className="p-1 text-text-tertiary hover:text-text-primary rounded"
           >
             <X size={16} />
@@ -409,7 +423,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               </button>
             </div>
             <div className="text-xs text-text-tertiary space-y-1">
-              <p dangerouslySetInnerHTML={{ __html: t('import.csvTemplate.format') }} />
+              <SafeHtml as="p" html={t('import.csvTemplate.format')} />
               <p>{t('import.csvTemplate.description')}</p>
             </div>
           </div>

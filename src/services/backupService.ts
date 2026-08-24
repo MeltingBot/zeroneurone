@@ -17,6 +17,16 @@ import type {
 
 const BACKUP_VERSION = '1.0.0';
 
+/**
+ * A backup written by a newer major version may hold fields this build does not
+ * understand; importing it would silently drop them. Older majors stay readable.
+ */
+export function isSupportedBackupVersion(version: string): boolean {
+  const major = Number.parseInt(version.split('.')[0], 10);
+  if (!Number.isFinite(major)) return false;
+  return major <= Number.parseInt(BACKUP_VERSION.split('.')[0], 10);
+}
+
 interface BackupData {
   version: string;
   exportedAt: string;
@@ -170,6 +180,14 @@ class BackupService {
       // Validate structure
       if (!data.version || !data.dossiers) {
         result.errors.push('Format de sauvegarde invalide');
+        return result;
+      }
+
+      if (!isSupportedBackupVersion(data.version)) {
+        result.errors.push(
+          `Sauvegarde en version ${data.version}, incompatible avec cette version de l'application ` +
+          `(format ${BACKUP_VERSION}). Mettez à jour ZeroNeurone avant de restaurer.`
+        );
         return result;
       }
 

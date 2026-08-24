@@ -1,4 +1,3 @@
-import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import { db } from '../db/database';
 import { generateUUID, bufferToHex, getExtension } from '../utils';
@@ -6,8 +5,7 @@ import type { Asset, AssetId, DossierId } from '../types';
 import { useEncryptionStore } from '../stores/encryptionStore';
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './encryption/opfsEncryption';
 
-// Configure pdf.js worker (stable URL from public/ — survives SW cache mismatches across deploys)
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+import { loadPdfjs } from './pdfjsLoader';
 
 // ============================================================================
 // SECURITY LIMITS FOR FILE UPLOADS
@@ -474,6 +472,7 @@ class FileService {
     try {
       // Use a copy: getDocument() transfers the ArrayBuffer to the worker,
       // which would detach the original and break subsequent extractPdfText()
+      const pdfjsLib = await loadPdfjs();
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
       const pdf = await loadingTask.promise;
 
@@ -538,6 +537,7 @@ class FileService {
 
   private async extractPdfText(arrayBuffer: ArrayBuffer): Promise<string | null> {
     try {
+      const pdfjsLib = await loadPdfjs();
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
 

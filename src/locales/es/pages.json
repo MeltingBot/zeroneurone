@@ -104,7 +104,8 @@
         "contacts": "en contacto con",
         "signed": "firmó"
       }
-    }
+    },
+    "cardActions": "Acciones del expediente"
   },
   "dossier": {
     "loading": {
@@ -189,8 +190,6 @@
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",
       "redo": "Rehacer (Ctrl+Shift+Z)",
-      "readableFont": "Fuente legible",
-      "handwrittenFont": "Fuente manuscrita",
       "darkMode": "Modo oscuro",
       "lightMode": "Modo claro",
       "showMedia": "Mostrar medios",
@@ -374,7 +373,8 @@
     "geoJsonSave": "Aplicar",
     "geoJsonParseError": "JSON no válido",
     "geoJsonMinVertices": "Mínimo 3 vértices",
-    "geoJsonInvalidCoord": "Coordenada inválida: [lng, lat]"
+    "geoJsonInvalidCoord": "Coordenada inválida: [lng, lat]",
+    "searchPlaceExternal": "Busca a través de OpenStreetMap (Nominatim): esta consulta sale de su dispositivo."
   },
   "timeline": {
     "noEvents": "Ningún evento fechado",

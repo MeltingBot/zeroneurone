@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw, LockKeyhole, KeyRound, Trash2, Timer } from 'lucide-react';
 import { Modal } from '../common';
 import { useEncryptionStore } from '../../stores/encryptionStore';
-import { enableEncryption, disableEncryption } from '../../services/encryption/migrationService';
+import { enableEncryption, disableEncryption, UndecryptableDataError } from '../../services/encryption/migrationService';
 import { changePassword } from '../../services/encryption/encryptionService';
 import type { WebAuthnCredentialEntry } from '../../services/encryption/encryptionService';
 import { isWebAuthnAvailable, registerWebAuthnCredential } from '../../services/encryption/webauthnService';
@@ -43,6 +43,11 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [migration, setMigration] = useState<MigrationState | null>(null);
+  // Désactivation en attente de confirmation : des updates sont indéchiffrables
+  // et seraient effacés. Rien n'a encore été écrit à ce stade.
+  const [pendingLoss, setPendingLoss] = useState<
+    { undecryptable: number; total: number; password: string } | null
+  >(null);
 
   // Réinitialiser à l'ouverture
   useEffect(() => {
@@ -51,8 +56,41 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
       setError(null);
       setSuccess(null);
       setMigration(null);
+      setPendingLoss(null);
     }
   }, [isOpen]);
+
+  const runDisable = async (password: string, acceptDataLoss: boolean) => {
+    if (!dek) { setError(t('encryption.errorMissingKey')); return; }
+    setIsBusy(true);
+    setError(null);
+    try {
+      // Vérifier le mot de passe avant de désactiver
+      const meta = await db._encryptionMeta.get('main');
+      if (!meta) throw new Error(t('encryption.errorMetaNotFound'));
+      const { unlockEncryption } = await import('../../services/encryption/encryptionService');
+      await unlockEncryption(meta, password); // lance si incorrect
+
+      await disableEncryption(dek, (p) => setMigration(p), { acceptDataLoss });
+      setPendingLoss(null);
+      setEnabled(false);
+      lockStore();
+      setSuccess(t('encryption.successDisabled'));
+      setView('main');
+      // Recharger pour rouvrir Dexie sans middleware
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      if (err instanceof UndecryptableDataError) {
+        // Aucune donnée n'a été touchée : on demande l'accord explicite.
+        setPendingLoss({ undecryptable: err.undecryptable, total: err.total, password });
+      } else {
+        setError(err instanceof Error ? err.message : t('encryption.errorDeactivation'));
+      }
+    } finally {
+      setIsBusy(false);
+      setMigration(null);
+    }
+  };
 
   const handleClose = () => {
     if (isBusy) return;
@@ -115,32 +153,13 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
           isBusy={isBusy}
           migration={migration}
           error={error}
-          onConfirm={async (password) => {
-            if (!dek) { setError(t('encryption.errorMissingKey')); return; }
-            setIsBusy(true);
-            setError(null);
-            try {
-              // Vérifier le mot de passe avant de désactiver
-              const meta = await db._encryptionMeta.get('main');
-              if (!meta) throw new Error(t('encryption.errorMetaNotFound'));
-              const { unlockEncryption } = await import('../../services/encryption/encryptionService');
-              await unlockEncryption(meta, password); // lance si incorrect
-
-              await disableEncryption(dek, (p) => setMigration(p));
-              setEnabled(false);
-              lockStore();
-              setSuccess(t('encryption.successDisabled'));
-              setView('main');
-              // Recharger pour rouvrir Dexie sans middleware
-              setTimeout(() => window.location.reload(), 1500);
-            } catch (err) {
-              setError(err instanceof Error ? err.message : t('encryption.errorDeactivation'));
-            } finally {
-              setIsBusy(false);
-              setMigration(null);
-            }
+          onConfirm={(password) => runDisable(password, false)}
+          pendingLoss={pendingLoss}
+          onAcceptLoss={() => {
+            if (pendingLoss) void runDisable(pendingLoss.password, true);
           }}
-          onBack={() => { setError(null); setView('main'); }}
+          onCancelLoss={() => setPendingLoss(null)}
+          onBack={() => { setError(null); setPendingLoss(null); setView('main'); }}
         />
       )}
 
@@ -492,12 +511,18 @@ function DisableView({
   migration,
   error,
   onConfirm,
+  pendingLoss,
+  onAcceptLoss,
+  onCancelLoss,
   onBack,
 }: {
   isBusy: boolean;
   migration: MigrationState | null;
   error: string | null;
   onConfirm: (password: string) => Promise<void>;
+  pendingLoss: { undecryptable: number; total: number } | null;
+  onAcceptLoss: () => void;
+  onCancelLoss: () => void;
   onBack: () => void;
 }) {
   const { t } = useTranslation('modals');
@@ -552,23 +577,54 @@ function DisableView({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <button
-          onClick={onBack}
-          disabled={isBusy}
-          className="flex-1 text-sm text-text-secondary border border-border-default rounded px-4 py-2 hover:bg-bg-secondary disabled:opacity-40"
-        >
-          {t('encryption.disable.cancel')}
-        </button>
-        <button
-          data-testid="disable-confirm-button"
-          onClick={() => onConfirm(password)}
-          disabled={!password || isBusy}
-          className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-red-700 disabled:opacity-50"
-        >
-          {isBusy ? t('encryption.disable.busy') : t('encryption.disable.submit')}
-        </button>
-      </div>
+      {pendingLoss ? (
+        <div className="p-3 bg-error/5 border border-error/20 rounded space-y-3">
+          <div className="flex items-start gap-2 text-xs text-error">
+            <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+            <span>
+              {t('encryption.disable.dataLossWarning', {
+                count: pendingLoss.undecryptable,
+                total: pendingLoss.total,
+              })}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onCancelLoss}
+              disabled={isBusy}
+              className="flex-1 text-sm text-text-secondary border border-border-default bg-bg-primary rounded px-4 py-2 hover:bg-bg-secondary disabled:opacity-40"
+            >
+              {t('encryption.disable.dataLossCancel')}
+            </button>
+            <button
+              data-testid="disable-accept-loss-button"
+              onClick={onAcceptLoss}
+              disabled={isBusy}
+              className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-red-700 disabled:opacity-50"
+            >
+              {isBusy ? t('encryption.disable.busy') : t('encryption.disable.dataLossConfirm')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            onClick={onBack}
+            disabled={isBusy}
+            className="flex-1 text-sm text-text-secondary border border-border-default rounded px-4 py-2 hover:bg-bg-secondary disabled:opacity-40"
+          >
+            {t('encryption.disable.cancel')}
+          </button>
+          <button
+            data-testid="disable-confirm-button"
+            onClick={() => onConfirm(password)}
+            disabled={!password || isBusy}
+            className="flex-1 text-sm font-medium bg-error text-white rounded px-4 py-2 hover:bg-red-700 disabled:opacity-50"
+          >
+            {isBusy ? t('encryption.disable.busy') : t('encryption.disable.submit')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

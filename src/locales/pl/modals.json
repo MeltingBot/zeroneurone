@@ -125,7 +125,8 @@
       "canvas": "Tablica",
       "editing": "Edycja",
       "zoom": "Zoom",
-      "selection": "Zaznaczenie"
+      "selection": "Zaznaczenie",
+      "security": "Bezpieczeństwo"
     },
     "shortcuts": {
       "canvasView": "Widok Tablica",
@@ -157,7 +158,10 @@
       "escape": "Odznacz / Zamknij",
       "prevTab": "Poprzednia karta",
       "nextTab": "Następna karta",
-      "firstTab": "Pierwsza karta"
+      "firstTab": "Pierwsza karta",
+      "matrixView": "Widok macierzy",
+      "cut": "Wytnij",
+      "lockSession": "Zablokuj sesję"
     }
   },
   "tagSetManager": {
@@ -576,7 +580,10 @@
       "passwordLabel": "Potwierdź aktualnym hasłem",
       "cancel": "Anuluj",
       "submit": "Wyłącz",
-      "busy": "Migracja…"
+      "busy": "Migracja…",
+      "dataLossWarning": "{{count}} z {{total}} zapisanych zmian nie może zostać odszyfrowanych i zostanie bezpowrotnie utraconych po kontynuowaniu. Najpierw wyeksportuj sprawy, jeśli chcesz je zachować.",
+      "dataLossCancel": "Anuluj",
+      "dataLossConfirm": "Wyłącz i utrać te dane"
     },
     "changePassword": {
       "oldLabel": "Aktualne hasło",

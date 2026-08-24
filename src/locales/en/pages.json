@@ -104,7 +104,8 @@
         "contacts": "in contact with",
         "signed": "signed"
       }
-    }
+    },
+    "cardActions": "Dossier actions"
   },
   "dossier": {
     "loading": {
@@ -189,8 +190,6 @@
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",
       "redo": "Redo (Ctrl+Shift+Z)",
-      "readableFont": "Readable font",
-      "handwrittenFont": "Handwritten font",
       "darkMode": "Dark mode",
       "lightMode": "Light mode",
       "showMedia": "Show media",
@@ -378,7 +377,8 @@
     "geoJsonSave": "Apply",
     "geoJsonParseError": "Invalid JSON",
     "geoJsonMinVertices": "Minimum 3 vertices",
-    "geoJsonInvalidCoord": "Invalid coordinate: [lng, lat]"
+    "geoJsonInvalidCoord": "Invalid coordinate: [lng, lat]",
+    "searchPlaceExternal": "Searches via OpenStreetMap (Nominatim): this query leaves your device."
   },
   "timeline": {
     "noEvents": "No dated events",

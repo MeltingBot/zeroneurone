@@ -51,6 +51,10 @@ export interface ElementNodeData extends Record<string, unknown> {
   isLoadingAsset?: boolean;
   /** Property to display as badge (value and type for country flag) */
   badgeProperty?: { value: string; type: string } | null;
+  /** Zoomed far enough out that labels are unreadable: render a plain box. */
+  isLowDetail?: boolean;
+  /** Whether any link touches this node — drives whether handles are needed. */
+  hasLinks?: boolean;
   /** Show confidence indicator (🤝 + %) */
   showConfidenceIndicator?: boolean;
   /** Properties to display below the element */
@@ -85,7 +89,7 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks } = nodeData;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -93,7 +97,6 @@ function ElementNodeComponent({ data }: NodeProps) {
   // (Ctrl/⌘ and Shift are reserved by React Flow for multi-selection / selection box.)
   const [keepAspect, setKeepAspect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const fontMode = useUIStore((state) => state.fontMode);
   // Get themeMode from data (passed from Canvas) for proper memo comparison
   const themeMode = data.themeMode ?? 'light';
   const hideMedia = useUIStore((state) => state.hideMedia);
@@ -247,6 +250,44 @@ function ElementNodeComponent({ data }: NodeProps) {
   // Skip HD loading when media is hidden — thumbnail is enough for pixelated display
   const firstAssetId = (hasThumbnail && !hideMedia) ? element.assetIds?.[0] : undefined;
   const hdImageUrl = useHdImage(firstAssetId, width, height);
+
+  // Zoomed far out, a node is a few pixels tall: its label, tags, badges,
+  // thumbnail and resizer are invisible but still cost DOM — the dominant
+  // expense when the whole graph is on screen. Render the shape alone.
+  // Handles are kept: React Flow anchors edges to them.
+  if (isLowDetail && !isEditing) {
+    return (
+      <div className={`relative ${isDimmed ? 'opacity-30' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
+        <div
+          className={`w-full h-full ${shapeStyles[element.visual.shape]} ${isSelected ? 'selection-ring' : ''}`}
+          style={{
+            backgroundColor: getThemeAwareColor(element.visual.color, themeMode === 'dark'),
+            borderWidth: element.visual.borderWidth ?? 2,
+            borderStyle: isGhost ? 'dashed' : (element.visual.borderStyle ?? 'solid'),
+            borderColor: themeMode === 'dark'
+              ? getThemeAwareColor(element.visual.borderColor, true)
+              : element.visual.borderColor,
+          }}
+        />
+        {/* Handles exist only to anchor edges, and links store their ids. An
+            unlinked node needs none — at 5 000 nodes that is 8 DOM elements
+            saved each. Link creation by dragging is impossible at this zoom
+            anyway, so nothing is lost. */}
+        {hasLinks && (
+          <>
+        <Handle type="source" position={Position.Top} id="source-top" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Bottom} id="source-bottom" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Left} id="source-left" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Top} id="target-top" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Bottom} id="target-bottom" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Right} id="target-right" className="!opacity-0 !w-1 !h-1" />
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -530,7 +571,7 @@ function ElementNodeComponent({ data }: NodeProps) {
             </div>
             <div className="w-full px-1 py-0.5 bg-bg-secondary border-t border-border-default flex-shrink-0">
               <span
-                className={`text-[10px] text-text-tertiary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`text-[10px] text-text-tertiary block text-center`}
               >
                 {element.label || t('status.loading')}
               </span>
@@ -572,16 +613,15 @@ function ElementNodeComponent({ data }: NodeProps) {
                   onKeyDown={handleInputKeyDown}
                   onBlur={handleInputBlur}
                   className="w-full text-[10px] text-text-primary text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
-                  style={{ fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined }}
                 />
               ) : anonymousMode ? (
                 <RedactedText
                   text={element.label || t('empty.unnamed')}
-                  className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                  className={`text-[10px] block text-center`}
                 />
               ) : (
                 <span
-                  className={`text-[10px] text-text-primary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                  className={`text-[10px] text-text-primary block text-center`}
                   style={{
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -617,18 +657,17 @@ function ElementNodeComponent({ data }: NodeProps) {
                   color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
                     ? '#111827'
                     : '#ffffff',
-                  fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
                 }}
               />
             ) : anonymousMode ? (
               <RedactedText
                 text={element.label || t('empty.unnamed')}
-                className={`font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`font-medium leading-tight block`}
                 style={{ fontSize: labelFontSize }}
               />
             ) : (
               <span
-                className={`font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`font-medium leading-tight block`}
                 style={{
                   fontSize: labelFontSize,
                   color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
@@ -670,16 +709,15 @@ function ElementNodeComponent({ data }: NodeProps) {
               onKeyDown={handleInputKeyDown}
               onBlur={handleInputBlur}
               className="w-full text-[10px] text-text-primary text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
-              style={{ fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined }}
             />
           ) : anonymousMode ? (
             <RedactedText
               text={element.label || t('empty.unnamed')}
-              className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              className={`text-[10px] block text-center`}
             />
           ) : (
             <span
-              className={`text-[10px] text-text-primary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              className={`text-[10px] text-text-primary block text-center`}
               style={{
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -768,6 +806,8 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isHighlighted !== nextData.isHighlighted) return false;
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
+  if (prevData.isLowDetail !== nextData.isLowDetail) return false;
+  if (prevData.hasLinks !== nextData.hasLinks) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;
   if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;
   if (prevData.isLoadingAsset !== nextData.isLoadingAsset) return false;

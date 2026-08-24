@@ -104,7 +104,8 @@
         "contacts": "harremanetan",
         "signed": "sinatu du"
       }
-    }
+    },
+    "cardActions": "Espedientearen ekintzak"
   },
   "dossier": {
     "loading": {
@@ -189,8 +190,6 @@
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
       "redo": "Berregin (Ctrl+Shift+Z)",
-      "readableFont": "Letra irakurgarria",
-      "handwrittenFont": "Eskuz idatzitako letra",
       "darkMode": "Modu iluna",
       "lightMode": "Modu argia",
       "showMedia": "Multimedia erakutsi",
@@ -363,7 +362,8 @@
     "cancelDraw": "Marrazketa ezeztatu",
     "zone": "Zona",
     "newZone": "Zona berria",
-    "deleteSelection": "Hautapena ezabatu"
+    "deleteSelection": "Hautapena ezabatu",
+    "searchPlaceExternal": "OpenStreetMap (Nominatim) bidez bilatzen du: kontsulta hau zure gailutik ateratzen da."
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

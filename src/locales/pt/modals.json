@@ -125,7 +125,8 @@
       "canvas": "Tela",
       "editing": "Edição",
       "zoom": "Zoom",
-      "selection": "Seleção"
+      "selection": "Seleção",
+      "security": "Segurança"
     },
     "shortcuts": {
       "canvasView": "Vista Tela",
@@ -157,7 +158,10 @@
       "escape": "Desselecionar / Fechar",
       "prevTab": "Aba anterior",
       "nextTab": "Próxima aba",
-      "firstTab": "Primeira aba"
+      "firstTab": "Primeira aba",
+      "matrixView": "Vista matriz",
+      "cut": "Cortar",
+      "lockSession": "Bloquear a sessão"
     }
   },
   "tagSetManager": {
@@ -576,7 +580,10 @@
       "passwordLabel": "Confirme com a sua senha atual",
       "cancel": "Cancelar",
       "submit": "Desativar",
-      "busy": "A migrar…"
+      "busy": "A migrar…",
+      "dataLossWarning": "{{count}} de {{total}} alterações guardadas não podem ser desencriptadas e serão perdidas definitivamente se continuar. Exporte os seus processos primeiro se quiser mantê-los.",
+      "dataLossCancel": "Cancelar",
+      "dataLossConfirm": "Desativar e perder estes dados"
     },
     "changePassword": {
       "oldLabel": "Senha atual",

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
 import { insightsService, type PathResult, type CycleResult } from '../services/insightsService';
-import { graphWorkerService } from '../services/graphWorkerService';
+import { graphWorkerService, SupersededError } from '../services/graphWorkerService';
 
 interface InsightsState {
   // Results
@@ -98,6 +98,11 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         computePhase: 'done',
       });
     }).catch((error) => {
+      // A superseded request is not a failure: a newer computation is already
+      // running and will set the state. Falling back here would compute the
+      // same thing twice and let a stale result overwrite a fresh one.
+      if (error instanceof SupersededError) return;
+
       console.error('[InsightsStore] Worker computation failed, falling back to main thread:', error);
       // Fallback to main-thread computation
       setTimeout(() => {

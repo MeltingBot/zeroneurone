@@ -1,5 +1,6 @@
 import type { Dossier, Element, Link, Asset } from '../types';
 import { getGeoCenter, isGeoPolygon } from '../utils/geo';
+import { safeColor } from '../utils/escapeHtml';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -560,7 +561,7 @@ class ReportService {
             }).join(', ')
           : '-';
         return `<tr>
-        <td><span class="color-dot" style="background:${el.visual.color}"></span>${this.escapeHTML(el.label)}</td>
+        <td><span class="color-dot" style="background:${safeColor(el.visual.color, '#d4cec4')}"></span>${this.escapeHTML(el.label)}</td>
         <td class="markdown-content">${el.notes ? this.markdownToHTML(el.notes) : '-'}</td>
         <td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join('') : '-'}</td>
         <td>${el.confidence !== null ? `${el.confidence}%` : '-'}</td>
@@ -992,15 +993,30 @@ class ReportService {
    * Open report in new window for printing
    */
   openForPrint(html: string): void {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(html);
-      printWindow.document.close();
-      // Delay print to allow styles to load
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
+    // Loading a Blob URL replaces the deprecated document.write path: the report
+    // is parsed as a normal document instead of being written into a blank one.
+    // Note it stays same-origin — a Blob URL inherits the creating origin — so
+    // the escaping in generateHTML remains the actual defence.
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const printWindow = window.open(url, '_blank');
+    if (!printWindow) {
+      URL.revokeObjectURL(url);
+      return;
     }
+
+    let printed = false;
+    const printOnce = () => {
+      if (printed) return;
+      printed = true;
+      printWindow.print();
+      URL.revokeObjectURL(url);
+    };
+
+    // Print once the document is actually rendered; a large report can take
+    // well over the fixed delay the previous implementation relied on.
+    printWindow.addEventListener('load', printOnce, { once: true });
+    // Fallback in case the load event already fired before we subscribed.
+    setTimeout(printOnce, 3000);
   }
 
   /**

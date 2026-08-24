@@ -21,6 +21,8 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 
 - **L'humain reste aux commandes** — Pas d'actions automatiques, Ni d'intelligence artificielle, suggestions uniquement sur demande
 - **100% local par defaut** — IndexedDB + OPFS, fonctionne hors-ligne, les donnees ne partent jamais sans action explicite
+  (deux exceptions, toutes deux declenchees par l'utilisateur : les tuiles de la carte, et la recherche de lieu
+  qui interroge OpenStreetMap/Nominatim avec le terme saisi)
 - **Le visuel EST l'analyse** — Position spatiale, couleurs, formes portent un sens defini par l'utilisateur
 - **Zero ontologie imposee** — Les utilisateurs creent leurs propres concepts, pas de types d'entites forces
 
@@ -77,7 +79,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Export ZIP complet (JSON + assets)
 - Export PNG haute resolution (zoom/scale configurable)
 - Export SVG natif (vectoriel)
-- Export PDF du canvas
+- Impression du rapport de synthese via le navigateur (PDF possible depuis la boite d'impression)
 - Export CSV (avec positions/groupes)
 - Export HTML interactif (rapport + graphe navigable, theme clair/sombre, TOC, stats)
 - Import CSV pour donnees tabulaires
@@ -116,12 +118,16 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Cache intelligent des tuiles OpenStreetMap
 - Service Worker avec mise a jour automatique
 
-### Accessibilite (WCAG AA)
-- Labels ARIA sur tous les controles interactifs
-- Navigation complete au clavier
-- Focus trap dans les modals
+### Accessibilite (partielle)
 - Skip link pour acces rapide au contenu
+- Focus trap dans les modales construites sur le composant `Modal`
+- Navigation clavier dans les menus deroulants
 - Contraste suffisant
+
+Chantier en cours : le graphe (canvas, carte, chronologie, matrice) n'est pas
+encore navigable au clavier ni expose aux technologies d'assistance, et une
+partie des modales n'utilise pas encore le composant `Modal` partage. La
+conformite WCAG AA n'est donc pas atteinte a ce jour.
 
 ### Internationalisation
 11 langues supportees :
@@ -185,13 +191,13 @@ L'application sera accessible sur `http://localhost:5173`
 | Annuler | `Ctrl+Z` |
 | Retablir | `Ctrl+Shift+Z` |
 | Supprimer selection | `Delete` / `Backspace` |
-| Mode focus | `F` |
 | Nouvel element | `E` |
 | Nouveau groupe | `G` |
 | Nouvelle annotation | `N` |
 | Vue Canvas | `1` |
 | Vue Carte | `2` |
 | Vue Timeline | `3` |
+| Vue Matrice | `4` |
 
 ### Interactions Canvas
 
@@ -199,7 +205,6 @@ L'application sera accessible sur `http://localhost:5173`
 |--------|----------|
 | Double-clic sur le canvas | Creer un element |
 | Glisser d'element a element | Creer un lien |
-| Glisser d'element vers le vide | Creer un nouvel element lie |
 | Clic droit | Menu contextuel |
 | Molette | Zoom |
 | Clic molette + glisser | Pan |
@@ -247,7 +252,7 @@ src/
 │   ├── insightsService.ts      # Analyse Graphology (Web Worker)
 │   ├── fileService.ts          # Gestion OPFS
 │   ├── importService.ts        # Import ZIP/CSV
-│   └── exportService.ts        # Export ZIP/PNG/PDF
+│   └── exportService.ts        # Export ZIP/PNG/SVG/CSV
 ├── workers/                    # Web Workers (analyse, layout)
 ├── i18n/                       # Traductions (11 langues)
 ├── types/                      # Types TypeScript
@@ -374,7 +379,7 @@ Ou deployer votre propre serveur y-websocket.
 ### v1.0 — Stabilisation ✓
 - [x] Tests E2E Playwright
 - [x] PWA complete
-- [x] Accessibilite WCAG AA
+- [ ] Accessibilite WCAG AA (partielle : skip link, focus trap, contraste)
 - [x] i18n (11 langues)
 - [x] Documentation utilisateur : [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - [x] Error boundaries

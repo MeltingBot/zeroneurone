@@ -104,7 +104,8 @@
         "contacts": "en contacte amb",
         "signed": "ha signat"
       }
-    }
+    },
+    "cardActions": "Accions de l'expedient"
   },
   "dossier": {
     "loading": {
@@ -189,8 +190,6 @@
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
       "redo": "Refer (Ctrl+Maj+Z)",
-      "readableFont": "Font llegible",
-      "handwrittenFont": "Font manuscrita",
       "darkMode": "Mode fosc",
       "lightMode": "Mode clar",
       "showMedia": "Mostrar mitjans",
@@ -363,7 +362,8 @@
     "cancelDraw": "Cancel·lar el dibuix",
     "zone": "Zona",
     "newZone": "Nova zona",
-    "deleteSelection": "Eliminar la selecció"
+    "deleteSelection": "Eliminar la selecció",
+    "searchPlaceExternal": "Cerca mitjançant OpenStreetMap (Nominatim): aquesta consulta surt del dispositiu."
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

@@ -104,7 +104,8 @@
         "contacts": "у контакті з",
         "signed": "підписав"
       }
-    }
+    },
+    "cardActions": "Дії зі справою"
   },
   "dossier": {
     "loading": {
@@ -189,8 +190,6 @@
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",
       "redo": "Повторити (Ctrl+Shift+Z)",
-      "readableFont": "Читабельний шрифт",
-      "handwrittenFont": "Рукописний шрифт",
       "darkMode": "Темний режим",
       "lightMode": "Світлий режим",
       "showMedia": "Показати медіа",
@@ -374,7 +373,8 @@
     "geoJsonSave": "Застосувати",
     "geoJsonParseError": "Невалідний JSON",
     "geoJsonMinVertices": "Мінімум 3 вершини",
-    "geoJsonInvalidCoord": "Невалідна координата: [lng, lat]"
+    "geoJsonInvalidCoord": "Невалідна координата: [lng, lat]",
+    "searchPlaceExternal": "Пошук через OpenStreetMap (Nominatim): цей запит залишає ваш пристрій."
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

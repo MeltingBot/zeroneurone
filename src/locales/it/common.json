@@ -110,7 +110,9 @@
     "required": "Questo campo è obbligatorio",
     "networkError": "Errore di rete",
     "importFailed": "Errore durante l'importazione",
-    "exportFailed": "Errore durante l'esportazione"
+    "exportFailed": "Errore durante l'esportazione",
+    "persistFailed": "Alcune modifiche non sono state salvate su questo dispositivo.",
+    "storageFull": "Spazio di archiviazione esaurito: le modifiche non possono più essere salvate. Liberare spazio o esportare il fascicolo."
   },
   "confirm": {
     "delete": "Sei sicuro di voler eliminare?",

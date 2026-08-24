@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers, Code, Copy } from 'lucide-react';
@@ -14,7 +14,9 @@ import { PropertiesEditor } from './PropertiesEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { VisualEditor } from './VisualEditor';
 import { AssetsPanel } from './AssetsPanel';
-import { GeoPicker } from './GeoPicker';
+// GeoPicker pulls in maplibre-gl, by far the heaviest dependency. The panel is
+// mounted on every dossier, the picker only when the user opens it.
+const GeoPicker = lazy(() => import('./GeoPicker').then(m => ({ default: m.GeoPicker })));
 import { EventsEditor } from './EventsEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
@@ -1478,6 +1480,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
       {/* Geo Picker Modal */}
       {showGeoPicker && (
+        <Suspense fallback={null}>
         <GeoPicker
           initialLat={(() => {
             // If opened from event, use event's geo
@@ -1502,6 +1505,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
             setShowGeoPicker(false);
           }}
         />
+        </Suspense>
       )}
 
       {/* Suggested Properties Popup */}

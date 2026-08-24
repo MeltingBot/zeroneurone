@@ -7,7 +7,7 @@ interface HistoryAction {
         'create-elements' | 'delete-elements' | 'move-elements' |
         'extract-to-element' | 'dissolve-group' | 'remove-from-group' |
         'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters' |
-        'add-asset';
+        'add-asset' | 'merge-elements';
   // Data for undoing the action
   undo: {
     elements?: Element[];
@@ -161,6 +161,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         }
         break;
 
+      case 'create-link':
+        // Remove the link that was just created
+        if (action.redo.linkIds) {
+          await store.deleteLinks(action.redo.linkIds);
+        }
+        break;
+
       case 'delete-link':
         // Restore deleted links
         if (action.undo.links) {
@@ -283,6 +290,36 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           await store.removeAsset(action.undo.snapshot.elementId, action.undo.snapshot.assetId);
         }
         break;
+
+      case 'merge-elements': {
+        // Put the source element and the dropped links back, then rewind the
+        // target and every link the merge rewrote.
+        const snap = action.undo.snapshot;
+        if (snap) {
+          const deleted = new Set<string>(snap.deletedLinkIds);
+          const droppedLinks = snap.linksBefore.filter((l: Link) => deleted.has(l.id));
+          store.pasteElements([snap.sourceElement], droppedLinks);
+          await store.updateElement(snap.targetId, snap.targetBefore);
+          for (const before of snap.linksBefore) {
+            if (deleted.has(before.id)) continue;
+            await store.updateLink(before.id, {
+              fromId: before.fromId,
+              toId: before.toId,
+              label: before.label,
+              notes: before.notes,
+              tags: before.tags,
+              properties: before.properties,
+            });
+          }
+        }
+        break;
+      }
+
+      default:
+        // The entry has already left `past`, so an unhandled type is silently
+        // skipped: the user presses Ctrl+Z, nothing happens, and the next one
+        // jumps to an older, unrelated action. Surface it instead of hiding it.
+        console.warn(`[history] no undo handler for action type "${action.type}"`);
     }
   },
 
@@ -331,6 +368,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         if (action.redo.elementId && action.redo.changes) {
           await store.updateElement(action.redo.elementId, action.redo.changes);
         }
+        break;
+
+      case 'create-link':
+        // Re-create the link
+        store.pasteElements([], action.redo.links || []);
         break;
 
       case 'delete-link':
@@ -463,6 +505,17 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           await store.addAsset(action.redo.snapshot.elementId, action.redo.snapshot.file);
         }
         break;
+
+      case 'merge-elements':
+        // The merge is deterministic given the same two elements, so replaying
+        // it is enough — and keeps the snapshot in sync with what it produces.
+        if (action.redo.snapshot) {
+          await store.mergeElements(action.redo.snapshot.targetId, action.redo.snapshot.sourceId);
+        }
+        break;
+
+      default:
+        console.warn(`[history] no redo handler for action type "${action.type}"`);
     }
   },
 

@@ -45,7 +45,6 @@ import { ViewToolbar } from '../common/ViewToolbar';
 import { PdfPreview } from '../common/PdfPreview';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
-import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
@@ -141,6 +140,9 @@ interface LinkContextMenuState {
   linkLabel: string;
 }
 
+/** Zoom below which nodes render as plain boxes. Labels are unreadable there. */
+const LOW_DETAIL_ZOOM = 0.35;
+
 const nodeTypes = {
   element: ElementNode,
   groupFrame: GroupNode,
@@ -173,6 +175,8 @@ function CanvasCaptureHandler() {
       }
 
       try {
+        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
+        const { toPng } = await import('html-to-image');
         return await toPng(element, {
           backgroundColor: '#faf8f5',
           pixelRatio: 3,
@@ -231,6 +235,7 @@ function CanvasZoomControls() {
       <div className="w-px h-4 bg-border-default mx-1" />
       <button
         onClick={handleFitView}
+        data-testid="fit-view"
         className="p-1.5 text-text-secondary hover:bg-bg-tertiary rounded"
         title={t('dossier.toolbar.fitView')}
       >
@@ -312,6 +317,8 @@ function elementToNode(
   themeMode?: 'light' | 'dark',
   isGhost?: boolean,
   isHighlighted?: boolean,
+  isLowDetail?: boolean,
+  hasLinks?: boolean,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -405,6 +412,8 @@ function elementToNode(
       tagDisplayMode,
       tagDisplaySize,
       themeMode,
+      isLowDetail,
+      hasLinks,
     } satisfies ElementNodeData,
     selected: isGhost ? false : isSelected,
   };
@@ -605,6 +614,11 @@ function linkToEdge(
 }
 
 export function Canvas() {
+  // Below this zoom a label is a few pixels tall and unreadable, so the node's
+  // text, tags, badges and thumbnail cost DOM for nothing. Rendering a plain
+  // coloured box instead is what makes a 5 000-element overview usable.
+  const [isLowDetail, setIsLowDetail] = useState(false);
+
   const { t } = useTranslation('common');
   const { t: tPages } = useTranslation('pages');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -1276,6 +1290,18 @@ export function Canvas() {
   const prevThemeRef = useRef(themeMode);
   const prevTabMemberSetRef = useRef(tabMemberSet);
   const prevActiveTabIdRef = useRef(activeTabId);
+  const prevLowDetailRef = useRef(isLowDetail);
+
+  // Which nodes carry at least one link. Stable: it depends on the links
+  // themselves, not on the viewport, so panning never invalidates it.
+  const linkedNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const lk of links) {
+      ids.add(lk.fromId);
+      ids.add(lk.toId);
+    }
+    return ids;
+  }, [links]);
 
   const nodes = useMemo(() => {
     const activeTabChanged = prevActiveTabIdRef.current !== activeTabId;
@@ -1284,7 +1310,8 @@ export function Canvas() {
       prevShowConfRef.current !== showConfidenceIndicator ||
       prevTagModeRef.current !== tagDisplayMode ||
       prevTagSizeRef.current !== tagDisplaySize ||
-      prevThemeRef.current !== themeMode;
+      prevThemeRef.current !== themeMode ||
+      prevLowDetailRef.current !== isLowDetail;
 
     // Helper: build a single node from its structure
     const buildNode = (ns: typeof nodeStructures[number]) => {
@@ -1319,6 +1346,8 @@ export function Canvas() {
         themeMode,
         isGhostNode,
         emphasizedElementIds.has(ns.el.id),
+        isLowDetail,
+        linkedNodeIds.has(ns.el.id),
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1354,6 +1383,7 @@ export function Canvas() {
       prevTagModeRef.current = tagDisplayMode;
       prevTagSizeRef.current = tagDisplaySize;
       prevThemeRef.current = themeMode;
+      prevLowDetailRef.current = isLowDetail;
       prevTabMemberSetRef.current = tabMemberSet;
       prevActiveTabIdRef.current = activeTabId;
       return result;
@@ -1490,7 +1520,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -2137,7 +2167,7 @@ export function Canvas() {
         const fromId = swap ? connection.target : connection.source;
         const toId = swap ? connection.source : connection.target;
 
-        await createLink(fromId, toId, {
+        const created = await createLink(fromId, toId, {
           sourceHandle: swap
             ? (connection.targetHandle ?? null)
             : (connection.sourceHandle ?? null),
@@ -2145,10 +2175,15 @@ export function Canvas() {
             ? (connection.sourceHandle ?? null)
             : (connection.targetHandle ?? null),
         });
+        pushAction({
+          type: 'create-link',
+          undo: {},
+          redo: { linkIds: [created.id], links: [created] },
+        });
         connectStartNodeRef.current = null;
       }
     },
-    [createLink]
+    [createLink, pushAction]
   );
 
   // Which endpoint stayed put during a reconnect. In ConnectionMode.Loose every
@@ -2220,15 +2255,35 @@ export function Canvas() {
       // the existing mode, letting auto placement resume.
       const isReanchor = oldEdge.source === fromId && oldEdge.target === toId;
 
-      await updateLink(oldEdge.id, {
+      const previous = links.find((l) => l.id === oldEdge.id);
+      const changes = {
         fromId,
         toId,
         sourceHandle: alignHandle(startedFromTarget ? fixedHandleId : movedHandleId, 'source'),
         targetHandle: alignHandle(startedFromTarget ? movedHandleId : fixedHandleId, 'target'),
         ...(isReanchor ? { anchorMode: 'manual' as const } : {}),
-      });
+      };
+
+      await updateLink(oldEdge.id, changes);
+
+      if (previous) {
+        pushAction({
+          type: 'update-link',
+          undo: {
+            linkId: oldEdge.id,
+            linkChanges: {
+              fromId: previous.fromId,
+              toId: previous.toId,
+              sourceHandle: previous.sourceHandle ?? null,
+              targetHandle: previous.targetHandle ?? null,
+              ...(isReanchor ? { anchorMode: previous.anchorMode } : {}),
+            },
+          },
+          redo: { linkId: oldEdge.id, linkChanges: changes },
+        });
+      }
     },
-    [updateLink]
+    [updateLink, links, pushAction]
   );
 
   // Handle node click (Shift or Ctrl for multi-select)
@@ -4221,6 +4276,12 @@ export function Canvas() {
   const handleViewportChange = useCallback(
     ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       setViewport({ x, y, zoom });
+      // Only re-render on a threshold crossing: setting the same value is a
+      // no-op in React, so this stays free during a pan.
+      setIsLowDetail((prev) => {
+        const next = zoom < LOW_DETAIL_ZOOM;
+        return prev === next ? prev : next;
+      });
     },
     [setViewport]
   );
@@ -4267,7 +4328,6 @@ export function Canvas() {
       <div className="w-full h-full flex flex-col">
         {/* Toolbar */}
         <ViewToolbar
-          showFontToggle
           leftContent={
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-xs text-text-secondary">
@@ -4651,7 +4711,12 @@ export function Canvas() {
             element1={mergeElements.el1}
             element2={mergeElements.el2}
             onMerge={async (targetId, sourceId) => {
-              await mergeElementsAction(targetId, sourceId);
+              const snapshot = await mergeElementsAction(targetId, sourceId);
+              pushAction({
+                type: 'merge-elements',
+                undo: { snapshot },
+                redo: { snapshot },
+              });
               clearSelection();
             }}
           />

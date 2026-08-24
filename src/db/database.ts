@@ -227,6 +227,25 @@ class DossierDatabase extends Dexie {
     this.version(13).stores({
       comments: 'id, dossierId, targetId, createdAt',
     });
+
+    // ─── Version 14: collect rows orphaned by the incomplete dossier delete ──
+    // savedQueries (v11) and comments (v13) were never removed when a dossier
+    // was deleted, so existing databases can hold rows pointing at nothing.
+    this.version(14).upgrade(async (tx) => {
+      const dossiers = await tx.table('dossiers').toArray();
+      const liveIds = new Set(dossiers.map((d: { id: string }) => d.id));
+
+      for (const tableName of ['savedQueries', 'comments']) {
+        const table = tx.table(tableName);
+        const rows = await table.toArray();
+        const orphanIds = rows
+          .filter((row: { dossierId?: string }) => !row.dossierId || !liveIds.has(row.dossierId))
+          .map((row: { id: string }) => row.id);
+        if (orphanIds.length > 0) {
+          await table.bulkDelete(orphanIds);
+        }
+      }
+    });
   }
 
   /**

@@ -11,6 +11,7 @@ import type {
 import { DEFAULT_FILTERS } from '../types';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
+import { onPersistFailure } from '../utils/persistError';
 
 interface TimelineState {
   zoom: number;
@@ -366,7 +367,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   restoreView: (view: View) => {
-    db.views.put(view).catch(() => {});
+    db.views.put(view).catch((err) => onPersistFailure(err, 'view.restore'));
     set((state) => ({
       savedViews: [...state.savedViews, view].sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
