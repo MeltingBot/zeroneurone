@@ -104,11 +104,15 @@ export default defineConfig({
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
   },
   test: {
+    // Node by default: most suites are pure logic and start faster without a
+    // DOM. Suites that need one opt in with `// @vitest-environment jsdom`
+    // (jsdom, not happy-dom: DOMPurify misbehaves under happy-dom).
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
-      include: ['src/services/encryption/**'],
+      include: ['src/services/**', 'src/db/**', 'src/stores/**', 'src/utils/**'],
+      exclude: ['**/*.test.{ts,tsx}', '**/__tests__/**'],
     },
   },
 })

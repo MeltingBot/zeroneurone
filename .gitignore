@@ -57,3 +57,7 @@ public/plugins/manifest.json
 .env.local
 .plan
 plan-cours-zn.md
+
+# Test and lint reports
+coverage/
+eslint-report.json

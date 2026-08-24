@@ -10,7 +10,7 @@ Il est généré automatiquement à partir des dépendances de production
 réellement installées — les outils de développement, absents du produit
 livré, n'y figurent pas.
 
-Composants recensés : 222
+Composants recensés : 223
 
 ------------------------------------------------------------------------------
 Composants sous double licence — option retenue
@@ -42,6 +42,7 @@ Sommaire
   @maplibre/vt-pbf@4.3.2 — MIT
   @napi-rs/canvas@0.1.100 — MIT
   @napi-rs/canvas-linux-x64-gnu@0.1.100 — MIT
+  @napi-rs/canvas-linux-x64-musl@0.1.100 — MIT
   @tanstack/react-virtual@3.14.5 — MIT
   @tanstack/virtual-core@3.17.3 — MIT
   @types/d3-color@3.1.3 — MIT
@@ -1028,6 +1029,17 @@ SOFTWARE.
 
 ==============================================================================
 @napi-rs/canvas-linux-x64-gnu@0.1.100
+==============================================================================
+
+Licence déclarée : MIT
+Source           : git+https://github.com/Brooooooklyn/canvas.git
+
+Ce paquet ne publie pas de fichier de licence.
+
+Distribué sous licence MIT — se reporter au texte de référence de cette licence.
+
+==============================================================================
+@napi-rs/canvas-linux-x64-musl@0.1.100
 ==============================================================================
 
 Licence déclarée : MIT
@@ -8698,7 +8710,6 @@ installées. Ils ne font pas partie du produit livré.
   @napi-rs/canvas-linux-arm64-gnu
   @napi-rs/canvas-linux-arm64-musl
   @napi-rs/canvas-linux-riscv64-gnu
-  @napi-rs/canvas-linux-x64-musl
   @napi-rs/canvas-win32-arm64-msvc
   @napi-rs/canvas-win32-x64-msvc
   immer
