@@ -13,6 +13,7 @@ const dossierStore = {
   updateElementPositions: vi.fn().mockResolvedValue(undefined),
   removeAsset: vi.fn().mockResolvedValue(undefined),
   addAsset: vi.fn().mockResolvedValue(undefined),
+  mergeElements: vi.fn().mockResolvedValue(undefined),
   elements: [] as Element[],
 };
 
@@ -265,6 +266,63 @@ describe('link creation', () => {
   });
 });
 
+describe('element merge', () => {
+  // A merge deletes the source element, retargets its links, drops the ones
+  // that became duplicates, and folds their metadata into the survivors.
+  const snapshot = {
+    targetId: 'target',
+    sourceId: 'source',
+    sourceElement: element('source'),
+    targetBefore: { notes: 'target notes before', tags: ['a'] },
+    linksBefore: [
+      { id: 'retargeted', fromId: 'source', toId: 'other', label: 'kept', notes: '', tags: [], properties: [] },
+      { id: 'dropped', fromId: 'source', toId: 'target', label: 'gone', notes: '', tags: [], properties: [] },
+    ],
+    deletedLinkIds: ['dropped'],
+  };
+
+  it('brings back the source element and the links the merge dropped', async () => {
+    push({ type: 'merge-elements', undo: { snapshot }, redo: { snapshot } });
+
+    await history().undo();
+
+    expect(dossierStore.pasteElements).toHaveBeenCalledWith(
+      [snapshot.sourceElement],
+      [snapshot.linksBefore[1]]
+    );
+  });
+
+  it('rewinds the target element to its pre-merge values', async () => {
+    push({ type: 'merge-elements', undo: { snapshot }, redo: { snapshot } });
+
+    await history().undo();
+
+    expect(dossierStore.updateElement).toHaveBeenCalledWith('target', snapshot.targetBefore);
+  });
+
+  it('restores the endpoints of retargeted links but not of dropped ones', async () => {
+    push({ type: 'merge-elements', undo: { snapshot }, redo: { snapshot } });
+
+    await history().undo();
+
+    const updated = dossierStore.updateLink.mock.calls.map((c) => c[0]);
+    expect(updated).toEqual(['retargeted']);
+    expect(dossierStore.updateLink).toHaveBeenCalledWith(
+      'retargeted',
+      expect.objectContaining({ fromId: 'source', toId: 'other', label: 'kept' })
+    );
+  });
+
+  it('replays the merge on redo', async () => {
+    push({ type: 'merge-elements', undo: { snapshot }, redo: { snapshot } });
+    await history().undo();
+
+    await history().redo();
+
+    expect(dossierStore.mergeElements).toHaveBeenCalledWith('target', 'source');
+  });
+});
+
 describe('unhandled action types', () => {
   it('warns instead of skipping silently', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -287,7 +345,7 @@ describe('unhandled action types', () => {
       'create-elements', 'delete-elements', 'move-elements',
       'extract-to-element', 'dissolve-group', 'remove-from-group',
       'create-group', 'delete-tab', 'delete-view', 'delete-section',
-      'clear-filters', 'add-asset',
+      'clear-filters', 'add-asset', 'merge-elements',
     ];
 
     for (const type of declared) {

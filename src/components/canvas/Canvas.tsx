@@ -4676,7 +4676,12 @@ export function Canvas() {
             element1={mergeElements.el1}
             element2={mergeElements.el2}
             onMerge={async (targetId, sourceId) => {
-              await mergeElementsAction(targetId, sourceId);
+              const snapshot = await mergeElementsAction(targetId, sourceId);
+              pushAction({
+                type: 'merge-elements',
+                undo: { snapshot },
+                redo: { snapshot },
+              });
               clearSelection();
             }}
           />

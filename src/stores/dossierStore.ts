@@ -69,6 +69,24 @@ import {
   type AssetMeta,
 } from '../services/assetSync';
 
+/**
+ * State captured before a merge, so the operation can be undone.
+ *
+ * A merge deletes the source element, retargets its links, drops the ones that
+ * became self-links or duplicates, and folds the dropped links' metadata into
+ * the survivors. Reverting that needs the previous state of every entity it
+ * touched, not just the two elements.
+ */
+export interface MergeSnapshot {
+  targetId: ElementId;
+  sourceId: ElementId;
+  sourceElement: Element;
+  targetBefore: Partial<Element>;
+  /** Full previous state of every link the merge retargeted, deleted or rewrote. */
+  linksBefore: Link[];
+  deletedLinkIds: LinkId[];
+}
+
 interface DossierState {
   // Current dossier
   currentDossier: Dossier | null;
@@ -126,7 +144,7 @@ interface DossierState {
   dissolveGroup: (groupId: ElementId) => Promise<void>;
 
   // Actions - Merge
-  mergeElements: (targetId: ElementId, sourceId: ElementId) => Promise<void>;
+  mergeElements: (targetId: ElementId, sourceId: ElementId) => Promise<MergeSnapshot>;
 
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
@@ -2014,6 +2032,35 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     }
 
+    // Snapshot everything the merge is about to change, so the caller can make
+    // it undoable. Taken before any mutation, and covering every touched link:
+    // retargeted, deleted, and those absorbing a duplicate's metadata.
+    const touchedLinkIds = new Set<string>([
+      ...linksToRetarget.map(r => r.id),
+      ...linksToDelete,
+      ...linksToMergeInto.keys(),
+    ]);
+    const mergeSnapshot: MergeSnapshot = {
+      targetId,
+      sourceId,
+      sourceElement: source,
+      targetBefore: {
+        notes: target.notes,
+        tags: target.tags,
+        properties: target.properties,
+        events: target.events,
+        assetIds: target.assetIds,
+        confidence: target.confidence,
+        source: target.source,
+        geo: target.geo,
+        date: target.date,
+        dateRange: target.dateRange,
+        childIds: target.childIds,
+      },
+      linksBefore: links.filter(l => touchedLinkIds.has(l.id)),
+      deletedLinkIds: [...linksToDelete],
+    };
+
     // --- Apply everything in one Y.Doc transaction ---
     localOpPending = true;
 
@@ -2167,6 +2214,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         useTabStore.getState().removeElementFromAllTabs(invId, sourceId);
       });
     }
+
+    return mergeSnapshot;
   },
 
   // ============================================================================
