@@ -448,7 +448,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           for (const v of vals) {
             const val = valueToString(v).trim();
             if (!val) continue;
-            const key = `${tag} ${val}`;
+            const key = `${tag}\u0000${val}`;
             let pivot = pivotByKey.get(key);
             if (!pivot) {
               pivot = mkElement({

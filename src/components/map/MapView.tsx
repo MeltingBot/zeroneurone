@@ -6,6 +6,7 @@ import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { escapeHtml, safeColor } from '../../utils/escapeHtml';
 import { toPng } from 'html-to-image';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
@@ -677,9 +678,8 @@ export function MapView() {
 
   // Create custom marker HTML
   const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number, isBreadcrumb?: boolean): string => {
-    const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const color = escHtml(element.visual.color || '#f5f5f4');
-    const borderColor = escHtml(element.visual.borderColor || '#a8a29e');
+    const color = safeColor(element.visual.color, '#f5f5f4');
+    const borderColor = safeColor(element.visual.borderColor, '#a8a29e');
 
     // Breadcrumb markers (past events in trace mode): a small coloured dot, no label/card.
     // Cheap to render for hundreds/thousands of them.
@@ -692,7 +692,7 @@ export function MapView() {
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
     const displayLabel = anonymousMode
       ? '<span style="display:inline-block;background:var(--color-text-primary,#3d3833);border-radius:2px;width:2.5em;height:0.8em;"></span>'
-      : escHtml(isSelected ? label : truncatedLabel);
+      : escapeHtml(isSelected ? label : truncatedLabel);
     const selectedStyle = isSelected
       ? 'box-shadow: 0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3);'
       : 'box-shadow: 0 1px 4px rgba(0,0,0,0.2);';
@@ -1299,7 +1299,8 @@ export function MapView() {
   const createArrowElement = useCallback((color: string, angle: number, size: number = 20): HTMLDivElement => {
     const el = document.createElement('div');
     el.className = 'link-arrow-icon';
-    el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 20 20" style="transform: rotate(${-angle + 90}deg);"><path d="M10 2 L18 18 L10 13 L2 18 Z" fill="${color}" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
+    const fill = safeColor(color, '#a8a29e');
+    el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 20 20" style="transform: rotate(${-angle + 90}deg);"><path d="M10 2 L18 18 L10 13 L2 18 Z" fill="${fill}" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
     el.style.pointerEvents = 'none';
     return el;
   }, []);

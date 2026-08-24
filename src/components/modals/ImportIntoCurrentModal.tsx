@@ -5,6 +5,7 @@ import { importService } from '../../services/importService';
 import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
+import { SafeHtml } from '../common/SafeHtml';
 
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
@@ -320,7 +321,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
               </button>
             </div>
             <div className="text-xs text-text-tertiary space-y-1">
-              <p dangerouslySetInnerHTML={{ __html: t('import.csvTemplate.format') }} />
+              <SafeHtml as="p" html={t('import.csvTemplate.format')} />
               <p>{t('import.csvTemplate.description')}</p>
             </div>
           </div>

@@ -10,6 +10,8 @@
 
 import type { Element, Link, Asset, Dossier, Report, Position } from '../types';
 import { fileService } from './fileService';
+import { escapeJsonForScript, safeColor, sanitizeUrl } from '../utils/escapeHtml';
+import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 
 // CSS variable to hex color map (same as svgExportService)
@@ -37,16 +39,19 @@ const CSS_VAR_MAP: Record<string, string> = {
 };
 
 // Allowed HTML tags in markdown output (whitelist for sanitisation)
-const ALLOWED_TAGS = new Set([
+const ALLOWED_TAGS = [
   'h1', 'h2', 'h3', 'strong', 'em', 'pre', 'code', 'blockquote',
   'hr', 'li', 'ul', 'a', 'br', 'p', 'dl', 'dt', 'dd',
-]);
+];
 
-// Strip any HTML tag not in the whitelist (defense-in-depth after markdown conversion)
+// Strip anything outside the whitelist. Attributes matter as much as tag names:
+// an <a> carrying an event handler is as dangerous as a <script>.
 function sanitiseHtml(html: string): string {
-  return html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
-    return ALLOWED_TAGS.has(tag.toLowerCase()) ? match : '';
-  });
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class', 'data-element-id'],
+    ALLOW_DATA_ATTR: false,
+  }) as string;
 }
 
 // Simple Markdown to HTML converter (no external dependency)
@@ -80,11 +85,10 @@ function markdownToHtml(md: string): string {
     .replace(/^- (.+)$/gm, '<li>$1</li>')
     // Links (only safe protocols: http, https, mailto, fragment)
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_: string, text: string, url: string) => {
-      const trimUrl = url.trim().toLowerCase();
-      if (/^(https?:|mailto:|#)/.test(trimUrl)) {
-        return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
-      }
-      return text;
+      const safeUrl = sanitizeUrl(url);
+      if (!safeUrl) return text;
+      // The href is quoted, so the URL must not be able to close the attribute.
+      return `<a href="${escapeXml(safeUrl)}" target="_blank" rel="noopener">${text}</a>`;
     })
     // Line breaks (two spaces or explicit)
     .replace(/  \n/g, '<br>\n')
@@ -96,7 +100,14 @@ function markdownToHtml(md: string): string {
   // Clean up adjacent blockquotes
   html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
 
-  html = `<p>${html}</p>`.replace(/<p><\/p>/g, '').replace(/<p>(<h[1-6]>)/g, '$1').replace(/(<\/h[1-6]>)<\/p>/g, '$1');
+  // Block elements must not end up inside <p>: the HTML parser hoists them out
+  // and leaves empty paragraphs behind, which shifts the layout of the report.
+  const BLOCK_OPEN = /<p>\s*(<(?:h[1-6]|ul|hr|blockquote|pre)\b)/g;
+  const BLOCK_CLOSE = /(<\/(?:h[1-6]|ul|blockquote|pre)>|<hr>)\s*<\/p>/g;
+  html = `<p>${html}</p>`
+    .replace(BLOCK_OPEN, '$1')
+    .replace(BLOCK_CLOSE, '$1')
+    .replace(/<p>\s*<\/p>/g, '');
 
   // Sanitise: strip any tag not in the whitelist
   return sanitiseHtml(html);
@@ -113,7 +124,9 @@ function parseElementReferences(html: string): string {
   );
 }
 
-// Resolve CSS variable colors to hex
+// Resolve CSS variable colors to hex.
+// The result lands in quoted SVG attributes, and colours can come from an
+// imported file or a peer, so anything unrecognised falls back.
 function resolveColor(color: string | undefined, defaultColor: string): string {
   if (!color) return defaultColor;
   // Handle CSS variables
@@ -127,7 +140,7 @@ function resolveColor(color: string | undefined, defaultColor: string): string {
     if (color.includes('accent') || color.includes('blue')) return '#2563eb';
     return defaultColor;
   }
-  return color;
+  return safeColor(color, defaultColor);
 }
 
 // Resolve absolute position for elements in groups
@@ -471,7 +484,8 @@ function buildElementDetails(elements: Element[], thumbnails: Record<string, str
     details[el.id] = html;
   }
 
-  return JSON.stringify(details);
+  // Embedded in an inline <script>, so plain JSON.stringify is not enough.
+  return escapeJsonForScript(details);
 }
 
 // Main export function
@@ -751,7 +765,7 @@ main[data-active-tab="graph"] #graph-panel{display:block;width:100%;height:100%}
 var D=document,Q=function(s){return D.querySelector(s)},QA=function(s){return D.querySelectorAll(s)};
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 var elementDetails=${params.elementDetails};
-var reportMarkdown=${JSON.stringify(params.reportMarkdown)};
+var reportMarkdown=${escapeJsonForScript(params.reportMarkdown)};
 var infoModal=Q('#info-modal'),infoBtn=Q('#info-btn'),modalClose=Q('#modal-close');
 infoBtn.addEventListener('click',function(){infoModal.classList.add('visible')});
 modalClose.addEventListener('click',function(){infoModal.classList.remove('visible')});
