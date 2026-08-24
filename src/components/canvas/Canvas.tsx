@@ -318,6 +318,7 @@ function elementToNode(
   isGhost?: boolean,
   isHighlighted?: boolean,
   isLowDetail?: boolean,
+  hasLinks?: boolean,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -412,6 +413,7 @@ function elementToNode(
       tagDisplaySize,
       themeMode,
       isLowDetail,
+      hasLinks,
     } satisfies ElementNodeData,
     selected: isGhost ? false : isSelected,
   };
@@ -1290,6 +1292,17 @@ export function Canvas() {
   const prevActiveTabIdRef = useRef(activeTabId);
   const prevLowDetailRef = useRef(isLowDetail);
 
+  // Which nodes carry at least one link. Stable: it depends on the links
+  // themselves, not on the viewport, so panning never invalidates it.
+  const linkedNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const lk of links) {
+      ids.add(lk.fromId);
+      ids.add(lk.toId);
+    }
+    return ids;
+  }, [links]);
+
   const nodes = useMemo(() => {
     const activeTabChanged = prevActiveTabIdRef.current !== activeTabId;
     const globalSettingsChanged =
@@ -1334,6 +1347,7 @@ export function Canvas() {
         isGhostNode,
         emphasizedElementIds.has(ns.el.id),
         isLowDetail,
+        linkedNodeIds.has(ns.el.id),
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1506,7 +1520,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
 
   // Update awareness when selection changes
   useEffect(() => {

@@ -15,7 +15,13 @@ const LINK_RATIO = 1.5;
 /** Nodes per row when laying the grid out. */
 const COLUMNS = 100;
 
-export function buildLargeDossierJson(elementCount: number): string {
+/**
+ * @param isolatedRatio share of elements carrying no link at all. Real dossiers
+ *   hold many — an imported contact list starts entirely unlinked — and they
+ *   are the case conditional handles are meant to help.
+ */
+export function buildLargeDossierJson(elementCount: number, isolatedRatio = 0): string {
+  const linkableCount = Math.max(2, Math.floor(elementCount * (1 - isolatedRatio)));
   const now = new Date().toISOString();
 
   const elements = Array.from({ length: elementCount }, (_, i) => ({
@@ -52,10 +58,10 @@ export function buildLargeDossierJson(elementCount: number): string {
     updatedAt: now,
   }));
 
-  const links = Array.from({ length: Math.floor(elementCount * LINK_RATIO) }, (_, i) => ({
+  const links = Array.from({ length: Math.floor(linkableCount * LINK_RATIO) }, (_, i) => ({
     id: `lk-${i}`,
-    fromId: `el-${i % elementCount}`,
-    toId: `el-${(i * 7 + 3) % elementCount}`,
+    fromId: `el-${i % linkableCount}`,
+    toId: `el-${(i * 7 + 3) % linkableCount}`,
     label: '',
     notes: '',
     tags: [],

@@ -18,6 +18,8 @@ import { buildLargeDossierJson } from './fixtures/large-dossier';
  */
 
 const ELEMENT_COUNT = Number(process.env.BENCH_ELEMENTS ?? 5000);
+/** Share of elements with no link. Conditional handles only help these. */
+const ISOLATED_RATIO = Number(process.env.BENCH_ISOLATED ?? 0);
 
 test.describe.configure({ mode: 'serial', timeout: 10 * 60 * 1000 });
 
@@ -31,7 +33,7 @@ test('render performance on a heavy dossier', async ({ page }) => {
   // Write the fixture where the file chooser can reach it.
   const dir = mkdtempSync(join(tmpdir(), 'zn-bench-'));
   const file = join(dir, 'heavy.json');
-  writeFileSync(file, buildLargeDossierJson(ELEMENT_COUNT));
+  writeFileSync(file, buildLargeDossierJson(ELEMENT_COUNT, ISOLATED_RATIO));
 
   // ── Import ────────────────────────────────────────────────────────────────
   await page.click('[data-testid="import-button"]');
@@ -105,6 +107,9 @@ test('render performance on a heavy dossier', async ({ page }) => {
   const zoomedOut = await page.evaluate(() => ({
     zoomedOutNodesInDom: document.querySelectorAll('.react-flow__node').length,
     zoomedOutEdgesInDom: document.querySelectorAll('.react-flow__edge').length,
+    // Deterministic, unlike frame timings: how much DOM the overview really holds.
+    zoomedOutHandlesInDom: document.querySelectorAll('.react-flow__handle').length,
+    zoomedOutTotalDomNodes: document.querySelectorAll('.react-flow__renderer *').length,
   }));
 
   const panZoomedOut = await page.evaluate(async () => {
@@ -148,6 +153,7 @@ test('render performance on a heavy dossier', async ({ page }) => {
 
   const results = {
     elements: ELEMENT_COUNT,
+    isolatedRatio: ISOLATED_RATIO,
     importMs,
     firstNodeMs,
     ...counts,
@@ -160,7 +166,7 @@ test('render performance on a heavy dossier', async ({ page }) => {
   console.log(JSON.stringify(results, null, 2));
   // Also on disk: console output is easily swallowed, and these numbers are
   // the point of the exercise.
-  writeFileSync(`render-bench-${ELEMENT_COUNT}.json`, JSON.stringify(results, null, 2));
+  writeFileSync(`render-bench-${ELEMENT_COUNT}${ISOLATED_RATIO ? '-iso' : ''}.json`, JSON.stringify(results, null, 2));
 
   // The only hard assertion: the canvas must actually be there. Everything
   // else is a measurement, and thresholds would go stale on other hardware.

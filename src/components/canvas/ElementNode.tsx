@@ -53,6 +53,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   badgeProperty?: { value: string; type: string } | null;
   /** Zoomed far enough out that labels are unreadable: render a plain box. */
   isLowDetail?: boolean;
+  /** Whether any link touches this node — drives whether handles are needed. */
+  hasLinks?: boolean;
   /** Show confidence indicator (🤝 + %) */
   showConfidenceIndicator?: boolean;
   /** Properties to display below the element */
@@ -87,7 +89,7 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks } = nodeData;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -267,7 +269,12 @@ function ElementNodeComponent({ data }: NodeProps) {
               : element.visual.borderColor,
           }}
         />
-        {/* Kept: edges anchor to these by id, and the ids are stored on links. */}
+        {/* Handles exist only to anchor edges, and links store their ids. An
+            unlinked node needs none — at 5 000 nodes that is 8 DOM elements
+            saved each. Link creation by dragging is impossible at this zoom
+            anyway, so nothing is lost. */}
+        {hasLinks && (
+          <>
         <Handle type="source" position={Position.Top} id="source-top" className="!opacity-0 !w-1 !h-1" />
         <Handle type="source" position={Position.Bottom} id="source-bottom" className="!opacity-0 !w-1 !h-1" />
         <Handle type="source" position={Position.Left} id="source-left" className="!opacity-0 !w-1 !h-1" />
@@ -276,6 +283,8 @@ function ElementNodeComponent({ data }: NodeProps) {
         <Handle type="target" position={Position.Bottom} id="target-bottom" className="!opacity-0 !w-1 !h-1" />
         <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
         <Handle type="target" position={Position.Right} id="target-right" className="!opacity-0 !w-1 !h-1" />
+          </>
+        )}
       </div>
     );
   }
@@ -798,6 +807,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.isLowDetail !== nextData.isLowDetail) return false;
+  if (prevData.hasLinks !== nextData.hasLinks) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;
   if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;
   if (prevData.isLoadingAsset !== nextData.isLoadingAsset) return false;
