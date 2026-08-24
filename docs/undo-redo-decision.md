@@ -65,19 +65,56 @@ Conséquence directe sur la feuille de route : la migration des 81 sites
 indépendamment de l'appelant : instrumenter les stores pour les 18 types
 concernés serait du travail jeté.
 
-## Points ouverts avant migration
+## Le prérequis : une action utilisateur = une transaction Y.Doc
 
-1. **Granularité.** `captureTimeout` vaut 500 ms par défaut : deux actions
-   utilisateur rapprochées fusionnent en une seule étape d'annulation. Il faudra
-   soit appeler `stopCapturing()` entre deux actions distinctes, soit passer
-   `captureTimeout: 0` et gérer le regroupement explicitement (notamment pour
-   les imports, qui doivent former une seule entrée).
-2. **Racines suivies.** Les `assets` sont diffusés par morceaux entre pairs ;
-   les exclure du suivi évite qu'un undo d'élément ne défasse un transfert.
-3. **Interaction avec les deux piles.** Ctrl+Z doit consulter une seule
-   séquence ordonnée. Faire cohabiter `UndoManager` et la pile maison demande un
-   ordonnancement explicite, sinon l'ordre d'annulation devient imprévisible
-   dès qu'on mélange une suppression de vue et une suppression d'élément.
-4. **Effets hors Y.Doc.** Certaines annulations ont des conséquences dans Dexie
-   ou OPFS (assets, appartenance aux onglets) que `UndoManager` ne rejouera pas.
-   Elles devront être rattachées aux événements `stack-item-popped`.
+`Y.UndoManager` raisonne en transactions : une transaction est une étape
+d'annulation. Ce n'est pas le cas aujourd'hui.
+
+Mesuré par `src/stores/transactionAtomicity.test.ts` :
+
+| Action | Transactions |
+|---|---|
+| Créer un élément, un lien ; modifier ; déplacer ; supprimer un lien | 1 |
+| **Supprimer un élément** | **3** |
+| **Supprimer plusieurs éléments** | **4** |
+| **Fusionner deux éléments** | **3** |
+
+Les trois cas non atomiques sont exactement ceux qui suppriment un élément et
+cascadent vers les onglets. La cascade est planifiée après un `import()`
+dynamique, dans une transaction détachée : le nombre d'étapes d'annulation et
+leur regroupement dépendent donc de la vitesse de résolution de cet import,
+pas de l'intention. Non déterministe, donc intestable.
+
+À noter : ces trois cas ne sont non atomiques **que si l'élément appartient à
+un onglet**. Une mesure qui ne place pas les éléments dans un onglet conclut à
+tort que tout est atomique — les tests le font explicitement.
+
+Rendre ces mutations atomiques est un correctif utile indépendamment de
+l'annulation : aujourd'hui un pair reçoit ces transactions séparément et
+observe un état intermédiaire incohérent.
+
+## Les autres points, une fois l'atomicité acquise
+
+1. **Granularité** : `captureTimeout: 0`, une transaction = une étape. Les
+   imports forment une seule entrée en enveloppant l'import dans une
+   transaction unique.
+2. **Racines suivies** : `elements`, `links`, `tabs`, `reports`, `meta` — pas
+   `assets`, diffusés par morceaux entre pairs, qu'un undo d'élément ne doit
+   pas défaire.
+3. **Cohabitation des deux piles** : la supprimer plutôt que l'organiser. Les
+   deux seuls cas hors Yjs (`delete-view`, `clear-filters`) sont des
+   opérations de panneau, pas de document ; un Ctrl+Z sur le canvas n'a pas à
+   les couvrir. Une affordance locale (toast « Annuler ») les traite mieux et
+   élimine tout problème d'ordonnancement.
+4. **Effets hors Y.Doc** : largement dissous. L'appartenance aux onglets
+   redevient automatique dès que `tabs` est une racine suivie. Dexie devrait
+   se remettre à jour via l'observer `_syncFromYDoc` existant — **à confirmer**,
+   car cet observer s'appuie sur le drapeau `localOpPending`. Reste OPFS, où
+   `cleanOrphanedOpfs()` couvre déjà les binaires orphelins.
+
+## Ordre d'exécution
+
+1. Rendre atomiques les trois mutations mesurées (sans toucher à l'annulation).
+2. Brancher `UndoManager` en parallèle, sans le câbler à Ctrl+Z, et comparer.
+3. Basculer Ctrl+Z, retirer les 18 cas du switch maison.
+4. Traiter `delete-view` et `clear-filters` par des affordances locales.
