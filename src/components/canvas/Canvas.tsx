@@ -140,6 +140,9 @@ interface LinkContextMenuState {
   linkLabel: string;
 }
 
+/** Zoom below which nodes render as plain boxes. Labels are unreadable there. */
+const LOW_DETAIL_ZOOM = 0.35;
+
 const nodeTypes = {
   element: ElementNode,
   groupFrame: GroupNode,
@@ -314,6 +317,7 @@ function elementToNode(
   themeMode?: 'light' | 'dark',
   isGhost?: boolean,
   isHighlighted?: boolean,
+  isLowDetail?: boolean,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -407,6 +411,7 @@ function elementToNode(
       tagDisplayMode,
       tagDisplaySize,
       themeMode,
+      isLowDetail,
     } satisfies ElementNodeData,
     selected: isGhost ? false : isSelected,
   };
@@ -607,6 +612,11 @@ function linkToEdge(
 }
 
 export function Canvas() {
+  // Below this zoom a label is a few pixels tall and unreadable, so the node's
+  // text, tags, badges and thumbnail cost DOM for nothing. Rendering a plain
+  // coloured box instead is what makes a 5 000-element overview usable.
+  const [isLowDetail, setIsLowDetail] = useState(false);
+
   const { t } = useTranslation('common');
   const { t: tPages } = useTranslation('pages');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -1278,6 +1288,7 @@ export function Canvas() {
   const prevThemeRef = useRef(themeMode);
   const prevTabMemberSetRef = useRef(tabMemberSet);
   const prevActiveTabIdRef = useRef(activeTabId);
+  const prevLowDetailRef = useRef(isLowDetail);
 
   const nodes = useMemo(() => {
     const activeTabChanged = prevActiveTabIdRef.current !== activeTabId;
@@ -1286,7 +1297,8 @@ export function Canvas() {
       prevShowConfRef.current !== showConfidenceIndicator ||
       prevTagModeRef.current !== tagDisplayMode ||
       prevTagSizeRef.current !== tagDisplaySize ||
-      prevThemeRef.current !== themeMode;
+      prevThemeRef.current !== themeMode ||
+      prevLowDetailRef.current !== isLowDetail;
 
     // Helper: build a single node from its structure
     const buildNode = (ns: typeof nodeStructures[number]) => {
@@ -1321,6 +1333,7 @@ export function Canvas() {
         themeMode,
         isGhostNode,
         emphasizedElementIds.has(ns.el.id),
+        isLowDetail,
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1356,6 +1369,7 @@ export function Canvas() {
       prevTagModeRef.current = tagDisplayMode;
       prevTagSizeRef.current = tagDisplaySize;
       prevThemeRef.current = themeMode;
+      prevLowDetailRef.current = isLowDetail;
       prevTabMemberSetRef.current = tabMemberSet;
       prevActiveTabIdRef.current = activeTabId;
       return result;
@@ -1492,7 +1506,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -4248,6 +4262,12 @@ export function Canvas() {
   const handleViewportChange = useCallback(
     ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       setViewport({ x, y, zoom });
+      // Only re-render on a threshold crossing: setting the same value is a
+      // no-op in React, so this stays free during a pan.
+      setIsLowDetail((prev) => {
+        const next = zoom < LOW_DETAIL_ZOOM;
+        return prev === next ? prev : next;
+      });
     },
     [setViewport]
   );

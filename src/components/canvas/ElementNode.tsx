@@ -51,6 +51,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   isLoadingAsset?: boolean;
   /** Property to display as badge (value and type for country flag) */
   badgeProperty?: { value: string; type: string } | null;
+  /** Zoomed far enough out that labels are unreadable: render a plain box. */
+  isLowDetail?: boolean;
   /** Show confidence indicator (🤝 + %) */
   showConfidenceIndicator?: boolean;
   /** Properties to display below the element */
@@ -85,7 +87,7 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail } = nodeData;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -246,6 +248,37 @@ function ElementNodeComponent({ data }: NodeProps) {
   // Skip HD loading when media is hidden — thumbnail is enough for pixelated display
   const firstAssetId = (hasThumbnail && !hideMedia) ? element.assetIds?.[0] : undefined;
   const hdImageUrl = useHdImage(firstAssetId, width, height);
+
+  // Zoomed far out, a node is a few pixels tall: its label, tags, badges,
+  // thumbnail and resizer are invisible but still cost DOM — the dominant
+  // expense when the whole graph is on screen. Render the shape alone.
+  // Handles are kept: React Flow anchors edges to them.
+  if (isLowDetail && !isEditing) {
+    return (
+      <div className={`relative ${isDimmed ? 'opacity-30' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
+        <div
+          className={`w-full h-full ${shapeStyles[element.visual.shape]} ${isSelected ? 'selection-ring' : ''}`}
+          style={{
+            backgroundColor: getThemeAwareColor(element.visual.color, themeMode === 'dark'),
+            borderWidth: element.visual.borderWidth ?? 2,
+            borderStyle: isGhost ? 'dashed' : (element.visual.borderStyle ?? 'solid'),
+            borderColor: themeMode === 'dark'
+              ? getThemeAwareColor(element.visual.borderColor, true)
+              : element.visual.borderColor,
+          }}
+        />
+        {/* Kept: edges anchor to these by id, and the ids are stored on links. */}
+        <Handle type="source" position={Position.Top} id="source-top" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Bottom} id="source-bottom" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Left} id="source-left" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Top} id="target-top" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Bottom} id="target-bottom" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="target" position={Position.Right} id="target-right" className="!opacity-0 !w-1 !h-1" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -764,6 +797,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isHighlighted !== nextData.isHighlighted) return false;
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
+  if (prevData.isLowDetail !== nextData.isLowDetail) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;
   if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;
   if (prevData.isLoadingAsset !== nextData.isLoadingAsset) return false;
