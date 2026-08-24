@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.51.1
+
+### Fixes
+- **Nœuds décalés de leur boîte de collision en production** — le corps d'un nœud était dessiné 64 px sous la boîte que React Flow lui attribuait. Le libellé paraissait rentré dans la forme et illisible, les poignées de redimensionnement flottaient au-dessus du nœud, et les blocs de propriétés recouvraient les cercles. En cause, `.handle-hitbox { position: relative }` dans la feuille de style de l'application, en conflit de même spécificité avec `.react-flow__handle { position: absolute }` de React Flow, les deux hors `@layer` : seul l'ordre des feuilles départageait. Le découpage du bundle introduit en 2.50.0 a sorti le CSS de React Flow dans un chunk distinct, émis avant celui de l'application, et la déclaration `relative` s'est mise à l'emporter — les huit poignées de connexion retombaient alors dans le flux normal et empilaient leur hauteur au-dessus du corps du nœud. La déclaration était inutile : cette classe n'est posée que sur des poignées, déjà positionnées en absolu et donc déjà bloc conteneur pour leur zone cliquable. Le défaut n'apparaissait qu'en production, le serveur de développement injectant les feuilles dans l'ordre d'évaluation des modules.
+- **Affichage dégradé au dézoom sur les petits tableaux** — le rendu simplifié (formes pleines sans image, libellé ni étiquette) ne dépendait que du niveau de zoom. Un dossier de quelques dizaines d'éléments perdait donc toute lisibilité au dézoom alors qu'il n'y avait aucun temps de rendu à y gagner. Il ne se déclenche plus qu'à partir de 400 éléments, seuil au-delà duquel il change réellement quelque chose.
+
+### Tests
+- Les tests de bout en bout tournent désormais sur Firefox en plus de Chromium, et sur le **build de production** en plus du serveur de développement — les deux angles morts qui ont laissé passer le défaut ci-dessus, invisible en développement par construction.
+- Nouvelle couverture de la mise en page d'un nœud : le conteneur React Flow, la racine du composant et la forme doivent partager la même boîte, et les poignées de redimensionnement encadrer la forme.
+
 ## 2.51.0
 
 ### Features

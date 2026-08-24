@@ -144,6 +144,11 @@ interface LinkContextMenuState {
 /** Zoom below which nodes render as plain boxes. Labels are unreadable there. */
 const LOW_DETAIL_ZOOM = 0.35;
 
+/** Below this many elements, drawing every label and thumbnail costs nothing
+ *  measurable, so zooming out keeps the full rendering. Stripping a 26-element
+ *  board down to flat shapes bought no frame time and only made it unreadable. */
+const LOW_DETAIL_MIN_ELEMENTS = 400;
+
 const nodeTypes = {
   element: ElementNode,
   groupFrame: GroupNode,
@@ -617,8 +622,10 @@ function linkToEdge(
 export function Canvas() {
   // Below this zoom a label is a few pixels tall and unreadable, so the node's
   // text, tags, badges and thumbnail cost DOM for nothing. Rendering a plain
-  // coloured box instead is what makes a 5 000-element overview usable.
-  const [isLowDetail, setIsLowDetail] = useState(false);
+  // coloured box instead is what makes a 5 000-element overview usable — but it
+  // is only worth the loss of legibility once there are enough nodes to pay for
+  // it, hence the element-count gate below.
+  const [isZoomedOut, setIsZoomedOut] = useState(false);
 
   const { t } = useTranslation('common');
   const { t: tPages } = useTranslation('pages');
@@ -628,6 +635,9 @@ export function Canvas() {
   // Stores — individual selectors to avoid re-renders when unrelated state changes
   const currentDossier = useDossierStore((s) => s.currentDossier);
   const elements = useDossierStore((s) => s.elements);
+
+  // Zooming out only strips detail on boards big enough for it to buy anything.
+  const isLowDetail = isZoomedOut && elements.length >= LOW_DETAIL_MIN_ELEMENTS;
   const links = useDossierStore((s) => s.links);
 
   // O(1) element lookup map — avoids O(n) .find() in hot paths (drag, resize, context menu)
@@ -4279,7 +4289,7 @@ export function Canvas() {
       setViewport({ x, y, zoom });
       // Only re-render on a threshold crossing: setting the same value is a
       // no-op in React, so this stays free during a pan.
-      setIsLowDetail((prev) => {
+      setIsZoomedOut((prev) => {
         const next = zoom < LOW_DETAIL_ZOOM;
         return prev === next ? prev : next;
       });
