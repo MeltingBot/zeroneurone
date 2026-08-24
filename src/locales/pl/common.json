@@ -110,7 +110,9 @@
     "required": "To pole jest wymagane",
     "networkError": "Błąd sieci",
     "importFailed": "Błąd importu",
-    "exportFailed": "Błąd eksportu"
+    "exportFailed": "Błąd eksportu",
+    "persistFailed": "Niektórych zmian nie udało się zapisać na tym urządzeniu.",
+    "storageFull": "Brak miejsca w pamięci: zmiany nie mogą już być zapisywane. Zwolnij miejsce lub wyeksportuj sprawę."
   },
   "confirm": {
     "delete": "Czy na pewno chcesz usunąć?",

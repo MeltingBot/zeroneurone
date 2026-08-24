@@ -110,7 +110,9 @@
     "required": "Aquest camp és obligatori",
     "networkError": "Error de xarxa",
     "importFailed": "Error en la importació",
-    "exportFailed": "Error en l'exportació"
+    "exportFailed": "Error en l'exportació",
+    "persistFailed": "Alguns canvis no s'han pogut desar en aquest dispositiu.",
+    "storageFull": "L'emmagatzematge és ple: els canvis ja no es poden desar. Allibereu espai o exporteu el vostre expedient."
   },
   "confirm": {
     "delete": "Esteu segur que voleu eliminar?",

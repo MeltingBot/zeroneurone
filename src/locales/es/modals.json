@@ -576,7 +576,10 @@
       "passwordLabel": "Confirme con su contraseña actual",
       "cancel": "Cancelar",
       "submit": "Desactivar",
-      "busy": "Migrando…"
+      "busy": "Migrando…",
+      "dataLossWarning": "{{count}} de {{total}} cambios guardados no se pueden descifrar y se perderán definitivamente si continúa. Exporte sus expedientes antes si desea conservarlos.",
+      "dataLossCancel": "Cancelar",
+      "dataLossConfirm": "Desactivar y perder estos datos"
     },
     "changePassword": {
       "oldLabel": "Contraseña actual",

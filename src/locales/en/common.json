@@ -111,7 +111,9 @@
     "required": "This field is required",
     "networkError": "Network error",
     "importFailed": "Import failed",
-    "exportFailed": "Export failed"
+    "exportFailed": "Export failed",
+    "persistFailed": "Some changes could not be saved on this device.",
+    "storageFull": "Storage is full: changes can no longer be saved. Free up space or export your dossier."
   },
   "confirm": {
     "delete": "Are you sure you want to delete?",

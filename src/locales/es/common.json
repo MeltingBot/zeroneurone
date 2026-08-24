@@ -110,7 +110,9 @@
     "required": "Este campo es obligatorio",
     "networkError": "Error de red",
     "importFailed": "Error en la importación",
-    "exportFailed": "Error en la exportación"
+    "exportFailed": "Error en la exportación",
+    "persistFailed": "Algunos cambios no se han podido guardar en este dispositivo.",
+    "storageFull": "El almacenamiento está lleno: los cambios ya no se pueden guardar. Libere espacio o exporte su expediente."
   },
   "confirm": {
     "delete": "¿Está seguro de que desea eliminar?",

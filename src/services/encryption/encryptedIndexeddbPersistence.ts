@@ -358,6 +358,43 @@ export async function migrateToEncrypted(
 }
 
 /**
+ * Compte les updates qui ne pourront pas être déchiffrés, sans rien modifier.
+ *
+ * migrateToPlaintext efface le store avant de réécrire : ce qui n'est pas
+ * déchiffrable est perdu définitivement. Ce comptage préalable permet de
+ * prévenir l'utilisateur avant toute écriture.
+ */
+export async function countUndecryptableUpdates(
+  dbName: string,
+  encryptionKey: Uint8Array
+): Promise<{ total: number; undecryptable: number }> {
+  const db = await idb.openDB(dbName, (db: IDBDatabase) =>
+    idb.createStores(db, [
+      [UPDATES_STORE_NAME, { autoIncrement: true }],
+      [CUSTOM_STORE_NAME],
+    ])
+  );
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([UPDATES_STORE_NAME], 'readonly');
+    const getReq = tx.objectStore(UPDATES_STORE_NAME).getAll();
+
+    getReq.onsuccess = () => {
+      const updates: Uint8Array[] = getReq.result;
+      let undecryptable = 0;
+      for (const update of updates) {
+        if (!isEncryptedUpdate(update)) continue;
+        if (!decryptUpdate(unwrapEncryptedUpdate(update), encryptionKey)) undecryptable++;
+      }
+      resolve({ total: updates.length, undecryptable });
+    };
+
+    tx.oncomplete = () => db.close();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
  * Migre une base chiffrée vers un format en clair (désactivation du chiffrement).
  */
 export async function migrateToPlaintext(

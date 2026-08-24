@@ -576,7 +576,10 @@
       "passwordLabel": "Mit Ihrem aktuellen Passwort bestätigen",
       "cancel": "Abbrechen",
       "submit": "Deaktivieren",
-      "busy": "Migriere…"
+      "busy": "Migriere…",
+      "dataLossWarning": "{{count}} von {{total}} gespeicherten Änderungen können nicht entschlüsselt werden und gehen beim Fortfahren endgültig verloren. Exportieren Sie Ihre Fälle vorher, wenn Sie sie behalten möchten.",
+      "dataLossCancel": "Abbrechen",
+      "dataLossConfirm": "Deaktivieren und Daten verlieren"
     },
     "changePassword": {
       "oldLabel": "Aktuelles Passwort",

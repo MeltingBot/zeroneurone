@@ -576,7 +576,10 @@
       "passwordLabel": "Conferma con la tua password attuale",
       "cancel": "Annulla",
       "submit": "Disattiva",
-      "busy": "Migrazione…"
+      "busy": "Migrazione…",
+      "dataLossWarning": "{{count}} modifiche salvate su {{total}} non possono essere decifrate e andranno perse definitivamente se si continua. Esportare prima i fascicoli per conservarli.",
+      "dataLossCancel": "Annulla",
+      "dataLossConfirm": "Disattiva e perdi questi dati"
     },
     "changePassword": {
       "oldLabel": "Password attuale",

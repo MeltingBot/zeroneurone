@@ -576,7 +576,10 @@
       "passwordLabel": "Bevestig met uw huidige wachtwoord",
       "cancel": "Annuleren",
       "submit": "Uitschakelen",
-      "busy": "Migreren…"
+      "busy": "Migreren…",
+      "dataLossWarning": "{{count}} van {{total}} opgeslagen wijzigingen kunnen niet worden ontsleuteld en gaan definitief verloren als u doorgaat. Exporteer eerst uw dossiers als u ze wilt behouden.",
+      "dataLossCancel": "Annuleren",
+      "dataLossConfirm": "Uitschakelen en gegevens verliezen"
     },
     "changePassword": {
       "oldLabel": "Huidig wachtwoord",

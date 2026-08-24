@@ -19,7 +19,56 @@
 import { db } from '../../db/database';
 import { DEFAULT_ENCRYPTED_TABLES } from './dexieEncryptionMiddleware';
 import { initializeEncryption } from './encryptionService';
-import { migrateToEncrypted, migrateToPlaintext } from './encryptedIndexeddbPersistence';
+import {
+  migrateToEncrypted,
+  migrateToPlaintext,
+  countUndecryptableUpdates,
+} from './encryptedIndexeddbPersistence';
+
+/**
+ * Levée quand la désactivation du chiffrement détruirait des données.
+ * L'appelant doit demander confirmation puis relancer avec acceptDataLoss.
+ */
+export class UndecryptableDataError extends Error {
+  readonly undecryptable: number;
+  readonly total: number;
+  readonly dossierIds: string[];
+
+  constructor(undecryptable: number, total: number, dossierIds: string[]) {
+    super(`${undecryptable}/${total} updates ne peuvent pas être déchiffrés`);
+    this.name = 'UndecryptableDataError';
+    this.undecryptable = undecryptable;
+    this.total = total;
+    this.dossierIds = dossierIds;
+  }
+}
+
+/** Passe en lecture seule sur toutes les bases Yjs, avant toute écriture. */
+async function countUndecryptableData(
+  dek: Uint8Array,
+  dossiers: Array<{ id: string }>
+): Promise<{ total: number; undecryptable: number; dossierIds: string[] }> {
+  let total = 0;
+  let undecryptable = 0;
+  const dossierIds: string[] = [];
+
+  for (const dossier of dossiers) {
+    try {
+      const count = await countUndecryptableUpdates(`zeroneurone-ydoc-${dossier.id}`, dek);
+      total += count.total;
+      if (count.undecryptable > 0) {
+        undecryptable += count.undecryptable;
+        dossierIds.push(dossier.id);
+      }
+    } catch (err) {
+      // Une base illisible ne doit pas bloquer le comptage ; migrateToPlaintext
+      // rencontrera la même erreur et la journalisera.
+      console.warn(`[migrationService] Comptage impossible pour ${dossier.id}:`, err);
+    }
+  }
+
+  return { total, undecryptable, dossierIds };
+}
 import { encryptOpfsBuffer, decryptOpfsBuffer, isOpfsEncrypted } from './opfsEncryption';
 import { syncService } from '../syncService';
 import { runBeforeDisableHooks } from '../../plugins/pluginAPI';
@@ -261,7 +310,8 @@ async function writePlaintextViaRawIDB(data: Record<string, unknown[]>): Promise
  */
 export async function disableEncryption(
   dek: Uint8Array,
-  onProgress: ProgressCallback = () => {}
+  onProgress: ProgressCallback = () => {},
+  options: { acceptDataLoss?: boolean } = {}
 ): Promise<void> {
   onProgress({ phase: 'Lecture des données déchiffrées', current: 0, total: 5 });
 
@@ -276,6 +326,16 @@ export async function disableEncryption(
   }
 
   const dossiers = (data['dossiers'] || []) as Array<{ id: string }>;
+
+  // Rien n'a encore été modifié : c'est le dernier moment où l'on peut renoncer
+  // sans conséquence. Si des updates sont indéchiffrables, ils seront effacés
+  // par migrateToPlaintext — l'utilisateur doit l'accepter explicitement.
+  if (!options.acceptDataLoss) {
+    const loss = await countUndecryptableData(dek, dossiers);
+    if (loss.undecryptable > 0) {
+      throw new UndecryptableDataError(loss.undecryptable, loss.total, loss.dossierIds);
+    }
+  }
 
   onProgress({ phase: 'Écriture en clair', current: 1, total: 5 });
 

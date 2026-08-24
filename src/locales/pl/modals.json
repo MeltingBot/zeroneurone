@@ -576,7 +576,10 @@
       "passwordLabel": "Potwierdź aktualnym hasłem",
       "cancel": "Anuluj",
       "submit": "Wyłącz",
-      "busy": "Migracja…"
+      "busy": "Migracja…",
+      "dataLossWarning": "{{count}} z {{total}} zapisanych zmian nie może zostać odszyfrowanych i zostanie bezpowrotnie utraconych po kontynuowaniu. Najpierw wyeksportuj sprawy, jeśli chcesz je zachować.",
+      "dataLossCancel": "Anuluj",
+      "dataLossConfirm": "Wyłącz i utrać te dane"
     },
     "changePassword": {
       "oldLabel": "Aktualne hasło",

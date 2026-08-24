@@ -576,7 +576,10 @@
       "passwordLabel": "Confirmeu amb la vostra contrasenya actual",
       "cancel": "Cancel·lar",
       "submit": "Desactivar",
-      "busy": "Migrant…"
+      "busy": "Migrant…",
+      "dataLossWarning": "{{count}} de {{total}} canvis desats no es poden desxifrar i es perdran definitivament si continueu. Exporteu els expedients abans si els voleu conservar.",
+      "dataLossCancel": "Cancel·la",
+      "dataLossConfirm": "Desactiva i perd aquestes dades"
     },
     "changePassword": {
       "oldLabel": "Contrasenya actual",

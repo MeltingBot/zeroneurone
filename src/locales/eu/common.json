@@ -110,7 +110,9 @@
     "required": "Eremu hau beharrezkoa da",
     "networkError": "Sare errorea",
     "importFailed": "Errorea inportatzean",
-    "exportFailed": "Errorea esportatzean"
+    "exportFailed": "Errorea esportatzean",
+    "persistFailed": "Aldaketa batzuk ezin izan dira gailu honetan gorde.",
+    "storageFull": "Biltegiratzea beteta dago: aldaketak ezin dira gehiago gorde. Egin lekua edo esportatu zure espedientea."
   },
   "confirm": {
     "delete": "Ziur zaude ezabatu nahi duzula?",

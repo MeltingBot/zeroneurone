@@ -110,7 +110,9 @@
     "required": "Dieses Feld ist erforderlich",
     "networkError": "Netzwerkfehler",
     "importFailed": "Fehler beim Import",
-    "exportFailed": "Fehler beim Export"
+    "exportFailed": "Fehler beim Export",
+    "persistFailed": "Einige Änderungen konnten auf diesem Gerät nicht gespeichert werden.",
+    "storageFull": "Der Speicher ist voll: Änderungen können nicht mehr gespeichert werden. Geben Sie Speicherplatz frei oder exportieren Sie Ihren Fall."
   },
   "confirm": {
     "delete": "Sind Sie sicher, dass Sie löschen möchten?",

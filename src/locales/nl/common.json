@@ -110,7 +110,9 @@
     "required": "Dit veld is verplicht",
     "networkError": "Netwerkfout",
     "importFailed": "Importfout",
-    "exportFailed": "Exportfout"
+    "exportFailed": "Exportfout",
+    "persistFailed": "Sommige wijzigingen konden niet op dit apparaat worden opgeslagen.",
+    "storageFull": "De opslag is vol: wijzigingen kunnen niet meer worden opgeslagen. Maak ruimte vrij of exporteer uw dossier."
   },
   "confirm": {
     "delete": "Weet u zeker dat u wilt verwijderen?",

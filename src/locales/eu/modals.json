@@ -576,7 +576,10 @@
       "passwordLabel": "Berretsi zure oraingo pasahitzarekin",
       "cancel": "Utzi",
       "submit": "Desgaitu",
-      "busy": "Migratzen…"
+      "busy": "Migratzen…",
+      "dataLossWarning": "Gordetako {{total}} aldaketetatik {{count}} ezin dira deszifratu eta betiko galduko dira jarraitzen baduzu. Esportatu zure espedienteak lehenik gorde nahi badituzu.",
+      "dataLossCancel": "Utzi",
+      "dataLossConfirm": "Desaktibatu eta galdu datu hauek"
     },
     "changePassword": {
       "oldLabel": "Oraingo pasahitza",
