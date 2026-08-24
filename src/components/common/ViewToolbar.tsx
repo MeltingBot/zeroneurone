@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Undo2, Redo2, Image, ImageOff, Eye, EyeOff, Type, PenTool, MessageCircle, MessageCircleOff } from 'lucide-react';
+import { Undo2, Redo2, Image, ImageOff, Eye, EyeOff, MessageCircle, MessageCircleOff } from 'lucide-react';
 import { useUIStore, useHistoryStore } from '../../stores';
 
 interface ViewToolbarProps {
@@ -11,7 +11,6 @@ interface ViewToolbarProps {
   /** Right side content before common controls (e.g., view-specific buttons) */
   rightContent?: ReactNode;
   /** Show font mode toggle (for views with text labels) */
-  showFontToggle?: boolean;
   /** Show hide-media toggle (default true, hide for views without media) */
   showMediaToggle?: boolean;
   /** Show comment badges toggle (default true, hide for views without badges) */
@@ -22,12 +21,11 @@ export function ViewToolbar({
   leftContent,
   centerContent,
   rightContent,
-  showFontToggle = false,
   showMediaToggle = true,
   showCommentBadgesToggle = true,
 }: ViewToolbarProps) {
   const { t } = useTranslation('pages');
-  const { fontMode, toggleFontMode, hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
+  const { hideMedia, toggleHideMedia, anonymousMode, toggleAnonymousMode, showCommentBadges, toggleShowCommentBadges } = useUIStore();
   const { canUndo, canRedo, undo, redo } = useHistoryStore();
 
   const canUndoNow = canUndo();
@@ -73,18 +71,6 @@ export function ViewToolbar({
         </button>
 
         <div className="w-px h-4 bg-border-default mx-1" />
-
-        {/* Font mode toggle */}
-        {showFontToggle && (
-          <button
-            onClick={toggleFontMode}
-            aria-pressed={fontMode === 'handwritten'}
-            className={`p-1.5 rounded transition-colors ${fontMode === 'handwritten' ? 'bg-accent-light text-accent' : 'hover:bg-bg-tertiary text-text-secondary'}`}
-            title={fontMode === 'handwritten' ? t('dossier.viewToolbar.readableFont') : t('dossier.viewToolbar.handwrittenFont')}
-          >
-            {fontMode === 'handwritten' ? <Type size={16} /> : <PenTool size={16} />}
-          </button>
-        )}
 
         {/* Hide media toggle */}
         {showMediaToggle && (

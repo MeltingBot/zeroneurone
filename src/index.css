@@ -1,5 +1,3 @@
-/* Google Font - Handwritten style - must be before Tailwind */
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -150,7 +148,6 @@ html[data-theme="dark"] .modal-shadow {
 /* Font System */
 :root {
   --font-readable: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-handwritten: "Caveat", cursive;
   font-family: var(--font-readable);
   line-height: 1.5;
   font-weight: 400;
@@ -166,12 +163,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-}
-
-/* Handwritten mode - applies ONLY to canvas elements (nodes & edge labels) */
-.canvas-handwritten-text {
-  font-family: var(--font-handwritten);
-  font-size: 1.15em; /* Caveat needs slightly larger size */
 }
 
 #root {

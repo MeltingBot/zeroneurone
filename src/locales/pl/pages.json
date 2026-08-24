@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
       "redo": "Ponów (Ctrl+Shift+Z)",
-      "readableFont": "Czytelna czcionka",
-      "handwrittenFont": "Czcionka odręczna",
       "darkMode": "Tryb ciemny",
       "lightMode": "Tryb jasny",
       "showMedia": "Pokaż media",

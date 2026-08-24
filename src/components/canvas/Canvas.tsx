@@ -4293,7 +4293,6 @@ export function Canvas() {
       <div className="w-full h-full flex flex-col">
         {/* Toolbar */}
         <ViewToolbar
-          showFontToggle
           leftContent={
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-xs text-text-secondary">

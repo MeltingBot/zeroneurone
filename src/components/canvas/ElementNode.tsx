@@ -93,7 +93,6 @@ function ElementNodeComponent({ data }: NodeProps) {
   // (Ctrl/⌘ and Shift are reserved by React Flow for multi-selection / selection box.)
   const [keepAspect, setKeepAspect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const fontMode = useUIStore((state) => state.fontMode);
   // Get themeMode from data (passed from Canvas) for proper memo comparison
   const themeMode = data.themeMode ?? 'light';
   const hideMedia = useUIStore((state) => state.hideMedia);
@@ -530,7 +529,7 @@ function ElementNodeComponent({ data }: NodeProps) {
             </div>
             <div className="w-full px-1 py-0.5 bg-bg-secondary border-t border-border-default flex-shrink-0">
               <span
-                className={`text-[10px] text-text-tertiary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`text-[10px] text-text-tertiary block text-center`}
               >
                 {element.label || t('status.loading')}
               </span>
@@ -572,16 +571,15 @@ function ElementNodeComponent({ data }: NodeProps) {
                   onKeyDown={handleInputKeyDown}
                   onBlur={handleInputBlur}
                   className="w-full text-[10px] text-text-primary text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
-                  style={{ fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined }}
                 />
               ) : anonymousMode ? (
                 <RedactedText
                   text={element.label || t('empty.unnamed')}
-                  className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                  className={`text-[10px] block text-center`}
                 />
               ) : (
                 <span
-                  className={`text-[10px] text-text-primary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                  className={`text-[10px] text-text-primary block text-center`}
                   style={{
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -617,18 +615,17 @@ function ElementNodeComponent({ data }: NodeProps) {
                   color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
                     ? '#111827'
                     : '#ffffff',
-                  fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
                 }}
               />
             ) : anonymousMode ? (
               <RedactedText
                 text={element.label || t('empty.unnamed')}
-                className={`font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`font-medium leading-tight block`}
                 style={{ fontSize: labelFontSize }}
               />
             ) : (
               <span
-                className={`font-medium leading-tight block ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+                className={`font-medium leading-tight block`}
                 style={{
                   fontSize: labelFontSize,
                   color: isLightColor(getThemeAwareColor(element.visual.color, themeMode === 'dark'))
@@ -670,16 +667,15 @@ function ElementNodeComponent({ data }: NodeProps) {
               onKeyDown={handleInputKeyDown}
               onBlur={handleInputBlur}
               className="w-full text-[10px] text-text-primary text-center bg-transparent border-none outline-none focus:ring-1 focus:ring-accent rounded"
-              style={{ fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined }}
             />
           ) : anonymousMode ? (
             <RedactedText
               text={element.label || t('empty.unnamed')}
-              className={`text-[10px] block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              className={`text-[10px] block text-center`}
             />
           ) : (
             <span
-              className={`text-[10px] text-text-primary block text-center ${fontMode === 'handwritten' ? 'canvas-handwritten-text' : ''}`}
+              className={`text-[10px] text-text-primary block text-center`}
               style={{
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",
       "redo": "Ripristina (Ctrl+Maiusc+Z)",
-      "readableFont": "Font leggibile",
-      "handwrittenFont": "Font manoscritto",
       "darkMode": "Modalità scura",
       "lightMode": "Modalità chiara",
       "showMedia": "Mostra media",

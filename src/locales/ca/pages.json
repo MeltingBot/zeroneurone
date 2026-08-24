@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
       "redo": "Refer (Ctrl+Maj+Z)",
-      "readableFont": "Font llegible",
-      "handwrittenFont": "Font manuscrita",
       "darkMode": "Mode fosc",
       "lightMode": "Mode clar",
       "showMedia": "Mostrar mitjans",

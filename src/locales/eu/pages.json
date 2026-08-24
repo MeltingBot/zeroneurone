@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
       "redo": "Berregin (Ctrl+Shift+Z)",
-      "readableFont": "Letra irakurgarria",
-      "handwrittenFont": "Eskuz idatzitako letra",
       "darkMode": "Modu iluna",
       "lightMode": "Modu argia",
       "showMedia": "Multimedia erakutsi",

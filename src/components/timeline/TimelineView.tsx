@@ -1156,7 +1156,6 @@ export function TimelineView() {
     <div className="h-full flex flex-col bg-bg-secondary">
       {/* Toolbar */}
       <ViewToolbar
-        showFontToggle
         leftContent={
           <SwimlaneToolbar
             mode={timelineMode}

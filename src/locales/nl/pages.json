@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
       "redo": "Opnieuw doen (Ctrl+Shift+Z)",
-      "readableFont": "Leesbaar lettertype",
-      "handwrittenFont": "Handgeschreven lettertype",
       "darkMode": "Donkere modus",
       "lightMode": "Lichte modus",
       "showMedia": "Media tonen",

@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",
       "redo": "Rehacer (Ctrl+Shift+Z)",
-      "readableFont": "Fuente legible",
-      "handwrittenFont": "Fuente manuscrita",
       "darkMode": "Modo oscuro",
       "lightMode": "Modo claro",
       "showMedia": "Mostrar medios",

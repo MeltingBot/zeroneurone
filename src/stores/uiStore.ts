@@ -41,7 +41,6 @@ export interface ImportPlacementData {
   prebuilt?: { elements: Element[]; links: Link[]; assets?: { elementId: string; urls: string[] }[] };
 }
 
-export type FontMode = 'readable' | 'handwritten';
 export type ThemeMode = 'light' | 'dark';
 
 // Capture handler type - each view registers a function that fits content and returns screenshot
@@ -65,9 +64,6 @@ interface UIState {
 
   // Search
   searchOpen: boolean;
-
-  // Font mode (canvas only)
-  fontMode: FontMode;
 
   // Theme mode (entire interface)
   themeMode: ThemeMode;
@@ -138,10 +134,6 @@ interface UIState {
   closeSearch: () => void;
   toggleSearch: () => void;
 
-  // Actions - Font mode
-  setFontMode: (mode: FontMode) => void;
-  toggleFontMode: () => void;
-
   // Actions - Theme mode
   setThemeMode: (mode: ThemeMode) => void;
   toggleThemeMode: () => void;
@@ -196,7 +188,6 @@ export const useUIStore = create<UIState>()(
   activeTool: 'select',
   toasts: [],
   searchOpen: false,
-  fontMode: 'readable' as FontMode,
   themeMode: 'light' as ThemeMode,
   hideMedia: false,
   anonymousMode: false,
@@ -310,17 +301,6 @@ export const useUIStore = create<UIState>()(
     set((state) => ({ searchOpen: !state.searchOpen }));
   },
 
-  // Font mode (applies only to canvas elements via React state)
-  setFontMode: (mode) => {
-    set({ fontMode: mode });
-  },
-
-  toggleFontMode: () => {
-    set((state) => ({
-      fontMode: state.fontMode === 'readable' ? 'handwritten' : 'readable',
-    }));
-  },
-
   // Theme mode (applies to entire interface via CSS)
   setThemeMode: (mode) => {
     set({ themeMode: mode });
@@ -419,7 +399,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ fontMode: state.fontMode, themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, map3D: state.map3D, map3DBuildings: state.map3DBuildings }),
+      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, map3D: state.map3D, map3DBuildings: state.map3DBuildings }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

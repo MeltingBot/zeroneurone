@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",
       "redo": "Redo (Ctrl+Shift+Z)",
-      "readableFont": "Readable font",
-      "handwrittenFont": "Handwritten font",
       "darkMode": "Dark mode",
       "lightMode": "Light mode",
       "showMedia": "Show media",

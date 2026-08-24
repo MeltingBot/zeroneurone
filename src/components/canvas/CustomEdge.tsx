@@ -75,7 +75,6 @@ function CustomEdgeComponent(props: EdgeProps) {
     selected,  // React Flow's built-in selected state
   } = props;
 
-  const fontMode = useUIStore((state) => state.fontMode);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const themeMode = useUIStore((state) => state.themeMode);
   const { screenToFlowPosition } = useReactFlow();
@@ -579,8 +578,7 @@ function CustomEdgeComponent(props: EdgeProps) {
                   className="w-full h-full text-center bg-transparent border-none outline-none"
                   style={{
                     color: '#3d3833',
-                    fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
-                    fontSize: fontMode === 'handwritten' ? labelFontSize + 2 : labelFontSize,
+                    fontSize: labelFontSize,
                   }}
                 />
               </foreignObject>
@@ -602,8 +600,7 @@ function CustomEdgeComponent(props: EdgeProps) {
                 stroke: themeMode === 'dark' ? '#3d3833' : '#ffffff',
                 strokeWidth: 3,
                 paintOrder: 'stroke fill',
-                fontFamily: fontMode === 'handwritten' ? '"Caveat", cursive' : undefined,
-                fontSize: fontMode === 'handwritten' ? labelFontSize + 2 : labelFontSize,
+                fontSize: labelFontSize,
                 fontWeight: 500,
               }}
               textAnchor="middle"

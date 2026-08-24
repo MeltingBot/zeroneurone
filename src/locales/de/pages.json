@@ -190,8 +190,6 @@
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",
       "redo": "Wiederholen (Strg+Umschalt+Z)",
-      "readableFont": "Lesbare Schrift",
-      "handwrittenFont": "Handschrift",
       "darkMode": "Dunkler Modus",
       "lightMode": "Heller Modus",
       "showMedia": "Medien anzeigen",
