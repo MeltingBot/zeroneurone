@@ -28,6 +28,7 @@ import { ProgressiveList } from '../common/ProgressiveList';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
 import type { Element } from '../../types';
 import { DEFAULT_FILTERS } from '../../types';
+import { graphStructureSignature } from '../../services/graph/structureSignature';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
@@ -87,7 +88,16 @@ export function InsightsPanel() {
   // Respect link direction: only directed circuits (forward/backward), neutral links stay bidirectional
   const [cycleDirected, setCycleDirected] = useState(false);
 
-  // Auto-compute insights when data changes (debounced)
+  // Insights describe the shape of the graph, not its layout: moving a node
+  // changes neither its clusters, its bridges nor its centrality. Keying the
+  // recompute on the structure alone avoids relaunching a full analysis on
+  // every drag — the dominant source of recomputes on a large dossier.
+  const structureKey = useMemo(
+    () => graphStructureSignature(elements, links),
+    [elements, links]
+  );
+
+  // Auto-compute insights when the structure changes (debounced)
   useEffect(() => {
     if (elements.length === 0) return;
 
@@ -96,7 +106,10 @@ export function InsightsPanel() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [elements, links, computeInsights]);
+    // elements/links are read inside but deliberately not dependencies: only a
+    // structural change should retrigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureKey, computeInsights]);
 
   // Toggle section expansion
   const toggleSection = useCallback((sectionId: string) => {
