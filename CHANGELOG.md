@@ -1,5 +1,44 @@
 # Changelog
 
+## 2.50.0
+
+### Sécurité
+- **Deux XSS dans les rapports HTML exportés** — un rapport interactif est fait pour être partagé : c'était le seul vecteur inter-utilisateurs d'une application locale. Le contenu des sections était injecté dans le `<script>` embarqué via `JSON.stringify`, qui n'échappe pas `</script>` : une note piégée s'exécutait chez le destinataire. Les URL des liens markdown étaient filtrées en minuscules mais insérées brutes dans `href`, sans échapper les guillemets, et le garde-fou aval n'inspectait que les noms de balises — un lien porteur d'un gestionnaire d'événement passait intact. Le sanitiseur maison est remplacé par DOMPurify.
+- **Couleurs non validées** — `visual.color`, qui provient d'un import ou d'un pair, arrivait brut dans de l'`innerHTML` et des attributs SVG (carte, rapports, export). Validé au point de passage unique de chaque chemin.
+- **Impression du rapport** — `document.write`, déprécié, remplacé par un chargement de document. L'attente porte sur l'événement `load` au lieu d'un délai fixe qui pouvait tomber sur une page vide.
+- Les six `dangerouslySetInnerHTML` sur clés de traduction passent par un composant assaini.
+
+### Intégrité des données
+- **Suppression de dossier incomplète** — les requêtes ZNQuery sauvegardées et les commentaires n'étaient pas supprimés : ils restaient orphelins définitivement. Une migration nettoie les bases existantes.
+- **Échecs d'écriture invisibles** — la persistance derrière le Y.Doc était en « lance et oublie » : 25 écritures pouvaient échouer en silence, une base non inscriptible ressemblait exactement à une sauvegarde réussie. Elles signalent désormais l'erreur, avec un message dédié à la saturation du stockage.
+- **Désactivation du chiffrement** — les données non déchiffrables étaient effacées sans prévenir. L'opération les compte d'abord en lecture seule et demande une confirmation explicite indiquant combien seraient perdues.
+- **Restauration de sauvegarde** — la version de l'archive était ignorée ; une sauvegarde issue d'une version plus récente était acceptée telle quelle.
+- L'historique d'annulation est vidé au changement de dossier : un Ctrl+Z pouvait rejouer une action de l'enquête précédente.
+
+### Performances
+- **Analyse de graphe jusqu'à 290× plus rapide** — la détection des points d'articulation copiait le graphe entier pour chacun des N nœuds. Sur 5 000 éléments elle passe de 52 s à 4 ms, la détection de doublons de 17 s à 33 ms, et l'analyse complète de 72 s à 250 ms. À 10 000 éléments, six minutes deviennent moins d'une seconde.
+- **Recalculs inutiles supprimés** — l'analyse se relançait à chaque déplacement de nœud, alors qu'elle ne dépend pas des positions. Les calculs concurrents ne s'empilent plus sans jamais se résoudre.
+- **Canvas dézoomé fluide** — en vue d'ensemble d'un gros dossier, chaque nœud rendait son libellé, ses tags et ses badges, invisibles à ce zoom. Ils ne rendent plus que leur forme : la pire image passe de 181 ms à 17–33 ms sur 5 000 éléments, et le zoom est deux fois plus rapide.
+- **Démarrage allégé de 41 %** — 4 853 Ko à 2 843 Ko. La carte et le lecteur PDF ne sont plus chargés d'emblée, et seule la langue active est téléchargée au lieu des onze.
+
+### Accessibilité
+- **Les 21 modales piègent le focus** — douze réimplémentaient leur coque à la main : tabuler en sortait vers la page derrière, Échap ne fermait pas, et le focus ne revenait pas à son point de départ à la fermeture.
+- Les boutons à icône exigent désormais un nom accessible ; onze n'en avaient aucun. Les bascules de la barre d'outils exposent leur état, et la matrice est annoncée comme un tableau, avec le sens du tri.
+
+### Fixes
+- **Création et recâblage de liens annulables** — créer un lien par glisser puis faire Ctrl+Z ne produisait rien. Une action non gérée quittait la pile sans effet, si bien que le Ctrl+Z suivant annulait une action plus ancienne et sans rapport.
+- **Fusion d'éléments annulable** — l'opération la plus destructrice du canvas était la seule sans retour arrière.
+- Le repli de traduction passe du français à l'anglais : un utilisateur allemand voyait les libellés manquants en français.
+
+### Retiré
+- **Mode police manuscrite** — sans intérêt, et contraire aux règles de design du projet qui prescrivent la police système. Sa suppression retire aussi un appel réseau vers Google Fonts à chaque chargement.
+
+### Interne
+- Intégration continue : typecheck, tests et build en portes dures, avec un cliquet empêchant la dette de lint d'augmenter. Lockfile versionné.
+- Couverture de tests portée de 226 à 335, dont les premiers tests sur les stores, les repositories et les migrations de schéma.
+- Bancs d'essai reproductibles pour le calcul (`npm run bench`) et le rendu (`playwright test render-perf`).
+- Documentation alignée sur le code : l'export PDF, le raccourci de mode focus et la conformité WCAG AA annoncés n'existaient pas.
+
 ## 2.49.1
 
 ### Fixes
