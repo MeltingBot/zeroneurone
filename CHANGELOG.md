@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.50.2
+
+### Fixes
+- **Aperçu PDF : annulation de rendu signalée comme une erreur** — changer de page ou de zoom relançait le rendu sans annuler le précédent. pdf.js interrompait alors lui-même le rendu obsolète, et l'exception correspondante était journalisée comme une panne. La tâche de rendu est désormais conservée et annulée à la sortie, et une annulation n'est plus traitée comme une erreur : c'est le mécanisme normal de changement de page.
+- **Hooks conditionnels dans l'éditeur GeoJSON** — l'éditeur de coordonnées d'une zone polygonale appelait `useState` après un retour anticipé. React voyait un nombre de hooks variable selon la géométrie de l'élément, ce qui pouvait faire échouer le rendu du panneau. Défaut présent depuis l'ajout des zones géographiques.
+
 ## 2.50.1
 
 ### Fixes

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PDFDocumentProxy, PDFDocumentLoadingTask } from 'pdfjs-dist';
+import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask } from 'pdfjs-dist';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileWarning } from 'lucide-react';
 import { loadPdfjs } from '../../services/pdfjsLoader';
 
@@ -88,6 +88,11 @@ export function PdfPreview({ url }: PdfPreviewProps) {
     if (!doc || !canvas || scale === null) return;
     let cancelled = false;
 
+    // Held so the effect cleanup can cancel it: without this, changing page or
+    // zoom leaves the previous render running against the same canvas, and
+    // pdf.js aborts it on its own with a RenderingCancelledException.
+    let renderTask: RenderTask | null = null;
+
     doc.getPage(pageNum)
       .then(async (page) => {
         if (cancelled) return;
@@ -96,15 +101,20 @@ export function PdfPreview({ url }: PdfPreviewProps) {
         if (!ctx) return;
         canvas.width = Math.round(viewport.width);
         canvas.height = Math.round(viewport.height);
-        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        renderTask = page.render({ canvasContext: ctx, viewport, canvas });
+        await renderTask.promise;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
+        // Cancelling is how this component switches page or zoom level; it is
+        // control flow, not a failure to report.
+        if ((err as { name?: string })?.name === 'RenderingCancelledException') return;
         console.error('Erreur de rendu de la page PDF:', err);
         if (!cancelled) setError(true);
       });
 
     return () => {
       cancelled = true;
+      renderTask?.cancel();
     };
   }, [pageNum, scale]);
 

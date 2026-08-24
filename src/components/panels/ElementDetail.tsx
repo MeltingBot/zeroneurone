@@ -58,11 +58,17 @@ function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => 
   const updateElement = useDossierStore((s) => s.updateElement);
   const pushAction = useHistoryStore((s) => s.pushAction);
   const geo = element.geo;
-  if (!geo || !isGeoPolygon(geo)) return null;
+  const polygon = geo && isGeoPolygon(geo) ? geo : null;
 
-  const initialJson = JSON.stringify(geo.coordinates, null, 2);
-  const [text, setText] = useState(initialJson);
+  // Hooks must run on every render: they used to sit after the early return
+  // below, so React saw a different number of them depending on the element's
+  // geometry — the classic cause of "rendered fewer hooks than expected".
+  const [text, setText] = useState(() =>
+    polygon ? JSON.stringify(polygon.coordinates, null, 2) : ''
+  );
   const [error, setError] = useState<string | null>(null);
+
+  if (!polygon) return null;
 
   const handleSave = () => {
     try {
@@ -81,7 +87,7 @@ function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => 
       const center = computePolygonCenter(newCoords);
       const area = computePolygonAreaKm2(newCoords);
       const oldGeo = element.geo;
-      const newGeo = { ...geo, coordinates: newCoords, center, area };
+      const newGeo = { ...polygon, coordinates: newCoords, center, area };
       updateElement(element.id, { geo: newGeo });
       pushAction({
         type: 'update-element',
