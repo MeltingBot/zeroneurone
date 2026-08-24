@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.50.1
+
+### Fixes
+- **Exécution de code à l'ouverture d'un PDF piégé** (CVE via `pdfjs-dist`, sévérité haute) — la version embarquée de pdf.js permettait l'exécution de JavaScript arbitraire à l'ouverture d'un document PDF malveillant. Dans un outil d'enquête, où l'on ouvre par nature des documents d'origine non maîtrisée, c'est exactement le scénario à écarter. Montée en version 6.2.108. L'aperçu PDF a été adapté : `PDFDocumentProxy.destroy()` n'existe plus, la libération du worker passe désormais par la tâche de chargement.
+- **dompurify** (modéré) et **react-router** (haute) montés vers leurs versions corrigées. Le lockfile publié les contenait déjà — seuls les arbres de développement installés avant cette release étaient concernés.
+- **Avertissement de moteur Node à la construction Docker** — `jsdom` 30 exige Node ≥ 22.22.2 alors que l'image de construction fournit 22.21. Redescendu en 29, qui accepte la même plage que le reste du projet. Dépendance de développement uniquement.
+
+L'audit des dépendances de production ne remonte plus aucune vulnérabilité.
+
 ## 2.50.0
 
 ### Sécurité

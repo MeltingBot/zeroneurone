@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy, PDFDocumentLoadingTask } from 'pdfjs-dist';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileWarning } from 'lucide-react';
 import { loadPdfjs } from '../../services/pdfjsLoader';
 
@@ -25,6 +25,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
+  const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNum, setPageNum] = useState(1);
   const [scale, setScale] = useState<number | null>(null);
@@ -41,10 +42,17 @@ export function PdfPreview({ url }: PdfPreviewProps) {
     setScale(null);
 
     loadPdfjs()
-      .then((pdfjsLib) => pdfjsLib.getDocument({ url }).promise)
+      .then((pdfjsLib) => {
+        // pdf.js 6 dropped PDFDocumentProxy.destroy(); tearing down the worker
+        // transport now goes through the loading task.
+        const task = pdfjsLib.getDocument({ url });
+        loadingTaskRef.current = task;
+        return task.promise;
+      })
       .then(async (doc) => {
         if (cancelled) {
-          doc.destroy();
+          void loadingTaskRef.current?.destroy();
+          loadingTaskRef.current = null;
           return;
         }
         docRef.current = doc;
@@ -67,7 +75,8 @@ export function PdfPreview({ url }: PdfPreviewProps) {
 
     return () => {
       cancelled = true;
-      docRef.current?.destroy();
+      void loadingTaskRef.current?.destroy();
+      loadingTaskRef.current = null;
       docRef.current = null;
     };
   }, [url]);

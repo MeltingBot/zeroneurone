@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.50.0",
+  "version": "2.50.1",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -69,7 +69,7 @@
     "maplibre-gl": "^5.20.1",
     "marked": "^15.0.12",
     "minisearch": "^7.2.0",
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^16.5.3",
@@ -102,7 +102,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "fake-indexeddb": "^6.2.5",
     "globals": "^16.5.0",
-    "jsdom": "^30.0.1",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.6",
     "redis": "^5.10.0",
     "tailwindcss": "^4.1.18",
