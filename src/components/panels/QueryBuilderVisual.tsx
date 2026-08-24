@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStore } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
@@ -6,7 +6,8 @@ import { RESERVED_FIELDS, OPERATOR_SYMBOLS } from '../../services/query/types';
 import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot, QueryWithin } from '../../services/query/types';
 import { serializeQuery } from '../../services/query/serializer';
 import { Plus, X, ToggleLeft, ToggleRight, MapPin, Waypoints } from 'lucide-react';
-import { GeoRadiusPicker } from './GeoRadiusPicker';
+// Also pulls in maplibre-gl; only needed once the user opens the picker.
+const GeoRadiusPicker = lazy(() => import('./GeoRadiusPicker').then(m => ({ default: m.GeoRadiusPicker })));
 
 // ── Condition Row ──
 
@@ -303,6 +304,7 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
 
       {/* Geo radius picker modal */}
       {showGeoRadiusPicker && nearParts && (
+        <Suspense fallback={null}>
         <GeoRadiusPicker
           initialLat={parseFloat(nearParts.lat) || undefined}
           initialLng={parseFloat(nearParts.lng) || undefined}
@@ -320,6 +322,7 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
           }}
           onCancel={() => setShowGeoRadiusPicker(false)}
         />
+        </Suspense>
       )}
     </div>
   );

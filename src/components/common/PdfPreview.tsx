@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileWarning } from 'lucide-react';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+import { loadPdfjs } from '../../services/pdfjsLoader';
 
 const MIN_SCALE = 0.4;
 const MAX_SCALE = 3;
@@ -42,7 +40,8 @@ export function PdfPreview({ url }: PdfPreviewProps) {
     setPageNum(1);
     setScale(null);
 
-    pdfjsLib.getDocument({ url }).promise
+    loadPdfjs()
+      .then((pdfjsLib) => pdfjsLib.getDocument({ url }).promise)
       .then(async (doc) => {
         if (cancelled) {
           doc.destroy();

@@ -45,7 +45,6 @@ import { ViewToolbar } from '../common/ViewToolbar';
 import { PdfPreview } from '../common/PdfPreview';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
-import { toPng } from 'html-to-image';
 import type { Element, Link, Position, Asset } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
@@ -173,6 +172,8 @@ function CanvasCaptureHandler() {
       }
 
       try {
+        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
+        const { toPng } = await import('html-to-image');
         return await toPng(element, {
           backgroundColor: '#faf8f5',
           pixelRatio: 3,

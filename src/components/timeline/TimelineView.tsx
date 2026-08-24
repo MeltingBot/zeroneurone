@@ -6,7 +6,6 @@ import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, U
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import { toPng } from 'html-to-image';
 import { TimelineRangeSlider } from './TimelineRangeSlider';
 import { SwimlaneToolbar } from './SwimlaneToolbar';
 import { TimelineSwimlane } from './TimelineSwimlane';
@@ -552,6 +551,8 @@ export function TimelineView() {
       }
 
       try {
+        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
+        const { toPng } = await import('html-to-image');
         return await toPng(element, {
           backgroundColor: '#faf8f5',
           pixelRatio: 2,

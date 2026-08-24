@@ -7,7 +7,6 @@ import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsigh
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { escapeHtml, safeColor } from '../../utils/escapeHtml';
-import { toPng } from 'html-to-image';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
 import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
@@ -1799,6 +1798,8 @@ export function MapView() {
       if (!container) return null;
 
       try {
+        // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
+        const { toPng } = await import('html-to-image');
         return await toPng(container, {
           backgroundColor: '#e5e3df',
           pixelRatio: 2,

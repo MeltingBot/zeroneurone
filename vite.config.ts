@@ -98,6 +98,24 @@ export default defineConfig({
     })
   ],
   server: {},
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the heavy vendors out of the entry chunk. They change far less
+        // often than application code, so a release no longer invalidates them
+        // in the browser cache.
+        manualChunks(id) {
+          if (id.includes('/src/locales/')) return 'locales';
+          if (!id.includes('/node_modules/')) return undefined;
+          if (id.includes('/@xyflow/')) return 'xyflow';
+          if (id.includes('/graphology') || id.includes('/@dagrejs/')) return 'graph';
+          if (/\/(yjs|y-websocket|y-indexeddb|lib0)\//.test(id)) return 'yjs';
+          if (id.includes('/jszip/')) return 'jszip';
+          return undefined;
+        },
+      },
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
