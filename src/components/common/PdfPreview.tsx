@@ -25,7 +25,6 @@ export function PdfPreview({ url }: PdfPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
-  const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNum, setPageNum] = useState(1);
   const [scale, setScale] = useState<number | null>(null);
@@ -41,20 +40,25 @@ export function PdfPreview({ url }: PdfPreviewProps) {
     setPageNum(1);
     setScale(null);
 
+    // Local to this effect run, never a ref: in StrictMode the effect runs
+    // twice, and a ref shared between runs let the first run's late promise
+    // destroy the second run's task — leaving a live document whose transport
+    // was already torn down.
+    let task: PDFDocumentLoadingTask | null = null;
+
     loadPdfjs()
       .then((pdfjsLib) => {
         // pdf.js 6 dropped PDFDocumentProxy.destroy(); tearing down the worker
         // transport now goes through the loading task.
-        const task = pdfjsLib.getDocument({ url });
-        loadingTaskRef.current = task;
+        task = pdfjsLib.getDocument({ url });
+        if (cancelled) {
+          void task.destroy();
+          return null;
+        }
         return task.promise;
       })
       .then(async (doc) => {
-        if (cancelled) {
-          void loadingTaskRef.current?.destroy();
-          loadingTaskRef.current = null;
-          return;
-        }
+        if (!doc || cancelled) return;
         docRef.current = doc;
         const firstPage = await doc.getPage(1);
         const baseViewport = firstPage.getViewport({ scale: 1 });
@@ -66,17 +70,16 @@ export function PdfPreview({ url }: PdfPreviewProps) {
         setIsLoading(false);
       })
       .catch((err) => {
+        // Destroying the task rejects its pending promise: expected here.
+        if (cancelled) return;
         console.error('Erreur de chargement du PDF:', err);
-        if (!cancelled) {
-          setError(true);
-          setIsLoading(false);
-        }
+        setError(true);
+        setIsLoading(false);
       });
 
     return () => {
       cancelled = true;
-      void loadingTaskRef.current?.destroy();
-      loadingTaskRef.current = null;
+      void task?.destroy();
       docRef.current = null;
     };
   }, [url]);
@@ -180,7 +183,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
             <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <canvas ref={canvasRef} className="bg-white" />
+          <canvas ref={canvasRef} data-testid="pdf-preview-canvas" className="bg-white" />
         )}
       </div>
     </div>

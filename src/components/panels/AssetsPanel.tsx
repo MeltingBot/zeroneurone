@@ -534,6 +534,7 @@ function AssetItem({
           {(isImage || isPdf || isText || isDoc) && (
             <button
               onClick={onPreview}
+              data-testid="preview-asset"
               className="p-1 text-text-tertiary hover:text-text-primary"
               title={tPanels('detail.files.preview')}
             >

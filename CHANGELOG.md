@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.50.3
+
+### Fixes
+- **Aperçu PDF vide** — régression introduite en 2.50.1. La tâche de chargement pdf.js était mémorisée dans une référence partagée entre les exécutions de l'effet React. En mode strict, l'effet se joue deux fois : la promesse de la première passe se résolvait après le nettoyage et détruisait alors la tâche de la **seconde**, laissant un document dont le worker était déjà démonté. Le premier appel à `getPage()` échouait sur un transport nul et l'aperçu restait vide. La tâche est désormais locale à chaque exécution.
+
+### Interne
+- Test de bout en bout sur l'aperçu PDF : attacher un document, l'ouvrir, vérifier qu'une page est réellement dessinée et qu'aucune erreur de transport n'est émise. Ce composant a cassé deux fois en deux versions sans qu'aucun test ne le couvre.
+
 ## 2.50.2
 
 ### Fixes
