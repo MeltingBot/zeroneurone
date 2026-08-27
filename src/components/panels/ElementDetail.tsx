@@ -1028,7 +1028,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           </div>
 
           {/* Tags */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" data-tutorial="element-tags">
             <label className="text-xs font-medium text-text-secondary">{t('detail.labels.tags')}</label>
             <TagsEditor
               tags={element.tags}
@@ -1163,6 +1163,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {/* Events */}
       <AccordionSection
         id="events"
+        dataTutorial="events-section"
         title={t('detail.sections.events')}
         icon={<Calendar size={12} />}
         badge={eventsBadge}
@@ -1203,6 +1204,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {/* Location */}
       <AccordionSection
         id="location"
+        dataTutorial="location-section"
         title={t('detail.sections.location')}
         icon={<MapPin size={12} />}
         badge={hasGeo ? (
@@ -1284,6 +1286,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
                     }
                   }}
                   placeholder={t('detail.location.latitude')}
+                  data-tutorial="geo-lat"
                   className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary placeholder:text-text-tertiary transition-all"
                 />
                 <span className="text-[10px] text-text-tertiary">{t('detail.location.latRange')}</span>
@@ -1336,6 +1339,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
                   pendingGeoPickerCallback.current = null;
                   setShowGeoPicker(true);
                 }}
+                data-tutorial="pick-on-map"
                 className={`${hasGeo ? 'flex-1' : 'w-full'} px-3 py-2 text-sm bg-bg-tertiary border border-border-default sketchy-border hover:bg-bg-secondary transition-colors flex items-center justify-center gap-2 text-text-secondary`}
               >
                 <MapIcon size={14} />
@@ -1400,6 +1404,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       {/* Properties */}
       <AccordionSection
         id="properties"
+        dataTutorial="properties-section"
         title={t('detail.sections.properties')}
         icon={<Settings size={12} />}
         badge={propertiesBadge}

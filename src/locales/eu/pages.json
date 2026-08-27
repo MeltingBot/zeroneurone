@@ -517,5 +517,98 @@
       "connectionLost": "Konexioa galdu da",
       "connectionError": "Errorea konektatzean"
     }
+  },
+  "tutorial": {
+    "start": "Tutorial gidatua",
+    "restart": "Tutoriala berrabiarazi",
+    "progress": "{{current}}/{{total}} urratsa",
+    "next": "Hurrengoa",
+    "skip": "Saltatu",
+    "quit": "Irten",
+    "finish": "Amaitu",
+    "deleteDossier": "Tutorialaren espedientea ezabatu",
+    "keepDossier": "Gorde",
+    "offTrack": {
+      "title": "Tutoriala pausatuta",
+      "body": "Tutorialaren ibilbidea utzi duzu. Itzuli tutorialaren espedientera jarraitzeko, edo irten tutorialetik.",
+      "continue": "Tutorialarekin jarraitu"
+    },
+    "steps": {
+      "intro": {
+        "title": "Ongi etorri",
+        "body": "Tutorial honek urrats gutxitan gidatzen zaitu: espediente bat sortu, elementuak, lotura bat, eta ondoren propietateak, gertaerak eta ikuspegi desberdinak arakatu. Edozein urrats salta dezakezu edo edonoiz irten."
+      },
+      "createDossier": {
+        "title": "Espediente bat sortu",
+        "body": "Egin klik botoi honetan zure lehen ikerketa-espedientea sortzeko."
+      },
+      "nameDossier": {
+        "title": "Espedienteari izena eman",
+        "body": "Izen bat proposatzen da — alda dezakezu. Berretsi espedientea sortzeko: tutorialaren amaieran ezabatu ahal izango da."
+      },
+      "firstElement": {
+        "title": "Elementu bat sortu",
+        "body": "Egin klik bikoitza arbelean, adierazitako tokian: elementu bat sortzen da."
+      },
+      "nameFirstElement": {
+        "title": "Elementuari izena eman",
+        "body": "Egin klik bikoitza elementuan izena editatzeko, idatzi adibidez «Alice», eta berretsi Enter sakatuz. Ondo izendatutako elementuek analisia irakurgarri mantentzen dute."
+      },
+      "secondElement": {
+        "title": "Bigarren elementu bat",
+        "body": "Sortu bigarren elementu bat klik bikoitzarekin, lehenengotik pixka bat urrunago."
+      },
+      "nameSecondElement": {
+        "title": "Bigarrenari izena eman",
+        "body": "Egin klik bikoitza elementu berri honetan eta eman izena — adibidez «Bob»."
+      },
+      "createLink": {
+        "title": "Elementuak lotu",
+        "body": "Arrastatu elementu honen ertzetik bestera lotura bat sortzeko."
+      },
+      "nameLink": {
+        "title": "Erlazioa zehaztu",
+        "body": "Izenik gabeko lotura batek gutxi dio: egin klik bikoitza loturan eta eman izena erlazioari — adibidez «ezagutzen du» edo «lanean ari da harekin». Erlazio batek datak, konfiantza eta propietateak ere izan ditzake: hautatu xehetasunak irekitzeko."
+      },
+      "selectElement": {
+        "title": "Xehetasunak ireki",
+        "body": "Egin klik elementu batean: bere xehetasunak eskuineko alboko panelean agertzen dira."
+      },
+      "addTag": {
+        "title": "Etiketa bat gehitu",
+        "body": "Xehetasun-panelean, gehitu etiketa bat elementuari (adibidez «Pertsona»). Etiketek itxura definitzen dute eta iragaztea ahalbidetzen dute."
+      },
+      "addProperty": {
+        "title": "Propietate bat gehitu",
+        "body": "Etiketak agian propietateak proposatu ditu jada: bete balio bat horietako batean. Bestela, ireki «Propietateak» atala eta egin klik «Propietatea gehitu» botoian. Propietateek informazioa egituratzen dute: zenbaki bat, nazionalitate bat, data bat…"
+      },
+      "addEvent": {
+        "title": "Gertaera bat gehitu",
+        "body": "Egin klik «Gertaera gehitu» botoian: berehala sortzen da, gaurko datarekin. Eman etiketa bat besterik ez (adib. «Lehen kontaktua») — gertaerek jarduera denboran zehar jarraitzen dute eta denbora-lerroa elikatzen dute."
+      },
+      "addGeo": {
+        "title": "Geolokalizatu",
+        "body": "Ireki «Kokapena» atala eta egin klik «Mapan aukeratu» botoian: kokatu puntua zuzenean mapan. Geolokalizatutako elementu bat ikusgai bihurtzen da Mapa ikuspegian."
+      },
+      "viewMap": {
+        "title": "Mapa",
+        "body": "Egin klik «Mapa» botoian: zure geolokalizatutako elementua han agertzen da, puntu asko daudenean talde automatikoekin.",
+        "explore": "Zure geolokalizatutako elementua mapan agertzen da. Zooma egin eta mugitu: puntu asko daudenean, automatikoki taldekatzen dira. Egin klik «Hurrengoa» botoian prest zaudenean."
+      },
+      "viewTimeline": {
+        "title": "Denbora-lerroa",
+        "body": "Egin klik «Denbora-lerroa» botoian: zure gertaera denboran kokatuta dago. Datadun loturak eta data motako propietateak ere han agertzen dira.",
+        "explore": "Zure gertaera denboran kokatuta dago. Datadun loturak eta data motako propietateak ere hemen agertzen dira. Arakatu, eta gero egin klik «Hurrengoa» botoian."
+      },
+      "viewMatrix": {
+        "title": "Matrizea",
+        "body": "Egin klik «Matrizea» botoian: elementu guztiak gurutzatzen ditu eta dauden — edo falta diren — loturak begirada batean erakusten ditu.",
+        "explore": "Matrizeak elementu guztiak gurutzatzen ditu: gelaxka bakoitzak dagoen lotura bat markatzen du — gelaxka hutsek falta diren erlazioak agerian uzten dituzte. Egin klik «Hurrengoa» botoian amaitzeko."
+      },
+      "done": {
+        "title": "Amaituta",
+        "body": "Funtsezkoa ezagutzen duzu. Tutorialaren espedientea ezabatu nahi duzu, ala gorde esperimentatzen jarraitzeko?"
+      }
+    }
   }
 }

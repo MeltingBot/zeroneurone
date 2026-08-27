@@ -532,5 +532,98 @@
       "connectionLost": "Connection lost",
       "connectionError": "Connection error"
     }
+  },
+  "tutorial": {
+    "start": "Guided tutorial",
+    "restart": "Restart the tutorial",
+    "progress": "Step {{current}}/{{total}}",
+    "next": "Next",
+    "skip": "Skip",
+    "quit": "Quit",
+    "finish": "Finish",
+    "deleteDossier": "Delete the tutorial dossier",
+    "keepDossier": "Keep it",
+    "offTrack": {
+      "title": "Tutorial paused",
+      "body": "You have left the tutorial path. Return to the tutorial dossier to continue, or quit the tutorial.",
+      "continue": "Continue the tutorial"
+    },
+    "steps": {
+      "intro": {
+        "title": "Welcome",
+        "body": "This tutorial walks you through the basics: create a dossier, add elements, link them, then explore properties, events and the different views. You can skip any step or quit at any time."
+      },
+      "createDossier": {
+        "title": "Create a dossier",
+        "body": "Click this button to create your first investigation dossier."
+      },
+      "nameDossier": {
+        "title": "Name the dossier",
+        "body": "A name is suggested — you can change it. Confirm to create the dossier: it can be deleted at the end of the tutorial."
+      },
+      "firstElement": {
+        "title": "Create an element",
+        "body": "Double-click the canvas at the indicated spot: an element is created."
+      },
+      "nameFirstElement": {
+        "title": "Name the element",
+        "body": "Double-click the element to edit its name, type for example “Alice”, then press Enter. Well-named elements keep the analysis readable."
+      },
+      "secondElement": {
+        "title": "A second element",
+        "body": "Create a second element with a double-click, a bit further from the first."
+      },
+      "nameSecondElement": {
+        "title": "Name the second one",
+        "body": "Double-click this new element and name it — for example “Bob”."
+      },
+      "createLink": {
+        "title": "Link the elements",
+        "body": "Drag from the edge of this element to the other to create a link."
+      },
+      "nameLink": {
+        "title": "Qualify the relationship",
+        "body": "An unnamed link says little: double-click the link and name the relationship — for example “knows” or “works with”. A relationship can also carry dates, confidence and properties: select it to open its details."
+      },
+      "selectElement": {
+        "title": "Open the details",
+        "body": "Click an element: its details appear in the right side panel."
+      },
+      "addTag": {
+        "title": "Add a tag",
+        "body": "In the detail panel, add a tag to the element (for example “Person”). Tags drive appearance and filtering."
+      },
+      "addProperty": {
+        "title": "Add a property",
+        "body": "The tag may already have suggested properties: fill in a value in one of them. Otherwise, open the “Properties” section and click “Add a property”. Properties structure information: a number, a nationality, a date…"
+      },
+      "addEvent": {
+        "title": "Add an event",
+        "body": "Click “Add event”: it is created right away, dated today. Just give it a label (e.g. “First contact”) — events trace activity over time and feed the timeline."
+      },
+      "addGeo": {
+        "title": "Geolocate",
+        "body": "Open the “Location” section then click “Pick on map”: place the point directly on the map. A geolocated element becomes visible in the Map view."
+      },
+      "viewMap": {
+        "title": "The Map",
+        "body": "Click “Map”: your geolocated element appears there, with automatic clustering when points are numerous.",
+        "explore": "Your geolocated element appears on the map. Zoom and pan: when points are numerous they cluster automatically. Click “Next” when you are ready."
+      },
+      "viewTimeline": {
+        "title": "The Timeline",
+        "body": "Click “Timeline”: your event is placed in time. Dated links and date-type properties appear there too.",
+        "explore": "Your event is placed in time. Dated links and date-type properties also appear here. Explore, then click “Next”."
+      },
+      "viewMatrix": {
+        "title": "The Matrix",
+        "body": "Click “Matrix”: it crosses all elements and reveals existing — or missing — links at a glance.",
+        "explore": "The matrix crosses all elements: each cell marks an existing link — empty cells reveal missing relationships. Click “Next” to finish."
+      },
+      "done": {
+        "title": "All done",
+        "body": "You know the essentials. Would you like to delete the tutorial dossier, or keep it to keep experimenting?"
+      }
+    }
   }
 }

@@ -533,5 +533,98 @@
       "connectionLost": "Connexion perdue",
       "connectionError": "Erreur lors de la connexion"
     }
+  },
+  "tutorial": {
+    "start": "Tutoriel guidé",
+    "restart": "Relancer le tutoriel",
+    "progress": "Étape {{current}}/{{total}}",
+    "next": "Suivant",
+    "skip": "Passer",
+    "quit": "Quitter",
+    "finish": "Terminer",
+    "deleteDossier": "Supprimer le dossier tutoriel",
+    "keepDossier": "Le conserver",
+    "offTrack": {
+      "title": "Tutoriel en pause",
+      "body": "Vous avez quitté le parcours du tutoriel. Retournez dans le dossier tutoriel pour continuer, ou quittez le tutoriel.",
+      "continue": "Continuer le tutoriel"
+    },
+    "steps": {
+      "intro": {
+        "title": "Bienvenue",
+        "body": "Ce tutoriel vous guide en quelques étapes : créer un dossier, des éléments, un lien, puis explorer les propriétés, les événements et les différentes vues. Vous pouvez passer une étape ou quitter à tout moment."
+      },
+      "createDossier": {
+        "title": "Créer un dossier",
+        "body": "Cliquez sur ce bouton pour créer votre premier dossier d'enquête."
+      },
+      "nameDossier": {
+        "title": "Nommer le dossier",
+        "body": "Un nom est proposé — vous pouvez le modifier. Validez pour créer le dossier : il pourra être supprimé à la fin du tutoriel."
+      },
+      "firstElement": {
+        "title": "Créer un élément",
+        "body": "Double-cliquez sur le canvas, à l'endroit indiqué : un élément est créé."
+      },
+      "nameFirstElement": {
+        "title": "Nommer l'élément",
+        "body": "Double-cliquez sur l'élément pour éditer son nom, saisissez par exemple « Alice », puis validez avec Entrée. Des éléments bien nommés rendent l'analyse lisible."
+      },
+      "secondElement": {
+        "title": "Un deuxième élément",
+        "body": "Créez un second élément par double-clic, un peu plus loin du premier."
+      },
+      "nameSecondElement": {
+        "title": "Nommer le deuxième",
+        "body": "Double-cliquez sur ce nouvel élément et nommez-le — par exemple « Bob »."
+      },
+      "createLink": {
+        "title": "Relier les éléments",
+        "body": "Glissez depuis le bord de cet élément jusqu'à l'autre pour créer un lien."
+      },
+      "nameLink": {
+        "title": "Qualifier la relation",
+        "body": "Double-cliquez sur le lien et nommez la relation — par exemple « connaît » ou « travaille avec ». Une relation peut aussi porter des dates, une confiance, des propriétés : sélectionnez-la pour ouvrir son détail."
+      },
+      "selectElement": {
+        "title": "Ouvrir le détail",
+        "body": "Cliquez sur un élément : son détail apparaît dans le panneau latéral droit."
+      },
+      "addTag": {
+        "title": "Ajouter un tag",
+        "body": "Dans le panneau de détail, ajoutez un tag à l'élément (par exemple « Personne »). Les tags définissent l'apparence et permettent de filtrer."
+      },
+      "addProperty": {
+        "title": "Ajouter une propriété",
+        "body": "Le tag a peut-être déjà proposé des propriétés : renseignez une valeur dans l'une d'elles. Sinon, ouvrez la section « Propriétés » et cliquez sur « Ajouter une propriété ». Les propriétés structurent l'information : un numéro, une nationalité, une date…"
+      },
+      "addEvent": {
+        "title": "Ajouter un événement",
+        "body": "Cliquez sur « Ajouter un événement » : il est créé aussitôt, daté du jour. Donnez-lui simplement un libellé (ex. « Premier contact ») — les événements tracent l'activité dans le temps et alimentent la chronologie."
+      },
+      "addGeo": {
+        "title": "Géolocaliser",
+        "body": "Ouvrez la section « Localisation » puis cliquez sur « Choisir sur la carte » : placez le point directement sur la carte. Un élément géolocalisé devient visible dans la vue Carte."
+      },
+      "viewMap": {
+        "title": "La Carte",
+        "body": "Cliquez sur « Carte » : votre élément géolocalisé y apparaît, avec regroupement automatique quand les points sont nombreux.",
+        "explore": "Votre élément géolocalisé apparaît sur la carte. Zoomez, déplacez-vous : quand les points sont nombreux, ils se regroupent automatiquement. Cliquez sur « Suivant » quand vous êtes prêt."
+      },
+      "viewTimeline": {
+        "title": "La Chronologie",
+        "body": "Cliquez sur « Chronologie » : votre événement y est placé dans le temps. Les liens datés et les propriétés de type date y apparaissent aussi.",
+        "explore": "Votre événement est placé dans le temps. Les liens datés et les propriétés de type date apparaissent aussi ici. Explorez, puis cliquez sur « Suivant »."
+      },
+      "viewMatrix": {
+        "title": "La Matrice",
+        "body": "Cliquez sur « Matrice » : elle croise tous les éléments et révèle les liens existants — ou manquants — d'un coup d'œil.",
+        "explore": "La matrice croise tous les éléments : chaque case marque un lien existant — les cases vides révèlent les relations manquantes. Cliquez sur « Suivant » pour terminer."
+      },
+      "done": {
+        "title": "C'est terminé",
+        "body": "Vous connaissez l'essentiel. Souhaitez-vous supprimer le dossier tutoriel, ou le conserver pour continuer à expérimenter ?"
+      }
+    }
   }
 }

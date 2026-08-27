@@ -11,6 +11,8 @@ interface AccordionSectionProps {
   defaultOpen?: boolean;
   isOpen?: boolean;
   onToggle?: (id: string, isOpen: boolean) => void;
+  /** Ancrage pour le tutoriel guidé (rendu en data-tutorial sur le conteneur). */
+  dataTutorial?: string;
 }
 
 export function AccordionSection({
@@ -22,6 +24,7 @@ export function AccordionSection({
   defaultOpen = false,
   isOpen: controlledIsOpen,
   onToggle,
+  dataTutorial,
 }: AccordionSectionProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
 
@@ -37,7 +40,7 @@ export function AccordionSection({
   }, [id, isOpen, isControlled, onToggle]);
 
   return (
-    <div className="border-b border-border-default last:border-b-0">
+    <div className="border-b border-border-default last:border-b-0" data-tutorial={dataTutorial}>
       <button
         type="button"
         onClick={handleToggle}

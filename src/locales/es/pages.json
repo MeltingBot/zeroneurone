@@ -528,5 +528,98 @@
       "connectionLost": "Conexión perdida",
       "connectionError": "Error durante la conexión"
     }
+  },
+  "tutorial": {
+    "start": "Tutorial guiado",
+    "restart": "Reiniciar el tutorial",
+    "progress": "Paso {{current}}/{{total}}",
+    "next": "Siguiente",
+    "skip": "Omitir",
+    "quit": "Salir",
+    "finish": "Terminar",
+    "deleteDossier": "Eliminar el expediente del tutorial",
+    "keepDossier": "Conservarlo",
+    "offTrack": {
+      "title": "Tutorial en pausa",
+      "body": "Ha salido del recorrido del tutorial. Vuelva al expediente del tutorial para continuar, o salga del tutorial.",
+      "continue": "Continuar el tutorial"
+    },
+    "steps": {
+      "intro": {
+        "title": "Bienvenido",
+        "body": "Este tutorial le guía en unos pasos: crear un expediente, elementos, un enlace, y luego explorar las propiedades, los eventos y las distintas vistas. Puede omitir un paso o salir en cualquier momento."
+      },
+      "createDossier": {
+        "title": "Crear un expediente",
+        "body": "Haga clic en este botón para crear su primer expediente de investigación."
+      },
+      "nameDossier": {
+        "title": "Nombrar el expediente",
+        "body": "Se propone un nombre — puede modificarlo. Valide para crear el expediente: podrá eliminarse al final del tutorial."
+      },
+      "firstElement": {
+        "title": "Crear un elemento",
+        "body": "Haga doble clic en el lienzo, en el lugar indicado: se crea un elemento."
+      },
+      "nameFirstElement": {
+        "title": "Nombrar el elemento",
+        "body": "Haga doble clic en el elemento para editar su nombre, escriba por ejemplo «Alice» y valide con Intro. Los elementos bien nombrados hacen legible el análisis."
+      },
+      "secondElement": {
+        "title": "Un segundo elemento",
+        "body": "Cree un segundo elemento con doble clic, un poco más lejos del primero."
+      },
+      "nameSecondElement": {
+        "title": "Nombrar el segundo",
+        "body": "Haga doble clic en este nuevo elemento y nómbrelo — por ejemplo «Bob»."
+      },
+      "createLink": {
+        "title": "Enlazar los elementos",
+        "body": "Arrastre desde el borde de este elemento hasta el otro para crear un enlace."
+      },
+      "nameLink": {
+        "title": "Calificar la relación",
+        "body": "Un enlace sin nombre dice poco: haga doble clic en el enlace y nombre la relación — por ejemplo «conoce a» o «trabaja con». Una relación también puede llevar fechas, confianza y propiedades: selecciónela para abrir su detalle."
+      },
+      "selectElement": {
+        "title": "Abrir el detalle",
+        "body": "Haga clic en un elemento: su detalle aparece en el panel lateral derecho."
+      },
+      "addTag": {
+        "title": "Añadir una etiqueta",
+        "body": "En el panel de detalle, añada una etiqueta al elemento (por ejemplo «Persona»). Las etiquetas definen la apariencia y permiten filtrar."
+      },
+      "addProperty": {
+        "title": "Añadir una propiedad",
+        "body": "Puede que la etiqueta ya haya propuesto propiedades: rellene un valor en una de ellas. Si no, abra la sección «Propiedades» y haga clic en «Añadir una propiedad». Las propiedades estructuran la información: un número, una nacionalidad, una fecha…"
+      },
+      "addEvent": {
+        "title": "Añadir un evento",
+        "body": "Haga clic en «Añadir un evento»: se crea de inmediato, con la fecha de hoy. Solo dele un título (p. ej. «Primer contacto») — los eventos trazan la actividad en el tiempo y alimentan la línea de tiempo."
+      },
+      "addGeo": {
+        "title": "Geolocalizar",
+        "body": "Abra la sección «Localización» y haga clic en «Elegir en el mapa»: coloque el punto directamente en el mapa. Un elemento geolocalizado se vuelve visible en la vista Mapa."
+      },
+      "viewMap": {
+        "title": "El Mapa",
+        "body": "Haga clic en «Mapa»: su elemento geolocalizado aparece allí, con agrupación automática cuando hay muchos puntos.",
+        "explore": "Su elemento geolocalizado aparece en el mapa. Haga zoom y desplácese: cuando hay muchos puntos, se agrupan automáticamente. Haga clic en «Siguiente» cuando esté listo."
+      },
+      "viewTimeline": {
+        "title": "La Línea de tiempo",
+        "body": "Haga clic en «Línea de tiempo»: su evento queda situado en el tiempo. Los enlaces con fecha y las propiedades de tipo fecha también aparecen allí.",
+        "explore": "Su evento está situado en el tiempo. Los enlaces con fecha y las propiedades de tipo fecha también aparecen aquí. Explore y luego haga clic en «Siguiente»."
+      },
+      "viewMatrix": {
+        "title": "La Matriz",
+        "body": "Haga clic en «Matriz»: cruza todos los elementos y revela los enlaces existentes — o ausentes — de un vistazo.",
+        "explore": "La matriz cruza todos los elementos: cada celda marca un enlace existente — las celdas vacías revelan las relaciones ausentes. Haga clic en «Siguiente» para terminar."
+      },
+      "done": {
+        "title": "Terminado",
+        "body": "Ya conoce lo esencial. ¿Desea eliminar el expediente del tutorial o conservarlo para seguir experimentando?"
+      }
+    }
   }
 }

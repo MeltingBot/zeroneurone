@@ -528,5 +528,98 @@
       "connectionLost": "Utracono połączenie",
       "connectionError": "Błąd podczas łączenia"
     }
+  },
+  "tutorial": {
+    "start": "Samouczek z przewodnikiem",
+    "restart": "Uruchom samouczek ponownie",
+    "progress": "Krok {{current}}/{{total}}",
+    "next": "Dalej",
+    "skip": "Pomiń",
+    "quit": "Zakończ",
+    "finish": "Zakończ",
+    "deleteDossier": "Usuń teczkę samouczka",
+    "keepDossier": "Zachowaj ją",
+    "offTrack": {
+      "title": "Samouczek wstrzymany",
+      "body": "Opuściłeś ścieżkę samouczka. Wróć do teczki samouczka, aby kontynuować, lub zakończ samouczek.",
+      "continue": "Kontynuuj samouczek"
+    },
+    "steps": {
+      "intro": {
+        "title": "Witamy",
+        "body": "Ten samouczek poprowadzi Cię w kilku krokach: utworzenie teczki, elementów, powiązania, a następnie poznanie właściwości, zdarzeń i różnych widoków. Możesz pominąć każdy krok lub zakończyć w dowolnym momencie."
+      },
+      "createDossier": {
+        "title": "Utwórz teczkę",
+        "body": "Kliknij ten przycisk, aby utworzyć swoją pierwszą teczkę śledczą."
+      },
+      "nameDossier": {
+        "title": "Nazwij teczkę",
+        "body": "Zaproponowano nazwę — możesz ją zmienić. Zatwierdź, aby utworzyć teczkę: będzie można ją usunąć na końcu samouczka."
+      },
+      "firstElement": {
+        "title": "Utwórz element",
+        "body": "Kliknij dwukrotnie na tablicy, we wskazanym miejscu: element zostanie utworzony."
+      },
+      "nameFirstElement": {
+        "title": "Nazwij element",
+        "body": "Kliknij dwukrotnie element, aby edytować jego nazwę, wpisz np. „Alice”, a następnie zatwierdź Enterem. Dobrze nazwane elementy czynią analizę czytelną."
+      },
+      "secondElement": {
+        "title": "Drugi element",
+        "body": "Utwórz drugi element podwójnym kliknięciem, nieco dalej od pierwszego."
+      },
+      "nameSecondElement": {
+        "title": "Nazwij drugi",
+        "body": "Kliknij dwukrotnie ten nowy element i nadaj mu nazwę — np. „Bob”."
+      },
+      "createLink": {
+        "title": "Połącz elementy",
+        "body": "Przeciągnij od krawędzi tego elementu do drugiego, aby utworzyć powiązanie."
+      },
+      "nameLink": {
+        "title": "Określ relację",
+        "body": "Powiązanie bez nazwy mówi niewiele: kliknij dwukrotnie powiązanie i nazwij relację — np. „zna” lub „pracuje z”. Relacja może też mieć daty, poziom pewności i właściwości: zaznacz ją, aby otworzyć szczegóły."
+      },
+      "selectElement": {
+        "title": "Otwórz szczegóły",
+        "body": "Kliknij element: jego szczegóły pojawią się w prawym panelu bocznym."
+      },
+      "addTag": {
+        "title": "Dodaj tag",
+        "body": "W panelu szczegółów dodaj tag do elementu (np. „Osoba”). Tagi określają wygląd i umożliwiają filtrowanie."
+      },
+      "addProperty": {
+        "title": "Dodaj właściwość",
+        "body": "Tag mógł już zaproponować właściwości: wpisz wartość w jednej z nich. W przeciwnym razie otwórz sekcję „Właściwości” i kliknij „Dodaj właściwość”. Właściwości porządkują informacje: numer, narodowość, data…"
+      },
+      "addEvent": {
+        "title": "Dodaj zdarzenie",
+        "body": "Kliknij „Dodaj zdarzenie”: zostanie utworzone od razu, z dzisiejszą datą. Nadaj mu po prostu etykietę (np. „Pierwszy kontakt”) — zdarzenia śledzą aktywność w czasie i zasilają oś czasu."
+      },
+      "addGeo": {
+        "title": "Geolokalizuj",
+        "body": "Otwórz sekcję „Lokalizacja” i kliknij „Wybierz na mapie”: umieść punkt bezpośrednio na mapie. Element z geolokalizacją staje się widoczny w widoku Mapy."
+      },
+      "viewMap": {
+        "title": "Mapa",
+        "body": "Kliknij „Mapa”: Twój zgeolokalizowany element pojawi się tam, z automatycznym grupowaniem przy wielu punktach.",
+        "explore": "Twój zgeolokalizowany element pojawia się na mapie. Przybliżaj i przesuwaj: przy wielu punktach grupują się automatycznie. Kliknij „Dalej”, gdy będziesz gotowy."
+      },
+      "viewTimeline": {
+        "title": "Oś czasu",
+        "body": "Kliknij „Oś czasu”: Twoje zdarzenie zostanie umieszczone w czasie. Pojawiają się tam także datowane powiązania i właściwości typu data.",
+        "explore": "Twoje zdarzenie jest umieszczone w czasie. Datowane powiązania i właściwości typu data również się tu pojawiają. Poznaj widok, a potem kliknij „Dalej”."
+      },
+      "viewMatrix": {
+        "title": "Macierz",
+        "body": "Kliknij „Macierz”: krzyżuje wszystkie elementy i pokazuje istniejące — lub brakujące — powiązania na pierwszy rzut oka.",
+        "explore": "Macierz krzyżuje wszystkie elementy: każda komórka oznacza istniejące powiązanie — puste komórki ujawniają brakujące relacje. Kliknij „Dalej”, aby zakończyć."
+      },
+      "done": {
+        "title": "Gotowe",
+        "body": "Znasz już podstawy. Czy chcesz usunąć teczkę samouczka, czy zachować ją do dalszych eksperymentów?"
+      }
+    }
   }
 }

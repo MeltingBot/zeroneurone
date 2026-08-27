@@ -246,6 +246,7 @@ const EventItem = memo(function EventItem({
           onChange={(e) => setLabel(e.target.value)}
           onBlur={handleLabelBlur}
           placeholder={t('detail.events.labelPlaceholder')}
+          data-tutorial="event-label"
           className="flex-1 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
         />
         <div className="flex items-center gap-1">
@@ -782,6 +783,7 @@ export function EventsEditor({
       <button
         type="button"
         onClick={handleAdd}
+        data-tutorial="add-event"
         className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default w-full justify-center"
       >
         <Plus size={12} />

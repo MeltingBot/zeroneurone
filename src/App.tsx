@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { HomePage, DossierPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
+import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { useTagSetStore } from './stores';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import { usePlugins } from './plugins/usePlugins';
@@ -330,6 +331,7 @@ function App() {
               <Route path="/join/:roomId" element={<JoinPage />} />
             </Routes>
             <ToastContainer />
+            <TutorialOverlay />
             {globalPlugins.map((Plugin, i) => <Plugin key={`gp-${i}`} />)}
           </BrowserRouter>
         </EncryptionGate>

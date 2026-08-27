@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FolderOpen, Download, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive } from 'lucide-react';
+import { Plus, FolderOpen, Download, Tags, Home, Info, Sun, Moon, HardDrive, BookOpen, Search, X, ChevronDown, Lock, Archive, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, EmptyState, LanguageSwitcher } from '../components/common';
 import { DossierCard, LandingSection } from '../components/home';
@@ -18,7 +18,7 @@ import {
   EncryptionModal,
 } from '../components/modals';
 import { useEncryptionStore } from '../stores/encryptionStore';
-import { useDossierStore, useUIStore, useViewStore } from '../stores';
+import { useDossierStore, useUIStore, useViewStore, useTutorialStore } from '../stores';
 import { dossierRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
 import { importService } from '../services/importService';
@@ -44,6 +44,8 @@ export function HomePage() {
   } = useDossierStore();
 
   const { themeMode, toggleThemeMode } = useUIStore();
+  const tutorialActive = useTutorialStore((s) => s.active);
+  const suggestedTutorialName = useTutorialStore((s) => s.suggestedDossierName);
   const homePlugins = usePlugins('home:actions');
   const bannerPlugins = usePlugins('home:banner');
 
@@ -296,6 +298,7 @@ export function HomePage() {
               size="sm"
               onClick={handleOpenCreateModal}
               data-testid="new-dossier"
+              data-tutorial="new-dossier"
             >
               <Plus size={16} />
               {t('home.newDossier')}
@@ -323,6 +326,14 @@ export function HomePage() {
               title={themeMode === 'light' ? t('home.darkMode') : t('home.lightMode')}
             >
               {themeMode === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => useTutorialStore.getState().start()}
+              title={t('tutorial.start')}
+            >
+              <GraduationCap size={16} />
             </Button>
             <Button
               variant="ghost"
@@ -602,6 +613,7 @@ export function HomePage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreate}
+        initialName={tutorialActive ? (suggestedTutorialName ?? undefined) : undefined}
       />
 
       <ConfirmDeleteModal

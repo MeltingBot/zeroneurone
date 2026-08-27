@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Button, Input, Textarea } from '../common';
 
@@ -6,15 +6,25 @@ interface CreateDossierModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (name: string, description: string) => Promise<void>;
+  /** Nom pré-rempli (tutoriel guidé). */
+  initialName?: string;
 }
 
 export function CreateDossierModal({
   isOpen,
   onClose,
   onCreate,
+  initialName,
 }: CreateDossierModalProps) {
   const { t } = useTranslation('modals');
   const [name, setName] = useState('');
+
+  // Pré-remplit le nom à l'ouverture (sans écraser une saisie en cours).
+  useEffect(() => {
+    if (isOpen && initialName) {
+      setName((current) => (current === '' ? initialName : current));
+    }
+  }, [isOpen, initialName]);
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,6 +79,7 @@ export function CreateDossierModal({
           onChange={(e) => setName(e.target.value)}
           autoFocus
           data-testid="dossier-name"
+          data-tutorial="dossier-name"
         />
         <Textarea
           label={t('createDossier.descriptionPlaceholder')}

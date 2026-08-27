@@ -6,8 +6,9 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Compass, BookOpen, X } from 'lucide-react';
+import { Compass, BookOpen, GraduationCap, X } from 'lucide-react';
 import { Button } from '../common';
+import { useTutorialStore } from '../../stores/tutorialStore';
 
 const STORAGE_KEY = 'zeroneurone:onboarding-dismissed';
 
@@ -44,6 +45,14 @@ export function WelcomeBanner({ onTryExample }: WelcomeBannerProps) {
           <BookOpen size={14} />
           {t('home.documentation')}
         </a>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => useTutorialStore.getState().start()}
+        >
+          <GraduationCap size={14} />
+          {t('tutorial.start')}
+        </Button>
         <Button variant="primary" size="sm" onClick={onTryExample}>
           {t('home.onboarding.tryExample')}
         </Button>

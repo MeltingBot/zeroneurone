@@ -528,5 +528,98 @@
       "connectionLost": "Verbindung verloren",
       "connectionError": "Fehler bei der Verbindung"
     }
+  },
+  "tutorial": {
+    "start": "Geführtes Tutorial",
+    "restart": "Tutorial neu starten",
+    "progress": "Schritt {{current}}/{{total}}",
+    "next": "Weiter",
+    "skip": "Überspringen",
+    "quit": "Beenden",
+    "finish": "Abschließen",
+    "deleteDossier": "Tutorial-Akte löschen",
+    "keepDossier": "Behalten",
+    "offTrack": {
+      "title": "Tutorial pausiert",
+      "body": "Sie haben den Tutorial-Pfad verlassen. Kehren Sie zur Tutorial-Akte zurück, um fortzufahren, oder beenden Sie das Tutorial.",
+      "continue": "Tutorial fortsetzen"
+    },
+    "steps": {
+      "intro": {
+        "title": "Willkommen",
+        "body": "Dieses Tutorial führt Sie in wenigen Schritten: eine Akte anlegen, Elemente erstellen, verknüpfen, dann Eigenschaften, Ereignisse und die verschiedenen Ansichten erkunden. Sie können jeden Schritt überspringen oder jederzeit beenden."
+      },
+      "createDossier": {
+        "title": "Akte anlegen",
+        "body": "Klicken Sie auf diese Schaltfläche, um Ihre erste Ermittlungsakte anzulegen."
+      },
+      "nameDossier": {
+        "title": "Akte benennen",
+        "body": "Ein Name wird vorgeschlagen — Sie können ihn ändern. Bestätigen Sie, um die Akte anzulegen: Sie kann am Ende des Tutorials gelöscht werden."
+      },
+      "firstElement": {
+        "title": "Element erstellen",
+        "body": "Doppelklicken Sie an der markierten Stelle auf die Arbeitsfläche: Ein Element wird erstellt."
+      },
+      "nameFirstElement": {
+        "title": "Element benennen",
+        "body": "Doppelklicken Sie auf das Element, um den Namen zu bearbeiten, geben Sie z. B. „Alice“ ein und bestätigen Sie mit der Eingabetaste. Gut benannte Elemente halten die Analyse lesbar."
+      },
+      "secondElement": {
+        "title": "Ein zweites Element",
+        "body": "Erstellen Sie per Doppelklick ein zweites Element, etwas weiter vom ersten entfernt."
+      },
+      "nameSecondElement": {
+        "title": "Das zweite benennen",
+        "body": "Doppelklicken Sie auf dieses neue Element und benennen Sie es — z. B. „Bob“."
+      },
+      "createLink": {
+        "title": "Elemente verknüpfen",
+        "body": "Ziehen Sie vom Rand dieses Elements zum anderen, um eine Verknüpfung zu erstellen."
+      },
+      "nameLink": {
+        "title": "Beziehung benennen",
+        "body": "Eine unbenannte Verknüpfung sagt wenig: Doppelklicken Sie auf die Verknüpfung und benennen Sie die Beziehung — z. B. „kennt“ oder „arbeitet mit“. Eine Beziehung kann auch Daten, Vertrauensgrad und Eigenschaften tragen: Wählen Sie sie aus, um ihre Details zu öffnen."
+      },
+      "selectElement": {
+        "title": "Details öffnen",
+        "body": "Klicken Sie auf ein Element: Seine Details erscheinen im rechten Seitenpanel."
+      },
+      "addTag": {
+        "title": "Tag hinzufügen",
+        "body": "Fügen Sie dem Element im Detailpanel ein Tag hinzu (z. B. „Person“). Tags bestimmen das Aussehen und ermöglichen das Filtern."
+      },
+      "addProperty": {
+        "title": "Eigenschaft hinzufügen",
+        "body": "Das Tag hat möglicherweise bereits Eigenschaften vorgeschlagen: Tragen Sie in einer davon einen Wert ein. Andernfalls öffnen Sie den Bereich „Eigenschaften“ und klicken Sie auf „Eigenschaft hinzufügen“. Eigenschaften strukturieren Informationen: eine Nummer, eine Nationalität, ein Datum…"
+      },
+      "addEvent": {
+        "title": "Ereignis hinzufügen",
+        "body": "Klicken Sie auf „Ereignis hinzufügen“: Es wird sofort erstellt, datiert auf heute. Geben Sie ihm einfach eine Bezeichnung (z. B. „Erster Kontakt“) — Ereignisse zeichnen die Aktivität über die Zeit nach und speisen die Zeitleiste."
+      },
+      "addGeo": {
+        "title": "Geolokalisieren",
+        "body": "Öffnen Sie den Bereich „Standort“ und klicken Sie auf „Auf Karte wählen“: Setzen Sie den Punkt direkt auf der Karte. Ein geolokalisiertes Element wird in der Kartenansicht sichtbar."
+      },
+      "viewMap": {
+        "title": "Die Karte",
+        "body": "Klicken Sie auf „Karte“: Ihr geolokalisiertes Element erscheint dort, mit automatischer Gruppierung bei vielen Punkten.",
+        "explore": "Ihr geolokalisiertes Element erscheint auf der Karte. Zoomen und verschieben Sie: Bei vielen Punkten gruppieren sie sich automatisch. Klicken Sie auf „Weiter“, wenn Sie bereit sind."
+      },
+      "viewTimeline": {
+        "title": "Die Zeitleiste",
+        "body": "Klicken Sie auf „Zeitleiste“: Ihr Ereignis wird zeitlich eingeordnet. Datierte Verknüpfungen und Eigenschaften vom Typ Datum erscheinen dort ebenfalls.",
+        "explore": "Ihr Ereignis ist zeitlich eingeordnet. Datierte Verknüpfungen und Eigenschaften vom Typ Datum erscheinen ebenfalls hier. Erkunden Sie, und klicken Sie dann auf „Weiter“."
+      },
+      "viewMatrix": {
+        "title": "Die Matrix",
+        "body": "Klicken Sie auf „Matrix“: Sie kreuzt alle Elemente und zeigt bestehende — oder fehlende — Verknüpfungen auf einen Blick.",
+        "explore": "Die Matrix kreuzt alle Elemente: Jede Zelle markiert eine bestehende Verknüpfung — leere Zellen zeigen fehlende Beziehungen. Klicken Sie auf „Weiter“, um abzuschließen."
+      },
+      "done": {
+        "title": "Geschafft",
+        "body": "Sie kennen das Wesentliche. Möchten Sie die Tutorial-Akte löschen oder zum weiteren Experimentieren behalten?"
+      }
+    }
   }
 }

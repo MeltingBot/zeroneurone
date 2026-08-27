@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Download, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, icons } from 'lucide-react';
+import { Plus, Download, Map, Clock, Network, Search, Shield, ShieldCheck, Zap, Info, BookOpen, Github, Coffee, Sun, Moon, ExternalLink, Settings, ChevronRight, HardDrive, Lock, GraduationCap, icons } from 'lucide-react';
 import { Button, LanguageSwitcher } from '../common';
 import { WelcomeBanner } from '../onboarding/WelcomeBanner';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
+import { useTutorialStore } from '../../stores/tutorialStore';
 import type { HomeCardRegistration } from '../../types/plugins';
 
 interface LandingSectionProps {
@@ -101,7 +102,7 @@ export function LandingSection({
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 mt-8">
-            <Button variant="primary" size="md" onClick={onNewDossier} data-testid="new-dossier">
+            <Button variant="primary" size="md" onClick={onNewDossier} data-testid="new-dossier" data-tutorial="new-dossier">
               <Plus size={18} />
               {t('home.landing.startNew')}
             </Button>
@@ -285,6 +286,13 @@ export function LandingSection({
             {themeMode === 'light' ? <Moon size={14} /> : <Sun size={14} />}
           </button>
           <LanguageSwitcher size="sm" direction="up" />
+          <button
+            onClick={() => useTutorialStore.getState().start()}
+            className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+            title={t('tutorial.start')}
+          >
+            <GraduationCap size={14} />
+          </button>
           <button
             onClick={onAbout}
             className="inline-flex items-center text-text-tertiary hover:text-text-secondary transition-colors"

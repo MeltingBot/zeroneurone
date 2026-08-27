@@ -551,6 +551,7 @@ export function DossierPage() {
             return (
               <button
                 key={option.mode}
+                data-tutorial={`view-${option.mode}`}
                 onClick={() => setDisplayMode(option.mode)}
                 className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
                   isActive

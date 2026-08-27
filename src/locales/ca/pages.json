@@ -517,5 +517,98 @@
       "connectionLost": "Connexió perduda",
       "connectionError": "Error durant la connexió"
     }
+  },
+  "tutorial": {
+    "start": "Tutorial guiat",
+    "restart": "Reiniciar el tutorial",
+    "progress": "Pas {{current}}/{{total}}",
+    "next": "Següent",
+    "skip": "Ometre",
+    "quit": "Sortir",
+    "finish": "Acabar",
+    "deleteDossier": "Suprimir l'expedient del tutorial",
+    "keepDossier": "Conservar-lo",
+    "offTrack": {
+      "title": "Tutorial en pausa",
+      "body": "Heu sortit del recorregut del tutorial. Torneu a l'expedient del tutorial per continuar, o sortiu del tutorial.",
+      "continue": "Continuar el tutorial"
+    },
+    "steps": {
+      "intro": {
+        "title": "Benvingut",
+        "body": "Aquest tutorial us guia en pocs passos: crear un expedient, elements, un enllaç, i després explorar les propietats, els esdeveniments i les diferents vistes. Podeu ometre qualsevol pas o sortir en qualsevol moment."
+      },
+      "createDossier": {
+        "title": "Crear un expedient",
+        "body": "Feu clic en aquest botó per crear el vostre primer expedient d'investigació."
+      },
+      "nameDossier": {
+        "title": "Anomenar l'expedient",
+        "body": "Es proposa un nom — podeu modificar-lo. Valideu per crear l'expedient: es podrà suprimir al final del tutorial."
+      },
+      "firstElement": {
+        "title": "Crear un element",
+        "body": "Feu doble clic al llenç, al lloc indicat: es crea un element."
+      },
+      "nameFirstElement": {
+        "title": "Anomenar l'element",
+        "body": "Feu doble clic a l'element per editar-ne el nom, escriviu per exemple «Alice» i valideu amb Retorn. Els elements ben anomenats fan llegible l'anàlisi."
+      },
+      "secondElement": {
+        "title": "Un segon element",
+        "body": "Creeu un segon element amb doble clic, una mica més lluny del primer."
+      },
+      "nameSecondElement": {
+        "title": "Anomenar el segon",
+        "body": "Feu doble clic en aquest nou element i doneu-li un nom — per exemple «Bob»."
+      },
+      "createLink": {
+        "title": "Enllaçar els elements",
+        "body": "Arrossegueu des de la vora d'aquest element fins a l'altre per crear un enllaç."
+      },
+      "nameLink": {
+        "title": "Qualificar la relació",
+        "body": "Un enllaç sense nom diu poc: feu doble clic a l'enllaç i anomeneu la relació — per exemple «coneix» o «treballa amb». Una relació també pot portar dates, confiança i propietats: seleccioneu-la per obrir-ne el detall."
+      },
+      "selectElement": {
+        "title": "Obrir el detall",
+        "body": "Feu clic en un element: el seu detall apareix al panell lateral dret."
+      },
+      "addTag": {
+        "title": "Afegir una etiqueta",
+        "body": "Al panell de detall, afegiu una etiqueta a l'element (per exemple «Persona»). Les etiquetes defineixen l'aparença i permeten filtrar."
+      },
+      "addProperty": {
+        "title": "Afegir una propietat",
+        "body": "Potser l'etiqueta ja ha proposat propietats: ompliu un valor en una d'elles. Si no, obriu la secció «Propietats» i feu clic a «Afegir una propietat». Les propietats estructuren la informació: un número, una nacionalitat, una data…"
+      },
+      "addEvent": {
+        "title": "Afegir un esdeveniment",
+        "body": "Feu clic a «Afegir un esdeveniment»: es crea de seguida, amb la data d'avui. Doneu-li simplement un títol (p. ex. «Primer contacte») — els esdeveniments tracen l'activitat en el temps i alimenten la línia de temps."
+      },
+      "addGeo": {
+        "title": "Geolocalitzar",
+        "body": "Obriu la secció «Localització» i feu clic a «Triar al mapa»: col·loqueu el punt directament al mapa. Un element geolocalitzat esdevé visible a la vista Mapa."
+      },
+      "viewMap": {
+        "title": "El Mapa",
+        "body": "Feu clic a «Mapa»: el vostre element geolocalitzat hi apareix, amb agrupació automàtica quan els punts són nombrosos.",
+        "explore": "El vostre element geolocalitzat apareix al mapa. Feu zoom i desplaceu-vos: quan els punts són nombrosos, s'agrupen automàticament. Feu clic a «Següent» quan estigueu a punt."
+      },
+      "viewTimeline": {
+        "title": "La Línia de temps",
+        "body": "Feu clic a «Línia de temps»: el vostre esdeveniment queda situat en el temps. Els enllaços datats i les propietats de tipus data també hi apareixen.",
+        "explore": "El vostre esdeveniment està situat en el temps. Els enllaços datats i les propietats de tipus data també apareixen aquí. Exploreu i després feu clic a «Següent»."
+      },
+      "viewMatrix": {
+        "title": "La Matriu",
+        "body": "Feu clic a «Matriu»: creua tots els elements i revela els enllaços existents — o absents — d'un cop d'ull.",
+        "explore": "La matriu creua tots els elements: cada cel·la marca un enllaç existent — les cel·les buides revelen les relacions absents. Feu clic a «Següent» per acabar."
+      },
+      "done": {
+        "title": "Fet",
+        "body": "Ja coneixeu l'essencial. Voleu suprimir l'expedient del tutorial o conservar-lo per continuar experimentant?"
+      }
+    }
   }
 }

@@ -389,6 +389,7 @@ export function PropertiesEditor({
       ) : (
         <button
           onClick={() => setIsAdding(true)}
+          data-tutorial="add-property"
           className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default w-full justify-center"
         >
           <Plus size={12} />

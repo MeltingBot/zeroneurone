@@ -4411,6 +4411,7 @@ export function Canvas() {
           ref={reactFlowWrapper}
           className={`flex-1 relative outline-none ${importPlacementMode ? 'cursor-crosshair' : ''} ${isViewportMoving && elements.length > 500 ? 'edges-hidden' : ''}`}
           data-testid="canvas"
+          data-tutorial="canvas"
           data-report-capture="canvas"
           onMouseMove={(e) => { lastMousePosRef.current = { x: e.clientX, y: e.clientY }; }}
           onDrop={handleFileDrop}

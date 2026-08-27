@@ -528,5 +528,98 @@
       "connectionLost": "Verbinding verloren",
       "connectionError": "Fout tijdens verbinden"
     }
+  },
+  "tutorial": {
+    "start": "Begeleide tutorial",
+    "restart": "Tutorial opnieuw starten",
+    "progress": "Stap {{current}}/{{total}}",
+    "next": "Volgende",
+    "skip": "Overslaan",
+    "quit": "Stoppen",
+    "finish": "Afronden",
+    "deleteDossier": "Tutorialdossier verwijderen",
+    "keepDossier": "Behouden",
+    "offTrack": {
+      "title": "Tutorial gepauzeerd",
+      "body": "U heeft het tutorialpad verlaten. Keer terug naar het tutorialdossier om verder te gaan, of stop de tutorial.",
+      "continue": "Tutorial voortzetten"
+    },
+    "steps": {
+      "intro": {
+        "title": "Welkom",
+        "body": "Deze tutorial leidt u in enkele stappen: een dossier aanmaken, elementen maken, koppelen, en vervolgens eigenschappen, gebeurtenissen en de verschillende weergaven verkennen. U kunt elke stap overslaan of op elk moment stoppen."
+      },
+      "createDossier": {
+        "title": "Een dossier aanmaken",
+        "body": "Klik op deze knop om uw eerste onderzoeksdossier aan te maken."
+      },
+      "nameDossier": {
+        "title": "Het dossier benoemen",
+        "body": "Er wordt een naam voorgesteld — u kunt deze wijzigen. Bevestig om het dossier aan te maken: het kan aan het einde van de tutorial worden verwijderd."
+      },
+      "firstElement": {
+        "title": "Een element maken",
+        "body": "Dubbelklik op het canvas, op de aangegeven plek: er wordt een element gemaakt."
+      },
+      "nameFirstElement": {
+        "title": "Het element benoemen",
+        "body": "Dubbelklik op het element om de naam te bewerken, typ bijvoorbeeld “Alice” en bevestig met Enter. Goed benoemde elementen houden de analyse leesbaar."
+      },
+      "secondElement": {
+        "title": "Een tweede element",
+        "body": "Maak met een dubbelklik een tweede element, iets verder van het eerste."
+      },
+      "nameSecondElement": {
+        "title": "Het tweede benoemen",
+        "body": "Dubbelklik op dit nieuwe element en geef het een naam — bijvoorbeeld “Bob”."
+      },
+      "createLink": {
+        "title": "Elementen koppelen",
+        "body": "Sleep vanaf de rand van dit element naar het andere om een koppeling te maken."
+      },
+      "nameLink": {
+        "title": "De relatie benoemen",
+        "body": "Een naamloze koppeling zegt weinig: dubbelklik op de koppeling en benoem de relatie — bijvoorbeeld “kent” of “werkt met”. Een relatie kan ook datums, betrouwbaarheid en eigenschappen dragen: selecteer deze om de details te openen."
+      },
+      "selectElement": {
+        "title": "De details openen",
+        "body": "Klik op een element: de details verschijnen in het rechterzijpaneel."
+      },
+      "addTag": {
+        "title": "Een tag toevoegen",
+        "body": "Voeg in het detailpaneel een tag toe aan het element (bijvoorbeeld “Persoon”). Tags bepalen het uiterlijk en maken filteren mogelijk."
+      },
+      "addProperty": {
+        "title": "Een eigenschap toevoegen",
+        "body": "De tag heeft mogelijk al eigenschappen voorgesteld: vul in één ervan een waarde in. Open anders de sectie “Eigenschappen” en klik op “Eigenschap toevoegen”. Eigenschappen structureren informatie: een nummer, een nationaliteit, een datum…"
+      },
+      "addEvent": {
+        "title": "Een gebeurtenis toevoegen",
+        "body": "Klik op “Gebeurtenis toevoegen”: deze wordt meteen aangemaakt, gedateerd op vandaag. Geef er gewoon een label aan (bijv. “Eerste contact”) — gebeurtenissen volgen de activiteit in de tijd en voeden de tijdlijn."
+      },
+      "addGeo": {
+        "title": "Geolokaliseren",
+        "body": "Open de sectie “Locatie” en klik op “Kiezen op kaart”: plaats het punt direct op de kaart. Een gelokaliseerd element wordt zichtbaar in de kaartweergave."
+      },
+      "viewMap": {
+        "title": "De Kaart",
+        "body": "Klik op “Kaart”: uw gelokaliseerde element verschijnt daar, met automatische groepering bij veel punten.",
+        "explore": "Uw gelokaliseerde element verschijnt op de kaart. Zoom en verschuif: bij veel punten groeperen ze zich automatisch. Klik op “Volgende” wanneer u klaar bent."
+      },
+      "viewTimeline": {
+        "title": "De Tijdlijn",
+        "body": "Klik op “Tijdlijn”: uw gebeurtenis wordt in de tijd geplaatst. Gedateerde koppelingen en eigenschappen van het type datum verschijnen daar ook.",
+        "explore": "Uw gebeurtenis is in de tijd geplaatst. Gedateerde koppelingen en eigenschappen van het type datum verschijnen hier ook. Verken, en klik dan op “Volgende”."
+      },
+      "viewMatrix": {
+        "title": "De Matrix",
+        "body": "Klik op “Matrix”: deze kruist alle elementen en toont bestaande — of ontbrekende — koppelingen in één oogopslag.",
+        "explore": "De matrix kruist alle elementen: elke cel markeert een bestaande koppeling — lege cellen onthullen ontbrekende relaties. Klik op “Volgende” om af te ronden."
+      },
+      "done": {
+        "title": "Klaar",
+        "body": "U kent de basis. Wilt u het tutorialdossier verwijderen, of het behouden om verder te experimenteren?"
+      }
+    }
   }
 }

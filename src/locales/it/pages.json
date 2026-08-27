@@ -528,5 +528,98 @@
       "connectionLost": "Connessione persa",
       "connectionError": "Errore durante la connessione"
     }
+  },
+  "tutorial": {
+    "start": "Tutorial guidato",
+    "restart": "Riavvia il tutorial",
+    "progress": "Passo {{current}}/{{total}}",
+    "next": "Avanti",
+    "skip": "Salta",
+    "quit": "Esci",
+    "finish": "Termina",
+    "deleteDossier": "Elimina il fascicolo del tutorial",
+    "keepDossier": "Conservalo",
+    "offTrack": {
+      "title": "Tutorial in pausa",
+      "body": "Hai lasciato il percorso del tutorial. Torna al fascicolo del tutorial per continuare, oppure esci dal tutorial.",
+      "continue": "Continua il tutorial"
+    },
+    "steps": {
+      "intro": {
+        "title": "Benvenuto",
+        "body": "Questo tutorial ti guida in pochi passi: creare un fascicolo, degli elementi, un collegamento, poi esplorare le proprietà, gli eventi e le diverse viste. Puoi saltare un passo o uscire in qualsiasi momento."
+      },
+      "createDossier": {
+        "title": "Creare un fascicolo",
+        "body": "Fai clic su questo pulsante per creare il tuo primo fascicolo d'indagine."
+      },
+      "nameDossier": {
+        "title": "Nominare il fascicolo",
+        "body": "Viene proposto un nome — puoi modificarlo. Conferma per creare il fascicolo: potrà essere eliminato alla fine del tutorial."
+      },
+      "firstElement": {
+        "title": "Creare un elemento",
+        "body": "Fai doppio clic sulla lavagna, nel punto indicato: viene creato un elemento."
+      },
+      "nameFirstElement": {
+        "title": "Nominare l'elemento",
+        "body": "Fai doppio clic sull'elemento per modificarne il nome, digita ad esempio «Alice», poi conferma con Invio. Elementi ben nominati rendono l'analisi leggibile."
+      },
+      "secondElement": {
+        "title": "Un secondo elemento",
+        "body": "Crea un secondo elemento con doppio clic, un po' più lontano dal primo."
+      },
+      "nameSecondElement": {
+        "title": "Nominare il secondo",
+        "body": "Fai doppio clic su questo nuovo elemento e dagli un nome — ad esempio «Bob»."
+      },
+      "createLink": {
+        "title": "Collegare gli elementi",
+        "body": "Trascina dal bordo di questo elemento fino all'altro per creare un collegamento."
+      },
+      "nameLink": {
+        "title": "Qualificare la relazione",
+        "body": "Un collegamento senza nome dice poco: fai doppio clic sul collegamento e nomina la relazione — ad esempio «conosce» o «lavora con». Una relazione può anche portare date, affidabilità e proprietà: selezionala per aprirne il dettaglio."
+      },
+      "selectElement": {
+        "title": "Aprire il dettaglio",
+        "body": "Fai clic su un elemento: il suo dettaglio appare nel pannello laterale destro."
+      },
+      "addTag": {
+        "title": "Aggiungere un tag",
+        "body": "Nel pannello di dettaglio, aggiungi un tag all'elemento (ad esempio «Persona»). I tag definiscono l'aspetto e permettono di filtrare."
+      },
+      "addProperty": {
+        "title": "Aggiungere una proprietà",
+        "body": "Il tag potrebbe aver già proposto delle proprietà: inserisci un valore in una di esse. Altrimenti, apri la sezione «Proprietà» e fai clic su «Aggiungi una proprietà». Le proprietà strutturano l'informazione: un numero, una nazionalità, una data…"
+      },
+      "addEvent": {
+        "title": "Aggiungere un evento",
+        "body": "Fai clic su «Aggiungi un evento»: viene creato subito, datato oggi. Dagli semplicemente un'etichetta (es. «Primo contatto») — gli eventi tracciano l'attività nel tempo e alimentano la timeline."
+      },
+      "addGeo": {
+        "title": "Geolocalizzare",
+        "body": "Apri la sezione «Localizzazione» e fai clic su «Scegli sulla mappa»: posiziona il punto direttamente sulla mappa. Un elemento geolocalizzato diventa visibile nella vista Mappa."
+      },
+      "viewMap": {
+        "title": "La Mappa",
+        "body": "Fai clic su «Mappa»: il tuo elemento geolocalizzato vi appare, con raggruppamento automatico quando i punti sono numerosi.",
+        "explore": "Il tuo elemento geolocalizzato appare sulla mappa. Zooma e spostati: quando i punti sono numerosi si raggruppano automaticamente. Fai clic su «Avanti» quando sei pronto."
+      },
+      "viewTimeline": {
+        "title": "La Timeline",
+        "body": "Fai clic su «Timeline»: il tuo evento è collocato nel tempo. Anche i collegamenti datati e le proprietà di tipo data vi appaiono.",
+        "explore": "Il tuo evento è collocato nel tempo. Anche i collegamenti datati e le proprietà di tipo data appaiono qui. Esplora, poi fai clic su «Avanti»."
+      },
+      "viewMatrix": {
+        "title": "La Matrice",
+        "body": "Fai clic su «Matrice»: incrocia tutti gli elementi e rivela i collegamenti esistenti — o mancanti — a colpo d'occhio.",
+        "explore": "La matrice incrocia tutti gli elementi: ogni cella segna un collegamento esistente — le celle vuote rivelano le relazioni mancanti. Fai clic su «Avanti» per terminare."
+      },
+      "done": {
+        "title": "Finito",
+        "body": "Conosci l'essenziale. Vuoi eliminare il fascicolo del tutorial o conservarlo per continuare a sperimentare?"
+      }
+    }
   }
 }

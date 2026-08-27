@@ -357,6 +357,7 @@ export function SidePanel() {
       }`}
       style={isDetached ? undefined : isBottom ? { height: `${height}px` } : { width: `${width}px` }}
       data-testid="detail-panel"
+      data-tutorial="detail-panel"
     >
       {/* Resize handle (not shown when detached) */}
       {!isDetached && (
