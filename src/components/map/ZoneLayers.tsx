@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import type maplibregl from 'maplibre-gl';
+import type * as maplibregl from 'maplibre-gl';
 import type { Element, ElementId, GeoPolygon } from '../../types';
 import { isGeoPolygon } from '../../utils/geo';
 import { useDossierStore } from '../../stores';

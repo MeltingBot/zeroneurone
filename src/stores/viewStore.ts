@@ -75,11 +75,20 @@ interface ViewState {
   // Timeline view state
   timeline: TimelineState;
 
+  // Map temporal navigator — mirror of MapView's scrubber, published
+  // here so other views and plugins can follow the scrubbed instant
+  // (e.g. sync a communications panel with the device's position).
+  // `dateMs` is the selected instant (epoch ms), null when inactive.
+  mapTemporal: { active: boolean; dateMs: number | null };
+
   // Saved views
   savedViews: View[];
 
   // Actions - Timeline
   setTimeline: (updates: Partial<TimelineState>) => void;
+
+  // Actions - Map temporal navigator (written by MapView only)
+  setMapTemporal: (state: { active: boolean; dateMs: number | null }) => void;
 
   // Actions - Viewport
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
@@ -137,6 +146,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   focusElementId: null,
   focusDepth: 1,
   timeline: { ...DEFAULT_TIMELINE },
+  mapTemporal: { active: false, dateMs: null },
   savedViews: [],
 
   // Timeline
@@ -144,6 +154,13 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set((state) => ({
       timeline: { ...state.timeline, ...updates },
     }));
+  },
+
+  // Map temporal navigator
+  setMapTemporal: (next) => {
+    const prev = get().mapTemporal;
+    if (prev.active === next.active && prev.dateMs === next.dateMs) return;
+    set({ mapTemporal: next });
   },
 
   // Viewport
@@ -402,6 +419,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
       savedViews: [],
       displayMode: 'canvas',
       timeline: { ...DEFAULT_TIMELINE },
+      mapTemporal: { active: false, dateMs: null },
     });
   },
 }));

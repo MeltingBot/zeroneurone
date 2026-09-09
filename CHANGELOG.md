@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.52.1
+
+### Security
+- **maplibre-gl 5.24 → 6.9** — corrige le contournement du sanitizer XSS de `DOM.sanitize()` (GHSA-jrc7-96c5-q579, critique). Seule adaptation : la v6 supprime l'export par défaut, les imports passent en namespace. Dépendances d'outillage également corrigées via audit (vitest/mocker, browserslist, postcss, js-yaml, nanoid, fast-uri, brace-expansion).
+
+### Features
+- **Navigateur temporel de la carte exposé aux plugins** — l'instant sélectionné par le curseur temporel de la vue Carte (`mapTemporal { active, dateMs }`) est publié dans `useViewStore`, avec écriture dédupliquée et remise à zéro en quittant la vue ou le dossier. Les autres vues et les plugins (ex. ForeNeurone) peuvent s'y abonner pour caler leurs propres filtres de période sur la position de l'appareil au fil du balayage.
+
 ## 2.52.0
 
 ### Features

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
@@ -255,6 +255,18 @@ export function MapView() {
   const [temporalTrace, setTemporalTrace] = useState(false);
   const isPlayingRef = useRef(false);
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  // Publish the temporal scrubber into the view store so other views
+  // and plugins can follow the scrubbed instant (deduped in the store).
+  useEffect(() => {
+    useViewStore.getState().setMapTemporal({
+      active: temporalMode,
+      dateMs: temporalMode && selectedDate ? selectedDate.getTime() : null,
+    });
+  }, [temporalMode, selectedDate]);
+  useEffect(() => () => {
+    // Leaving the map view ends the scrub for followers.
+    useViewStore.getState().setMapTemporal({ active: false, dateMs: null });
+  }, []);
 
   const { elements, links, assets, comments, updateElement, createElement, deleteElements, currentDossier } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);

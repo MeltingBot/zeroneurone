@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.52.0",
+  "version": "2.52.1",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -30,7 +30,7 @@
     "sync-server": "y-websocket-server",
     "relay-server": "node relay-server.js",
     "start": "node server/index.js",
-    "docker:generate-lock": "node -e \"const fs=require('fs'),{execSync}=require('child_process'),d=fs.mkdtempSync('/tmp/zn-lock-');fs.copyFileSync('package.json',d+'/package.json');execSync('npm install --package-lock-only',{cwd:d,stdio:'inherit'});fs.copyFileSync(d+'/package-lock.json','package-lock.json');fs.rmSync(d,{recursive:true});\"",
+    "docker:generate-lock": "node scripts/generate-docker-lock.mjs",
     "docker:build": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; npm run build:plugins && npm run docker:generate-lock && docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t ${DOCKER_REGISTRY:-zeroneurone}:latest . ; docker build -t ${DOCKER_REGISTRY:-zeroneurone}-relay:latest ./relay",
     "docker:build:app": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; npm run build:plugins && npm run docker:generate-lock && docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t ${DOCKER_REGISTRY:-zeroneurone}:latest .",
     "docker:build:local": "export $(grep -v '^#' .env 2>/dev/null | xargs) 2>/dev/null; npm run build:plugins && npm run build && docker build -f Dockerfile.static -t ${DOCKER_REGISTRY:-zeroneurone}:latest .",
@@ -66,7 +66,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
-    "maplibre-gl": "^5.20.1",
+    "maplibre-gl": "^6.9.0",
     "marked": "^15.0.12",
     "minisearch": "^7.2.0",
     "pdfjs-dist": "^6.2.108",
@@ -94,7 +94,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.11",
     "@y/websocket-server": "^0.1.1",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.1",
@@ -110,7 +110,7 @@
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.18",
+    "vitest": "^4.1.11",
     "ws": "^8.19.0"
   }
 }

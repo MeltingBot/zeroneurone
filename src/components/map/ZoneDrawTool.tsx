@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import { computePolygonCenter, computePolygonAreaKm2, generateCirclePolygon, generateSquarePolygon } from '../../utils/geo';
 import type { GeoPolygon } from '../../types';
 
