@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.52.2
+
+### Fixes
+- **Flèches décollées des losanges** — le losange est dessiné en tournant le corps du nœud de 45° : ses pointes débordent de la boîte React Flow d'environ 20 %, alors que les points d'ancrage des liens restaient aux milieux des côtés de la boîte, à l'intérieur du dessin. Selon l'angle d'arrivée, la flèche finissait enterrée dans la forme ou flottante à côté du biseau. Les ancrages sont désormais placés sur les pointes visibles (calcul exact, valable aussi pour les dimensions héritées non carrées).
+- **Redimensionnement du losange** — étirer un losange produisait une barre rectangulaire inclinée à 45°, plus un losange : la forme étant obtenue par rotation, un corps non carré ne donne pas un rhombe. Le redimensionnement conserve désormais les proportions (comme avec Alt), et un losange déjà enregistré avec des dimensions non carrées est affiché carré (moyenne des deux côtés).
+
 ## 2.52.1
 
 ### Security

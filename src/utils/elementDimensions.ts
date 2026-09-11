@@ -48,6 +48,13 @@ export function computeElementDimensions(
 ): NodeDimensions {
   // Explicit custom dimensions always win
   if (visual.customWidth && visual.customHeight) {
+    // The diamond is drawn by rotating the square body 45°: a non-square body
+    // would render as a slanted bar, not a rhombus. Keep it square (legacy
+    // non-square dimensions are averaged).
+    if (visual.shape === 'diamond' && visual.customWidth !== visual.customHeight) {
+      const side = Math.round((visual.customWidth + visual.customHeight) / 2);
+      return { width: side, height: side };
+    }
     return { width: visual.customWidth, height: visual.customHeight };
   }
 

@@ -222,6 +222,34 @@ function ElementNodeComponent({ data }: NodeProps) {
   // Handle visibility: show when hovered or selected
   const handleOpacity = isHovered || isSelected ? 'opacity-100' : 'opacity-0';
 
+  // The diamond is the body rectangle rotated 45°: its four corners (the
+  // visible tips) overhang the React Flow bounding box, while the box side
+  // midpoints — where handles normally sit — fall inside the drawn shape.
+  // Place each handle on the exact tip. For a w×h body rotated 45° the tips
+  // sit at ±(w+h)/(2√2) along the axes, shifted off-axis by (w−h)/(2√2) when
+  // the body is not square (which is what a resized diamond becomes).
+  const isDiamond = element.visual.shape === 'diamond';
+  const diamondHandleStyles = useMemo(():
+    | Record<'top' | 'bottom' | 'left' | 'right', React.CSSProperties>
+    | null => {
+    if (!isDiamond) return null;
+    const w = dimensions.width;
+    const h = dimensions.height;
+    const half = (w + h) / (2 * Math.SQRT2); // distance centre → pointe, sur l'axe
+    const oy = half - h / 2; // débord vertical au-delà du bord haut/bas
+    const ox = half - w / 2; // débord horizontal au-delà du bord gauche/droit
+    const dx = (h - w) / (2 * Math.SQRT2); // décalage x de la pointe haute (bas = −dx)
+    const dy = (w - h) / (2 * Math.SQRT2); // décalage y de la pointe droite (gauche = −dy)
+    return {
+      top: { top: -oy, left: `calc(50% + ${dx}px)` },
+      bottom: { bottom: -oy, left: `calc(50% + ${-dx}px)` },
+      right: { right: -ox, top: `calc(50% + ${dy}px)` },
+      left: { left: -ox, top: `calc(50% + ${-dy}px)` },
+    };
+  }, [isDiamond, dimensions.width, dimensions.height]);
+  const handleShift = (side: 'top' | 'bottom' | 'left' | 'right') =>
+    diamondHandleStyles?.[side];
+
   // Live resize handler - updates visual preview
   const handleResize = (_event: unknown, params: { width: number; height: number }) => {
     setDimensions({ width: params.width, height: params.height });
@@ -275,14 +303,14 @@ function ElementNodeComponent({ data }: NodeProps) {
             anyway, so nothing is lost. */}
         {hasLinks && (
           <>
-        <Handle type="source" position={Position.Top} id="source-top" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="source" position={Position.Left} id="source-left" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="target" position={Position.Top} id="target-top" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="target" position={Position.Bottom} id="target-bottom" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
-        <Handle type="target" position={Position.Right} id="target-right" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Top} id="source-top" className="!opacity-0 !w-1 !h-1" style={handleShift('top')} />
+        <Handle type="source" position={Position.Bottom} id="source-bottom" className="!opacity-0 !w-1 !h-1" style={handleShift('bottom')} />
+        <Handle type="source" position={Position.Left} id="source-left" className="!opacity-0 !w-1 !h-1" style={handleShift('left')} />
+        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" style={handleShift('right')} />
+        <Handle type="target" position={Position.Top} id="target-top" className="!opacity-0 !w-1 !h-1" style={handleShift('top')} />
+        <Handle type="target" position={Position.Bottom} id="target-bottom" className="!opacity-0 !w-1 !h-1" style={handleShift('bottom')} />
+        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" style={handleShift('left')} />
+        <Handle type="target" position={Position.Right} id="target-right" className="!opacity-0 !w-1 !h-1" style={handleShift('right')} />
           </>
         )}
       </div>
@@ -340,7 +368,7 @@ function ElementNodeComponent({ data }: NodeProps) {
         minWidth={MIN_WIDTH}
         minHeight={MIN_HEIGHT}
         isVisible={isSelected}
-        keepAspectRatio={keepAspect}
+        keepAspectRatio={keepAspect || isDiamond}
         lineClassName="!border-accent"
         handleClassName="!w-3 !h-3 !bg-accent !border-2 !border-white !rounded"
         onResize={handleResize}
@@ -353,24 +381,28 @@ function ElementNodeComponent({ data }: NodeProps) {
         position={Position.Top}
         id="source-top"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('top')}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('bottom')}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="source-left"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('left')}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('right')}
       />
 
       {/* Target handles on all 4 sides */}
@@ -379,24 +411,28 @@ function ElementNodeComponent({ data }: NodeProps) {
         position={Position.Top}
         id="target-top"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('top')}
       />
       <Handle
         type="target"
         position={Position.Bottom}
         id="target-bottom"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('bottom')}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="target-left"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('left')}
       />
       <Handle
         type="target"
         position={Position.Right}
         id="target-right"
         className={`!w-2 !h-2 !bg-accent !border !border-white handle-hitbox z-20 ${handleOpacity}`}
+        style={handleShift('right')}
       />
 
       {/* Comment indicator - shows when element has unresolved comments */}
