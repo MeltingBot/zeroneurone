@@ -232,7 +232,15 @@
       "toggleText": "Show/hide text",
       "extractMetadata": "Extract metadata",
       "noMetadata": "No metadata found in this file",
-      "metadataFailed": "Metadata extraction failed"
+      "metadataFailed": "Metadata extraction failed",
+      "emlRaw": "Raw source",
+      "emlFormatted": "Formatted",
+      "emlFrom": "From",
+      "emlTo": "To",
+      "emlCc": "Cc",
+      "emlDate": "Date",
+      "emlSubject": "Subject",
+      "emlAttachments": "Attachments"
     },
     "timestamps": {
       "createdAt": "Created",

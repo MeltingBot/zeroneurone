@@ -230,6 +230,69 @@ async function extractOfficeMetadata(arrayBuffer: ArrayBuffer): Promise<Extracte
 }
 
 /**
+ * Extract metadata from an EML email file (headers, origin, attachments).
+ */
+async function extractEmlMetadata(arrayBuffer: ArrayBuffer): Promise<ExtractedMetadata | null> {
+  const { parseEml, readFileAsLatin1 } = await import('./emlParser');
+  const eml = parseEml(await readFileAsLatin1(arrayBuffer));
+
+  const properties: Property[] = [];
+
+  if (eml.from) properties.push({ key: 'Expéditeur', value: eml.from, type: 'text' });
+  if (eml.to) properties.push({ key: 'Destinataire', value: eml.to, type: 'text' });
+  if (eml.cc) properties.push({ key: 'Copie (Cc)', value: eml.cc, type: 'text' });
+  if (eml.replyTo && eml.replyTo !== eml.from) {
+    properties.push({ key: 'Répondre à', value: eml.replyTo, type: 'text' });
+  }
+  if (eml.returnPath) {
+    const clean = eml.returnPath.replace(/^<|>$/g, '');
+    // Only worth surfacing when it differs from the sender (spoofing hint)
+    if (clean && eml.from && !eml.from.includes(clean)) {
+      properties.push({ key: 'Chemin de retour', value: clean, type: 'text' });
+    }
+  }
+  if (eml.subject) properties.push({ key: 'Sujet', value: eml.subject, type: 'text' });
+  if (eml.date) properties.push({ key: "Date d'envoi", value: eml.date, type: 'datetime' });
+  if (eml.messageId) properties.push({ key: 'Message-ID', value: eml.messageId, type: 'text' });
+  if (eml.mailer) properties.push({ key: 'Client de messagerie', value: eml.mailer, type: 'text' });
+  if (eml.originIp) properties.push({ key: "IP d'origine", value: eml.originIp, type: 'text' });
+  if (eml.attachments.length > 0) {
+    properties.push({ key: 'Pièces jointes', value: eml.attachments.length, type: 'number' });
+    properties.push({
+      key: 'Noms des pièces jointes',
+      value: eml.attachments.map((a) => a.filename).join(', '),
+      type: 'text',
+    });
+  }
+
+  // Body URLs — capped so a marketing email doesn't flood the proposal list
+  const MAX_LINKS = 10;
+  const MAX_IMAGE_LINKS = 5;
+  eml.links.slice(0, MAX_LINKS).forEach((url, i) => {
+    properties.push({ key: eml.links.length > 1 ? `Lien ${i + 1}` : 'Lien', value: url, type: 'link' });
+  });
+  if (eml.links.length > MAX_LINKS) {
+    properties.push({ key: 'Autres liens', value: eml.links.length - MAX_LINKS, type: 'number' });
+  }
+  eml.imageLinks.slice(0, MAX_IMAGE_LINKS).forEach((url, i) => {
+    properties.push({
+      key: eml.imageLinks.length > 1 ? `Image distante ${i + 1}` : 'Image distante',
+      value: url,
+      type: 'link',
+    });
+  });
+  if (eml.imageLinks.length > MAX_IMAGE_LINKS) {
+    properties.push({
+      key: 'Autres images distantes',
+      value: eml.imageLinks.length - MAX_IMAGE_LINKS,
+      type: 'number',
+    });
+  }
+
+  return properties.length > 0 ? { properties } : null;
+}
+
+/**
  * Main entry point: extract metadata from a file based on its MIME type.
  * Returns null if no metadata found or file type not supported.
  */
@@ -251,6 +314,10 @@ async function extractMetadata(file: File, arrayBuffer: ArrayBuffer): Promise<Ex
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext && ['docx', 'xlsx', 'pptx'].includes(ext)) {
       return await extractOfficeMetadata(arrayBuffer);
+    }
+
+    if (file.type === 'message/rfc822' || ext === 'eml') {
+      return await extractEmlMetadata(arrayBuffer);
     }
 
     return null;

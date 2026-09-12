@@ -218,7 +218,15 @@
       "toggleText": "Testua erakutsi/ezkutatu",
       "extractMetadata": "Atera metadatuak",
       "noMetadata": "Ez da metadaturik aurkitu fitxategi honetan",
-      "metadataFailed": "Metadatuak ateratzeak huts egin du"
+      "metadataFailed": "Metadatuak ateratzeak huts egin du",
+      "emlRaw": "Iturburu gordina",
+      "emlFormatted": "Formatuduna",
+      "emlFrom": "Nork",
+      "emlTo": "Nori",
+      "emlCc": "Cc",
+      "emlDate": "Data",
+      "emlSubject": "Gaia",
+      "emlAttachments": "Eranskinak"
     },
     "timestamps": {
       "createdAt": "Sortze data",

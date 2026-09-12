@@ -218,7 +218,15 @@
       "toggleText": "Pokaz/ukryj tekst",
       "extractMetadata": "Wyodrębnij metadane",
       "noMetadata": "Nie znaleziono metadanych w tym pliku",
-      "metadataFailed": "Nie udało się wyodrębnić metadanych"
+      "metadataFailed": "Nie udało się wyodrębnić metadanych",
+      "emlRaw": "Surowe źródło",
+      "emlFormatted": "Sformatowany",
+      "emlFrom": "Od",
+      "emlTo": "Do",
+      "emlCc": "DW",
+      "emlDate": "Data",
+      "emlSubject": "Temat",
+      "emlAttachments": "Załączniki"
     },
     "timestamps": {
       "createdAt": "Utworzono",

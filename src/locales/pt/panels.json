@@ -218,7 +218,15 @@
       "toggleText": "Mostrar/ocultar texto",
       "extractMetadata": "Extrair metadados",
       "noMetadata": "Nenhum metadado encontrado neste ficheiro",
-      "metadataFailed": "Falha ao extrair os metadados"
+      "metadataFailed": "Falha ao extrair os metadados",
+      "emlRaw": "Fonte bruta",
+      "emlFormatted": "Formatado",
+      "emlFrom": "De",
+      "emlTo": "Para",
+      "emlCc": "Cc",
+      "emlDate": "Data",
+      "emlSubject": "Assunto",
+      "emlAttachments": "Anexos"
     },
     "timestamps": {
       "createdAt": "Criado em",

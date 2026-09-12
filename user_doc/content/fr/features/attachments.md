@@ -14,6 +14,7 @@ Attachez des documents, images et fichiers à vos éléments pour enrichir votre
 |-----------|---------|
 | **Images** | PNG, JPG, GIF, WebP, SVG, TIFF |
 | **Documents** | PDF, DOCX, XLSX, PPTX |
+| **Emails** | EML (RFC 822) |
 | **Autres** | Tout fichier (stocké, prévisualisation limitée) |
 
 ---
@@ -127,6 +128,7 @@ ZeroNeurone extrait automatiquement les métadonnées des fichiers joints et pro
 | **JPEG, TIFF, WebP** | Date de prise de vue, appareil (fabricant/modèle), dimensions, exposition, ouverture, ISO, focale, **coordonnées GPS** |
 | **PDF** | Créateur, producteur, dates création/modification, nombre de pages |
 | **DOCX, XLSX, PPTX** | Auteur, modifié par, dates création/modification, titre, sujet, nombre de pages/mots |
+| **EML** | Expéditeur, destinataires, sujet, date d'envoi, Message-ID, client de messagerie, IP d'origine (dernier relais public), chemin de retour et Répondre-à s'ils diffèrent de l'expéditeur, pièces jointes, liens du corps et images distantes (pixels de tracking) |
 
 ### Processus d'import
 

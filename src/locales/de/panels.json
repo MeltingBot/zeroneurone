@@ -218,7 +218,15 @@
       "toggleText": "Text ein-/ausblenden",
       "extractMetadata": "Metadaten extrahieren",
       "noMetadata": "Keine Metadaten in dieser Datei gefunden",
-      "metadataFailed": "Extraktion der Metadaten fehlgeschlagen"
+      "metadataFailed": "Extraktion der Metadaten fehlgeschlagen",
+      "emlRaw": "Rohquelle",
+      "emlFormatted": "Formatiert",
+      "emlFrom": "Von",
+      "emlTo": "An",
+      "emlCc": "Cc",
+      "emlDate": "Datum",
+      "emlSubject": "Betreff",
+      "emlAttachments": "Anhänge"
     },
     "timestamps": {
       "createdAt": "Erstellt am",

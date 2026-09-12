@@ -218,7 +218,15 @@
       "toggleText": "Mostrar/ocultar texto",
       "extractMetadata": "Extraer metadatos",
       "noMetadata": "No se han encontrado metadatos en este archivo",
-      "metadataFailed": "Error al extraer los metadatos"
+      "metadataFailed": "Error al extraer los metadatos",
+      "emlRaw": "Fuente sin procesar",
+      "emlFormatted": "Formateado",
+      "emlFrom": "De",
+      "emlTo": "Para",
+      "emlCc": "Cc",
+      "emlDate": "Fecha",
+      "emlSubject": "Asunto",
+      "emlAttachments": "Adjuntos"
     },
     "timestamps": {
       "createdAt": "Creado el",

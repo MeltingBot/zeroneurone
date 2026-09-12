@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.53.0
+
+### Features
+- **Support des emails EML** — un fichier `.eml` (RFC 822) déposé sur le canvas ou joint à un élément est maintenant accepté, prévisualisé et analysé. Parser MIME intégré sans dépendance : en-têtes dépliés et encoded-words RFC 2047, multipart imbriqué, quoted-printable/base64, jeux de caractères, messages transférés.
+  - **Analyse** : la modale de proposition de métadonnées remonte expéditeur, destinataires, sujet, date d'envoi (utilisable en chronologie), Message-ID, client de messagerie, **IP d'origine** (dernier relais public de la chaîne Received, ou X-Originating-IP), chemin de retour et Répondre-à quand ils diffèrent de l'expéditeur (indice d'usurpation), pièces jointes, **liens du corps** et **images distantes** (pixels de tracking) en propriétés de type lien — plafonnés pour ne pas noyer la modale.
+  - **Prévisualisation** : l'aperçu affiche les en-têtes lisibles et le corps (repli sur le HTML débalisé), avec un bouton pour basculer sur la **source brute** intégrale (tous les en-têtes Received, DKIM…).
+  - **Recherche** : le texte des emails (en-têtes + corps) est indexé, comme les PDF et DOCX.
+
+### Fixes
+- **Nom de hash dans la modale de métadonnées** — relancer l'extraction affichait le nom de stockage interne du fichier (hash SHA-256) au lieu de son nom d'origine ; `getAssetFile` restitue désormais toujours le vrai nom et le type MIME de la pièce jointe.
+- **Image Docker : worker PDF désynchronisé** — le build de l'image lançait `npx vite build` sans le hook `prebuild`, embarquant le `pdf.worker.min.mjs` committé même quand `npm ci` installait un pdfjs-dist plus récent (erreur « The API version … does not match the Worker version … » à l'ouverture d'un PDF). Le Dockerfile synchronise maintenant le worker avant le build.
+
 ## 2.52.2
 
 ### Fixes

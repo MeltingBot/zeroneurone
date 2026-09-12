@@ -218,7 +218,15 @@
       "toggleText": "Mostra/nascondi testo",
       "extractMetadata": "Estrai i metadati",
       "noMetadata": "Nessun metadato trovato in questo file",
-      "metadataFailed": "Estrazione dei metadati non riuscita"
+      "metadataFailed": "Estrazione dei metadati non riuscita",
+      "emlRaw": "Sorgente grezza",
+      "emlFormatted": "Formattato",
+      "emlFrom": "Da",
+      "emlTo": "A",
+      "emlCc": "Cc",
+      "emlDate": "Data",
+      "emlSubject": "Oggetto",
+      "emlAttachments": "Allegati"
     },
     "timestamps": {
       "createdAt": "Creato il",

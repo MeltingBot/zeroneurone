@@ -37,6 +37,12 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # Copy source code
 COPY . .
 
+# Sync the pdfjs worker with the installed pdfjs-dist version. `npx vite build`
+# skips npm's prebuild hook, so without this the committed public/pdf.worker.min.mjs
+# can lag behind the API bundled from node_modules ("API version X does not match
+# the Worker version Y" at runtime).
+RUN npm run sync:pdf-worker
+
 # Build the application with version info
 ENV VITE_APP_VERSION=$GIT_COMMIT
 RUN npx vite build

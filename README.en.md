@@ -10,7 +10,7 @@ An infinite whiteboard with graph-analysis capabilities.
 
 *Language: [Français](README.md) | English*
 
-![Version](https://img.shields.io/badge/version-2.42.6-blue)
+![Version](https://img.shields.io/badge/version-2.53.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -45,7 +45,7 @@ An infinite whiteboard with graph-analysis capabilities.
 - **Links**: relationships between elements with full metadata
 - **Properties**: customisable key/value pairs
 - **Tags**: free organisation and filtering
-- **Attachments**: images, PDF, documents with text extraction (EXIF, PDF/DOCX/XLSX metadata)
+- **Attachments**: images, PDF, documents, EML emails with text and metadata extraction (EXIF, PDF/DOCX/XLSX, email headers, originating IP, body links)
 - **Markdown description**: full support with tables, anchor links, code, quotes
 
 ### Graph Analysis

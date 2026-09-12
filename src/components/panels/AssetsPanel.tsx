@@ -373,7 +373,8 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
               onClearText={asset.extractedText ? () => handleClearText(asset.id) : undefined}
               onExtractText={
                 (asset.mimeType === 'application/pdf' || asset.mimeType.startsWith('text/')
-                  || asset.filename.toLowerCase().endsWith('.docx') || asset.filename.toLowerCase().endsWith('.odt'))
+                  || asset.filename.toLowerCase().endsWith('.docx') || asset.filename.toLowerCase().endsWith('.odt')
+                  || asset.mimeType === 'message/rfc822' || asset.filename.toLowerCase().endsWith('.eml'))
                   ? () => handleExtractText(asset.id)
                   : undefined
               }
@@ -482,6 +483,7 @@ function AssetItem({
   const isPdf = asset.mimeType === 'application/pdf';
   const isText = asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename);
   const isDoc = /\.(docx|odt)$/i.test(asset.filename);
+  const isEml = asset.mimeType === 'message/rfc822' || /\.eml$/i.test(asset.filename);
   const hasText = !!asset.extractedText;
 
   const Icon = isImage ? Image : (isPdf || isDoc) ? FileText : File;
@@ -565,7 +567,7 @@ function AssetItem({
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {(isImage || isPdf || isText || isDoc) && (
+          {(isImage || isPdf || isText || isDoc || isEml) && (
             <button
               onClick={onPreview}
               data-testid="preview-asset"
@@ -641,13 +643,16 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
   const { t: tPanels } = useTranslation('panels');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [rawContent, setRawContent] = useState<string | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const isImage = asset.mimeType.startsWith('image/');
   const isPdf = asset.mimeType === 'application/pdf';
-  const isText = asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename);
+  const isEml = asset.mimeType === 'message/rfc822' || /\.eml$/i.test(asset.filename);
+  const isText = !isEml && (asset.mimeType.startsWith('text/') || /\.(md|mdx|json|xml|csv|yaml|yml|toml|ini|conf|log)$/i.test(asset.filename));
   const isDoc = /\.(docx|odt)$/i.test(asset.filename);
-  const hasPreview = isImage || isPdf || isText || isDoc;
+  const hasPreview = isImage || isPdf || isText || isDoc || isEml;
 
   // Load file from OPFS
   useEffect(() => {
@@ -661,6 +666,28 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           const file = await fileService.getAssetFile(asset);
           const text = await file.text();
           if (mounted) setTextContent(text);
+        } else if (isEml) {
+          const file = await fileService.getAssetFile(asset);
+          const { parseEml, readFileAsLatin1 } = await import('../../services/emlParser');
+          const rawLatin1 = await readFileAsLatin1(await file.arrayBuffer());
+          if (mounted) setRawContent(rawLatin1);
+          const eml = parseEml(rawLatin1);
+          let body = eml.textBody;
+          if (!body && eml.htmlBody) {
+            const doc = new DOMParser().parseFromString(eml.htmlBody, 'text/html');
+            body = doc.body?.textContent?.trim() || null;
+          }
+          const headerLines = [
+            eml.from && `${tPanels('detail.files.emlFrom')} : ${eml.from}`,
+            eml.to && `${tPanels('detail.files.emlTo')} : ${eml.to}`,
+            eml.cc && `${tPanels('detail.files.emlCc')} : ${eml.cc}`,
+            eml.date && `${tPanels('detail.files.emlDate')} : ${eml.date.toLocaleString()}`,
+            eml.subject && `${tPanels('detail.files.emlSubject')} : ${eml.subject}`,
+            eml.attachments.length > 0 &&
+              `${tPanels('detail.files.emlAttachments')} : ${eml.attachments.map((a) => a.filename).join(', ')}`,
+          ].filter(Boolean) as string[];
+          const preview = [headerLines.join('\n'), body ?? ''].filter(Boolean).join('\n\n' + '─'.repeat(40) + '\n\n');
+          if (mounted) setTextContent(preview || null);
         } else if (isDoc) {
           // Use extractedText if available, otherwise show notice
           if (mounted) setTextContent(asset.extractedText || null);
@@ -685,7 +712,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
       mounted = false;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [asset, isImage, isPdf, isText, isDoc, hasPreview]);
+  }, [asset, isImage, isPdf, isText, isDoc, isEml, hasPreview]);
 
   // Handle keyboard events
   useEffect(() => {
@@ -705,7 +732,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     >
       <div
         className={`bg-bg-primary rounded shadow-lg ${
-          isPdf || isText || isDoc || isImage ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
+          isPdf || isText || isDoc || isEml || isImage ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -714,6 +741,20 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           <h3 className="text-sm font-medium text-text-primary truncate pr-4">
             {asset.filename}
           </h3>
+          <div className="flex items-center gap-1 flex-shrink-0">
+          {isEml && rawContent !== null && (
+            <button
+              onClick={() => setShowRaw((v) => !v)}
+              className={`px-2 py-1 text-xs rounded border ${
+                showRaw
+                  ? 'border-accent text-accent bg-accent-light'
+                  : 'border-border-default text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+              }`}
+              title={showRaw ? tPanels('detail.files.emlFormatted') : tPanels('detail.files.emlRaw')}
+            >
+              {showRaw ? tPanels('detail.files.emlFormatted') : tPanels('detail.files.emlRaw')}
+            </button>
+          )}
           <button
             onClick={onClose}
             className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
@@ -721,10 +762,11 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
           >
             <X size={16} />
           </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className={isPdf || isText || isDoc || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
+        <div className={isPdf || isText || isDoc || isEml || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <div className="flex flex-col items-center gap-2">
@@ -734,9 +776,9 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
             </div>
           ) : isPdf && fileUrl ? (
             <PdfPreview url={fileUrl} />
-          ) : (isText || isDoc) && textContent !== null ? (
+          ) : (isText || isDoc || isEml) && textContent !== null ? (
             <pre className="w-full h-full overflow-auto p-4 text-xs text-text-primary font-mono whitespace-pre-wrap leading-relaxed">
-              {textContent}
+              {isEml && showRaw && rawContent !== null ? rawContent : textContent}
             </pre>
           ) : isDoc && textContent === null ? (
             <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">

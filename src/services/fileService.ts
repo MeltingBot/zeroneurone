@@ -47,6 +47,9 @@ const FILE_LIMITS = {
     'application/json',
     'application/xml',
 
+    // Emails
+    'message/rfc822',
+
     // Archives (for dossier export/import)
     'application/zip',
     'application/x-zip-compressed',
@@ -74,6 +77,8 @@ const FILE_LIMITS = {
     '.txt', '.md', '.csv', '.json', '.xml', '.html', '.htm',
     // Documents
     '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp',
+    // Emails
+    '.eml',
     // Images
     '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.ico',
     // Audio
@@ -284,11 +289,14 @@ class FileService {
       const rawBuf = await rawFile.arrayBuffer();
       if (isOpfsEncrypted(rawBuf)) {
         const plainBuf = await decryptOpfsBuffer(dek, rawBuf);
-        return new File([plainBuf], rawFile.name, { type: asset.mimeType });
+        return new File([plainBuf], asset.filename, { type: asset.mimeType });
       }
     }
 
-    return rawFile;
+    // OPFS stores files under their content hash: hand back a File carrying
+    // the asset's real filename so consumers (metadata modal, downloads…)
+    // never surface the internal hash name.
+    return new File([rawFile], asset.filename, { type: asset.mimeType || rawFile.type });
   }
 
   async getAssetUrl(asset: Asset): Promise<string> {
@@ -532,7 +540,37 @@ class FileService {
       return this.extractOdtText(arrayBuffer);
     }
 
+    // Extract text from EML emails (headers + text body)
+    if (file.type === 'message/rfc822' || nameLower.endsWith('.eml')) {
+      return this.extractEmlText(arrayBuffer);
+    }
+
     return null;
+  }
+
+  private async extractEmlText(arrayBuffer: ArrayBuffer): Promise<string | null> {
+    try {
+      const { parseEml, readFileAsLatin1 } = await import('./emlParser');
+      const eml = parseEml(await readFileAsLatin1(arrayBuffer));
+      const headerLines = [
+        eml.from && `De: ${eml.from}`,
+        eml.to && `À: ${eml.to}`,
+        eml.cc && `Cc: ${eml.cc}`,
+        eml.subject && `Sujet: ${eml.subject}`,
+        eml.date && `Date: ${eml.date.toISOString()}`,
+      ].filter(Boolean) as string[];
+      // Fall back to HTML stripped of tags when there is no text/plain part
+      let body = eml.textBody;
+      if (!body && eml.htmlBody) {
+        const doc = new DOMParser().parseFromString(eml.htmlBody, 'text/html');
+        body = doc.body?.textContent?.trim() || null;
+      }
+      const full = [headerLines.join('\n'), body].filter(Boolean).join('\n\n');
+      return full ? this.normalizeExtractedText(full) : null;
+    } catch (error) {
+      console.warn('Failed to extract EML text:', error);
+      return null;
+    }
   }
 
   private async extractPdfText(arrayBuffer: ArrayBuffer): Promise<string | null> {

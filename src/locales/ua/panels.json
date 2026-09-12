@@ -218,7 +218,15 @@
       "toggleText": "Pokazaty/skhovaty tekst",
       "extractMetadata": "Витягти метадані",
       "noMetadata": "У цьому файлі метаданих не знайдено",
-      "metadataFailed": "Не вдалося витягти метадані"
+      "metadataFailed": "Не вдалося витягти метадані",
+      "emlRaw": "Вихідний код",
+      "emlFormatted": "Відформатовано",
+      "emlFrom": "Від",
+      "emlTo": "Кому",
+      "emlCc": "Копія",
+      "emlDate": "Дата",
+      "emlSubject": "Тема",
+      "emlAttachments": "Вкладення"
     },
     "timestamps": {
       "createdAt": "Створено",

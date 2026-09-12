@@ -232,7 +232,15 @@
       "toggleText": "Afficher/masquer le texte",
       "extractMetadata": "Extraire les métadonnées",
       "noMetadata": "Aucune métadonnée trouvée dans ce fichier",
-      "metadataFailed": "Échec de l'extraction des métadonnées"
+      "metadataFailed": "Échec de l'extraction des métadonnées",
+      "emlRaw": "Source brute",
+      "emlFormatted": "Mis en forme",
+      "emlFrom": "De",
+      "emlTo": "À",
+      "emlCc": "Cc",
+      "emlDate": "Date",
+      "emlSubject": "Sujet",
+      "emlAttachments": "Pièces jointes"
     },
     "timestamps": {
       "createdAt": "Créé le",

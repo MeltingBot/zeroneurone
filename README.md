@@ -10,7 +10,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 
 *Langue : Francais | [English](README.en.md)*
 
-![Version](https://img.shields.io/badge/version-2.52.2-blue)
+![Version](https://img.shields.io/badge/version-2.53.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -47,7 +47,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - **Liens** : Relations entre elements avec metadonnees completes
 - **Proprietes** : Paires cle/valeur personnalisables
 - **Tags** : Organisation libre et filtrage
-- **Pieces jointes** : Images, PDF, documents avec extraction de texte (EXIF, metadonnees PDF/DOCX/XLSX)
+- **Pieces jointes** : Images, PDF, documents, emails EML avec extraction de texte et de metadonnees (EXIF, PDF/DOCX/XLSX, en-tetes email, IP d'origine, liens du corps)
 - **Description Markdown** : Support complet avec tables, liens d'ancrage, code, citations
 
 ### Analyse de Graphe

@@ -218,7 +218,15 @@
       "toggleText": "Mostra/amaga text",
       "extractMetadata": "Extreu les metadades",
       "noMetadata": "No s'han trobat metadades en aquest fitxer",
-      "metadataFailed": "Ha fallat l'extracció de metadades"
+      "metadataFailed": "Ha fallat l'extracció de metadades",
+      "emlRaw": "Font en brut",
+      "emlFormatted": "Formatat",
+      "emlFrom": "De",
+      "emlTo": "Per a",
+      "emlCc": "Cc",
+      "emlDate": "Data",
+      "emlSubject": "Assumpte",
+      "emlAttachments": "Adjunts"
     },
     "timestamps": {
       "createdAt": "Creat el",

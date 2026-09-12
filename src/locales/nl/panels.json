@@ -218,7 +218,15 @@
       "toggleText": "Tekst tonen/verbergen",
       "extractMetadata": "Metadata extraheren",
       "noMetadata": "Geen metadata gevonden in dit bestand",
-      "metadataFailed": "Extraheren van metadata mislukt"
+      "metadataFailed": "Extraheren van metadata mislukt",
+      "emlRaw": "Onbewerkte bron",
+      "emlFormatted": "Opgemaakt",
+      "emlFrom": "Van",
+      "emlTo": "Aan",
+      "emlCc": "Cc",
+      "emlDate": "Datum",
+      "emlSubject": "Onderwerp",
+      "emlAttachments": "Bijlagen"
     },
     "timestamps": {
       "createdAt": "Aangemaakt op",
