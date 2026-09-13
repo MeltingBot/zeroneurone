@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Document source expiré (rétention dépassée de {{days}} jour(s))",
     "warnings": "Avertissements:",
-    "andMore": "... et {{count}} autres"
+    "andMore": "... et {{count}} autres",
+    "fec": {
+      "optionsTitle": "Options d'import FEC",
+      "summary": "{{lines}} lignes · {{entries}} écritures · {{aux}} tiers · du {{from}} au {{to}}",
+      "unbalancedWarning": "{{count}} écritures déséquilibrées ou à sens unique",
+      "topN": "Plafond de tiers (top N)",
+      "minAmount": "Montant minimal par lien (€)",
+      "dateFrom": "Du",
+      "dateTo": "Au",
+      "familiesTitle": "Familles à inclure",
+      "families": {
+        "clients": "Clients",
+        "suppliers": "Fournisseurs",
+        "otherThirdParties": "Autres tiers",
+        "banks": "Banques",
+        "expenses": "Charges",
+        "revenues": "Produits",
+        "others": "Autres comptes"
+      },
+      "preview": "{{elements}} éléments · {{links}} liens",
+      "capped": "{{count}} tiers sous le plafond seront exclus",
+      "flowConvention": "Flux orientés du compte crédité vers le compte débité (sens de la valeur).",
+      "confirm": "Importer",
+      "includeGenToGen": "Inclure les flux entre comptes généraux (TVA, OD, paie…)"
+    }
   },
   "export": {
     "title": "Exporter le dossier",

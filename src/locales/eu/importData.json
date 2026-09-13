@@ -137,5 +137,36 @@
       "entityNoId": "ID gabeko entitatea saltatu da",
       "linkMissingEntity": "Lotura saltatu da: iturri/helburu entitatea ez da aurkitu"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "FEC formatua ez da ezagutu (JournalCode goiburua falta da)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} lerro irakurtezin baztertu dira",
+      "unbalanced": "{{count}} idazpen desorekatu edo norabide bakarreko",
+      "cappedThirdParties": "Mugaren azpiko {{count}} hirugarren ez dira inportatu"
+    },
+    "tags": {
+      "client": "Bezeroa",
+      "supplier": "Hornitzailea",
+      "thirdParty": "Hirugarrena",
+      "bank": "Bankua",
+      "expense": "Gastua",
+      "revenue": "Sarrera",
+      "other": "Kontua"
+    },
+    "properties": {
+      "auxAccount": "Kontu laguntzailea",
+      "pcgRoot": "PCG erroa",
+      "generalAccounts": "Kontu orokorrak",
+      "totalDebit": "Zor guztira",
+      "totalCredit": "Hartzeko guztira",
+      "lineCount": "Lerro kopurua",
+      "paymentModes": "Ordainketa moduak",
+      "amount": "Zenbateko metatua",
+      "entryCount": "Idazpen kopurua",
+      "journals": "Egunkariak"
+    }
   }
 }

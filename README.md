@@ -10,7 +10,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 
 *Langue : Francais | [English](README.en.md)*
 
-![Version](https://img.shields.io/badge/version-2.53.0-blue)
+![Version](https://img.shields.io/badge/version-2.54.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -89,6 +89,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Import STIX 2.1 (cyber threat intelligence)
 - Import OSINT Industries, Graph Palette, PredicaGraph, OSINTracker
 - Import GEDCOM 5.5.1/7.0 et GeneWeb pour donnees genealogiques (nom, dates, lieux, profession, surnom, titre, notes)
+- **Import FEC** (Fichier des Ecritures Comptables) : graphe de flux financiers agrege oriente enquete — tiers, banques, charges/produits, montants cumules, periodes
 - Import ZIP (restauration complete avec onglets)
 - Import dans dossier courante (merge avec placement visuel)
 - **Import JSON par mapping** : assistant pour relier les champs d'un JSON quelconque aux elements — detection auto (source, libelle, date/pays/geo/identifiants), sous-elements lies, liens par reference d'ID et **noeuds pivots** (valeur partagee), medias en pieces jointes, polygones geo, **filtre multi-conditions** + plafond, **modeles reutilisables** exportables ; aussi par collage direct (Ctrl+V) sur le canvas

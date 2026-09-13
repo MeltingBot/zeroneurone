@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Documento fuente expirado (retención superada en {{days}} día(s))",
     "warnings": "Advertencias:",
-    "andMore": "... y {{count}} más"
+    "andMore": "... y {{count}} más",
+    "fec": {
+      "optionsTitle": "Opciones de importación FEC",
+      "summary": "{{lines}} líneas · {{entries}} asientos · {{aux}} terceros · del {{from}} al {{to}}",
+      "unbalancedWarning": "{{count}} asientos desequilibrados o de un solo sentido",
+      "topN": "Límite de terceros (top N)",
+      "minAmount": "Importe mínimo por enlace (€)",
+      "dateFrom": "Desde",
+      "dateTo": "Hasta",
+      "familiesTitle": "Familias a incluir",
+      "families": {
+        "clients": "Clientes",
+        "suppliers": "Proveedores",
+        "otherThirdParties": "Otros terceros",
+        "banks": "Bancos",
+        "expenses": "Gastos",
+        "revenues": "Ingresos",
+        "others": "Otras cuentas"
+      },
+      "preview": "{{elements}} elementos · {{links}} enlaces",
+      "capped": "{{count}} terceros bajo el límite serán excluidos",
+      "flowConvention": "Flujos orientados de la cuenta acreditada hacia la cuenta debitada (sentido del valor).",
+      "confirm": "Importar",
+      "includeGenToGen": "Incluir flujos entre cuentas generales (IVA, asientos varios, nóminas…)"
+    }
   },
   "export": {
     "title": "Exportar el expediente",

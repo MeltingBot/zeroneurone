@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Documento sorgente scaduto (conservazione superata di {{days}} giorno/i)",
     "warnings": "Avvisi:",
-    "andMore": "... e altri {{count}}"
+    "andMore": "... e altri {{count}}",
+    "fec": {
+      "optionsTitle": "Opzioni di importazione FEC",
+      "summary": "{{lines}} righe · {{entries}} registrazioni · {{aux}} terzi · dal {{from}} al {{to}}",
+      "unbalancedWarning": "{{count}} registrazioni squilibrate o a senso unico",
+      "topN": "Limite di terzi (top N)",
+      "minAmount": "Importo minimo per collegamento (€)",
+      "dateFrom": "Dal",
+      "dateTo": "Al",
+      "familiesTitle": "Famiglie da includere",
+      "families": {
+        "clients": "Clienti",
+        "suppliers": "Fornitori",
+        "otherThirdParties": "Altri terzi",
+        "banks": "Banche",
+        "expenses": "Costi",
+        "revenues": "Ricavi",
+        "others": "Altri conti"
+      },
+      "preview": "{{elements}} elementi · {{links}} collegamenti",
+      "capped": "{{count}} terzi sotto il limite saranno esclusi",
+      "flowConvention": "Flussi orientati dal conto accreditato verso il conto addebitato (direzione del valore).",
+      "confirm": "Importa",
+      "includeGenToGen": "Includi flussi tra conti generali (IVA, scritture varie, paghe…)"
+    }
   },
   "export": {
     "title": "Esporta il fascicolo",

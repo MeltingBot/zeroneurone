@@ -137,5 +137,36 @@
       "entityNoId": "Entitat sense ID omesa",
       "linkMissingEntity": "Enllaç omès: entitat origen/destinació no trobada"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "Format FEC no reconegut (capçalera JournalCode absent)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} línies illegibles omeses",
+      "unbalanced": "{{count}} assentaments desequilibrats o d'un sol sentit",
+      "cappedThirdParties": "{{count}} tercers sota el límit no importats"
+    },
+    "tags": {
+      "client": "Client",
+      "supplier": "Proveïdor",
+      "thirdParty": "Tercer",
+      "bank": "Banc",
+      "expense": "Despesa",
+      "revenue": "Ingrés",
+      "other": "Compte"
+    },
+    "properties": {
+      "auxAccount": "Compte auxiliar",
+      "pcgRoot": "Arrel PCG",
+      "generalAccounts": "Comptes generals",
+      "totalDebit": "Total deure",
+      "totalCredit": "Total haver",
+      "lineCount": "Nombre de línies",
+      "paymentModes": "Modes de pagament",
+      "amount": "Import acumulat",
+      "entryCount": "Nombre d'assentaments",
+      "journals": "Diaris"
+    }
   }
 }

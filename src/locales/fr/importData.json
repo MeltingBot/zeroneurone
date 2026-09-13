@@ -137,5 +137,36 @@
       "entityNoId": "Entité sans ID ignorée",
       "linkMissingEntity": "Lien ignoré : entité source/cible non trouvée"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "Format FEC non reconnu (en-tête JournalCode absent)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} lignes illisibles ignorées",
+      "unbalanced": "{{count}} écritures déséquilibrées ou à sens unique",
+      "cappedThirdParties": "{{count}} tiers sous le plafond non importés"
+    },
+    "tags": {
+      "client": "Client",
+      "supplier": "Fournisseur",
+      "thirdParty": "Tiers",
+      "bank": "Banque",
+      "expense": "Charge",
+      "revenue": "Produit",
+      "other": "Compte"
+    },
+    "properties": {
+      "auxAccount": "Compte auxiliaire",
+      "pcgRoot": "Racine PCG",
+      "generalAccounts": "Comptes généraux",
+      "totalDebit": "Total débit",
+      "totalCredit": "Total crédit",
+      "lineCount": "Nombre de lignes d'écriture",
+      "paymentModes": "Modes de règlement",
+      "amount": "Montant cumulé",
+      "entryCount": "Nombre d'écritures",
+      "journals": "Journaux"
+    }
   }
 }

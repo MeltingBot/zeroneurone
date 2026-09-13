@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Brondocument verlopen (bewaring overschreden met {{days}} dag(en))",
     "warnings": "Waarschuwingen:",
-    "andMore": "... en nog {{count}}"
+    "andMore": "... en nog {{count}}",
+    "fec": {
+      "optionsTitle": "FEC-importopties",
+      "summary": "{{lines}} regels · {{entries}} boekingen · {{aux}} derden · van {{from}} tot {{to}}",
+      "unbalancedWarning": "{{count}} onevenwichtige of eenzijdige boekingen",
+      "topN": "Limiet derden (top N)",
+      "minAmount": "Minimumbedrag per koppeling (€)",
+      "dateFrom": "Van",
+      "dateTo": "Tot",
+      "familiesTitle": "Op te nemen families",
+      "families": {
+        "clients": "Klanten",
+        "suppliers": "Leveranciers",
+        "otherThirdParties": "Andere derden",
+        "banks": "Banken",
+        "expenses": "Kosten",
+        "revenues": "Opbrengsten",
+        "others": "Andere rekeningen"
+      },
+      "preview": "{{elements}} elementen · {{links}} koppelingen",
+      "capped": "{{count}} derden onder de limiet worden uitgesloten",
+      "flowConvention": "Stromen lopen van de gecrediteerde naar de gedebiteerde rekening (richting van de waarde).",
+      "confirm": "Importeren",
+      "includeGenToGen": "Stromen tussen grootboekrekeningen opnemen (btw, diverse boekingen, loon…)"
+    }
   },
   "export": {
     "title": "Dossier exporteren",

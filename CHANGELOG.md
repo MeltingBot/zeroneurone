@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.54.0
+
+### Features
+- **Import FEC** — un Fichier des Écritures Comptables (format normalisé DGFiP, `.txt`/`.fec`, détecté par son en-tête) se transforme en graphe de flux financiers orienté enquête et due diligence, plutôt qu'en 90 000 lignes tabulaires. Les tiers auxiliaires deviennent des éléments taggés (Client, Fournisseur, Tiers), les comptes généraux sont agrégés par racine PCG (Banque, Charge, Produit…), et les écritures équilibrées produisent des liens de flux agrégés — montant cumulé en label, épaisseur logarithmique, nombre d'écritures, journaux et période en propriétés, dates visibles en chronologie. Convention de sens : du compte crédité vers le compte débité (le sens de la valeur). Un écran d'options avec aperçu instantané contrôle le volume : plafond top-N tiers, **seuil de montant pré-calculé depuis la distribution réelle des flux** (un seuil fixe n'a aucun sens d'un FEC à l'autre), familles à inclure, période, et exclusion par défaut des flux techniques entre comptes généraux (TVA, OD, paie) qui maillent le graphe sans nommer personne. Sur un FEC réel de 94 000 lignes : analyse en ~350 ms, graphe par défaut d'environ 85 éléments et 140 liens, disposés en colonnes par famille dans le sens de la valeur. Disponible dans les deux chemins d'import (nouveau dossier, dossier courant avec placement au clic). Prorata n×m au sein des écritures, contrôle d'équilibre, 16 tests unitaires.
+
 ## 2.53.0
 
 ### Features

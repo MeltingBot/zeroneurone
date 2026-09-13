@@ -137,5 +137,36 @@
       "entityNoId": "Entiteit zonder ID overgeslagen",
       "linkMissingEntity": "Koppeling overgeslagen: bron-/doelobject niet gevonden"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "FEC-formaat niet herkend (JournalCode-koptekst ontbreekt)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} onleesbare regels overgeslagen",
+      "unbalanced": "{{count}} onevenwichtige of eenzijdige boekingen",
+      "cappedThirdParties": "{{count}} derden onder de limiet niet geïmporteerd"
+    },
+    "tags": {
+      "client": "Klant",
+      "supplier": "Leverancier",
+      "thirdParty": "Derde",
+      "bank": "Bank",
+      "expense": "Kosten",
+      "revenue": "Opbrengst",
+      "other": "Rekening"
+    },
+    "properties": {
+      "auxAccount": "Subrekening",
+      "pcgRoot": "PCG-stam",
+      "generalAccounts": "Grootboekrekeningen",
+      "totalDebit": "Totaal debet",
+      "totalCredit": "Totaal credit",
+      "lineCount": "Aantal boekingsregels",
+      "paymentModes": "Betaalwijzen",
+      "amount": "Gecumuleerd bedrag",
+      "entryCount": "Aantal boekingen",
+      "journals": "Dagboeken"
+    }
   }
 }

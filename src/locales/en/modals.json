@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Source document expired (retention exceeded by {{days}} day(s))",
     "warnings": "Warnings:",
-    "andMore": "... and {{count}} more"
+    "andMore": "... and {{count}} more",
+    "fec": {
+      "optionsTitle": "FEC import options",
+      "summary": "{{lines}} lines · {{entries}} entries · {{aux}} third parties · from {{from}} to {{to}}",
+      "unbalancedWarning": "{{count}} unbalanced or one-sided entries",
+      "topN": "Third-party cap (top N)",
+      "minAmount": "Minimum amount per link (€)",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "familiesTitle": "Families to include",
+      "families": {
+        "clients": "Clients",
+        "suppliers": "Suppliers",
+        "otherThirdParties": "Other third parties",
+        "banks": "Banks",
+        "expenses": "Expenses",
+        "revenues": "Revenues",
+        "others": "Other accounts"
+      },
+      "preview": "{{elements}} elements · {{links}} links",
+      "capped": "{{count}} third parties below the cap will be excluded",
+      "flowConvention": "Flows are directed from the credited account to the debited account (direction of value).",
+      "confirm": "Import",
+      "includeGenToGen": "Include flows between general accounts (VAT, misc. entries, payroll…)"
+    }
   },
   "export": {
     "title": "Export dossier",

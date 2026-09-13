@@ -572,13 +572,41 @@ fam Dupont Jean + Martin Marie
 - Enfants listés entre `beg` et `end`
 - Préfixe `h` = homme, `f` = femme
 
+### FEC (Fichier des Écritures Comptables)
+
+**Format normalisé DGFiP** (art. A47 A-1 du LPF) produit par tout logiciel comptable français. Fichier `.txt` ou `.fec`, colonnes séparées par pipe ou tabulation, détecté par son en-tête `JournalCode`.
+
+L'import ne reproduit pas la comptabilité : il construit un **graphe de flux agrégé orienté enquête** (due diligence, analyse financière) — qui est payé, par où passe l'argent, sur quelle période.
+
+#### Modèle produit
+
+| Donnée FEC | Résultat dans ZeroNeurone |
+|------------|---------------------------|
+| Comptes auxiliaires (CompAuxNum) | Un élément par tiers, taggé **Client** (41x), **Fournisseur** (40x) ou **Tiers** |
+| Comptes généraux sans auxiliaire | Un élément par racine PCG à 3 chiffres, taggé **Banque** (51x), **Charge** (classe 6), **Produit** (classe 7)… |
+| Écritures équilibrées | Des **liens de flux** agrégés par paire de comptes : montant cumulé, nombre d'écritures, journaux, période (visible en chronologie) |
+
+Les montants sont répartis au prorata au sein de chaque écriture. **Convention de sens : les flux vont du compte crédité vers le compte débité** (le sens de la valeur : Banque → Fournisseur = paiement). L'épaisseur du lien reflète le montant cumulé (échelle logarithmique).
+
+#### Écran d'options
+
+Avant l'import, un écran présente le résumé du fichier (lignes, écritures, tiers, période) et permet d'ajuster avec un **aperçu instantané** du nombre d'éléments et de liens :
+
+- **Plafond de tiers (top N)** — garde les N tiers aux plus gros flux cumulés (défaut 200)
+- **Montant minimal par lien** — pré-calculé automatiquement depuis la distribution des montants pour viser un graphe d'environ 300 liens
+- **Familles à inclure** — clients, fournisseurs, banques, charges, produits…
+- **Période** — bornes de dates pré-remplies
+- **Flux entre comptes généraux** — décochés par défaut (TVA, OD, paie… maillent le graphe sans nommer personne)
+
+Chaque élément porte ses totaux débit/crédit, ses comptes de rattachement et ses modes de règlement en propriétés — exploitables ensuite dans les filtres, requêtes et la matrice.
+
 ---
 
 ## Importer dans le dossier courant
 
 Depuis un dossier ouvert, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans le dossier en cours.
 
-**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
+**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
 ### Mode placement
 

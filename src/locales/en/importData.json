@@ -137,5 +137,36 @@
       "entityNoId": "Entity without ID skipped",
       "linkMissingEntity": "Link skipped: source/target entity not found"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "Unrecognized FEC format (missing JournalCode header)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} unreadable lines skipped",
+      "unbalanced": "{{count}} unbalanced or one-sided entries",
+      "cappedThirdParties": "{{count}} third parties below the cap were not imported"
+    },
+    "tags": {
+      "client": "Client",
+      "supplier": "Supplier",
+      "thirdParty": "Third party",
+      "bank": "Bank",
+      "expense": "Expense",
+      "revenue": "Revenue",
+      "other": "Account"
+    },
+    "properties": {
+      "auxAccount": "Auxiliary account",
+      "pcgRoot": "PCG root",
+      "generalAccounts": "General accounts",
+      "totalDebit": "Total debit",
+      "totalCredit": "Total credit",
+      "lineCount": "Entry line count",
+      "paymentModes": "Payment methods",
+      "amount": "Cumulated amount",
+      "entryCount": "Entry count",
+      "journals": "Journals"
+    }
   }
 }

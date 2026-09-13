@@ -10,7 +10,7 @@ An infinite whiteboard with graph-analysis capabilities.
 
 *Language: [Français](README.md) | English*
 
-![Version](https://img.shields.io/badge/version-2.53.0-blue)
+![Version](https://img.shields.io/badge/version-2.54.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -87,6 +87,7 @@ An infinite whiteboard with graph-analysis capabilities.
 - STIX 2.1 import (cyber threat intelligence)
 - OSINT Industries, Graph Palette, PredicaGraph, OSINTracker import
 - GEDCOM 5.5.1/7.0 and GeneWeb import for genealogical data (name, dates, places, occupation, nickname, title, notes)
+- **FEC import** (French accounting entries file): aggregated, investigation-oriented financial flow graph — third parties, banks, expenses/revenues, cumulated amounts, periods
 - ZIP import (full restore with tabs)
 - Import into current dossier (merge with visual placement)
 - **JSON mapping import**: an assistant to map any JSON's fields onto elements — auto-detection (record source, label, date/country/geo/identifiers), linked sub-elements, ID-reference links and **pivot nodes** (shared value), media as attachments, geo polygons, **multi-condition filter** + cap, reusable **templates** (exportable); also via direct paste (Ctrl+V) onto the canvas

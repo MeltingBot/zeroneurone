@@ -3254,6 +3254,11 @@ export function Canvas() {
             }
           } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {
             result = await importService.importFromGenealogy(importPlacementData.file, invId);
+          } else if (fileName.endsWith('.txt') || fileName.endsWith('.fec')) {
+            const { importFEC, isFECFormat } = await import('../../services/importFEC');
+            result = isFECFormat(content)
+              ? await importFEC(content, invId, importPlacementData.importOptions?.fec)
+              : { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
           } else if (fileName.endsWith('.json') || fileName.endsWith('.excalidraw')) {
             result = await importService.importFromJSON(content, invId);
           } else {

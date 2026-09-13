@@ -137,5 +137,36 @@
       "entityNoId": "Entität ohne ID übersprungen",
       "linkMissingEntity": "Link übersprungen: Quell-/Zielentität nicht gefunden"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "FEC-Format nicht erkannt (JournalCode-Kopfzeile fehlt)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} unlesbare Zeilen übersprungen",
+      "unbalanced": "{{count}} unausgeglichene oder einseitige Buchungen",
+      "cappedThirdParties": "{{count}} Dritte unter der Obergrenze nicht importiert"
+    },
+    "tags": {
+      "client": "Kunde",
+      "supplier": "Lieferant",
+      "thirdParty": "Dritter",
+      "bank": "Bank",
+      "expense": "Aufwand",
+      "revenue": "Ertrag",
+      "other": "Konto"
+    },
+    "properties": {
+      "auxAccount": "Nebenkonto",
+      "pcgRoot": "PCG-Wurzel",
+      "generalAccounts": "Hauptkonten",
+      "totalDebit": "Summe Soll",
+      "totalCredit": "Summe Haben",
+      "lineCount": "Anzahl Buchungszeilen",
+      "paymentModes": "Zahlungsarten",
+      "amount": "Kumulierter Betrag",
+      "entryCount": "Anzahl Buchungen",
+      "journals": "Journale"
+    }
   }
 }

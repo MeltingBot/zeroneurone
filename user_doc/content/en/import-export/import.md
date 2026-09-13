@@ -572,13 +572,41 @@ fam Smith John + Johnson Mary
 - Children listed between `beg` and `end`
 - Prefix `h` = male, `f` = female
 
+### FEC (French Accounting Entries File)
+
+**DGFiP-normalized format** (art. A47 A-1 of the French tax procedures code) produced by every French accounting software. `.txt` or `.fec` file, pipe- or tab-separated columns, detected by its `JournalCode` header.
+
+The import does not reproduce the bookkeeping: it builds an **aggregated, investigation-oriented flow graph** (due diligence, financial analysis) — who gets paid, where the money goes, over which period.
+
+#### Resulting model
+
+| FEC data | Result in ZeroNeurone |
+|----------|----------------------|
+| Auxiliary accounts (CompAuxNum) | One element per third party, tagged **Client** (41x), **Supplier** (40x) or **Third party** |
+| General accounts without auxiliary | One element per 3-digit PCG root, tagged **Bank** (51x), **Expense** (class 6), **Revenue** (class 7)… |
+| Balanced entries | Aggregated **flow links** per account pair: cumulated amount, entry count, journals, period (visible on the timeline) |
+
+Amounts are distributed pro rata within each entry. **Direction convention: flows go from the credited account to the debited account** (the direction of value: Bank → Supplier = payment). Link thickness reflects the cumulated amount (log scale).
+
+#### Options screen
+
+Before importing, an options screen shows a file summary (lines, entries, third parties, period) and lets you adjust with an **instant preview** of the element and link counts:
+
+- **Third-party cap (top N)** — keeps the N third parties with the largest cumulated flows (default 200)
+- **Minimum amount per link** — pre-computed from the amount distribution to target a ~300-link graph
+- **Families to include** — clients, suppliers, banks, expenses, revenues…
+- **Period** — pre-filled date bounds
+- **Flows between general accounts** — unchecked by default (VAT, misc. entries, payroll… mesh the graph without naming anyone)
+
+Each element carries its debit/credit totals, related accounts and payment methods as properties — usable in filters, queries and the matrix view.
+
 ---
 
 ## Import into Current Dossier
 
 From an open dossier, the **Import** button in the toolbar lets you add data directly into the current dossier.
 
-**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb).
+**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
 ### Placement Mode
 

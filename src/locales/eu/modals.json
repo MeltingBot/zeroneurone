@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Iturburu-dokumentua iraungita (atxikipena {{days}} egunez gainditua)",
     "warnings": "Abisuak:",
-    "andMore": "... eta beste {{count}}"
+    "andMore": "... eta beste {{count}}",
+    "fec": {
+      "optionsTitle": "FEC inportazio-aukerak",
+      "summary": "{{lines}} lerro · {{entries}} idazpen · {{aux}} hirugarren · {{from}}tik {{to}}ra",
+      "unbalancedWarning": "{{count}} idazpen desorekatu edo norabide bakarreko",
+      "topN": "Hirugarrenen muga (top N)",
+      "minAmount": "Loturako gutxieneko zenbatekoa (€)",
+      "dateFrom": "Noiztik",
+      "dateTo": "Noiz arte",
+      "familiesTitle": "Sartu beharreko familiak",
+      "families": {
+        "clients": "Bezeroak",
+        "suppliers": "Hornitzaileak",
+        "otherThirdParties": "Beste hirugarrenak",
+        "banks": "Bankuak",
+        "expenses": "Gastuak",
+        "revenues": "Sarrerak",
+        "others": "Beste kontuak"
+      },
+      "preview": "{{elements}} elementu · {{links}} lotura",
+      "capped": "Mugaren azpiko {{count}} hirugarren baztertuko dira",
+      "flowConvention": "Fluxuak kontu abonatutik kontu kargatura doaz (balioaren noranzkoa).",
+      "confirm": "Inportatu",
+      "includeGenToGen": "Sartu kontu orokorren arteko fluxuak (BEZ, idazpen orokorrak, nominak…)"
+    }
   },
   "export": {
     "title": "Espediente esportatu",

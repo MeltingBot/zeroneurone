@@ -6,6 +6,16 @@ import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } 
 import { importGEXF } from '../../services/importGephi';
 import { importANX, isANXFormat } from '../../services/importANX';
 import { importANB, isANBFormat } from '../../services/importANB';
+import {
+  importFEC,
+  isFECFormat,
+  analyzeFEC,
+  DEFAULT_FEC_OPTIONS,
+  suggestMinLinkAmount,
+  type FECAggregate,
+  type FECImportOptions,
+} from '../../services/importFEC';
+import { FECOptionsPanel } from './FECOptionsPanel';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
@@ -30,6 +40,13 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [znzipPassword, setZnzipPassword] = useState('');
   const [znzipError, setZnzipError] = useState<string | null>(null);
   const [showZnzipPassword, setShowZnzipPassword] = useState(false);
+  // Étape d'options FEC (le fichier est analysé une fois, les options filtrent)
+  const [pendingFEC, setPendingFEC] = useState<{
+    fileName: string;
+    content: string;
+    aggregate: FECAggregate;
+  } | null>(null);
+  const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
 
   const { dossiers, createDossier, deleteDossier, currentDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
@@ -66,6 +83,32 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       setZnzipError(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
+    }
+
+    // Détection FEC (par contenu — .txt est trop générique) : ouvre l'étape
+    // d'options au lieu d'importer directement. Le dossier n'est créé qu'à la
+    // confirmation, pour ne rien laisser derrière en cas d'annulation.
+    if (/\.(txt|fec)$/i.test(file.name)) {
+      const content = await importService.readFileAsText(file);
+      if (isFECFormat(content)) {
+        setIsProcessing(true);
+        try {
+          const aggregate = analyzeFEC(content);
+          setPendingFEC({ fileName: file.name, content, aggregate });
+          const base = {
+            ...DEFAULT_FEC_OPTIONS,
+            dateFrom: aggregate.dateMin,
+            dateTo: aggregate.dateMax,
+          };
+          // Seuil adaptatif : viser ~300 liens quel que soit le volume du FEC.
+          setFecOptions({ ...base, minLinkAmount: suggestMinLinkAmount(aggregate, base) });
+          setImportResult(null);
+        } finally {
+          setIsProcessing(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -236,6 +279,50 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     }
   }, [targetDossierId, createMissingElements, createDossier, deleteDossier, navigate, onClose, t, isOnDossierPage, currentDossier, enterImportPlacementMode, requestFitView]);
 
+  // Confirmation de l'étape d'options FEC : le dossier est créé ici seulement.
+  const handleFecImport = useCallback(async () => {
+    if (!pendingFEC) return;
+    setIsProcessing(true);
+    let dossierId = targetDossierId;
+    let createdNewDossier = false;
+    try {
+      if (targetDossierId === 'new') {
+        const name = pendingFEC.fileName.replace(/\.(txt|fec)$/i, '');
+        const dossier = await createDossier(name, '');
+        dossierId = dossier.id;
+        createdNewDossier = true;
+      }
+      const result = await importFEC(pendingFEC.content, dossierId, fecOptions);
+      setImportResult(result);
+      if (result.success) {
+        setPendingFEC(null);
+        toast.success(t('import.success'));
+        requestFitView();
+        setTimeout(() => {
+          onClose();
+          navigate(`/dossier/${dossierId}`);
+        }, 1500);
+      } else if (createdNewDossier) {
+        await deleteDossier(dossierId).catch(() => {});
+      }
+    } catch (error) {
+      if (createdNewDossier) {
+        await deleteDossier(dossierId).catch(() => {});
+      }
+      setImportResult({
+        success: false,
+        elementsImported: 0,
+        linksImported: 0,
+        assetsImported: 0,
+        reportImported: false,
+        errors: [error instanceof Error ? error.message : t('import.unknownError')],
+        warnings: [],
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [pendingFEC, fecOptions, targetDossierId, createDossier, deleteDossier, navigate, onClose, requestFitView, t]);
+
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -243,6 +330,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const handleClose = useCallback(() => {
     setImportResult(null);
     setTargetDossierId('new');
+    setPendingFEC(null);
     onClose();
   }, [onClose]);
 
@@ -314,11 +402,40 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"
           />
+
+          {/* Étape d'options FEC */}
+          {pendingFEC && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-text-primary">{t('import.fec.optionsTitle')}</p>
+              <FECOptionsPanel
+                fileName={pendingFEC.fileName}
+                aggregate={pendingFEC.aggregate}
+                options={fecOptions}
+                onChange={setFecOptions}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingFEC(null)}
+                  className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
+                >
+                  {t('common:actions.cancel')}
+                </button>
+                <button
+                  onClick={handleFecImport}
+                  disabled={isProcessing}
+                  data-testid="fec-import-confirm"
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-accent-hover disabled:opacity-40"
+                >
+                  {isProcessing ? t('import.importing') : t('import.fec.confirm')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Déchiffrement .znzip */}
           {pendingEncryptedFile && (
@@ -371,6 +488,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           )}
 
           {/* Import button */}
+          {!pendingFEC && (
           <button
             onClick={triggerFileSelect}
             disabled={isProcessing}
@@ -392,6 +510,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               </div>
             </div>
           </button>
+          )}
 
           {/* Options for CSV */}
           <div className="flex items-center gap-2">

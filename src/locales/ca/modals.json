@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Document font expirat (retenció superada en {{days}} dia/es)",
     "warnings": "Advertències:",
-    "andMore": "... i {{count}} més"
+    "andMore": "... i {{count}} més",
+    "fec": {
+      "optionsTitle": "Opcions d'importació FEC",
+      "summary": "{{lines}} línies · {{entries}} assentaments · {{aux}} tercers · del {{from}} al {{to}}",
+      "unbalancedWarning": "{{count}} assentaments desequilibrats o d'un sol sentit",
+      "topN": "Límit de tercers (top N)",
+      "minAmount": "Import mínim per enllaç (€)",
+      "dateFrom": "Des de",
+      "dateTo": "Fins a",
+      "familiesTitle": "Famílies a incloure",
+      "families": {
+        "clients": "Clients",
+        "suppliers": "Proveïdors",
+        "otherThirdParties": "Altres tercers",
+        "banks": "Bancs",
+        "expenses": "Despeses",
+        "revenues": "Ingressos",
+        "others": "Altres comptes"
+      },
+      "preview": "{{elements}} elements · {{links}} enllaços",
+      "capped": "{{count}} tercers sota el límit seran exclosos",
+      "flowConvention": "Fluxos orientats del compte acreditat cap al compte debitat (sentit del valor).",
+      "confirm": "Importar",
+      "includeGenToGen": "Incloure fluxos entre comptes generals (IVA, assentaments diversos, nòmines…)"
+    }
   },
   "export": {
     "title": "Exportar l'expedient",

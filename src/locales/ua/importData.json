@@ -137,5 +137,36 @@
       "entityNoId": "Пропущено об'єкт без ID",
       "linkMissingEntity": "Зв'язок пропущено: об'єкт джерело/ціль не знайдено"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "Формат FEC не розпізнано (відсутній заголовок JournalCode)"
+    },
+    "warnings": {
+      "skippedLines": "Пропущено {{count}} нечитабельних рядків",
+      "unbalanced": "{{count}} незбалансованих або односторонніх проведень",
+      "cappedThirdParties": "{{count}} контрагентів нижче ліміту не імпортовано"
+    },
+    "tags": {
+      "client": "Клієнт",
+      "supplier": "Постачальник",
+      "thirdParty": "Контрагент",
+      "bank": "Банк",
+      "expense": "Витрата",
+      "revenue": "Дохід",
+      "other": "Рахунок"
+    },
+    "properties": {
+      "auxAccount": "Аналітичний рахунок",
+      "pcgRoot": "Корінь PCG",
+      "generalAccounts": "Синтетичні рахунки",
+      "totalDebit": "Разом дебет",
+      "totalCredit": "Разом кредит",
+      "lineCount": "Кількість рядків",
+      "paymentModes": "Способи оплати",
+      "amount": "Накопичена сума",
+      "entryCount": "Кількість проведень",
+      "journals": "Журнали"
+    }
   }
 }

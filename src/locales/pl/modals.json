@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Dokument źródłowy wygasł (retencja przekroczona o {{days}} dni)",
     "warnings": "Ostrzeżenia:",
-    "andMore": "... i jeszcze {{count}}"
+    "andMore": "... i jeszcze {{count}}",
+    "fec": {
+      "optionsTitle": "Opcje importu FEC",
+      "summary": "{{lines}} wierszy · {{entries}} zapisów · {{aux}} kontrahentów · od {{from}} do {{to}}",
+      "unbalancedWarning": "{{count}} zapisów niezbilansowanych lub jednostronnych",
+      "topN": "Limit kontrahentów (top N)",
+      "minAmount": "Minimalna kwota powiązania (€)",
+      "dateFrom": "Od",
+      "dateTo": "Do",
+      "familiesTitle": "Rodziny do uwzględnienia",
+      "families": {
+        "clients": "Klienci",
+        "suppliers": "Dostawcy",
+        "otherThirdParties": "Inni kontrahenci",
+        "banks": "Banki",
+        "expenses": "Koszty",
+        "revenues": "Przychody",
+        "others": "Inne konta"
+      },
+      "preview": "{{elements}} elementów · {{links}} powiązań",
+      "capped": "{{count}} kontrahentów poniżej limitu zostanie wykluczonych",
+      "flowConvention": "Przepływy skierowane od konta uznanego do konta obciążonego (kierunek wartości).",
+      "confirm": "Importuj",
+      "includeGenToGen": "Uwzględnij przepływy między kontami głównymi (VAT, zapisy różne, płace…)"
+    }
   },
   "export": {
     "title": "Eksportuj teczka",

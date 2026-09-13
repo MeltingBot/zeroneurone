@@ -137,5 +137,36 @@
       "entityNoId": "Pominięto encję bez ID",
       "linkMissingEntity": "Pominięto łącze: nie znaleziono encji źródłowej/docelowej"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "Nierozpoznany format FEC (brak nagłówka JournalCode)"
+    },
+    "warnings": {
+      "skippedLines": "Pominięto {{count}} nieczytelnych wierszy",
+      "unbalanced": "{{count}} zapisów niezbilansowanych lub jednostronnych",
+      "cappedThirdParties": "{{count}} kontrahentów poniżej limitu nie zaimportowano"
+    },
+    "tags": {
+      "client": "Klient",
+      "supplier": "Dostawca",
+      "thirdParty": "Kontrahent",
+      "bank": "Bank",
+      "expense": "Koszt",
+      "revenue": "Przychód",
+      "other": "Konto"
+    },
+    "properties": {
+      "auxAccount": "Konto pomocnicze",
+      "pcgRoot": "Rdzeń PCG",
+      "generalAccounts": "Konta główne",
+      "totalDebit": "Suma Wn",
+      "totalCredit": "Suma Ma",
+      "lineCount": "Liczba wierszy",
+      "paymentModes": "Formy płatności",
+      "amount": "Kwota skumulowana",
+      "entryCount": "Liczba zapisów",
+      "journals": "Dzienniki"
+    }
   }
 }

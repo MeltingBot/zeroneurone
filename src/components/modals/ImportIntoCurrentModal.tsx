@@ -4,6 +4,16 @@ import { X, AlertCircle, Download, FileSpreadsheet, FileJson } from 'lucide-reac
 import { importService } from '../../services/importService';
 import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
+import {
+  isFECFormat,
+  analyzeFEC,
+  previewFECGraph,
+  DEFAULT_FEC_OPTIONS,
+  suggestMinLinkAmount,
+  type FECAggregate,
+  type FECImportOptions,
+} from '../../services/importFEC';
+import { FECOptionsPanel } from './FECOptionsPanel';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -95,6 +105,12 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createMissingElements, setCreateMissingElements] = useState(true);
+  const [pendingFEC, setPendingFEC] = useState<{
+    file: File;
+    content: string;
+    aggregate: FECAggregate;
+  } | null>(null);
+  const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentDossier } = useDossierStore();
@@ -168,6 +184,22 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
         content = await importService.readFileAsText(file);
       }
 
+      // FEC (détection par contenu) → étape d'options avant le mode placement
+      if (/\.(txt|fec)$/i.test(file.name) && isFECFormat(content)) {
+        const aggregate = analyzeFEC(content);
+        setPendingFEC({ file, content, aggregate });
+        const base = {
+          ...DEFAULT_FEC_OPTIONS,
+          dateFrom: aggregate.dateMin,
+          dateTo: aggregate.dateMax,
+        };
+        // Seuil adaptatif : viser ~300 liens quel que soit le volume du FEC.
+        setFecOptions({ ...base, minLinkAmount: suggestMinLinkAmount(aggregate, base) });
+        setIsProcessing(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
       // Validate content is parseable before entering placement mode
       if (file.name.endsWith('.json') || file.name.endsWith('.excalidraw')) {
         try {
@@ -214,12 +246,40 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
     }
   }, [currentDossier, createMissingElements, enterImportPlacementMode, onClose, t, requestFitView]);
 
+  // Confirmation des options FEC → mode placement avec les options choisies.
+  const handleFecConfirm = useCallback(() => {
+    if (!pendingFEC || !currentDossier) return;
+    const preview = previewFECGraph(pendingFEC.aggregate, fecOptions);
+    const gridSize = Math.ceil(Math.sqrt(Math.max(1, preview.elementCount)));
+    const estimatedWidth = gridSize * 280;
+    const estimatedHeight = gridSize * 140;
+    enterImportPlacementMode({
+      boundingBox: {
+        minX: 0,
+        minY: 0,
+        maxX: estimatedWidth,
+        maxY: estimatedHeight,
+        width: estimatedWidth,
+        height: estimatedHeight,
+        elementCount: preview.elementCount,
+      },
+      file: pendingFEC.file,
+      dossierId: currentDossier.id,
+      fileContent: pendingFEC.content,
+      importOptions: { createMissingElements, fec: fecOptions },
+      onComplete: () => setError(null),
+    });
+    setPendingFEC(null);
+    onClose();
+  }, [pendingFEC, fecOptions, currentDossier, createMissingElements, enterImportPlacementMode, onClose]);
+
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
   const handleClose = useCallback(() => {
     setError(null);
+    setPendingFEC(null);
     onClose();
   }, [onClose]);
 
@@ -276,12 +336,41 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec"
             onChange={handleFileSelect}
             className="hidden"
           />
 
+          {/* Étape d'options FEC */}
+          {pendingFEC && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-text-primary">{t('import.fec.optionsTitle')}</p>
+              <FECOptionsPanel
+                fileName={pendingFEC.file.name}
+                aggregate={pendingFEC.aggregate}
+                options={fecOptions}
+                onChange={setFecOptions}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingFEC(null)}
+                  className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
+                >
+                  {t('common:actions.cancel')}
+                </button>
+                <button
+                  onClick={handleFecConfirm}
+                  disabled={isProcessing}
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-accent-hover disabled:opacity-40"
+                >
+                  {t('import.fec.confirm')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Import button */}
+          {!pendingFEC && (
           <button
             onClick={triggerFileSelect}
             disabled={isProcessing}
@@ -303,6 +392,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
               </div>
             </div>
           </button>
+          )}
 
           {/* CSV options */}
           <div className="flex items-center gap-2">

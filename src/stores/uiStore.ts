@@ -34,6 +34,8 @@ export interface ImportPlacementData {
   /** Import options (e.g. CSV createMissingElements) */
   importOptions?: {
     createMissingElements?: boolean;
+    /** FEC aggregation options chosen in the options step. */
+    fec?: import('../services/importFEC').FECImportOptions;
   };
   /** Pre-built elements/links to place directly (e.g. JSON mapping import).
       Positions are relative to boundingBox.min and shifted to the click point.

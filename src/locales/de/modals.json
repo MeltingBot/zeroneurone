@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Quelldokument abgelaufen (Aufbewahrung um {{days}} Tag(e) überschritten)",
     "warnings": "Warnungen:",
-    "andMore": "... und {{count}} weitere"
+    "andMore": "... und {{count}} weitere",
+    "fec": {
+      "optionsTitle": "FEC-Importoptionen",
+      "summary": "{{lines}} Zeilen · {{entries}} Buchungen · {{aux}} Dritte · vom {{from}} bis {{to}}",
+      "unbalancedWarning": "{{count}} unausgeglichene oder einseitige Buchungen",
+      "topN": "Obergrenze Dritte (Top N)",
+      "minAmount": "Mindestbetrag pro Verknüpfung (€)",
+      "dateFrom": "Von",
+      "dateTo": "Bis",
+      "familiesTitle": "Einzubeziehende Familien",
+      "families": {
+        "clients": "Kunden",
+        "suppliers": "Lieferanten",
+        "otherThirdParties": "Andere Dritte",
+        "banks": "Banken",
+        "expenses": "Aufwendungen",
+        "revenues": "Erträge",
+        "others": "Andere Konten"
+      },
+      "preview": "{{elements}} Elemente · {{links}} Verknüpfungen",
+      "capped": "{{count}} Dritte unter der Obergrenze werden ausgeschlossen",
+      "flowConvention": "Flüsse verlaufen vom Habenkonto zum Sollkonto (Wertrichtung).",
+      "confirm": "Importieren",
+      "includeGenToGen": "Flüsse zwischen Hauptkonten einbeziehen (USt., sonstige Buchungen, Lohn…)"
+    }
   },
   "export": {
     "title": "Akte exportieren",

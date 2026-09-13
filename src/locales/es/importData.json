@@ -137,5 +137,36 @@
       "entityNoId": "Entidad sin ID omitida",
       "linkMissingEntity": "Enlace omitido: entidad origen/destino no encontrada"
     }
+  },
+  "fec": {
+    "errors": {
+      "invalidFormat": "Formato FEC no reconocido (falta el encabezado JournalCode)"
+    },
+    "warnings": {
+      "skippedLines": "{{count}} líneas ilegibles omitidas",
+      "unbalanced": "{{count}} asientos desequilibrados o de un solo sentido",
+      "cappedThirdParties": "{{count}} terceros bajo el límite no importados"
+    },
+    "tags": {
+      "client": "Cliente",
+      "supplier": "Proveedor",
+      "thirdParty": "Tercero",
+      "bank": "Banco",
+      "expense": "Gasto",
+      "revenue": "Ingreso",
+      "other": "Cuenta"
+    },
+    "properties": {
+      "auxAccount": "Cuenta auxiliar",
+      "pcgRoot": "Raíz PCG",
+      "generalAccounts": "Cuentas generales",
+      "totalDebit": "Total debe",
+      "totalCredit": "Total haber",
+      "lineCount": "Número de líneas",
+      "paymentModes": "Modos de pago",
+      "amount": "Importe acumulado",
+      "entryCount": "Número de asientos",
+      "journals": "Diarios"
+    }
   }
 }

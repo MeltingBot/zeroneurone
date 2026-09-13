@@ -54,7 +54,31 @@
     },
     "retentionExpired": "Documento fonte expirado (retenção ultrapassada em {{days}} dia(s))",
     "warnings": "Avisos:",
-    "andMore": "... e mais {{count}}"
+    "andMore": "... e mais {{count}}",
+    "fec": {
+      "optionsTitle": "Opções de importação FEC",
+      "summary": "{{lines}} linhas · {{entries}} lançamentos · {{aux}} terceiros · de {{from}} a {{to}}",
+      "unbalancedWarning": "{{count}} lançamentos desequilibrados ou de sentido único",
+      "topN": "Limite de terceiros (top N)",
+      "minAmount": "Montante mínimo por ligação (€)",
+      "dateFrom": "De",
+      "dateTo": "Até",
+      "familiesTitle": "Famílias a incluir",
+      "families": {
+        "clients": "Clientes",
+        "suppliers": "Fornecedores",
+        "otherThirdParties": "Outros terceiros",
+        "banks": "Bancos",
+        "expenses": "Gastos",
+        "revenues": "Rendimentos",
+        "others": "Outras contas"
+      },
+      "preview": "{{elements}} elementos · {{links}} ligações",
+      "capped": "{{count}} terceiros abaixo do limite serão excluídos",
+      "flowConvention": "Fluxos orientados da conta creditada para a conta debitada (sentido do valor).",
+      "confirm": "Importar",
+      "includeGenToGen": "Incluir fluxos entre contas gerais (IVA, lançamentos diversos, salários…)"
+    }
   },
   "export": {
     "title": "Exportar o dossiê",
