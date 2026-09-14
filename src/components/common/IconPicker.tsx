@@ -1,8 +1,13 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, X } from 'lucide-react';
+import { Search, X, Plus, Upload, Trash2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { DropdownPortal } from './DropdownPortal';
+import { ResolvedIcon } from './ResolvedIcon';
+import { useCustomIconStore, toast } from '../../stores';
+import { CUSTOM_ICON_PREFIX, isCustomIconName } from '../../types';
+import { sanitizeSvgIcon, iconNameFromFilename, SvgIconError } from '../../utils/svgIcon';
+import type { CustomIcon } from '../../types';
 
 // Get all icon names from Lucide (excluding non-icon exports)
 const EXCLUDED_EXPORTS = new Set([
@@ -14,13 +19,14 @@ const EXCLUDED_EXPORTS = new Set([
   'Icon',
 ]);
 
-// Build icon list once - filter to get only icon components (not *Icon duplicates)
+// Build icon list once - filter to get only icon components (not *Icon / Lucide* duplicates)
 const ALL_ICONS = Object.keys(LucideIcons)
   .filter(name => {
     // Exclude non-icon exports
     if (EXCLUDED_EXPORTS.has(name)) return false;
-    // Exclude *Icon duplicates (keep User, not UserIcon)
+    // Exclude *Icon and Lucide* duplicates (keep User, not UserIcon / LucideUser)
     if (name.endsWith('Icon')) return false;
+    if (name.startsWith('Lucide')) return false;
     // Check if it's a valid React component (has $$typeof Symbol)
     const component = (LucideIcons as Record<string, unknown>)[name];
     if (typeof component !== 'object' || component === null) return false;
@@ -61,19 +67,34 @@ const POPULAR_ICONS = [
   'Star', 'Heart', 'Bookmark', 'Tag', 'Hash', 'Link', 'ExternalLink',
 ];
 
-interface IconPickerProps {
+/**
+ * Shared dropdown content: search, custom icons section (with SVG import),
+ * and the Lucide icon grid.
+ */
+function IconDropdownContent({
+  value,
+  onSelect,
+  onClear,
+  showClear,
+}: {
   value: string | null;
-  onChange: (iconName: string | null) => void;
-  placeholder?: string;
-}
-
-export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
+  onSelect: (iconName: string) => void;
+  onClear?: () => void;
+  showClear?: boolean;
+}) {
   const { t } = useTranslation('common');
-  const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const placeholderText = placeholder || t('iconPicker.placeholder');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const customIconsMap = useCustomIconStore((state) => state.icons);
+  const createCustomIcon = useCustomIconStore((state) => state.create);
+  const deleteCustomIcon = useCustomIconStore((state) => state.delete);
+
+  const customIcons = useMemo(
+    () => Array.from(customIconsMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
+    [customIconsMap]
+  );
 
   // Filter icons based on search
   const filteredIcons = useMemo(() => {
@@ -84,37 +105,201 @@ export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
     return ALL_ICONS.filter(name => name.toLowerCase().includes(searchLower));
   }, [search]);
 
-  // Get the icon component for rendering
+  const filteredCustomIcons = useMemo(() => {
+    if (!search.trim()) return customIcons;
+    const searchLower = search.toLowerCase();
+    return customIcons.filter(icon => icon.name.toLowerCase().includes(searchLower));
+  }, [customIcons, search]);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
+  const handleImportFile = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const rawSvg = await file.text();
+      const svg = sanitizeSvgIcon(rawSvg);
+      const icon = await createCustomIcon(iconNameFromFilename(file.name), svg);
+      onSelect(`${CUSTOM_ICON_PREFIX}${icon.id}`);
+    } catch (error) {
+      if (error instanceof SvgIconError && error.code === 'too_large') {
+        toast.error(t('iconPicker.svgTooLarge'));
+      } else {
+        toast.error(t('iconPicker.invalidSvg'));
+      }
+    }
+  }, [createCustomIcon, onSelect, t]);
+
+  const handleDeleteCustom = useCallback(async (event: React.MouseEvent, icon: CustomIcon) => {
+    event.stopPropagation();
+    await deleteCustomIcon(icon.id);
+  }, [deleteCustomIcon]);
+
   const getIconComponent = useCallback((name: string) => {
     return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
   }, []);
 
+  return (
+    <>
+      {/* Search input */}
+      <div className="p-2 border-b border-border-default">
+        <div className="relative">
+          <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('iconPicker.searchPlaceholder')}
+            className="w-full pl-7 pr-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
+          />
+        </div>
+        {showClear && value && onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="w-full mt-1 px-2 py-1 text-xs text-text-tertiary hover:text-error hover:bg-bg-secondary rounded transition-colors"
+          >
+            {t('iconPicker.removeIcon')}
+          </button>
+        )}
+      </div>
+
+      {/* Icons grid */}
+      <div className="p-2 max-h-64 overflow-y-auto">
+        {/* Custom icons section */}
+        {(filteredCustomIcons.length > 0 || !search) && (
+          <>
+            <p className="text-[10px] text-text-tertiary mb-2">{t('iconPicker.customIcons')}</p>
+            <div className="grid grid-cols-8 gap-1 mb-2">
+              {filteredCustomIcons.map((icon) => {
+                const iconRef = `${CUSTOM_ICON_PREFIX}${icon.id}`;
+                const isSelected = value === iconRef;
+                return (
+                  <div key={icon.id} className="relative group">
+                    <button
+                      type="button"
+                      onClick={() => onSelect(iconRef)}
+                      className={`p-2 rounded hover:bg-bg-secondary transition-colors ${
+                        isSelected ? 'bg-accent/20 text-accent' : 'text-text-secondary'
+                      }`}
+                      title={icon.name}
+                    >
+                      <ResolvedIcon name={iconRef} size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteCustom(e, icon)}
+                      className="absolute -top-0.5 -right-0.5 hidden group-hover:flex items-center justify-center w-3.5 h-3.5 rounded-full bg-bg-primary border border-border-default text-text-tertiary hover:text-error"
+                      title={t('iconPicker.deleteCustomIcon')}
+                    >
+                      <Trash2 size={9} />
+                    </button>
+                  </div>
+                );
+              })}
+              {!search && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 rounded border border-dashed border-border-default text-text-tertiary hover:border-accent hover:text-accent transition-colors flex items-center justify-center"
+                  title={t('iconPicker.importSvg')}
+                >
+                  <Upload size={14} />
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".svg,image/svg+xml"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+          </>
+        )}
+
+        {!search && (
+          <p className="text-[10px] text-text-tertiary mb-2">{t('iconPicker.popularIcons')}</p>
+        )}
+        {search && filteredIcons.length === 0 && filteredCustomIcons.length === 0 ? (
+          <p className="text-xs text-text-tertiary text-center py-4">
+            {t('iconPicker.noIconFound')}
+          </p>
+        ) : (
+          <div className="grid grid-cols-8 gap-1">
+            {filteredIcons.slice(0, 64).map((iconName) => {
+              const IconComponent = getIconComponent(iconName);
+              if (!IconComponent) return null;
+
+              const isSelected = value === iconName;
+
+              return (
+                <button
+                  key={iconName}
+                  type="button"
+                  onClick={() => onSelect(iconName)}
+                  className={`p-2 rounded hover:bg-bg-secondary transition-colors ${
+                    isSelected ? 'bg-accent/20 text-accent' : 'text-text-secondary'
+                  }`}
+                  title={iconName}
+                >
+                  <IconComponent size={16} />
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {filteredIcons.length > 64 && (
+          <p className="text-[10px] text-text-tertiary text-center mt-2">
+            {t('iconPicker.moreIconsRefine', { count: filteredIcons.length - 64 })}
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
+
+interface IconPickerProps {
+  value: string | null;
+  onChange: (iconName: string | null) => void;
+  placeholder?: string;
+}
+
+export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
+  const { t } = useTranslation('common');
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const placeholderText = placeholder || t('iconPicker.placeholder');
+
+  const customIconsMap = useCustomIconStore((state) => state.icons);
+
   const handleSelect = useCallback((iconName: string) => {
     onChange(iconName);
     setIsOpen(false);
-    setSearch('');
   }, [onChange]);
 
   const handleClear = useCallback(() => {
     onChange(null);
     setIsOpen(false);
-    setSearch('');
   }, [onChange]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    setSearch('');
   }, []);
 
-  // Focus search input when opening
-  useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
+  // Display name for the selected icon (custom icons show their user-given name)
+  const selectedLabel = useMemo(() => {
+    if (!value) return null;
+    if (isCustomIconName(value)) {
+      const icon = customIconsMap.get(value.slice(CUSTOM_ICON_PREFIX.length));
+      return icon?.name ?? null;
     }
-  }, [isOpen]);
-
-  // Render selected icon
-  const SelectedIcon = value ? getIconComponent(value) : null;
+    return value;
+  }, [value, customIconsMap]);
 
   return (
     <div>
@@ -124,10 +309,10 @@ export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent text-text-primary flex items-center gap-2 hover:bg-bg-tertiary transition-colors"
       >
-        {SelectedIcon ? (
+        {value && selectedLabel !== null ? (
           <>
-            <SelectedIcon size={16} className="text-text-secondary" />
-            <span className="flex-1 text-left truncate">{value}</span>
+            <ResolvedIcon name={value} size={16} className="text-text-secondary" />
+            <span className="flex-1 text-left truncate">{selectedLabel}</span>
             <button
               type="button"
               onClick={(e) => {
@@ -150,60 +335,7 @@ export function IconPicker({ value, onChange, placeholder }: IconPickerProps) {
         onClose={handleClose}
         className="w-72"
       >
-        {/* Search input */}
-        <div className="p-2 border-b border-border-default">
-          <div className="relative">
-            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('iconPicker.searchPlaceholder')}
-              className="w-full pl-7 pr-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
-            />
-          </div>
-        </div>
-
-        {/* Icons grid */}
-        <div className="p-2 max-h-64 overflow-y-auto">
-          {!search && (
-            <p className="text-[10px] text-text-tertiary mb-2">{t('iconPicker.popularIcons')}</p>
-          )}
-          {search && filteredIcons.length === 0 ? (
-            <p className="text-xs text-text-tertiary text-center py-4">
-              {t('iconPicker.noIconFound')}
-            </p>
-          ) : (
-            <div className="grid grid-cols-8 gap-1">
-              {filteredIcons.slice(0, 64).map((iconName) => {
-                const IconComponent = getIconComponent(iconName);
-                if (!IconComponent) return null;
-
-                const isSelected = value === iconName;
-
-                return (
-                  <button
-                    key={iconName}
-                    type="button"
-                    onClick={() => handleSelect(iconName)}
-                    className={`p-2 rounded hover:bg-bg-secondary transition-colors ${
-                      isSelected ? 'bg-accent/20 text-accent' : 'text-text-secondary'
-                    }`}
-                    title={iconName}
-                  >
-                    <IconComponent size={16} />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {filteredIcons.length > 64 && (
-            <p className="text-[10px] text-text-tertiary text-center mt-2">
-              {t('iconPicker.moreIconsRefine', { count: filteredIcons.length - 64 })}
-            </p>
-          )}
-        </div>
+        <IconDropdownContent value={value} onSelect={handleSelect} />
       </DropdownPortal>
     </div>
   );
@@ -218,40 +350,21 @@ interface IconPickerCompactProps {
 export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
   const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  const filteredIcons = useMemo(() => {
-    if (!search.trim()) {
-      return POPULAR_ICONS.filter(name => ALL_ICONS.includes(name));
-    }
-    const searchLower = search.toLowerCase();
-    return ALL_ICONS.filter(name => name.toLowerCase().includes(searchLower));
-  }, [search]);
-
-  const getIconComponent = useCallback((name: string) => {
-    return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
-  }, []);
 
   const handleSelect = useCallback((iconName: string) => {
     onChange(iconName);
     setIsOpen(false);
-    setSearch('');
+  }, [onChange]);
+
+  const handleClear = useCallback(() => {
+    onChange(null);
+    setIsOpen(false);
   }, [onChange]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    setSearch('');
   }, []);
-
-  useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  const SelectedIcon = value ? getIconComponent(value) : null;
 
   return (
     <div className="relative">
@@ -266,7 +379,7 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
         }`}
         title={value ? `${value}` : t('iconPicker.addIcon')}
       >
-        {SelectedIcon ? <SelectedIcon size={14} /> : <Plus size={12} />}
+        {value ? <ResolvedIcon name={value} size={14} /> : <Plus size={12} />}
       </button>
 
       <DropdownPortal
@@ -275,76 +388,13 @@ export function IconPickerCompact({ value, onChange }: IconPickerCompactProps) {
         onClose={handleClose}
         className="w-72"
       >
-        {/* Search input */}
-        <div className="p-2 border-b border-border-default">
-          <div className="relative">
-            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('iconPicker.searchPlaceholder')}
-              className="w-full pl-7 pr-2 py-1.5 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
-            />
-          </div>
-          {value && (
-            <button
-              type="button"
-              onClick={() => {
-                onChange(null);
-                setIsOpen(false);
-              }}
-              className="w-full mt-1 px-2 py-1 text-xs text-text-tertiary hover:text-error hover:bg-bg-secondary rounded transition-colors"
-            >
-              {t('iconPicker.removeIcon')}
-            </button>
-          )}
-        </div>
-
-        {/* Icons grid */}
-        <div className="p-2 max-h-64 overflow-y-auto">
-          {!search && (
-            <p className="text-[10px] text-text-tertiary mb-2">{t('iconPicker.popularIcons')}</p>
-          )}
-          {search && filteredIcons.length === 0 ? (
-            <p className="text-xs text-text-tertiary text-center py-4">
-              {t('iconPicker.noIconFound')}
-            </p>
-          ) : (
-            <div className="grid grid-cols-8 gap-1">
-              {filteredIcons.slice(0, 64).map((iconName) => {
-                const IconComponent = getIconComponent(iconName);
-                if (!IconComponent) return null;
-
-                const isSelected = value === iconName;
-
-                return (
-                  <button
-                    key={iconName}
-                    type="button"
-                    onClick={() => handleSelect(iconName)}
-                    className={`p-2 rounded hover:bg-bg-secondary transition-colors ${
-                      isSelected ? 'bg-accent/20 text-accent' : 'text-text-secondary'
-                    }`}
-                    title={iconName}
-                  >
-                    <IconComponent size={16} />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {filteredIcons.length > 64 && (
-            <p className="text-[10px] text-text-tertiary text-center mt-2">
-              {t('iconPicker.moreIcons', { count: filteredIcons.length - 64 })}
-            </p>
-          )}
-        </div>
+        <IconDropdownContent
+          value={value}
+          onSelect={handleSelect}
+          onClear={handleClear}
+          showClear
+        />
       </DropdownPortal>
     </div>
   );
 }
-
-// Missing import for compact version
-const { Plus } = LucideIcons;

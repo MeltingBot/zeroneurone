@@ -268,6 +268,17 @@ button {
 }
 
 /* ============================================
+   CUSTOM ICONS (user-imported SVG)
+   ============================================ */
+
+/* The wrapper span sets width/height; the inlined SVG fills it */
+.zn-custom-icon > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ============================================
    SKETCHY / HAND-DRAWN EFFECT CLASSES
    ============================================ */
 

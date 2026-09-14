@@ -53,6 +53,7 @@
       "description": "Links reference elements by their label in the \"from\" and \"to\" columns. type=event rows attach an event to an element via the \"de\"/\"from\" column (date required)"
     },
     "retentionExpired": "Source document expired (retention exceeded by {{days}} day(s))",
+    "customIconSkipped": "Custom icon skipped: {{name}}",
     "warnings": "Warnings:",
     "andMore": "... and {{count}} more",
     "fec": {

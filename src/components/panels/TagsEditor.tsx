@@ -1,8 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, Sparkles, Check } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
-import { DropdownPortal, IconPickerCompact } from '../common';
+import { X, Plus, Sparkles, Check, Pencil } from 'lucide-react';
+import { DropdownPortal, IconPickerCompact, ResolvedIcon, iconNameResolves } from '../common';
 import { useTagSetStore } from '../../stores';
 
 interface TagsEditorProps {
@@ -14,9 +13,11 @@ interface TagsEditorProps {
   onNewTag?: (tag: string) => void;
   /** Callback when a tag from a TagSet is added (to show suggested properties popup) */
   onTagSetTagAdded?: (tagSetName: string) => void;
+  /** When provided, tags can be renamed inline (rename scope is the caller's: usually the whole dossier) */
+  onRenameTag?: (oldName: string, newName: string) => void | Promise<void>;
 }
 
-export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSetTagAdded }: TagsEditorProps) {
+export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSetTagAdded, onRenameTag }: TagsEditorProps) {
   const { t } = useTranslation('panels');
   const [inputValue, setInputValue] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -27,6 +28,11 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
 
   // State for editing existing tag icons
   const [editingTagIcon, setEditingTagIcon] = useState<string | null>(null);
+
+  // State for inline tag rename
+  const [renamingTag, setRenamingTag] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   // Get TagSet store
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
@@ -57,10 +63,6 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
     return icons;
   }, [tagSetData]);
 
-  // Get icon component by name
-  const getIconComponent = useCallback((name: string) => {
-    return (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
-  }, []);
 
   // Merge TagSet names with dossier suggestions (unique, sorted)
   const allSuggestions = useMemo(() => {
@@ -119,6 +121,35 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
     },
     [tags, onChange]
   );
+
+  const handleStartRename = useCallback((tag: string) => {
+    setRenamingTag(tag);
+    setRenameValue(tag);
+  }, []);
+
+  const handleCommitRename = useCallback(async () => {
+    const oldName = renamingTag;
+    const trimmed = renameValue.trim();
+    setRenamingTag(null);
+    setRenameValue('');
+    if (!oldName || !trimmed || trimmed === oldName || !onRenameTag) return;
+    await onRenameTag(oldName, trimmed);
+  }, [renamingTag, renameValue, onRenameTag]);
+
+  const handleRenameKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCommitRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setRenamingTag(null);
+      setRenameValue('');
+    }
+  }, [handleCommitRename]);
+
+  useEffect(() => {
+    if (renamingTag) renameInputRef.current?.focus();
+  }, [renamingTag]);
 
   // Handle icon change for existing tags
   const handleTagIconChange = useCallback(async (tagName: string, newIcon: string | null) => {
@@ -186,7 +217,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => {
           const iconName = tagIcons.get(tag);
-          const IconComponent = iconName ? getIconComponent(iconName) : null;
+          const hasIcon = iconName ? iconNameResolves(iconName) : false;
           const isEditingIcon = editingTagIcon === tag;
 
           return (
@@ -200,13 +231,13 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                   value={iconName || null}
                   onChange={(newIcon) => handleTagIconChange(tag, newIcon)}
                 />
-              ) : IconComponent ? (
+              ) : hasIcon && iconName ? (
                 <button
                   onClick={() => setEditingTagIcon(tag)}
                   className="hover:text-accent focus:outline-none"
                   title={t('detail.tags.editIcon')}
                 >
-                  <IconComponent size={12} className="text-text-tertiary" />
+                  <ResolvedIcon name={iconName} size={12} className="text-text-tertiary" />
                 </button>
               ) : (
                 <button
@@ -217,7 +248,36 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                   <Plus size={10} />
                 </button>
               )}
-              {tag}
+              {renamingTag === tag ? (
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={handleRenameKeyDown}
+                  onBlur={handleCommitRename}
+                  className="px-1 py-0 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary min-w-[80px] max-w-[160px]"
+                  style={{ width: `${Math.max(renameValue.length, 6)}ch` }}
+                />
+              ) : onRenameTag ? (
+                <span
+                  onDoubleClick={() => handleStartRename(tag)}
+                  title={t('detail.tags.renameHint')}
+                >
+                  {tag}
+                </span>
+              ) : (
+                tag
+              )}
+              {onRenameTag && renamingTag !== tag && (
+                <button
+                  onClick={() => handleStartRename(tag)}
+                  className="opacity-0 group-hover:opacity-100 hover:text-accent focus:outline-none transition-opacity"
+                  title={t('detail.tags.renameTag')}
+                >
+                  <Pencil size={10} />
+                </button>
+              )}
               <button
                 onClick={() => handleRemoveTag(tag)}
                 className="hover:text-error focus:outline-none"
@@ -269,7 +329,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                 filteredSuggestions.map((suggestion, index) => {
                   const isTagSet = tagSetNames.has(suggestion);
                   const suggestionIconName = tagIcons.get(suggestion);
-                  const SuggestionIcon = suggestionIconName ? getIconComponent(suggestionIconName) : null;
+                  const hasSuggestionIcon = suggestionIconName ? iconNameResolves(suggestionIconName) : false;
                   return (
                     <button
                       key={suggestion}
@@ -282,8 +342,8 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                         index === selectedSuggestionIndex ? 'bg-bg-secondary' : ''
                       }`}
                     >
-                      {SuggestionIcon && (
-                        <SuggestionIcon size={14} className="text-text-tertiary flex-shrink-0" />
+                      {hasSuggestionIcon && suggestionIconName && (
+                        <ResolvedIcon name={suggestionIconName} size={14} className="text-text-tertiary flex-shrink-0" />
                       )}
                       <span className="flex-1">{suggestion}</span>
                       {isTagSet && (

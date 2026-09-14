@@ -1,5 +1,7 @@
 import JSZip from 'jszip';
-import type { Dossier, Element, Link, Asset, Report, CanvasTab, View, SavedQuery, Comment } from '../types';
+import type { Dossier, Element, Link, Asset, Report, CanvasTab, View, SavedQuery, Comment, TagSetDefaultVisual, SuggestedProperty } from '../types';
+import { isCustomIconName, customIconIdFromName } from '../types';
+import { useTagSetStore, useCustomIconStore } from '../stores';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
@@ -16,6 +18,21 @@ export interface ExportedAssetMeta {
   size: number;
   /** Path within the ZIP archive (uses UUID) */
   archivePath: string;
+}
+
+/** User-imported custom icon embedded in the export (SVG inline, ~1 KB each) */
+export interface ExportedCustomIcon {
+  id: string;
+  name: string;
+  svg: string;
+}
+
+/** TagSet (tag family) used by the exported elements */
+export interface ExportedTagSetData {
+  name: string;
+  description: string;
+  defaultVisual: TagSetDefaultVisual;
+  suggestedProperties: SuggestedProperty[];
 }
 
 export interface ExportData {
@@ -38,10 +55,63 @@ export interface ExportData {
   queryHistory?: string[];
   /** Comments on elements/links */
   comments?: Comment[];
+  /** TagSets (tag families) referenced by the exported elements */
+  tagSets?: ExportedTagSetData[];
+  /** Custom icons referenced by exported TagSets or element visuals */
+  customIcons?: ExportedCustomIcon[];
 }
 
 class ExportService {
   private readonly VERSION = '1.1.0'; // Updated for ZIP assets support
+
+  /**
+   * Collect the TagSets (tag families) used by the exported elements, plus
+   * every custom icon they or the element visuals reference. Reads the global
+   * stores synchronously (loaded at app startup).
+   */
+  private collectTagSetsAndCustomIcons(elements: Element[]): {
+    tagSets: ExportedTagSetData[];
+    customIcons: ExportedCustomIcon[];
+  } {
+    const usedTagNames = new Set<string>();
+    for (const el of elements) {
+      for (const tag of el.tags || []) usedTagNames.add(tag.toLowerCase());
+    }
+
+    const tagSets: ExportedTagSetData[] = [];
+    const customIconIds = new Set<string>();
+
+    for (const ts of useTagSetStore.getState().tagSets.values()) {
+      if (!usedTagNames.has(ts.name.toLowerCase())) continue;
+      tagSets.push({
+        name: ts.name,
+        description: ts.description,
+        defaultVisual: ts.defaultVisual,
+        suggestedProperties: ts.suggestedProperties,
+      });
+      if (isCustomIconName(ts.defaultVisual.icon)) {
+        customIconIds.add(customIconIdFromName(ts.defaultVisual.icon));
+      }
+    }
+
+    // Element visuals can also carry a custom icon (inherited from a TagSet)
+    for (const el of elements) {
+      if (isCustomIconName(el.visual?.icon)) {
+        customIconIds.add(customIconIdFromName(el.visual.icon!));
+      }
+    }
+
+    const customIcons: ExportedCustomIcon[] = [];
+    const iconStore = useCustomIconStore.getState();
+    for (const id of customIconIds) {
+      const icon = iconStore.icons.get(id);
+      if (icon) {
+        customIcons.push({ id: icon.id, name: icon.name, svg: icon.svg });
+      }
+    }
+
+    return { tagSets, customIcons };
+  }
 
   /**
    * Export dossier data to JSON string
@@ -60,6 +130,7 @@ class ExportService {
   ): string {
     // Strip local-only viewport from tabs before export
     const exportTabs = tabs?.map(({ viewport: _v, ...rest }) => rest);
+    const { tagSets, customIcons } = this.collectTagSetsAndCustomIcons(elements);
     const data: ExportData = {
       version: this.VERSION,
       exportedAt: new Date().toISOString(),
@@ -73,6 +144,8 @@ class ExportService {
       queries: queries && queries.length > 0 ? queries : undefined,
       queryHistory: queryHistory && queryHistory.length > 0 ? queryHistory : undefined,
       comments: comments && comments.length > 0 ? comments : undefined,
+      tagSets: tagSets.length > 0 ? tagSets : undefined,
+      customIcons: customIcons.length > 0 ? customIcons : undefined,
     };
     return JSON.stringify(data, null, 2);
   }

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.55.0
+
+### Features
+- **Icônes personnalisées (SVG)** — le sélecteur d'icônes accepte désormais vos propres fichiers SVG (section « Mes icônes »), par exemple des logos de services téléchargés depuis Simple Icons — ZeroNeurone n'embarque volontairement aucun logo de marque (droit des marques, raison pour laquelle Lucide a déprécié les siens). Le SVG est sanitisé à l'import (DOMPurify durci : scripts, `foreignObject`, références externes supprimés ; 64 Ko max) et normalisé en `currentColor` pour suivre le thème et se recolorer comme une icône Lucide. Les icônes sont globales, dédupliquées par contenu, stockées dans une nouvelle table Dexie (v15), et rendues partout où les icônes de tags apparaissent (canvas, groupes, panneau de détail, gestionnaire de jeux de tags).
+  - **Portabilité** : l'export d'un dossier (ZIP et JSON) embarque désormais les jeux de tags utilisés par les éléments **avec leurs SVG inline** — ce qui corrige au passage une lacune : les jeux de tags ne voyageaient pas du tout. À l'import, les icônes sont re-sanitisées (défense en profondeur), les jeux absents recréés, les références remappées ; l'existant local n'est jamais écrasé. L'export/import JSON dédié du gestionnaire de jeux de tags passe en v2 avec les mêmes garanties (v1 toujours acceptée).
+- **Renommage de tags** — un tag peut être renommé depuis le panneau de détail (crayon au survol ou double-clic sur le chip). Le renommage réécrit le tag sur tous les éléments **et liens du dossier courant** (synchronisé Y.js), met à jour la liste de suggestions, et duplique le jeu de tags sous le nouveau nom pour que l'icône et les visuels suivent — sans toucher au jeu d'origine ni aux autres dossiers.
+
+### Fixes
+- **Dropdowns coupés au bord de l'écran** — `DropdownPortal` ancrait toujours le menu au bord gauche de son déclencheur sans vérifier le viewport : ouvert depuis un chip de tag dans le panneau latéral droit, le sélecteur d'icônes débordait de la fenêtre (grille tronquée). La position est désormais bornée au viewport, avec ouverture vers le haut quand la place manque en bas — tous les dropdowns en profitent.
+- **Doublons dans la recherche d'icônes** — les alias `Lucide*` exportés par lucide-react polluaient la liste (3816 entrées au lieu de ~1900) : chaque icône apparaissait deux fois dans les résultats.
+
 ## 2.54.0
 
 ### Features

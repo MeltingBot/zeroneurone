@@ -7,6 +7,7 @@ export { useInsightsStore } from './insightsStore';
 export { useToastStore, toast } from './toastStore';
 export { useHistoryStore } from './historyStore';
 export { useTagSetStore } from './tagSetStore';
+export { useCustomIconStore } from './customIconStore';
 export { useSyncStore } from './syncStore';
 export { useReportStore } from './reportStore';
 export { useTabStore } from './tabStore';

@@ -174,7 +174,12 @@
     "moreIcons": "+{{count}} més",
     "moreIconsRefine": "+{{count}} més (afineu la cerca)",
     "addIcon": "Afegir una icona",
-    "removeIcon": "Treure la icona"
+    "removeIcon": "Treure la icona",
+    "customIcons": "Les meves icones",
+    "importSvg": "Importa un SVG",
+    "deleteCustomIcon": "Suprimeix aquesta icona",
+    "invalidSvg": "Fitxer SVG no vàlid",
+    "svgTooLarge": "Fitxer SVG massa gran (màx. 64 KB)"
   },
   "language": {
     "switch": "Canviar d'idioma",

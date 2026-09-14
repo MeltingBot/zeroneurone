@@ -174,7 +174,12 @@
     "moreIcons": "+{{count}} meer",
     "moreIconsRefine": "+{{count}} meer (verfijn zoekopdracht)",
     "addIcon": "Pictogram toevoegen",
-    "removeIcon": "Pictogram verwijderen"
+    "removeIcon": "Pictogram verwijderen",
+    "customIcons": "Mijn pictogrammen",
+    "importSvg": "SVG importeren",
+    "deleteCustomIcon": "Dit pictogram verwijderen",
+    "invalidSvg": "Ongeldig SVG-bestand",
+    "svgTooLarge": "SVG-bestand te groot (max. 64 kB)"
   },
   "language": {
     "switch": "Taal wijzigen",

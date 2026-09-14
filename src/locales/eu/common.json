@@ -174,7 +174,12 @@
     "moreIcons": "+{{count}} gehiago",
     "moreIconsRefine": "+{{count}} gehiago (bilaketa zehaztu)",
     "addIcon": "Ikonoa gehitu",
-    "removeIcon": "Ikonoa kendu"
+    "removeIcon": "Ikonoa kendu",
+    "customIcons": "Nire ikonoak",
+    "importSvg": "Inportatu SVG bat",
+    "deleteCustomIcon": "Ezabatu ikono hau",
+    "invalidSvg": "SVG fitxategi baliogabea",
+    "svgTooLarge": "SVG fitxategia handiegia da (geh. 64 KB)"
   },
   "language": {
     "switch": "Hizkuntza aldatu",

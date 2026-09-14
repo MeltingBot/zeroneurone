@@ -53,6 +53,7 @@
       "description": "Les liens référencent les éléments par leur label dans les colonnes \"de\" et \"vers\". Les lignes type=event rattachent un événement à un élément via la colonne \"de\" (date requise)"
     },
     "retentionExpired": "Document source expiré (rétention dépassée de {{days}} jour(s))",
+    "customIconSkipped": "Icône personnalisée ignorée : {{name}}",
     "warnings": "Avertissements:",
     "andMore": "... et {{count}} autres",
     "fec": {

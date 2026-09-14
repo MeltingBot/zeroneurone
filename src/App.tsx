@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from '
 import { HomePage, DossierPage, JoinPage } from './pages';
 import { ToastContainer, MinResolutionGuard, ErrorBoundary } from './components/common';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
-import { useTagSetStore } from './stores';
+import { useTagSetStore, useCustomIconStore } from './stores';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import { usePlugins } from './plugins/usePlugins';
 import { PasswordModal } from './components/modals/PasswordModal';
@@ -301,6 +301,7 @@ function NavigateRef() {
 
 function App() {
   const loadTagSets = useTagSetStore((state) => state.load);
+  const loadCustomIcons = useCustomIconStore((state) => state.load);
   const isReady = useEncryptionStore((state) => state.isReady);
 
   // Initialize TagSets uniquement quand Dexie est prête (middleware installé
@@ -309,8 +310,9 @@ function App() {
   useEffect(() => {
     if (!isReady) return;
     loadTagSets();
+    loadCustomIcons();
     cleanOrphanedOpfs();
-  }, [loadTagSets, isReady]);
+  }, [loadTagSets, loadCustomIcons, isReady]);
 
   // Check for app updates on tab focus
   useVersionCheck();

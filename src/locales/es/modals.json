@@ -53,6 +53,7 @@
       "description": "Los enlaces referencian los elementos por su etiqueta en las columnas \"de\" y \"a\". Las filas type=event adjuntan un evento a un elemento mediante la columna \"de\"/\"from\" (fecha obligatoria)"
     },
     "retentionExpired": "Documento fuente expirado (retención superada en {{days}} día(s))",
+    "customIconSkipped": "Icono personalizado omitido: {{name}}",
     "warnings": "Advertencias:",
     "andMore": "... y {{count}} más",
     "fec": {

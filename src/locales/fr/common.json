@@ -175,7 +175,12 @@
     "moreIcons": "+{{count}} autres",
     "moreIconsRefine": "+{{count}} autres (affinez la recherche)",
     "addIcon": "Ajouter une icône",
-    "removeIcon": "Supprimer l'icône"
+    "removeIcon": "Supprimer l'icône",
+    "customIcons": "Mes icônes",
+    "importSvg": "Importer un SVG",
+    "deleteCustomIcon": "Supprimer cette icône",
+    "invalidSvg": "Fichier SVG invalide",
+    "svgTooLarge": "Fichier SVG trop volumineux (max 64 Ko)"
   },
   "language": {
     "switch": "Changer de langue"

@@ -20,6 +20,8 @@ import type {
   SavedQueryId,
   Comment,
   CommentId,
+  CustomIcon,
+  CustomIconId,
 } from '../types';
 import type { JsonMappingTemplate } from '../utils/jsonMapping';
 import type { EncryptionMeta } from '../services/encryption/encryptionService';
@@ -48,6 +50,7 @@ class DossierDatabase extends Dexie {
   jsonMappings!: Table<JsonMappingTemplate, string>;
   /** Import-staging for comments (normally Y.Doc-only); migrated to the Y.Doc on first load. */
   comments!: Table<Comment, CommentId>;
+  customIcons!: Table<CustomIcon, CustomIconId>;
   _encryptionMeta!: Table<EncryptionMeta, 'main'>;
 
   constructor() {
@@ -245,6 +248,11 @@ class DossierDatabase extends Dexie {
           await table.bulkDelete(orphanIds);
         }
       }
+    });
+
+    // ─── Version 15: customIcons table (global, user-imported SVG icons) ───
+    this.version(15).stores({
+      customIcons: 'id, name',
     });
   }
 

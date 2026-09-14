@@ -14,6 +14,7 @@ export type ViewId = UUID;
 export type ReportSectionId = UUID;
 export type TagSetId = UUID;
 export type TabId = UUID;
+export type CustomIconId = UUID;
 
 // ============================================================================
 // UTILITY TYPES
@@ -96,6 +97,33 @@ export interface PropertyDefinition {
   type: PropertyType;
   /** Available options for 'choice' type */
   choices?: string[];
+}
+
+// ============================================================================
+// CUSTOM ICONS
+// ============================================================================
+
+/** Prefix used in icon name fields to reference a user-imported SVG icon */
+export const CUSTOM_ICON_PREFIX = 'custom:';
+
+/** User-imported SVG icon (global, referenced as `custom:<id>` in icon fields) */
+export interface CustomIcon {
+  id: CustomIconId;
+  /** Display name (derived from filename, editable) */
+  name: string;
+  /** Sanitized SVG markup, normalized to currentColor */
+  svg: string;
+  createdAt: Date;
+}
+
+/** True if an icon name references a user-imported custom icon */
+export function isCustomIconName(name: string | null | undefined): name is string {
+  return typeof name === 'string' && name.startsWith(CUSTOM_ICON_PREFIX);
+}
+
+/** Extract the CustomIconId from a `custom:<id>` reference */
+export function customIconIdFromName(name: string): CustomIconId {
+  return name.slice(CUSTOM_ICON_PREFIX.length);
 }
 
 // ============================================================================

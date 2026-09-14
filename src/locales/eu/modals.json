@@ -53,6 +53,7 @@
       "description": "Loturek elementuak erreferentziatzen dituzte haien etiketaren bidez \"nondik\" eta \"nora\" zutabeetan. type=event lerroek gertaera bat elementu bati lotzen diote \"de\"/\"from\" zutabearen bidez (data beharrezkoa)"
     },
     "retentionExpired": "Iturburu-dokumentua iraungita (atxikipena {{days}} egunez gainditua)",
+    "customIconSkipped": "Ikono pertsonalizatua baztertu da: {{name}}",
     "warnings": "Abisuak:",
     "andMore": "... eta beste {{count}}",
     "fec": {

@@ -22,6 +22,15 @@ Tags are free-form labels to categorize your elements and links.
 
 ZeroNeurone suggests tags already used in the dossier to maintain consistency.
 
+### Rename a Tag
+
+Rename a tag everywhere in the current dossier:
+
+1. In the detail panel, hover over the tag and click the **pencil** icon (or double-click the name)
+2. Type the new name, confirm with **Enter** (Escape to cancel)
+
+The rename applies to **every element and link of the current dossier** carrying that tag, as well as the suggestion list. If the tag matches a tag set, its appearance (icon, color, shape) is carried over under the new name. Other dossiers are not affected.
+
 ### Filter by Tags
 
 Use the **Filters** panel to display only elements with certain tags.
@@ -46,7 +55,19 @@ Each tag set defines:
 
 When you apply a tag from a set to an element, its appearance (color, shape) is automatically defined and the suggested properties are offered.
 
-**Import/Export**: Tag sets can be exported and imported in JSON or CSV format for sharing between dossiers.
+**Import/Export**: Tag sets can be exported and imported in JSON or CSV format for sharing between dossiers. Referenced custom icons are embedded in the JSON. Tag sets used in a dossier are also included in the dossier export (ZIP/JSON) and recreated on import when they do not already exist.
+
+### Custom Icons (SVG)
+
+In addition to the built-in icons (Lucide), you can import your own SVG icons — for instance service logos (GitHub, Discord…) downloaded from [Simple Icons](https://simpleicons.org):
+
+1. Open the icon picker (tag set, or a tag's icon in the detail panel)
+2. In the **My icons** section, click the import button and choose an `.svg` file (64 KB max)
+3. The icon is sanitized (scripts and external references stripped), converted to monochrome, and automatically follows the theme color
+
+Imported icons are global (available in every dossier) and travel with dossier and tag set exports. To delete one, hover over it in the picker and click the trash icon.
+
+> **Licensing**: ZeroNeurone does not bundle any brand logo. If you import a service's logo, its use is your responsibility (trademark law).
 
 **Built-in sets**: ZeroNeurone provides default tag sets (Person, Company, Bank Account, Location…). They cannot be deleted but can be modified. The **Reset** button restores the default sets.
 

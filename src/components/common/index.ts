@@ -14,6 +14,7 @@ export { MarkdownEditor, MarkdownPreview } from './MarkdownEditor';
 export { EditableField } from './EditableField';
 export { MinResolutionGuard } from './MinResolutionGuard';
 export { IconPicker, IconPickerCompact } from './IconPicker';
+export { ResolvedIcon, iconNameResolves } from './ResolvedIcon';
 export { LanguageSwitcher } from './LanguageSwitcher';
 export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
 export { ProgressiveList } from './ProgressiveList';

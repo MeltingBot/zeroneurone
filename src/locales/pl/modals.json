@@ -53,6 +53,7 @@
       "description": "Połączenia odwołują się do elementów po etykiecie w kolumnach \"od\" i \"do\". Wiersze type=event dołączają zdarzenie do elementu przez kolumnę \"de\"/\"from\" (data wymagana)"
     },
     "retentionExpired": "Dokument źródłowy wygasł (retencja przekroczona o {{days}} dni)",
+    "customIconSkipped": "Pominięto ikonę niestandardową: {{name}}",
     "warnings": "Ostrzeżenia:",
     "andMore": "... i jeszcze {{count}}",
     "fec": {

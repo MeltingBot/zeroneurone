@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Hexagon, Download, Upload, HelpCircle } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
-import { Modal, Button, IconButton } from '../common';
-import { useTagSetStore, useUIStore } from '../../stores';
+import { Modal, Button, IconButton, ResolvedIcon, iconNameResolves } from '../common';
+import { useTagSetStore, useUIStore, useCustomIconStore } from '../../stores';
+import { CUSTOM_ICON_PREFIX, isCustomIconName, customIconIdFromName } from '../../types';
+import { sanitizeSvgIcon } from '../../utils/svgIcon';
 import { TagSetEditorModal } from './TagSetEditorModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
 
@@ -21,7 +22,8 @@ const shapeIcons: Record<ElementShape, typeof Circle> = {
 };
 
 // Export format version for future compatibility
-const EXPORT_VERSION = 1;
+// v2: adds customIcons (user-imported SVG referenced as custom:<id>)
+const EXPORT_VERSION = 2;
 
 interface ExportedTagSet {
   name: string;
@@ -30,10 +32,17 @@ interface ExportedTagSet {
   suggestedProperties: SuggestedProperty[];
 }
 
+interface ExportedTagSetCustomIcon {
+  id: string;
+  name: string;
+  svg: string;
+}
+
 interface TagSetExportData {
   version: number;
   exportedAt: string;
   tagSets: ExportedTagSet[];
+  customIcons?: ExportedTagSetCustomIcon[];
 }
 
 // Validation helpers
@@ -103,8 +112,21 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
     setConfirmReset(false);
   }, [confirmReset, resetToDefaults, showToast, t]);
 
-  // Export all TagSets to JSON file
+  // Export all TagSets to JSON file (embedding referenced custom icons)
   const handleExportJSON = useCallback(() => {
+    const iconStore = useCustomIconStore.getState();
+    const customIcons: ExportedTagSetCustomIcon[] = [];
+    const seenIconIds = new Set<string>();
+    for (const ts of tagSets) {
+      const iconName = ts.defaultVisual.icon;
+      if (!isCustomIconName(iconName)) continue;
+      const id = customIconIdFromName(iconName);
+      if (seenIconIds.has(id)) continue;
+      seenIconIds.add(id);
+      const icon = iconStore.icons.get(id);
+      if (icon) customIcons.push({ id: icon.id, name: icon.name, svg: icon.svg });
+    }
+
     const exportData: TagSetExportData = {
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
@@ -114,6 +136,7 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
         defaultVisual: ts.defaultVisual,
         suggestedProperties: ts.suggestedProperties,
       })),
+      customIcons: customIcons.length > 0 ? customIcons : undefined,
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -311,6 +334,28 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
           return;
         }
 
+        // Recreate embedded custom icons (v2), remapping custom:<id> references
+        const iconIdMap = new Map<string, string>();
+        if (Array.isArray(data.customIcons)) {
+          const createIcon = useCustomIconStore.getState().create;
+          for (const exportedIcon of data.customIcons.slice(0, 500)) {
+            try {
+              if (typeof exportedIcon.svg !== 'string' || typeof exportedIcon.id !== 'string') continue;
+              const svg = sanitizeSvgIcon(exportedIcon.svg);
+              const name = typeof exportedIcon.name === 'string' && exportedIcon.name.trim()
+                ? exportedIcon.name.trim().slice(0, 100)
+                : 'icon';
+              const icon = await createIcon(name, svg);
+              iconIdMap.set(exportedIcon.id, icon.id);
+            } catch { /* invalid SVG skipped; the referencing TagSet falls back to no icon */ }
+          }
+        }
+        const remapIcon = (iconName: string | null): string | null => {
+          if (!isCustomIconName(iconName)) return iconName;
+          const newId = iconIdMap.get(customIconIdFromName(iconName));
+          return newId ? `${CUSTOM_ICON_PREFIX}${newId}` : null;
+        };
+
         for (const exportedTagSet of data.tagSets) {
           if (nameExists(exportedTagSet.name)) {
             skipped++;
@@ -320,7 +365,10 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
           await create({
             name: exportedTagSet.name,
             description: exportedTagSet.description,
-            defaultVisual: exportedTagSet.defaultVisual,
+            defaultVisual: {
+              ...exportedTagSet.defaultVisual,
+              icon: remapIcon(exportedTagSet.defaultVisual.icon),
+            },
             suggestedProperties: exportedTagSet.suggestedProperties,
             isBuiltIn: false,
           });
@@ -491,14 +539,12 @@ interface TagSetListItemProps {
 function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
   const { t } = useTranslation(['modals', 'common']);
 
-  // Get custom icon if set, otherwise use shape icon
-  const CustomIcon = tagSet.defaultVisual.icon
-    ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>>)[tagSet.defaultVisual.icon]
-    : null;
+  // Get configured icon if it resolves, otherwise use shape icon
+  const iconName = tagSet.defaultVisual.icon;
+  const hasIcon = iconName ? iconNameResolves(iconName) : false;
   const ShapeIcon = tagSet.defaultVisual.shape
     ? shapeIcons[tagSet.defaultVisual.shape]
     : Circle;
-  const DisplayIcon = CustomIcon || ShapeIcon;
 
   return (
     <div className="flex items-center gap-3 p-3 bg-bg-secondary border border-border-default rounded hover:border-border-strong transition-colors group">
@@ -509,12 +555,22 @@ function TagSetListItem({ tagSet, onEdit, onDelete }: TagSetListItemProps) {
           backgroundColor: tagSet.defaultVisual.color || 'var(--color-bg-tertiary)',
         }}
       >
-        <DisplayIcon
-          size={18}
-          style={{
-            color: tagSet.defaultVisual.color ? 'white' : 'var(--color-text-secondary)',
-          }}
-        />
+        {hasIcon && iconName ? (
+          <ResolvedIcon
+            name={iconName}
+            size={18}
+            style={{
+              color: tagSet.defaultVisual.color ? 'white' : 'var(--color-text-secondary)',
+            }}
+          />
+        ) : (
+          <ShapeIcon
+            size={18}
+            style={{
+              color: tagSet.defaultVisual.color ? 'white' : 'var(--color-text-secondary)',
+            }}
+          />
+        )}
       </div>
 
       {/* Name and info */}

@@ -53,6 +53,7 @@
       "description": "Verbindingen verwijzen naar elementen via hun label in de kolommen \"van\" en \"naar\". type=event-rijen koppelen een gebeurtenis aan een element via de kolom \"de\"/\"from\" (datum vereist)"
     },
     "retentionExpired": "Brondocument verlopen (bewaring overschreden met {{days}} dag(en))",
+    "customIconSkipped": "Aangepast pictogram overgeslagen: {{name}}",
     "warnings": "Waarschuwingen:",
     "andMore": "... en nog {{count}}",
     "fec": {

@@ -53,6 +53,7 @@
       "description": "I collegamenti fanno riferimento agli elementi per etichetta nelle colonne \"da\" e \"a\". Le righe type=event collegano un evento a un elemento tramite la colonna \"de\"/\"from\" (data obbligatoria)"
     },
     "retentionExpired": "Documento sorgente scaduto (conservazione superata di {{days}} giorno/i)",
+    "customIconSkipped": "Icona personalizzata ignorata: {{name}}",
     "warnings": "Avvisi:",
     "andMore": "... e altri {{count}}",
     "fec": {

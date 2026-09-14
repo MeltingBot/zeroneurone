@@ -174,7 +174,12 @@
     "moreIcons": "+{{count}} більше",
     "moreIconsRefine": "+{{count}} більше (уточніть пошук)",
     "addIcon": "Додати іконку",
-    "removeIcon": "Видалити іконку"
+    "removeIcon": "Видалити іконку",
+    "customIcons": "Мої іконки",
+    "importSvg": "Імпортувати SVG",
+    "deleteCustomIcon": "Видалити цю іконку",
+    "invalidSvg": "Недійсний файл SVG",
+    "svgTooLarge": "Файл SVG завеликий (макс. 64 КБ)"
   },
   "language": {
     "switch": "Змінити мову",

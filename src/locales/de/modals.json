@@ -53,6 +53,7 @@
       "description": "Verbindungen referenzieren Elemente über ihre Bezeichnung in den Spalten \"von\" und \"nach\". type=event-Zeilen hängen ein Ereignis über die Spalte \"de\"/\"from\" an ein Element an (Datum erforderlich)"
     },
     "retentionExpired": "Quelldokument abgelaufen (Aufbewahrung um {{days}} Tag(e) überschritten)",
+    "customIconSkipped": "Benutzerdefiniertes Symbol übersprungen: {{name}}",
     "warnings": "Warnungen:",
     "andMore": "... und {{count}} weitere",
     "fec": {

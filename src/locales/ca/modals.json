@@ -53,6 +53,7 @@
       "description": "Els enllaços referencien els elements per la seva etiqueta a les columnes \"de\" i \"a\". Les files type=event adjunten un esdeveniment a un element mitjançant la columna \"de\"/\"from\" (data obligatòria)"
     },
     "retentionExpired": "Document font expirat (retenció superada en {{days}} dia/es)",
+    "customIconSkipped": "S'ha omès la icona personalitzada: {{name}}",
     "warnings": "Advertències:",
     "andMore": "... i {{count}} més",
     "fec": {

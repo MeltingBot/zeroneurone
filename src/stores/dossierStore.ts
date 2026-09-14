@@ -162,6 +162,8 @@ interface DossierState {
 
   // Actions - Settings (for reusable tags/properties)
   addExistingTag: (tag: string) => Promise<void>;
+  /** Rename a tag on every element/link of the CURRENT dossier only (no impact on other dossiers). */
+  renameTag: (oldName: string, newName: string) => Promise<{ elements: number; links: number }>;
   addSuggestedProperty: (propertyDef: PropertyDefinition) => Promise<void>;
   updateSuggestedPropertyChoices: (key: string, choices: string[]) => Promise<void>;
   associatePropertyWithTags: (propertyDef: PropertyDefinition, tags: string[]) => Promise<void>;
@@ -2486,6 +2488,64 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // ============================================================================
   // SETTINGS - Via Dexie (unchanged)
   // ============================================================================
+
+  renameTag: async (oldName: string, newName: string) => {
+    const trimmed = newName.trim();
+    const { currentDossier, elements, links, updateElement, updateLink } = get();
+    const counts = { elements: 0, links: 0 };
+    if (!currentDossier || !trimmed || trimmed === oldName) return counts;
+
+    // Copy the tag family (visuals, icon, suggested properties) under the new
+    // name so the association follows the rename. Additive only: the original
+    // family is left untouched for other dossiers that may use it.
+    try {
+      const tagSetStore = useTagSetStore.getState();
+      const oldSet = tagSetStore.getByName(oldName);
+      if (oldSet && !tagSetStore.getByName(trimmed)) {
+        await tagSetStore.create({
+          name: trimmed,
+          description: oldSet.description,
+          defaultVisual: oldSet.defaultVisual,
+          suggestedProperties: oldSet.suggestedProperties,
+          isBuiltIn: false,
+        });
+      }
+    } catch (e) {
+      console.warn('renameTag: TagSet copy failed', e);
+    }
+
+    // Rewrite the tag on every element/link of the current dossier (dedup in
+    // case the new name was already present alongside the old one)
+    for (const el of elements) {
+      if (el.tags?.includes(oldName)) {
+        const newTags = Array.from(new Set(el.tags.map(t => (t === oldName ? trimmed : t))));
+        await updateElement(el.id, { tags: newTags });
+        counts.elements++;
+      }
+    }
+    for (const lk of links) {
+      if (lk.tags?.includes(oldName)) {
+        const newTags = Array.from(new Set(lk.tags.map(t => (t === oldName ? trimmed : t))));
+        await updateLink(lk.id, { tags: newTags });
+        counts.links++;
+      }
+    }
+
+    // Update the dossier's tag suggestion list
+    const existing = get().currentDossier?.settings.existingTags ?? [];
+    if (existing.includes(oldName)) {
+      const updated = Array.from(new Set(existing.map(t => (t === oldName ? trimmed : t))));
+      const settings = { ...get().currentDossier!.settings, existingTags: updated };
+      await dossierRepository.update(currentDossier.id, { settings });
+      set((state) => ({
+        currentDossier: state.currentDossier
+          ? { ...state.currentDossier, settings }
+          : null,
+      }));
+    }
+
+    return counts;
+  },
 
   addExistingTag: async (tag: string) => {
     const { currentDossier } = get();

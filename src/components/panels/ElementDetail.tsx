@@ -667,6 +667,14 @@ export function ElementDetail({ element }: ElementDetailProps) {
     [addExistingTag]
   );
 
+  const handleRenameTag = useCallback(
+    async (oldName: string, newName: string) => {
+      await useDossierStore.getState().renameTag(oldName, newName);
+      useUIStore.getState().showToast('success', t('detail.tags.tagRenamed', { oldName, newName }));
+    },
+    [t]
+  );
+
   // Handle TagSet tag added (show suggested properties popup)
   const handleTagSetTagAdded = useCallback((tagSetName: string) => {
     setSuggestedPropsTagSet(tagSetName);
@@ -1036,6 +1044,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
               suggestions={currentDossier?.settings.existingTags}
               onNewTag={handleNewTag}
               onTagSetTagAdded={handleTagSetTagAdded}
+              onRenameTag={handleRenameTag}
             />
           </div>
 

@@ -53,6 +53,7 @@
       "description": "As ligações referenciam os elementos pela sua etiqueta nas colunas \"de\" e \"para\". As linhas type=event anexam um evento a um elemento pela coluna \"de\"/\"from\" (data obrigatória)"
     },
     "retentionExpired": "Documento fonte expirado (retenção ultrapassada em {{days}} dia(s))",
+    "customIconSkipped": "Ícone personalizado ignorado: {{name}}",
     "warnings": "Avisos:",
     "andMore": "... e mais {{count}}",
     "fec": {

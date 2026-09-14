@@ -29,8 +29,12 @@ import type {
   Comment,
   CommentId,
 } from '../types';
-import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
+import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL, CUSTOM_ICON_PREFIX, isCustomIconName } from '../types';
 import { useQueryStore } from '../stores/queryStore';
+import { useTagSetStore } from '../stores/tagSetStore';
+import { useCustomIconStore } from '../stores/customIconStore';
+import { tagSetRepository, customIconRepository } from '../db/repositories';
+import { sanitizeSvgIcon } from '../utils/svgIcon';
 import { normalizeGeo, computePolygonCenter } from '../utils/geo';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
@@ -352,6 +356,9 @@ class ImportService {
         }
       }
 
+      // Import tag families and custom icons, remapping icon references
+      await this.importTagSetsAndCustomIcons(data, result);
+
       // Import elements and links (with optional position offset)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
 
@@ -519,6 +526,91 @@ class ImportService {
   }
 
   /**
+   * Import the TagSets (tag families) and custom icons embedded in an export.
+   *
+   * - Custom icons are re-sanitized (defense in depth), deduplicated by
+   *   content, and recreated under new IDs; `custom:<oldId>` references in
+   *   element visuals and imported TagSets are remapped (mutates `data`).
+   * - TagSets are created only when no local TagSet with the same name exists
+   *   (the local version always wins — the user stays in control).
+   */
+  private async importTagSetsAndCustomIcons(
+    data: ExportData,
+    result: ImportResult
+  ): Promise<void> {
+    const iconIdMap = new Map<string, string>();
+
+    // 1. Recreate custom icons (dedup by identical SVG content)
+    if (data.customIcons && data.customIcons.length > 0) {
+      for (const exported of data.customIcons.slice(0, 500)) {
+        try {
+          if (typeof exported.svg !== 'string' || typeof exported.id !== 'string') continue;
+          const svg = sanitizeSvgIcon(exported.svg);
+          const name = typeof exported.name === 'string' && exported.name.trim()
+            ? exported.name.trim().slice(0, 100)
+            : 'icon';
+          const icon = await customIconRepository.create(name, svg);
+          iconIdMap.set(exported.id, icon.id);
+        } catch {
+          result.warnings.push(
+            i18next.t('import.customIconSkipped', { ns: 'modals', name: exported.name ?? '?' })
+          );
+        }
+      }
+    }
+
+    const remapIcon = (iconName: string | null | undefined): string | null => {
+      if (!iconName) return null;
+      if (!isCustomIconName(iconName)) return iconName;
+      const newId = iconIdMap.get(iconName.slice(CUSTOM_ICON_PREFIX.length));
+      return newId ? `${CUSTOM_ICON_PREFIX}${newId}` : null;
+    };
+
+    // 2. Create missing TagSets (never overwrite an existing local family)
+    if (data.tagSets && data.tagSets.length > 0) {
+      for (const exported of data.tagSets) {
+        try {
+          if (typeof exported.name !== 'string' || !exported.name.trim()) continue;
+          const existing = await tagSetRepository.getByName(exported.name);
+          if (existing) continue;
+          await tagSetRepository.create({
+            name: exported.name.trim(),
+            description: typeof exported.description === 'string' ? exported.description : '',
+            defaultVisual: {
+              color: exported.defaultVisual?.color ?? null,
+              shape: exported.defaultVisual?.shape ?? null,
+              icon: remapIcon(exported.defaultVisual?.icon),
+            },
+            suggestedProperties: Array.isArray(exported.suggestedProperties)
+              ? exported.suggestedProperties
+              : [],
+            isBuiltIn: false,
+          });
+        } catch (e) {
+          console.warn(`TagSet import failed for "${exported.name}":`, e);
+        }
+      }
+    }
+
+    // 3. Remap custom icon references carried by element visuals
+    if (iconIdMap.size > 0) {
+      for (const el of data.elements) {
+        if (el.visual && isCustomIconName(el.visual.icon)) {
+          el.visual.icon = remapIcon(el.visual.icon);
+        }
+      }
+    }
+
+    // Refresh in-memory stores so the imported families/icons show up
+    try {
+      const tagSets = await tagSetRepository.getAll();
+      useTagSetStore.setState({ tagSets: new Map(tagSets.map(t => [t.id, t])) });
+      const icons = await customIconRepository.getAll();
+      useCustomIconStore.setState({ icons: new Map(icons.map(i => [i.id, i])) });
+    } catch { /* stores refresh on next load */ }
+  }
+
+  /**
    * Import native ZeroNeurone JSON format (without assets)
    */
   private async importNativeJSON(
@@ -546,6 +638,9 @@ class ImportService {
       const elementIdMap = new Map<ElementId, ElementId>();
       const assetIdMap = new Map<AssetId, AssetId>(); // Will be empty for JSON import
       const linkIdMap = new Map<LinkId, LinkId>();
+
+      // Import tag families and custom icons, remapping icon references
+      await this.importTagSetsAndCustomIcons(data, result);
 
       // Import elements and links (no assets for JSON-only import)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result);

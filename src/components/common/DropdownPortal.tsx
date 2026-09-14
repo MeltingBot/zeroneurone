@@ -22,24 +22,47 @@ export function DropdownPortal({
   useEffect(() => {
     if (!isOpen || !anchorRef.current) return;
 
+    const MARGIN = 8;
+
     const updatePosition = () => {
       const rect = anchorRef.current?.getBoundingClientRect();
-      if (rect) {
-        setPosition({
-          top: rect.bottom + 4,
-          left: rect.left,
-          width: rect.width,
-        });
+      if (!rect) return;
+
+      // Clamp within the viewport so the dropdown is never cut off by the
+      // window edge (e.g. pickers anchored in the right side panel)
+      const dropdown = dropdownRef.current;
+      const ddWidth = dropdown?.offsetWidth ?? 0;
+      const ddHeight = dropdown?.offsetHeight ?? 0;
+
+      let left = rect.left;
+      if (ddWidth > 0) {
+        left = Math.max(MARGIN, Math.min(left, window.innerWidth - ddWidth - MARGIN));
       }
+
+      let top = rect.bottom + 4;
+      if (ddHeight > 0 && top + ddHeight > window.innerHeight - MARGIN) {
+        // Open upward when there is more room above the anchor
+        const topAbove = rect.top - 4 - ddHeight;
+        if (topAbove >= MARGIN) {
+          top = topAbove;
+        } else {
+          top = Math.max(MARGIN, window.innerHeight - ddHeight - MARGIN);
+        }
+      }
+
+      setPosition({ top, left, width: rect.width });
     };
 
     updatePosition();
+    // Second pass once the dropdown has been laid out (real size known)
+    const rafId = requestAnimationFrame(updatePosition);
 
     // Update position on scroll/resize
     window.addEventListener('scroll', updatePosition, true);
     window.addEventListener('resize', updatePosition);
 
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', updatePosition, true);
       window.removeEventListener('resize', updatePosition);
     };

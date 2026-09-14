@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
-import { useDossierStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useHistoryStore, useUIStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition, FontSize } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
@@ -336,6 +336,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
     [addExistingTag]
   );
 
+  const handleRenameTag = useCallback(
+    async (oldName: string, newName: string) => {
+      await useDossierStore.getState().renameTag(oldName, newName);
+      useUIStore.getState().showToast('success', t('detail.tags.tagRenamed', { oldName, newName }));
+    },
+    [t]
+  );
+
   // Handle TagSet tag added (to show suggested properties popup)
   const handleTagSetTagAdded = useCallback((tagSetName: string) => {
     setSuggestedPropsTagSet(tagSetName);
@@ -463,6 +471,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
               suggestions={currentDossier?.settings.existingTags}
               onNewTag={handleNewTag}
               onTagSetTagAdded={handleTagSetTagAdded}
+              onRenameTag={handleRenameTag}
             />
           </div>
         </div>

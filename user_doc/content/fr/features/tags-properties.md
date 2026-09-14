@@ -22,6 +22,15 @@ Les tags sont des étiquettes libres pour catégoriser vos éléments et liens.
 
 ZeroNeurone suggère les tags déjà utilisés dans le dossier pour maintenir la cohérence.
 
+### Renommer un tag
+
+Renommez un tag partout dans le dossier courant :
+
+1. Dans le panneau de détail, survolez le tag et cliquez sur l'icône **crayon** (ou double-cliquez sur le nom)
+2. Saisissez le nouveau nom, validez avec **Entrée** (Échap pour annuler)
+
+Le renommage s'applique à **tous les éléments et liens du dossier courant** qui portent ce tag, ainsi qu'à la liste de suggestions. Si le tag correspond à un jeu de tags, son apparence (icône, couleur, forme) est reprise sous le nouveau nom. Les autres dossiers ne sont pas affectés.
+
 ### Filtrer par tags
 
 Utilisez le panneau **Filtres** pour afficher uniquement les éléments avec certains tags.
@@ -46,7 +55,19 @@ Chaque jeu de tags définit :
 
 Lorsque vous appliquez un tag issu d'un jeu à un élément, son apparence (couleur, forme) est automatiquement définie et les propriétés suggérées sont proposées.
 
-**Import/Export** : Les jeux de tags peuvent être exportés et importés au format JSON ou CSV pour les partager entre dossiers.
+**Import/Export** : Les jeux de tags peuvent être exportés et importés au format JSON ou CSV pour les partager entre dossiers. Les icônes personnalisées référencées sont embarquées dans le JSON. Les jeux de tags utilisés dans un dossier sont également inclus dans l'export du dossier (ZIP/JSON) et recréés à l'import s'ils n'existent pas déjà.
+
+### Icônes personnalisées (SVG)
+
+En plus des icônes intégrées (Lucide), vous pouvez importer vos propres icônes SVG — par exemple des logos de services (GitHub, Discord…) téléchargés depuis [Simple Icons](https://simpleicons.org) :
+
+1. Ouvrez le sélecteur d'icône (jeu de tags, ou icône d'un tag dans le panneau de détail)
+2. Dans la section **Mes icônes**, cliquez sur le bouton d'import et choisissez un fichier `.svg` (64 Ko max)
+3. L'icône est nettoyée (scripts et références externes supprimés), passée en monochrome et suit automatiquement la couleur du thème
+
+Les icônes importées sont globales (disponibles dans tous les dossiers) et voyagent dans les exports de dossiers et de jeux de tags. Pour en supprimer une, survolez-la dans le sélecteur et cliquez sur la corbeille.
+
+> **Licences** : ZeroNeurone n'embarque aucun logo de marque. Si vous importez le logo d'un service, son usage relève de votre responsabilité (droit des marques).
 
 **Jeux intégrés** : ZeroNeurone fournit des jeux de tags par défaut (Personne, Entreprise, Compte bancaire, Lieu…). Ils ne peuvent pas être supprimés mais peuvent être modifiés. Le bouton **Réinitialiser** restaure les jeux par défaut.
 

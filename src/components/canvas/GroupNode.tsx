@@ -1,9 +1,9 @@
 import { memo, useRef, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
-import * as LucideIcons from 'lucide-react';
+import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element } from '../../types';
 import { FONT_SIZE_PX } from '../../types';
-import { useUIStore, useTagSetStore } from '../../stores';
+import { useUIStore, useTagSetStore, useCustomIconStore } from '../../stores';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -50,6 +50,8 @@ function GroupNodeComponent({ data }: NodeProps) {
   const anonymousMode = useUIStore((state) => state.anonymousMode);
   const labelFontSize = FONT_SIZE_PX[element.visual.fontSize || 'sm'];
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
+  // Subscribe to custom icons so tag icons appear once the store loads
+  useCustomIconStore((state) => state.icons);
 
   const handleResizeEnd = useCallback(
     (_event: unknown, params: { x: number; y: number; width: number; height: number }) => {
@@ -189,21 +191,19 @@ function GroupNodeComponent({ data }: NodeProps) {
         {tagsToDisplay.length > 0 && (
           <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 z-10">
             {tagsToDisplay.slice(0, 4).map(({ name, iconName }) => {
-              const IconComponent = iconName
-                ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[iconName]
-                : null;
-              const showIcon = (tagDisplayMode === 'icons' || tagDisplayMode === 'both') && IconComponent;
+              const hasIcon = iconName ? iconNameResolves(iconName) : false;
+              const showIcon = (tagDisplayMode === 'icons' || tagDisplayMode === 'both') && hasIcon;
               const showLabel = tagDisplayMode === 'labels' || tagDisplayMode === 'both';
 
               if (tagDisplayMode === 'icons') {
-                if (!IconComponent) return null;
+                if (!hasIcon || !iconName) return null;
                 return (
                   <div
                     key={name}
                     className={`${tagSizeConfig.boxSize} rounded bg-bg-secondary border border-border-default flex items-center justify-center`}
                     title={name}
                   >
-                    <IconComponent size={tagSizeConfig.iconSize} className="text-text-secondary" />
+                    <ResolvedIcon name={iconName} size={tagSizeConfig.iconSize} className="text-text-secondary" />
                   </div>
                 );
               }
@@ -214,7 +214,7 @@ function GroupNodeComponent({ data }: NodeProps) {
                   className={`${tagSizeConfig.padding} rounded bg-bg-secondary border border-border-default flex items-center gap-0.5`}
                   title={name}
                 >
-                  {showIcon && <IconComponent size={tagSizeConfig.iconSize} className="text-text-secondary" />}
+                  {showIcon && iconName && <ResolvedIcon name={iconName} size={tagSizeConfig.iconSize} className="text-text-secondary" />}
                   {showLabel && <span className={`${tagSizeConfig.fontSize} text-text-secondary whitespace-nowrap`}>{name}</span>}
                 </div>
               );
