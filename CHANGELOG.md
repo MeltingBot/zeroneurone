@@ -1,5 +1,39 @@
 # Changelog
 
+## 2.56.0
+
+### Fixes
+
+- **La carte n'affichait plus aucune couche vectorielle** — depuis la v2.52.1 et
+  le passage à MapLibre v6, les lignes entre éléments, les zones et les
+  bâtiments avaient disparu de la carte, sans le moindre message dans la
+  console. MapLibre v6 charge son moteur de traitement depuis un fichier séparé
+  que la construction du projet n'embarquait pas : la requête tombait sur la
+  page d'accueil, le navigateur refusait le fichier, et la carte se retrouvait
+  privée de tout ce qu'elle doit calculer elle-même. Les fichiers concernés sont
+  désormais copiés à la construction comme à l'exécution en développement.
+- **Changer de fond de carte faisait disparaître les liens** — et
+  définitivement : ils ne revenaient qu'en rouvrant le dossier. Leur
+  reconstruction attendait un signal que MapLibre n'émet pas lorsqu'il passe
+  d'un fond à un autre sans tout recharger.
+- **Le bouton Bâtiments restait sans effet sur certains fonds** — les fonds
+  vectoriels apportent leurs propres volumes de bâtiments, que le bouton ne
+  pilotait pas. Il agit maintenant sur les deux.
+
+### Fonds de carte
+
+- **CartoDB retiré** — le fournisseur exige désormais une clé d'accès. Si vous
+  l'aviez sélectionné, votre choix bascule automatiquement vers OpenFreeMap.
+- **OpenFreeMap ajouté, et devient le fond par défaut** — carte vectorielle
+  libre, sans compte ni clé, dont le rendu reste net à tous les niveaux de zoom.
+  Le bouton porte un chevron ouvrant cinq variantes : automatique, qui suit le
+  thème clair ou sombre de l'application, clair, détaillé, sombre et contrasté.
+- **Sélecteur simplifié** — trois fonds au lieu de quatre : OpenFreeMap,
+  OpenStreetMap et Satellite. L'entrée OSM FR/DE disparaît, OpenFreeMap rendant
+  les mêmes noms de lieux plus lisiblement ; les préférences qui la nommaient
+  basculent vers OpenStreetMap. Celui-ci est conservé comme second fournisseur,
+  de sorte qu'une interruption d'OpenFreeMap ne laisse pas sans carte.
+
 ## 2.55.2
 
 ### Fixes

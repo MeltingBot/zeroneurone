@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.55.2",
+  "version": "2.56.0",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -9,14 +9,13 @@
   },
   "type": "module",
   "scripts": {
-    "sync:pdf-worker": "node -e \"import('node:fs').then(({copyFileSync})=>import('node:module').then(({createRequire})=>copyFileSync(createRequire(import.meta.url).resolve('pdfjs-dist/build/pdf.worker.min.mjs'),'public/pdf.worker.min.mjs')))\"",
     "licenses": "node scripts/generate-third-party-licenses.mjs",
-    "predev": "npm run sync:pdf-worker",
+    "predev": "npm run sync:workers",
     "dev": "vite",
     "dev:plugins": "node scripts/build-plugins.mjs && vite",
     "build:plugins": "node scripts/build-plugins.mjs",
     "rehash:plugins": "node scripts/build-plugins.mjs --skip-build",
-    "prebuild": "npm run sync:pdf-worker && npm run licenses",
+    "prebuild": "npm run sync:workers && npm run licenses",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -44,7 +43,8 @@
     "docker:logs": "docker compose logs -f",
     "lock:refresh": "node -e \"const fs=require('fs'),{execSync}=require('child_process'),d=fs.mkdtempSync('/tmp/zn-lock-');fs.copyFileSync('package.json',d+'/package.json');execSync('npm install --package-lock-only',{cwd:d,stdio:'inherit'});fs.copyFileSync(d+'/package-lock.json','package-lock.json');fs.rmSync(d,{recursive:true});\"",
     "check": "tsc -b && vitest run && npm run build",
-    "bench": "vitest run --config vitest.bench.config.ts"
+    "bench": "vitest run --config vitest.bench.config.ts",
+    "sync:workers": "node scripts/sync-workers.mjs"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
