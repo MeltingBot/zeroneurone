@@ -1,5 +1,61 @@
 # Changelog
 
+## 2.55.1
+
+### Sécurité
+
+Audit statique de la base, suivi de la correction des constats vérifiés. Sept
+défauts, dont deux critiques. Chaque correction est couverte par un test de
+non-régression, validé en rétablissant le code d'origine pour vérifier qu'il
+échouait alors.
+
+- **Injection HTML via la vignette d'un asset partagé** — la vignette d'un
+  fichier joint était insérée sans échappement dans un `url()` non quoté du
+  marqueur de carte, puis posée par `innerHTML`. Cette vignette arrive telle
+  quelle d'un pair de collaboration, et le contrôle d'intégrité SHA-256 ne
+  portait que sur le fichier lui-même, jamais sur cette chaîne : un pair
+  malveillant pouvait donc faire exécuter du code dans l'application de ses
+  correspondants, avec accès à leurs dossiers. Les vignettes sont désormais
+  validées à la réception comme à l'affichage. Même correction dans le rapport
+  HTML, qui reçoit au passage une politique de sécurité de contenu.
+- **Perte de données à la désactivation du chiffrement** — si un dossier
+  échouait au déchiffrement, l'erreur n'apparaissait qu'en console et la
+  procédure supprimait malgré tout la clé, seule copie existante : le dossier
+  restait chiffré et devenait définitivement illisible. La désactivation
+  s'interrompt maintenant avant toute suppression et signale les dossiers
+  concernés, la base restant entièrement récupérable avec le mot de passe. Une
+  base illisible est comptée comme un risque de perte et non plus comme une
+  absence de perte. À l'activation, un chiffrement partiel est signalé au lieu
+  d'être présenté comme complet.
+- **Exports SVG** — les couleurs n'étaient pas filtrées avant d'être écrites
+  dans le fichier, contrairement au rapport interactif. Un fichier `.svg`
+  exporté pouvait exécuter du code à l'ouverture, y compris chez un
+  destinataire tiers.
+- **Validation des fichiers joints** — un fichier était accepté dès que son
+  type déclaré *ou* son extension convenait, alors qu'une archive importée
+  contrôle les deux. L'extension fait désormais foi, et un type déclaré doit
+  être reconnu. Les orthographes acceptées jusqu'ici par leur type (`.jfif`,
+  `.markdown`, `.m4v`, `.oga`, `.ogv`, `.tif`…) restent acceptées.
+- **En-têtes de sécurité** — la configuration nginx déclarait bien une
+  politique de sécurité de contenu, HSTS et les autres en-têtes, mais nginx
+  n'en émettait aucun : un bloc `location` qui définit un en-tête n'hérite
+  d'aucun en-tête du niveau supérieur. Vérifié sur conteneur avant et après.
+- **Plugins** — une entrée de manifeste sans empreinte désactivait
+  silencieusement la vérification d'intégrité ; elle est maintenant refusée.
+  Le filtrage de permissions est documenté pour ce qu'il est : un plugin
+  s'exécute dans le même contexte que l'application, le filtrage façonne
+  l'interface qui lui est remise mais ne le confine pas. Un plugin installé
+  doit être considéré comme du code de confiance.
+- **Relais de collaboration** — l'en-tête `X-Forwarded-For` était accepté sans
+  condition, ce qui permettait de contourner la limite de connexions par
+  adresse. Il n'est désormais pris en compte que derrière un proxy déclaré,
+  via la variable `TRUST_PROXY`.
+
+### Fixes
+
+- Le chargement des plugins recevait l'instance i18n en paramètre depuis
+  l'ajout de `skipIds`, ce qui empêchait la compilation.
+
 ## 2.55.0
 
 ### Features
