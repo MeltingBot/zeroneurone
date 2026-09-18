@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.55.2
+
+### Fixes
+
+- **Politique de sécurité de contenu trop restrictive** — la v2.55.1 a rendu
+  effective, pour la première fois, la politique de sécurité de contenu
+  déclarée dans la configuration nginx : un défaut d'héritage faisait qu'elle
+  n'était auparavant émise sur aucune réponse. Écrite pour une application sans
+  extensions, elle bloquait les appels réseau des plugins — API Mistral, OpenAI
+  ou Anthropic et modèles HuggingFace pour OneNeurone, proxy RPUC pour
+  SpotNeurone, serveur GoNeurone, stockage S3 ou WebDAV pour VaultNeurone — ces
+  adresses étant choisies par l'utilisateur, aucune liste fermée ne peut les
+  énumérer. Elle bloquait aussi WebAssembly, dont dépendent ForeNeurone pour
+  lire les bases SQLite et OneNeurone pour les modèles locaux, ainsi que la
+  lecture des vidéos jointes.
+
+  Les destinations réseau, les images et les médias sont désormais ouverts. Ce
+  qui protège réellement est conservé et vérifié : les scripts en ligne et les
+  scripts d'origine externe sont refusés, `eval` reste interdit, et
+  `object-src`, `base-uri`, `form-action` et `frame-ancestors` sont verrouillés.
+  Restreindre les destinations n'apportait ici qu'une assurance de façade, un
+  plugin s'exécutant dans le même contexte que l'application avec un accès
+  réseau libre.
+
+  Après mise à jour, le service worker peut encore servir l'ancienne politique
+  depuis son cache : un rechargement forcé, ou la fermeture puis réouverture de
+  l'onglet, suffit à la remplacer.
+
 ## 2.55.1
 
 ### Sécurité
