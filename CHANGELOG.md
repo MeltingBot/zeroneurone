@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.56.1
+
+### Fixes
+
+- **Construction de l'image Docker** — la v2.56.0 ne se construisait pas : un
+  script de préparation avait été renommé sans que le Dockerfile suive. Au-delà
+  de l'échec, l'image n'aurait de toute façon pas embarqué le correctif de la
+  carte livré en 2.56.0, la construction Docker n'appelant pas le même
+  enchaînement que la construction locale. L'image combinée était dans le même
+  cas, et n'embarquait déjà pas le moteur de lecture des PDF. Si vous avez
+  déployé une image 2.56.0, remplacez-la.
+
 ## 2.56.0
 
 ### Fixes

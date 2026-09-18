@@ -37,6 +37,10 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # Copy source code
 COPY . .
 
+# Sync the third-party workers. `npx vite build` skips npm's prebuild hook, so
+# the pdf.js and MapLibre workers have to be copied explicitly — see Dockerfile.
+RUN npm run sync:workers
+
 # Build the application with version info
 # Skip TypeScript strict checking, use Vite directly
 ENV VITE_APP_VERSION=$GIT_COMMIT
