@@ -113,11 +113,22 @@ export function isSafeExternalUrl(url: string): boolean {
   }
 }
 
+/** A real extension: short and alphanumeric. Anything else is not one. */
+const EXTENSION_PATTERN = /^[a-z0-9]{1,8}$/;
+
 /**
- * Get file extension from filename
+ * Get file extension from filename.
+ *
+ * Returns 'bin' unless the name actually carries a plausible extension. Two
+ * cases matter beyond tidiness: a name without any dot used to return the whole
+ * name, and filenames reach us from imported archives and collaboration peers,
+ * while the result is concatenated into an OPFS handle name ("<hash>.<ext>").
  */
 export function getExtension(filename: string): string {
-  return filename.split('.').pop()?.toLowerCase() || 'bin';
+  const parts = filename.split('.');
+  if (parts.length < 2) return 'bin';
+  const ext = parts.pop()!.toLowerCase();
+  return EXTENSION_PATTERN.test(ext) ? ext : 'bin';
 }
 
 /**

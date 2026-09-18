@@ -6,7 +6,7 @@ import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { escapeHtml, safeColor } from '../../utils/escapeHtml';
+import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
 import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
@@ -698,7 +698,7 @@ export function MapView() {
       const dimmedStyle = isDimmed ? 'opacity:0.25;' : 'opacity:0.6;';
       return `<div class="map-breadcrumb" style="width:8px;height:8px;border-radius:50%;background:${color};border:1.5px solid ${borderColor};${dimmedStyle}cursor:pointer;"></div>`;
     }
-    const thumbnail = getThumbnail(element);
+    const thumbnail = safeDataImageUrl(getThumbnail(element));
     const label = element.label || t('map.unnamed');
     const truncatedLabel = label.length > 12 ? label.substring(0, 10) + '...' : label;
     const displayLabel = anonymousMode
@@ -719,7 +719,7 @@ export function MapView() {
       return `
         <div class="map-marker-card" style="position:relative;background:var(--color-bg-primary, #ffffff);border:1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : borderColor};border-radius:4px;overflow:visible;${selectedStyle}${dimmedStyle}${cardWidth};">
           ${commentBadge}
-          <div style="width:100%;min-width:48px;height:48px;background-image:url(${thumbnail});background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
+          <div style="width:100%;min-width:48px;height:48px;background-image:url('${thumbnail}');background-size:cover;background-position:center;background-color:var(--color-bg-secondary, #f7f4ef);border-radius:4px 4px 0 0;${blurStyle}"></div>
           <div style="padding:2px 3px;background:var(--color-bg-primary, #ffffff);border-top:1px solid var(--color-border-default, #e8e3db);">
             <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;${labelOverflow}">${displayLabel}</span>
           </div>

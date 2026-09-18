@@ -1,6 +1,6 @@
 import type { Dossier, Element, Link, Asset } from '../types';
 import { getGeoCenter, isGeoPolygon } from '../utils/geo';
-import { safeColor } from '../utils/escapeHtml';
+import { safeColor, safeDataImageUrl } from '../utils/escapeHtml';
 import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -154,6 +154,10 @@ class ReportService {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- This document is opened through a same-origin blob: URL by openForPrint(),
+       so it inherits the app origin. It carries no script of its own, hence the
+       absence of script-src under default-src 'none'. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:;">
   <title>${this.escapeHTML(title)}</title>
   <style>
     :root {
@@ -424,10 +428,13 @@ class ReportService {
           if (!asset) continue;
           const sizeKB = (asset.size / 1024).toFixed(1);
           const isImage = asset.mimeType.startsWith('image/');
-          const hasPreview = isImage && asset.thumbnailDataUrl;
+          // Thumbnails can come from a collaboration peer, and this document is
+          // opened via a same-origin blob: URL by openForPrint().
+          const thumb = safeDataImageUrl(asset.thumbnailDataUrl);
+          const hasPreview = isImage && thumb;
 
           html += `      <div class="media-item">
-        ${hasPreview ? `<img src="${asset.thumbnailDataUrl}" alt="${this.escapeHTML(asset.filename)}" />` : `<div style="width:100pt;height:60pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:8pt;color:var(--color-secondary)">${asset.mimeType.split('/')[0].toUpperCase()}</div>`}
+        ${hasPreview ? `<img src="${thumb}" alt="${this.escapeHTML(asset.filename)}" />` : `<div style="width:100pt;height:60pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:8pt;color:var(--color-secondary)">${asset.mimeType.split('/')[0].toUpperCase()}</div>`}
         <div class="media-name">${this.escapeHTML(asset.filename)}</div>
         <div style="font-size:7pt;color:var(--color-secondary)">${this.escapeHTML(el.label)} - ${sizeKB} Ko</div>
       </div>\n`;
@@ -510,9 +517,10 @@ class ReportService {
         <div class="media-grid" style="margin-top:6pt">
           ${elAssets.map(a => {
             const isImage = a.mimeType.startsWith('image/');
-            const hasPreview = isImage && a.thumbnailDataUrl;
+            const thumb = safeDataImageUrl(a.thumbnailDataUrl);
+            const hasPreview = isImage && thumb;
             return `<div class="media-item" style="max-width:100pt">
-            ${hasPreview ? `<img src="${a.thumbnailDataUrl}" alt="${this.escapeHTML(a.filename)}" style="max-width:90pt;max-height:60pt" />` : `<div style="width:60pt;height:40pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:7pt;color:var(--color-secondary)">${a.mimeType.split('/')[0].toUpperCase()}</div>`}
+            ${hasPreview ? `<img src="${thumb}" alt="${this.escapeHTML(a.filename)}" style="max-width:90pt;max-height:60pt" />` : `<div style="width:60pt;height:40pt;background:var(--color-bg);display:flex;align-items:center;justify-content:center;font-size:7pt;color:var(--color-secondary)">${a.mimeType.split('/')[0].toUpperCase()}</div>`}
             <div style="font-size:7pt;color:var(--color-secondary);word-break:break-all">${this.escapeHTML(a.filename)}</div>
             <div style="font-size:6pt;color:var(--color-secondary)">${(a.size / 1024).toFixed(1)} Ko</div>
           </div>`;

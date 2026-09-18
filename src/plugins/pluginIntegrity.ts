@@ -18,7 +18,12 @@ export async function computeIntegrityHash(source: string): Promise<string> {
 
 /**
  * Verify plugin source integrity against a declared hash.
- * Returns true if valid (or if no hash is declared — backward compat).
+ *
+ * Fails closed: a manifest entry without an `integrity` field is refused rather
+ * than trusted. A plugin runs in the main realm (pluginLoaderService imports it
+ * from a blob URL), so deciding which code is loaded is the only control point
+ * there is — the permission filter in pluginSandbox shapes the API object, it
+ * does not confine the code. `npm run rehash:plugins` regenerates the hashes.
  */
 export async function verifyIntegrity(
   source: string,
@@ -26,8 +31,11 @@ export async function verifyIntegrity(
   pluginId: string
 ): Promise<boolean> {
   if (!expectedHash) {
-    console.warn(`[ZN] Plugin "${pluginId}" has no integrity hash — skipping verification`);
-    return true;
+    console.error(
+      `[ZN] Plugin "${pluginId}" declares no integrity hash — refusing to load. ` +
+      `Run "npm run rehash:plugins" to regenerate the manifest.`
+    );
+    return false;
   }
 
   const actual = await computeIntegrityHash(source);

@@ -87,6 +87,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY security-headers.conf /etc/nginx/conf.d/security-headers.conf
 
 # Add .mjs to the JavaScript MIME mapping (nginx's default mime.types omits it,
 # so .mjs files would be served as application/octet-stream and blocked by browsers

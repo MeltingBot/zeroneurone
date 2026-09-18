@@ -1,4 +1,5 @@
 import type { Element, Link, Position, ElementSize } from '../types';
+import { safeColor } from '../utils/escapeHtml';
 
 // ============================================================================
 // TYPES
@@ -50,7 +51,9 @@ function resolveColor(color: string): string {
     if (varName && CSS_VAR_MAP[varName]) return CSS_VAR_MAP[varName];
     return '#9a948d';
   }
-  return color;
+  // Colours reach us from imported archives and collaboration peers, so they
+  // cannot go straight into fill=/stroke= attributes of the exported SVG.
+  return safeColor(color, '#9a948d');
 }
 
 function isLightColor(color: string): boolean {

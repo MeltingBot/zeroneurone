@@ -59,8 +59,12 @@ function rewriteBareImports(source: string): string {
  * Manifest v2 adds trust levels and permissions for community plugins.
  * Manifest v1 (no manifestVersion field) is fully backward-compatible:
  * all plugins are treated as community with all permissions granted.
+ *
+ * `skipIds`: plugin ids to ignore — used by plugin dev modes where the
+ * workspace version already registered itself and the compiled copy in
+ * /plugins/ would otherwise load twice.
  */
-export async function loadExternalPlugins(): Promise<void> {
+export async function loadExternalPlugins(skipIds: string[] = []): Promise<void> {
   let manifest: PluginManifestV2;
 
   try {
@@ -90,6 +94,11 @@ export async function loadExternalPlugins(): Promise<void> {
   for (const entry of manifest.plugins) {
     if (!entry.id || !entry.file) {
       console.warn(`[ZN] Plugin entry missing id or file, skipping:`, entry);
+      continue;
+    }
+
+    if (skipIds.includes(entry.id)) {
+      console.log(`[ZN] Plugin "${entry.id}" skipped (workspace version active)`);
       continue;
     }
 

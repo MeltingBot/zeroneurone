@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { escapeHtml, escapeJsonForScript, sanitizeUrl, safeColor } from './escapeHtml';
+import { escapeHtml, escapeJsonForScript, sanitizeUrl, safeColor, safeDataImageUrl } from './escapeHtml';
 
 describe('escapeHtml', () => {
   it('escapes the five HTML-significant characters', () => {
@@ -92,5 +92,47 @@ describe('safeColor', () => {
     expect(safeColor(undefined, FALLBACK)).toBe(FALLBACK);
     expect(safeColor(null, FALLBACK)).toBe(FALLBACK);
     expect(safeColor('', FALLBACK)).toBe(FALLBACK);
+  });
+});
+
+describe('safeDataImageUrl', () => {
+  const valid = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD=';
+
+  it('accepts a canvas-produced thumbnail', () => {
+    expect(safeDataImageUrl(valid)).toBe(valid);
+  });
+
+  it('accepts the other raster types we generate', () => {
+    expect(safeDataImageUrl('data:image/png;base64,iVBORw0KGgo=')).not.toBe('');
+    expect(safeDataImageUrl('data:image/webp;base64,UklGRg==')).not.toBe('');
+  });
+
+  it('rejects a CSS url() breakout', () => {
+    // The payload that reached background-image:url(${thumbnail}) in MapView.
+    expect(safeDataImageUrl('x);"></div><img src=q onerror=alert(1)>')).toBe('');
+  });
+
+  it('rejects an attribute breakout', () => {
+    expect(safeDataImageUrl('x" onerror="alert(1)')).toBe('');
+  });
+
+  it('rejects non-image and script-bearing schemes', () => {
+    expect(safeDataImageUrl('javascript:alert(1)')).toBe('');
+    expect(safeDataImageUrl('data:text/html,<script>alert(1)</script>')).toBe('');
+    expect(safeDataImageUrl('https://example.com/a.png')).toBe('');
+  });
+
+  it('rejects SVG, which carries markup semantics', () => {
+    expect(safeDataImageUrl('data:image/svg+xml;base64,PHN2Zz4=')).toBe('');
+  });
+
+  it('rejects anything appended after the base64 payload', () => {
+    expect(safeDataImageUrl(valid + '");background:url(//evil')).toBe('');
+  });
+
+  it('returns an empty string for absent values', () => {
+    expect(safeDataImageUrl(null)).toBe('');
+    expect(safeDataImageUrl(undefined)).toBe('');
+    expect(safeDataImageUrl('')).toBe('');
   });
 });
