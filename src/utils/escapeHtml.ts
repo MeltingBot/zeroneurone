@@ -63,3 +63,25 @@ export function safeColor(color: string | undefined | null, fallback: string): s
   if (/^var\(--[a-z0-9-]+\)$/i.test(trimmed)) return trimmed;
   return COLOR_PATTERN.test(trimmed) ? trimmed : fallback;
 }
+
+// Raster types only. SVG is excluded on purpose: thumbnails are always produced
+// by canvas.toDataURL (fileService.generateThumbnail), so no legitimate value
+// is vectorial, and an SVG payload has markup semantics we do not want here.
+const DATA_IMAGE_PATTERN =
+  /^data:image\/(png|jpeg|jpg|gif|webp|avif);base64,[a-z0-9+/]+={0,2}$/i;
+
+/**
+ * Validate a data: image URL before injecting it into innerHTML, a CSS url()
+ * or a quoted src attribute.
+ *
+ * Asset thumbnails reach us verbatim from a collaboration peer (assetSync
+ * readAssetMeta) and the SHA-256 integrity check only covers the binary, never
+ * this string. Returns an empty string when the value is anything else, so the
+ * caller renders no image rather than arbitrary markup.
+ */
+export function safeDataImageUrl(value: string | undefined | null): string {
+  if (!value) return '';
+  // 8 MB of base64 is far above any canvas-produced thumbnail.
+  if (value.length > 8_000_000) return '';
+  return DATA_IMAGE_PATTERN.test(value) ? value : '';
+}

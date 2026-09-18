@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Shield, ShieldOff, RefreshCw, LockKeyhole, KeyRound, Trash2, Timer } from 'lucide-react';
 import { Modal } from '../common';
 import { useEncryptionStore } from '../../stores/encryptionStore';
-import { enableEncryption, disableEncryption, UndecryptableDataError } from '../../services/encryption/migrationService';
+import { enableEncryption, disableEncryption, UndecryptableDataError, PartialMigrationError } from '../../services/encryption/migrationService';
 import { changePassword } from '../../services/encryption/encryptionService';
 import type { WebAuthnCredentialEntry } from '../../services/encryption/encryptionService';
 import { isWebAuthnAvailable, registerWebAuthnCredential } from '../../services/encryption/webauthnService';
@@ -138,6 +138,14 @@ export function EncryptionModal({ isOpen, onClose }: EncryptionModalProps) {
               setSuccess(t('encryption.successEnabled'));
               setView('main');
             } catch (err) {
+              // Migration partielle : le chiffrement est bel et bien actif, seule
+              // une partie des données n'a pas pu etre migree. L'etat doit donc
+              // refleter "active", avec l'avertissement affiche.
+              if (err instanceof PartialMigrationError && err.dek) {
+                setDek(err.dek);
+                setEnabled(true);
+                setView('main');
+              }
               setError(err instanceof Error ? err.message : t('encryption.errorActivation'));
             } finally {
               setIsBusy(false);

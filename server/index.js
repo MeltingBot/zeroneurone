@@ -13,6 +13,9 @@
  * - REDIS_URL: Redis connection URL for persistent buffer storage (optional)
  *              Example: redis://localhost:6379
  *              If not set, uses in-memory storage (lost on restart)
+ * - TRUST_PROXY: Set to "1" to trust X-Forwarded-For (only behind a reverse
+ *                proxy that sets it). Leave unset when exposed directly, or the
+ *                per-IP connection limit can be bypassed at will.
  *
  * WebSocket URL parameters:
  * - async=1: Enable async buffering (messages stored when alone in room)
@@ -49,6 +52,9 @@ const DIST_DIR = join(__dirname, '..', 'dist');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+// Set to "1" only when a reverse proxy in front of this server sets
+// X-Forwarded-For. Off by default: see getClientIP.
+const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 
 // ============================================================================
 // SECURITY LIMITS (DoS Protection)
@@ -184,12 +190,18 @@ function serveStatic(req, res) {
 // ============================================================================
 
 /**
- * Get client IP from request, handling proxies
+ * Get client IP from request — only trust X-Forwarded-For behind a known proxy.
+ *
+ * Without this gate the header is attacker-supplied: a fresh value on each
+ * handshake defeats MAX_CONNECTIONS_PER_IP entirely, and connectionsPerIP grows
+ * an unbounded number of keys. Mirrors getClientIP in relay-server.js.
  */
 function getClientIP(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
+  if (TRUST_PROXY) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+      return forwarded.split(',')[0].trim();
+    }
   }
   return req.socket.remoteAddress || 'unknown';
 }

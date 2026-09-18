@@ -71,20 +71,22 @@ const FILE_LIMITS = {
     'video/x-msvideo',
   ]),
 
-  // Additional extensions to allow (when MIME type is empty/generic)
+  // Authoritative list: a file is accepted on its extension, never on the
+  // declared MIME type alone (see validateFile).
   ALLOWED_EXTENSIONS: new Set([
     // Text
-    '.txt', '.md', '.csv', '.json', '.xml', '.html', '.htm',
+    '.txt', '.md', '.markdown', '.csv', '.json', '.xml', '.html', '.htm',
     // Documents
     '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp',
     // Emails
     '.eml',
     // Images
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.ico',
+    '.jpg', '.jpeg', '.jpe', '.jfif', '.pjpeg',
+    '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.ico',
     // Audio
-    '.mp3', '.wav', '.ogg', '.aac', '.flac', '.m4a',
+    '.mp3', '.wav', '.ogg', '.oga', '.aac', '.flac', '.m4a',
     // Video
-    '.mp4', '.webm', '.mov', '.avi', '.mkv',
+    '.mp4', '.m4v', '.webm', '.ogv', '.mov', '.avi', '.mkv',
     // Archives
     '.zip',
   ]),
@@ -166,9 +168,21 @@ class FileService {
     const ext = '.' + getExtension(file.name).toLowerCase();
     const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
 
-    if (!mimeAllowed && !extAllowed) {
+    // The extension decides. On the ZIP import path the MIME type is supplied by
+    // the archive itself (importService builds the File from assetMeta.mimeType),
+    // so an OR let an attacker satisfy whichever side was convenient.
+    if (!extAllowed) {
       throw new FileValidationError(
         `Type de fichier non autorise: ${file.type || 'inconnu'} (${ext})`
+      );
+    }
+
+    // An empty or generic type is the browser saying it does not know, not a
+    // claim. Any other declared type has to be one we recognise.
+    const mimeDeclared = file.type && file.type !== 'application/octet-stream';
+    if (mimeDeclared && !mimeAllowed) {
+      throw new FileValidationError(
+        `Type de fichier non autorise: ${file.type} (${ext})`
       );
     }
   }
@@ -196,9 +210,16 @@ class FileService {
     const ext = '.' + getExtension(filename).toLowerCase();
     const extAllowed = FILE_LIMITS.ALLOWED_EXTENSIONS.has(ext);
 
-    if (!mimeAllowed && !extAllowed) {
+    if (!extAllowed) {
       throw new FileValidationError(
         `Type de fichier non autorisé: ${mimeType || 'inconnu'} (${ext})`,
+      );
+    }
+
+    const mimeDeclared = mimeType && mimeType !== 'application/octet-stream';
+    if (mimeDeclared && !mimeAllowed) {
+      throw new FileValidationError(
+        `Type de fichier non autorisé: ${mimeType} (${ext})`,
       );
     }
   }

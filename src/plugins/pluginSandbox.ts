@@ -4,6 +4,18 @@
  * Trusted plugins receive the full scoped API (no filtering).
  * Community plugins receive only the API members their permissions allow.
  * Undeclared members are simply absent from the object.
+ *
+ * NOT A SECURITY BOUNDARY. This shapes the API object handed to a plugin; it
+ * does not confine the code. pluginLoaderService imports the plugin from a blob
+ * URL, and an ES module imported that way runs in the importer's realm — there
+ * is no Worker, no iframe, no ShadowRealm anywhere on that path. A plugin with
+ * zero permissions still reaches globalThis, indexedDB, navigator.storage,
+ * fetch and useEncryptionStore.getState().dek directly.
+ *
+ * Treat an installed plugin as fully trusted code, on a par with the app
+ * itself. The only real control is deciding which code gets loaded, which is
+ * what pluginIntegrity enforces. Tightening the permission catalogue below
+ * improves ergonomics and intent, never containment.
  */
 
 import type { Permission, TrustLevel } from './pluginManifest';

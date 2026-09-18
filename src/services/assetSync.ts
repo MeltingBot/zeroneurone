@@ -11,6 +11,7 @@
 
 import * as Y from 'yjs';
 import type { Asset } from '../types';
+import { safeDataImageUrl } from '../utils/escapeHtml';
 
 /** Chunk size for asset binary transfer (512 KB). Larger chunks mean fewer
  *  WebSocket messages, keeping asset transfers well under the relay's per-second
@@ -46,7 +47,8 @@ export function readAssetMeta(map: Y.Map<any>, fallbackDossierId: string): Asset
     mimeType: map.get('mimeType') || 'application/octet-stream',
     size: map.get('size') || 0,
     hash: map.get('hash') || '',
-    thumbnailDataUrl: map.get('thumbnailDataUrl') || null,
+    // Peer-controlled: the SHA-256 check covers the binary, never this string.
+    thumbnailDataUrl: safeDataImageUrl(map.get('thumbnailDataUrl')) || null,
     extractedText: map.get('extractedText') || null,
     createdAt: map.get('createdAt') ? new Date(map.get('createdAt')) : new Date(),
   };

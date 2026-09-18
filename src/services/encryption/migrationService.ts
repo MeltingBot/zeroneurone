@@ -26,6 +26,32 @@ import {
 } from './encryptedIndexeddbPersistence';
 
 /**
+ * Levée quand une migration s'est terminée avec des échecs partiels.
+ *
+ * Pour disableEncryption, elle est levée AVANT la suppression de
+ * `_encryptionMeta` : la base reste chiffrée, donc récupérable avec le mot de
+ * passe. Pour enableEncryption, elle signale que certaines données sont restées
+ * en clair alors que le chiffrement est actif.
+ */
+export class PartialMigrationError extends Error {
+  readonly failures: string[];
+  /** Présente pour l'activation : le chiffrement est actif malgré l'échec. */
+  readonly dek?: Uint8Array;
+
+  constructor(operation: string, failures: string[], dek?: Uint8Array, outcome = '') {
+    super(
+      `${operation} : ${failures.length} élément(s) n'ont pas pu être migrés. ` +
+      (outcome ? `${outcome} ` : '') +
+      `Détail : ${failures.slice(0, 5).join(', ')}` +
+      (failures.length > 5 ? ` (+${failures.length - 5})` : '')
+    );
+    this.name = 'PartialMigrationError';
+    this.failures = failures;
+    this.dek = dek;
+  }
+}
+
+/**
  * Levée quand la désactivation du chiffrement détruirait des données.
  * L'appelant doit demander confirmation puis relancer avec acceptDataLoss.
  */
@@ -61,9 +87,12 @@ async function countUndecryptableData(
         dossierIds.push(dossier.id);
       }
     } catch (err) {
-      // Une base illisible ne doit pas bloquer le comptage ; migrateToPlaintext
-      // rencontrera la même erreur et la journalisera.
+      // Une base illisible est un risque, pas un zéro : migrateToPlaintext
+      // rencontrera la même erreur et effacera son contenu. La compter comme
+      // indéchiffrable est le seul comptage honnête.
       console.warn(`[migrationService] Comptage impossible pour ${dossier.id}:`, err);
+      undecryptable += 1;
+      dossierIds.push(dossier.id);
     }
   }
 
@@ -90,8 +119,9 @@ type ProgressCallback = (progress: MigrationProgress) => void;
  * Le middleware doit être déjà appliqué (db.applyEncryption(dek)) avant appel.
  * Lit chaque table en clair et réécrit → le middleware chiffre à l'écriture.
  */
-async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<void> {
+async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<string[]> {
   const tables = Array.from(DEFAULT_ENCRYPTED_TABLES);
+  const failures: string[] = [];
   let done = 0;
 
   for (const tableName of tables) {
@@ -107,11 +137,13 @@ async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<vo
       }
     } catch (err) {
       console.warn(`[migrationService] Erreur sur table ${tableName}:`, err);
+      failures.push(`table ${tableName}`);
     }
     done++;
   }
 
   onProgress({ phase: 'Dexie chiffrée', current: tables.length, total: tables.length });
+  return failures;
 }
 
 // ============================================================================
@@ -125,10 +157,11 @@ async function migrateDexieToEncrypted(onProgress: ProgressCallback): Promise<vo
 async function migrateOpfsToEncrypted(
   dek: Uint8Array,
   onProgress: ProgressCallback
-): Promise<void> {
+): Promise<string[]> {
   const assets = await db.assets.toArray();
-  if (assets.length === 0) return;
+  if (assets.length === 0) return [];
 
+  const failures: string[] = [];
   const root = await navigator.storage.getDirectory();
 
   for (let i = 0; i < assets.length; i++) {
@@ -151,8 +184,11 @@ async function migrateOpfsToEncrypted(
       await writable.close();
     } catch (err) {
       console.warn(`[migrationService] Erreur OPFS ${asset.opfsPath}:`, err);
+      failures.push(asset.opfsPath);
     }
   }
+
+  return failures;
 }
 
 /**
@@ -161,10 +197,11 @@ async function migrateOpfsToEncrypted(
 async function migrateOpfsToPlaintext(
   dek: Uint8Array,
   onProgress: ProgressCallback
-): Promise<void> {
+): Promise<string[]> {
   const assets = await db.assets.toArray();
-  if (assets.length === 0) return;
+  if (assets.length === 0) return [];
 
+  const failures: string[] = [];
   const root = await navigator.storage.getDirectory();
 
   for (let i = 0; i < assets.length; i++) {
@@ -187,8 +224,11 @@ async function migrateOpfsToPlaintext(
       await writable.close();
     } catch (err) {
       console.warn(`[migrationService] Erreur OPFS ${asset.opfsPath}:`, err);
+      failures.push(asset.opfsPath);
     }
   }
+
+  return failures;
 }
 
 // ============================================================================
@@ -219,11 +259,17 @@ export async function enableEncryption(
   db.applyEncryption(dek);
   onProgress({ phase: 'Middleware Dexie activé', current: 1, total: 5 });
 
+  // Tout échec partiel est collecté : le silence laissait croire à un
+  // chiffrement complet alors que des données restaient en clair sur le disque,
+  // sans que rien ne repasse jamais dessus (la détection par marqueur les voit
+  // comme déjà traitées).
+  const failures: string[] = [];
+
   // 3. Re-écrire tous les enregistrements Dexie existants
   onProgress({ phase: 'Migration données Dexie', current: 2, total: 5 });
-  await migrateDexieToEncrypted((p) =>
+  failures.push(...await migrateDexieToEncrypted((p) =>
     onProgress({ phase: p.phase, current: 2, total: 5 })
-  );
+  ));
 
   // 4. Migrer les bases y-indexeddb de chaque dossier
   const dossiers = await db.dossiers.toArray();
@@ -240,17 +286,33 @@ export async function enableEncryption(
       await migrateToEncrypted(`zeroneurone-ydoc-${inv.id}`, dek);
     } catch (err) {
       console.warn(`[migrationService] Erreur y-indexeddb ${inv.id}:`, err);
+      failures.push(`dossier ${inv.id}`);
     }
   }
 
   // 5. Migrer les fichiers OPFS
   onProgress({ phase: 'Migration fichiers OPFS', current: 4, total: 5 });
-  await migrateOpfsToEncrypted(dek, (p) =>
+  failures.push(...await migrateOpfsToEncrypted(dek, (p) =>
     onProgress({ phase: p.phase, current: 4, total: 5 })
-  );
+  ));
 
   // 6. Configurer syncService
   syncService.setAtRestDek(dek);
+
+  // Le chiffrement est actif et la base utilisable, mais une partie des données
+  // est restée en clair : on le dit plutôt que de recharger sur un succès
+  // apparent. L'utilisateur recharge lui-même une fois informé.
+  if (failures.length > 0) {
+    // Pas de rechargement ici : applyEncryption a déjà refermé puis rouvert la
+    // connexion avec le middleware recompilé, la base est donc utilisable en
+    // l'état. Recharger ferait disparaître le message avant lecture.
+    throw new PartialMigrationError(
+      'Activation du chiffrement',
+      failures,
+      dek,
+      "Le chiffrement est actif et la base utilisable, mais ces éléments sont restés en clair sur le disque."
+    );
+  }
 
   onProgress({ phase: 'Chiffrement activé — redémarrage', current: 5, total: 5 });
 
@@ -326,6 +388,7 @@ export async function disableEncryption(
   }
 
   const dossiers = (data['dossiers'] || []) as Array<{ id: string }>;
+  const failures: string[] = [];
 
   // Rien n'a encore été modifié : c'est le dernier moment où l'on peut renoncer
   // sans conséquence. Si des updates sont indéchiffrables, ils seront effacés
@@ -358,14 +421,28 @@ export async function disableEncryption(
       await migrateToPlaintext(`zeroneurone-ydoc-${inv.id}`, dek);
     } catch (err) {
       console.warn(`[migrationService] Erreur y-indexeddb ${inv.id}:`, err);
+      failures.push(`dossier ${inv.id}`);
     }
   }
 
   // 4. Déchiffrer les fichiers OPFS
   onProgress({ phase: 'Déchiffrement fichiers OPFS', current: 3, total: 5 });
-  await migrateOpfsToPlaintext(dek, (p) =>
+  failures.push(...await migrateOpfsToPlaintext(dek, (p) =>
     onProgress({ phase: p.phase, current: 3, total: 5 })
-  );
+  ));
+
+  // Point de non-retour. `_encryptionMeta` porte la seule copie de la DEK
+  // chiffrée : la supprimer alors que des données sont restées chiffrées les
+  // rendrait définitivement illisibles. On s'arrête ici, base toujours
+  // chiffrée et donc entièrement récupérable avec le mot de passe.
+  if (failures.length > 0) {
+    throw new PartialMigrationError(
+      'Désactivation du chiffrement',
+      failures,
+      undefined,
+      'Aucune donnée n\'a été détruite : la base reste chiffrée et récupérable avec le mot de passe.'
+    );
+  }
 
   onProgress({ phase: 'Suppression métadonnées', current: 4, total: 5 });
 

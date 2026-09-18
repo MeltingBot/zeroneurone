@@ -11,7 +11,9 @@ import { loadExternalPlugins } from './services/pluginLoaderService'
 // first render — plugins so usePlugins() is correct from the start,
 // translations so the UI never flashes raw keys.
 initI18n()
-  .then(loadExternalPlugins)
+  // Wrapped: loadExternalPlugins now takes an optional skipIds array, and
+  // passing it as a .then callback handed it the i18n instance instead.
+  .then(() => loadExternalPlugins())
   .then(() => {
     createRoot(document.getElementById('root')!).render(
       <StrictMode>
