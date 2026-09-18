@@ -162,14 +162,23 @@ Pour les événements avec zone, un éditeur texte permet de copier/coller du Ge
 
 ## Fonds de carte
 
-Quatre fonds de carte sont disponibles via le sélecteur dans la barre d'outils :
+Trois fonds de carte sont disponibles via le sélecteur dans la barre d'outils :
 
 | Fond | Description |
 |------|-------------|
-| **OpenStreetMap** | Carte standard avec noms locaux |
-| **OSM Latin** | Noms de lieux en alphabet latin (par défaut) |
-| **CartoDB** | Carte claire et épurée (bascule auto en mode sombre) |
+| **OpenFreeMap** | Carte vectorielle épurée, par défaut, avec plusieurs variantes de rendu |
+| **OpenStreetMap** | Carte matricielle standard |
 | **Satellite** | Imagerie satellite (Esri) |
+
+Le bouton OpenFreeMap porte un chevron ouvrant le choix de la variante :
+
+| Variante | Rendu |
+|----------|-------|
+| **Automatique** | Suit le thème clair ou sombre de l'application (par défaut) |
+| **Clair** | Fond très sobre, pensé pour laisser ressortir vos éléments |
+| **Détaillé** | Routes, reliefs et limites administratives plus lisibles |
+| **Sombre** | Équivalent sombre du fond clair |
+| **Contrasté** | Contrastes renforcés, utile en projection ou en plein soleil |
 
 ---
 
@@ -192,7 +201,7 @@ Contrôles :
 | Bouton | Action |
 |--------|--------|
 | **Recherche** | Rechercher un lieu (Nominatim) |
-| **Fond de carte** | Choisir entre 4 fonds de carte |
+| **Fond de carte** | Choisir le fond, et la variante pour OpenFreeMap |
 | **3D** | Activer/désactiver le mode 3D |
 | **Bâtiments** | Afficher/masquer les bâtiments 3D |
 | **Temporel** | Activer/désactiver le mode temporel |

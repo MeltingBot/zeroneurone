@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useCallback, useState } from 'react';
+import { Fragment, useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -58,6 +58,29 @@ interface ClusterState {
   clusterId?: number;
 }
 
+// Vector basemaps served as a complete style document. Unlike the raster
+// entries below, these are handed to MapLibre as a URL: the provider owns the
+// whole style, so we cannot assemble it locally.
+//
+// OpenFreeMap needs no API key, sets no quota and allows commercial use; only
+// attribution is required, and MapLibre adds it from the style itself. The
+// project already backs the 3D buildings source (see add3DBuildingsLayer).
+const STYLE_SOURCES: Record<string, string> = {
+  ofmPositron: 'https://tiles.openfreemap.org/styles/positron',
+  ofmLiberty: 'https://tiles.openfreemap.org/styles/liberty',
+  ofmDark: 'https://tiles.openfreemap.org/styles/dark',
+  ofmFiord: 'https://tiles.openfreemap.org/styles/fiord',
+};
+
+/** Variants offered in the basemap dropdown. 'auto' follows the theme. */
+const OFM_VARIANTS = [
+  { id: 'auto' as const, labelKey: 'map.ofmAuto', fallback: 'Automatique' },
+  { id: 'positron' as const, labelKey: 'map.ofmPositron', fallback: 'Clair' },
+  { id: 'liberty' as const, labelKey: 'map.ofmLiberty', fallback: 'Détaillé' },
+  { id: 'dark' as const, labelKey: 'map.ofmDark', fallback: 'Sombre' },
+  { id: 'fiord' as const, labelKey: 'map.ofmFiord', fallback: 'Contrasté' },
+];
+
 // Raster tile sources
 const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom: number; tileSize?: number; subdomains?: string }> = {
   osm: {
@@ -75,16 +98,6 @@ const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzo
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.openstreetmap.de">OSM Deutschland</a>',
     maxzoom: 19,
   },
-  cartoLight: {
-    tiles: ['https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 'https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'],
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    maxzoom: 20,
-  },
-  cartoDark: {
-    tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'],
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    maxzoom: 20,
-  },
   satellite: {
     tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
     attribution: '&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
@@ -93,24 +106,39 @@ const TILE_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzo
 };
 
 const BASE_LAYERS = [
+  { id: 'ofm', label: 'OpenFreeMap' },
+  // Kept as a fallback provider: OpenFreeMap runs on donations, and a single
+  // basemap supplier would leave no map at all if it ever stopped.
   { id: 'osm', label: 'OSM' },
-  { id: 'osmLocalized', label: 'OSM FR/DE' },
-  { id: 'carto', label: 'CartoDB' },
   { id: 'satellite', label: 'Satellite' },
 ];
 
-function resolveLayerId(id: string, isDark: boolean, lang?: string): string {
-  if (id === 'carto') return isDark ? 'cartoDark' : 'cartoLight';
-  if (id === 'osmLocalized') {
-    const l = lang?.substring(0, 2);
-    if (l === 'fr') return 'osmFr';
-    if (l === 'de') return 'osmDe';
-    return 'osm';
+function resolveLayerId(id: string, isDark: boolean, ofmVariant: string): string {
+  // Stored preferences may still name basemaps that no longer exist: CartoDB
+  // (now behind an API key) and the localized OSM raster entry. Map them to
+  // something valid rather than render a blank map.
+  if (id === 'carto' || id === 'cartoLight' || id === 'cartoDark') return 'ofm';
+  if (id === 'osmLocalized' || id === 'osmFr' || id === 'osmDe') return 'osm';
+
+  if (id === 'ofm') {
+    if (ofmVariant === 'auto') return isDark ? 'ofmDark' : 'ofmPositron';
+    return `ofm${ofmVariant.charAt(0).toUpperCase()}${ofmVariant.slice(1)}`;
   }
   return id;
 }
 
-function buildMapStyle(activeLayerId: string, enable3D: boolean): maplibregl.StyleSpecification {
+/**
+ * Build the style for a basemap.
+ *
+ * Returns a URL for provider-owned vector styles, and a hand-assembled style
+ * object for raster tile sets. MapLibre accepts either in `setStyle` and in the
+ * Map constructor. Terrain is only injected in the object form; for a remote
+ * style the 3D effect adds the source itself once the style has loaded.
+ */
+function buildMapStyle(activeLayerId: string, enable3D: boolean): maplibregl.StyleSpecification | string {
+  const styleUrl = STYLE_SOURCES[activeLayerId];
+  if (styleUrl) return styleUrl;
+
   const src = TILE_SOURCES[activeLayerId];
   const sources: maplibregl.StyleSpecification['sources'] = {
     'base-tiles': {
@@ -138,12 +166,59 @@ function buildMapStyle(activeLayerId: string, enable3D: boolean): maplibregl.Sty
   };
 }
 
-function add3DBuildingsLayer(map: maplibregl.Map) {
-  if (map.getSource('openmaptiles')) return;
-  map.addSource('openmaptiles', {
-    type: 'vector',
-    url: 'https://tiles.openfreemap.org/planet',
+/**
+ * Make sure the elevation source exists before enabling terrain.
+ *
+ * buildMapStyle only embeds it in the raster style it assembles itself. A
+ * provider-owned style (OpenFreeMap) arrives without it, so setTerrain would
+ * fail there unless we add it first.
+ */
+function ensureTerrainSource(map: maplibregl.Map) {
+  if (map.getSource('terrain-dem')) return;
+  map.addSource('terrain-dem', {
+    type: 'raster-dem',
+    tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+    tileSize: 256,
+    encoding: 'terrarium',
   });
+}
+
+/**
+ * Show or hide the basemap's own extruded buildings.
+ *
+ * OpenFreeMap styles carry a `building` fill layer, and Liberty adds a
+ * `building-3d` fill-extrusion one. Toggling our own layer therefore left the
+ * style's extrusions on screen, so the button looked broken on OpenFreeMap
+ * while it worked on the raster basemaps.
+ *
+ * Only extrusion layers are touched: the flat `building` fill belongs to the
+ * basemap's own rendering, exactly as building footprints baked into an OSM
+ * raster tile do, and the button is about 3D buildings.
+ */
+function setBasemapBuildings(map: maplibregl.Map, visible: boolean) {
+  for (const layer of map.getStyle().layers) {
+    if (layer.id === '3d-buildings') continue;
+    if (layer.type !== 'fill-extrusion') continue;
+    if ((layer as { 'source-layer'?: string })['source-layer'] !== 'building') continue;
+    try {
+      map.setLayoutProperty(layer.id, 'visibility', visible ? 'visible' : 'none');
+    } catch { /* layer may vanish with a style change */ }
+  }
+}
+
+function add3DBuildingsLayer(map: maplibregl.Map) {
+  // Guard on the layer, not the source: an OpenFreeMap basemap is built on
+  // OpenMapTiles and already ships a source under this very name, so testing
+  // the source made the function return before adding anything and the
+  // buildings toggle did nothing there.
+  setBasemapBuildings(map, true);
+  if (map.getLayer('3d-buildings')) return;
+  if (!map.getSource('openmaptiles')) {
+    map.addSource('openmaptiles', {
+      type: 'vector',
+      url: 'https://tiles.openfreemap.org/planet',
+    });
+  }
   // Find the first link layer to insert buildings below it
   const firstLinkLayer = map.getStyle().layers.find(l => l.id.startsWith('link-'));
   map.addLayer(
@@ -226,7 +301,11 @@ export function MapView() {
 
   // Map preferences (persisted in uiStore)
   const activeBaseLayer = useUIStore((s) => s.mapBaseLayer);
+  const ofmVariant = useUIStore((s) => s.mapOfmVariant);
+  const [showOfmMenu, setShowOfmMenu] = useState(false);
   const setActiveBaseLayer = (id: string) => useUIStore.setState({ mapBaseLayer: id });
+  const setOfmVariant = (v: typeof OFM_VARIANTS[number]['id']) =>
+    useUIStore.setState({ mapOfmVariant: v, mapBaseLayer: 'ofm' });
   const is3D = useUIStore((s) => s.map3D);
   const setIs3D = (v: boolean | ((prev: boolean) => boolean)) => useUIStore.setState((s) => ({ map3D: typeof v === 'function' ? v(s.map3D) : v }));
   const show3DBuildings = useUIStore((s) => s.map3DBuildings);
@@ -748,10 +827,10 @@ export function MapView() {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    const { mapBaseLayer: initLayer, map3D: init3D, themeMode: initTheme } = useUIStore.getState();
+    const { mapBaseLayer: initLayer, map3D: init3D, themeMode: initTheme, mapOfmVariant: initVariant } = useUIStore.getState();
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: buildMapStyle(resolveLayerId(initLayer, initTheme === 'dark', i18n.language), init3D),
+      style: buildMapStyle(resolveLayerId(initLayer, initTheme === 'dark', initVariant), init3D),
       center: [1.888334, 46.603354], // Center of France [lng, lat]
       zoom: 6,
       pitch: init3D ? 45 : 0,
@@ -788,11 +867,14 @@ export function MapView() {
       mapLoadedRef.current = true;
       const { map3D: load3D, map3DBuildings: loadBuildings } = useUIStore.getState();
       if (load3D) {
+        ensureTerrainSource(map);
         map.setProjection({ type: 'globe' });
         map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
       }
       if (loadBuildings) {
         add3DBuildingsLayer(map);
+      } else {
+        setBasemapBuildings(map, false);
       }
       setClusteringVersion(v => v + 1);
     });
@@ -834,20 +916,41 @@ export function MapView() {
       ll.arrowEnd?.remove();
     });
     linkLayersRef.current.clear();
-    map.setStyle(buildMapStyle(resolveLayerId(activeBaseLayer, themeMode === 'dark', i18n.language), is3DRef.current));
-    // Re-flag as loaded after style switch
-    map.once('style.load', () => {
+    map.setStyle(buildMapStyle(resolveLayerId(activeBaseLayer, themeMode === 'dark', ofmVariant), is3DRef.current));
+    // Re-flag as loaded once the new style is actually in place.
+    //
+    // Neither 'style.load' nor 'idle' is reliable here. style.load only fires
+    // when MapLibre rebuilds the style, not when it diffs two similar ones;
+    // idle can fire before a remote style (OpenFreeMap) has finished loading.
+    // In both cases the callback was missed or ran too early, so the link
+    // layers were never rebuilt although their DOM markers had just been
+    // removed above — switching basemap silently dropped every link line.
+    //
+    // 'styledata' fires once MapLibre has applied the new style, which is all
+    // that adding sources and layers requires. isStyleLoaded() is deliberately
+    // not consulted: it stays false while the style's own sources are still
+    // fetching, so gating on it stalled the rebuild indefinitely.
+    const onStyleReady = () => {
       mapLoadedRef.current = true;
       if (is3DRef.current) {
+        ensureTerrainSource(map);
         map.setProjection({ type: 'globe' });
         map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
       }
       if (show3DBuildingsRef.current) {
         add3DBuildingsLayer(map);
+      } else {
+        // A freshly loaded style brings its own extrusions back: hide them
+        // again so the toggle still reflects what is on screen.
+        setBasemapBuildings(map, false);
       }
       setClusteringVersion(v => v + 1);
-    });
-  }, [activeBaseLayer, themeMode, i18n.language]);
+    };
+    map.once('styledata', onStyleReady);
+    // themeMode is a dependency: OpenFreeMap ships a light style and a dark
+    // one, so switching theme reloads the style. i18n.language no longer is,
+    // since the localized OSM raster entry was dropped.
+  }, [activeBaseLayer, themeMode, ofmVariant]);
 
   // Toggle 3D mode (projection + terrain + pitch) without full style reload
   const is3DInitRef = useRef(true); // skip first render (handled by init)
@@ -856,15 +959,7 @@ export function MapView() {
     const map = mapRef.current;
     if (!map || !mapLoadedRef.current) return;
     if (is3D) {
-      // Add terrain source if missing
-      if (!map.getSource('terrain-dem')) {
-        map.addSource('terrain-dem', {
-          type: 'raster-dem',
-          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          encoding: 'terrarium',
-        });
-      }
+      ensureTerrainSource(map);
       map.setProjection({ type: 'globe' });
       map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
       map.easeTo({ pitch: 45, duration: 600 });
@@ -878,7 +973,10 @@ export function MapView() {
       // Keep 3D buildings if user has them enabled
       if (!show3DBuildingsRef.current && map.getLayer('3d-buildings')) {
         map.removeLayer('3d-buildings');
-        if (map.getSource('openmaptiles')) map.removeSource('openmaptiles');
+        setBasemapBuildings(map, false);
+        // The source is deliberately left in place: on an OpenFreeMap basemap
+        // it belongs to the style itself, and removing it would take the whole
+        // map down. A vector source no layer consumes fetches nothing.
       }
     }
   }, [is3D]);
@@ -889,9 +987,10 @@ export function MapView() {
     if (!map || !mapLoadedRef.current) return;
     if (show3DBuildings) {
       add3DBuildingsLayer(map);
-    } else if (map.getLayer('3d-buildings')) {
-      map.removeLayer('3d-buildings');
-      if (map.getSource('openmaptiles')) map.removeSource('openmaptiles');
+    } else {
+      if (map.getLayer('3d-buildings')) map.removeLayer('3d-buildings');
+      setBasemapBuildings(map, false);
+      // Same as above: never remove a source the basemap may own.
     }
   }, [show3DBuildings]);
 
@@ -2179,17 +2278,45 @@ export function MapView() {
               </button>
             </form>
 
-            {/* Base layer switcher */}
-            <div className="flex items-center border border-border-default rounded overflow-hidden mr-2">
-              {BASE_LAYERS.map(layer => (
-                <button
-                  key={layer.id}
-                  onClick={() => setActiveBaseLayer(layer.id)}
-                  className={`px-2 h-6 text-[10px] ${activeBaseLayer === layer.id ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
-                >
-                  {layer.label}
-                </button>
-              ))}
+            {/* Base layer switcher. OpenFreeMap carries a variant dropdown. */}
+            <div className="relative mr-2">
+              <div className="flex items-center border border-border-default rounded overflow-hidden">
+                {BASE_LAYERS.map(layer => (
+                  <Fragment key={layer.id}>
+                    <button
+                      onClick={() => setActiveBaseLayer(layer.id)}
+                      className={`px-2 h-6 text-[10px] ${activeBaseLayer === layer.id ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                    >
+                      {layer.label}
+                    </button>
+                    {layer.id === 'ofm' && (
+                      <button
+                        onClick={() => setShowOfmMenu(v => !v)}
+                        title={t('map.ofmVariant', 'Variante de rendu')}
+                        className={`h-6 px-1 border-r border-border-default ${activeBaseLayer === 'ofm' ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                      >
+                        <ChevronDown size={10} />
+                      </button>
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+              {showOfmMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowOfmMenu(false)} />
+                  <div className="absolute top-7 left-0 bg-bg-primary border border-border-default rounded shadow-md z-50 min-w-[130px]">
+                    {OFM_VARIANTS.map(({ id, labelKey, fallback }) => (
+                      <button
+                        key={id}
+                        onClick={() => { setOfmVariant(id); setShowOfmMenu(false); }}
+                        className={`w-full px-3 py-1.5 text-xs text-left hover:bg-bg-tertiary ${ofmVariant === id ? 'font-medium text-text-primary' : 'text-text-secondary'}`}
+                      >
+                        {t(labelKey, fallback)}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 3D toggle */}

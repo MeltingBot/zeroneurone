@@ -363,7 +363,13 @@
     "zone": "Zona",
     "newZone": "Zona berria",
     "deleteSelection": "Hautapena ezabatu",
-    "searchPlaceExternal": "OpenStreetMap (Nominatim) bidez bilatzen du: kontsulta hau zure gailutik ateratzen da."
+    "searchPlaceExternal": "OpenStreetMap (Nominatim) bidez bilatzen du: kontsulta hau zure gailutik ateratzen da.",
+    "ofmVariant": "Estilo aldaera",
+    "ofmAuto": "Automatikoa",
+    "ofmPositron": "Argia",
+    "ofmLiberty": "Xehetua",
+    "ofmDark": "Iluna",
+    "ofmFiord": "Kontraste handia"
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

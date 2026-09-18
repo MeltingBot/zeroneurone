@@ -97,6 +97,13 @@ export default defineConfig({
       }
     })
   ],
+  // MapLibre v6 loads its worker from a separate file (maplibre-gl-worker.mjs).
+  // Vite's dependency optimizer does not emit it, so the worker 404s in dev:
+  // MapLibre then parses no GeoJSON source at all — link lines, zones and any
+  // other vector layer silently never render, with no error in the console.
+  optimizeDeps: {
+    exclude: ['maplibre-gl'],
+  },
   server: {},
   build: {
     rollupOptions: {

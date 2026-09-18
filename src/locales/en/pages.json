@@ -378,7 +378,13 @@
     "geoJsonParseError": "Invalid JSON",
     "geoJsonMinVertices": "Minimum 3 vertices",
     "geoJsonInvalidCoord": "Invalid coordinate: [lng, lat]",
-    "searchPlaceExternal": "Searches via OpenStreetMap (Nominatim): this query leaves your device."
+    "searchPlaceExternal": "Searches via OpenStreetMap (Nominatim): this query leaves your device.",
+    "ofmVariant": "Style variant",
+    "ofmAuto": "Automatic",
+    "ofmPositron": "Light",
+    "ofmLiberty": "Detailed",
+    "ofmDark": "Dark",
+    "ofmFiord": "High contrast"
   },
   "timeline": {
     "noEvents": "No dated events",
