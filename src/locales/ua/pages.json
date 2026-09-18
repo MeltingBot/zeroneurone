@@ -374,7 +374,13 @@
     "geoJsonParseError": "Невалідний JSON",
     "geoJsonMinVertices": "Мінімум 3 вершини",
     "geoJsonInvalidCoord": "Невалідна координата: [lng, lat]",
-    "searchPlaceExternal": "Пошук через OpenStreetMap (Nominatim): цей запит залишає ваш пристрій."
+    "searchPlaceExternal": "Пошук через OpenStreetMap (Nominatim): цей запит залишає ваш пристрій.",
+    "ofmVariant": "Варіант відображення",
+    "ofmAuto": "Автоматично",
+    "ofmPositron": "Світла",
+    "ofmLiberty": "Детальна",
+    "ofmDark": "Темна",
+    "ofmFiord": "Висока контрастність"
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

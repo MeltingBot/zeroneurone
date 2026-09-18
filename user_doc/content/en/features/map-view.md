@@ -162,14 +162,23 @@ For events with zones, a text editor allows copy/pasting GeoJSON from an externa
 
 ## Base Maps
 
-Four base maps are available via the selector in the toolbar:
+Three base maps are available via the selector in the toolbar:
 
 | Base Map | Description |
 |----------|-------------|
-| **OpenStreetMap** | Standard map with local names |
-| **OSM Latin** | Place names in Latin script (default) |
-| **CartoDB** | Clean, minimal map (auto-switches to dark mode) |
+| **OpenFreeMap** | Clean vector map, the default, with several rendering variants |
+| **OpenStreetMap** | Standard raster map |
 | **Satellite** | Satellite imagery (Esri) |
+
+The OpenFreeMap button carries a chevron that opens the variant picker:
+
+| Variant | Rendering |
+|---------|-----------|
+| **Automatic** | Follows the application's light or dark theme (default) |
+| **Light** | Very restrained background, so your own elements stand out |
+| **Detailed** | Roads, terrain and administrative boundaries are more legible |
+| **Dark** | Dark counterpart of the light background |
+| **High contrast** | Stronger contrasts, useful when projecting or in bright light |
 
 ---
 
@@ -192,7 +201,7 @@ Controls:
 | Button | Action |
 |--------|--------|
 | **Search** | Search for a place (Nominatim) |
-| **Base map** | Choose between 4 base maps |
+| **Base map** | Choose the base map, and the variant for OpenFreeMap |
 | **3D** | Enable/disable 3D mode |
 | **Buildings** | Show/hide 3D buildings |
 | **Temporal** | Enable/disable temporal mode |

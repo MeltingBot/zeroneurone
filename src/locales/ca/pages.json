@@ -363,7 +363,13 @@
     "zone": "Zona",
     "newZone": "Nova zona",
     "deleteSelection": "Eliminar la selecció",
-    "searchPlaceExternal": "Cerca mitjançant OpenStreetMap (Nominatim): aquesta consulta surt del dispositiu."
+    "searchPlaceExternal": "Cerca mitjançant OpenStreetMap (Nominatim): aquesta consulta surt del dispositiu.",
+    "ofmVariant": "Variant de renderitzat",
+    "ofmAuto": "Automàtic",
+    "ofmPositron": "Clar",
+    "ofmLiberty": "Detallat",
+    "ofmDark": "Fosc",
+    "ofmFiord": "Alt contrast"
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

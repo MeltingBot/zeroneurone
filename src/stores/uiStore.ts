@@ -89,6 +89,8 @@ interface UIState {
 
   // Map preferences
   mapBaseLayer: string;
+  /** OpenFreeMap style variant. 'auto' follows the light/dark theme. */
+  mapOfmVariant: 'auto' | 'positron' | 'liberty' | 'dark' | 'fiord';
   map3D: boolean;
   map3DBuildings: boolean;
 
@@ -198,7 +200,8 @@ export const useUIStore = create<UIState>()(
   snapToGrid: false,
   showAlignGuides: true,
   gridSize: 20,
-  mapBaseLayer: 'osm',
+  mapBaseLayer: 'ofm',
+  mapOfmVariant: 'auto',
   map3D: false,
   map3DBuildings: false,
   metadataImportQueue: [],
@@ -401,7 +404,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, map3D: state.map3D, map3DBuildings: state.map3DBuildings }),
+      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {
@@ -410,6 +413,17 @@ export const useUIStore = create<UIState>()(
         // Migrate old osmLatin → osmLocalized
         if (state && state.mapBaseLayer === 'osmLatin') {
           state.mapBaseLayer = 'osmLocalized';
+        }
+        // CartoDB basemaps were removed (they now require an API key).
+        // OpenFreeMap fills the same role, with a light and a dark style.
+        if (state && (state.mapBaseLayer === 'carto' || state.mapBaseLayer === 'cartoLight' || state.mapBaseLayer === 'cartoDark')) {
+          state.mapBaseLayer = 'ofm';
+        }
+        // The localized OSM raster entry was dropped: OpenFreeMap renders the
+        // same names more legibly, so send that preference to plain OSM, which
+        // remains available as a fallback provider.
+        if (state && (state.mapBaseLayer === 'osmLocalized' || state.mapBaseLayer === 'osmFr' || state.mapBaseLayer === 'osmDe')) {
+          state.mapBaseLayer = 'osm';
         }
       },
     }

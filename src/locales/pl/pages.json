@@ -374,7 +374,13 @@
     "geoJsonParseError": "Nieprawidłowy JSON",
     "geoJsonMinVertices": "Minimum 3 wierzchołki",
     "geoJsonInvalidCoord": "Nieprawidłowa współrzędna: [lng, lat]",
-    "searchPlaceExternal": "Wyszukiwanie przez OpenStreetMap (Nominatim): to zapytanie opuszcza urządzenie."
+    "searchPlaceExternal": "Wyszukiwanie przez OpenStreetMap (Nominatim): to zapytanie opuszcza urządzenie.",
+    "ofmVariant": "Wariant stylu",
+    "ofmAuto": "Automatycznie",
+    "ofmPositron": "Jasny",
+    "ofmLiberty": "Szczegółowy",
+    "ofmDark": "Ciemny",
+    "ofmFiord": "Wysoki kontrast"
   },
   "timeline": {
     "noEvents": "Brak datowanych zdarzeń",
