@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.56.2
+
+### Fixes
+
+- **Erreurs de console sur la carte** — deux fichiers internes de la carte
+  réclamaient un fichier de débogage que l'application ne distribue pas, ce qui
+  produisait des erreurs visibles dans la console du navigateur. La référence
+  est retirée, plutôt que d'alourdir l'application de 2,5 Mo pour un fichier
+  utile aux seuls développeurs de la bibliothèque.
+- **Rechargement inutile du fond de carte** — la carte rechargeait son fond une
+  fois à l'ouverture, alors qu'elle venait d'être créée avec ce même fond. Ce
+  rechargement redessinait au passage tous les liens et laissait un
+  avertissement en console. Il est supprimé.
+
 ## 2.56.1
 
 ### Fixes

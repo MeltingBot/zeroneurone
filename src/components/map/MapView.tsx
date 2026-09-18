@@ -906,7 +906,15 @@ export function MapView() {
   }, [clearSelection]);
 
   // Switch base layer
+  //
+  // Skipped on mount: the map is already constructed with this exact style, so
+  // calling setStyle again while the first one is still loading makes MapLibre
+  // rebuild from scratch ("Unable to perform style diff"). The initial
+  // 'load' handler is what flags the map ready and triggers the first link
+  // build, so nothing is lost by not reloading the style here.
+  const baseLayerInitRef = useRef(true);
   useEffect(() => {
+    if (baseLayerInitRef.current) { baseLayerInitRef.current = false; return; }
     const map = mapRef.current;
     if (!map) return;
     // setStyle removes all sources/layers — clear link refs so the effect recreates them
