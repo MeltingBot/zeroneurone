@@ -101,7 +101,9 @@
       "png": "PNG (immagine della lavagna)",
       "pngDesc": "Cattura visiva con scelta di risoluzione",
       "svg": "SVG (vettoriale)",
-      "svgDesc": "Immagine vettoriale modificabile (Inkscape, Illustrator)"
+      "svgDesc": "Immagine vettoriale modificabile (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Grafico per i2 (posizioni, colori, attributi)"
     },
     "options": {
       "includeAssets": "Includi file allegati",

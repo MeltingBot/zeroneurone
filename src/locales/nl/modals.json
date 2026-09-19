@@ -101,7 +101,9 @@
       "png": "PNG (afbeelding van canvas)",
       "pngDesc": "Visuele opname met resolutiekeuze",
       "svg": "SVG (vector)",
-      "svgDesc": "Bewerkbare vectorafbeelding (Inkscape, Illustrator)"
+      "svgDesc": "Bewerkbare vectorafbeelding (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Diagram voor i2 (posities, kleuren, attributen)"
     },
     "options": {
       "includeAssets": "Bijlagen opnemen",

@@ -127,6 +127,25 @@ The graph opens in Gephi with the same layout and colors as on the canvas. Posit
 
 ---
 
+### ANX (i2 Analyst's Notebook)
+
+**i2 exchange format**, to hand a chart over to an analyst working in Analyst's Notebook.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.anx` |
+| Content | i2 XML (entities, links, types, attributes) |
+| Attached files | ❌ Not included |
+| Use | i2 Analyst's Notebook |
+
+The file opens directly in Analyst's Notebook, with no import specification. Canvas positions, colours, link direction and line width are preserved. Each element's first tag becomes its i2 entity type, further tags become attributes, and properties carry their type wherever i2 has an equivalent: numbers, dates and booleans survive, other types are sent as text.
+
+Some ZeroNeurone notions have no i2 counterpart and are not carried over. Groups and annotations are not exported; elements inside a group are placed at their actual position and keep the group name in an attribute. A geographic area is reduced to its centre point, a date range to two attributes, and shapes, attached media and custom sizes are lost. A link with an endpoint that is not exported is dropped, so that no reference points at nothing.
+
+The native binary `.anb` format is not offered for export: its structure is not publicly documented, and ZeroNeurone only reads it partially, by pattern recognition.
+
+---
+
 ### GeoJSON
 
 **Geographic format** for GIS tools.

@@ -101,7 +101,9 @@
       "png": "PNG (imagem da tela)",
       "pngDesc": "Captura visual com escolha de resolução",
       "svg": "SVG (vetorial)",
-      "svgDesc": "Imagem vetorial editável (Inkscape, Illustrator)"
+      "svgDesc": "Imagem vetorial editável (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Gráfico para i2 (posições, cores, atributos)"
     },
     "options": {
       "includeAssets": "Incluir ficheiros anexos",

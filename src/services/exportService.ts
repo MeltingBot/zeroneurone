@@ -7,8 +7,9 @@ import { fileService } from './fileService';
 import { generateUUID, getExtension } from '../utils';
 import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { encryptZip } from './encryption/zipEncryption';
+import { buildANXExport } from './exportANX';
 
-export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'zip';
+export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'anx' | 'zip';
 
 /** Asset metadata for export (without binary data) */
 export interface ExportedAssetMeta {
@@ -802,6 +803,11 @@ ${edges}
       case 'geojson': {
         const geojson = this.exportToGeoJSON(dossier, elements, links);
         this.download(geojson, `${baseName}.geojson`, 'application/geo+json');
+        break;
+      }
+      case 'anx': {
+        const anx = buildANXExport(dossier, elements, links);
+        this.download(anx, `${baseName}.anx`, 'application/xml');
         break;
       }
     }

@@ -81,6 +81,7 @@ Un tableau blanc infini avec des capacites d'analyse de graphe.
 - Export SVG natif (vectoriel)
 - Impression du rapport de synthese via le navigateur (PDF possible depuis la boite d'impression)
 - Export CSV (avec positions/groupes)
+- Export ANX (i2 Analyst's Notebook) : positions, couleurs, types d'entites, attributs
 - Export HTML interactif (rapport + graphe navigable, theme clair/sombre, TOC, stats)
 - Import CSV pour donnees tabulaires
 - Import GraphML / GEXF (Gephi) / Gephi Lite JSON pour donnees de graphes

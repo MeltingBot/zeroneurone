@@ -101,7 +101,9 @@
       "png": "PNG (image du canvas)",
       "pngDesc": "Capture visuelle avec choix de résolution",
       "svg": "SVG (vectoriel)",
-      "svgDesc": "Image vectorielle éditable (Inkscape, Illustrator)"
+      "svgDesc": "Image vectorielle éditable (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Graphe pour i2 (positions, couleurs, attributs)"
     },
     "options": {
       "includeAssets": "Inclure les fichiers joints",

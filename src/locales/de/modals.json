@@ -101,7 +101,9 @@
       "png": "PNG (Bild der Arbeitsfläche)",
       "pngDesc": "Visuelle Aufnahme mit Auflösungswahl",
       "svg": "SVG (vektoriell)",
-      "svgDesc": "Bearbeitbares Vektorbild (Inkscape, Illustrator)"
+      "svgDesc": "Bearbeitbares Vektorbild (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Diagramm für i2 (Positionen, Farben, Attribute)"
     },
     "options": {
       "includeAssets": "Anhänge einschließen",
