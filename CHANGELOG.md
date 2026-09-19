@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.57.0
+
+### Features
+
+- **Export vers i2 Analyst's Notebook** — un nouveau format `.anx` rejoint la
+  liste d'export. Le fichier s'ouvre directement dans Analyst's Notebook, sans
+  configuration préalable chez le destinataire. La disposition du canvas, les
+  couleurs, la direction et l'épaisseur des liens sont conservées. Le premier
+  tag de chaque élément devient son type d'entité i2, les tags suivants et les
+  propriétés deviennent des attributs, en gardant leur nature lorsque i2 a un
+  équivalent : nombres, dates et booléens sont préservés, le reste passe en
+  texte. Dates et événements deviennent des fiches i2.
+
+  Certaines notions n'ont pas d'équivalent et ne sont pas transmises. Les
+  groupes et les annotations ne sont pas exportés : leurs éléments sont placés à
+  leur position réelle et gardent le nom du groupe en attribut. Une zone
+  géographique est réduite à son point central, une plage de dates à deux
+  attributs, et les formes, les médias joints et les tailles personnalisées sont
+  perdus.
+
+  Le format binaire `.anb` n'est pas proposé à l'export. Sa structure n'est pas
+  documentée publiquement, et ZeroNeurone ne sait le lire que partiellement, par
+  reconnaissance de motifs : de quoi ouvrir un fichier, pas d'en écrire un.
+
 ## 2.56.2
 
 ### Fixes
