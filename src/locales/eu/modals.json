@@ -101,7 +101,9 @@
       "png": "PNG (arbelaren irudia)",
       "pngDesc": "Kaptura bisuala bereizmen aukerarekin",
       "svg": "SVG (bektoriala)",
-      "svgDesc": "Irudi bektorial editagarria (Inkscape, Illustrator)"
+      "svgDesc": "Irudi bektorial editagarria (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "i2rako grafikoa (kokapenak, koloreak, atributuak)"
     },
     "options": {
       "includeAssets": "Erantsitako fitxategiak sartu",

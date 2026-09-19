@@ -79,6 +79,7 @@ An infinite whiteboard with graph-analysis capabilities.
 - Native SVG export (vector)
 - PDF export of the canvas
 - CSV export (with positions/groups)
+- ANX export (i2 Analyst's Notebook): positions, colours, entity types, attributes
 - Interactive HTML export (report + navigable graph, light/dark theme, TOC, stats)
 - CSV import for tabular data
 - GraphML / GEXF (Gephi) / Gephi Lite JSON import for graph data

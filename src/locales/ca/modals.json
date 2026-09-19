@@ -101,7 +101,9 @@
       "png": "PNG (imatge del llenç)",
       "pngDesc": "Captura visual amb elecció de resolució",
       "svg": "SVG (vectorial)",
-      "svgDesc": "Imatge vectorial editable (Inkscape, Illustrator)"
+      "svgDesc": "Imatge vectorial editable (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Gràfic per a i2 (posicions, colors, atributs)"
     },
     "options": {
       "includeAssets": "Incloure fitxers adjunts",

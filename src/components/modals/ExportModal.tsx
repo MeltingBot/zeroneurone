@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
@@ -21,6 +21,7 @@ const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; 
   { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
   { format: 'gexf', labelKey: 'gexf', descKey: 'gexfDesc', icon: FileText },
   { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
+  { format: 'anx', labelKey: 'anx', descKey: 'anxDesc', icon: Network },
 ];
 
 const pngScaleOptions = [

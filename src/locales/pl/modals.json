@@ -101,7 +101,9 @@
       "png": "PNG (obraz tablicy)",
       "pngDesc": "Zrzut wizualny z wyborem rozdzielczości",
       "svg": "SVG (wektorowy)",
-      "svgDesc": "Edytowalny obraz wektorowy (Inkscape, Illustrator)"
+      "svgDesc": "Edytowalny obraz wektorowy (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Wykres dla i2 (pozycje, kolory, atrybuty)"
     },
     "options": {
       "includeAssets": "Dołącz załączniki",

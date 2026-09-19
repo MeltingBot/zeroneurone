@@ -101,7 +101,9 @@
       "png": "PNG (зображення дошки)",
       "pngDesc": "Візуальний знімок з вибором роздільності",
       "svg": "SVG (векторний)",
-      "svgDesc": "Редагований векторний малюнок (Inkscape, Illustrator)"
+      "svgDesc": "Редагований векторний малюнок (Inkscape, Illustrator)",
+      "anx": "ANX (i2 Analyst's Notebook)",
+      "anxDesc": "Граф для i2 (позиції, кольори, атрибути)"
     },
     "options": {
       "includeAssets": "Включити вкладення",
