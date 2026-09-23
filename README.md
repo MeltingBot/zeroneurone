@@ -167,7 +167,7 @@ conformite WCAG AA n'est donc pas atteinte a ce jour.
 
 ```bash
 # Cloner le repo
-git clone https://github.com/votre-username/zeroneurone.git
+git clone https://github.com/MeltingBot/zeroneurone.git
 cd zeroneurone
 
 # Installer les dependances

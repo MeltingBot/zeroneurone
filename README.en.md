@@ -161,7 +161,7 @@ An infinite whiteboard with graph-analysis capabilities.
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/zeroneurone.git
+git clone https://github.com/MeltingBot/zeroneurone.git
 cd zeroneurone
 
 # Install dependencies
