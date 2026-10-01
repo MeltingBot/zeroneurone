@@ -642,6 +642,7 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
   const { t: tCommon } = useTranslation('common');
   const { t: tPanels } = useTranslation('panels');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [rawContent, setRawContent] = useState<string | null>(null);
   const [showRaw, setShowRaw] = useState(false);
@@ -691,6 +692,9 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
         } else if (isDoc) {
           // Use extractedText if available, otherwise show notice
           if (mounted) setTextContent(asset.extractedText || null);
+        } else if (isPdf) {
+          const file = await fileService.getAssetFile(asset);
+          if (mounted) setPdfFile(file);
         } else {
           url = await fileService.getAssetUrl(asset);
           if (mounted) setFileUrl(url);
@@ -774,8 +778,8 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
                 <span className="text-xs text-text-secondary">{tCommon('status.loading')}</span>
               </div>
             </div>
-          ) : isPdf && fileUrl ? (
-            <PdfPreview url={fileUrl} />
+          ) : isPdf && pdfFile ? (
+            <PdfPreview file={pdfFile} />
           ) : (isText || isDoc || isEml) && textContent !== null ? (
             <pre className="w-full h-full overflow-auto p-4 text-xs text-text-primary font-mono whitespace-pre-wrap leading-relaxed">
               {isEml && showRaw && rawContent !== null ? rawContent : textContent}

@@ -4766,6 +4766,7 @@ interface AssetPreviewModalProps {
 function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
   const { t } = useTranslation('pages');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isImage = asset.mimeType.startsWith('image/');
@@ -4779,9 +4780,14 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     const loadFile = async () => {
       try {
         setIsLoading(true);
-        url = await fileService.getAssetUrl(asset);
-        if (mounted) {
-          setFileUrl(url);
+        if (isPdf) {
+          const file = await fileService.getAssetFile(asset);
+          if (mounted) setPdfFile(file);
+        } else {
+          url = await fileService.getAssetUrl(asset);
+          if (mounted) {
+            setFileUrl(url);
+          }
         }
       } catch (error) {
         console.error('Error loading file:', error);
@@ -4852,8 +4858,8 @@ function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
                 <span className="text-xs text-text-secondary">{t('dossier.toolbar.loading')}</span>
               </div>
             </div>
-          ) : isPdf && fileUrl ? (
-            <PdfPreview url={fileUrl} />
+          ) : isPdf && pdfFile ? (
+            <PdfPreview file={pdfFile} />
           ) : isImage && fileUrl ? (
             <ImagePreview key={fileUrl} url={fileUrl} alt={asset.filename} />
           ) : asset.thumbnailDataUrl ? (

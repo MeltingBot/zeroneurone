@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.58.1
+
+### Fixes
+
+- **Aperçu PDF en production** — sur zeroneurone.com, l'aperçu d'un PDF joint
+  échouait (« Impossible d'afficher ce PDF ») : pdf.js lisait le fichier via
+  une URL `blob:`, requête que la Content-Security-Policy du serveur
+  (`connect-src` sans `blob:`) bloquait. Le PDF est désormais transmis
+  directement à pdf.js, quelle que soit la politique du serveur.
+- **CSP** — `blob:` est ajouté à `connect-src` dans `security-headers.conf`.
+  Une URL `blob:` ne désigne qu'un objet créé par la page elle-même ; cela
+  évite qu'un export PNG du canvas perde silencieusement les images affichées
+  en haute définition.
+
 ## 2.58.0
 
 ### Features

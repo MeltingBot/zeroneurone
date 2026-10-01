@@ -8,7 +8,7 @@ import { loadPdfjs } from '../../services/pdfjsLoader';
 const CONTAINER_PADDING = 32;
 
 interface PdfPreviewProps {
-  url: string;
+  file: Blob;
 }
 
 /**
@@ -17,8 +17,12 @@ interface PdfPreviewProps {
  * PDF plugin inside a sandboxed iframe at all; without sandbox, a mislabeled
  * file gets same-origin script execution). pdf.js parses PDF bytes directly
  * and never executes them as a document.
+ *
+ * Takes the bytes, not a blob: URL. Given a URL, pdf.js loads it with fetch(),
+ * which the production CSP (connect-src without blob:) refuses: the load fails
+ * with an opaque "Unexpected server response (0)".
  */
-export function PdfPreview({ url }: PdfPreviewProps) {
+export function PdfPreview({ file }: PdfPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
@@ -43,11 +47,11 @@ export function PdfPreview({ url }: PdfPreviewProps) {
     // was already torn down.
     let task: PDFDocumentLoadingTask | null = null;
 
-    loadPdfjs()
-      .then((pdfjsLib) => {
+    Promise.all([loadPdfjs(), file.arrayBuffer()])
+      .then(([pdfjsLib, data]) => {
         // pdf.js 6 dropped PDFDocumentProxy.destroy(); tearing down the worker
         // transport now goes through the loading task.
-        task = pdfjsLib.getDocument({ url });
+        task = pdfjsLib.getDocument({ data });
         if (cancelled) {
           void task.destroy();
           return null;
@@ -79,7 +83,7 @@ export function PdfPreview({ url }: PdfPreviewProps) {
       void task?.destroy();
       docRef.current = null;
     };
-  }, [url]);
+  }, [file]);
 
   // Render the current page whenever the page or zoom changes
   useEffect(() => {
