@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.58.2
+
+### Fixes
+
+- **Carte : erreur « t.bitmap is undefined »** — le service worker gardait
+  indéfiniment en cache le worker de MapLibre (`maplibre-gl-worker.mjs`,
+  `maplibre-gl-shared.mjs`), dont le nom ne change pas d'une version à
+  l'autre. Depuis le passage à MapLibre 6.11 (v2.58.0), un navigateur qui
+  avait déjà ouvert la carte combinait l'ancien worker avec la nouvelle
+  bibliothèque, et l'affichage des libellés échouait. Ces fichiers sont
+  désormais mis à jour selon leur contenu.
+
 ## 2.58.1
 
 ### Fixes

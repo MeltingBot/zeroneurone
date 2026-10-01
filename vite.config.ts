@@ -81,6 +81,14 @@ export default defineConfig({
         // Exclude version.json and plugins from SW precache (always fetched fresh)
         globIgnores: ['version.json', 'plugins/**'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        // The plugin's default (^assets/) precaches everything under assets/
+        // with revision null, i.e. as if its name carried a content hash. The
+        // MapLibre worker files (maplibre-gl-worker.mjs, maplibre-gl-shared.mjs)
+        // live there under fixed names: a browser kept the old copy forever
+        // while the main chunk moved on, and the worker then misread the glyph
+        // payload ("t.bitmap is undefined"). Only real Vite hashes skip the
+        // revision now; every other file is revisioned by content.
+        dontCacheBustURLsMatching: /^assets\/.+-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*tile\.openstreetmap\.org/,
