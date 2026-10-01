@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.58.0
+
+### Features
+
+- **Import Mermaid** — un diagramme Mermaid de type `flowchart` ou `graph`
+  devient un graphe ZeroNeurone. Le cas d'usage visé : demander à un assistant
+  IA de structurer des notes en graphe Mermaid, puis coller sa réponse. Le
+  diagramme se colle avec Ctrl+V sur le canvas (y compris entouré du bloc
+  ` ```mermaid ` et de texte explicatif) ou via « Coller » du clic droit, et
+  s'importe aussi depuis un fichier `.mmd`, `.mermaid` ou `.md` (le premier
+  bloc flowchart du Markdown est utilisé). Il est ensuite placé d'un clic, sans
+  toucher au contenu existant, et s'annule comme toute création.
+
+  Formes, libellés, flèches (orientées, bidirectionnelles, pointillées,
+  épaisses), couleurs `classDef` / `style` sont repris ; chaque `subgraph`
+  devient un tag. Mermaid ne contenant aucune position, la disposition est
+  recalculée selon le sens du diagramme (`TD`, `LR`…). Les lignes non comprises
+  sont ignorées et comptées dans un avertissement plutôt que de faire échouer
+  l'import ; les autres types de diagrammes (séquence, entités, mindmap…) sont
+  refusés avec un message explicite.
+- **Copier en Mermaid** — une sélection de plusieurs éléments se copie en bloc
+  Mermaid, à coller dans un wiki, Obsidian, GitHub ou un rapport Markdown. Les
+  groupes deviennent des `subgraph`. Les positions, propriétés et dates ne sont
+  pas transmises.
+- **Menu clic droit réorganisé** — le menu d'un élément passe d'une longue
+  liste à une dizaine de lignes : les actions moins fréquentes sont rangées
+  dans des sous-menus Focus, Analyser, Organiser et Onglets (un sous-menu qui
+  n'aurait qu'une entrée s'affiche à plat). Les sous-menus s'ouvrent au survol
+  ou au clic, et le menu se parcourt au clavier (flèches, Entrée, Échap).
+  « Coller » quitte le menu d'un élément et reste dans celui du canvas.
+- **Extensions dans le menu** — une extension qui ajoute plusieurs entrées les
+  range dans un sous-menu à son nom ; une extension à entrée unique reste au
+  premier niveau.
+
+### Fixes
+
+- **Sous-menus des extensions** — les choix proposés par une extension (par
+  exemple plusieurs tags suggérés) n'étaient affichés que sur les liens : sur
+  un élément ou le canvas, le clic ne faisait rien. Ils s'affichent désormais
+  partout.
+- **Entrées d'extension affichées à tort** — une extension qui décide de façon
+  différée si elle s'applique à un élément était toujours affichée. Sa réponse
+  est maintenant attendue : moins d'entrées apparaissent, mais seulement celles
+  qui ont un sens pour l'élément cliqué.
+
 ## 2.57.0
 
 ### Features

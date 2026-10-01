@@ -239,17 +239,7 @@ Exported files follow the format:
 
 Example: `Smith_Case_2024-01-15_10-30-00.zip`
 
----
 
-## Automation
-
-### Command Line Export
-
-Not currently available (web application only).
-
-### API
-
-Not currently available.
 
 ---
 

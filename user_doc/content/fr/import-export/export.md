@@ -241,16 +241,5 @@ Exemple : `Affaire_Dupont_2024-01-15_10-30-00.zip`
 
 ---
 
-## Automatisation
-
-### Export en ligne de commande
-
-Non disponible actuellement (application web uniquement).
-
-### API
-
-Non disponible actuellement.
-
----
 
 **Voir aussi** : [Importer]({{< relref "import" >}})
