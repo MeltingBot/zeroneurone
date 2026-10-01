@@ -1,8 +1,14 @@
-import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Clipboard, Image, Group, Ungroup, BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, ExternalLink, Link2, ChevronRight, icons } from 'lucide-react';
+import {
+  Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Image, Group, Ungroup,
+  BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2, Code,
+} from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
+import { ContextMenuShell } from './contextMenu/ContextMenuShell';
+import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
+import { submenu, type MenuItem } from './contextMenu/types';
 
 interface ContextMenuProps {
   x: number;
@@ -11,7 +17,6 @@ interface ContextMenuProps {
   elementLabel: string;
   isFocused: boolean;
   isHidden: boolean;
-  hasCopiedElements: boolean;
   hasPreviewableAsset: boolean;
   // For path finding when 2 elements are selected
   otherSelectedId?: string;
@@ -23,8 +28,8 @@ interface ContextMenuProps {
   onDelete: () => void;
   onCopy: () => void;
   onCut: () => void;
-  onPaste: () => void;
   onDuplicate: () => void;
+  onCopyAsMermaid?: () => void;
   onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
   onFindAllPaths?: (fromId: string, toId: string) => void;
@@ -73,7 +78,6 @@ function ContextMenuComponent({
   elementLabel,
   isFocused,
   isHidden,
-  hasCopiedElements,
   hasPreviewableAsset,
   otherSelectedId,
   otherSelectedLabel,
@@ -84,8 +88,8 @@ function ContextMenuComponent({
   onDelete,
   onCopy,
   onCut,
-  onPaste,
   onDuplicate,
+  onCopyAsMermaid,
   onPreview,
   onFindPaths,
   onFindAllPaths,
@@ -115,503 +119,128 @@ function ContextMenuComponent({
   onClose,
 }: ContextMenuProps) {
   const { t } = useTranslation('pages');
+  const cm = (key: string) => t(`dossier.contextMenu.${key}`);
   const hasTwoSelected = !!otherSelectedId && !!otherSelectedLabel;
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x, y });
+  const pluginItems = usePluginMenuItems(pluginExtensions, menuContext);
 
-  const visibleExtensions = useMemo(() => {
-    if (!pluginExtensions || !menuContext) return [];
-    return pluginExtensions.filter(ext => !ext.visible || ext.visible(menuContext));
-  }, [pluginExtensions, menuContext]);
+  // ── URLs: one URL inline, several grouped under "Links (N)" ──
+  let urlItems: MenuItem[] = [];
+  if (urls && urls.length === 1 && onOpenUrl) {
+    urlItems = [
+      { id: 'open-url', label: cm('openUrl'), icon: ExternalLink, title: urls[0].url, onSelect: () => onOpenUrl(urls[0].url) },
+      onCopyUrl && { id: 'copy-url', label: cm('copyUrl'), icon: Link2, title: urls[0].url, onSelect: () => onCopyUrl(urls[0].url) },
+    ].filter(Boolean) as MenuItem[];
+  } else if (urls && urls.length > 1 && onOpenUrl) {
+    urlItems = [{
+      id: 'urls',
+      label: t('dossier.contextMenu.links', { count: urls.length }),
+      icon: Link2,
+      children: urls.flatMap((u, i) => [
+        { id: `url-${i}-key`, label: u.key, title: u.url, kind: 'header' as const },
+        { id: `url-${i}-open`, label: cm('openUrl'), icon: ExternalLink, title: u.url, onSelect: () => onOpenUrl(u.url) },
+        ...(onCopyUrl ? [{ id: `url-${i}-copy`, label: cm('copyUrl'), icon: Link2, title: u.url, onSelect: () => onCopyUrl(u.url) }] : []),
+      ]),
+    }];
+  }
 
-  // Adjust position to keep menu within viewport
-  useLayoutEffect(() => {
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect();
-      const padding = 8;
-      let newX = x;
-      let newY = y;
+  const focusItem: MenuItem | null = isFocused
+    ? { id: 'exit-focus', label: cm('exitFocus'), icon: X, onSelect: onClearFocus }
+    : submenu('focus', cm('focusMode'), Focus, focusDepthOptions.map((o) => ({
+        id: `focus-${o.depth}`,
+        label: t(o.labelKey),
+        icon: Focus,
+        onSelect: () => onFocus(o.depth),
+      })));
 
-      // Check right edge
-      if (x + rect.width > window.innerWidth - padding) {
-        newX = window.innerWidth - rect.width - padding;
-      }
+  const analyzeItem = submenu('analyze', cm('analyze'), ScanSearch, [
+    hasTwoSelected && onFindPaths && { id: 'find-paths', label: cm('findPaths'), icon: Route, onSelect: () => onFindPaths(elementId, otherSelectedId!) },
+    hasTwoSelected && onFindAllPaths && { id: 'find-all-paths', label: cm('findAllPaths'), icon: Waypoints, onSelect: () => onFindAllPaths(elementId, otherSelectedId!) },
+    onFindSimilar && { id: 'find-similar', label: cm('findSimilar'), icon: Search, onSelect: onFindSimilar },
+    onQueryFromSelection && { id: 'query-selection', label: cm('queryFromSelection'), icon: Search, onSelect: onQueryFromSelection },
+  ]);
 
-      // Check bottom edge
-      if (y + rect.height > window.innerHeight - padding) {
-        newY = window.innerHeight - rect.height - padding;
-      }
+  const organizeItem = submenu('organize', cm('organize'), Boxes, [
+    hasMultipleSelected && !isGroup && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
+    isGroup && { id: 'dissolve-group', label: cm('dissolveGroup'), icon: Ungroup, onSelect: onDissolveGroup },
+    isInGroup && { id: 'remove-from-group', label: cm('removeFromGroup'), icon: BoxSelect, onSelect: onRemoveFromGroup },
+    hasTwoSelected && onMerge && { id: 'merge', label: cm('merge'), icon: Combine, onSelect: onMerge },
+    {
+      id: 'toggle-lock',
+      label: isPositionLocked ? cm('unlockPosition') : cm('lockPosition'),
+      icon: isPositionLocked ? LockOpen : Lock,
+      onSelect: onToggleLock,
+    },
+  ]);
 
-      // Check left edge
-      if (newX < padding) {
-        newX = padding;
-      }
-
-      // Check top edge
-      if (newY < padding) {
-        newY = padding;
-      }
-
-      if (newX !== x || newY !== y) {
-        setPosition({ x: newX, y: newY });
-      }
-    }
-  }, [x, y]);
+  // ── Tabs: go to source tab (ghosts), add to tab, remove from the active tab ──
+  const tabsItem = tabs.length > 0 ? submenu('tabs', cm('tabs'), Layers, [
+    ...(isGhostElement
+      ? elementTabIds
+          .filter((tid) => tid !== activeTabId)
+          .map((tid) => tabs.find((tab) => tab.id === tid))
+          .filter((tab): tab is CanvasTab => !!tab)
+          .map((tab) => ({
+            id: `goto-tab-${tab.id}`,
+            label: t('dossier.tabs.navigateTo', { name: tab.name }),
+            icon: ArrowRight,
+            onSelect: () => onGoToTab(tab.id),
+          }))
+      : []),
+    { id: 'add-to-tab-header', label: t('dossier.tabs.addToTab'), kind: 'header' as const },
+    ...tabs.map((tab) => {
+      const isInTab = elementTabIds.includes(tab.id);
+      return {
+        id: `add-to-tab-${tab.id}`,
+        label: tab.name,
+        icon: Layers,
+        checked: isInTab,
+        disabled: isInTab,
+        onSelect: () => onAddToTab(tab.id),
+      };
+    }),
+    // Remove: ghost → dismiss, member in >1 tab → unassign
+    !!activeTabId && (isGhostElement || (elementTabIds.includes(activeTabId) && elementTabIds.length > 1)) && {
+      id: 'remove-from-tab',
+      label: t('dossier.tabs.removeFromTab'),
+      icon: X,
+      onSelect: onRemoveFromTab,
+    },
+  ]) : null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onClose();
-        }}
-      />
-
-      {/* Menu */}
-      <div
-        ref={menuRef}
-        className="fixed z-50 min-w-48 py-1 bg-bg-primary border border-border-default sketchy-border-soft panel-shadow"
-        style={{ left: position.x, top: position.y }}
-      >
-        {/* Header */}
-        <div className="px-3 py-2 border-b border-border-default">
-          <span className="text-xs font-medium text-text-primary truncate block max-w-40">
-            {hasTwoSelected ? `${elementLabel} ↔ ${otherSelectedLabel}` : elementLabel}
-          </span>
-        </div>
-
-        {/* Preview (if element has previewable assets) */}
-        {hasPreviewableAsset && onPreview && (
-          <div className="py-1 border-b border-border-default">
-            <button
-              onClick={() => {
-                onPreview();
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-            >
-              <Image size={14} />
-              {t('dossier.contextMenu.preview')}
-            </button>
-          </div>
-        )}
-
-        {/* Copy/Cut/Paste */}
-        <div className="py-1 border-b border-border-default">
-          <button
-            onClick={() => {
-              onCopy();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <Copy size={14} />
-            {t('dossier.contextMenu.copy')}
-            <span className="ml-auto text-xs text-text-tertiary">Ctrl+C</span>
-          </button>
-          <button
-            onClick={() => {
-              onCut();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <Scissors size={14} />
-            {t('dossier.contextMenu.cut')}
-            <span className="ml-auto text-xs text-text-tertiary">Ctrl+X</span>
-          </button>
-          <button
-            onClick={() => {
-              onPaste();
-              onClose();
-            }}
-            disabled={!hasCopiedElements}
-            className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
-              hasCopiedElements
-                ? 'text-text-primary hover:bg-bg-tertiary'
-                : 'text-text-tertiary cursor-not-allowed'
-            }`}
-          >
-            <Clipboard size={14} />
-            {t('dossier.contextMenu.paste')}
-            <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
-          </button>
-          <button
-            onClick={() => {
-              onDuplicate();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <CopyPlus size={14} />
-            {t('dossier.contextMenu.duplicate')}
-            <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
-          </button>
-        </div>
-
-        {/* Path finding & merge (when 2 elements selected) */}
-        {hasTwoSelected && (onFindPaths || onFindAllPaths || onMerge) && (
-          <div className="py-1 border-b border-border-default">
-            {onFindPaths && (
-              <button
-                onClick={() => {
-                  onFindPaths(elementId, otherSelectedId);
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Route size={14} />
-                {t('dossier.contextMenu.findPaths')}
-              </button>
-            )}
-            {onFindAllPaths && (
-              <button
-                onClick={() => {
-                  onFindAllPaths(elementId, otherSelectedId);
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Waypoints size={14} />
-                {t('dossier.contextMenu.findAllPaths')}
-              </button>
-            )}
-            {onMerge && (
-              <button
-                onClick={() => {
-                  onMerge();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Combine size={14} />
-                {t('dossier.contextMenu.merge')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Query actions */}
-        {(onFindSimilar || onQueryFromSelection) && (
-          <div className="py-1 border-b border-border-default">
-            {onFindSimilar && (
-              <button
-                onClick={() => {
-                  onFindSimilar();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Search size={14} />
-                {t('dossier.contextMenu.findSimilar')}
-              </button>
-            )}
-            {onQueryFromSelection && (
-              <button
-                onClick={() => {
-                  onQueryFromSelection();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Search size={14} />
-                {t('dossier.contextMenu.queryFromSelection')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* URL actions (element has one or more URL properties) */}
-        {urls && urls.length === 1 && onOpenUrl && (
-          <div className="py-1 border-b border-border-default">
-            <button
-              onClick={() => onOpenUrl(urls[0].url)}
-              title={urls[0].url}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-            >
-              <ExternalLink size={14} />
-              {t('dossier.contextMenu.openUrl')}
-            </button>
-            {onCopyUrl && (
-              <button
-                onClick={() => onCopyUrl(urls[0].url)}
-                title={urls[0].url}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Link2 size={14} />
-                {t('dossier.contextMenu.copyUrl')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Multiple URLs → hover submenu grouped under "Links (N)" */}
-        {urls && urls.length > 1 && onOpenUrl && (
-          <div className="py-1 border-b border-border-default">
-            <div className="relative group">
-              <button className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors">
-                <Link2 size={14} />
-                <span className="truncate">{t('dossier.contextMenu.links', { count: urls.length })}</span>
-                <ChevronRight size={14} className="ml-auto text-text-tertiary" />
-              </button>
-              <div
-                className={`absolute top-0 ${position.x + 440 > (typeof window !== 'undefined' ? window.innerWidth : 99999) ? 'right-full' : 'left-full'} hidden group-hover:block min-w-56 max-h-80 overflow-y-auto py-1 bg-bg-primary border border-border-default sketchy-border-soft panel-shadow z-50`}
-              >
-                {urls.map((u, i) => (
-                  <div key={`${u.key}-${i}`} className="border-b border-border-default last:border-b-0 py-0.5">
-                    <div className="px-3 py-0.5 text-xs text-text-tertiary truncate" title={u.url}>{u.key}</div>
-                    <button
-                      onClick={() => onOpenUrl(u.url)}
-                      title={u.url}
-                      className="w-full flex items-center gap-2 px-3 py-1 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                    >
-                      <ExternalLink size={14} />
-                      {t('dossier.contextMenu.openUrl')}
-                    </button>
-                    {onCopyUrl && (
-                      <button
-                        onClick={() => onCopyUrl(u.url)}
-                        title={u.url}
-                        className="w-full flex items-center gap-2 px-3 py-1 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                      >
-                        <Link2 size={14} />
-                        {t('dossier.contextMenu.copyUrl')}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Group actions */}
-        {(hasMultipleSelected || isGroup || isInGroup) && (
-          <div className="py-1 border-b border-border-default">
-            {hasMultipleSelected && !isGroup && (
-              <button
-                onClick={() => {
-                  onGroupSelection();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Group size={14} />
-                {t('dossier.contextMenu.groupSelection')}
-              </button>
-            )}
-            {isGroup && (
-              <button
-                onClick={() => {
-                  onDissolveGroup();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Ungroup size={14} />
-                {t('dossier.contextMenu.dissolveGroup')}
-              </button>
-            )}
-            {isInGroup && (
-              <button
-                onClick={() => {
-                  onRemoveFromGroup();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <BoxSelect size={14} />
-                {t('dossier.contextMenu.removeFromGroup')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Focus options */}
-        <div className="py-1">
-          {isFocused ? (
-            <button
-              onClick={() => {
-                onClearFocus();
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-            >
-              <X size={14} />
-              {t('dossier.contextMenu.exitFocus')}
-            </button>
-          ) : (
-            <>
-              <div className="px-3 py-1 text-xs text-text-tertiary">
-                {t('dossier.contextMenu.focusMode')}
-              </div>
-              {focusDepthOptions.map((option) => (
-                <button
-                  key={option.depth}
-                  onClick={() => {
-                    onFocus(option.depth);
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  <Focus size={14} />
-                  {t(option.labelKey)}
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-
-        {/* Go to source tab (ghost elements only) */}
-        {isGhostElement && elementTabIds.length > 0 && (
-          <div className="py-1 border-t border-border-default">
-            {elementTabIds
-              .filter((tid) => tid !== activeTabId)
-              .map((tid) => {
-                const tab = tabs.find((t) => t.id === tid);
-                if (!tab) return null;
-                return (
-                  <button
-                    key={tid}
-                    onClick={() => {
-                      onGoToTab(tid);
-                      onClose();
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                  >
-                    <ArrowRight size={14} />
-                    <span className="truncate">{t('dossier.tabs.navigateTo', { name: tab.name })}</span>
-                  </button>
-                );
-              })}
-          </div>
-        )}
-
-        {/* Tab assignment */}
-        {tabs.length > 0 && (
-          <div className="py-1 border-t border-border-default">
-            <div className="px-3 py-1 text-xs text-text-tertiary">
-              {t('dossier.tabs.addToTab')}
-            </div>
-            {tabs.map((tab) => {
-              const isInTab = elementTabIds.includes(tab.id);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (!isInTab) onAddToTab(tab.id);
-                    onClose();
-                  }}
-                  disabled={isInTab}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
-                    isInTab ? 'text-text-tertiary cursor-default' : 'text-text-primary hover:bg-bg-tertiary'
-                  }`}
-                >
-                  <Layers size={14} />
-                  <span className="truncate">{tab.name}</span>
-                  {isInTab && <span className="ml-auto text-[10px] text-text-tertiary">&#10003;</span>}
-                </button>
-              );
-            })}
-            {/* Remove: ghost → dismiss, member in >1 tab → unassign */}
-            {activeTabId && (isGhostElement || (elementTabIds.includes(activeTabId) && elementTabIds.length > 1)) && (
-              <button
-                onClick={() => {
-                  onRemoveFromTab();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <X size={14} />
-                {t('dossier.tabs.removeFromTab')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Position Lock */}
-        <div className="py-1 border-t border-border-default">
-          <button
-            onClick={() => {
-              onToggleLock();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            {isPositionLocked ? <LockOpen size={14} /> : <Lock size={14} />}
-            {isPositionLocked
-              ? t('dossier.contextMenu.unlockPosition')
-              : t('dossier.contextMenu.lockPosition')}
-          </button>
-        </div>
-
-        {/* Visibility */}
-        <div className="py-1 border-t border-border-default">
-          {isHidden ? (
-            <button
-              onClick={() => {
-                onShow();
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-            >
-              <Eye size={14} />
-              {t('dossier.contextMenu.showElement')}
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                onHide();
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-            >
-              <EyeOff size={14} />
-              {hasMultipleSelected ? t('dossier.contextMenu.hideSelection') : t('dossier.contextMenu.hideElement')}
-            </button>
-          )}
-        </div>
-
-        {/* Plugin extensions */}
-        {visibleExtensions.length > 0 && (
-          <div className="py-1 border-t border-border-default">
-            {visibleExtensions.map((ext) => {
-              const Icon = icons[ext.icon as keyof typeof icons];
-              return (
-                <button
-                  key={ext.id}
-                  onClick={() => {
-                    if (menuContext) ext.action(menuContext);
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  {Icon && <Icon size={14} />}
-                  {ext.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Delete */}
-        <div className="py-1 border-t border-border-default">
-          <button
-            onClick={() => {
-              onDelete();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-error hover:bg-pastel-pink transition-colors"
-          >
-            <Trash2 size={14} />
-            {t('dossier.contextMenu.delete')}
-          </button>
-        </div>
-      </div>
-    </>
+    <ContextMenuShell
+      x={x}
+      y={y}
+      onClose={onClose}
+      header={
+        <span className="text-xs font-medium text-text-primary truncate block max-w-56">
+          {hasTwoSelected ? `${elementLabel} ↔ ${otherSelectedLabel}` : elementLabel}
+        </span>
+      }
+      sections={[
+        [
+          hasPreviewableAsset && onPreview && { id: 'preview', label: cm('preview'), icon: Image, onSelect: onPreview },
+          ...urlItems,
+        ],
+        [
+          { id: 'copy', label: cm('copy'), icon: Copy, shortcut: 'Ctrl+C', onSelect: onCopy },
+          { id: 'cut', label: cm('cut'), icon: Scissors, shortcut: 'Ctrl+X', onSelect: onCut },
+          { id: 'duplicate', label: cm('duplicate'), icon: CopyPlus, shortcut: 'Ctrl+D', onSelect: onDuplicate },
+          hasMultipleSelected && onCopyAsMermaid && { id: 'copy-mermaid', label: cm('copyAsMermaid'), icon: Code, onSelect: onCopyAsMermaid },
+        ],
+        [
+          focusItem,
+          analyzeItem,
+          organizeItem,
+          tabsItem,
+          isHidden
+            ? { id: 'show', label: cm('showElement'), icon: Eye, onSelect: onShow }
+            : { id: 'hide', label: hasMultipleSelected ? cm('hideSelection') : cm('hideElement'), icon: EyeOff, onSelect: onHide },
+        ],
+        pluginItems,
+        [{ id: 'delete', label: cm('delete'), icon: Trash2, danger: true, onSelect: onDelete }],
+      ]}
+    />
   );
 }
 

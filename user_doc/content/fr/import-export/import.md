@@ -387,6 +387,54 @@ Les éléments Excalidraw sont convertis en éléments ZeroNeurone :
 
 ---
 
+### Mermaid
+
+**Diagrammes Mermaid** de type `flowchart` ou `graph`, dans n'importe quel sens (`TD`, `LR`…) : texte collé, fichier `.mmd` / `.mermaid`, ou fichier Markdown `.md` contenant un bloc ` ```mermaid `.
+
+Pratique pour structurer des notes avec un assistant IA : demandez-lui « un graphe Mermaid des personnes, sociétés et relations de ce texte », puis collez le résultat dans ZeroNeurone.
+
+Trois façons d'importer :
+- **Coller sur le canvas** (Ctrl+V) : le texte Mermaid est reconnu automatiquement, y compris entouré d'un bloc ` ```mermaid ` et de texte explicatif
+- **Clic droit sur le canvas → Coller**
+- **Importer** → fichier `.mmd`, `.mermaid` ou `.md` (dans un Markdown, le premier bloc ` ```mermaid ` de type flowchart est utilisé)
+
+Le diagramme est ensuite positionné en **mode placement**, sans toucher au contenu existant. La mise en page suit le sens du diagramme (`TD`, `LR`…).
+
+| Mermaid | ZeroNeurone |
+|---------|-------------|
+| `A[texte]`, `A(texte)`, `A([texte])`, `A[[texte]]` | Élément rectangle |
+| `A((texte))` | Élément cercle |
+| `A{texte}` | Élément losange |
+| `A{{texte}}` | Élément hexagone |
+| `A --> B`, `A ==> B` (épais) | Lien orienté |
+| `A --- B` | Lien non orienté |
+| `A -.-> B` | Lien en pointillés |
+| `A <--> B` | Lien bidirectionnel |
+| `A -->\|libellé\| B`, `A -- libellé --> B` | Libellé du lien |
+| `subgraph Titre … end` | Tag « Titre » sur les éléments du sous-graphe |
+| `classDef`, `class`, `:::`, `style` (`fill`, `stroke`) | Couleur de fond et de bordure |
+
+#### Exemple
+
+```
+flowchart LR
+  A((Alice Martin)) -->|dirige| B[Société Alpha]
+  B -.->|soupçonnée| C{Paris}
+  subgraph Famille
+    A --- D((Bob Martin))
+  end
+```
+
+{{< hint info >}}
+**Limites** : seuls `flowchart` et `graph` sont pris en charge (pas `sequenceDiagram`, `erDiagram`, `mindmap`…). Les lignes non reconnues sont ignorées et comptées dans un avertissement. Les positions ne sont pas lues : Mermaid n'en contient pas.
+{{< /hint >}}
+
+{{< hint info >}}
+**Dans l'autre sens** : sélectionnez plusieurs éléments, puis clic droit → **Copier en Mermaid** pour obtenir un bloc à coller dans un wiki, Obsidian, GitHub ou un rapport Markdown.
+{{< /hint >}}
+
+---
+
 ### OSINT Industries
 
 **Format JSON** exporté depuis OSINT Industries.
@@ -606,7 +654,7 @@ Chaque élément porte ses totaux débit/crédit, ses comptes de rattachement et
 
 Depuis un dossier ouvert, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans le dossier en cours.
 
-**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
+**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
 ### Mode placement
 

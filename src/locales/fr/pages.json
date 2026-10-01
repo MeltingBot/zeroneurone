@@ -185,7 +185,11 @@
       "noLabel": "Sans label",
       "openUrl": "Ouvrir l'URL",
       "copyUrl": "Copier l'URL",
-      "links": "Liens ({{count}})"
+      "links": "Liens ({{count}})",
+      "analyze": "Analyser",
+      "organize": "Organiser",
+      "tabs": "Onglets",
+      "copyAsMermaid": "Copier en Mermaid"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",
@@ -335,7 +339,9 @@
     "retentionRedactAction": "Caviarder définitivement",
     "opfsUnavailable": "Ce navigateur (ou le mode privé) empêche le stockage local des médias : les images ne s'afficheront pas. Ouvrez le dossier dans une fenêtre normale.",
     "urlCopied": "URL copiée",
-    "urlCopyFailed": "Échec de la copie de l'URL"
+    "urlCopyFailed": "Échec de la copie de l'URL",
+    "mermaidCopied": "Sélection copiée en Mermaid",
+    "mermaidCopyFailed": "Impossible de copier dans le presse-papiers"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

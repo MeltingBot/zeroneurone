@@ -185,7 +185,11 @@
       "noLabel": "Sem rótulo",
       "openUrl": "Abrir URL",
       "copyUrl": "Copiar URL",
-      "links": "Ligações ({{count}})"
+      "links": "Ligações ({{count}})",
+      "analyze": "Analisar",
+      "organize": "Organizar",
+      "tabs": "Separadores",
+      "copyAsMermaid": "Copiar como Mermaid"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Redatar definitivamente",
     "opfsUnavailable": "Este navegador (ou o modo privado) impede o armazenamento local de mídia: as imagens não serão exibidas. Abra o dossiê numa janela normal.",
     "urlCopied": "URL copiado",
-    "urlCopyFailed": "Falha ao copiar o URL"
+    "urlCopyFailed": "Falha ao copiar o URL",
+    "mermaidCopied": "Seleção copiada como Mermaid",
+    "mermaidCopyFailed": "Não foi possível copiar para a área de transferência"
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",

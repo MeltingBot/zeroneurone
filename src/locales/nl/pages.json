@@ -185,7 +185,11 @@
       "noLabel": "Zonder label",
       "openUrl": "URL openen",
       "copyUrl": "URL kopiëren",
-      "links": "Links ({{count}})"
+      "links": "Links ({{count}})",
+      "analyze": "Analyseren",
+      "organize": "Ordenen",
+      "tabs": "Tabbladen",
+      "copyAsMermaid": "Kopiëren als Mermaid"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Definitief censureren",
     "opfsUnavailable": "Deze browser (of privémodus) blokkeert lokale media-opslag: afbeeldingen worden niet weergegeven. Open het dossier in een normaal venster.",
     "urlCopied": "URL gekopieerd",
-    "urlCopyFailed": "Kopiëren van URL mislukt"
+    "urlCopyFailed": "Kopiëren van URL mislukt",
+    "mermaidCopied": "Selectie gekopieerd als Mermaid",
+    "mermaidCopyFailed": "Kopiëren naar het klembord mislukt"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

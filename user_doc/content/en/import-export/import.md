@@ -387,6 +387,54 @@ Excalidraw elements are converted to ZeroNeurone elements:
 
 ---
 
+### Mermaid
+
+**Mermaid diagrams** of type `flowchart` or `graph`, in any direction (`TD`, `LR`…): pasted text, `.mmd` / `.mermaid` file, or Markdown `.md` file containing a ` ```mermaid ` block.
+
+Handy to structure notes with an AI assistant: ask it for "a Mermaid graph of the people, companies and relationships in this text", then paste the result into ZeroNeurone.
+
+Three ways to import:
+- **Paste on the canvas** (Ctrl+V): Mermaid text is detected automatically, even inside a ` ```mermaid ` block surrounded by explanations
+- **Right-click on the canvas → Paste**
+- **Import** → `.mmd`, `.mermaid` or `.md` file (in Markdown, the first ` ```mermaid ` flowchart block is used)
+
+The diagram is then positioned in **placement mode**, without touching existing content. The layout follows the diagram direction (`TD`, `LR`…).
+
+| Mermaid | ZeroNeurone |
+|---------|-------------|
+| `A[text]`, `A(text)`, `A([text])`, `A[[text]]` | Rectangle element |
+| `A((text))` | Circle element |
+| `A{text}` | Diamond element |
+| `A{{text}}` | Hexagon element |
+| `A --> B`, `A ==> B` (thick) | Directed link |
+| `A --- B` | Undirected link |
+| `A -.-> B` | Dashed link |
+| `A <--> B` | Bidirectional link |
+| `A -->\|label\| B`, `A -- label --> B` | Link label |
+| `subgraph Title … end` | "Title" tag on the subgraph's elements |
+| `classDef`, `class`, `:::`, `style` (`fill`, `stroke`) | Fill and border color |
+
+#### Example
+
+```
+flowchart LR
+  A((Alice Martin)) -->|manages| B[Alpha Ltd]
+  B -.->|suspected| C{Paris}
+  subgraph Family
+    A --- D((Bob Martin))
+  end
+```
+
+{{< hint info >}}
+**Limits**: only `flowchart` and `graph` are supported (not `sequenceDiagram`, `erDiagram`, `mindmap`…). Unrecognized lines are skipped and counted in a warning. Positions are not read: Mermaid has none.
+{{< /hint >}}
+
+{{< hint info >}}
+**The other way round**: select several elements, then right-click → **Copy as Mermaid** to get a block you can paste into a wiki, Obsidian, GitHub or a Markdown report.
+{{< /hint >}}
+
+---
+
 ### OSINT Industries
 
 **JSON format** exported from OSINT Industries.
@@ -606,7 +654,7 @@ Each element carries its debit/credit totals, related accounts and payment metho
 
 From an open dossier, the **Import** button in the toolbar lets you add data directly into the current dossier.
 
-**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
+**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
 ### Placement Mode
 

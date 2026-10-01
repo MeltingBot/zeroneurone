@@ -132,7 +132,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetDossierId === 'new') {
         // Create new dossier with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|anx|anb|ged|gw)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
         const dossier = await createDossier(name, '');
         dossierId = dossier.id;
         createdNewDossier = true;
@@ -218,6 +218,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         } else {
           result = await importService.importFromGraphML(content, dossierId);
         }
+      } else if (/\.(mmd|mermaid|md|markdown)$/i.test(file.name)) {
+        const content = await importService.readFileAsText(file);
+        const { importMermaid } = await import('../../services/importMermaid');
+        result = await importMermaid(content, dossierId);
       } else if (file.name.endsWith('.geojson')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromGeoJSON(content, dossierId);
@@ -402,7 +406,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

@@ -168,5 +168,12 @@
       "entryCount": "Entry count",
       "journals": "Journals"
     }
+  },
+  "mermaid": {
+    "empty": "No Mermaid flowchart or graph diagram found",
+    "unsupportedDiagram": "Mermaid diagram \"{{type}}\" is not supported: only flowchart and graph can be imported",
+    "parseError": "Mermaid parsing error: {{message}}",
+    "skippedLines_one": "{{count}} unrecognized Mermaid line skipped",
+    "skippedLines_other": "{{count}} unrecognized Mermaid lines skipped"
   }
 }

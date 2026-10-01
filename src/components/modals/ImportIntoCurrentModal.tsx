@@ -14,6 +14,7 @@ import {
   type FECImportOptions,
 } from '../../services/importFEC';
 import { FECOptionsPanel } from './FECOptionsPanel';
+import { startMermaidPlacement } from '../../services/mermaidPlacement';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -146,6 +147,15 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
         }
         setIsProcessing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      // Mermaid (.mmd / .mermaid, or Markdown with a ```mermaid block) → built in memory, then placement mode
+      if (/\.(mmd|mermaid|md|markdown)$/i.test(file.name)) {
+        const content = await importService.readFileAsText(file);
+        const res = startMermaidPlacement(content, dossierId);
+        if (res.ok) onClose();
+        else setError(res.error);
         return;
       }
 
@@ -336,7 +346,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
             onChange={handleFileSelect}
             className="hidden"
           />

@@ -168,5 +168,12 @@
       "entryCount": "Anzahl Buchungen",
       "journals": "Journale"
     }
+  },
+  "mermaid": {
+    "empty": "Kein Mermaid-Diagramm vom Typ flowchart oder graph gefunden",
+    "unsupportedDiagram": "Mermaid-Diagramm „{{type}}“ wird nicht unterstützt: nur flowchart und graph sind importierbar",
+    "parseError": "Fehler beim Lesen von Mermaid: {{message}}",
+    "skippedLines_one": "{{count}} nicht erkannte Mermaid-Zeile übersprungen",
+    "skippedLines_other": "{{count}} nicht erkannte Mermaid-Zeilen übersprungen"
   }
 }

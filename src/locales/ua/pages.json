@@ -185,7 +185,11 @@
       "noLabel": "Без мітки",
       "openUrl": "Відкрити URL",
       "copyUrl": "Копіювати URL",
-      "links": "Посилання ({{count}})"
+      "links": "Посилання ({{count}})",
+      "analyze": "Аналіз",
+      "organize": "Упорядкувати",
+      "tabs": "Вкладки",
+      "copyAsMermaid": "Копіювати як Mermaid"
     },
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Редагувати назавжди",
     "opfsUnavailable": "Цей браузер (або приватний режим) блокує локальне зберігання медіа: зображення не відображатимуться. Відкрийте справу у звичайному вікні.",
     "urlCopied": "URL скопійовано",
-    "urlCopyFailed": "Не вдалося скопіювати URL"
+    "urlCopyFailed": "Не вдалося скопіювати URL",
+    "mermaidCopied": "Виділення скопійовано як Mermaid",
+    "mermaidCopyFailed": "Не вдалося скопіювати в буфер обміну"
   },
   "map": {
     "noGeoElements": "Немає геолокалізованих елементів",

@@ -185,7 +185,11 @@
       "noLabel": "Senza etichetta",
       "openUrl": "Apri URL",
       "copyUrl": "Copia URL",
-      "links": "Link ({{count}})"
+      "links": "Link ({{count}})",
+      "analyze": "Analizza",
+      "organize": "Organizza",
+      "tabs": "Schede",
+      "copyAsMermaid": "Copia come Mermaid"
     },
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Oscurare definitivamente",
     "opfsUnavailable": "Questo browser (o la modalità privata) impedisce l'archiviazione locale dei media: le immagini non verranno visualizzate. Apri il fascicolo in una finestra normale.",
     "urlCopied": "URL copiato",
-    "urlCopyFailed": "Impossibile copiare l'URL"
+    "urlCopyFailed": "Impossibile copiare l'URL",
+    "mermaidCopied": "Selezione copiata come Mermaid",
+    "mermaidCopyFailed": "Impossibile copiare negli appunti"
   },
   "map": {
     "noGeoElements": "Nessun elemento geolocalizzato",

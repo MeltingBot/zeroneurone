@@ -168,5 +168,12 @@
       "entryCount": "Número de asientos",
       "journals": "Diarios"
     }
+  },
+  "mermaid": {
+    "empty": "No se encontró ningún diagrama Mermaid de tipo flowchart o graph",
+    "unsupportedDiagram": "Diagrama Mermaid «{{type}}» no compatible: solo se pueden importar flowchart y graph",
+    "parseError": "Error al leer Mermaid: {{message}}",
+    "skippedLines_one": "{{count}} línea Mermaid no reconocida omitida",
+    "skippedLines_other": "{{count}} líneas Mermaid no reconocidas omitidas"
   }
 }

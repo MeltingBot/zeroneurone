@@ -52,6 +52,9 @@ import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { isMappableJson } from '../../utils/jsonMapping';
+import { isMermaidFlowchart } from '../../services/importMermaid';
+import { buildMermaidExport } from '../../services/exportMermaid';
+import { startMermaidPlacement } from '../../services/mermaidPlacement';
 import { serializeQuery } from '../../services/query/serializer';
 import { insightsService } from '../../services/insightsService';
 import { fileService } from '../../services/fileService';
@@ -743,9 +746,6 @@ export function Canvas() {
 
   // History store for undo/redo
   const { pushAction, popUndo, popRedo } = useHistoryStore();
-
-  // Whether the global clipboard currently holds elements (enables paste in menus)
-  const hasCopiedElements = useClipboardStore((s) => s.elements.length > 0);
 
   // Selection store — individual selectors prevent re-renders when unrelated selection state changes
   const selectedElementIds = useSelectionStore((s) => s.selectedElementIds);
@@ -2578,8 +2578,10 @@ export function Canvas() {
 
   // Query: Find similar (single element — search by tags)
   const handleFindSimilar = useCallback(() => {
-    if (!contextMenu) return;
-    const el = elements.find(e => e.id === contextMenu.elementId);
+    // Element menu: right-clicked element; canvas menu: the single selected element
+    const targetId = contextMenu?.elementId ?? getSelectedElementIds()[0];
+    if (!targetId) return;
+    const el = elements.find(e => e.id === targetId);
     if (!el) return;
     if (el.tags.filter(Boolean).length === 0) {
       useUIStore.getState().showToast('warning', tPages('dossier.findSimilarNoTags'));
@@ -2601,7 +2603,7 @@ export function Canvas() {
     useQueryStore.getState().setText(text);
     useQueryStore.getState().execute();
     useUIStore.getState().setSidePanelTab('query');
-  }, [contextMenu, elements]);
+  }, [contextMenu, elements, getSelectedElementIds]);
 
   // Open a URL from an element property in a new tab.
   const handleOpenUrl = useCallback((url: string) => {
@@ -2644,6 +2646,19 @@ export function Canvas() {
     useUIStore.getState().setSidePanelTab('query');
   }, [getSelectedElementIds, elements]);
 
+  // Copy the selection as a Mermaid flowchart (Markdown notes, wikis, reports)
+  const handleCopyAsMermaid = useCallback(() => {
+    const ids = new Set(getSelectedElementIds());
+    if (ids.size === 0) return;
+    // Children of selected groups come along
+    for (const el of elements) if (el.parentGroupId && ids.has(el.parentGroupId)) ids.add(el.id);
+    const selected = elements.filter(el => ids.has(el.id));
+    const between = links.filter(l => ids.has(l.fromId) && ids.has(l.toId));
+    navigator.clipboard.writeText(buildMermaidExport(selected, between))
+      .then(() => toast.success(tPages('dossier.mermaidCopied')))
+      .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
+  }, [getSelectedElementIds, elements, links, tPages]);
+
   // Paste from canvas context menu (at cursor position)
   const handleCanvasContextMenuPaste = useCallback(async () => {
     if (!canvasContextMenu) return;
@@ -2657,6 +2672,7 @@ export function Canvas() {
       let imageFile: File | null = null;
 
       // Only take the first image found (clipboard may have multiple representations)
+      let textItem: ClipboardItem | null = null;
       for (const item of clipboardItems) {
         if (imageFile) break;
         for (const type of item.types) {
@@ -2665,6 +2681,17 @@ export function Canvas() {
             imageFile = new File([blob], `image.${type.split('/')[1]}`, { type });
             break;
           }
+          if (type === 'text/plain' && !textItem) textItem = item;
+        }
+      }
+
+      // Mermaid flowchart text → import placement mode (same as Ctrl+V)
+      if (!imageFile && textItem && currentDossier) {
+        const text = (await (await textItem.getType('text/plain')).text()).trim();
+        if (isMermaidFlowchart(text)) {
+          const res = startMermaidPlacement(text, currentDossier.id);
+          if (!res.ok) toast.error(res.error);
+          return;
         }
       }
 
@@ -2822,38 +2849,6 @@ export function Canvas() {
       clearSelection();
     }
   }, [elements, links, getSelectedElementIds, contextMenu, selectedLinkIds, deleteElements, clearSelection, pushAction, writeClipboard]);
-
-  // Paste handler for context menu (paste at context menu position)
-  const handleContextMenuPaste = useCallback(() => {
-    const clip = useClipboardStore.getState();
-    if (clip.elements.length === 0) return;
-    if (!reactFlowWrapper.current || !contextMenu || !currentDossier) return;
-
-    // Calculate paste position relative to context menu click
-    const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    const pasteX = (contextMenu.x - bounds.left - viewport.x) / viewport.zoom;
-    const pasteY = (contextMenu.y - bounds.top - viewport.y) / viewport.zoom;
-
-    const { newElements, newLinks } = cloneClipboardForPaste(clip, currentDossier.id, pasteX, pasteY);
-
-    // Single Y.js transaction for all elements + links
-    pasteElements(newElements, newLinks);
-
-    // Save for undo (include both element and link IDs)
-    const newElementIds = newElements.map(el => el.id);
-    if (activeTabId) {
-      addTabMembers(activeTabId, newElementIds);
-    }
-    const newLinkIds = newLinks.map(l => l.id);
-    pushAction({
-      type: 'create-elements',
-      undo: {},
-      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
-    });
-
-    // Select all pasted elements
-    selectElements(newElementIds);
-  }, [contextMenu, viewport, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Duplicate handler for context menu
   const handleContextMenuDuplicate = useCallback(() => {
@@ -4180,6 +4175,15 @@ export function Canvas() {
       // STIX2, Excalidraw, OSINT Industries…) goes through the standard import
       // (placement mode); otherwise, generic JSON opens the field mapper.
       const trimmedClip = clipboardText.trim();
+
+      // PRIORITY 0a: Mermaid flowchart text (e.g. produced by an LLM) → placement mode
+      const inRichText = event.target instanceof HTMLElement && event.target.isContentEditable;
+      if (!inRichText && !hasInternalCopyMarker && files.length === 0 && currentDossier && isMermaidFlowchart(trimmedClip)) {
+        event.preventDefault();
+        const res = startMermaidPlacement(trimmedClip, currentDossier.id);
+        if (!res.ok) toast.error(res.error);
+        return;
+      }
       if (!hasInternalCopyMarker && files.length === 0 && (trimmedClip.startsWith('{') || trimmedClip.startsWith('['))) {
         try {
           const data = JSON.parse(trimmedClip);
@@ -4571,7 +4575,6 @@ export function Canvas() {
               elementLabel={contextMenu.elementLabel}
               isFocused={focusElementId === contextMenu.elementId}
               isHidden={hiddenElementIds.has(contextMenu.elementId)}
-              hasCopiedElements={hasCopiedElements}
               hasPreviewableAsset={!!contextMenu.previewAsset}
               otherSelectedId={otherSelectedElement?.id}
               otherSelectedLabel={otherSelectedElement?.label || t('empty.unnamed')}
@@ -4582,8 +4585,8 @@ export function Canvas() {
               onDelete={handleContextMenuDelete}
               onCopy={handleContextMenuCopy}
               onCut={handleContextMenuCut}
-              onPaste={handleContextMenuPaste}
               onDuplicate={handleContextMenuDuplicate}
+              onCopyAsMermaid={handleCopyAsMermaid}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
               onFindAllPaths={handleFindAllPaths}
@@ -4656,6 +4659,9 @@ export function Canvas() {
               onDeleteSelection={handleSelectionDelete}
               onHideSelection={handleSelectionHide}
               onGroupSelection={handleGroupSelection}
+              onCopyAsMermaid={handleCopyAsMermaid}
+              onFindSimilar={handleFindSimilar}
+              onQueryFromSelection={handleQueryFromSelection}
               onClose={closeCanvasContextMenu}
               pluginExtensions={[
                 ...canvasPlugins,

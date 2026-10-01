@@ -168,5 +168,12 @@
       "entryCount": "Nombre d'assentaments",
       "journals": "Diaris"
     }
+  },
+  "mermaid": {
+    "empty": "No s'ha trobat cap diagrama Mermaid de tipus flowchart o graph",
+    "unsupportedDiagram": "Diagrama Mermaid «{{type}}» no compatible: només es poden importar flowchart i graph",
+    "parseError": "Error de lectura Mermaid: {{message}}",
+    "skippedLines_one": "{{count}} línia Mermaid no reconeguda omesa",
+    "skippedLines_other": "{{count}} línies Mermaid no reconegudes omeses"
   }
 }
