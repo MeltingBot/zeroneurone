@@ -1,12 +1,10 @@
-import { memo, useRef, useState, useLayoutEffect, useMemo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, icons } from 'lucide-react';
+import { memo } from 'react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
-import { useQueryStore } from '../../stores/queryStore';
-import { useDossierStore } from '../../stores/dossierStore';
-import { useUIStore } from '../../stores/uiStore';
-import { serializeQuery } from '../../services/query/serializer';
-import type { QueryCondition, QueryOr } from '../../services/query/types';
+import { ContextMenuShell } from './contextMenu/ContextMenuShell';
+import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
+import { submenu } from './contextMenu/types';
 
 interface CanvasContextMenuProps {
   x: number;
@@ -24,6 +22,10 @@ interface CanvasContextMenuProps {
   onDeleteSelection?: () => void;
   onHideSelection?: () => void;
   onGroupSelection?: () => void;
+  onCopyAsMermaid?: () => void;
+  // Query actions
+  onFindSimilar?: () => void;
+  onQueryFromSelection?: () => void;
   onClose: () => void;
   pluginExtensions?: ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -43,6 +45,9 @@ function CanvasContextMenuComponent({
   onDeleteSelection,
   onHideSelection,
   onGroupSelection,
+  onCopyAsMermaid,
+  onFindSimilar,
+  onQueryFromSelection,
   onClose,
   pluginExtensions,
   menuContext,
@@ -50,310 +55,46 @@ function CanvasContextMenuComponent({
   const { t } = useTranslation('pages');
   const cm = (key: string) => t(`dossier.contextMenu.${key}`);
   const hasSelection = selectedCount > 0;
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x, y });
-
-  const visibleExtensions = useMemo(() => {
-    if (!pluginExtensions || !menuContext) return [];
-    return pluginExtensions.filter(ext => !ext.visible || ext.visible(menuContext));
-  }, [pluginExtensions, menuContext]);
-
-  // Query from selection handlers
-  const handleFindSimilar = () => {
-    if (!menuContext || menuContext.elementIds.length !== 1) return;
-    const elements = useDossierStore.getState().elements;
-    const el = elements.find(e => e.id === menuContext.elementIds[0]);
-    if (!el || el.tags.length === 0) return;
-
-    // Build query: tag = "X" OR tag = "Y"
-    const conditions: QueryCondition[] = el.tags.filter(Boolean).map(tag => ({
-      type: 'condition' as const,
-      field: 'tag',
-      operator: 'eq' as const,
-      value: tag,
-    }));
-
-    const ast = conditions.length === 1
-      ? conditions[0]
-      : { type: 'or' as const, children: conditions } as QueryOr;
-
-    const text = serializeQuery(ast);
-    useQueryStore.getState().setText(text);
-    useQueryStore.getState().execute();
-    useUIStore.getState().setSidePanelTab('query');
-    onClose();
-  };
-
-  const handleQueryFromSelection = () => {
-    if (!menuContext || menuContext.elementIds.length < 2) return;
-    const elements = useDossierStore.getState().elements;
-
-    // Build query: label = "A" OR label = "B" OR ...
-    const conditions: QueryCondition[] = menuContext.elementIds
-      .map(id => elements.find(e => e.id === id))
-      .filter(Boolean)
-      .map(el => ({
-        type: 'condition' as const,
-        field: 'label',
-        operator: 'eq' as const,
-        value: el!.label,
-      }));
-
-    if (conditions.length === 0) return;
-
-    const ast = conditions.length === 1
-      ? conditions[0]
-      : { type: 'or' as const, children: conditions } as QueryOr;
-
-    const text = serializeQuery(ast);
-    useQueryStore.getState().setText(text);
-    useQueryStore.getState().execute();
-    useUIStore.getState().setSidePanelTab('query');
-    onClose();
-  };
-
-  // Adjust position to keep menu within viewport
-  useLayoutEffect(() => {
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect();
-      const padding = 8;
-      let newX = x;
-      let newY = y;
-
-      // Check right edge
-      if (x + rect.width > window.innerWidth - padding) {
-        newX = window.innerWidth - rect.width - padding;
-      }
-
-      // Check bottom edge
-      if (y + rect.height > window.innerHeight - padding) {
-        newY = window.innerHeight - rect.height - padding;
-      }
-
-      // Check left edge
-      if (newX < padding) {
-        newX = padding;
-      }
-
-      // Check top edge
-      if (newY < padding) {
-        newY = padding;
-      }
-
-      if (newX !== x || newY !== y) {
-        setPosition({ x: newX, y: newY });
-      }
-    }
-  }, [x, y]);
+  const pluginItems = usePluginMenuItems(pluginExtensions, menuContext);
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onClose();
-        }}
-      />
-
-      {/* Menu */}
-      <div
-        ref={menuRef}
-        className="fixed z-50 min-w-44 py-1 bg-bg-primary border border-border-default sketchy-border-soft panel-shadow"
-        style={{ left: position.x, top: position.y }}
-      >
-        {/* Selection actions (when elements are selected) */}
-        {hasSelection && (
-          <>
-            <div className="px-3 py-1.5 border-b border-border-default">
-              <span className="text-xs text-text-secondary">
-                {t('dossier.toolbar.selectedCount', { count: selectedCount })}
-              </span>
-            </div>
-            <div className="py-1 border-b border-border-default">
-              {onCopySelection && (
-                <button
-                  onClick={() => {
-                    onCopySelection();
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  <Copy size={14} />
-                  {cm('copy')}
-                  <span className="ml-auto text-xs text-text-tertiary">Ctrl+C</span>
-                </button>
-              )}
-              {onCutSelection && (
-                <button
-                  onClick={() => {
-                    onCutSelection();
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  <Scissors size={14} />
-                  {cm('cut')}
-                  <span className="ml-auto text-xs text-text-tertiary">Ctrl+X</span>
-                </button>
-              )}
-              {onDuplicateSelection && (
-                <button
-                  onClick={() => {
-                    onDuplicateSelection();
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  <CopyPlus size={14} />
-                  {cm('duplicate')}
-                  <span className="ml-auto text-xs text-text-tertiary">Ctrl+D</span>
-                </button>
-              )}
-            </div>
-            <div className="py-1 border-b border-border-default">
-              {selectedCount > 1 && onGroupSelection && (
-                <button
-                  onClick={() => {
-                    onGroupSelection();
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  <Group size={14} />
-                  {cm('group')}
-</button>
-              )}
-              {onHideSelection && (
-                <button
-                  onClick={() => {
-                    onHideSelection();
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  <EyeOff size={14} />
-                  {cm('hide')}
-                </button>
-              )}
-              {onDeleteSelection && (
-                <button
-                  onClick={() => {
-                    onDeleteSelection();
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-error hover:bg-pastel-pink transition-colors"
-                >
-                  <Trash2 size={14} />
-                  {cm('delete')}
-                  <span className="ml-auto text-xs text-text-tertiary">Del</span>
-                </button>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Query actions */}
-        {hasSelection && (
-          <div className="py-1 border-b border-border-default">
-            {selectedCount === 1 && (
-              <button
-                onClick={handleFindSimilar}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Search size={14} />
-                {cm('findSimilar')}
-              </button>
-            )}
-            {selectedCount > 1 && (
-              <button
-                onClick={handleQueryFromSelection}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-              >
-                <Search size={14} />
-                {cm('queryFromSelection')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Create new element */}
-        <div className="py-1">
-          <button
-            onClick={() => {
-              onCreateElement();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <Plus size={14} />
-            {cm('addElement')}
-            <span className="ml-auto text-xs text-text-tertiary">E</span>
-          </button>
-          <button
-            onClick={() => {
-              onCreateGroup();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <Group size={14} />
-            {cm('addGroup')}
-            <span className="ml-auto text-xs text-text-tertiary">G</span>
-          </button>
-          <button
-            onClick={() => {
-              onCreateAnnotation();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <StickyNote size={14} />
-            {cm('addAnnotation')}
-            <span className="ml-auto text-xs text-text-tertiary">N</span>
-          </button>
-        </div>
-
-        {/* Paste */}
-        <div className="py-1 border-t border-border-default">
-          <button
-            onClick={() => {
-              onPaste();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-          >
-            <Clipboard size={14} />
-            {cm('paste')}
-            <span className="ml-auto text-xs text-text-tertiary">Ctrl+V</span>
-          </button>
-        </div>
-
-        {/* Plugin extensions */}
-        {visibleExtensions.length > 0 && (
-          <div className="py-1 border-t border-border-default">
-            {visibleExtensions.map((ext) => {
-              const Icon = icons[ext.icon as keyof typeof icons];
-              return (
-                <button
-                  key={ext.id}
-                  onClick={() => {
-                    if (menuContext) ext.action(menuContext);
-                    onClose();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  {Icon && <Icon size={14} />}
-                  {ext.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </>
+    <ContextMenuShell
+      x={x}
+      y={y}
+      minWidthClass="min-w-44"
+      onClose={onClose}
+      header={hasSelection ? (
+        <span className="text-xs text-text-secondary">
+          {t('dossier.toolbar.selectedCount', { count: selectedCount })}
+        </span>
+      ) : undefined}
+      sections={[
+        hasSelection ? [
+          onCopySelection && { id: 'copy', label: cm('copy'), icon: Copy, shortcut: 'Ctrl+C', onSelect: onCopySelection },
+          onCutSelection && { id: 'cut', label: cm('cut'), icon: Scissors, shortcut: 'Ctrl+X', onSelect: onCutSelection },
+          onDuplicateSelection && { id: 'duplicate', label: cm('duplicate'), icon: CopyPlus, shortcut: 'Ctrl+D', onSelect: onDuplicateSelection },
+          selectedCount > 1 && onCopyAsMermaid && { id: 'copy-mermaid', label: cm('copyAsMermaid'), icon: Code, onSelect: onCopyAsMermaid },
+        ] : [],
+        hasSelection ? [
+          submenu('analyze', cm('analyze'), ScanSearch, [
+            selectedCount === 1 && onFindSimilar && { id: 'find-similar', label: cm('findSimilar'), icon: Search, onSelect: onFindSimilar },
+            selectedCount > 1 && onQueryFromSelection && { id: 'query-selection', label: cm('queryFromSelection'), icon: Search, onSelect: onQueryFromSelection },
+          ]),
+          selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
+          onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
+        ] : [],
+        [
+          { id: 'add-element', label: cm('addElement'), icon: Plus, shortcut: 'E', onSelect: onCreateElement },
+          { id: 'add-group', label: cm('addGroup'), icon: Group, shortcut: 'G', onSelect: onCreateGroup },
+          { id: 'add-annotation', label: cm('addAnnotation'), icon: StickyNote, shortcut: 'N', onSelect: onCreateAnnotation },
+        ],
+        [{ id: 'paste', label: cm('paste'), icon: Clipboard, shortcut: 'Ctrl+V', onSelect: onPaste }],
+        pluginItems,
+        hasSelection && onDeleteSelection
+          ? [{ id: 'delete', label: cm('delete'), icon: Trash2, danger: true, shortcut: 'Del', onSelect: onDeleteSelection }]
+          : [],
+      ]}
+    />
   );
 }
 

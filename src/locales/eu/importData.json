@@ -168,5 +168,12 @@
       "entryCount": "Idazpen kopurua",
       "journals": "Egunkariak"
     }
+  },
+  "mermaid": {
+    "empty": "Ez da flowchart edo graph motako Mermaid diagramarik aurkitu",
+    "unsupportedDiagram": "«{{type}}» Mermaid diagrama ez da onartzen: flowchart eta graph soilik inporta daitezke",
+    "parseError": "Errorea Mermaid irakurtzean: {{message}}",
+    "skippedLines_one": "Ezagutu gabeko Mermaid lerro {{count}} saltatu da",
+    "skippedLines_other": "Ezagutu gabeko {{count}} Mermaid lerro saltatu dira"
   }
 }

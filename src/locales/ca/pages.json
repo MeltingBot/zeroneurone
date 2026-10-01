@@ -185,7 +185,11 @@
       "noLabel": "Sense etiqueta",
       "openUrl": "Obrir l'URL",
       "copyUrl": "Copiar l'URL",
-      "links": "Enllaços ({{count}})"
+      "links": "Enllaços ({{count}})",
+      "analyze": "Analitzar",
+      "organize": "Organitzar",
+      "tabs": "Pestanyes",
+      "copyAsMermaid": "Copiar com a Mermaid"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Redactar definitivament",
     "opfsUnavailable": "Aquest navegador (o el mode privat) impedeix l'emmagatzematge local dels mitjans: les imatges no es mostraran. Obre l'expedient en una finestra normal.",
     "urlCopied": "URL copiada",
-    "urlCopyFailed": "No s'ha pogut copiar l'URL"
+    "urlCopyFailed": "No s'ha pogut copiar l'URL",
+    "mermaidCopied": "Selecció copiada com a Mermaid",
+    "mermaidCopyFailed": "No s'ha pogut copiar al porta-retalls"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

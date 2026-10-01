@@ -24,7 +24,7 @@ export function initMyPlugin() {
     id: 'my-plugin-action',
     label: 'Analyser avec MyPlugin',
     icon: 'Brain',              // N'importe quel nom d'icone Lucide
-    separator: true,            // Ligne horizontale avant cette entree
+    separator: true,            // Ignore : separateurs geres par ZN
     action: (context) => {
       console.log('Elements selectionnes:', context.elementIds);
       // Votre logique ici
@@ -263,7 +263,7 @@ interface ContextMenuExtension {
   id: string;                                    // Identifiant unique
   label: string;                                 // Label affiche
   icon: string;                                  // Nom d'icone Lucide (PascalCase)
-  separator?: boolean;                           // Ligne horizontale avant
+  separator?: boolean;                           // Ignore (compatibilite), separateurs geres par ZN
   action: (context: MenuContext) => void | Promise<void>;        // Handler de clic (sync ou async)
   visible?: (context: MenuContext) => boolean | Promise<boolean>; // Condition de visibilite
   children?: (context: MenuContext) => Promise<ContextMenuChild[]>; // Sous-menu dynamique
@@ -337,6 +337,21 @@ registerPlugin('contextMenu:link', {
   },
 });
 ```
+
+#### Affichage dans le menu
+
+ZN construit le menu à partir de vos entrées ; vous n'avez rien à gérer côté plugin.
+
+- **`visible` asynchrone** : la promesse est attendue avant l'affichage (les entrées de tous les plugins sont résolues en parallèle, une fois à l'ouverture du menu). Une exception ou un rejet équivaut à `false`.
+- **`children`** : pris en charge dans les trois menus.
+  - 0 enfant → clic sur l'entrée = `action(context)`
+  - 1 enfant → l'entrée affiche le label de l'enfant et exécute directement son `action()`
+  - 2 enfants ou plus → sous-menu
+- **Regroupement par plugin** : un plugin qui a une seule entrée visible reste au premier niveau ; à partir de 2 entrées, elles sont regroupées dans un sous-menu portant le nom du plugin (le `name` de sa carte `home:card`, sinon son `pluginId`). Choisissez des labels qui se comprennent seuls (« Suggérer un tag » plutôt que « Suggérer »).
+- **`separator`** : ignoré (conservé pour compatibilité) — les séparateurs sont gérés par ZN.
+- Les entrées plugins apparaissent après les actions natives, juste avant « Supprimer ». Le menu est navigable au clavier (↑ ↓ → ← Entrée Échap).
+
+**Quel slot choisir ?** Le menu contextuel sert aux actions liées à ce qui a été cliqué : un élément, un lien, ou une position sur le canvas (`canvasPosition`). Une action qui porte sur tout le dossier (sauvegarde, changement de réglage, ouverture d'un panneau) a sa place dans `header:right` ou `panel:right`, pas dans `contextMenu:canvas`.
 
 ### `keyboard:shortcuts` — Raccourcis clavier
 

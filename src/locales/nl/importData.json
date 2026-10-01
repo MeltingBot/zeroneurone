@@ -168,5 +168,12 @@
       "entryCount": "Aantal boekingen",
       "journals": "Dagboeken"
     }
+  },
+  "mermaid": {
+    "empty": "Geen Mermaid-diagram van het type flowchart of graph gevonden",
+    "unsupportedDiagram": "Mermaid-diagram \"{{type}}\" wordt niet ondersteund: alleen flowchart en graph kunnen worden geïmporteerd",
+    "parseError": "Fout bij het lezen van Mermaid: {{message}}",
+    "skippedLines_one": "{{count}} onherkende Mermaid-regel overgeslagen",
+    "skippedLines_other": "{{count}} onherkende Mermaid-regels overgeslagen"
   }
 }

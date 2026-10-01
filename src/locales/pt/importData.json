@@ -168,5 +168,12 @@
       "entryCount": "Número de lançamentos",
       "journals": "Diários"
     }
+  },
+  "mermaid": {
+    "empty": "Nenhum diagrama Mermaid do tipo flowchart ou graph encontrado",
+    "unsupportedDiagram": "Diagrama Mermaid «{{type}}» não suportado: só flowchart e graph podem ser importados",
+    "parseError": "Erro ao ler Mermaid: {{message}}",
+    "skippedLines_one": "{{count}} linha Mermaid não reconhecida ignorada",
+    "skippedLines_other": "{{count}} linhas Mermaid não reconhecidas ignoradas"
   }
 }

@@ -185,7 +185,11 @@
       "noLabel": "Etiketarik gabe",
       "openUrl": "Ireki URLa",
       "copyUrl": "Kopiatu URLa",
-      "links": "Estekak ({{count}})"
+      "links": "Estekak ({{count}})",
+      "analyze": "Aztertu",
+      "organize": "Antolatu",
+      "tabs": "Fitxak",
+      "copyAsMermaid": "Kopiatu Mermaid gisa"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Behin betiko zentzuratu",
     "opfsUnavailable": "Nabigatzaile honek (edo modu pribatuak) tokiko multimedia-biltegiratzea eragozten du: irudiak ez dira bistaratuko. Ireki espedientea leiho normal batean.",
     "urlCopied": "URLa kopiatu da",
-    "urlCopyFailed": "Ezin izan da URLa kopiatu"
+    "urlCopyFailed": "Ezin izan da URLa kopiatu",
+    "mermaidCopied": "Hautapena Mermaid gisa kopiatu da",
+    "mermaidCopyFailed": "Ezin izan da arbelera kopiatu"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

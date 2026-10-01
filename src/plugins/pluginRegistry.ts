@@ -149,6 +149,17 @@ export function getPlugins<K extends keyof PluginSlots>(
   return result as PluginSlots[K];
 }
 
+/** pluginId of a registered extension (object field or 3rd arg of registerPlugin). */
+export function getExtensionPluginId(ext: unknown): string | undefined {
+  return resolvePluginId(ext);
+}
+
+/** Display name and icon of a plugin, from its home:card registration. */
+export function getPluginInfo(pluginId: string): { name: string; icon?: string } | undefined {
+  const card = slots['home:card'].find((c) => resolvePluginId(c) === pluginId);
+  return card ? { name: card.name, icon: card.icon } : undefined;
+}
+
 export function clearAllPlugins(): void {
   for (const key of Object.keys(slots) as (keyof PluginSlots)[]) {
     slots[key] = [] as any;

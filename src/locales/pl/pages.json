@@ -185,7 +185,11 @@
       "noLabel": "Bez etykiety",
       "openUrl": "Otwórz URL",
       "copyUrl": "Kopiuj URL",
-      "links": "Linki ({{count}})"
+      "links": "Linki ({{count}})",
+      "analyze": "Analizuj",
+      "organize": "Organizuj",
+      "tabs": "Karty",
+      "copyAsMermaid": "Kopiuj jako Mermaid"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
@@ -334,7 +338,9 @@
     "retentionRedactAction": "Zredagować na stałe",
     "opfsUnavailable": "Ta przeglądarka (lub tryb prywatny) blokuje lokalne przechowywanie multimediów: obrazy nie będą wyświetlane. Otwórz teczkę w zwykłym oknie.",
     "urlCopied": "Skopiowano URL",
-    "urlCopyFailed": "Nie udało się skopiować URL"
+    "urlCopyFailed": "Nie udało się skopiować URL",
+    "mermaidCopied": "Zaznaczenie skopiowane jako Mermaid",
+    "mermaidCopyFailed": "Nie udało się skopiować do schowka"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

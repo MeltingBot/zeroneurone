@@ -168,5 +168,14 @@
       "entryCount": "Кількість проведень",
       "journals": "Журнали"
     }
+  },
+  "mermaid": {
+    "empty": "Не знайдено діаграми Mermaid типу flowchart або graph",
+    "unsupportedDiagram": "Діаграма Mermaid «{{type}}» не підтримується: імпортувати можна лише flowchart і graph",
+    "parseError": "Помилка читання Mermaid: {{message}}",
+    "skippedLines_one": "Пропущено {{count}} нерозпізнаний рядок Mermaid",
+    "skippedLines_few": "Пропущено {{count}} нерозпізнані рядки Mermaid",
+    "skippedLines_many": "Пропущено {{count}} нерозпізнаних рядків Mermaid",
+    "skippedLines_other": "Пропущено {{count}} нерозпізнаних рядків Mermaid"
   }
 }

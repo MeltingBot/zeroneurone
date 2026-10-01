@@ -24,7 +24,7 @@ export function initMyPlugin() {
     id: 'my-plugin-action',
     label: 'Analyze with MyPlugin',
     icon: 'Brain',              // Any Lucide icon name
-    separator: true,            // Horizontal line before this entry
+    separator: true,            // Ignored: separators handled by ZN
     action: (context) => {
       console.log('Selected elements:', context.elementIds);
       // Your logic here
@@ -263,7 +263,7 @@ interface ContextMenuExtension {
   id: string;                                    // Unique identifier
   label: string;                                 // Display label
   icon: string;                                  // Lucide icon name (PascalCase)
-  separator?: boolean;                           // Add horizontal line before
+  separator?: boolean;                           // Ignored (compatibility), separators handled by ZN
   action: (context: MenuContext) => void | Promise<void>;        // Click handler (sync or async)
   visible?: (context: MenuContext) => boolean | Promise<boolean>; // Visibility condition
   children?: (context: MenuContext) => Promise<ContextMenuChild[]>; // Dynamic submenu
@@ -337,6 +337,21 @@ registerPlugin('contextMenu:link', {
   },
 });
 ```
+
+#### How entries are displayed
+
+ZN builds the menu from your entries; there is nothing to manage on the plugin side.
+
+- **Async `visible`**: the promise is awaited before display (entries of all plugins are resolved in parallel, once when the menu opens). A thrown error or rejection counts as `false`.
+- **`children`**: supported in all three menus.
+  - 0 children → clicking the entry runs `action(context)`
+  - 1 child → the entry shows the child's label and runs its `action()` directly
+  - 2 or more children → submenu
+- **Grouping by plugin**: a plugin with a single visible entry stays at the top level; from 2 entries on, they are grouped in a submenu named after the plugin (the `name` of its `home:card`, otherwise its `pluginId`). Pick labels that make sense on their own ("Suggest a tag" rather than "Suggest").
+- **`separator`**: ignored (kept for compatibility) — separators are handled by ZN.
+- Plugin entries appear after the native actions, just before "Delete". The menu is keyboard-navigable (↑ ↓ → ← Enter Esc).
+
+**Which slot?** The context menu is for actions tied to what was clicked: an element, a link, or a position on the canvas (`canvasPosition`). An action on the whole dossier (backup, changing a setting, opening a panel) belongs in `header:right` or `panel:right`, not in `contextMenu:canvas`.
 
 ### `keyboard:shortcuts` — Keyboard Shortcuts
 

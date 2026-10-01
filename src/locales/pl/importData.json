@@ -168,5 +168,14 @@
       "entryCount": "Liczba zapisów",
       "journals": "Dzienniki"
     }
+  },
+  "mermaid": {
+    "empty": "Nie znaleziono diagramu Mermaid typu flowchart lub graph",
+    "unsupportedDiagram": "Diagram Mermaid „{{type}}” nie jest obsługiwany: można importować tylko flowchart i graph",
+    "parseError": "Błąd odczytu Mermaid: {{message}}",
+    "skippedLines_one": "Pominięto {{count}} nierozpoznany wiersz Mermaid",
+    "skippedLines_few": "Pominięto {{count}} nierozpoznane wiersze Mermaid",
+    "skippedLines_many": "Pominięto {{count}} nierozpoznanych wierszy Mermaid",
+    "skippedLines_other": "Pominięto {{count}} nierozpoznanych wierszy Mermaid"
   }
 }
