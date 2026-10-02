@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.58.3
+
+### Fixes
+
+- **Plugins : sélecteur de carte de ZN** — les plugins peuvent ouvrir le
+  sélecteur de position de ZN via `api.ui.openGeoPicker(initial, { query })`
+  (nouvelle permission `ui`, accordée par défaut). La carte et la recherche
+  d'adresse restent des appels réseau de ZN ; le texte transmis pré-remplit
+  le champ de recherche, qui attend l'action de l'utilisateur. La promesse
+  renvoie le point choisi, ou `null` en cas d'annulation.
+
 ## 2.58.2
 
 ### Fixes

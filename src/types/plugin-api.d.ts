@@ -277,6 +277,20 @@ export interface ToastAPI {
   dismiss: (id: string) => void;
 }
 
+// ─── UI API ───────────────────────────────────────────────────
+
+export interface UiAPI {
+  /**
+   * Opens ZN's map picker. Map tiles and address search are ZN's own
+   * network calls. `options.query` pre-fills the search field; the search
+   * still waits for the user. Resolves with the chosen point, or null when cancelled.
+   */
+  openGeoPicker: (
+    initial?: { lat: number; lng: number },
+    options?: { query?: string },
+  ) => Promise<{ lat: number; lng: number } | null>;
+}
+
 // ─── Services API ─────────────────────────────────────────────
 
 export interface ServicesAPI {
@@ -375,6 +389,9 @@ export interface PluginAPI {
 
   // Toast / Notifications
   toast: ToastAPI;
+
+  // ZN components opened by plugins (requires the 'ui' permission)
+  ui: UiAPI;
 
   // Plugin data persistence (raw — requires pluginId in each call)
   pluginData: PluginDataAPI;

@@ -70,6 +70,7 @@ import { encryptOpfsBuffer, decryptOpfsBuffer } from '../services/encryption/opf
 
 // ─── Event bus ─────────────────────────────────────────────────
 import { onPluginEvent } from './pluginEventBus';
+import { openGeoPicker } from './pluginUi';
 
 // ─── Navigation ────────────────────────────────────────────────
 // react-router navigate function is set at runtime by NavigateRef in App.tsx
@@ -292,6 +293,15 @@ export const pluginAPI = {
     dismiss(id: string): void {
       useUIStore.getState().dismissToast(id);
     },
+  },
+
+  // ─── ZN components opened by plugins ────────────────────────
+  ui: {
+    /**
+     * Opens ZN's map picker (map tiles and address search are ZN's own).
+     * Resolves with the chosen point, or null when cancelled.
+     */
+    openGeoPicker,
   },
 
   // ─── Chiffrement at-rest (partage de la DEK avec les plugins) ──

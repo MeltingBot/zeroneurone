@@ -14,6 +14,7 @@ import { isWebAuthnAvailable, unlockWithWebAuthn } from './services/encryption/w
 import { db, cleanOrphanedOpfs } from './db/database';
 import { syncService } from './services/syncService';
 import { setPluginNavigate } from './plugins/pluginAPI';
+import { PluginUiHost } from './components/plugins/PluginUiHost';
 
 /**
  * Lit _encryptionMeta directement via l'API IndexedDB native, sans passer par
@@ -335,6 +336,7 @@ function App() {
             <ToastContainer />
             <TutorialOverlay />
             {globalPlugins.map((Plugin, i) => <Plugin key={`gp-${i}`} />)}
+            <PluginUiHost />
           </BrowserRouter>
         </EncryptionGate>
       </MinResolutionGuard>

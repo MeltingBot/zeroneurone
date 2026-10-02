@@ -28,6 +28,7 @@ export type Permission =
   // Events & notifications
   | 'events:subscribe'
   | 'toast'
+  | 'ui'
   // Services
   | 'services:export'
   | 'services:import'
@@ -88,6 +89,7 @@ export const DEFAULT_COMMUNITY_PERMISSIONS: Permission[] = [
   'pluginData:readwrite',
   'events:subscribe',
   'toast',
+  'ui',
   'slots:ui',
   'slots:contextMenu',
 ];

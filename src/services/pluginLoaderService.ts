@@ -218,6 +218,7 @@ const ALL_PERMISSIONS: Permission[] = [
   'pluginData:readwrite',
   'events:subscribe',
   'toast',
+  'ui',
   'services:export', 'services:import', 'services:navigate',
   'db:direct',
   'fileService',

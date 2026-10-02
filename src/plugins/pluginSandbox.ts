@@ -247,6 +247,11 @@ export function buildSandboxedAPI(
     api.toast = scopedAPI.toast;
   }
 
+  // --- ZN components (map picker...) ---
+  if (has(permissions, 'ui')) {
+    api.ui = scopedAPI.ui;
+  }
+
   // --- Services (granular) ---
   if (has(permissions, 'services:export') ||
       has(permissions, 'services:import') ||

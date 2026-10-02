@@ -7,11 +7,13 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 interface GeoPickerProps {
   initialLat?: number;
   initialLng?: number;
+  /** Pre-filled search text; the search itself still waits for the user. */
+  initialQuery?: string;
   onConfirm: (lat: number, lng: number) => void;
   onCancel: () => void;
 }
 
-export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPickerProps) {
+export function GeoPicker({ initialLat, initialLng, initialQuery, onConfirm, onCancel }: GeoPickerProps) {
   const { t } = useTranslation(['panels', 'common']);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -19,7 +21,7 @@ export function GeoPicker({ initialLat, initialLng, onConfirm, onCancel }: GeoPi
 
   const [selectedLat, setSelectedLat] = useState<number | null>(initialLat ?? null);
   const [selectedLng, setSelectedLng] = useState<number | null>(initialLng ?? null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialQuery ?? '');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
