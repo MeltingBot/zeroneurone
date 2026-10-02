@@ -3943,6 +3943,12 @@ export function Canvas() {
         selectElements(visibleIds);
       }
 
+      // Text selected in a preview (PDF, text file): let the browser copy it.
+      // Writing elements to the clipboard here would overwrite it right after.
+      if ((event.key === 'c' || event.key === 'x') && isCtrlOrMeta && window.getSelection()?.toString()) {
+        return;
+      }
+
       // Copy with Ctrl+C
       if (event.key === 'c' && isCtrlOrMeta) {
         const selectedEls = getSelectedElementIds();

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.58.4
+
+### Fixes
+
+- **Aperçu PDF : texte sélectionnable** — un calque de texte pdf.js est
+  superposé au rendu de la page : le texte peut être sélectionné et copié
+  (hors PDF scannés sans OCR). Le Ctrl+C / Ctrl+X du canvas ne remplace plus
+  le presse-papier quand du texte est sélectionné dans un aperçu (PDF ou
+  fichier texte).
+
 ## 2.58.3
 
 ### Fixes

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask } from 'pdfjs-dist';
+import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask, TextLayer } from 'pdfjs-dist';
 import { ChevronLeft, ChevronRight, FileWarning } from 'lucide-react';
 import { ZoomControls } from './ZoomControls';
 import { ZOOM_STEP, clampScale } from './zoom';
@@ -25,6 +25,7 @@ interface PdfPreviewProps {
 export function PdfPreview({ file }: PdfPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textLayerRef = useRef<HTMLDivElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNum, setPageNum] = useState(1);
@@ -89,29 +90,46 @@ export function PdfPreview({ file }: PdfPreviewProps) {
   useEffect(() => {
     const doc = docRef.current;
     const canvas = canvasRef.current;
-    if (!doc || !canvas || scale === null) return;
+    const textDiv = textLayerRef.current;
+    if (!doc || !canvas || !textDiv || scale === null) return;
     let cancelled = false;
 
     // Held so the effect cleanup can cancel it: without this, changing page or
     // zoom leaves the previous render running against the same canvas, and
     // pdf.js aborts it on its own with a RenderingCancelledException.
     let renderTask: RenderTask | null = null;
+    let textLayer: TextLayer | null = null;
 
-    doc.getPage(pageNum)
-      .then(async (page) => {
+    Promise.all([loadPdfjs(), doc.getPage(pageNum)])
+      .then(async ([pdfjsLib, page]) => {
         if (cancelled) return;
         const viewport = page.getViewport({ scale });
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         canvas.width = Math.round(viewport.width);
         canvas.height = Math.round(viewport.height);
+
+        // Transparent spans laid over the canvas, at the glyphs' positions, so
+        // the text can be selected and copied. The layer sizes itself from
+        // CSS variables: viewport.scale, not the zoom state, since it already
+        // includes the page's UserUnit.
+        textDiv.replaceChildren();
+        textDiv.style.setProperty('--total-scale-factor', String(viewport.scale));
+        textDiv.style.setProperty('--scale-round-x', '1px');
+        textDiv.style.setProperty('--scale-round-y', '1px');
+        textLayer = new pdfjsLib.TextLayer({
+          textContentSource: page.streamTextContent(),
+          container: textDiv,
+          viewport,
+        });
+
         renderTask = page.render({ canvasContext: ctx, viewport, canvas });
-        await renderTask.promise;
+        await Promise.all([renderTask.promise, textLayer.render()]);
       })
       .catch((err: unknown) => {
         // Cancelling is how this component switches page or zoom level; it is
         // control flow, not a failure to report.
-        if ((err as { name?: string })?.name === 'RenderingCancelledException') return;
+        if (cancelled || (err as { name?: string })?.name === 'RenderingCancelledException') return;
         console.error('Erreur de rendu de la page PDF:', err);
         if (!cancelled) setError(true);
       });
@@ -119,6 +137,7 @@ export function PdfPreview({ file }: PdfPreviewProps) {
     return () => {
       cancelled = true;
       renderTask?.cancel();
+      textLayer?.cancel();
     };
   }, [pageNum, scale]);
 
@@ -164,7 +183,10 @@ export function PdfPreview({ file }: PdfPreviewProps) {
             <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <canvas ref={canvasRef} data-testid="pdf-preview-canvas" className="bg-white" />
+          <div className="relative bg-white">
+            <canvas ref={canvasRef} data-testid="pdf-preview-canvas" className="block" />
+            <div ref={textLayerRef} data-testid="pdf-preview-text" className="textLayer" />
+          </div>
         )}
       </div>
     </div>

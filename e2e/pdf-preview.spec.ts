@@ -65,6 +65,38 @@ test.describe('PDF preview', () => {
     expect(size.width).toBeGreaterThan(0);
     expect(size.height).toBeGreaterThan(0);
 
+    // The text layer over the canvas is what makes the text selectable.
+    const textLayer = page.getByTestId('pdf-preview-text');
+    await expect(textLayer).toContainText('ZeroNeurone', { timeout: 10_000 });
+    const selected = await textLayer.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return sel.toString();
+    });
+    expect(selected).toContain('ZeroNeurone');
+
+    // The span must sit over the drawn glyphs: the fixture prints the word at
+    // x=20, baseline y=100 (from the bottom) on a 200x200 page, in 18pt.
+    const geometry = await page.evaluate(() => {
+      const canvas = document.querySelector('[data-testid="pdf-preview-canvas"]')!.getBoundingClientRect();
+      const span = document.querySelector('[data-testid="pdf-preview-text"] span')!.getBoundingClientRect();
+      const k = canvas.width / 200;
+      return {
+        left: (span.left - canvas.left) / k,
+        top: (span.top - canvas.top) / k,
+        height: span.height / k,
+      };
+    });
+    expect(geometry.left).toBeGreaterThan(15);
+    expect(geometry.left).toBeLessThan(25);
+    expect(geometry.top).toBeGreaterThan(75);
+    expect(geometry.top).toBeLessThan(100);
+    expect(geometry.height).toBeGreaterThan(12);
+    expect(geometry.height).toBeLessThan(25);
+
     // The exact regression: getPage() on a document whose transport was torn down.
     expect(errors.filter((e) => e.includes('sendWithPromise'))).toEqual([]);
     expect(errors.filter((e) => e.includes('Erreur de rendu'))).toEqual([]);
