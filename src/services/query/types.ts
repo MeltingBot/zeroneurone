@@ -118,6 +118,8 @@ export const OPERATOR_SYMBOLS: Record<QueryOperator, string> = {
 
 export const RESERVED_FIELDS = new Set([
   'label', 'notes', 'tag', 'confidence', 'source',
+  // Two-axis grading (Europol / Admiralty): "B2", its axes and its scale
+  'evaluation', 'evaluation.source', 'evaluation.info', 'evaluation.scale',
   'date', 'date.start', 'date.end',
   'created', 'updated',
   'type', 'has_geo', 'group', 'country',

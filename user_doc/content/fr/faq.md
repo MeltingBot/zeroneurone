@@ -129,6 +129,10 @@ Ils bougent ensemble maintenant. C'est beau.
 
 Oui. Sélectionnez 2 éléments → clic-droit → **Fusionner**. Choisissez le label à garder, le reste (propriétés, tags, fichiers, liens) est fusionné intelligemment. Les liens en double sont combinés, les auto-liens supprimés.
 
+### Je peux coter mes infos façon Europol ?
+
+Oui. Panneau du dossier → **Évaluation de l'information** → choisissez **Europol (4x4)** ou **Amirauté / OTAN (6x6)**. Chaque élément et lien se cote alors avec deux codes (ex. **B2** : source le plus souvent fiable, information connue de la source). Le choix vaut pour tout le dossier, collaborateurs compris. Revenir au modèle ZeroNeurone ne perd rien : rien n'est converti, tout est conservé. Détails dans [Évaluation de l'information]({{< relref "features/evaluation" >}}).
+
 ### C'est quoi les onglets canvas ?
 
 Des **espaces de travail thématiques** au sein d'un même dossier. Un onglet par hypothèse, par acteur, par période... Les éléments d'autres onglets connectés au vôtre apparaissent en transparence. Pratique pour ne pas tout mélanger.

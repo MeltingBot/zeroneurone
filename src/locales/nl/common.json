@@ -208,5 +208,89 @@
     "suggestLarger": "Gebruik een groter scherm of tablet",
     "suggestMaximize": "Maximaliseer uw browservenster",
     "suggestZoom": "Verlaag het zoomniveau van de browser (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Waardering",
+    "notGraded": "Niet gewaardeerd",
+    "clear": "Wissen",
+    "outOfModel": "{{scale}}-waardering: {{code}} (andere schaal)",
+    "sourceLabel": "Betrouwbaarheid van de bron",
+    "infoLabel": "Juistheid van de informatie",
+    "sourceShort": "Bron",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (betrouwbaarheid 0-100%)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Admiraliteit / NAVO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Eén betrouwbaarheidsniveau van 0 tot 100%, in stappen van 10.",
+      "europol": "Betrouwbaarheid van de bron (A, B, C, X) en juistheid van de informatie (1 tot 4), zoals vastgelegd in artikel 29 van Verordening (EU) 2016/794.",
+      "admiralty": "Betrouwbaarheid van de bron (A tot F) en geloofwaardigheid van de informatie (1 tot 6), volgens de door de NAVO gebruikte Admiralty-code."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Admiraliteit"
+    },
+    "europol": {
+      "sources": {
+        "A": "Altijd betrouwbaar",
+        "B": "Meestal betrouwbaar",
+        "C": "Meestal onbetrouwbaar",
+        "X": "Niet te beoordelen"
+      },
+      "sourcesHelp": {
+        "A": "Er bestaat geen twijfel over de authenticiteit, betrouwbaarheid en bekwaamheid van de bron, of de informatie is afkomstig van een bron die in alle gevallen betrouwbaar is gebleken.",
+        "B": "De informatie is afkomstig van een bron die in de meeste gevallen betrouwbaar is gebleken.",
+        "C": "De informatie is afkomstig van een bron die in de meeste gevallen onbetrouwbaar is gebleken.",
+        "X": "De betrouwbaarheid van de bron kan niet worden beoordeeld."
+      },
+      "infos": {
+        "1": "Juistheid vaststaand",
+        "2": "Bekend bij de bron",
+        "3": "Bevestigd",
+        "4": "Niet bevestigd"
+      },
+      "infosHelp": {
+        "1": "Informatie waarvan de juistheid niet in twijfel staat.",
+        "2": "Informatie die de bron persoonlijk bekend is, maar niet persoonlijk bekend is aan de ambtenaar die haar doorgeeft.",
+        "3": "Informatie die de bron niet persoonlijk bekend is, maar die wordt bevestigd door andere reeds geregistreerde informatie.",
+        "4": "Informatie die de bron niet persoonlijk bekend is en die niet kan worden bevestigd."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Volledig betrouwbaar",
+        "B": "Meestal betrouwbaar",
+        "C": "Redelijk betrouwbaar",
+        "D": "Meestal onbetrouwbaar",
+        "E": "Onbetrouwbaar",
+        "F": "Niet te beoordelen"
+      },
+      "sourcesHelp": {
+        "A": "Geen twijfel over authenticiteit, betrouwbaarheid of bekwaamheid; is altijd volledig betrouwbaar gebleken.",
+        "B": "Lichte twijfel over authenticiteit, betrouwbaarheid of bekwaamheid; heeft meestal juiste informatie geleverd.",
+        "C": "Twijfel over authenticiteit, betrouwbaarheid of bekwaamheid, maar heeft in het verleden juiste informatie geleverd.",
+        "D": "Grote twijfel over authenticiteit, betrouwbaarheid of bekwaamheid, maar heeft in het verleden juiste informatie geleverd.",
+        "E": "Gebrek aan authenticiteit, betrouwbaarheid en bekwaamheid; heeft eerder onjuiste informatie geleverd.",
+        "F": "Er is geen basis om de betrouwbaarheid van de bron te beoordelen."
+      },
+      "infos": {
+        "1": "Bevestigd",
+        "2": "Waarschijnlijk waar",
+        "3": "Mogelijk waar",
+        "4": "Twijfelachtig",
+        "5": "Onwaarschijnlijk",
+        "6": "Niet te beoordelen"
+      },
+      "infosHelp": {
+        "1": "Bevestigd door andere onafhankelijke bronnen; op zichzelf logisch; in overeenstemming met andere informatie over het onderwerp.",
+        "2": "Niet bevestigd; op zichzelf logisch; in overeenstemming met andere informatie over het onderwerp.",
+        "3": "Niet bevestigd; redelijk logisch; komt overeen met een deel van de andere informatie over het onderwerp.",
+        "4": "Niet bevestigd; mogelijk maar niet logisch; geen andere informatie over het onderwerp.",
+        "5": "Niet bevestigd; op zichzelf niet logisch; tegengesproken door andere informatie over het onderwerp.",
+        "6": "Er is geen basis om de geldigheid van de informatie te beoordelen."
+      }
+    }
   }
 }

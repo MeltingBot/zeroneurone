@@ -10,6 +10,7 @@ import * as Y from 'yjs';
 import type { Link, LinkVisual, Property } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
+import { sanitizeEvaluation } from '../../utils/evaluation';
 
 // ============================================================================
 // LINK -> Y.MAP (FOR MIGRATION - uses primitive values)
@@ -34,6 +35,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
   map.set('directed', link.directed);
   map.set('direction', link.direction);
   map.set('confidence', link.confidence);
+  map.set('evaluation', link.evaluation ?? null);
   map.set('source', link.source);
   map.set('date', dateToYjs(link.date));
 
@@ -186,6 +188,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
     directed: ymap.get('directed') ?? false,
     direction: ymap.get('direction') ?? 'none',
     confidence: ymap.get('confidence') ?? null,
+    evaluation: readEvaluation(ymap.get('evaluation')),
     source: ymap.get('source') || '',
     date: dateFromYjs(ymap.get('date')),
     dateRange,
@@ -264,6 +267,10 @@ export function updateLinkYMap(
       ymap.set('confidence', changes.confidence);
     }
 
+    if (changes.evaluation !== undefined) {
+      ymap.set('evaluation', changes.evaluation ?? null);
+    }
+
     if (changes.source !== undefined) {
       ymap.set('source', changes.source);
     }
@@ -335,4 +342,9 @@ function deserializePropertyValue(value: any): Property['value'] {
     return new Date(value.value);
   }
   return value;
+}
+
+/** Evaluation stored as a plain object (or a Y.Map, should a peer write one) */
+function readEvaluation(raw: unknown) {
+  return sanitizeEvaluation(raw instanceof Y.Map ? raw.toJSON() : raw);
 }

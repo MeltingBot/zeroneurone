@@ -203,5 +203,89 @@
     "suggestLarger": "Utilitzeu una pantalla més gran o una tauleta",
     "suggestMaximize": "Maximitzeu la finestra del navegador",
     "suggestZoom": "Reduïu el nivell de zoom del navegador (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Valoració",
+    "notGraded": "Sense valorar",
+    "clear": "Esborrar",
+    "outOfModel": "Valoració {{scale}}: {{code}} (una altra escala)",
+    "sourceLabel": "Fiabilitat de la font",
+    "infoLabel": "Exactitud de la informació",
+    "sourceShort": "Font",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (confiança 0-100 %)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Almirallat / OTAN (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Un únic nivell de confiança de 0 a 100 %, en passos de 10.",
+      "europol": "Fiabilitat de la font (A, B, C, X) i exactitud de la informació (1 a 4), segons l'article 29 del Reglament (UE) 2016/794.",
+      "admiralty": "Fiabilitat de la font (A a F) i credibilitat de la informació (1 a 6), segons el codi de l'Almirallat utilitzat per l'OTAN."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Almirallat"
+    },
+    "europol": {
+      "sources": {
+        "A": "Sempre fiable",
+        "B": "Majoritàriament fiable",
+        "C": "Majoritàriament no fiable",
+        "X": "No avaluable"
+      },
+      "sourcesHelp": {
+        "A": "No hi ha cap dubte sobre l'autenticitat, la fiabilitat i la competència de la font, o la informació prové d'una font que ha demostrat ser fiable en tots els casos.",
+        "B": "La informació prové d'una font que en la majoria dels casos ha demostrat ser fiable.",
+        "C": "La informació prové d'una font que en la majoria dels casos ha demostrat no ser fiable.",
+        "X": "No es pot avaluar la fiabilitat de la font."
+      },
+      "infos": {
+        "1": "Exactitud indubtable",
+        "2": "Coneguda per la font",
+        "3": "Corroborada",
+        "4": "No corroborada"
+      },
+      "infosHelp": {
+        "1": "Informació de l'exactitud de la qual no hi ha cap dubte.",
+        "2": "Informació coneguda personalment per la font, però no coneguda personalment pel funcionari que la transmet.",
+        "3": "Informació no coneguda personalment per la font, però corroborada per altra informació ja registrada.",
+        "4": "Informació no coneguda personalment per la font i que no es pot corroborar."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Totalment fiable",
+        "B": "Normalment fiable",
+        "C": "Bastant fiable",
+        "D": "Normalment no fiable",
+        "E": "No fiable",
+        "F": "No avaluable"
+      },
+      "sourcesHelp": {
+        "A": "Cap dubte sobre l'autenticitat, la fiabilitat o la competència; sempre ha resultat fiable.",
+        "B": "Dubtes menors sobre l'autenticitat, la fiabilitat o la competència; ha proporcionat informació vàlida la majoria de les vegades.",
+        "C": "Dubtes sobre l'autenticitat, la fiabilitat o la competència, però ha proporcionat informació vàlida en el passat.",
+        "D": "Dubtes importants sobre l'autenticitat, la fiabilitat o la competència, però ha proporcionat informació vàlida en el passat.",
+        "E": "Manca d'autenticitat, fiabilitat i competència; antecedents d'informació no vàlida.",
+        "F": "No hi ha cap base per avaluar la fiabilitat de la font."
+      },
+      "infos": {
+        "1": "Confirmada",
+        "2": "Probablement certa",
+        "3": "Possiblement certa",
+        "4": "Dubtosa",
+        "5": "Improbable",
+        "6": "No avaluable"
+      },
+      "infosHelp": {
+        "1": "Confirmada per altres fonts independents; lògica en si mateixa; coherent amb altra informació sobre el tema.",
+        "2": "No confirmada; lògica en si mateixa; coherent amb altra informació sobre el tema.",
+        "3": "No confirmada; raonablement lògica en si mateixa; concorda amb part de la informació sobre el tema.",
+        "4": "No confirmada; possible però no lògica; no hi ha altra informació sobre el tema.",
+        "5": "No confirmada; no lògica en si mateixa; contradita per altra informació sobre el tema.",
+        "6": "No hi ha cap base per avaluar la validesa de la informació."
+      }
+    }
   }
 }

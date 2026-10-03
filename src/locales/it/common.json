@@ -205,5 +205,89 @@
     "suggestLarger": "Usa uno schermo più grande o un tablet",
     "suggestMaximize": "Massimizza la finestra del browser",
     "suggestZoom": "Riduci il livello di zoom del browser (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Valutazione",
+    "notGraded": "Non valutato",
+    "clear": "Cancella",
+    "outOfModel": "Valutazione {{scale}}: {{code}} (altra scala)",
+    "sourceLabel": "Affidabilità della fonte",
+    "infoLabel": "Esattezza dell'informazione",
+    "sourceShort": "Fonte",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (affidabilità 0-100%)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Ammiragliato / NATO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Un unico livello di affidabilità da 0 a 100%, a passi di 10.",
+      "europol": "Affidabilità della fonte (A, B, C, X) ed esattezza dell'informazione (da 1 a 4), come previsto dall'articolo 29 del regolamento (UE) 2016/794.",
+      "admiralty": "Affidabilità della fonte (da A a F) e credibilità dell'informazione (da 1 a 6), secondo il codice dell'Ammiragliato utilizzato dalla NATO."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Ammiragliato"
+    },
+    "europol": {
+      "sources": {
+        "A": "Sempre affidabile",
+        "B": "Per lo più affidabile",
+        "C": "Per lo più inaffidabile",
+        "X": "Non valutabile"
+      },
+      "sourcesHelp": {
+        "A": "Non sussistono dubbi circa l'autenticità, l'affidabilità e la competenza della fonte, oppure l'informazione proviene da una fonte che si è rivelata affidabile in tutti i casi.",
+        "B": "L'informazione proviene da una fonte che si è rivelata affidabile nella maggior parte dei casi.",
+        "C": "L'informazione proviene da una fonte che si è rivelata inaffidabile nella maggior parte dei casi.",
+        "X": "L'affidabilità della fonte non può essere valutata."
+      },
+      "infos": {
+        "1": "Esattezza certa",
+        "2": "Nota alla fonte",
+        "3": "Confermata",
+        "4": "Non confermata"
+      },
+      "infosHelp": {
+        "1": "Informazione la cui esattezza non è in dubbio.",
+        "2": "Informazione nota personalmente alla fonte ma non nota personalmente al funzionario che la trasmette.",
+        "3": "Informazione non nota personalmente alla fonte ma confermata da altre informazioni già registrate.",
+        "4": "Informazione non nota personalmente alla fonte e che non può essere confermata."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Completamente affidabile",
+        "B": "Generalmente affidabile",
+        "C": "Abbastanza affidabile",
+        "D": "Generalmente inaffidabile",
+        "E": "Inaffidabile",
+        "F": "Non valutabile"
+      },
+      "sourcesHelp": {
+        "A": "Nessun dubbio su autenticità, attendibilità o competenza; si è sempre rivelata affidabile.",
+        "B": "Dubbi minori su autenticità, attendibilità o competenza; ha fornito informazioni valide nella maggior parte dei casi.",
+        "C": "Dubbi su autenticità, attendibilità o competenza, ma in passato ha fornito informazioni valide.",
+        "D": "Dubbi significativi su autenticità, attendibilità o competenza, ma in passato ha fornito informazioni valide.",
+        "E": "Priva di autenticità, attendibilità e competenza; precedenti di informazioni non valide.",
+        "F": "Non esiste alcuna base per valutare l'affidabilità della fonte."
+      },
+      "infos": {
+        "1": "Confermata",
+        "2": "Probabilmente vera",
+        "3": "Possibilmente vera",
+        "4": "Dubbia",
+        "5": "Improbabile",
+        "6": "Non valutabile"
+      },
+      "infosHelp": {
+        "1": "Confermata da altre fonti indipendenti; logica in sé; coerente con le altre informazioni sull'argomento.",
+        "2": "Non confermata; logica in sé; coerente con le altre informazioni sull'argomento.",
+        "3": "Non confermata; ragionevolmente logica in sé; concorda con parte delle altre informazioni sull'argomento.",
+        "4": "Non confermata; possibile ma non logica; nessun'altra informazione sull'argomento.",
+        "5": "Non confermata; non logica in sé; contraddetta da altre informazioni sull'argomento.",
+        "6": "Non esiste alcuna base per valutare la validità dell'informazione."
+      }
+    }
   }
 }

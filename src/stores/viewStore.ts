@@ -401,6 +401,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
       filters.hasProperty !== null ||
       filters.textSearch !== '' ||
       filters.minConfidence !== null ||
+      (filters.evaluationSources?.length ?? 0) > 0 ||
+      (filters.evaluationInfos?.length ?? 0) > 0 ||
       filters.dateFrom !== null ||
       filters.dateTo !== null ||
       filters.hasGeo !== null

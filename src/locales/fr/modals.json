@@ -79,7 +79,8 @@
       "flowConvention": "Flux orientés du compte crédité vers le compte débité (sens de la valeur).",
       "confirm": "Importer",
       "includeGenToGen": "Inclure les flux entre comptes généraux (TVA, OD, paie…)"
-    }
+    },
+    "evaluationModelKept": "Le fichier utilise le modèle d'évaluation « {{imported}} » ; l'enquête conserve le sien (« {{current}} »). Les cotations d'une autre échelle sont conservées et affichées en grisé."
   },
   "export": {
     "title": "Exporter le dossier",
@@ -488,7 +489,8 @@
       "searchPlaceholder": "Rechercher un élément...",
       "graph": "Graphe",
       "toc": "Sommaire"
-    }
+    },
+    "sortByEvaluation": "Cotation"
   },
   "metadataImport": {
     "title": "Importer les métadonnées",

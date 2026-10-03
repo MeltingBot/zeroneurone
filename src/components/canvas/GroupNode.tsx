@@ -1,7 +1,10 @@
 import { memo, useRef, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+import { useTranslation } from 'react-i18next';
+import { Gauge } from 'lucide-react';
 import { ResolvedIcon, iconNameResolves } from '../common';
-import type { Element } from '../../types';
+import type { Element, EvaluationModel } from '../../types';
+import { getEvaluationBadge } from '../../utils/evaluation';
 import { FONT_SIZE_PX } from '../../types';
 import { useUIStore, useTagSetStore, useCustomIconStore } from '../../stores';
 
@@ -30,6 +33,7 @@ export interface GroupNodeData extends Record<string, unknown> {
   themeMode?: 'light' | 'dark';
   unresolvedCommentCount?: number;
   showConfidenceIndicator?: boolean;
+  evaluationModel?: EvaluationModel;
   displayedPropertyValues?: { key: string; value: string }[];
   tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both';
   tagDisplaySize?: 'small' | 'medium' | 'large';
@@ -42,9 +46,13 @@ function GroupNodeComponent({ data }: NodeProps) {
   const nodeData = data as GroupNodeData;
   const {
     element, isSelected, isDimmed, onResize, isEditing, onLabelChange, onStopEditing,
-    unresolvedCommentCount, showConfidenceIndicator, displayedPropertyValues,
+    unresolvedCommentCount, showConfidenceIndicator, evaluationModel, displayedPropertyValues,
     tagDisplayMode, tagDisplaySize,
   } = nodeData;
+  const confidenceBadge = showConfidenceIndicator
+    ? getEvaluationBadge(element.confidence, element.evaluation, evaluationModel ?? 'zeroneurone')
+    : null;
+  const { t } = useTranslation('common');
   const inputRef = useRef<HTMLInputElement>(null);
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
@@ -177,13 +185,13 @@ function GroupNodeComponent({ data }: NodeProps) {
         )}
 
         {/* Confidence - top center */}
-        {showConfidenceIndicator && element.confidence !== null && (
+        {confidenceBadge && (
           <div
             className="absolute top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-bg-secondary border border-border-default rounded text-xs flex items-center gap-1 z-10"
-            title={`Confiance: ${element.confidence}%`}
+            title={`${evaluationModel && evaluationModel !== 'zeroneurone' ? t('evaluation.label') : t('labels.confidence')} : ${confidenceBadge.text}`}
           >
-            <span className="text-[10px]">🤝</span>
-            <span className="text-text-secondary font-medium text-[10px]">{element.confidence}%</span>
+            <Gauge size={10} className="text-text-tertiary" />
+            <span className={`font-medium text-[10px] ${confidenceBadge.muted ? 'text-text-tertiary' : 'text-text-secondary'}`}>{confidenceBadge.text}</span>
           </div>
         )}
 

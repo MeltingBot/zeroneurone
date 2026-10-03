@@ -52,7 +52,7 @@ Si vous incluez la liste des éléments :
 | Option | Description |
 |--------|-------------|
 | Grouper par tag | Organise les éléments par leurs tags |
-| Trier par | Nom, Date ou Confiance |
+| Trier par | Nom, Date ou Confiance (Cotation en modèle Europol / Amirauté) |
 
 ---
 

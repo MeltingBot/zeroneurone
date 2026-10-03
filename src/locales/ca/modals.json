@@ -79,7 +79,8 @@
       "flowConvention": "Fluxos orientats del compte acreditat cap al compte debitat (sentit del valor).",
       "confirm": "Importar",
       "includeGenToGen": "Incloure fluxos entre comptes generals (IVA, assentaments diversos, nòmines…)"
-    }
+    },
+    "evaluationModelKept": "El fitxer fa servir el model d'avaluació «{{imported}}»; l'expedient conserva el seu («{{current}}»). Les valoracions d'una altra escala es conserven i es mostren en gris."
   },
   "export": {
     "title": "Exportar l'expedient",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Cercar un element...",
       "graph": "Graf",
       "toc": "Sumari"
-    }
+    },
+    "sortByEvaluation": "Valoració"
   },
   "metadataImport": {
     "title": "Importar metadades",

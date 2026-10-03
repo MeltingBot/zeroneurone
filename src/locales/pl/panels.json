@@ -13,7 +13,8 @@
       "information": "Informacje",
       "dates": "Daty",
       "properties": "Właściwości",
-      "retention": "Retencja"
+      "retention": "Retencja",
+      "evaluation": "Ocena informacji"
     },
     "labels": {
       "name": "Nazwa",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Wygasła {{days}} dni temu",
       "retentionPolicyRedact": "Trwała redakcja",
       "retentionApply": "Zastosuj",
-      "retentionReset": "Resetuj"
+      "retentionReset": "Resetuj",
+      "evaluationModel": "Model oceny",
+      "evaluationOutsideWarning": "Oceny korzystające z innej skali: {{count}}. Zostaną zachowane i wyświetlone na szaro, bez konwersji.",
+      "evaluationHiddenWarning": "Oceny, które zostaną zachowane, ale ukryte, dopóki ten model jest aktywny: {{count}}."
     },
     "placeholders": {
       "name": "Nazwa teczki",
@@ -268,7 +272,9 @@
       "setColorAll": "Ustaw kolor dla wszystkich",
       "setTextSizeAll": "Ustaw rozmiar tekstu dla wszystkich",
       "elementsSection": "Elementy ({{count}})",
-      "linksSection": "Połączenia ({{count}})"
+      "linksSection": "Połączenia ({{count}})",
+      "setEvaluationAll": "Zastosuj tę samą ocenę do całego zaznaczenia",
+      "clearConfidenceAll": "Wyczyść pewność dla całego zaznaczenia"
     },
     "copyDate": "Kopiuj datę"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Niska pewność",
       "lowConfidenceDesc": "Pewność < 50%",
       "hasComments": "Komentarze",
-      "hasCommentsDesc": "Elementy z nierozwiązanymi komentarzami"
+      "hasCommentsDesc": "Elementy z nierozwiązanymi komentarzami",
+      "reliableSources": "Wiarygodne źródła",
+      "reliableSourcesDesc": "Zachowaj tylko źródła ocenione jako wiarygodne"
     },
     "property": {
       "hasProperty": "Ma właściwość",
@@ -328,6 +336,9 @@
       "count": "{{count}} ukrytych elementów",
       "showAll": "Pokaż wszystko",
       "noHidden": "Brak ukrytych elementów"
+    },
+    "evaluation": {
+      "hint": "Widoczne pozostają tylko elementy ocenione w aktywnym modelu wybranym kodem."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Etykiety",
       "both": "Ikony + Etykiety"
     },
-    "confidenceIndicator": "Wskaźnik pewności",
+    "confidenceIndicator": "Wskaźnik pewności / oceny",
     "links": "Połączenia",
     "linkShape": "Kształt",
     "linkCurves": "Krzywe",

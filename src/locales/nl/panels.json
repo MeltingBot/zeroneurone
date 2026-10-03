@@ -13,7 +13,8 @@
       "information": "Informatie",
       "dates": "Datums",
       "properties": "Eigenschappen",
-      "retention": "Bewaring"
+      "retention": "Bewaring",
+      "evaluation": "Beoordeling van informatie"
     },
     "labels": {
       "name": "Naam",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Verlopen sinds {{days}} dag(en)",
       "retentionPolicyRedact": "Definitieve censuur",
       "retentionApply": "Toepassen",
-      "retentionReset": "Resetten"
+      "retentionReset": "Resetten",
+      "evaluationModel": "Beoordelingsmodel",
+      "evaluationOutsideWarning": "{{count}} waardering(en) gebruiken een andere schaal. Ze blijven behouden en worden grijs weergegeven, zonder omrekening.",
+      "evaluationHiddenWarning": "{{count}} waardering(en) blijven behouden, maar worden verborgen zolang dit model actief is."
     },
     "placeholders": {
       "name": "Naam van het dossier",
@@ -268,7 +272,9 @@
       "setColorAll": "Kleur instellen voor allen",
       "setTextSizeAll": "Tekstgrootte voor alles instellen",
       "elementsSection": "Elementen ({{count}})",
-      "linksSection": "Verbindingen ({{count}})"
+      "linksSection": "Verbindingen ({{count}})",
+      "setEvaluationAll": "Dezelfde waardering toepassen op de hele selectie",
+      "clearConfidenceAll": "Betrouwbaarheid voor de hele selectie wissen"
     },
     "copyDate": "Datum kopiëren"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Lage betrouwbaarheid",
       "lowConfidenceDesc": "Betrouwbaarheid < 50%",
       "hasComments": "Opmerkingen",
-      "hasCommentsDesc": "Elementen met onopgeloste opmerkingen"
+      "hasCommentsDesc": "Elementen met onopgeloste opmerkingen",
+      "reliableSources": "Betrouwbare bronnen",
+      "reliableSourcesDesc": "Alleen als betrouwbaar gewaardeerde bronnen behouden"
     },
     "property": {
       "hasProperty": "Heeft eigenschap",
@@ -328,6 +336,9 @@
       "count": "{{count}} verborgen element(en)",
       "showAll": "Alles tonen",
       "noHidden": "Geen verborgen elementen"
+    },
+    "evaluation": {
+      "hint": "Alleen elementen die in het actieve model met een geselecteerde code zijn gewaardeerd, blijven zichtbaar."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Labels",
       "both": "Pictogrammen + Labels"
     },
-    "confidenceIndicator": "Betrouwbaarheidsindicator",
+    "confidenceIndicator": "Betrouwbaarheids- / waarderingsindicator",
     "links": "Verbindingen",
     "linkShape": "Vorm",
     "linkCurves": "Curven",

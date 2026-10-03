@@ -198,5 +198,89 @@
     "suggestLarger": "Use a larger screen or tablet",
     "suggestMaximize": "Maximize your browser window",
     "suggestZoom": "Reduce your browser zoom level (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Grading",
+    "notGraded": "Not graded",
+    "clear": "Clear",
+    "outOfModel": "{{scale}} grading: {{code}} (other scale)",
+    "sourceLabel": "Source reliability",
+    "infoLabel": "Information accuracy",
+    "sourceShort": "Source",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (confidence 0-100%)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Admiralty / NATO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "A single confidence level from 0 to 100%, in steps of 10.",
+      "europol": "Source reliability (A, B, C, X) and information accuracy (1 to 4), as set by Article 29 of Regulation (EU) 2016/794.",
+      "admiralty": "Source reliability (A to F) and information credibility (1 to 6), following the Admiralty code used by NATO."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Admiralty"
+    },
+    "europol": {
+      "sources": {
+        "A": "Always reliable",
+        "B": "Mostly reliable",
+        "C": "Mostly unreliable",
+        "X": "Cannot be assessed"
+      },
+      "sourcesHelp": {
+        "A": "No doubt as to the authenticity, trustworthiness and competence of the source, or the source has proved to be reliable in all instances.",
+        "B": "The source has in most instances proved to be reliable.",
+        "C": "The source has in most instances proved to be unreliable.",
+        "X": "The reliability of the source cannot be assessed."
+      },
+      "infos": {
+        "1": "Accuracy not in doubt",
+        "2": "Known to the source",
+        "3": "Corroborated",
+        "4": "Not corroborated"
+      },
+      "infosHelp": {
+        "1": "Information whose accuracy is not in doubt.",
+        "2": "Information known personally to the source but not known personally to the official passing it on.",
+        "3": "Information not known personally to the source but corroborated by other information already recorded.",
+        "4": "Information not known personally to the source and which cannot be corroborated."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Completely reliable",
+        "B": "Usually reliable",
+        "C": "Fairly reliable",
+        "D": "Not usually reliable",
+        "E": "Unreliable",
+        "F": "Cannot be judged"
+      },
+      "sourcesHelp": {
+        "A": "No doubt of authenticity, trustworthiness or competency; has a history of complete reliability.",
+        "B": "Minor doubt about authenticity, trustworthiness or competency; has provided valid information most of the time.",
+        "C": "Doubt of authenticity, trustworthiness or competency, but has provided valid information in the past.",
+        "D": "Significant doubt about authenticity, trustworthiness or competency, but has provided valid information in the past.",
+        "E": "Lacking in authenticity, trustworthiness and competency; history of invalid information.",
+        "F": "No basis exists for evaluating the reliability of the source."
+      },
+      "infos": {
+        "1": "Confirmed",
+        "2": "Probably true",
+        "3": "Possibly true",
+        "4": "Doubtful",
+        "5": "Improbable",
+        "6": "Cannot be judged"
+      },
+      "infosHelp": {
+        "1": "Confirmed by other independent sources; logical in itself; consistent with other information on the subject.",
+        "2": "Not confirmed; logical in itself; consistent with other information on the subject.",
+        "3": "Not confirmed; reasonably logical in itself; agrees with some other information on the subject.",
+        "4": "Not confirmed; possible but not logical; no other information on the subject.",
+        "5": "Not confirmed; not logical in itself; contradicted by other information on the subject.",
+        "6": "No basis exists for evaluating the validity of the information."
+      }
+    }
   }
 }

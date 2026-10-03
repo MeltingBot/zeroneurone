@@ -79,7 +79,8 @@
       "flowConvention": "Flows are directed from the credited account to the debited account (direction of value).",
       "confirm": "Import",
       "includeGenToGen": "Include flows between general accounts (VAT, misc. entries, payroll…)"
-    }
+    },
+    "evaluationModelKept": "The file uses the \"{{imported}}\" evaluation model; the dossier keeps its own (\"{{current}}\"). Gradings in another scale are kept and shown greyed out."
   },
   "export": {
     "title": "Export dossier",
@@ -488,7 +489,8 @@
       "searchPlaceholder": "Search an element...",
       "graph": "Graph",
       "toc": "Table of contents"
-    }
+    },
+    "sortByEvaluation": "Grading"
   },
   "metadataImport": {
     "title": "Import metadata",

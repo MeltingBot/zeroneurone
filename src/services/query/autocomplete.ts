@@ -2,6 +2,7 @@
 // Provides: field names, operators, values, keywords, tags
 
 import type { Element, Link } from '../../types';
+import { formatEvaluation } from '../../utils/evaluation';
 import { RESERVED_FIELDS, OPERATOR_KEYWORDS } from './types';
 
 export interface AutocompleteSuggestion {
@@ -152,6 +153,10 @@ const FIELD_TYPES: Record<string, FieldType> = {
   notes: 'string',
   tag: 'string',
   confidence: 'number',
+  evaluation: 'string',
+  'evaluation.source': 'string',
+  'evaluation.info': 'string',
+  'evaluation.scale': 'string',
   source: 'string',
   date: 'date',
   'date.start': 'date',
@@ -253,6 +258,10 @@ function collectFieldValues(
         switch (lower) {
           case 'label': addValue(item.label); break;
           case 'source': addValue(item.source); break;
+          case 'evaluation': addValue(formatEvaluation(item.evaluation)); break;
+          case 'evaluation.source': addValue(item.evaluation?.source); break;
+          case 'evaluation.info': addValue(item.evaluation?.info); break;
+          case 'evaluation.scale': addValue(item.evaluation?.scale); break;
           case 'tag':
             for (const t of item.tags) if (t) addValue(t);
             break;

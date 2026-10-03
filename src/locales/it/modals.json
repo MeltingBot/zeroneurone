@@ -79,7 +79,8 @@
       "flowConvention": "Flussi orientati dal conto accreditato verso il conto addebitato (direzione del valore).",
       "confirm": "Importa",
       "includeGenToGen": "Includi flussi tra conti generali (IVA, scritture varie, paghe…)"
-    }
+    },
+    "evaluationModelKept": "Il file usa il modello di valutazione \"{{imported}}\"; il fascicolo mantiene il proprio (\"{{current}}\"). Le valutazioni in un'altra scala sono conservate e mostrate in grigio."
   },
   "export": {
     "title": "Esporta il fascicolo",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Cerca un elemento...",
       "graph": "Grafo",
       "toc": "Sommario"
-    }
+    },
+    "sortByEvaluation": "Valutazione"
   },
   "metadataImport": {
     "title": "Importa metadati",

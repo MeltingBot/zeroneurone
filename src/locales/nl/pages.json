@@ -474,7 +474,8 @@
     "unpinColumn": "Kolom losmaken",
     "copyCell": "Cel kopiëren",
     "copyRow": "Rij kopiëren",
-    "copySelection": "Selectie kopiëren ({{count}})"
+    "copySelection": "Selectie kopiëren ({{count}})",
+    "evaluation": "Waard."
   },
   "report": {
     "title": "Rapport",

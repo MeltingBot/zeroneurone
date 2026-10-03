@@ -201,5 +201,89 @@
     "suggestLarger": "Use una pantalla más grande o una tableta",
     "suggestMaximize": "Maximice la ventana de su navegador",
     "suggestZoom": "Reduzca el nivel de zoom del navegador (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Valoración",
+    "notGraded": "Sin valorar",
+    "clear": "Borrar",
+    "outOfModel": "Valoración {{scale}}: {{code}} (otra escala)",
+    "sourceLabel": "Fiabilidad de la fuente",
+    "infoLabel": "Exactitud de la información",
+    "sourceShort": "Fuente",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (confianza 0-100 %)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Almirantazgo / OTAN (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Un único nivel de confianza de 0 a 100 %, en pasos de 10.",
+      "europol": "Fiabilidad de la fuente (A, B, C, X) y exactitud de la información (1 a 4), según el artículo 29 del Reglamento (UE) 2016/794.",
+      "admiralty": "Fiabilidad de la fuente (A a F) y credibilidad de la información (1 a 6), según el código del Almirantazgo utilizado por la OTAN."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Almirantazgo"
+    },
+    "europol": {
+      "sources": {
+        "A": "Siempre fiable",
+        "B": "Mayormente fiable",
+        "C": "Mayormente no fiable",
+        "X": "No evaluable"
+      },
+      "sourcesHelp": {
+        "A": "No existen dudas sobre la autenticidad, fiabilidad y competencia de la fuente, o la información procede de una fuente que ha demostrado ser fiable en todos los casos.",
+        "B": "La información procede de una fuente que en la mayoría de los casos ha demostrado ser fiable.",
+        "C": "La información procede de una fuente que en la mayoría de los casos ha demostrado no ser fiable.",
+        "X": "No puede evaluarse la fiabilidad de la fuente."
+      },
+      "infos": {
+        "1": "Exactitud indudable",
+        "2": "Conocida por la fuente",
+        "3": "Corroborada",
+        "4": "No corroborada"
+      },
+      "infosHelp": {
+        "1": "Información de cuya exactitud no existe duda alguna.",
+        "2": "Información conocida personalmente por la fuente, pero no conocida personalmente por el funcionario que la transmite.",
+        "3": "Información no conocida personalmente por la fuente, pero corroborada por otra información ya registrada.",
+        "4": "Información no conocida personalmente por la fuente y que no puede ser corroborada."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Totalmente fiable",
+        "B": "Normalmente fiable",
+        "C": "Bastante fiable",
+        "D": "Normalmente no fiable",
+        "E": "No fiable",
+        "F": "No evaluable"
+      },
+      "sourcesHelp": {
+        "A": "Sin dudas sobre su autenticidad, fiabilidad o competencia; siempre ha resultado fiable.",
+        "B": "Dudas menores sobre su autenticidad, fiabilidad o competencia; ha proporcionado información válida la mayoría de las veces.",
+        "C": "Dudas sobre su autenticidad, fiabilidad o competencia, pero ha proporcionado información válida en el pasado.",
+        "D": "Dudas importantes sobre su autenticidad, fiabilidad o competencia, pero ha proporcionado información válida en el pasado.",
+        "E": "Carece de autenticidad, fiabilidad y competencia; antecedentes de información no válida.",
+        "F": "No existe ninguna base para evaluar la fiabilidad de la fuente."
+      },
+      "infos": {
+        "1": "Confirmada",
+        "2": "Probablemente cierta",
+        "3": "Posiblemente cierta",
+        "4": "Dudosa",
+        "5": "Improbable",
+        "6": "No evaluable"
+      },
+      "infosHelp": {
+        "1": "Confirmada por otras fuentes independientes; lógica en sí misma; coherente con otra información sobre el tema.",
+        "2": "No confirmada; lógica en sí misma; coherente con otra información sobre el tema.",
+        "3": "No confirmada; razonablemente lógica en sí misma; concuerda con parte de la información sobre el tema.",
+        "4": "No confirmada; posible pero no lógica; no hay otra información sobre el tema.",
+        "5": "No confirmada; no lógica en sí misma; contradicha por otra información sobre el tema.",
+        "6": "No existe ninguna base para evaluar la validez de la información."
+      }
+    }
   }
 }

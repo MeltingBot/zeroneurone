@@ -1,11 +1,12 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Settings, Calendar, Timer } from 'lucide-react';
+import { FileText, Settings, Calendar, Timer, Gauge } from 'lucide-react';
 import { useDossierStore } from '../../stores';
-import type { Dossier, Property, PropertyDefinition } from '../../types';
+import type { Dossier, EvaluationModel, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { AccordionSection, EditableField, MarkdownEditor } from '../common';
+import { EVALUATION_MODELS, countEvaluationsOutsideModel, getEvaluationModel, isEvaluationModel } from '../../utils/evaluation';
 
 interface DossierDetailProps {
   dossier: Dossier;
@@ -247,6 +248,9 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
         </div>
       </AccordionSection>
 
+      {/* Évaluation de l'information */}
+      <EvaluationSection dossier={dossier} />
+
       {/* Rétention */}
       <RetentionSection dossier={dossier} />
 
@@ -267,6 +271,94 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
         />
       </AccordionSection>
     </div>
+  );
+}
+
+/**
+ * Evaluation model of the dossier, shared with every collaborator.
+ * Switching models never converts existing gradings: when some would end up
+ * outside the new model, an inline confirmation states how many.
+ */
+function EvaluationSection({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation('panels');
+  const { t: tc } = useTranslation('common');
+  const { updateDossier } = useDossierStore();
+  const model = getEvaluationModel(dossier);
+  const [pendingState, setPending] = useState<
+    { model: EvaluationModel; count: number; from: EvaluationModel; dossierId: string } | null
+  >(null);
+  // A pending confirmation lapses when the model changes remotely or the dossier switches
+  const pending = pendingState && pendingState.from === model && pendingState.dossierId === dossier.id
+    ? pendingState
+    : null;
+
+  const handleChange = (value: string) => {
+    if (!isEvaluationModel(value) || value === model) {
+      setPending(null);
+      return;
+    }
+    // Read on demand: subscribing to elements/links would re-render the panel on every edit
+    const { elements, links } = useDossierStore.getState();
+    const count = countEvaluationsOutsideModel(elements, value) + countEvaluationsOutsideModel(links, value);
+    if (count > 0) {
+      setPending({ model: value, count, from: model, dossierId: dossier.id });
+    } else {
+      updateDossier(dossier.id, { evaluationModel: value });
+    }
+  };
+
+  const shown = pending?.model ?? model;
+
+  return (
+    <AccordionSection
+      id="evaluation"
+      title={t('dossier.sections.evaluation')}
+      icon={<Gauge size={12} />}
+      defaultOpen={false}
+    >
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.evaluationModel')}</label>
+          <select
+            value={shown}
+            onChange={(e) => handleChange(e.target.value)}
+            title={tc(`evaluation.modelHints.${shown}`)}
+            className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
+          >
+            {EVALUATION_MODELS.map((m) => (
+              <option key={m} value={m}>{tc(`evaluation.models.${m}`)}</option>
+            ))}
+          </select>
+        </div>
+
+        {pending && (
+          <div className="space-y-2 p-2 border border-border-default rounded bg-bg-secondary">
+            <p className="text-xs text-text-primary">
+              {pending.model === 'zeroneurone'
+                ? t('dossier.labels.evaluationHiddenWarning', { count: pending.count })
+                : t('dossier.labels.evaluationOutsideWarning', { count: pending.count })}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setPending(null)}
+                className="px-3 py-1.5 text-sm font-medium text-text-primary bg-bg-primary border border-border-default hover:bg-bg-secondary rounded transition-colors"
+              >
+                {tc('actions.cancel')}
+              </button>
+              <button
+                onClick={() => {
+                  updateDossier(dossier.id, { evaluationModel: pending.model });
+                  setPending(null);
+                }}
+                className="px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded transition-colors"
+              >
+                {tc('actions.confirm')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </AccordionSection>
   );
 }
 

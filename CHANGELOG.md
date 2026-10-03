@@ -1,5 +1,44 @@
 # Changelog
 
+## 2.59.0
+
+### Features
+
+- **Modèle d'évaluation de l'information** — chaque dossier choisit, dans ses
+  détails, comment évaluer l'information de ses éléments et liens : la
+  confiance ZeroNeurone (0-100 %), la grille Europol 4x4 (article 29 du
+  règlement (UE) 2016/794 : fiabilité de la source A/B/C/X, exactitude de
+  l'information 1 à 4) ou le code de l'Amirauté / OTAN 6x6. Le modèle est
+  commun à tous les participants d'une session collaborative.
+
+  Changer de modèle ne convertit rien : aucune correspondance officielle
+  n'existe entre les grilles. Les confiances restent enregistrées et
+  réapparaissent au retour au modèle ZeroNeurone ; une cotation faite dans une
+  autre grille reste affichée en grisé, et le changement demande une
+  confirmation qui indique combien de cotations sont concernées.
+
+  La cotation (ex. `B2`) se saisit dans la fiche, en multi-sélection ou
+  directement dans la matrice ; elle s'affiche en badge sur le canvas, se
+  filtre (codes à cocher, filtre rapide « Sources fiables »), s'interroge en
+  ZNQuery (`evaluation`, `evaluation.source`, `evaluation.info`,
+  `evaluation.scale`), apparaît dans les rapports et la synthèse, et voyage
+  dans les exports ZIP/JSON (format 1.2.0), CSV, GEXF, GeoJSON et ANX (grades
+  i2 1 et 2).
+- **Confiance réinitialisable** — un bouton « Effacer » remet la confiance
+  d'un élément ou d'un lien à « non définie », aussi en multi-sélection.
+
+### Fixes
+
+- **Confiance d'un collaborateur** — la fiche d'un élément ouverte pendant
+  qu'un collaborateur modifiait sa confiance continuait d'afficher l'ancienne
+  valeur.
+- L'indicateur de confiance du canvas utilise une icône à la place d'un emoji,
+  et son infobulle est traduite.
+
+### Docs
+
+- Nouvelle page « Évaluation de l'information » ; README mis à jour.
+
 ## 2.58.5
 
 ### Fixes

@@ -2,7 +2,10 @@ import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
 import { useDossierStore, useHistoryStore, useUIStore } from '../../stores';
-import type { Link, LinkStyle, LinkDirection, Confidence, Property, PropertyDefinition, FontSize } from '../../types';
+import type { Link, LinkStyle, LinkDirection, Confidence, Evaluation, Property, PropertyDefinition, FontSize } from '../../types';
+import { getModelScale } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
+import { EvaluationInput } from './EvaluationInput';
 import { FONT_SIZE_PX } from '../../types';
 import { PropertiesEditor } from './PropertiesEditor';
 import { TagsEditor } from './TagsEditor';
@@ -226,9 +229,10 @@ export function LinkDetail({ link }: LinkDetailProps) {
 
   // Handle confidence change (with undo support)
   const handleConfidenceChange = useCallback(
-    (value: number) => {
+    (value: number | null) => {
       const oldConfidence = link.confidence;
-      const newConfidence = Math.round(value / 10) * 10 as Confidence;
+      // null resets the confidence to "not set"
+      const newConfidence = value === null ? null : Math.round(value / 10) * 10 as Confidence;
       updateLink(link.id, { confidence: newConfidence });
       pushAction({
         type: 'update-link',
@@ -237,6 +241,21 @@ export function LinkDetail({ link }: LinkDetailProps) {
       });
     },
     [link.id, link.confidence, updateLink, pushAction]
+  );
+
+  // Handle evaluation change (with undo support)
+  const evaluationScale = getModelScale(useEvaluationModel());
+  const handleEvaluationChange = useCallback(
+    (next: Evaluation | null) => {
+      const previous = link.evaluation ?? null;
+      updateLink(link.id, { evaluation: next });
+      pushAction({
+        type: 'update-link',
+        undo: { linkId: link.id, linkChanges: { evaluation: previous } },
+        redo: { linkId: link.id, linkChanges: { evaluation: next } },
+      });
+    },
+    [link.id, link.evaluation, updateLink, pushAction]
   );
 
   // Handle visual changes — pass only changed property, store merges (with undo support)
@@ -490,14 +509,29 @@ export function LinkDetail({ link }: LinkDetailProps) {
         defaultOpen={false}
       >
         <div className="space-y-4">
-          {/* Confidence */}
+          {/* Confidence (ZeroNeurone model) or two-axis grading */}
+          {evaluationScale ? (
+            <EvaluationInput
+              value={link.evaluation}
+              scale={evaluationScale}
+              onChange={handleEvaluationChange}
+            />
+          ) : (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
                 {t('detail.labels.confidence')}
               </label>
-              <span className="text-xs text-text-tertiary">
+              <span className="flex items-center gap-2 text-xs text-text-tertiary">
                 {link.confidence !== null ? `${link.confidence}%` : t('detail.labels.confidenceUndefined')}
+                {link.confidence !== null && (
+                  <button
+                    onClick={() => handleConfidenceChange(null)}
+                    className="px-1.5 py-0.5 text-xs text-text-secondary border border-border-default rounded hover:bg-bg-secondary"
+                  >
+                    {tCommon('evaluation.clear')}
+                  </button>
+                )}
               </span>
             </div>
             <input
@@ -510,6 +544,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
               className="w-full h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
             />
           </div>
+          )}
 
           {/* Source */}
           <div className="space-y-1.5">

@@ -79,7 +79,8 @@
       "flowConvention": "Fluxuak kontu abonatutik kontu kargatura doaz (balioaren noranzkoa).",
       "confirm": "Inportatu",
       "includeGenToGen": "Sartu kontu orokorren arteko fluxuak (BEZ, idazpen orokorrak, nominak…)"
-    }
+    },
+    "evaluationModelKept": "Fitxategiak \"{{imported}}\" ebaluazio-eredua erabiltzen du; espedienteak berea mantentzen du (\"{{current}}\"). Beste eskala bateko kalifikazioak gorde egiten dira eta grisez erakusten dira."
   },
   "export": {
     "title": "Espediente esportatu",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Elementu bat bilatu...",
       "graph": "Grafoa",
       "toc": "Aurkibidea"
-    }
+    },
+    "sortByEvaluation": "Kalifikazioa"
   },
   "metadataImport": {
     "title": "Metadatuak inportatu",

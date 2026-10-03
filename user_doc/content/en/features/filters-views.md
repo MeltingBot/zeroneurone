@@ -18,7 +18,8 @@ The **Filters** panel allows you to show or hide elements based on various crite
 |--------|-------------|
 | **Text search** | Filter by label or notes |
 | **Tags** | Include/exclude by tags |
-| **Confidence** | Minimum confidence threshold |
+| **Confidence** | Minimum confidence threshold (ZeroNeurone model) |
+| **Grading** | Accepted source and information codes (Europol and Admiralty models) |
 | **Properties** | Elements having a specific property |
 | **Hidden elements** | Manage manually hidden elements |
 | **Isolated** | Elements without connections |
@@ -102,7 +103,7 @@ The **Views** panel also controls general display:
 | Option | Description |
 |--------|-------------|
 | **Link labels** | Show/hide labels |
-| **Confidence indicator** | Colored border based on confidence |
+| **Confidence / grading indicator** | Badge with the confidence (`70%`) or the grading (`B2`) depending on the [evaluation model]({{< relref "evaluation" >}}) |
 | **Tags** | Tag display mode |
 | **Property badges** | Properties displayed on nodes |
 

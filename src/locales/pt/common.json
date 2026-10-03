@@ -205,5 +205,89 @@
     "suggestLarger": "Use um ecrã maior ou um tablet",
     "suggestMaximize": "Maximize a janela do navegador",
     "suggestZoom": "Reduza o nível de zoom do navegador (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Classificação",
+    "notGraded": "Não classificado",
+    "clear": "Limpar",
+    "outOfModel": "Classificação {{scale}}: {{code}} (outra escala)",
+    "sourceLabel": "Fiabilidade da fonte",
+    "infoLabel": "Exatidão da informação",
+    "sourceShort": "Fonte",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (confiança 0-100 %)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Almirantado / NATO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Um único nível de confiança de 0 a 100 %, em passos de 10.",
+      "europol": "Fiabilidade da fonte (A, B, C, X) e exatidão da informação (1 a 4), nos termos do artigo 29.º do Regulamento (UE) 2016/794.",
+      "admiralty": "Fiabilidade da fonte (A a F) e credibilidade da informação (1 a 6), segundo o código do Almirantado utilizado pela NATO."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Almirantado"
+    },
+    "europol": {
+      "sources": {
+        "A": "Sempre fiável",
+        "B": "Geralmente fiável",
+        "C": "Geralmente não fiável",
+        "X": "Não avaliável"
+      },
+      "sourcesHelp": {
+        "A": "Não há dúvidas quanto à autenticidade, à fiabilidade e à competência da fonte, ou a informação é fornecida por uma fonte que se revelou fiável em todos os casos.",
+        "B": "A informação é fornecida por uma fonte que se revelou fiável na maioria dos casos.",
+        "C": "A informação é fornecida por uma fonte que se revelou não fiável na maioria dos casos.",
+        "X": "Não pode ser avaliada a fiabilidade da fonte."
+      },
+      "infos": {
+        "1": "Exatidão indubitável",
+        "2": "Conhecida da fonte",
+        "3": "Corroborada",
+        "4": "Não corroborada"
+      },
+      "infosHelp": {
+        "1": "Informação cuja exatidão não suscita dúvidas.",
+        "2": "Informação conhecida pessoalmente pela fonte, mas não conhecida pessoalmente pelo funcionário que a transmite.",
+        "3": "Informação não conhecida pessoalmente pela fonte, mas corroborada por outras informações já registadas.",
+        "4": "Informação não conhecida pessoalmente pela fonte e que não pode ser corroborada."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Completamente fiável",
+        "B": "Normalmente fiável",
+        "C": "Razoavelmente fiável",
+        "D": "Normalmente não fiável",
+        "E": "Não fiável",
+        "F": "Não avaliável"
+      },
+      "sourcesHelp": {
+        "A": "Sem dúvidas quanto à autenticidade, fiabilidade ou competência; sempre se revelou fiável.",
+        "B": "Dúvidas menores quanto à autenticidade, fiabilidade ou competência; forneceu informação válida na maioria das vezes.",
+        "C": "Dúvidas quanto à autenticidade, fiabilidade ou competência, mas forneceu informação válida no passado.",
+        "D": "Dúvidas significativas quanto à autenticidade, fiabilidade ou competência, mas forneceu informação válida no passado.",
+        "E": "Falta de autenticidade, fiabilidade e competência; historial de informação inválida.",
+        "F": "Não existe base para avaliar a fiabilidade da fonte."
+      },
+      "infos": {
+        "1": "Confirmada",
+        "2": "Provavelmente verdadeira",
+        "3": "Possivelmente verdadeira",
+        "4": "Duvidosa",
+        "5": "Improvável",
+        "6": "Não avaliável"
+      },
+      "infosHelp": {
+        "1": "Confirmada por outras fontes independentes; lógica em si mesma; coerente com outras informações sobre o assunto.",
+        "2": "Não confirmada; lógica em si mesma; coerente com outras informações sobre o assunto.",
+        "3": "Não confirmada; razoavelmente lógica em si mesma; concorda com parte das informações sobre o assunto.",
+        "4": "Não confirmada; possível mas não lógica; sem outras informações sobre o assunto.",
+        "5": "Não confirmada; não lógica em si mesma; contrariada por outras informações sobre o assunto.",
+        "6": "Não existe base para avaliar a validade da informação."
+      }
+    }
   }
 }

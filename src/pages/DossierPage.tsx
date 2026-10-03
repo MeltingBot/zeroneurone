@@ -37,6 +37,7 @@ import { searchService } from '../services/searchService';
 import { syncService } from '../services/syncService';
 import { fileService } from '../services/fileService';
 import type { DisplayMode } from '../types';
+import { useEvaluationModel } from '../hooks/useEvaluationModel';
 import { usePlugins } from '../plugins/usePlugins';
 import { getPlugins } from '../plugins/pluginRegistry';
 
@@ -94,6 +95,15 @@ export function DossierPage() {
   const updateElement = useDossierStore((s) => s.updateElement);
   const updateLink = useDossierStore((s) => s.updateLink);
   const updateDossier = useDossierStore((s) => s.updateDossier);
+
+  // Confidence and grading filters do not carry over to another evaluation model
+  const evaluationModel = useEvaluationModel();
+  const prevEvaluationModelRef = useRef(evaluationModel);
+  useEffect(() => {
+    if (prevEvaluationModelRef.current === evaluationModel) return;
+    prevEvaluationModelRef.current = evaluationModel;
+    useViewStore.getState().setFilters({ minConfidence: null, evaluationSources: null, evaluationInfos: null });
+  }, [evaluationModel]);
 
   const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);

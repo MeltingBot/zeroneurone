@@ -1,11 +1,13 @@
-import type { Element, Link, ViewFilters } from '../types';
+import type { Element, EvaluationModel, Link, ViewFilters } from '../types';
+import { matchesEvaluationFilters } from './evaluation';
 
 /**
  * Check if an element matches the given filters
  */
 export function elementMatchesFilters(
   element: Element,
-  filters: ViewFilters
+  filters: ViewFilters,
+  evaluationModel: EvaluationModel = 'zeroneurone'
 ): boolean {
   // Text search filter
   if (filters.textSearch) {
@@ -47,8 +49,13 @@ export function elementMatchesFilters(
     if (!hasProperty) return false;
   }
 
-  // Minimum confidence filter
-  if (filters.minConfidence !== null) {
+  // Grading filters (Europol / Admiralty models only)
+  if (!matchesEvaluationFilters(element.evaluation, evaluationModel, filters.evaluationSources, filters.evaluationInfos)) {
+    return false;
+  }
+
+  // Minimum confidence filter (ZeroNeurone model only)
+  if (filters.minConfidence !== null && evaluationModel === 'zeroneurone') {
     if (element.confidence === null || element.confidence < filters.minConfidence) {
       return false;
     }
@@ -92,7 +99,8 @@ export function linkShouldBeDimmed(
 export function getDimmedElementIds(
   elements: Element[],
   filters: ViewFilters,
-  hiddenElementIds: Set<string>
+  hiddenElementIds: Set<string>,
+  evaluationModel: EvaluationModel = 'zeroneurone'
 ): Set<string> {
   const dimmedIds = new Set<string>();
 
@@ -102,7 +110,9 @@ export function getDimmedElementIds(
     filters.excludeTags.length > 0 ||
     filters.hasProperty !== null ||
     filters.textSearch !== '' ||
-    filters.minConfidence !== null ||
+    (filters.minConfidence !== null && evaluationModel === 'zeroneurone') ||
+    (evaluationModel !== 'zeroneurone' &&
+      ((filters.evaluationSources?.length ?? 0) > 0 || (filters.evaluationInfos?.length ?? 0) > 0)) ||
     filters.dateFrom !== null ||
     filters.dateTo !== null ||
     filters.hasGeo !== null;
@@ -115,7 +125,7 @@ export function getDimmedElementIds(
     // Skip hidden elements
     if (hiddenElementIds.has(element.id)) continue;
 
-    if (!elementMatchesFilters(element, filters)) {
+    if (!elementMatchesFilters(element, filters, evaluationModel)) {
       dimmedIds.add(element.id);
     }
   }

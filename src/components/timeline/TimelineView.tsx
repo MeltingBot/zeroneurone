@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Upload, Clock } from 'lucide-react';
 import { fileService } from '../../services/fileService';
@@ -63,6 +64,7 @@ export function TimelineView() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { elements, links, comments, currentDossier } = useDossierStore();
+  const evaluationModel = useEvaluationModel();
   const { selectElement, selectLink, selectedElementIds, selectedLinkIds, setFocusedEventId } = useSelectionStore();
   const hideMedia = useUIStore((state) => state.hideMedia);
   const anonymousMode = useUIStore((state) => state.anonymousMode);
@@ -94,7 +96,7 @@ export function TimelineView() {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
     } else {
-      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
     }
     // ZNQuery filter: dim elements not matching the query
     if (queryFilterActive && queryMatchElementIds.size > 0) {
@@ -105,7 +107,7 @@ export function TimelineView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
 
   // Persisted timeline state (survives view switches)
   const tl = useViewStore((s) => s.timeline);

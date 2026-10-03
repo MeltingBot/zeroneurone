@@ -13,7 +13,8 @@
       "information": "Información",
       "dates": "Fechas",
       "properties": "Propiedades",
-      "retention": "Retención"
+      "retention": "Retención",
+      "evaluation": "Evaluación de la información"
     },
     "labels": {
       "name": "Nombre",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Vencida hace {{days}} día(s)",
       "retentionPolicyRedact": "Redacción definitiva",
       "retentionApply": "Aplicar",
-      "retentionReset": "Restablecer"
+      "retentionReset": "Restablecer",
+      "evaluationModel": "Modelo de evaluación",
+      "evaluationOutsideWarning": "{{count}} valoración(es) usan otra escala. Se conservarán y se mostrarán en gris, sin conversión.",
+      "evaluationHiddenWarning": "{{count}} valoración(es) se conservarán pero quedarán ocultas mientras este modelo esté activo."
     },
     "placeholders": {
       "name": "Nombre de el expediente",
@@ -268,7 +272,9 @@
       "setColorAll": "Definir el color para todos",
       "setTextSizeAll": "Definir tamaño del texto para todos",
       "elementsSection": "Elementos ({{count}})",
-      "linksSection": "Enlaces ({{count}})"
+      "linksSection": "Enlaces ({{count}})",
+      "setEvaluationAll": "Aplicar la misma valoración a toda la selección",
+      "clearConfidenceAll": "Borrar la confianza de toda la selección"
     },
     "copyDate": "Copiar fecha"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Confianza baja",
       "lowConfidenceDesc": "Confianza < 50%",
       "hasComments": "Comentarios",
-      "hasCommentsDesc": "Elementos con comentarios sin resolver"
+      "hasCommentsDesc": "Elementos con comentarios sin resolver",
+      "reliableSources": "Fuentes fiables",
+      "reliableSourcesDesc": "Conservar solo las fuentes valoradas como fiables"
     },
     "property": {
       "hasProperty": "Tiene la propiedad",
@@ -328,6 +336,9 @@
       "count": "{{count}} elemento(s) oculto(s)",
       "showAll": "Mostrar todo",
       "noHidden": "Ningún elemento oculto"
+    },
+    "evaluation": {
+      "hint": "Solo permanecen visibles los elementos valorados en el modelo activo con un código seleccionado."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Etiquetas",
       "both": "Iconos + Etiquetas"
     },
-    "confidenceIndicator": "Indicador de confianza",
+    "confidenceIndicator": "Indicador de confianza / valoración",
     "links": "Enlaces",
     "linkShape": "Forma",
     "linkCurves": "Curvas",

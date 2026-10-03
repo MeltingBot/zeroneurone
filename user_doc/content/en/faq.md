@@ -129,6 +129,10 @@ They move together now. Beautiful.
 
 Yes. Select 2 elements → right-click → **Merge**. Choose which label to keep, the rest (properties, tags, files, links) is merged intelligently. Duplicate links are combined, self-links removed.
 
+### Can I grade my information the Europol way?
+
+Yes. Dossier panel → **Information evaluation** → pick **Europol (4x4)** or **Admiralty / NATO (6x6)**. Each element and link is then graded with two codes (e.g. **B2**: source mostly reliable, information known to the source). The choice applies to the whole dossier, collaborators included. Switching back to the ZeroNeurone model loses nothing: nothing is converted, everything is kept. Details in [Information evaluation]({{< relref "features/evaluation" >}}).
+
 ### What are canvas tabs?
 
 **Thematic workspaces** within a single dossier. One tab per hypothesis, per actor type, per time period... Elements from other tabs connected to yours appear semi-transparent. Handy for keeping things organized.

@@ -111,6 +111,10 @@ WITHIN 2 HOPS OF tag = "suspect"
 | `notes` | texte | Notes associées |
 | `tag` | texte | Tags (correspond si au moins un tag match) |
 | `confidence` | nombre | Niveau de confiance (0-100) |
+| `evaluation` | texte | Cotation complète (ex. `"B2"`) |
+| `evaluation.source` | texte | Code de fiabilité de la source (ex. `"B"`) |
+| `evaluation.info` | texte | Code d'exactitude de l'information (ex. `"2"`) |
+| `evaluation.scale` | texte | Grille de la cotation (`"europol"` ou `"admiralty"`) |
 | `source` | texte | Source de l'information |
 | `date` | date | Date de l'élément |
 | `date.start` | date | Début de la plage de dates |

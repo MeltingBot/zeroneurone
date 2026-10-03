@@ -9,6 +9,7 @@
 import * as Y from 'yjs';
 import type { Element, ElementVisual, ElementEvent, Property, Position } from '../../types';
 import { normalizeGeo } from '../../utils/geo';
+import { sanitizeEvaluation } from '../../utils/evaluation';
 import { DEFAULT_ELEMENT_VISUAL } from '../../types';
 import { dateToYjs, dateFromYjs } from '../../types/yjs';
 
@@ -46,6 +47,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
   map.set('dossierId', element.dossierId);
   map.set('label', element.label);
   map.set('confidence', element.confidence);
+  map.set('evaluation', element.evaluation ?? null);
   map.set('source', element.source);
   map.set('date', dateToYjs(element.date));
   map.set('parentGroupId', element.parentGroupId);
@@ -313,6 +315,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
     tags,
     properties,
     confidence: ymap.get('confidence') ?? null,
+    evaluation: readEvaluation(ymap.get('evaluation')),
     source: ymap.get('source') || '',
     date: dateFromYjs(ymap.get('date')),
     dateRange,
@@ -400,6 +403,10 @@ export function updateElementYMap(
 
     if (changes.confidence !== undefined) {
       ymap.set('confidence', changes.confidence);
+    }
+
+    if (changes.evaluation !== undefined) {
+      ymap.set('evaluation', changes.evaluation ?? null);
     }
 
     if (changes.source !== undefined) {
@@ -531,4 +538,9 @@ function deserializePropertyValue(value: any): Property['value'] {
     return new Date(value.value);
   }
   return value;
+}
+
+/** Evaluation stored as a plain object (or a Y.Map, should a peer write one) */
+function readEvaluation(raw: unknown) {
+  return sanitizeEvaluation(raw instanceof Y.Map ? raw.toJSON() : raw);
 }

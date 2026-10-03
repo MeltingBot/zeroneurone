@@ -463,7 +463,8 @@
     "unpinColumn": "Alliberar columna",
     "copyCell": "Copiar cel·la",
     "copyRow": "Copiar fila",
-    "copySelection": "Copiar selecció ({{count}})"
+    "copySelection": "Copiar selecció ({{count}})",
+    "evaluation": "Val."
   },
   "report": {
     "title": "Informe",

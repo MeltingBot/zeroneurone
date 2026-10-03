@@ -1,4 +1,5 @@
-import type { Dossier, Element, Link, Asset } from '../types';
+import type { Dossier, Element, Link, Asset, EvaluationModel } from '../types';
+import { evaluationSortKey, formatEvaluation, getEvaluationModel, isInModel } from '../utils/evaluation';
 import { getGeoCenter, isGeoPolygon } from '../utils/geo';
 import { safeColor, safeDataImageUrl } from '../utils/escapeHtml';
 import { insightsService } from './insightsService';
@@ -67,6 +68,24 @@ export const DEFAULT_REPORT_OPTIONS: ReportOptions = {
 };
 
 class ReportService {
+  /** Evaluation model of the dossier being reported (set by generate) */
+  private evaluationModel: EvaluationModel = 'zeroneurone';
+
+  /** Column/field title for the confidence or the grading */
+  private evaluationTitle(): string {
+    return this.evaluationModel === 'zeroneurone'
+      ? this.t('confidence')
+      : (i18next.t('common:evaluation.label') as string);
+  }
+
+  /** Confidence ("70%") or grading ("B2") of an item, '-' when missing */
+  private evaluationText(item: Element | Link): string {
+    if (this.evaluationModel === 'zeroneurone') {
+      return item.confidence !== null ? `${item.confidence}%` : '-';
+    }
+    return isInModel(item.evaluation, this.evaluationModel) ? formatEvaluation(item.evaluation) : '-';
+  }
+
   /**
    * Helper to get translation with fallback
    */
@@ -91,6 +110,8 @@ class ReportService {
     if (language && language !== currentLang) {
       i18next.changeLanguage(language);
     }
+
+    this.evaluationModel = getEvaluationModel(dossier);
 
     // Build insights if needed
     if (options.includeInsights && elements.length > 0) {
@@ -476,7 +497,7 @@ class ReportService {
       <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('identity')}</th></tr>
         <tr><td>${this.t('tags')}</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join(' ') : '-'}</td></tr>
-        <tr><td>${this.t('confidence')}</td><td>${el.confidence !== null ? `${el.confidence}%` : '-'}</td></tr>
+        <tr><td>${this.evaluationTitle()}</td><td>${this.evaluationText(el)}</td></tr>
         <tr><td>${this.t('source')}</td><td>${el.source ? this.escapeHTML(el.source) : '-'}</td></tr>
         ${el.notes ? `<tr><td>${this.t('notes')}</td><td class="markdown-content">${this.markdownToHTML(el.notes)}</td></tr>` : ''}
       </table>\n`;
@@ -553,7 +574,7 @@ class ReportService {
         <th>${this.t('element')}</th>
         <th>${this.t('notes')}</th>
         <th>${this.t('tags')}</th>
-        <th>${this.t('confidence')}</th>
+        <th>${this.evaluationTitle()}</th>
         <th>${this.t('source')}</th>
         ${showProps ? `<th>${this.t('properties')}</th>` : ''}
         ${options.includeFiles ? `<th>${this.t('files')}</th>` : ''}
@@ -572,7 +593,7 @@ class ReportService {
         <td><span class="color-dot" style="background:${safeColor(el.visual.color, '#d4cec4')}"></span>${this.escapeHTML(el.label)}</td>
         <td class="markdown-content">${el.notes ? this.markdownToHTML(el.notes) : '-'}</td>
         <td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join('') : '-'}</td>
-        <td>${el.confidence !== null ? `${el.confidence}%` : '-'}</td>
+        <td>${this.evaluationText(el)}</td>
         <td>${el.source ? this.escapeHTML(el.source) : '-'}</td>
         ${showProps ? `<td>${propsHtml}</td>` : ''}
         ${options.includeFiles ? `<td class="file-list">${filesHtml}</td>` : ''}
@@ -781,7 +802,7 @@ class ReportService {
           md += `| ${this.t('field')} | ${this.t('value')} |\n`;
           md += `|-------|--------|\n`;
           md += `| ${this.t('tags')} | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
-          md += `| ${this.t('confidence')} | ${el.confidence !== null ? `${el.confidence}%` : '-'} |\n`;
+          md += `| ${this.evaluationTitle()} | ${this.evaluationText(el)} |\n`;
           md += `| ${this.t('source')} | ${el.source || '-'} |\n`;
           if (el.notes) {
             md += `| ${this.t('notes')} | ${el.notes.replace(/\n/g, ' ')} |\n`;
@@ -850,7 +871,7 @@ class ReportService {
     const showProps = options.includeProperties;
     const showFiles = options.includeFiles;
 
-    let md = `| ${this.t('element')} | ${this.t('notes')} | ${this.t('tags')} | ${this.t('confidence')} | ${this.t('source')} |`;
+    let md = `| ${this.t('element')} | ${this.t('notes')} | ${this.t('tags')} | ${this.evaluationTitle()} | ${this.t('source')} |`;
     if (showProps) md += ` ${this.t('properties')} |`;
     if (showFiles) md += ` ${this.t('files')} |`;
     md += `\n`;
@@ -862,7 +883,7 @@ class ReportService {
 
     for (const el of elements) {
       const tags = el.tags.length > 0 ? el.tags.join(', ') : '-';
-      const confidence = el.confidence !== null ? `${el.confidence}%` : '-';
+      const confidence = this.evaluationText(el);
       const props = showProps && el.properties.length > 0
         ? el.properties.map(p => `**${p.key}:** ${p.value ?? ''}`).join(', ')
         : '-';
@@ -940,6 +961,7 @@ class ReportService {
         notes: el.notes || null,
         tags: el.tags,
         confidence: el.confidence,
+        evaluation: el.evaluation ?? null,
         source: el.source || null,
         geo: el.geo || null,
         properties: el.properties.reduce((acc, p) => {
@@ -969,6 +991,7 @@ class ReportService {
           notes: link.notes || null,
           directed: link.directed,
           confidence: link.confidence,
+          evaluation: link.evaluation ?? null,
           source: link.source || null,
           properties: link.properties.reduce((acc, p) => {
             acc[p.key] = p.value;
@@ -1077,6 +1100,11 @@ class ReportService {
           return new Date(dateA).getTime() - new Date(dateB).getTime();
         }
         case 'confidence':
+          if (this.evaluationModel !== 'zeroneurone') {
+            const ka = evaluationSortKey(a.evaluation, this.evaluationModel);
+            const kb = evaluationSortKey(b.evaluation, this.evaluationModel);
+            return ka === kb ? 0 : ka < kb ? -1 : 1;
+          }
           return (b.confidence ?? -1) - (a.confidence ?? -1);
         default:
           return 0;

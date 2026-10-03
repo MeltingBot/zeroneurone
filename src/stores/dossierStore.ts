@@ -30,6 +30,7 @@ import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
 import { deriveRoomId } from '../services/cryptoService';
 import { onPersistFailure } from '../utils/persistError';
+import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
 import { useHistoryStore } from './historyStore';
 import { getYMaps } from '../types/yjs';
 import {
@@ -710,6 +711,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         };
         if (metaRetDays !== undefined) joinerChanges.retentionDays = metaRetDays;
         if (metaRetPolicy !== undefined) joinerChanges.retentionPolicy = metaRetPolicy as Dossier['retentionPolicy'];
+        const metaEvalModel = metaMap.get('evaluationModel');
+        if (isEvaluationModel(metaEvalModel)) joinerChanges.evaluationModel = metaEvalModel;
         dossier = { ...dossier, ...joinerChanges };
         await dossierRepository.update(id, joinerChanges);
       }
@@ -998,6 +1001,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           deferredYdoc.transact(() => {
             deferredMeta.set('name', srcDossier.name);
             deferredMeta.set('description', srcDossier.description || '');
+            // Never overwrite a model already chosen in the shared session
+            if (!deferredMeta.has('evaluationModel')) {
+              deferredMeta.set('evaluationModel', getEvaluationModel(srcDossier));
+            }
           });
 
           const syncStore = useSyncStore.getState();
@@ -1090,6 +1097,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (changes.properties !== undefined) metaMap.set('properties', changes.properties);
         if (changes.retentionDays !== undefined) metaMap.set('retentionDays', changes.retentionDays);
         if (changes.retentionPolicy !== undefined) metaMap.set('retentionPolicy', changes.retentionPolicy);
+        if (changes.evaluationModel !== undefined) metaMap.set('evaluationModel', changes.evaluationModel);
       });
     }
 
@@ -1964,6 +1972,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       ? (Math.max(target.confidence, source.confidence) as import('../types').Confidence)
       : target.confidence ?? source.confidence;
 
+    // Grading: target wins, fallback to source (gradings are not comparable across scales)
+    const mergedEvaluation = target.evaluation ?? source.evaluation ?? null;
+
     // Source: combine if different
     const mergedSource = target.source && source.source && target.source !== source.source
       ? `${target.source} ; ${source.source}`
@@ -2053,6 +2064,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         events: target.events,
         assetIds: target.assetIds,
         confidence: target.confidence,
+        evaluation: target.evaluation ?? null,
         source: target.source,
         geo: target.geo,
         date: target.date,
@@ -2115,6 +2127,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             events: mergedEvents,
             assetIds: mergedAssetIds,
             confidence: mergedConfidence,
+            evaluation: mergedEvaluation,
             source: mergedSource,
             geo: mergedGeo,
             date: mergedDate,
@@ -2144,6 +2157,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
           events: mergedEvents,
           assetIds: mergedAssetIds,
           confidence: mergedConfidence,
+          evaluation: mergedEvaluation,
           source: mergedSource,
           geo: mergedGeo,
           date: mergedDate,
@@ -2918,6 +2932,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const metaProperties = metaMap.get('properties') as any[] | undefined;
       const metaRetentionDays = metaMap.get('retentionDays') as number | null | undefined;
       const metaRetentionPolicy = metaMap.get('retentionPolicy') as string | undefined;
+      const rawEvalModel = metaMap.get('evaluationModel');
+      const metaEvaluationModel = isEvaluationModel(rawEvalModel) ? rawEvalModel : undefined;
 
       const hasMetaChanges =
         (metaName !== undefined && metaName !== currentDossier.name) ||
@@ -2927,7 +2943,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         (metaTags !== undefined && JSON.stringify(metaTags) !== JSON.stringify(currentDossier.tags || [])) ||
         (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentDossier.properties || [])) ||
         (metaRetentionDays !== undefined && metaRetentionDays !== (currentDossier.retentionDays ?? null)) ||
-        (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentDossier.retentionPolicy || 'warn'));
+        (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentDossier.retentionPolicy || 'warn')) ||
+        (metaEvaluationModel !== undefined && metaEvaluationModel !== getEvaluationModel(currentDossier));
 
       if (hasMetaChanges) {
         const changes: Partial<Dossier> = {};
@@ -2939,6 +2956,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (metaProperties !== undefined) changes.properties = metaProperties;
         if (metaRetentionDays !== undefined) changes.retentionDays = metaRetentionDays;
         if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Dossier['retentionPolicy'];
+        if (metaEvaluationModel !== undefined) changes.evaluationModel = metaEvaluationModel;
 
         updatedDossier = {
           ...currentDossier,

@@ -13,7 +13,8 @@
       "information": "Informazioa",
       "dates": "Datak",
       "properties": "Propietateak",
-      "retention": "Atxikipena"
+      "retention": "Atxikipena",
+      "evaluation": "Informazioaren ebaluazioa"
     },
     "labels": {
       "name": "Izena",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Iraungita duela {{days}} egun",
       "retentionPolicyRedact": "Behin betiko zentsura",
       "retentionApply": "Aplikatu",
-      "retentionReset": "Berrezarri"
+      "retentionReset": "Berrezarri",
+      "evaluationModel": "Ebaluazio-eredua",
+      "evaluationOutsideWarning": "{{count}} kalifikaziok beste eskala bat erabiltzen dute. Gorde egingo dira eta grisez erakutsiko dira, bihurketarik gabe.",
+      "evaluationHiddenWarning": "{{count}} kalifikazio gorde egingo dira, baina ezkutatuta egongo dira eredu hau aktibo dagoen bitartean."
     },
     "placeholders": {
       "name": "Espedienteren izena",
@@ -268,7 +272,9 @@
       "setColorAll": "Kolorea ezarri guztientzat",
       "setTextSizeAll": "Testuaren tamaina guztientzat ezarri",
       "elementsSection": "Elementuak ({{count}})",
-      "linksSection": "Loturak ({{count}})"
+      "linksSection": "Loturak ({{count}})",
+      "setEvaluationAll": "Kalifikazio bera aplikatu hautapen osoari",
+      "clearConfidenceAll": "Ezabatu hautapen osoaren konfiantza"
     },
     "copyDate": "Data kopiatu"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Konfiantza baxua",
       "lowConfidenceDesc": "Konfiantza < 50%",
       "hasComments": "Iruzkinak",
-      "hasCommentsDesc": "Ebatzi gabeko iruzkindun elementuak"
+      "hasCommentsDesc": "Ebatzi gabeko iruzkindun elementuak",
+      "reliableSources": "Iturri fidagarriak",
+      "reliableSourcesDesc": "Fidagarri gisa kalifikatutako iturriak soilik mantendu"
     },
     "property": {
       "hasProperty": "Propietatea du",
@@ -328,6 +336,9 @@
       "count": "{{count}} elementu ezkutatuta",
       "showAll": "Dena erakutsi",
       "noHidden": "Ez dago elementu ezkutaturik"
+    },
+    "evaluation": {
+      "hint": "Eredu aktiboan hautatutako kode batekin kalifikatutako elementuak soilik geratzen dira ikusgai."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Etiketak",
       "both": "Ikonoak + Etiketak"
     },
-    "confidenceIndicator": "Konfiantza adierazlea",
+    "confidenceIndicator": "Konfiantza / kalifikazio adierazlea",
     "links": "Loturak",
     "linkShape": "Forma",
     "linkCurves": "Kurbak",

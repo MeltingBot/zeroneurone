@@ -202,5 +202,89 @@
     "suggestLarger": "Erabili pantaila handiagoa edo tableta",
     "suggestMaximize": "Maximizatu nabigatzailearen leihoa",
     "suggestZoom": "Murriztu nabigatzailearen zoom maila (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Kalifikazioa",
+    "notGraded": "Kalifikatu gabe",
+    "clear": "Garbitu",
+    "outOfModel": "{{scale}} kalifikazioa: {{code}} (beste eskala bat)",
+    "sourceLabel": "Iturriaren fidagarritasuna",
+    "infoLabel": "Informazioaren zehaztasuna",
+    "sourceShort": "Iturria",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (konfiantza % 0-100)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Almirantegoa / NATO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Konfiantza-maila bakarra, % 0tik % 100era, 10eko urratsetan.",
+      "europol": "Iturriaren fidagarritasuna (A, B, C, X) eta informazioaren zehaztasuna (1etik 4ra), (EB) 2016/794 Erregelamenduaren 29. artikuluaren arabera.",
+      "admiralty": "Iturriaren fidagarritasuna (Atik Fra) eta informazioaren sinesgarritasuna (1etik 6ra), NATOk erabiltzen duen Almirantegoaren kodearen arabera."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Almirantegoa"
+    },
+    "europol": {
+      "sources": {
+        "A": "Beti fidagarria",
+        "B": "Gehienetan fidagarria",
+        "C": "Gehienetan ez fidagarria",
+        "X": "Ezin da ebaluatu"
+      },
+      "sourcesHelp": {
+        "A": "Ez dago zalantzarik iturriaren benetakotasunari, fidagarritasunari eta gaitasunari buruz, edo informazioa kasu guztietan fidagarria izan den iturri batetik dator.",
+        "B": "Informazioa kasu gehienetan fidagarria izan den iturri batetik dator.",
+        "C": "Informazioa kasu gehienetan fidagarria izan ez den iturri batetik dator.",
+        "X": "Ezin da iturriaren fidagarritasuna ebaluatu."
+      },
+      "infos": {
+        "1": "Zehaztasun ziurra",
+        "2": "Iturriak ezagutua",
+        "3": "Berretsia",
+        "4": "Berretsi gabea"
+      },
+      "infosHelp": {
+        "1": "Zehaztasunari buruz zalantzarik ez dagoen informazioa.",
+        "2": "Iturriak pertsonalki ezagutzen duen informazioa, baina hura transmititzen duen funtzionarioak pertsonalki ezagutzen ez duena.",
+        "3": "Iturriak pertsonalki ezagutzen ez duen informazioa, baina jada erregistratutako beste informazio batzuek berresten dutena.",
+        "4": "Iturriak pertsonalki ezagutzen ez duen informazioa, eta berretsi ezin dena."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Guztiz fidagarria",
+        "B": "Normalean fidagarria",
+        "C": "Nahiko fidagarria",
+        "D": "Normalean ez fidagarria",
+        "E": "Ez fidagarria",
+        "F": "Ezin da ebaluatu"
+      },
+      "sourcesHelp": {
+        "A": "Ez dago zalantzarik benetakotasunari, fidagarritasunari edo gaitasunari buruz; beti izan da guztiz fidagarria.",
+        "B": "Zalantza txikiak benetakotasunari, fidagarritasunari edo gaitasunari buruz; gehienetan informazio baliodunak eman ditu.",
+        "C": "Zalantzak benetakotasunari, fidagarritasunari edo gaitasunari buruz, baina iraganean informazio baliodunak eman ditu.",
+        "D": "Zalantza handiak benetakotasunari, fidagarritasunari edo gaitasunari buruz, baina iraganean informazio baliodunak eman ditu.",
+        "E": "Benetakotasunik, fidagarritasunik eta gaitasunik gabe; iraganean baliorik gabeko informazioak eman ditu.",
+        "F": "Ez dago oinarririk iturriaren fidagarritasuna ebaluatzeko."
+      },
+      "infos": {
+        "1": "Berretsia",
+        "2": "Ziurrenik egia",
+        "3": "Agian egia",
+        "4": "Zalantzazkoa",
+        "5": "Nekez egia",
+        "6": "Ezin da ebaluatu"
+      },
+      "infosHelp": {
+        "1": "Beste iturri independente batzuek berretsia; berez logikoa; gaiari buruzko beste informazioekin koherentea.",
+        "2": "Berretsi gabea; berez logikoa; gaiari buruzko beste informazioekin koherentea.",
+        "3": "Berretsi gabea; berez nahiko logikoa; gaiari buruzko beste informazio batzuekin bat dator.",
+        "4": "Berretsi gabea; posiblea baina ez logikoa; ez dago gaiari buruzko beste informaziorik.",
+        "5": "Berretsi gabea; berez ez logikoa; gaiari buruzko beste informazio batzuek gezurtatzen dute.",
+        "6": "Ez dago oinarririk informazioaren baliozkotasuna ebaluatzeko."
+      }
+    }
   }
 }

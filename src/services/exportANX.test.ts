@@ -228,6 +228,26 @@ describe('buildANXExport — formatting', () => {
     expect(expectWellFormed(xml).querySelector('ChartItem')?.getAttribute('GradeOneIndex')).toBe('4');
   });
 
+  it('maps a grading onto GradeOne (source) and GradeTwo (information)', () => {
+    const europol = { ...DOSSIER, evaluationModel: 'europol' } as Dossier;
+    const xml = buildANXExport(europol, [
+      makeElement({ confidence: 80 as never, evaluation: { scale: 'europol', source: 'B', info: '3' } }),
+    ], []);
+    const item = expectWellFormed(xml).querySelector('ChartItem');
+    expect(item?.getAttribute('GradeOneIndex')).toBe('2');
+    expect(item?.getAttribute('GradeTwoIndex')).toBe('3');
+  });
+
+  it('leaves the grades empty for a grading made in another scale', () => {
+    const admiralty = { ...DOSSIER, evaluationModel: 'admiralty' } as Dossier;
+    const xml = buildANXExport(admiralty, [
+      makeElement({ evaluation: { scale: 'europol', source: 'A', info: '1' } }),
+    ], []);
+    const item = expectWellFormed(xml).querySelector('ChartItem');
+    expect(item?.getAttribute('GradeOneIndex')).toBe('0');
+    expect(item?.getAttribute('GradeTwoIndex')).toBe('0');
+  });
+
   it('carries events as cards', () => {
     const xml = buildANXExport(DOSSIER, [makeElement({
       events: [{ id: 'ev1', date: new Date('2026-03-09'), label: 'Séjour à Genève' }] as never,

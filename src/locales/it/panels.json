@@ -13,7 +13,8 @@
       "information": "Informazioni",
       "dates": "Date",
       "properties": "Proprietà",
-      "retention": "Conservazione"
+      "retention": "Conservazione",
+      "evaluation": "Valutazione delle informazioni"
     },
     "labels": {
       "name": "Nome",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Scaduta da {{days}} giorno/i",
       "retentionPolicyRedact": "Oscuramento definitivo",
       "retentionApply": "Applica",
-      "retentionReset": "Reimpostare"
+      "retentionReset": "Reimpostare",
+      "evaluationModel": "Modello di valutazione",
+      "evaluationOutsideWarning": "{{count}} valutazione/i usano un'altra scala. Saranno conservate e mostrate in grigio, senza conversione.",
+      "evaluationHiddenWarning": "{{count}} valutazione/i saranno conservate ma nascoste finché questo modello è attivo."
     },
     "placeholders": {
       "name": "Nome delil fascicolo",
@@ -268,7 +272,9 @@
       "setColorAll": "Imposta il colore per tutti",
       "setTextSizeAll": "Imposta dimensione del testo per tutti",
       "elementsSection": "Elementi ({{count}})",
-      "linksSection": "Collegamenti ({{count}})"
+      "linksSection": "Collegamenti ({{count}})",
+      "setEvaluationAll": "Applica la stessa valutazione a tutta la selezione",
+      "clearConfidenceAll": "Cancella l'affidabilità per tutta la selezione"
     },
     "copyDate": "Copia data"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Bassa affidabilità",
       "lowConfidenceDesc": "Affidabilità < 50%",
       "hasComments": "Commenti",
-      "hasCommentsDesc": "Elementi con commenti non risolti"
+      "hasCommentsDesc": "Elementi con commenti non risolti",
+      "reliableSources": "Fonti affidabili",
+      "reliableSourcesDesc": "Mantieni solo le fonti valutate come affidabili"
     },
     "property": {
       "hasProperty": "Ha la proprietà",
@@ -328,6 +336,9 @@
       "count": "{{count}} elemento/i nascosto/i",
       "showAll": "Mostra tutto",
       "noHidden": "Nessun elemento nascosto"
+    },
+    "evaluation": {
+      "hint": "Restano visibili solo gli elementi valutati nel modello attivo con un codice selezionato."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Etichette",
       "both": "Icone + Etichette"
     },
-    "confidenceIndicator": "Indicatore di affidabilità",
+    "confidenceIndicator": "Indicatore di affidabilità / valutazione",
     "links": "Collegamenti",
     "linkShape": "Forma",
     "linkCurves": "Curve",

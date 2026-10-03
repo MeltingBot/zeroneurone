@@ -13,7 +13,8 @@
       "information": "Informations",
       "dates": "Dates",
       "properties": "Propriétés",
-      "retention": "Rétention"
+      "retention": "Rétention",
+      "evaluation": "Évaluation de l'information"
     },
     "labels": {
       "name": "Nom",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Expiré depuis {{days}} jour(s)",
       "retentionPolicyRedact": "Caviardage définitif",
       "retentionApply": "Appliquer",
-      "retentionReset": "Réinitialiser"
+      "retentionReset": "Réinitialiser",
+      "evaluationModel": "Modèle d'évaluation",
+      "evaluationOutsideWarning": "{{count}} cotation(s) utilisent une autre échelle. Elles seront conservées et affichées en grisé, sans conversion.",
+      "evaluationHiddenWarning": "{{count}} cotation(s) seront conservées mais masquées tant que ce modèle est actif."
     },
     "placeholders": {
       "name": "Nom du dossier",
@@ -282,7 +286,9 @@
       "setColorAll": "Définir la couleur pour tous",
       "setTextSizeAll": "Définir la taille du texte pour tous",
       "elementsSection": "Éléments ({{count}})",
-      "linksSection": "Liens ({{count}})"
+      "linksSection": "Liens ({{count}})",
+      "setEvaluationAll": "Appliquer la même cotation à toute la sélection",
+      "clearConfidenceAll": "Effacer la confiance de toute la sélection"
     },
     "copyDate": "Copier la date"
   },
@@ -325,7 +331,9 @@
       "lowConfidence": "Confiance faible",
       "lowConfidenceDesc": "Confiance < 50%",
       "hasComments": "Commentaires",
-      "hasCommentsDesc": "Éléments avec commentaires non résolus"
+      "hasCommentsDesc": "Éléments avec commentaires non résolus",
+      "reliableSources": "Sources fiables",
+      "reliableSourcesDesc": "Ne garder que les sources cotées fiables"
     },
     "property": {
       "hasProperty": "Possède la propriété",
@@ -342,6 +350,9 @@
       "count": "{{count}} élément(s) masqué(s)",
       "showAll": "Tout afficher",
       "noHidden": "Aucun élément masqué"
+    },
+    "evaluation": {
+      "hint": "Seuls les éléments cotés dans le modèle actif et avec un code sélectionné restent visibles."
     }
   },
   "query": {
@@ -499,7 +510,7 @@
       "labels": "Labels",
       "both": "Icônes + Labels"
     },
-    "confidenceIndicator": "Indicateur de confiance",
+    "confidenceIndicator": "Indicateur de confiance / cotation",
     "links": "Liaisons",
     "linkShape": "Forme",
     "linkCurves": "Courbes",

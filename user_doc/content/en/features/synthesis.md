@@ -52,7 +52,7 @@ If you include the element list:
 | Option | Description |
 |--------|-------------|
 | Group by tag | Organizes elements by their tags |
-| Sort by | Name, Date, or Confidence |
+| Sort by | Name, Date, or Confidence (Grading with the Europol / Admiralty model) |
 
 ---
 

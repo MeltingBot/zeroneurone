@@ -79,7 +79,8 @@
       "flowConvention": "Stromen lopen van de gecrediteerde naar de gedebiteerde rekening (richting van de waarde).",
       "confirm": "Importeren",
       "includeGenToGen": "Stromen tussen grootboekrekeningen opnemen (btw, diverse boekingen, loon…)"
-    }
+    },
+    "evaluationModelKept": "Het bestand gebruikt het beoordelingsmodel \"{{imported}}\"; het dossier behoudt het eigen model (\"{{current}}\"). Waarderingen in een andere schaal blijven behouden en worden grijs weergegeven."
   },
   "export": {
     "title": "Dossier exporteren",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Element zoeken...",
       "graph": "Graaf",
       "toc": "Inhoudsopgave"
-    }
+    },
+    "sortByEvaluation": "Waardering"
   },
   "metadataImport": {
     "title": "Metadata importeren",

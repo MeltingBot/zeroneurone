@@ -79,7 +79,8 @@
       "flowConvention": "Przepływy skierowane od konta uznanego do konta obciążonego (kierunek wartości).",
       "confirm": "Importuj",
       "includeGenToGen": "Uwzględnij przepływy między kontami głównymi (VAT, zapisy różne, płace…)"
-    }
+    },
+    "evaluationModelKept": "Plik używa modelu oceny „{{imported}}”; teczka zachowuje własny („{{current}}”). Oceny w innej skali zostają zachowane i są wyświetlane na szaro."
   },
   "export": {
     "title": "Eksportuj teczka",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Szukaj elementu...",
       "graph": "Graf",
       "toc": "Spis treści"
-    }
+    },
+    "sortByEvaluation": "Ocena"
   },
   "metadataImport": {
     "title": "Importuj metadane",

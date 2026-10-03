@@ -131,6 +131,8 @@ L'import se fait en un seul lot **annulable** (Ctrl+Z).
 | notes | Notes texte |
 | tags | Tags séparés par ; |
 | confiance | 0-100 |
+| cotation_echelle (ou evaluation_scale) | `europol` ou `admiralty` (format unifié) |
+| cotation_source / cotation_info | Codes de la cotation, ex. `B` et `2` |
 | source | Source de l'information |
 | date | Date (YYYY-MM-DD) |
 | date_debut | Début de période (liens, events) |

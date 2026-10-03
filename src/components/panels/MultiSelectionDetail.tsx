@@ -19,6 +19,7 @@ import type {
   LinkDirection,
   LinkStyle,
   Confidence,
+  Evaluation,
   Property,
   FontSize,
 } from '../../types';
@@ -26,6 +27,9 @@ import { DEFAULT_COLORS, FONT_SIZE_PX } from '../../types';
 import { AccordionSection } from '../common';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
+import { EvaluationInput } from './EvaluationInput';
+import { getModelScale } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 
 const ELEMENT_SHAPES: { value: ElementShape; label: string }[] = [
@@ -285,8 +289,9 @@ export function MultiSelectionDetail() {
   // ============================================================================
 
   const handleConfidenceChange = useCallback(
-    async (value: number) => {
-      const confidence = Math.round(value / 10) * 10 as Confidence;
+    async (value: number | null) => {
+      // null resets the confidence to "not set" on the whole selection
+      const confidence = value === null ? null : Math.round(value / 10) * 10 as Confidence;
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
 
@@ -295,6 +300,25 @@ export function MultiSelectionDetail() {
       }
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { confidence });
+      }
+    },
+    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
+  );
+
+  // Two-axis grading: the composed value is applied as a whole to the selection
+  const evaluationScale = getModelScale(useEvaluationModel());
+  const [bulkEvaluation, setBulkEvaluation] = useState<Evaluation | null>(null);
+  const handleEvaluationChange = useCallback(
+    async (evaluation: Evaluation | null) => {
+      setBulkEvaluation(evaluation);
+      const elementIds = Array.from(selectedElementIds);
+      const linkIds = Array.from(selectedLinkIds);
+
+      if (elementIds.length > 0) {
+        await updateElements(elementIds, { evaluation });
+      }
+      if (linkIds.length > 0) {
+        await updateLinks(linkIds, { evaluation });
       }
     },
     [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
@@ -493,7 +517,27 @@ export function MultiSelectionDetail() {
         </div>
       </AccordionSection>
 
-      {/* Confidence - Common */}
+      {/* Evaluation - Common (grading models) */}
+      {evaluationScale ? (
+      <AccordionSection
+        id="bulk-evaluation"
+        title={tCommon('evaluation.label')}
+        icon={<Percent size={12} />}
+        defaultOpen={false}
+      >
+        <div className="space-y-2">
+          <p className="text-[10px] text-text-tertiary">
+            {t('detail.multi.setEvaluationAll')}
+          </p>
+          <EvaluationInput
+            value={bulkEvaluation}
+            scale={evaluationScale}
+            onChange={handleEvaluationChange}
+          />
+        </div>
+      </AccordionSection>
+      ) : (
+      /* Confidence - Common */
       <AccordionSection
         id="bulk-confidence"
         title={t('detail.labels.confidence')}
@@ -518,8 +562,15 @@ export function MultiSelectionDetail() {
             <span>50%</span>
             <span>100%</span>
           </div>
+          <button
+            onClick={() => handleConfidenceChange(null)}
+            className="px-1.5 py-0.5 text-xs text-text-secondary border border-border-default rounded hover:bg-bg-secondary"
+          >
+            {t('detail.multi.clearConfidenceAll')}
+          </button>
         </div>
       </AccordionSection>
+      )}
 
       {/* Color - Common */}
       <AccordionSection

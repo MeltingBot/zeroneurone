@@ -36,6 +36,7 @@ import { useCustomIconStore } from '../stores/customIconStore';
 import { tagSetRepository, customIconRepository } from '../db/repositories';
 import { sanitizeSvgIcon } from '../utils/svgIcon';
 import { normalizeGeo, computePolygonCenter } from '../utils/geo';
+import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
 import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
@@ -359,6 +360,9 @@ class ImportService {
       // Import tag families and custom icons, remapping icon references
       await this.importTagSetsAndCustomIcons(data, result);
 
+      // Adopt the evaluation model of the archive (before elements land in the dossier)
+      await this.applyImportedEvaluationModel(data.dossier?.evaluationModel, targetDossierId, result);
+
       // Import elements and links (with optional position offset)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
 
@@ -510,6 +514,44 @@ class ImportService {
   }
 
   /**
+   * Adopt the evaluation model of an imported ZeroNeurone archive, but only
+   * for an empty dossier that never chose one (a dossier created for the
+   * import). An existing dossier keeps its model: the user stays in control,
+   * and a warning tells them the gradings may show as another scale.
+   */
+  private async applyImportedEvaluationModel(
+    rawModel: unknown,
+    targetDossierId: DossierId,
+    result: ImportResult
+  ): Promise<void> {
+    if (!isEvaluationModel(rawModel)) return;
+    const { useDossierStore } = await import('../stores/dossierStore');
+    const store = useDossierStore.getState();
+    const isOpen = store.currentDossier?.id === targetDossierId;
+    const dossier = isOpen ? store.currentDossier : await db.dossiers.get(targetDossierId);
+    if (!dossier || getEvaluationModel(dossier) === rawModel) return;
+
+    const elementCount = isOpen
+      ? store.elements.length
+      : await db.elements.where('dossierId').equals(targetDossierId).count();
+    if (dossier.evaluationModel === undefined && elementCount === 0) {
+      if (isOpen) {
+        await store.updateDossier(targetDossierId, { evaluationModel: rawModel });
+      } else {
+        await db.dossiers.update(targetDossierId, { evaluationModel: rawModel });
+      }
+      return;
+    }
+    result.warnings.push(
+      i18next.t('import.evaluationModelKept', {
+        ns: 'modals',
+        imported: i18next.t(`evaluation.models.${rawModel}`, { ns: 'common' }),
+        current: i18next.t(`evaluation.models.${getEvaluationModel(dossier)}`, { ns: 'common' }),
+      })
+    );
+  }
+
+  /**
    * Apply default display settings for imported dossiers
    * Sets curved links with auto anchoring for better readability
    */
@@ -641,6 +683,9 @@ class ImportService {
 
       // Import tag families and custom icons, remapping icon references
       await this.importTagSetsAndCustomIcons(data, result);
+
+      // Adopt the evaluation model of the file (before elements land in the dossier)
+      await this.applyImportedEvaluationModel(data.dossier?.evaluationModel, targetDossierId, result);
 
       // Import elements and links (no assets for JSON-only import)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result);
@@ -1388,6 +1433,7 @@ class ImportService {
         position,
         assetIds: newAssetIds,
         geo: normalizeGeo(importedElement.geo),
+        evaluation: sanitizeEvaluation(importedElement.evaluation),
         date: importedElement.date ? new Date(importedElement.date) : null,
         dateRange: importedElement.dateRange
           ? {
@@ -1431,6 +1477,7 @@ class ImportService {
         dossierId: targetDossierId,
         fromId: newFromId,
         toId: newToId,
+        evaluation: sanitizeEvaluation(importedLink.evaluation),
         date: importedLink.date ? new Date(importedLink.date) : null,
         // Handle direction with backwards compatibility
         direction: importedLink.direction || (importedLink.directed ? 'forward' : 'none'),
@@ -1729,6 +1776,17 @@ class ImportService {
       const notesIdx = headers.findIndex((h) => ['notes', 'description'].includes(h));
       const tagsIdx = headers.findIndex((h) => ['tags', 'etiquettes'].includes(h));
       const confidenceIdx = headers.findIndex((h) => ['confiance', 'confidence'].includes(h));
+      const evalScaleIdx = headers.findIndex((h) => ['cotation_echelle', 'evaluation_scale'].includes(h));
+      const evalSourceIdx = headers.findIndex((h) => ['cotation_source', 'evaluation_source'].includes(h));
+      const evalInfoIdx = headers.findIndex((h) => ['cotation_info', 'evaluation_info'].includes(h));
+      const parseEvaluation = (values: string[]) =>
+        evalScaleIdx >= 0
+          ? sanitizeEvaluation({
+              scale: values[evalScaleIdx]?.trim().toLowerCase(),
+              source: evalSourceIdx >= 0 ? values[evalSourceIdx] : null,
+              info: evalInfoIdx >= 0 ? values[evalInfoIdx] : null,
+            })
+          : null;
       const sourceIdx = headers.findIndex((h) => h === 'source' && deIdx !== headers.indexOf(h)); // Avoid conflict with 'de'
       const dateIdx = headers.findIndex((h) => h === 'date');
       const dateStartIdx = headers.findIndex((h) => ['date_debut', 'date_start'].includes(h));
@@ -1748,6 +1806,7 @@ class ImportService {
       const knownHeaders = new Set([
         'type', 'label', 'nom', 'name', 'de', 'from', 'source', 'vers', 'to', 'target',
         'notes', 'description', 'tags', 'etiquettes', 'confiance', 'confidence',
+        'cotation_echelle', 'evaluation_scale', 'cotation_source', 'evaluation_source', 'cotation_info', 'evaluation_info',
         'date', 'date_debut', 'date_start', 'date_fin', 'date_end',
         'latitude', 'lat', 'longitude', 'lng', 'lon',
         'position_x', 'x', 'posx', 'position_y', 'y', 'posy',
@@ -1863,6 +1922,7 @@ class ImportService {
           tags: tagsIdx >= 0 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
           properties,
           confidence,
+          evaluation: parseEvaluation(values),
           source: sourceIdx >= 0 ? values[sourceIdx] || '' : '',
           date,
           dateRange: null,
@@ -2031,6 +2091,7 @@ class ImportService {
           tags: [],
           properties: linkProperties,
           confidence: linkConfidence,
+          evaluation: parseEvaluation(values),
           source: '',
           date: null,
           dateRange,

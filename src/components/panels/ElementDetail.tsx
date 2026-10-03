@@ -3,7 +3,9 @@ import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, ExternalLink, Lock, LockOpen, Layers, Code, Copy } from 'lucide-react';
 import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore, useSelectionStore } from '../../stores';
-import type { Element, Link, Confidence, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
+import type { Element, Link, Confidence, Evaluation, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
+import { getModelScale } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { parseFlexibleDate, formatDateForCopy } from '../../utils';
 import { syncService } from '../../services/syncService';
@@ -20,6 +22,7 @@ const GeoPicker = lazy(() => import('./GeoPicker').then(m => ({ default: m.GeoPi
 import { EventsEditor } from './EventsEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
+import { EvaluationInput } from './EvaluationInput';
 
 interface ElementDetailProps {
   element: Element;
@@ -131,6 +134,7 @@ function GeoJsonEditor({ element, onClose }: { element: Element; onClose: () => 
 export function ElementDetail({ element }: ElementDetailProps) {
   const { t } = useTranslation('panels');
   const { t: tPages } = useTranslation('pages');
+  const { t: tCommon } = useTranslation('common');
   // Individual selectors — prevent re-renders when unrelated store state changes
   const updateElement = useDossierStore((s) => s.updateElement);
   const createElement = useDossierStore((s) => s.createElement);
@@ -165,7 +169,9 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const [label, setLabel] = useState(element.label);
   const [notes, setNotes] = useState(element.notes);
   const [source, setSource] = useState(element.source);
-  const [confidence, setConfidence] = useState<Confidence | null>(element.confidence);
+  // Read from the element (not local state) so a collaborator's change shows at once
+  const confidence = element.confidence;
+  const evaluationScale = getModelScale(useEvaluationModel());
   const [dateDate, setDateDate] = useState(element.date ? formatDateForInput(element.date) : '');
   const [dateTime, setDateTime] = useState(element.date ? formatTimeForInput(element.date) : '');
   const initCenter = element.geo ? getGeoCenter(element.geo) : null;
@@ -233,7 +239,6 @@ export function ElementDetail({ element }: ElementDetailProps) {
     setLabel(freshElement.label);
     setNotes(freshElement.notes);
     setSource(freshElement.source);
-    setConfidence(freshElement.confidence);
     setDateDate(freshElement.date ? formatDateForInput(freshElement.date) : '');
     setDateTime(freshElement.date ? formatTimeForInput(freshElement.date) : '');
     const freshCenter = freshElement.geo ? getGeoCenter(freshElement.geo) : null;
@@ -321,10 +326,10 @@ export function ElementDetail({ element }: ElementDetailProps) {
 
   // Handle confidence change (with undo support)
   const handleConfidenceChange = useCallback(
-    (value: number) => {
+    (value: number | null) => {
       const oldConfidence = element.confidence;
-      const newConfidence = Math.round(value / 10) * 10 as Confidence;
-      setConfidence(newConfidence);
+      // null resets the confidence to "not set"
+      const newConfidence = value === null ? null : Math.round(value / 10) * 10 as Confidence;
       updateElement(element.id, { confidence: newConfidence });
       pushAction({
         type: 'update-element',
@@ -333,6 +338,20 @@ export function ElementDetail({ element }: ElementDetailProps) {
       });
     },
     [element.id, element.confidence, updateElement, pushAction]
+  );
+
+  // Handle evaluation change (with undo support)
+  const handleEvaluationChange = useCallback(
+    (next: Evaluation | null) => {
+      const previous = element.evaluation ?? null;
+      updateElement(element.id, { evaluation: next });
+      pushAction({
+        type: 'update-element',
+        undo: { elementId: element.id, changes: { evaluation: previous } },
+        redo: { elementId: element.id, changes: { evaluation: next } },
+      });
+    },
+    [element.id, element.evaluation, updateElement, pushAction]
   );
 
   // Handle date/time change (with undo support)
@@ -1075,14 +1094,29 @@ export function ElementDetail({ element }: ElementDetailProps) {
         defaultOpen={false}
       >
         <div className="space-y-4">
-          {/* Confidence */}
+          {/* Confidence (ZeroNeurone model) or two-axis grading */}
+          {evaluationScale ? (
+            <EvaluationInput
+              value={element.evaluation}
+              scale={evaluationScale}
+              onChange={handleEvaluationChange}
+            />
+          ) : (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
                 {t('detail.labels.confidence')}
               </label>
-              <span className="text-xs text-text-tertiary">
+              <span className="flex items-center gap-2 text-xs text-text-tertiary">
                 {confidence !== null ? `${confidence}%` : t('detail.labels.confidenceUndefined')}
+                {confidence !== null && (
+                  <button
+                    onClick={() => handleConfidenceChange(null)}
+                    className="px-1.5 py-0.5 text-xs text-text-secondary border border-border-default rounded hover:bg-bg-secondary"
+                  >
+                    {tCommon('evaluation.clear')}
+                  </button>
+                )}
               </span>
             </div>
             <input
@@ -1095,6 +1129,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
               className="w-full h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
             />
           </div>
+          )}
 
           {/* Source */}
           <div className="space-y-1.5">

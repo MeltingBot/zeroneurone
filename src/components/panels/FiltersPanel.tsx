@@ -17,7 +17,9 @@ import {
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useSelectionStore } from '../../stores';
 import { ProgressiveList } from '../common/ProgressiveList';
-import type { Confidence, Element, Comment, ViewFilters } from '../../types';
+import type { Confidence, Element, Comment, EvaluationModel, ViewFilters } from '../../types';
+import { EVALUATION_GRIDS, getModelScale, matchesEvaluationFilters } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter } from '../../utils/geo';
 
 // Quick filter definitions (without labels - those come from translations)
@@ -31,6 +33,7 @@ interface QuickFilterParams {
   hiddenElementIds: Set<string>;
   elements: Element[];
   comments: Comment[];
+  evaluationModel: EvaluationModel;
 }
 
 interface QuickFilterDef {
@@ -40,6 +43,13 @@ interface QuickFilterDef {
   icon: React.ReactNode;
   apply: (params: QuickFilterParams) => void;
   isActive: (params: QuickFilterParams) => boolean;
+  /** Evaluation models the filter is offered in (all when absent) */
+  models?: EvaluationModel[];
+}
+
+/** Same set of grading codes, whatever the order they were ticked in */
+function sameCodes(a: readonly string[] | null | undefined, b: readonly string[]): boolean {
+  return !!a && a.length === b.length && b.every((code) => a.includes(code));
 }
 
 const QUICK_FILTER_DEFS: QuickFilterDef[] = [
@@ -146,6 +156,25 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
       }
     },
     isActive: ({ filters }) => filters.minConfidence === 50,
+    models: ['zeroneurone'],
+  },
+  {
+    id: 'reliable-sources',
+    labelKey: 'reliableSources',
+    descKey: 'reliableSourcesDesc',
+    icon: <AlertCircle size={12} />,
+    apply: ({ setFilters, filters, evaluationModel }) => {
+      const scale = getModelScale(evaluationModel);
+      if (!scale) return;
+      const reliable = EVALUATION_GRIDS[scale].reliableSources;
+      const isOn = sameCodes(filters.evaluationSources, reliable);
+      setFilters({ evaluationSources: isOn ? null : [...reliable] });
+    },
+    isActive: ({ filters, evaluationModel }) => {
+      const scale = getModelScale(evaluationModel);
+      return !!scale && sameCodes(filters.evaluationSources, EVALUATION_GRIDS[scale].reliableSources);
+    },
+    models: ['europol', 'admiralty'],
   },
   {
     id: 'has-comments',
@@ -180,6 +209,7 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
 
 export function FiltersPanel() {
   const { t } = useTranslation('panels');
+  const { t: tCommon } = useTranslation('common');
   const { elements, comments } = useDossierStore();
   const {
     filters,
@@ -198,6 +228,17 @@ export function FiltersPanel() {
   const deselectElement = useSelectionStore((s) => s.deselectElement);
 
   const isActive = hasActiveFilters();
+  const evaluationModel = useEvaluationModel();
+  const evaluationScale = getModelScale(evaluationModel);
+
+  const toggleEvaluationCode = useCallback(
+    (axis: 'evaluationSources' | 'evaluationInfos', code: string) => {
+      const current = filters[axis] ?? [];
+      const next = current.includes(code) ? current.filter((c) => c !== code) : [...current, code];
+      setFilters({ [axis]: next.length > 0 ? next : null });
+    },
+    [filters, setFilters]
+  );
 
   // IDs of elements matching current filters (visible + matching all active criteria)
   const matchingIds = useMemo(() => {
@@ -225,14 +266,17 @@ export function FiltersPanel() {
         if (!hasProp) return false;
       }
 
-      // Check confidence
-      if (filters.minConfidence !== null) {
+      // Check confidence (ZeroNeurone model) or grading (other models)
+      if (filters.minConfidence !== null && evaluationModel === 'zeroneurone') {
         if (el.confidence === null || el.confidence < filters.minConfidence) return false;
+      }
+      if (!matchesEvaluationFilters(el.evaluation, evaluationModel, filters.evaluationSources, filters.evaluationInfos)) {
+        return false;
       }
 
       return true;
     }).map((el) => el.id);
-  }, [elements, hiddenElementIds, filters]);
+  }, [elements, hiddenElementIds, filters, evaluationModel]);
 
   const matchingCount = matchingIds.length;
 
@@ -277,8 +321,9 @@ export function FiltersPanel() {
       hiddenElementIds,
       elements,
       comments,
+      evaluationModel,
     }),
-    [filters, setFilters, clearFilters, isolated, hideElements, showAllElements, hiddenElementIds, elements, comments]
+    [filters, setFilters, clearFilters, isolated, hideElements, showAllElements, hiddenElementIds, elements, comments, evaluationModel]
   );
 
   // Handle tag toggle
@@ -380,7 +425,7 @@ export function FiltersPanel() {
             {t('filters.sections.quickFilters')}
           </label>
           <div className="flex flex-wrap gap-1.5">
-            {QUICK_FILTER_DEFS.map((qf) => {
+            {QUICK_FILTER_DEFS.filter((qf) => !qf.models || qf.models.includes(evaluationModel)).map((qf) => {
               const active = qf.isActive(quickFilterParams);
               return (
                 <button
@@ -501,7 +546,44 @@ export function FiltersPanel() {
           )}
         </div>
 
-        {/* Confidence filter */}
+        {/* Grading filter (Europol / Admiralty) or confidence filter */}
+        {evaluationScale ? (
+          <div className="space-y-2">
+            {(['evaluationSources', 'evaluationInfos'] as const).map((axis) => {
+              const codes = axis === 'evaluationSources'
+                ? EVALUATION_GRIDS[evaluationScale].sources
+                : EVALUATION_GRIDS[evaluationScale].infos;
+              const selected = filters[axis] ?? [];
+              return (
+                <div key={axis} className="space-y-1.5">
+                  <label className="text-xs font-medium text-text-secondary">
+                    {tCommon(axis === 'evaluationSources' ? 'evaluation.sourceLabel' : 'evaluation.infoLabel')}
+                  </label>
+                  <div className="flex flex-wrap gap-1">
+                    {codes.map((code) => {
+                      const on = selected.includes(code);
+                      return (
+                        <button
+                          key={code}
+                          onClick={() => toggleEvaluationCode(axis, code)}
+                          title={tCommon(`evaluation.${evaluationScale}.${axis === 'evaluationSources' ? 'sources' : 'infos'}.${code}`)}
+                          className={`min-w-7 px-2 py-1 text-xs font-medium rounded border transition-colors ${
+                            on
+                              ? 'bg-accent text-white border-accent'
+                              : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent hover:text-text-primary'
+                          }`}
+                        >
+                          {code}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            <p className="text-[10px] text-text-tertiary">{t('filters.evaluation.hint')}</p>
+          </div>
+        ) : (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-text-secondary">
@@ -528,6 +610,7 @@ export function FiltersPanel() {
             <span>100%</span>
           </div>
         </div>
+        )}
 
         {/* Active filters summary */}
         {isActive && (
@@ -556,10 +639,22 @@ export function FiltersPanel() {
                   onRemove={() => handlePropertyChange('')}
                 />
               )}
-              {filters.minConfidence !== null && (
+              {filters.minConfidence !== null && evaluationModel === 'zeroneurone' && (
                 <FilterBadge
                   label={`≥${filters.minConfidence}%`}
                   onRemove={() => setFilters({ minConfidence: null })}
+                />
+              )}
+              {evaluationScale && (filters.evaluationSources?.length ?? 0) > 0 && (
+                <FilterBadge
+                  label={`${tCommon('evaluation.sourceShort')} ${filters.evaluationSources!.join(', ')}`}
+                  onRemove={() => setFilters({ evaluationSources: null })}
+                />
+              )}
+              {evaluationScale && (filters.evaluationInfos?.length ?? 0) > 0 && (
+                <FilterBadge
+                  label={`${tCommon('evaluation.infoShort')} ${filters.evaluationInfos!.join(', ')}`}
+                  onRemove={() => setFilters({ evaluationInfos: null })}
                 />
               )}
             </div>

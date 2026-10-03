@@ -18,7 +18,8 @@ Le panneau **Filtres** permet d'afficher ou masquer des éléments selon différ
 |--------|-------------|
 | **Recherche texte** | Filtre par label ou notes |
 | **Tags** | Inclure/exclure par tags |
-| **Confiance** | Seuil minimum de confiance |
+| **Confiance** | Seuil minimum de confiance (modèle ZeroNeurone) |
+| **Cotation** | Codes source et information acceptés (modèles Europol et Amirauté) |
 | **Propriétés** | Éléments ayant une propriété spécifique |
 | **Éléments masqués** | Gérer les éléments cachés manuellement |
 | **Isolés** | Éléments sans connexion |
@@ -102,7 +103,7 @@ Le panneau **Vues** contrôle aussi l'affichage général :
 | Option | Description |
 |--------|-------------|
 | **Labels des liens** | Afficher/masquer les labels |
-| **Indicateur confiance** | Bordure colorée selon confiance |
+| **Indicateur confiance / cotation** | Badge avec la confiance (`70%`) ou la cotation (`B2`) selon le [modèle d'évaluation]({{< relref "evaluation" >}}) |
 | **Tags** | Mode d'affichage des tags |
 | **Propriétés badges** | Propriétés affichées sur les nœuds |
 

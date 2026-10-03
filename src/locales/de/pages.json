@@ -474,7 +474,8 @@
     "unpinColumn": "Spalte lösen",
     "copyCell": "Zelle kopieren",
     "copyRow": "Zeile kopieren",
-    "copySelection": "Auswahl kopieren ({{count}})"
+    "copySelection": "Auswahl kopieren ({{count}})",
+    "evaluation": "Bew."
   },
   "report": {
     "title": "Bericht",

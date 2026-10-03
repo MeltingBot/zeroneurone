@@ -463,7 +463,8 @@
     "unpinColumn": "Zutabea askatu",
     "copyCell": "Gelaxka kopiatu",
     "copyRow": "Errenkada kopiatu",
-    "copySelection": "Hautapena kopiatu ({{count}})"
+    "copySelection": "Hautapena kopiatu ({{count}})",
+    "evaluation": "Kalif."
   },
   "report": {
     "title": "Txostena",

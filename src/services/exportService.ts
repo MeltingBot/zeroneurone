@@ -6,6 +6,7 @@ import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
 import { generateUUID, getExtension, stripLocalOnlyDossierFields } from '../utils';
 import { isGeoPolygon, getGeoCenter } from '../utils/geo';
+import { formatEvaluation } from '../utils/evaluation';
 import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
 
@@ -63,7 +64,7 @@ export interface ExportData {
 }
 
 class ExportService {
-  private readonly VERSION = '1.1.0'; // Updated for ZIP assets support
+  private readonly VERSION = '1.2.0'; // 1.2.0: dossier evaluationModel + element/link evaluation
 
   /**
    * Collect the TagSets (tag families) used by the exported elements, plus
@@ -318,6 +319,9 @@ class ExportService {
       'style',
       'est_groupe',
       'groupe_parent',
+      'cotation_echelle',
+      'cotation_source',
+      'cotation_info',
     ];
     const headers = [...baseHeaders, ...sortedPropertyKeys];
 
@@ -347,6 +351,7 @@ class ExportService {
         '', // style
         el.isGroup ? 'oui' : 'non',
         el.parentGroupId ?? '',
+        ...this.evaluationCSV(el),
       ];
       // Add property values
       const propsMap = new Map(el.properties?.map((p) => [p.key, String(p.value)]) ?? []);
@@ -380,6 +385,7 @@ class ExportService {
         link.visual.style,
         '', // est_groupe
         '', // groupe_parent
+        ...this.evaluationCSV(link),
       ];
       // Add property values
       const propsMap = new Map(link.properties?.map((p) => [p.key, String(p.value)]) ?? []);
@@ -414,6 +420,7 @@ class ExportService {
           '', // style
           '', // est_groupe
           '', // groupe_parent
+          '', '', '', // cotation_echelle, cotation_source, cotation_info
         ];
         // Add property values
         const propsMap = new Map(ev.properties?.map((p) => [p.key, String(p.value)]) ?? []);
@@ -425,6 +432,22 @@ class ExportService {
     }
 
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+  }
+
+  /** GEXF attvalues of a grading ("B2" + its scale), empty when not graded */
+  private evaluationGEXF(item: Element | Link): string {
+    const text = formatEvaluation(item.evaluation);
+    if (!text || !item.evaluation) return '';
+    return `
+          <attvalue for="evaluation" value="${this.escapeXML(text)}"/>
+          <attvalue for="evaluation_scale" value="${item.evaluation.scale}"/>`;
+  }
+
+  /** Grading columns of a CSV row: scale, source code, information code */
+  private evaluationCSV(item: Element | Link): string[] {
+    const evaluation = item.evaluation;
+    if (!evaluation) return ['', '', ''];
+    return [evaluation.scale, evaluation.source ?? '', evaluation.info ?? ''];
   }
 
   /**
@@ -516,9 +539,13 @@ class ExportService {
     const nodeAttrs = `    <attributes class="node">
       <attribute id="notes" title="notes" type="string"/>
       <attribute id="tags" title="tags" type="string"/>
+      <attribute id="evaluation" title="evaluation" type="string"/>
+      <attribute id="evaluation_scale" title="evaluation_scale" type="string"/>
     </attributes>`;
     const edgeAttrs = `    <attributes class="edge">
       <attribute id="confidence" title="confidence" type="integer"/>
+      <attribute id="evaluation" title="evaluation" type="string"/>
+      <attribute id="evaluation_scale" title="evaluation_scale" type="string"/>
     </attributes>`;
 
     const nodes = elements
@@ -529,7 +556,7 @@ class ExportService {
         return `      <node id="${el.id}" label="${this.escapeXML(el.label)}">
         <attvalues>
           <attvalue for="notes" value="${this.escapeXML(el.notes ?? '')}"/>
-          <attvalue for="tags" value="${this.escapeXML(tags)}"/>
+          <attvalue for="tags" value="${this.escapeXML(tags)}"/>${this.evaluationGEXF(el)}
         </attvalues>
         <viz:color r="${rgb.r}" g="${rgb.g}" b="${rgb.b}"/>
         <viz:position x="${el.position.x}" y="${-el.position.y}" z="0"/>
@@ -552,10 +579,15 @@ class ExportService {
           target = link.fromId;
         }
         const label = link.label ? ` label="${this.escapeXML(link.label)}"` : '';
-        const confidence =
+        const confidenceValue =
           typeof link.confidence === 'number'
+            ? `<attvalue for="confidence" value="${Math.round(link.confidence)}"/>`
+            : '';
+        const evaluationValues = this.evaluationGEXF(link).trim();
+        const confidence =
+          confidenceValue || evaluationValues
             ? `
-        <attvalues><attvalue for="confidence" value="${Math.round(link.confidence)}"/></attvalues>`
+        <attvalues>${confidenceValue}${evaluationValues}</attvalues>`
             : '';
         return `      <edge id="${link.id}" source="${source}" target="${target}" type="${type}"${label}>${confidence}
       </edge>`;
@@ -645,6 +677,7 @@ ${edges}
           notes: el.notes || null,
           tags: el.tags.length > 0 ? el.tags : null,
           confidence: el.confidence,
+          evaluation: el.evaluation ?? null,
           source: el.source || null,
           date: el.date ? new Date(el.date).toISOString() : null,
           color: el.visual.color,
@@ -689,6 +722,7 @@ ${edges}
             notes: link.notes || null,
             tags: link.tags?.length > 0 ? link.tags : null,
             confidence: link.confidence,
+            evaluation: link.evaluation ?? null,
             source: link.source || null,
             directed: link.directed,
             dateStart: link.dateRange?.start ? new Date(link.dateRange.start).toISOString() : null,

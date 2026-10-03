@@ -479,7 +479,8 @@
     "unpinColumn": "Libérer la colonne",
     "copyCell": "Copier la cellule",
     "copyRow": "Copier la ligne",
-    "copySelection": "Copier la sélection ({{count}})"
+    "copySelection": "Copier la sélection ({{count}})",
+    "evaluation": "Cot."
   },
   "report": {
     "title": "Rapport",

@@ -79,7 +79,8 @@
       "flowConvention": "Fluxos orientados da conta creditada para a conta debitada (sentido do valor).",
       "confirm": "Importar",
       "includeGenToGen": "Incluir fluxos entre contas gerais (IVA, lançamentos diversos, salários…)"
-    }
+    },
+    "evaluationModelKept": "O ficheiro usa o modelo de avaliação \"{{imported}}\"; o dossiê mantém o seu (\"{{current}}\"). As classificações noutra escala são mantidas e apresentadas a cinzento."
   },
   "export": {
     "title": "Exportar o dossiê",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Pesquisar um elemento...",
       "graph": "Grafo",
       "toc": "Sumário"
-    }
+    },
+    "sortByEvaluation": "Classificação"
   },
   "metadataImport": {
     "title": "Importar metadados",

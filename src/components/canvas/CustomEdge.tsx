@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
 import { useUIStore } from '../../stores';
 import { FONT_SIZE_PX, type FontSize } from '../../types';
+import type { EvaluationBadge } from '../../utils/evaluation';
 
 // Remote user presence info for a link
 interface RemoteLinkPresence {
@@ -31,9 +32,9 @@ interface CustomEdgeData {
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void;
   // Curve mode: straight lines, curved bezier, or orthogonal (right angles)
   curveMode?: 'straight' | 'curved' | 'orthogonal';
-  // Confidence indicator
+  // Confidence / grading indicator (precomputed by Canvas, null when hidden)
   showConfidenceIndicator?: boolean;
-  confidence?: number | null;
+  confidenceBadge?: EvaluationBadge | null;
   // Displayed properties
   displayedPropertyValues?: { key: string; value: string }[];
   // Remote user presence (passed from Canvas level)
@@ -101,8 +102,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const curveOffset = edgeData?.curveOffset ?? { x: 0, y: 0 };
   const onCurveOffsetChange = edgeData?.onCurveOffsetChange;
   const curveMode = edgeData?.curveMode ?? 'curved';
-  const showConfidenceIndicator = edgeData?.showConfidenceIndicator ?? false;
-  const confidence = edgeData?.confidence;
+  const confidenceBadge = edgeData?.confidenceBadge ?? null;
   const displayedPropertyValues = edgeData?.displayedPropertyValues;
   const labelFontSize = FONT_SIZE_PX[edgeData?.fontSize || 'sm'];
 
@@ -612,8 +612,8 @@ function CustomEdgeComponent(props: EdgeProps) {
         </g>
       )}
 
-      {/* Confidence indicator - 🤝 + % */}
-      {showConfidenceIndicator && confidence !== null && confidence !== undefined && (
+      {/* Confidence / grading indicator */}
+      {confidenceBadge && (
         <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0)})`}>
           <rect
             x={-18}
@@ -631,16 +631,18 @@ function CustomEdgeComponent(props: EdgeProps) {
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={9}
-            fill={themeMode === 'dark' ? '#ffffff' : '#3d3833'}
+            fill={confidenceBadge.muted
+              ? (themeMode === 'dark' ? '#8a8279' : '#9a948d')
+              : (themeMode === 'dark' ? '#ffffff' : '#3d3833')}
           >
-            🤝 {confidence}%
+            {confidenceBadge.text}
           </text>
         </g>
       )}
 
       {/* Displayed properties */}
       {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0) + (showConfidenceIndicator && confidence !== null ? 18 : 0)})`}>
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0) + (confidenceBadge ? 18 : 0)})`}>
           {displayedPropertyValues.slice(0, 2).map(({ key, value }, index) => {
             const displayValue = value.length > 15 ? value.slice(0, 15) + '...' : value;
             const displayText = `${key}: ${displayValue}`;
@@ -812,7 +814,8 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.curveOffset?.y !== nextData.curveOffset?.y) return false;
   if (prevData.curveMode !== nextData.curveMode) return false;
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
-  if (prevData.confidence !== nextData.confidence) return false;
+  if (prevData.confidenceBadge?.text !== nextData.confidenceBadge?.text) return false;
+  if (prevData.confidenceBadge?.muted !== nextData.confidenceBadge?.muted) return false;
   if (prevData.fontSize !== nextData.fontSize) return false;
 
   // Compare displayed properties

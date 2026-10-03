@@ -5,7 +5,9 @@ import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, use
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import type { Element, Confidence } from '../../types';
+import type { Element, Confidence, EvaluationModel } from '../../types';
+import { evaluationStrength, formatEvaluation, getModelScale, isInModel, sanitizeEvaluation } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -47,13 +49,15 @@ function getPropertyValue(element: Element, key: string): string {
 }
 
 /** Get a sortable raw value (number-aware) */
-function getSortValue(element: Element, column: string): string | number {
+function getSortValue(element: Element, column: string, model: EvaluationModel): string | number {
   switch (column) {
     case 'label':
       return element.label.toLowerCase();
     case 'tags':
       return (element.tags[0] || '').toLowerCase();
     case 'confidence':
+      // Grading models: same order as confidence (weakest first, ungraded lowest)
+      if (model !== 'zeroneurone') return evaluationStrength(element.evaluation, model);
       return element.confidence ?? -1;
     case 'source':
       return element.source.toLowerCase();
@@ -68,13 +72,16 @@ function getSortValue(element: Element, column: string): string | number {
 }
 
 /** Render cell value for fixed columns */
-function getCellValue(el: Element, colKey: string): string {
+function getCellValue(el: Element, colKey: string, model: EvaluationModel): string {
   switch (colKey) {
     case 'label':
       return el.label || '—';
     case 'tags':
       return el.tags[0] || '—';
     case 'confidence':
+      if (model !== 'zeroneurone') {
+        return isInModel(el.evaluation, model) ? formatEvaluation(el.evaluation) : '—';
+      }
       return el.confidence != null ? `${el.confidence}%` : '—';
     case 'source':
       return el.source || '—';
@@ -93,6 +100,7 @@ export function MatrixView() {
   const elements = useDossierStore((s) => s.elements);
   const links = useDossierStore((s) => s.links);
   const updateElement = useDossierStore((s) => s.updateElement);
+  const evaluationModel = useEvaluationModel();
   const dossierName = useDossierStore((s) => s.currentDossier?.name ?? 'export');
   const { selectElement, selectElements, toggleElement, selectedElementIds } = useSelectionStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
@@ -135,7 +143,7 @@ export function MatrixView() {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
     } else {
-      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
     }
     // ZNQuery filter: dim elements not matching the query
     if (queryFilterActive && queryMatchElementIds.size > 0) {
@@ -146,7 +154,7 @@ export function MatrixView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
 
   // Filter elements: exclude groups, annotations, hidden; respect tabs
   const visibleElements = useMemo(() => {
@@ -186,7 +194,12 @@ export function MatrixView() {
   const allColumns: ColumnDef[] = useMemo(() => {
     const colMap: Record<string, ColumnDef> = {
       tags: { key: 'tags', label: t('matrix.type'), width: COL_TAGS },
-      confidence: { key: 'confidence', label: t('matrix.confidence'), width: COL_CONFIDENCE, alignRight: true },
+      confidence: {
+        key: 'confidence',
+        label: evaluationModel === 'zeroneurone' ? t('matrix.confidence') : t('matrix.evaluation'),
+        width: COL_CONFIDENCE,
+        alignRight: true,
+      },
       source: { key: 'source', label: t('matrix.source'), width: COL_SOURCE },
     };
     propertyKeys.forEach((key) => {
@@ -197,7 +210,7 @@ export function MatrixView() {
       { key: 'label', label: t('matrix.label'), width: COL_LABEL, fixed: true },
       ...ordered,
     ];
-  }, [t, propertyKeys, columnOrder]);
+  }, [t, propertyKeys, columnOrder, evaluationModel]);
 
   // Helper: effective column width (custom or default)
   const getColWidth = useCallback((col: ColumnDef) =>
@@ -361,18 +374,18 @@ export function MatrixView() {
     if (activeFilters.length === 0) return visibleElements;
     return visibleElements.filter((el) =>
       activeFilters.every(([colKey, filterText]) => {
-        const value = getCellValue(el, colKey).toLowerCase();
+        const value = getCellValue(el, colKey, evaluationModel).toLowerCase();
         return value.includes(filterText.toLowerCase());
       })
     );
-  }, [visibleElements, columnFilters]);
+  }, [visibleElements, columnFilters, evaluationModel]);
 
   // Sort
   const sortedElements = useMemo(() => {
     const sorted = [...filteredElements];
     sorted.sort((a, b) => {
-      const aVal = getSortValue(a, sort.column);
-      const bVal = getSortValue(b, sort.column);
+      const aVal = getSortValue(a, sort.column, evaluationModel);
+      const bVal = getSortValue(b, sort.column, evaluationModel);
       let cmp: number;
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         cmp = aVal - bVal;
@@ -382,7 +395,7 @@ export function MatrixView() {
       return sort.direction === 'asc' ? cmp : -cmp;
     });
     return sorted;
-  }, [filteredElements, sort]);
+  }, [filteredElements, sort, evaluationModel]);
 
   // Column sort toggle
   const handleSort = useCallback((column: string) => {
@@ -429,11 +442,15 @@ export function MatrixView() {
     switch (colKey) {
       case 'label': return el.label;
       case 'tags': return el.tags.join(', ');
-      case 'confidence': return el.confidence != null ? String(el.confidence) : '';
+      case 'confidence':
+        if (evaluationModel !== 'zeroneurone') {
+          return isInModel(el.evaluation, evaluationModel) ? formatEvaluation(el.evaluation) : '';
+        }
+        return el.confidence != null ? String(el.confidence) : '';
       case 'source': return el.source;
       default: return getPropertyValue(el, colKey);
     }
-  }, []);
+  }, [evaluationModel]);
 
   const handleCellDoubleClick = useCallback((el: Element, colKey: string) => {
     if (anonymousMode) return;
@@ -468,6 +485,25 @@ export function MatrixView() {
         break;
       }
       case 'confidence': {
+        const evaluationScale = getModelScale(evaluationModel);
+        if (evaluationScale) {
+          // "B2", "b 2", "B-" or "-2"; empty clears the grading
+          const compact = trimmed.replace(/\s+/g, '').toUpperCase();
+          const next = compact === ''
+            ? null
+            : sanitizeEvaluation({
+                scale: evaluationScale,
+                source: compact[0] === '-' ? null : compact[0],
+                info: compact[1] && compact[1] !== '-' ? compact[1] : null,
+              });
+          if (compact !== '' && !next) break;
+          if (formatEvaluation(next) !== formatEvaluation(isInModel(el.evaluation, evaluationModel) ? el.evaluation : null)) {
+            const old = el.evaluation ?? null;
+            updateElement(el.id, { evaluation: next });
+            pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { evaluation: old } }, redo: { elementId: el.id, changes: { evaluation: next } } });
+          }
+          break;
+        }
         const num = trimmed === '' ? null : Math.round(Math.max(0, Math.min(100, parseInt(trimmed, 10) || 0)) / 10) * 10 as Confidence;
         if (num !== el.confidence) {
           const old = el.confidence;
@@ -497,7 +533,7 @@ export function MatrixView() {
       }
     }
     setEditingCell(null);
-  }, [editingCell, editValue, elements, updateElement, pushAction]);
+  }, [editingCell, editValue, elements, updateElement, pushAction, evaluationModel]);
 
   const handleCellCancel = useCallback(() => {
     setEditingCell(null);
@@ -544,12 +580,12 @@ export function MatrixView() {
     const headers = visibleCols.map((c) => c.label).join('\t');
     const rows = selectedRows.map((el) =>
       visibleCols.map((col) => {
-        const v = getCellValue(el, col.key);
+        const v = getCellValue(el, col.key, evaluationModel);
         return v === '—' ? '' : v;
       }).join('\t')
     );
     return [headers, ...rows].join('\n');
-  }, [sortedElements, selectedElementIds, visibleCols]);
+  }, [sortedElements, selectedElementIds, visibleCols, evaluationModel]);
 
   // Context menu handlers
   const handleContextMenu = useCallback((e: React.MouseEvent, elementId: string, colKey: string) => {
@@ -571,10 +607,10 @@ export function MatrixView() {
     if (!contextMenu) return;
     const el = elements.find((e) => e.id === contextMenu.elementId);
     if (!el) return;
-    const value = getCellValue(el, contextMenu.colKey);
+    const value = getCellValue(el, contextMenu.colKey, evaluationModel);
     navigator.clipboard.writeText(value === '—' ? '' : value);
     closeContextMenu();
-  }, [contextMenu, elements, closeContextMenu]);
+  }, [contextMenu, elements, closeContextMenu, evaluationModel]);
 
   const handleCopyRow = useCallback(() => {
     if (!contextMenu) return;
@@ -582,12 +618,12 @@ export function MatrixView() {
     if (!el) return;
     const headers = visibleCols.map((c) => c.label).join('\t');
     const row = visibleCols.map((col) => {
-      const v = getCellValue(el, col.key);
+      const v = getCellValue(el, col.key, evaluationModel);
       return v === '—' ? '' : v;
     }).join('\t');
     navigator.clipboard.writeText(`${headers}\n${row}`);
     closeContextMenu();
-  }, [contextMenu, elements, visibleCols, closeContextMenu]);
+  }, [contextMenu, elements, visibleCols, closeContextMenu, evaluationModel]);
 
   const handleCopySelection = useCallback(() => {
     const tsv = buildSelectedTSV();
@@ -635,7 +671,7 @@ export function MatrixView() {
     const headers = visibleCols.map((c) => escape(c.label)).join(',');
     const rows = sortedElements.map((el) =>
       visibleCols.map((col) => {
-        const v = getCellValue(el, col.key);
+        const v = getCellValue(el, col.key, evaluationModel);
         return escape(v === '—' ? '' : v);
       }).join(',')
     );
@@ -651,7 +687,7 @@ export function MatrixView() {
     a.download = `${slug}_matrice_${ts}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [sortedElements, visibleCols]);
+  }, [sortedElements, visibleCols, evaluationModel]);
 
   // Keyboard shortcuts (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Ctrl+C)
   useEffect(() => {
@@ -900,7 +936,7 @@ export function MatrixView() {
                     }}
                   >
                     {visibleCols.map((col) => {
-                      const value = getCellValue(el, col.key);
+                      const value = getCellValue(el, col.key, evaluationModel);
                       const isEmpty = value === '—';
                       const redact = anonymousMode && col.key !== 'confidence' && !isEmpty;
                       const isEditing = editingCell?.rowId === el.id && editingCell?.colKey === col.key;
@@ -923,15 +959,15 @@ export function MatrixView() {
                           {isEditing ? (
                             <input
                               ref={editInputRef}
-                              type={col.key === 'confidence' ? 'number' : 'text'}
+                              type={col.key === 'confidence' && evaluationModel === 'zeroneurone' ? 'number' : 'text'}
                               value={editValue}
                               onChange={(e) => setEditValue(e.target.value)}
                               onKeyDown={handleCellKeyDown}
                               onBlur={handleCellSave}
                               className="w-full h-full bg-transparent outline-none ring-0 shadow-none text-sm text-text-primary"
                               style={{ outline: 'none', boxShadow: 'none' }}
-                              min={col.key === 'confidence' ? 0 : undefined}
-                              max={col.key === 'confidence' ? 100 : undefined}
+                              min={col.key === 'confidence' && evaluationModel === 'zeroneurone' ? 0 : undefined}
+                              max={col.key === 'confidence' && evaluationModel === 'zeroneurone' ? 100 : undefined}
                             />
                           ) : redact ? (
                             <span

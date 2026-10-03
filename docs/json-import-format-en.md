@@ -14,7 +14,7 @@ When importing, **all IDs are regenerated** as new UUIDs. Internal references (e
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "exportedAt": "2026-02-11T10:00:00.000Z",
   "dossier": { ... },
   "elements": [ ... ],
@@ -27,9 +27,9 @@ When importing, **all IDs are regenerated** as new UUIDs. Internal references (e
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| `version` | **Yes** | `string` | Format version (e.g. `"1.1.0"`). Must be truthy. |
+| `version` | **Yes** | `string` | Format version (e.g. `"1.2.0"`). Must be truthy. |
 | `exportedAt` | No | `string` | ISO 8601 timestamp. Informational only, not validated. |
-| `dossier` | No | `object` | Dossier metadata. Included in exports for completeness but **not used** on native JSON import. |
+| `dossier` | No | `object` | Dossier metadata. Included in exports for completeness. Only `evaluationModel` is read on import (see [EvaluationModel](#evaluationmodel)). |
 | `elements` | **Yes** | `Element[]` | Array of element objects. Can be empty. |
 | `links` | **Yes** | `Link[]` | Array of link objects. Can be empty. |
 | `tabs` | No | `CanvasTab[]` | Canvas tab definitions. Only imported for new dossiers (not merges). |
@@ -97,6 +97,7 @@ Each element represents a node on the canvas (person, company, location, concept
 | `tags` | `string[]` | No | `[]` | User-defined tags for filtering and categorization. |
 | `properties` | `Property[]` | No | `[]` | Typed key/value metadata pairs. See [Property](#property). |
 | `confidence` | `number \| null` | No | `null` | Confidence level. Must be a multiple of 10 from 0 to 100, or `null`. |
+| `evaluation` | `Evaluation \| null` | No | `null` | Two-axis grading (Europol / Admiralty). See [Evaluation](#evaluation). |
 | `source` | `string` | No | `""` | Source attribution text. |
 | `date` | `string \| null` | No | `null` | ISO 8601 date string for timeline positioning. |
 | `dateRange` | `DateRange \| null` | No | `null` | Date range with `start` and `end` fields. See [DateRange](#daterange). |
@@ -166,6 +167,7 @@ Each link represents a relationship between two elements (an edge in the graph).
 | `directed` | `boolean` | No | `false` | **Deprecated.** Used as fallback when `direction` is missing. |
 | `direction` | `string` | No | Inferred | `"none"`, `"forward"`, `"backward"`, or `"both"`. If missing, inferred from `directed`: `true` -> `"forward"`, otherwise `"none"`. |
 | `confidence` | `number \| null` | No | `null` | Confidence level (0-100, multiples of 10). |
+| `evaluation` | `Evaluation \| null` | No | `null` | Two-axis grading (Europol / Admiralty). See [Evaluation](#evaluation). |
 | `source` | `string` | No | `""` | Source attribution. |
 | `date` | `string \| null` | No | `null` | ISO 8601 date. |
 | `dateRange` | `DateRange \| null` | No | `null` | Date range with `start` and `end`. |
@@ -433,6 +435,26 @@ type Confidence = 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100
 
 Must be a multiple of 10 from 0 to 100, or `null`.
 
+### Evaluation
+
+Two-axis grading of an element or a link (since version 1.2.0).
+
+```json
+{ "scale": "europol", "source": "B", "info": "2" }
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `scale` | `"europol" \| "admiralty"` | Grid of the grading |
+| `source` | `string \| null` | Source reliability: `A`, `B`, `C`, `X` (europol) or `A` to `F` (admiralty) |
+| `info` | `string \| null` | Information accuracy: `1` to `4` (europol) or `1` to `6` (admiralty) |
+
+Unknown codes are dropped on import; a grading without any valid code becomes `null`.
+
+### EvaluationModel
+
+Field `dossier.evaluationModel`: `"zeroneurone"` (default, 0-100 confidence), `"europol"` or `"admiralty"`. On import it is applied only when the target dossier is empty and has no model yet; otherwise the dossier keeps its own and a warning is shown.
+
 ### Link Direction
 
 ```
@@ -533,7 +555,7 @@ This creates an empty dossier.
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "elements": [
     {
       "id": "elem-001",
@@ -627,7 +649,7 @@ This creates an empty dossier.
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "elements": [
     {
       "id": "group-001",

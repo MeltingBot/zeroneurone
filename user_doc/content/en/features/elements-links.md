@@ -23,7 +23,7 @@ An element represents any concept: person, place, organization, object, event, d
 | **Label** | Name displayed on the canvas |
 | **Notes** | Free-form description, long text |
 | **Tags** | Labels for categorization |
-| **Confidence** | Certainty level (0-100%) |
+| **Confidence / grading** | Certainty level (0-100%) or Europol / Admiralty grading, depending on the dossier's [evaluation model]({{< relref "evaluation" >}}) |
 | **Source** | Information origin |
 | **Date** | Associated date (for timeline) |
 | **Geolocation** | Coordinates (for map) |
@@ -93,7 +93,7 @@ A link represents a relationship between two elements. Links are **first-class c
 |----------|-------------|
 | **Label** | Relationship type (e.g., "knows", "works for") |
 | **Notes** | Detailed description |
-| **Confidence** | Certainty level |
+| **Confidence / grading** | Depending on the dossier's [evaluation model]({{< relref "evaluation" >}}) |
 | **Source** | Information origin |
 | **Period** | Start and end date (for timeline) |
 | **Directed** | Arrow indicating direction |
@@ -206,6 +206,7 @@ Combine two elements into one when they represent the same concept.
 | **Notes** | Concatenated (separated by ---) |
 | **Attachments** | Union |
 | **Confidence** | Maximum of both values |
+| **Grading** | The kept element's, otherwise the other element's |
 | **Source** | Combined if different |
 | **Links** | Transferred to the kept element |
 

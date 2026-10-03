@@ -13,7 +13,8 @@
       "information": "Informació",
       "dates": "Dates",
       "properties": "Propietats",
-      "retention": "Retenció"
+      "retention": "Retenció",
+      "evaluation": "Avaluació de la informació"
     },
     "labels": {
       "name": "Nom",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Expirada des de fa {{days}} dia/es",
       "retentionPolicyRedact": "Redacció definitiva",
       "retentionApply": "Aplicar",
-      "retentionReset": "Reiniciar"
+      "retentionReset": "Reiniciar",
+      "evaluationModel": "Model d'avaluació",
+      "evaluationOutsideWarning": "{{count}} valoració(ns) fan servir una altra escala. Es conservaran i es mostraran en gris, sense conversió.",
+      "evaluationHiddenWarning": "{{count}} valoració(ns) es conservaran però quedaran ocultes mentre aquest model estigui actiu."
     },
     "placeholders": {
       "name": "Nom de l'expedient",
@@ -268,7 +272,9 @@
       "setColorAll": "Definir el color per a tots",
       "setTextSizeAll": "Definir mida del text per a tots",
       "elementsSection": "Elements ({{count}})",
-      "linksSection": "Enllaços ({{count}})"
+      "linksSection": "Enllaços ({{count}})",
+      "setEvaluationAll": "Aplicar la mateixa valoració a tota la selecció",
+      "clearConfidenceAll": "Esborra la confiança de tota la selecció"
     },
     "copyDate": "Copiar la data"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Confiança baixa",
       "lowConfidenceDesc": "Confiança < 50%",
       "hasComments": "Comentaris",
-      "hasCommentsDesc": "Elements amb comentaris sense resoldre"
+      "hasCommentsDesc": "Elements amb comentaris sense resoldre",
+      "reliableSources": "Fonts fiables",
+      "reliableSourcesDesc": "Conservar només les fonts valorades com a fiables"
     },
     "property": {
       "hasProperty": "Té la propietat",
@@ -328,6 +336,9 @@
       "count": "{{count}} element(s) amagat(s)",
       "showAll": "Mostrar tot",
       "noHidden": "Cap element amagat"
+    },
+    "evaluation": {
+      "hint": "Només queden visibles els elements valorats en el model actiu amb un codi seleccionat."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Etiquetes",
       "both": "Icones + Etiquetes"
     },
-    "confidenceIndicator": "Indicador de confiança",
+    "confidenceIndicator": "Indicador de confiança / valoració",
     "links": "Enllaços",
     "linkShape": "Forma",
     "linkCurves": "Corbes",

@@ -10,6 +10,7 @@ import {
 import { useDossierStore, useViewStore, useUIStore } from '../../stores';
 import type { DisplayMode } from '../../types';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 
 interface SynthesisModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface ScreenshotOptions {
 
 export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   const { t, i18n } = useTranslation('modals');
+  const evaluationModel = useEvaluationModel();
   const { currentDossier, elements, links, assets } = useDossierStore();
   const { displayMode, setDisplayMode } = useViewStore();
   const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore();
@@ -389,7 +391,9 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
                 >
                   <option value="label">{t('synthesis.sortByName')}</option>
                   <option value="date">{t('synthesis.sortByDate')}</option>
-                  <option value="confidence">{t('synthesis.sortByConfidence')}</option>
+                  <option value="confidence">
+                    {evaluationModel === 'zeroneurone' ? t('synthesis.sortByConfidence') : t('synthesis.sortByEvaluation')}
+                  </option>
                 </select>
               </div>
             </div>

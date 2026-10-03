@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Gauge } from 'lucide-react';
 import { ResolvedIcon, iconNameResolves } from '../common';
-import type { Element } from '../../types';
+import type { Element, EvaluationModel } from '../../types';
+import { formatEvaluation, getEvaluationBadge } from '../../utils/evaluation';
 import { FONT_SIZE_PX } from '../../types';
 import { useUIStore, useTagSetStore, useSyncStore, useCustomIconStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
@@ -55,8 +56,10 @@ export interface ElementNodeData extends Record<string, unknown> {
   isLowDetail?: boolean;
   /** Whether any link touches this node — drives whether handles are needed. */
   hasLinks?: boolean;
-  /** Show confidence indicator (🤝 + %) */
+  /** Show the confidence / grading badge */
   showConfidenceIndicator?: boolean;
+  /** Evaluation model of the dossier, drives the badge content */
+  evaluationModel?: EvaluationModel;
   /** Properties to display below the element */
   displayedPropertyValues?: { key: string; value: string }[];
   /** Tag display mode: none, icons, labels, or both */
@@ -89,7 +92,10 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks } = nodeData;
+  const confidenceBadge = showConfidenceIndicator
+    ? getEvaluationBadge(element.confidence, element.evaluation, evaluationModel ?? 'zeroneurone')
+    : null;
 
   const [isHovered, setIsHovered] = useState(false);
   const [editValue, setEditValue] = useState(element.label || '');
@@ -447,14 +453,14 @@ function ElementNodeComponent({ data }: NodeProps) {
         </div>
       )}
 
-      {/* Confidence indicator - 🤝 + % */}
-      {showConfidenceIndicator && element.confidence !== null && (
+      {/* Confidence / grading indicator */}
+      {confidenceBadge && (
         <div
           className="absolute -top-2 -left-2 px-1.5 py-0.5 bg-bg-secondary border border-border-default rounded text-xs flex items-center gap-1 shadow-sm z-10"
-          title={`Confiance: ${element.confidence}%`}
+          title={`${evaluationModel && evaluationModel !== 'zeroneurone' ? t('evaluation.label') : t('labels.confidence')} : ${confidenceBadge.text}`}
         >
-          <span className="text-sm">🤝</span>
-          <span className="text-text-secondary font-medium">{element.confidence}%</span>
+          <Gauge size={12} className="text-text-tertiary" />
+          <span className={`font-medium ${confidenceBadge.muted ? 'text-text-tertiary' : 'text-text-secondary'}`}>{confidenceBadge.text}</span>
         </div>
       )}
 
@@ -862,6 +868,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
 
   // Compare display settings that affect rendering
   if (prevData.showConfidenceIndicator !== nextData.showConfidenceIndicator) return false;
+  if (prevData.evaluationModel !== nextData.evaluationModel) return false;
   if (prevData.tagDisplayMode !== nextData.tagDisplayMode) return false;
   if (prevData.tagDisplaySize !== nextData.tagDisplaySize) return false;
   if (prevData.themeMode !== nextData.themeMode) return false;
@@ -880,6 +887,8 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevEl.id !== nextEl.id) return false;
   if (prevEl.label !== nextEl.label) return false;
   if (prevEl.confidence !== nextEl.confidence) return false;
+  if (formatEvaluation(prevEl.evaluation) !== formatEvaluation(nextEl.evaluation)
+    || prevEl.evaluation?.scale !== nextEl.evaluation?.scale) return false;
   if (prevEl.visual.color !== nextEl.visual.color) return false;
   if (prevEl.visual.borderColor !== nextEl.visual.borderColor) return false;
   if (prevEl.visual.borderWidth !== nextEl.visual.borderWidth) return false;

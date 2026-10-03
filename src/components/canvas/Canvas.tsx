@@ -46,7 +46,9 @@ import { PdfPreview } from '../common/PdfPreview';
 import { ImagePreview } from '../common/ImagePreview';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
-import type { Element, Link, Position, Asset } from '../../types';
+import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
+import { getEvaluationBadge } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
@@ -319,7 +321,7 @@ function elementToNode(
   unresolvedCommentCount?: number,
   isLoadingAsset?: boolean,
   badgeProperty?: { value: string; type: string } | null,
-  showConfidenceIndicator?: boolean,
+  confidenceDisplay?: EvaluationModel | null,
   displayedPropertyValues?: { key: string; value: string }[],
   tagDisplayMode?: 'none' | 'icons' | 'labels' | 'both',
   tagDisplaySize?: 'small' | 'medium' | 'large',
@@ -381,7 +383,8 @@ function elementToNode(
         onStopEditing: isGhost ? undefined : onStopEditing,
         themeMode,
         unresolvedCommentCount,
-        showConfidenceIndicator,
+        showConfidenceIndicator: !!confidenceDisplay,
+        evaluationModel: confidenceDisplay ?? 'zeroneurone',
         displayedPropertyValues,
         tagDisplayMode,
         tagDisplaySize,
@@ -416,7 +419,8 @@ function elementToNode(
       unresolvedCommentCount,
       isLoadingAsset,
       badgeProperty,
-      showConfidenceIndicator,
+      showConfidenceIndicator: !!confidenceDisplay,
+      evaluationModel: confidenceDisplay ?? 'zeroneurone',
       displayedPropertyValues,
       tagDisplayMode,
       tagDisplaySize,
@@ -487,7 +491,7 @@ function linkToEdge(
   parallelIndex?: number,
   parallelCount?: number,
   onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
-  showConfidenceIndicator?: boolean,
+  confidenceDisplay?: EvaluationModel | null,
   displayedPropertyValues?: { key: string; value: string }[],
   remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[],
   simplified?: boolean
@@ -608,9 +612,11 @@ function linkToEdge(
       // Include handles in data to force React Flow to re-render when they change
       _sourceHandle: sourceHandle,
       _targetHandle: targetHandle,
-      // Confidence indicator
-      showConfidenceIndicator,
-      confidence: link.confidence,
+      // Confidence / grading indicator
+      showConfidenceIndicator: !!confidenceDisplay,
+      confidenceBadge: confidenceDisplay
+        ? getEvaluationBadge(link.confidence, link.evaluation, confidenceDisplay)
+        : null,
       // Displayed properties
       displayedPropertyValues,
       // Remote user presence (passed from Canvas, not subscribed per-edge)
@@ -637,6 +643,7 @@ export function Canvas() {
 
   // Stores — individual selectors to avoid re-renders when unrelated state changes
   const currentDossier = useDossierStore((s) => s.currentDossier);
+  const evaluationModel = useEvaluationModel();
   const elements = useDossierStore((s) => s.elements);
 
   // Zooming out only strips detail on boards big enough for it to buy anything.
@@ -980,7 +987,7 @@ export function Canvas() {
       });
     } else {
       // Otherwise use filter-based dimming
-      newDimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
+      newDimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
     }
 
     // ZNQuery canvas filter: dim elements not matching the query
@@ -1003,7 +1010,7 @@ export function Canvas() {
     }
     prevDimmedRef.current = newDimmed;
     return newDimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
 
   // Emphasized (glow) element IDs: the positive "result set" of an active
   // narrowing — insights highlight, ZNQuery filter, or view filters. These are
@@ -1124,6 +1131,8 @@ export function Canvas() {
   const showConfidenceIndicator = useDossierStore(
     (state) => state.currentDossier?.settings?.showConfidenceIndicator ?? false
   );
+  // Model whose badge is shown on nodes/edges, null when badges are off
+  const confidenceDisplay = showConfidenceIndicator ? evaluationModel : null;
   const tagDisplayMode = useDossierStore(
     (state) => state.currentDossier?.settings?.tagDisplayMode ?? 'icons'
   );
@@ -1295,7 +1304,7 @@ export function Canvas() {
   const prevHighlightedIdsRef = useRef(emphasizedElementIds);
   const prevEditingIdRef = useRef(editingElementId);
   const prevRemoteUsersRef = useRef(remoteUsersByElement);
-  const prevShowConfRef = useRef(showConfidenceIndicator);
+  const prevShowConfRef = useRef(confidenceDisplay);
   const prevTagModeRef = useRef(tagDisplayMode);
   const prevTagSizeRef = useRef(tagDisplaySize);
   const prevThemeRef = useRef(themeMode);
@@ -1318,7 +1327,7 @@ export function Canvas() {
     const activeTabChanged = prevActiveTabIdRef.current !== activeTabId;
     const globalSettingsChanged =
       activeTabChanged ||
-      prevShowConfRef.current !== showConfidenceIndicator ||
+      prevShowConfRef.current !== confidenceDisplay ||
       prevTagModeRef.current !== tagDisplayMode ||
       prevTagSizeRef.current !== tagDisplaySize ||
       prevThemeRef.current !== themeMode ||
@@ -1350,7 +1359,7 @@ export function Canvas() {
         ns.unresolvedCommentCount,
         ns.isLoadingAsset,
         ns.badgeProperty,
-        showConfidenceIndicator,
+        confidenceDisplay,
         ns.displayedPropertyValues,
         tagDisplayMode,
         tagDisplaySize,
@@ -1390,7 +1399,7 @@ export function Canvas() {
       prevHighlightedIdsRef.current = emphasizedElementIds;
       prevEditingIdRef.current = editingElementId;
       prevRemoteUsersRef.current = remoteUsersByElement;
-      prevShowConfRef.current = showConfidenceIndicator;
+      prevShowConfRef.current = confidenceDisplay;
       prevTagModeRef.current = tagDisplayMode;
       prevTagSizeRef.current = tagDisplaySize;
       prevThemeRef.current = themeMode;
@@ -1531,7 +1540,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, showConfidenceIndicator, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -1772,7 +1781,7 @@ export function Canvas() {
         const linkUnchanged = cd?._linkRef === link;
         const globalsUnchanged = cd?._curveMode === linkCurveMode
           && cd?._anchorMode === linkAnchorMode
-          && cd?._showConfidence === showConfidenceIndicator;
+          && cd?._showConfidence === confidenceDisplay;
         if (linkUnchanged && globalsUnchanged) {
           const sameVisuals = cached.selected === isSelected
             && cd?.isDimmed === isLinkDimmed
@@ -1841,7 +1850,7 @@ export function Canvas() {
           edgeCbs.onLabelChange, stopEditing, edgeCbs.onStartEditing,
           parallel.index, parallel.count,
           edgeCbs.onCurveOffsetChange,
-          showConfidenceIndicator, linkDisplayedPropertyValues,
+          confidenceDisplay, linkDisplayedPropertyValues,
           remoteUsersByLink.get(link.id)
         );
       }
@@ -1851,7 +1860,7 @@ export function Canvas() {
       edgeData._linkRef = link;
       edgeData._curveMode = linkCurveMode;
       edgeData._anchorMode = linkAnchorMode;
-      edgeData._showConfidence = showConfidenceIndicator;
+      edgeData._showConfidence = confidenceDisplay;
       edgeData.isHighlighted = isLinkHighlighted;
       if (!simplified) {
         const parallel = parallelLookup.get(link.id);
@@ -1873,7 +1882,7 @@ export function Canvas() {
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, showConfidenceIndicator, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.

@@ -474,7 +474,8 @@
     "unpinColumn": "Liberar columna",
     "copyCell": "Copiar celda",
     "copyRow": "Copiar fila",
-    "copySelection": "Copiar selección ({{count}})"
+    "copySelection": "Copiar selección ({{count}})",
+    "evaluation": "Val."
   },
   "report": {
     "title": "Informe",

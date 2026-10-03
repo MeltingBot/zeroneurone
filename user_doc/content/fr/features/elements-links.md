@@ -23,7 +23,7 @@ Un élément représente n'importe quel concept : personne, lieu, organisation, 
 | **Label** | Nom affiché sur le canvas |
 | **Notes** | Description libre, texte long |
 | **Tags** | Étiquettes pour catégoriser |
-| **Confiance** | Niveau de certitude (0-100%) |
+| **Confiance / cotation** | Niveau de certitude (0-100%) ou cotation Europol / Amirauté, selon le [modèle d'évaluation]({{< relref "evaluation" >}}) du dossier |
 | **Source** | Origine de l'information |
 | **Date** | Date associée (pour la timeline) |
 | **Géolocalisation** | Coordonnées (pour la carte) |
@@ -93,7 +93,7 @@ Un lien représente une relation entre deux éléments. Les liens sont des **cit
 |-----------|-------------|
 | **Label** | Type de relation (ex: "connaît", "travaille pour") |
 | **Notes** | Description détaillée |
-| **Confiance** | Niveau de certitude |
+| **Confiance / cotation** | Selon le [modèle d'évaluation]({{< relref "evaluation" >}}) du dossier |
 | **Source** | Origine de l'information |
 | **Période** | Date de début et fin (pour la timeline) |
 | **Dirigé** | Flèche indiquant le sens |
@@ -206,6 +206,7 @@ Combinez deux éléments en un seul lorsqu'ils représentent le même concept.
 | **Notes** | Concaténées (séparées par ---) |
 | **Fichiers joints** | Union |
 | **Confiance** | Maximum des deux valeurs |
+| **Cotation** | Celle de l'élément conservé, sinon celle de l'autre élément |
 | **Source** | Combinées si différentes |
 | **Liens** | Transférés vers l'élément conservé |
 

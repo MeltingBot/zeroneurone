@@ -111,6 +111,10 @@ WITHIN 2 HOPS OF tag = "suspect"
 | `notes` | text | Associated notes |
 | `tag` | text | Tags (matches if at least one tag matches) |
 | `confidence` | number | Confidence level (0-100) |
+| `evaluation` | text | Full grading (e.g. `"B2"`) |
+| `evaluation.source` | text | Source reliability code (e.g. `"B"`) |
+| `evaluation.info` | text | Information accuracy code (e.g. `"2"`) |
+| `evaluation.scale` | text | Grid of the grading (`"europol"` or `"admiralty"`) |
 | `source` | text | Information source |
 | `date` | date | Element date |
 | `date.start` | date | Date range start |

@@ -10,136 +10,93 @@ An infinite whiteboard with graph-analysis capabilities.
 
 *Language: [Français](README.md) | English*
 
-![Version](https://img.shields.io/badge/version-2.54.0-blue)
+![Version](https://img.shields.io/badge/version-2.59.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
 ![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8)
 ![i18n](https://img.shields.io/badge/i18n-11%20languages-orange)
 
+User documentation: [doc.zeroneurone.com](https://doc.zeroneurone.com)
+
 ## Philosophy
 
-- **The human stays in control** — No automatic actions, no artificial intelligence; suggestions only on demand
-- **100% local by default** — IndexedDB + OPFS, works offline, data never leaves without an explicit action
-- **The visual IS the analysis** — Spatial position, colours and shapes carry meaning defined by the user
-- **Zero imposed ontology** — Users create their own concepts, no forced entity types
+- **The human stays in control** — no automatic actions, no artificial intelligence; suggestions only on demand.
+- **100% local by default** — IndexedDB + OPFS, works offline, data never leaves without an explicit action. Two exceptions, both triggered by the user: map tiles and place search (OpenStreetMap/Nominatim).
+- **The visual is the analysis** — position, colours and shapes carry the meaning the user gives them.
+- **Zero imposed ontology** — users create their own concepts; no entity type is forced.
 
 ## Features
 
-### Interactive Canvas
-- Create elements by double-clicking
-- Link elements by drag-and-drop
-- Multi-selection and group manipulation
-- Smooth zoom and navigation
-- Visual customisation (colours, shapes, sizes, icons)
-- Nested visual groups
-- Annotations (sticky notes)
-- **Canvas tabs**: thematic spaces per hypothesis, actor type, period (max 10 per dossier)
-- Ghost elements: elements from other tabs connected to the current tab, shown translucent
-- Context menu with selection actions and tab management
-- Minimap for quick navigation
-- Magnetic alignment grid
+### Canvas
+- Create elements by double-clicking, links by drag and drop
+- Multi-selection, copy/paste, alignment, automatic layouts (force, hierarchical, circular, grid, scatter)
+- Customisable appearance: colours, shapes, sizes, Lucide icons or your own SVG icons
+- Nested groups, annotations, minimap, snapping grid
+- **Tabs**: up to 10 thematic spaces per dossier (hypothesis, actor, period); elements from other tabs linked to the current one show as ghosts
+- Undo / redo for every operation, element merges included
 
-### Data Management
-- **Elements**: graph nodes (people, companies, places, concepts, documents…)
-- **Links**: relationships between elements with full metadata
-- **Properties**: customisable key/value pairs
-- **Tags**: free organisation and filtering
-- **Attachments**: images, PDF, documents, EML emails with text and metadata extraction (EXIF, PDF/DOCX/XLSX, email headers, originating IP, body links)
-- **Markdown description**: full support with tables, anchor links, code, quotes
+### Data
+- **Elements and links** with Markdown notes, tags, typed properties, source, dates, geolocation (point or area)
+- **Tag sets**: appearance and properties bound to a tag, exported with the dossier
+- **Attachments**: images, PDF, documents, EML emails, with preview and text and metadata extraction (EXIF, PDF/DOCX/XLSX, email headers)
+- **Information evaluation**, chosen per dossier:
+  - confidence from 0 to 100%;
+  - Europol 4x4 grid (Article 29 of Regulation (EU) 2016/794): source reliability A/B/C/X and information accuracy 1 to 4;
+  - NATO Admiralty 6x6 code.
 
-### Graph Analysis
-- Community detection (Louvain)
-- Centrality (degree, betweenness)
-- Bridge identification between clusters (Tarjan O(V+E))
-- Shortest path between elements
-- Focus mode (N-level neighbourhood)
-- Isolated-node detection
-- Label-similarity analysis
+### Views
+- **Canvas**: main graph
+- **Map**: MapLibre GL JS, vector and satellite base maps, 3D buildings, time navigation
+- **Timeline**: virtualised chronology (10,000+ elements)
+- **Matrix**: sortable, filterable and editable table, CSV export
 
-### Multiple Views
-- **Canvas**: main graph view
-- **Map**: geographic visualisation (MapLibre GL JS) with satellite view
-- **Timeline**: virtualised chronological view (10k+ elements)
+### Search, filters and queries
+- Full-text search (`Ctrl+K`)
+- Filters by tags, properties, confidence or grading, dates; saved views
+- **ZNQuery**: structured query language (`tag = "person" AND confidence > 50`), with a visual builder and saved queries
 
-### Real-time Collaboration
-- Synchronisation over WebSocket with E2E encryption (AES-256-GCM)
-- Link sharing with the key in the URL fragment (never sent to the server)
-- **Asynchronous mode**: collaborators work at different times, data buffered for 7 days
-- Collaborators' cursors and selections visible
-- Attachment synchronisation
-- Canvas-tab synchronisation (names, members, order — viewport stays local per user)
-- Presence detection with heartbeat
-- Optimised incremental sync
-- Hashed Room ID (the server cannot correlate sessions)
+### Graph analysis
+- Communities (Louvain), centrality (degree, betweenness), bridges between clusters
+- Shortest path, focus mode on the N-level neighbourhood, isolated nodes
+- Label similarity to spot duplicates
 
-### Export & Import
-- Full ZIP export (JSON + assets)
-- High-resolution PNG export (configurable zoom/scale)
-- Native SVG export (vector)
-- PDF export of the canvas
-- CSV export (with positions/groups)
-- ANX export (i2 Analyst's Notebook): positions, colours, entity types, attributes
-- Interactive HTML export (report + navigable graph, light/dark theme, TOC, stats)
-- CSV import for tabular data
-- GraphML / GEXF (Gephi) / Gephi Lite JSON import for graph data
-- Excalidraw import
-- ANX (i2 Analyst's Notebook - XML) and ANB (i2 Analyst's Notebook - binary) import
-- STIX 2.1 import (cyber threat intelligence)
-- OSINT Industries, Graph Palette, PredicaGraph, OSINTracker import
-- GEDCOM 5.5.1/7.0 and GeneWeb import for genealogical data (name, dates, places, occupation, nickname, title, notes)
-- **FEC import** (French accounting entries file): aggregated, investigation-oriented financial flow graph — third parties, banks, expenses/revenues, cumulated amounts, periods
-- ZIP import (full restore with tabs)
-- Import into current dossier (merge with visual placement)
-- **JSON mapping import**: an assistant to map any JSON's fields onto elements — auto-detection (record source, label, date/country/geo/identifiers), linked sub-elements, ID-reference links and **pivot nodes** (shared value), media as attachments, geo polygons, **multi-condition filter** + cap, reusable **templates** (exportable); also via direct paste (Ctrl+V) onto the canvas
-- Report panel (Markdown writing with references to elements)
-- Synthesis generation (automatic report with graph analysis)
-- [Documented JSON import format](docs/json-import-format-en.md) ([FR](docs/json-import-format-fr.md))
+### Report and synthesis
+- Report written in Markdown with clickable references to elements
+- Synthesis generated from the graph (HTML, Markdown, JSON)
+- Interactive HTML export (report + navigable graph) and printing through the browser
 
-### Automatic Layouts
-- Force-directed (clusters)
-- Hierarchical (trees, org charts)
-- Circular
-- Grid
-- Scatter
+### Import and export
+- **Native**: ZIP (data + attachments, optional encryption) and JSON ([documented format](docs/json-import-format-en.md))
+- **Graphs**: CSV, GraphML, GEXF, Gephi Lite, Excalidraw, Mermaid (import, and copy a selection as Mermaid)
+- **i2 Analyst's Notebook**: ANX and ANB import, ANX export
+- **Intelligence and OSINT**: STIX 2.1, OSINT Industries, Graph Palette, PredicaGraph, OSINTracker
+- **Specialised**: GEDCOM 5.5.1/7.0 and GeneWeb (genealogy), FEC (French accounting entries file, as a financial-flow graph)
+- **Any JSON** through a mapping assistant with reusable templates; also by pasting onto the canvas
+- **Images**: high-resolution PNG, SVG; **geography**: GeoJSON
+- Import into the open dossier, with visual placement
 
-### At-rest Encryption
-- Encryption of all local data (IndexedDB + OPFS files)
-- AES-256-GCM for files, XSalsa20-Poly1305 for records
-- DEK/KEK architecture with PBKDF2-SHA256 derivation (600k iterations)
-- Session lock (`Alt+L`) without closing the browser
-- Encrypted ZIP export with optional password
-- Unrecoverable password — no backdoor
-- [Technical documentation](docs/encryption-en.md) ([FR](docs/encryption-fr.md))
+### Collaboration
+- Real-time sync (Yjs), end-to-end encrypted (AES-256-GCM)
+- Sharing by link: the key stays in the URL fragment and is never sent to the server
+- Async mode: changes are kept for 7 days for absent collaborators
+- Participants' cursors, selections and presence; attachments and tabs are synced
+- Hashed room ID: the server cannot correlate sessions
 
-### PWA & Offline
-- Install on mobile and desktop
-- Works 100% offline
-- Smart caching of OpenStreetMap tiles
-- Service Worker with automatic updates
+### Security and retention
+- Optional **at-rest encryption** of all local data: XSalsa20-Poly1305 for records, AES-256-GCM for files, PBKDF2-SHA256 with 600,000 iterations. Session lock with `Alt+L`. Unrecoverable password, no back door. [Technical documentation](docs/encryption-en.md)
+- **Retention**: lifetime per dossier, with a warning, read-only, proposed deletion or redaction on expiry
 
-### Accessibility (WCAG AA)
-- ARIA labels on all interactive controls
-- Full keyboard navigation
-- Focus trap in modals
-- Skip link for quick access to content
-- Sufficient contrast
+### Extensions
+Slot-based plugin system (menus, panels, header, shortcuts, report, import/export). Without plugins, no impact on the application. [Developer guide](docs/plugin-development-en.md)
 
-### Internationalisation
-11 supported languages:
-- Français (fr)
-- English (en)
-- Español (es)
-- Deutsch (de)
-- Català (ca)
-- Euskara (eu)
-- Italiano (it)
-- Polski (pl)
-- Português (pt)
-- Українська (ua)
-- Nederlands (nl)
+### Application
+- Installable PWA, works fully offline
+- 11 languages: French, English, Spanish, German, Italian, Portuguese, Dutch, Polish, Ukrainian, Basque, Catalan
+- Guided tutorial and sample dossier
+- Partial accessibility: every modal manages focus, buttons have an accessible name, the matrix is announced as a table. The graph itself (canvas, map, timeline) is not yet keyboard-navigable; WCAG AA conformance is not reached.
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |-------|------------|
@@ -150,140 +107,101 @@ An infinite whiteboard with graph-analysis capabilities.
 | Map | MapLibre GL JS |
 | Analysis | Graphology |
 | Search | MiniSearch |
-| Sync | Yjs + y-websocket + y-indexeddb |
-| Collab crypto | Web Crypto API (AES-256-GCM) |
-| At-rest crypto | tweetnacl (XSalsa20-Poly1305) + Web Crypto (AES-256-GCM) |
-| PWA | vite-plugin-pwa |
+| Sync | Yjs + y-websocket |
+| Cryptography | Web Crypto API (AES-256-GCM), tweetnacl (XSalsa20-Poly1305) |
 | Style | Tailwind CSS |
-| E2E tests | Playwright |
+| Tests | Vitest, Playwright |
 
 ## Installation
 
 ```bash
-# Clone the repo
 git clone https://github.com/MeltingBot/zeroneurone.git
 cd zeroneurone
-
-# Install dependencies
 npm install
-
-# Run in development
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
+The application runs at `http://localhost:5173`.
+
+For deployment, `docker-compose.yml` provides the application and the relay server behind Traefik.
 
 ## Usage
 
-### Keyboard Shortcuts
+### Keyboard shortcuts
 
 | Action | Shortcut |
 |--------|----------|
 | Search | `Ctrl+K` |
-| Copy | `Ctrl+C` |
-| Cut | `Ctrl+X` |
-| Paste | `Ctrl+V` |
+| Copy / Cut / Paste | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` |
 | Duplicate | `Ctrl+D` |
-| Undo | `Ctrl+Z` |
-| Redo | `Ctrl+Shift+Z` |
+| Undo / Redo | `Ctrl+Z` / `Ctrl+Shift+Z` |
 | Delete selection | `Delete` / `Backspace` |
-| Focus mode | `F` |
-| New element | `E` |
-| New group | `G` |
-| New annotation | `N` |
-| Canvas view | `1` |
-| Map view | `2` |
-| Timeline view | `3` |
+| New element / group / annotation | `E` / `G` / `N` |
+| Canvas / Map / Timeline / Matrix view | `1` / `2` / `3` / `4` |
+| Lock the session (encryption) | `Alt+L` |
 
-### Canvas Interactions
+### Canvas
 
 | Action | Result |
 |--------|--------|
 | Double-click on the canvas | Create an element |
-| Drag from element to element | Create a link |
-| Drag from element to empty space | Create a new linked element |
+| Drag from one element to another | Create a link |
+| Drag from an element to empty space | Create a linked element |
 | Right-click | Context menu |
-| Wheel | Zoom |
-| Middle-click + drag | Pan |
+| Mouse wheel | Zoom |
 
 ### Collaboration
 
-1. Open a dossier
-2. Click "Share" in the toolbar
-3. Configure the signalling server URL (once)
-4. Enable asynchronous mode if needed (collaborators working at different times)
-5. Copy the share link
-6. Collaborators open the link to join
+1. Open a dossier and click **Share**
+2. Enter the sync server URL (once)
+3. Turn on async mode if collaborators work at different times
+4. Send the share link; collaborators open it to join
 
-> **Important**: in asynchronous mode, keep the share link. It is the only way to rejoin the session and decrypt the data.
+> In async mode, keep the share link: it is the only way to join the session and decrypt the data.
 
-See the [documentation](https://doc.zeroneurone.com) for details.
+The bundled relay server (`relay-server.js`) handles real-time and async mode:
+
+```bash
+npm run relay-server   # ws://localhost:4444
+```
 
 ## Architecture
 
-```
-src/
-├── components/
-│   ├── canvas/          # Canvas and graph elements
-│   ├── map/             # Map view (MapLibre GL JS)
-│   ├── timeline/        # Chronological view
-│   ├── panels/          # Side panels
-│   ├── collaboration/   # Collaboration UI
-│   ├── modals/          # Modal dialogs
-│   └── common/          # Shared components
-├── stores/              # Zustand stores
-├── db/                  # Dexie config + repositories
-├── services/            # Sync, crypto, search, insights, files, import/export
-├── workers/             # Web Workers (analysis, layout)
-├── i18n/                # Translations (11 languages)
-├── types/               # TypeScript types
-└── utils/               # Utilities
-```
-
 ### Storage
-
 - **Metadata** (elements, links, views): IndexedDB via Dexie
-- **Binary files** (assets): OPFS with SHA-256 deduplication
-- **Synchronisation**: Y.Doc with local IndexedDB persistence
-- **At-rest encryption**: Dexie middleware (XSalsa20-Poly1305) + OPFS (AES-256-GCM), opt-in via password
+- **Files**: OPFS, deduplicated by SHA-256
+- **Sync**: Y.Doc with local IndexedDB persistence
 - **Search index**: MiniSearch, rebuilt on load
 
-### Collaboration Security
+### Collaboration security
 
-- End-to-end encryption (E2E) with AES-256-GCM
-- Encryption key generated client-side
-- Key transmitted only via the URL fragment (`#key=...`)
-- The signalling server only ever sees encrypted data
-- No cleartext data passes through the server
+```
+┌─────────────┐            ┌─────────────────┐            ┌─────────────┐
+│  Client A   │◄──────────►│  Relay server   │◄──────────►│  Client B   │
+│ Key: xxxxx  │ encrypted  │ (only sees      │ encrypted  │ Key: xxxxx  │
+└─────────────┘            │  ciphertext)    │            └─────────────┘
+                           └─────────────────┘
+```
+
+- Key generated on the client, passed only in the URL fragment (`#key=...`)
+- The server only relays encrypted data
 
 ## Development
 
 ```bash
-npm run dev          # Development with hot-reload
-npm run typecheck    # TypeScript check
-npm run test:e2e     # E2E tests
-npm run lint         # Linting
-npm run build        # Production build
-npm run preview      # Preview the build
+npm run dev                            # development server
+npx tsc --noEmit -p tsconfig.app.json  # TypeScript check
+npm run test:unit                      # unit tests (Vitest)
+npm run test:e2e                       # end-to-end tests (Playwright)
+npm run lint                           # ESLint
+npm run build                          # production build
 ```
 
-### Signalling Server
-
-For collaboration you can use the bundled y-websocket server (`npm run sync-server`) or deploy your own.
-
-## Roadmap (selected)
-
-- **v1.0 — Stabilisation** ✓ (E2E tests, PWA, WCAG AA, i18n, user docs, STIX2 import)
-- **v2.0 — Asynchronous collaboration** ✓ (offset work, 7-day buffer, hashed room ID)
-- **v2.8 — Canvas tabs** ✓
-- **v2.12 — Plugin system** ✓ (slot-based registry, [developer docs](docs/plugin-development-en.md))
-- **v2.17 — At-rest encryption** ✓ (DEK/KEK, session lock, encrypted ZIP)
-- **v2.42 — JSON mapping import** ✓ (field mapping, linked sub-elements, pivot nodes, ID-reference links, media attachments, multi-condition filter + cap, reusable templates, native-format recognition on paste)
-- **Future ideas**: custom theming, presentation mode, WebGL large-graph view (Sigma + graphology) for very large datasets
+The data format is described in [docs/json-import-format-en.md](docs/json-import-format-en.md).
 
 ## Contributing
 
-Contributions are welcome! Feel free to open an issue or a pull request.
+Contributions are welcome: open an issue or a pull request.
 
 ## License
 

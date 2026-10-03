@@ -13,7 +13,8 @@
       "information": "Information",
       "dates": "Dates",
       "properties": "Properties",
-      "retention": "Retention"
+      "retention": "Retention",
+      "evaluation": "Information evaluation"
     },
     "labels": {
       "name": "Name",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Expired since {{days}} day(s)",
       "retentionPolicyRedact": "Permanent redaction",
       "retentionApply": "Apply",
-      "retentionReset": "Reset"
+      "retentionReset": "Reset",
+      "evaluationModel": "Evaluation model",
+      "evaluationOutsideWarning": "{{count}} grading(s) use another scale. They will be kept and shown greyed out, without conversion.",
+      "evaluationHiddenWarning": "{{count}} grading(s) will be kept but hidden while this model is active."
     },
     "placeholders": {
       "name": "Dossier name",
@@ -282,7 +286,9 @@
       "setColorAll": "Set color for all",
       "setTextSizeAll": "Set text size for all",
       "elementsSection": "Elements ({{count}})",
-      "linksSection": "Links ({{count}})"
+      "linksSection": "Links ({{count}})",
+      "setEvaluationAll": "Apply the same grading to the whole selection",
+      "clearConfidenceAll": "Clear confidence for the whole selection"
     },
     "copyDate": "Copy date"
   },
@@ -325,7 +331,9 @@
       "lowConfidence": "Low confidence",
       "lowConfidenceDesc": "Confidence < 50%",
       "hasComments": "Comments",
-      "hasCommentsDesc": "Elements with unresolved comments"
+      "hasCommentsDesc": "Elements with unresolved comments",
+      "reliableSources": "Reliable sources",
+      "reliableSourcesDesc": "Keep only sources graded as reliable"
     },
     "property": {
       "hasProperty": "Has property",
@@ -342,6 +350,9 @@
       "count": "{{count}} hidden element(s)",
       "showAll": "Show all",
       "noHidden": "No hidden elements"
+    },
+    "evaluation": {
+      "hint": "Only elements graded in the active model with a selected code stay visible."
     }
   },
   "query": {
@@ -499,7 +510,7 @@
       "labels": "Labels",
       "both": "Icons + Labels"
     },
-    "confidenceIndicator": "Confidence indicator",
+    "confidenceIndicator": "Confidence / grading indicator",
     "links": "Links",
     "linkShape": "Shape",
     "linkCurves": "Curves",

@@ -2,6 +2,7 @@
 // Runs entirely in-memory on Zustand data. No IndexedDB calls.
 
 import type { Element, Link } from '../../types';
+import { formatEvaluation } from '../../utils/evaluation';
 import type { QueryNode, QueryCondition, QueryWithin, QueryOperator, QueryValue, QueryResult } from './types';
 
 // ── Evaluation context ──
@@ -39,6 +40,14 @@ function resolveField(
       return item.notes;
     case 'confidence':
       return item.confidence;
+    case 'evaluation':
+      return formatEvaluation(item.evaluation) || null;
+    case 'evaluation.source':
+      return item.evaluation?.source ?? null;
+    case 'evaluation.info':
+      return item.evaluation?.info ?? null;
+    case 'evaluation.scale':
+      return item.evaluation?.scale ?? null;
     case 'source':
       return item.source;
     case 'created':

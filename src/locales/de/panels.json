@@ -13,7 +13,8 @@
       "information": "Informationen",
       "dates": "Daten",
       "properties": "Eigenschaften",
-      "retention": "Aufbewahrung"
+      "retention": "Aufbewahrung",
+      "evaluation": "Informationsbewertung"
     },
     "labels": {
       "name": "Name",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Abgelaufen seit {{days}} Tag(en)",
       "retentionPolicyRedact": "Endgültige Schwärzung",
       "retentionApply": "Anwenden",
-      "retentionReset": "Zurücksetzen"
+      "retentionReset": "Zurücksetzen",
+      "evaluationModel": "Bewertungsmodell",
+      "evaluationOutsideWarning": "{{count}} Bewertung(en) verwenden eine andere Skala. Sie bleiben erhalten und werden ohne Umrechnung ausgegraut angezeigt.",
+      "evaluationHiddenWarning": "{{count}} Bewertung(en) bleiben erhalten, werden aber ausgeblendet, solange dieses Modell aktiv ist."
     },
     "placeholders": {
       "name": "Name der Akte",
@@ -268,7 +272,9 @@
       "setColorAll": "Farbe für alle festlegen",
       "setTextSizeAll": "Textgröße für alle festlegen",
       "elementsSection": "Elemente ({{count}})",
-      "linksSection": "Verbindungen ({{count}})"
+      "linksSection": "Verbindungen ({{count}})",
+      "setEvaluationAll": "Dieselbe Bewertung auf die gesamte Auswahl anwenden",
+      "clearConfidenceAll": "Vertrauen für die gesamte Auswahl löschen"
     },
     "copyDate": "Datum kopieren"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Niedriges Vertrauen",
       "lowConfidenceDesc": "Vertrauen < 50%",
       "hasComments": "Kommentare",
-      "hasCommentsDesc": "Elemente mit ungelösten Kommentaren"
+      "hasCommentsDesc": "Elemente mit ungelösten Kommentaren",
+      "reliableSources": "Verlässliche Quellen",
+      "reliableSourcesDesc": "Nur als verlässlich bewertete Quellen behalten"
     },
     "property": {
       "hasProperty": "Hat die Eigenschaft",
@@ -328,6 +336,9 @@
       "count": "{{count}} ausgeblendete(s) Element(e)",
       "showAll": "Alle einblenden",
       "noHidden": "Keine ausgeblendeten Elemente"
+    },
+    "evaluation": {
+      "hint": "Nur Elemente, die im aktiven Modell mit einem ausgewählten Code bewertet sind, bleiben sichtbar."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Bezeichnungen",
       "both": "Symbole + Bezeichnungen"
     },
-    "confidenceIndicator": "Vertrauensindikator",
+    "confidenceIndicator": "Vertrauens- / Bewertungsindikator",
     "links": "Verbindungen",
     "linkShape": "Form",
     "linkCurves": "Kurven",

@@ -14,7 +14,7 @@ Lors de l'import, **tous les IDs sont regeneres** en nouveaux UUIDs. Les referen
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "exportedAt": "2026-02-11T10:00:00.000Z",
   "dossier": { ... },
   "elements": [ ... ],
@@ -27,9 +27,9 @@ Lors de l'import, **tous les IDs sont regeneres** en nouveaux UUIDs. Les referen
 
 | Champ | Obligatoire | Type | Description |
 |-------|-------------|------|-------------|
-| `version` | **Oui** | `string` | Version du format (ex. `"1.1.0"`). Doit etre truthy. |
+| `version` | **Oui** | `string` | Version du format (ex. `"1.2.0"`). Doit etre truthy. |
 | `exportedAt` | Non | `string` | Horodatage ISO 8601. Informatif uniquement, non valide. |
-| `dossier` | Non | `object` | Metadonnees de l'dossier. Inclus dans les exports pour reference mais **non utilise** lors de l'import JSON natif. |
+| `dossier` | Non | `object` | Metadonnees de l'dossier. Inclus dans les exports pour reference. Seul `evaluationModel` est lu a l'import (voir [EvaluationModel](#evaluationmodel)). |
 | `elements` | **Oui** | `Element[]` | Tableau d'objets element. Peut etre vide. |
 | `links` | **Oui** | `Link[]` | Tableau d'objets lien. Peut etre vide. |
 | `tabs` | Non | `CanvasTab[]` | Definitions des onglets canvas. Importes uniquement pour les nouvelles dossiers (pas les fusions). |
@@ -97,6 +97,7 @@ Chaque element represente un noeud sur le canvas (personne, entreprise, lieu, co
 | `tags` | `string[]` | Non | `[]` | Tags definis par l'utilisateur pour le filtrage et la categorisation. |
 | `properties` | `Property[]` | Non | `[]` | Paires cle/valeur typees. Voir [Property](#property). |
 | `confidence` | `number \| null` | Non | `null` | Niveau de confiance. Multiple de 10 de 0 a 100, ou `null`. |
+| `evaluation` | `Evaluation \| null` | Non | `null` | Cotation a deux axes (Europol / Amiraute). Voir [Evaluation](#evaluation). |
 | `source` | `string` | Non | `""` | Attribution de la source. |
 | `date` | `string \| null` | Non | `null` | Date ISO 8601 pour le positionnement sur la timeline. |
 | `dateRange` | `DateRange \| null` | Non | `null` | Plage de dates avec champs `start` et `end`. Voir [DateRange](#daterange). |
@@ -166,6 +167,7 @@ Chaque lien represente une relation entre deux elements (une arete dans le graph
 | `directed` | `boolean` | Non | `false` | **Deprecie.** Utilise comme fallback quand `direction` est absent. |
 | `direction` | `string` | Non | Infere | `"none"`, `"forward"`, `"backward"` ou `"both"`. Si absent, infere depuis `directed` : `true` -> `"forward"`, sinon `"none"`. |
 | `confidence` | `number \| null` | Non | `null` | Niveau de confiance (0-100, multiples de 10). |
+| `evaluation` | `Evaluation \| null` | Non | `null` | Cotation a deux axes (Europol / Amiraute). Voir [Evaluation](#evaluation). |
 | `source` | `string` | Non | `""` | Attribution de la source. |
 | `date` | `string \| null` | Non | `null` | Date ISO 8601. |
 | `dateRange` | `DateRange \| null` | Non | `null` | Plage de dates avec `start` et `end`. |
@@ -433,6 +435,26 @@ type Confidence = 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100
 
 Doit etre un multiple de 10 de 0 a 100, ou `null`.
 
+### Evaluation
+
+Cotation a deux axes d'un element ou d'un lien (depuis la version 1.2.0).
+
+```json
+{ "scale": "europol", "source": "B", "info": "2" }
+```
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `scale` | `"europol" \| "admiralty"` | Grille de la cotation |
+| `source` | `string \| null` | Fiabilite de la source : `A`, `B`, `C`, `X` (europol) ou `A` a `F` (admiralty) |
+| `info` | `string \| null` | Exactitude de l'information : `1` a `4` (europol) ou `1` a `6` (admiralty) |
+
+Les codes inconnus sont ignores a l'import ; une cotation sans aucun code valide devient `null`.
+
+### EvaluationModel
+
+Champ `dossier.evaluationModel` : `"zeroneurone"` (par defaut, confiance 0-100), `"europol"` ou `"admiralty"`. A l'import, il n'est applique que si le dossier cible est vide et n'a pas encore de modele ; sinon le dossier garde le sien et un avertissement est affiche.
+
 ### Direction du lien (LinkDirection)
 
 ```
@@ -533,7 +555,7 @@ Cela cree une dossier vide.
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "elements": [
     {
       "id": "elem-001",
@@ -627,7 +649,7 @@ Cela cree une dossier vide.
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "elements": [
     {
       "id": "group-001",

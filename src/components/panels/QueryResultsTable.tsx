@@ -5,6 +5,8 @@ import { useDossierStore } from '../../stores/dossierStore';
 import { useSelectionStore } from '../../stores/selectionStore';
 import { useViewStore } from '../../stores/viewStore';
 import type { Element, Link } from '../../types';
+import { evaluationStrength, formatEvaluation, isInModel } from '../../utils/evaluation';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { ArrowUpDown, ArrowUp, ArrowDown, Upload, Box, Link2 } from 'lucide-react';
 
 interface TableRow {
@@ -13,6 +15,7 @@ interface TableRow {
   label: string;
   tags: string[];
   confidence: number | null;
+  evaluation: Element['evaluation'];
   date: Date | null;
   properties: Record<string, unknown>;
 }
@@ -36,6 +39,7 @@ function buildRows(
       label: el.label,
       tags: el.tags.filter(Boolean),
       confidence: el.confidence,
+      evaluation: el.evaluation ?? null,
       date: el.date || el.dateRange?.start || null,
       properties: props,
     });
@@ -52,6 +56,7 @@ function buildRows(
       label: lk.label,
       tags: lk.tags.filter(Boolean),
       confidence: lk.confidence,
+      evaluation: lk.evaluation ?? null,
       date: lk.date || lk.dateRange?.start || null,
       properties: props,
     });
@@ -70,6 +75,12 @@ export function QueryResultsTable() {
   const linksMap = useDossierStore((s) => s.links);
   const selectElement = useSelectionStore((s) => s.selectElement);
   const requestViewportChange = useViewStore((s) => s.requestViewportChange);
+  // Grading models show the grading in the 'confidence' column
+  const evaluationModel = useEvaluationModel();
+  const gradingCell = useCallback(
+    (row: TableRow) => (isInModel(row.evaluation, evaluationModel) ? formatEvaluation(row.evaluation) : null),
+    [evaluationModel]
+  );
 
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
@@ -95,7 +106,14 @@ export function QueryResultsTable() {
         case 'label': va = a.label; vb = b.label; break;
         case 'type': va = a.type; vb = b.type; break;
         case 'tags': va = a.tags.join(','); vb = b.tags.join(','); break;
-        case 'confidence': va = a.confidence ?? -1; vb = b.confidence ?? -1; break;
+        case 'confidence':
+          if (evaluationModel !== 'zeroneurone') {
+            va = evaluationStrength(a.evaluation, evaluationModel);
+            vb = evaluationStrength(b.evaluation, evaluationModel);
+          } else {
+            va = a.confidence ?? -1; vb = b.confidence ?? -1;
+          }
+          break;
         case 'date': va = a.date?.getTime() ?? 0; vb = b.date?.getTime() ?? 0; break;
         default: va = a.properties[sortCol]; vb = b.properties[sortCol]; break;
       }
@@ -113,7 +131,7 @@ export function QueryResultsTable() {
       return sortDir === 'desc' ? -cmp : cmp;
     });
     return sorted;
-  }, [rows, sortCol, sortDir]);
+  }, [rows, sortCol, sortDir, evaluationModel]);
 
   const handleSort = useCallback((col: string) => {
     if (sortCol === col) {
@@ -162,7 +180,7 @@ export function QueryResultsTable() {
           case 'type': return escape(row.type);
           case 'label': return escape(row.label);
           case 'tags': return escape(row.tags.join(', '));
-          case 'confidence': return escape(row.confidence);
+          case 'confidence': return escape(evaluationModel !== 'zeroneurone' ? gradingCell(row) : row.confidence);
           case 'date': return escape(row.date);
           default: return escape(row.properties[col]);
         }
@@ -177,7 +195,7 @@ export function QueryResultsTable() {
     a.download = 'query-results.csv';
     a.click();
     URL.revokeObjectURL(url);
-  }, [sortedRows, tableColumns]);
+  }, [sortedRows, tableColumns, evaluationModel, gradingCell]);
 
   if (!results || (results.elementIds.size === 0 && results.linkIds.size === 0)) {
     return (
@@ -223,7 +241,7 @@ export function QueryResultsTable() {
                   className="px-2 py-1.5 text-left font-medium text-text-secondary cursor-pointer hover:text-text-primary border-b border-border-default select-none"
                 >
                   <span className="flex items-center gap-1">
-                    {col === 'type' ? '' : col}
+                    {col === 'type' ? '' : col === 'confidence' && evaluationModel !== 'zeroneurone' ? 'evaluation' : col}
                     <SortIcon col={col} />
                   </span>
                 </th>
@@ -247,6 +265,10 @@ export function QueryResultsTable() {
                       <span className="font-medium">{row.label}</span>
                     ) : col === 'tags' ? (
                       <span className="text-text-secondary">{row.tags.join(', ')}</span>
+                    ) : col === 'confidence' && evaluationModel !== 'zeroneurone' ? (
+                      gradingCell(row)
+                        ? <span className="text-text-secondary">{gradingCell(row)}</span>
+                        : <span className="text-text-tertiary">—</span>
                     ) : col === 'confidence' ? (
                       row.confidence != null
                         ? <span className="text-text-secondary">{row.confidence}%</span>

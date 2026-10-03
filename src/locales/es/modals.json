@@ -79,7 +79,8 @@
       "flowConvention": "Flujos orientados de la cuenta acreditada hacia la cuenta debitada (sentido del valor).",
       "confirm": "Importar",
       "includeGenToGen": "Incluir flujos entre cuentas generales (IVA, asientos varios, nóminas…)"
-    }
+    },
+    "evaluationModelKept": "El archivo usa el modelo de evaluación \"{{imported}}\"; el expediente conserva el suyo (\"{{current}}\"). Las valoraciones de otra escala se conservan y se muestran en gris."
   },
   "export": {
     "title": "Exportar el expediente",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Buscar un elemento...",
       "graph": "Grafo",
       "toc": "Índice"
-    }
+    },
+    "sortByEvaluation": "Valoración"
   },
   "metadataImport": {
     "title": "Importar metadatos",

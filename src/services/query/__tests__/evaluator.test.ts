@@ -151,6 +151,40 @@ describe('evaluator — tags', () => {
   });
 });
 
+describe('evaluator — evaluation', () => {
+  const graded = () => [
+    makeElement({ evaluation: { scale: 'europol', source: 'B', info: '2' } }),
+    makeElement({ evaluation: { scale: 'admiralty', source: 'A', info: '1' } }),
+    makeElement(),
+  ];
+
+  it('matches a source code (case-insensitive)', () => {
+    const els = graded();
+    const r = query('evaluation.source = "b"', els);
+    expect(r.elementIds.size).toBe(1);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+  });
+
+  it('matches the full grading and its scale', () => {
+    const els = graded();
+    expect(query('evaluation = "A1"', els).elementIds.has(els[1].id)).toBe(true);
+    expect(query('evaluation.scale = "europol"', els).elementIds.size).toBe(1);
+  });
+
+  it('IN on information codes, links included', () => {
+    const els = graded();
+    const lk = makeLink({ evaluation: { scale: 'europol', source: 'X', info: '3' } });
+    const r = query('evaluation.info IN ("2", "3")', els, [lk]);
+    expect(r.elementIds.has(els[0].id)).toBe(true);
+    expect(r.linkIds.has(lk.id)).toBe(true);
+  });
+
+  it('EXISTS finds graded items only', () => {
+    const els = graded();
+    expect(query('evaluation EXISTS', els).elementIds.size).toBe(2);
+  });
+});
+
 describe('evaluator — confidence', () => {
   it('> number', () => {
     const els = [

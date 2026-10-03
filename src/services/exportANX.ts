@@ -32,9 +32,10 @@
  */
 
 import type {
-  Dossier, Element, Link, Position, PropertyType, Property,
+  Dossier, Element, EvaluationModel, Link, Position, PropertyType, Property,
 } from '../types';
 import { getGeoCenter } from '../utils/geo';
+import { EVALUATION_GRIDS, getEvaluationModel, getModelScale } from '../utils/evaluation';
 
 // ============================================================================
 // TUNING — every unknown that only a real i2 can settle lives here, so that a
@@ -240,6 +241,24 @@ function confidenceToGrade(confidence: number | null | undefined): number {
   return Math.min(5, Math.max(1, Math.round(confidence / 20)));
 }
 
+/**
+ * i2 grades of an item: GradeOne/GradeTwo carry the source reliability and the
+ * information accuracy in the grading models (1-based position in the grid,
+ * 0 when not graded in the dossier's scale), the 1-5 confidence otherwise.
+ * No grade collection is emitted, so i2 shows the indices with its own labels.
+ */
+function itemGrades(item: Element | Link, model: EvaluationModel): { one: number; two: number } {
+  const scale = getModelScale(model);
+  if (!scale) return { one: confidenceToGrade(item.confidence), two: 0 };
+  const evaluation = item.evaluation;
+  if (!evaluation || evaluation.scale !== scale) return { one: 0, two: 0 };
+  const grid = EVALUATION_GRIDS[scale];
+  return {
+    one: evaluation.source ? grid.sources.indexOf(evaluation.source) + 1 : 0,
+    two: evaluation.info ? grid.infos.indexOf(evaluation.info) + 1 : 0,
+  };
+}
+
 function serialiseValue(value: Property['value']): string {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) return formatI2Date(value) ?? '';
@@ -269,6 +288,7 @@ const ATTR_DATE_END = 'Date end';
 
 export function buildANXExport(dossier: Dossier, elements: Element[], links: Link[]): string {
   const byId = new Map(elements.map((el) => [el.id, el]));
+  const model = getEvaluationModel(dossier);
 
   // Groups and annotations have no counterpart in the subset we emit. Their
   // children are emitted at absolute positions instead.
@@ -452,7 +472,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const entityAttrs = EMIT_IBASE_DIALECT ? ` EntityId="${escapeAttr(chartId)}"` : '';
 
     items.push(
-      `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" DateSet="${mainDate ? 'true' : 'false'}" TimeSet="${mainDate ? 'true' : 'false'}" GradeOneIndex="${confidenceToGrade(el.confidence)}" GradeTwoIndex="0" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(el.source)}" SourceType="ZeroNeurone" XPosition="${x}">`,
+      `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" DateSet="${mainDate ? 'true' : 'false'}" TimeSet="${mainDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(el, model).one}" GradeTwoIndex="${itemGrades(el, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(el.source)}" SourceType="ZeroNeurone" XPosition="${x}">`,
       ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),
       ...(cards.length ? ['      <CardCollection>', ...cards, '      </CardCollection>'] : []),
       `      <End X="${x}" Y="${y}" Z="0">`,
@@ -494,7 +514,7 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
       : ` End1Reference="${end1}" End2Reference="${end2}"`;
 
     items.push(
-      `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" DateSet="${linkDate ? 'true' : 'false'}" TimeSet="${linkDate ? 'true' : 'false'}" GradeOneIndex="${confidenceToGrade(link.confidence)}" GradeTwoIndex="0" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
+      `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" DateSet="${linkDate ? 'true' : 'false'}" TimeSet="${linkDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
       ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),
       ...(cards.length ? ['      <CardCollection>', ...cards, '      </CardCollection>'] : []),
       `      <Link LabelPos="50" LabelSegment="0" Offset="0"${ends}>`,

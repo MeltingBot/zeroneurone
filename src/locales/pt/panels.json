@@ -13,7 +13,8 @@
       "information": "Informações",
       "dates": "Datas",
       "properties": "Propriedades",
-      "retention": "Retenção"
+      "retention": "Retenção",
+      "evaluation": "Avaliação da informação"
     },
     "labels": {
       "name": "Nome",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Expirada há {{days}} dia(s)",
       "retentionPolicyRedact": "Redação definitiva",
       "retentionApply": "Aplicar",
-      "retentionReset": "Redefinir"
+      "retentionReset": "Redefinir",
+      "evaluationModel": "Modelo de avaliação",
+      "evaluationOutsideWarning": "{{count}} classificação(ões) usam outra escala. Serão mantidas e apresentadas a cinzento, sem conversão.",
+      "evaluationHiddenWarning": "{{count}} classificação(ões) serão mantidas, mas ocultadas enquanto este modelo estiver ativo."
     },
     "placeholders": {
       "name": "Nome do dossiê",
@@ -268,7 +272,9 @@
       "setColorAll": "Definir a cor para todos",
       "setTextSizeAll": "Definir tamanho do texto para todos",
       "elementsSection": "Elementos ({{count}})",
-      "linksSection": "Ligações ({{count}})"
+      "linksSection": "Ligações ({{count}})",
+      "setEvaluationAll": "Aplicar a mesma classificação a toda a seleção",
+      "clearConfidenceAll": "Limpar a confiança de toda a seleção"
     },
     "copyDate": "Copiar data"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Baixa confiança",
       "lowConfidenceDesc": "Confiança < 50%",
       "hasComments": "Comentários",
-      "hasCommentsDesc": "Elementos com comentários por resolver"
+      "hasCommentsDesc": "Elementos com comentários por resolver",
+      "reliableSources": "Fontes fiáveis",
+      "reliableSourcesDesc": "Manter apenas as fontes classificadas como fiáveis"
     },
     "property": {
       "hasProperty": "Tem a propriedade",
@@ -328,6 +336,9 @@
       "count": "{{count}} elemento(s) oculto(s)",
       "showAll": "Mostrar tudo",
       "noHidden": "Nenhum elemento oculto"
+    },
+    "evaluation": {
+      "hint": "Só permanecem visíveis os elementos classificados no modelo ativo com um código selecionado."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Etiquetas",
       "both": "Ícones + Etiquetas"
     },
-    "confidenceIndicator": "Indicador de confiança",
+    "confidenceIndicator": "Indicador de confiança / classificação",
     "links": "Ligações",
     "linkShape": "Forma",
     "linkCurves": "Curvas",

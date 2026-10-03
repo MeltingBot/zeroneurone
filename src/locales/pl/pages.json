@@ -474,7 +474,8 @@
     "unpinColumn": "Odblokuj kolumnę",
     "copyCell": "Kopiuj komórkę",
     "copyRow": "Kopiuj wiersz",
-    "copySelection": "Kopiuj zaznaczenie ({{count}})"
+    "copySelection": "Kopiuj zaznaczenie ({{count}})",
+    "evaluation": "Ocena"
   },
   "report": {
     "title": "Raport",

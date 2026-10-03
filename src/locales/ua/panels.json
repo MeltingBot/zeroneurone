@@ -13,7 +13,8 @@
       "information": "Інформація",
       "dates": "Дати",
       "properties": "Властивості",
-      "retention": "Зберігання"
+      "retention": "Зберігання",
+      "evaluation": "Оцінка інформації"
     },
     "labels": {
       "name": "Назва",
@@ -33,7 +34,10 @@
       "retentionExpiredSince": "Закінчилось {{days}} днів тому",
       "retentionPolicyRedact": "Остаточне редагування",
       "retentionApply": "Застосувати",
-      "retentionReset": "Скинути"
+      "retentionReset": "Скинути",
+      "evaluationModel": "Модель оцінки",
+      "evaluationOutsideWarning": "Оцінок, що використовують іншу шкалу: {{count}}. Їх буде збережено й показано сірим, без перетворення.",
+      "evaluationHiddenWarning": "Оцінок, які буде збережено, але приховано, поки активна ця модель: {{count}}."
     },
     "placeholders": {
       "name": "Назва справа",
@@ -268,7 +272,9 @@
       "setColorAll": "Встановити колір для всіх",
       "setTextSizeAll": "Встановити розмір тексту для всіх",
       "elementsSection": "Елементи ({{count}})",
-      "linksSection": "Зв'язки ({{count}})"
+      "linksSection": "Зв'язки ({{count}})",
+      "setEvaluationAll": "Застосувати ту саму оцінку до всього виділення",
+      "clearConfidenceAll": "Очистити достовірність для всього виділення"
     },
     "copyDate": "Копіювати дату"
   },
@@ -311,7 +317,9 @@
       "lowConfidence": "Низька достовірність",
       "lowConfidenceDesc": "Достовірність < 50%",
       "hasComments": "Коментарі",
-      "hasCommentsDesc": "Елементи з невирішеними коментарями"
+      "hasCommentsDesc": "Елементи з невирішеними коментарями",
+      "reliableSources": "Надійні джерела",
+      "reliableSourcesDesc": "Залишити лише джерела, оцінені як надійні"
     },
     "property": {
       "hasProperty": "Має властивість",
@@ -328,6 +336,9 @@
       "count": "{{count}} прихованих елементів",
       "showAll": "Показати все",
       "noHidden": "Немає прихованих елементів"
+    },
+    "evaluation": {
+      "hint": "Видимими залишаються лише елементи, оцінені в активній моделі вибраним кодом."
     }
   },
   "query": {
@@ -485,7 +496,7 @@
       "labels": "Мітки",
       "both": "Іконки + Мітки"
     },
-    "confidenceIndicator": "Індикатор достовірності",
+    "confidenceIndicator": "Індикатор достовірності / оцінки",
     "links": "Зв'язки",
     "linkShape": "Форма",
     "linkCurves": "Криві",

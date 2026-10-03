@@ -208,6 +208,30 @@ export type LinkDirection = 'none' | 'forward' | 'backward' | 'both';
 /** Confidence level (0-100 in steps of 10) */
 export type Confidence = 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100;
 
+/**
+ * How a dossier evaluates its information, shared by every collaborator:
+ * - 'zeroneurone': a single confidence level (0-100)
+ * - 'europol': source reliability A/B/C/X + information accuracy 1-4
+ *   (Regulation (EU) 2016/794, art. 29)
+ * - 'admiralty': source reliability A-F + information credibility 1-6 (NATO)
+ */
+export type EvaluationModel = 'zeroneurone' | 'europol' | 'admiralty';
+
+/** A grading scale (every evaluation model but the confidence one) */
+export type EvaluationScale = Exclude<EvaluationModel, 'zeroneurone'>;
+
+/**
+ * Two-axis grading of an element or link. It keeps the scale it was given in:
+ * switching the dossier model never converts it.
+ */
+export interface Evaluation {
+  scale: EvaluationScale;
+  /** Source reliability code ('A', 'B', ... or 'X'), null when not graded */
+  source: string | null;
+  /** Information accuracy code ('1', '2', ...), null when not graded */
+  info: string | null;
+}
+
 // ============================================================================
 // DOSSIER
 // ============================================================================
@@ -264,6 +288,11 @@ export interface Dossier {
   lastSharedKey?: string;
   /** Async buffering flag for the last shared session (paired with lastSharedKey). */
   lastSharedAsync?: boolean;
+  /**
+   * Evaluation model of the dossier (absent = 'zeroneurone'). Shared through
+   * the Y.Doc meta map, so every collaborator works with the same model.
+   */
+  evaluationModel?: EvaluationModel;
 }
 
 export interface DossierSettings {
@@ -300,6 +329,8 @@ export interface Element {
   tags: string[];
   properties: Property[];
   confidence: Confidence | null;
+  /** Two-axis grading (Europol / Admiralty models), absent when never graded */
+  evaluation?: Evaluation | null;
   source: string;
   date: Date | null;
   dateRange: DateRange | null;
@@ -345,6 +376,8 @@ export interface Link {
   directed: boolean; // @deprecated - use direction instead
   direction: LinkDirection;
   confidence: Confidence | null;
+  /** Two-axis grading (Europol / Admiralty models), absent when never graded */
+  evaluation?: Evaluation | null;
   source: string;
   date: Date | null;
   dateRange: DateRange | null;
@@ -449,6 +482,10 @@ export interface ViewFilters {
   badgePropertyKey: string | null;
   textSearch: string;
   minConfidence: Confidence | null;
+  /** Accepted source reliability codes (grading models), null = no filter */
+  evaluationSources?: string[] | null;
+  /** Accepted information accuracy codes (grading models), null = no filter */
+  evaluationInfos?: string[] | null;
   dateFrom: Date | null;
   dateTo: Date | null;
   hasGeo: boolean | null;
@@ -601,6 +638,8 @@ export const DEFAULT_FILTERS: ViewFilters = {
   badgePropertyKey: null,
   textSearch: '',
   minConfidence: null,
+  evaluationSources: null,
+  evaluationInfos: null,
   dateFrom: null,
   dateTo: null,
   hasGeo: null,

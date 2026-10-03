@@ -478,7 +478,8 @@
     "unpinColumn": "Unfreeze column",
     "copyCell": "Copy cell",
     "copyRow": "Copy row",
-    "copySelection": "Copy selection ({{count}})"
+    "copySelection": "Copy selection ({{count}})",
+    "evaluation": "Grade"
   },
   "report": {
     "title": "Report",

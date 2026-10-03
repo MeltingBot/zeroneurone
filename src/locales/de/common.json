@@ -201,5 +201,89 @@
     "suggestLarger": "Verwenden Sie einen größeren Bildschirm oder ein Tablet",
     "suggestMaximize": "Maximieren Sie Ihr Browserfenster",
     "suggestZoom": "Verringern Sie die Zoomstufe des Browsers (Strg + -)"
+  },
+  "evaluation": {
+    "label": "Bewertung",
+    "notGraded": "Nicht bewertet",
+    "clear": "Entfernen",
+    "outOfModel": "{{scale}}-Bewertung: {{code}} (andere Skala)",
+    "sourceLabel": "Zuverlässigkeit der Quelle",
+    "infoLabel": "Richtigkeit der Information",
+    "sourceShort": "Quelle",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (Vertrauen 0-100 %)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Admiralty / NATO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Ein einzelner Vertrauenswert von 0 bis 100 %, in Zehnerschritten.",
+      "europol": "Zuverlässigkeit der Quelle (A, B, C, X) und Richtigkeit der Information (1 bis 4) gemäß Artikel 29 der Verordnung (EU) 2016/794.",
+      "admiralty": "Zuverlässigkeit der Quelle (A bis F) und Glaubwürdigkeit der Information (1 bis 6) nach dem von der NATO verwendeten Admiralty-Code."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Admiralty"
+    },
+    "europol": {
+      "sources": {
+        "A": "Stets verlässlich",
+        "B": "Meist verlässlich",
+        "C": "Meist nicht verlässlich",
+        "X": "Nicht beurteilbar"
+      },
+      "sourcesHelp": {
+        "A": "Es bestehen keine Zweifel an der Authentizität, Verlässlichkeit und Eignung der Quelle, oder die Informationen stammen von einer Quelle, die sich in allen Fällen als verlässlich erwiesen hat.",
+        "B": "Die Informationen stammen von einer Quelle, die sich in den meisten Fällen als verlässlich erwiesen hat.",
+        "C": "Die Informationen stammen von einer Quelle, die sich in den meisten Fällen als nicht verlässlich erwiesen hat.",
+        "X": "Die Verlässlichkeit der Quelle kann nicht beurteilt werden."
+      },
+      "infos": {
+        "1": "Unzweifelhaft",
+        "2": "Der Quelle bekannt",
+        "3": "Erhärtet",
+        "4": "Nicht erhärtet"
+      },
+      "infosHelp": {
+        "1": "Informationen, an deren Wahrheitsgehalt kein Zweifel besteht.",
+        "2": "Informationen, die der Quelle persönlich bekannt sind, nicht aber dem Beamten, der sie weitergibt.",
+        "3": "Informationen, die der Quelle nicht persönlich bekannt sind, die aber durch andere bereits erfasste Informationen erhärtet werden.",
+        "4": "Informationen, die der Quelle nicht persönlich bekannt sind und die sich nicht erhärten lassen."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Vollständig zuverlässig",
+        "B": "Meist zuverlässig",
+        "C": "Ziemlich zuverlässig",
+        "D": "Meist unzuverlässig",
+        "E": "Unzuverlässig",
+        "F": "Nicht beurteilbar"
+      },
+      "sourcesHelp": {
+        "A": "Keine Zweifel an Authentizität, Vertrauenswürdigkeit oder Kompetenz; bisher stets zuverlässig.",
+        "B": "Geringe Zweifel an Authentizität, Vertrauenswürdigkeit oder Kompetenz; hat meist zutreffende Informationen geliefert.",
+        "C": "Zweifel an Authentizität, Vertrauenswürdigkeit oder Kompetenz, hat aber in der Vergangenheit zutreffende Informationen geliefert.",
+        "D": "Erhebliche Zweifel an Authentizität, Vertrauenswürdigkeit oder Kompetenz, hat aber in der Vergangenheit zutreffende Informationen geliefert.",
+        "E": "Mangelnde Authentizität, Vertrauenswürdigkeit und Kompetenz; hat bisher unzutreffende Informationen geliefert.",
+        "F": "Es gibt keine Grundlage, um die Zuverlässigkeit der Quelle zu beurteilen."
+      },
+      "infos": {
+        "1": "Bestätigt",
+        "2": "Wahrscheinlich wahr",
+        "3": "Möglicherweise wahr",
+        "4": "Zweifelhaft",
+        "5": "Unwahrscheinlich",
+        "6": "Nicht beurteilbar"
+      },
+      "infosHelp": {
+        "1": "Durch andere unabhängige Quellen bestätigt; in sich logisch; stimmt mit anderen Informationen zum Thema überein.",
+        "2": "Nicht bestätigt; in sich logisch; stimmt mit anderen Informationen zum Thema überein.",
+        "3": "Nicht bestätigt; in sich weitgehend logisch; stimmt mit einem Teil der anderen Informationen zum Thema überein.",
+        "4": "Nicht bestätigt; möglich, aber nicht logisch; keine weiteren Informationen zum Thema.",
+        "5": "Nicht bestätigt; in sich nicht logisch; steht im Widerspruch zu anderen Informationen zum Thema.",
+        "6": "Es gibt keine Grundlage, um die Gültigkeit der Information zu beurteilen."
+      }
+    }
   }
 }

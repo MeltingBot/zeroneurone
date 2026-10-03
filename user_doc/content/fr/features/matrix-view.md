@@ -23,7 +23,7 @@ Basculez en vue matrice via le **selecteur de vue** dans la barre d'outils (icon
 |---------|---------|
 | **Label** | Nom de l'element (fixe, toujours visible) |
 | **Type** | Premier tag |
-| **Confiance** | Niveau de confiance (0-100%) |
+| **Confiance** | Niveau de confiance (0-100%), ou cotation (`B2`) en [modèle Europol / Amirauté]({{< relref "evaluation" >}}) |
 | **Source** | Attribution de la source |
 | *Proprietes* | Une colonne par propriete personnalisee utilisee |
 

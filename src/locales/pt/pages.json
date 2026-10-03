@@ -474,7 +474,8 @@
     "unpinColumn": "Libertar coluna",
     "copyCell": "Copiar célula",
     "copyRow": "Copiar linha",
-    "copySelection": "Copiar seleção ({{count}})"
+    "copySelection": "Copiar seleção ({{count}})",
+    "evaluation": "Class."
   },
   "report": {
     "title": "Relatório",

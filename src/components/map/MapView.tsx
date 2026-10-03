@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
+import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml';
 import type { Element, GeoData, GeoPolygon } from '../../types';
@@ -348,6 +349,7 @@ export function MapView() {
   }, []);
 
   const { elements, links, assets, comments, updateElement, createElement, deleteElements, currentDossier } = useDossierStore();
+  const evaluationModel = useEvaluationModel();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectedElementIds, selectElement, selectLink, clearSelection, setFocusedEventId } = useSelectionStore();
   const themeMode = useUIStore((state) => state.themeMode);
@@ -380,7 +382,7 @@ export function MapView() {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
     } else {
-      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds);
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
     }
     // ZNQuery canvas filter: dim elements not matching the query
     if (queryFilterActive && queryMatchElementIds.size > 0) {
@@ -391,7 +393,7 @@ export function MapView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
 
   // Extend dimming: tab ghost elements appear dimmed on map
   const effectiveDimmedIds = useMemo(() => {

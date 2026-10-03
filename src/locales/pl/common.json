@@ -208,5 +208,89 @@
     "suggestLarger": "Użyj większego ekranu lub tabletu",
     "suggestMaximize": "Zmaksymalizuj okno przeglądarki",
     "suggestZoom": "Zmniejsz poziom powiększenia przeglądarki (Ctrl + -)"
+  },
+  "evaluation": {
+    "label": "Ocena",
+    "notGraded": "Bez oceny",
+    "clear": "Wyczyść",
+    "outOfModel": "Ocena {{scale}}: {{code}} (inna skala)",
+    "sourceLabel": "Wiarygodność źródła",
+    "infoLabel": "Prawdziwość informacji",
+    "sourceShort": "Źródło",
+    "infoShort": "Info",
+    "models": {
+      "zeroneurone": "ZeroNeurone (pewność 0-100%)",
+      "europol": "Europol (4x4)",
+      "admiralty": "Admiralicja / NATO (6x6)"
+    },
+    "modelHints": {
+      "zeroneurone": "Jeden poziom pewności od 0 do 100%, co 10.",
+      "europol": "Wiarygodność źródła (A, B, C, X) i prawdziwość informacji (1–4) zgodnie z art. 29 rozporządzenia (UE) 2016/794.",
+      "admiralty": "Wiarygodność źródła (A–F) i wiarygodność informacji (1–6) według kodu admiralicji stosowanego przez NATO."
+    },
+    "scales": {
+      "europol": "Europol",
+      "admiralty": "Admiralicja"
+    },
+    "europol": {
+      "sources": {
+        "A": "Zawsze wiarygodne",
+        "B": "Zwykle wiarygodne",
+        "C": "Zwykle niewiarygodne",
+        "X": "Nie do oceny"
+      },
+      "sourcesHelp": {
+        "A": "Nie ma wątpliwości co do autentyczności, wiarygodności i kompetencji źródła lub informacje pochodzą ze źródła, które we wszystkich przypadkach okazało się wiarygodne.",
+        "B": "Informacje pochodzą ze źródła, które w większości przypadków okazało się wiarygodne.",
+        "C": "Informacje pochodzą ze źródła, które w większości przypadków okazało się niewiarygodne.",
+        "X": "Nie można ocenić wiarygodności źródła."
+      },
+      "infos": {
+        "1": "Prawdziwość pewna",
+        "2": "Znana źródłu",
+        "3": "Potwierdzona",
+        "4": "Niepotwierdzona"
+      },
+      "infosHelp": {
+        "1": "Informacje, których prawdziwość nie budzi wątpliwości.",
+        "2": "Informacje znane osobiście źródłu, ale nieznane osobiście urzędnikowi, który je przekazuje.",
+        "3": "Informacje nieznane osobiście źródłu, ale potwierdzone innymi, już zarejestrowanymi informacjami.",
+        "4": "Informacje nieznane osobiście źródłu, których nie można potwierdzić."
+      }
+    },
+    "admiralty": {
+      "sources": {
+        "A": "Całkowicie wiarygodne",
+        "B": "Zwykle wiarygodne",
+        "C": "Dość wiarygodne",
+        "D": "Zwykle niewiarygodne",
+        "E": "Niewiarygodne",
+        "F": "Nie do oceny"
+      },
+      "sourcesHelp": {
+        "A": "Brak wątpliwości co do autentyczności, rzetelności i kompetencji; zawsze okazywało się w pełni wiarygodne.",
+        "B": "Niewielkie wątpliwości co do autentyczności, rzetelności lub kompetencji; w większości przypadków dostarczało prawdziwych informacji.",
+        "C": "Wątpliwości co do autentyczności, rzetelności lub kompetencji, ale w przeszłości dostarczało prawdziwych informacji.",
+        "D": "Poważne wątpliwości co do autentyczności, rzetelności lub kompetencji, ale w przeszłości dostarczało prawdziwych informacji.",
+        "E": "Brak autentyczności, rzetelności i kompetencji; w przeszłości dostarczało nieprawdziwych informacji.",
+        "F": "Brak podstaw do oceny wiarygodności źródła."
+      },
+      "infos": {
+        "1": "Potwierdzona",
+        "2": "Prawdopodobnie prawdziwa",
+        "3": "Możliwie prawdziwa",
+        "4": "Wątpliwa",
+        "5": "Mało prawdopodobna",
+        "6": "Nie do oceny"
+      },
+      "infosHelp": {
+        "1": "Potwierdzona przez inne niezależne źródła; logiczna sama w sobie; spójna z innymi informacjami na dany temat.",
+        "2": "Niepotwierdzona; logiczna sama w sobie; spójna z innymi informacjami na dany temat.",
+        "3": "Niepotwierdzona; dość logiczna sama w sobie; zgodna z częścią innych informacji na dany temat.",
+        "4": "Niepotwierdzona; możliwa, ale nielogiczna; brak innych informacji na dany temat.",
+        "5": "Niepotwierdzona; nielogiczna sama w sobie; sprzeczna z innymi informacjami na dany temat.",
+        "6": "Brak podstaw do oceny prawdziwości informacji."
+      }
+    }
   }
 }

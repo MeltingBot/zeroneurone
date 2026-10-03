@@ -23,7 +23,7 @@ Switch to matrix view using the **view selector** in the top toolbar (table icon
 |--------|---------|
 | **Label** | Element name (fixed, always visible) |
 | **Type** | First tag |
-| **Confidence** | Confidence level (0-100%) |
+| **Confidence** | Confidence level (0-100%), or grading (`B2`) with the [Europol / Admiralty model]({{< relref "evaluation" >}}) |
 | **Source** | Source attribution |
 | *Properties* | One column per custom property used across elements |
 

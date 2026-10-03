@@ -79,7 +79,8 @@
       "flowConvention": "Flüsse verlaufen vom Habenkonto zum Sollkonto (Wertrichtung).",
       "confirm": "Importieren",
       "includeGenToGen": "Flüsse zwischen Hauptkonten einbeziehen (USt., sonstige Buchungen, Lohn…)"
-    }
+    },
+    "evaluationModelKept": "Die Datei verwendet das Bewertungsmodell „{{imported}}“; die Akte behält ihr eigenes („{{current}}“). Bewertungen in einer anderen Skala bleiben erhalten und werden ausgegraut angezeigt."
   },
   "export": {
     "title": "Akte exportieren",
@@ -471,7 +472,8 @@
       "searchPlaceholder": "Element suchen...",
       "graph": "Graph",
       "toc": "Inhaltsverzeichnis"
-    }
+    },
+    "sortByEvaluation": "Bewertung"
   },
   "metadataImport": {
     "title": "Metadaten importieren",

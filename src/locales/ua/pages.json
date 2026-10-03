@@ -474,7 +474,8 @@
     "unpinColumn": "Відкріпити стовпець",
     "copyCell": "Копіювати комірку",
     "copyRow": "Копіювати рядок",
-    "copySelection": "Копіювати вибране ({{count}})"
+    "copySelection": "Копіювати вибране ({{count}})",
+    "evaluation": "Оцін."
   },
   "report": {
     "title": "Звіт",

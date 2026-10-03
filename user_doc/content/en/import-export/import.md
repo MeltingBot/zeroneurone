@@ -131,6 +131,8 @@ The import happens as a single **undoable** batch (Ctrl+Z).
 | notes | Text notes |
 | tags | Tags separated by ; |
 | confidence | 0-100 |
+| cotation_echelle (or evaluation_scale) | `europol` or `admiralty` (unified format) |
+| cotation_source / cotation_info | Grading codes, e.g. `B` and `2` |
 | source | Information source |
 | date | Date (YYYY-MM-DD) |
 | start_date | Period start (links, events) |
