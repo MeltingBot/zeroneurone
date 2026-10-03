@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.58.5
+
+### Fixes
+
+- **Export et sauvegarde : clé de session partagée retirée** — l'export
+  ZIP/JSON d'une enquête et la sauvegarde globale contenaient la clé de
+  chiffrement de la dernière session partagée (`lastSharedKey`) : quiconque
+  recevait le fichier pouvait rejoindre cette session. Cette clé et les autres
+  champs propres à l'appareil (`lastSharedAsync`, `origin`) ne sont plus
+  écrits dans les fichiers exportés.
+
 ## 2.58.4
 
 ### Fixes

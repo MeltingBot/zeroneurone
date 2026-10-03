@@ -4,7 +4,7 @@ import { isCustomIconName, customIconIdFromName } from '../types';
 import { useTagSetStore, useCustomIconStore } from '../stores';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { fileService } from './fileService';
-import { generateUUID, getExtension } from '../utils';
+import { generateUUID, getExtension, stripLocalOnlyDossierFields } from '../utils';
 import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
@@ -135,7 +135,7 @@ class ExportService {
     const data: ExportData = {
       version: this.VERSION,
       exportedAt: new Date().toISOString(),
-      dossier,
+      dossier: stripLocalOnlyDossierFields(dossier),
       elements,
       links,
       assets: assetsMeta,

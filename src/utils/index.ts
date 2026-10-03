@@ -1,4 +1,4 @@
-import { DEFAULT_COLORS } from '../types';
+import { DEFAULT_COLORS, type Dossier } from '../types';
 
 /**
  * Generate a UUID v4
@@ -241,4 +241,14 @@ export function toUrl(str: string): string {
   if (t.startsWith('www.')) return `https://${t}`;
   if (/^https?:\/\//i.test(t)) return t;
   return `https://${t}`;
+}
+
+/**
+ * Drop the device-local fields of a dossier before it leaves the device
+ * (export, backup). `lastSharedKey` is the E2E key of the last shared session:
+ * anyone holding the file could otherwise join that session.
+ */
+export function stripLocalOnlyDossierFields(dossier: Dossier): Dossier {
+  const { lastSharedKey: _key, lastSharedAsync: _async, origin: _origin, ...rest } = dossier;
+  return rest;
 }

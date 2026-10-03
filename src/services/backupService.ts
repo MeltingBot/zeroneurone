@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { db } from '../db/database';
 import { fileService } from './fileService';
-import { generateUUID, getExtension } from '../utils';
+import { generateUUID, getExtension, stripLocalOnlyDossierFields } from '../utils';
 import type {
   Dossier,
   Element,
@@ -102,7 +102,7 @@ class BackupService {
     const backupData: BackupData = {
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
-      dossiers,
+      dossiers: dossiers.map(stripLocalOnlyDossierFields),
       elements,
       links,
       assets: assetsMetadata,
