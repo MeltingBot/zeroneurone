@@ -10,7 +10,7 @@ Un tableau blanc infini avec des capacités d'analyse de graphe.
 
 *Langue : Français | [English](README.en.md)*
 
-![Version](https://img.shields.io/badge/version-2.59.1-blue)
+![Version](https://img.shields.io/badge/version-2.60.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -70,6 +70,7 @@ Documentation utilisateur : [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - **Natif** : ZIP (données + pièces jointes, chiffrement optionnel) et JSON ([format documenté](docs/json-import-format-fr.md))
 - **Graphes** : CSV, GraphML, GEXF, Gephi Lite, Excalidraw, Mermaid (import, et copie d'une sélection en Mermaid)
 - **i2 Analyst's Notebook** : import ANX et ANB, export ANX
+- **Obsidian** : export en coffre (fiches Markdown, relations en wikilinks, canvas par onglet)
 - **Renseignement et OSINT** : STIX 2.1, OSINT Industries, Graph Palette, PredicaGraph, OSINTracker
 - **Spécialisés** : GEDCOM 5.5.1/7.0 et GeneWeb (généalogie), FEC (fichier des écritures comptables, en graphe de flux financiers)
 - **JSON quelconque** par un assistant de mapping, avec modèles réutilisables ; aussi par simple collage sur le canvas

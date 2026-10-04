@@ -104,7 +104,23 @@
       "svg": "SVG (bektoriala)",
       "svgDesc": "Irudi bektorial editagarria (Inkscape, Illustrator)",
       "anx": "ANX (i2 Analyst's Notebook)",
-      "anxDesc": "i2rako grafikoa (kokapenak, koloreak, atributuak)"
+      "anxDesc": "i2rako grafikoa (kokapenak, koloreak, atributuak)",
+      "obsidian": "Obsidian (ZIP biltegia)",
+      "obsidianDesc": "Markdown fitxak, erlazioak wikilink gisa, canvas bat fitxa bakoitzeko"
+    },
+    "obsidian": {
+      "elementsFolder": "Elementuak",
+      "canvasFolder": "Canvas",
+      "reportFolder": "Txostena",
+      "relations": "Erlazioak",
+      "events": "Gertaerak",
+      "members": "Kideak",
+      "attachments": "Eranskinak",
+      "canvases": "Canvasak",
+      "elements": "Elementuak",
+      "report": "Txostena",
+      "related": "lotuta",
+      "untitled": "Izenbururik gabe"
     },
     "options": {
       "includeAssets": "Erantsitako fitxategiak sartu",

@@ -9,8 +9,9 @@ import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { formatEvaluation } from '../utils/evaluation';
 import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
+import { buildObsidianVault, type ObsidianLabels } from './exportObsidian';
 
-export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'anx' | 'zip';
+export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'anx' | 'obsidian' | 'zip';
 
 /** Asset metadata for export (without binary data) */
 export interface ExportedAssetMeta {
@@ -241,6 +242,39 @@ class ExportService {
     const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments);
     const encBuf = await encryptZip(zipBlob, password);
     return new Blob([encBuf], { type: 'application/octet-stream' });
+  }
+
+  /**
+   * Export dossier as an Obsidian vault (notes, JSON Canvas, report, attachments)
+   */
+  async exportToObsidian(
+    dossier: Dossier,
+    elements: Element[],
+    links: Link[],
+    assets: Asset[],
+    labels: ObsidianLabels,
+    report?: Report | null,
+    tabs?: CanvasTab[]
+  ): Promise<Blob> {
+    const zip = new JSZip();
+    const { files, assetPaths } = buildObsidianVault({ dossier, elements, links, tabs, report, assets, labels });
+
+    for (const file of files) {
+      zip.file(file.path, file.content);
+    }
+
+    for (const asset of assets) {
+      const path = assetPaths.get(asset.id);
+      if (!path) continue;
+      try {
+        const file = await fileService.getAssetFile(asset);
+        zip.file(path, await file.arrayBuffer());
+      } catch (error) {
+        console.warn(`Failed to export asset ${asset.filename}:`, error);
+      }
+    }
+
+    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
   }
 
   /**
@@ -801,7 +835,8 @@ ${edges}
     views?: View[],
     queries?: SavedQuery[],
     queryHistory?: string[],
-    comments?: Comment[]
+    comments?: Comment[],
+    obsidianLabels?: ObsidianLabels
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
@@ -842,6 +877,12 @@ ${edges}
       case 'anx': {
         const anx = buildANXExport(dossier, elements, links);
         this.download(anx, `${baseName}.anx`, 'application/xml');
+        break;
+      }
+      case 'obsidian': {
+        if (!obsidianLabels) throw new Error('Obsidian export requires labels');
+        const vault = await this.exportToObsidian(dossier, elements, links, assets || [], obsidianLabels, report, tabs);
+        this.downloadBlob(vault, `${baseName}_obsidian.zip`);
         break;
       }
     }

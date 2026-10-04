@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.60.0
+
+### Features
+
+- **Export Obsidian** — nouveau format dans la fenêtre d'export : un coffre
+  Obsidian (ZIP à ouvrir comme coffre) avec une fiche Markdown par élément.
+  Les tags, la confiance, l'évaluation, la source, les dates, la position
+  (`location`, compatible Map View) et les propriétés passent en propriétés
+  Obsidian ; les notes, événements et fichiers joints forment le corps.
+  Les relations sont écrites dans une section Relations (sens, dates,
+  confiance, notes du lien), visibles dans la vue graphe et les rétroliens,
+  et en propriétés par libellé (`employé de: [[ACME]]`) interrogeables avec
+  Dataview ou Bases. Chaque onglet devient un fichier Canvas qui reprend la
+  disposition du graphe, les libellés, couleurs et sens des liens, les
+  groupes et les annotations. Le rapport est exporté avec ses références
+  converties en liens vers les fiches.
+
 ## 2.59.1
 
 ### Fixes

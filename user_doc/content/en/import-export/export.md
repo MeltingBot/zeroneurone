@@ -149,6 +149,44 @@ The native binary `.anb` format is not offered for export: its structure is not 
 
 ---
 
+### Obsidian (vault)
+
+**Obsidian vault**: one Markdown note per element, to carry the analysis on in Obsidian.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.zip` |
+| Content | `.md` notes, `.canvas` files, report |
+| Attached files | ✅ Included |
+| Use | Obsidian (graph, backlinks, Dataview, Bases) |
+
+Archive structure:
+
+```
+case_2024-01-15_obsidian.zip
+├── Case.md               # Index: description, canvases, report, notes
+├── Elements/             # One note per element (and per group)
+├── Canvas/               # One .canvas file per tab
+├── Report/               # The report, references turned into links
+└── attachments/          # Attached files
+```
+
+Unzip the archive, then in Obsidian choose **Open folder as vault**.
+
+Each note carries as properties (frontmatter) the element's tags, confidence, grading, source, dates, location (`location`, compatible with the Map View plugin), parent group and properties. The element's notes form the body, followed by its events and attached files.
+
+Obsidian has no typed links, so relations are written three ways:
+
+- a **Relations** section in each note, with the label, direction (→, ←, ↔), dates, confidence, source and notes of the link. Relations show up in the graph view and in backlinks;
+- one property per relation label in the originating note (`employed by: [[ACME]]`), queryable with Dataview or Bases. An undirected relation is written on both sides;
+- one **Canvas** file per tab, reproducing the canvas layout with link labels, colours and direction. Groups become Canvas groups, annotations become text cards.
+
+{{< hint warning >}}
+`.canvas` files point to notes by their path from the vault root. If you copy the export into a sub-folder of an existing vault, notes and their links still work, but the canvases no longer find their notes.
+{{< /hint >}}
+
+---
+
 ### GeoJSON
 
 **Geographic format** for GIS tools.

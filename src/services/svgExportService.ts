@@ -120,7 +120,7 @@ function computeNodeDimensions(element: Element): NodeDimensions {
 // POSITION RESOLUTION (groups → absolute positions)
 // ============================================================================
 
-function resolveAbsolutePosition(element: Element, elementsMap: Map<string, Element>): Position {
+export function resolveAbsolutePosition(element: Element, elementsMap: Map<string, Element>): Position {
   if (!element.parentGroupId) return element.position;
   const parent = elementsMap.get(element.parentGroupId);
   if (!parent) return element.position;

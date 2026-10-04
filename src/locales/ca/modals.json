@@ -104,7 +104,23 @@
       "svg": "SVG (vectorial)",
       "svgDesc": "Imatge vectorial editable (Inkscape, Illustrator)",
       "anx": "ANX (i2 Analyst's Notebook)",
-      "anxDesc": "Gràfic per a i2 (posicions, colors, atributs)"
+      "anxDesc": "Gràfic per a i2 (posicions, colors, atributs)",
+      "obsidian": "Obsidian (caixa forta ZIP)",
+      "obsidianDesc": "Notes Markdown, relacions com a wikilinks, un canvas per pestanya"
+    },
+    "obsidian": {
+      "elementsFolder": "Elements",
+      "canvasFolder": "Canvas",
+      "reportFolder": "Informe",
+      "relations": "Relacions",
+      "events": "Esdeveniments",
+      "members": "Membres",
+      "attachments": "Adjunts",
+      "canvases": "Canvas",
+      "elements": "Elements",
+      "report": "Informe",
+      "related": "vinculat a",
+      "untitled": "Sense títol"
     },
     "options": {
       "includeAssets": "Incloure fitxers adjunts",

@@ -149,6 +149,44 @@ Le format binaire natif `.anb` n'est pas proposé à l'export : sa structure n'e
 
 ---
 
+### Obsidian (coffre)
+
+**Coffre Obsidian** : une fiche Markdown par élément, pour prolonger l'analyse dans Obsidian.
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.zip` |
+| Contenu | Fiches `.md`, fichiers `.canvas`, rapport |
+| Fichiers joints | ✅ Inclus |
+| Usage | Obsidian (graphe, rétroliens, Dataview, Bases) |
+
+Structure de l'archive :
+
+```
+enquete_2024-01-15_obsidian.zip
+├── Enquête.md            # Index : description, canvas, rapport, fiches
+├── Éléments/             # Une fiche par élément (et par groupe)
+├── Canvas/               # Un fichier .canvas par onglet
+├── Rapport/              # Le rapport, références converties en liens
+└── attachments/          # Fichiers joints
+```
+
+Décompressez l'archive puis, dans Obsidian, choisissez **Ouvrir un dossier comme coffre**.
+
+Chaque fiche porte en propriétés (frontmatter) les tags, la confiance, l'évaluation, la source, les dates, la position géographique (`location`, compatible avec le plugin Map View), le groupe parent et les propriétés de l'élément. Les notes de l'élément forment le corps de la fiche, suivies de ses événements et de ses fichiers joints.
+
+Obsidian ne connaît pas les liens typés. Les relations sont donc écrites de trois façons :
+
+- une section **Relations** dans chaque fiche, avec le libellé, le sens (→, ←, ↔), les dates, la confiance, la source et les notes du lien. Les relations apparaissent dans la vue graphe et dans les rétroliens ;
+- une propriété par libellé de relation dans la fiche d'origine (`employé de: [[ACME]]`), interrogeable avec Dataview ou Bases. Une relation sans sens est écrite des deux côtés ;
+- un fichier **Canvas** par onglet, qui reproduit la disposition du canvas avec les libellés, les couleurs et le sens des liens. Les groupes deviennent des groupes Canvas, les annotations des cartes de texte.
+
+{{< hint warning >}}
+Les fichiers `.canvas` désignent les fiches par leur chemin depuis la racine du coffre. Si vous copiez l'export dans un sous-dossier d'un coffre existant, les fiches et leurs liens fonctionnent, mais les canvas ne trouvent plus leurs fiches.
+{{< /hint >}}
+
+---
+
 ### GeoJSON
 
 **Format géographique** pour outils SIG.

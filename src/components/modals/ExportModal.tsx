@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network, NotebookText } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
@@ -22,6 +22,7 @@ const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; 
   { format: 'gexf', labelKey: 'gexf', descKey: 'gexfDesc', icon: FileText },
   { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
   { format: 'anx', labelKey: 'anx', descKey: 'anxDesc', icon: Network },
+  { format: 'obsidian', labelKey: 'obsidian', descKey: 'obsidianDesc', icon: NotebookText },
 ];
 
 const pngScaleOptions = [
@@ -52,13 +53,13 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Fetch assets, report and tabs for ZIP/JSON export
       let assets;
       let report;
-      if (format === 'zip') {
+      if (format === 'zip' || format === 'obsidian') {
         assets = await fileService.getAssetsByDossier(currentDossier.id);
         // Use getByDossierWithYDoc to check both Dexie and Y.Doc storage
         report = await reportRepository.getByDossierWithYDoc(currentDossier.id);
       }
       const includeStructure = format === 'zip' || format === 'json';
-      const tabs = includeStructure
+      const tabs = includeStructure || format === 'obsidian'
         ? await tabRepository.getByDossier(currentDossier.id)
         : undefined;
       const views = includeStructure
@@ -72,7 +73,24 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         : undefined;
       const exportComments = includeStructure ? comments : undefined;
 
-      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments);
+      const obsidianLabels = format === 'obsidian'
+        ? {
+            elementsFolder: t('export.obsidian.elementsFolder'),
+            canvasFolder: t('export.obsidian.canvasFolder'),
+            reportFolder: t('export.obsidian.reportFolder'),
+            relations: t('export.obsidian.relations'),
+            events: t('export.obsidian.events'),
+            members: t('export.obsidian.members'),
+            attachments: t('export.obsidian.attachments'),
+            canvases: t('export.obsidian.canvases'),
+            elements: t('export.obsidian.elements'),
+            report: t('export.obsidian.report'),
+            related: t('export.obsidian.related'),
+            untitled: t('export.obsidian.untitled'),
+          }
+        : undefined;
+
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {

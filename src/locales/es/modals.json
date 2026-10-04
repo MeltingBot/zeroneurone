@@ -104,7 +104,23 @@
       "svg": "SVG (vectorial)",
       "svgDesc": "Imagen vectorial editable (Inkscape, Illustrator)",
       "anx": "ANX (i2 Analyst's Notebook)",
-      "anxDesc": "Gráfico para i2 (posiciones, colores, atributos)"
+      "anxDesc": "Gráfico para i2 (posiciones, colores, atributos)",
+      "obsidian": "Obsidian (bóveda ZIP)",
+      "obsidianDesc": "Notas Markdown, relaciones como wikilinks, un canvas por pestaña"
+    },
+    "obsidian": {
+      "elementsFolder": "Elementos",
+      "canvasFolder": "Canvas",
+      "reportFolder": "Informe",
+      "relations": "Relaciones",
+      "events": "Eventos",
+      "members": "Miembros",
+      "attachments": "Adjuntos",
+      "canvases": "Canvas",
+      "elements": "Elementos",
+      "report": "Informe",
+      "related": "vinculado a",
+      "untitled": "Sin título"
     },
     "options": {
       "includeAssets": "Incluir archivos adjuntos",

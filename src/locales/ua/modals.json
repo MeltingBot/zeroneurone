@@ -104,7 +104,23 @@
       "svg": "SVG (векторний)",
       "svgDesc": "Редагований векторний малюнок (Inkscape, Illustrator)",
       "anx": "ANX (i2 Analyst's Notebook)",
-      "anxDesc": "Граф для i2 (позиції, кольори, атрибути)"
+      "anxDesc": "Граф для i2 (позиції, кольори, атрибути)",
+      "obsidian": "Obsidian (сховище ZIP)",
+      "obsidianDesc": "Нотатки Markdown, зв'язки як вікіпосилання, полотно на кожну вкладку"
+    },
+    "obsidian": {
+      "elementsFolder": "Елементи",
+      "canvasFolder": "Полотна",
+      "reportFolder": "Звіт",
+      "relations": "Зв'язки",
+      "events": "Події",
+      "members": "Учасники",
+      "attachments": "Вкладення",
+      "canvases": "Полотна",
+      "elements": "Елементи",
+      "report": "Звіт",
+      "related": "пов'язано з",
+      "untitled": "Без назви"
     },
     "options": {
       "includeAssets": "Включити вкладення",

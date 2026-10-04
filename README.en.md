@@ -10,7 +10,7 @@ An infinite whiteboard with graph-analysis capabilities.
 
 *Language: [Français](README.md) | English*
 
-![Version](https://img.shields.io/badge/version-2.59.1-blue)
+![Version](https://img.shields.io/badge/version-2.60.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -70,6 +70,7 @@ User documentation: [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - **Native**: ZIP (data + attachments, optional encryption) and JSON ([documented format](docs/json-import-format-en.md))
 - **Graphs**: CSV, GraphML, GEXF, Gephi Lite, Excalidraw, Mermaid (import, and copy a selection as Mermaid)
 - **i2 Analyst's Notebook**: ANX and ANB import, ANX export
+- **Obsidian**: vault export (Markdown notes, wikilink relations, one canvas per tab)
 - **Intelligence and OSINT**: STIX 2.1, OSINT Industries, Graph Palette, PredicaGraph, OSINTracker
 - **Specialised**: GEDCOM 5.5.1/7.0 and GeneWeb (genealogy), FEC (French accounting entries file, as a financial-flow graph)
 - **Any JSON** through a mapping assistant with reusable templates; also by pasting onto the canvas

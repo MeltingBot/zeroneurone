@@ -104,7 +104,23 @@
       "svg": "SVG (vector)",
       "svgDesc": "Bewerkbare vectorafbeelding (Inkscape, Illustrator)",
       "anx": "ANX (i2 Analyst's Notebook)",
-      "anxDesc": "Diagram voor i2 (posities, kleuren, attributen)"
+      "anxDesc": "Diagram voor i2 (posities, kleuren, attributen)",
+      "obsidian": "Obsidian (vault-ZIP)",
+      "obsidianDesc": "Markdown-notities, relaties als wikilinks, één canvas per tabblad"
+    },
+    "obsidian": {
+      "elementsFolder": "Elementen",
+      "canvasFolder": "Canvas",
+      "reportFolder": "Rapport",
+      "relations": "Relaties",
+      "events": "Gebeurtenissen",
+      "members": "Leden",
+      "attachments": "Bijlagen",
+      "canvases": "Canvassen",
+      "elements": "Elementen",
+      "report": "Rapport",
+      "related": "verbonden met",
+      "untitled": "Zonder titel"
     },
     "options": {
       "includeAssets": "Bijlagen opnemen",

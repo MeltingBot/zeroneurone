@@ -104,7 +104,23 @@
       "svg": "SVG (wektorowy)",
       "svgDesc": "Edytowalny obraz wektorowy (Inkscape, Illustrator)",
       "anx": "ANX (i2 Analyst's Notebook)",
-      "anxDesc": "Wykres dla i2 (pozycje, kolory, atrybuty)"
+      "anxDesc": "Wykres dla i2 (pozycje, kolory, atrybuty)",
+      "obsidian": "Obsidian (sejf ZIP)",
+      "obsidianDesc": "Notatki Markdown, relacje jako wikilinki, jedno płótno na kartę"
+    },
+    "obsidian": {
+      "elementsFolder": "Elementy",
+      "canvasFolder": "Płótna",
+      "reportFolder": "Raport",
+      "relations": "Relacje",
+      "events": "Zdarzenia",
+      "members": "Członkowie",
+      "attachments": "Załączniki",
+      "canvases": "Płótna",
+      "elements": "Elementy",
+      "report": "Raport",
+      "related": "powiązany z",
+      "untitled": "Bez tytułu"
     },
     "options": {
       "includeAssets": "Dołącz załączniki",
