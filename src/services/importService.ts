@@ -36,6 +36,7 @@ import { useCustomIconStore } from '../stores/customIconStore';
 import { tagSetRepository, customIconRepository } from '../db/repositories';
 import { sanitizeSvgIcon } from '../utils/svgIcon';
 import { normalizeGeo, computePolygonCenter } from '../utils/geo';
+import { splitCSVRecords } from '../utils/csv';
 import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
@@ -1745,7 +1746,7 @@ class ImportService {
     };
 
     try {
-      const lines = content.split('\n').filter((line) => line.trim());
+      const lines = splitCSVRecords(content);
       if (lines.length === 0) {
         result.errors.push('Fichier CSV vide');
         return result;
@@ -2287,7 +2288,7 @@ class ImportService {
     };
 
     try {
-      const lines = content.split('\n').filter((line) => line.trim());
+      const lines = splitCSVRecords(content);
       if (lines.length === 0) {
         result.errors.push('Fichier CSV vide');
         return result;
@@ -2459,7 +2460,7 @@ class ImportService {
     };
 
     try {
-      const lines = content.split('\n').filter((line) => line.trim());
+      const lines = splitCSVRecords(content);
       if (lines.length === 0) {
         result.errors.push('Fichier CSV vide');
         return result;
@@ -2767,8 +2768,7 @@ class ImportService {
    */
   private detectCSVDelimiter(content: string): string {
     const candidates = [',', ';', '\t'];
-    const lines = content.split('\n');
-    const firstLine = lines.find((l) => l.trim().length > 0) ?? '';
+    const firstLine = splitCSVRecords(content)[0] ?? '';
 
     let inQuotes = false;
     const counts: Record<string, number> = { ',': 0, ';': 0, '\t': 0 };

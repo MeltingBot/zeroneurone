@@ -18,6 +18,7 @@ import { startMermaidPlacement } from '../../services/mermaidPlacement';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { splitCSVRecords } from '../../utils/csv';
 
 interface ImportIntoCurrentModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ function estimateElementCount(file: File, content: string): number {
 
   if (name.endsWith('.csv')) {
     // Count non-empty, non-header lines
-    const lines = content.split('\n').filter(l => l.trim().length > 0);
+    const lines = splitCSVRecords(content);
     return Math.max(lines.length - 1, 1); // minus header
   }
 

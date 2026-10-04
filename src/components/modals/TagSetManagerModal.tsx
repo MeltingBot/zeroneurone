@@ -5,6 +5,7 @@ import { Modal, Button, IconButton, ResolvedIcon, iconNameResolves } from '../co
 import { useTagSetStore, useUIStore, useCustomIconStore } from '../../stores';
 import { CUSTOM_ICON_PREFIX, isCustomIconName, customIconIdFromName } from '../../types';
 import { sanitizeSvgIcon } from '../../utils/svgIcon';
+import { splitCSVRecords } from '../../utils/csv';
 import { TagSetEditorModal } from './TagSetEditorModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
 
@@ -257,7 +258,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
 
       if (file.name.endsWith('.csv')) {
         // CSV import
-        const lines = text.split('\n').filter((l) => l.trim());
+        const lines = splitCSVRecords(text);
         if (lines.length < 2) {
           showToast('error', t('tagSets.csvEmptyOrInvalid'));
           return;

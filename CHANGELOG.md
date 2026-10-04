@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.59.1
+
+### Fixes
+
+- **Export i2 (.anx) refusé par Analyst's Notebook** — i2 rejetait le fichier
+  dès qu'un élément ou un lien portait des propriétés (« ChartItem a un élément
+  enfant non valide 'AttributeCollection' »). Les propriétés sont maintenant
+  écrites après l'élément ou le lien, et les dates et événements à l'intérieur
+  de celui-ci, dans l'ordre qu'utilise i2. Les dates exportées sont aussi
+  relues lors d'un réimport dans ZeroNeurone. Les noms de propriétés
+  sont nettoyés des espaces et retours chariot résiduels.
+- **Import CSV : cellules sur plusieurs lignes** — une cellule entre
+  guillemets contenant un retour à la ligne (Alt+Entrée dans Excel) coupait la
+  ligne en deux et créait un élément de trop. Elle est désormais lue d'un seul
+  tenant, notes multi-lignes comprises. Concerne l'import CSV d'éléments, de
+  liens, le format unifié et l'import de TagSets.
+- **Import CSV de TagSets : fins de ligne Windows** — la dernière colonne
+  d'un fichier enregistré par Excel gardait un retour chariot final.
+
 ## 2.59.0
 
 ### Features

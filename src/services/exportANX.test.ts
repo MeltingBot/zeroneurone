@@ -258,6 +258,41 @@ describe('buildANXExport — formatting', () => {
   });
 });
 
+// i2 validates child order against its schema and refuses the whole chart on a
+// mismatch ("ChartItem a un élément enfant non valide 'AttributeCollection'").
+// The expected order is copied from a chart exported by i2 itself.
+describe('buildANXExport — schema child order', () => {
+  const childNames = (n: globalThis.Element | null | undefined) => [...(n?.children ?? [])].map((c) => c.tagName);
+
+  it('puts AttributeCollection after End, and cards inside Entity', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({
+      date: new Date('2026-03-09') as never,
+      properties: [{ key: 'telephone', value: '0612345678', type: 'text' }] as never,
+    })], []);
+    const doc = expectWellFormed(xml);
+    expect(childNames(doc.querySelector('ChartItem'))).toEqual(['End', 'AttributeCollection']);
+    expect(childNames(doc.querySelector('Entity'))).toEqual(['Icon', 'CardCollection']);
+  });
+
+  it('puts AttributeCollection after Link, and cards before LinkStyle', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({ id: 'e1' }), makeElement({ id: 'e2', label: 'B' })], [makeLink({
+      date: new Date('2026-03-09') as never,
+      properties: [{ key: 'montant', value: '100', type: 'text' }] as never,
+    })]);
+    const doc = expectWellFormed(xml);
+    const linkItem = doc.querySelector('Link')?.parentElement;
+    expect(childNames(linkItem)).toEqual(['Link', 'AttributeCollection']);
+    expect(childNames(doc.querySelector('Link'))).toEqual(['CardCollection', 'LinkStyle']);
+  });
+
+  it('trims a trailing carriage return left in a property key by a CRLF import', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({
+      properties: [{ key: 'telephone\r', value: '0612345678', type: 'text' }] as never,
+    })], []);
+    expect(expectWellFormed(xml).querySelector('AttributeClass')?.getAttribute('Name')).toBe('telephone');
+  });
+});
+
 // The strongest check available without a copy of Analyst's Notebook: feed our
 // own output back through the reader that models the format.
 describe('buildANXExport — round trip through importANX', () => {

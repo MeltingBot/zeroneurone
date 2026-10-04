@@ -25,8 +25,13 @@
  *     EntityTypeCollection > EntityType Id="IDENT*"
  *     AttributeClassCollection > AttributeClass Id="IDSET*"   (only when needed)
  *     ChartItemCollection  > ChartItem  Id="ID*"
- *                              End > Entity > Icon > IconStyle   (entities)
- *                              Link > LinkStyle                  (links)
+ *                              End > Entity > Icon, CardCollection   (entities)
+ *                              Link > CardCollection, LinkStyle      (links)
+ *                              AttributeCollection                   (after End/Link)
+ *
+ * Child order is enforced by i2's schema validator: an AttributeCollection
+ * before End/Link, or a CardCollection directly under ChartItem, makes i2
+ * refuse the whole chart. The order above is the one a real i2 export uses.
  *
  * Ids share one namespace across the document, hence the disjoint prefixes.
  */
@@ -377,7 +382,9 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
 
   // Attribute classes: first declared type wins, later values degrade to text.
   const attributeClasses = new Map<string, AttributeClassDef>();
-  const declareAttr = (name: string, type: PropertyType | undefined): AttributeClassDef => {
+  const declareAttr = (rawName: string, type: PropertyType | undefined): AttributeClassDef => {
+    // Keys imported from CRLF files can keep a trailing "\r" ("telephone\r").
+    const name = rawName.trim();
     let def = attributeClasses.get(name);
     if (!def) {
       def = { id: nextDefId(), name, attType: propertyTypeToAttType(type) };
@@ -473,8 +480,6 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
 
     items.push(
       `    <ChartItem Id="${chartId}" Label="${escapeAttr(el.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(el.notes)}" DateSet="${mainDate ? 'true' : 'false'}" TimeSet="${mainDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(el, model).one}" GradeTwoIndex="${itemGrades(el, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(el.source)}" SourceType="ZeroNeurone" XPosition="${x}">`,
-      ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),
-      ...(cards.length ? ['      <CardCollection>', ...cards, '      </CardCollection>'] : []),
       `      <End X="${x}" Y="${y}" Z="0">`,
       `        <Entity${entityAttrs} Identity="${escapeAttr(el.label)}" LabelIsIdentity="true">`,
       '          <Icon TextX="0" TextY="16">',
@@ -482,8 +487,10 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
       `              <FrameStyle Colour="${frameColour}" />`,
       '            </IconStyle>',
       '          </Icon>',
+      ...(cards.length ? ['          <CardCollection>', ...cards.map((c) => `    ${c}`), '          </CardCollection>'] : []),
       '        </Entity>',
       '      </End>',
+      ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),
       '    </ChartItem>',
     );
   }
@@ -515,11 +522,11 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
 
     items.push(
       `    <ChartItem Id="${chartId}" Label="${escapeAttr(link.label)}" Shown="true" DateTimeDescription="" Description="${escapeAttr(link.notes)}" DateSet="${linkDate ? 'true' : 'false'}" TimeSet="${linkDate ? 'true' : 'false'}" GradeOneIndex="${itemGrades(link, model).one}" GradeTwoIndex="${itemGrades(link, model).two}" GradeThreeIndex="0" Ordered="false" SourceReference="${escapeAttr(link.source)}" SourceType="ZeroNeurone" XPosition="0">`,
-      ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),
-      ...(cards.length ? ['      <CardCollection>', ...cards, '      </CardCollection>'] : []),
       `      <Link LabelPos="50" LabelSegment="0" Offset="0"${ends}>`,
+      ...(cards.length ? ['        <CardCollection>', ...cards.map((c) => `  ${c}`), '        </CardCollection>'] : []),
       `        <LinkStyle ArrowStyle="${directionToArrowStyle(link)}" LineWidth="${width}" LineColour="${hexToColorref(link.visual?.color)}" Strength="${escapeAttr(strength.name)}" Type="${escapeAttr(linkType.name)}" LinkTypeReference="${linkType.id}" StrengthReference="${strength.id}" />`,
       '      </Link>',
+      ...(attributes.length ? ['      <AttributeCollection>', ...attributes, '      </AttributeCollection>'] : []),
       '    </ChartItem>',
     );
   }
