@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.60.2
+
+### Corrections
+
+- **Fenêtre d'export dans l'ordre de la documentation** — ZIP en tête, puis
+  JSON, CSV, GraphML, GEXF, ANX, Obsidian, GeoJSON, et les images (PNG, SVG)
+  en dernier.
+- **Liste des formats d'import complétée** — ANB, Mermaid, FEC, STIX 2.1 et
+  GeoJSON s'importaient déjà mais n'étaient pas annoncés ; liste remise dans
+  l'ordre de la documentation, sans doublons (11 langues).
+
+### Documentation
+
+- Nouvelle page **Stockage et maintenance** : fenêtre Stockage, sauvegarde
+  complète, purge de l'historique Y.js et bilan.
+- **Collaboration** : aucun serveur n'est configuré d'office, contrairement à
+  ce qu'indiquait la page ; adresse du serveur public
+  `wss://sync.zeroneurone.com` et marche à suivre.
+- **FAQ** revue : tutoriel guidé, ZNQuery, ontologie et tags, métadonnées et
+  EXIF, analyse de graphe, rapport et synthèse, recherche, filtres et vues,
+  commentaires, aperçu PDF, place occupée, formats d'échange, serveur de
+  collaboration, fichiers partagés, mode sombre, langues, raccourcis.
+
 ## 2.60.1
 
 ### Aperçu PDF

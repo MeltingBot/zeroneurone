@@ -176,9 +176,10 @@ If the application doesn't load:
 
 ### Insufficient Space
 
-1. Delete unused dossiers
-2. Delete large attached files
-3. Export as ZIP then delete the dossier
+1. Purge the dossiers' history: **Storage** window → **Maintenance** (see [Storage and maintenance]({{< relref "maintenance" >}}))
+2. Delete unused dossiers
+3. Delete large attached files
+4. Export as ZIP then delete the dossier
 
 ### Migration
 

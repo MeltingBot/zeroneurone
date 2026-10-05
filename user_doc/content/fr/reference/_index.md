@@ -10,3 +10,4 @@ Documentation technique et raccourcis.
 
 - [Raccourcis clavier]({{< relref "keyboard-shortcuts" >}}) — Toutes les touches
 - [Stockage des données]({{< relref "data-storage" >}}) — IndexedDB et OPFS
+- [Stockage et maintenance]({{< relref "maintenance" >}}) — Sauvegarde, purge de l'historique, place libérée

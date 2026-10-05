@@ -240,17 +240,23 @@ Pour mettre à jour votre dossier local avec les modifications asynchrones dista
 
 ## Serveur de signalisation
 
-### Serveur par défaut
+### Serveur public
 
-ZeroNeurone utilise un serveur de signalisation public par défaut.
+Aucun serveur n'est configuré d'office : sans serveur, rien ne sort de votre navigateur. Pour collaborer, renseignez le serveur public du projet :
+
+```
+wss://sync.zeroneurone.com
+```
+
+1. Bouton **Partager** dans l'en-tête du dossier
+2. Section **Serveur de synchronisation**
+3. Collez l'adresse et enregistrez
+
+Les participants n'ont rien à saisir : l'adresse du serveur est dans le lien de partage, et la page qui s'ouvre leur propose de l'enregistrer.
 
 ### Serveur personnalisé
 
-Pour utiliser votre propre serveur :
-
-1. Menu **⋯** → **Partager**
-2. Section **Serveur**
-3. Entrez l'URL complète de votre serveur
+Pour utiliser votre propre serveur, même démarche : entrez son URL complète dans la section **Serveur de synchronisation**.
 
 {{< hint warning >}}
 **Format requis** : L'URL doit inclure le protocole WebSocket :

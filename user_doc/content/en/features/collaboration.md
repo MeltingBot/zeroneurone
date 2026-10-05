@@ -240,17 +240,23 @@ To update your local dossier with remote async changes:
 
 ## Signaling Server
 
-### Default Server
+### Public Server
 
-ZeroNeurone uses a public signaling server by default.
+No server is set up by default: without one, nothing leaves your browser. To collaborate, enter the project's public server:
+
+```
+wss://sync.zeroneurone.com
+```
+
+1. **Share** button in the dossier header
+2. **Sync server** section
+3. Paste the address and save
+
+Participants have nothing to type: the server address is in the share link, and the page it opens offers to save it.
 
 ### Custom Server
 
-To use your own server:
-
-1. Menu **⋯** → **Share**
-2. **Server** section
-3. Enter your server's full URL
+To use your own server, same steps: enter its full URL in the **Sync server** section.
 
 {{< hint warning >}}
 **Required format**: The URL must include the WebSocket protocol:

@@ -20,9 +20,9 @@ const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; 
   { format: 'csv', labelKey: 'csv', descKey: 'csvDesc', icon: FileSpreadsheet },
   { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
   { format: 'gexf', labelKey: 'gexf', descKey: 'gexfDesc', icon: FileText },
-  { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
   { format: 'anx', labelKey: 'anx', descKey: 'anxDesc', icon: Network },
   { format: 'obsidian', labelKey: 'obsidian', descKey: 'obsidianDesc', icon: NotebookText },
+  { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
 ];
 
 const pngScaleOptions = [
@@ -260,68 +260,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </p>
 
           <div className="space-y-3">
-            {/* PNG Export with scale selection */}
-            <div className="rounded-lg border border-border-default overflow-hidden">
-              <button
-                onClick={() => setShowPngOptions(!showPngOptions)}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
-              >
-                <Image size={20} className="text-text-secondary" />
-                <div className="text-left flex-1">
-                  <div className="text-sm font-medium text-text-primary">
-                    {t('export.formats.png')}
-                  </div>
-                  <div className="text-xs text-text-tertiary">
-                    {t('export.formats.pngDesc')}
-                  </div>
-                </div>
-                <ChevronDown
-                  size={16}
-                  className={`text-text-tertiary transition-transform ${showPngOptions ? 'rotate-180' : ''}`}
-                />
-              </button>
-              {showPngOptions && (
-                <div className="border-t border-border-default bg-bg-secondary p-2">
-                  <div className="text-xs text-text-tertiary mb-2 px-1">{t('export.resolution')} :</div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {pngScaleOptions.map((option) => (
-                      <button
-                        key={option.scale}
-                        onClick={() => handleExportPng(option.scale)}
-                        disabled={isProcessing}
-                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors disabled:opacity-50 ${
-                          selectedPngScale === option.scale
-                            ? 'border-accent bg-accent/10 text-accent'
-                            : 'border-border-default hover:border-accent hover:bg-accent/5 text-text-primary'
-                        }`}
-                        title={t(`export.scale.${option.descKey}`)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* SVG Export */}
-            <button
-              onClick={handleExportSvg}
-              disabled={isProcessing}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
-            >
-              <Pen size={20} className="text-text-secondary" />
-              <div className="text-left">
-                <div className="text-sm font-medium text-text-primary">
-                  {t('export.formats.svg')}
-                </div>
-                <div className="text-xs text-text-tertiary">
-                  {t('export.formats.svgDesc')}
-                </div>
-              </div>
-            </button>
-
+            {/* Same order as the user documentation: ZIP, exchange formats, then images */}
             {/* ZIP export (standard + chiffré) */}
             <div className="rounded-lg border border-border-default overflow-hidden">
               <button
@@ -450,6 +389,68 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 </button>
               );
             })}
+
+            {/* PNG Export with scale selection */}
+            <div className="rounded-lg border border-border-default overflow-hidden">
+              <button
+                onClick={() => setShowPngOptions(!showPngOptions)}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
+              >
+                <Image size={20} className="text-text-secondary" />
+                <div className="text-left flex-1">
+                  <div className="text-sm font-medium text-text-primary">
+                    {t('export.formats.png')}
+                  </div>
+                  <div className="text-xs text-text-tertiary">
+                    {t('export.formats.pngDesc')}
+                  </div>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`text-text-tertiary transition-transform ${showPngOptions ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showPngOptions && (
+                <div className="border-t border-border-default bg-bg-secondary p-2">
+                  <div className="text-xs text-text-tertiary mb-2 px-1">{t('export.resolution')} :</div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {pngScaleOptions.map((option) => (
+                      <button
+                        key={option.scale}
+                        onClick={() => handleExportPng(option.scale)}
+                        disabled={isProcessing}
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors disabled:opacity-50 ${
+                          selectedPngScale === option.scale
+                            ? 'border-accent bg-accent/10 text-accent'
+                            : 'border-border-default hover:border-accent hover:bg-accent/5 text-text-primary'
+                        }`}
+                        title={t(`export.scale.${option.descKey}`)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* SVG Export */}
+            <button
+              onClick={handleExportSvg}
+              disabled={isProcessing}
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+            >
+              <Pen size={20} className="text-text-secondary" />
+              <div className="text-left">
+                <div className="text-sm font-medium text-text-primary">
+                  {t('export.formats.svg')}
+                </div>
+                <div className="text-xs text-text-tertiary">
+                  {t('export.formats.svgDesc')}
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       </div>

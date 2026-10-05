@@ -176,9 +176,10 @@ Si l'application ne charge pas :
 
 ### Espace insuffisant
 
-1. Supprimer les dossiers inutiles
-2. Supprimer les fichiers joints volumineux
-3. Exporter en ZIP puis supprimer le dossier
+1. Purger l'historique des dossiers : fenêtre **Stockage** → **Maintenance** (voir [Stockage et maintenance]({{< relref "maintenance" >}}))
+2. Supprimer les dossiers inutiles
+3. Supprimer les fichiers joints volumineux
+4. Exporter en ZIP puis supprimer le dossier
 
 ### Migration
 
