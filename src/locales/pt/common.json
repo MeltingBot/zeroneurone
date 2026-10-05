@@ -289,5 +289,19 @@
         "6": "Não existe base para avaliar a validade da informação."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Página anterior",
+    "nextPage": "Página seguinte",
+    "fitWidth": "Largura da página",
+    "fitPage": "Página inteira",
+    "search": "Pesquisar no texto",
+    "searchPlaceholder": "Pesquisar…",
+    "previousMatch": "Resultado anterior",
+    "nextMatch": "Resultado seguinte",
+    "closeSearch": "Fechar pesquisa",
+    "noMatch": "Nenhum resultado",
+    "indexing": "A indexar…",
+    "loadError": "Não é possível apresentar este PDF"
   }
 }

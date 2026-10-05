@@ -701,64 +701,106 @@ export async function purgeYjsDatabases(): Promise<{ deleted: number; errors: st
   return result;
 }
 
-/**
- * Compact a single Y.js database: load state, delete database, recreate with
- * a single snapshot. Truly frees disk space.
- * Falls back to clear+rewrite if deleteDatabase is blocked (dossier open).
- */
-export async function compactYjsDatabase(dbName: string): Promise<void> {
-  const { syncService } = await import('../services/syncService');
+export type YjsHistoryPurgeResult =
+  | { status: 'done'; before: number; after: number }
+  | { status: 'skipped'; reason: 'open' | 'shared' | 'empty' }
+  | { status: 'failed'; reason: 'undecryptable' | 'unsupported' | 'mismatch' | 'error' };
 
-  // If this dossier is currently open, use the existing provider to avoid IDB lock conflicts
-  const dossierId = dbName.replace('zeroneurone-ydoc-', '');
-  if (syncService.getDossierId() === dossierId && syncService.isOpen()) {
-    const compacted = await syncService.compactCurrentDossier();
-    if (compacted) {
-      console.log(`[compact] ${dbName}: compacted via active provider`);
-      return;
+/**
+ * Assets of a dossier whose file is in OPFS and matches its recorded hash,
+ * as id → hash. Their copy in the Y.Doc can go: the file is safe locally.
+ */
+async function verifiedLocalAssets(dossierId: string): Promise<Map<string, string>> {
+  const { fileService } = await import('../services/fileService');
+  const { bufferToHex } = await import('../utils');
+  const verified = new Map<string, string>();
+  for (const asset of await db.assets.where({ dossierId }).toArray()) {
+    try {
+      const data = await (await fileService.getAssetFile(asset)).arrayBuffer();
+      // Same encoding as fileService uses to record asset.hash
+      const hash = bufferToHex(await crypto.subtle.digest('SHA-256', data));
+      if (hash === asset.hash) verified.set(asset.id, asset.hash);
+    } catch {
+      // Missing or unreadable: its Y.Doc copy may be the only one left
     }
   }
+  return verified;
+}
 
-  // Dossier is not open — safe to use delete+recreate strategy
-  const { EncryptedIndexeddbPersistence } = await import(
+/**
+ * Drops the edit history of a dossier's Y.js database, keeping its content.
+ *
+ * Folding the update log into one snapshot frees almost nothing: the snapshot
+ * still carries a tombstone for every overwritten field and deleted element.
+ * The content is copied into a fresh document instead (see rebuildYdoc), the
+ * copy checked against the original, and only then written — in the same
+ * transaction as the read.
+ *
+ * File binaries copied into the Y.Doc go too, for every file verified intact
+ * in OPFS: that copy only serves peers, and a dossier that is not shared has
+ * none. Sharing the dossier sends the files again.
+ *
+ * Skipped for a shared dossier (the fresh document could no longer merge with
+ * the peers' copies) and for the dossier being edited (its live document
+ * would write the history back).
+ */
+export async function purgeYjsHistory(dbName: string): Promise<YjsHistoryPurgeResult> {
+  const dossierId = dbName.replace('zeroneurone-ydoc-', '');
+
+  const dossier = await db.dossiers.get(dossierId);
+  if (dossier?.lastSharedKey) return { status: 'skipped', reason: 'shared' };
+
+  const { syncService } = await import('../services/syncService');
+  if (syncService.getDossierId() === dossierId && syncService.isOpen()) {
+    // Left open by navigating away without closing it: nothing reads it any
+    // more, so it can be closed. The dossier on screen cannot.
+    const { useDossierStore } = await import('../stores/dossierStore');
+    if (useDossierStore.getState().currentDossier?.id === dossierId) {
+      return { status: 'skipped', reason: 'open' };
+    }
+    await syncService.close();
+  }
+
+  const { rewriteStoredUpdates, UndecryptableUpdateError } = await import(
     '../services/encryption/encryptedIndexeddbPersistence'
   );
+  const { rebuildYdoc, ydocFingerprint, UnsupportedYdocError } = await import('../services/yjs/rebuildYdoc');
   const { useEncryptionStore } = await import('../stores/encryptionStore');
   const Y = await import('yjs');
 
-  const dek = useEncryptionStore.getState().dek;
+  class MismatchError extends Error {}
 
-  // 1. Load all data into a Y.Doc
-  const ydoc = new Y.Doc();
-  const provider = new EncryptedIndexeddbPersistence(dbName, ydoc, dek || undefined);
-  await provider.whenSynced;
+  try {
+    // Hashing is async: done before the transaction, which cannot wait
+    const localFiles = await verifiedLocalAssets(dossierId);
+    const result = await rewriteStoredUpdates(dbName, useEncryptionStore.getState().dek, (updates) => {
+      if (updates.length === 0) return null;
+      const source = new Y.Doc();
+      for (const update of updates) Y.applyUpdate(source, update);
 
-  // 2. Capture the full state as a single update
-  const snapshot = Y.encodeStateAsUpdate(ydoc);
-  console.log(`[compact] ${dbName}: snapshot ${snapshot.byteLength} bytes`);
+      // Same id and same content as a file safe in OPFS
+      const assetsMap = source.getMap('assets');
+      const redundant = [...assetsMap.entries()]
+        .filter(([id, entry]) => entry instanceof Y.Map && localFiles.get(id) === entry.get('hash'))
+        .map(([id]) => id);
+      if (redundant.length > 0) source.transact(() => redundant.forEach((id) => assetsMap.delete(id)));
 
-  // 3. Close the provider (releases IDB connection)
-  await provider.destroy();
-  ydoc.destroy();
-
-  // 4. Delete the database entirely and recreate with just the snapshot
-  await new Promise<void>((resolve) => {
-    const req = indexedDB.deleteDatabase(dbName);
-    req.onsuccess = () => resolve();
-    req.onerror = () => resolve();
-    req.onblocked = () => {
-      console.warn(`[compact] ${dbName}: deleteDatabase blocked (unexpected — dossier should be closed)`);
-      resolve();
-    };
-  });
-
-  const ydoc2 = new Y.Doc();
-  Y.applyUpdate(ydoc2, snapshot);
-  const provider2 = new EncryptedIndexeddbPersistence(dbName, ydoc2, dek || undefined);
-  await provider2.whenSynced;
-  await provider2.destroy();
-  ydoc2.destroy();
-  console.log(`[compact] ${dbName}: delete+recreate OK`);
+      const snapshot = Y.encodeStateAsUpdate(rebuildYdoc(source));
+      // Check what will actually be stored, reloaded the way it will be
+      const check = new Y.Doc();
+      Y.applyUpdate(check, snapshot);
+      if (ydocFingerprint(check) !== ydocFingerprint(source)) throw new MismatchError(dbName);
+      return snapshot;
+    });
+    if (!result) return { status: 'skipped', reason: 'empty' };
+    return { status: 'done', ...result };
+  } catch (error) {
+    console.error(`[purgeYjsHistory] ${dbName}:`, error);
+    if (error instanceof UndecryptableUpdateError) return { status: 'failed', reason: 'undecryptable' };
+    if (error instanceof UnsupportedYdocError) return { status: 'failed', reason: 'unsupported' };
+    if (error instanceof MismatchError) return { status: 'failed', reason: 'mismatch' };
+    return { status: 'failed', reason: 'error' };
+  }
 }
 
 /**

@@ -357,6 +357,18 @@
       "success": "{{count}} database(s) verwijderd",
       "successWithErrors": "{{deleted}} database(s) verwijderd, {{errors}} fout(en)",
       "error": "Fout tijdens opruimen"
+    },
+    "compact": {
+      "title": "Y.js-geschiedenis per dossier",
+      "description": "Verwijdert de bewerkingsgeschiedenis en de bestandskopieën die alleen voor synchronisatie dienen, om ruimte vrij te maken. De inhoud en bestanden van de dossiers blijven behouden. Gedeelde dossiers worden niet aangeraakt.",
+      "button": "Geschiedenis wissen",
+      "all": "Alles wissen",
+      "shared": "Gedeeld",
+      "sharedHint": "Gedeeld dossier: de geschiedenis is nodig voor synchronisatie",
+      "freed": "Vrijgemaakte ruimte: {{size}}",
+      "skipped": "Overgeslagen: {{count}} (gedeeld of geopend)",
+      "failed": "Niet verwerkt: {{count}} (onleesbare of niet-verifieerbare inhoud, er is niets gewijzigd)",
+      "error": "Fout bij het wissen"
     }
   },
   "localStorage": {

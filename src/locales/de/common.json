@@ -285,5 +285,19 @@
         "6": "Es gibt keine Grundlage, um die Gültigkeit der Information zu beurteilen."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "fitWidth": "Seitenbreite",
+    "fitPage": "Ganze Seite",
+    "search": "Text durchsuchen",
+    "searchPlaceholder": "Suchen…",
+    "previousMatch": "Vorheriger Treffer",
+    "nextMatch": "Nächster Treffer",
+    "closeSearch": "Suche schließen",
+    "noMatch": "Keine Treffer",
+    "indexing": "Indexierung…",
+    "loadError": "Dieses PDF kann nicht angezeigt werden"
   }
 }

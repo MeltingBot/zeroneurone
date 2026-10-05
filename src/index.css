@@ -497,3 +497,13 @@ button {
 .textLayer.selecting .endOfContent {
   top: 0;
 }
+/* Search matches, wrapped inside the text item spans: kept in their flow,
+   not positioned like the items themselves. */
+.textLayer span.pdf-match {
+  position: static;
+  background: color-mix(in srgb, var(--color-warning), transparent 65%);
+}
+.textLayer span.pdf-match-current {
+  background: color-mix(in srgb, var(--color-warning), transparent 25%);
+  outline: 1px solid var(--color-warning);
+}

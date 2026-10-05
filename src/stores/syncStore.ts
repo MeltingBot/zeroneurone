@@ -379,6 +379,13 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
 
       set({ encryptionKey });
 
+      // A local dossier keeps its files out of the Y.Doc; peers fetch them
+      // from it, so send them now, in the background.
+      const { useDossierStore } = await import('./dossierStore');
+      useDossierStore.getState().uploadAssetsForSharing().catch((err) => {
+        console.warn('[syncStore.share] Failed to upload assets:', err);
+      });
+
       return { shareUrl, encryptionKey };
     },
 

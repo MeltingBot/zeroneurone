@@ -357,6 +357,18 @@
       "success": "{{count}} baz usunięto",
       "successWithErrors": "{{deleted}} baz usunięto, {{errors}} błędów",
       "error": "Błąd podczas czyszczenia"
+    },
+    "compact": {
+      "title": "Historia Y.js według dossier",
+      "description": "Usuwa historię zmian i kopie plików przeznaczone do synchronizacji, aby zwolnić miejsce. Zawartość i pliki dossier są zachowane. Udostępnione dossier nie są objęte.",
+      "button": "Wyczyść historię",
+      "all": "Wyczyść wszystko",
+      "shared": "Udostępnione",
+      "sharedHint": "Udostępnione dossier: jego historia jest potrzebna do synchronizacji",
+      "freed": "Zwolnione miejsce: {{size}}",
+      "skipped": "Pominięte: {{count}} (udostępnione lub otwarte)",
+      "failed": "Nieprzetworzone: {{count}} (nieczytelna lub niemożliwa do sprawdzenia zawartość, nic nie zmieniono)",
+      "error": "Błąd podczas czyszczenia"
     }
   },
   "localStorage": {

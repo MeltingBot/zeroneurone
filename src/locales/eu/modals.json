@@ -357,6 +357,18 @@
       "success": "{{count}} datu-base ezabatuta",
       "successWithErrors": "{{deleted}} datu-base ezabatuta, {{errors}} errore",
       "error": "Errorea garbitzean"
+    },
+    "compact": {
+      "title": "Y.js historia espedienteka",
+      "description": "Aldaketen historia eta sinkronizaziorako soilik gordetako fitxategi-kopiak ezabatzen ditu, lekua askatzeko. Espedienteen edukia eta fitxategiak gordetzen dira. Partekatutako espedienteak ez dira ukitzen.",
+      "button": "Garbitu historia",
+      "all": "Garbitu dena",
+      "shared": "Partekatua",
+      "sharedHint": "Espediente partekatua: bere historia beharrezkoa da sinkronizaziorako",
+      "freed": "Askatutako lekua: {{size}}",
+      "skipped": "Saltatuak: {{count}} (partekatuak edo irekiak)",
+      "failed": "Prozesatu gabeak: {{count}} (eduki irakurgaitza edo egiaztaezina, ez da ezer aldatu)",
+      "error": "Errorea garbitzean"
     }
   },
   "localStorage": {

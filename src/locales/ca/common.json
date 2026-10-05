@@ -287,5 +287,19 @@
         "6": "No hi ha cap base per avaluar la validesa de la informació."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Pàgina anterior",
+    "nextPage": "Pàgina següent",
+    "fitWidth": "Amplada de pàgina",
+    "fitPage": "Pàgina sencera",
+    "search": "Cerca al text",
+    "searchPlaceholder": "Cerca…",
+    "previousMatch": "Resultat anterior",
+    "nextMatch": "Resultat següent",
+    "closeSearch": "Tanca la cerca",
+    "noMatch": "Cap resultat",
+    "indexing": "S'està indexant…",
+    "loadError": "No es pot mostrar aquest PDF"
   }
 }

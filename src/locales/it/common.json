@@ -289,5 +289,19 @@
         "6": "Non esiste alcuna base per valutare la validità dell'informazione."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Pagina precedente",
+    "nextPage": "Pagina successiva",
+    "fitWidth": "Larghezza pagina",
+    "fitPage": "Pagina intera",
+    "search": "Cerca nel testo",
+    "searchPlaceholder": "Cerca…",
+    "previousMatch": "Risultato precedente",
+    "nextMatch": "Risultato successivo",
+    "closeSearch": "Chiudi ricerca",
+    "noMatch": "Nessun risultato",
+    "indexing": "Indicizzazione…",
+    "loadError": "Impossibile visualizzare questo PDF"
   }
 }

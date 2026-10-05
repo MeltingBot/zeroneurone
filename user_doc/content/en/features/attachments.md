@@ -61,7 +61,11 @@ Images display as thumbnails on the canvas. When you zoom in or resize a node be
 
 ### PDF
 
-PDFs open in an integrated viewer.
+PDFs open in an integrated viewer. Pages scroll continuously; the counter follows the current page and the arrows jump from page to page.
+
+- **Fit** — "Page width" or "Whole page". The chosen mode is kept when the panel is resized; zooming by hand leaves it.
+- **Search** — the magnifier next to the page counter, or Ctrl+F in the preview. Search ignores case and accents; matches are highlighted, Enter goes to the next one, Shift+Enter to the previous one, Escape closes the search.
+- **Select** — text can be selected and copied as in a document; releasing the mouse over an empty area stops the selection there.
 
 
 ### Other Files

@@ -357,6 +357,18 @@
       "success": "{{count}} Datenbank(en) gelöscht",
       "successWithErrors": "{{deleted}} Datenbank(en) gelöscht, {{errors}} Fehler",
       "error": "Fehler beim Bereinigen"
+    },
+    "compact": {
+      "title": "Y.js-Verlauf pro Dossier",
+      "description": "Löscht den Bearbeitungsverlauf und die nur für die Synchronisierung angelegten Dateikopien, um Speicherplatz freizugeben. Inhalt und Dateien der Dossiers bleiben erhalten. Geteilte Dossiers sind nicht betroffen.",
+      "button": "Verlauf löschen",
+      "all": "Alle bereinigen",
+      "shared": "Geteilt",
+      "sharedHint": "Geteiltes Dossier: Sein Verlauf wird für die Synchronisierung benötigt",
+      "freed": "Freigegebener Speicher: {{size}}",
+      "skipped": "Übersprungen: {{count}} (geteilt oder geöffnet)",
+      "failed": "Nicht verarbeitet: {{count}} (unlesbarer oder nicht überprüfbarer Inhalt, nichts wurde geändert)",
+      "error": "Fehler beim Bereinigen"
     }
   },
   "localStorage": {

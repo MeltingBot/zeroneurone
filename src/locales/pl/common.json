@@ -292,5 +292,19 @@
         "6": "Brak podstaw do oceny prawdziwości informacji."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Poprzednia strona",
+    "nextPage": "Następna strona",
+    "fitWidth": "Szerokość strony",
+    "fitPage": "Cała strona",
+    "search": "Szukaj w tekście",
+    "searchPlaceholder": "Szukaj…",
+    "previousMatch": "Poprzedni wynik",
+    "nextMatch": "Następny wynik",
+    "closeSearch": "Zamknij wyszukiwanie",
+    "noMatch": "Brak wyników",
+    "indexing": "Indeksowanie…",
+    "loadError": "Nie można wyświetlić tego pliku PDF"
   }
 }

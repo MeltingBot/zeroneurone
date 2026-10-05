@@ -369,11 +369,15 @@
     },
     "compact": {
       "title": "Y.js history per dossier",
-      "button": "Compact",
-      "all": "Compact all",
-      "success": "Compaction complete",
-      "allSuccess": "All databases compacted",
-      "error": "Compaction error"
+      "description": "Deletes the edit history and the file copies kept for synchronization, to free up space. Dossier content and files are kept. Shared dossiers are left untouched.",
+      "button": "Purge history",
+      "all": "Purge all",
+      "shared": "Shared",
+      "sharedHint": "Shared dossier: its history is needed for synchronization",
+      "freed": "Space freed: {{size}}",
+      "skipped": "Skipped: {{count}} (shared or open)",
+      "failed": "Not processed: {{count}} (unreadable or unverifiable content, nothing was changed)",
+      "error": "Purge error"
     }
   },
   "localStorage": {

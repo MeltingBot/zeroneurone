@@ -292,5 +292,19 @@
         "6": "Er is geen basis om de geldigheid van de informatie te beoordelen."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Vorige pagina",
+    "nextPage": "Volgende pagina",
+    "fitWidth": "Paginabreedte",
+    "fitPage": "Hele pagina",
+    "search": "Tekst doorzoeken",
+    "searchPlaceholder": "Zoeken…",
+    "previousMatch": "Vorig resultaat",
+    "nextMatch": "Volgend resultaat",
+    "closeSearch": "Zoeken sluiten",
+    "noMatch": "Geen resultaten",
+    "indexing": "Indexeren…",
+    "loadError": "Deze PDF kan niet worden weergegeven"
   }
 }

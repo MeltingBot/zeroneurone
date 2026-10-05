@@ -357,6 +357,18 @@
       "success": "{{count}} base(s) eliminada(s)",
       "successWithErrors": "{{deleted}} base(s) eliminada(s), {{errors}} erro(s)",
       "error": "Erro durante a limpeza"
+    },
+    "compact": {
+      "title": "Histórico Y.js por dossiê",
+      "description": "Elimina o histórico de alterações e as cópias de ficheiros reservadas à sincronização, para libertar espaço. O conteúdo e os ficheiros dos dossiês são mantidos. Os dossiês partilhados não são afetados.",
+      "button": "Limpar histórico",
+      "all": "Limpar tudo",
+      "shared": "Partilhado",
+      "sharedHint": "Dossiê partilhado: o seu histórico é necessário para a sincronização",
+      "freed": "Espaço libertado: {{size}}",
+      "skipped": "Ignorados: {{count}} (partilhados ou abertos)",
+      "failed": "Não processados: {{count}} (conteúdo ilegível ou não verificável, nada foi alterado)",
+      "error": "Erro ao limpar"
     }
   },
   "localStorage": {

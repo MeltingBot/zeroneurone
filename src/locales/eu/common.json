@@ -286,5 +286,19 @@
         "6": "Ez dago oinarririk informazioaren baliozkotasuna ebaluatzeko."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Aurreko orria",
+    "nextPage": "Hurrengo orria",
+    "fitWidth": "Orriaren zabalera",
+    "fitPage": "Orri osoa",
+    "search": "Bilatu testuan",
+    "searchPlaceholder": "Bilatu…",
+    "previousMatch": "Aurreko emaitza",
+    "nextMatch": "Hurrengo emaitza",
+    "closeSearch": "Itxi bilaketa",
+    "noMatch": "Emaitzarik ez",
+    "indexing": "Indexatzen…",
+    "loadError": "Ezin da PDF hau bistaratu"
   }
 }

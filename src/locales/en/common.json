@@ -282,5 +282,19 @@
         "6": "No basis exists for evaluating the validity of the information."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "fitWidth": "Page width",
+    "fitPage": "Whole page",
+    "search": "Search text",
+    "searchPlaceholder": "Search…",
+    "previousMatch": "Previous match",
+    "nextMatch": "Next match",
+    "closeSearch": "Close search",
+    "noMatch": "No match",
+    "indexing": "Indexing…",
+    "loadError": "Unable to display this PDF"
   }
 }

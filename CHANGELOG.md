@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.60.1
+
+### Aperçu PDF
+
+- **Défilement continu** — toutes les pages se suivent ; seules celles proches
+  de l'écran sont dessinées. Le compteur suit la page en cours, les flèches
+  sautent d'une page à l'autre et le zoom garde l'endroit lu à l'écran.
+- **Recherche dans le texte** — loupe à côté de la pagination ou Ctrl+F.
+  Insensible à la casse, aux accents et aux ligatures ; résultats surlignés,
+  Entrée / Maj+Entrée pour naviguer, Échap pour fermer.
+- **Largeur de la page / Page entière** — deux modes d'ajustement, conservés
+  quand le panneau change de taille.
+- **Sélection de texte** — relâcher la souris dans une zone vide ne
+  sélectionne plus le paragraphe précédent (Firefox) ou les suivants
+  (Chromium) ; un double-clic dans le vide ne sélectionne plus rien.
+
+### Stockage
+
+- **Purge de l'historique Y.js** (Stockage → Maintenance), en remplacement du
+  compactage, qui ne libérait rien : il regroupait le journal en un instantané
+  qui gardait toutes les traces des modifications. Le dossier est reconstruit
+  à partir de son contenu, vérifié à l'identique puis écrit en une seule
+  transaction ; rien n'est écrit en cas d'écart ou de données illisibles.
+  Les dossiers partagés et le dossier ouvert ne sont pas concernés.
+- **Fichiers joints : plus de double stockage pour les dossiers locaux.**
+  Chaque fichier était aussi copié en binaire dans le document Y.js, même
+  sans partage. Il n'y est plus copié qu'au partage du dossier (puis à chaque
+  ouverture tant qu'il est partagé). La purge retire les copies existantes des
+  dossiers non partagés, pour les fichiers présents en local et dont
+  l'empreinte SHA-256 correspond.
+
 ## 2.60.0
 
 ### Features

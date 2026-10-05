@@ -60,7 +60,11 @@ Les images s'affichent en miniature sur le canvas. Lorsque vous zoomez ou redime
 
 ### PDF
 
-Les PDF s'ouvrent dans une visionneuse intégrée.
+Les PDF s'ouvrent dans une visionneuse intégrée. Les pages défilent en continu ; le compteur suit la page en cours et les flèches sautent d'une page à l'autre.
+
+- **Ajuster** — « Largeur de la page » ou « Page entière ». Le mode choisi est conservé si le panneau change de taille ; zoomer à la main le quitte.
+- **Rechercher** — la loupe à côté de la pagination, ou Ctrl+F dans l'aperçu. La recherche ignore la casse et les accents ; les résultats sont surlignés, Entrée passe au suivant, Maj+Entrée au précédent, Échap ferme la recherche.
+- **Sélectionner** — le texte se sélectionne et se copie comme dans un document ; relâcher la souris dans une zone vide arrête la sélection à cet endroit.
 
 
 ### Autres fichiers

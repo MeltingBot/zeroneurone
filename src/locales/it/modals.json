@@ -357,6 +357,18 @@
       "success": "{{count}} database eliminato/i",
       "successWithErrors": "{{deleted}} database eliminato/i, {{errors}} errore/i",
       "error": "Errore durante l'eliminazione"
+    },
+    "compact": {
+      "title": "Cronologia Y.js per fascicolo",
+      "description": "Elimina la cronologia delle modifiche e le copie dei file riservate alla sincronizzazione, per liberare spazio. Il contenuto e i file dei fascicoli vengono conservati. I fascicoli condivisi non vengono toccati.",
+      "button": "Elimina cronologia",
+      "all": "Elimina tutto",
+      "shared": "Condiviso",
+      "sharedHint": "Fascicolo condiviso: la sua cronologia è necessaria per la sincronizzazione",
+      "freed": "Spazio liberato: {{size}}",
+      "skipped": "Ignorati: {{count}} (condivisi o aperti)",
+      "failed": "Non elaborati: {{count}} (contenuto illeggibile o non verificabile, nulla è stato modificato)",
+      "error": "Errore durante l'eliminazione"
     }
   },
   "localStorage": {

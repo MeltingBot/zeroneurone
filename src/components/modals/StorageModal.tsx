@@ -16,14 +16,14 @@ import {
   Download,
   Upload,
   Trash2,
-  PackageCheck,
+  Eraser,
 } from 'lucide-react';
 import { Modal } from '../common';
 import {
   getDetailedStorageInfo,
   requestPersistentStorage,
   purgeAllDossiers,
-  compactYjsDatabase,
+  purgeYjsHistory,
   type StorageInfo,
 } from '../../db/database';
 import { backupService } from '../../services/backupService';
@@ -62,6 +62,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
   const [compactingDb, setCompactingDb] = useState<string | null>(null);
   const [compactMessage, setCompactMessage] = useState<string | null>(null);
   const [dossierNames, setDossierNames] = useState<Record<string, string>>({});
+  const [sharedDossierIds, setSharedDossierIds] = useState<Set<string>>(() => new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadStorageInfo = useCallback(async (silent = false) => {
@@ -89,6 +90,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
         const names: Record<string, string> = {};
         for (const d of dossiers) names[d.id] = d.name;
         setDossierNames(names);
+        setSharedDossierIds(new Set(dossiers.filter(d => d.lastSharedKey).map(d => d.id)));
       }).catch(() => {});
     }
   }, [isOpen, loadStorageInfo]);
@@ -158,33 +160,28 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
     }
   };
 
-  const handleCompactYjs = async (dbName: string) => {
-    setCompactingDb(dbName);
+  // Sequential: each purge holds a readwrite transaction on its own database,
+  // and a summary of all of them reads better than one toast per dossier.
+  const handlePurgeHistory = async (dbNames: string[], busyKey: string) => {
+    setCompactingDb(busyKey);
     setCompactMessage(null);
+    let freed = 0;
+    let skipped = 0;
+    let failed = 0;
     try {
-      await compactYjsDatabase(dbName);
-      setCompactMessage(t('storage.compact.success'));
-      await loadStorageInfo(true);
-    } catch (error) {
-      console.error('Compact failed:', error);
-      setCompactMessage(t('storage.compact.error'));
-    } finally {
-      setCompactingDb(null);
-    }
-  };
-
-  const handleCompactAll = async () => {
-    if (!storageInfo) return;
-    setCompactingDb('__all__');
-    setCompactMessage(null);
-    try {
-      for (const { dbName } of storageInfo.ydocSizes) {
-        await compactYjsDatabase(dbName);
+      for (const dbName of dbNames) {
+        const result = await purgeYjsHistory(dbName);
+        if (result.status === 'done') freed += Math.max(0, result.before - result.after);
+        else if (result.status === 'failed') failed++;
+        else if (result.reason !== 'empty') skipped++;
       }
-      setCompactMessage(t('storage.compact.allSuccess'));
+      const parts = [t('storage.compact.freed', { size: formatBytes(freed, locale) })];
+      if (skipped > 0) parts.push(t('storage.compact.skipped', { count: skipped }));
+      if (failed > 0) parts.push(t('storage.compact.failed', { count: failed }));
+      setCompactMessage(parts.join(' · '));
       await loadStorageInfo(true);
     } catch (error) {
-      console.error('Compact all failed:', error);
+      console.error('History purge failed:', error);
       setCompactMessage(t('storage.compact.error'));
     } finally {
       setCompactingDb(null);
@@ -557,52 +554,62 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
                     </div>
                   )}
 
-                  {/* Y.js per-dossier breakdown with compact buttons */}
+                  {/* Y.js per-dossier breakdown with history purge buttons */}
                   {storageInfo.ydocSizes.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-border-default">
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-text-secondary">
                           {t('storage.compact.title')}
                         </span>
                         <button
-                          onClick={handleCompactAll}
+                          onClick={() => handlePurgeHistory(storageInfo.ydocSizes.map(y => y.dbName), '__all__')}
                           disabled={compactingDb !== null}
                           className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-accent border border-accent/30 rounded hover:bg-accent/10 disabled:opacity-50"
                         >
                           {compactingDb === '__all__' ? (
                             <RefreshCw size={10} className="animate-spin" />
                           ) : (
-                            <PackageCheck size={10} />
+                            <Eraser size={10} />
                           )}
                           {t('storage.compact.all')}
                         </button>
                       </div>
+                      <p className="mb-1.5 text-[10px] text-text-tertiary">{t('storage.compact.description')}</p>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {storageInfo.ydocSizes.map(({ dbName, dossierId, size }) => (
-                          <div key={dbName} className="flex items-center justify-between text-[10px] group">
-                            <span className="text-text-tertiary truncate flex-1 mr-2" title={dossierId}>
-                              {dossierNames[dossierId] || dossierId.slice(0, 8) + '…'}
-                            </span>
-                            <span className="text-text-secondary tabular-nums mr-2">
-                              ~{formatBytes(size, locale)}
-                            </span>
-                            <button
-                              onClick={() => handleCompactYjs(dbName)}
-                              disabled={compactingDb !== null}
-                              className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 px-1 py-0.5 text-[10px] text-accent hover:bg-accent/10 rounded disabled:opacity-50 transition-opacity"
-                              title={t('storage.compact.button')}
-                            >
-                              {compactingDb === dbName ? (
-                                <RefreshCw size={10} className="animate-spin" />
-                              ) : (
-                                <PackageCheck size={10} />
+                        {storageInfo.ydocSizes.map(({ dbName, dossierId, size }) => {
+                          const isShared = sharedDossierIds.has(dossierId);
+                          return (
+                            <div key={dbName} className="flex items-center justify-between text-[10px] group">
+                              <span className="text-text-tertiary truncate flex-1 mr-2" title={dossierId}>
+                                {dossierNames[dossierId] || dossierId.slice(0, 8) + '…'}
+                              </span>
+                              {isShared && (
+                                <span className="text-text-tertiary mr-2" title={t('storage.compact.sharedHint')}>
+                                  {t('storage.compact.shared')}
+                                </span>
                               )}
-                            </button>
-                          </div>
-                        ))}
+                              <span className="text-text-secondary tabular-nums mr-2">
+                                ~{formatBytes(size, locale)}
+                              </span>
+                              <button
+                                onClick={() => handlePurgeHistory([dbName], dbName)}
+                                disabled={compactingDb !== null || isShared}
+                                className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center gap-0.5 px-1 py-0.5 text-[10px] text-accent hover:bg-accent/10 rounded disabled:opacity-30 transition-opacity"
+                                title={isShared ? t('storage.compact.sharedHint') : t('storage.compact.button')}
+                                aria-label={t('storage.compact.button')}
+                              >
+                                {compactingDb === dbName ? (
+                                  <RefreshCw size={10} className="animate-spin" />
+                                ) : (
+                                  <Eraser size={10} />
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                       {compactMessage && (
-                        <p className="mt-1 text-[10px] text-text-tertiary">{compactMessage}</p>
+                        <p className="mt-1 text-[10px] text-text-tertiary" role="status">{compactMessage}</p>
                       )}
                     </div>
                   )}

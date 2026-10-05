@@ -357,6 +357,18 @@
       "success": "{{count}} base(s) eliminada(s)",
       "successWithErrors": "{{deleted}} base(s) eliminada(s), {{errors}} error(es)",
       "error": "Error durante la purga"
+    },
+    "compact": {
+      "title": "Historial Y.js por expediente",
+      "description": "Elimina el historial de modificaciones y las copias de archivos reservadas a la sincronización, para liberar espacio. El contenido y los archivos de los expedientes se conservan. Los expedientes compartidos no se ven afectados.",
+      "button": "Purgar historial",
+      "all": "Purgar todo",
+      "shared": "Compartido",
+      "sharedHint": "Expediente compartido: su historial es necesario para la sincronización",
+      "freed": "Espacio liberado: {{size}}",
+      "skipped": "Omitidos: {{count}} (compartidos o abiertos)",
+      "failed": "No procesados: {{count}} (contenido ilegible o no verificable, no se ha modificado nada)",
+      "error": "Error al purgar"
     }
   },
   "localStorage": {

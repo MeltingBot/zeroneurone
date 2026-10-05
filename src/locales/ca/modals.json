@@ -357,6 +357,18 @@
       "success": "{{count}} base(s) eliminada(es)",
       "successWithErrors": "{{deleted}} base(s) eliminada(es), {{errors}} error(s)",
       "error": "Error durant la purga"
+    },
+    "compact": {
+      "title": "Historial Y.js per expedient",
+      "description": "Elimina l'historial de modificacions i les còpies de fitxers reservades a la sincronització, per alliberar espai. El contingut i els fitxers dels expedients es conserven. Els expedients compartits no es veuen afectats.",
+      "button": "Purga l'historial",
+      "all": "Purga-ho tot",
+      "shared": "Compartit",
+      "sharedHint": "Expedient compartit: el seu historial és necessari per a la sincronització",
+      "freed": "Espai alliberat: {{size}}",
+      "skipped": "Omesos: {{count}} (compartits o oberts)",
+      "failed": "No processats: {{count}} (contingut il·legible o no verificable, no s'ha modificat res)",
+      "error": "Error en purgar"
     }
   },
   "localStorage": {

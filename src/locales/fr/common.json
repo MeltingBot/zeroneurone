@@ -282,5 +282,19 @@
         "6": "Aucun élément ne permet d'évaluer la validité de l'information."
       }
     }
+  },
+  "pdfPreview": {
+    "previousPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "fitWidth": "Largeur de la page",
+    "fitPage": "Page entière",
+    "search": "Rechercher dans le texte",
+    "searchPlaceholder": "Rechercher…",
+    "previousMatch": "Résultat précédent",
+    "nextMatch": "Résultat suivant",
+    "closeSearch": "Fermer la recherche",
+    "noMatch": "Aucun résultat",
+    "indexing": "Indexation…",
+    "loadError": "Impossible d'afficher ce PDF"
   }
 }

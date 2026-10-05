@@ -150,6 +150,8 @@ interface DossierState {
   // Actions - Assets
   addAsset: (elementId: ElementId, file: File) => Promise<Asset>;
   removeAsset: (elementId: ElementId, assetId: string) => Promise<void>;
+  /** Sends the open dossier's files to the Y.Doc; called when it starts being shared. */
+  uploadAssetsForSharing: () => Promise<void>;
   reorderAssets: (elementId: ElementId, assetIds: string[]) => Promise<void>;
   clearAssetText: (assetId: string) => Promise<void>;
   extractAssetText: (assetId: string) => Promise<void>;
@@ -219,6 +221,44 @@ async function saveAssembledAsset(map: Y.Map<any>, meta: AssetMeta): Promise<Ass
   } catch {
     syncStore.markMediaAssetFailed(meta.id);
     return null;
+  }
+}
+
+/**
+ * Pushes into the Y.Doc, as chunks, the binary of every asset it lacks.
+ *
+ * Only for a shared dossier: the Y.Doc is how peers fetch files, and a copy
+ * there doubles the file's footprint on disk. A local dossier keeps its files
+ * in OPFS alone; sharing it calls this to send them.
+ */
+async function uploadMissingAssets(ydoc: Y.Doc, assets: Asset[]): Promise<void> {
+  const { assets: assetsMap } = getYMaps(ydoc);
+  const syncStore = useSyncStore.getState();
+  const toUpload = assets.filter((a) => !assetsMap.has(a.id) && a.size <= MAX_SHARED_ASSET_SIZE);
+  // Register them all first, so the badge shows the total upfront instead of
+  // growing one by one.
+  for (const a of toUpload) {
+    syncStore.registerMediaAsset(a.id, a.filename, a.size);
+  }
+
+  for (const asset of toUpload) {
+    // Removed meanwhile, or pushed by a concurrent call
+    if (assetsMap.has(asset.id)) continue;
+    try {
+      const file = await fileService.getAssetFile(asset);
+      const arrayBuffer = await file.arrayBuffer();
+      await pushAssetChunked(
+        ydoc,
+        assetsMap,
+        asset,
+        arrayBuffer,
+        (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
+      );
+      syncStore.markMediaAssetDone(asset.id);
+    } catch (error) {
+      console.warn('Failed to sync asset to Y.Doc:', asset.id, error);
+      syncStore.markMediaAssetFailed(asset.id);
+    }
   }
 }
 
@@ -996,7 +1036,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         setTimeout(async () => {
           const deferredYdoc = syncService.getYDoc();
           if (!deferredYdoc) return;
-          const { meta: deferredMeta, assets: deferredAssetsMap } = getYMaps(deferredYdoc);
+          const { meta: deferredMeta } = getYMaps(deferredYdoc);
 
           deferredYdoc.transact(() => {
             deferredMeta.set('name', srcDossier.name);
@@ -1007,34 +1047,10 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             }
           });
 
-          const syncStore = useSyncStore.getState();
-          // Register all to-be-uploaded assets in the progress aggregate first,
-          // so the badge shows the total upfront instead of growing one by one.
-          const toUpload = srcAssets.filter(
-            (a) => !deferredAssetsMap.has(a.id) && a.size <= MAX_SHARED_ASSET_SIZE,
-          );
-          for (const a of toUpload) {
-            syncStore.registerMediaAsset(a.id, a.filename, a.size);
-          }
-
-          for (const asset of srcAssets) {
-            if (deferredAssetsMap.has(asset.id)) continue;
-            if (asset.size > MAX_SHARED_ASSET_SIZE) continue;
-            try {
-              const file = await fileService.getAssetFile(asset);
-              const arrayBuffer = await file.arrayBuffer();
-              await pushAssetChunked(
-                deferredYdoc,
-                deferredAssetsMap,
-                asset,
-                arrayBuffer,
-                (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
-              );
-              syncStore.markMediaAssetDone(asset.id);
-            } catch (error) {
-              console.warn('Failed to sync asset to Y.Doc:', asset.id, error);
-              syncStore.markMediaAssetFailed(asset.id);
-            }
+          // File binaries only go into the Y.Doc for peers to fetch: a local
+          // dossier keeps them in OPFS alone (see uploadMissingAssets).
+          if (syncService.getState().mode === 'shared') {
+            await uploadMissingAssets(deferredYdoc, srcAssets);
           }
         }, 200);
       }
@@ -2291,15 +2307,15 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     elementRepository.addAsset(elementId, asset.id).catch((err) => onPersistFailure(err, 'element.addAsset'));
 
     // Push the asset binary to the Y.Doc as chunks so peers receive it
-    // progressively (one WS message per chunk). Skip when over the shared-mode
-    // hard cap — the file stays local but other peers won't see it.
-    if (ydoc && !exceedsSharedCap) {
+    // progressively (one WS message per chunk). Only when shared: a local
+    // dossier keeps the file in OPFS alone, and sharing it sends the files
+    // then (uploadMissingAssets). Skip when over the shared-mode hard cap —
+    // the file stays local but other peers won't see it.
+    if (ydoc && isShared && !exceedsSharedCap) {
       const { assets: assetsMap } = getYMaps(ydoc);
       const syncStore = useSyncStore.getState();
       // Pre-register so the progress badge appears immediately
-      if (isShared) {
-        syncStore.registerMediaAsset(asset.id, asset.filename, asset.size);
-      }
+      syncStore.registerMediaAsset(asset.id, asset.filename, asset.size);
       file.arrayBuffer().then(async (arrayBuffer) => {
         try {
           await pushAssetChunked(
@@ -2307,21 +2323,25 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             assetsMap,
             asset,
             arrayBuffer,
-            (bytesSent) => {
-              if (isShared) syncStore.updateMediaAssetBytes(asset.id, bytesSent);
-            },
+            (bytesSent) => syncStore.updateMediaAssetBytes(asset.id, bytesSent),
           );
-          if (isShared) syncStore.markMediaAssetDone(asset.id);
+          syncStore.markMediaAssetDone(asset.id);
         } catch {
-          if (isShared) syncStore.markMediaAssetFailed(asset.id);
+          syncStore.markMediaAssetFailed(asset.id);
         }
       }).catch(() => {
-        if (isShared) syncStore.markMediaAssetFailed(asset.id);
+        syncStore.markMediaAssetFailed(asset.id);
       });
     }
 
     emitPluginEvent('asset:created', currentDossier.id, asset.id);
     return asset;
+  },
+
+  uploadAssetsForSharing: async () => {
+    const ydoc = syncService.getYDoc();
+    if (!ydoc || !get().currentDossier) return;
+    await uploadMissingAssets(ydoc, get().assets);
   },
 
   removeAsset: async (elementId: ElementId, assetId: string) => {

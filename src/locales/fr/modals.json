@@ -360,11 +360,15 @@
     },
     "compact": {
       "title": "Historique Y.js par dossier",
-      "button": "Compacter",
-      "all": "Tout compacter",
-      "success": "Compaction terminée",
-      "allSuccess": "Toutes les bases compactées",
-      "error": "Erreur lors de la compaction"
+      "description": "Supprime l'historique des modifications et les copies de fichiers réservées à la synchronisation, pour libérer de la place. Le contenu des dossiers et leurs fichiers sont conservés. Les dossiers partagés ne sont pas concernés.",
+      "button": "Purger l'historique",
+      "all": "Tout purger",
+      "shared": "Partagé",
+      "sharedHint": "Dossier partagé : son historique est nécessaire à la synchronisation",
+      "freed": "Espace libéré : {{size}}",
+      "skipped": "Ignorés : {{count}} (partagés ou ouverts)",
+      "failed": "Non traités : {{count}} (contenu illisible ou non vérifiable, rien n'a été modifié)",
+      "error": "Erreur lors de la purge"
     },
     "purgeAll": {
       "title": "Supprimer tous les dossiers",

@@ -307,6 +307,82 @@ export class EncryptedIndexeddbPersistence extends Observable<string> {
 // MIGRATION : base en clair → base chiffrée
 // ============================================================================
 
+/** Raised when a stored update cannot be read: the rewrite is abandoned. */
+export class UndecryptableUpdateError extends Error {}
+
+/**
+ * Replaces every stored update of `dbName` with the single update returned by
+ * `transform`, given the decrypted updates. Read, transform and write happen
+ * in one IndexedDB transaction: if anything throws, nothing is written, and no
+ * other tab can slip an update in between.
+ *
+ * `transform` must be synchronous — an await would let the transaction
+ * commit early. It returns null to leave the database untouched.
+ *
+ * Refuses to run when an update cannot be decrypted (no key, or the wrong
+ * one): the loaded document would be incomplete, and writing it would destroy
+ * the missing part.
+ */
+export async function rewriteStoredUpdates(
+  dbName: string,
+  encryptionKey: Uint8Array | null,
+  transform: (updates: Uint8Array[]) => Uint8Array | null
+): Promise<{ before: number; after: number } | null> {
+  const db = await idb.openDB(dbName, (db: IDBDatabase) =>
+    idb.createStores(db, [
+      [UPDATES_STORE_NAME, { autoIncrement: true }],
+      [CUSTOM_STORE_NAME],
+    ])
+  );
+
+  return new Promise((resolve, reject) => {
+    let result: { before: number; after: number } | null = null;
+    let failure: unknown = null;
+    const tx = db.transaction([UPDATES_STORE_NAME], 'readwrite');
+    const store = tx.objectStore(UPDATES_STORE_NAME);
+
+    const getReq = store.getAll();
+    getReq.onsuccess = () => {
+      try {
+        const raws = (getReq.result as (Uint8Array | ArrayBuffer)[])
+          .map((raw) => (raw instanceof Uint8Array ? raw : new Uint8Array(raw)));
+        const updates = raws.map((raw) => {
+          if (!isEncryptedUpdate(raw)) return raw;
+          const decrypted = encryptionKey
+            ? decryptUpdate(unwrapEncryptedUpdate(raw), encryptionKey)
+            : null;
+          if (!decrypted) throw new UndecryptableUpdateError(dbName);
+          return decrypted;
+        });
+
+        const snapshot = transform(updates);
+        if (!snapshot) return;
+        const stored = encryptionKey
+          ? wrapEncryptedUpdate(encryptUpdate(snapshot, encryptionKey))
+          : snapshot;
+        store.clear();
+        store.add(stored);
+        result = {
+          before: raws.reduce((sum, raw) => sum + raw.byteLength, 0),
+          after: stored.byteLength,
+        };
+      } catch (err) {
+        failure = err;
+        tx.abort();
+      }
+    };
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve(result);
+    };
+    tx.onabort = () => {
+      db.close();
+      reject(failure ?? tx.error);
+    };
+  });
+}
+
 /**
  * Migre une base y-indexeddb existante en clair vers un format chiffré.
  * Lit tous les updates, les supprime, et les réécrit chiffrés.
