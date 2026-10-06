@@ -37,7 +37,16 @@
       "retentionReset": "Restablecer",
       "evaluationModel": "Modelo de evaluación",
       "evaluationOutsideWarning": "{{count}} valoración(es) usan otra escala. Se conservarán y se mostrarán en gris, sin conversión.",
-      "evaluationHiddenWarning": "{{count}} valoración(es) se conservarán pero quedarán ocultas mientras este modelo esté activo."
+      "evaluationHiddenWarning": "{{count}} valoración(es) se conservarán pero quedarán ocultas mientras este modelo esté activo.",
+      "timeZone": "Zona horaria",
+      "legacyDates": "Fechas importadas a medianoche UTC",
+      "legacyCheck": "Verificar",
+      "legacyNone": "Ninguna fecha que corregir",
+      "legacyFound": "{{count}} fecha(s) que corregir",
+      "legacyApply": "Corregir",
+      "legacyCancel": "Cancelar",
+      "legacyDone": "{{count}} fecha(s) corregida(s)",
+      "legacyError": "La corrección ha fallado"
     },
     "placeholders": {
       "name": "Nombre de el expediente",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Aplicar la misma valoración a toda la selección",
       "clearConfidenceAll": "Borrar la confianza de toda la selección"
     },
-    "copyDate": "Copiar fecha"
+    "copyDate": "Copiar fecha",
+    "timeZone": {
+      "title": "Zona horaria de la hora introducida",
+      "search": "Ciudad o zona",
+      "system": "Sistema ({{city}})"
+    }
   },
   "filters": {
     "title": "Filtros",

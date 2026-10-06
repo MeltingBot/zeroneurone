@@ -91,8 +91,12 @@ Columns:
 | tags | Tags separated by ; |
 | confidence | 0-100 |
 | cotation_echelle / cotation_source / cotation_info | Europol or Admiralty grading (see [evaluation]({{< relref "features/evaluation" >}})) |
-| date / end_date | Event date and optional end |
+| date / end_date | Event date and optional end (events) |
+| start_date / end_date | Period (links) |
+| fuseau | Source time zone; the row's times are written in this zone |
 | ... | Custom properties |
+
+Date formats: see [Dates and Time Zones]({{< relref "features/dates-timezones" >}}).
 
 **Events** attached to elements are exported as `type=event` rows: an export → import round-trip rebuilds the timeline identically.
 

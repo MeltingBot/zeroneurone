@@ -41,6 +41,7 @@ import type {
 } from '../types';
 import { getGeoCenter } from '../utils/geo';
 import { EVALUATION_GRIDS, getEvaluationModel, getModelScale } from '../utils/evaluation';
+import { parseDateValue, toLocalDateKey } from '../utils/dates';
 
 // ============================================================================
 // TUNING — every unknown that only a real i2 can settle lives here, so that a
@@ -138,12 +139,16 @@ function hexToColorref(hex: string | null | undefined): number {
 // DATES
 // ============================================================================
 
-/** i2 local date-time: no zone suffix, milliseconds kept. */
+/**
+ * i2 local date-time: no zone suffix, milliseconds kept. The chart declares
+ * UseLocalTimeZone, so this is the local wall clock (not the UTC one), which
+ * is also how the ANX importer reads it back.
+ */
 function formatI2Date(date: Date | string | number | null | undefined): string | null {
-  if (date === null || date === undefined || date === '') return null;
-  const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toISOString().replace('Z', '').slice(0, 23);
+  const d = parseDateValue(date);
+  if (!d) return null;
+  const pad = (n: number, len = 2) => String(n).padStart(len, '0');
+  return `${toLocalDateKey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
 }
 
 // ============================================================================

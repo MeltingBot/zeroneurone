@@ -10,6 +10,7 @@ import type {
   Link,
   ElementEvent,
   Property,
+  DatePrecision,
   DossierId,
   ElementId,
   LinkId,
@@ -85,6 +86,7 @@ function personToElement(
       id: uuidv4(),
       date: birthDate,
       dateEnd: birthDate, // Point-in-time event: same start and end
+      ...datingOf(person.birthDate),
       label: t('events.birth'),
       geo: person.birthPlace?.lat != null && person.birthPlace?.lng != null
         ? { type: 'point' as const, lat: person.birthPlace.lat, lng: person.birthPlace.lng }
@@ -101,6 +103,7 @@ function personToElement(
       id: uuidv4(),
       date: deathDate,
       dateEnd: deathDate, // Point-in-time event: same start and end
+      ...datingOf(person.deathDate),
       label: t('events.death'),
       geo: person.deathPlace?.lat != null && person.deathPlace?.lng != null
         ? { type: 'point' as const, lat: person.deathPlace.lat, lng: person.deathPlace.lng }
@@ -118,6 +121,7 @@ function personToElement(
         id: uuidv4(),
         date: residence.startDate ? toDate(residence.startDate) : new Date(),
         dateEnd: residence.endDate ? toDate(residence.endDate) : undefined,
+        ...(residence.startDate ? datingOf(residence.startDate, residence.endDate) : {}),
         label: t('events.residence'),
         geo: residence.place?.lat != null && residence.place?.lng != null
           ? { type: 'point' as const, lat: residence.place.lat, lng: residence.place.lng }
@@ -181,6 +185,7 @@ function personToElement(
       ? {
           start: person.birthDate ? toDate(person.birthDate) : null,
           end: person.deathDate ? toDate(person.deathDate) : null,
+          ...datingOf(person.birthDate, person.deathDate),
         }
       : null,
     // Don't set fixed geo on person - each event (birth, death, residence) has its own location
@@ -334,6 +339,7 @@ function familyToLinks(
           ? {
               start: family.marriageDate ? toDate(family.marriageDate) : null,
               end: marriageEndDate,
+              ...datingOf(family.marriageDate),
             }
           : null,
         visual: {
@@ -440,6 +446,36 @@ function familyToLinks(
   }
 
   return links;
+}
+
+const PRECISION_ORDER: DatePrecision[] = ['year', 'month', 'day', 'minute'];
+
+/** Precision of a genealogy date: what the source actually gives (year, month or day). */
+function precisionOf(gdate: GenealogyDate): DatePrecision {
+  if (gdate.day) return 'day';
+  if (gdate.month) return 'month';
+  return 'year';
+}
+
+/**
+ * Precision / approximation of one or two genealogy dates (a range shares one
+ * precision: the coarser of its bounds). "ABT", "EST", "CAL" mark approximate.
+ */
+function datingOf(
+  a: GenealogyDate | undefined,
+  b?: GenealogyDate,
+): { precision?: DatePrecision; approximate?: boolean } {
+  const dates = [a, b].filter((d): d is GenealogyDate => !!d);
+  if (dates.length === 0) return {};
+  const precision = dates
+    .map(precisionOf)
+    .reduce((p, q) => (PRECISION_ORDER.indexOf(q) < PRECISION_ORDER.indexOf(p) ? q : p));
+  const approximate = dates.some((d) => d.modifier === 'about');
+  return {
+    // A full day is what an undated precision already means: keep the data unchanged
+    ...(precision !== 'day' ? { precision } : {}),
+    ...(approximate ? { approximate: true } : {}),
+  };
 }
 
 /**

@@ -120,7 +120,7 @@ describe('buildObsidianVault', () => {
         el('a', 'A', {
           parentGroupId: 'g', tags: ['#suspect principal'], confidence: 80, date: new Date(2021, 2, 4),
           geo: { type: 'point', lat: 48.85, lng: 2.35 }, assetIds: ['as1', 'as2', 'as3'],
-          visual: { ...DEFAULT_ELEMENT_VISUAL, image: 'as1' }, dateRange: { start: new Date('2020-05-01'), end: null },
+          visual: { ...DEFAULT_ELEMENT_VISUAL, image: 'as1' }, dateRange: { start: new Date(2020, 4, 1), end: null },
           events: [{ id: 'e1', date: new Date(2022, 0, 1), label: 'Arrivée', description: 'Ligne 1' }],
         }),
       ],

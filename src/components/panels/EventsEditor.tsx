@@ -4,6 +4,8 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Plus, Trash2, MapPin, Calendar, ChevronDown, ChevronUp, FileText, ArrowUpRight, Hexagon, Copy, PenTool, Code, Check, X } from 'lucide-react';
 import type { ElementEvent, PropertyDefinition, GeoData, GeoPolygon } from '../../types';
 import { generateUUID, parseFlexibleDate, formatDateForCopy } from '../../utils';
+import { dateFromInputKeys, dateInputKeys, toLocalDateKey, toLocalTimeKey } from '../../utils/dates';
+import { TimeZoneButton } from '../common/TimeZoneButton';
 import { useUIStore } from '../../stores';
 import { PropertiesEditor } from './PropertiesEditor';
 import { isGeoPolygon, getGeoCenter, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
@@ -95,19 +97,25 @@ const EventItem = memo(function EventItem({
     setLocalDateEnd(event.dateEnd);
   }, [event.id, event.label, event.description, event.source, event.geo, event.date, event.dateEnd]);
 
-  const formatDateForInput = (date: Date): string => {
-    const d = new Date(date);
-    const year = String(d.getFullYear()).padStart(4, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  // Inputs show and read the hours in the event's source zone (system zone when unset)
+  const formatDateForInput = (date: Date): string => dateInputKeys(new Date(date), event.timeZone).date;
+  const formatTimeForInput = (date: Date): string => dateInputKeys(new Date(date), event.timeZone).time;
+  const fromInputs = (dateKey: string, timeKey: string): Date => dateFromInputKeys(dateKey, timeKey, event.timeZone);
+  // A pasted "12/03/2024 03:12" is a wall clock too: read it in the source zone
+  const fromPasted = (parsed: Date | null): Date | null =>
+    parsed && event.timeZone ? fromInputs(toLocalDateKey(parsed), toLocalTimeKey(parsed)) : parsed;
 
-  const formatTimeForInput = (date: Date): string => {
-    const d = new Date(date);
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
+  // Changing the zone keeps the typed wall clock: "03:12" now means 03:12 in the new zone
+  const handleTimeZoneChange = (timeZone: string | undefined) => {
+    const reread = (d: Date) => {
+      const keys = dateInputKeys(new Date(d), event.timeZone);
+      return dateFromInputKeys(keys.date, keys.time, timeZone);
+    };
+    onUpdate({
+      timeZone,
+      date: reread(event.date),
+      ...(event.dateEnd ? { dateEnd: reread(event.dateEnd) } : {}),
+    });
   };
 
   // Blur handlers - sync to parent
@@ -303,10 +311,10 @@ const EventItem = memo(function EventItem({
             onChange={(e) => {
               if (!e.target.value) return;
               const existingTime = formatTimeForInput(new Date(localDate));
-              setLocalDate(new Date(`${e.target.value}T${existingTime}`));
+              setLocalDate(fromInputs(e.target.value, existingTime));
             }}
             onPaste={(e) => {
-              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+              const parsed = fromPasted(parseFlexibleDate(e.clipboardData.getData('text')));
               if (parsed) {
                 e.preventDefault();
                 setLocalDate(parsed);
@@ -326,7 +334,7 @@ const EventItem = memo(function EventItem({
             value={formatTimeForInput(new Date(localDate))}
             onChange={(e) => {
               const existingDate = formatDateForInput(new Date(localDate));
-              setLocalDate(new Date(`${existingDate}T${e.target.value || '00:00'}`));
+              setLocalDate(fromInputs(existingDate, e.target.value || '00:00'));
             }}
             onBlur={() => {
               const d = new Date(localDate);
@@ -336,6 +344,7 @@ const EventItem = memo(function EventItem({
             }}
             className="w-20 px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"
           />
+          <TimeZoneButton value={event.timeZone} onChange={handleTimeZoneChange} />
           <button
             type="button"
             onClick={() => {
@@ -361,10 +370,10 @@ const EventItem = memo(function EventItem({
                 return;
               }
               const existingTime = localDateEnd ? formatTimeForInput(new Date(localDateEnd)) : '00:00';
-              setLocalDateEnd(new Date(`${e.target.value}T${existingTime}`));
+              setLocalDateEnd(fromInputs(e.target.value, existingTime));
             }}
             onPaste={(e) => {
-              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
+              const parsed = fromPasted(parseFlexibleDate(e.clipboardData.getData('text')));
               if (parsed) {
                 e.preventDefault();
                 setLocalDateEnd(parsed);
@@ -387,7 +396,7 @@ const EventItem = memo(function EventItem({
             onChange={(e) => {
               if (!localDateEnd) return;
               const existingDate = formatDateForInput(new Date(localDateEnd));
-              setLocalDateEnd(new Date(`${existingDate}T${e.target.value || '00:00'}`));
+              setLocalDateEnd(fromInputs(existingDate, e.target.value || '00:00'));
             }}
             onBlur={() => {
               if (!localDateEnd) return;
@@ -705,9 +714,17 @@ export function EventsEditor({
   // Update event
   const handleUpdate = useCallback(
     (eventId: string, updates: Partial<ElementEvent>) => {
-      const newEvents = events.map((e) =>
-        e.id === eventId ? { ...e, ...updates } : e
-      );
+      const newEvents = events.map((e) => {
+        if (e.id !== eventId) return e;
+        const next = { ...e, ...updates };
+        // A date entered by hand is a full date: drop the partial / approximate
+        // dating an import may have set ("1890", "~1890"), which has no editor
+        if (('date' in updates || 'dateEnd' in updates) && (next.precision || next.approximate)) {
+          delete next.precision;
+          delete next.approximate;
+        }
+        return next;
+      });
       onChange(newEvents);
     },
     [events, onChange]

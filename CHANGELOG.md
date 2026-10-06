@@ -1,5 +1,55 @@
 # Changelog
 
+## 2.61.0
+
+### Features
+
+- **Mode temporel du canvas** — bouton **Temporel** : même barre que la
+  carte (pas à pas, lecture, champ date). Les éléments ayant un événement à
+  la date et les liens actifs ont un halo, le reste daté est atténué, les
+  non datés sont grisés ou masqués (œil). Les positions ne bougent pas.
+- **Sélection d'une période** — sur le canvas et la carte, bouton
+  **Période** : curseur à deux poignées, lecture qui fait glisser la
+  période. Sur la carte, seuls les éléments actifs dans la période
+  apparaissent, la trace se limite à la période.
+- **Événements sous les éléments et les marqueurs** — en mode temporel,
+  l'événement s'affiche sous l'élément (`+N` s'il y en a plusieurs) ; la
+  liste datée s'ouvre au survol, un clic ouvre l'événement dans le panneau.
+- **Fuseau d'un événement ou d'une période de lien** — bouton ville à côté
+  de l'heure : l'heure se saisit dans le fuseau de la source et s'affiche
+  ailleurs avec l'heure d'origine, ex. `02:12 (03:12 Beirut)`. Conservé en
+  collaboration et à l'export CSV (colonne `fuseau`).
+- **Dossier, section Dates** — fuseau d'affichage, et correction sur
+  demande des dates importées à minuit UTC par d'anciens imports.
+- **Dates incomplètes en généalogie** — GEDCOM / GeneWeb : `1890`,
+  `mars 1890`, `~1890` au lieu d'un faux 1er janvier ; la date couvre toute
+  la période sur la timeline et la barre temporelle.
+- **Timeline** — libellé des barres courtes et des événements ponctuels
+  affiché après la barre ; infobulle limitée aux dates.
+
+### Corrections
+
+- **Dates décalées d'un jour ou d'une heure selon le fuseau** :
+  - export CSV (dossier et timeline) : la veille pour les dates sans heure ;
+  - aller-retour i2 (ANX) et import ANB : 1 à 2 h de décalage ;
+  - import CSV, GeoJSON, GraphML : `AAAA-MM-JJ` lu à minuit UTC (01:00 à
+    Paris, la veille en Amérique) ;
+  - générateur de requêtes, curseur de période de la timeline, export
+    Obsidian, éditeur de propriétés : jour ou heure UTC affichés ;
+  - journées de 23 h / 25 h aux changements d'heure.
+- **Collaboration** — les propriétés de type date d'un événement arrivaient
+  vides chez les autres participants.
+- **Format des dates dans 9 langues** — les dates s'affichaient au format
+  américain hors français et anglais.
+- **Barre d'outils** — sur écran étroit, le bloc de droite ne passe plus en
+  entier à la ligne (décalage dans la timeline).
+
+### Documentation
+
+- Nouvelles pages **Mode temporel** et **Dates et fuseaux horaires**.
+- Timeline, carte, éléments et liens, import / export CSV mis à jour
+  (formats de date, colonne `fuseau`).
+
 ## 2.60.2
 
 ### Corrections

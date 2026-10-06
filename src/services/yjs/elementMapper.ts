@@ -11,7 +11,7 @@ import type { Element, ElementVisual, ElementEvent, Property, Position } from '.
 import { normalizeGeo } from '../../utils/geo';
 import { sanitizeEvaluation } from '../../utils/evaluation';
 import { DEFAULT_ELEMENT_VISUAL } from '../../types';
-import { dateToYjs, dateFromYjs } from '../../types/yjs';
+import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs, isDatePrecision } from '../../types/yjs';
 
 /**
  * Thrown by yMapToElement when no valid position can be read from the Y.Map.
@@ -77,10 +77,7 @@ export function elementToYMap(element: Element): Y.Map<any> {
   map.set('position', { x: element.position.x, y: element.position.y });
 
   // DateRange as plain object or null
-  map.set('dateRange', element.dateRange ? {
-    start: dateToYjs(element.dateRange.start),
-    end: dateToYjs(element.dateRange.end),
-  } : null);
+  map.set('dateRange', dateRangeToYjs(element.dateRange));
 
   // Geo as plain object or null (serialized as-is, includes type discriminator)
   map.set('geo', element.geo ?? null);
@@ -195,18 +192,7 @@ export function yMapToElement(ymap: Y.Map<any>): Element {
   }
 
   // Handle dateRange - can be Y.Map, plain object, or null
-  let dateRange = null;
-  if (dateRangeRaw instanceof Y.Map) {
-    dateRange = {
-      start: dateFromYjs(dateRangeRaw.get('start')),
-      end: dateFromYjs(dateRangeRaw.get('end')),
-    };
-  } else if (dateRangeRaw && typeof dateRangeRaw === 'object') {
-    dateRange = {
-      start: dateFromYjs(dateRangeRaw.start),
-      end: dateFromYjs(dateRangeRaw.end),
-    };
-  }
+  const dateRange = dateRangeFromYjs(dateRangeRaw);
 
   // Handle geo - can be Y.Map, plain object (GeoData), or null
   let geo: import('../../types').GeoData | null = null;
@@ -418,10 +404,7 @@ export function updateElementYMap(
     }
 
     if (changes.dateRange !== undefined) {
-      ymap.set('dateRange', changes.dateRange ? {
-        start: dateToYjs(changes.dateRange.start),
-        end: dateToYjs(changes.dateRange.end),
-      } : null);
+      ymap.set('dateRange', dateRangeToYjs(changes.dateRange));
     }
 
     if (changes.assetIds !== undefined) {
@@ -470,8 +453,32 @@ function eventToPlainObject(event: ElementEvent): any {
     description: event.description || null,
     source: event.source || null,
     geo: event.geo || null,
-    properties: event.properties || null,
+    // Date values must go through the property serializer: Y.js would encode
+    // a Date as an empty object for the other peers
+    properties: event.properties
+      ? event.properties.map((p) => ({ ...p, value: serializePropertyValue(p.value) }))
+      : null,
+    // Optional: only written when set, so older peers see the same shape
+    ...(event.precision ? { precision: event.precision } : {}),
+    ...(event.approximate ? { approximate: true } : {}),
+    ...(event.timeZone ? { timeZone: event.timeZone } : {}),
   };
+}
+
+function eventPrecisionFromYjs(read: (key: string) => unknown): Pick<ElementEvent, 'precision' | 'approximate' | 'timeZone'> {
+  const precision = read('precision');
+  const timeZone = read('timeZone');
+  return {
+    ...(isDatePrecision(precision) ? { precision } : {}),
+    ...(read('approximate') === true ? { approximate: true } : {}),
+    ...(typeof timeZone === 'string' && timeZone ? { timeZone } : {}),
+  };
+}
+
+function eventPropertiesFromYjs(raw: unknown): ElementEvent['properties'] {
+  const list = raw instanceof Y.Array ? raw.toJSON() : raw;
+  if (!Array.isArray(list)) return undefined;
+  return list.map((p) => ({ ...p, value: deserializePropertyValue(p?.value) }));
 }
 
 function plainObjectToEvent(obj: any): ElementEvent {
@@ -482,8 +489,9 @@ function plainObjectToEvent(obj: any): ElementEvent {
     label: obj.label || '',
     description: obj.description || undefined,
     geo: normalizeGeo(obj.geo) || undefined,
-    properties: obj.properties || undefined,
+    properties: eventPropertiesFromYjs(obj.properties),
     source: obj.source || undefined,
+    ...eventPrecisionFromYjs((key) => obj[key]),
   };
 }
 
@@ -505,8 +513,9 @@ function yMapToEvent(ymap: Y.Map<any>): ElementEvent {
     label: ymap.get('label') || '',
     description: ymap.get('description') || undefined,
     geo,
-    properties: ymap.get('properties') || undefined,
+    properties: eventPropertiesFromYjs(ymap.get('properties')),
     source: ymap.get('source') || undefined,
+    ...eventPrecisionFromYjs((key) => ymap.get(key)),
   };
 }
 

@@ -11,7 +11,9 @@ import { TimelineRangeSlider } from './TimelineRangeSlider';
 import { SwimlaneToolbar } from './SwimlaneToolbar';
 import { TimelineSwimlane } from './TimelineSwimlane';
 import { useSwimlaneGrouping } from './useSwimlaneGrouping';
-import type { Element as ZNElement } from '../../types';
+import type { DatePrecision, Element as ZNElement } from '../../types';
+import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision } from '../../utils/dates';
+import { formatItemDates } from './timelineDates';
 
 export interface TimelineItem {
   id: string;
@@ -19,6 +21,13 @@ export interface TimelineItem {
   sublabel?: string;
   start: Date;
   end?: Date;
+  /** End as entered, for labels (`end` extends to the end of its period, or to now) */
+  displayEnd?: Date;
+  /** Precision of start/end ("2019", "mars 2019"…); inferred when absent */
+  precision?: DatePrecision;
+  approximate?: boolean;
+  /** Source zone of the hours (shown in parentheses) */
+  timeZone?: string;
   color: string;
   type: 'link' | 'event' | 'property' | 'created';
   sourceId?: string; // For selection
@@ -43,7 +52,10 @@ const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
 const MAX_ZOOM = 1000; // pixels per day (900 = ~1h visible at 800px width)
 const ROW_HEIGHT = 36;
 const ROW_GAP = 8;
-const AXIS_HEIGHT = 28;
+// Scatter mode: a bar too short for its content shows it just after the bar
+// (each item has its own row, so the space on the right is free)
+const OUTSIDE_LABEL_GAP = 6;
+const LABEL_CHAR_PX = 6.5;
 const DENSITY_HEIGHT = 20;
 
 // Zoom presets (pixels per day) with approximate visible range at 800px width
@@ -181,7 +193,6 @@ export function TimelineView() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartView, setDragStartView] = useState<Date>(new Date());
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [showTemporalFilter, setShowTemporalFilter] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState<Date | null>(null);
   const [filterEndDate, setFilterEndDate] = useState<Date | null>(null);
@@ -318,7 +329,11 @@ export function TimelineView() {
       }
 
       const startDate = new Date(link.dateRange.start);
-      const endDate = link.dateRange.end ? new Date(link.dateRange.end) : now;
+      const enteredEnd = link.dateRange.end ? new Date(link.dateRange.end) : null;
+      // A bound covers its whole period: an end "2021" lasts until 31 Dec 2021
+      const endDate = enteredEnd
+        ? new Date(endOfPrecision(enteredEnd, effectivePrecision(enteredEnd, link.dateRange.precision)))
+        : now;
 
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
 
@@ -343,6 +358,10 @@ export function TimelineView() {
         sublabel: undefined,
         start: startDate,
         end: endDate,
+        displayEnd: enteredEnd ?? undefined,
+        precision: link.dateRange.precision,
+        approximate: link.dateRange.approximate,
+        timeZone: link.dateRange.timeZone,
         color: link.visual.color || '#6b7280',
         type: 'link',
         sourceId: link.id,
@@ -381,8 +400,12 @@ export function TimelineView() {
         if (eventTime > maxTime) maxTime = eventTime;
 
         const hasEnd = event.dateEnd && !isNaN(new Date(event.dateEnd).getTime());
-        // If no end date, extend to today (ongoing event)
-        const endDate = hasEnd ? new Date(event.dateEnd!) : now;
+        const enteredEnd = hasEnd ? new Date(event.dateEnd!) : null;
+        // If no end date, extend to today (ongoing event); an end covers its
+        // whole period ("2021" lasts until 31 Dec 2021)
+        const endDate = enteredEnd
+          ? new Date(endOfPrecision(enteredEnd, effectivePrecision(enteredEnd, event.precision)))
+          : now;
 
         const endTime = endDate.getTime();
         if (endTime > maxTime) maxTime = endTime;
@@ -416,6 +439,10 @@ export function TimelineView() {
           sublabel: eventSublabel,
           start: eventDate,
           end: endDate,
+          displayEnd: enteredEnd ?? undefined,
+          precision: event.precision,
+          approximate: event.approximate,
+          timeZone: event.timeZone,
           color: element.visual.color,
           type: 'event',
           sourceId: element.id,
@@ -845,7 +872,7 @@ export function TimelineView() {
                        (step === 'hour' && current.getHours() % 6 === 0);
         // For year/decade/century: use getFullYear() directly to show negative years (BC)
         // For hour steps: show date at midnight ticks, time otherwise
-        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        const locale = dateLocale(i18n.language);
         let label: string;
         if (step === 'century' || step === 'decade' || step === 'year') {
           label = String(current.getFullYear());
@@ -1037,9 +1064,7 @@ export function TimelineView() {
   // Handle item click
   const handleItemClick = useCallback((item: TimelineItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Toggle info panel
-    setExpandedItemId(prev => prev === item.id ? null : item.id);
-    // Also select the element/link
+    // Select the element/link (its details open in the side panel)
     if (!item.sourceId) return;
     if (item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) {
       selectLink(item.sourceId);
@@ -1305,7 +1330,7 @@ export function TimelineView() {
             <button
               onClick={() => {
                 const name = currentDossier?.name || 'timeline';
-                const date = new Date().toISOString().slice(0, 10);
+                const date = toLocalDateKey(new Date());
                 exportTimelineToCSV(filteredItems, `${name}_timeline_${date}.csv`);
               }}
               disabled={filteredItems.length === 0}
@@ -1345,7 +1370,6 @@ export function TimelineView() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onClick={() => setExpandedItemId(null)}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         {/* Time axis + density bar - sticky */}
@@ -1374,7 +1398,7 @@ export function TimelineView() {
                 const x = dateToX(bucket.start);
                 const cellWidth = dateToX(bucket.end) - x;
                 const gap = cellWidth > 3 ? 1 : 0;
-                const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+                const locale = dateLocale(i18n.language);
                 const fmt: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
                 const label = `${bucket.start.toLocaleDateString(locale, fmt)} – ${bucket.end.toLocaleDateString(locale, fmt)}: ${bucket.count}`;
                 return (
@@ -1473,6 +1497,7 @@ export function TimelineView() {
                     opacity: item.isDimmed ? 0.3 : 1,
                   }}
                   onClick={(e) => handleItemClick(item, e)}
+                  title={formatItemDates(item, i18n.language)}
                 >
                   {hasThumbImage ? (
                     // Show image thumbnail for property items
@@ -1492,6 +1517,20 @@ export function TimelineView() {
                       size={ROW_HEIGHT}
                     />
                   )}
+                  {/* Label after the point (its row is free on the right) */}
+                  <div
+                    className="absolute top-0 h-full flex items-center whitespace-nowrap"
+                    style={{ left: ROW_HEIGHT + OUTSIDE_LABEL_GAP }}
+                  >
+                    {anonymousMode ? (
+                      <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '4em' }} />
+                    ) : (
+                      <span className="text-xs text-text-primary font-medium">
+                        {item.label}
+                        {item.sublabel && <span className="ml-1.5 text-[10px] font-normal text-text-tertiary">{item.sublabel}</span>}
+                      </span>
+                    )}
+                  </div>
                   {/* Comment indicator */}
                   {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                     <div
@@ -1505,7 +1544,11 @@ export function TimelineView() {
               );
             }
 
-            // Range items (links, events with duration)
+            // Range items (links, events with duration). Short bars keep their
+            // true length; their thumbnail and label move just after the bar.
+            const isLinkItem = item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'));
+            const contentWidth = 8 + 24 + 8 + Math.min(item.label.length, 80) * LABEL_CHAR_PX + 8 + (isLinkItem ? 32 : 0);
+            const labelOutside = width < contentWidth;
             return (
               <div
                 key={item.id}
@@ -1519,6 +1562,7 @@ export function TimelineView() {
                   opacity: item.isDimmed ? 0.3 : 1,
                 }}
                 onClick={(e) => handleItemClick(item, e)}
+                title={formatItemDates(item, i18n.language)}
               >
                 {/* Period bar with clear border frame */}
                 <div
@@ -1540,101 +1584,76 @@ export function TimelineView() {
                     {item.unresolvedCommentCount}
                   </div>
                 )}
-                {/* Content */}
-                <div
-                  className="relative h-full flex items-center overflow-hidden gap-2 pr-2"
-                  style={{ paddingLeft: contentOffset + 8 }}
-                >
-                  {/* Source thumbnail - image or shape (blur images if hideMedia enabled) */}
-                  <ItemThumbnail
-                    imageUrl={item.thumbImageId ? thumbnails[item.thumbImageId] : undefined}
-                    shape={item.thumbShape}
-                    color={item.thumbColor}
-                    letter={anonymousMode ? '?' : item.thumbLetter}
-                    blur={hideMedia}
-                  />
-                  {anonymousMode ? (
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '2em' }} />
-                      <span className="text-xs text-text-tertiary">→</span>
-                      <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '3em' }} />
-                      <span className="text-xs text-text-tertiary">→</span>
-                      <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '2em' }} />
-                    </span>
-                  ) : (
-                    <div className="flex flex-col flex-1 min-w-0 justify-center">
-                      <span className="text-xs text-text-primary truncate font-medium">
-                        {item.label}
-                      </span>
-                      {item.sublabel && (
-                        <span className="text-[10px] text-text-tertiary truncate">
-                          {item.sublabel}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {/* Destination thumbnail for links */}
-                  {(item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) && item.destThumbLetter && (
+                {labelOutside ? (
+                  <div
+                    className="absolute top-0 h-full flex items-center gap-1.5 whitespace-nowrap"
+                    style={{ left: width + OUTSIDE_LABEL_GAP }}
+                  >
                     <ItemThumbnail
-                      imageUrl={item.destThumbImageId ? thumbnails[item.destThumbImageId] : undefined}
-                      shape={item.destThumbShape || 'circle'}
-                      color={item.destThumbColor || '#6b7280'}
-                      letter={anonymousMode ? '?' : item.destThumbLetter}
+                      imageUrl={item.thumbImageId ? thumbnails[item.thumbImageId] : undefined}
+                      shape={item.thumbShape}
+                      color={item.thumbColor}
+                      letter={anonymousMode ? '?' : item.thumbLetter}
                       blur={hideMedia}
                     />
-                  )}
-                </div>
+                    {anonymousMode ? (
+                      <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '4em' }} />
+                    ) : (
+                      <span className="text-xs text-text-primary font-medium">
+                        {item.label}
+                        {item.sublabel && <span className="ml-1.5 text-[10px] font-normal text-text-tertiary">{item.sublabel}</span>}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  // Content inside the bar
+                  <div
+                    className="relative h-full flex items-center overflow-hidden gap-2 pr-2"
+                    style={{ paddingLeft: contentOffset + 8 }}
+                  >
+                    {/* Source thumbnail - image or shape (blur images if hideMedia enabled) */}
+                    <ItemThumbnail
+                      imageUrl={item.thumbImageId ? thumbnails[item.thumbImageId] : undefined}
+                      shape={item.thumbShape}
+                      color={item.thumbColor}
+                      letter={anonymousMode ? '?' : item.thumbLetter}
+                      blur={hideMedia}
+                    />
+                    {anonymousMode ? (
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '2em' }} />
+                        <span className="text-xs text-text-tertiary">→</span>
+                        <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '3em' }} />
+                        <span className="text-xs text-text-tertiary">→</span>
+                        <span className="inline-block bg-text-primary rounded-sm h-3" style={{ width: '2em' }} />
+                      </span>
+                    ) : (
+                      <div className="flex flex-col flex-1 min-w-0 justify-center">
+                        <span className="text-xs text-text-primary truncate font-medium">
+                          {item.label}
+                        </span>
+                        {item.sublabel && (
+                          <span className="text-[10px] text-text-tertiary truncate">
+                            {item.sublabel}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {/* Destination thumbnail for links */}
+                    {(item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) && item.destThumbLetter && (
+                      <ItemThumbnail
+                        imageUrl={item.destThumbImageId ? thumbnails[item.destThumbImageId] : undefined}
+                        shape={item.destThumbShape || 'circle'}
+                        color={item.destThumbColor || '#6b7280'}
+                        letter={anonymousMode ? '?' : item.destThumbLetter}
+                        blur={hideMedia}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
-
-          {/* Info panel for clicked item */}
-          {expandedItemId && (() => {
-            const expandedItem = visibleItems.find(i => i.id === expandedItemId);
-            if (!expandedItem) return null;
-            const x = Math.max(8, dateToX(expandedItem.start));
-            const itemY = ROW_GAP + expandedItem.row * (ROW_HEIGHT + ROW_GAP);
-
-            // Estimate panel height (title + sublabel + date + padding)
-            const panelHeight = 80;
-
-            // Calculate position below the item
-            const yBelow = itemY + ROW_HEIGHT + 4;
-
-            // Check if panel would be cut off at bottom
-            // Compare with visible viewport (scrollTop + containerHeight - AXIS_HEIGHT)
-            const visibleBottom = scrollTop + containerHeight - AXIS_HEIGHT;
-            const wouldBeClipped = (yBelow + panelHeight) > visibleBottom;
-
-            // If clipped, show above the item instead
-            const y = wouldBeClipped ? itemY - panelHeight - 4 : yBelow;
-
-            return (
-              <div
-                className="absolute z-30 bg-bg-primary border border-border-default rounded shadow-lg p-2 max-w-xs"
-                style={{ transform: `translate3d(${x}px, ${y}px, 0)` }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-xs font-medium text-text-primary mb-1 pr-4">
-                  {expandedItem.label}
-                </div>
-                {expandedItem.sublabel && (
-                  <div className="text-[10px] text-text-secondary mb-1">
-                    {expandedItem.sublabel}
-                  </div>
-                )}
-                <div className="text-[10px] text-text-tertiary">
-                  {formatDateRange(expandedItem.start, expandedItem.end, i18n.language === 'fr' ? 'fr-FR' : 'en-US')}
-                </div>
-                <button
-                  onClick={() => setExpandedItemId(null)}
-                  className="absolute top-1 right-1 p-0.5 text-text-tertiary hover:text-text-primary"
-                >
-                  ✕
-                </button>
-              </div>
-            );
-          })()}
 
           {/* Causal connections - rendered as SVG curves */}
           {showCausality && causalConnections.length > 0 && (
@@ -1884,20 +1903,6 @@ function ItemThumbnail({ imageUrl, shape, color, letter, blur, size }: {
   );
 }
 
-function formatDateRange(start: Date, end?: Date, locale: string = 'en-US'): string {
-  const hasTime = (d: Date) => d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
-  const dateOpts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
-  const dateTimeOpts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-
-  const startOpts = hasTime(start) ? dateTimeOpts : dateOpts;
-  const startStr = start.toLocaleString(locale, startOpts);
-  if (!end || end.getTime() === start.getTime()) return startStr;
-
-  const endOpts = hasTime(end) ? dateTimeOpts : dateOpts;
-  const endStr = end.toLocaleString(locale, endOpts);
-  return `${startStr} → ${endStr}`;
-}
-
 function escapeCSV(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`;
@@ -1907,7 +1912,7 @@ function escapeCSV(value: string): string {
 
 function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
   const typeLabels: Record<string, string> = { link: 'lien', event: 'evenement', property: 'propriete', created: 'ajout' };
-  const formatDate = (d: Date) => d.toISOString().slice(0, 10);
+  const formatDate = (d: Date) => toLocalDateKey(d);
 
   const sorted = [...items].sort((a, b) => a.start.getTime() - b.start.getTime());
 

@@ -7,6 +7,8 @@ import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { AccordionSection, EditableField, MarkdownEditor } from '../common';
 import { EVALUATION_MODELS, countEvaluationsOutsideModel, getEvaluationModel, isEvaluationModel } from '../../utils/evaluation';
+import { activeTimeZoneLabel, dateLocale } from '../../utils/dates';
+import { findLegacyUtcMidnightDates, type LegacyDateFixes } from '../../utils/legacyDates';
 
 interface DossierDetailProps {
   dossier: Dossier;
@@ -245,6 +247,9 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
               {formatDateDisplay(dossier.updatedAt, i18n.language)}
             </p>
           </div>
+
+          {/* Time zone shown, correction of older imported dates */}
+          <TimeZoneAndLegacyDates />
         </div>
       </AccordionSection>
 
@@ -498,7 +503,7 @@ function formatDateForInput(date: Date): string {
 // Format date for display
 function formatDateDisplay(date: Date, language: string): string {
   const d = new Date(date);
-  const locale = language.startsWith('fr') ? 'fr-FR' : 'en-US';
+  const locale = dateLocale(language);
   return d.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
@@ -506,4 +511,91 @@ function formatDateDisplay(date: Date, language: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+/**
+ * Part of the Dates section: the time zone hours are shown in (the system one,
+ * read-only) and, on request, the correction of calendar days saved at UTC
+ * midnight by older imports. Nothing changes without an explicit confirmation.
+ */
+function TimeZoneAndLegacyDates() {
+  const { t } = useTranslation('panels');
+  const { updateElement, updateLink } = useDossierStore();
+  const [fixes, setFixes] = useState<LegacyDateFixes | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [doneCount, setDoneCount] = useState<number | null>(null);
+  const [error, setError] = useState(false);
+
+  const handleCheck = () => {
+    const { elements, links } = useDossierStore.getState();
+    setFixes(findLegacyUtcMidnightDates(elements, links));
+    setDoneCount(null);
+    setError(false);
+  };
+
+  const handleApply = async () => {
+    if (!fixes) return;
+    setApplying(true);
+    setError(false);
+    try {
+      for (const { id, changes } of fixes.elements) await updateElement(id, changes);
+      for (const { id, changes } of fixes.links) await updateLink(id, changes);
+      setDoneCount(fixes.dateCount);
+      setFixes(null);
+    } catch {
+      setError(true);
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const secondaryButton = 'px-3 py-1.5 text-sm font-medium text-text-secondary bg-bg-secondary border border-border-default hover:bg-bg-tertiary rounded transition-colors disabled:opacity-50';
+
+  return (
+    <>
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.timeZone')}</label>
+        <p className="text-sm text-text-primary">{activeTimeZoneLabel()}</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.legacyDates')}</label>
+
+        {(fixes === null || fixes.dateCount === 0) && (
+          <button onClick={handleCheck} className={secondaryButton}>
+            {t('dossier.labels.legacyCheck')}
+          </button>
+        )}
+
+        {fixes !== null && fixes.dateCount === 0 && (
+          <p className="text-sm text-text-primary">{t('dossier.labels.legacyNone')}</p>
+        )}
+
+        {fixes !== null && fixes.dateCount > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-text-primary">
+              {t('dossier.labels.legacyFound', { count: fixes.dateCount })}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleApply}
+                disabled={applying}
+                className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded transition-colors disabled:opacity-50"
+              >
+                {t('dossier.labels.legacyApply')}
+              </button>
+              <button onClick={() => setFixes(null)} disabled={applying} className={`flex-1 ${secondaryButton}`}>
+                {t('dossier.labels.legacyCancel')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {doneCount !== null && (
+          <p className="text-sm text-text-primary">{t('dossier.labels.legacyDone', { count: doneCount })}</p>
+        )}
+        {error && <p className="text-sm text-error">{t('dossier.labels.legacyError')}</p>}
+      </div>
+    </>
+  );
 }

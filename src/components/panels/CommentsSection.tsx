@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, Trash2, Send } from 'lucide-react';
 import { useDossierStore, useSyncStore } from '../../stores';
 import type { Comment, CommentTargetType } from '../../types';
+import { dateLocale } from '../../utils/dates';
 
 interface CommentsSectionProps {
   targetId: string;
@@ -131,7 +132,7 @@ export function CommentsSection({ targetId, targetType }: CommentsSectionProps) 
                     </span>
                     <span
                       className="text-xs text-[var(--color-text-tertiary)]"
-                      title={new Date(comment.createdAt).toLocaleString(i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US', {
+                      title={new Date(comment.createdAt).toLocaleString(dateLocale(i18n.language), {
                         dateStyle: 'medium',
                         timeStyle: 'short',
                       })}

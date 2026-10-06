@@ -17,6 +17,8 @@ Explore the main features of ZeroNeurone.
 - [Graph analysis]({{< relref "graph-analysis" >}}) — Clusters, centrality, paths
 - [Map view]({{< relref "map-view" >}}) — Geolocation
 - [Timeline]({{< relref "timeline" >}}) — Chronological visualization
+- [Temporal Mode]({{< relref "temporal-mode" >}}) — Navigate through time on the canvas and the map
+- [Dates and Time Zones]({{< relref "dates-timezones" >}}) — Source time zone, partial dates
 - [Matrix view]({{< relref "matrix-view" >}}) — Tabular data view
 - [Attachments]({{< relref "attachments" >}}) — Documents and images
 - [Search]({{< relref "search" >}}) — Find quickly

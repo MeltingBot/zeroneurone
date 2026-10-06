@@ -37,7 +37,16 @@
       "retentionReset": "Reset",
       "evaluationModel": "Evaluation model",
       "evaluationOutsideWarning": "{{count}} grading(s) use another scale. They will be kept and shown greyed out, without conversion.",
-      "evaluationHiddenWarning": "{{count}} grading(s) will be kept but hidden while this model is active."
+      "evaluationHiddenWarning": "{{count}} grading(s) will be kept but hidden while this model is active.",
+      "timeZone": "Time zone",
+      "legacyDates": "Dates imported at UTC midnight",
+      "legacyCheck": "Check",
+      "legacyNone": "No date to fix",
+      "legacyFound": "{{count}} date(s) to fix",
+      "legacyApply": "Fix",
+      "legacyCancel": "Cancel",
+      "legacyDone": "{{count}} date(s) fixed",
+      "legacyError": "Fix failed"
     },
     "placeholders": {
       "name": "Dossier name",
@@ -290,7 +299,12 @@
       "setEvaluationAll": "Apply the same grading to the whole selection",
       "clearConfidenceAll": "Clear confidence for the whole selection"
     },
-    "copyDate": "Copy date"
+    "copyDate": "Copy date",
+    "timeZone": {
+      "title": "Time zone of the typed hours",
+      "search": "City or zone",
+      "system": "System ({{city}})"
+    }
   },
   "filters": {
     "title": "Filters",

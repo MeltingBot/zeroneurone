@@ -27,6 +27,7 @@ import { syncService } from '../services/syncService';
 import { isValidKeyString } from '../services/cryptoService';
 import { dossierRepository } from '../db/repositories';
 import type { Dossier } from '../types';
+import { dateLocale } from '../utils/dates';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
@@ -186,7 +187,7 @@ export function JoinPage() {
       let existingDossier = await dossierRepository.getById(dossierId);
 
       if (!existingDossier) {
-        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        const locale = dateLocale(i18n.language);
         // Create dossier with the specific UUID from the share link.
         // Mark origin = 'joined' so loadDossier never pushes our local Dexie
         // into the shared Y.Doc (this caused the (0,0) pile-up bug). The

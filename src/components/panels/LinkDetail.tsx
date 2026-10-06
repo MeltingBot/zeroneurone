@@ -13,6 +13,8 @@ import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { DEFAULT_COLORS } from '../../types';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
+import { dateFromInputKeys, dateInputKeys } from '../../utils/dates';
+import { TimeZoneButton } from '../common/TimeZoneButton';
 
 interface LinkDetailProps {
   link: Link;
@@ -56,23 +58,34 @@ const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xl', label: 'XL' },
 ];
 
-function formatDateForInput(date: Date): string {
-  const year = String(date.getFullYear()).padStart(4, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function formatTimeForInput(date: Date): string {
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
 
 
 
 export function LinkDetail({ link }: LinkDetailProps) {
   const { t } = useTranslation('panels');
+
+  // Period inputs show and read the hours in the period's source zone (system zone when unset)
+  const periodTz = link.dateRange?.timeZone;
+  const formatDateForInput = (date: Date): string => dateInputKeys(date, periodTz).date;
+  const formatTimeForInput = (date: Date): string => dateInputKeys(date, periodTz).time;
+  const fromInputs = (dateKey: string, timeKey: string): Date => dateFromInputKeys(dateKey, timeKey, periodTz);
+  // Rebuilt ranges keep the zone; a typed bound is a full date (no imported precision)
+  const zoneOf = periodTz ? { timeZone: periodTz } : {};
+  // Changing the zone keeps the typed wall clock: "03:12" now means 03:12 in the new zone
+  const handlePeriodTimeZoneChange = (timeZone: string | undefined) => {
+    const reread = (d: Date | null) => {
+      if (!d) return null;
+      const keys = dateInputKeys(new Date(d), periodTz);
+      return dateFromInputKeys(keys.date, keys.time, timeZone);
+    };
+    updateLink(link.id, {
+      dateRange: {
+        start: reread(link.dateRange?.start ?? null),
+        end: reread(link.dateRange?.end ?? null),
+        ...(timeZone ? { timeZone } : {}),
+      },
+    });
+  };
   const { t: tCommon } = useTranslation('common');
   // Individual selectors — prevent re-renders when unrelated state changes
   const updateLink = useDossierStore((s) => s.updateLink);
@@ -586,9 +599,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
                     onChange={(e) => {
                       const dateStr = e.target.value;
                       const existingTime = link.dateRange?.start ? formatTimeForInput(new Date(link.dateRange.start)) : '00:00';
-                      const newDate = dateStr ? new Date(`${dateStr}T${existingTime}`) : null;
+                      const newDate = dateStr ? fromInputs(dateStr, existingTime) : null;
                       updateLink(link.id, {
-                        dateRange: { start: newDate, end: link.dateRange?.end ?? null },
+                        dateRange: { start: newDate, end: link.dateRange?.end ?? null, ...zoneOf },
                       });
                     }}
                     className="flex-1 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
@@ -599,13 +612,14 @@ export function LinkDetail({ link }: LinkDetailProps) {
                     onChange={(e) => {
                       const existingDate = link.dateRange?.start ? formatDateForInput(new Date(link.dateRange.start)) : '';
                       if (!existingDate) return;
-                      const newDate = new Date(`${existingDate}T${e.target.value || '00:00'}`);
+                      const newDate = fromInputs(existingDate, e.target.value || '00:00');
                       updateLink(link.id, {
-                        dateRange: { start: newDate, end: link.dateRange?.end ?? null },
+                        dateRange: { start: newDate, end: link.dateRange?.end ?? null, ...zoneOf },
                       });
                     }}
                     className="w-24 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
                   />
+                  <TimeZoneButton value={periodTz} onChange={handlePeriodTimeZoneChange} />
                 </div>
               </div>
               <div>
@@ -617,9 +631,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
                     onChange={(e) => {
                       const dateStr = e.target.value;
                       const existingTime = link.dateRange?.end ? formatTimeForInput(new Date(link.dateRange.end)) : '00:00';
-                      const newDate = dateStr ? new Date(`${dateStr}T${existingTime}`) : null;
+                      const newDate = dateStr ? fromInputs(dateStr, existingTime) : null;
                       updateLink(link.id, {
-                        dateRange: { start: link.dateRange?.start ?? null, end: newDate },
+                        dateRange: { start: link.dateRange?.start ?? null, end: newDate, ...zoneOf },
                       });
                     }}
                     className="flex-1 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
@@ -630,9 +644,9 @@ export function LinkDetail({ link }: LinkDetailProps) {
                     onChange={(e) => {
                       const existingDate = link.dateRange?.end ? formatDateForInput(new Date(link.dateRange.end)) : '';
                       if (!existingDate) return;
-                      const newDate = new Date(`${existingDate}T${e.target.value || '00:00'}`);
+                      const newDate = fromInputs(existingDate, e.target.value || '00:00');
                       updateLink(link.id, {
-                        dateRange: { start: link.dateRange?.start ?? null, end: newDate },
+                        dateRange: { start: link.dateRange?.start ?? null, end: newDate, ...zoneOf },
                       });
                     }}
                     className="w-24 px-2 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"

@@ -184,15 +184,7 @@ Le bouton OpenFreeMap porte un chevron ouvrant le choix de la variante :
 
 ## Mode temporel
 
-Si vos éléments ont des dates ou des événements avec positions, activez le **mode temporel** :
-
-1. Cliquez sur **Temporel** dans la barre d'outils
-2. Utilisez le curseur pour naviguer dans le temps
-3. Les marqueurs apparaissent/disparaissent selon leur période d'activité
-
-Contrôles :
-- **Lecture** : animation automatique
-- **Pas à pas** : avancer/reculer d'un événement
+Cliquez sur **Temporel** pour naviguer dans le temps, à une date ou sur une période. La barre est la même que sur le canvas : voir [Mode temporel]({{< relref "temporal-mode" >}}).
 
 ---
 

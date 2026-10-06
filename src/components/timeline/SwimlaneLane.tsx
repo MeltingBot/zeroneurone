@@ -7,6 +7,8 @@ import {
   SWIMLANE_LINK_HEIGHT_COMPACT,
 } from './useSwimlaneLayout';
 import { useUIStore } from '../../stores/uiStore';
+import i18next from 'i18next';
+import { formatItemDates } from './timelineDates';
 
 /** Darken a color for light-theme borders so pastel swatches stay visible on white. */
 function borderForTheme(color: string, themeMode: 'light' | 'dark'): string {
@@ -36,17 +38,7 @@ interface SwimlaneLaneProps {
 
 function formatTooltip(item: TimelineItem): string {
   const parts: string[] = [item.label];
-  const fmtDate = (d: Date) => {
-    const hasTime = d.getHours() !== 0 || d.getMinutes() !== 0;
-    return hasTime
-      ? d.toLocaleString(undefined, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-      : d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
-  };
-  if (item.end && item.end.getTime() !== item.start.getTime()) {
-    parts.push(`${fmtDate(item.start)} \u2192 ${fmtDate(item.end)}`);
-  } else {
-    parts.push(fmtDate(item.start));
-  }
+  parts.push(formatItemDates(item, i18next.language));
   if (item.sublabel) parts.push(item.sublabel);
   return parts.join('\n');
 }

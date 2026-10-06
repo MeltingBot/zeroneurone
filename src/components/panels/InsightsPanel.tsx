@@ -29,6 +29,7 @@ import { MergeElementsModal } from '../modals/MergeElementsModal';
 import type { Element } from '../../types';
 import { DEFAULT_FILTERS } from '../../types';
 import { graphStructureSignature } from '../../services/graph/structureSignature';
+import { dateLocale } from '../../utils/dates';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
@@ -1058,7 +1059,7 @@ export function InsightsPanel() {
           <div className="p-3 border-t border-border-default">
             <p className="text-[10px] text-text-tertiary text-center">
               {t('insights.lastComputed')}{' '}
-              {computedAt.toLocaleString(i18n.language === 'en' ? 'en-US' : 'fr-FR', {
+              {computedAt.toLocaleString(dateLocale(i18n.language), {
                 day: '2-digit',
                 month: '2-digit',
                 hour: '2-digit',

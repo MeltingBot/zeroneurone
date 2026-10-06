@@ -59,6 +59,8 @@ Empêchez les déplacements accidentels en verrouillant la position d'un éléme
 
 Les éléments peuvent avoir des **événements** associés, chacun avec une date, une description et éventuellement une géolocalisation (point ou zone polygonale).
 
+La ville à droite de l'heure indique son fuseau : cliquez dessus pour saisir une heure dans le fuseau de la source. Voir [Dates et fuseaux horaires]({{< relref "dates-timezones" >}}).
+
 ### Extraire un événement en élément
 
 Transformez un événement en un élément autonome sur le canvas :
@@ -95,7 +97,7 @@ Un lien représente une relation entre deux éléments. Les liens sont des **cit
 | **Notes** | Description détaillée |
 | **Confiance / cotation** | Selon le [modèle d'évaluation]({{< relref "evaluation" >}}) du dossier |
 | **Source** | Origine de l'information |
-| **Période** | Date de début et fin (pour la timeline) |
+| **Période** | Date de début et fin, avec fuseau de la source si besoin ([Dates et fuseaux horaires]({{< relref "dates-timezones" >}})) |
 | **Dirigé** | Flèche indiquant le sens |
 | **Propriétés** | Champs personnalisés |
 

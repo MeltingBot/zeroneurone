@@ -131,6 +131,8 @@
       "snapToGrid": "Rejilla magnética",
       "alignGuides": "Guías de alineación",
       "minimap": "Minimapa",
+      "temporalUndatedHide": "Ocultar los no fechados",
+      "temporalUndatedShow": "Mostrar los no fechados (en gris)",
       "hideMinimap": "Ocultar minimapa",
       "closeEsc": "Cerrar (Esc)",
       "close": "Cerrar",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} elemento(s) localizado(s)",
     "linksCount": "({{count}} enlace(s))",
     "temporalMode": "Modo temporal",
+    "period": "Período",
     "toggle3D": "Modo 3D",
     "searchPlace": "Buscar un lugar...",
     "toggle3DBuildings": "Edificios 3D",
@@ -386,7 +389,8 @@
     "ofmPositron": "Claro",
     "ofmLiberty": "Detallado",
     "ofmDark": "Oscuro",
-    "ofmFiord": "Alto contraste"
+    "ofmFiord": "Alto contraste",
+    "timeZoneHint": "Zona horaria"
   },
   "timeline": {
     "noEvents": "Ningún evento fechado",

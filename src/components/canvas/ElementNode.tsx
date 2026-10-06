@@ -9,6 +9,8 @@ import { FONT_SIZE_PX } from '../../types';
 import { useUIStore, useTagSetStore, useSyncStore, useCustomIconStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
 import { computeElementDimensions, getBaseSize } from '../../utils/elementDimensions';
+import { TemporalEventsBadge } from './TemporalEventsBadge';
+import type { TemporalEventSummary } from '../../utils/temporalUtils';
 
 // Redacted text component for anonymous mode
 function RedactedText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -54,6 +56,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   badgeProperty?: { value: string; type: string } | null;
   /** Zoomed far enough out that labels are unreadable: render a plain box. */
   isLowDetail?: boolean;
+  /** Temporal navigator: events of the element at the instant/period */
+  activeEvents?: TemporalEventSummary;
   /** Whether any link touches this node — drives whether handles are needed. */
   hasLinks?: boolean;
   /** Show the confidence / grading badge */
@@ -73,6 +77,8 @@ export interface ElementNodeData extends Record<string, unknown> {
 // Minimum sizes for resizing
 const MIN_WIDTH = 60;
 const MIN_HEIGHT = 40;
+// Height reserved below the node for the temporal event label (px)
+const EVENT_LABEL_HEIGHT = 24;
 
 // Convert country code to flag emoji (e.g., "FR" → "🇫🇷")
 function countryCodeToFlag(countryCode: string): string {
@@ -92,7 +98,7 @@ function isLikelyCountryCode(value: string): boolean {
 function ElementNodeComponent({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks, activeEvents } = nodeData;
   const confidenceBadge = showConfidenceIndicator
     ? getEvaluationBadge(element.confidence, element.evaluation, evaluationModel ?? 'zeroneurone')
     : null;
@@ -278,6 +284,7 @@ function ElementNodeComponent({ data }: NodeProps) {
   const hasExternalLabel =
     hasThumbnail &&
     (element.visual.shape === 'circle' || element.visual.shape === 'hexagon' || element.visual.shape === 'diamond');
+  const showEventLabel = !!activeEvents && !anonymousMode;
   const externalLabelReserve = hasExternalLabel
     ? (element.visual.shape === 'diamond' ? (height * (Math.SQRT2 - 1)) / 2 + 4 : 2) + 18
     : 0;
@@ -526,11 +533,20 @@ function ElementNodeComponent({ data }: NodeProps) {
         </div>
       )}
 
+      {/* Temporal navigator: events of this element at the instant/period, below the node */}
+      {showEventLabel && activeEvents && (
+        <TemporalEventsBadge
+          elementId={element.id}
+          summary={activeEvents}
+          style={{ top: `calc(100% + ${(badgeProperty ? 28 : 6) + externalLabelReserve}px)` }}
+        />
+      )}
+
       {/* Displayed properties - shows selected properties below the element */}
       {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
         <div
           className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10"
-          style={{ top: `calc(100% + ${(badgeProperty ? 28 : 6) + externalLabelReserve}px)` }}
+          style={{ top: `calc(100% + ${(badgeProperty ? 28 : 6) + externalLabelReserve + (showEventLabel ? EVENT_LABEL_HEIGHT : 0)}px)` }}
         >
           {displayedPropertyValues.slice(0, 3).map(({ key, value }) => {
             const isCountry = isLikelyCountryCode(value);
@@ -849,6 +865,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.isLowDetail !== nextData.isLowDetail) return false;
+  if (prevData.activeEvents !== nextData.activeEvents) return false;
   if (prevData.hasLinks !== nextData.hasLinks) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;
   if (prevData.unresolvedCommentCount !== nextData.unresolvedCommentCount) return false;

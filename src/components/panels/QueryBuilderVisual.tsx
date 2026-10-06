@@ -6,6 +6,7 @@ import { RESERVED_FIELDS, OPERATOR_SYMBOLS } from '../../services/query/types';
 import type { QueryCondition, QueryOperator, QueryNode, QueryAnd, QueryOr, QueryNot, QueryWithin } from '../../services/query/types';
 import { serializeQuery } from '../../services/query/serializer';
 import { Plus, X, ToggleLeft, ToggleRight, MapPin, Waypoints } from 'lucide-react';
+import { toLocalDateKey } from '../../utils/dates';
 // Also pulls in maplibre-gl; only needed once the user opens the picker.
 const GeoRadiusPicker = lazy(() => import('./GeoRadiusPicker').then(m => ({ default: m.GeoRadiusPicker })));
 
@@ -171,7 +172,7 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
   // Format date value for input[type="date"]
   const dateInputValue = useMemo(() => {
     const v = condition.value;
-    if (v instanceof Date) return v.toISOString().slice(0, 10);
+    if (v instanceof Date) return toLocalDateKey(v);
     if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
     return '';
   }, [condition.value]);
@@ -234,7 +235,7 @@ function ConditionRow({ condition, onChange, onRemove, availableFields, availabl
     return (
       <input
         type="text"
-        value={condition.value instanceof Date ? condition.value.toISOString().slice(0, 10) : String(condition.value ?? '')}
+        value={condition.value instanceof Date ? toLocalDateKey(condition.value) : String(condition.value ?? '')}
         onChange={handleValueChange}
         placeholder={t('query.valuePlaceholder')}
         className={inputClass}

@@ -131,6 +131,8 @@
       "snapToGrid": "Sareta magnetikoa",
       "alignGuides": "Lerrokatze gidak",
       "minimap": "Minimapa",
+      "temporalUndatedHide": "Ezkutatu datarik gabekoak",
+      "temporalUndatedShow": "Erakutsi datarik gabekoak (grisez)",
       "hideMinimap": "Minimapa ezkutatu",
       "closeEsc": "Itxi (Esc)",
       "close": "Itxi",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} elementu kokatuta",
     "linksCount": "({{count}} lotura)",
     "temporalMode": "Denbora modua",
+    "period": "Aldia",
     "toggle3D": "3D modua",
     "searchPlace": "Leku bat bilatu...",
     "toggle3DBuildings": "3D eraikinak",
@@ -375,7 +378,8 @@
     "ofmPositron": "Argia",
     "ofmLiberty": "Xehetua",
     "ofmDark": "Iluna",
-    "ofmFiord": "Kontraste handia"
+    "ofmFiord": "Kontraste handia",
+    "timeZoneHint": "Ordu-eremua"
   },
   "timeline": {
     "noEvents": "Ez dago datatutako gertaerarik",

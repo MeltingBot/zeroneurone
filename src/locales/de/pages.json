@@ -131,6 +131,8 @@
       "snapToGrid": "Am Raster ausrichten",
       "alignGuides": "Ausrichtungshilfen",
       "minimap": "Minimap",
+      "temporalUndatedHide": "Undatierte ausblenden",
+      "temporalUndatedShow": "Undatierte anzeigen (grau)",
       "hideMinimap": "Minimap ausblenden",
       "closeEsc": "Schließen (Esc)",
       "close": "Schließen",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} Element(e) lokalisiert",
     "linksCount": "({{count}} Verbindung(en))",
     "temporalMode": "Zeitlicher Modus",
+    "period": "Zeitraum",
     "toggle3D": "3D-Modus",
     "searchPlace": "Ort suchen...",
     "toggle3DBuildings": "3D-Gebäude",
@@ -386,7 +389,8 @@
     "ofmPositron": "Hell",
     "ofmLiberty": "Detailliert",
     "ofmDark": "Dunkel",
-    "ofmFiord": "Kontrastreich"
+    "ofmFiord": "Kontrastreich",
+    "timeZoneHint": "Zeitzone"
   },
   "timeline": {
     "noEvents": "Keine datierten Ereignisse",

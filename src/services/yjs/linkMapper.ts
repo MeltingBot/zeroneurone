@@ -9,7 +9,7 @@
 import * as Y from 'yjs';
 import type { Link, LinkVisual, Property } from '../../types';
 import { DEFAULT_LINK_VISUAL } from '../../types';
-import { dateToYjs, dateFromYjs } from '../../types/yjs';
+import { dateToYjs, dateFromYjs, dateRangeToYjs, dateRangeFromYjs } from '../../types/yjs';
 import { sanitizeEvaluation } from '../../utils/evaluation';
 
 // ============================================================================
@@ -54,10 +54,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
   })));
 
   // DateRange as plain object or null
-  map.set('dateRange', link.dateRange ? {
-    start: dateToYjs(link.dateRange.start),
-    end: dateToYjs(link.dateRange.end),
-  } : null);
+  map.set('dateRange', dateRangeToYjs(link.dateRange));
 
   // Visual as plain object
   map.set('visual', {
@@ -123,18 +120,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
   }
 
   // Handle dateRange - can be Y.Map, plain object, or null
-  let dateRange = null;
-  if (dateRangeRaw instanceof Y.Map) {
-    dateRange = {
-      start: dateFromYjs(dateRangeRaw.get('start')),
-      end: dateFromYjs(dateRangeRaw.get('end')),
-    };
-  } else if (dateRangeRaw && typeof dateRangeRaw === 'object') {
-    dateRange = {
-      start: dateFromYjs(dateRangeRaw.start),
-      end: dateFromYjs(dateRangeRaw.end),
-    };
-  }
+  const dateRange = dateRangeFromYjs(dateRangeRaw);
 
   // Handle visual - can be Y.Map or plain object
   let visual = { ...DEFAULT_LINK_VISUAL };
@@ -280,10 +266,7 @@ export function updateLinkYMap(
     }
 
     if (changes.dateRange !== undefined) {
-      ymap.set('dateRange', changes.dateRange ? {
-        start: dateToYjs(changes.dateRange.start),
-        end: dateToYjs(changes.dateRange.end),
-      } : null);
+      ymap.set('dateRange', dateRangeToYjs(changes.dateRange));
     }
 
     if (changes.visual !== undefined) {

@@ -29,8 +29,8 @@ function makeElement(overrides: Partial<Element> = {}): Element {
     isGroup: false,
     isAnnotation: false,
     childIds: [],
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-06-01'),
+    createdAt: new Date('2024-01-01T00:00:00'),
+    updatedAt: new Date('2024-06-01T00:00:00'),
     ...overrides,
   } as Element;
 }
@@ -56,8 +56,8 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     dateRange: null,
     visual: { color: '#6b7280', style: 'solid', thickness: 1 },
     curveOffset: { x: 0, y: 0 },
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-06-01'),
+    createdAt: new Date('2024-01-01T00:00:00'),
+    updatedAt: new Date('2024-06-01T00:00:00'),
     ...overrides,
   } as Link;
 }
@@ -210,8 +210,8 @@ describe('evaluator — confidence', () => {
 describe('evaluator — dates', () => {
   it('date = specific date', () => {
     const els = [
-      makeElement({ date: new Date('2024-03-15') }),
-      makeElement({ date: new Date('2024-06-01') }),
+      makeElement({ date: new Date('2024-03-15T00:00:00') }),
+      makeElement({ date: new Date('2024-06-01T00:00:00') }),
     ];
     const r = query('date = 2024-03-15', els);
     expect(r.elementIds.size).toBe(1);
@@ -220,8 +220,8 @@ describe('evaluator — dates', () => {
 
   it('date >= range start', () => {
     const els = [
-      makeElement({ date: new Date('2024-06-01') }),
-      makeElement({ date: new Date('2023-12-01') }),
+      makeElement({ date: new Date('2024-06-01T00:00:00') }),
+      makeElement({ date: new Date('2023-12-01T00:00:00') }),
     ];
     const r = query('date >= 2024-01-01', els);
     expect(r.elementIds.size).toBe(1);
@@ -229,8 +229,8 @@ describe('evaluator — dates', () => {
 
   it('date.start and date.end', () => {
     const els = [
-      makeElement({ dateRange: { start: new Date('2024-01-01'), end: new Date('2024-06-30') } }),
-      makeElement({ dateRange: { start: new Date('2023-01-01'), end: new Date('2023-06-30') } }),
+      makeElement({ dateRange: { start: new Date('2024-01-01T00:00:00'), end: new Date('2024-06-30T00:00:00') } }),
+      makeElement({ dateRange: { start: new Date('2023-01-01T00:00:00'), end: new Date('2023-06-30T00:00:00') } }),
     ];
     const r = query('date.start >= 2024-01-01', els);
     expect(r.elementIds.size).toBe(1);
@@ -238,8 +238,8 @@ describe('evaluator — dates', () => {
 
   it('created date', () => {
     const els = [
-      makeElement({ createdAt: new Date('2024-01-01') }),
-      makeElement({ createdAt: new Date('2023-01-01') }),
+      makeElement({ createdAt: new Date('2024-01-01T00:00:00') }),
+      makeElement({ createdAt: new Date('2023-01-01T00:00:00') }),
     ];
     const r = query('created >= 2024-01-01', els);
     expect(r.elementIds.size).toBe(1);
@@ -482,13 +482,13 @@ describe('evaluator — event fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-03-01'), label: 'Escale Marseille' },
-          { id: 'ev2', date: new Date('2024-04-01'), label: 'Escale Toulon' },
+          { id: 'ev1', date: new Date('2024-03-01T00:00:00'), label: 'Escale Marseille' },
+          { id: 'ev2', date: new Date('2024-04-01T00:00:00'), label: 'Escale Toulon' },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev3', date: new Date('2024-05-01'), label: 'Départ Paris' },
+          { id: 'ev3', date: new Date('2024-05-01T00:00:00'), label: 'Départ Paris' },
         ],
       }),
       makeElement({ events: [] }),
@@ -502,17 +502,17 @@ describe('evaluator — event fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-15'), label: 'Janvier' },
+          { id: 'ev1', date: new Date('2024-01-15T00:00:00'), label: 'Janvier' },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev2', date: new Date('2024-06-15'), label: 'Juin' },
+          { id: 'ev2', date: new Date('2024-06-15T00:00:00'), label: 'Juin' },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev3', date: new Date('2023-12-01'), label: 'Décembre 2023' },
+          { id: 'ev3', date: new Date('2023-12-01T00:00:00'), label: 'Décembre 2023' },
         ],
       }),
     ];
@@ -525,12 +525,12 @@ describe('evaluator — event fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-01'), dateEnd: new Date('2024-03-01'), label: 'Long event' },
+          { id: 'ev1', date: new Date('2024-01-01T00:00:00'), dateEnd: new Date('2024-03-01T00:00:00'), label: 'Long event' },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev2', date: new Date('2024-01-01'), label: 'Ponctuel' },
+          { id: 'ev2', date: new Date('2024-01-01T00:00:00'), label: 'Ponctuel' },
         ],
       }),
     ];
@@ -543,12 +543,12 @@ describe('evaluator — event fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-01'), label: 'A', source: 'douanes' },
+          { id: 'ev1', date: new Date('2024-01-01T00:00:00'), label: 'A', source: 'douanes' },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev2', date: new Date('2024-01-01'), label: 'B', source: 'police' },
+          { id: 'ev2', date: new Date('2024-01-01T00:00:00'), label: 'B', source: 'police' },
         ],
       }),
     ];
@@ -561,12 +561,12 @@ describe('evaluator — event fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-01'), label: 'A', geo: { type: 'point', lat: 43.3, lng: 5.4 } },
+          { id: 'ev1', date: new Date('2024-01-01T00:00:00'), label: 'A', geo: { type: 'point', lat: 43.3, lng: 5.4 } },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev2', date: new Date('2024-01-01'), label: 'B' },
+          { id: 'ev2', date: new Date('2024-01-01T00:00:00'), label: 'B' },
         ],
       }),
     ];
@@ -579,12 +579,12 @@ describe('evaluator — event fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-01'), label: 'A', description: 'Suspect vu au port de Marseille' },
+          { id: 'ev1', date: new Date('2024-01-01T00:00:00'), label: 'A', description: 'Suspect vu au port de Marseille' },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev2', date: new Date('2024-01-01'), label: 'B', description: 'RAS' },
+          { id: 'ev2', date: new Date('2024-01-01T00:00:00'), label: 'B', description: 'RAS' },
         ],
       }),
     ];
@@ -598,7 +598,7 @@ describe('evaluator — event fields', () => {
       makeElement({ events: [] }),
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-01'), label: 'A' },
+          { id: 'ev1', date: new Date('2024-01-01T00:00:00'), label: 'A' },
         ],
       }),
     ];
@@ -609,7 +609,7 @@ describe('evaluator — event fields', () => {
 
   it('event.* never matches on links', () => {
     const el = makeElement({
-      events: [{ id: 'ev1', date: new Date('2024-01-01'), label: 'Event' }],
+      events: [{ id: 'ev1', date: new Date('2024-01-01T00:00:00'), label: 'Event' }],
     });
     const link = makeLink({ fromId: el.id, toId: el.id });
     const r = query('event.label = "Event"', [el], [link]);
@@ -622,19 +622,19 @@ describe('evaluator — event fields', () => {
       makeElement({
         tags: ['navire'],
         events: [
-          { id: 'ev1', date: new Date('2024-02-15'), label: 'Escale' },
+          { id: 'ev1', date: new Date('2024-02-15T00:00:00'), label: 'Escale' },
         ],
       }),
       makeElement({
         tags: ['navire'],
         events: [
-          { id: 'ev2', date: new Date('2024-08-15'), label: 'Escale' },
+          { id: 'ev2', date: new Date('2024-08-15T00:00:00'), label: 'Escale' },
         ],
       }),
       makeElement({
         tags: ['personne'],
         events: [
-          { id: 'ev3', date: new Date('2024-02-15'), label: 'Observation' },
+          { id: 'ev3', date: new Date('2024-02-15T00:00:00'), label: 'Observation' },
         ],
       }),
     ];
@@ -698,12 +698,12 @@ describe('evaluator — geo fields', () => {
     const els = [
       makeElement({
         events: [
-          { id: 'ev1', date: new Date('2024-01-01'), label: 'Escale Marseille', geo: { type: 'point', lat: 43.3, lng: 5.4 } },
+          { id: 'ev1', date: new Date('2024-01-01T00:00:00'), label: 'Escale Marseille', geo: { type: 'point', lat: 43.3, lng: 5.4 } },
         ],
       }),
       makeElement({
         events: [
-          { id: 'ev2', date: new Date('2024-01-01'), label: 'Escale Paris', geo: { type: 'point', lat: 48.85, lng: 2.35 } },
+          { id: 'ev2', date: new Date('2024-01-01T00:00:00'), label: 'Escale Paris', geo: { type: 'point', lat: 48.85, lng: 2.35 } },
         ],
       }),
       makeElement({ events: [] }),

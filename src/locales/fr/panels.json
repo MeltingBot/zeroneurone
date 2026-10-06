@@ -37,7 +37,16 @@
       "retentionReset": "Réinitialiser",
       "evaluationModel": "Modèle d'évaluation",
       "evaluationOutsideWarning": "{{count}} cotation(s) utilisent une autre échelle. Elles seront conservées et affichées en grisé, sans conversion.",
-      "evaluationHiddenWarning": "{{count}} cotation(s) seront conservées mais masquées tant que ce modèle est actif."
+      "evaluationHiddenWarning": "{{count}} cotation(s) seront conservées mais masquées tant que ce modèle est actif.",
+      "timeZone": "Fuseau horaire",
+      "legacyDates": "Dates importées à minuit UTC",
+      "legacyCheck": "Vérifier",
+      "legacyNone": "Aucune date à corriger",
+      "legacyFound": "{{count}} date(s) à corriger",
+      "legacyApply": "Corriger",
+      "legacyCancel": "Annuler",
+      "legacyDone": "{{count}} date(s) corrigée(s)",
+      "legacyError": "Échec de la correction"
     },
     "placeholders": {
       "name": "Nom du dossier",
@@ -290,7 +299,12 @@
       "setEvaluationAll": "Appliquer la même cotation à toute la sélection",
       "clearConfidenceAll": "Effacer la confiance de toute la sélection"
     },
-    "copyDate": "Copier la date"
+    "copyDate": "Copier la date",
+    "timeZone": {
+      "title": "Fuseau de l'heure saisie",
+      "search": "Ville ou fuseau",
+      "system": "Système ({{city}})"
+    }
   },
   "filters": {
     "title": "Filtres",

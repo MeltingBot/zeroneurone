@@ -37,7 +37,16 @@
       "retentionReset": "Redefinir",
       "evaluationModel": "Modelo de avaliação",
       "evaluationOutsideWarning": "{{count}} classificação(ões) usam outra escala. Serão mantidas e apresentadas a cinzento, sem conversão.",
-      "evaluationHiddenWarning": "{{count}} classificação(ões) serão mantidas, mas ocultadas enquanto este modelo estiver ativo."
+      "evaluationHiddenWarning": "{{count}} classificação(ões) serão mantidas, mas ocultadas enquanto este modelo estiver ativo.",
+      "timeZone": "Fuso horário",
+      "legacyDates": "Datas importadas à meia-noite UTC",
+      "legacyCheck": "Verificar",
+      "legacyNone": "Nenhuma data a corrigir",
+      "legacyFound": "{{count}} data(s) a corrigir",
+      "legacyApply": "Corrigir",
+      "legacyCancel": "Cancelar",
+      "legacyDone": "{{count}} data(s) corrigida(s)",
+      "legacyError": "A correção falhou"
     },
     "placeholders": {
       "name": "Nome do dossiê",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Aplicar a mesma classificação a toda a seleção",
       "clearConfidenceAll": "Limpar a confiança de toda a seleção"
     },
-    "copyDate": "Copiar data"
+    "copyDate": "Copiar data",
+    "timeZone": {
+      "title": "Fuso horário da hora introduzida",
+      "search": "Cidade ou fuso",
+      "system": "Sistema ({{city}})"
+    }
   },
   "filters": {
     "title": "Filtros",

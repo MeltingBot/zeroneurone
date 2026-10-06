@@ -131,6 +131,8 @@
       "snapToGrid": "Przyciąganie do siatki",
       "alignGuides": "Linie pomocnicze",
       "minimap": "Minimapa",
+      "temporalUndatedHide": "Ukryj bez daty",
+      "temporalUndatedShow": "Pokaż bez daty (wyszarzone)",
       "hideMinimap": "Ukryj minimapę",
       "closeEsc": "Zamknij (Esc)",
       "close": "Zamknij",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} element(ów) zlokalizowanych",
     "linksCount": "({{count}} połączenie(ń))",
     "temporalMode": "Tryb czasowy",
+    "period": "Okres",
     "toggle3D": "Tryb 3D",
     "searchPlace": "Szukaj miejsca...",
     "toggle3DBuildings": "Budynki 3D",
@@ -386,7 +389,8 @@
     "ofmPositron": "Jasny",
     "ofmLiberty": "Szczegółowy",
     "ofmDark": "Ciemny",
-    "ofmFiord": "Wysoki kontrast"
+    "ofmFiord": "Wysoki kontrast",
+    "timeZoneHint": "Strefa czasowa"
   },
   "timeline": {
     "noEvents": "Brak datowanych zdarzeń",

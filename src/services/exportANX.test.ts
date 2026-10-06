@@ -250,11 +250,20 @@ describe('buildANXExport — formatting', () => {
 
   it('carries events as cards', () => {
     const xml = buildANXExport(DOSSIER, [makeElement({
-      events: [{ id: 'ev1', date: new Date('2026-03-09'), label: 'Séjour à Genève' }] as never,
+      events: [{ id: 'ev1', date: new Date(2026, 2, 9), label: 'Séjour à Genève' }] as never,
     })], []);
     const card = expectWellFormed(xml).querySelector('Card');
     expect(card?.getAttribute('Summary')).toBe('Séjour à Genève');
-    expect(card?.getAttribute('DateTime')).toMatch(/^2026-03-09T/);
+    expect(card?.getAttribute('DateTime')).toBe('2026-03-09T00:00:00.000');
+  });
+
+  // The chart declares UseLocalTimeZone: DateTime is the local wall clock,
+  // so a late-evening event keeps its day and hour whatever the user's zone.
+  it('writes the local wall clock, not the UTC one', () => {
+    const xml = buildANXExport(DOSSIER, [makeElement({
+      events: [{ id: 'ev1', date: new Date(2026, 2, 9, 23, 30), label: 'Appel' }] as never,
+    })], []);
+    expect(expectWellFormed(xml).querySelector('Card')?.getAttribute('DateTime')).toBe('2026-03-09T23:30:00.000');
   });
 });
 
@@ -266,7 +275,7 @@ describe('buildANXExport — schema child order', () => {
 
   it('puts AttributeCollection after End, and cards inside Entity', () => {
     const xml = buildANXExport(DOSSIER, [makeElement({
-      date: new Date('2026-03-09') as never,
+      date: new Date(2026, 2, 9) as never,
       properties: [{ key: 'telephone', value: '0612345678', type: 'text' }] as never,
     })], []);
     const doc = expectWellFormed(xml);
@@ -276,7 +285,7 @@ describe('buildANXExport — schema child order', () => {
 
   it('puts AttributeCollection after Link, and cards before LinkStyle', () => {
     const xml = buildANXExport(DOSSIER, [makeElement({ id: 'e1' }), makeElement({ id: 'e2', label: 'B' })], [makeLink({
-      date: new Date('2026-03-09') as never,
+      date: new Date(2026, 2, 9) as never,
       properties: [{ key: 'montant', value: '100', type: 'text' }] as never,
     })]);
     const doc = expectWellFormed(xml);

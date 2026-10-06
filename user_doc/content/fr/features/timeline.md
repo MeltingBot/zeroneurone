@@ -34,6 +34,12 @@ Les liens ayant une **période** (date début/fin) apparaissent comme des **barr
 - Longueur = durée
 - Position = période couverte
 
+### Libellés
+
+Quand une barre est trop courte, la vignette et le libellé s'affichent juste après. Les événements ponctuels ont leur libellé à droite.
+
+Au survol, une infobulle affiche les dates. Une heure saisie dans un autre fuseau est suivie de l'heure d'origine : `02:12 (03:12 Beirut)`. Voir [Dates et fuseaux horaires]({{< relref "dates-timezones" >}}).
+
 
 ---
 
@@ -128,7 +134,7 @@ Le zoom ajuste automatiquement l'échelle :
 
 | Action | Résultat |
 |--------|----------|
-| **Clic** | Sélectionne l'élément/lien |
+| **Clic** | Sélectionne l'élément/lien et ouvre son détail dans le panneau |
 | **Ctrl+clic** | Ajoute à la sélection |
 
 La sélection est synchronisée avec le canvas : sélectionner sur la timeline sélectionne sur le canvas, et inversement.
@@ -211,4 +217,4 @@ Cliquez sur l'icône de téléchargement dans la barre d'outils pour exporter le
 
 ---
 
-**Voir aussi** : [Vue carte]({{< relref "map-view" >}}) | [Fichiers joints]({{< relref "attachments" >}})
+**Voir aussi** : [Mode temporel]({{< relref "temporal-mode" >}}) | [Vue carte]({{< relref "map-view" >}}) | [Fichiers joints]({{< relref "attachments" >}})

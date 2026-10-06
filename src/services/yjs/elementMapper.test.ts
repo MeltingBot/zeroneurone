@@ -112,3 +112,84 @@ describe('elementMapper — position safety', () => {
     expect(ymap.get('positionY')).toBe(0);
   });
 });
+
+describe('elementMapper — event properties across peers', () => {
+  // Y.js encodes a Date as a plain object with no own keys ({}): date
+  // properties inside events must go through the property serializer.
+  it('keeps a date property of an event on the remote peer', () => {
+    const when = new Date(2024, 2, 12, 14, 30);
+    const local = new Y.Doc();
+    local.getMap('elements').set('el-1', elementToYMap(makeElement({
+      events: [{
+        id: 'ev-1',
+        date: new Date(2024, 2, 12),
+        label: 'Rencontre',
+        properties: [{ key: 'heure_rdv', value: when, type: 'datetime' }],
+      }],
+    })));
+
+    const remote = new Y.Doc();
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    const result = yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>);
+
+    const value = result.events[0].properties?.[0].value;
+    expect(value).toBeInstanceOf(Date);
+    expect((value as Date).getTime()).toBe(when.getTime());
+  });
+
+  it('applies the same serialization when events are updated', () => {
+    const when = new Date(2024, 5, 1, 9, 0);
+    const local = new Y.Doc();
+    const ymap = elementToYMap(makeElement());
+    local.getMap('elements').set('el-1', ymap);
+    updateElementYMap(ymap, {
+      events: [{ id: 'ev-1', date: new Date(2024, 5, 1), label: 'Départ', properties: [{ key: 'h', value: when, type: 'datetime' }] }],
+    }, local);
+
+    const remote = new Y.Doc();
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    const result = yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>);
+    expect((result.events[0].properties?.[0].value as Date).getTime()).toBe(when.getTime());
+  });
+});
+
+describe('elementMapper — date precision across peers', () => {
+  it('keeps event and dateRange precision on the remote peer', () => {
+    const local = new Y.Doc();
+    local.getMap('elements').set('el-1', elementToYMap(makeElement({
+      dateRange: { start: new Date(1900, 0, 1), end: null, precision: 'year', approximate: true },
+      events: [{ id: 'ev-1', date: new Date(2019, 2, 1), label: 'Arrivée', precision: 'month', approximate: true }],
+    })));
+    const remote = new Y.Doc();
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    const result = yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>);
+    expect(result.events[0].precision).toBe('month');
+    expect(result.events[0].approximate).toBe(true);
+    expect(result.dateRange?.precision).toBe('year');
+    expect(result.dateRange?.approximate).toBe(true);
+  });
+
+  it('leaves dates without precision unchanged', () => {
+    const ydoc = new Y.Doc();
+    const ymap = elementToYMap(makeElement({ events: [{ id: 'ev-1', date: new Date(2019, 2, 1), label: 'X' }] }));
+    ydoc.getMap('elements').set('el-1', ymap);
+    const result = yMapToElement(ymap);
+    expect(result.events[0].precision).toBeUndefined();
+    expect('approximate' in result.events[0]).toBe(false);
+  });
+});
+
+describe('elementMapper — source time zone across peers', () => {
+  it('keeps the time zone of events and date ranges', () => {
+    const local = new Y.Doc();
+    local.getMap('elements').set('el-1', elementToYMap(makeElement({
+      dateRange: { start: new Date(2024, 0, 1), end: null, timeZone: 'Asia/Beirut' },
+      events: [{ id: 'ev-1', date: new Date(2024, 2, 1), label: 'Appel', timeZone: 'Asia/Beirut' }],
+    })));
+    const remote = new Y.Doc();
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    const result = yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>);
+    expect(result.events[0].timeZone).toBe('Asia/Beirut');
+    expect(result.dateRange?.timeZone).toBe('Asia/Beirut');
+  });
+});

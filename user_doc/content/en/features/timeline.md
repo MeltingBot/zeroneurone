@@ -34,6 +34,12 @@ Links having a **period** (start/end date) appear as **bars**:
 - Length = duration
 - Position = covered period
 
+### Labels
+
+When a bar is too short, its thumbnail and label are shown right after it. Point events have their label on the right.
+
+On hover, a tooltip shows the dates. A time entered in another zone is followed by the original time: `02:12 (03:12 Beirut)`. See [Dates and Time Zones]({{< relref "dates-timezones" >}}).
+
 
 ---
 
@@ -128,7 +134,7 @@ Zoom automatically adjusts the scale:
 
 | Action | Result |
 |--------|--------|
-| **Click** | Selects element/link |
+| **Click** | Selects element/link and opens its details in the panel |
 | **Ctrl+click** | Adds to selection |
 
 Selection is synchronized with the canvas: selecting on the timeline selects on the canvas, and vice versa.
@@ -211,4 +217,4 @@ Click the download icon in the toolbar to export timeline events as CSV. The tem
 
 ---
 
-**See also**: [Map View]({{< relref "map-view" >}}) | [Attachments]({{< relref "attachments" >}})
+**See also**: [Temporal Mode]({{< relref "temporal-mode" >}}) | [Map View]({{< relref "map-view" >}}) | [Attachments]({{< relref "attachments" >}})

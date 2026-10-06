@@ -1,7 +1,7 @@
 {
   "name": "zeroneurone-app",
   "private": true,
-  "version": "2.60.2",
+  "version": "2.61.0",
   "license": "MIT",
   "overrides": {
     "serialize-javascript": "7.0.5",
@@ -22,6 +22,7 @@
     "preview:plugins": "cp -f plugins/*.json plugins/*.js dist/plugins/ 2>/dev/null; vite preview",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "test:unit:tz": "TZ=America/Toronto vitest run && TZ=Pacific/Auckland vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

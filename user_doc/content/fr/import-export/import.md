@@ -134,9 +134,10 @@ L'import se fait en un seul lot **annulable** (Ctrl+Z).
 | cotation_echelle (ou evaluation_scale) | `europol` ou `admiralty` (format unifié) |
 | cotation_source / cotation_info | Codes de la cotation, ex. `B` et `2` |
 | source | Source de l'information |
-| date | Date (YYYY-MM-DD) |
+| date | Date : `2019`, `2019-03`, `2019-03-12` ou `2019-03-12 14:30` ; `~` en tête si approximative |
 | date_debut | Début de période (liens, events) |
 | date_fin | Fin de période (liens, events) |
+| fuseau | Fuseau des heures de la ligne, ex. `Asia/Beirut` (vide = fuseau du système) |
 | latitude | Coordonnée lat (éléments, events — pas les liens) |
 | longitude | Coordonnée lng (éléments, events — pas les liens) |
 | couleur | Code couleur (#hex) |
@@ -164,6 +165,7 @@ L'événement réutilise les colonnes du format unifié :
 | de | Label de l'élément parent (**obligatoire**) |
 | date | Date de l'événement (**obligatoire**) |
 | date_fin | Fin optionnelle (événement avec durée) |
+| fuseau | Fuseau des heures, ex. `Asia/Beirut` (optionnel) |
 | label | Libellé de l'événement |
 | notes | Description |
 | latitude / longitude | Géolocalisation (apparaît sur la carte) |

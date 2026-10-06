@@ -37,7 +37,16 @@
       "retentionReset": "Скинути",
       "evaluationModel": "Модель оцінки",
       "evaluationOutsideWarning": "Оцінок, що використовують іншу шкалу: {{count}}. Їх буде збережено й показано сірим, без перетворення.",
-      "evaluationHiddenWarning": "Оцінок, які буде збережено, але приховано, поки активна ця модель: {{count}}."
+      "evaluationHiddenWarning": "Оцінок, які буде збережено, але приховано, поки активна ця модель: {{count}}.",
+      "timeZone": "Часовий пояс",
+      "legacyDates": "Дати, імпортовані опівночі UTC",
+      "legacyCheck": "Перевірити",
+      "legacyNone": "Немає дат для виправлення",
+      "legacyFound": "Дат для виправлення: {{count}}",
+      "legacyApply": "Виправити",
+      "legacyCancel": "Скасувати",
+      "legacyDone": "Виправлено дат: {{count}}",
+      "legacyError": "Виправлення не вдалося"
     },
     "placeholders": {
       "name": "Назва справа",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Застосувати ту саму оцінку до всього виділення",
       "clearConfidenceAll": "Очистити достовірність для всього виділення"
     },
-    "copyDate": "Копіювати дату"
+    "copyDate": "Копіювати дату",
+    "timeZone": {
+      "title": "Часовий пояс введеного часу",
+      "search": "Місто або пояс",
+      "system": "Система ({{city}})"
+    }
   },
   "filters": {
     "title": "Фільтри",

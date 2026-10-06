@@ -37,7 +37,16 @@
       "retentionReset": "Zurücksetzen",
       "evaluationModel": "Bewertungsmodell",
       "evaluationOutsideWarning": "{{count}} Bewertung(en) verwenden eine andere Skala. Sie bleiben erhalten und werden ohne Umrechnung ausgegraut angezeigt.",
-      "evaluationHiddenWarning": "{{count}} Bewertung(en) bleiben erhalten, werden aber ausgeblendet, solange dieses Modell aktiv ist."
+      "evaluationHiddenWarning": "{{count}} Bewertung(en) bleiben erhalten, werden aber ausgeblendet, solange dieses Modell aktiv ist.",
+      "timeZone": "Zeitzone",
+      "legacyDates": "Um Mitternacht UTC importierte Daten",
+      "legacyCheck": "Prüfen",
+      "legacyNone": "Kein Datum zu korrigieren",
+      "legacyFound": "{{count}} Datum/Daten zu korrigieren",
+      "legacyApply": "Korrigieren",
+      "legacyCancel": "Abbrechen",
+      "legacyDone": "{{count}} Datum/Daten korrigiert",
+      "legacyError": "Korrektur fehlgeschlagen"
     },
     "placeholders": {
       "name": "Name der Akte",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Dieselbe Bewertung auf die gesamte Auswahl anwenden",
       "clearConfidenceAll": "Vertrauen für die gesamte Auswahl löschen"
     },
-    "copyDate": "Datum kopieren"
+    "copyDate": "Datum kopieren",
+    "timeZone": {
+      "title": "Zeitzone der eingegebenen Uhrzeit",
+      "search": "Stadt oder Zone",
+      "system": "System ({{city}})"
+    }
   },
   "filters": {
     "title": "Filter",

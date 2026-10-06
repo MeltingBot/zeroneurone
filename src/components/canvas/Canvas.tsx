@@ -22,7 +22,7 @@ import {
   type NodeChange,
 } from '@xyflow/react';
 
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Grid3x3, Magnet, Map as MapIcon, Box, Link2, X, Eye, EyeOff } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 
@@ -53,6 +53,9 @@ import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { dateLocale } from '../../utils/dates';
+import { collectTemporalDates, computeCanvasTemporalClassification, closestDateIndex, shiftNavigator, summarizeActiveEvents, sameEventSummary, type TemporalEventSummary } from '../../utils/temporalUtils';
+import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
 import { isMappableJson } from '../../utils/jsonMapping';
 import { isMermaidFlowchart } from '../../services/importMermaid';
 import { buildMermaidExport } from '../../services/exportMermaid';
@@ -307,6 +310,18 @@ function FitViewController() {
 }
 
 
+const EMPTY_ID_SET: Set<string> = new Set();
+
+// Return `prev` when both sets hold the same ids (keeps memo dependencies stable)
+function reuseIfSameSet(prev: Set<string>, next: Set<string>): Set<string> {
+  if (prev === next) return prev;
+  if (prev.size !== next.size) return next;
+  for (const id of next) {
+    if (!prev.has(id)) return next;
+  }
+  return prev;
+}
+
 // Convert our Element to React Flow Node
 function elementToNode(
   element: Element,
@@ -330,6 +345,7 @@ function elementToNode(
   isHighlighted?: boolean,
   isLowDetail?: boolean,
   hasLinks?: boolean,
+  activeEvents?: TemporalEventSummary,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -427,6 +443,7 @@ function elementToNode(
       themeMode,
       isLowDetail,
       hasLinks,
+      activeEvents,
     } satisfies ElementNodeData,
     selected: isGhost ? false : isSelected,
   };
@@ -637,7 +654,7 @@ export function Canvas() {
   const [isZoomedOut, setIsZoomedOut] = useState(false);
 
   const { t } = useTranslation('common');
-  const { t: tPages } = useTranslation('pages');
+  const { t: tPages, i18n } = useTranslation('pages');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -961,6 +978,88 @@ export function Canvas() {
   const importPlacementData = useUIStore((state) => state.importPlacementData);
   const exitImportPlacementMode = useUIStore((state) => state.exitImportPlacementMode);
 
+  // Temporal navigator (same controls as the map): classify elements and links
+  // at the selected instant or over the selected period. Display-only state
+  // (viewStore.canvasTemporal), never persisted nor synced.
+  const canvasTemporal = useViewStore((s) => s.canvasTemporal);
+  const setCanvasTemporal = useViewStore((s) => s.setCanvasTemporal);
+  const temporalDates = useMemo(() => collectTemporalDates(elements, links), [elements, links]);
+  const [isTemporalPlaying, setIsTemporalPlaying] = useState(false);
+  const temporalClassification = useMemo(() => {
+    if (!canvasTemporal.active || !canvasTemporal.date) return null;
+    return computeCanvasTemporalClassification(elements, links, canvasTemporal.date, canvasTemporal.periodEnd);
+  }, [canvasTemporal.active, canvasTemporal.date, canvasTemporal.periodEnd, elements, links]);
+
+  const handleToggleTemporal = useCallback(() => {
+    if (!canvasTemporal.active && temporalDates.length > 0) {
+      setCanvasTemporal({ active: true, date: temporalDates[closestDateIndex(temporalDates, Date.now())] });
+    } else {
+      setCanvasTemporal({ active: false, date: null, periodEnd: null });
+      setIsTemporalPlaying(false);
+    }
+  }, [canvasTemporal.active, temporalDates, setCanvasTemporal]);
+
+  // Play every 800ms (same pace as the map): next date, or slide the period
+  // one step keeping its width; stop at the end
+  useEffect(() => {
+    if (!isTemporalPlaying || temporalDates.length === 0) return;
+    const interval = setInterval(() => {
+      const { date, periodEnd } = useViewStore.getState().canvasTemporal;
+      const next = date ? shiftNavigator(temporalDates, date, periodEnd, 1) : { start: temporalDates[0], periodEnd: null };
+      if (!next) {
+        setIsTemporalPlaying(false);
+        return;
+      }
+      setCanvasTemporal({ date: next.start, periodEnd: next.periodEnd });
+    }, 800);
+    return () => clearInterval(interval);
+  }, [isTemporalPlaying, temporalDates, setCanvasTemporal]);
+
+  // Undated elements/links hidden by the cursor (stable references: the window moves often)
+  const prevTemporalHiddenElementsRef = useRef(EMPTY_ID_SET);
+  const temporalHiddenElementIds = useMemo(() => {
+    const next = temporalClassification && !canvasTemporal.showUndated
+      ? temporalClassification.undatedElementIds
+      : EMPTY_ID_SET;
+    prevTemporalHiddenElementsRef.current = reuseIfSameSet(prevTemporalHiddenElementsRef.current, next);
+    return prevTemporalHiddenElementsRef.current;
+  }, [temporalClassification, canvasTemporal.showUndated]);
+  const prevTemporalHiddenLinksRef = useRef(EMPTY_ID_SET);
+  const temporalHiddenLinkIds = useMemo(() => {
+    const next = temporalClassification && !canvasTemporal.showUndated
+      ? temporalClassification.undatedLinkIds
+      : EMPTY_ID_SET;
+    prevTemporalHiddenLinksRef.current = reuseIfSameSet(prevTemporalHiddenLinksRef.current, next);
+    return prevTemporalHiddenLinksRef.current;
+  }, [temporalClassification, canvasTemporal.showUndated]);
+
+  // Events shown under each active element: the most recent one, a count of
+  // the others (period mode), and the full dated list (clickable popover).
+  const prevTemporalEventSummariesRef = useRef(new Map<string, TemporalEventSummary>());
+  const temporalEventSummaries = useMemo(() => {
+    const next = new Map<string, TemporalEventSummary>();
+    if (temporalClassification) {
+      for (const [id, events] of temporalClassification.activeEventsByElement) {
+        next.set(id, summarizeActiveEvents(events, i18n.language));
+      }
+    }
+    // Keep previous summary objects when unchanged, so only nodes whose events
+    // changed are rebuilt; keep the previous Map when nothing changed at all.
+    const prev = prevTemporalEventSummariesRef.current;
+    let changed = prev.size !== next.size;
+    for (const [id, summary] of next) {
+      const p = prev.get(id);
+      if (p && sameEventSummary(p, summary)) {
+        next.set(id, p);
+      } else {
+        changed = true;
+      }
+    }
+    if (!changed) return prev;
+    prevTemporalEventSummariesRef.current = next;
+    return next;
+  }, [temporalClassification, i18n.language]);
+
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
   // Stabilized: returns the same Set reference if contents haven't changed,
   // preventing unnecessary cascading to nodes and edges useMemos.
@@ -999,6 +1098,15 @@ export function Canvas() {
       }
     }
 
+    // Temporal navigator: dated elements with nothing at the instant/period,
+    // and undated ones when shown greyed (hidden otherwise, see visible filter)
+    if (temporalClassification) {
+      for (const id of temporalClassification.inactiveElementIds) newDimmed.add(id);
+      if (canvasTemporal.showUndated) {
+        for (const id of temporalClassification.undatedElementIds) newDimmed.add(id);
+      }
+    }
+
     // Stabilize reference: return previous Set if contents are identical
     const prev = prevDimmedRef.current;
     if (newDimmed.size === prev.size) {
@@ -1010,7 +1118,7 @@ export function Canvas() {
     }
     prevDimmedRef.current = newDimmed;
     return newDimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, temporalClassification, canvasTemporal.showUndated]);
 
   // Emphasized (glow) element IDs: the positive "result set" of an active
   // narrowing — insights highlight, ZNQuery filter, or view filters. These are
@@ -1025,7 +1133,13 @@ export function Canvas() {
       filtersActive;
 
     let next: Set<string>;
-    if (!narrowingActive) {
+    if (temporalClassification) {
+      // Canvas time cursor: glow on elements with an event inside the window
+      next = new Set<string>();
+      for (const id of temporalClassification.activeElementIds) {
+        if (!dimmedElementIds.has(id)) next.add(id);
+      }
+    } else if (!narrowingActive) {
       next = new Set<string>();
     } else {
       next = new Set<string>();
@@ -1045,7 +1159,7 @@ export function Canvas() {
     }
     prevEmphasizedRef.current = next;
     return next;
-  }, [elements, dimmedElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, filtersActive]);
+  }, [elements, dimmedElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, filtersActive, temporalClassification]);
 
   // Pre-compute comment counts per element (O(c) instead of O(n*c))
   const commentCountMap = useMemo(() => {
@@ -1199,6 +1313,9 @@ export function Canvas() {
   // Track property display settings to invalidate cache when they change
   const prevBadgeKeyRef = useRef(filters.badgePropertyKey);
   const prevDisplayedPropsRef = useRef(displayedProperties);
+  // Date property values are formatted in the UI language
+  const propertyDateLocale = dateLocale(i18n.language);
+  const prevPropertyDateLocaleRef = useRef(propertyDateLocale);
 
   const nodeStructures = useMemo(() => {
     const prevElements = prevElementsByIdRef.current;
@@ -1206,10 +1323,12 @@ export function Canvas() {
 
     // Invalidate entire cache when property display settings change
     if (prevBadgeKeyRef.current !== filters.badgePropertyKey ||
-        prevDisplayedPropsRef.current !== displayedProperties) {
+        prevDisplayedPropsRef.current !== displayedProperties ||
+        prevPropertyDateLocaleRef.current !== propertyDateLocale) {
       cache.clear();
       prevBadgeKeyRef.current = filters.badgePropertyKey;
       prevDisplayedPropsRef.current = displayedProperties;
+      prevPropertyDateLocaleRef.current = propertyDateLocale;
     }
 
     const buildStructure = (el: Element): NodeStructure => {
@@ -1225,7 +1344,7 @@ export function Canvas() {
           const valueStr = typeof prop.value === 'string'
             ? prop.value
             : prop.value instanceof Date
-              ? prop.value.toLocaleDateString('fr-FR')
+              ? prop.value.toLocaleDateString(propertyDateLocale)
               : String(prop.value);
           badgeProperty = { value: valueStr, type: prop.type || 'text' };
         }
@@ -1238,7 +1357,7 @@ export function Canvas() {
           const valueStr = typeof prop.value === 'string'
             ? prop.value
             : prop.value instanceof Date
-              ? prop.value.toLocaleDateString('fr-FR')
+              ? prop.value.toLocaleDateString(propertyDateLocale)
               : String(prop.value);
           return { key, value: valueStr };
         })
@@ -1250,6 +1369,7 @@ export function Canvas() {
     // Tab filtering: on "Tous" all elements pass, on specific tab only members + ghosts
     const visible = elements.filter((el) => {
       if (hiddenElementIds.has(el.id)) return false;
+      if (temporalHiddenElementIds.has(el.id)) return false;
       if (activeTabId !== null && !tabMemberSet.has(el.id) && !localGhostIds.has(el.id)) return false;
       return true;
     });
@@ -1284,7 +1404,7 @@ export function Canvas() {
     }
 
     return result;
-  }, [elements, hiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, activeTabId, tabMemberSet, localGhostIds]);
+  }, [elements, hiddenElementIds, temporalHiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, propertyDateLocale, activeTabId, tabMemberSet, localGhostIds]);
 
   // --- Measured dimensions cache ---
   // React Flow (controlled mode) sends dimension changes via onNodesChange after ResizeObserver
@@ -1311,6 +1431,7 @@ export function Canvas() {
   const prevTabMemberSetRef = useRef(tabMemberSet);
   const prevActiveTabIdRef = useRef(activeTabId);
   const prevLowDetailRef = useRef(isLowDetail);
+  const prevEventSummariesRef = useRef(temporalEventSummaries);
 
   // Which nodes carry at least one link. Stable: it depends on the links
   // themselves, not on the viewport, so panning never invalidates it.
@@ -1368,6 +1489,7 @@ export function Canvas() {
         emphasizedElementIds.has(ns.el.id),
         isLowDetail,
         linkedNodeIds.has(ns.el.id),
+        temporalEventSummaries.get(ns.el.id),
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1397,6 +1519,7 @@ export function Canvas() {
       prevSelectedIdsRef.current = selectedElementIds;
       prevDimmedIdsRef.current = dimmedElementIds;
       prevHighlightedIdsRef.current = emphasizedElementIds;
+      prevEventSummariesRef.current = temporalEventSummaries;
       prevEditingIdRef.current = editingElementId;
       prevRemoteUsersRef.current = remoteUsersByElement;
       prevShowConfRef.current = confidenceDisplay;
@@ -1455,6 +1578,17 @@ export function Canvas() {
       }
     }
 
+    // Temporal navigator event summary diff (summaries are recreated only when
+    // their content changes, so reference inequality means a visual change)
+    if (prevEventSummariesRef.current !== temporalEventSummaries) {
+      for (const [id, summary] of temporalEventSummaries) {
+        if (prevEventSummariesRef.current.get(id) !== summary) needsRebuild.add(id);
+      }
+      for (const id of prevEventSummariesRef.current.keys()) {
+        if (!temporalEventSummaries.has(id)) needsRebuild.add(id);
+      }
+    }
+
     // Editing diff
     if (prevEditingIdRef.current !== editingElementId) {
       if (prevEditingIdRef.current) needsRebuild.add(prevEditingIdRef.current);
@@ -1487,6 +1621,7 @@ export function Canvas() {
     prevSelectedIdsRef.current = selectedElementIds;
     prevDimmedIdsRef.current = dimmedElementIds;
     prevHighlightedIdsRef.current = emphasizedElementIds;
+    prevEventSummariesRef.current = temporalEventSummaries;
     prevEditingIdRef.current = editingElementId;
     prevRemoteUsersRef.current = remoteUsersByElement;
     prevTabMemberSetRef.current = tabMemberSet;
@@ -1540,7 +1675,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -1716,6 +1851,7 @@ export function Canvas() {
     const vBottom = (-cv.y + (wrapperSize.height + bufferPx)) / cv.zoom;
 
     const visibleLinks = links.filter(link => {
+      if (temporalHiddenLinkIds.has(link.id)) return false;
       const fromPos = nodePositions.get(link.fromId);
       const toPos = nodePositions.get(link.toId);
       if (!fromPos || !toPos) return true;
@@ -1766,10 +1902,17 @@ export function Canvas() {
     const result = cappedLinks.map(link => {
       const isSelected = selectedLinkIds.has(link.id);
       const endpointDimmed = dimmedElementIds.has(link.fromId) || dimmedElementIds.has(link.toId);
-      const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
+      const temporalDimmed = !!temporalClassification && (
+        temporalClassification.inactiveLinkIds.has(link.id) ||
+        (canvasTemporal.showUndated && temporalClassification.undatedLinkIds.has(link.id))
+      );
+      const isLinkDimmed = temporalDimmed || (endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id)));
       // Emphasis (glow): link is part of the active result set — kept (not dimmed)
-      // while a narrowing is active (insights, query, or filters).
-      const isLinkHighlighted = emphasizedElementIds.size > 0 && !isLinkDimmed;
+      // while a narrowing is active (insights, query, or filters). With the time
+      // cursor on, only links dated inside the window glow.
+      const isLinkHighlighted = temporalClassification
+        ? temporalClassification.activeLinkIds.has(link.id) && !isLinkDimmed
+        : emphasizedElementIds.size > 0 && !isLinkDimmed;
       const simplified = useSimpleEdges && !isSelected;
 
       // Reuse cached edge if visual state is unchanged (same reference → memo skip)
@@ -1781,7 +1924,8 @@ export function Canvas() {
         const linkUnchanged = cd?._linkRef === link;
         const globalsUnchanged = cd?._curveMode === linkCurveMode
           && cd?._anchorMode === linkAnchorMode
-          && cd?._showConfidence === confidenceDisplay;
+          && cd?._showConfidence === confidenceDisplay
+          && cd?._dateLocale === propertyDateLocale;
         if (linkUnchanged && globalsUnchanged) {
           const sameVisuals = cached.selected === isSelected
             && cd?.isDimmed === isLinkDimmed
@@ -1837,7 +1981,7 @@ export function Canvas() {
             const valueStr = typeof prop.value === 'string'
               ? prop.value
               : prop.value instanceof Date
-                ? prop.value.toLocaleDateString('fr-FR')
+                ? prop.value.toLocaleDateString(propertyDateLocale)
                 : String(prop.value);
             return { key, value: valueStr };
           })
@@ -1861,6 +2005,7 @@ export function Canvas() {
       edgeData._curveMode = linkCurveMode;
       edgeData._anchorMode = linkAnchorMode;
       edgeData._showConfidence = confidenceDisplay;
+      edgeData._dateLocale = propertyDateLocale;
       edgeData.isHighlighted = isLinkHighlighted;
       if (!simplified) {
         const parallel = parallelLookup.get(link.id);
@@ -1882,7 +2027,7 @@ export function Canvas() {
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, canvasTemporal.showUndated, propertyDateLocale]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.
@@ -4421,6 +4566,9 @@ export function Canvas() {
               >
                 <MapIcon size={16} />
               </button>
+              {(temporalDates.length > 0 || canvasTemporal.active) && (
+                <TemporalToggleButton active={canvasTemporal.active} onClick={handleToggleTemporal} />
+              )}
               <div className="w-px h-4 bg-border-default mx-1" />
               <AlignDropdown />
               <LayoutDropdown />
@@ -4429,6 +4577,27 @@ export function Canvas() {
             </>
           }
         />
+
+        {/* Temporal navigator: glows what happens at the instant/period, dims the rest */}
+        {canvasTemporal.active && temporalDates.length > 0 && (
+          <TemporalNavigatorBar
+            dates={temporalDates}
+            selectedDate={canvasTemporal.date}
+            periodEnd={canvasTemporal.periodEnd}
+            onChange={(date, periodEnd) => setCanvasTemporal({ date, periodEnd })}
+            isPlaying={isTemporalPlaying}
+            onTogglePlay={() => setIsTemporalPlaying(!isTemporalPlaying)}
+            extraControls={
+              <button
+                onClick={() => setCanvasTemporal({ showUndated: !canvasTemporal.showUndated })}
+                className={`p-1 rounded ${!canvasTemporal.showUndated ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
+                title={tPages(canvasTemporal.showUndated ? 'dossier.toolbar.temporalUndatedHide' : 'dossier.toolbar.temporalUndatedShow')}
+              >
+                {canvasTemporal.showUndated ? <Eye size={14} /> : <EyeOff size={14} />}
+              </button>
+            }
+          />
+        )}
 
         {/* Canvas */}
         <div

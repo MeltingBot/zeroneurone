@@ -295,7 +295,8 @@ function parseLinkDate(str: string): string | null {
   if (!m) return null;
   const [, d, mo, y, h, min, s] = m;
   const year = y.length === 2 ? '20' + y : y;
-  return `${year}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T${h.padStart(2, '0')}:${min}:${s}.000Z`;
+  // ANB stores the local wall clock: no zone suffix, so it is read back as local time
+  return `${year}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T${h.padStart(2, '0')}:${min}:${s}`;
 }
 
 // ============================================================================
@@ -709,9 +710,13 @@ function parseANBCards(bytes: Uint8Array): ANBCard[] {
         const oleDate = view.getFloat64(pos + 88, true);
         // Valid OLE range: ~1 (Dec 31 1899) to ~73413 (Dec 31 2100)
         if (oleDate > 1 && oleDate < 73413) {
-          const unixMs = (oleDate - 25569) * 86400000;
-          const d = new Date(unixMs);
-          if (!isNaN(d.getTime())) date = d;
+          // OLE dates count local wall-clock days: read the components as UTC,
+          // then rebuild them as local time
+          const utc = new Date((oleDate - 25569) * 86400000);
+          if (!isNaN(utc.getTime())) {
+            date = new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate(),
+              utc.getUTCHours(), utc.getUTCMinutes(), utc.getUTCSeconds());
+          }
         }
       }
 
@@ -1053,7 +1058,8 @@ function fieldToProperty(field: { ref: number; value: string }): Property {
   if (known) {
     if (known.type === 'date' && /^\d{2}\/\d{2}\/\d{4}$/.test(field.value)) {
       const [d, m, y] = field.value.split('/');
-      return { key: known.key, value: `${y}-${m}-${d}T00:00:00.000Z`, type: 'date' };
+      // Calendar day: local midnight (a UTC-midnight string shows the previous day west of UTC)
+      return { key: known.key, value: new Date(Number(y), Number(m) - 1, Number(d)), type: 'date' };
     }
     return { key: known.key, value: field.value, type: known.type };
   }

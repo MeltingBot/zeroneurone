@@ -33,8 +33,8 @@ export function ViewToolbar({
 
   return (
     <div className="min-h-10 flex items-center flex-wrap px-3 py-1 border-b border-border-default bg-bg-primary shrink-0 gap-x-2 gap-y-1">
-      {/* Left side */}
-      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 min-w-0">
+      {/* Left side (stays on the first line when the right side wraps) */}
+      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 min-w-0 self-start min-h-8">
         {leftContent}
       </div>
 
@@ -45,8 +45,10 @@ export function ViewToolbar({
         </div>
       )}
 
-      {/* Right side - view-specific + common controls */}
-      <div className="flex items-center flex-wrap gap-x-1 gap-y-1 justify-end ml-auto">
+      {/* Right side - view-specific + common controls. Takes the rest of the
+          first line and wraps its own buttons, rather than dropping as a whole
+          block onto a second line when the window is narrow */}
+      <div className="flex items-center flex-wrap gap-x-1 gap-y-1 justify-end ml-auto flex-1 min-w-0 self-start min-h-8">
         {rightContent}
 
         {/* Separator if there's right content */}

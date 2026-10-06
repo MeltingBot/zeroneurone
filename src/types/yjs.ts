@@ -12,6 +12,7 @@
  */
 
 import type * as Y from 'yjs';
+import type { DatePrecision, DateRange } from './index';
 
 // ============================================================================
 // SYNC STATE
@@ -156,4 +157,40 @@ export function dateToYjs(date: Date | null | undefined): string | null {
 export function dateFromYjs(value: string | null | undefined): Date | null {
   if (!value) return null;
   return new Date(value);
+}
+
+/**
+ * DateRange as stored in Y.js: plain object, precision kept. Optional fields
+ * are only written when set, so older peers see the same shape as before.
+ */
+export function dateRangeToYjs(range: DateRange | null | undefined): Record<string, unknown> | null {
+  if (!range) return null;
+  return {
+    start: dateToYjs(range.start),
+    end: dateToYjs(range.end),
+    ...(range.precision ? { precision: range.precision } : {}),
+    ...(range.approximate ? { approximate: true } : {}),
+    ...(range.timeZone ? { timeZone: range.timeZone } : {}),
+  };
+}
+
+/** DateRange from Y.js: a plain object, or a Y.Map written by an older peer. */
+export function dateRangeFromYjs(raw: unknown): DateRange | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const read = (key: string) =>
+    typeof (raw as { get?: unknown }).get === 'function'
+      ? (raw as Y.Map<unknown>).get(key)
+      : (raw as Record<string, unknown>)[key];
+  const precision = read('precision');
+  return {
+    start: dateFromYjs(read('start') as string | null),
+    end: dateFromYjs(read('end') as string | null),
+    ...(isDatePrecision(precision) ? { precision } : {}),
+    ...(read('approximate') === true ? { approximate: true } : {}),
+    ...(typeof read('timeZone') === 'string' && read('timeZone') ? { timeZone: read('timeZone') as string } : {}),
+  };
+}
+
+export function isDatePrecision(value: unknown): value is DatePrecision {
+  return value === 'year' || value === 'month' || value === 'day' || value === 'minute';
 }

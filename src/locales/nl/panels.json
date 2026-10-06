@@ -37,7 +37,16 @@
       "retentionReset": "Resetten",
       "evaluationModel": "Beoordelingsmodel",
       "evaluationOutsideWarning": "{{count}} waardering(en) gebruiken een andere schaal. Ze blijven behouden en worden grijs weergegeven, zonder omrekening.",
-      "evaluationHiddenWarning": "{{count}} waardering(en) blijven behouden, maar worden verborgen zolang dit model actief is."
+      "evaluationHiddenWarning": "{{count}} waardering(en) blijven behouden, maar worden verborgen zolang dit model actief is.",
+      "timeZone": "Tijdzone",
+      "legacyDates": "Om middernacht UTC geïmporteerde datums",
+      "legacyCheck": "Controleren",
+      "legacyNone": "Geen datum te corrigeren",
+      "legacyFound": "{{count}} datum/datums te corrigeren",
+      "legacyApply": "Corrigeren",
+      "legacyCancel": "Annuleren",
+      "legacyDone": "{{count}} datum/datums gecorrigeerd",
+      "legacyError": "Correctie mislukt"
     },
     "placeholders": {
       "name": "Naam van het dossier",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Dezelfde waardering toepassen op de hele selectie",
       "clearConfidenceAll": "Betrouwbaarheid voor de hele selectie wissen"
     },
-    "copyDate": "Datum kopiëren"
+    "copyDate": "Datum kopiëren",
+    "timeZone": {
+      "title": "Tijdzone van de ingevoerde tijd",
+      "search": "Stad of zone",
+      "system": "Systeem ({{city}})"
+    }
   },
   "filters": {
     "title": "Filters",

@@ -37,7 +37,16 @@
       "retentionReset": "Berrezarri",
       "evaluationModel": "Ebaluazio-eredua",
       "evaluationOutsideWarning": "{{count}} kalifikaziok beste eskala bat erabiltzen dute. Gorde egingo dira eta grisez erakutsiko dira, bihurketarik gabe.",
-      "evaluationHiddenWarning": "{{count}} kalifikazio gorde egingo dira, baina ezkutatuta egongo dira eredu hau aktibo dagoen bitartean."
+      "evaluationHiddenWarning": "{{count}} kalifikazio gorde egingo dira, baina ezkutatuta egongo dira eredu hau aktibo dagoen bitartean.",
+      "timeZone": "Ordu-eremua",
+      "legacyDates": "UTC gauerdian inportatutako datak",
+      "legacyCheck": "Egiaztatu",
+      "legacyNone": "Ez dago zuzentzeko datarik",
+      "legacyFound": "{{count}} data zuzentzeko",
+      "legacyApply": "Zuzendu",
+      "legacyCancel": "Utzi",
+      "legacyDone": "{{count}} data zuzenduta",
+      "legacyError": "Zuzenketak huts egin du"
     },
     "placeholders": {
       "name": "Espedienteren izena",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Kalifikazio bera aplikatu hautapen osoari",
       "clearConfidenceAll": "Ezabatu hautapen osoaren konfiantza"
     },
-    "copyDate": "Data kopiatu"
+    "copyDate": "Data kopiatu",
+    "timeZone": {
+      "title": "Idatzitako orduaren ordu-eremua",
+      "search": "Hiria edo eremua",
+      "system": "Sistema ({{city}})"
+    }
   },
   "filters": {
     "title": "Iragazkiak",

@@ -131,6 +131,8 @@
       "snapToGrid": "Graella magnètica",
       "alignGuides": "Guies d'alineació",
       "minimap": "Minimapa",
+      "temporalUndatedHide": "Amagar els no datats",
+      "temporalUndatedShow": "Mostrar els no datats (en gris)",
       "hideMinimap": "Amagar minimapa",
       "closeEsc": "Tancar (Esc)",
       "close": "Tancar",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} element(s) localitzat(s)",
     "linksCount": "({{count}} enllaç(os))",
     "temporalMode": "Mode temporal",
+    "period": "Període",
     "toggle3D": "Mode 3D",
     "searchPlace": "Cercar un lloc...",
     "toggle3DBuildings": "Edificis 3D",
@@ -375,7 +378,8 @@
     "ofmPositron": "Clar",
     "ofmLiberty": "Detallat",
     "ofmDark": "Fosc",
-    "ofmFiord": "Alt contrast"
+    "ofmFiord": "Alt contrast",
+    "timeZoneHint": "Fus horari"
   },
   "timeline": {
     "noEvents": "Cap esdeveniment datat",

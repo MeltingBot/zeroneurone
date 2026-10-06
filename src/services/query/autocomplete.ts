@@ -4,6 +4,7 @@
 import type { Element, Link } from '../../types';
 import { formatEvaluation } from '../../utils/evaluation';
 import { RESERVED_FIELDS, OPERATOR_KEYWORDS } from './types';
+import { toLocalDateKey } from '../../utils/dates';
 
 export interface AutocompleteSuggestion {
   text: string;
@@ -229,7 +230,7 @@ function collectFieldValues(
 
   const addValue = (v: unknown) => {
     if (v == null || v === '') return;
-    const s = v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
+    const s = v instanceof Date ? toLocalDateKey(v) : String(v);
     values.set(s, (values.get(s) || 0) + 1);
   };
 

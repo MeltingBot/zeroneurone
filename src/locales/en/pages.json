@@ -131,6 +131,8 @@
       "snapToGrid": "Snap to grid",
       "alignGuides": "Alignment guides",
       "minimap": "Minimap",
+      "temporalUndatedHide": "Hide undated",
+      "temporalUndatedShow": "Show undated (greyed)",
       "hideMinimap": "Hide minimap",
       "closeEsc": "Close (Esc)",
       "close": "Close",
@@ -350,6 +352,7 @@
     "elementsLocated": "{{count}} element(s) located",
     "linksCount": "({{count}} link(s))",
     "temporalMode": "Temporal mode",
+    "period": "Period",
     "toggle3D": "3D mode",
     "searchPlace": "Search a place...",
     "toggle3DBuildings": "Toggle 3D buildings",
@@ -390,7 +393,8 @@
     "ofmPositron": "Light",
     "ofmLiberty": "Detailed",
     "ofmDark": "Dark",
-    "ofmFiord": "High contrast"
+    "ofmFiord": "High contrast",
+    "timeZoneHint": "Time zone"
   },
   "timeline": {
     "noEvents": "No dated events",

@@ -20,6 +20,7 @@ function rehydrateLink(link: Link): Link {
     tags: link.tags || [], // Ensure tags array exists for old links
     date: link.date ? new Date(link.date) : null,
     dateRange: link.dateRange ? {
+      ...link.dateRange, // keeps precision / approximate
       start: link.dateRange.start ? new Date(link.dateRange.start) : null,
       end: link.dateRange.end ? new Date(link.dateRange.end) : null,
     } : null,

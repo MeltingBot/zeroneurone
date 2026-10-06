@@ -59,6 +59,8 @@ Prevent accidental moves by locking an element's position.
 
 Elements can have associated **events**, each with a date, description, and optionally a geolocation (point or polygon zone).
 
+The city to the right of the time shows its zone: click it to type a time in the source's zone. See [Dates and Time Zones]({{< relref "dates-timezones" >}}).
+
 ### Extract an Event to Element
 
 Turn an event into a standalone element on the canvas:
@@ -95,7 +97,7 @@ A link represents a relationship between two elements. Links are **first-class c
 | **Notes** | Detailed description |
 | **Confidence / grading** | Depending on the dossier's [evaluation model]({{< relref "evaluation" >}}) |
 | **Source** | Information origin |
-| **Period** | Start and end date (for timeline) |
+| **Period** | Start and end date, with the source's time zone if needed ([Dates and Time Zones]({{< relref "dates-timezones" >}})) |
 | **Directed** | Arrow indicating direction |
 | **Properties** | Custom fields |
 

@@ -6,6 +6,7 @@ import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
 import { parseFlexibleDate, formatDateForCopy } from '../../utils';
+import { parseDateValue } from '../../utils/dates';
 
 interface PropertiesEditorProps {
   properties: Property[];
@@ -40,6 +41,22 @@ function formatTimeForInput(date: Date): string {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${hours}:${minutes}`;
+}
+
+/**
+ * Date and time parts shown in the inputs. Imported ISO date-time strings are
+ * read as instants and shown in local time (slicing them would show the UTC
+ * day and hour); other strings (`YYYY-MM-DD`, `DD/MM/YYYY`…) are shown as is.
+ */
+function dateInputParts(value: unknown): { date: string; time: string } {
+  if (value instanceof Date) return { date: formatDateForInput(value), time: formatTimeForInput(value) };
+  if (!value) return { date: '', time: '' };
+  const str = String(value);
+  if (str.includes('T')) {
+    const d = parseDateValue(str);
+    if (d) return { date: formatDateForInput(d), time: formatTimeForInput(d) };
+  }
+  return { date: str.split('T')[0], time: str.slice(11, 16) };
 }
 
 export function PropertiesEditor({
@@ -136,8 +153,7 @@ export function PropertiesEditor({
         if (currentValue instanceof Date) {
           finalValue = isNaN(currentValue.getTime()) ? null : currentValue;
         } else if (typeof currentValue === 'string' && currentValue) {
-          const d = new Date(currentValue);
-          finalValue = isNaN(d.getTime()) ? null : d;
+          finalValue = parseDateValue(currentValue);
         } else {
           finalValue = null;
         }
@@ -589,23 +605,18 @@ function PropertyValueInput({
   // Local state for text-based inputs (syncs on blur)
   const [localText, setLocalText] = useState(String(value ?? ''));
   const [localNumber, setLocalNumber] = useState(value !== null && value !== undefined ? String(value) : '');
-  const [localDate, setLocalDate] = useState(() =>
-    value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : ''
-  );
-  const [localDateTimeDate, setLocalDateTimeDate] = useState(() =>
-    value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : ''
-  );
-  const [localDateTimeTime, setLocalDateTimeTime] = useState(() =>
-    value instanceof Date ? formatTimeForInput(value) : value ? String(value).slice(11, 16) : ''
-  );
+  const [localDate, setLocalDate] = useState(() => dateInputParts(value).date);
+  const [localDateTimeDate, setLocalDateTimeDate] = useState(() => dateInputParts(value).date);
+  const [localDateTimeTime, setLocalDateTimeTime] = useState(() => dateInputParts(value).time);
 
   // Sync local state when prop value changes externally (undo/redo, collab)
   useEffect(() => {
     setLocalText(String(value ?? ''));
     setLocalNumber(value !== null && value !== undefined ? String(value) : '');
-    setLocalDate(value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : '');
-    setLocalDateTimeDate(value instanceof Date ? formatDateForInput(value) : value ? String(value).split('T')[0] : '');
-    setLocalDateTimeTime(value instanceof Date ? formatTimeForInput(value) : value ? String(value).slice(11, 16) : '');
+    const parts = dateInputParts(value);
+    setLocalDate(parts.date);
+    setLocalDateTimeDate(parts.date);
+    setLocalDateTimeTime(parts.time);
   }, [value]);
 
   const baseInputClass = compact

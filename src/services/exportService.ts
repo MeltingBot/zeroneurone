@@ -9,7 +9,15 @@ import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { formatEvaluation } from '../utils/evaluation';
 import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
+import { formatDateForExport, formatPreciseDateKey, toLocalDateKey } from '../utils/dates';
 import { buildObsidianVault, type ObsidianLabels } from './exportObsidian';
+
+/** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
+function propertyValueToCSV(value: unknown): string {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? '' : formatDateForExport(value);
+  return String(value);
+}
+
 
 export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'anx' | 'obsidian' | 'zip';
 
@@ -41,6 +49,8 @@ export interface ExportedTagSetData {
 export interface ExportData {
   version: string;
   exportedAt: string;
+  /** IANA time zone of the exporting system: hours were entered and shown in it */
+  timeZone?: string;
   dossier: Dossier;
   elements: Element[];
   links: Link[];
@@ -137,6 +147,7 @@ class ExportService {
     const data: ExportData = {
       version: this.VERSION,
       exportedAt: new Date().toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       dossier: stripLocalOnlyDossierFields(dossier),
       elements,
       links,
@@ -356,6 +367,7 @@ class ExportService {
       'cotation_echelle',
       'cotation_source',
       'cotation_info',
+      'fuseau',
     ];
     const headers = [...baseHeaders, ...sortedPropertyKeys];
 
@@ -372,7 +384,7 @@ class ExportService {
         this.escapeCSV(el.tags.join(';')),
         el.confidence?.toString() ?? '',
         this.escapeCSV(el.source),
-        el.date ? new Date(el.date).toISOString().slice(0, 10) : '',
+        el.date ? toLocalDateKey(new Date(el.date)) : '',
         '', // date_debut
         '', // date_fin
         el.geo ? getGeoCenter(el.geo).lat.toString() : '',
@@ -386,9 +398,10 @@ class ExportService {
         el.isGroup ? 'oui' : 'non',
         el.parentGroupId ?? '',
         ...this.evaluationCSV(el),
+        '', // fuseau (no dated bounds on element rows)
       ];
       // Add property values
-      const propsMap = new Map(el.properties?.map((p) => [p.key, String(p.value)]) ?? []);
+      const propsMap = new Map(el.properties?.map((p) => [p.key, propertyValueToCSV(p.value)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }
@@ -407,8 +420,8 @@ class ExportService {
         link.confidence?.toString() ?? '',
         this.escapeCSV(link.source),
         '', // date
-        link.dateRange?.start ? new Date(link.dateRange.start).toISOString().slice(0, 10) : '',
-        link.dateRange?.end ? new Date(link.dateRange.end).toISOString().slice(0, 10) : '',
+        link.dateRange?.start ? formatPreciseDateKey(new Date(link.dateRange.start), link.dateRange.precision, link.dateRange.approximate, link.dateRange.timeZone) : '',
+        link.dateRange?.end ? formatPreciseDateKey(new Date(link.dateRange.end), link.dateRange.precision, link.dateRange.approximate, link.dateRange.timeZone) : '',
         '', // latitude
         '', // longitude
         '', // position_x
@@ -420,9 +433,10 @@ class ExportService {
         '', // est_groupe
         '', // groupe_parent
         ...this.evaluationCSV(link),
+        link.dateRange?.timeZone ?? '', // fuseau
       ];
       // Add property values
-      const propsMap = new Map(link.properties?.map((p) => [p.key, String(p.value)]) ?? []);
+      const propsMap = new Map(link.properties?.map((p) => [p.key, propertyValueToCSV(p.value)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }
@@ -441,9 +455,9 @@ class ExportService {
           '', // tags
           '', // confiance
           this.escapeCSV(ev.source ?? ''),
-          ev.date ? new Date(ev.date).toISOString().slice(0, 10) : '',
+          ev.date ? formatPreciseDateKey(new Date(ev.date), ev.precision, ev.approximate, ev.timeZone) : '',
           '', // date_debut
-          ev.dateEnd ? new Date(ev.dateEnd).toISOString().slice(0, 10) : '',
+          ev.dateEnd ? formatPreciseDateKey(new Date(ev.dateEnd), ev.precision, ev.approximate, ev.timeZone) : '',
           ev.geo ? getGeoCenter(ev.geo).lat.toString() : '',
           ev.geo ? getGeoCenter(ev.geo).lng.toString() : '',
           '', // position_x
@@ -455,9 +469,10 @@ class ExportService {
           '', // est_groupe
           '', // groupe_parent
           '', '', '', // cotation_echelle, cotation_source, cotation_info
+          ev.timeZone ?? '', // fuseau
         ];
         // Add property values
-        const propsMap = new Map(ev.properties?.map((p) => [p.key, String(p.value)]) ?? []);
+        const propsMap = new Map(ev.properties?.map((p) => [p.key, propertyValueToCSV(p.value)]) ?? []);
         for (const key of sortedPropertyKeys) {
           baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
         }
@@ -839,7 +854,7 @@ ${edges}
     obsidianLabels?: ObsidianLabels
   ): Promise<void> {
     const now = new Date();
-    const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
+    const timestamp = `${toLocalDateKey(now)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
     const baseName = `${dossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
 
     switch (format) {

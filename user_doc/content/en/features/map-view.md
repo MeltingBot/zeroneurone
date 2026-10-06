@@ -184,15 +184,7 @@ The OpenFreeMap button carries a chevron that opens the variant picker:
 
 ## Temporal Mode
 
-If your elements have dates or events with positions, enable **temporal mode**:
-
-1. Click **Temporal** in the toolbar
-2. Use the slider to navigate through time
-3. Markers appear/disappear according to their activity period
-
-Controls:
-- **Play**: automatic animation
-- **Step**: advance/go back one event
+Click **Temporal** to navigate through time, at a date or over a period. The bar is the same as on the canvas: see [Temporal Mode]({{< relref "temporal-mode" >}}).
 
 ---
 

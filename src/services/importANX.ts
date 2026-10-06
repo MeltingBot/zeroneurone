@@ -17,6 +17,7 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
+import { parseDateValue } from '../utils/dates';
 
 // ============================================================================
 // i18n
@@ -409,8 +410,8 @@ export async function importANX(
         const card0 = cards[0];
         const dateStr = card0.getAttribute('DateTime');
         if (dateStr && card0.getAttribute('DateSet') === 'true') {
-          const parsed = new Date(dateStr);
-          if (!isNaN(parsed.getTime())) date = parsed;
+          const parsed = parseDateValue(dateStr);
+          if (parsed) date = parsed;
         }
         const srcRef = card0.getAttribute('SourceReference') || '';
         const srcType = card0.getAttribute('SourceType') || '';
@@ -432,8 +433,8 @@ export async function importANX(
         const card = cards[c];
         const eDateStr = card.getAttribute('DateTime');
         if (!eDateStr) continue;
-        const eDate = new Date(eDateStr);
-        if (isNaN(eDate.getTime())) continue;
+        const eDate = parseDateValue(eDateStr);
+        if (!eDate) continue;
 
         const eSrcRef = card.getAttribute('SourceReference') || '';
         const eSrcType = card.getAttribute('SourceType') || '';
@@ -567,8 +568,8 @@ export async function importANX(
         const card0 = linkCards[0];
         const dateStr = card0.getAttribute('DateTime');
         if (dateStr && card0.getAttribute('DateSet') === 'true') {
-          const parsed = new Date(dateStr);
-          if (!isNaN(parsed.getTime())) linkDate = parsed;
+          const parsed = parseDateValue(dateStr);
+          if (parsed) linkDate = parsed;
         }
         const srcRef = card0.getAttribute('SourceReference') || '';
         const srcType = card0.getAttribute('SourceType') || '';

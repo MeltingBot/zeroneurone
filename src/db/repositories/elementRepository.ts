@@ -14,6 +14,7 @@ function rehydrateElement(element: Element): Element {
     ...element,
     date: element.date ? new Date(element.date) : null,
     dateRange: element.dateRange ? {
+      ...element.dateRange, // keeps precision / approximate
       start: element.dateRange.start ? new Date(element.dateRange.start) : null,
       end: element.dateRange.end ? new Date(element.dateRange.end) : null,
     } : null,

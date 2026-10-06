@@ -43,6 +43,23 @@ const DEFAULT_TIMELINE: TimelineState = {
   showCreatedAt: false,
 };
 
+export interface CanvasTemporalState {
+  active: boolean;
+  /** Selected instant of the navigator, or start of the period */
+  date: Date | null;
+  /** End of the period; null = instant mode */
+  periodEnd: Date | null;
+  /** Undated elements and links: shown greyed (true) or hidden (false). */
+  showUndated: boolean;
+}
+
+const DEFAULT_CANVAS_TEMPORAL: CanvasTemporalState = {
+  active: false,
+  date: null,
+  periodEnd: null,
+  showUndated: true,
+};
+
 interface ViewState {
   // Viewport
   viewport: {
@@ -81,6 +98,9 @@ interface ViewState {
   // `dateMs` is the selected instant (epoch ms), null when inactive.
   mapTemporal: { active: boolean; dateMs: number | null };
 
+  // Canvas temporal navigator — local display state, never persisted nor synced.
+  canvasTemporal: CanvasTemporalState;
+
   // Saved views
   savedViews: View[];
 
@@ -89,6 +109,9 @@ interface ViewState {
 
   // Actions - Map temporal navigator (written by MapView only)
   setMapTemporal: (state: { active: boolean; dateMs: number | null }) => void;
+
+  // Actions - Canvas time cursor
+  setCanvasTemporal: (updates: Partial<CanvasTemporalState>) => void;
 
   // Actions - Viewport
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void;
@@ -147,6 +170,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   focusDepth: 1,
   timeline: { ...DEFAULT_TIMELINE },
   mapTemporal: { active: false, dateMs: null },
+  canvasTemporal: { ...DEFAULT_CANVAS_TEMPORAL },
   savedViews: [],
 
   // Timeline
@@ -161,6 +185,11 @@ export const useViewStore = create<ViewState>((set, get) => ({
     const prev = get().mapTemporal;
     if (prev.active === next.active && prev.dateMs === next.dateMs) return;
     set({ mapTemporal: next });
+  },
+
+  // Canvas time cursor
+  setCanvasTemporal: (updates) => {
+    set((state) => ({ canvasTemporal: { ...state.canvasTemporal, ...updates } }));
   },
 
   // Viewport
@@ -422,6 +451,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
       displayMode: 'canvas',
       timeline: { ...DEFAULT_TIMELINE },
       mapTemporal: { active: false, dateMs: null },
+      canvasTemporal: { ...DEFAULT_CANVAS_TEMPORAL },
     });
   },
 }));

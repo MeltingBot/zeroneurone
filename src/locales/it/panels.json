@@ -37,7 +37,16 @@
       "retentionReset": "Reimpostare",
       "evaluationModel": "Modello di valutazione",
       "evaluationOutsideWarning": "{{count}} valutazione/i usano un'altra scala. Saranno conservate e mostrate in grigio, senza conversione.",
-      "evaluationHiddenWarning": "{{count}} valutazione/i saranno conservate ma nascoste finché questo modello è attivo."
+      "evaluationHiddenWarning": "{{count}} valutazione/i saranno conservate ma nascoste finché questo modello è attivo.",
+      "timeZone": "Fuso orario",
+      "legacyDates": "Date importate a mezzanotte UTC",
+      "legacyCheck": "Verifica",
+      "legacyNone": "Nessuna data da correggere",
+      "legacyFound": "{{count}} data/e da correggere",
+      "legacyApply": "Correggi",
+      "legacyCancel": "Annulla",
+      "legacyDone": "{{count}} data/e corretta/e",
+      "legacyError": "Correzione non riuscita"
     },
     "placeholders": {
       "name": "Nome delil fascicolo",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Applica la stessa valutazione a tutta la selezione",
       "clearConfidenceAll": "Cancella l'affidabilità per tutta la selezione"
     },
-    "copyDate": "Copia data"
+    "copyDate": "Copia data",
+    "timeZone": {
+      "title": "Fuso orario dell'ora inserita",
+      "search": "Città o fuso",
+      "system": "Sistema ({{city}})"
+    }
   },
   "filters": {
     "title": "Filtri",

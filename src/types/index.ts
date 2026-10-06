@@ -73,12 +73,31 @@ export interface ElementEvent {
   geo?: GeoData; // Point or polygon — if present, event appears on map
   properties?: Property[]; // Typed properties (same system as elements/links)
   source?: string;      // Source of this information
+  /** How precise `date`/`dateEnd` are; inferred when absent (00:00 = day, else minute) */
+  precision?: DatePrecision;
+  /** Approximate dating ("~2019", "vers mars 2019") */
+  approximate?: boolean;
+  /** Time zone (IANA) the hours were given in at the source; system zone when absent */
+  timeZone?: string;
 }
+
+/**
+ * Precision of a date. A date is stored at the start of its period (1 January
+ * for a year, the 1st for a month, local midnight for a day) and covers the
+ * whole period.
+ */
+export type DatePrecision = 'year' | 'month' | 'day' | 'minute';
 
 /** Date range for timeline */
 export interface DateRange {
   start: Date | null;
   end: Date | null;
+  /** Precision of both bounds; inferred when absent */
+  precision?: DatePrecision;
+  /** Approximate dating of the range */
+  approximate?: boolean;
+  /** Time zone (IANA) the bounds were given in at the source; system zone when absent */
+  timeZone?: string;
 }
 
 /** Property types for typed input */

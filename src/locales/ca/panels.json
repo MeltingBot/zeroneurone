@@ -37,7 +37,16 @@
       "retentionReset": "Reiniciar",
       "evaluationModel": "Model d'avaluació",
       "evaluationOutsideWarning": "{{count}} valoració(ns) fan servir una altra escala. Es conservaran i es mostraran en gris, sense conversió.",
-      "evaluationHiddenWarning": "{{count}} valoració(ns) es conservaran però quedaran ocultes mentre aquest model estigui actiu."
+      "evaluationHiddenWarning": "{{count}} valoració(ns) es conservaran però quedaran ocultes mentre aquest model estigui actiu.",
+      "timeZone": "Fus horari",
+      "legacyDates": "Dates importades a mitjanit UTC",
+      "legacyCheck": "Verificar",
+      "legacyNone": "Cap data per corregir",
+      "legacyFound": "{{count}} data(es) per corregir",
+      "legacyApply": "Corregir",
+      "legacyCancel": "Cancel·lar",
+      "legacyDone": "{{count}} data(es) corregida(es)",
+      "legacyError": "La correcció ha fallat"
     },
     "placeholders": {
       "name": "Nom de l'expedient",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Aplicar la mateixa valoració a tota la selecció",
       "clearConfidenceAll": "Esborra la confiança de tota la selecció"
     },
-    "copyDate": "Copiar la data"
+    "copyDate": "Copiar la data",
+    "timeZone": {
+      "title": "Fus horari de l'hora introduïda",
+      "search": "Ciutat o fus",
+      "system": "Sistema ({{city}})"
+    }
   },
   "filters": {
     "title": "Filtres",

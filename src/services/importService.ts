@@ -4,6 +4,8 @@ import { getPlugins } from '../plugins/pluginRegistry';
 import { generateUUID } from '../utils';
 import { decryptZip, isEncryptedZipBuffer } from './encryption/zipEncryption';
 import type {
+  DatePrecision,
+  DateRange,
   DossierId,
   Element,
   ElementId,
@@ -49,6 +51,43 @@ import { importExcalidraw, isExcalidrawFormat } from './importExcalidraw';
 import { importSTIX2, isSTIX2Format } from './importSTIX2';
 import { importGephiLiteJSON, isGephiLiteFormat } from './importGephi';
 import { importGenealogyFile, detectGenealogyFormatFromName, type GenealogyImportOptions } from './genealogy';
+import { dateFromInputKeys, parseDateWithPrecision, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
+
+/**
+ * Date read from an imported value. A bare `YYYY-MM-DD` is a calendar day (local
+ * midnight, like a date entered in the app), not UTC midnight; `2019`,
+ * `2019-03` and a `~` prefix (as written by the CSV export) are understood.
+ * Unparseable values give an Invalid Date, as `new Date()` did, for the
+ * existing checks.
+ */
+function importedDate(value: string, timeZone?: string): Date {
+  const date = parseDateWithPrecision(value)?.date;
+  if (!date) return new Date(NaN);
+  // With a source zone (`fuseau` column), the text is that zone's wall clock
+  return timeZone ? dateFromInputKeys(toLocalDateKey(date), toLocalTimeKey(date), timeZone) : date;
+}
+
+/** IANA zone from a `fuseau` cell, or undefined when empty / unknown. */
+function importedTimeZone(value: string | undefined): string | undefined {
+  const zone = value?.trim();
+  if (!zone) return undefined;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zone });
+    return zone;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Precision / approximation carried by an imported date text (`2019`, `~2019-03`…). */
+function importedPrecision(value: string | undefined): { precision?: DatePrecision; approximate?: boolean } {
+  const parsed = value ? parseDateWithPrecision(value) : null;
+  if (!parsed) return {};
+  return {
+    ...(parsed.precision && parsed.precision !== 'day' ? { precision: parsed.precision } : {}),
+    ...(parsed.approximate ? { approximate: true } : {}),
+  };
+}
 
 // ============================================================================
 // SECURITY LIMITS FOR ZIP IMPORTS (ZIP bomb protection)
@@ -952,7 +991,7 @@ class ImportService {
         // Parse date
         let date: Date | null = null;
         if (props.date) {
-          const parsed = new Date(String(props.date));
+          const parsed = importedDate(String(props.date));
           if (!isNaN(parsed.getTime())) date = parsed;
         }
 
@@ -1264,7 +1303,7 @@ class ImportService {
         const dateValue = edgeData.date || edgeData.date_heure || edgeData.datetime ||
           edgeData.timestamp || edgeData.time || edgeData.date_time;
         if (dateValue) {
-          const parsed = new Date(String(dateValue));
+          const parsed = importedDate(String(dateValue));
           if (!isNaN(parsed.getTime())) {
             edgeDate = parsed;
           }
@@ -1438,6 +1477,7 @@ class ImportService {
         date: importedElement.date ? new Date(importedElement.date) : null,
         dateRange: importedElement.dateRange
           ? {
+              ...importedElement.dateRange, // keeps precision / approximate
               start: importedElement.dateRange.start
                 ? new Date(importedElement.dateRange.start)
                 : null,
@@ -1792,6 +1832,8 @@ class ImportService {
       const dateIdx = headers.findIndex((h) => h === 'date');
       const dateStartIdx = headers.findIndex((h) => ['date_debut', 'date_start'].includes(h));
       const dateEndIdx = headers.findIndex((h) => ['date_fin', 'date_end'].includes(h));
+      const timeZoneIdx = headers.findIndex((h) => ['fuseau', 'timezone', 'time_zone'].includes(h));
+      const rowTimeZone = (values: string[]) => (timeZoneIdx >= 0 ? importedTimeZone(values[timeZoneIdx]) : undefined);
       const latIdx = headers.findIndex((h) => ['latitude', 'lat'].includes(h));
       const lngIdx = headers.findIndex((h) => ['longitude', 'lng', 'lon'].includes(h));
       const posXIdx = headers.findIndex((h) => ['position_x', 'x', 'posx'].includes(h));
@@ -1875,7 +1917,7 @@ class ImportService {
         // Parse date
         let date: Date | null = null;
         if (dateIdx >= 0 && values[dateIdx]) {
-          const parsed = new Date(values[dateIdx]);
+          const parsed = importedDate(values[dateIdx]);
           if (!isNaN(parsed.getTime())) {
             date = parsed;
           }
@@ -2059,14 +2101,16 @@ class ImportService {
         }
 
         // Parse date range
-        let dateRange: { start: Date | null; end: Date | null } | null = null;
+        let dateRange: DateRange | null = null;
         if (dateStartIdx >= 0 && values[dateStartIdx]) {
-          const startDate = new Date(values[dateStartIdx]);
-          const endDate = dateEndIdx >= 0 && values[dateEndIdx] ? new Date(values[dateEndIdx]) : startDate;
+          const startDate = importedDate(values[dateStartIdx], rowTimeZone(values));
+          const endDate = dateEndIdx >= 0 && values[dateEndIdx] ? importedDate(values[dateEndIdx], rowTimeZone(values)) : startDate;
           if (!isNaN(startDate.getTime())) {
             dateRange = {
               start: startDate,
               end: !isNaN(endDate.getTime()) ? endDate : startDate,
+              ...importedPrecision(values[dateStartIdx]),
+              ...(rowTimeZone(values) ? { timeZone: rowTimeZone(values) } : {}),
             };
           }
         }
@@ -2177,13 +2221,14 @@ class ImportService {
 
         // Parse event date (required) — prefer `date`, fallback to `date_debut`
         let eventDate: Date | null = null;
+        let eventDateText: string | undefined;
         if (dateIdx >= 0 && values[dateIdx]) {
-          const parsed = new Date(values[dateIdx]);
-          if (!isNaN(parsed.getTime())) eventDate = parsed;
+          const parsed = importedDate(values[dateIdx], rowTimeZone(values));
+          if (!isNaN(parsed.getTime())) { eventDate = parsed; eventDateText = values[dateIdx]; }
         }
         if (!eventDate && dateStartIdx >= 0 && values[dateStartIdx]) {
-          const parsed = new Date(values[dateStartIdx]);
-          if (!isNaN(parsed.getTime())) eventDate = parsed;
+          const parsed = importedDate(values[dateStartIdx], rowTimeZone(values));
+          if (!isNaN(parsed.getTime())) { eventDate = parsed; eventDateText = values[dateStartIdx]; }
         }
         if (!eventDate) {
           result.warnings.push(`Ligne ${rowNum}: date manquante ou invalide, événement ignoré`);
@@ -2194,7 +2239,7 @@ class ImportService {
         // Parse optional end date
         let eventDateEnd: Date | undefined;
         if (dateEndIdx >= 0 && values[dateEndIdx]) {
-          const parsed = new Date(values[dateEndIdx]);
+          const parsed = importedDate(values[dateEndIdx], rowTimeZone(values));
           if (!isNaN(parsed.getTime())) eventDateEnd = parsed;
         }
 
@@ -2226,6 +2271,8 @@ class ImportService {
           ...(eventGeo ? { geo: eventGeo } : {}),
           ...(eventProperties.length > 0 ? { properties: eventProperties } : {}),
           ...(sourceIdx >= 0 && values[sourceIdx]?.trim() ? { source: values[sourceIdx].trim() } : {}),
+          ...importedPrecision(eventDateText),
+          ...(rowTimeZone(values) ? { timeZone: rowTimeZone(values) } : {}),
         };
 
         const list = eventsByElementId.get(parentElement.id) ?? [];
@@ -2358,7 +2405,7 @@ class ImportService {
           // Parse date
           let date: Date | null = null;
           if (dateIdx >= 0 && values[dateIdx]) {
-            const parsed = new Date(values[dateIdx]);
+            const parsed = importedDate(values[dateIdx]);
             if (!isNaN(parsed.getTime())) {
               date = parsed;
             }
@@ -2501,6 +2548,8 @@ class ImportService {
       const confidenceIdx = headers.findIndex((h) => ['confidence', 'confiance'].includes(h.toLowerCase()));
       const dateStartIdx = headers.findIndex((h) => ['date_debut', 'date_start', 'debut', 'start'].includes(h.toLowerCase()));
       const dateEndIdx = headers.findIndex((h) => ['date_fin', 'date_end', 'fin', 'end'].includes(h.toLowerCase()));
+      const timeZoneIdx = headers.findIndex((h) => ['fuseau', 'timezone', 'time_zone'].includes(h.toLowerCase()));
+      const rowTimeZone = (values: string[]) => (timeZoneIdx >= 0 ? importedTimeZone(values[timeZoneIdx]) : undefined);
 
       if (fromIdx === -1 || toIdx === -1) {
         result.errors.push('Colonnes "de" et "vers" (ou "from" et "to") requises non trouvées');
@@ -2610,14 +2659,16 @@ class ImportService {
           }
 
           // Parse date range
-          let dateRange: { start: Date | null; end: Date | null } | null = null;
+          let dateRange: DateRange | null = null;
           if (dateStartIdx >= 0 && values[dateStartIdx]) {
-            const startDate = new Date(values[dateStartIdx]);
-            const endDate = dateEndIdx >= 0 && values[dateEndIdx] ? new Date(values[dateEndIdx]) : startDate;
+            const startDate = importedDate(values[dateStartIdx], rowTimeZone(values));
+            const endDate = dateEndIdx >= 0 && values[dateEndIdx] ? importedDate(values[dateEndIdx], rowTimeZone(values)) : startDate;
             if (!isNaN(startDate.getTime())) {
               dateRange = {
                 start: startDate,
                 end: !isNaN(endDate.getTime()) ? endDate : startDate,
+                ...importedPrecision(values[dateStartIdx]),
+                ...(rowTimeZone(values) ? { timeZone: rowTimeZone(values) } : {}),
               };
             }
           }

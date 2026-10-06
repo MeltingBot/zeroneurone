@@ -131,6 +131,8 @@
       "snapToGrid": "Прив'язка до сітки",
       "alignGuides": "Напрямні вирівнювання",
       "minimap": "Мінікарта",
+      "temporalUndatedHide": "Приховати без дати",
+      "temporalUndatedShow": "Показати без дати (сірим)",
       "hideMinimap": "Сховати мінікарту",
       "closeEsc": "Закрити (Esc)",
       "close": "Закрити",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} елементів локалізовано",
     "linksCount": "({{count}} зв'язків)",
     "temporalMode": "Темпоральний режим",
+    "period": "Період",
     "toggle3D": "3D режим",
     "searchPlace": "Шукати місце...",
     "toggle3DBuildings": "3D будівлі",
@@ -386,7 +389,8 @@
     "ofmPositron": "Світла",
     "ofmLiberty": "Детальна",
     "ofmDark": "Темна",
-    "ofmFiord": "Висока контрастність"
+    "ofmFiord": "Висока контрастність",
+    "timeZoneHint": "Часовий пояс"
   },
   "timeline": {
     "noEvents": "Немає датованих подій",

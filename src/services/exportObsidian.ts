@@ -23,6 +23,7 @@ import { formatEvaluation } from '../utils/evaluation';
 import { getGeoCenter } from '../utils/geo';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { resolveAbsolutePosition } from './svgExportService';
+import { isDayOnly, parseDateValue, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 
 /** Translated strings used in the generated notes (provided by the caller). */
 export interface ObsidianLabels {
@@ -112,25 +113,14 @@ function wikilink(basename: string, display?: string): string {
 // VALUES
 // ============================================================================
 
-function toDate(value: unknown): Date | null {
-  if (value === null || value === undefined || value === '') return null;
-  const d = value instanceof Date ? value : new Date(value as string);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 /**
- * Calendar date, plus local time when there is one. Date-only inputs are
- * stored at UTC midnight: read in local time they would shift to 01:00.
+ * Calendar date, plus local time when there is one: the same reading as the
+ * app (a value entered without a time is stored at local midnight).
  */
 export function formatDate(value: unknown): string {
-  const d = toDate(value);
+  const d = parseDateValue(value);
   if (!d) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  if (!d.getUTCHours() && !d.getUTCMinutes()) {
-    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-  }
-  const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return d.getHours() || d.getMinutes() ? `${day}T${pad(d.getHours())}:${pad(d.getMinutes())}` : day;
+  return isDayOnly(d) ? toLocalDateKey(d) : `${toLocalDateKey(d)}T${toLocalTimeKey(d)}`;
 }
 
 function formatPeriod(start: unknown, end: unknown): string {
@@ -349,7 +339,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
 
     if (el.events?.length) {
       body.push(`## ${labels.events}`, '');
-      const sorted = [...el.events].sort((a, b) => (toDate(a.date)?.getTime() ?? 0) - (toDate(b.date)?.getTime() ?? 0));
+      const sorted = [...el.events].sort((a, b) => (parseDateValue(a.date)?.getTime() ?? 0) - (parseDateValue(b.date)?.getTime() ?? 0));
       for (const ev of sorted) body.push(...eventLines(ev));
       body.push('');
     }

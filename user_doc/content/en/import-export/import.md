@@ -134,9 +134,10 @@ The import happens as a single **undoable** batch (Ctrl+Z).
 | cotation_echelle (or evaluation_scale) | `europol` or `admiralty` (unified format) |
 | cotation_source / cotation_info | Grading codes, e.g. `B` and `2` |
 | source | Information source |
-| date | Date (YYYY-MM-DD) |
+| date | Date: `2019`, `2019-03`, `2019-03-12` or `2019-03-12 14:30`; leading `~` if approximate |
 | start_date | Period start (links, events) |
 | end_date | Period end (links, events) |
+| fuseau (or timezone) | Time zone of the row's times, e.g. `Asia/Beirut` (empty = system zone) |
 | latitude | Lat coordinate (elements, events — not links) |
 | longitude | Lng coordinate (elements, events — not links) |
 | color | Color code (#hex) |
@@ -164,6 +165,7 @@ The event reuses the unified-format columns:
 | from | Parent element label (**required**) |
 | date | Event date (**required**) |
 | end_date | Optional end (event with duration) |
+| fuseau (or timezone) | Time zone of the times, e.g. `Asia/Beirut` (optional) |
 | label | Event label |
 | notes | Description |
 | latitude / longitude | Geolocation (shows on the map) |

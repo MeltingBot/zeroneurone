@@ -91,8 +91,12 @@ Colonnes :
 | tags | Tags séparés par ; |
 | confiance | 0-100 |
 | cotation_echelle / cotation_source / cotation_info | Cotation Europol ou Amirauté (voir [évaluation]({{< relref "features/evaluation" >}})) |
-| date / date_fin | Date de l'événement et fin éventuelle |
+| date / date_fin | Date de l'événement et fin éventuelle (événements) |
+| date_debut / date_fin | Période (liens) |
+| fuseau | Fuseau de la source ; les heures de la ligne sont écrites dans ce fuseau |
 | ... | Propriétés personnalisées |
+
+Formats de date : voir [Dates et fuseaux horaires]({{< relref "features/dates-timezones" >}}).
 
 Les **événements** rattachés aux éléments sont exportés en lignes `type=event` : un aller-retour export → import reconstruit la chronologie à l'identique.
 

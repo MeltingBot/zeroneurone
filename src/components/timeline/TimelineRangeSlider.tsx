@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { toLocalDateKey, dateLocale } from '../../utils/dates';
 
 interface TimelineRangeSliderProps {
   minDate: Date;
@@ -16,9 +17,9 @@ function formatDate(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-// Format date for input
+// Format date for input (local day: toISOString would show the previous day east of UTC)
 function formatDateForInput(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return toLocalDateKey(date);
 }
 
 export function TimelineRangeSlider({
@@ -30,7 +31,7 @@ export function TimelineRangeSlider({
   onClear,
 }: TimelineRangeSliderProps) {
   const { t, i18n } = useTranslation('pages');
-  const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = dateLocale(i18n.language);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<'start' | 'end' | 'range' | null>(null);

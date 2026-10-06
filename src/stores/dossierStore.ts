@@ -2009,7 +2009,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const end = target.dateRange.end && source.dateRange.end
         ? new Date(Math.max(target.dateRange.end.getTime(), source.dateRange.end.getTime()))
         : target.dateRange.end ?? source.dateRange.end;
-      mergedDateRange = { start, end };
+      mergedDateRange = { ...target.dateRange, start, end };
     } else {
       mergedDateRange = target.dateRange ?? source.dateRange;
     }

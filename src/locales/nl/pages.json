@@ -131,6 +131,8 @@
       "snapToGrid": "Magnetisch raster",
       "alignGuides": "Uitlijnhulplijnen",
       "minimap": "Minimap",
+      "temporalUndatedHide": "Ongedateerde verbergen",
+      "temporalUndatedShow": "Ongedateerde tonen (grijs)",
       "hideMinimap": "Minimap verbergen",
       "closeEsc": "Sluiten (Esc)",
       "close": "Sluiten",
@@ -349,6 +351,7 @@
     "elementsLocated": "{{count}} element(en) gelokaliseerd",
     "linksCount": "({{count}} verbinding(en))",
     "temporalMode": "Temporele modus",
+    "period": "Periode",
     "toggle3D": "3D-modus",
     "searchPlace": "Plaats zoeken...",
     "toggle3DBuildings": "3D-gebouwen",
@@ -386,7 +389,8 @@
     "ofmPositron": "Licht",
     "ofmLiberty": "Gedetailleerd",
     "ofmDark": "Donker",
-    "ofmFiord": "Hoog contrast"
+    "ofmFiord": "Hoog contrast",
+    "timeZoneHint": "Tijdzone"
   },
   "timeline": {
     "noEvents": "Geen gedateerde gebeurtenissen",

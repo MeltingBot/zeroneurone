@@ -37,7 +37,16 @@
       "retentionReset": "Resetuj",
       "evaluationModel": "Model oceny",
       "evaluationOutsideWarning": "Oceny korzystające z innej skali: {{count}}. Zostaną zachowane i wyświetlone na szaro, bez konwersji.",
-      "evaluationHiddenWarning": "Oceny, które zostaną zachowane, ale ukryte, dopóki ten model jest aktywny: {{count}}."
+      "evaluationHiddenWarning": "Oceny, które zostaną zachowane, ale ukryte, dopóki ten model jest aktywny: {{count}}.",
+      "timeZone": "Strefa czasowa",
+      "legacyDates": "Daty zaimportowane o północy UTC",
+      "legacyCheck": "Sprawdź",
+      "legacyNone": "Brak dat do poprawienia",
+      "legacyFound": "Daty do poprawienia: {{count}}",
+      "legacyApply": "Popraw",
+      "legacyCancel": "Anuluj",
+      "legacyDone": "Poprawiono daty: {{count}}",
+      "legacyError": "Poprawka nie powiodła się"
     },
     "placeholders": {
       "name": "Nazwa teczki",
@@ -276,7 +285,12 @@
       "setEvaluationAll": "Zastosuj tę samą ocenę do całego zaznaczenia",
       "clearConfidenceAll": "Wyczyść pewność dla całego zaznaczenia"
     },
-    "copyDate": "Kopiuj datę"
+    "copyDate": "Kopiuj datę",
+    "timeZone": {
+      "title": "Strefa czasowa wpisanej godziny",
+      "search": "Miasto lub strefa",
+      "system": "System ({{city}})"
+    }
   },
   "filters": {
     "title": "Filtry",

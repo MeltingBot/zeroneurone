@@ -10,12 +10,18 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
-import { MapPin, Clock, Play, Pause, SkipBack, SkipForward, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
+import { MapPin, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { ZoneDrawTool } from './ZoneDrawTool';
 import { ZoneEditTool } from './ZoneEditTool';
 import { ZoneLayers, resolveCssColor } from './ZoneLayers';
+import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
+import { toMinuteStart, dateEndInclusive, linkInterval, eventInterval, elementRangeInterval, overlaps, navigatorWindow, shiftNavigator, closestDateIndex, computeCanvasTemporalClassification, summarizeActiveEvents, type TemporalEventSummary } from '../../utils/temporalUtils';
+import { TemporalEventsPopover } from '../common/TemporalEventsPopover';
+import { toLocalDateKey } from '../../utils/dates';
+import { useHoverPopover } from '../../hooks/useHoverPopover';
+import { useFocusElementEvent } from '../../hooks/useFocusElementEvent';
 
 // Element with geo coordinates (resolved for a specific time)
 interface ResolvedGeoElement {
@@ -330,6 +336,13 @@ export function MapView() {
   // Temporal mode state
   const [temporalMode, setTemporalMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // End of the selected period; null = instant mode (selectedDate only)
+  const [periodEnd, setPeriodEnd] = useState<Date | null>(null);
+  // Period mode: [selectedDate, periodEnd]; null in instant mode
+  const periodWindow = useMemo(
+    () => (temporalMode && selectedDate && periodEnd ? navigatorWindow(selectedDate, periodEnd) : null),
+    [temporalMode, selectedDate, periodEnd]
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [temporalFollowCamera, setTemporalFollowCamera] = useState(false);
   const [temporalTrace, setTemporalTrace] = useState(false);
@@ -337,12 +350,15 @@ export function MapView() {
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
   // Publish the temporal scrubber into the view store so other views
   // and plugins can follow the scrubbed instant (deduped in the store).
+  // In period mode the published instant is the end of the period (the
+  // leading edge while playing).
   useEffect(() => {
+    const instant = periodEnd ?? selectedDate;
     useViewStore.getState().setMapTemporal({
       active: temporalMode,
-      dateMs: temporalMode && selectedDate ? selectedDate.getTime() : null,
+      dateMs: temporalMode && instant ? instant.getTime() : null,
     });
-  }, [temporalMode, selectedDate]);
+  }, [temporalMode, selectedDate, periodEnd]);
   useEffect(() => () => {
     // Leaving the map view ends the scrub for followers.
     useViewStore.getState().setMapTemporal({ active: false, dateMs: null });
@@ -423,23 +439,6 @@ export function MapView() {
     return counts;
   }, [comments]);
 
-  // Normalize to start of minute (preserves minute-level precision for the temporal slider)
-  const toMinuteStart = useCallback((d: Date | string | number): Date => {
-    const date = new Date(d);
-    date.setSeconds(0, 0);
-    return date;
-  }, []);
-
-  // Inclusive end timestamp for a date used as a bound.
-  // Dates without time-of-day (hh=mm=ss=ms=0) are treated as a full day, for backward compat
-  // with dossiers that only recorded days. Dates with a time are used as exact instants.
-  const dateEndInclusive = useCallback((d: Date | string | number): number => {
-    const date = new Date(d);
-    const isDayOnly = date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
-    if (isDayOnly) return date.getTime() + 24 * 60 * 60 * 1000 - 1;
-    return date.getTime();
-  }, []);
-
   // Calculate time range and collect all unique event dates
   const { timeRange, eventDates } = useMemo(() => {
     const allDates: Date[] = [];
@@ -474,7 +473,7 @@ export function MapView() {
       timeRange: { min: sortedDates[0], max: sortedDates[sortedDates.length - 1] },
       eventDates: sortedDates,
     };
-  }, [elements, links, toMinuteStart]);
+  }, [elements, links]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
@@ -542,7 +541,7 @@ export function MapView() {
       }
       return null;
     },
-    [temporalMode, toMinuteStart, dateEndInclusive]
+    [temporalMode]
   );
 
   // Get any geo position for an element (for link-pulled visibility)
@@ -575,6 +574,10 @@ export function MapView() {
   const isLinkActiveAtTime = useCallback(
     (link: typeof links[0]): boolean => {
       if (!temporalMode || !selectedDate) return true;
+      if (periodWindow) {
+        const interval = linkInterval(link);
+        return interval ? overlaps(interval, periodWindow) : true;
+      }
       const targetTime = toMinuteStart(selectedDate).getTime();
       if (link.date) {
         const linkDate = toMinuteStart(link.date).getTime();
@@ -589,40 +592,23 @@ export function MapView() {
       }
       return true;
     },
-    [temporalMode, selectedDate, toMinuteStart, dateEndInclusive]
+    [temporalMode, selectedDate, periodWindow]
   );
 
   // Calculate visibility windows for each element based on links
   const elementLinkVisibility = useMemo(() => {
     const visibilityMap = new Map<string, { from: number; until: number }[]>();
     links.forEach((link) => {
-      let linkFrom: number | null = null;
-      let linkUntil: number | null = null;
-      if (link.date) {
-        linkFrom = toMinuteStart(link.date).getTime();
-        linkUntil = dateEndInclusive(toMinuteStart(link.date));
-      }
-      if (link.dateRange?.start) {
-        const rangeStart = toMinuteStart(link.dateRange.start).getTime();
-        const rangeEnd = link.dateRange.end ? dateEndInclusive(toMinuteStart(link.dateRange.end)) : Infinity;
-        if (linkFrom !== null) {
-          linkFrom = Math.min(linkFrom, rangeStart);
-          linkUntil = Math.max(linkUntil!, rangeEnd);
-        } else {
-          linkFrom = rangeStart;
-          linkUntil = rangeEnd;
-        }
-      }
-      if (linkFrom !== null && linkUntil !== null) {
-        [link.fromId, link.toId].forEach((elId) => {
-          const existing = visibilityMap.get(elId) || [];
-          existing.push({ from: linkFrom!, until: linkUntil! });
-          visibilityMap.set(elId, existing);
-        });
-      }
+      const interval = linkInterval(link);
+      if (!interval) return;
+      [link.fromId, link.toId].forEach((elId) => {
+        const existing = visibilityMap.get(elId) || [];
+        existing.push({ from: interval.from, until: interval.until });
+        visibilityMap.set(elId, existing);
+      });
     });
     return visibilityMap;
-  }, [links, toMinuteStart, dateEndInclusive]);
+  }, [links]);
 
   // Check if element is visible via any link at a given time
   const isVisibleViaLink = useCallback(
@@ -644,6 +630,55 @@ export function MapView() {
         const position = getPositionAtTime(el, null);
         if (position) {
           result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
+        }
+      });
+      return result;
+    }
+    if (periodWindow) {
+      // Period mode: only what is active inside the period. An element shows at
+      // its latest geolocated event of the period; the trace keeps the others.
+      elements.forEach((el) => {
+        if (hiddenElementIds.has(el.id)) return;
+        if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
+        const eventsInPeriod = (el.events || [])
+          .filter((e) => {
+            const interval = eventInterval(e);
+            return interval !== null && overlaps(interval, periodWindow);
+          })
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const viaLink = (elementLinkVisibility.get(el.id) || []).some((w) => overlaps(w, periodWindow));
+        let position: { geo: { lat: number; lng: number }; geoData?: GeoData; label?: string; eventId?: string } | null = null;
+        const geoEventsInPeriod = eventsInPeriod.filter((e) => e.geo);
+        const latestGeoEvent = geoEventsInPeriod[geoEventsInPeriod.length - 1];
+        if (latestGeoEvent) {
+          position = { geo: getGeoCenter(latestGeoEvent.geo!), geoData: latestGeoEvent.geo!, label: latestGeoEvent.label, eventId: latestGeoEvent.id };
+        } else if (eventsInPeriod.length > 0 && el.geo) {
+          const latest = eventsInPeriod[eventsInPeriod.length - 1];
+          position = { geo: getGeoCenter(el.geo), geoData: el.geo, label: latest.label, eventId: latest.id };
+        } else if (eventsInPeriod.length === 0 && (el.events || []).length === 0 && el.geo) {
+          const ownRange = elementRangeInterval(el);
+          const ownDate = el.date ? navigatorWindow(el.date, null) : null;
+          if ((ownRange && overlaps(ownRange, periodWindow)) || (!ownRange && ownDate && overlaps(ownDate, periodWindow))) {
+            position = { geo: getGeoCenter(el.geo), geoData: el.geo };
+          }
+        }
+        if (!position && viaLink) position = getAnyGeoPosition(el);
+        if (!position) return;
+        result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
+        if (temporalTrace) {
+          for (const ev of geoEventsInPeriod) {
+            if (ev.id === position.eventId) continue;
+            result.push({
+              element: el,
+              geo: getGeoCenter(ev.geo!),
+              geoData: ev.geo!,
+              fromEvent: true,
+              eventLabel: ev.label,
+              eventId: ev.id,
+              isBreadcrumb: true,
+              secondaryEvent: true,
+            });
+          }
         }
       });
       return result;
@@ -720,7 +755,7 @@ export function MapView() {
       }
     });
     return result;
-  }, [elements, selectedDate, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, temporalTrace, isVisibleViaLink, toMinuteStart, dateEndInclusive, activeTabId, tabMemberSet, tabGhostIds]);
+  }, [elements, selectedDate, periodWindow, elementLinkVisibility, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, temporalTrace, isVisibleViaLink, activeTabId, tabMemberSet, tabGhostIds]);
 
   // Legacy geoElements for compatibility (preserves full GeoData including polygons).
   // Enriched with _markerKey/_eventId so a single element can produce several markers
@@ -761,6 +796,57 @@ export function MapView() {
     });
   }, [links, geoElementIds, temporalMode, selectedDate, isLinkActiveAtTime]);
 
+  // Temporal mode: events of each element at the instant/period, same rule as
+  // the canvas. Shown as a badge under the element's primary marker.
+  const temporalEventSummaries = useMemo(() => {
+    const summaries = new Map<string, TemporalEventSummary>();
+    if (!temporalMode || !selectedDate) return summaries;
+    const classification = computeCanvasTemporalClassification(elements, links, selectedDate, periodEnd);
+    for (const [id, events] of classification.activeEventsByElement) {
+      summaries.set(id, summarizeActiveEvents(events, i18n.language));
+    }
+    return summaries;
+  }, [temporalMode, selectedDate, periodEnd, elements, links, i18n.language]);
+
+  // Event list popover opened from a marker badge (markers are plain DOM, so
+  // their listeners reach React state through refs)
+  const eventPopover = useHoverPopover();
+  const eventPopoverAnchorRef = useRef<HTMLElement | null>(null);
+  const [eventPopoverElementId, setEventPopoverElementId] = useState<string | null>(null);
+  const eventPopoverHandlersRef = useRef({
+    open: (_elementId: string, _anchor: HTMLElement) => {},
+    toggle: (_elementId: string, _anchor: HTMLElement) => {},
+    scheduleClose: () => {},
+  });
+  const focusElementEvent = useFocusElementEvent();
+  useEffect(() => {
+    // A single event: the list would only repeat the badge, so no hover list
+    // and a click opens the event in the side panel directly.
+    const openFor = (elementId: string, anchor: HTMLElement) => {
+      const summary = temporalEventSummaries.get(elementId);
+      if (!summary || summary.moreCount === 0) return;
+      eventPopoverAnchorRef.current = anchor;
+      setEventPopoverElementId(elementId);
+      eventPopover.open();
+    };
+    eventPopoverHandlersRef.current = {
+      open: openFor,
+      toggle: (elementId, anchor) => {
+        const summary = temporalEventSummaries.get(elementId);
+        if (!summary) return;
+        if (summary.moreCount === 0) focusElementEvent(elementId, summary.events[0].id);
+        else if (eventPopover.isOpen && eventPopoverAnchorRef.current === anchor) eventPopover.close();
+        else openFor(elementId, anchor);
+      },
+      scheduleClose: eventPopover.scheduleClose,
+    };
+  }, [eventPopover, temporalEventSummaries, focusElementEvent]);
+  const eventPopoverSummary = eventPopoverElementId ? temporalEventSummaries.get(eventPopoverElementId) : undefined;
+  const closeEventPopover = eventPopover.close;
+  useEffect(() => {
+    if (!temporalMode) closeEventPopover();
+  }, [temporalMode, closeEventPopover]);
+
   // Get thumbnail for element
   const getThumbnail = useCallback((element: Element): string | null => {
     const firstAssetId = element.assetIds?.[0];
@@ -769,7 +855,7 @@ export function MapView() {
   }, [assetMap]);
 
   // Create custom marker HTML
-  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number, isBreadcrumb?: boolean): string => {
+  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number, isBreadcrumb?: boolean, eventSummary?: TemporalEventSummary): string => {
     const color = safeColor(element.visual.color, '#f5f5f4');
     const borderColor = safeColor(element.visual.borderColor, '#a8a29e');
 
@@ -789,6 +875,10 @@ export function MapView() {
       ? 'box-shadow: 0 0 0 2px var(--color-accent, #e07a5f), 0 2px 6px rgba(0,0,0,0.3);'
       : 'box-shadow: 0 1px 4px rgba(0,0,0,0.2);';
     const dimmedStyle = isDimmed ? 'opacity: 0.3;' : '';
+    // Temporal mode: most recent event of the instant/period + count (hover lists them all)
+    const eventBadge = eventSummary && !anonymousMode
+      ? `<div class="map-event-badge" style="display:flex;align-items:center;gap:3px;max-width:160px;margin:2px auto 0;background:var(--color-bg-primary, #ffffff);border:1px solid var(--color-accent, #e07a5f);border-radius:3px;padding:1px 4px;box-shadow:0 1px 2px rgba(0,0,0,0.1);font-size:9px;color:var(--color-text-primary, #3d3833);white-space:nowrap;cursor:pointer;"><span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(eventSummary.label)}</span>${eventSummary.moreCount > 0 ? `<span style="flex-shrink:0;color:var(--color-text-tertiary, #a8a29e);">+${eventSummary.moreCount}</span>` : ''}</div>`
+      : '';
     const commentBadge = showCommentBadges && unresolvedCommentCount && unresolvedCommentCount > 0
       ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background-color:#f59e0b;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3);z-index:10;">${unresolvedCommentCount}</div>`
       : '';
@@ -804,7 +894,7 @@ export function MapView() {
           <div style="padding:2px 3px;background:var(--color-bg-primary, #ffffff);border-top:1px solid var(--color-border-default, #e8e3db);">
             <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;${labelOverflow}">${displayLabel}</span>
           </div>
-        </div>`;
+        </div>${eventBadge}`;
     } else {
       return `
         <div class="map-marker-simple" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;${dimmedStyle}">
@@ -813,14 +903,15 @@ export function MapView() {
           <div style="background:var(--color-bg-primary, #ffffff);border:1px solid var(--color-border-default, #e8e3db);border-radius:3px;padding:1px 4px;box-shadow:0 1px 2px rgba(0,0,0,0.1);">
             <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);white-space:nowrap;">${displayLabel}</span>
           </div>
+          ${eventBadge}
         </div>`;
     }
   }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges, t]);
 
   // Create marker DOM element
-  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number, isBreadcrumb?: boolean): HTMLDivElement => {
+  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number, isBreadcrumb?: boolean, eventSummary?: TemporalEventSummary): HTMLDivElement => {
     const el = document.createElement('div');
-    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, isBreadcrumb);
+    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, isBreadcrumb, eventSummary);
     el.style.cursor = 'pointer';
     return el;
   }, [createMarkerHtml]);
@@ -863,6 +954,11 @@ export function MapView() {
 
     map.on('moveend', () => {
       setClusteringVersion(v => v + 1);
+    });
+
+    // The event list is anchored to a marker: close it when the map moves
+    map.on('movestart', () => {
+      eventPopoverHandlersRef.current.scheduleClose();
     });
 
     map.on('load', () => {
@@ -1180,6 +1276,8 @@ export function MapView() {
       const isSelected = selectedElementIds.has(element.id);
       const isDimmed = effectiveDimmedIds.has(element.id);
       const commentCount = unresolvedCommentCounts.get(element.id);
+      // Event badge only on the element's primary marker (not breadcrumbs/siblings)
+      const eventSummary = element._clusterExclude ? undefined : temporalEventSummaries.get(element.id);
       const state = newClusterState.get(markerKey);
       const isClustered = state?.clustered ?? false;
 
@@ -1200,11 +1298,11 @@ export function MapView() {
         const el = existingMarker.getElement();
         const isBeingEdited = editingZoneId === element.id;
         el.style.display = (isClustered || isBeingEdited) ? 'none' : '';
-        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, element._isBreadcrumb);
+        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary);
         el.setAttribute('title', anonymousMode ? '' : (element.label || ''));
       } else {
         // Create new marker
-        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount, element._isBreadcrumb);
+        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary);
         const isBeingEdited = editingZoneId === element.id;
         markerEl.style.display = (isClustered || isBeingEdited) ? 'none' : '';
         markerEl.setAttribute('title', anonymousMode ? '' : (element.label || ''));
@@ -1222,8 +1320,25 @@ export function MapView() {
         const markerEventId = element._eventId;
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
+          // Event badge: open the dated list instead of selecting
+          const badge = (e.target as HTMLElement).closest<HTMLElement>('.map-event-badge');
+          if (badge) {
+            eventPopoverHandlersRef.current.toggle(markerId, badge);
+            return;
+          }
           selectElement(markerId);
           setFocusedEventId(markerEventId ?? null);
+        });
+        // Hovering the event badge opens the dated list (delegated: the marker
+        // HTML is rewritten on every update)
+        markerEl.addEventListener('mouseover', (e) => {
+          const badge = (e.target as HTMLElement).closest<HTMLElement>('.map-event-badge');
+          if (badge) eventPopoverHandlersRef.current.open(markerId, badge);
+        });
+        markerEl.addEventListener('mouseout', (e) => {
+          const badge = (e.target as HTMLElement).closest<HTMLElement>('.map-event-badge');
+          if (!badge || badge.contains(e.relatedTarget as Node | null)) return;
+          eventPopoverHandlersRef.current.scheduleClose();
         });
 
         // Drag handlers
@@ -1384,7 +1499,7 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
@@ -1940,95 +2055,31 @@ export function MapView() {
     return () => unregisterCaptureHandler('map');
   }, [geoElements, registerCaptureHandler, unregisterCaptureHandler]);
 
-  // Format date for display (handles BC/negative years and hour precision)
-  const formatDate = (date: Date) => {
-    const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-    const year = date.getFullYear();
-    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
-    if (year <= 0) {
-      // BC date: getFullYear() gives the astronomical year (0 = 1 BC, -1 = 2 BC, etc.)
-      const monthDay = new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(
-        new Date(2000, date.getMonth(), date.getDate())
-      );
-      const timePart = hasTime ? ` ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '';
-      return `${monthDay} ${year}${timePart}`;
-    }
-    return date.toLocaleDateString(locale, {
-      day: '2-digit', month: 'short', year: 'numeric',
-      ...(hasTime ? { hour: '2-digit', minute: '2-digit' } : {}),
-    });
-  };
-
-  // Format date for <input type="datetime-local"> — only supports years 1–9999
-  const formatDateForInput = (date: Date): string => {
-    const y = date.getFullYear();
-    if (y < 1 || y > 9999) return '';
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const hh = String(date.getHours()).padStart(2, '0');
-    const mm = String(date.getMinutes()).padStart(2, '0');
-    return `${String(y).padStart(4, '0')}-${m}-${d}T${hh}:${mm}`;
-  };
-
-  // Get current event index from selected date
-  const currentEventIndex = useMemo(() => {
-    if (eventDates.length === 0 || !selectedDate) return 0;
-    const selectedTime = selectedDate.getTime();
-    let closestIdx = 0;
-    let closestDiff = Math.abs(eventDates[0].getTime() - selectedTime);
-    for (let i = 1; i < eventDates.length; i++) {
-      const diff = Math.abs(eventDates[i].getTime() - selectedTime);
-      if (diff < closestDiff) { closestDiff = diff; closestIdx = i; }
-    }
-    return closestIdx;
-  }, [eventDates, selectedDate]);
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (eventDates.length === 0) return;
-    const index = parseInt(e.target.value);
-    setSelectedDate(eventDates[index]);
-  };
-
   const handleToggleTemporal = () => {
     if (!temporalMode && eventDates.length > 0) {
       setTemporalMode(true);
-      const now = Date.now();
-      let closestDate = eventDates[0];
-      let closestDiff = Math.abs(eventDates[0].getTime() - now);
-      for (const ed of eventDates) {
-        const diff = Math.abs(ed.getTime() - now);
-        if (diff < closestDiff) { closestDiff = diff; closestDate = ed; }
-      }
-      setSelectedDate(closestDate);
+      setSelectedDate(eventDates[closestDateIndex(eventDates, Date.now())]);
     } else {
       setTemporalMode(false);
       setSelectedDate(null);
+      setPeriodEnd(null);
       setIsPlaying(false);
     }
-  };
-
-  const handleStep = (direction: 'forward' | 'backward') => {
-    if (eventDates.length === 0) return;
-    const newIndex = direction === 'forward'
-      ? Math.min(currentEventIndex + 1, eventDates.length - 1)
-      : Math.max(currentEventIndex - 1, 0);
-    setSelectedDate(eventDates[newIndex]);
   };
 
   // Play animation — fixed interval only when follow camera is OFF
   // When follow camera is ON, advancement is chained via moveend below
   // This interval handles the non-follow-camera case + kick-starts the chain
+  const selectionRef = useRef({ selectedDate, periodEnd });
+  useEffect(() => { selectionRef.current = { selectedDate, periodEnd }; }, [selectedDate, periodEnd]);
   const advanceDate = useCallback(() => {
-    setSelectedDate((prev) => {
-      if (!prev) return eventDates[0];
-      let currentIdx = 0;
-      for (let i = 0; i < eventDates.length; i++) {
-        if (eventDates[i].getTime() <= prev.getTime()) currentIdx = i;
-      }
-      const nextIdx = currentIdx + 1;
-      if (nextIdx >= eventDates.length) { setIsPlaying(false); return eventDates[eventDates.length - 1]; }
-      return eventDates[nextIdx];
-    });
+    const { selectedDate: start, periodEnd: end } = selectionRef.current;
+    if (!start) { setSelectedDate(eventDates[0]); return; }
+    // Instant: next date; period: slide the window one step, keeping its width
+    const next = shiftNavigator(eventDates, start, end, 1);
+    if (!next) { setIsPlaying(false); return; }
+    setSelectedDate(next.start);
+    setPeriodEnd(next.periodEnd);
   }, [eventDates]);
 
   useEffect(() => {
@@ -2048,7 +2099,8 @@ export function MapView() {
     if (resolvedGeoElements.length === 0) return;
 
     const map = mapRef.current;
-    const targetMinute = toMinuteStart(selectedDate).getTime();
+    // Period mode: follow the leading edge of the window
+    const targetMinute = toMinuteStart(periodEnd ?? selectedDate).getTime();
     let cancelled = false;
     let advanceTimeout: ReturnType<typeof setTimeout>;
 
@@ -2148,7 +2200,7 @@ export function MapView() {
       clearTimeout(advanceTimeout);
       clearTimeout(safetyTimeout);
     };
-  }, [temporalMode, selectedDate, resolvedGeoElements, temporalFollowCamera, toMinuteStart, advanceDate]);
+  }, [temporalMode, selectedDate, periodEnd, resolvedGeoElements, temporalFollowCamera, advanceDate]);
 
   // ── Listen for flyToPolygon events from detail panel ──────────────
   useEffect(() => {
@@ -2396,16 +2448,7 @@ export function MapView() {
 
             {/* Temporal mode toggle */}
             {timeRange && (
-              <button
-                onClick={handleToggleTemporal}
-                className={`px-2 py-1 text-xs flex items-center gap-1 rounded transition-colors ${
-                  temporalMode ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
-                }`}
-                title={t('map.temporalMode')}
-              >
-                <Clock size={12} />
-                {t('map.temporal')}
-              </button>
+              <TemporalToggleButton active={temporalMode} onClick={handleToggleTemporal} />
             )}
             {selectedElementIds.size > 0 && (
               <>
@@ -2436,7 +2479,7 @@ export function MapView() {
             <button
               onClick={() => {
                 const name = currentDossier?.name || 'map';
-                const date = new Date().toISOString().slice(0, 10);
+                const date = toLocalDateKey(new Date());
                 exportMapToCSV(geoElements, `${name}_carte_${date}.csv`);
               }}
               disabled={geoElements.length === 0}
@@ -2451,78 +2494,32 @@ export function MapView() {
 
       {/* Temporal slider */}
       {temporalMode && timeRange && (
-        <div className="px-4 py-2 border-b border-border-default bg-bg-primary flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => handleStep('backward')}
-              className="p-1 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-              title={t('map.stepBack')}
-            >
-              <SkipBack size={14} />
-            </button>
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`p-1 rounded ${isPlaying ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
-              title={isPlaying ? t('map.pause') : t('map.play')}
-            >
-              {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-            </button>
-            <button
-              onClick={() => handleStep('forward')}
-              className="p-1 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-              title={t('map.stepForward')}
-            >
-              <SkipForward size={14} />
-            </button>
-            <button
-              onClick={() => setTemporalFollowCamera(!temporalFollowCamera)}
-              className={`p-1 rounded ${temporalFollowCamera ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
-              title={t('map.followCamera')}
-            >
-              <Crosshair size={14} />
-            </button>
-            <button
-              onClick={() => setTemporalTrace(!temporalTrace)}
-              className={`p-1 rounded ${temporalTrace ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
-              title={t('map.temporalTrace', 'Afficher la trace (événements passés)')}
-            >
-              <Route size={14} />
-            </button>
-          </div>
-          <span className="text-xs text-text-tertiary whitespace-nowrap">{formatDate(timeRange.min)}</span>
-          <input
-            type="range"
-            min="0"
-            max={Math.max(0, eventDates.length - 1)}
-            value={currentEventIndex}
-            onChange={handleSliderChange}
-            className="flex-1 h-1.5 bg-bg-tertiary rounded appearance-none cursor-pointer accent-accent"
-          />
-          <span className="text-xs text-text-tertiary whitespace-nowrap">{formatDate(timeRange.max)}</span>
-          <span className="text-[10px] text-text-tertiary whitespace-nowrap">
-            {currentEventIndex + 1}/{eventDates.length}
-          </span>
-          {selectedDate && (
-            selectedDate.getFullYear() >= 1 && selectedDate.getFullYear() <= 9999 ? (
-              <input
-                type="datetime-local"
-                value={formatDateForInput(selectedDate)}
-                onChange={(e) => {
-                  const dateStr = e.target.value;
-                  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dateStr)) {
-                    const newDate = new Date(dateStr);
-                    if (!isNaN(newDate.getTime())) setSelectedDate(newDate);
-                  }
-                }}
-                className="text-xs font-medium text-accent bg-transparent border border-border-default rounded px-2 py-0.5 min-w-[10rem]"
-              />
-            ) : (
-              <span className="text-xs font-medium text-accent border border-border-default rounded px-2 py-0.5 whitespace-nowrap">
-                {formatDate(selectedDate)}
-              </span>
-            )
-          )}
-        </div>
+        <TemporalNavigatorBar
+          dates={eventDates}
+          selectedDate={selectedDate}
+          periodEnd={periodEnd}
+          onChange={(start, end) => { setSelectedDate(start); setPeriodEnd(end); }}
+          isPlaying={isPlaying}
+          onTogglePlay={() => setIsPlaying(!isPlaying)}
+          extraControls={
+            <>
+              <button
+                onClick={() => setTemporalFollowCamera(!temporalFollowCamera)}
+                className={`p-1 rounded ${temporalFollowCamera ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
+                title={t('map.followCamera')}
+              >
+                <Crosshair size={14} />
+              </button>
+              <button
+                onClick={() => setTemporalTrace(!temporalTrace)}
+                className={`p-1 rounded ${temporalTrace ? 'bg-accent text-white' : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'}`}
+                title={t('map.temporalTrace', 'Afficher la trace (événements passés)')}
+              >
+                <Route size={14} />
+              </button>
+            </>
+          }
+        />
       )}
 
       {/* Map container */}
@@ -2548,6 +2545,19 @@ export function MapView() {
         onZoneClick={handleZoneClick}
         onZoneDoubleClick={handleZoneDoubleClick}
       />
+
+      {/* Temporal mode: dated event list of a marker */}
+      {eventPopoverElementId && eventPopoverSummary && (
+        <TemporalEventsPopover
+          anchorRef={eventPopoverAnchorRef}
+          isOpen={eventPopover.isOpen}
+          elementId={eventPopoverElementId}
+          events={eventPopoverSummary.events}
+          onClose={eventPopover.close}
+          onPointerEnter={eventPopover.cancelClose}
+          onPointerLeave={eventPopover.scheduleClose}
+        />
+      )}
 
       {/* Zone drawing tool */}
       <ZoneDrawTool
