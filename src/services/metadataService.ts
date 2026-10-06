@@ -35,7 +35,9 @@ function parsePdfDate(raw: string): Date | null {
     const offset = `${tzSign}${tzHour}:${tzMin || '00'}`;
     return new Date(dateStr + offset);
   }
-  return new Date(dateStr + 'Z');
+  // `Z` is UTC; without zone the PDF spec leaves it unknown: read it as the
+  // local wall clock, like every other zone-less date in the app
+  return new Date(tzSign === 'Z' ? dateStr + 'Z' : dateStr);
 }
 
 /**

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   activeTimeZoneLabel, dateLocale, endOfLocalDay, endOfPrecision, formatDateForExport, formatPreciseDate,
   formatPreciseDateKey, isDayOnly, parseDateValue, parseDateWithPrecision, startOfPrecision, toLocalDateKey,
-  fromZonedWallClock, dateInputKeys, formatSourceTime, dateFromInputKeys, toLocalTimeKey,
+  fromZonedWallClock, dateInputKeys, formatSourceTime, dateFromInputKeys, toLocalTimeKey, formatPropertyValue,
 } from './dates';
 
 // Date bugs only show up away from UTC: run the suite in zones on both sides,
@@ -137,5 +137,15 @@ describe('CSV round trip with a source zone', () => {
     const parsed = parseDateWithPrecision(text)!.date;
     const back = dateFromInputKeys(toLocalDateKey(parsed), toLocalTimeKey(parsed), 'Asia/Beirut');
     expect(back.getTime()).toBe(instant.getTime());
+  });
+});
+
+describe('formatPropertyValue', () => {
+  it('formats dates for people, not Date.toString()', () => {
+    expect(formatPropertyValue(new Date(2024, 2, 12), 'date', 'fr')).toBe('12 mars 2024');
+    expect(formatPropertyValue(new Date(2024, 2, 12, 14, 30), 'datetime', 'fr')).toContain('14:30');
+    expect(formatPropertyValue('2024-03-12', 'date', 'fr')).toBe('12 mars 2024');
+    expect(formatPropertyValue('ABC', 'text', 'fr')).toBe('ABC');
+    expect(formatPropertyValue(null, 'date', 'fr')).toBe('');
   });
 });

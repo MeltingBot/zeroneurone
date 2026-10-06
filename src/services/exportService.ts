@@ -776,6 +776,8 @@ ${edges}
             directed: link.directed,
             dateStart: link.dateRange?.start ? new Date(link.dateRange.start).toISOString() : null,
             dateEnd: link.dateRange?.end ? new Date(link.dateRange.end).toISOString() : null,
+            // Zone the period's hours were given in at the source (IANA), if any
+            timeZone: link.dateRange?.timeZone ?? null,
             color: link.visual.color,
             style: link.visual.style,
             // Include custom properties

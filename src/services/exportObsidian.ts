@@ -23,7 +23,7 @@ import { formatEvaluation } from '../utils/evaluation';
 import { getGeoCenter } from '../utils/geo';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { resolveAbsolutePosition } from './svgExportService';
-import { isDayOnly, parseDateValue, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
+import { dateInputKeys, isDayOnly, parseDateValue, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 
 /** Translated strings used in the generated notes (provided by the caller). */
 export interface ObsidianLabels {
@@ -123,9 +123,23 @@ export function formatDate(value: unknown): string {
   return isDayOnly(d) ? toLocalDateKey(d) : `${toLocalDateKey(d)}T${toLocalTimeKey(d)}`;
 }
 
-function formatPeriod(start: unknown, end: unknown): string {
-  const s = formatDate(start);
-  const e = formatDate(end);
+/**
+ * Source-zone wall clock appended to a date typed in another zone:
+ * "2024-04-20T02:12 (03:12 Asia/Beirut)", with the source day when it differs.
+ */
+function withSourceTime(text: string, value: unknown, timeZone: string | undefined): string {
+  const d = parseDateValue(value);
+  if (!text || !d || !timeZone) return text;
+  const src = dateInputKeys(d, timeZone);
+  const local = dateInputKeys(d);
+  if (src.date === local.date && src.time === local.time) return text;
+  const at = src.date === local.date ? src.time : `${src.date} ${src.time}`;
+  return `${text} (${at} ${timeZone})`;
+}
+
+function formatPeriod(start: unknown, end: unknown, timeZone?: string): string {
+  const s = withSourceTime(formatDate(start), start, timeZone);
+  const e = withSourceTime(formatDate(end), end, timeZone);
   if (s && e) return `${s} → ${e}`;
   return s || (e ? `→ ${e}` : '');
 }
@@ -315,7 +329,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
       for (const rel of relations) {
         const l = rel.link;
         const meta = [
-          formatDate(l.date) || formatPeriod(l.dateRange?.start, l.dateRange?.end),
+          formatDate(l.date) || formatPeriod(l.dateRange?.start, l.dateRange?.end, l.dateRange?.timeZone),
           l.confidence !== null && l.confidence !== undefined ? `${l.confidence} %` : '',
           formatEvaluation(l.evaluation),
           l.source,
@@ -407,7 +421,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
 }
 
 function eventLines(ev: ElementEvent): string[] {
-  const head = [formatPeriod(ev.date, ev.dateEnd), ev.label].filter(Boolean).join(' — ');
+  const head = [formatPeriod(ev.date, ev.dateEnd, ev.timeZone), ev.label].filter(Boolean).join(' — ');
   const extra: string[] = [];
   if (ev.geo) {
     const { lat, lng } = getGeoCenter(ev.geo);

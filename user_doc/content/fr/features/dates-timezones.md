@@ -69,4 +69,18 @@ La colonne `fuseau` (ex. `Asia/Beirut`) indique le fuseau des heures de la ligne
 
 ---
 
+## Autres formats
+
+| Format | Fuseau de la source |
+|--------|---------------------|
+| ZIP / JSON | Conservé |
+| CSV | Colonne `fuseau` |
+| Obsidian | Heure d'origine après la date : `2024-04-20T02:12 (03:12 Asia/Beirut)` |
+| GeoJSON | Propriété `timeZone` des liens |
+| i2 (ANX) | Non transmis : heures dans votre fuseau |
+| Rapports | Heure d'origine entre parenthèses |
+| Import JSON | Horodatages avec fuseau (`Z`, `+02:00`) lus exactement |
+
+---
+
 **Voir aussi** : [Mode temporel]({{< relref "temporal-mode" >}}) | [Timeline]({{< relref "timeline" >}})

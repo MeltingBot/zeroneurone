@@ -219,3 +219,21 @@ describe('convertReportRefs', () => {
       .toBe('[[Alice]] ~~Gone~~');
   });
 });
+
+describe('buildObsidianVault — source time zone', () => {
+  it('appends the source hour to an event typed in another zone', () => {
+    const previous = process.env.TZ;
+    process.env.TZ = 'Europe/Paris';
+    try {
+      const out = buildObsidianVault({
+        dossier, labels, links: [], assets: [],
+        elements: [el('a', 'A', {
+          events: [{ id: 'e1', date: new Date('2024-04-20T00:12:00Z'), label: 'Appel', timeZone: 'Asia/Beirut' }],
+        })],
+      });
+      expect(file(out, 'Elements/A.md')).toContain('2024-04-20T02:12 (03:12 Asia/Beirut) — Appel');
+    } finally {
+      process.env.TZ = previous;
+    }
+  });
+});

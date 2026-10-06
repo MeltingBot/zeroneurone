@@ -6,6 +6,8 @@ import { insightsService } from './insightsService';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
+import { formatEventWhen } from '../utils/temporalUtils';
+import { dateLocale, formatPropertyValue } from '../utils/dates';
 
 // Configure marked for secure rendering
 marked.setOptions({
@@ -260,7 +262,7 @@ class ReportService {
 <body>
   <header>
     <h1>${this.escapeHTML(title)}</h1>
-    <p class="meta">${this.t('generatedOn', { date: new Date().toLocaleDateString(locale), time: new Date().toLocaleTimeString(locale) })}</p>
+    <p class="meta">${this.t('generatedOn', { date: new Date().toLocaleDateString(dateLocale(locale)), time: new Date().toLocaleTimeString(dateLocale(locale)) })}</p>
   </header>
 `;
 
@@ -383,11 +385,10 @@ class ReportService {
     <table class="timeline-table">
       <tr><th>${this.t('date')}</th><th>${this.t('element')}</th><th>${this.t('event')}</th><th>${this.t('details')}</th></tr>
       ${allEvents.map(ev => {
-        const dateStr = new Date(ev.date).toLocaleDateString(locale);
-        const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
+        const dateStr = formatEventWhen(ev, locale);
         const location = ev.geo ? `${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' (zone)' : ''}` : '';
         return `<tr>
-        <td>${dateStr}${endStr}</td>
+        <td>${this.escapeHTML(dateStr)}</td>
         <td>${this.escapeHTML(ev.elementLabel)}</td>
         <td>${this.escapeHTML(ev.label)}</td>
         <td>${ev.description ? this.escapeHTML(ev.description) : ''}${location ? ` [${location}]` : ''}</td>
@@ -506,7 +507,7 @@ class ReportService {
           if (el.properties.length > 0) {
             html += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('properties')} (${el.properties.length})</th></tr>
-        ${el.properties.map(p => `<tr><td>${this.escapeHTML(p.key)}</td><td>${this.escapeHTML(String(p.value ?? ''))}</td></tr>`).join('\n        ')}
+        ${el.properties.map(p => `<tr><td>${this.escapeHTML(p.key)}</td><td>${this.escapeHTML(formatPropertyValue(p.value, p.type, locale))}</td></tr>`).join('\n        ')}
       </table>\n`;
           }
 
@@ -515,10 +516,9 @@ class ReportService {
             html += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('events')} (${el.events.length})</th></tr>
         ${el.events.map(ev => {
-          const dateStr = new Date(ev.date).toLocaleDateString(locale);
-          const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
+          const dateStr = formatEventWhen(ev, locale);
           const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
-          return `<tr><td>${dateStr}${endStr}</td><td><b>${this.escapeHTML(ev.label)}</b>${ev.description ? ` - ${this.escapeHTML(ev.description)}` : ''}${geo}</td></tr>`;
+          return `<tr><td>${this.escapeHTML(dateStr)}</td><td><b>${this.escapeHTML(ev.label)}</b>${ev.description ? ` - ${this.escapeHTML(ev.description)}` : ''}${geo}</td></tr>`;
         }).join('\n        ')}
       </table>\n`;
           }
@@ -581,7 +581,7 @@ class ReportService {
       </tr>
       ${elements.map(el => {
         const propsHtml = showProps && el.properties.length > 0
-          ? el.properties.map(p => `<b>${this.escapeHTML(p.key)}:</b> ${this.escapeHTML(String(p.value ?? ''))}`).join('<br>')
+          ? el.properties.map(p => `<b>${this.escapeHTML(p.key)}:</b> ${this.escapeHTML(formatPropertyValue(p.value, p.type, i18next.language))}`).join('<br>')
           : '-';
         const filesHtml = options.includeFiles && el.assetIds.length > 0
           ? el.assetIds.map(id => {
@@ -633,7 +633,7 @@ class ReportService {
     const totalFiles = elements.reduce((sum, el) => sum + el.assetIds.length, 0);
 
     let md = `# ${title}\n\n`;
-    md += `*${this.t('generatedOn', { date: new Date().toLocaleDateString(locale), time: new Date().toLocaleTimeString(locale) })}*\n\n`;
+    md += `*${this.t('generatedOn', { date: new Date().toLocaleDateString(dateLocale(locale)), time: new Date().toLocaleTimeString(dateLocale(locale)) })}*\n\n`;
 
     // Description
     if (options.includeDescription && dossier.description) {
@@ -715,11 +715,10 @@ class ReportService {
       md += `| ${this.t('date')} | ${this.t('element')} | ${this.t('event')} | ${this.t('details')} |\n`;
       md += `|------|---------|-----------|----------|\n`;
       for (const ev of allEvents) {
-        const dateStr = new Date(ev.date).toLocaleDateString(locale);
-        const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
+        const dateStr = formatEventWhen(ev, locale);
         const location = ev.geo && ev.geo.type === 'point' ? `[${ev.geo.lat.toFixed(4)}, ${ev.geo.lng.toFixed(4)}]` : '';
         const details = [ev.description, location].filter(Boolean).join(' ');
-        md += `| ${dateStr}${endStr} | ${ev.elementLabel} | ${ev.label} | ${details || '-'} |\n`;
+        md += `| ${dateStr} | ${ev.elementLabel} | ${ev.label} | ${details || '-'} |\n`;
       }
       md += `\n`;
     }
@@ -815,7 +814,7 @@ class ReportService {
             md += `| ${this.t('property')} | ${this.t('value')} |\n`;
             md += `|-----------|--------|\n`;
             for (const p of el.properties) {
-              md += `| ${p.key} | ${p.value ?? ''} |\n`;
+              md += `| ${p.key} | ${formatPropertyValue(p.value, p.type, locale)} |\n`;
             }
             md += `\n`;
           }
@@ -826,10 +825,9 @@ class ReportService {
             md += `| ${this.t('date')} | ${this.t('event')} | ${this.t('details')} |\n`;
             md += `|------|-----------|----------|\n`;
             for (const ev of el.events) {
-              const dateStr = new Date(ev.date).toLocaleDateString(locale);
-              const endStr = ev.dateEnd ? ` - ${new Date(ev.dateEnd).toLocaleDateString(locale)}` : '';
+              const dateStr = formatEventWhen(ev, locale);
               const geo = ev.geo ? ` [${getGeoCenter(ev.geo).lat.toFixed(4)}, ${getGeoCenter(ev.geo).lng.toFixed(4)}${isGeoPolygon(ev.geo) ? ' zone' : ''}]` : '';
-              md += `| ${dateStr}${endStr} | ${ev.label} | ${ev.description || '-'}${geo} |\n`;
+              md += `| ${dateStr} | ${ev.label} | ${ev.description || '-'}${geo} |\n`;
             }
             md += `\n`;
           }
@@ -885,7 +883,7 @@ class ReportService {
       const tags = el.tags.length > 0 ? el.tags.join(', ') : '-';
       const confidence = this.evaluationText(el);
       const props = showProps && el.properties.length > 0
-        ? el.properties.map(p => `**${p.key}:** ${p.value ?? ''}`).join(', ')
+        ? el.properties.map(p => `**${p.key}:** ${formatPropertyValue(p.value, p.type, i18next.language)}`).join(', ')
         : '-';
       const files = showFiles && el.assetIds.length > 0
         ? el.assetIds.map(id => {

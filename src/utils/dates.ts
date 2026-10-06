@@ -281,3 +281,19 @@ export function formatSourceTime(date: Date, timeZone: string | undefined, langu
   const day = new Date(y, m - 1, d).toLocaleDateString(dateLocale(language), { day: 'numeric', month: 'short' });
   return `${day} ${src.time} ${city}`;
 }
+
+/**
+ * Readable text of a property value for reports and exports meant for people:
+ * dates in the UI language ("12 mars 2024", with the time when there is one),
+ * ISO date strings from imports included; anything else as is.
+ */
+export function formatPropertyValue(value: unknown, type: string | undefined, language: string): string {
+  if (value === null || value === undefined) return '';
+  const isDateType = type === 'date' || type === 'datetime';
+  if (value instanceof Date || (isDateType && typeof value === 'string')) {
+    const date = parseDateValue(value);
+    if (!date) return String(value);
+    return formatPreciseDate(date, type === 'date' ? 'day' : undefined, false, language);
+  }
+  return String(value);
+}

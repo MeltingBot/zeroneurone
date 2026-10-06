@@ -279,21 +279,28 @@ export interface TemporalEventSummary {
  * reads as such ("28 janv. 2025 → 30 juin 2025").
  */
 export function summarizeActiveEvents(events: ElementEvent[], language: string): TemporalEventSummary {
-  // "12 mars 2024, 02:12 (03:12 Beirut)" when the event's hours come from another zone
-  const format = (ev: ElementEvent, d: Date) => {
+  return {
+    label: events[events.length - 1].label,
+    moreCount: events.length - 1,
+    events: events.map((ev) => ({ id: ev.id, dateLabel: formatEventWhen(ev, language), label: ev.label })),
+  };
+}
+
+/**
+ * When an event happened, as shown everywhere (lists, reports): at its
+ * precision, with its end, and the source hour when typed in another zone —
+ * "12 mars 2024, 02:12 (03:12 Beirut) → 14 mars 2024".
+ */
+export function formatEventWhen(
+  ev: Pick<ElementEvent, 'date' | 'dateEnd' | 'precision' | 'approximate' | 'timeZone'>,
+  language: string,
+): string {
+  const format = (d: Date) => {
     const text = formatPreciseDate(new Date(d), ev.precision, ev.approximate, language);
     const source = formatSourceTime(new Date(d), ev.timeZone, language);
     return source ? `${text} (${source})` : text;
   };
-  return {
-    label: events[events.length - 1].label,
-    moreCount: events.length - 1,
-    events: events.map((ev) => ({
-      id: ev.id,
-      dateLabel: ev.dateEnd ? `${format(ev, ev.date)} → ${format(ev, ev.dateEnd)}` : format(ev, ev.date),
-      label: ev.label,
-    })),
-  };
+  return ev.dateEnd ? `${format(ev.date)} → ${format(ev.dateEnd)}` : format(ev.date);
 }
 
 export function sameEventSummary(a: TemporalEventSummary, b: TemporalEventSummary): boolean {

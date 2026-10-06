@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.61.1
+
+### Corrections
+
+- **Import JSON (correspondance de champs)** — un horodatage avec fuseau
+  (`…Z`, `+02:00`) était lu comme une heure locale ; il est maintenant lu
+  exactement. Une date sans heure devient la journée entière (et non midi).
+  Même correction pour une date collée dans un champ date.
+- **Métadonnées PDF** — une date sans fuseau est lue en heure locale ; seul
+  un `Z` explicite signifie UTC.
+- **Rapports HTML, Markdown, PDF et rapport interactif** — les propriétés de
+  type date s'affichaient en texte brut du navigateur
+  (`Tue Mar 12 2024 00:00:00 GMT+0100…`) ; elles s'affichent maintenant
+  `12 mars 2024`, dans la langue du rapport. Les événements gardent leur
+  précision, leur durée et l'heure d'origine (`02:12 (03:12 Beirut)`).
+- **Export Obsidian et GeoJSON** — le fuseau de la source est conservé
+  (heure d'origine après la date, propriété `timeZone`).
+
+### Documentation
+
+- **Dates et fuseaux horaires** : tableau du devenir du fuseau de la source
+  selon le format (ZIP, CSV, Obsidian, GeoJSON, i2, rapports, import JSON).
+
 ## 2.61.0
 
 ### Features

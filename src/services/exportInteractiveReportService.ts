@@ -13,6 +13,7 @@ import { fileService } from './fileService';
 import { escapeJsonForScript, safeColor, sanitizeUrl } from '../utils/escapeHtml';
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
+import { dateLocale, formatPropertyValue } from '../utils/dates';
 
 // CSS variable to hex color map (same as svgExportService)
 const CSS_VAR_MAP: Record<string, string> = {
@@ -462,7 +463,7 @@ function buildElementDetails(elements: Element[], thumbnails: Record<string, str
     if (el.properties && el.properties.length > 0) {
       html += '<dl class="properties">';
       for (const prop of el.properties) {
-        html += `<dt>${escapeXml(prop.key)}</dt><dd>${escapeXml(String(prop.value))}</dd>`;
+        html += `<dt>${escapeXml(prop.key)}</dt><dd>${escapeXml(formatPropertyValue(prop.value, prop.type, i18next.language))}</dd>`;
       }
       html += '</dl>';
     }
@@ -753,7 +754,7 @@ main[data-active-tab="graph"] #graph-panel{display:block;width:100%;height:100%}
 <h1>${escapeXml(params.dossierName)}</h1>
 <div class="actions"><button id="search-btn" class="header-btn" title="${escapeXml(s.search)}">&#x2315;</button><div class="tag-filter-wrap"><button id="tag-btn" class="header-btn" title="${escapeXml(s.filterByTags)}" style="display:none;">&#x25cb;</button><div id="tag-popover"></div></div><button id="layout-toggle" class="header-btn" title="${escapeXml(s.toggleLayout)}">&#x21C4;</button><button id="export-md" class="header-btn" title="${escapeXml(s.exportMarkdown)}">MD</button><button id="info-btn" class="header-btn" title="${escapeXml(s.info)}">i</button><button id="theme-toggle" class="header-btn" title="${escapeXml(s.theme)}">☀</button></div>
 </header>
-<div id="info-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h2>${escapeXml(s.info)}</h2><button class="modal-close" id="modal-close">&times;</button></div><div class="modal-body"><dl><dt>${escapeXml(s.dossier)}</dt><dd>${escapeXml(params.dossierName)}</dd><dt>${escapeXml(s.createdOn)}</dt><dd>${new Date(params.dossierCreatedAt).toLocaleDateString(s.lang)}</dd><dt>${escapeXml(s.exportedOn)}</dt><dd>${new Date(params.exportDate).toLocaleDateString(s.lang)}</dd></dl><div class="stats"><span>${params.elementCount} ${escapeXml(s.elements)}</span><span>${params.linkCount} ${escapeXml(s.links)}</span>${params.groupCount > 0 ? `<span>${params.groupCount} ${escapeXml(s.groups)}</span>` : ''}</div>${params.dossierDescription ? `<div class="description"><p>${escapeXml(params.dossierDescription)}</p></div>` : ''}</div><div class="modal-footer"><a href="https://zeroneurone.com" target="_blank" rel="noopener">zeroneurone.com</a></div></div></div>
+<div id="info-modal" class="modal-overlay"><div class="modal"><div class="modal-header"><h2>${escapeXml(s.info)}</h2><button class="modal-close" id="modal-close">&times;</button></div><div class="modal-body"><dl><dt>${escapeXml(s.dossier)}</dt><dd>${escapeXml(params.dossierName)}</dd><dt>${escapeXml(s.createdOn)}</dt><dd>${new Date(params.dossierCreatedAt).toLocaleDateString(dateLocale(s.lang))}</dd><dt>${escapeXml(s.exportedOn)}</dt><dd>${new Date(params.exportDate).toLocaleDateString(dateLocale(s.lang))}</dd></dl><div class="stats"><span>${params.elementCount} ${escapeXml(s.elements)}</span><span>${params.linkCount} ${escapeXml(s.links)}</span>${params.groupCount > 0 ? `<span>${params.groupCount} ${escapeXml(s.groups)}</span>` : ''}</div>${params.dossierDescription ? `<div class="description"><p>${escapeXml(params.dossierDescription)}</p></div>` : ''}</div><div class="modal-footer"><a href="https://zeroneurone.com" target="_blank" rel="noopener">zeroneurone.com</a></div></div></div>
 <div id="search-overlay"><div id="search-box"><input id="search-input" type="text" placeholder="${escapeXml(s.searchPlaceholder)}" autocomplete="off"/><div id="search-results"></div></div></div>
 <nav id="mobile-tabs"><button class="tab active" data-tab="report">${escapeXml(s.report)}</button><button class="tab" data-tab="graph">${escapeXml(s.graph)}</button></nav>
 <main data-active-tab="report">

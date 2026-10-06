@@ -27,17 +27,26 @@ export function deserializeDate(str: string | null): Date | null {
  * Accepts ISO (2000-04-18), and slash/dot/dash separated values, day-first by
  * default (18/04/2000) — matching the European display — but disambiguates when
  * a part is > 12 (handles 04/18/2000 too). An optional trailing time (HH:MM[:SS])
- * is parsed as well; date-only values default to local noon to avoid TZ drift.
+ * is parsed as well; date-only values are local midnight (a whole day).
+ * An ISO date-time carrying its zone (`Z`, `+02:00`) is that exact instant.
  * Returns null when the text isn't a recognizable date.
  */
+const ZONED_ISO_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/i;
+
 export function parseFlexibleDate(text: string): Date | null {
   if (!text) return null;
   const s = text.trim();
   if (!s) return null;
 
+  // Zoned ISO timestamp (logs, APIs, exports): keep the exact instant
+  if (ZONED_ISO_RE.test(s)) {
+    const exact = new Date(s.replace(' ', 'T'));
+    return Number.isNaN(exact.getTime()) ? null : exact;
+  }
+
   const timeMatch = s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
   const hasTime = !!timeMatch;
-  const hours = hasTime ? parseInt(timeMatch![1], 10) : 12;
+  const hours = hasTime ? parseInt(timeMatch![1], 10) : 0;
   const minutes = hasTime ? parseInt(timeMatch![2], 10) : 0;
   const seconds = hasTime && timeMatch![3] ? parseInt(timeMatch![3], 10) : 0;
   if (hours > 23 || minutes > 59 || seconds > 59) return null;

@@ -69,4 +69,18 @@ The `fuseau` column (or `timezone` on import, e.g. `Asia/Beirut`) gives the zone
 
 ---
 
+## Other Formats
+
+| Format | Source time zone |
+|--------|------------------|
+| ZIP / JSON | Kept |
+| CSV | `fuseau` column |
+| Obsidian | Original time after the date: `2024-04-20T02:12 (03:12 Asia/Beirut)` |
+| GeoJSON | `timeZone` property on links |
+| i2 (ANX) | Not transmitted: times in your zone |
+| Reports | Original time in parentheses |
+| JSON import | Timestamps with a zone (`Z`, `+02:00`) read exactly |
+
+---
+
 **See also**: [Temporal Mode]({{< relref "temporal-mode" >}}) | [Timeline]({{< relref "timeline" >}})
