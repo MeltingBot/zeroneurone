@@ -696,10 +696,11 @@ Le champ Source d'un element, d'un lien ou d'un evenement reste une chaine. ZN y
 | `asset:<hash>` | Ouvre l'apercu du document du dossier dont le SHA-256 commence par `<hash>` (hash complet ou au moins 8 caracteres hexadecimaux) |
 
 ```text
-[Piece 12](asset:3fa1c2d9) ; [Article](https://exemple.fr/a)
+[Piece 12](asset:3fa1c2d9)
+[Article](https://exemple.fr/a)
 ```
 
-Toute autre cible reste du texte. Un `asset:` absent du dossier s'affiche grise, sans lien. Le hash est stable a l'export/import, contrairement aux identifiants. Un `]` dans le libelle s'ecrit `\]`.
+**Une source par ligne** : le separateur est le retour a la ligne (`\n`), y compris pour la fusion d'elements. Un `;` n'a pas de role particulier. Toute autre cible reste du texte. Un `asset:` absent du dossier s'affiche grise, sans lien. Le hash est stable a l'export/import, contrairement aux identifiants. Un `]` dans le libelle s'ecrit `\]`.
 
 ## Chiffrement at-rest
 

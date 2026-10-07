@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Element } from '../../types';
 import type { TimelineItem } from './TimelineView';
-import { sourceToPlainText } from '../../utils/sourceLinks';
+import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 
 export interface GroupingCriterion {
@@ -134,7 +134,7 @@ export function useSwimlaneGrouping(
         }
       } else if (criterion === 'source') {
         // Lane name: link labels, not the Markdown syntax
-        addToGroup(sourceToPlainText(el.source || '', getSourceSchemeNames()), item);
+        addToGroup(joinSourceLines(sourceToPlainText(el.source || '', getSourceSchemeNames())), item);
       } else if (criterion.startsWith('property:')) {
         const propKey = criterion.slice(9);
         const prop = el.properties.find(p => p.key === propKey);

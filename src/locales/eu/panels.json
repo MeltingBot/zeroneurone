@@ -107,7 +107,9 @@
       "directionBoth": "Bi norabidetan",
       "openInNewTab": "Fitxa berrian ireki",
       "sourceDocumentMissing": "Dokumentua ez dago espedientean",
-      "sourceTargetMissing": "Helburua ez da aurkitu"
+      "sourceTargetMissing": "Helburua ez da aurkitu",
+      "sourceShowMore": "+{{count}} gehiago",
+      "sourceShowLess": "Gutxiago"
     },
     "tags": {
       "editIcon": "Ikonoa editatu",

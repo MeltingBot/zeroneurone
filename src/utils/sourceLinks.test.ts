@@ -5,6 +5,8 @@ import {
   sourceToPlainText,
   sourceToMarkdown,
   sourceWebLinks,
+  splitSourceItems,
+  joinSourceLines,
   findAssetByHash,
   assetHashOf,
   targetValue,
@@ -145,5 +147,36 @@ describe('schémas de plugins', () => {
     expect(sourceToPlainText(src, mn)).toBe('PV p.3 ; art');
     expect(sourceToMarkdown(src, mn)).toBe('PV p.3 ; [art](https://a.fr)');
     expect(sourceWebLinks(src).map(l => l.target)).toEqual(['https://a.fr']);
+  });
+});
+
+describe('splitSourceItems', () => {
+  const items = (src: string) =>
+    splitSourceItems(parseSourceLinks(src)).map(item =>
+      item.map(s => (s.kind === 'link' ? `<${s.label}>` : s.text)).join(''));
+
+  it('une source par ligne, espaces retirés', () => {
+    expect(items('[P12](asset:3fa1c2d9)\n  [P14](asset:8be07a11)  \r\nnotes libres')).toEqual(['<P12>', '<P14>', 'notes libres']);
+  });
+
+  it('le « ; » ne sépare pas', () => {
+    expect(items('PV 12; annexe ; [a](https://a.fr)')).toEqual(['PV 12; annexe ; <a>']);
+  });
+
+  it('texte et lien sur la même ligne', () => {
+    expect(items('voir [art](https://a.fr) p.3\n[b](https://b.fr)')).toEqual(['voir <art> p.3', '<b>']);
+  });
+
+  it('lignes vides ignorées', () => {
+    expect(items('\n [a](https://a.fr) \n\n')).toEqual(['<a>']);
+    expect(items('')).toEqual([]);
+  });
+});
+
+describe('joinSourceLines', () => {
+  it('une ligne, séparateur « · » par défaut', () => {
+    expect(joinSourceLines('Pièce 12\n  Pièce 14 \n\nArticle')).toBe('Pièce 12 · Pièce 14 · Article');
+    expect(joinSourceLines('a\r\nb', '<br>')).toBe('a<br>b');
+    expect(joinSourceLines('seule')).toBe('seule');
   });
 });

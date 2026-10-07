@@ -107,7 +107,9 @@
       "directionBoth": "Dwukierunkowy",
       "openInNewTab": "Otwórz w nowej karcie",
       "sourceDocumentMissing": "Brak dokumentu w aktach",
-      "sourceTargetMissing": "Nie znaleziono celu"
+      "sourceTargetMissing": "Nie znaleziono celu",
+      "sourceShowMore": "+{{count}} więcej",
+      "sourceShowLess": "Zwiń"
     },
     "tags": {
       "editIcon": "Edytuj ikonę",

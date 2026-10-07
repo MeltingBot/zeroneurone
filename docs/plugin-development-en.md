@@ -696,10 +696,11 @@ The Source field of an element, a link or an event stays a string. ZN renders as
 | `asset:<hash>` | Opens the preview of the dossier document whose SHA-256 starts with `<hash>` (full hash or at least 8 hex digits) |
 
 ```text
-[Exhibit 12](asset:3fa1c2d9) ; [Article](https://example.com/a)
+[Exhibit 12](asset:3fa1c2d9)
+[Article](https://example.com/a)
 ```
 
-Any other target stays text. An `asset:` missing from the dossier is shown greyed out, without a link. The hash is stable across export/import, unlike ids. Write `\]` for a `]` in the label.
+**One source per line**: the separator is the line break (`\n`), element merges included. A `;` has no special role. Any other target stays text. An `asset:` missing from the dossier is shown greyed out, without a link. The hash is stable across export/import, unlike ids. Write `\]` for a `]` in the label.
 
 ## At-Rest Encryption
 

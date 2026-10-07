@@ -31,10 +31,11 @@ Un élément représente n'importe quel concept : personne, lieu, organisation, 
 
 ### Liens dans la source
 
-Le champ **Source** accepte des liens au format Markdown `[libellé](cible)` :
+Le champ **Source** contient une source par ligne (**Entrée** pour passer à la ligne suivante) et accepte des liens au format Markdown `[libellé](cible)` :
 
 ```text
-[Pièce 12](asset:3fa1c2d9) ; [Article](https://exemple.fr/a)
+[Pièce 12](asset:3fa1c2d9)
+[Article](https://exemple.fr/a)
 ```
 
 | Cible | Au clic |
@@ -42,9 +43,9 @@ Le champ **Source** accepte des liens au format Markdown `[libellé](cible)` :
 | `https://…` | Ouvre la page dans un nouvel onglet |
 | `asset:` + début de l'empreinte SHA-256 du fichier (8 caractères minimum) | Ouvre l'aperçu du fichier joint du dossier |
 
-Hors édition, seuls les libellés s'affichent. Cliquez à côté d'un lien pour modifier le texte brut. Un fichier absent du dossier s'affiche grisé. Les autres cibles restent du texte. Certaines extensions ajoutent leurs propres liens.
+Hors édition, seuls les libellés s'affichent, une source par ligne ; au-delà de trois, **+N autres** déplie la liste. Cliquez à côté d'un lien pour modifier le texte brut. Un fichier absent du dossier s'affiche grisé. Les autres cibles restent du texte. Certaines extensions ajoutent leurs propres liens.
 
-Dans la matrice, la timeline, les rapports et les exports ANX et Obsidian, les liens sont remplacés par leur libellé (les liens web restent des liens dans les rapports et Obsidian). Les exports CSV et JSON gardent le texte tel quel.
+Dans la matrice, la timeline, les rapports et les exports ANX et Obsidian, les liens sont remplacés par leur libellé (les liens web restent des liens dans les rapports et Obsidian), et les sources tiennent sur une ligne, séparées par « · ». Les exports CSV et JSON gardent le texte tel quel. Dans la matrice, une source de plusieurs lignes se modifie dans le panneau de détail.
 
 ### Apparence visuelle
 
@@ -228,7 +229,7 @@ Combinez deux éléments en un seul lorsqu'ils représentent le même concept.
 | **Fichiers joints** | Union |
 | **Confiance** | Maximum des deux valeurs |
 | **Cotation** | Celle de l'élément conservé, sinon celle de l'autre élément |
-| **Source** | Combinées si différentes |
+| **Source** | Combinées si différentes, une par ligne |
 | **Liens** | Transférés vers l'élément conservé |
 
 ### Gestion des liens en doublon

@@ -4,14 +4,15 @@
  *
  * - no link in the text → the plain input, as before (with its "open" button
  *   when the whole field is a URL)
- * - links → a read view; a click outside a link (or focus) switches to the
+ * - links → a read view, one source per line, the first
+ *   three until expanded; a click outside a link (or focus) switches to the
  *   raw input, leaving it switches back
  *
  * Plugin schemes (slot `source:scheme`) are resolved and opened by their
  * plugin; a failing plugin only greys its own links out.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExternalLink } from 'lucide-react';
 import { useDossierStore } from '../../stores';
@@ -23,10 +24,15 @@ import {
   isWebScheme,
   parseSourceLinks,
   sourceToPlainText,
+  splitSourceItems,
   targetValue,
+  type SourceSegment,
 } from '../../utils/sourceLinks';
 import { useSourceSchemes } from '../../plugins/sourceSchemes';
 import { isUrl, toUrl } from '../../utils';
+
+/** Sources shown before "+N more" */
+const MAX_COLLAPSED = 3;
 
 interface SourceFieldProps {
   value: string;
@@ -45,31 +51,107 @@ export function SourceField({ value, onChange, onBlur, placeholder, className }:
   const schemeNames = useMemo(() => new Set(pluginSchemes.keys()), [pluginSchemes]);
   const [editing, setEditing] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const segments = useMemo(() => parseSourceLinks(value, schemeNames), [value, schemeNames]);
   const hasLinks = segments.some((s) => s.kind === 'link');
+  // Several sources: one per line, the first ones only until expanded
+  const items = useMemo(() => splitSourceItems(segments), [segments]);
+  const [expanded, setExpanded] = useState(false);
   const showInput = editing || !hasLinks;
   const urlButton = showInput && isUrl(value);
 
   useEffect(() => {
-    if (editing) inputRef.current?.focus();
+    const el = inputRef.current;
+    if (!editing || !el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
   }, [editing]);
+
+  // The raw text wraps: grow the field with its content
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const cs = getComputedStyle(el);
+    el.style.height = `${el.scrollHeight + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth)}px`;
+  }, [value, showInput]);
+
+  const renderSegment = (seg: SourceSegment, i: number) => {
+    if (seg.kind === 'text') return <span key={i}>{seg.text}</span>;
+    const missing = (title: string) => (
+      <span key={i} className="text-text-tertiary" title={title}>
+        {seg.label}
+      </span>
+    );
+    const linkButton = (title: string, onOpen: () => void) => (
+      <button
+        key={i}
+        type="button"
+        tabIndex={-1}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        title={title}
+        className="text-accent hover:underline"
+      >
+        {seg.label}
+      </button>
+    );
+    if (seg.scheme === 'asset') {
+      const asset = findAssetByHash(assets, assetHashOf(seg.target));
+      if (!asset) return missing(t('detail.labels.sourceDocumentMissing'));
+      return linkButton(asset.filename, () => setPreviewAsset(asset));
+    }
+    if (!isWebScheme(seg.scheme)) {
+      const ext = pluginSchemes.get(seg.scheme);
+      const linkValue = targetValue(seg.target);
+      const ctx = { dossierId };
+      let found = false;
+      try {
+        found = !!ext?.resolve(linkValue, ctx);
+      } catch (err) {
+        console.warn(`[SourceField] resolve failed for scheme "${seg.scheme}"`, err);
+      }
+      if (!ext || !found) return missing(t('detail.labels.sourceTargetMissing'));
+      return linkButton(seg.target, () => {
+        Promise.resolve()
+          .then(() => ext.open(linkValue, ctx))
+          .catch((err) => console.warn(`[SourceField] open failed for scheme "${seg.scheme}"`, err));
+      });
+    }
+    return (
+      <a
+        key={i}
+        href={seg.target}
+        target="_blank"
+        rel="noopener noreferrer"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        title={seg.target}
+        className="text-accent hover:underline"
+      >
+        {seg.label}
+      </a>
+    );
+  };
 
   return (
     <div className="relative">
       {showInput ? (
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
+          rows={1}
           value={value}
+          // One source per line
           onChange={(e) => onChange(e.target.value)}
           onBlur={() => {
             setEditing(false);
             onBlur?.();
           }}
           placeholder={placeholder}
-          className={`${className} ${urlButton ? 'pr-9' : ''}`}
+          className={`${className} block resize-none overflow-hidden ${urlButton ? 'pr-9' : ''}`}
         />
       ) : (
         <div
@@ -81,67 +163,32 @@ export function SourceField({ value, onChange, onBlur, placeholder, className }:
             if (e.target === e.currentTarget) setEditing(true);
           }}
           title={sourceToPlainText(value, schemeNames)}
-          className={`${className} truncate cursor-text`}
+          className={`${className} cursor-text`}
         >
-          {segments.map((seg, i) => {
-            if (seg.kind === 'text') return <span key={i}>{seg.text}</span>;
-            const missing = (title: string) => (
-              <span key={i} className="text-text-tertiary" title={title}>
-                {seg.label}
-              </span>
-            );
-            const linkButton = (title: string, onOpen: () => void) => (
-              <button
-                key={i}
-                type="button"
-                tabIndex={-1}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpen();
-                }}
-                title={title}
-                className="text-accent hover:underline"
-              >
-                {seg.label}
-              </button>
-            );
-            if (seg.scheme === 'asset') {
-              const asset = findAssetByHash(assets, assetHashOf(seg.target));
-              if (!asset) return missing(t('detail.labels.sourceDocumentMissing'));
-              return linkButton(asset.filename, () => setPreviewAsset(asset));
-            }
-            if (!isWebScheme(seg.scheme)) {
-              const ext = pluginSchemes.get(seg.scheme);
-              const linkValue = targetValue(seg.target);
-              const ctx = { dossierId };
-              let found = false;
-              try {
-                found = !!ext?.resolve(linkValue, ctx);
-              } catch (err) {
-                console.warn(`[SourceField] resolve failed for scheme "${seg.scheme}"`, err);
-              }
-              if (!ext || !found) return missing(t('detail.labels.sourceTargetMissing'));
-              return linkButton(seg.target, () => {
-                Promise.resolve()
-                  .then(() => ext.open(linkValue, ctx))
-                  .catch((err) => console.warn(`[SourceField] open failed for scheme "${seg.scheme}"`, err));
-              });
-            }
-            return (
-              <a
-                key={i}
-                href={seg.target}
-                target="_blank"
-                rel="noopener noreferrer"
-                tabIndex={-1}
-                onClick={(e) => e.stopPropagation()}
-                title={seg.target}
-                className="text-accent hover:underline"
-              >
-                {seg.label}
-              </a>
-            );
-          })}
+          {items.length <= 1 ? (
+            <div className="truncate">{segments.map(renderSegment)}</div>
+          ) : (
+            <>
+              {(expanded ? items : items.slice(0, MAX_COLLAPSED)).map((item, i) => (
+                <div key={i} className="truncate">{item.map(renderSegment)}</div>
+              ))}
+              {items.length > MAX_COLLAPSED && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpanded((v) => !v);
+                  }}
+                  className="text-text-tertiary hover:text-text-secondary"
+                >
+                  {expanded
+                    ? t('detail.labels.sourceShowLess')
+                    : t('detail.labels.sourceShowMore', { count: items.length - MAX_COLLAPSED })}
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
       {urlButton && (

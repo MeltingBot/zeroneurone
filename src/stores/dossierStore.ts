@@ -1991,9 +1991,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Grading: target wins, fallback to source (gradings are not comparable across scales)
     const mergedEvaluation = target.evaluation ?? source.evaluation ?? null;
 
-    // Source: combine if different
+    // Source: combine if different, one source per line
     const mergedSource = target.source && source.source && target.source !== source.source
-      ? `${target.source} ; ${source.source}`
+      ? `${target.source}\n${source.source}`
       : target.source || source.source;
 
     // Geo: target wins, fallback to source

@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.62.1
+
+### Corrections
+
+- **Champ Source : une source par ligne** — le retour à la ligne sépare les
+  sources (Entrée en édition) ; un `;` n'a plus de rôle et « PV 12; annexe »
+  reste entier. La fusion d'éléments place les sources l'une sous l'autre.
+- **Champ Source avec beaucoup de sources** — en lecture, une par ligne,
+  les trois premières puis **+N autres** pour déplier ; en édition, le texte
+  passe à la ligne et le champ s'agrandit.
+- **Sorties sur une ligne** — matrice, timeline et lignes Obsidian séparent
+  les sources par « · », tableaux Markdown par `<br>`, rapport HTML par un
+  saut de ligne. Dans la matrice, une source de plusieurs lignes se modifie
+  dans le panneau de détail.
+
+### Documentation
+
+- Éléments et liens, guide des extensions : une source par ligne.
+
 ## 2.62.0
 
 ### Features

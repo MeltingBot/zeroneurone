@@ -107,7 +107,10 @@
       "directionBoth": "Bidirectionnel",
       "openInNewTab": "Ouvrir dans un nouvel onglet",
       "sourceDocumentMissing": "Document absent du dossier",
-      "sourceTargetMissing": "Cible introuvable"
+      "sourceTargetMissing": "Cible introuvable",
+      "sourceShowMore_one": "+{{count}} autre",
+      "sourceShowMore": "+{{count}} autres",
+      "sourceShowLess": "Réduire"
     },
     "tags": {
       "editIcon": "Modifier l'icône",

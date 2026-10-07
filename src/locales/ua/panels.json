@@ -107,7 +107,9 @@
       "directionBoth": "Двонаправлений",
       "openInNewTab": "Відкрити в новій вкладці",
       "sourceDocumentMissing": "Документа немає в справі",
-      "sourceTargetMissing": "Ціль не знайдено"
+      "sourceTargetMissing": "Ціль не знайдено",
+      "sourceShowMore": "+{{count}} ще",
+      "sourceShowLess": "Згорнути"
     },
     "tags": {
       "editIcon": "Редагувати іконку",

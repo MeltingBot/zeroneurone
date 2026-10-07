@@ -107,7 +107,9 @@
       "directionBoth": "Bidireccional",
       "openInNewTab": "Obrir en una nova pestanya",
       "sourceDocumentMissing": "Document absent de l'expedient",
-      "sourceTargetMissing": "Destinació no trobada"
+      "sourceTargetMissing": "Destinació no trobada",
+      "sourceShowMore": "+{{count}} més",
+      "sourceShowLess": "Mostrar menys"
     },
     "tags": {
       "editIcon": "Editar icona",

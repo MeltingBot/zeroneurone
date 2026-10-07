@@ -107,7 +107,9 @@
       "directionBoth": "Bidirecional",
       "openInNewTab": "Abrir num novo separador",
       "sourceDocumentMissing": "Documento ausente do processo",
-      "sourceTargetMissing": "Destino não encontrado"
+      "sourceTargetMissing": "Destino não encontrado",
+      "sourceShowMore": "+{{count}} mais",
+      "sourceShowLess": "Mostrar menos"
     },
     "tags": {
       "editIcon": "Editar ícone",

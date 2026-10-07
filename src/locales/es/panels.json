@@ -107,7 +107,9 @@
       "directionBoth": "Bidireccional",
       "openInNewTab": "Abrir en una nueva pestaña",
       "sourceDocumentMissing": "Documento ausente del expediente",
-      "sourceTargetMissing": "Destino no encontrado"
+      "sourceTargetMissing": "Destino no encontrado",
+      "sourceShowMore": "+{{count}} más",
+      "sourceShowLess": "Mostrar menos"
     },
     "tags": {
       "editIcon": "Editar icono",

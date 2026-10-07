@@ -8,7 +8,7 @@ import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { formatEventWhen } from '../utils/temporalUtils';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
-import { isWebScheme, parseSourceLinks, sourceToMarkdown } from '../utils/sourceLinks';
+import { isWebScheme, joinSourceLines, parseSourceLinks, sourceToMarkdown } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 
 // Configure marked for secure rendering
@@ -804,7 +804,7 @@ class ReportService {
           md += `|-------|--------|\n`;
           md += `| ${this.t('tags')} | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
           md += `| ${this.evaluationTitle()} | ${this.evaluationText(el)} |\n`;
-          md += `| ${this.t('source')} | ${el.source ? sourceToMarkdown(el.source, getSourceSchemeNames()) : '-'} |\n`;
+          md += `| ${this.t('source')} | ${el.source ? joinSourceLines(sourceToMarkdown(el.source, getSourceSchemeNames()), '<br>') : '-'} |\n`;
           if (el.notes) {
             md += `| ${this.t('notes')} | ${el.notes.replace(/\n/g, ' ')} |\n`;
           }
@@ -894,7 +894,7 @@ class ReportService {
           }).join(', ')
         : '-';
 
-      md += `| ${el.label} | ${el.notes || '-'} | ${tags} | ${confidence} | ${el.source ? sourceToMarkdown(el.source, getSourceSchemeNames()) : '-'} |`;
+      md += `| ${el.label} | ${el.notes || '-'} | ${tags} | ${confidence} | ${el.source ? joinSourceLines(sourceToMarkdown(el.source, getSourceSchemeNames()), '<br>') : '-'} |`;
       if (showProps) md += ` ${props} |`;
       if (showFiles) md += ` ${files} |`;
       md += `\n`;
@@ -1158,7 +1158,8 @@ class ReportService {
   private sourceHTML(source: string): string {
     return parseSourceLinks(source, getSourceSchemeNames())
       .map(s => {
-        if (s.kind === 'text') return this.escapeHTML(s.text);
+        // One source per line
+        if (s.kind === 'text') return this.escapeHTML(s.text).replace(/\r?\n/g, '<br>');
         if (!isWebScheme(s.scheme)) return this.escapeHTML(s.label);
         return `<a href="${this.escapeHTML(s.target)}" target="_blank" rel="noopener noreferrer">${this.escapeHTML(s.label)}</a>`;
       })

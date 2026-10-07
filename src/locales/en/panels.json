@@ -107,7 +107,9 @@
       "directionBoth": "Bidirectional",
       "openInNewTab": "Open in new tab",
       "sourceDocumentMissing": "Document not in this dossier",
-      "sourceTargetMissing": "Target not found"
+      "sourceTargetMissing": "Target not found",
+      "sourceShowMore": "+{{count}} more",
+      "sourceShowLess": "Show less"
     },
     "tags": {
       "editIcon": "Edit icon",

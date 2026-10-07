@@ -107,7 +107,10 @@
       "directionBoth": "Bidirezionale",
       "openInNewTab": "Apri in una nuova scheda",
       "sourceDocumentMissing": "Documento assente dal fascicolo",
-      "sourceTargetMissing": "Destinazione non trovata"
+      "sourceTargetMissing": "Destinazione non trovata",
+      "sourceShowMore_one": "+{{count}} altra",
+      "sourceShowMore": "+{{count}} altre",
+      "sourceShowLess": "Mostra meno"
     },
     "tags": {
       "editIcon": "Modifica icona",

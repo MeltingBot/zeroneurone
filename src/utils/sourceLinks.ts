@@ -94,6 +94,46 @@ export function parseSourceLinks(source: string, pluginSchemes?: PluginSchemes):
   return segments;
 }
 
+/**
+ * Sources listed in one field: one per line. Blank lines are dropped and the
+ * spaces around each line trimmed.
+ */
+export function splitSourceItems(segments: readonly SourceSegment[]): SourceSegment[][] {
+  const items: SourceSegment[][] = [[]];
+  for (const seg of segments) {
+    if (seg.kind === 'link') {
+      items[items.length - 1].push(seg);
+      continue;
+    }
+    seg.text.split(/\r?\n/).forEach((part, i) => {
+      if (i > 0) items.push([]);
+      if (part) items[items.length - 1].push({ kind: 'text', text: part });
+    });
+  }
+  return items
+    .map((item) => {
+      const out = item.map((s) => ({ ...s }));
+      const first = out[0];
+      const last = out[out.length - 1];
+      if (first?.kind === 'text') first.text = first.text.trimStart();
+      if (last?.kind === 'text') last.text = last.text.trimEnd();
+      return out.filter((s) => s.kind === 'link' || s.text);
+    })
+    .filter((item) => item.length > 0);
+}
+
+/** Separator of the sources when they are shown on one line */
+export const SOURCE_LINE_SEPARATOR = ' · ';
+
+/** Joins the lines of a source for a one-line output (table cell, list line). */
+export function joinSourceLines(text: string, separator = SOURCE_LINE_SEPARATOR): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(separator);
+}
+
 export function hasSourceLinks(source: string | null | undefined, pluginSchemes?: PluginSchemes): boolean {
   return !!source && parseSourceLinks(source, pluginSchemes).some(s => s.kind === 'link');
 }

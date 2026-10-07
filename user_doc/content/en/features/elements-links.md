@@ -31,10 +31,11 @@ An element represents any concept: person, place, organization, object, event, d
 
 ### Links in the Source
 
-The **Source** field accepts Markdown links `[label](target)`:
+The **Source** field holds one source per line (**Enter** starts a new line) and accepts Markdown links `[label](target)`:
 
 ```text
-[Exhibit 12](asset:3fa1c2d9) ; [Article](https://example.com/a)
+[Exhibit 12](asset:3fa1c2d9)
+[Article](https://example.com/a)
 ```
 
 | Target | On click |
@@ -42,9 +43,9 @@ The **Source** field accepts Markdown links `[label](target)`:
 | `https://…` | Opens the page in a new tab |
 | `asset:` + start of the file's SHA-256 fingerprint (at least 8 characters) | Opens the preview of the dossier's attached file |
 
-Outside editing, only the labels are shown. Click next to a link to edit the raw text. A file missing from the dossier is shown greyed out. Other targets stay text. Some extensions add their own links.
+Outside editing, only the labels are shown, one source per line; beyond three, **+N more** expands the list. Click next to a link to edit the raw text. A file missing from the dossier is shown greyed out. Other targets stay text. Some extensions add their own links.
 
-In the matrix, the timeline, reports and ANX and Obsidian exports, links are replaced by their label (web links stay links in reports and Obsidian). CSV and JSON exports keep the text as is.
+In the matrix, the timeline, reports and ANX and Obsidian exports, links are replaced by their label (web links stay links in reports and Obsidian), and sources fit on one line, separated by "·". CSV and JSON exports keep the text as is. In the matrix, a multi-line source is edited in the detail panel.
 
 ### Visual Appearance
 
@@ -228,7 +229,7 @@ Combine two elements into one when they represent the same concept.
 | **Attachments** | Union |
 | **Confidence** | Maximum of both values |
 | **Grading** | The kept element's, otherwise the other element's |
-| **Source** | Combined if different |
+| **Source** | Combined if different, one per line |
 | **Links** | Transferred to the kept element |
 
 ### Duplicate Link Handling

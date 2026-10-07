@@ -107,7 +107,9 @@
       "directionBoth": "Bidirektional",
       "openInNewTab": "In neuem Tab öffnen",
       "sourceDocumentMissing": "Dokument nicht im Dossier",
-      "sourceTargetMissing": "Ziel nicht gefunden"
+      "sourceTargetMissing": "Ziel nicht gefunden",
+      "sourceShowMore": "+{{count}} weitere",
+      "sourceShowLess": "Weniger"
     },
     "tags": {
       "editIcon": "Symbol bearbeiten",
