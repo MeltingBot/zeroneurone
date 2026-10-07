@@ -105,7 +105,9 @@
       "directionForward": "Helburura",
       "directionBackward": "Jatorrira",
       "directionBoth": "Bi norabidetan",
-      "openInNewTab": "Fitxa berrian ireki"
+      "openInNewTab": "Fitxa berrian ireki",
+      "sourceDocumentMissing": "Dokumentua ez dago espedientean",
+      "sourceTargetMissing": "Helburua ez da aurkitu"
     },
     "tags": {
       "editIcon": "Ikonoa editatu",

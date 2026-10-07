@@ -144,6 +144,8 @@ Lorsque vous ajoutez un fichier contenant des métadonnées :
 
 Les métadonnées importées deviennent des propriétés de l'élément.
 
+Pour plusieurs fichiers ajoutés en une fois, cochez **Appliquer aux fichiers suivants** : le même choix (importer ces métadonnées, ou ignorer) vaut pour les autres fichiers de l'ajout, y compris ceux encore en chargement.
+
 ### Relancer l'extraction
 
 Si vous avez cliqué **Ignorer**, ou si vous souhaitez simplement y revenir plus tard, le bouton **Extraire les métadonnées** (icône information) de la ligne du fichier relance l'analyse. Il est disponible sur tous les types de fichiers, y compris les images, où il permet de récupérer les coordonnées GPS d'une photo après coup. Si le fichier n'en contient aucune, un message vous le signale.

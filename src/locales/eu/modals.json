@@ -507,7 +507,13 @@
     "title": "Metadatuak inportatu",
     "description": "Fitxategitik metadatuak atera (EXIF, PDF, etab.)",
     "noMetadata": "Ez da metadaturik aurkitu",
-    "import": "Hautatutako metadatuak inportatu"
+    "import": "Hautatutako metadatuak inportatu",
+    "detected": "Metadatuak aurkitu dira",
+    "gps": "GPS koordenatuak",
+    "ignore": "Baztertu",
+    "applyToBatch": "Hurrengo fitxategiei aplikatu",
+    "yes": "Bai",
+    "no": "Ez"
   },
   "collaboration": {
     "title": "Lankidetza",

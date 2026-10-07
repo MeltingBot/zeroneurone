@@ -42,11 +42,12 @@ import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
-import { PdfPreview } from '../common/PdfPreview';
-import { ImagePreview } from '../common/ImagePreview';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
 import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
+import { computeElementDimensions } from '../../utils/elementDimensions';
+import { AssetPreviewModal } from '../modals/AssetPreviewModal';
+import { hasSourceLinks, sourceWebLinks } from '../../utils/sourceLinks';
 import { getEvaluationBadge } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { FONT_SIZE_PX } from '../../types';
@@ -62,7 +63,6 @@ import { buildMermaidExport } from '../../services/exportMermaid';
 import { startMermaidPlacement } from '../../services/mermaidPlacement';
 import { serializeQuery } from '../../services/query/serializer';
 import { insightsService } from '../../services/insightsService';
-import { fileService } from '../../services/fileService';
 import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
 import { syncService } from '../../services/syncService';
@@ -3067,11 +3067,26 @@ export function Canvas() {
   }, [contextMenu, elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
 
   // Group selection handler for context menu
+  // Elements a new group can take: top-level, non-group elements. Groups are
+  // a single level (child position = group position + relative offset), and
+  // undo only knows how to put children back at the top level, so groups and
+  // elements already inside a group are left out.
+  const groupableSelectedIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const id of selectedElementIds) {
+      const el = elementMap.get(id);
+      if (el && !el.isGroup && !el.parentGroupId) ids.push(id);
+    }
+    return ids;
+  }, [selectedElementIds, elementMap]);
+  const canGroupSelection = groupableSelectedIds.length >= 2;
+
   const handleGroupSelection = useCallback(async () => {
-    const selectedEls = getSelectedElementIds();
-    if (selectedEls.length < 2) return;
-    const selectedElements = elements.filter(el => selectedEls.includes(el.id) && !el.isGroup);
+    const selectedElements = groupableSelectedIds
+      .map(id => elementMap.get(id))
+      .filter((el): el is Element => !!el);
     if (selectedElements.length < 2) return;
+    const childIds = selectedElements.map(el => el.id);
 
     // Snapshot absolute positions for undo
     const absolutePositions = selectedElements.map(el => ({
@@ -3079,12 +3094,14 @@ export function Canvas() {
       position: { ...el.position },
     }));
 
-    // Calculate bounding box of selected elements with padding
+    // Bounding box of the selected elements, using the size they are drawn at.
+    // The padding also covers the diamond tips, which overhang the node box.
     const padding = 40;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const el of selectedElements) {
-      const w = el.visual.customWidth || 120;
-      const h = el.visual.customHeight || 60;
+      const firstAssetId = el.assetIds?.[0];
+      const hasImage = Boolean(firstAssetId && assetMap.get(firstAssetId)) && el.visual.hideMedia !== true;
+      const { width: w, height: h } = computeElementDimensions(el.visual, el.label || t('empty.unnamed'), hasImage);
       minX = Math.min(minX, el.position.x);
       minY = Math.min(minY, el.position.y);
       maxX = Math.max(maxX, el.position.x + w);
@@ -3097,7 +3114,7 @@ export function Canvas() {
       height: maxY - minY + padding * 2,
     };
 
-    const group = await createGroup('Groupe', groupPos, groupSize, selectedEls);
+    const group = await createGroup('Groupe', groupPos, groupSize, childIds);
 
     // Compute relative positions for redo
     const relativePositions = selectedElements.map(el => ({
@@ -3116,7 +3133,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [elements, getSelectedElementIds, createGroup, clearSelection, pushAction]);
+  }, [groupableSelectedIds, elementMap, assetMap, t, createGroup, clearSelection, pushAction]);
 
   // Dissolve group handler
   const handleDissolveGroup = useCallback(async () => {
@@ -3602,7 +3619,8 @@ export function Canvas() {
         const elementId = nodeElement.getAttribute('data-id');
         if (elementId) {
           const targetElement = elementMap.get(elementId);
-          for (const file of files) {
+          const batchId = generateUUID();
+          for (const [index, file] of files.entries()) {
             const asset = await addAsset(elementId, file);
             // Record in history so the attachment can be undone
             pushAction({
@@ -3619,6 +3637,7 @@ export function Canvas() {
                   elementLabel: targetElement?.label || '',
                   filename: file.name,
                   metadata,
+                  batch: { id: batchId, index, size: files.length },
                 });
               }
             } catch (err) {
@@ -3631,6 +3650,7 @@ export function Canvas() {
 
       // Dropped on empty canvas - create new elements with files
       const createdElements: Element[] = [];
+      const batchId = generateUUID();
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const position = {
@@ -3656,6 +3676,7 @@ export function Canvas() {
               elementLabel: newElement.label,
               filename: file.name,
               metadata,
+              batch: { id: batchId, index: i, size: files.length },
             });
           }
         } catch (err) {
@@ -4662,6 +4683,7 @@ export function Canvas() {
             onEdgeContextMenu={handleEdgeContextMenu}
             onPaneClick={handlePaneClick}
             onPaneContextMenu={handlePaneContextMenu}
+            onSelectionContextMenu={handlePaneContextMenu}
             onDoubleClick={handlePaneDoubleClick}
             onViewportChange={handleViewportChange}
             onMoveStart={handleMoveStart}
@@ -4738,8 +4760,9 @@ export function Canvas() {
           {/* Context menu for elements */}
           {contextMenu && (() => {
             // URLs of the right-clicked element (single selection): the source
-            // metadata field if it's a URL, plus any URL property (type 'link'
-            // or a value that looks like a URL).
+            // metadata field if it's a URL, or each web link written in it as
+            // Markdown, plus any URL property (type 'link' or a value that
+            // looks like a URL).
             const ctxEl = selectedElementIds.size <= 1 ? elementMap.get(contextMenu.elementId) : undefined;
             const propertyUrls = (ctxEl?.properties ?? [])
               .filter(p => {
@@ -4747,9 +4770,11 @@ export function Canvas() {
                 return v.length > 0 && (p.type === 'link' || isUrl(v));
               })
               .map(p => ({ key: p.key, url: toUrl(String(p.value)) }));
-            const sourceUrls = ctxEl?.source && isUrl(ctxEl.source)
-              ? [{ key: t('labels.source'), url: toUrl(ctxEl.source) }]
-              : [];
+            const sourceUrls = !ctxEl?.source
+              ? []
+              : isUrl(ctxEl.source) && !hasSourceLinks(ctxEl.source)
+                ? [{ key: t('labels.source'), url: toUrl(ctxEl.source) }]
+                : sourceWebLinks(ctxEl.source).map(l => ({ key: `${t('labels.source')} · ${l.label}`, url: l.target }));
             const elementUrls = [...sourceUrls, ...propertyUrls];
             return (
             <ContextMenu
@@ -4778,7 +4803,7 @@ export function Canvas() {
               isGroup={!!elementMap.get(contextMenu.elementId)?.isGroup}
               isInGroup={!!elementMap.get(contextMenu.elementId)?.parentGroupId}
               hasMultipleSelected={selectedElementIds.size > 1}
-              onGroupSelection={handleGroupSelection}
+              onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onDissolveGroup={handleDissolveGroup}
               onRemoveFromGroup={handleRemoveFromGroup}
               isPositionLocked={!!elementMap.get(contextMenu.elementId)?.isPositionLocked}
@@ -4842,7 +4867,7 @@ export function Canvas() {
               onDuplicateSelection={handleSelectionDuplicate}
               onDeleteSelection={handleSelectionDelete}
               onHideSelection={handleSelectionHide}
-              onGroupSelection={handleGroupSelection}
+              onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onCopyAsMermaid={handleCopyAsMermaid}
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
@@ -4938,130 +4963,5 @@ export function Canvas() {
         )}
       </div>
     </ReactFlowProvider>
-  );
-}
-
-// Asset preview modal component (reusable)
-interface AssetPreviewModalProps {
-  asset: Asset;
-  onClose: () => void;
-}
-
-function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
-  const { t } = useTranslation('pages');
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const isImage = asset.mimeType.startsWith('image/');
-  const isPdf = asset.mimeType === 'application/pdf';
-
-  // Load file from OPFS
-  useEffect(() => {
-    let mounted = true;
-    let url: string | null = null;
-
-    const loadFile = async () => {
-      try {
-        setIsLoading(true);
-        if (isPdf) {
-          const file = await fileService.getAssetFile(asset);
-          if (mounted) setPdfFile(file);
-        } else {
-          url = await fileService.getAssetUrl(asset);
-          if (mounted) {
-            setFileUrl(url);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading file:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    if (isImage || isPdf) {
-      loadFile();
-    } else {
-      setIsLoading(false);
-    }
-
-    return () => {
-      mounted = false;
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    };
-  }, [asset, isImage, isPdf]);
-
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
-      <div
-        className={`bg-bg-primary rounded shadow-lg ${
-          isPdf || isImage ? 'w-[90vw] h-[90vh] flex flex-col' : 'max-w-[90vw] max-h-[90vh] flex flex-col'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-border-default flex-shrink-0">
-          <h3 className="text-sm font-medium text-text-primary truncate pr-4">
-            {asset.filename}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 text-text-tertiary hover:text-text-primary flex-shrink-0"
-            title={t('dossier.toolbar.closeEsc')}
-          >
-            <span className="sr-only">{t('dossier.toolbar.close')}</span>
-            ×
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className={isPdf || isImage ? 'flex-1 min-h-0 overflow-hidden' : 'overflow-auto'}>
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-text-secondary">{t('dossier.toolbar.loading')}</span>
-              </div>
-            </div>
-          ) : isPdf && pdfFile ? (
-            <PdfPreview file={pdfFile} />
-          ) : isImage && fileUrl ? (
-            <ImagePreview key={fileUrl} url={fileUrl} alt={asset.filename} />
-          ) : asset.thumbnailDataUrl ? (
-            <div className="p-4 text-center">
-              <img
-                src={asset.thumbnailDataUrl}
-                alt={asset.filename}
-                className="max-w-full inline-block"
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-4 py-8 text-text-tertiary">
-              <span className="text-4xl">📄</span>
-              <p className="text-sm">Aperçu non disponible</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }

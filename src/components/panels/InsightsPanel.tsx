@@ -22,6 +22,7 @@ import {
   Group,
   Ungroup,
 } from 'lucide-react';
+import { computeElementDimensions } from '../../utils/elementDimensions';
 import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
@@ -202,9 +203,14 @@ export function InsightsPanel() {
 
       const padding = 40;
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      // Size each element as the canvas draws it (thumbnail included)
+      const thumbnails = new Map(
+        useDossierStore.getState().assets.map(a => [a.id, a.thumbnailDataUrl] as const),
+      );
       for (const el of clusterElements) {
-        const w = el.visual.customWidth || 120;
-        const h = el.visual.customHeight || 60;
+        const firstAssetId = el.assetIds?.[0];
+        const hasImage = Boolean(firstAssetId && thumbnails.get(firstAssetId)) && el.visual.hideMedia !== true;
+        const { width: w, height: h } = computeElementDimensions(el.visual, el.label || t('common:empty.unnamed'), hasImage);
         minX = Math.min(minX, el.position.x);
         minY = Math.min(minY, el.position.y);
         maxX = Math.max(maxX, el.position.x + w);

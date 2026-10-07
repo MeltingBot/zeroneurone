@@ -221,6 +221,7 @@ src/
 | `keyboard:shortcuts` | `KeyboardShortcut[]` | DossierPage keydown |
 | `export:hooks` | `ExportHook[]` | exportService.exportToZip() |
 | `import:hooks` | `ImportHook[]` | importService.importFromZip() |
+| `source:scheme` | `SourceSchemeExtension[]` | SourceField (Source links), source conversions |
 
 ### Plugin Data Storage
 Generic `pluginData` table in Dexie (v6): `{ pluginId, dossierId, key, value }` with compound index `[pluginId+dossierId+key]`.

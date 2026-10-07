@@ -516,7 +516,13 @@
     "title": "Import metadata",
     "description": "Extract file metadata (EXIF, PDF, etc.)",
     "noMetadata": "No metadata found",
-    "import": "Import selected metadata"
+    "import": "Import selected metadata",
+    "detected": "Metadata found",
+    "gps": "GPS coordinates",
+    "ignore": "Ignore",
+    "applyToBatch": "Apply to the next files",
+    "yes": "Yes",
+    "no": "No"
   },
   "collaboration": {
     "title": "Collaboration",

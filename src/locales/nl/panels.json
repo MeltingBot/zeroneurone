@@ -105,7 +105,9 @@
       "directionForward": "Naar bestemming",
       "directionBackward": "Naar bron",
       "directionBoth": "Bidirectioneel",
-      "openInNewTab": "Openen in nieuw tabblad"
+      "openInNewTab": "Openen in nieuw tabblad",
+      "sourceDocumentMissing": "Document niet in het dossier",
+      "sourceTargetMissing": "Doel niet gevonden"
     },
     "tags": {
       "editIcon": "Pictogram bewerken",

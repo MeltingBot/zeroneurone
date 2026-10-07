@@ -278,6 +278,23 @@ function ElementNodeComponent({ data }: NodeProps) {
 
   const { width, height } = dimensions;
 
+  // Diamond label: the body is a square of side s rotated 45°, so an
+  // axis-aligned box W×H centred in it fits only if W + H ≤ s√2. Using the
+  // full body width lets the corners clip the text; constrain the label to a
+  // wide inscribed box instead (minus the border).
+  const diamondTextBox = isDiamond
+    ? (() => {
+        const s = Math.min(width, height) - 2 * (element.visual.borderWidth ?? 2) - 4;
+        const boxWidth = Math.max(0, s * 0.85);
+        const boxHeight = Math.max(0, s * Math.SQRT2 - boxWidth);
+        return { width: boxWidth, height: boxHeight };
+      })()
+    : null;
+  const labelLineHeight = labelFontSize * 1.25;
+  const labelMaxLines = diamondTextBox
+    ? Math.max(1, Math.floor(diamondTextBox.height / labelLineHeight))
+    : Math.max(1, Math.floor(height / 16));
+
   // When the label is rendered OUTSIDE the node body (circle/hexagon/diamond with a
   // thumbnail), reserve vertical space for it so the displayed properties don't overlap
   // the name. Diamond's bottom corner overhangs the wrapper bbox, so it needs extra room.
@@ -697,9 +714,10 @@ function ElementNodeComponent({ data }: NodeProps) {
           /* Diamond shape content needs to be counter-rotated */
           <div
             className={`
-              text-center px-2 overflow-hidden w-full
-              ${element.visual.shape === 'diamond' ? '-rotate-45' : ''}
+              text-center overflow-hidden
+              ${diamondTextBox ? '-rotate-45 flex-shrink-0' : 'px-2 w-full'}
             `}
+            style={diamondTextBox ? { width: diamondTextBox.width, maxHeight: diamondTextBox.height } : undefined}
           >
             {isEditing ? (
               <input
@@ -734,7 +752,7 @@ function ElementNodeComponent({ data }: NodeProps) {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: '-webkit-box',
-                  WebkitLineClamp: Math.max(1, Math.floor(height / 16)),
+                  WebkitLineClamp: labelMaxLines,
                   WebkitBoxOrient: 'vertical',
                   wordBreak: 'break-word',
                 }}

@@ -516,7 +516,13 @@
     "title": "Importer les métadonnées",
     "description": "Extraire les métadonnées du fichier (EXIF, PDF, etc.)",
     "noMetadata": "Aucune métadonnée trouvée",
-    "import": "Importer les métadonnées sélectionnées"
+    "import": "Importer les métadonnées sélectionnées",
+    "detected": "Métadonnées détectées",
+    "gps": "Coordonnées GPS",
+    "ignore": "Ignorer",
+    "applyToBatch": "Appliquer aux fichiers suivants",
+    "yes": "Oui",
+    "no": "Non"
   },
   "collaboration": {
     "title": "Collaboration",

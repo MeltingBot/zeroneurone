@@ -1,5 +1,51 @@
 # Changelog
 
+## 2.62.0
+
+### Features
+
+- **Liens dans le champ Source** — `[libellé](https://…)` ouvre la page,
+  `[libellé](asset:3fa1c2d9)` ouvre l'aperçu du fichier joint dont
+  l'empreinte SHA-256 commence ainsi (8 caractères minimum, stable à
+  l'export/import). Hors édition, seuls les libellés s'affichent ; un clic à
+  côté repasse en texte brut. Fichier absent : libellé grisé. Toute autre
+  cible reste du texte. Élément, lien et événement ; la matrice et la
+  timeline affichent les libellés ; le menu « Liens » propose chaque lien web
+  du champ.
+- **Rapports et exports** — liens de source réduits au libellé (ANX), liens
+  web conservés (rapports HTML et Markdown, Obsidian). CSV et JSON
+  inchangés.
+- **Métadonnées de plusieurs fichiers** — case **Appliquer aux fichiers
+  suivants** : le choix (clés cochées, GPS, ou ignorer) vaut pour tout
+  l'ajout, y compris les fichiers encore en chargement.
+- **Extensions** — slot `source:scheme` : une extension rend cliquables ses
+  propres liens `[libellé](schéma:valeur)`. `api.version` et `api.features`
+  (`sourceLinks`, `sourceSchemes`) pour tester une fonction avant de s'en
+  servir.
+
+### Corrections
+
+- **Losanges** — le texte était coupé par les coins ; il tient dans la
+  forme, avec « … » au-delà.
+- **Clic-droit après une sélection au lasso** — le menu du navigateur
+  s'ouvrait sur le cadre de sélection ; c'est maintenant le menu ZN
+  (Grouper, Copier…).
+- **Grouper la sélection** — le cadre ne couvrait pas toujours les
+  éléments (losanges, cercles, images) ; un groupe sélectionné était
+  imbriqué et un élément déjà groupé faussait le cadre. Seuls les éléments
+  libres sont repris, et **Grouper** n'apparaît que s'il y en a au moins
+  deux. Même correction de taille pour **Grouper le cluster** (Insights).
+- **Aperçu de fichier depuis le canvas** — même aperçu que le panneau
+  Fichiers (texte, e-mail, docx en plus des images et PDF).
+- **Fenêtre des métadonnées** — traduite dans les 11 langues.
+
+### Documentation
+
+- Éléments et liens : liens dans la source, groupement après un lasso.
+- Fichiers joints : métadonnées de plusieurs fichiers.
+- Guide des extensions : `api.version`, `api.features`, slot
+  `source:scheme`.
+
 ## 2.61.1
 
 ### Corrections

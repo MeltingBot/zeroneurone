@@ -455,6 +455,26 @@ registerPlugin('import:hooks', {
 
 **Gestion d'erreur :** Si votre hook lance une exception, ZN l'intercepte, logue un avertissement et continue. L'echec de votre plugin ne bloque jamais l'export/import.
 
+### `source:scheme` — Liens de plugin dans les champs Source
+
+Rend cliquables les liens `[libelle](schema:valeur)` d'un schema propre au plugin, dans les champs Source (element, lien, evenement). Sans plugin enregistre pour le schema, le lien reste du texte.
+
+```typescript
+registerPlugin('source:scheme', {
+  scheme: 'mn',                                   // [PV p.3](mn:1a2b3c4d)
+  resolve: (value, ctx) => annotationExists(ctx.dossierId, value), // false → libelle grise, non cliquable
+  open: (value, ctx) => openReader(ctx.dossierId, value),
+  pluginId: 'markneurone',
+});
+```
+
+- `value` est le texte apres `schema:` (ici `1a2b3c4d`) ; `ctx` vaut `{ dossierId }`.
+- `resolve` est appele a chaque affichage : il doit etre synchrone et rapide.
+- Nom de schema : minuscules, `[a-z][a-z0-9+.-]*`. Les schemas `http`, `https`, `asset`, `javascript`, `vbscript`, `data`, `file`, `blob`, `about`, `mailto` et `tel` sont refuses. Si deux plugins declarent le meme schema, le premier enregistre l'emporte.
+- Dans les sorties (matrice, timeline, rapports, exports ANX et Obsidian), un lien de plugin est remplace par son libelle.
+- Une exception dans `resolve` grise le lien ; une exception dans `open` est loguee, sans autre effet.
+- Disponible si `api.features?.sourceSchemes` est vrai.
+
 ## Persistence des donnees
 
 ZN fournit une table generique `pluginData` dans Dexie pour le stockage des plugins :
@@ -655,6 +675,31 @@ api.toast.dismiss(id);
 ```
 
 **Durees par defaut :** `error` = 0 (persistant), les autres = 3000ms.
+
+## Version et fonctionnalites (`api.version`, `api.features`)
+
+`api.version` donne la version de ZeroNeurone (semver). Pour savoir si une fonction existe, tester plutot `api.features` :
+
+```javascript
+if (api.features?.sourceLinks) {
+  // ZN affiche les liens Markdown des champs Source
+}
+```
+
+### Liens dans les champs Source (`features.sourceLinks`)
+
+Le champ Source d'un element, d'un lien ou d'un evenement reste une chaine. ZN y affiche comme liens cliquables les liens Markdown dont la cible est autorisee :
+
+| Cible | Au clic |
+|---|---|
+| `https://…`, `http://…` | Ouvre un nouvel onglet |
+| `asset:<hash>` | Ouvre l'apercu du document du dossier dont le SHA-256 commence par `<hash>` (hash complet ou au moins 8 caracteres hexadecimaux) |
+
+```text
+[Piece 12](asset:3fa1c2d9) ; [Article](https://exemple.fr/a)
+```
+
+Toute autre cible reste du texte. Un `asset:` absent du dossier s'affiche grise, sans lien. Le hash est stable a l'export/import, contrairement aux identifiants. Un `]` dans le libelle s'ecrit `\]`.
 
 ## Chiffrement at-rest
 
@@ -1052,6 +1097,7 @@ if (isPluginDisabled('my-plugin')) return;
 | `keyboard:shortcuts` | `KeyboardShortcut` | — | Handler keydown global |
 | `export:hooks` | `ExportHook` | `(zip, dossierId)` | Export ZIP |
 | `import:hooks` | `ImportHook` | `(zip, dossierId)` | Import ZIP |
+| `source:scheme` | `SourceSchemeExtension` | `(value, { dossierId })` | Champs Source (liens `schema:`) |
 
 ## Plugins externes (chargement local)
 

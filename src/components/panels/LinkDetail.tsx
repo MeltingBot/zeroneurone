@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowLeftRight, Minus, Link2, Settings, Palette, Calendar, MessageSquare } from 'lucide-react';
 import { useDossierStore, useHistoryStore, useUIStore } from '../../stores';
 import type { Link, LinkStyle, LinkDirection, Confidence, Evaluation, Property, PropertyDefinition, FontSize } from '../../types';
 import { getModelScale } from '../../utils/evaluation';
@@ -15,24 +15,10 @@ import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
 import { dateFromInputKeys, dateInputKeys } from '../../utils/dates';
 import { TimeZoneButton } from '../common/TimeZoneButton';
+import { SourceField } from '../common/SourceField';
 
 interface LinkDetailProps {
   link: Link;
-}
-
-// Check if a string looks like a URL
-function isUrl(str: string): boolean {
-  if (!str) return false;
-  const trimmed = str.trim();
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('www.');
-}
-
-// Get a proper URL (only http/https allowed)
-function toUrl(str: string): string {
-  const trimmed = str.trim();
-  if (trimmed.startsWith('www.')) return `https://${trimmed}`;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
 }
 
 // Debounce hook
@@ -562,28 +548,15 @@ export function LinkDetail({ link }: LinkDetailProps) {
           {/* Source */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-secondary">{t('detail.labels.source')}</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={source}
-                onChange={(e) => {
-                  editingLinkIdRef.current = link.id;
-                  setSource(e.target.value);
-                }}
-                placeholder={t('detail.placeholders.source')}
-                className={`w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary ${isUrl(source) ? 'pr-9' : ''}`}
-              />
-              {isUrl(source) && (
-                <button
-                  type="button"
-                  onClick={() => window.open(toUrl(source), '_blank', 'noopener,noreferrer')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-tertiary hover:text-accent transition-colors"
-                  title={t('detail.labels.openInNewTab')}
-                >
-                  <ExternalLink size={14} />
-                </button>
-              )}
-            </div>
+            <SourceField
+              value={source}
+              onChange={(value) => {
+                editingLinkIdRef.current = link.id;
+                setSource(value);
+              }}
+              placeholder={t('detail.placeholders.source')}
+              className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary placeholder:text-text-tertiary"
+            />
           </div>
 
           {/* Period (start/end) */}

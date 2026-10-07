@@ -145,6 +145,8 @@ When you add a file containing metadata:
 
 Imported metadata become element properties.
 
+When several files are added at once, tick **Apply to the next files**: the same choice (import these metadata, or ignore) applies to the other files of that addition, including those still loading.
+
 ### Re-running extraction
 
 If you clicked **Ignore**, or simply want to revisit it later, the **Extract metadata** button (information icon) on the file row runs the analysis again. It is available on every file type, images included, where it recovers a photograph's GPS coordinates after the fact. When a file holds none, a message says so.

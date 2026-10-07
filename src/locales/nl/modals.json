@@ -507,7 +507,13 @@
     "title": "Metadata importeren",
     "description": "Metadata uit bestand extraheren (EXIF, PDF, enz.)",
     "noMetadata": "Geen metadata gevonden",
-    "import": "Geselecteerde metadata importeren"
+    "import": "Geselecteerde metadata importeren",
+    "detected": "Metadata gevonden",
+    "gps": "GPS-coördinaten",
+    "ignore": "Negeren",
+    "applyToBatch": "Toepassen op de volgende bestanden",
+    "yes": "Ja",
+    "no": "Nee"
   },
   "collaboration": {
     "title": "Samenwerking",

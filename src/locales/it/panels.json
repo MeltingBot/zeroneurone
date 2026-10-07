@@ -105,7 +105,9 @@
       "directionForward": "Verso la destinazione",
       "directionBackward": "Verso l'origine",
       "directionBoth": "Bidirezionale",
-      "openInNewTab": "Apri in una nuova scheda"
+      "openInNewTab": "Apri in una nuova scheda",
+      "sourceDocumentMissing": "Documento assente dal fascicolo",
+      "sourceTargetMissing": "Destinazione non trovata"
     },
     "tags": {
       "editIcon": "Modifica icona",

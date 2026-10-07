@@ -112,6 +112,28 @@ export interface HomeCardRegistration {
 
 // ─── The complete slot registry ─────────────────────────────
 
+// ─── Source link schemes ────────────────────────────────────
+
+/** Context passed to a source scheme resolver */
+export interface SourceSchemeContext {
+  dossierId: string;
+}
+
+/**
+ * Lets a plugin make `[label](scheme:value)` links clickable in Source fields.
+ * `value` is the text after `scheme:`. Without a registration for the scheme,
+ * the link stays plain text.
+ */
+export interface SourceSchemeExtension {
+  /** Lowercase scheme name, e.g. 'mn' for `[PV p.3](mn:1a2b3c4d)` */
+  scheme: string;
+  /** false → target not found: the label is shown greyed out, not clickable */
+  resolve: (value: string, ctx: SourceSchemeContext) => boolean;
+  /** Called when the user clicks the link */
+  open: (value: string, ctx: SourceSchemeContext) => void | Promise<void>;
+  pluginId?: string;
+}
+
 export interface PluginSlots {
   'header:right': ComponentType[];
   'home:actions': ComponentType<HomeActionsProps>[];
@@ -127,4 +149,5 @@ export interface PluginSlots {
   'keyboard:shortcuts': KeyboardShortcut[];
   'export:hooks': ExportHook[];
   'import:hooks': ImportHook[];
+  'source:scheme': SourceSchemeExtension[];
 }

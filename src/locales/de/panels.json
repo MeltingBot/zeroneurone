@@ -105,7 +105,9 @@
       "directionForward": "Zum Ziel",
       "directionBackward": "Zur Quelle",
       "directionBoth": "Bidirektional",
-      "openInNewTab": "In neuem Tab öffnen"
+      "openInNewTab": "In neuem Tab öffnen",
+      "sourceDocumentMissing": "Dokument nicht im Dossier",
+      "sourceTargetMissing": "Ziel nicht gefunden"
     },
     "tags": {
       "editIcon": "Symbol bearbeiten",

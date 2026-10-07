@@ -105,7 +105,9 @@
       "directionForward": "Cap a la destinació",
       "directionBackward": "Cap a l'origen",
       "directionBoth": "Bidireccional",
-      "openInNewTab": "Obrir en una nova pestanya"
+      "openInNewTab": "Obrir en una nova pestanya",
+      "sourceDocumentMissing": "Document absent de l'expedient",
+      "sourceTargetMissing": "Destinació no trobada"
     },
     "tags": {
       "editIcon": "Editar icona",

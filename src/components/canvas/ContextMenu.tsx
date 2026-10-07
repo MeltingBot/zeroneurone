@@ -38,7 +38,7 @@ interface ContextMenuProps {
   isGroup: boolean;
   isInGroup: boolean;
   hasMultipleSelected: boolean;
-  onGroupSelection: () => void;
+  onGroupSelection?: () => void;
   onDissolveGroup: () => void;
   onRemoveFromGroup: () => void;
   // Position lock
@@ -160,7 +160,7 @@ function ContextMenuComponent({
   ]);
 
   const organizeItem = submenu('organize', cm('organize'), Boxes, [
-    hasMultipleSelected && !isGroup && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
+    hasMultipleSelected && !isGroup && onGroupSelection && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
     isGroup && { id: 'dissolve-group', label: cm('dissolveGroup'), icon: Ungroup, onSelect: onDissolveGroup },
     isInGroup && { id: 'remove-from-group', label: cm('removeFromGroup'), icon: BoxSelect, onSelect: onRemoveFromGroup },
     hasTwoSelected && onMerge && { id: 'merge', label: cm('merge'), icon: Combine, onSelect: onMerge },

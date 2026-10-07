@@ -4,11 +4,21 @@ import type { ModalType, Toast, ToolType, SidePanelTab, DisplayMode, GeoData, Ge
 import type { ExtractedMetadata } from '../services/metadataService';
 import { useToastStore } from './toastStore';
 
+/** Files added in one go: the user can apply one choice to the whole batch */
+export interface MetadataImportBatch {
+  id: string;
+  /** Position of the file in the batch (0-based) */
+  index: number;
+  /** Number of files in the batch */
+  size: number;
+}
+
 export interface MetadataImportItem {
   elementId: string;
   elementLabel: string;
   filename: string;
   metadata: ExtractedMetadata;
+  batch?: MetadataImportBatch;
 }
 
 /** Data for import placement mode */

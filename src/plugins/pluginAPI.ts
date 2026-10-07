@@ -114,6 +114,17 @@ export const pluginAPI = {
   unregisterPlugin,
   isPluginDisabled,
 
+  // ─── Host version and capabilities ──────────────────────────
+  /** ZeroNeurone version (semver) */
+  version: __APP_VERSION__,
+  /** Capabilities a plugin can test before relying on them */
+  features: {
+    /** Source fields render `[label](https://…)` and `[label](asset:<sha256 prefix>)` as links */
+    sourceLinks: true,
+    /** Slot `source:scheme`: a plugin makes its own `[label](scheme:value)` links clickable */
+    sourceSchemes: true,
+  },
+
   // ─── React (same instance as the app — hooks work) ──────────
   React,
 

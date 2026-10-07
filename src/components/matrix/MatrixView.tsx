@@ -8,6 +8,8 @@ import { ViewToolbar } from '../common/ViewToolbar';
 import type { Element, Confidence, EvaluationModel } from '../../types';
 import { evaluationStrength, formatEvaluation, getModelScale, isInModel, sanitizeEvaluation } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
+import { sourceToPlainText } from '../../utils/sourceLinks';
+import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -60,7 +62,7 @@ function getSortValue(element: Element, column: string, model: EvaluationModel):
       if (model !== 'zeroneurone') return evaluationStrength(element.evaluation, model);
       return element.confidence ?? -1;
     case 'source':
-      return element.source.toLowerCase();
+      return sourceToPlainText(element.source, getSourceSchemeNames()).toLowerCase();
     default: {
       const prop = element.properties.find((p) => p.key === column);
       if (!prop || prop.value == null) return '';
@@ -936,7 +938,9 @@ export function MatrixView() {
                     }}
                   >
                     {visibleCols.map((col) => {
-                      const value = getCellValue(el, col.key, evaluationModel);
+                      const rawValue = getCellValue(el, col.key, evaluationModel);
+                      // Source: show link labels, not the Markdown syntax (editing stays raw)
+                      const value = col.key === 'source' && el.source ? sourceToPlainText(rawValue, getSourceSchemeNames()) : rawValue;
                       const isEmpty = value === '—';
                       const redact = anonymousMode && col.key !== 'confidence' && !isEmpty;
                       const isEditing = editingCell?.rowId === el.id && editingCell?.colKey === col.key;

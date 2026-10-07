@@ -9,6 +9,7 @@ import { TimeZoneButton } from '../common/TimeZoneButton';
 import { useUIStore } from '../../stores';
 import { PropertiesEditor } from './PropertiesEditor';
 import { isGeoPolygon, getGeoCenter, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
+import { SourceField } from '../common/SourceField';
 
 interface EventsEditorProps {
   events: ElementEvent[];
@@ -443,10 +444,9 @@ const EventItem = memo(function EventItem({
           {/* Source */}
           <div>
             <label className="text-[10px] text-text-tertiary">{t('detail.events.sourceLabel')}</label>
-            <input
-              type="text"
+            <SourceField
               value={source}
-              onChange={(e) => setSource(e.target.value)}
+              onChange={setSource}
               onBlur={handleSourceBlur}
               placeholder={t('detail.events.sourcePlaceholder')}
               className="w-full px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent"

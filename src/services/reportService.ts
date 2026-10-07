@@ -8,6 +8,8 @@ import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { formatEventWhen } from '../utils/temporalUtils';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
+import { isWebScheme, parseSourceLinks, sourceToMarkdown } from '../utils/sourceLinks';
+import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 
 // Configure marked for secure rendering
 marked.setOptions({
@@ -499,7 +501,7 @@ class ReportService {
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('identity')}</th></tr>
         <tr><td>${this.t('tags')}</td><td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join(' ') : '-'}</td></tr>
         <tr><td>${this.evaluationTitle()}</td><td>${this.evaluationText(el)}</td></tr>
-        <tr><td>${this.t('source')}</td><td>${el.source ? this.escapeHTML(el.source) : '-'}</td></tr>
+        <tr><td>${this.t('source')}</td><td>${el.source ? this.sourceHTML(el.source) : '-'}</td></tr>
         ${el.notes ? `<tr><td>${this.t('notes')}</td><td class="markdown-content">${this.markdownToHTML(el.notes)}</td></tr>` : ''}
       </table>\n`;
 
@@ -594,7 +596,7 @@ class ReportService {
         <td class="markdown-content">${el.notes ? this.markdownToHTML(el.notes) : '-'}</td>
         <td>${el.tags.length > 0 ? el.tags.map(t => `<span class="tag">${this.escapeHTML(t)}</span>`).join('') : '-'}</td>
         <td>${this.evaluationText(el)}</td>
-        <td>${el.source ? this.escapeHTML(el.source) : '-'}</td>
+        <td>${el.source ? this.sourceHTML(el.source) : '-'}</td>
         ${showProps ? `<td>${propsHtml}</td>` : ''}
         ${options.includeFiles ? `<td class="file-list">${filesHtml}</td>` : ''}
       </tr>`;
@@ -802,7 +804,7 @@ class ReportService {
           md += `|-------|--------|\n`;
           md += `| ${this.t('tags')} | ${el.tags.length > 0 ? el.tags.join(', ') : '-'} |\n`;
           md += `| ${this.evaluationTitle()} | ${this.evaluationText(el)} |\n`;
-          md += `| ${this.t('source')} | ${el.source || '-'} |\n`;
+          md += `| ${this.t('source')} | ${el.source ? sourceToMarkdown(el.source, getSourceSchemeNames()) : '-'} |\n`;
           if (el.notes) {
             md += `| ${this.t('notes')} | ${el.notes.replace(/\n/g, ' ')} |\n`;
           }
@@ -892,7 +894,7 @@ class ReportService {
           }).join(', ')
         : '-';
 
-      md += `| ${el.label} | ${el.notes || '-'} | ${tags} | ${confidence} | ${el.source || '-'} |`;
+      md += `| ${el.label} | ${el.notes || '-'} | ${tags} | ${confidence} | ${el.source ? sourceToMarkdown(el.source, getSourceSchemeNames()) : '-'} |`;
       if (showProps) md += ` ${props} |`;
       if (showFiles) md += ` ${files} |`;
       md += `\n`;
@@ -1150,6 +1152,17 @@ class ReportService {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  /** Source as HTML: web links become anchors, asset and plugin links their label only. */
+  private sourceHTML(source: string): string {
+    return parseSourceLinks(source, getSourceSchemeNames())
+      .map(s => {
+        if (s.kind === 'text') return this.escapeHTML(s.text);
+        if (!isWebScheme(s.scheme)) return this.escapeHTML(s.label);
+        return `<a href="${this.escapeHTML(s.target)}" target="_blank" rel="noopener noreferrer">${this.escapeHTML(s.label)}</a>`;
+      })
+      .join('');
   }
 
   /**

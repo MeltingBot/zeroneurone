@@ -105,7 +105,9 @@
       "directionForward": "Do celu",
       "directionBackward": "Do źródła",
       "directionBoth": "Dwukierunkowy",
-      "openInNewTab": "Otwórz w nowej karcie"
+      "openInNewTab": "Otwórz w nowej karcie",
+      "sourceDocumentMissing": "Brak dokumentu w aktach",
+      "sourceTargetMissing": "Nie znaleziono celu"
     },
     "tags": {
       "editIcon": "Edytuj ikonę",

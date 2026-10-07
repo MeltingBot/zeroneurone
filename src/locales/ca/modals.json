@@ -507,7 +507,13 @@
     "title": "Importar metadades",
     "description": "Extreure metadades del fitxer (EXIF, PDF, etc.)",
     "noMetadata": "Sense metadades trobades",
-    "import": "Importar les metadades seleccionades"
+    "import": "Importar les metadades seleccionades",
+    "detected": "Metadades detectades",
+    "gps": "Coordenades GPS",
+    "ignore": "Ignorar",
+    "applyToBatch": "Aplicar als fitxers següents",
+    "yes": "Sí",
+    "no": "No"
   },
   "collaboration": {
     "title": "Col·laboració",

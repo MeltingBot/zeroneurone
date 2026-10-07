@@ -24,10 +24,27 @@ An element represents any concept: person, place, organization, object, event, d
 | **Notes** | Free-form description, long text |
 | **Tags** | Labels for categorization |
 | **Confidence / grading** | Certainty level (0-100%) or Europol / Admiralty grading, depending on the dossier's [evaluation model]({{< relref "evaluation" >}}) |
-| **Source** | Information origin |
+| **Source** | Information origin, with clickable links ([see below](#links-in-the-source)) |
 | **Date** | Associated date (for timeline) |
 | **Geolocation** | Coordinates (for map) |
 | **Properties** | Custom fields (key/value) |
+
+### Links in the Source
+
+The **Source** field accepts Markdown links `[label](target)`:
+
+```text
+[Exhibit 12](asset:3fa1c2d9) ; [Article](https://example.com/a)
+```
+
+| Target | On click |
+|--------|----------|
+| `https://…` | Opens the page in a new tab |
+| `asset:` + start of the file's SHA-256 fingerprint (at least 8 characters) | Opens the preview of the dossier's attached file |
+
+Outside editing, only the labels are shown. Click next to a link to edit the raw text. A file missing from the dossier is shown greyed out. Other targets stay text. Some extensions add their own links.
+
+In the matrix, the timeline, reports and ANX and Obsidian exports, links are replaced by their label (web links stay links in reports and Obsidian). CSV and JSON exports keep the text as is.
 
 ### Visual Appearance
 
@@ -176,7 +193,9 @@ Organize your elements into visual **groups**.
 1. Select multiple elements
 2. Right-click → **Group**
 
-The group appears as a frame containing its members.
+After a lasso selection (Shift + drag), right-click on the selection frame.
+
+The group appears as a frame containing its members. Groups and elements already in a group are left out.
 
 
 ### Manipulate a Group

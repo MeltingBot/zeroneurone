@@ -455,6 +455,26 @@ registerPlugin('import:hooks', {
 
 **Error handling:** If your hook throws, ZN catches the error, logs a warning, and continues. Your plugin failing never blocks the export/import.
 
+### `source:scheme` — Plugin links in Source fields
+
+Makes `[label](scheme:value)` links of a plugin's own scheme clickable in Source fields (element, link, event). Without a plugin registered for the scheme, the link stays text.
+
+```typescript
+registerPlugin('source:scheme', {
+  scheme: 'mn',                                   // [PV p.3](mn:1a2b3c4d)
+  resolve: (value, ctx) => annotationExists(ctx.dossierId, value), // false → greyed-out label, not clickable
+  open: (value, ctx) => openReader(ctx.dossierId, value),
+  pluginId: 'markneurone',
+});
+```
+
+- `value` is the text after `scheme:` (here `1a2b3c4d`); `ctx` is `{ dossierId }`.
+- `resolve` runs on every render: keep it synchronous and fast.
+- Scheme name: lowercase, `[a-z][a-z0-9+.-]*`. `http`, `https`, `asset`, `javascript`, `vbscript`, `data`, `file`, `blob`, `about`, `mailto` and `tel` are refused. When two plugins declare the same scheme, the first registration wins.
+- In outputs (matrix, timeline, reports, ANX and Obsidian exports), a plugin link is replaced by its label.
+- An exception in `resolve` greys the link out; an exception in `open` is logged, nothing else.
+- Available when `api.features?.sourceSchemes` is true.
+
 ## Data Persistence
 
 ZN provides a generic `pluginData` table in Dexie for plugin storage:
@@ -655,6 +675,31 @@ api.toast.dismiss(id);
 ```
 
 **Default durations:** `error` = 0 (persistent), others = 3000ms.
+
+## Version and features (`api.version`, `api.features`)
+
+`api.version` is the ZeroNeurone version (semver). To know whether a feature exists, test `api.features` instead:
+
+```javascript
+if (api.features?.sourceLinks) {
+  // ZN renders Markdown links in Source fields
+}
+```
+
+### Links in Source fields (`features.sourceLinks`)
+
+The Source field of an element, a link or an event stays a string. ZN renders as clickable links the Markdown links whose target is allowed:
+
+| Target | On click |
+|---|---|
+| `https://…`, `http://…` | Opens a new tab |
+| `asset:<hash>` | Opens the preview of the dossier document whose SHA-256 starts with `<hash>` (full hash or at least 8 hex digits) |
+
+```text
+[Exhibit 12](asset:3fa1c2d9) ; [Article](https://example.com/a)
+```
+
+Any other target stays text. An `asset:` missing from the dossier is shown greyed out, without a link. The hash is stable across export/import, unlike ids. Write `\]` for a `]` in the label.
 
 ## At-Rest Encryption
 
@@ -1052,6 +1097,7 @@ if (isPluginDisabled('my-plugin')) return;
 | `keyboard:shortcuts` | `KeyboardShortcut` | — | Global keydown handler |
 | `export:hooks` | `ExportHook` | `(zip, dossierId)` | ZIP export |
 | `import:hooks` | `ImportHook` | `(zip, dossierId)` | ZIP import |
+| `source:scheme` | `SourceSchemeExtension` | `(value, { dossierId })` | Source fields (`scheme:` links) |
 
 ## External Plugins (Local Loading)
 

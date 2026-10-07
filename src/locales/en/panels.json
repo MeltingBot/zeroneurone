@@ -105,7 +105,9 @@
       "directionForward": "To target",
       "directionBackward": "To source",
       "directionBoth": "Bidirectional",
-      "openInNewTab": "Open in new tab"
+      "openInNewTab": "Open in new tab",
+      "sourceDocumentMissing": "Document not in this dossier",
+      "sourceTargetMissing": "Target not found"
     },
     "tags": {
       "editIcon": "Edit icon",

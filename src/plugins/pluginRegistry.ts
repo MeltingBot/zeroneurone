@@ -28,6 +28,7 @@ const slots: PluginSlots = {
   'keyboard:shortcuts': [],
   'export:hooks': [],
   'import:hooks': [],
+  'source:scheme': [],
 };
 
 // ─── Plugin ID tracking ─────────────────────────────────────
@@ -51,12 +52,26 @@ function resolvePluginId(ext: any): string | undefined {
 // ─── Enabled plugins (opt-in: disabled by default) ─────────
 
 const ENABLED_KEY = 'zeroneurone:enabled-plugins';
-const enabledIds = new Set<string>(
-  JSON.parse(localStorage.getItem(ENABLED_KEY) || '[]')
-);
+
+// Storage may be missing (tests, workers) or blocked: start with no plugin
+// enabled rather than failing every module that imports the registry.
+function readEnabledIds(): string[] {
+  try {
+    const ids = JSON.parse(localStorage.getItem(ENABLED_KEY) || '[]');
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+}
+
+const enabledIds = new Set<string>(readEnabledIds());
 
 function persistEnabled() {
-  localStorage.setItem(ENABLED_KEY, JSON.stringify([...enabledIds]));
+  try {
+    localStorage.setItem(ENABLED_KEY, JSON.stringify([...enabledIds]));
+  } catch (err) {
+    console.warn('[pluginRegistry] Cannot save enabled plugins', err);
+  }
 }
 
 export function disablePlugin(id: string): void {

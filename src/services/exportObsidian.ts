@@ -24,6 +24,8 @@ import { getGeoCenter } from '../utils/geo';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { resolveAbsolutePosition } from './svgExportService';
 import { dateInputKeys, isDayOnly, parseDateValue, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
+import { sourceToMarkdown } from '../utils/sourceLinks';
+import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 
 /** Translated strings used in the generated notes (provided by the caller). */
 export interface ObsidianLabels {
@@ -277,7 +279,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
     if (el.confidence !== null && el.confidence !== undefined) fm.push(['confidence', el.confidence]);
     const evaluation = formatEvaluation(el.evaluation);
     if (evaluation) fm.push(['evaluation', evaluation]);
-    if (el.source) fm.push(['source', el.source]);
+    if (el.source) fm.push(['source', sourceToMarkdown(el.source, getSourceSchemeNames())]);
     const date = formatDate(el.date);
     if (date) fm.push(['date', date]);
     const start = formatDate(el.dateRange?.start);
@@ -332,7 +334,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
           formatDate(l.date) || formatPeriod(l.dateRange?.start, l.dateRange?.end, l.dateRange?.timeZone),
           l.confidence !== null && l.confidence !== undefined ? `${l.confidence} %` : '',
           formatEvaluation(l.evaluation),
-          l.source,
+          l.source ? sourceToMarkdown(l.source, getSourceSchemeNames()) : '',
         ].filter(Boolean);
         const label = l.label.trim() ? `${l.label.trim()} ` : '';
         const other = elementsMap.get(rel.otherId)!;
@@ -427,7 +429,7 @@ function eventLines(ev: ElementEvent): string[] {
     const { lat, lng } = getGeoCenter(ev.geo);
     extra.push(`${lat}, ${lng}`);
   }
-  if (ev.source) extra.push(ev.source);
+  if (ev.source) extra.push(sourceToMarkdown(ev.source, getSourceSchemeNames()));
   const lines = [`- **${head}**${extra.length ? ` · ${extra.join(' · ')}` : ''}`];
   for (const line of (ev.description ?? '').trim().split('\n').filter(Boolean)) lines.push(`  ${line}`);
   return lines;

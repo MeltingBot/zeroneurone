@@ -507,7 +507,13 @@
     "title": "Importuj metadane",
     "description": "Wyodrębnij metadane z pliku (EXIF, PDF, itp.)",
     "noMetadata": "Nie znaleziono metadanych",
-    "import": "Importuj wybrane metadane"
+    "import": "Importuj wybrane metadane",
+    "detected": "Wykryte metadane",
+    "gps": "Współrzędne GPS",
+    "ignore": "Pomiń",
+    "applyToBatch": "Zastosuj do kolejnych plików",
+    "yes": "Tak",
+    "no": "Nie"
   },
   "collaboration": {
     "title": "Współpraca",

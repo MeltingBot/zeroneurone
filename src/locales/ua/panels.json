@@ -105,7 +105,9 @@
       "directionForward": "До цілі",
       "directionBackward": "До джерела",
       "directionBoth": "Двонаправлений",
-      "openInNewTab": "Відкрити в новій вкладці"
+      "openInNewTab": "Відкрити в новій вкладці",
+      "sourceDocumentMissing": "Документа немає в справі",
+      "sourceTargetMissing": "Ціль не знайдено"
     },
     "tags": {
       "editIcon": "Редагувати іконку",

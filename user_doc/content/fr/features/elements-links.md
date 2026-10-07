@@ -24,10 +24,27 @@ Un élément représente n'importe quel concept : personne, lieu, organisation, 
 | **Notes** | Description libre, texte long |
 | **Tags** | Étiquettes pour catégoriser |
 | **Confiance / cotation** | Niveau de certitude (0-100%) ou cotation Europol / Amirauté, selon le [modèle d'évaluation]({{< relref "evaluation" >}}) du dossier |
-| **Source** | Origine de l'information |
+| **Source** | Origine de l'information, avec liens cliquables ([voir ci-dessous](#liens-dans-la-source)) |
 | **Date** | Date associée (pour la timeline) |
 | **Géolocalisation** | Coordonnées (pour la carte) |
 | **Propriétés** | Champs personnalisés (clé/valeur) |
+
+### Liens dans la source
+
+Le champ **Source** accepte des liens au format Markdown `[libellé](cible)` :
+
+```text
+[Pièce 12](asset:3fa1c2d9) ; [Article](https://exemple.fr/a)
+```
+
+| Cible | Au clic |
+|-------|---------|
+| `https://…` | Ouvre la page dans un nouvel onglet |
+| `asset:` + début de l'empreinte SHA-256 du fichier (8 caractères minimum) | Ouvre l'aperçu du fichier joint du dossier |
+
+Hors édition, seuls les libellés s'affichent. Cliquez à côté d'un lien pour modifier le texte brut. Un fichier absent du dossier s'affiche grisé. Les autres cibles restent du texte. Certaines extensions ajoutent leurs propres liens.
+
+Dans la matrice, la timeline, les rapports et les exports ANX et Obsidian, les liens sont remplacés par leur libellé (les liens web restent des liens dans les rapports et Obsidian). Les exports CSV et JSON gardent le texte tel quel.
 
 ### Apparence visuelle
 
@@ -176,7 +193,9 @@ Organisez vos éléments en **groupes** visuels.
 1. Sélectionnez plusieurs éléments
 2. Clic-droit → **Grouper**
 
-Le groupe apparaît comme un cadre englobant ses membres.
+Après une sélection au lasso (Maj + glisser), le clic-droit se fait sur le cadre de sélection.
+
+Le groupe apparaît comme un cadre englobant ses membres. Les groupes et les éléments déjà dans un groupe ne sont pas repris.
 
 
 ### Manipuler un groupe
