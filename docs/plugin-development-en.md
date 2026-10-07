@@ -692,7 +692,7 @@ The Source field of an element, a link or an event stays a string. ZN renders as
 
 | Target | On click |
 |---|---|
-| `https://…`, `http://…` | Opens a new tab |
+| `https://…`, `http://…` | Opens a new tab (a bare URL in the text is a link too) |
 | `asset:<hash>` | Opens the preview of the dossier document whose SHA-256 starts with `<hash>` (full hash or at least 8 hex digits) |
 
 ```text

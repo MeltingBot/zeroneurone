@@ -40,7 +40,7 @@ The **Source** field holds one source per line (**Enter** starts a new line) and
 
 | Target | On click |
 |--------|----------|
-| `https://…` | Opens the page in a new tab |
+| `https://…` | Opens the page in a new tab; an address written alone (without `[label]`) is a link too |
 | `asset:` + start of the file's SHA-256 fingerprint (at least 8 characters) | Opens the preview of the dossier's attached file |
 
 Outside editing, only the labels are shown, one source per line; beyond three, **+N more** expands the list. Click next to a link to edit the raw text. A file missing from the dossier is shown greyed out. Other targets stay text. Some extensions add their own links.

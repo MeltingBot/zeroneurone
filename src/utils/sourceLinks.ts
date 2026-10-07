@@ -3,7 +3,8 @@
  *
  * A source stays a plain string; `[label](target)` inside it is read as a link
  * when the target uses an allowed scheme:
- *   - http(s)://…  → opens in a new tab
+ *   - http(s)://…  → opens in a new tab; a bare URL in the text is a link
+ *                    too, labelled with itself
  *   - asset:<hash> → opens the dossier asset whose SHA-256 starts with <hash>
  *                    (full hash or a prefix of at least 8 hex digits)
  *   - a scheme a plugin registered (slot `source:scheme`), passed in as
@@ -44,6 +45,10 @@ export type SourceSegment =
     };
 
 const LINK_PATTERN = /\[((?:[^\]\\]|\\.)+)\]\(([^()\s]+)\)/g;
+/** Bare web URL in free text (no spaces, brackets or parentheses) */
+const BARE_URL = /https?:\/\/[^\s<>()[\]]+/gi;
+/** Punctuation ending a sentence, not the URL */
+const TRAILING_PUNCTUATION = /[.,;:!?'"]+$/;
 const ASSET_HASH = /^[0-9a-f]{8,64}$/i;
 
 function linkScheme(target: string, pluginSchemes?: PluginSchemes): string | null {
@@ -71,6 +76,23 @@ function unescapeLabel(label: string): string {
   return label.replace(/\\(.)/g, '$1');
 }
 
+/** Splits free text around its bare web URLs, which become links. */
+function autolink(text: string): SourceSegment[] {
+  const out: SourceSegment[] = [];
+  let last = 0;
+  for (const match of text.matchAll(BARE_URL)) {
+    const start = match.index ?? 0;
+    const url = match[0].replace(TRAILING_PUNCTUATION, '');
+    const scheme = linkScheme(url);
+    if (!scheme) continue;
+    if (start > last) out.push({ kind: 'text', text: text.slice(last, start) });
+    out.push({ kind: 'link', label: url, target: url, scheme, raw: url });
+    last = start + url.length;
+  }
+  if (last < text.length) out.push({ kind: 'text', text: text.slice(last) });
+  return out;
+}
+
 export function parseSourceLinks(source: string, pluginSchemes?: PluginSchemes): SourceSegment[] {
   const segments: SourceSegment[] = [];
   let text = '';
@@ -85,12 +107,12 @@ export function parseSourceLinks(source: string, pluginSchemes?: PluginSchemes):
       text += raw;
       continue;
     }
-    if (text) segments.push({ kind: 'text', text });
+    if (text) segments.push(...autolink(text));
     text = '';
     segments.push({ kind: 'link', label: unescapeLabel(label), target, scheme, raw });
   }
   text += source.slice(last);
-  if (text) segments.push({ kind: 'text', text });
+  if (text) segments.push(...autolink(text));
   return segments;
 }
 

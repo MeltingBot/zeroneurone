@@ -38,8 +38,28 @@ describe('parseSourceLinks', () => {
     expect(parseSourceLinks('PV 12 du 03/02')).toEqual([{ kind: 'text', text: 'PV 12 du 03/02' }]);
   });
 
-  it('URL nue → un segment texte', () => {
-    expect(parseSourceLinks('https://a.fr/x')).toEqual([{ kind: 'text', text: 'https://a.fr/x' }]);
+  it('URL nue → un lien libellé par elle-même', () => {
+    expect(parseSourceLinks('https://a.fr/x')).toEqual([
+      { kind: 'link', label: 'https://a.fr/x', target: 'https://a.fr/x', scheme: 'https', raw: 'https://a.fr/x' },
+    ]);
+  });
+
+  it('plusieurs URL nues, ponctuation finale exclue', () => {
+    const segs = parseSourceLinks('https://www.google.com\nvoir https://www.yandex.com.');
+    expect(segs.map(s => (s.kind === 'link' ? `<${s.target}>` : s.text))).toEqual([
+      '<https://www.google.com>', '\nvoir ', '<https://www.yandex.com>', '.',
+    ]);
+    expect(sourceWebLinks('https://a.fr\n[b](https://b.fr)\nhttps://a.fr').map(l => l.target)).toEqual(['https://a.fr', 'https://b.fr']);
+  });
+
+  it('URL dans un lien Markdown : pas de second lien', () => {
+    const segs = parseSourceLinks('[art](https://a.fr/x)');
+    expect(segs).toHaveLength(1);
+    expect(segs[0]).toMatchObject({ label: 'art' });
+  });
+
+  it('URL sans hôte ou autre schéma → texte', () => {
+    expect(hasSourceLinks('https:// ; ftp://a.fr ; www.a.fr')).toBe(false);
   });
 
   it('deux liens asset séparés', () => {

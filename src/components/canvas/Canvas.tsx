@@ -47,7 +47,7 @@ import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, use
 import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
-import { hasSourceLinks, sourceWebLinks } from '../../utils/sourceLinks';
+import { sourceWebLinks } from '../../utils/sourceLinks';
 import { getEvaluationBadge } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { FONT_SIZE_PX } from '../../types';
@@ -4772,7 +4772,7 @@ export function Canvas() {
               .map(p => ({ key: p.key, url: toUrl(String(p.value)) }));
             const sourceUrls = !ctxEl?.source
               ? []
-              : isUrl(ctxEl.source) && !hasSourceLinks(ctxEl.source)
+              : isUrl(ctxEl.source) && !/\s/.test(ctxEl.source.trim())
                 ? [{ key: t('labels.source'), url: toUrl(ctxEl.source) }]
                 : sourceWebLinks(ctxEl.source).map(l => ({ key: `${t('labels.source')} · ${l.label}`, url: l.target }));
             const elementUrls = [...sourceUrls, ...propertyUrls];

@@ -692,7 +692,7 @@ Le champ Source d'un element, d'un lien ou d'un evenement reste une chaine. ZN y
 
 | Cible | Au clic |
 |---|---|
-| `https://…`, `http://…` | Ouvre un nouvel onglet |
+| `https://…`, `http://…` | Ouvre un nouvel onglet (une URL nue dans le texte est aussi un lien) |
 | `asset:<hash>` | Ouvre l'apercu du document du dossier dont le SHA-256 commence par `<hash>` (hash complet ou au moins 8 caracteres hexadecimaux) |
 
 ```text

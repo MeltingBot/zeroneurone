@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.62.2
+
+### Corrections
+
+- **Champ Source avec plusieurs adresses web** — le bouton d'ouverture
+  collait les adresses (`https://www.google.comhttps//www.yandex.com`).
+  Une adresse `https://…` écrite seule est maintenant un lien, une par
+  ligne ; le menu **Liens** les propose toutes. Un champ réduit à une seule
+  adresse garde son bouton d'ouverture.
+
+### Documentation
+
+- Éléments et liens, guide des extensions : adresses écrites seules.
+
 ## 2.62.1
 
 ### Corrections

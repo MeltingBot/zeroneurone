@@ -40,7 +40,7 @@ Le champ **Source** contient une source par ligne (**Entrée** pour passer à la
 
 | Cible | Au clic |
 |-------|---------|
-| `https://…` | Ouvre la page dans un nouvel onglet |
+| `https://…` | Ouvre la page dans un nouvel onglet ; une adresse écrite seule (sans `[libellé]`) est aussi un lien |
 | `asset:` + début de l'empreinte SHA-256 du fichier (8 caractères minimum) | Ouvre l'aperçu du fichier joint du dossier |
 
 Hors édition, seuls les libellés s'affichent, une source par ligne ; au-delà de trois, **+N autres** déplie la liste. Cliquez à côté d'un lien pour modifier le texte brut. Un fichier absent du dossier s'affiche grisé. Les autres cibles restent du texte. Certaines extensions ajoutent leurs propres liens.

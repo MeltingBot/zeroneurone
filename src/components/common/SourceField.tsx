@@ -2,8 +2,8 @@
  * Source field: shows the Markdown links of a source as links, edits the raw
  * text. See utils/sourceLinks for the accepted syntax.
  *
- * - no link in the text → the plain input, as before (with its "open" button
- *   when the whole field is a URL)
+ * - no link in the text, or the whole field is one URL → the plain input, as
+ *   before (with its "open" button for the URL)
  * - links → a read view, one source per line, the first
  *   three until expanded; a click outside a link (or focus) switches to the
  *   raw input, leaving it switches back
@@ -58,8 +58,10 @@ export function SourceField({ value, onChange, onBlur, placeholder, className }:
   // Several sources: one per line, the first ones only until expanded
   const items = useMemo(() => splitSourceItems(segments), [segments]);
   const [expanded, setExpanded] = useState(false);
-  const showInput = editing || !hasLinks;
-  const urlButton = showInput && isUrl(value);
+  // The whole field is one URL: plain input with its open button, as before
+  const singleUrl = isUrl(value) && !/\s/.test(value.trim());
+  const showInput = editing || !hasLinks || singleUrl;
+  const urlButton = showInput && singleUrl;
 
   useEffect(() => {
     const el = inputRef.current;
