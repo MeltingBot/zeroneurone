@@ -39,6 +39,8 @@ Older imports (CSV in `YYYY-MM-DD` format, ANB) saved some dates at UTC midnight
 
 Dossier panel, **Dates** section: **Check**, then **Fix**. Nothing changes without confirmation.
 
+Date/time properties from an archive older than 2.61: UTC midnight stays midnight in your time zone, other times are read exactly.
+
 ---
 
 ## Partial Dates

@@ -169,6 +169,8 @@ Réarrangez automatiquement les éléments selon différents algorithmes via le 
 - Utilisez **Ctrl+Z** pour annuler un layout
 - Le layout **Hiérarchie** détecte automatiquement les racines (éléments sans liens entrants)
 - Le layout **Force** s'adapte à la taille du graphe (optimisé pour les grands réseaux)
+- Un **groupe** se déplace d'un bloc avec ses éléments, quel que soit le layout
+- Sélectionner seulement des éléments d'un même groupe les arrange **à l'intérieur** du groupe
 
 ---
 

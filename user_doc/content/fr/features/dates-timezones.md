@@ -39,6 +39,8 @@ D'anciens imports (CSV au format `AAAA-MM-JJ`, ANB) enregistraient certaines dat
 
 Panneau du dossier, section **Dates** : **Vérifier**, puis **Corriger**. Rien ne change sans confirmation.
 
+Propriétés date/heure d'une archive antérieure à la 2.61 : minuit UTC reste minuit dans votre fuseau, les autres heures sont lues exactement.
+
 ---
 
 ## Dates incomplètes

@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.62.3
+
+### Corrections
+
+- **Arranger avec des groupes** — les éléments d'un groupe se
+  séparaient de leur cadre, quel que soit l'arrangement (Circulaire,
+  Grille, Dispersion, Hiérarchie, mais aussi Force et Clusters). Un
+  groupe est maintenant arrangé d'un bloc avec ses éléments, à la taille
+  de son cadre ; ses liens vers l'extérieur comptent pour le groupe.
+  Sélectionner seulement des éléments d'un même groupe les arrange à
+  l'intérieur du groupe. Les éléments sont placés par leur centre, ce qui
+  évite les chevauchements des grands éléments.
+- **Propriétés date/heure importées** — depuis la 2.61.0, une valeur
+  importée à minuit UTC (`2024-03-12T00:00:00Z`) s'affichait à 02:00 à
+  Paris. Minuit UTC reste minuit dans le fuseau du poste ; les autres
+  heures avec fuseau sont lues exactement. L'import d'une archive ZIP ou
+  JSON convertit ces valeurs en dates.
+- **Heure des propriétés date/heure** — affichée sur le canvas (badge,
+  propriétés affichées) et dans les rapports, même à 00:00.
+
+### Documentation
+
+- Analyse de graphe : layouts et groupes.
+- Dates et fuseaux horaires : propriétés date/heure des anciennes archives.
+
 ## 2.62.2
 
 ### Corrections

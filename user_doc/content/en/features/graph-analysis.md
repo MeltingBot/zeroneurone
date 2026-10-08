@@ -169,6 +169,8 @@ Automatically rearrange elements using different algorithms via the **Arrange** 
 - Use **Ctrl+Z** to undo a layout
 - **Hierarchy** layout auto-detects roots (elements with no incoming links)
 - **Force** layout adapts to graph size (optimized for large networks)
+- A **group** moves as one block with its elements, whatever the layout
+- Selecting only elements of the same group arranges them **inside** the group
 
 ---
 

@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { Dossier, Element, Link, Asset, Report, CanvasTab, View, SavedQuery, Comment, TagSetDefaultVisual, SuggestedProperty } from '../types';
+import type { Dossier, Element, Link, Asset, Report, CanvasTab, View, SavedQuery, Comment, TagSetDefaultVisual, SuggestedProperty, Property } from '../types';
 import { isCustomIconName, customIconIdFromName } from '../types';
 import { useTagSetStore, useCustomIconStore } from '../stores';
 import { getPlugins } from '../plugins/pluginRegistry';
@@ -9,12 +9,16 @@ import { isGeoPolygon, getGeoCenter } from '../utils/geo';
 import { formatEvaluation } from '../utils/evaluation';
 import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
-import { formatDateForExport, formatPreciseDateKey, toLocalDateKey } from '../utils/dates';
+import { formatDateForExport, formatPreciseDateKey, parsePropertyDate, toLocalDateKey } from '../utils/dates';
 import { buildObsidianVault, type ObsidianLabels } from './exportObsidian';
 
 /** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
-function propertyValueToCSV(value: unknown): string {
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? '' : formatDateForExport(value);
+function propertyValueToCSV(prop: Property): string {
+  const { value } = prop;
+  if (value instanceof Date || prop.type === 'date' || prop.type === 'datetime') {
+    const d = parsePropertyDate(value);
+    if (d) return formatDateForExport(d);
+  }
   return String(value);
 }
 
@@ -401,7 +405,7 @@ class ExportService {
         '', // fuseau (no dated bounds on element rows)
       ];
       // Add property values
-      const propsMap = new Map(el.properties?.map((p) => [p.key, propertyValueToCSV(p.value)]) ?? []);
+      const propsMap = new Map(el.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }
@@ -436,7 +440,7 @@ class ExportService {
         link.dateRange?.timeZone ?? '', // fuseau
       ];
       // Add property values
-      const propsMap = new Map(link.properties?.map((p) => [p.key, propertyValueToCSV(p.value)]) ?? []);
+      const propsMap = new Map(link.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
       for (const key of sortedPropertyKeys) {
         baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
       }
@@ -472,7 +476,7 @@ class ExportService {
           ev.timeZone ?? '', // fuseau
         ];
         // Add property values
-        const propsMap = new Map(ev.properties?.map((p) => [p.key, propertyValueToCSV(p.value)]) ?? []);
+        const propsMap = new Map(ev.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
         for (const key of sortedPropertyKeys) {
           baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
         }

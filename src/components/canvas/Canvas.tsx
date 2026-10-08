@@ -54,7 +54,7 @@ import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { dateLocale } from '../../utils/dates';
+import { dateLocale, formatPropertyValue } from '../../utils/dates';
 import { collectTemporalDates, computeCanvasTemporalClassification, closestDateIndex, shiftNavigator, summarizeActiveEvents, sameEventSummary, type TemporalEventSummary } from '../../utils/temporalUtils';
 import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
 import { isMappableJson } from '../../utils/jsonMapping';
@@ -1341,11 +1341,7 @@ export function Canvas() {
       if (filters.badgePropertyKey) {
         const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
         if (prop && prop.value != null) {
-          const valueStr = typeof prop.value === 'string'
-            ? prop.value
-            : prop.value instanceof Date
-              ? prop.value.toLocaleDateString(propertyDateLocale)
-              : String(prop.value);
+          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language);
           badgeProperty = { value: valueStr, type: prop.type || 'text' };
         }
       }
@@ -1354,11 +1350,7 @@ export function Canvas() {
         .map(key => {
           const prop = el.properties.find(p => p.key === key);
           if (!prop || prop.value == null) return null;
-          const valueStr = typeof prop.value === 'string'
-            ? prop.value
-            : prop.value instanceof Date
-              ? prop.value.toLocaleDateString(propertyDateLocale)
-              : String(prop.value);
+          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language);
           return { key, value: valueStr };
         })
         .filter((p): p is { key: string; value: string } => p !== null);
@@ -1978,11 +1970,7 @@ export function Canvas() {
           .map(key => {
             const prop = link.properties?.find(p => p.key === key);
             if (!prop || prop.value == null) return null;
-            const valueStr = typeof prop.value === 'string'
-              ? prop.value
-              : prop.value instanceof Date
-                ? prop.value.toLocaleDateString(propertyDateLocale)
-                : String(prop.value);
+            const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language);
             return { key, value: valueStr };
           })
           .filter((p): p is { key: string; value: string } => p !== null);

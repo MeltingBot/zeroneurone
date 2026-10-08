@@ -23,7 +23,7 @@ import { EventsEditor } from './EventsEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
 import { EvaluationInput } from './EvaluationInput';
-import { parseDateValue } from '../../utils/dates';
+import { parsePropertyDate } from '../../utils/dates';
 import { SourceField } from '../common/SourceField';
 
 interface ElementDetailProps {
@@ -569,7 +569,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           options.geo = { type: 'point', lat: parts[0], lng: parts[1] };
         }
       } else if ((property.type === 'date' || property.type === 'datetime') && property.value) {
-        options.date = parseDateValue(property.value);
+        options.date = parsePropertyDate(property.value);
       }
 
       const newElement = await createElement(label, position, options);

@@ -51,7 +51,7 @@ import { importExcalidraw, isExcalidrawFormat } from './importExcalidraw';
 import { importSTIX2, isSTIX2Format } from './importSTIX2';
 import { importGephiLiteJSON, isGephiLiteFormat } from './importGephi';
 import { importGenealogyFile, detectGenealogyFormatFromName, type GenealogyImportOptions } from './genealogy';
-import { dateFromInputKeys, parseDateWithPrecision, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
+import { dateFromInputKeys, parseDateValue, parseDateWithPrecision, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 
 /**
  * Date read from an imported value. A bare `YYYY-MM-DD` is a calendar day (local
@@ -65,6 +65,20 @@ function importedDate(value: string, timeZone?: string): Date {
   if (!date) return new Date(NaN);
   // With a source zone (`fuseau` column), the text is that zone's wall clock
   return timeZone ? dateFromInputKeys(toLocalDateKey(date), toLocalTimeKey(date), timeZone) : date;
+}
+
+/**
+ * Date / datetime property values of a ZeroNeurone archive, as Dates. An
+ * archive that records its time zone (v2.61.0+) holds exact instants; in older
+ * or generated ones, 00:00 UTC stands for a calendar day (`parsePropertyDate`).
+ */
+function importedProperties<T extends Property[] | undefined>(properties: T, exact: boolean): T {
+  if (!Array.isArray(properties)) return properties;
+  return properties.map((p) => {
+    if ((p.type !== 'date' && p.type !== 'datetime') || typeof p.value !== 'string') return p;
+    const value = exact ? parseDateValue(p.value) : parsePropertyDate(p.value);
+    return value ? { ...p, value } : p;
+  }) as T;
 }
 
 /** IANA zone from a `fuseau` cell, or undefined when empty / unknown. */
@@ -1431,6 +1445,9 @@ class ImportService {
     result: ImportResult,
     positionOffset?: Position
   ): Promise<void> {
+    // Archives recording their zone (v2.61.0+) hold exact date instants
+    const exactDates = Boolean(data.timeZone);
+
     // First pass: create ID mappings for all elements
     for (const importedElement of data.elements) {
       const newId = generateUUID();
@@ -1472,6 +1489,10 @@ class ImportService {
         dossierId: targetDossierId,
         position,
         assetIds: newAssetIds,
+        properties: importedProperties(importedElement.properties, exactDates),
+        events: Array.isArray(importedElement.events)
+          ? importedElement.events.map((ev) => ({ ...ev, properties: importedProperties(ev.properties, exactDates) }))
+          : importedElement.events,
         geo: normalizeGeo(importedElement.geo),
         evaluation: sanitizeEvaluation(importedElement.evaluation),
         date: importedElement.date ? new Date(importedElement.date) : null,
@@ -1518,6 +1539,7 @@ class ImportService {
         dossierId: targetDossierId,
         fromId: newFromId,
         toId: newToId,
+        properties: importedProperties(importedLink.properties, exactDates),
         evaluation: sanitizeEvaluation(importedLink.evaluation),
         date: importedLink.date ? new Date(importedLink.date) : null,
         // Handle direction with backwards compatibility

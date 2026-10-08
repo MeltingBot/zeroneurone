@@ -3,6 +3,7 @@ import {
   activeTimeZoneLabel, dateLocale, endOfLocalDay, endOfPrecision, formatDateForExport, formatPreciseDate,
   formatPreciseDateKey, isDayOnly, parseDateValue, parseDateWithPrecision, startOfPrecision, toLocalDateKey,
   fromZonedWallClock, dateInputKeys, formatSourceTime, dateFromInputKeys, toLocalTimeKey, formatPropertyValue,
+  parsePropertyDate,
 } from './dates';
 
 // Date bugs only show up away from UTC: run the suite in zones on both sides,
@@ -22,6 +23,27 @@ for (const zone of ZONES) {
 
     it('runs in the requested zone', () => {
       expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe(zone);
+    });
+
+    it('reads a property date text by its zone, UTC midnight as a local day', () => {
+      for (const text of ['2024-03-12T00:00:00.000Z', '2024-03-12T00:00:00+00:00', '2024-03-12T00:00']) {
+        const d = parsePropertyDate(text)!;
+        expect(toLocalDateKey(d)).toBe('2024-03-12');
+        expect(toLocalTimeKey(d)).toBe('00:00');
+      }
+      expect(parsePropertyDate('2026-02-03T14:30:00.000Z')!.toISOString()).toBe('2026-02-03T14:30:00.000Z');
+      expect(parsePropertyDate('2024-03-12T00:00:00+02:00')!.toISOString()).toBe('2024-03-11T22:00:00.000Z');
+      const local = parsePropertyDate('2024-03-12T14:30')!;
+      expect(`${toLocalDateKey(local)} ${toLocalTimeKey(local)}`).toBe('2024-03-12 14:30');
+      expect(toLocalDateKey(parsePropertyDate('1982-05-15')!)).toBe('1982-05-15');
+      const instant = new Date('2024-03-12T10:00:00Z');
+      expect(parsePropertyDate(instant)).toBe(instant);
+      expect(parsePropertyDate('n/a')).toBeNull();
+    });
+
+    it('shows the time of a datetime property, even at midnight', () => {
+      expect(formatPropertyValue('2024-03-12T00:00:00.000Z', 'datetime', 'fr')).toContain('00:00');
+      expect(formatPropertyValue('2024-03-12T00:00:00.000Z', 'date', 'fr')).not.toContain(':');
     });
 
     it('reads a bare calendar day as local midnight', () => {

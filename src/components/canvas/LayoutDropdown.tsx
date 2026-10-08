@@ -5,6 +5,7 @@ import { layoutService, type LayoutType } from '../../services/layoutService';
 import { graphWorkerService } from '../../services/graphWorkerService';
 import { useDossierStore, useHistoryStore, useSelectionStore } from '../../stores';
 import type { Position } from '../../types';
+import { buildLayoutScope } from '../../utils/layoutScope';
 
 export function LayoutDropdown() {
   const { t } = useTranslation('pages');
@@ -39,73 +40,43 @@ export function LayoutDropdown() {
     setIsApplying(true);
     setIsOpen(false);
 
+    // Scope: >= 2 selected elements -> induced sub-graph, else whole dossier.
+    // Groups are laid out as single blocks so their children follow them.
+    const scope = buildLayoutScope(elements, links, selectedElementIds);
+    if (scope.elements.length === 0) {
+      setIsApplying(false);
+      return;
+    }
+
+    // Save old positions for undo (only scoped nodes move)
+    const oldPositions = scope.originalPositions;
+
+    // Center: centroid of the scoped nodes (same coordinate space as them)
+    const center = {
+      x: scope.elements.reduce((sum, el) => sum + el.position.x, 0) / scope.elements.length,
+      y: scope.elements.reduce((sum, el) => sum + el.position.y, 0) / scope.elements.length,
+    };
+
     try {
-      // Scope: if >= 2 elements selected, layout only the induced sub-graph;
-      // otherwise layout the whole dossier.
-      const useSelection = selectedElementIds.size >= 2;
-      const scopedElements = useSelection
-        ? elements.filter((el) => selectedElementIds.has(el.id))
-        : elements;
-      const scopedIds = new Set(scopedElements.map((el) => el.id));
-      const scopedLinks = useSelection
-        ? links.filter((l) => scopedIds.has(l.fromId) && scopedIds.has(l.toId))
-        : links;
+      let positions: Record<string, Position>;
+      try {
+        // Apply layout in Web Worker (non-blocking)
+        positions = await graphWorkerService.computeLayout(
+          scope.elements,
+          scope.links,
+          { layoutType, center }
+        );
+      } catch (error) {
+        console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
+        const result = layoutService.applyLayout(layoutType, scope.elements, scope.links, { center });
+        positions = Object.fromEntries(result.positions);
+      }
 
-      // Save old positions for undo (only scoped elements move)
-      const oldPositions: { id: string; position: Position }[] = scopedElements.map(el => ({
-        id: el.id,
-        position: { ...el.position },
-      }));
-
-      // Center: centroid of the scoped elements
-      const centerX = scopedElements.reduce((sum, el) => sum + el.position.x, 0) / scopedElements.length;
-      const centerY = scopedElements.reduce((sum, el) => sum + el.position.y, 0) / scopedElements.length;
-
-      // Apply layout in Web Worker (non-blocking)
-      const positions = await graphWorkerService.computeLayout(
-        scopedElements,
-        scopedLinks,
-        { layoutType, center: { x: centerX, y: centerY } }
-      );
-
-      // Build new positions array
       const newPositions: { id: string; position: Position }[] = [];
       for (const [id, pos] of Object.entries(positions)) {
-        newPositions.push({ id, position: pos });
+        newPositions.push({ id, position: scope.toStoredPosition(id, pos) });
       }
 
-      if (newPositions.length > 0) {
-        // Push undo action
-        pushAction({
-          type: 'move-elements',
-          undo: { positions: oldPositions },
-          redo: { positions: newPositions },
-        });
-
-        // Apply new positions
-        await updateElementPositions(newPositions);
-      }
-    } catch (error) {
-      console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
-      // Fallback to main-thread computation (same scoping)
-      const useSelection = selectedElementIds.size >= 2;
-      const scopedElements = useSelection
-        ? elements.filter((el) => selectedElementIds.has(el.id))
-        : elements;
-      const scopedIds = new Set(scopedElements.map((el) => el.id));
-      const scopedLinks = useSelection
-        ? links.filter((l) => scopedIds.has(l.fromId) && scopedIds.has(l.toId))
-        : links;
-      const centerX = scopedElements.reduce((sum, el) => sum + el.position.x, 0) / scopedElements.length;
-      const centerY = scopedElements.reduce((sum, el) => sum + el.position.y, 0) / scopedElements.length;
-      const oldPositions = scopedElements.map((el) => ({ id: el.id, position: { ...el.position } }));
-      const result = layoutService.applyLayout(layoutType, scopedElements, scopedLinks, {
-        center: { x: centerX, y: centerY },
-      });
-      const newPositions: { id: string; position: Position }[] = [];
-      for (const [id, position] of result.positions) {
-        newPositions.push({ id, position });
-      }
       if (newPositions.length > 0) {
         pushAction({
           type: 'move-elements',

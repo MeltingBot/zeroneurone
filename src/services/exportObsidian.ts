@@ -23,7 +23,7 @@ import { formatEvaluation } from '../utils/evaluation';
 import { getGeoCenter } from '../utils/geo';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { resolveAbsolutePosition } from './svgExportService';
-import { dateInputKeys, isDayOnly, parseDateValue, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
+import { dateInputKeys, isDayOnly, parseDateValue, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
 import { joinSourceLines, sourceToMarkdown } from '../utils/sourceLinks';
 import { getSourceSchemeNames } from '../plugins/sourceSchemes';
 
@@ -186,7 +186,8 @@ function propertyValue(prop: Property): YamlScalar | null {
   const { value } = prop;
   if (value === null || value === undefined || value === '') return null;
   if (value instanceof Date || prop.type === 'date' || prop.type === 'datetime') {
-    return formatDate(value) || String(value);
+    const d = parsePropertyDate(value);
+    return (d && formatDate(d)) || String(value);
   }
   if (typeof value === 'number' || typeof value === 'boolean') return value;
   return String(value);

@@ -6,7 +6,7 @@ import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
 import { parseFlexibleDate, formatDateForCopy } from '../../utils';
-import { parseDateValue } from '../../utils/dates';
+import { parsePropertyDate } from '../../utils/dates';
 
 interface PropertiesEditorProps {
   properties: Property[];
@@ -44,16 +44,15 @@ function formatTimeForInput(date: Date): string {
 }
 
 /**
- * Date and time parts shown in the inputs. Imported ISO date-time strings are
- * read as instants and shown in local time (slicing them would show the UTC
- * day and hour); other strings (`YYYY-MM-DD`, `DD/MM/YYYY`…) are shown as is.
+ * Date and time parts shown in the inputs, in local time. Imported text
+ * values are read by `parsePropertyDate` (UTC midnight stays a local day).
  */
 function dateInputParts(value: unknown): { date: string; time: string } {
   if (value instanceof Date) return { date: formatDateForInput(value), time: formatTimeForInput(value) };
   if (!value) return { date: '', time: '' };
   const str = String(value);
   if (str.includes('T')) {
-    const d = parseDateValue(str);
+    const d = parsePropertyDate(str);
     if (d) return { date: formatDateForInput(d), time: formatTimeForInput(d) };
   }
   return { date: str.split('T')[0], time: str.slice(11, 16) };
@@ -153,7 +152,7 @@ export function PropertiesEditor({
         if (currentValue instanceof Date) {
           finalValue = isNaN(currentValue.getTime()) ? null : currentValue;
         } else if (typeof currentValue === 'string' && currentValue) {
-          finalValue = parseDateValue(currentValue);
+          finalValue = parsePropertyDate(currentValue);
         } else {
           finalValue = null;
         }

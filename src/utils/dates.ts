@@ -32,6 +32,38 @@ export function parseDateValue(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+const WALL_CLOCK_RE = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/;
+const ZONE_SUFFIX_RE = /(?:Z|[+-]\d{2}:?\d{2})$/i;
+
+/**
+ * Date of a `date` / `datetime` property value. A Date is an exact instant.
+ * Text (imports, values never edited since) follows its zone: `Z` or an offset
+ * is an exact instant (as written by the ZeroNeurone export), except exactly
+ * 00:00 UTC, which older and generated archives used for a calendar day: it
+ * stays midnight in the system zone (`2024-03-12T00:00:00Z` is 00:00, not
+ * 02:00 in Paris). Without a zone, the written time is local. Returns null
+ * when unparseable.
+ */
+export function parsePropertyDate(value: unknown): Date | null {
+  if (typeof value !== 'string') return parseDateValue(value);
+  const str = value.trim();
+  const m = WALL_CLOCK_RE.exec(str);
+  if (!m) return parseDateValue(str);
+  if (ZONE_SUFFIX_RE.test(str)) {
+    const instant = new Date(str);
+    if (Number.isNaN(instant.getTime())) return null;
+    const utcMidnight = instant.getUTCHours() === 0 && instant.getUTCMinutes() === 0
+      && instant.getUTCSeconds() === 0 && instant.getUTCMilliseconds() === 0;
+    if (!utcMidnight) return instant;
+    return new Date(instant.getUTCFullYear(), instant.getUTCMonth(), instant.getUTCDate());
+  }
+  const d = new Date(
+    Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+    Number(m[4]), Number(m[5]), Number(m[6] ?? 0),
+  );
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 const pad = (n: number, len = 2) => String(n).padStart(len, '0');
 
 /** Local calendar day as `YYYY-MM-DD` (for `<input type="date">`, CSV, keys). */
@@ -291,9 +323,9 @@ export function formatPropertyValue(value: unknown, type: string | undefined, la
   if (value === null || value === undefined) return '';
   const isDateType = type === 'date' || type === 'datetime';
   if (value instanceof Date || (isDateType && typeof value === 'string')) {
-    const date = parseDateValue(value);
+    const date = isDateType ? parsePropertyDate(value) : parseDateValue(value);
     if (!date) return String(value);
-    return formatPreciseDate(date, type === 'date' ? 'day' : undefined, false, language);
+    return formatPreciseDate(date, type === 'date' ? 'day' : type === 'datetime' ? 'minute' : undefined, false, language);
   }
   return String(value);
 }
