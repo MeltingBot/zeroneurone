@@ -463,7 +463,7 @@ function buildElementDetails(elements: Element[], thumbnails: Record<string, str
     if (el.properties && el.properties.length > 0) {
       html += '<dl class="properties">';
       for (const prop of el.properties) {
-        html += `<dt>${escapeXml(prop.key)}</dt><dd>${escapeXml(formatPropertyValue(prop.value, prop.type, i18next.language))}</dd>`;
+        html += `<dt>${escapeXml(prop.key)}</dt><dd>${escapeXml(formatPropertyValue(prop.value, prop.type, i18next.language, prop.timeZone))}</dd>`;
       }
       html += '</dl>';
     }

@@ -51,6 +51,7 @@ export function linkToYMap(link: Link): Y.Map<any> {
     key: prop.key,
     value: serializePropertyValue(prop.value),
     type: prop.type || 'text',
+    ...(prop.timeZone ? { timeZone: prop.timeZone } : {}),
   })));
 
   // DateRange as plain object or null
@@ -238,6 +239,7 @@ export function updateLinkYMap(
         key: prop.key,
         value: serializePropertyValue(prop.value),
         type: prop.type || 'text',
+        ...(prop.timeZone ? { timeZone: prop.timeZone } : {}),
       })));
     }
 
@@ -302,6 +304,7 @@ function parsePropertyFromYMap(ymap: Y.Map<any>): Property {
     key: ymap.get('key') || '',
     value: deserializePropertyValue(ymap.get('value')),
     type: ymap.get('type') || 'text',
+    ...propertyTimeZone(ymap.get('timeZone')),
   };
 }
 
@@ -310,7 +313,13 @@ function parsePropertyFromPlain(obj: any): Property {
     key: obj.key || '',
     value: deserializePropertyValue(obj.value),
     type: obj.type || 'text',
+    ...propertyTimeZone(obj.timeZone),
   };
+}
+
+/** Source zone of a property, only written when set so older peers see the same shape */
+function propertyTimeZone(raw: unknown): Pick<Property, 'timeZone'> {
+  return typeof raw === 'string' && raw ? { timeZone: raw } : {};
 }
 
 function serializePropertyValue(value: Property['value']): any {

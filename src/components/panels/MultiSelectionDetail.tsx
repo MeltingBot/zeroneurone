@@ -58,6 +58,11 @@ const FONT_SIZES: { value: FontSize; label: string }[] = [
   { value: 'xl', label: 'XL' },
 ];
 
+/** `target` taking the value, type and source zone of `source` */
+function withValueOf(target: Property, source: Property): Property {
+  return { key: target.key, value: source.value, type: source.type, ...(source.timeZone ? { timeZone: source.timeZone } : {}) };
+}
+
 export function MultiSelectionDetail() {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
@@ -106,7 +111,8 @@ export function MultiSelectionDetail() {
         item.properties.some(p =>
           p.key === prop.key &&
           p.type === prop.type &&
-          String(p.value ?? '') === String(prop.value ?? '')
+          String(p.value ?? '') === String(prop.value ?? '') &&
+          p.timeZone === prop.timeZone
         )
       )
     );
@@ -240,7 +246,7 @@ export function MultiSelectionDetail() {
     // Added or updated properties
     const changedProps = newProperties.filter(p => {
       const old = mergedProperties.find(o => o.key === p.key);
-      return !old || old.value !== p.value || old.type !== p.type;
+      return !old || old.value !== p.value || old.type !== p.type || old.timeZone !== p.timeZone;
     });
 
     // Apply removals
@@ -264,7 +270,7 @@ export function MultiSelectionDetail() {
         if (existing) {
           // Update value
           await updateElements([el.id], {
-            properties: el.properties.map(p => p.key === prop.key ? { ...p, value: prop.value, type: prop.type } : p),
+            properties: el.properties.map(p => p.key === prop.key ? withValueOf(p, prop) : p),
           });
         } else {
           // Add
@@ -275,7 +281,7 @@ export function MultiSelectionDetail() {
         const existing = link.properties.find(p => p.key === prop.key);
         if (existing) {
           await updateLinks([link.id], {
-            properties: link.properties.map(p => p.key === prop.key ? { ...p, value: prop.value, type: prop.type } : p),
+            properties: link.properties.map(p => p.key === prop.key ? withValueOf(p, prop) : p),
           });
         } else {
           await updateLinks([link.id], { properties: [...link.properties, prop] });

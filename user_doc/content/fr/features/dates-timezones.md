@@ -15,7 +15,7 @@ Une date saisie sans heure correspond à la journée entière.
 
 ---
 
-## Fuseau d'un événement ou d'une période
+## Fuseau d'un événement, d'une période ou d'une propriété
 
 Pour des heures relevées dans un autre fuseau (extraction de téléphone, journal serveur, source étrangère) :
 
@@ -29,7 +29,7 @@ Ailleurs, l'heure est affichée dans votre fuseau, suivie de l'heure d'origine :
 20 avr. 2024, 02:12 (03:12 Beirut)
 ```
 
-Disponible sur les événements et sur la période d'un lien. **Système** revient au fuseau normal.
+Disponible sur les événements, sur la période d'un lien et sur les propriétés **date/heure**. **Système** revient au fuseau normal.
 
 ---
 
@@ -76,7 +76,7 @@ La colonne `fuseau` (ex. `Asia/Beirut`) indique le fuseau des heures de la ligne
 | Format | Fuseau de la source |
 |--------|---------------------|
 | ZIP / JSON | Conservé |
-| CSV | Colonne `fuseau` |
+| CSV | Colonne `fuseau` ; propriétés date/heure dans votre fuseau |
 | Obsidian | Heure d'origine après la date : `2024-04-20T02:12 (03:12 Asia/Beirut)` |
 | GeoJSON | Propriété `timeZone` des liens |
 | i2 (ANX) | Non transmis : heures dans votre fuseau |

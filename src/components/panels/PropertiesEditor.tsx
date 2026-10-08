@@ -6,7 +6,8 @@ import type { Property, PropertyType, PropertyDefinition } from '../../types';
 import { DropdownPortal } from '../common';
 import { getLocalizedCountries, getCountryName, getCountryByCode, type LocalizedCountry } from '../../data/countries';
 import { parseFlexibleDate, formatDateForCopy } from '../../utils';
-import { parsePropertyDate } from '../../utils/dates';
+import { dateFromInputKeys, dateInputKeys, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../../utils/dates';
+import { TimeZoneButton } from '../common/TimeZoneButton';
 
 interface PropertiesEditorProps {
   properties: Property[];
@@ -36,24 +37,18 @@ function formatDateForInput(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/** Format Date for time input (HH:mm) using LOCAL timezone */
-function formatTimeForInput(date: Date): string {
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
 /**
- * Date and time parts shown in the inputs, in local time. Imported text
- * values are read by `parsePropertyDate` (UTC midnight stays a local day).
+ * Date and time parts shown in the inputs, in the source zone (local time when
+ * none). Imported text values are read by `parsePropertyDate` (UTC midnight
+ * stays a local day).
  */
-function dateInputParts(value: unknown): { date: string; time: string } {
-  if (value instanceof Date) return { date: formatDateForInput(value), time: formatTimeForInput(value) };
+function dateInputParts(value: unknown, timeZone?: string): { date: string; time: string } {
+  if (value instanceof Date) return dateInputKeys(value, timeZone);
   if (!value) return { date: '', time: '' };
   const str = String(value);
   if (str.includes('T')) {
     const d = parsePropertyDate(str);
-    if (d) return { date: formatDateForInput(d), time: formatTimeForInput(d) };
+    if (d) return dateInputKeys(d, timeZone);
   }
   return { date: str.split('T')[0], time: str.slice(11, 16) };
 }
@@ -74,6 +69,7 @@ export function PropertiesEditor({
   const [newValue, setNewValue] = useState<string | number | boolean | Date | null>('');
   const [newType, setNewType] = useState<PropertyType>('text');
   const [newChoices, setNewChoices] = useState(''); // Comma-separated choices for 'choice' type
+  const [newTimeZone, setNewTimeZone] = useState<string | undefined>(undefined); // 'datetime' source zone
   // Mirror newValue in a ref so handleAddProperty reads the latest value even when
   // the user picks a date and clicks "Add" in the same React batch (the click handler
   // would otherwise capture the stale newValue from the previous render's closure).
@@ -126,6 +122,7 @@ export function PropertiesEditor({
     setNewValue('');
     setNewType('text');
     setNewChoices('');
+    setNewTimeZone(undefined);
     setIsAdding(false);
     setShowSuggestions(false);
     setShowTypeDropdown(false);
@@ -160,7 +157,8 @@ export function PropertiesEditor({
         finalValue = currentValue !== '' ? String(currentValue) : null;
       }
 
-      onChange([...properties, { key: trimmedKey, value: finalValue, type: finalType }]);
+      const timeZone = finalType === 'datetime' ? newTimeZone : undefined;
+      onChange([...properties, { key: trimmedKey, value: finalValue, type: finalType, ...(timeZone ? { timeZone } : {}) }]);
 
       // Always notify parent to update association (will update type if different)
       if (onNewProperty) {
@@ -172,7 +170,17 @@ export function PropertiesEditor({
       }
       resetForm();
     }
-  }, [newKey, newValue, newType, newChoices, properties, onChange, onNewProperty, suggestions, resetForm]);
+  }, [newKey, newValue, newType, newChoices, newTimeZone, properties, onChange, onNewProperty, suggestions, resetForm]);
+
+  // Changing the zone of the new value keeps the typed wall clock, as on existing rows
+  const handleNewTimeZoneChange = useCallback((timeZone: string | undefined) => {
+    const date = parsePropertyDate(newValueRef.current);
+    if (date) {
+      const keys = dateInputKeys(date, newTimeZone);
+      setNewValueSync(dateFromInputKeys(keys.date, keys.time, timeZone));
+    }
+    setNewTimeZone(timeZone);
+  }, [newTimeZone, setNewValueSync]);
 
   const handleRemoveProperty = useCallback(
     (keyToRemove: string) => {
@@ -187,6 +195,26 @@ export function PropertiesEditor({
         properties.map((prop) =>
           prop.key === key ? { ...prop, value, type: type || prop.type } : prop
         )
+      );
+    },
+    [properties, onChange]
+  );
+
+  // Changing the zone keeps the typed wall clock: "03:12" now means 03:12 in the new zone
+  const handleUpdateTimeZone = useCallback(
+    (key: string, timeZone: string | undefined) => {
+      onChange(
+        properties.map((prop) => {
+          if (prop.key !== key) return prop;
+          const { timeZone: previous, ...rest } = prop;
+          const date = parsePropertyDate(prop.value);
+          const keys = date ? dateInputKeys(date, previous) : null;
+          return {
+            ...rest,
+            value: keys ? dateFromInputKeys(keys.date, keys.time, timeZone) : prop.value,
+            ...(timeZone ? { timeZone } : {}),
+          };
+        })
       );
     },
     [properties, onChange]
@@ -379,6 +407,8 @@ export function PropertiesEditor({
               onChange={setNewValueSync}
               onKeyDown={handleValueKeyPress}
               placeholder={t('detail.properties.valuePlaceholder')}
+              timeZone={newTimeZone}
+              onTimeZoneChange={handleNewTimeZoneChange}
               t={t}
               locale={i18n.language}
             />
@@ -442,6 +472,7 @@ export function PropertiesEditor({
                   <PropertyRow
                     property={prop}
                     onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
+                    onUpdateTimeZone={(timeZone) => handleUpdateTimeZone(prop.key, timeZone)}
                     onRemove={() => handleRemoveProperty(prop.key)}
                     onExtract={onExtractToElement ? () => onExtractToElement(prop) : undefined}
                     isDisplayed={displayedProperties.includes(prop.key)}
@@ -469,6 +500,7 @@ export function PropertiesEditor({
 interface PropertyRowProps {
   property: Property;
   onUpdate: (value: Property['value']) => void;
+  onUpdateTimeZone?: (timeZone: string | undefined) => void;
   onRemove: () => void;
   onExtract?: () => void;
   isDisplayed?: boolean;
@@ -479,7 +511,7 @@ interface PropertyRowProps {
   locale: string;
 }
 
-function PropertyRow({ property, onUpdate, onRemove, onExtract, isDisplayed, onToggleDisplay, choices, onUpdateChoices, t, locale }: PropertyRowProps) {
+function PropertyRow({ property, onUpdate, onUpdateTimeZone, onRemove, onExtract, isDisplayed, onToggleDisplay, choices, onUpdateChoices, t, locale }: PropertyRowProps) {
   const type = property.type || 'text';
   const [editingChoices, setEditingChoices] = useState(false);
   const [choicesInput, setChoicesInput] = useState('');
@@ -539,6 +571,8 @@ function PropertyRow({ property, onUpdate, onRemove, onExtract, isDisplayed, onT
             type={type}
             value={property.value}
             onChange={onUpdate}
+            timeZone={property.timeZone}
+            onTimeZoneChange={onUpdateTimeZone}
             placeholder={t('detail.properties.valuePlaceholder')}
             choices={choices}
             compact
@@ -586,6 +620,10 @@ interface PropertyValueInputProps {
   placeholder?: string;
   choices?: string[];
   compact?: boolean;
+  /** `datetime`: zone the hour is typed in (system zone when unset) */
+  timeZone?: string;
+  /** `datetime`: shows the zone picker when set */
+  onTimeZoneChange?: (timeZone: string | undefined) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   locale: string;
 }
@@ -598,6 +636,8 @@ function PropertyValueInput({
   placeholder,
   choices,
   compact = false,
+  timeZone,
+  onTimeZoneChange,
   t,
   locale,
 }: PropertyValueInputProps) {
@@ -605,18 +645,18 @@ function PropertyValueInput({
   const [localText, setLocalText] = useState(String(value ?? ''));
   const [localNumber, setLocalNumber] = useState(value !== null && value !== undefined ? String(value) : '');
   const [localDate, setLocalDate] = useState(() => dateInputParts(value).date);
-  const [localDateTimeDate, setLocalDateTimeDate] = useState(() => dateInputParts(value).date);
-  const [localDateTimeTime, setLocalDateTimeTime] = useState(() => dateInputParts(value).time);
+  const [localDateTimeDate, setLocalDateTimeDate] = useState(() => dateInputParts(value, timeZone).date);
+  const [localDateTimeTime, setLocalDateTimeTime] = useState(() => dateInputParts(value, timeZone).time);
 
   // Sync local state when prop value changes externally (undo/redo, collab)
   useEffect(() => {
     setLocalText(String(value ?? ''));
     setLocalNumber(value !== null && value !== undefined ? String(value) : '');
-    const parts = dateInputParts(value);
-    setLocalDate(parts.date);
-    setLocalDateTimeDate(parts.date);
-    setLocalDateTimeTime(parts.time);
-  }, [value]);
+    setLocalDate(dateInputParts(value).date);
+    const zoned = dateInputParts(value, timeZone);
+    setLocalDateTimeDate(zoned.date);
+    setLocalDateTimeTime(zoned.time);
+  }, [value, timeZone]);
 
   const baseInputClass = compact
     ? 'w-full px-2 py-1 text-xs bg-bg-secondary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary'
@@ -717,18 +757,18 @@ function PropertyValueInput({
               if (!e.target.value) {
                 if (value !== null) onChange(null);
               } else {
-                const time = localDateTimeTime || '00:00';
-                const parsed = new Date(`${e.target.value}T${time}`);
+                const parsed = dateFromInputKeys(e.target.value, localDateTimeTime || '00:00', timeZone);
                 if (!isNaN(parsed.getTime())) onChange(parsed);
               }
             }}
             onPaste={(e) => {
-              const parsed = parseFlexibleDate(e.clipboardData.getData('text'));
-              if (parsed) {
+              // A pasted "12/03/2024 03:12" is a wall clock: read it in the source zone
+              const pasted = parseFlexibleDate(e.clipboardData.getData('text'));
+              if (pasted) {
                 e.preventDefault();
-                setLocalDateTimeDate(formatDateForInput(parsed));
-                setLocalDateTimeTime(formatTimeForInput(parsed));
-                onChange(parsed);
+                setLocalDateTimeDate(toLocalDateKey(pasted));
+                setLocalDateTimeTime(toLocalTimeKey(pasted));
+                onChange(dateFromInputKeys(toLocalDateKey(pasted), toLocalTimeKey(pasted), timeZone));
               }
             }}
             onKeyDown={onKeyDown}
@@ -740,13 +780,14 @@ function PropertyValueInput({
             onChange={(e) => {
               setLocalDateTimeTime(e.target.value);
               if (localDateTimeDate) {
-                const parsed = new Date(`${localDateTimeDate}T${e.target.value || '00:00'}`);
+                const parsed = dateFromInputKeys(localDateTimeDate, e.target.value || '00:00', timeZone);
                 if (!isNaN(parsed.getTime())) onChange(parsed);
               }
             }}
             onKeyDown={onKeyDown}
             className={`w-20 ${baseInputClass}`}
           />
+          {onTimeZoneChange && <TimeZoneButton value={timeZone} onChange={onTimeZoneChange} />}
           {value instanceof Date && (
             <button
               type="button"

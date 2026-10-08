@@ -49,6 +49,10 @@ Basculez en vue matrice via le **selecteur de vue** dans la barre d'outils (icon
 | **Shift+Tab** | Sauvegarder et revenir a la colonne precedente |
 | **Fleche Haut/Bas** | Sauvegarder et passer a la ligne adjacente |
 
+Les liens de la colonne **Source** (page web, document joint, extension) s'ouvrent d'un clic. Elle s'edite dans une zone de plusieurs lignes, une source par ligne : **Entree** ajoute une ligne, **Ctrl+Entree** sauvegarde.
+
+Les dates s'editent au format `AAAA-MM-JJ HH:mm`, dans le fuseau de la source.
+
 Toutes les modifications supportent **annuler/retablir** (Ctrl+Z / Ctrl+Shift+Z).
 
 {{< hint info >}}

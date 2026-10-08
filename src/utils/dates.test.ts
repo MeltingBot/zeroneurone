@@ -146,6 +146,19 @@ describe('source time zone', () => {
   });
 });
 
+describe('datetime property in a source zone', () => {
+  let previous: string | undefined;
+  beforeAll(() => { previous = process.env.TZ; process.env.TZ = 'Europe/Paris'; });
+  afterAll(() => { process.env.TZ = previous; });
+
+  it('adds the source hour after the local one', () => {
+    const d = fromZonedWallClock('2024-06-12', '03:12', 'Asia/Beirut');
+    expect(formatPropertyValue(d, 'datetime', 'fr', 'Asia/Beirut')).toMatch(/02:12 \(03:12 Beirut\)$/);
+    expect(formatPropertyValue(d, 'datetime', 'fr')).not.toContain('Beirut');
+    expect(formatPropertyValue(d, 'date', 'fr', 'Asia/Beirut')).not.toContain('Beirut');
+  });
+});
+
 describe('CSV round trip with a source zone', () => {
   let previous: string | undefined;
   beforeAll(() => { previous = process.env.TZ; process.env.TZ = 'America/Toronto'; });

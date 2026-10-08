@@ -49,6 +49,10 @@ Switch to matrix view using the **view selector** in the top toolbar (table icon
 | **Shift+Tab** | Save and move to previous column |
 | **Arrow Up/Down** | Save and move to adjacent row |
 
+Links in the **Source** column (web page, attached document, extension) open with a click. It is edited in a multi-line box, one source per line: **Enter** adds a line, **Ctrl+Enter** saves.
+
+Dates are edited as `YYYY-MM-DD HH:mm`, in the source's time zone.
+
 All edits support **undo/redo** (Ctrl+Z / Ctrl+Shift+Z).
 
 {{< hint info >}}

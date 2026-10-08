@@ -509,7 +509,7 @@ class ReportService {
           if (el.properties.length > 0) {
             html += `      <table class="fiche-table">
         <tr><th colspan="2" style="background:var(--color-bg-alt)">${this.t('properties')} (${el.properties.length})</th></tr>
-        ${el.properties.map(p => `<tr><td>${this.escapeHTML(p.key)}</td><td>${this.escapeHTML(formatPropertyValue(p.value, p.type, locale))}</td></tr>`).join('\n        ')}
+        ${el.properties.map(p => `<tr><td>${this.escapeHTML(p.key)}</td><td>${this.escapeHTML(formatPropertyValue(p.value, p.type, locale, p.timeZone))}</td></tr>`).join('\n        ')}
       </table>\n`;
           }
 
@@ -583,7 +583,7 @@ class ReportService {
       </tr>
       ${elements.map(el => {
         const propsHtml = showProps && el.properties.length > 0
-          ? el.properties.map(p => `<b>${this.escapeHTML(p.key)}:</b> ${this.escapeHTML(formatPropertyValue(p.value, p.type, i18next.language))}`).join('<br>')
+          ? el.properties.map(p => `<b>${this.escapeHTML(p.key)}:</b> ${this.escapeHTML(formatPropertyValue(p.value, p.type, i18next.language, p.timeZone))}`).join('<br>')
           : '-';
         const filesHtml = options.includeFiles && el.assetIds.length > 0
           ? el.assetIds.map(id => {
@@ -816,7 +816,7 @@ class ReportService {
             md += `| ${this.t('property')} | ${this.t('value')} |\n`;
             md += `|-----------|--------|\n`;
             for (const p of el.properties) {
-              md += `| ${p.key} | ${formatPropertyValue(p.value, p.type, locale)} |\n`;
+              md += `| ${p.key} | ${formatPropertyValue(p.value, p.type, locale, p.timeZone)} |\n`;
             }
             md += `\n`;
           }
@@ -885,7 +885,7 @@ class ReportService {
       const tags = el.tags.length > 0 ? el.tags.join(', ') : '-';
       const confidence = this.evaluationText(el);
       const props = showProps && el.properties.length > 0
-        ? el.properties.map(p => `**${p.key}:** ${formatPropertyValue(p.value, p.type, i18next.language)}`).join(', ')
+        ? el.properties.map(p => `**${p.key}:** ${formatPropertyValue(p.value, p.type, i18next.language, p.timeZone)}`).join(', ')
         : '-';
       const files = showFiles && el.assetIds.length > 0
         ? el.assetIds.map(id => {

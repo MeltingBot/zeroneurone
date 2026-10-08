@@ -15,7 +15,7 @@ A date entered without a time means the whole day.
 
 ---
 
-## Time Zone of an Event or a Period
+## Time Zone of an Event, a Period or a Property
 
 For times recorded in another zone (phone extraction, server log, foreign source):
 
@@ -29,7 +29,7 @@ Elsewhere, the time is shown in your zone, followed by the original time:
 20 Apr 2024, 02:12 (03:12 Beirut)
 ```
 
-Available on events and on a link's period. **System** returns to the normal zone.
+Available on events, on a link's period and on **date/time** properties. **System** returns to the normal zone.
 
 ---
 
@@ -76,7 +76,7 @@ The `fuseau` column (or `timezone` on import, e.g. `Asia/Beirut`) gives the zone
 | Format | Source time zone |
 |--------|------------------|
 | ZIP / JSON | Kept |
-| CSV | `fuseau` column |
+| CSV | `fuseau` column; date/time properties in your zone |
 | Obsidian | Original time after the date: `2024-04-20T02:12 (03:12 Asia/Beirut)` |
 | GeoJSON | `timeZone` property on links |
 | i2 (ANX) | Not transmitted: times in your zone |

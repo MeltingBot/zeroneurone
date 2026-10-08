@@ -108,6 +108,8 @@ export interface Property {
   key: string;
   value: string | number | boolean | Date | null;
   type?: PropertyType;
+  /** `datetime` only: time zone (IANA) the hour was given in at the source; system zone when absent */
+  timeZone?: string;
 }
 
 /** Property definition for suggestions (includes type info) */

@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.62.4
+
+### Nouveautés
+
+- **Fuseau d'une propriété date/heure** — comme sur les événements, la
+  ville à droite de l'heure choisit le fuseau de la source, dès l'ajout de
+  la propriété. L'heure est saisie telle qu'elle figure dans la source ;
+  ailleurs elle s'affiche dans votre fuseau suivie de l'heure d'origine
+  (`20 avr. 2024, 02:12 (03:12 Beirut)`) : canvas, rapports, timeline,
+  matrice, export Obsidian. Conservé en collaboration, en sélection
+  multiple et à l'export ZIP/JSON.
+- **Matrice : sources sur plusieurs lignes** — un double-clic ouvre une
+  zone d'édition, une source par ligne (Entrée ajoute une ligne,
+  Ctrl+Entrée enregistre), au lieu du renvoi vers le panneau. Les liens
+  de la colonne Source s'ouvrent d'un clic (page web, document joint,
+  extension).
+
+### Corrections
+
+- **Timeline** — les propriétés date/heure n'y apparaissaient pas ; les
+  propriétés date importées en texte tombaient la veille à l'ouest de
+  UTC ; les dates des propriétés d'un événement s'affichaient en texte
+  brut du navigateur.
+- **Matrice** — valider une cellule date sans la changer remplaçait la
+  date par son texte (heure et fuseau perdus), un nombre devenait du
+  texte ; une saisie illisible est maintenant ignorée. Les dates/heures
+  affichent l'heure et sont triées dans l'ordre chronologique.
+
+### Documentation
+
+- Dates et fuseaux horaires : fuseau des propriétés date/heure.
+- Vue matrice : sources, liens et dates.
+
 ## 2.62.3
 
 ### Corrections

@@ -317,15 +317,23 @@ export function formatSourceTime(date: Date, timeZone: string | undefined, langu
 /**
  * Readable text of a property value for reports and exports meant for people:
  * dates in the UI language ("12 mars 2024", with the time when there is one),
- * ISO date strings from imports included; anything else as is.
+ * ISO date strings from imports included; anything else as is. A datetime
+ * given in another zone adds the source hour: "12 mars 2024, 02:12 (03:12 Beirut)".
  */
-export function formatPropertyValue(value: unknown, type: string | undefined, language: string): string {
+export function formatPropertyValue(
+  value: unknown,
+  type: string | undefined,
+  language: string,
+  timeZone?: string,
+): string {
   if (value === null || value === undefined) return '';
   const isDateType = type === 'date' || type === 'datetime';
   if (value instanceof Date || (isDateType && typeof value === 'string')) {
     const date = isDateType ? parsePropertyDate(value) : parseDateValue(value);
     if (!date) return String(value);
-    return formatPreciseDate(date, type === 'date' ? 'day' : type === 'datetime' ? 'minute' : undefined, false, language);
+    const text = formatPreciseDate(date, type === 'date' ? 'day' : type === 'datetime' ? 'minute' : undefined, false, language);
+    const source = type === 'datetime' ? formatSourceTime(date, timeZone, language) : '';
+    return source ? `${text} (${source})` : text;
   }
   return String(value);
 }

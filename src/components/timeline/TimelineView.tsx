@@ -12,7 +12,7 @@ import { SwimlaneToolbar } from './SwimlaneToolbar';
 import { TimelineSwimlane } from './TimelineSwimlane';
 import { useSwimlaneGrouping } from './useSwimlaneGrouping';
 import type { DatePrecision, Element as ZNElement } from '../../types';
-import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision } from '../../utils/dates';
+import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue, parsePropertyDate } from '../../utils/dates';
 import { formatItemDates } from './timelineDates';
 
 export interface TimelineItem {
@@ -419,7 +419,7 @@ export function TimelineView() {
         if (event.properties && event.properties.length > 0) {
           eventSublabel = event.properties
             .filter((p) => p.value !== null && p.value !== undefined && p.value !== '')
-            .map((p) => `${p.key}: ${String(p.value)}`)
+            .map((p) => `${p.key}: ${formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)}`)
             .join(' | ');
         }
 
@@ -457,7 +457,7 @@ export function TimelineView() {
       });
     });
 
-    // 3. Process element properties with type "date"
+    // 3. Process element properties with type "date" or "datetime"
     elements.forEach((element) => {
       // Skip hidden elements or elements not in active tab
       if (hiddenElementIds.has(element.id)) return;
@@ -467,11 +467,12 @@ export function TimelineView() {
       const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
 
       element.properties.forEach((prop, index) => {
-        if (prop.type !== 'date' || !prop.value) return;
+        if ((prop.type !== 'date' && prop.type !== 'datetime') || !prop.value) return;
 
-        // Parse the date value
-        const propDate = prop.value instanceof Date ? prop.value : new Date(String(prop.value));
-        if (isNaN(propDate.getTime())) return;
+        // Imported text is read like everywhere else (UTC midnight = a local day)
+        const propDate = parsePropertyDate(prop.value);
+        if (!propDate) return;
+        const isDateTime = prop.type === 'datetime';
 
         const propTime = propDate.getTime();
         if (propTime < minTime) minTime = propTime;
@@ -484,6 +485,8 @@ export function TimelineView() {
           label: `${elementLabel}: ${prop.key}`,
           start: propDate,
           end: undefined, // Properties are point-in-time
+          precision: isDateTime ? 'minute' : 'day',
+          ...(isDateTime && prop.timeZone ? { timeZone: prop.timeZone } : {}),
           color: element.visual.color,
           type: 'property',
           sourceId: element.id,
@@ -516,7 +519,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt]);
+  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});

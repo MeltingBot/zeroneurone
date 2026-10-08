@@ -192,4 +192,25 @@ describe('elementMapper — source time zone across peers', () => {
     expect(result.events[0].timeZone).toBe('Asia/Beirut');
     expect(result.dateRange?.timeZone).toBe('Asia/Beirut');
   });
+
+  it('keeps the time zone of a datetime property, on create and on update', () => {
+    const when = new Date('2024-04-20T00:12:00Z');
+    const prop = { key: 'appel', value: when, type: 'datetime' as const, timeZone: 'Asia/Beirut' };
+    const local = new Y.Doc();
+    const ymap = elementToYMap(makeElement({ properties: [prop] }));
+    local.getMap('elements').set('el-1', ymap);
+    const remote = new Y.Doc();
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    const created = yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>);
+    expect(created.properties[0].timeZone).toBe('Asia/Beirut');
+    expect((created.properties[0].value as Date).getTime()).toBe(when.getTime());
+
+    local.transact(() => updateElementYMap(ymap, { properties: [{ ...prop, timeZone: 'Asia/Tokyo' }] }, local));
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    expect(yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>).properties[0].timeZone).toBe('Asia/Tokyo');
+
+    local.transact(() => updateElementYMap(ymap, { properties: [{ key: 'appel', value: when, type: 'datetime' }] }, local));
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
+    expect(yMapToElement(remote.getMap('elements').get('el-1') as Y.Map<any>).properties[0]).not.toHaveProperty('timeZone');
+  });
 });

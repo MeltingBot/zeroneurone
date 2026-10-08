@@ -4,8 +4,13 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateC
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { ViewToolbar } from '../common/ViewToolbar';
+import { DropdownPortal } from '../common/DropdownPortal';
+import { SourceInline } from '../common/SourceInline';
 
-import type { Element, Confidence, EvaluationModel } from '../../types';
+import i18next from 'i18next';
+import type { Element, Confidence, EvaluationModel, Property } from '../../types';
+import { dateFromInputKeys, dateInputKeys, formatPropertyValue, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../../utils/dates';
+import { parseFlexibleDate } from '../../utils';
 import { evaluationStrength, formatEvaluation, getModelScale, isInModel, sanitizeEvaluation } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
@@ -37,17 +42,61 @@ const COL_CONFIDENCE = 80;
 const COL_SOURCE = 128;
 const COL_PROPERTY = 144;
 
+const isDateProperty = (prop: Property) => prop.type === 'date' || prop.type === 'datetime';
+
 /** Extract a display value for a property key from an element */
 function getPropertyValue(element: Element, key: string): string {
   const prop = element.properties.find((p) => p.key === key);
   if (!prop || prop.value == null) return '';
-  if (prop.value instanceof Date) {
-    return prop.value.toLocaleDateString();
+  if (prop.value instanceof Date || isDateProperty(prop)) {
+    // Date and time with the source hour: "28 oct. 2026, 23:59 (05:59 Tokyo)"
+    return formatPropertyValue(prop.value, prop.type, i18next.language, prop.timeZone);
   }
   if (typeof prop.value === 'boolean') {
     return prop.value ? '✓' : '✗';
   }
   return String(prop.value);
+}
+
+/** Editable text of a property: dates as `YYYY-MM-DD[ HH:mm]` in their source zone */
+function getPropertyEditValue(prop: Property | undefined): string {
+  if (!prop || prop.value == null) return '';
+  if (prop.value instanceof Date || isDateProperty(prop)) {
+    const date = parsePropertyDate(prop.value);
+    if (!date) return String(prop.value);
+    const keys = dateInputKeys(date, prop.type === 'datetime' ? prop.timeZone : undefined);
+    return prop.type === 'date' ? keys.date : `${keys.date} ${keys.time}`;
+  }
+  return String(prop.value);
+}
+
+/**
+ * Value typed in a property cell, converted to the property's type; undefined
+ * when it cannot be read (the edit is then dropped rather than turning a typed
+ * value into text).
+ */
+function parsePropertyEdit(text: string, prop: Property | undefined): Property['value'] | undefined {
+  if (!prop || !prop.type || prop.type === 'text') return text || null;
+  if (!text) return null;
+  switch (prop.type) {
+    case 'number': {
+      const num = Number(text.replace(',', '.'));
+      return Number.isFinite(num) ? num : undefined;
+    }
+    case 'boolean':
+      return ['true', '1', '✓', 'oui', 'yes', 'vrai'].includes(text.toLowerCase());
+    case 'date':
+    case 'datetime': {
+      const parsed = parseFlexibleDate(text);
+      if (!parsed) return undefined;
+      // A zone in the text ("…Z", "+02:00") is exact; otherwise it is the source wall clock
+      if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)) return parsed;
+      const timeZone = prop.type === 'datetime' ? prop.timeZone : undefined;
+      return dateFromInputKeys(toLocalDateKey(parsed), prop.type === 'date' ? '00:00' : toLocalTimeKey(parsed), timeZone);
+    }
+    default:
+      return text;
+  }
 }
 
 /** Get a sortable raw value (number-aware) */
@@ -67,7 +116,7 @@ function getSortValue(element: Element, column: string, model: EvaluationModel):
       const prop = element.properties.find((p) => p.key === column);
       if (!prop || prop.value == null) return '';
       if (typeof prop.value === 'number') return prop.value;
-      if (prop.value instanceof Date) return prop.value.getTime();
+      if (prop.value instanceof Date || isDateProperty(prop)) return parsePropertyDate(prop.value)?.getTime() ?? '';
       return String(prop.value).toLowerCase();
     }
   }
@@ -430,12 +479,16 @@ export function MatrixView() {
   const [editingCell, setEditingCell] = useState<{ rowId: string; colKey: string } | null>(null);
   const [editValue, setEditValue] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
+  // Source: one source per line, edited in a multi-line box anchored to the cell
+  const sourceCellRef = useRef<HTMLDivElement>(null);
+  const sourceTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus input when entering edit mode
   useEffect(() => {
-    if (editingCell && editInputRef.current) {
-      editInputRef.current.focus();
-      editInputRef.current.select();
+    const field = editInputRef.current ?? sourceTextareaRef.current;
+    if (editingCell && field) {
+      field.focus();
+      field.select();
     }
   }, [editingCell]);
 
@@ -450,23 +503,16 @@ export function MatrixView() {
         }
         return el.confidence != null ? String(el.confidence) : '';
       case 'source': return el.source;
-      default: return getPropertyValue(el, colKey);
+      default: return getPropertyEditValue(el.properties.find((p) => p.key === colKey));
     }
   }, [evaluationModel]);
 
-  const openSidePanel = useUIStore((s) => s.openSidePanel);
 
   const handleCellDoubleClick = useCallback((el: Element, colKey: string) => {
     if (anonymousMode) return;
-    // A one-line cell would merge the lines of a multi-source field: edit it in the panel
-    if (colKey === 'source' && /\r?\n/.test(el.source)) {
-      selectElement(el.id);
-      openSidePanel('detail');
-      return;
-    }
     setEditingCell({ rowId: el.id, colKey });
     setEditValue(getRawEditValue(el, colKey));
-  }, [anonymousMode, getRawEditValue, selectElement, openSidePanel]);
+  }, [anonymousMode, getRawEditValue]);
 
   const handleCellSave = useCallback(() => {
     if (!editingCell) return;
@@ -534,9 +580,13 @@ export function MatrixView() {
         // Property column
         const oldProps = el.properties;
         const existing = oldProps.find((p) => p.key === colKey);
+        // Unchanged text keeps the stored value (a date stays a date, with its zone)
+        if (trimmed === getPropertyEditValue(existing).trim()) break;
+        const value = parsePropertyEdit(trimmed, existing);
+        if (value === undefined) break;
         const newProps = existing
-          ? oldProps.map((p) => p.key === colKey ? { ...p, value: trimmed } : p)
-          : [...oldProps, { key: colKey, value: trimmed }];
+          ? oldProps.map((p) => p.key === colKey ? { ...p, value } : p)
+          : [...oldProps, { key: colKey, value }];
         updateElement(el.id, { properties: newProps });
         pushAction({ type: 'update-element', undo: { elementId: el.id, changes: { properties: oldProps } }, redo: { elementId: el.id, changes: { properties: newProps } } });
         break;
@@ -580,6 +630,14 @@ export function MatrixView() {
     }
     else if (e.key === 'ArrowUp') { e.preventDefault(); navigateToCell(-1, 0); return; }
     else if (e.key === 'ArrowDown') { e.preventDefault(); navigateToCell(1, 0); return; }
+    e.stopPropagation();
+  }, [handleCellSave, handleCellCancel, navigateToCell]);
+
+  // Multi-line source: Enter adds a line, Ctrl/Cmd+Enter saves, arrows move the caret
+  const handleSourceKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleCellSave(); }
+    else if (e.key === 'Escape') { e.preventDefault(); handleCellCancel(); }
+    else if (e.key === 'Tab') { e.preventDefault(); navigateToCell(0, e.shiftKey ? -1 : 1); return; }
     e.stopPropagation();
   }, [handleCellSave, handleCellCancel, navigateToCell]);
 
@@ -952,9 +1010,11 @@ export function MatrixView() {
                       const isEmpty = value === '—';
                       const redact = anonymousMode && col.key !== 'confidence' && !isEmpty;
                       const isEditing = editingCell?.rowId === el.id && editingCell?.colKey === col.key;
+                      const isEditingSource = isEditing && col.key === 'source';
                       return (
                         <div
                           key={col.key}
+                          ref={isEditingSource ? sourceCellRef : undefined}
                           role="gridcell"
                           onContextMenu={(e) => handleContextMenu(e, el.id, col.key)}
                           onDoubleClick={(e) => { e.stopPropagation(); handleCellDoubleClick(el, col.key); }}
@@ -968,7 +1028,22 @@ export function MatrixView() {
                           style={{ width: getColWidth(col) }}
                           title={!isEmpty && !redact ? value : undefined}
                         >
-                          {isEditing ? (
+                          {isEditingSource ? (
+                            <>
+                              <span className="truncate">{value}</span>
+                              <DropdownPortal anchorRef={sourceCellRef} isOpen className="p-1">
+                                <textarea
+                                  ref={sourceTextareaRef}
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onKeyDown={handleSourceKeyDown}
+                                  onBlur={handleCellSave}
+                                  rows={Math.min(8, Math.max(3, editValue.split('\n').length + 1))}
+                                  className="block w-80 max-w-[90vw] px-2 py-1.5 text-sm rounded border border-border-default bg-bg-primary text-text-primary resize-y focus:outline-none focus:border-accent"
+                                />
+                              </DropdownPortal>
+                            </>
+                          ) : isEditing ? (
                             <input
                               ref={editInputRef}
                               type={col.key === 'confidence' && evaluationModel === 'zeroneurone' ? 'number' : 'text'}
@@ -986,6 +1061,8 @@ export function MatrixView() {
                               className="inline-block bg-text-primary rounded-sm"
                               style={{ width: `${Math.max(1.5, Math.min(value.length * 0.45, 7))}em`, height: '0.8em' }}
                             />
+                          ) : col.key === 'source' && el.source ? (
+                            <SourceInline value={el.source} />
                           ) : (
                             <span className="truncate">{value}</span>
                           )}

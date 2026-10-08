@@ -1341,7 +1341,7 @@ export function Canvas() {
       if (filters.badgePropertyKey) {
         const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
         if (prop && prop.value != null) {
-          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language);
+          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language, prop.timeZone);
           badgeProperty = { value: valueStr, type: prop.type || 'text' };
         }
       }
@@ -1350,7 +1350,7 @@ export function Canvas() {
         .map(key => {
           const prop = el.properties.find(p => p.key === key);
           if (!prop || prop.value == null) return null;
-          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language);
+          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language, prop.timeZone);
           return { key, value: valueStr };
         })
         .filter((p): p is { key: string; value: string } => p !== null);
@@ -1970,7 +1970,7 @@ export function Canvas() {
           .map(key => {
             const prop = link.properties?.find(p => p.key === key);
             if (!prop || prop.value == null) return null;
-            const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language);
+            const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language, prop.timeZone);
             return { key, value: valueStr };
           })
           .filter((p): p is { key: string; value: string } => p !== null);

@@ -187,7 +187,9 @@ function propertyValue(prop: Property): YamlScalar | null {
   if (value === null || value === undefined || value === '') return null;
   if (value instanceof Date || prop.type === 'date' || prop.type === 'datetime') {
     const d = parsePropertyDate(value);
-    return (d && formatDate(d)) || String(value);
+    if (!d) return String(value);
+    const text = formatDate(d);
+    return prop.type === 'datetime' ? withSourceTime(text, d, prop.timeZone) : text;
   }
   if (typeof value === 'number' || typeof value === 'boolean') return value;
   return String(value);
