@@ -71,6 +71,13 @@ describe('rebuildYdoc', () => {
     expect(ydocFingerprint(a)).not.toBe(ydocFingerprint(b));
   });
 
+  it('keeps shared plugin data', () => {
+    const doc = new Y.Doc();
+    doc.getMap('pluginData').set('mark-neurone|ann:h1', { pluginId: 'mark-neurone', key: 'ann:h1', value: '[]', updatedAt: 1 });
+    const source = reload(doc);
+    expect(ydocFingerprint(reload(rebuildYdoc(source)))).toBe(ydocFingerprint(source));
+  });
+
   it('refuses a document with unknown root types', () => {
     const doc = new Y.Doc();
     doc.getArray('unexpected').push([1]);

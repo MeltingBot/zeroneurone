@@ -9,6 +9,7 @@
  * - views: Y.Map<Y.Map<any>>      → Saved views
  * - assets: Y.Map<Y.Map<any>>     → Asset metadata (binaries stay in OPFS)
  * - reports: Y.Map<Y.Map<any>>    → Reports by ID (one per dossier)
+ * - pluginData: Y.Map<entry>       → Plugin data keys declared shared (services/yjs/pluginDataSync.ts)
  */
 
 import type * as Y from 'yjs';

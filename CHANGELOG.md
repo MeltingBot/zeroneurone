@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.63.0
+
+### Nouveautés
+
+- **Extensions : données partagées en collaboration** — une extension peut
+  déclarer certaines de ses données comme partagées
+  (`api.pluginData.shareKeys`). Dans un dossier partagé, elles sont alors
+  transmises aux autres membres, chiffrées comme le reste du dossier ; les
+  autres données restent sur le poste. Les modifications faites dossier
+  fermé sont reportées à l'ouverture suivante. Nouvelles méthodes
+  `pluginData.list` et `pluginData.onRemoteChange`, capacité
+  `features.sharedPluginData`. Voir le guide des extensions.
+
 ## 2.62.4
 
 ### Nouveautés

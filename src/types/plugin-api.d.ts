@@ -225,6 +225,20 @@ export interface PluginDataAPI {
   setGlobal: (pluginId: string, key: string, value: any) => Promise<void>;
   /** Remove global plugin data (not tied to any dossier). */
   removeGlobal: (pluginId: string, key: string) => Promise<void>;
+
+  /** Entries of a dossier whose key starts with `prefix`. */
+  list: (pluginId: string, dossierId: string, prefix: string) => Promise<{ key: string; value: any }[]>;
+  /** Declares key prefixes shared with collaborators through the dossier's Y.Doc (JSON values). ZN 2.63+ (`features.sharedPluginData`). */
+  shareKeys: (pluginId: string, prefixes: string[]) => void;
+  /** Called when a collaborator changed a shared key; Dexie is already updated. Returns an unsubscribe function. */
+  onRemoteChange: (pluginId: string, cb: (change: PluginDataRemoteChange) => void) => () => void;
+}
+
+/** A shared pluginData key changed by a collaborator. */
+export interface PluginDataRemoteChange {
+  dossierId: string;
+  key: string;
+  deleted: boolean;
 }
 
 /**
@@ -238,6 +252,9 @@ export interface ScopedPluginDataAPI {
   getGlobal: (key: string) => Promise<any>;
   setGlobal: (key: string, value: any) => Promise<void>;
   removeGlobal: (key: string) => Promise<void>;
+  list: (dossierId: string, prefix: string) => Promise<{ key: string; value: any }[]>;
+  shareKeys: (prefixes: string[]) => void;
+  onRemoteChange: (cb: (change: PluginDataRemoteChange) => void) => () => void;
 }
 
 // ─── Event bus ────────────────────────────────────────────────

@@ -72,6 +72,16 @@ import { encryptOpfsBuffer, decryptOpfsBuffer } from '../services/encryption/opf
 import { onPluginEvent } from './pluginEventBus';
 import { openGeoPicker } from './pluginUi';
 
+// ─── Shared plugin data (Y.js) ─────────────────────────────────
+import {
+  shareKeys,
+  isSharedKey,
+  onRemoteChange,
+  setSharedValue,
+  removeSharedValue,
+  type PluginDataRemoteChange,
+} from '../services/yjs/pluginDataSync';
+
 // ─── Navigation ────────────────────────────────────────────────
 // react-router navigate function is set at runtime by NavigateRef in App.tsx
 type NavigateFn = (path: string) => void;
@@ -123,6 +133,8 @@ export const pluginAPI = {
     sourceLinks: true,
     /** Slot `source:scheme`: a plugin makes its own `[label](scheme:value)` links clickable */
     sourceSchemes: true,
+    /** pluginData.shareKeys / list / onRemoteChange: keys shared with collaborators through the dossier's Y.Doc */
+    sharedPluginData: true,
   },
 
   // ─── React (same instance as the app — hooks work) ──────────
@@ -467,18 +479,43 @@ export const pluginAPI = {
     async get(pluginId: string, dossierId: string, key: string): Promise<any> {
       // PK uses investigationId (legacy), so query with it
       const row = await db.pluginData.get({ pluginId, investigationId: dossierId, key });
-      return row?.value;
+      return row?.deleted ? undefined : row?.value;
     },
 
     async set(pluginId: string, dossierId: string, key: string, value: any): Promise<void> {
+      if (isSharedKey(pluginId, key)) return setSharedValue(pluginId, dossierId, key, value);
       // Must include investigationId for compound PK + dossierId for index
       await db.pluginData.put({ pluginId, investigationId: dossierId, dossierId, key, value });
     },
 
     async remove(pluginId: string, dossierId: string, key: string): Promise<void> {
+      if (isSharedKey(pluginId, key)) return removeSharedValue(pluginId, dossierId, key);
       await db.pluginData
         .where({ pluginId, investigationId: dossierId, key })
         .delete();
+    },
+
+    /** Entries of a dossier whose key starts with `prefix`. */
+    async list(pluginId: string, dossierId: string, prefix: string): Promise<{ key: string; value: any }[]> {
+      const rows = await db.pluginData
+        .where('[pluginId+investigationId+key]')
+        .between([pluginId, dossierId, prefix], [pluginId, dossierId, prefix + '\uffff'], true, true)
+        .toArray();
+      return rows.filter((row) => !row.deleted).map((row) => ({ key: row.key, value: row.value }));
+    },
+
+    /**
+     * Declares key prefixes shared with the dossier's collaborators: `set` and
+     * `remove` on those keys also go through the Y.Doc. Values must be JSON.
+     * Call it at registration. Other keys stay on this workstation.
+     */
+    shareKeys(pluginId: string, prefixes: string[]): void {
+      shareKeys(pluginId, prefixes);
+    },
+
+    /** Called when a collaborator changed one of the plugin's shared keys (Dexie is already updated). */
+    onRemoteChange(pluginId: string, cb: (change: PluginDataRemoteChange) => void): () => void {
+      return onRemoteChange(pluginId, cb);
     },
 
     // ─── Global data (not tied to any dossier) ────────────────
@@ -533,6 +570,21 @@ export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pl
       async remove(...args: any[]): Promise<void> {
         const [dossierId, key] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
         return pluginAPI.pluginData.remove(pluginId, dossierId, key);
+      },
+      // list: new(dossierId, prefix) or legacy(pluginId, dossierId, prefix)
+      async list(...args: any[]): Promise<{ key: string; value: any }[]> {
+        const [dossierId, prefix] = args.length >= 3 ? [args[1], args[2]] : [args[0], args[1]];
+        return pluginAPI.pluginData.list(pluginId, dossierId, prefix);
+      },
+      // shareKeys: new(prefixes) or legacy(pluginId, prefixes)
+      shareKeys(...args: any[]): void {
+        const prefixes = args.length >= 2 ? args[1] : args[0];
+        pluginAPI.pluginData.shareKeys(pluginId, Array.isArray(prefixes) ? prefixes : []);
+      },
+      // onRemoteChange: new(cb) or legacy(pluginId, cb)
+      onRemoteChange(...args: any[]): () => void {
+        const cb = args.length >= 2 ? args[1] : args[0];
+        return pluginAPI.pluginData.onRemoteChange(pluginId, cb);
       },
       // getGlobal: new(key) or legacy(pluginId, key)
       async getGlobal(...args: any[]): Promise<any> {

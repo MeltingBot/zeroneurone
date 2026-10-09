@@ -14,7 +14,7 @@ import * as Y from 'yjs';
  */
 
 /** Root types of a dossier document; all are Y.Maps. */
-export const DOSSIER_ROOTS = ['assets', 'comments', 'elements', 'links', 'meta', 'reports', 'tabs', 'views'] as const;
+export const DOSSIER_ROOTS = ['assets', 'comments', 'elements', 'links', 'meta', 'pluginData', 'reports', 'tabs', 'views'] as const;
 
 export class UnsupportedYdocError extends Error {}
 

@@ -33,6 +33,7 @@ import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
 import { useHistoryStore } from './historyStore';
 import { getYMaps } from '../types/yjs';
+import { attachPluginDataSync } from '../services/yjs/pluginDataSync';
 import {
   elementToYMap,
   yMapToElement,
@@ -924,7 +925,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (ydocObserverCleanup) {
         ydocObserverCleanup();
       }
-      ydocObserverCleanup = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
+      const cleanupObserver = setupYDocObserver(ydoc, () => get()._syncFromYDoc());
+      const detachPluginData = attachPluginDataSync(ydoc, id);
+      ydocObserverCleanup = () => { cleanupObserver(); detachPluginData(); };
 
       set({ loadingPhase: 'elements', loadingDetail: `${elementsMap.size}|${linksMap.size}`, loadingProgress: 75 });
 

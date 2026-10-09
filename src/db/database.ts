@@ -34,6 +34,12 @@ export interface PluginDataRow {
   investigationId?: string;
   key: string;
   value: any;
+  /** Shared keys only (see services/yjs/pluginDataSync.ts): last write, ms */
+  updatedAt?: number;
+  /** Shared keys only: the row is known to the dossier's Y.Doc */
+  mirrored?: boolean;
+  /** Shared keys only: removed while the dossier was closed, applied at next open */
+  deleted?: boolean;
 }
 
 class DossierDatabase extends Dexie {

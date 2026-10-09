@@ -558,6 +558,30 @@ await api.pluginData.removeGlobal('serverUrl');
 
 **Note:** Global data is NOT affected by dossier deletion.
 
+### Data shared with collaborators (ZN 2.63+)
+
+By default, `pluginData` stays on the workstation: in a shared dossier, other members don't see it. A plugin can declare **shared** key prefixes: `set` and `remove` on those keys also go through the dossier's Y.Doc, with the same end-to-end encryption.
+
+```javascript
+if (api.features?.sharedPluginData) {
+  // At registration: shared keys
+  api.pluginData.shareKeys(['ann:']);
+
+  // Change made by another member (Dexie is already updated)
+  api.pluginData.onRemoteChange(({ dossierId, key, deleted }) => {
+    invalidateCache(dossierId, key);
+  });
+}
+
+// Every key with a prefix
+const entries = await api.pluginData.list(dossierId, 'ann:<hash>:'); // [{ key, value }]
+```
+
+- JSON values only: a `Date` comes back as a string.
+- Conflicts: last write wins, key by key. Prefer one key per object (`ann:<hash>:<id>`) over an array under a single key, otherwise two members writing at the same time overwrite each other.
+- Don't share secrets, workstation settings or large data: everything shared is stored in the Y.Doc.
+- Use `api.pluginData`: a direct write to `db.pluginData` is not shared.
+
 ### Automatic cleanup
 
 When a dossier is deleted, ZN automatically cleans up all `pluginData` associated with that dossier. No need to handle this case in your plugin.

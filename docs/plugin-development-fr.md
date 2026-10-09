@@ -558,6 +558,30 @@ await api.pluginData.removeGlobal('serverUrl');
 
 **Note :** Les donnees globales ne sont PAS affectees par la suppression d'un dossier.
 
+### Données partagées en collaboration (ZN 2.63+)
+
+Par défaut, `pluginData` reste sur le poste. Dans un dossier partagé, les autres membres ne voient pas ces données. Un plugin peut déclarer des préfixes de clés **partagés** : `set` et `remove` sur ces clés passent alors aussi par le Y.Doc du dossier, avec le même chiffrement de bout en bout.
+
+```javascript
+if (api.features?.sharedPluginData) {
+  // À l'enregistrement : clés partagées
+  api.pluginData.shareKeys(['ann:']);
+
+  // Changement fait par un autre membre (Dexie est déjà à jour)
+  api.pluginData.onRemoteChange(({ dossierId, key, deleted }) => {
+    invalidateCache(dossierId, key);
+  });
+}
+
+// Toutes les clés d'un préfixe
+const entries = await api.pluginData.list(dossierId, 'ann:<hash>:'); // [{ key, value }]
+```
+
+- Valeurs JSON uniquement : une `Date` revient sous forme de chaîne.
+- Conflits : la dernière écriture gagne, clé par clé. Préférez une clé par objet (`ann:<hash>:<id>`) à un tableau sous une seule clé : sinon deux membres qui écrivent en même temps s'écrasent.
+- Ne partagez ni secrets, ni réglages du poste, ni données volumineuses : tout ce qui est partagé est stocké dans le Y.Doc.
+- Passez par `api.pluginData` : une écriture directe dans `db.pluginData` n'est pas partagée.
+
 ### Nettoyage automatique
 
 Quand un dossier est supprime, ZN nettoie automatiquement les `pluginData` associees a ce dossier. Plus besoin de gerer ce cas cote plugin.
