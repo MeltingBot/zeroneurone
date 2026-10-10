@@ -863,6 +863,35 @@ Follow ZN design rules strictly:
 
 See [design-guidelines-v1.md](design-guidelines-v1.md) for full specifications.
 
+### Tailwind classes in a compiled plugin
+
+ZN's stylesheet only holds the Tailwind classes found in ZN's sources. A class used only by a plugin (`max-w-[80%]`, `whitespace-pre-line`, `ml-8`...) does not exist once the compiled plugin runs in ZN, although it shows in dev, where the server scans the plugin's sources. The plugin therefore ships its own utilities:
+
+```css
+/* src/plugin-utilities.css: utilities of the plugin's sources, with ZN's theme */
+@reference "../../zeroneurone/src/index.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./";
+```
+
+```typescript
+// vite.config.plugin.ts
+import tailwindcss from '@tailwindcss/vite';
+// plugins: [react(), tailwindcss()],
+
+// src/plugin-external.ts: injected once, at registration
+import utilitiesCss from './plugin-utilities.css?inline';
+function injectUtilities() {
+  if (document.getElementById('my-plugin-utilities')) return;
+  const style = document.createElement('style');
+  style.id = 'my-plugin-utilities';
+  style.textContent = utilitiesCss;
+  document.head.appendChild(style);
+}
+```
+
+`@reference` gives access to ZN's theme without emitting it: the classes use ZN's CSS variables (colors, dark mode). Neither preflight nor theme values are shipped. Without Vite's types, declare the module: `declare module '*.css?inline' { const css: string; export default css; }`.
+
 ## Error Handling
 
 ZN wraps all plugin interactions in try/catch. However, you should still handle errors gracefully:

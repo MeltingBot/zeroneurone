@@ -863,6 +863,35 @@ Respectez strictement les regles de design ZN :
 
 Voir [design-guidelines-v1.md](design-guidelines-v1.md) pour les specifications completes.
 
+### Classes Tailwind dans un plugin compile
+
+La feuille de style de ZN ne contient que les classes Tailwind presentes dans les sources de ZN. Une classe utilisee seulement par un plugin (`max-w-[80%]`, `whitespace-pre-line`, `ml-8`...) n'existe pas une fois le plugin compile charge dans ZN, alors qu'elle s'affiche en dev, ou le serveur parcourt les sources du plugin. Le plugin embarque donc ses propres utilitaires :
+
+```css
+/* src/plugin-utilities.css : utilitaires des sources du plugin, avec le theme de ZN */
+@reference "../../zeroneurone/src/index.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./";
+```
+
+```typescript
+// vite.config.plugin.ts
+import tailwindcss from '@tailwindcss/vite';
+// plugins: [react(), tailwindcss()],
+
+// src/plugin-external.ts : injection une seule fois, a l'enregistrement
+import utilitiesCss from './plugin-utilities.css?inline';
+function injectUtilities() {
+  if (document.getElementById('mon-plugin-utilities')) return;
+  const style = document.createElement('style');
+  style.id = 'mon-plugin-utilities';
+  style.textContent = utilitiesCss;
+  document.head.appendChild(style);
+}
+```
+
+`@reference` donne acces au theme de ZN sans l'emettre : les classes utilisent les variables CSS de ZN (couleurs, mode sombre). Ni preflight ni valeurs du theme ne sont embarques. Sans les types de Vite, declarer le module : `declare module '*.css?inline' { const css: string; export default css; }`.
+
 ## Gestion des erreurs
 
 ZN encapsule toutes les interactions avec les plugins dans des try/catch. Cependant, vous devriez quand meme gerer les erreurs proprement :
