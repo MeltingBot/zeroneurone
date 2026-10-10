@@ -59,6 +59,14 @@ const PLUGINS = [
     description: 'Géolocalisation et analyse spatiale',
     trust: 'trusted',
   },
+  {
+    id: 'mark-neurone',
+    workspace: 'markneurone',
+    output: 'markneurone.js',
+    name: 'MarkNeurone',
+    description: 'Lecture annotée — surlignage de documents, passages sources',
+    trust: 'trusted',
+  },
 ];
 
 function computeHash(filePath) {

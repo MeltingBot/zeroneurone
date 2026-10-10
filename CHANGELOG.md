@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.64.1
+
+### Corrections
+
+- **Boutons du haut du dossier masqués par une extension** — avec
+  MarkNeurone, OneNeurone ou une autre extension compilée, les boutons du
+  haut du dossier (thème, côté du panneau, etc.) pouvaient disparaître :
+  les classes de mise en forme embarquées par l'extension passaient avant
+  celles de ZeroNeurone. Le guide des extensions place désormais ces
+  classes dans une sous-couche (`layer(utilities.plugin)`), où celles de
+  ZeroNeurone l'emportent toujours ; les extensions de la gamme sont
+  corrigées.
+- **MarkNeurone** ajouté aux extensions livrées avec ZeroNeurone.
+
 ## 2.64.0
 
 ### Nouveautés

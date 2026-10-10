@@ -870,7 +870,7 @@ La feuille de style de ZN ne contient que les classes Tailwind presentes dans le
 ```css
 /* src/plugin-utilities.css : utilitaires des sources du plugin, avec le theme de ZN */
 @reference "../../zeroneurone/src/index.css";
-@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "tailwindcss/utilities.css" layer(utilities.plugin) source(none);
 @source "./";
 ```
 
@@ -891,6 +891,8 @@ function injectUtilities() {
 ```
 
 `@reference` donne acces au theme de ZN sans l'emettre : les classes utilisent les variables CSS de ZN (couleurs, mode sombre). Ni preflight ni valeurs du theme ne sont embarques. Sans les types de Vite, declarer le module : `declare module '*.css?inline' { const css: string; export default css; }`.
+
+La sous-couche `utilities.plugin` est indispensable : dans `layer(utilities)`, la feuille du plugin, injectee apres celle de ZN, ferait passer ses classes avant celles de ZN (un `.hidden` du plugin masquerait le `hidden lg:flex` du header de ZN). Dans une sous-couche, les classes de ZN l'emportent toujours, et celles que seul le plugin utilise s'appliquent.
 
 ## Gestion des erreurs
 
