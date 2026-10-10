@@ -351,6 +351,49 @@ export interface ServicesAPI {
   navigateTo: (path: string) => void;
 }
 
+// ─── Services between plugins ─────────────────────────────────
+
+/** Returned by `provide`. */
+export interface ServiceHandle {
+  /** Withdraws the service. */
+  revoke(): void;
+  /** Tells consumers that what the service offers changed (e.g. a license). */
+  changed(): void;
+}
+
+/**
+ * Services a plugin offers to the others (ZN 2.64+, `features.pluginServices`).
+ * Requires the `pluginServices` permission for community plugins.
+ */
+export interface PluginServicesAPI {
+  /** Raw form: `provide(owner, name, impl)`. `name` must start with "<owner>:". */
+  provide: (owner: string, name: string, impl: { version: number }) => ServiceHandle;
+  /** The service, or undefined when it is not provided or its plugin is disabled. */
+  get: <T>(name: string) => T | undefined;
+  subscribe: (cb: () => void) => () => void;
+  getVersion: () => number;
+  /** React hook: re-renders when a service is provided, withdrawn or changed. */
+  use: <T>(name: string) => T | undefined;
+}
+
+/** Scoped form: the provider is the calling plugin. */
+export interface ScopedPluginServicesAPI extends Omit<PluginServicesAPI, 'provide'> {
+  /** `name` must start with "<pluginId>:". */
+  provide: (name: string, impl: { version: number }) => ServiceHandle;
+}
+
+/** Capabilities a plugin can test before relying on them. */
+export interface PluginFeatures {
+  /** Source fields render `[label](https://…)` and `[label](asset:…)` as links (2.62+) */
+  sourceLinks?: boolean;
+  /** Slot `source:scheme` (2.62+) */
+  sourceSchemes?: boolean;
+  /** pluginData.shareKeys / list / onRemoteChange (2.63+) */
+  sharedPluginData?: boolean;
+  /** pluginServices (2.64+) */
+  pluginServices?: boolean;
+}
+
 // ─── Main API type ────────────────────────────────────────────
 
 export interface PluginAPI {
@@ -404,8 +447,16 @@ export interface PluginAPI {
   // Utilities
   generateUUID: () => string;
 
+  /** ZeroNeurone version (semver) */
+  version: string;
+  /** Capabilities of this ZeroNeurone */
+  features: PluginFeatures;
+
   // Services (export, import, navigation)
   services: ServicesAPI;
+
+  // Services between plugins (raw — the provider's id comes first)
+  pluginServices: PluginServicesAPI;
 
   // Event bus (subscribe to data changes)
   events: EventsAPI;
@@ -428,11 +479,13 @@ export interface PluginAPI {
  * pluginData methods auto-inject the plugin's ID, preventing
  * cross-plugin data access.
  */
-export interface ScopedPluginAPI extends Omit<PluginAPI, 'pluginData'> {
+export interface ScopedPluginAPI extends Omit<PluginAPI, 'pluginData' | 'pluginServices'> {
   /** The ID of this plugin (from manifest). */
   pluginId: string;
   /** Scoped data API — pluginId is injected automatically. */
   pluginData: ScopedPluginDataAPI;
+  /** Scoped services API — the provider is this plugin. */
+  pluginServices: ScopedPluginServicesAPI;
 }
 
 /**

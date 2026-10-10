@@ -25,6 +25,8 @@ export type Permission =
   | 'repositories:write'
   // Plugin data
   | 'pluginData:readwrite'
+  // Services offered to and used from other plugins
+  | 'pluginServices'
   // Events & notifications
   | 'events:subscribe'
   | 'toast'

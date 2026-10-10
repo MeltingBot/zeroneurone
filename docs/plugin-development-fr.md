@@ -682,6 +682,37 @@ Navigation interne react-router. Routes disponibles :
 api.services.navigateTo(`/dossier/${newDossierId}`);
 ```
 
+## Services entre plugins (`api.pluginServices`, ZN 2.64+)
+
+Un plugin peut offrir un service aux autres plugins, et utiliser celui d'un autre plugin lorsqu'il est present. ZN ne fait que tenir le registre : il n'appelle jamais un service lui-meme. Testez `api.features?.pluginServices` avant de vous en servir. Pour un plugin `community`, la permission `pluginServices` est necessaire.
+
+```javascript
+// Fournisseur : le nom commence par l'identifiant du plugin
+const handle = api.pluginServices.provide('mark-neurone:anchors', {
+  version: 1,
+  anchorPassage: async (req) => { /* ... */ },
+});
+handle.changed();  // ce que le service offre a change (licence...) : les consommateurs sont prevenus
+handle.revoke();   // retire le service
+
+// Consommateur : le service, ou undefined s'il est absent ou si son plugin est desactive
+const anchors = api.pluginServices.get('mark-neurone:anchors');
+if (anchors && anchors.version >= 1) {
+  try {
+    await anchors.anchorPassage({ /* ... */ });
+  } catch (err) {
+    console.warn('service indisponible', err);  // revenir au comportement sans le service
+  }
+}
+
+// Dans un composant React : rendu a nouveau quand un service apparait, disparait ou change
+const extraction = api.pluginServices.use('oneneurone:extraction');
+```
+
+- Le nom d'un service commence par l'identifiant du plugin qui le fournit (`<pluginId>:nom`). Le premier plugin qui fournit un nom le garde.
+- Un service est un objet avec un champ `version` numerique. Le consommateur verifie la version qu'il connait et appelle le service dans un `try/catch`.
+- Le service d'un plugin desactive n'est pas renvoye. `subscribe(cb)` et `getVersion()` permettent de suivre les changements hors de React.
+
 ## Toast / Notifications (`api.toast`)
 
 API simplifiee pour les notifications utilisateur. Preferable a l'acces direct au store UI.
@@ -1191,15 +1222,15 @@ Depuis la v2.39.0, ZN supporte le **manifest v2** avec niveaux de confiance et p
 
 **Donnees :** `repositories:read`, `repositories:write`, `pluginData:readwrite`, `db:direct`
 
-**Events & notifications :** `events:subscribe`, `toast`
+**Events & notifications :** `events:subscribe`, `toast`, `ui`
 
-**Services :** `services:export`, `services:import`, `services:navigate`
+**Services :** `services:export`, `services:import`, `services:navigate`, `pluginServices` (services entre plugins)
 
 **Acces avances :** `fileService`, `encryption`, `network:fetch`
 
 **Slots UI :** `slots:ui`, `slots:contextMenu`, `slots:keyboard`, `slots:exportImport`
 
-Un plugin `community` sans champ `permissions` recoit le jeu minimal par defaut : `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:ui:write`, `pluginData:readwrite`, `events:subscribe`, `toast`, `slots:ui`, `slots:contextMenu`.
+Un plugin `community` sans champ `permissions` recoit le jeu minimal par defaut : `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:ui:write`, `pluginData:readwrite`, `events:subscribe`, `toast`, `ui`, `slots:ui`, `slots:contextMenu`.
 
 Un plugin avec `stores:dossier:read` (sans `write`) recoit un store en lecture seule — les actions (comme `createElement`, `deleteElement`) sont remplacees par des no-ops qui loguent une erreur en console.
 

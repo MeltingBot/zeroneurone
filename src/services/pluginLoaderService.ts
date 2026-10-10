@@ -216,6 +216,7 @@ const ALL_PERMISSIONS: Permission[] = [
   'stores:ui:read', 'stores:ui:write',
   'repositories:read', 'repositories:write',
   'pluginData:readwrite',
+  'pluginServices',
   'events:subscribe',
   'toast',
   'ui',

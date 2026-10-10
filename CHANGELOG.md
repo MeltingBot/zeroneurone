@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.64.0
+
+### Nouveautés
+
+- **Extensions : services entre extensions** — une extension peut offrir un
+  service aux autres (`api.pluginServices.provide`) et utiliser celui d'une
+  autre lorsqu'elle est installée et activée (`get`, ou `use` dans un
+  composant). ZeroNeurone tient seulement le registre. Sert par exemple à
+  OneNeurone et MarkNeurone pour lancer une extraction depuis le lecteur et
+  citer le passage d'origine en source. Disponible si
+  `features.pluginServices` ; permission `pluginServices` pour une extension
+  communautaire. Voir le guide des extensions.
+- **Extensions communautaires** — elles reçoivent désormais `api.version` et
+  `api.features`, pour tester les capacités de ZeroNeurone.
+
 ## 2.63.0
 
 ### Nouveautés

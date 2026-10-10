@@ -190,6 +190,9 @@ export function buildSandboxedAPI(
   api.icons = scopedAPI.icons;
   api.i18n = scopedAPI.i18n;
   api.generateUUID = scopedAPI.generateUUID;
+  // What the host can do: a plugin tests it before relying on a capability.
+  api.version = scopedAPI.version;
+  api.features = scopedAPI.features;
 
   // --- Stores ---
   const stores: any = {};
@@ -235,6 +238,11 @@ export function buildSandboxedAPI(
   // --- Plugin data (already scoped by createScopedPluginAPI) ---
   if (has(permissions, 'pluginData:readwrite')) {
     api.pluginData = scopedAPI.pluginData;
+  }
+
+  // --- Services between plugins (already scoped by createScopedPluginAPI) ---
+  if (has(permissions, 'pluginServices')) {
+    api.pluginServices = scopedAPI.pluginServices;
   }
 
   // --- Event bus ---

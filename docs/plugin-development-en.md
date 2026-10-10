@@ -682,6 +682,37 @@ Internal react-router navigation. Available routes:
 api.services.navigateTo(`/dossier/${newDossierId}`);
 ```
 
+## Services between plugins (`api.pluginServices`, ZN 2.64+)
+
+A plugin can offer a service to the other plugins, and use another plugin's service when it is there. ZN only keeps the registry: it never calls a service itself. Test `api.features?.pluginServices` before relying on it. A `community` plugin needs the `pluginServices` permission.
+
+```javascript
+// Provider: the name starts with the plugin id
+const handle = api.pluginServices.provide('mark-neurone:anchors', {
+  version: 1,
+  anchorPassage: async (req) => { /* ... */ },
+});
+handle.changed();  // what the service offers changed (license...): consumers are notified
+handle.revoke();   // withdraws the service
+
+// Consumer: the service, or undefined when it is missing or its plugin is disabled
+const anchors = api.pluginServices.get('mark-neurone:anchors');
+if (anchors && anchors.version >= 1) {
+  try {
+    await anchors.anchorPassage({ /* ... */ });
+  } catch (err) {
+    console.warn('service unavailable', err);  // fall back to the behavior without the service
+  }
+}
+
+// In a React component: re-renders when a service appears, disappears or changes
+const extraction = api.pluginServices.use('oneneurone:extraction');
+```
+
+- A service name starts with the id of the plugin that provides it (`<pluginId>:name`). The first plugin to provide a name keeps it.
+- A service is an object with a numeric `version` field. The consumer checks the version it knows and calls the service in a `try/catch`.
+- The service of a disabled plugin is not returned. `subscribe(cb)` and `getVersion()` follow changes outside React.
+
 ## Toast / Notifications (`api.toast`)
 
 Simplified API for user notifications. Preferred over direct UI store access.
@@ -1191,15 +1222,15 @@ Since v2.39.0, ZN supports **manifest v2** with trust levels and permissions. Ma
 
 **Data:** `repositories:read`, `repositories:write`, `pluginData:readwrite`, `db:direct`
 
-**Events & notifications:** `events:subscribe`, `toast`
+**Events & notifications:** `events:subscribe`, `toast`, `ui`
 
-**Services:** `services:export`, `services:import`, `services:navigate`
+**Services:** `services:export`, `services:import`, `services:navigate`, `pluginServices` (services between plugins)
 
 **Advanced access:** `fileService`, `encryption`, `network:fetch`
 
 **UI slots:** `slots:ui`, `slots:contextMenu`, `slots:keyboard`, `slots:exportImport`
 
-A `community` plugin without a `permissions` field receives the minimal default set: `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:ui:write`, `pluginData:readwrite`, `events:subscribe`, `toast`, `slots:ui`, `slots:contextMenu`.
+A `community` plugin without a `permissions` field receives the minimal default set: `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:ui:write`, `pluginData:readwrite`, `events:subscribe`, `toast`, `ui`, `slots:ui`, `slots:contextMenu`.
 
 A plugin with `stores:dossier:read` (without `write`) receives a read-only store — actions (like `createElement`, `deleteElement`) are replaced by no-ops that log an error to console.
 

@@ -4,6 +4,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 import Dexie from 'dexie';
 import { icons } from 'lucide-react';
 import { registerPlugin, registerPlugins, unregisterPlugin, isPluginDisabled } from './pluginRegistry';
+import { provideService, getService, subscribeToServices, getServicesVersion, useService, scopedPluginServices, type ServiceHandle } from './pluginServices';
 import { db } from '../db/database';
 import i18n from '../i18n';
 
@@ -135,6 +136,30 @@ export const pluginAPI = {
     sourceSchemes: true,
     /** pluginData.shareKeys / list / onRemoteChange: keys shared with collaborators through the dossier's Y.Doc */
     sharedPluginData: true,
+    /** pluginServices: a plugin offers a named service, another one uses it when it is there */
+    pluginServices: true,
+  },
+
+  // ─── Services between plugins ───────────────────────────────
+  // Raw form: the provider's id comes first. Plugins receive the scoped form
+  // (createScopedPluginAPI), where it is their own id.
+  pluginServices: {
+    provide(owner: string, name: string, impl: { version: number }): ServiceHandle {
+      return provideService(owner, name, impl);
+    },
+    get<T>(name: string): T | undefined {
+      return getService<T>(name);
+    },
+    subscribe(cb: () => void): () => void {
+      return subscribeToServices(cb);
+    },
+    getVersion(): number {
+      return getServicesVersion();
+    },
+    /** React hook: re-renders when a service is provided, withdrawn or changed */
+    use<T>(name: string): T | undefined {
+      return useService<T>(name);
+    },
   },
 
   // ─── React (same instance as the app — hooks work) ──────────
@@ -555,6 +580,7 @@ export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pl
   return {
     ...pluginAPI,
     pluginId,
+    pluginServices: scopedPluginServices(pluginId) as any,
     pluginData: {
       // get: new(dossierId, key) or legacy(pluginId, dossierId, key)
       async get(...args: any[]): Promise<any> {
