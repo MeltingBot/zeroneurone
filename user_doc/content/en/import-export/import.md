@@ -391,6 +391,24 @@ Excalidraw elements are converted to ZeroNeurone elements:
 
 ---
 
+### draw.io (diagrams.net)
+
+**draw.io diagrams**: `.drawio` file, or `.xml` exported by draw.io (compressed or not). All pages are imported, placed one below the other.
+
+- Shapes → elements (ellipse → circle, rhombus → diamond, hexagon, otherwise rectangle), with position, size and colors
+- Connectors attached to two shapes → links, with label, color, width and dashes; no arrowhead → undirected link
+- Custom data (*Edit Data*) → properties; the shape's link → `url` property
+- Embedded images → attachments
+- Free text → element without fill or border
+
+Unattached connectors and empty groups are skipped.
+
+{{< hint info >}}
+**Visio**: open the `.vsdx` file in draw.io, save it as `.drawio`, then import it.
+{{< /hint >}}
+
+---
+
 ### Mermaid
 
 **Mermaid diagrams** of type `flowchart` or `graph`, in any direction (`TD`, `LR`…): pasted text, `.mmd` / `.mermaid` file, or Markdown `.md` file containing a ` ```mermaid ` block.

@@ -30,7 +30,7 @@
   "import": {
     "title": "Importuj teczka",
     "dropzone": "Upuść plik lub kliknij, aby wybrać",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importuj do",
@@ -43,7 +43,7 @@
     "successEvents": "Zaimportowano zdarzenia: {{count}}",
     "successAssets": "{{count}} plików zaimportowano",
     "error": "Błąd importu",
-    "unknownFormat": "Nierozpoznany format pliku. Obsługiwane formaty: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
+    "unknownFormat": "Nierozpoznany format pliku. Obsługiwane formaty: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Nieznany błąd",
     "createMissing": "Utwórz brakujące elementy (połączenia CSV)",
     "csvTemplate": {

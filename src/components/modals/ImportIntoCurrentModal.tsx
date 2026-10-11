@@ -79,6 +79,12 @@ function estimateElementCount(file: File, content: string): number {
     return matches ? matches.length : 10;
   }
 
+  if (name.endsWith('.drawio') || (name.endsWith('.xml') && /<(mxfile|mxGraphModel)[\s>]/.test(content.slice(0, 2000)))) {
+    // Count vertices (compressed diagrams cannot be counted synchronously)
+    const matches = content.match(/vertex="1"/g);
+    return matches ? matches.length : 10;
+  }
+
   if (name.endsWith('.graphml') || name.endsWith('.xml')) {
     // Count <node> tags
     const matches = content.match(/<node[\s>]/g);
@@ -347,7 +353,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
             onChange={handleFileSelect}
             className="hidden"
           />

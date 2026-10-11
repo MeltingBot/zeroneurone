@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.65.0
+
+### Nouveautés
+
+- **Import draw.io** — les diagrammes draw.io (diagrams.net), en `.drawio`
+  ou `.xml`, compressés ou non, s'importent en nouveau dossier ou dans le
+  dossier courant. Formes → éléments (forme, taille, couleurs, position, y
+  compris dans les groupes), connecteurs → liens (libellé, couleur,
+  épaisseur, pointillés, sens de la flèche), données personnalisées →
+  propriétés, images intégrées → pièces jointes. Les pages multiples sont
+  empilées. Pour Visio : ouvrir le `.vsdx` dans draw.io puis enregistrer en
+  `.drawio`.
+
 ## 2.64.2
 
 ### Corrections

@@ -3398,9 +3398,12 @@ export function Canvas() {
           } else if (fileName.endsWith('.anx')) {
             const { importANX } = await import('../../services/importANX');
             result = await importANX(content, invId);
-          } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml')) {
+          } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml') || fileName.endsWith('.drawio')) {
             const { isANXFormat } = await import('../../services/importANX');
-            if (isANXFormat(content)) {
+            const { isDrawioFormat, importDrawio } = await import('../../services/importDrawio');
+            if (isDrawioFormat(content)) {
+              result = await importDrawio(content, invId);
+            } else if (isANXFormat(content)) {
               const { importANX } = await import('../../services/importANX');
               result = await importANX(content, invId);
             } else {

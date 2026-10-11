@@ -132,7 +132,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
       if (targetDossierId === 'new') {
         // Create new dossier with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
+        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|drawio|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
         const dossier = await createDossier(name, '');
         dossierId = dossier.id;
         createdNewDossier = true;
@@ -211,9 +211,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       } else if (file.name.endsWith('.anx')) {
         const content = await importService.readFileAsText(file);
         result = await importANX(content, dossierId);
-      } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml')) {
+      } else if (file.name.endsWith('.graphml') || file.name.endsWith('.xml') || file.name.endsWith('.drawio')) {
         const content = await importService.readFileAsText(file);
-        if (isANXFormat(content)) {
+        const { isDrawioFormat, importDrawio } = await import('../../services/importDrawio');
+        if (isDrawioFormat(content)) {
+          result = await importDrawio(content, dossierId);
+        } else if (isANXFormat(content)) {
           result = await importANX(content, dossierId);
         } else {
           result = await importService.importFromGraphML(content, dossierId);
@@ -406,7 +409,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

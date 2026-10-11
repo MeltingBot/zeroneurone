@@ -30,7 +30,7 @@
   "import": {
     "title": "Espediente inportatu",
     "dropzone": "Jaregin fitxategia edo egin klik hautatzeko",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Hona inportatu",
@@ -43,7 +43,7 @@
     "successEvents": "{{count}} gertaera inportatuta",
     "successAssets": "{{count}} fitxategi inportatuta",
     "error": "Inportazio errorea",
-    "unknownFormat": "Fitxategi formatua ez da ezagutzen. Onartutako formatuak: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
+    "unknownFormat": "Fitxategi formatua ez da ezagutzen. Onartutako formatuak: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Errore ezezaguna",
     "createMissing": "Falta diren elementuak sortu (CSV loturak)",
     "csvTemplate": {

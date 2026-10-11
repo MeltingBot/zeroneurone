@@ -30,7 +30,7 @@
   "import": {
     "title": "Importar un expedient",
     "dropzone": "Deixeu anar un fitxer o feu clic per seleccionar",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar a",
@@ -43,7 +43,7 @@
     "successEvents": "{{count}} esdeveniment(s) importat(s)",
     "successAssets": "{{count}} fitxer(s) importat(s)",
     "error": "Error d'importació",
-    "unknownFormat": "Format de fitxer no reconegut. Formats suportats: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
+    "unknownFormat": "Format de fitxer no reconegut. Formats suportats: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Error desconegut",
     "createMissing": "Crear els elements que falten (CSV enllaços)",
     "csvTemplate": {

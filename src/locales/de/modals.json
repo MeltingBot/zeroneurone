@@ -30,7 +30,7 @@
   "import": {
     "title": "Akte importieren",
     "dropzone": "Datei ablegen oder klicken zum Auswählen",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importieren in",
@@ -43,7 +43,7 @@
     "successEvents": "{{count}} Ereignis(se) importiert",
     "successAssets": "{{count}} Datei(en) importiert",
     "error": "Importfehler",
-    "unknownFormat": "Unbekanntes Dateiformat. Unterstützte Formate: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw.",
+    "unknownFormat": "Unbekanntes Dateiformat. Unterstützte Formate: ZIP, JSON, CSV, GraphML/XML, OSINTracker, Excalidraw, draw.io.",
     "unknownError": "Unbekannter Fehler",
     "createMissing": "Fehlende Elemente erstellen (CSV-Verbindungen)",
     "csvTemplate": {
