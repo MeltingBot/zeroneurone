@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.64.2
+
+### Corrections
+
+- **Aperçu PDF en erreur** — sur certains navigateurs, l'aperçu d'un PDF
+  échouait avec « getOrInsertComputed is not a function » : la version
+  moderne de pdf.js utilise des fonctions JavaScript très récentes sans les
+  fournir. ZeroNeurone charge désormais la version compatible de pdf.js
+  (aperçu, miniatures, métadonnées) ; MarkNeurone et OneNeurone sont
+  corrigés de la même façon.
+
 ## 2.64.1
 
 ### Corrections

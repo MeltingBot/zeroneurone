@@ -24,7 +24,7 @@ import { dirname } from 'node:path';
 const require = createRequire(import.meta.url);
 
 const WORKERS = [
-  ['pdfjs-dist/build/pdf.worker.min.mjs', 'public/pdf.worker.min.mjs'],
+  ['pdfjs-dist/legacy/build/pdf.worker.min.mjs', 'public/pdf.worker.min.mjs'],
   ['maplibre-gl/dist/maplibre-gl-worker.mjs', 'public/assets/maplibre-gl-worker.mjs'],
   ['maplibre-gl/dist/maplibre-gl-shared.mjs', 'public/assets/maplibre-gl-shared.mjs'],
 ];

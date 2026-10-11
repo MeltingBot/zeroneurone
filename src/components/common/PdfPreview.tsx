@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask, TextLayer } from 'pdfjs-dist';
+import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask, TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {
   ChevronDown, ChevronLeft, ChevronRight, ChevronUp, FileWarning, MoveHorizontal, MoveVertical, Search, X,
 } from 'lucide-react';

@@ -1,4 +1,5 @@
 import type { Property, GeoCoordinates } from '../types';
+import { loadPdfjs } from './pdfjsLoader';
 
 export interface ExtractedMetadata {
   properties: Property[];
@@ -44,11 +45,7 @@ function parsePdfDate(raw: string): Date | null {
  * Extract metadata from PDF using pdf.js
  */
 async function extractPdfMetadata(arrayBuffer: ArrayBuffer): Promise<ExtractedMetadata | null> {
-  const pdfjsLib = await import('pdfjs-dist');
-  // Ensure worker is configured
-  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-  }
+  const pdfjsLib = await loadPdfjs();
 
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const meta = await pdf.getMetadata();
