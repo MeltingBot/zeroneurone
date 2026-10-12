@@ -480,7 +480,10 @@ Expected structure: array of objects with `module`, `query`, `status`.
 
 **JSON format** exported from Graph Palette / OSINT Industries Palette.
 
-Expected structure: object with `nodes` containing types `textNode`, `moduleNode`, `imageNode`.
+Two structures are recognized:
+
+- **Current format** (`schemaVersion: 2`): `nodes` each carrying a typed `entity`, and `edges`. Searched selectors and results become elements at their position, result fields become typed properties, OI dates (account creation, Google Maps reviews…) become dated, geolocated events, embedded images become attachments.
+- **Legacy format**: `nodes` containing types `textNode`, `moduleNode`, `imageNode`.
 
 ```json
 {

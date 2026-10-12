@@ -13,6 +13,7 @@ import { db } from '../db/database';
 import { fileService } from './fileService';
 import { dataUrlToFile } from './importOsintracker';
 import type { ImportResult } from './importService';
+import { importOIPaletteV2, isOIPaletteV2Format } from './importOIPaletteV2';
 
 // ============================================================================
 // Graph Palette (OSINT Industries) Format Types
@@ -150,7 +151,11 @@ export async function importOIPalette(
   };
 
   try {
-    const data = JSON.parse(content) as PaletteGraphData;
+    const parsed: unknown = JSON.parse(content);
+    if (isOIPaletteV2Format(parsed)) {
+      return await importOIPaletteV2(parsed, targetDossierId);
+    }
+    const data = parsed as PaletteGraphData;
 
     if (!data.nodes || !Array.isArray(data.nodes)) {
       result.errors.push('Format Graph Palette invalide: champ "nodes" manquant');
@@ -527,6 +532,9 @@ export function isOIPaletteFormat(data: unknown): boolean {
 
   // Must have nodes array
   if (!Array.isArray(obj.nodes)) return false;
+
+  // v2 export: nodes carry a typed `entity` instead of a React Flow `type`
+  if (isOIPaletteV2Format(data)) return true;
 
   // Check for Palette-specific node types
   if (obj.nodes.length > 0) {

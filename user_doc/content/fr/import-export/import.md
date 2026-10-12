@@ -480,7 +480,10 @@ Structure attendue : tableau d'objets avec `module`, `query`, `status`.
 
 **Format JSON** exporté depuis Graph Palette / OSINT Industries Palette.
 
-Structure attendue : objet avec `nodes` contenant des types `textNode`, `moduleNode`, `imageNode`.
+Deux structures sont reconnues :
+
+- **Format actuel** (`schemaVersion: 2`) : `nodes` portant chacun une `entity` typée, et `edges`. Les recherches de départ et les résultats deviennent des éléments à leur position, les champs des résultats des propriétés typées, les dates OI (création de compte, avis Google Maps…) des événements datés et géolocalisés, les images intégrées des pièces jointes.
+- **Ancien format** : `nodes` contenant des types `textNode`, `moduleNode`, `imageNode`.
 
 ```json
 {

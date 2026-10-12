@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.65.1
+
+### Corrections
+
+- **Import Graph Palette (OSINT Industries)** — les exports au nouveau
+  format Palette (`schemaVersion: 2`) sont reconnus. Sélecteurs recherchés
+  (email, pseudo, téléphone, photo) et résultats → éléments à leur position,
+  étiquetés par catégorie ; champs imbriqués → propriétés typées (lien,
+  nombre, oui/non, date-heure) ; dates OI (création de compte, avis et photos
+  Google Maps) → événements datés et géolocalisés ; images intégrées →
+  pièces jointes. L'ancien format reste pris en charge.
+
 ## 2.65.0
 
 ### Nouveautés
