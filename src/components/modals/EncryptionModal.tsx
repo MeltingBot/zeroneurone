@@ -656,6 +656,7 @@ function WebAuthnView({
   const [credentials, setCredentials] = useState<WebAuthnCredentialEntry[]>([]);
   const [label, setLabel] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Charger les credentials existants
@@ -699,7 +700,7 @@ function WebAuthnView({
   };
 
   const handleRemove = async (index: number) => {
-    if (!confirm(t('encryption.webauthn.deleteConfirm'))) return;
+    setPendingRemove(null);
     const updated = credentials.filter((_, i) => i !== index);
 
     const meta = await db._encryptionMeta.get('main');
@@ -732,13 +733,31 @@ function WebAuthnView({
                   {t('encryption.webauthn.addedOn')} {new Date(cred.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <button
-                onClick={() => handleRemove(i)}
-                className="shrink-0 p-1 text-text-tertiary hover:text-error"
-                title={t('encryption.webauthn.deleteConfirm')}
-              >
-                <Trash2 size={13} />
-              </button>
+              {pendingRemove === i ? (
+                <div className="shrink-0 flex items-center gap-1.5">
+                  <span className="text-xs text-text-secondary">{t('encryption.webauthn.deleteConfirm')}</span>
+                  <button
+                    onClick={() => setPendingRemove(null)}
+                    className="px-2 py-0.5 text-xs border border-border-default text-text-primary bg-bg-primary hover:bg-bg-secondary rounded"
+                  >
+                    {t('common:actions.cancel')}
+                  </button>
+                  <button
+                    onClick={() => handleRemove(i)}
+                    className="px-2 py-0.5 text-xs text-white bg-error hover:bg-red-700 rounded"
+                  >
+                    {t('common:actions.delete')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setPendingRemove(i)}
+                  className="shrink-0 p-1 text-text-tertiary hover:text-error"
+                  title={t('common:actions.delete')}
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
           ))}
         </div>

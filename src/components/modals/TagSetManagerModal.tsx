@@ -1,12 +1,13 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Hexagon, Download, Upload, HelpCircle } from 'lucide-react';
+import { Plus, RotateCcw, Pencil, Trash2, Circle, Square, Diamond, RectangleHorizontal, Hexagon, Download, Upload, HelpCircle, Search } from 'lucide-react';
 import { Modal, Button, IconButton, ResolvedIcon, iconNameResolves } from '../common';
 import { useTagSetStore, useUIStore, useCustomIconStore } from '../../stores';
 import { CUSTOM_ICON_PREFIX, isCustomIconName, customIconIdFromName } from '../../types';
 import { sanitizeSvgIcon } from '../../utils/svgIcon';
 import { splitCSVRecords } from '../../utils/csv';
 import { TagSetEditorModal } from './TagSetEditorModal';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import type { TagSet, TagSetId, ElementShape, SuggestedProperty, TagSetDefaultVisual } from '../../types';
 
 interface TagSetManagerModalProps {
@@ -78,9 +79,17 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
   const [isCreating, setIsCreating] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<TagSet | null>(null);
+  const [query, setQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tagSets = getAll();
+
+  const filteredTagSets = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return tagSets;
+    return tagSets.filter((ts) => ts.name.toLowerCase().includes(q));
+  }, [tagSets, query]);
 
   const handleEdit = useCallback((tagSet: TagSet) => {
     setEditingTagSet(tagSet);
@@ -96,9 +105,6 @@ export function TagSetManagerModal({ isOpen, onClose }: TagSetManagerModalProps)
   }, []);
 
   const handleDelete = useCallback(async (id: TagSetId, name: string) => {
-    if (!confirm(t('tagSets.deleteConfirm', { name }))) {
-      return;
-    }
     await deleteTagSet(id);
     showToast('success', t('tagSets.tagDeleted', { name }));
   }, [deleteTagSet, showToast, t]);
@@ -399,6 +405,7 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
         onClose={onClose}
         title={t('tagSets.title')}
         width="lg"
+        fixedHeight
         footer={
           <div className="flex justify-between w-full">
             <div className="flex gap-2">
@@ -481,15 +488,33 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
             )}
           </div>
 
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('common:actions.search')}
+              aria-label={t('common:actions.search')}
+              className="w-full pl-7 pr-2 py-1.5 text-sm sketchy-border border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+            />
+          </div>
+
           {/* TagSet list */}
-          {tagSets.map((tagSet) => (
+          {filteredTagSets.map((tagSet) => (
             <TagSetListItem
               key={tagSet.id}
               tagSet={tagSet}
               onEdit={() => handleEdit(tagSet)}
-              onDelete={() => handleDelete(tagSet.id, tagSet.name)}
+              onDelete={() => setPendingDelete(tagSet)}
             />
           ))}
+          {query.trim() && filteredTagSets.length === 0 && (
+            <p className="text-xs text-text-tertiary text-center py-3">
+              {t('search.noResults', { query: query.trim() })}
+            </p>
+          )}
 
           {/* Add button */}
           <button
@@ -510,6 +535,17 @@ Adresse,Une adresse postale,#8b5cf6,rectangle,rue:text;ville:text;code_postal:te
           />
         </div>
       </Modal>
+
+      {/* Delete confirmation, stacked over the manager */}
+      {pendingDelete && (
+        <ConfirmDeleteModal
+          isOpen={true}
+          onClose={() => setPendingDelete(null)}
+          onConfirm={() => handleDelete(pendingDelete.id, pendingDelete.name)}
+          title={t('common:actions.delete')}
+          message={t('tagSets.deleteConfirm', { name: pendingDelete.name })}
+        />
+      )}
 
       {/* Editor modal for editing */}
       {editingTagSet && (

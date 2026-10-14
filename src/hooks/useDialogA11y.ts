@@ -22,6 +22,10 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
+// Open dialogs, most recent last. Only the topmost one reacts to Escape/Tab, so
+// a confirmation stacked over another modal closes alone.
+const dialogStack: object[] = [];
+
 export function getFocusableElements(container: HTMLElement): HTMLElement[] {
   // Deliberately no visibility filter: `offsetParent` is null for anything
   // inside a `position: fixed` subtree, which is exactly what a dialog is, so
@@ -49,8 +53,11 @@ export function useDialogA11y(
     if (!isOpen) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    const token = {};
+    dialogStack.push(token);
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (dialogStack[dialogStack.length - 1] !== token) return;
       if (event.key === 'Escape') {
         onCloseRef.current();
         return;
@@ -86,6 +93,7 @@ export function useDialogA11y(
 
     return () => {
       clearTimeout(focusTimer);
+      dialogStack.splice(dialogStack.indexOf(token), 1);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();

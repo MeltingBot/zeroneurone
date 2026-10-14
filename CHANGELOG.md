@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.65.3
+
+### Corrections
+
+- **Suppression d'un tag** — confirmation dans une modale ZN, empilée sur la
+  gestion des tags, au lieu de la boîte de dialogue du navigateur. Même
+  correction pour la suppression d'une clé de sécurité (confirmation dans la
+  ligne).
+- **Gestion des tags** — champ de recherche par nom ; la modale garde une
+  hauteur fixe pendant le filtrage.
+- **Modales empilées** — seule la modale du dessus réagit à Échap et à Tab.
+
 ## 2.65.2
 
 ### Corrections

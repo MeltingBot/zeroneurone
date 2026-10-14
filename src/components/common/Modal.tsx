@@ -11,6 +11,8 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   width?: 'sm' | 'md' | 'lg';
+  /** Fixed height (80vh) so filtering the content does not resize the modal */
+  fixedHeight?: boolean;
 }
 
 const widthStyles = {
@@ -26,6 +28,7 @@ export function Modal({
   children,
   footer,
   width = 'md',
+  fixedHeight = false,
 }: ModalProps) {
   const { t } = useTranslation('common');
   const titleId = useId();
@@ -53,7 +56,7 @@ export function Modal({
         className={`
           relative
           bg-bg-primary sketchy-border-soft modal-shadow
-          max-h-[80vh] overflow-hidden
+          ${fixedHeight ? 'h-[80vh]' : 'max-h-[80vh]'} overflow-hidden
           flex flex-col
           ${widthStyles[width]}
         `}
