@@ -291,37 +291,9 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
 
   postProgress(80, 'overlap removal');
 
-  // AABB overlap removal on final positions
-  const gap = 24;
-  for (let pass = 0; pass < 15; pass++) {
-    let hasOverlap = false;
-    for (let i = 0; i < nodeData.length; i++) {
-      for (let j = i + 1; j < nodeData.length; j++) {
-        const a = nodeData[i];
-        const b = nodeData[j];
-        const overlapX = (a.w / 2 + b.w / 2 + gap) - Math.abs(a.x - b.x);
-        const overlapY = (a.h / 2 + b.h / 2 + gap) - Math.abs(a.y - b.y);
-
-        if (overlapX > 0 && overlapY > 0) {
-          hasOverlap = true;
-          if (overlapX < overlapY) {
-            const push = overlapX / 2 + 1;
-            if (a.x < b.x) { a.x -= push; b.x += push; }
-            else { a.x += push; b.x -= push; }
-          } else {
-            const push = overlapY / 2 + 1;
-            if (a.y < b.y) { a.y -= push; b.y += push; }
-            else { a.y += push; b.y -= push; }
-          }
-        } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
-          hasOverlap = true;
-          b.x += (a.w / 2 + b.w / 2 + gap) * Math.random();
-          b.y += (a.h / 2 + b.h / 2 + gap) * Math.random();
-        }
-      }
-    }
-    if (!hasOverlap) break;
-  }
+  // AABB overlap removal on final positions. Dense clouds (many mostly
+  // unlinked nodes) need many passes to converge; it stops as soon as clean.
+  removeOverlaps(nodeData, 24, 200);
 
   const positions: Record<string, { x: number; y: number }> = {};
   for (const n of nodeData) {

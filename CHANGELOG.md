@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.65.2
+
+### Corrections
+
+- **Import CSV** — un élément tagué reprend la forme, la couleur et l'icône
+  de son premier tag quand la colonne `forme`/`couleur` du CSV est vide ou
+  invalide (même règle qu'à la création manuelle) ; une valeur explicite du
+  CSV reste prioritaire. Les formes saisies avec une majuscule
+  (`Rectangle`) sont normalisées.
+- **Taille des carrés** — la forme carrée s'agrandit selon la longueur du
+  nom (60 à 150 px), comme le cercle, au lieu d'une taille fixe qui coupait
+  le libellé.
+- **Disposition force** — l'anti-chevauchement va jusqu'à convergence
+  (200 passes au plus, arrêt dès qu'il n'y a plus de recouvrement) : les
+  nuages denses d'éléments peu reliés ne se superposent plus.
+
 ## 2.65.1
 
 ### Corrections

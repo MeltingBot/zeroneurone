@@ -76,7 +76,7 @@ export function computeElementDimensions(
       return { width, height };
     }
     case 'square': {
-      const size = Math.max(baseSize, 60);
+      const size = Math.min(Math.max(estimatedTextWidth * 0.8, baseSize, 60), 150);
       return { width: size, height: size };
     }
     case 'circle': {

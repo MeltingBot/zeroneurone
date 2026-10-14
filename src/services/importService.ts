@@ -16,6 +16,7 @@ import type {
   GeoData,
   Confidence,
   ElementShape,
+  ElementVisual,
   ElementEvent,
   LinkStyle,
   Property,
@@ -1789,6 +1790,8 @@ class ImportService {
     targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
+    // TagSets give the fallback visual of tagged rows (buildCsvElementVisual)
+    if (!useTagSetStore.getState().isLoaded) await useTagSetStore.getState().load();
     content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
@@ -1979,12 +1982,14 @@ class ImportService {
         const isGroup = isGroupIdx >= 0 && ['oui', 'yes', 'true', '1'].includes(values[isGroupIdx]?.toLowerCase().trim());
         const parentGroupId = parentGroupIdx >= 0 && values[parentGroupIdx]?.trim() ? values[parentGroupIdx].trim() : null;
 
+        const tags = tagsIdx >= 0 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [];
+
         const element: Element = {
           id: generateUUID(),
           dossierId: targetDossierId,
           label,
           notes: notesIdx >= 0 ? values[notesIdx] || '' : '',
-          tags: tagsIdx >= 0 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
+          tags,
           properties,
           confidence,
           evaluation: parseEvaluation(values),
@@ -1994,11 +1999,11 @@ class ImportService {
           position: { x: posX, y: posY },
           isPositionLocked: false,
           geo,
-          visual: {
-            ...DEFAULT_ELEMENT_VISUAL,
-            color: colorIdx >= 0 && values[colorIdx] ? values[colorIdx] : DEFAULT_ELEMENT_VISUAL.color,
-            shape: shapeIdx >= 0 && this.isValidShape(values[shapeIdx]) ? values[shapeIdx] as ElementShape : DEFAULT_ELEMENT_VISUAL.shape,
-          },
+          visual: this.buildCsvElementVisual(
+            tags,
+            colorIdx >= 0 ? values[colorIdx] : undefined,
+            shapeIdx >= 0 ? values[shapeIdx] : undefined,
+          ),
           assetIds: [],
           parentGroupId,
           isGroup,
@@ -2338,6 +2343,8 @@ class ImportService {
     targetDossierId: DossierId,
     options: Partial<CSVImportOptions> = {}
   ): Promise<ImportResult> {
+    // TagSets give the fallback visual of tagged rows (buildCsvElementVisual)
+    if (!useTagSetStore.getState().isLoaded) await useTagSetStore.getState().load();
     content = this.normalizeCSVContent(content);
     const opts: CSVImportOptions = {
       hasHeaders: true,
@@ -2461,13 +2468,11 @@ class ImportService {
             position,
             isPositionLocked: false,
             geo,
-            visual: {
-              ...DEFAULT_ELEMENT_VISUAL,
-              color: colorIdx >= 0 && values[colorIdx] ? values[colorIdx] : DEFAULT_ELEMENT_VISUAL.color,
-              shape: shapeIdx >= 0 && this.isValidShape(values[shapeIdx])
-                ? (values[shapeIdx] as ElementShape)
-                : DEFAULT_ELEMENT_VISUAL.shape,
-            },
+            visual: this.buildCsvElementVisual(
+              tags,
+              colorIdx >= 0 ? values[colorIdx] : undefined,
+              shapeIdx >= 0 ? values[shapeIdx] : undefined,
+            ),
             assetIds: [],
             parentGroupId: null,
             isGroup: false,
@@ -2896,6 +2901,26 @@ class ImportService {
 
     result.push(current);
     return result;
+  }
+
+  /**
+   * Visual of a CSV-imported element. Explicit CSV color/shape win; empty or
+   * invalid cells fall back to the first tag's TagSet defaultVisual (same rule
+   * as manual creation in dossierStore), then to DEFAULT_ELEMENT_VISUAL.
+   */
+  private buildCsvElementVisual(tags: string[], colorRaw: string | undefined, shapeRaw: string | undefined): ElementVisual {
+    const visual: ElementVisual = { ...DEFAULT_ELEMENT_VISUAL };
+    const dv = tags.length > 0 ? useTagSetStore.getState().getByName(tags[0])?.defaultVisual : undefined;
+    if (dv) {
+      if (dv.color !== null) visual.color = dv.color;
+      if (dv.shape !== null) visual.shape = dv.shape;
+      if (dv.icon !== null) visual.icon = dv.icon;
+    }
+    const color = colorRaw?.trim();
+    if (color) visual.color = color;
+    const shape = shapeRaw?.trim();
+    if (shape && this.isValidShape(shape)) visual.shape = shape.toLowerCase() as ElementShape;
+    return visual;
   }
 
   private isValidShape(value: string | number | undefined): boolean {
