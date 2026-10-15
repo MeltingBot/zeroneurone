@@ -76,10 +76,11 @@ function darkenColor(hex: string): string {
 
 function mapEnlargementToSize(enlargement: string | null): ElementSize {
   switch (enlargement) {
-    case 'ICEnlargeSingle': return 'small';
-    case 'ICEnlargeDouble': return 'medium';
-    case 'ICEnlargeTriple': return 'large';
-    default: return 'small';
+    // i2's default (Single) is ZN's default (medium); see exportANX's inverse.
+    case 'ICEnlargeSingle': return 'medium';
+    case 'ICEnlargeDouble': return 'large';
+    case 'ICEnlargeTriple': return 96;
+    default: return 'medium';
   }
 }
 

@@ -302,6 +302,27 @@ describe('buildANXExport — schema child order', () => {
   });
 });
 
+describe('buildANXExport — icon enlargement', () => {
+  const enlargementOf = (size: unknown) => {
+    const xml = buildANXExport(DOSSIER, [makeElement({
+      visual: { color: '#ff8800', borderColor: '#333333', shape: 'circle', size, icon: null, image: null } as never,
+    })], []);
+    return expectWellFormed(xml).querySelector('IconStyle')?.getAttribute('Enlargement');
+  };
+
+  it('keeps ZN default size at i2 default size, so the label stays below the icon', () => {
+    expect(enlargementOf('small')).toBe('ICEnlargeSingle');
+    expect(enlargementOf('medium')).toBe('ICEnlargeSingle');
+    expect(enlargementOf('large')).toBe('ICEnlargeDouble');
+  });
+
+  it('reads numeric sizes as pixels', () => {
+    expect(enlargementOf(56)).toBe('ICEnlargeSingle');
+    expect(enlargementOf(72)).toBe('ICEnlargeDouble');
+    expect(enlargementOf(120)).toBe('ICEnlargeTriple');
+  });
+});
+
 // The strongest check available without a copy of Analyst's Notebook: feed our
 // own output back through the reader that models the format.
 describe('buildANXExport — round trip through importANX', () => {
@@ -336,6 +357,8 @@ describe('buildANXExport — round trip through importANX', () => {
     expect(camille!.notes).toContain('note');
     expect(camille!.confidence).toBe(80);
     expect(camille!.visual.color.toLowerCase()).toBe('#ff8800');
+    expect(camille!.visual.size).toBe('large');
+    expect(elements.find((e) => e.label === 'Société Vortex')!.visual.size).toBe('medium');
     expect(camille!.properties.find((p) => p.key === 'Nationalité')?.value).toBe('Française');
 
     const links = await db.links.where({ dossierId: 'd-target' }).toArray();

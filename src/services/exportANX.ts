@@ -170,14 +170,19 @@ function resolveAbsolutePosition(element: Element, byId: Map<string, Element>): 
 // ENUMERATION INVERSES (see importANX.ts for the forward direction)
 // ============================================================================
 
+/**
+ * ZN size to i2 enlargement, shifted one step down: 'medium' is ZN's default,
+ * and i2's default is Single. Mapping medium to Double enlarged every icon and
+ * pushed its label onto it, since TextY stays at the reference value.
+ * Numeric sizes are pixels (small 40, medium 56, large 72).
+ */
 function sizeToEnlargement(size: unknown): string {
   if (typeof size === 'number') {
-    if (size <= 14) return 'ICEnlargeSingle';
-    if (size <= 24) return 'ICEnlargeDouble';
+    if (size <= 56) return 'ICEnlargeSingle';
+    if (size <= 90) return 'ICEnlargeDouble';
     return 'ICEnlargeTriple';
   }
-  if (size === 'medium') return 'ICEnlargeDouble';
-  if (size === 'large') return 'ICEnlargeTriple';
+  if (size === 'large') return 'ICEnlargeDouble';
   return 'ICEnlargeSingle';
 }
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.65.4
+
+### Corrections
+
+- **Export i2 (ANX)** — les entités de taille par défaut s'ouvrent en taille
+  normale dans Analyst's Notebook, libellé sous l'icône (elles étaient
+  doublées et le libellé recouvrait l'icône). Les tailles numériques sont
+  lues en pixels. À l'import ANX, la taille normale i2 devient la taille par
+  défaut ZN.
+
 ## 2.65.3
 
 ### Corrections
