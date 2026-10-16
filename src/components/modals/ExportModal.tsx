@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network, NotebookText } from 'lucide-react';
+import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network, NotebookText, FolderTree, Folder } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { fileService } from '../../services/fileService';
@@ -38,6 +38,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [selectedPngScale, _setSelectedPngScale] = useState(2);
   const [showPngOptions, setShowPngOptions] = useState(false);
   const [showZipOptions, setShowZipOptions] = useState(false);
+  const [showObsidianOptions, setShowObsidianOptions] = useState(false);
   const [zipPassword, setZipPassword] = useState('');
   const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
   const [showZipPassword, setShowZipPassword] = useState(false);
@@ -45,7 +46,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
   const { currentDossier, elements, links, comments } = useDossierStore();
 
-  const handleExport = useCallback(async (format: ExportFormat) => {
+  const handleExport = useCallback(async (format: ExportFormat, obsidianFolderByTag?: boolean) => {
     if (!currentDossier) return;
 
     setIsProcessing(true);
@@ -90,7 +91,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           }
         : undefined;
 
-      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels);
+      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag);
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
@@ -370,6 +371,54 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             {/* Other export formats (sans ZIP) */}
             {exportFormats.filter(f => f.format !== 'zip').map((format) => {
               const Icon = format.icon;
+              if (format.format === 'obsidian') {
+                return (
+                  <div key={format.format} className="rounded-lg border border-border-default overflow-hidden">
+                    <button
+                      onClick={() => setShowObsidianOptions(v => !v)}
+                      disabled={isProcessing}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
+                    >
+                      <Icon size={20} className="text-text-secondary" />
+                      <div className="text-left flex-1">
+                        <div className="text-sm font-medium text-text-primary">
+                          {t(`export.formats.${format.labelKey}`)}
+                        </div>
+                        <div className="text-xs text-text-tertiary">
+                          {t(`export.formats.${format.descKey}`)}
+                        </div>
+                      </div>
+                      <ChevronDown
+                        size={16}
+                        className={`text-text-tertiary transition-transform ${showObsidianOptions ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {showObsidianOptions && (
+                      <div className="border-t border-border-default bg-bg-secondary p-2 space-y-1">
+                        {([
+                          { byTag: true, icon: FolderTree, labelKey: 'folderByTag' },
+                          { byTag: false, icon: Folder, labelKey: 'folderFlat' },
+                        ] as const).map((option) => {
+                          const OptionIcon = option.icon;
+                          return (
+                            <button
+                              key={option.labelKey}
+                              onClick={() => handleExport('obsidian', option.byTag)}
+                              disabled={isProcessing}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-bg-tertiary transition-colors disabled:opacity-50 text-left"
+                            >
+                              <OptionIcon size={14} className="text-text-secondary shrink-0" />
+                              <span className="text-sm font-medium text-text-primary">
+                                {t(`export.obsidian.${option.labelKey}`)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
               return (
                 <button
                   key={format.format}

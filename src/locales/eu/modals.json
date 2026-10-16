@@ -120,7 +120,9 @@
       "elements": "Elementuak",
       "report": "Txostena",
       "related": "lotuta",
-      "untitled": "Izenbururik gabe"
+      "untitled": "Izenbururik gabe",
+      "folderByTag": "Karpeta bat etiketa nagusi bakoitzeko",
+      "folderFlat": "Karpeta laua"
     },
     "options": {
       "includeAssets": "Erantsitako fitxategiak sartu",

@@ -120,7 +120,9 @@
       "elements": "Elementos",
       "report": "Relatório",
       "related": "ligado a",
-      "untitled": "Sem título"
+      "untitled": "Sem título",
+      "folderByTag": "Uma pasta por tag principal",
+      "folderFlat": "Pasta única"
     },
     "options": {
       "includeAssets": "Incluir ficheiros anexos",

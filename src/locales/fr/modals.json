@@ -120,7 +120,9 @@
       "elements": "Éléments",
       "report": "Rapport",
       "related": "lié à",
-      "untitled": "Sans titre"
+      "untitled": "Sans titre",
+      "folderByTag": "Un dossier par tag principal",
+      "folderFlat": "Dossier à plat"
     },
     "options": {
       "includeAssets": "Inclure les fichiers joints",

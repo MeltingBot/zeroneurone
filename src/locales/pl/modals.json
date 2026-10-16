@@ -120,7 +120,9 @@
       "elements": "Elementy",
       "report": "Raport",
       "related": "powiązany z",
-      "untitled": "Bez tytułu"
+      "untitled": "Bez tytułu",
+      "folderByTag": "Jeden folder na tag główny",
+      "folderFlat": "Płaski folder"
     },
     "options": {
       "includeAssets": "Dołącz załączniki",

@@ -120,7 +120,9 @@
       "elements": "Elementos",
       "report": "Informe",
       "related": "vinculado a",
-      "untitled": "Sin título"
+      "untitled": "Sin título",
+      "folderByTag": "Una carpeta por etiqueta principal",
+      "folderFlat": "Carpeta plana"
     },
     "options": {
       "includeAssets": "Incluir archivos adjuntos",

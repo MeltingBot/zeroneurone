@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.65.6
+
+### Corrections
+
+- **Export Obsidian** — l'archive contient un dossier racine (le coffre, au
+  nom du dossier ZN) à ouvrir directement dans Obsidian. Choix du classement
+  des fiches à l'export : un sous-dossier par tag principal (type
+  d'entité), ou dossier à plat. Les chemins des canvas suivent le
+  classement.
+
 ## 2.65.5
 
 ### Corrections

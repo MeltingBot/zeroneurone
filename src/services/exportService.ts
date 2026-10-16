@@ -10,7 +10,7 @@ import { formatEvaluation } from '../utils/evaluation';
 import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
 import { formatDateForExport, formatPreciseDateKey, parsePropertyDate, toLocalDateKey } from '../utils/dates';
-import { buildObsidianVault, type ObsidianLabels } from './exportObsidian';
+import { buildObsidianVault, toVaultBasename, type ObsidianLabels } from './exportObsidian';
 
 /** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
 function propertyValueToCSV(prop: Property): string {
@@ -269,13 +269,16 @@ class ExportService {
     assets: Asset[],
     labels: ObsidianLabels,
     report?: Report | null,
-    tabs?: CanvasTab[]
+    tabs?: CanvasTab[],
+    folderByTag = false
   ): Promise<Blob> {
+    // The vault is a folder inside the ZIP: unzipping gives one folder to open as a vault
     const zip = new JSZip();
-    const { files, assetPaths } = buildObsidianVault({ dossier, elements, links, tabs, report, assets, labels });
+    const vault = zip.folder(toVaultBasename(dossier.name, labels.untitled))!;
+    const { files, assetPaths } = buildObsidianVault({ dossier, elements, links, tabs, report, assets, labels, folderByTag });
 
     for (const file of files) {
-      zip.file(file.path, file.content);
+      vault.file(file.path, file.content);
     }
 
     for (const asset of assets) {
@@ -283,7 +286,7 @@ class ExportService {
       if (!path) continue;
       try {
         const file = await fileService.getAssetFile(asset);
-        zip.file(path, await file.arrayBuffer());
+        vault.file(path, await file.arrayBuffer());
       } catch (error) {
         console.warn(`Failed to export asset ${asset.filename}:`, error);
       }
@@ -857,7 +860,8 @@ ${edges}
     queries?: SavedQuery[],
     queryHistory?: string[],
     comments?: Comment[],
-    obsidianLabels?: ObsidianLabels
+    obsidianLabels?: ObsidianLabels,
+    obsidianFolderByTag?: boolean
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${toLocalDateKey(now)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
@@ -902,7 +906,7 @@ ${edges}
       }
       case 'obsidian': {
         if (!obsidianLabels) throw new Error('Obsidian export requires labels');
-        const vault = await this.exportToObsidian(dossier, elements, links, assets || [], obsidianLabels, report, tabs);
+        const vault = await this.exportToObsidian(dossier, elements, links, assets || [], obsidianLabels, report, tabs, obsidianFolderByTag);
         this.downloadBlob(vault, `${baseName}_obsidian.zip`);
         break;
       }

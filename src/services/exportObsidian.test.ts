@@ -220,6 +220,27 @@ describe('convertReportRefs', () => {
   });
 });
 
+describe('buildObsidianVault — folders by main tag', () => {
+  it('files notes under their first tag, untagged at the root, canvas paths follow', () => {
+    const out = buildObsidianVault({
+      dossier, labels, folderByTag: true,
+      elements: [
+        el('a', 'A', { tags: ['Email', 'Personne'], position: { x: 0, y: 0 } }),
+        el('b', 'B', { tags: ['email'] }),
+        el('c', 'C', { tags: ['Pers/Morale'] }),
+        el('d', 'D'),
+      ],
+      links: [link('l1', 'a', 'd')],
+    });
+    expect(file(out, 'Elements/Email/A.md')).toContain('[[D]]');
+    expect(file(out, 'Elements/Email/B.md')).toContain('zn_id: "b"');
+    expect(file(out, 'Elements/Pers Morale/C.md')).toContain('zn_id: "c"');
+    expect(file(out, 'Elements/D.md')).toContain('[[A]]');
+    const canvas = JSON.parse(file(out, 'Canvas/Affaire X.canvas'));
+    expect(canvas.nodes.find((n: { id: string }) => n.id === 'a')).toMatchObject({ file: 'Elements/Email/A.md' });
+  });
+});
+
 describe('buildObsidianVault — source time zone', () => {
   it('appends the source hour to an event typed in another zone', () => {
     const previous = process.env.TZ;

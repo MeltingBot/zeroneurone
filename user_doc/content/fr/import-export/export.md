@@ -168,14 +168,22 @@ Structure de l'archive :
 
 ```
 enquete_2024-01-15_obsidian.zip
-├── Enquête.md            # Index : description, canvas, rapport, fiches
-├── Éléments/             # Une fiche par élément (et par groupe)
-├── Canvas/               # Un fichier .canvas par onglet
-├── Rapport/              # Le rapport, références converties en liens
-└── attachments/          # Fichiers joints
+└── Enquête/                  # Le coffre
+    ├── Enquête.md            # Index : description, canvas, rapport, fiches
+    ├── Éléments/             # Une fiche par élément (et par groupe)
+    │   ├── Personne/         # Option « Un dossier par tag principal »
+    │   └── Véhicule/
+    ├── Canvas/               # Un fichier .canvas par onglet
+    ├── Rapport/              # Le rapport, références converties en liens
+    └── attachments/          # Fichiers joints
 ```
 
-Décompressez l'archive puis, dans Obsidian, choisissez **Ouvrir un dossier comme coffre**.
+Décompressez l'archive puis, dans Obsidian, choisissez **Ouvrir un dossier comme coffre** et sélectionnez le dossier portant le nom du dossier ZN. Les noms de dossiers et de sections suivent la langue de ZeroNeurone.
+
+Au moment de l'export, choisissez le classement des fiches :
+
+- **Un dossier par tag principal** : les fiches sont rangées par **tag principal** (le premier tag de l'élément), un sous-dossier par type d'entité. Les éléments sans tag restent à la racine du dossier des éléments. Pour changer le classement d'un élément, réordonnez ses tags dans le panneau de détail (voir [Tags et propriétés]({{< relref "features/tags-properties" >}})).
+- **Dossier à plat** : toutes les fiches dans le même dossier.
 
 Chaque fiche porte en propriétés (frontmatter) les tags, la confiance, l'évaluation, la source, les dates, la position géographique (`location`, compatible avec le plugin Map View), le groupe parent et les propriétés de l'élément. Les notes de l'élément forment le corps de la fiche, suivies de ses événements et de ses fichiers joints.
 

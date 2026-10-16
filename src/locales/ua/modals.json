@@ -120,7 +120,9 @@
       "elements": "Елементи",
       "report": "Звіт",
       "related": "пов'язано з",
-      "untitled": "Без назви"
+      "untitled": "Без назви",
+      "folderByTag": "Окрема тека для кожного основного тегу",
+      "folderFlat": "Одна тека"
     },
     "options": {
       "includeAssets": "Включити вкладення",

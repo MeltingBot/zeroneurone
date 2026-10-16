@@ -168,14 +168,22 @@ Archive structure:
 
 ```
 case_2024-01-15_obsidian.zip
-├── Case.md               # Index: description, canvases, report, notes
-├── Elements/             # One note per element (and per group)
-├── Canvas/               # One .canvas file per tab
-├── Report/               # The report, references turned into links
-└── attachments/          # Attached files
+└── Case/                     # The vault
+    ├── Case.md               # Index: description, canvases, report, notes
+    ├── Elements/             # One note per element (and per group)
+    │   ├── Person/           # "One folder per main tag" option
+    │   └── Vehicle/
+    ├── Canvas/               # One .canvas file per tab
+    ├── Report/               # The report, references turned into links
+    └── attachments/          # Attached files
 ```
 
-Unzip the archive, then in Obsidian choose **Open folder as vault**.
+Unzip the archive, then in Obsidian choose **Open folder as vault** and select the folder named after the ZN dossier. Folder and section names follow the ZeroNeurone language.
+
+When exporting, choose how notes are filed:
+
+- **One folder per main tag**: notes are filed by **main tag** (the element's first tag), one sub-folder per entity type. Untagged elements stay at the root of the elements folder. To change where an element is filed, reorder its tags in the detail panel (see [Tags and Properties]({{< relref "features/tags-properties" >}})).
+- **Flat folder**: all notes in the same folder.
 
 Each note carries as properties (frontmatter) the element's tags, confidence, grading, source, dates, location (`location`, compatible with the Map View plugin), parent group and properties. The element's notes form the body, followed by its events and attached files.
 

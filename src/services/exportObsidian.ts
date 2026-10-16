@@ -9,6 +9,10 @@
  *   - one JSON Canvas file per canvas tab, the only place where the relation
  *     label stays visible on the graph.
  *
+ * With `folderByTag`, element notes are filed by main tag (the first one):
+ * `<elements>/<tag>/`; untagged notes stay directly in `<elements>/`.
+ * Paths are relative to the vault root (the caller may nest it in a folder).
+ *
  * Wikilinks use the bare basename, never a folder path, so they keep resolving
  * if the vault is dropped into a sub-folder of an existing vault. Canvas `file`
  * paths are vault-absolute: those only resolve when the ZIP is opened as a vault.
@@ -51,6 +55,8 @@ export interface ObsidianVaultInput {
   report?: Report | null;
   assets?: Asset[];
   labels: ObsidianLabels;
+  /** One sub-folder per main tag instead of a flat elements folder */
+  folderByTag?: boolean;
 }
 
 export interface ObsidianVaultOutput {
@@ -229,7 +235,7 @@ function viewFrom(link: Link, selfId: string): RelationView {
 // ============================================================================
 
 export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutput {
-  const { dossier, elements, links, tabs = [], report, assets = [], labels } = input;
+  const { dossier, elements, links, tabs = [], report, assets = [], labels, folderByTag = false } = input;
   const files: { path: string; content: string }[] = [];
   const elementsMap = new Map(elements.map((e) => [e.id, e]));
   const linkIds = new Set(links.map((l) => l.id));
@@ -246,6 +252,17 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
     ? names.allocate(toVaultBasename(report.title || labels.report, labels.report))
     : null;
   const canvasNames = new NameAllocator();
+
+  // --- Note paths: one sub-folder per main tag (case-insensitive, first spelling wins) ---
+  const tagFolders = new Map<string, string>();
+  const notePaths = new Map<string, string>();
+  for (const el of noteElements) {
+    const folder = folderByTag ? toVaultBasename(el.tags[0] ?? '', '') : '';
+    const key = folder.toLowerCase();
+    if (folder && !tagFolders.has(key)) tagFolders.set(key, folder);
+    const dir = folder ? `${labels.elementsFolder}/${tagFolders.get(key)}` : labels.elementsFolder;
+    notePaths.set(el.id, `${dir}/${basenames.get(el.id)}.md`);
+  }
 
   // --- Attachments ---
   const attachmentNames = new NameAllocator();
@@ -376,7 +393,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
     }
 
     files.push({
-      path: `${labels.elementsFolder}/${basename}.md`,
+      path: notePaths.get(el.id)!,
       content: toFrontmatter(fm) + body.join('\n'),
     });
   }
@@ -390,7 +407,7 @@ export function buildObsidianVault(input: ObsidianVaultInput): ObsidianVaultOutp
     const canvasName = canvasNames.allocate(toVaultBasename(tab.name, labels.untitled), '.canvas');
     const content = buildCanvas(
       tab.ids.map((id) => elementsMap.get(id)).filter((e): e is Element => !!e),
-      links, elementsMap, basenames, labels,
+      links, elementsMap, notePaths, labels,
     );
     canvasFiles.push(`${canvasName}.canvas`);
     files.push({ path: `${labels.canvasFolder}/${canvasName}.canvas`, content });
@@ -501,8 +518,8 @@ export function buildCanvas(
   members: Element[],
   links: Link[],
   elementsMap: Map<string, Element>,
-  basenames: Map<string, string>,
-  labels: Pick<ObsidianLabels, 'elementsFolder' | 'untitled'>,
+  notePaths: Map<string, string>,
+  labels: Pick<ObsidianLabels, 'untitled'>,
 ): string {
   // Cards: one size, centred on the ZN node centre
   const cards = new Map<string, CanvasNode>();
@@ -519,9 +536,10 @@ export function buildCanvas(
       height: CARD_HEIGHT,
       ...(color ? { color } : {}),
     };
-    cards.set(el.id, el.isAnnotation || !basenames.has(el.id)
+    const notePath = notePaths.get(el.id);
+    cards.set(el.id, el.isAnnotation || !notePath
       ? { ...base, type: 'text', text: el.notes?.trim() || el.label || '' }
-      : { ...base, type: 'file', file: `${labels.elementsFolder}/${basenames.get(el.id)}.md` });
+      : { ...base, type: 'file', file: notePath });
   }
 
   // Groups: the scaled ZN frame, grown to wrap the cards (and sub-groups) inside.
