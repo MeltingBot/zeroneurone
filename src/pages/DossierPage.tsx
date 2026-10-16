@@ -1,10 +1,10 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink, MoreVertical, Tags } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
-import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal, JsonMappingImportModal } from '../components/modals';
+import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal, JsonMappingImportModal, TagSetManagerModal } from '../components/modals';
 import { CollaborationInfo } from '../components/collaboration';
 
 // Lazy load with auto-reload on chunk load failure (stale cache after deploy)
@@ -126,6 +126,7 @@ export function DossierPage() {
   }, []);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const headerMenuRef = useRef<HTMLDivElement>(null);
 
@@ -616,6 +617,13 @@ export function DossierPage() {
           >
             <Search size={14} />
           </button>
+          <button
+            onClick={() => setTagManagerOpen(true)}
+            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
+            title={t('home.manageTags')}
+          >
+            <Tags size={14} />
+          </button>
 
           {/* Secondary buttons — visible on large screens */}
           <div className="hidden lg:flex items-center gap-1">
@@ -815,6 +823,11 @@ export function DossierPage() {
 
       {/* Metadata import modal */}
       <MetadataImportModal />
+
+      <TagSetManagerModal
+        isOpen={tagManagerOpen}
+        onClose={() => setTagManagerOpen(false)}
+      />
 
       {/* Warning when leaving a collaborative session */}
       <Modal

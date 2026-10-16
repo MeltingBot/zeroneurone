@@ -117,12 +117,12 @@
       "deleteTag": "Tag {{tag}} löschen",
       "renameTag": "Tag umbenennen",
       "renameHint": "Zum Umbenennen doppelklicken",
+      "dragToReorder": "Zum Neuordnen ziehen",
       "tagRenamed": "Tag „{{oldName}}“ in dieser Akte in „{{newName}}“ umbenannt",
       "newTagPlaceholder": "Neuer Tag...",
       "pressEnterToCreate": "Eingabe zum Erstellen von \"{{value}}\"",
       "typeToFilter": "Zum Filtern tippen...",
-      "add": "Hinzufügen",
-      "noTags": "Keine Tags"
+      "add": "Hinzufügen"
     },
     "warnings": {
       "noName": "Das Element hat keinen Namen"

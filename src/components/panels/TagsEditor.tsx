@@ -4,6 +4,8 @@ import { X, Plus, Sparkles, Check, Pencil } from 'lucide-react';
 import { DropdownPortal, IconPickerCompact, ResolvedIcon, iconNameResolves } from '../common';
 import { useTagSetStore } from '../../stores';
 
+const TAG_DRAG_MIME = 'application/x-zeroneurone-tag';
+
 interface TagsEditorProps {
   tags: string[];
   onChange: (tags: string[]) => void;
@@ -33,6 +35,10 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
   const [renamingTag, setRenamingTag] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // State for drag-and-drop reordering (tag order matters: the first tag drives some exports)
+  const [draggingTag, setDraggingTag] = useState<string | null>(null);
+  const [dragOverTag, setDragOverTag] = useState<string | null>(null);
 
   // Get TagSet store
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
@@ -111,8 +117,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
     setNewTagIcon(null);
     setShowSuggestions(false);
     setSelectedSuggestionIndex(-1);
-    // Keep input focused for adding more tags
-    inputRef.current?.focus();
+    setIsAdding(false);
   }, [inputValue, tags, onChange, onNewTag, onTagSetTagAdded, suggestions, tagSetNames, newTagIcon, createTagSet]);
 
   const handleRemoveTag = useCallback(
@@ -120,6 +125,21 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
       onChange(tags.filter((tag) => tag !== tagToRemove));
     },
     [tags, onChange]
+  );
+
+  const handleReorderDrop = useCallback(
+    (targetTag: string) => {
+      const from = draggingTag ? tags.indexOf(draggingTag) : -1;
+      const to = tags.indexOf(targetTag);
+      setDraggingTag(null);
+      setDragOverTag(null);
+      if (from < 0 || to < 0 || from === to) return;
+      const reordered = [...tags];
+      reordered.splice(from, 1);
+      reordered.splice(to, 0, tags[from]);
+      onChange(reordered);
+    },
+    [draggingTag, tags, onChange]
   );
 
   const handleStartRename = useCallback((tag: string) => {
@@ -215,15 +235,50 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
     <div className="space-y-2">
       {/* Tags list */}
       <div className="flex flex-wrap gap-1.5">
-        {tags.map((tag) => {
+        {tags.map((tag, index) => {
           const iconName = tagIcons.get(tag);
           const hasIcon = iconName ? iconNameResolves(iconName) : false;
           const isEditingIcon = editingTagIcon === tag;
+          const canReorder = tags.length > 1 && !isEditingIcon && renamingTag !== tag;
 
           return (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2 py-0.5 bg-bg-tertiary text-text-secondary text-xs rounded group"
+              draggable={canReorder}
+              onDragStart={canReorder ? (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData(TAG_DRAG_MIME, tag);
+                setDraggingTag(tag);
+              } : undefined}
+              onDragEnter={(e) => {
+                if (!draggingTag) return;
+                e.preventDefault();
+                setDragOverTag(tag);
+              }}
+              onDragOver={(e) => {
+                if (!draggingTag) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              }}
+              onDrop={(e) => {
+                if (!draggingTag) return;
+                e.preventDefault();
+                handleReorderDrop(tag);
+              }}
+              onDragEnd={() => {
+                setDraggingTag(null);
+                setDragOverTag(null);
+              }}
+              title={canReorder ? t('detail.tags.dragToReorder') : undefined}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 bg-bg-tertiary text-text-secondary text-xs rounded border group ${
+                canReorder ? 'cursor-grab active:cursor-grabbing' : ''
+              } ${draggingTag === tag ? 'opacity-50' : ''} ${
+                dragOverTag === tag && draggingTag !== tag
+                  ? 'border-accent'
+                  : index === 0 && tags.length > 1
+                    ? 'border-text-tertiary'
+                    : 'border-transparent'
+              }`}
             >
               {/* Icon edit area */}
               {isEditingIcon ? (
@@ -366,17 +421,14 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
         ) : (
           <button
             onClick={() => setIsAdding(true)}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default"
+            title={t('detail.tags.add')}
+            aria-label={t('detail.tags.add')}
+            className="inline-flex items-center px-1.5 py-0.5 text-xs text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary rounded border border-dashed border-border-default"
           >
             <Plus size={12} />
-            {t('detail.tags.add')}
           </button>
         )}
       </div>
-
-      {tags.length === 0 && !isAdding && (
-        <p className="text-xs text-text-tertiary">{t('detail.tags.noTags')}</p>
-      )}
     </div>
   );
 }

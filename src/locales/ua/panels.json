@@ -117,12 +117,12 @@
       "deleteTag": "Видалити тег {{tag}}",
       "renameTag": "Перейменувати тег",
       "renameHint": "Двічі клацніть, щоб перейменувати",
+      "dragToReorder": "Перетягніть, щоб змінити порядок",
       "tagRenamed": "Тег «{{oldName}}» перейменовано на «{{newName}}» у цій справі",
       "newTagPlaceholder": "Новий тег...",
       "pressEnterToCreate": "Enter для створення \"{{value}}\"",
       "typeToFilter": "Введіть для фільтрації...",
-      "add": "Додати",
-      "noTags": "Немає тегів"
+      "add": "Додати"
     },
     "warnings": {
       "noName": "Елемент не має назви"

@@ -118,12 +118,12 @@
       "deleteTag": "Elimina il tag {{tag}}",
       "renameTag": "Rinomina tag",
       "renameHint": "Doppio clic per rinominare",
+      "dragToReorder": "Trascina per riordinare",
       "tagRenamed": "Tag \"{{oldName}}\" rinominato in \"{{newName}}\" in questo fascicolo",
       "newTagPlaceholder": "Nuovo tag...",
       "pressEnterToCreate": "Invio per creare \"{{value}}\"",
       "typeToFilter": "Digita per filtrare...",
-      "add": "Aggiungi",
-      "noTags": "Nessun tag"
+      "add": "Aggiungi"
     },
     "warnings": {
       "noName": "L'elemento non ha nome"

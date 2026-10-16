@@ -117,12 +117,12 @@
       "deleteTag": "Eliminar l'etiqueta {{tag}}",
       "renameTag": "Canvia el nom de l'etiqueta",
       "renameHint": "Feu doble clic per canviar el nom",
+      "dragToReorder": "Arrossegueu per reordenar",
       "tagRenamed": "Etiqueta «{{oldName}}» reanomenada a «{{newName}}» en aquest dossier",
       "newTagPlaceholder": "Nova etiqueta...",
       "pressEnterToCreate": "Retorn per crear \"{{value}}\"",
       "typeToFilter": "Escriviu per filtrar...",
-      "add": "Afegir",
-      "noTags": "Sense etiquetes"
+      "add": "Afegir"
     },
     "warnings": {
       "noName": "L'element no té nom"

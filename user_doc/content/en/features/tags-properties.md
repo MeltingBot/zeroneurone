@@ -31,6 +31,12 @@ Rename a tag everywhere in the current dossier:
 
 The rename applies to **every element and link of the current dossier** carrying that tag, as well as the suggestion list. If the tag matches a tag set, its appearance (icon, color, shape) is carried over under the new name. Other dossiers are not affected.
 
+### Tag Order and Main Tag
+
+Tag order matters: the **first tag** is the main tag. It is the one shown by the **First** canvas display option, and the one some exports use.
+
+When an element or link carries several tags, the main tag is outlined. To change the order, drag a tag onto another one in the detail panel: it takes its place.
+
 ### Filter by Tags
 
 Use the **Filters** panel to display only elements with certain tags.
@@ -40,7 +46,7 @@ Use the **Filters** panel to display only elements with certain tags.
 
 Tag sets are predefined templates that associate each tag with a default appearance and suggested properties.
 
-**Access the manager**: Menu **⋯** → **Settings** → **Tag Sets**
+**Access the manager**: **Tags** icon (Manage tags) in the home page header or in the top bar of an open dossier
 
 Each tag set defines:
 
@@ -53,7 +59,7 @@ Each tag set defines:
 | **Icon** | Associated icon |
 | **Suggested properties** | List of pre-typed properties offered when the tag is applied |
 
-When you apply a tag from a set to an element, its appearance (color, shape) is automatically defined and the suggested properties are offered.
+When you apply a tag from a set to an element, its appearance (color, shape) is automatically defined and the suggested properties are offered. Suggested properties are also offered when the tag is added to a link or to the dossier itself (**Detail** tab, with nothing selected).
 
 **Import/Export**: Tag sets can be exported and imported in JSON or CSV format for sharing between dossiers. Referenced custom icons are embedded in the JSON. Tag sets used in a dossier are also included in the dossier export (ZIP/JSON) and recreated on import when they do not already exist.
 

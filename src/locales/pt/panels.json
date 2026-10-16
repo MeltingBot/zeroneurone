@@ -117,12 +117,12 @@
       "deleteTag": "Eliminar a tag {{tag}}",
       "renameTag": "Renomear etiqueta",
       "renameHint": "Duplo clique para renomear",
+      "dragToReorder": "Arraste para reordenar",
       "tagRenamed": "Etiqueta \"{{oldName}}\" renomeada para \"{{newName}}\" neste dossiê",
       "newTagPlaceholder": "Nova tag...",
       "pressEnterToCreate": "Enter para criar \"{{value}}\"",
       "typeToFilter": "Escreva para filtrar...",
-      "add": "Adicionar",
-      "noTags": "Sem tags"
+      "add": "Adicionar"
     },
     "warnings": {
       "noName": "O elemento não tem nome"

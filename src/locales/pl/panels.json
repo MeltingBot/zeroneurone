@@ -117,12 +117,12 @@
       "deleteTag": "Usuń tag {{tag}}",
       "renameTag": "Zmień nazwę tagu",
       "renameHint": "Kliknij dwukrotnie, aby zmienić nazwę",
+      "dragToReorder": "Przeciągnij, aby zmienić kolejność",
       "tagRenamed": "Tag „{{oldName}}” zmieniono na „{{newName}}” w tym dossier",
       "newTagPlaceholder": "Nowy tag...",
       "pressEnterToCreate": "Enter, aby utworzyć \"{{value}}\"",
       "typeToFilter": "Wpisz, aby filtrować...",
-      "add": "Dodaj",
-      "noTags": "Brak tagów"
+      "add": "Dodaj"
     },
     "warnings": {
       "noName": "Element nie ma nazwy"

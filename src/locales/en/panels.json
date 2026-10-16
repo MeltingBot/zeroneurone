@@ -117,12 +117,12 @@
       "deleteTag": "Delete tag {{tag}}",
       "renameTag": "Rename tag",
       "renameHint": "Double-click to rename",
+      "dragToReorder": "Drag to reorder",
       "tagRenamed": "Tag \"{{oldName}}\" renamed to \"{{newName}}\" in this dossier",
       "newTagPlaceholder": "New tag...",
       "pressEnterToCreate": "Press Enter to create \"{{value}}\"",
       "typeToFilter": "Type to filter...",
-      "add": "Add",
-      "noTags": "No tags"
+      "add": "Add"
     },
     "warnings": {
       "noName": "Element has no name"

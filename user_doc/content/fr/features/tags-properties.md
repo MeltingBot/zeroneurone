@@ -31,6 +31,12 @@ Renommez un tag partout dans le dossier courant :
 
 Le renommage s'applique à **tous les éléments et liens du dossier courant** qui portent ce tag, ainsi qu'à la liste de suggestions. Si le tag correspond à un jeu de tags, son apparence (icône, couleur, forme) est reprise sous le nouveau nom. Les autres dossiers ne sont pas affectés.
 
+### Ordre des tags et tag principal
+
+L'ordre des tags compte : le **premier tag** est le tag principal. C'est lui qu'affiche l'option **Premier** de l'affichage sur le canvas, et c'est lui que retiennent certains exports.
+
+Quand un élément ou un lien porte plusieurs tags, le tag principal est entouré d'un cadre. Pour changer l'ordre, faites glisser un tag sur un autre dans le panneau de détail : il prend sa place.
+
 ### Filtrer par tags
 
 Utilisez le panneau **Filtres** pour afficher uniquement les éléments avec certains tags.
@@ -40,7 +46,7 @@ Utilisez le panneau **Filtres** pour afficher uniquement les éléments avec cer
 
 Les jeux de tags sont des modèles prédéfinis qui associent à chaque tag une apparence et des propriétés suggérées.
 
-**Accéder au gestionnaire** : Menu **⋯** → **Paramètres** → **Jeux de tags**
+**Accéder au gestionnaire** : icône **Tags** (Gérer les tags) dans l'en-tête de la page d'accueil ou dans la barre du haut d'un dossier ouvert
 
 Chaque jeu de tags définit :
 
@@ -53,7 +59,7 @@ Chaque jeu de tags définit :
 | **Icône** | Icône associée |
 | **Propriétés suggérées** | Liste de propriétés pré-typées proposées à l'ajout du tag |
 
-Lorsque vous appliquez un tag issu d'un jeu à un élément, son apparence (couleur, forme) est automatiquement définie et les propriétés suggérées sont proposées.
+Lorsque vous appliquez un tag issu d'un jeu à un élément, son apparence (couleur, forme) est automatiquement définie et les propriétés suggérées sont proposées. Les propriétés suggérées sont aussi proposées quand le tag est ajouté à un lien ou au dossier lui-même (onglet **Détail**, sans sélection).
 
 **Import/Export** : Les jeux de tags peuvent être exportés et importés au format JSON ou CSV pour les partager entre dossiers. Les icônes personnalisées référencées sont embarquées dans le JSON. Les jeux de tags utilisés dans un dossier sont également inclus dans l'export du dossier (ZIP/JSON) et recréés à l'import s'ils n'existent pas déjà.
 

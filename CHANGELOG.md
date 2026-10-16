@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.65.5
+
+### Corrections
+
+- **Ordre des tags** — les tags d'un élément, d'un lien ou d'un dossier se
+  réordonnent par glisser-déposer dans le panneau de détail. Le premier tag
+  (tag principal, utilisé par l'affichage « Premier » et certains exports)
+  est encadré.
+- **Propriétés suggérées sur le dossier** — ajouter au dossier un tag issu
+  d'un jeu de tags propose ses propriétés suggérées, comme sur les éléments
+  et les liens.
+- **Gestion des tags depuis un dossier** — bouton dans la barre du haut,
+  sans repasser par l'accueil.
+- **Saisie des tags** — le champ se referme après l'ajout d'un tag ; bouton
+  d'ajout réduit à l'icône (libellé en info-bulle) ; mention « Aucun tag »
+  retirée.
+
 ## 2.65.4
 
 ### Corrections

@@ -5,6 +5,7 @@ import { useDossierStore } from '../../stores';
 import type { Dossier, EvaluationModel, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
+import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { AccordionSection, EditableField, MarkdownEditor } from '../common';
 import { EVALUATION_MODELS, countEvaluationsOutsideModel, getEvaluationModel, isEvaluationModel } from '../../utils/evaluation';
 import { activeTimeZoneLabel, dateLocale } from '../../utils/dates';
@@ -130,6 +131,16 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
     [dossier.id, updateDossier]
   );
 
+  // Suggested properties popup when a tag from a TagSet is added
+  const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
+
+  const handleApplySuggestedProperties = useCallback(
+    (properties: Property[]) => {
+      updateDossier(dossier.id, { properties: [...(dossier.properties || []), ...properties] });
+    },
+    [dossier.id, dossier.properties, updateDossier]
+  );
+
   // Handle new tag (save to dossier settings for reuse)
   const handleNewTag = useCallback(
     (tag: string) => {
@@ -206,6 +217,7 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
               onChange={handleTagsChange}
               suggestions={dossier.settings?.existingTags}
               onNewTag={handleNewTag}
+              onTagSetTagAdded={setSuggestedPropsTagSet}
             />
           </div>
         </div>
@@ -275,6 +287,15 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
           onUpdateChoices={updateSuggestedPropertyChoices}
         />
       </AccordionSection>
+
+      {suggestedPropsTagSet && (
+        <SuggestedPropertiesPopup
+          tagSetName={suggestedPropsTagSet}
+          existingPropertyKeys={(dossier.properties || []).map((p) => p.key)}
+          onApply={handleApplySuggestedProperties}
+          onClose={() => setSuggestedPropsTagSet(null)}
+        />
+      )}
     </div>
   );
 }

@@ -117,12 +117,12 @@
       "deleteTag": "Tag {{tag}} verwijderen",
       "renameTag": "Tag hernoemen",
       "renameHint": "Dubbelklik om te hernoemen",
+      "dragToReorder": "Sleep om de volgorde te wijzigen",
       "tagRenamed": "Tag \"{{oldName}}\" hernoemd naar \"{{newName}}\" in dit dossier",
       "newTagPlaceholder": "Nieuwe tag...",
       "pressEnterToCreate": "Enter om \"{{value}}\" aan te maken",
       "typeToFilter": "Typ om te filteren...",
-      "add": "Toevoegen",
-      "noTags": "Geen tags"
+      "add": "Toevoegen"
     },
     "warnings": {
       "noName": "Het element heeft geen naam"
