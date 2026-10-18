@@ -481,38 +481,63 @@ function calculateBestHandles(
   }
 }
 
-// Convert link style to strokeDasharray
-function getStrokeDasharray(style: string, thickness: number): string | undefined {
-  switch (style) {
-    case 'dashed':
-      return `${thickness * 4} ${thickness * 2}`;
-    case 'dotted':
-      return `${thickness} ${thickness * 2}`;
-    default:
-      return undefined;
-  }
-}
+type HandleSlots = { source: number; target: number };
 
-// Convert our Link to React Flow Edge
-function linkToEdge(
-  link: Link,
-  isSelected: boolean,
-  isDimmed: boolean,
+const HANDLE_SLOT_SPACING = 12;
+const HANDLE_SLOT_SPAN = 48;
+
+/**
+ * Links leaving the same node side would start from the same point (and share their first segments
+ * in orthogonal mode), whatever their other end. Spread every link of a side along it, ordered by
+ * the position of its other end so the lines do not cross on their way out; parallel links keep
+ * their order at both ends.
+ */
+function computeHandleSlots(
+  links: Link[],
   nodePositions: Map<string, Position>,
   linkAnchorMode: 'auto' | 'manual',
-  linkCurveMode: 'straight' | 'curved' | 'orthogonal',
-  isEditing?: boolean,
-  onLabelChange?: (newLabel: string) => void,
-  onStopEditing?: () => void,
-  onStartEditing?: () => void,
-  parallelIndex?: number,
-  parallelCount?: number,
-  onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
-  confidenceDisplay?: EvaluationModel | null,
-  displayedPropertyValues?: { key: string; value: string }[],
-  remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[],
-  simplified?: boolean
-): Edge {
+  parallelLookup: Map<string, { index: number; count: number }>
+): Map<string, HandleSlots> {
+  type SlotEntry = { linkId: string; end: 'source' | 'target'; order: number; tie: number };
+  const sides = new Map<string, SlotEntry[]>();
+  for (const link of links) {
+    const { sourceHandle, targetHandle } = resolveLinkHandles(link, nodePositions, linkAnchorMode);
+    const tie = parallelLookup.get(link.id)?.index ?? 0;
+    const ends = [
+      { end: 'source' as const, nodeId: link.fromId, handle: sourceHandle, otherId: link.toId },
+      { end: 'target' as const, nodeId: link.toId, handle: targetHandle, otherId: link.fromId },
+    ];
+    for (const { end, nodeId, handle, otherId } of ends) {
+      const side = handle.split('-')[1];
+      const other = nodePositions.get(otherId);
+      const order = other ? (side === 'top' || side === 'bottom' ? other.x : other.y) : 0;
+      const key = `${nodeId}:${side}`;
+      let entries = sides.get(key);
+      if (!entries) { entries = []; sides.set(key, entries); }
+      entries.push({ linkId: link.id, end, order, tie });
+    }
+  }
+
+  const slots = new Map<string, HandleSlots>();
+  for (const entries of sides.values()) {
+    if (entries.length < 2) continue;
+    entries.sort((a, b) => a.order - b.order || a.tie - b.tie);
+    const spacing = Math.min(HANDLE_SLOT_SPACING, HANDLE_SLOT_SPAN / (entries.length - 1));
+    entries.forEach((entry, i) => {
+      const slot = slots.get(entry.linkId) ?? { source: 0, target: 0 };
+      slot[entry.end] = (i - (entries.length - 1) / 2) * spacing;
+      slots.set(entry.linkId, slot);
+    });
+  }
+  return slots;
+}
+
+/** Handles a link is drawn between: per-link anchor override, else dossier anchor mode. */
+function resolveLinkHandles(
+  link: Link,
+  nodePositions: Map<string, Position>,
+  linkAnchorMode: 'auto' | 'manual'
+): { sourceHandle: string; targetHandle: string } {
   // Helper to migrate old handle format and fix type mismatches
   const migrateHandle = (handle: string | null, type: 'source' | 'target'): string => {
     if (!handle) return type === 'source' ? 'source-right' : 'target-left';
@@ -557,6 +582,44 @@ function linkToEdge(
     sourceHandle = migrateHandle(link.sourceHandle, 'source');
     targetHandle = migrateHandle(link.targetHandle, 'target');
   }
+
+  return { sourceHandle, targetHandle };
+}
+
+// Convert link style to strokeDasharray
+function getStrokeDasharray(style: string, thickness: number): string | undefined {
+  switch (style) {
+    case 'dashed':
+      return `${thickness * 4} ${thickness * 2}`;
+    case 'dotted':
+      return `${thickness} ${thickness * 2}`;
+    default:
+      return undefined;
+  }
+}
+
+// Convert our Link to React Flow Edge
+function linkToEdge(
+  link: Link,
+  isSelected: boolean,
+  isDimmed: boolean,
+  nodePositions: Map<string, Position>,
+  linkAnchorMode: 'auto' | 'manual',
+  linkCurveMode: 'straight' | 'curved' | 'orthogonal',
+  isEditing?: boolean,
+  onLabelChange?: (newLabel: string) => void,
+  onStopEditing?: () => void,
+  onStartEditing?: () => void,
+  parallelIndex?: number,
+  parallelCount?: number,
+  onCurveOffsetChange?: (offset: { x: number; y: number }) => void,
+  confidenceDisplay?: EvaluationModel | null,
+  displayedPropertyValues?: { key: string; value: string }[],
+  remoteLinkSelectors?: { name: string; color: string; isEditing?: boolean }[],
+  simplified?: boolean,
+  handleSlots?: HandleSlots
+): Edge {
+  const { sourceHandle, targetHandle } = resolveLinkHandles(link, nodePositions, linkAnchorMode);
 
   const strokeDasharray = getStrokeDasharray(link.visual.style, link.visual.thickness);
 
@@ -622,7 +685,11 @@ function linkToEdge(
       onStartEditing,
       parallelIndex,
       parallelCount,
-      curveOffset: link.curveOffset ?? { x: 0, y: 0 },
+      // Offsets along the node side, shared by every link attached to the same handle
+      sourceSlot: handleSlots?.source ?? 0,
+      targetSlot: handleSlots?.target ?? 0,
+      // Each route style keeps its own manual offset
+      curveOffset: (linkCurveMode === 'orthogonal' ? link.orthogonalOffset : link.curveOffset) ?? { x: 0, y: 0 },
       onCurveOffsetChange,
       // Curve mode: straight or curved
       curveMode: linkCurveMode,
@@ -1691,12 +1758,12 @@ export function Canvas() {
     updateEditingLink(editingLinkId);
   }, [editingLinkId, updateEditingLink]);
 
-  // Handle curve offset change for edge dragging (2D offset)
+  // Handle curve offset change for edge dragging (2D offset), stored for the current route style
   const handleCurveOffsetChange = useCallback(
     (linkId: string, offset: { x: number; y: number }) => {
-      updateLink(linkId, { curveOffset: offset });
+      updateLink(linkId, linkCurveMode === 'orthogonal' ? { orthogonalOffset: offset } : { curveOffset: offset });
     },
-    [updateLink]
+    [updateLink, linkCurveMode]
   );
 
   // --- Stable edge callback refs (eliminates closure recreations per edge recalc) ---
@@ -1887,6 +1954,8 @@ export function Canvas() {
         parallelLookup.set(group[i], { index: i, count: group.length });
       }
     }
+    // Links sharing a node side, whatever their other end, get their own point along it
+    const handleSlots = computeHandleSlots(cappedLinks, nodePositions, linkAnchorMode, parallelLookup);
 
     const useSimpleEdges = cappedLinks.length > SIMPLE_EDGE_THRESHOLD;
 
@@ -1944,7 +2013,9 @@ export function Canvas() {
               const sameRemote = remoteUsersByLink.get(link.id) === cd?.remoteLinkSelectors;
               const parallel = parallelLookup.get(link.id);
               const sameParallel = cd?._parallelIndex === parallel?.index && cd?._parallelCount === parallel?.count;
-              if (sameEditing && sameRemote && sameParallel) {
+              const slots = handleSlots.get(link.id);
+              const sameSlots = cd?.sourceSlot === (slots?.source ?? 0) && cd?.targetSlot === (slots?.target ?? 0);
+              if (sameEditing && sameRemote && sameParallel && sameSlots) {
                 newCache.set(link.id, cached);
                 return cached;
               }
@@ -1983,7 +2054,9 @@ export function Canvas() {
           parallel.index, parallel.count,
           edgeCbs.onCurveOffsetChange,
           confidenceDisplay, linkDisplayedPropertyValues,
-          remoteUsersByLink.get(link.id)
+          remoteUsersByLink.get(link.id),
+          false,
+          handleSlots.get(link.id)
         );
       }
 
@@ -4888,6 +4961,18 @@ export function Canvas() {
                 startEditingLink(linkContextMenu.linkId);
                 closeLinkContextMenu();
               }}
+              onResetRoute={(() => {
+                // Offset of the current route style only (curves and right angles keep their own)
+                const menuLink = links.find((l) => l.id === linkContextMenu.linkId);
+                const offset = linkCurveMode === 'orthogonal' ? menuLink?.orthogonalOffset : menuLink?.curveOffset;
+                if (!offset || (offset.x === 0 && offset.y === 0)) return undefined;
+                return () => {
+                  updateLink(linkContextMenu.linkId, linkCurveMode === 'orthogonal'
+                    ? { orthogonalOffset: null }
+                    : { curveOffset: { x: 0, y: 0 } });
+                  closeLinkContextMenu();
+                };
+              })()}
               onDelete={() => {
                 const linkToDelete = links.find((l) => l.id === linkContextMenu.linkId);
                 if (linkToDelete) {

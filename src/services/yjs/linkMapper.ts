@@ -70,6 +70,9 @@ export function linkToYMap(link: Link): Y.Map<any> {
     x: link.curveOffset.x,
     y: link.curveOffset.y,
   });
+  map.set('orthogonalOffset', link.orthogonalOffset
+    ? { x: link.orthogonalOffset.x, y: link.orthogonalOffset.y }
+    : null);
 
   // Metadata
   map.set('_meta', {
@@ -95,6 +98,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
   const dateRangeRaw = ymap.get('dateRange');
   const visualRaw = ymap.get('visual');
   const curveRaw = ymap.get('curveOffset');
+  const orthogonalRaw = ymap.get('orthogonalOffset');
   const metaRaw = ymap.get('_meta');
 
   // Handle notes - can be Y.Text, plain string, or undefined
@@ -149,6 +153,11 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
     curveOffset = { x: curveRaw.x ?? 0, y: curveRaw.y ?? 0 };
   }
 
+  // Handle orthogonalOffset - plain object, null or absent (older links)
+  const orthogonalOffset = orthogonalRaw && typeof orthogonalRaw === 'object'
+    ? { x: orthogonalRaw.x ?? 0, y: orthogonalRaw.y ?? 0 }
+    : undefined;
+
   // Handle metadata - can be Y.Map or plain object
   let createdAt = new Date();
   let updatedAt = new Date();
@@ -181,6 +190,7 @@ export function yMapToLink(ymap: Y.Map<any>): Link {
     dateRange,
     visual,
     curveOffset,
+    orthogonalOffset,
     createdAt,
     updatedAt,
   };
@@ -284,6 +294,12 @@ export function updateLinkYMap(
         x: changes.curveOffset.x,
         y: changes.curveOffset.y,
       });
+    }
+
+    if (changes.orthogonalOffset !== undefined) {
+      ymap.set('orthogonalOffset', changes.orthogonalOffset
+        ? { x: changes.orthogonalOffset.x, y: changes.orthogonalOffset.y }
+        : null);
     }
 
     // Always update updatedAt

@@ -405,6 +405,11 @@ export interface Link {
   visual: LinkVisual;
   /** Manual curve control point offset from midpoint (pixels) */
   curveOffset: { x: number; y: number };
+  /**
+   * Manual offset of the right-angle route (pixels): moves its middle segment and its runs.
+   * Kept apart from curveOffset so a curve drawn by hand does not distort right-angle routes.
+   */
+  orthogonalOffset?: { x: number; y: number } | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -182,6 +182,7 @@
       "findSimilarNoTags": "Este elemento no tiene tags para buscar similares",
       "queryFromSelection": "Consulta desde selección",
       "editLinkLabel": "Editar etiqueta",
+      "resetLinkRoute": "Restablecer el trazado",
       "reverseLink": "Invertir dirección",
       "deleteLink": "Eliminar enlace",
       "noLabel": "Sin etiqueta",

@@ -182,6 +182,7 @@
       "findSimilarNoTags": "Este elemento não tem tags para pesquisa de similares",
       "queryFromSelection": "Consulta da seleção",
       "editLinkLabel": "Editar rótulo",
+      "resetLinkRoute": "Repor o traçado",
       "reverseLink": "Inverter direção",
       "deleteLink": "Eliminar ligação",
       "noLabel": "Sem rótulo",

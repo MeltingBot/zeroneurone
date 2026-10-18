@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
@@ -11,6 +11,8 @@ interface LinkContextMenuProps {
   linkId: string;
   linkLabel: string;
   onEditLabel: () => void;
+  /** Present only when the link has a manual route offset in the current route style */
+  onResetRoute?: () => void;
   onDelete: () => void;
   onClose: () => void;
   pluginExtensions?: readonly ContextMenuExtension[];
@@ -22,6 +24,7 @@ function LinkContextMenuComponent({
   y,
   linkLabel,
   onEditLabel,
+  onResetRoute,
   onDelete,
   onClose,
   pluginExtensions,
@@ -43,7 +46,12 @@ function LinkContextMenuComponent({
         </span>
       }
       sections={[
-        [{ id: 'edit-label', label: cm('editLinkLabel'), icon: Pencil, onSelect: onEditLabel }],
+        [
+          { id: 'edit-label', label: cm('editLinkLabel'), icon: Pencil, onSelect: onEditLabel },
+          ...(onResetRoute
+            ? [{ id: 'reset-route', label: cm('resetLinkRoute'), icon: RotateCcw, onSelect: onResetRoute }]
+            : []),
+        ],
         pluginItems,
         [{ id: 'delete', label: cm('deleteLink'), icon: Trash2, danger: true, onSelect: onDelete }],
       ]}

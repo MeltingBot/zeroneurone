@@ -182,6 +182,7 @@
       "findSimilarNoTags": "Dit element heeft geen tags voor vergelijkbare zoekopdracht",
       "queryFromSelection": "Zoekopdracht uit selectie",
       "editLinkLabel": "Label bewerken",
+      "resetLinkRoute": "Verloop herstellen",
       "reverseLink": "Richting omkeren",
       "deleteLink": "Verbinding verwijderen",
       "noLabel": "Zonder label",

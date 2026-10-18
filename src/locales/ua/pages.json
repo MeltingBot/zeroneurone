@@ -182,6 +182,7 @@
       "findSimilarNoTags": "Цей елемент не має тегів для пошуку подібних",
       "queryFromSelection": "Запит з виділення",
       "editLinkLabel": "Редагувати мітку",
+      "resetLinkRoute": "Скинути траєкторію",
       "reverseLink": "Змінити напрямок",
       "deleteLink": "Видалити зв'язок",
       "noLabel": "Без мітки",

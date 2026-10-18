@@ -182,6 +182,7 @@
       "findSimilarNoTags": "Aquest element no té tags per cercar similars",
       "queryFromSelection": "Consulta des de selecció",
       "editLinkLabel": "Editar etiqueta",
+      "resetLinkRoute": "Restableix el traçat",
       "reverseLink": "Invertir direcció",
       "deleteLink": "Eliminar enllaç",
       "noLabel": "Sense etiqueta",
