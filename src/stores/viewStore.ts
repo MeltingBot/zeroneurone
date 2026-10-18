@@ -23,6 +23,8 @@ interface TimelineState {
   showLinksInSwimlane: boolean;
   newestFirst: boolean;
   showDensity: boolean;
+  showHistogram: boolean;
+  histogramMode: 'hour' | 'weekday' | 'month';
   showCausality: boolean;
   causalityMaxDays: number;
   showCreatedAt: boolean;
@@ -38,6 +40,8 @@ const DEFAULT_TIMELINE: TimelineState = {
   showLinksInSwimlane: false,
   newestFirst: false,
   showDensity: true,
+  showHistogram: false,
+  histogramMode: 'hour',
   showCausality: false,
   causalityMaxDays: 365,
   showCreatedAt: false,

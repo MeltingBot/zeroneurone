@@ -411,9 +411,23 @@
     "recentUp": "Berria ↑",
     "oldUp": "Zaharra ↑",
     "causality": "Kausalitatea",
-    "causalityHint": "Lotutako elementuen gertaeren arteko kausalitate potentzialak erakutsi",
+    "causalityHint": "Lotutako elementuen gertaeren arteko kausalitate potentzialak: egin klik gertaera batean haren kausak eta ondorioak ikusteko (Esc itzultzeko)",
+    "causalityBadge": "Kausa eta ondorio potentzialak: {{count}} (egin klik erakusteko)",
     "density": "Dentsitatea",
     "densityHint": "Jarduera-dentsitate barra aldiko",
+    "histogram": "Jarduera",
+    "histogramHint": "Jarduera orduka, egunka edo hilabeteka",
+    "histogramMode": {
+      "hour": "Ordua",
+      "weekday": "Eguna",
+      "month": "Hilabetea"
+    },
+    "histogramSkipped": {
+      "hour": "Ordurik gabe: {{count}}",
+      "weekday": "Egunik gabe: {{count}}",
+      "month": "Hilabeterik gabe: {{count}}"
+    },
+    "histogramSkippedHint": "Banaketa honetarako zehaztugabeegiak diren datak, zenbatu gabe",
     "maxDaysBetweenEvents": "Gehienez {{days}} gertaeren artean",
     "unresolvedComments": "{{count}} iruzkin ebatzi gabe",
     "potentialCausality": "Kausalitate potentziala",

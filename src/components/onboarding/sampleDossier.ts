@@ -99,7 +99,7 @@ function buildSampleExportData(s: SampleStrings): ExportData {
     el('e1', 'Camille Laurent', 0, 0, 'circle', {
       tags: [s.tag.person],
       confidence: 80,
-      date: new Date('2026-03-10'),
+      date: new Date(2026, 2, 10),
       geo: paris,
       properties: [
         { key: 'Rôle', value: 'Gérante', type: 'text' },
@@ -108,13 +108,13 @@ function buildSampleExportData(s: SampleStrings): ExportData {
         { key: 'Nationalité', value: 'FR', type: 'country' },
       ],
       events: [
-        { id: 'ev1', date: new Date('2026-03-09'), dateEnd: new Date('2026-03-12'), label: 'Séjour à Genève', geo: geneve, source: 'Filature' },
-        { id: 'ev2', date: new Date('2026-03-13'), dateEnd: new Date('2026-03-16'), label: 'Virements suspects' },
+        { id: 'ev1', date: new Date(2026, 2, 9), dateEnd: new Date(2026, 2, 12), label: 'Séjour à Genève', geo: geneve, source: 'Filature' },
+        { id: 'ev2', date: new Date(2026, 2, 13), dateEnd: new Date(2026, 2, 16), label: 'Virements suspects' },
       ],
     }),
     el('e2', 'Théo Marchand', 320, 40, 'circle', {
       tags: [s.tag.person],
-      date: new Date('2026-03-12'),
+      date: new Date(2026, 2, 12),
       geo: marseille,
       properties: [
         { key: 'Rôle', value: 'Comptable', type: 'text' },
@@ -122,7 +122,7 @@ function buildSampleExportData(s: SampleStrings): ExportData {
         { key: 'Téléphone', value: '+33 6 12 34 56 78', type: 'text' },
       ],
       events: [
-        { id: 'ev3', date: new Date('2026-02-01'), dateEnd: new Date('2026-03-31'), label: 'Mission comptable' },
+        { id: 'ev3', date: new Date(2026, 1, 1), dateEnd: new Date(2026, 2, 31), label: 'Mission comptable' },
       ],
     }),
     el('e3', 'Société Vortex', 150, 230, 'square', {
@@ -135,7 +135,7 @@ function buildSampleExportData(s: SampleStrings): ExportData {
         { key: "Chiffre d'affaires", value: 1250000, type: 'number' },
       ],
       events: [
-        { id: 'ev4', date: new Date('2025-01-01'), dateEnd: new Date('2025-12-31'), label: 'Exercice 2025' },
+        { id: 'ev4', date: new Date(2025, 0, 1), dateEnd: new Date(2025, 11, 31), label: 'Exercice 2025' },
       ],
     }),
     el('e4', 'Lyon', -180, 240, 'diamond', {
@@ -158,8 +158,8 @@ function buildSampleExportData(s: SampleStrings): ExportData {
       events: [
         {
           id: 'ev5',
-          date: new Date('2026-01-15'),
-          dateEnd: new Date('2026-03-20'),
+          date: new Date(2026, 0, 15),
+          dateEnd: new Date(2026, 2, 20),
           label: "Période d'activité",
           properties: [{ key: 'Montant (€)', value: 50000, type: 'number' }],
         },
@@ -167,7 +167,7 @@ function buildSampleExportData(s: SampleStrings): ExportData {
     }),
     el('e6', 'Contrat 2026-03', 300, 430, 'rectangle', {
       tags: [s.tag.document],
-      date: new Date('2026-03-15'),
+      date: new Date(2026, 2, 15),
       properties: [
         { key: 'Type', value: 'Contrat de cession', type: 'choice' },
         { key: 'Signé le', value: '2026-03-15', type: 'date' },

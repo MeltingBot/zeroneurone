@@ -426,9 +426,23 @@
     "recentUp": "Recent ↑",
     "oldUp": "Old ↑",
     "causality": "Causality",
-    "causalityHint": "Show potential causal links between events of linked elements",
+    "causalityHint": "Potential causal links between events of linked elements: click an event to see its causes and consequences (Esc to go back)",
+    "causalityBadge": "Potential causes and consequences: {{count}} (click to show)",
     "density": "Density",
     "densityHint": "Activity density bar per period",
+    "histogram": "Activity",
+    "histogramHint": "Activity by hour, weekday or month",
+    "histogramMode": {
+      "hour": "Hour",
+      "weekday": "Day",
+      "month": "Month"
+    },
+    "histogramSkipped": {
+      "hour": "No time: {{count}}",
+      "weekday": "No day: {{count}}",
+      "month": "No month: {{count}}"
+    },
+    "histogramSkippedHint": "Dates too vague for this breakdown, not counted",
     "maxDaysBetweenEvents": "Max {{days}} between events",
     "unresolvedComments": "{{count}} unresolved comment(s)",
     "potentialCausality": "Potential causality",

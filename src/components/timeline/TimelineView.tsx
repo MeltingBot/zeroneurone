@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
-import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, Upload, Clock } from 'lucide-react';
+import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, ChartColumnBig, Upload, Clock } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
 
@@ -11,6 +11,9 @@ import { TimelineRangeSlider } from './TimelineRangeSlider';
 import { SwimlaneToolbar } from './SwimlaneToolbar';
 import { TimelineSwimlane } from './TimelineSwimlane';
 import { useSwimlaneGrouping } from './useSwimlaneGrouping';
+import { ActivityHistogramBar } from './ActivityHistogramBar';
+import { histogramBucket, type HistogramMode } from './activityHistogram';
+import { computeCausalConnections } from './causality';
 import type { DatePrecision, Element as ZNElement } from '../../types';
 import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue, parsePropertyDate } from '../../utils/dates';
 import { formatItemDates } from './timelineDates';
@@ -145,6 +148,20 @@ export function TimelineView() {
   const setShowDensity = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
     setTimeline({ showDensity: typeof v === 'function' ? v(tl.showDensity) : v });
   }, [tl.showDensity, setTimeline]);
+  const showHistogram = tl.showHistogram;
+  const histogramMode = tl.histogramMode;
+  // Selected histogram bar (local): highlights the matching items
+  const [histogramSelection, setHistogramSelection] = useState<number | null>(null);
+  // Event whose potential causes and consequences are shown (causality overlay, on demand)
+  const [causalFocusId, setCausalFocusId] = useState<string | null>(null);
+  const setHistogramMode = useCallback((mode: HistogramMode) => {
+    setTimeline({ histogramMode: mode });
+    setHistogramSelection(null);
+  }, [setTimeline]);
+  const toggleHistogram = useCallback(() => {
+    setTimeline({ showHistogram: !tl.showHistogram });
+    setHistogramSelection(null);
+  }, [tl.showHistogram, setTimeline]);
   const showCausality = tl.showCausality;
   const setShowCausality = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
     setTimeline({ showCausality: typeof v === 'function' ? v(tl.showCausality) : v });
@@ -614,10 +631,19 @@ export function TimelineView() {
     });
   }, [items, filterStartDate, filterEndDate]);
 
+  // Histogram bar selection: dim the items outside the selected bucket
+  const displayedItems = useMemo(() => {
+    if (!showHistogram || histogramSelection === null) return filteredItems;
+    return filteredItems.map((item) =>
+      item.isDimmed || histogramBucket(item, histogramMode) === histogramSelection
+        ? item
+        : { ...item, isDimmed: true });
+  }, [filteredItems, showHistogram, histogramSelection, histogramMode]);
+
   // Swimlane: optionally filter out links
   const swimlaneItems = useMemo(
-    () => showLinksInSwimlane ? filteredItems : filteredItems.filter(i => i.type !== 'link'),
-    [filteredItems, showLinksInSwimlane],
+    () => showLinksInSwimlane ? displayedItems : displayedItems.filter(i => i.type !== 'link'),
+    [displayedItems, showLinksInSwimlane],
   );
   const elementsMap = useMemo(
     () => new Map(elements.map(el => [el.id, el])) as Map<string, ZNElement>,
@@ -667,9 +693,9 @@ export function TimelineView() {
   // Each item gets its own row for clarity
   // Sort order: oldest at top by default, or newest at top if newestFirst
   const itemsWithRows = useMemo(() => {
-    const sortedItems = newestFirst ? [...filteredItems].reverse() : filteredItems;
+    const sortedItems = newestFirst ? [...displayedItems].reverse() : displayedItems;
     return sortedItems.map((item, index) => ({ ...item, row: index }));
-  }, [filteredItems, newestFirst]);
+  }, [displayedItems, newestFirst]);
 
   const totalRows = filteredItems.length || 1;
 
@@ -716,57 +742,51 @@ export function TimelineView() {
     });
   }, [itemsWithRows, viewStart, zoom, containerWidth, scrollTop, containerHeight]);
 
-  // Compute potential causal connections between visible events of linked elements
+  // Potential causal connections between visible events of linked elements (nearest cause per
+  // linked element, see causality.ts)
   const causalConnections = useMemo(() => {
     if (!showCausality) return [];
-    // Only compute for visible items to avoid O(n²) on full dataset
-    if (visibleItems.length > 500) return []; // Too many to compute
-
-    const connections: Array<{
-      fromItem: typeof visibleItems[0];
-      toItem: typeof visibleItems[0];
-    }> = [];
-
-    // Build a set of linked element pairs for quick lookup
-    const linkedPairs = new Set<string>();
-    links.forEach((link) => {
-      linkedPairs.add(`${link.fromId}|${link.toId}`);
-      linkedPairs.add(`${link.toId}|${link.fromId}`);
-    });
-
-    for (let i = 0; i < visibleItems.length; i++) {
-      for (let j = i + 1; j < visibleItems.length; j++) {
-        const itemA = visibleItems[i];
-        const itemB = visibleItems[j];
-
-        if (itemA.sourceId === itemB.sourceId) continue;
-        if (!itemA.sourceId || !itemB.sourceId) continue;
-        if (!linkedPairs.has(`${itemA.sourceId}|${itemB.sourceId}`)) continue;
-
-        const aEnd = itemA.end || itemA.start;
-        const bStart = itemB.start;
-        const bEnd = itemB.end || itemB.start;
-        const aStart = itemA.start;
-
-        // Check A→B
-        if (aEnd.getTime() <= bStart.getTime()) {
-          const daysDiff = (bStart.getTime() - aEnd.getTime()) / (24 * 60 * 60 * 1000);
-          if (daysDiff <= causalityMaxDays) {
-            connections.push({ fromItem: itemA, toItem: itemB });
-          }
-        }
-        // Check B→A
-        else if (bEnd.getTime() <= aStart.getTime()) {
-          const daysDiff = (aStart.getTime() - bEnd.getTime()) / (24 * 60 * 60 * 1000);
-          if (daysDiff <= causalityMaxDays) {
-            connections.push({ fromItem: itemB, toItem: itemA });
-          }
-        }
-      }
-    }
-
-    return connections;
+    // Only compute for visible items to keep the overlay cheap
+    if (visibleItems.length > 500) return [];
+    return computeCausalConnections(visibleItems, links, causalityMaxDays);
   }, [showCausality, visibleItems, links, causalityMaxDays]);
+
+  // Number of potential causes and consequences of each event (badge shown at rest)
+  const causalCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const { fromItem, toItem } of causalConnections) {
+      counts.set(fromItem.id, (counts.get(fromItem.id) ?? 0) + 1);
+      counts.set(toItem.id, (counts.get(toItem.id) ?? 0) + 1);
+    }
+    return counts;
+  }, [causalConnections]);
+
+  // Connections of the focused event only, and the events they involve (others are dimmed)
+  const focusedCausalConnections = useMemo(
+    () => (causalFocusId
+      ? causalConnections.filter((c) => c.fromItem.id === causalFocusId || c.toItem.id === causalFocusId)
+      : []),
+    [causalConnections, causalFocusId]
+  );
+  const causalFocusSet = useMemo(() => {
+    if (!causalFocusId) return null;
+    const ids = new Set<string>([causalFocusId]);
+    for (const { fromItem, toItem } of focusedCausalConnections) {
+      ids.add(fromItem.id);
+      ids.add(toItem.id);
+    }
+    return ids;
+  }, [causalFocusId, focusedCausalConnections]);
+
+  // Escape leaves the focus (turning the overlay off forgets it, see its button)
+  useEffect(() => {
+    if (!causalFocusId) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCausalFocusId(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [causalFocusId]);
 
   // Convert date to X position
   const dateToX = useCallback((date: Date): number => {
@@ -794,9 +814,10 @@ export function TimelineView() {
     let step: 'hour' | 'hour6' | 'day' | 'week' | 'month' | 'year' | 'decade' | 'century';
     let format: Intl.DateTimeFormatOptions;
 
-    // Pixel-based step selection for smooth transitions
-    // Choose smallest time unit that gives adequate label spacing
-    const MIN_LABEL_SPACING = 35; // minimum pixels between labels
+    // Pixel-based step selection for smooth transitions: choose the smallest time unit whose
+    // labels fit between two ticks. Minimum spacing per step, from its label width at 10px
+    // ("12:00", "12 sept.", "sept." / "2025")
+    const SPACING = { hour: 40, day: 48, month: 36, year: 36 };
 
     const hourSpacing = zoom / 24; // pixels per hour
     const hour6Spacing = zoom / 4; // pixels per 6 hours
@@ -806,25 +827,26 @@ export function TimelineView() {
     const yearSpacing = zoom * 365; // pixels per year
     const decadeSpacing = zoom * 3652; // pixels per decade
 
-    if (hourSpacing >= MIN_LABEL_SPACING) {
+    if (hourSpacing >= SPACING.hour) {
       step = 'hour';
       format = { hour: '2-digit', minute: '2-digit' };
-    } else if (hour6Spacing >= MIN_LABEL_SPACING) {
+    } else if (hour6Spacing >= SPACING.hour) {
       step = 'hour6';
       format = { hour: '2-digit', minute: '2-digit' };
-    } else if (daySpacing >= MIN_LABEL_SPACING) {
+    } else if (daySpacing >= SPACING.day) {
       step = 'day';
       format = { day: 'numeric', month: 'short' };
-    } else if (weekSpacing >= MIN_LABEL_SPACING) {
+    } else if (weekSpacing >= SPACING.day) {
       step = 'week';
       format = { day: 'numeric', month: 'short' };
-    } else if (monthSpacing >= MIN_LABEL_SPACING) {
+    } else if (monthSpacing >= SPACING.month) {
+      // Short month only; January (main tick) shows the year instead
       step = 'month';
-      format = { month: 'short', year: 'numeric' };
-    } else if (yearSpacing >= MIN_LABEL_SPACING) {
+      format = { month: 'short' };
+    } else if (yearSpacing >= SPACING.year) {
       step = 'year';
       format = { year: 'numeric' };
-    } else if (decadeSpacing >= MIN_LABEL_SPACING) {
+    } else if (decadeSpacing >= SPACING.year) {
       step = 'decade';
       format = { year: 'numeric' };
     } else {
@@ -877,7 +899,7 @@ export function TimelineView() {
         // For hour steps: show date at midnight ticks, time otherwise
         const locale = dateLocale(i18n.language);
         let label: string;
-        if (step === 'century' || step === 'decade' || step === 'year') {
+        if (step === 'century' || step === 'decade' || step === 'year' || (step === 'month' && isMain)) {
           label = String(current.getFullYear());
         } else if (step === 'hour' || step === 'hour6') {
           label = isMain
@@ -1067,6 +1089,8 @@ export function TimelineView() {
   // Handle item click
   const handleItemClick = useCallback((item: TimelineItem, e: React.MouseEvent) => {
     e.stopPropagation();
+    // With the causality overlay on, the clicked event becomes its subject (click again to leave)
+    if (showCausality) setCausalFocusId((prev) => (prev === item.id ? null : item.id));
     // Select the element/link (its details open in the side panel)
     if (!item.sourceId) return;
     if (item.type === 'link' || (item.type === 'created' && item.id.startsWith('created-lk-'))) {
@@ -1076,7 +1100,7 @@ export function TimelineView() {
       // For event items, focus the underlying event in the side panel (auto-expand + scroll)
       setFocusedEventId(item.type === 'event' && item.eventId ? item.eventId : null);
     }
-  }, [selectElement, selectLink, setFocusedEventId]);
+  }, [selectElement, selectLink, setFocusedEventId, showCausality]);
 
   // Navigation handlers
   const handleZoomIn = useCallback(() => {
@@ -1252,7 +1276,10 @@ export function TimelineView() {
               <>
             <div className="w-px h-4 bg-border-default mx-1" />
             <button
-              onClick={() => setShowCausality(!showCausality)}
+              onClick={() => {
+                setShowCausality(!showCausality);
+                setCausalFocusId(null);
+              }}
               className={`px-2 h-6 text-[10px] border flex items-center gap-1 ${
                 showCausality
                   ? 'bg-accent text-white border-accent rounded-l'
@@ -1315,6 +1342,18 @@ export function TimelineView() {
               <BarChart3 size={10} />
               {t('timeline.density')}
             </button>
+            <button
+              onClick={toggleHistogram}
+              className={`px-2 h-6 text-[10px] rounded border flex items-center gap-1 ${
+                showHistogram
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-text-secondary hover:bg-bg-tertiary border-border-default'
+              }`}
+              title={t('timeline.histogramHint')}
+            >
+              <ChartColumnBig size={10} />
+              {t('timeline.histogram')}
+            </button>
             <div className="w-px h-4 bg-border-default mx-1" />
             {/* Temporal filter toggle */}
             <button
@@ -1361,6 +1400,16 @@ export function TimelineView() {
             setFilterStartDate(null);
             setFilterEndDate(null);
           }}
+        />
+      )}
+
+      {showHistogram && (
+        <ActivityHistogramBar
+          items={filteredItems}
+          mode={histogramMode}
+          onModeChange={setHistogramMode}
+          selected={histogramSelection}
+          onSelect={setHistogramSelection}
         />
       )}
 
@@ -1480,6 +1529,21 @@ export function TimelineView() {
             const selected = isSelected(item);
             const isRange = !!item.end;
             const hasThumbImage = item.thumbImageId && thumbnails[item.thumbImageId];
+            const dimmed = item.isDimmed || (causalFocusSet !== null && !causalFocusSet.has(item.id));
+            const causalCount = showCausality ? causalCounts.get(item.id) ?? 0 : 0;
+            const causalBadge = causalCount > 0 ? (
+              <div
+                className={`absolute -top-1.5 -left-1.5 h-4 min-w-4 px-0.5 rounded-full flex items-center justify-center gap-px text-[9px] font-medium z-10 border ${
+                  causalFocusId === item.id
+                    ? 'bg-accent text-white border-accent'
+                    : 'bg-bg-primary text-text-secondary border-border-strong'
+                }`}
+                title={t('timeline.causalityBadge', { count: causalCount })}
+              >
+                <GitBranch size={8} />
+                {causalCount}
+              </div>
+            ) : null;
 
             // Calculate content offset to keep it visible when item extends beyond left edge
             // contentOffset pushes the content to the right when item starts before viewport
@@ -1497,7 +1561,7 @@ export function TimelineView() {
                     transform: `translate3d(${x}px, ${y}px, 0)`,
                     width: ROW_HEIGHT,
                     height: ROW_HEIGHT,
-                    opacity: item.isDimmed ? 0.3 : 1,
+                    opacity: dimmed ? 0.3 : 1,
                   }}
                   onClick={(e) => handleItemClick(item, e)}
                   title={formatItemDates(item, i18n.language)}
@@ -1534,6 +1598,7 @@ export function TimelineView() {
                       </span>
                     )}
                   </div>
+                  {causalBadge}
                   {/* Comment indicator */}
                   {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                     <div
@@ -1562,7 +1627,7 @@ export function TimelineView() {
                   transform: `translate3d(${x}px, ${y}px, 0)`,
                   width: width,
                   height: ROW_HEIGHT,
-                  opacity: item.isDimmed ? 0.3 : 1,
+                  opacity: dimmed ? 0.3 : 1,
                 }}
                 onClick={(e) => handleItemClick(item, e)}
                 title={formatItemDates(item, i18n.language)}
@@ -1578,6 +1643,7 @@ export function TimelineView() {
                     boxShadow: selected ? undefined : `inset 0 0 0 1px ${item.color}30`,
                   }}
                 />
+                {causalBadge}
                 {/* Comment indicator */}
                 {showCommentBadges && item.unresolvedCommentCount !== undefined && item.unresolvedCommentCount > 0 && (
                   <div
@@ -1659,7 +1725,7 @@ export function TimelineView() {
           })}
 
           {/* Causal connections - rendered as SVG curves */}
-          {showCausality && causalConnections.length > 0 && (
+          {showCausality && focusedCausalConnections.length > 0 && (
             <svg
               className="absolute inset-0 pointer-events-none z-5"
               style={{ overflow: 'visible' }}
@@ -1697,7 +1763,7 @@ export function TimelineView() {
                   </feMerge>
                 </filter>
               </defs>
-              {causalConnections.map((conn, idx) => {
+              {focusedCausalConnections.map((conn, idx) => {
                 // Calculate positions
                 const fromEndX = dateToX(conn.fromItem.end || conn.fromItem.start);
                 const fromY = ROW_GAP + conn.fromItem.row * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
@@ -1808,7 +1874,7 @@ export function TimelineView() {
                         width="28"
                         height="16"
                         rx="3"
-                        fill="white"
+                        style={{ fill: 'var(--color-bg-primary)' }}
                         fillOpacity="0.9"
                         stroke={colorCategory === 'short' ? '#10b981' : colorCategory === 'medium' ? '#f59e0b' : '#ef4444'}
                         strokeWidth="1"

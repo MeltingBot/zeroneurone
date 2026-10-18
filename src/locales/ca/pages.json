@@ -411,9 +411,23 @@
     "recentUp": "Recent ↑",
     "oldUp": "Antic ↑",
     "causality": "Causalitats",
-    "causalityHint": "Mostrar causalitats potencials entre esdeveniments d'elements enllaçats",
+    "causalityHint": "Causalitats potencials entre esdeveniments d'elements enllaçats: feu clic en un esdeveniment per veure'n les causes i conseqüències (Esc per tornar)",
+    "causalityBadge": "Causes i conseqüències potencials: {{count}} (feu clic per mostrar)",
     "density": "Densitat",
     "densityHint": "Barra de densitat d'activitat per període",
+    "histogram": "Activitat",
+    "histogramHint": "Activitat per hora, dia o mes",
+    "histogramMode": {
+      "hour": "Hora",
+      "weekday": "Dia",
+      "month": "Mes"
+    },
+    "histogramSkipped": {
+      "hour": "Sense hora: {{count}}",
+      "weekday": "Sense dia: {{count}}",
+      "month": "Sense mes: {{count}}"
+    },
+    "histogramSkippedHint": "Dates massa imprecises per a aquest desglossament, no comptades",
     "maxDaysBetweenEvents": "Màx. {{days}} entre esdeveniments",
     "unresolvedComments": "{{count}} comentari(s) sense resoldre",
     "potentialCausality": "Causalitat potencial",

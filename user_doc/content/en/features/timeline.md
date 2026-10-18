@@ -54,7 +54,7 @@ Each element occupies its own row. Suited for an overview of the chronology.
 | Control | Function |
 |---------|----------|
 | **Old/Recent** | Reverse vertical order |
-| **Causality** | Show temporal proximity links |
+| **Causality** | Marks events closely preceded or followed by an event of a linked element (counter); click an event to show its potential causes and consequences, Esc to go back |
 
 ### Swimlane Mode
 
@@ -162,6 +162,16 @@ Bucket size adapts automatically to the zoom level (7 days, 14 days, 1 month, 3 
 ### Interaction
 
 **Click** a density cell to activate the temporal filter on that period.
+
+---
+
+## Activity Histogram
+
+The **Activity** button shows, above the timeline, how events are spread by **hour** of the day, **day** of the week or **month** of the year. It brings out habits: call hours, connection days, seasonality.
+
+- Counts cover the displayed events (temporal filter included), in local time.
+- A date too vague for the breakdown is not counted: a date without a time in **Hour** mode, a month-only date in **Day** mode. Their number is shown under the selector.
+- **Click** a bar to highlight the matching events; the others are dimmed. Click again to clear.
 
 ---
 

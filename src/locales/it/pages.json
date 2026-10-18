@@ -422,9 +422,23 @@
     "recentUp": "Recente ↑",
     "oldUp": "Vecchio ↑",
     "causality": "Causalità",
-    "causalityHint": "Mostra causalità potenziali tra eventi di elementi collegati",
+    "causalityHint": "Causalità potenziali tra eventi di elementi collegati: fare clic su un evento per vederne cause e conseguenze (Esc per tornare)",
+    "causalityBadge": "Cause e conseguenze potenziali: {{count}} (clic per mostrare)",
     "density": "Densità",
     "densityHint": "Barra di densità attività per periodo",
+    "histogram": "Attività",
+    "histogramHint": "Attività per ora, giorno o mese",
+    "histogramMode": {
+      "hour": "Ora",
+      "weekday": "Giorno",
+      "month": "Mese"
+    },
+    "histogramSkipped": {
+      "hour": "Senza ora: {{count}}",
+      "weekday": "Senza giorno: {{count}}",
+      "month": "Senza mese: {{count}}"
+    },
+    "histogramSkippedHint": "Date troppo imprecise per questa suddivisione, non conteggiate",
     "maxDaysBetweenEvents": "Max {{days}} tra eventi",
     "unresolvedComments": "{{count}} commento/i non risolto/i",
     "potentialCausality": "Causalità potenziale",

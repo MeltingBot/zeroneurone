@@ -54,7 +54,7 @@ Chaque élément occupe sa propre ligne. Adapté pour une vue d'ensemble de la c
 | Contrôle | Fonction |
 |----------|----------|
 | **Ancien/Récent** | Inverser l'ordre vertical |
-| **Causalité** | Afficher les liens de proximité temporelle |
+| **Causalité** | Signale les événements précédés ou suivis de près par un événement d'un élément lié (compteur) ; cliquer sur un événement affiche ses causes et conséquences potentielles, Échap pour revenir |
 
 ### Mode Couloirs (swimlanes)
 
@@ -162,6 +162,16 @@ La taille des intervalles s'adapte automatiquement au niveau de zoom (7 jours, 1
 ### Interaction
 
 **Cliquez** sur une cellule pour activer le filtre temporel sur cette période.
+
+---
+
+## Histogramme d'activité
+
+Le bouton **Activité** affiche, au-dessus de la timeline, la répartition des événements par **heure** de la journée, **jour** de la semaine ou **mois** de l'année. Il fait ressortir les habitudes : horaires d'appels, jours de connexion, saisonnalité.
+
+- Le comptage porte sur les événements affichés (filtre temporel compris), en heure locale.
+- Une date trop imprécise pour le découpage n'est pas comptée : une date sans heure en mode **Heure**, une date au mois près en mode **Jour**. Leur nombre est indiqué sous le sélecteur.
+- **Cliquez** sur une barre pour mettre en évidence les événements correspondants ; les autres sont estompés. Un second clic annule.
 
 ---
 

@@ -422,9 +422,23 @@
     "recentUp": "Recent ↑",
     "oldUp": "Oud ↑",
     "causality": "Causaliteit",
-    "causalityHint": "Potentiële causaliteiten tonen tussen gebeurtenissen van verbonden elementen",
+    "causalityHint": "Potentiële causaliteiten tussen gebeurtenissen van verbonden elementen: klik op een gebeurtenis om oorzaken en gevolgen te zien (Esc om terug te gaan)",
+    "causalityBadge": "Mogelijke oorzaken en gevolgen: {{count}} (klik om te tonen)",
     "density": "Dichtheid",
     "densityHint": "Activiteitsdichtheidsbalk per periode",
+    "histogram": "Activiteit",
+    "histogramHint": "Activiteit per uur, dag of maand",
+    "histogramMode": {
+      "hour": "Uur",
+      "weekday": "Dag",
+      "month": "Maand"
+    },
+    "histogramSkipped": {
+      "hour": "Zonder tijd: {{count}}",
+      "weekday": "Zonder dag: {{count}}",
+      "month": "Zonder maand: {{count}}"
+    },
+    "histogramSkippedHint": "Datums te onnauwkeurig voor deze indeling, niet meegeteld",
     "maxDaysBetweenEvents": "Max. {{days}} tussen gebeurtenissen",
     "unresolvedComments": "{{count}} onopgeloste opmerking(en)",
     "potentialCausality": "Potentiële causaliteit",
