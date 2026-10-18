@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.66.1
+
+### Améliorations
+
+- **Nom en doublon** — dans le panneau de détail, un avertissement signale
+  qu'un autre élément porte déjà le même nom (sans tenir compte de la casse
+  ni des espaces). « Voir » centre la vue sur lui sans changer la
+  sélection ; des clics successifs passent d'un doublon à l'autre.
+- **Position du panneau** — le choix (droite, bas, gauche, détaché) se fait
+  par un menu dans l'en-tête du panneau, au lieu d'un bouton à cycle dans
+  l'en-tête du dossier. En mode détaché, le menu permet de réancrer le
+  panneau depuis la fenêtre séparée. L'icône « Réduire » suit la position.
+
+### Corrections
+
+- **Fuseau des dates anciennes** — le décalage horaire affiché dans la
+  navigation temporelle n'est plus tronqué pour les dates antérieures à
+  l'heure légale (Paris avant 1911 : `UTC+0:09:21` au lieu de `UTC+0:9.35`).
+
 ## 2.66.0
 
 ### Nouveautés
