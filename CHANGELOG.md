@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.65.7
+
+### Corrections
+
+- **Liens qui partagent un élément** — chaque lien part de son propre point
+  sur le côté de l'élément, dans l'ordre de l'élément à l'autre bout : plus
+  de départs ni de pointes superposés, en ligne droite, en courbe et en angle
+  droit.
+- **Liens parallèles** — plusieurs liens entre deux mêmes éléments restent
+  distincts et attachés aux éléments, chacun avec sa flèche et son libellé,
+  y compris quand ils vont en sens opposés.
+- **Angle droit** — les couloirs ne se croisent plus, la pointe tient entière
+  avant le coude, et le tracé se resserre quand les éléments sont proches
+  (libellés en quinconce).
+- **Déplacer un lien à angle droit** — la poignée du lien sélectionné déplace
+  son segment central et ses couloirs ; ce réglage est distinct de celui des
+  courbes. Menu du lien : « Réinitialiser le tracé ».
+
 ## 2.65.6
 
 ### Corrections
