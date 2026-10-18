@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.65.10
+
+### Corrections
+
+- **Import ANB : durée des événements** — un événement dont les attributs
+  donnent un début et une fin (par exemple « Date et heure de fin de
+  l'événement ») devient une période sur la timeline, quels que soient les
+  noms de ces attributs dans la palette.
+
 ## 2.65.9
 
 ### Corrections
