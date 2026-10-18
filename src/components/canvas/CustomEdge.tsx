@@ -3,6 +3,7 @@ import { type EdgeProps, useReactFlow } from '@xyflow/react';
 import { useUIStore } from '../../stores';
 import { FONT_SIZE_PX, type FontSize } from '../../types';
 import type { EvaluationBadge } from '../../utils/evaluation';
+import { arrowPolygon, computeEdgeRoute } from '../../utils/edgeRouting';
 
 // Remote user presence info for a link
 interface RemoteLinkPresence {
@@ -44,32 +45,6 @@ interface CustomEdgeData {
   remoteLinkSelectors?: RemoteLinkPresence[];
   // Font size for label
   fontSize?: FontSize;
-}
-
-// Helper to get handle direction vector from handle ID
-// Returns [dx, dy] unit vector indicating the direction the curve should exit/enter
-/** Lanes sit this many times their handle slot away from the node side */
-const LANE_FACTOR = 2.5;
-/** Largest handle slot (half of HANDLE_SLOT_SPAN in Canvas) */
-const MAX_HANDLE_SLOT = 24;
-/** Default spacing between handle slots (HANDLE_SLOT_SPACING in Canvas) */
-const HANDLE_SLOT_SPACING = 12;
-/** Below this lane spacing, labels of parallel edges are staggered along the run */
-const LABEL_MIN_SPACING = 18;
-const LABEL_STAGGER_STEP = 45;
-
-function getHandleDirection(handleId: string | null | undefined, type: 'source' | 'target'): { dx: number; dy: number } {
-  const defaultDir = type === 'source' ? { dx: 1, dy: 0 } : { dx: -1, dy: 0 }; // default: horizontal
-  if (!handleId) return defaultDir;
-
-  const position = handleId.split('-')[1]; // e.g., 'source-right' -> 'right'
-  switch (position) {
-    case 'top': return { dx: 0, dy: -1 };
-    case 'bottom': return { dx: 0, dy: 1 };
-    case 'left': return { dx: -1, dy: 0 };
-    case 'right': return { dx: 1, dy: 0 };
-    default: return defaultDir;
-  }
 }
 
 function CustomEdgeComponent(props: EdgeProps) {
@@ -119,29 +94,8 @@ function CustomEdgeComponent(props: EdgeProps) {
   const displayedPropertyValues = edgeData?.displayedPropertyValues;
   const labelFontSize = FONT_SIZE_PX[edgeData?.fontSize || 'sm'];
 
-  // Every link sharing a node side leaves it from its own slot (computed by Canvas, ordered by the
-  // position of the other end), so arrows and first segments do not pile up on the handle. Edges
-  // then run apart in lanes LANE_FACTOR times their slot, which keeps the slot order all along.
   const sourceSlot = edgeData?.sourceSlot ?? 0;
   const targetSlot = edgeData?.targetSlot ?? 0;
-  const slotSourceDir = getHandleDirection(sourceHandleId, 'source');
-  const slotTargetDir = getHandleDirection(targetHandleId, 'target');
-  // Along the node side the handle sits on
-  const sourceSpread = slotSourceDir.dx !== 0 ? { x: 0, y: sourceSlot } : { x: sourceSlot, y: 0 };
-  const targetSpread = slotTargetDir.dx !== 0 ? { x: 0, y: targetSlot } : { x: targetSlot, y: 0 };
-  const sourceX = rawSourceX + sourceSpread.x;
-  const sourceY = rawSourceY + sourceSpread.y;
-  const targetX = rawTargetX + targetSpread.x;
-  const targetY = rawTargetY + targetSpread.y;
-  // Straight and curved edges only need lanes between the same two nodes (parallel edges); other
-  // links go straight from their slot. Shifts are relative to the slot-shifted ends.
-  const isParallel = parallelCount > 1;
-  const sourceLane = isParallel
-    ? { x: sourceSpread.x * (LANE_FACTOR - 1), y: sourceSpread.y * (LANE_FACTOR - 1) }
-    : { x: 0, y: 0 };
-  const targetLane = isParallel
-    ? { x: targetSpread.x * (LANE_FACTOR - 1), y: targetSpread.y * (LANE_FACTOR - 1) }
-    : { x: 0, y: 0 };
 
   // Dragging state - 2D offset
   const [isDragging, setIsDragging] = useState(false);
@@ -246,389 +200,37 @@ function CustomEdgeComponent(props: EdgeProps) {
   const haloColor = '#e07a5f';
   const haloThickness = thickness + 6;
 
-  // Arrow size
-  const arrowLength = 16;
-  const arrowWidth = 12;
-
-  // Calculate edge direction and length
-  const edgeDx = targetX - sourceX;
-  const edgeDy = targetY - sourceY;
-  const edgeLength = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
-
-  // Determine path mode
+  // Route shared with the SVG export (utils/edgeRouting)
   const isStraight = curveMode === 'straight';
   const isOrthogonal = curveMode === 'orthogonal';
+  const route = computeEdgeRoute({
+    sourceX: rawSourceX,
+    sourceY: rawSourceY,
+    targetX: rawTargetX,
+    targetY: rawTargetY,
+    sourceHandleId,
+    targetHandleId,
+    curveMode,
+    parallelIndex,
+    parallelCount,
+    sourceSlot,
+    targetSlot,
+    offset: currentOffset,
+    hasStartArrow,
+    hasEndArrow,
+  });
+  const edgePath = route.path;
+  const { x: sourceX, y: sourceY } = route.sourcePoint;
+  const { x: targetX, y: targetY } = route.targetPoint;
+  // Label and drag handle share the same anchor
+  const labelX = route.labelX;
+  const labelY = route.labelY;
+  const controlHandleX = route.labelX;
+  const controlHandleY = route.labelY;
+  const orthogonalAdjustable = route.adjustable;
 
-  // Variables for path calculation
-  let edgePath: string;
-  let controlHandleX: number;
-  let controlHandleY: number;
-  let startAngle: number;
-  let endAngle: number;
-  // Orthogonal routes with a middle segment can be dragged (offset stored in orthogonalOffset)
-  let orthogonalAdjustable = false;
-
-  if (isStraight && isParallel && edgeLength > 0) {
-    // STRAIGHT LINE MODE, parallel edge: leave the handle, run alongside the others, come back to
-    // the target handle, so every edge stays attached and keeps its own arrow.
-    const ux = edgeDx / edgeLength;
-    const uy = edgeDy / edgeLength;
-    const fan = Math.min(30, edgeLength / 4);
-    const p1 = { x: sourceX + ux * fan + sourceLane.x, y: sourceY + uy * fan + sourceLane.y };
-    const p2 = { x: targetX - ux * fan + targetLane.x, y: targetY - uy * fan + targetLane.y };
-
-    controlHandleX = (p1.x + p2.x) / 2;
-    controlHandleY = (p1.y + p2.y) / 2;
-    startAngle = Math.atan2(p1.y - sourceY, p1.x - sourceX);
-    endAngle = Math.atan2(targetY - p2.y, targetX - p2.x);
-
-    const adjustedSourceX = sourceX + (hasStartArrow ? arrowLength * Math.cos(startAngle) : 0);
-    const adjustedSourceY = sourceY + (hasStartArrow ? arrowLength * Math.sin(startAngle) : 0);
-    const adjustedTargetX = targetX - (hasEndArrow ? arrowLength * Math.cos(endAngle) : 0);
-    const adjustedTargetY = targetY - (hasEndArrow ? arrowLength * Math.sin(endAngle) : 0);
-
-    edgePath = `M ${adjustedSourceX} ${adjustedSourceY} L ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${adjustedTargetX} ${adjustedTargetY}`;
-  } else if (isStraight) {
-    // STRAIGHT LINE MODE
-    // Midpoint for label
-    const midX = (sourceX + targetX) / 2;
-    const midY = (sourceY + targetY) / 2;
-    controlHandleX = midX;
-    controlHandleY = midY;
-
-    // Arrow angles based on line direction
-    startAngle = Math.atan2(edgeDy, edgeDx);
-    endAngle = startAngle;
-
-    // Arrow offsets
-    const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
-    const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
-    const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
-    const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
-
-    // Adjusted endpoints
-    const adjustedSourceX = sourceX + startOffsetX;
-    const adjustedSourceY = sourceY + startOffsetY;
-    const adjustedTargetX = targetX - endOffsetX;
-    const adjustedTargetY = targetY - endOffsetY;
-
-    // Straight line path
-    edgePath = `M ${adjustedSourceX} ${adjustedSourceY} L ${adjustedTargetX} ${adjustedTargetY}`;
-  } else if (isOrthogonal) {
-    // ORTHOGONAL MODE (right angles only)
-    // Get handle directions
-    const sourceDir = getHandleDirection(sourceHandleId, 'source');
-    const targetDir = getHandleDirection(targetHandleId, 'target');
-
-    // Minimum segment length for clean routing
-    const minSegment = 20;
-
-    // Calculate waypoints based on handle directions
-    // sourceDir: direction the edge exits the source
-    // targetDir: direction the edge enters the target (we need opposite for routing)
-    const srcHorizontal = sourceDir.dx !== 0;
-    const tgtHorizontal = targetDir.dx !== 0;
-
-    let waypoints: { x: number; y: number }[] = [];
-
-    // Links sharing a node side leave it from their slot through a short stub, then run in their own
-    // lane on fixed axes (edges drawn in opposite directions stay apart too). Offsetting only the
-    // middle segment would collapse when both nodes are aligned (zero-length segment).
-    // The stub always has room for a whole arrowhead on a straight part (with or without arrow, so
-    // all stubs of a side line up), then 12 px of line before the corner. Lanes further from the
-    // handle centre turn closer to the node, so the connectors of a side nest instead of overlapping.
-    const nesting = (slot: number) => (slot === 0 ? 0 : (MAX_HANDLE_SLOT - Math.abs(slot)) * 1.5);
-
-    // Facing handles (both horizontal or both vertical, target ahead): when the gap is shorter than
-    // the room stubs, nesting and lanes need, shrink them all by the same factor (arrowheads keep
-    // their room). At 0, each link goes straight from its slot to its target slot.
-    let laneScale = 1;
-    const facingGap = srcHorizontal && tgtHorizontal
-      ? (targetX - sourceX) * sourceDir.dx
-      : !srcHorizontal && !tgtHorizontal
-        ? (targetY - sourceY) * sourceDir.dy
-        : 0;
-    if (facingGap > 0) {
-      const flexibleRoom = 24 + nesting(sourceSlot) + nesting(targetSlot) + 2 * minSegment;
-      const room = facingGap - 2 * arrowLength;
-      if (room < flexibleRoom) laneScale = Math.max(0, room / flexibleRoom);
-    }
-
-    const sourceStubLength = arrowLength + (12 + nesting(sourceSlot)) * laneScale;
-    const targetStubLength = arrowLength + (12 + nesting(targetSlot)) * laneScale;
-    const sourceStub = { x: sourceX + sourceDir.dx * sourceStubLength, y: sourceY + sourceDir.dy * sourceStubLength };
-    const targetStub = { x: targetX + targetDir.dx * targetStubLength, y: targetY + targetDir.dy * targetStubLength };
-
-    // Each end runs in its own lane, LANE_FACTOR times its slot away from the handle, so lanes keep
-    // the slot order (no crossing) with room for labels. Values are relative to the slot-shifted
-    // ends, along the node side.
-    const sourceRun = sourceSlot * (LANE_FACTOR - 1) * laneScale;
-    const targetRun = targetSlot * (LANE_FACTOR - 1) * laneScale;
-
-    // Parallel edges whose lanes are too close for their labels get them staggered along the run,
-    // by rank, within the gap between the nodes
-    const laneSpacing = HANDLE_SLOT_SPACING * (1 + (LANE_FACTOR - 1) * laneScale);
-    const labelStagger = isParallel && facingGap > 0 && laneSpacing < LABEL_MIN_SPACING
-      ? (parallelIndex - (parallelCount - 1) / 2) * Math.min(LABEL_STAGGER_STEP, facingGap / Math.max(1, parallelCount))
-      : 0;
-    let labelOverride: { x: number; y: number } | null = null;
-
-    if (srcHorizontal && tgtHorizontal) {
-      // Both horizontal: route via vertical middle segment. Dragging moves that segment sideways
-      // and the horizontal runs up or down.
-      orthogonalAdjustable = true;
-      const midX = (sourceX + targetX) / 2 + currentOffset.x;
-      const sourceRunY = sourceY + sourceRun + currentOffset.y;
-      const targetRunY = targetY + targetRun + currentOffset.y;
-      if (labelStagger !== 0) {
-        // On the source run before the middle segment, on the target run after it
-        const x = midX + labelStagger;
-        labelOverride = { x, y: (x - midX) * sourceDir.dx < 0 ? sourceRunY : targetRunY };
-      }
-      waypoints = sourceRunY === sourceY && targetRunY === targetY
-        ? [
-          { x: midX, y: sourceY },
-          { x: midX, y: targetY },
-        ]
-        : [
-          sourceStub,
-          { x: sourceStub.x, y: sourceRunY },
-          { x: midX, y: sourceRunY },
-          { x: midX, y: targetRunY },
-          { x: targetStub.x, y: targetRunY },
-          targetStub,
-        ];
-    } else if (!srcHorizontal && !tgtHorizontal) {
-      // Both vertical: route via horizontal middle segment. Dragging moves that segment up or down
-      // and the vertical runs sideways.
-      orthogonalAdjustable = true;
-      const midY = (sourceY + targetY) / 2 + currentOffset.y;
-      const sourceRunX = sourceX + sourceRun + currentOffset.x;
-      const targetRunX = targetX + targetRun + currentOffset.x;
-      if (labelStagger !== 0) {
-        const y = midY + labelStagger;
-        labelOverride = { x: (y - midY) * sourceDir.dy < 0 ? sourceRunX : targetRunX, y };
-      }
-      waypoints = sourceRunX === sourceX && targetRunX === targetX
-        ? [
-          { x: sourceX, y: midY },
-          { x: targetX, y: midY },
-        ]
-        : [
-          sourceStub,
-          { x: sourceRunX, y: sourceStub.y },
-          { x: sourceRunX, y: midY },
-          { x: targetRunX, y: midY },
-          { x: targetRunX, y: targetStub.y },
-          targetStub,
-        ];
-    } else if (srcHorizontal && !tgtHorizontal) {
-      // Source horizontal, target vertical: single corner
-      // Go horizontal first, then vertical
-      const goingRight = sourceDir.dx > 0;
-      const targetLeft = targetX < sourceX;
-
-      if ((goingRight && !targetLeft) || (!goingRight && targetLeft)) {
-        // Direct corner works
-        waypoints = sourceRun === 0 && targetRun === 0
-          ? [{ x: targetX, y: sourceY }]
-          : [
-            sourceStub,
-            { x: sourceStub.x, y: sourceY + sourceRun },
-            { x: targetX + targetRun, y: sourceY + sourceRun },
-            { x: targetX + targetRun, y: targetStub.y },
-            targetStub,
-          ];
-      } else {
-        // Need to route around with extra segment (its horizontal middle is draggable)
-        orthogonalAdjustable = true;
-        const detourX = sourceX + sourceDir.dx * minSegment;
-        const midY = (sourceY + targetY) / 2 + sourceRun + currentOffset.y;
-        waypoints = [
-          { x: detourX, y: sourceY },
-          { x: detourX, y: midY },
-          { x: targetX, y: midY },
-        ];
-      }
-    } else {
-      // Source vertical, target horizontal: single corner
-      const goingDown = sourceDir.dy > 0;
-      const targetBelow = targetY > sourceY;
-
-      if ((goingDown && targetBelow) || (!goingDown && !targetBelow)) {
-        // Direct corner works
-        waypoints = sourceRun === 0 && targetRun === 0
-          ? [{ x: sourceX, y: targetY }]
-          : [
-            sourceStub,
-            { x: sourceX + sourceRun, y: sourceStub.y },
-            { x: sourceX + sourceRun, y: targetY + targetRun },
-            { x: targetStub.x, y: targetY + targetRun },
-            targetStub,
-          ];
-      } else {
-        // Need to route around with extra segment (its vertical middle is draggable)
-        orthogonalAdjustable = true;
-        const detourY = sourceY + sourceDir.dy * minSegment;
-        const midX = (sourceX + targetX) / 2 + sourceRun + currentOffset.x;
-        waypoints = [
-          { x: sourceX, y: detourY },
-          { x: midX, y: detourY },
-          { x: midX, y: targetY },
-        ];
-      }
-    }
-
-    // Calculate arrow angles based on final segment directions
-    if (waypoints.length > 0) {
-      const firstWp = waypoints[0];
-      startAngle = Math.atan2(firstWp.y - sourceY, firstWp.x - sourceX);
-      const lastWp = waypoints[waypoints.length - 1];
-      endAngle = Math.atan2(targetY - lastWp.y, targetX - lastWp.x);
-    } else {
-      startAngle = Math.atan2(edgeDy, edgeDx);
-      endAngle = startAngle;
-    }
-
-    // Arrow offsets
-    const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
-    const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
-    const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
-    const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
-
-    // Build path
-    const adjustedSourceX = sourceX + startOffsetX;
-    const adjustedSourceY = sourceY + startOffsetY;
-    const adjustedTargetX = targetX - endOffsetX;
-    const adjustedTargetY = targetY - endOffsetY;
-
-    let pathParts = [`M ${adjustedSourceX} ${adjustedSourceY}`];
-    for (const wp of waypoints) {
-      pathParts.push(`L ${wp.x} ${wp.y}`);
-    }
-    pathParts.push(`L ${adjustedTargetX} ${adjustedTargetY}`);
-    edgePath = pathParts.join(' ');
-
-    // Control handle at midpoint of the path for label placement
-    if (waypoints.length >= 2) {
-      // Place at middle of the middle segment of the whole route (source, waypoints, target)
-      const points = [{ x: sourceX, y: sourceY }, ...waypoints, { x: targetX, y: targetY }];
-      const segment = Math.floor((points.length - 1) / 2);
-      controlHandleX = (points[segment].x + points[segment + 1].x) / 2;
-      controlHandleY = (points[segment].y + points[segment + 1].y) / 2;
-    } else if (waypoints.length === 1) {
-      // Single corner: place between source and corner
-      controlHandleX = (sourceX + waypoints[0].x) / 2;
-      controlHandleY = (sourceY + waypoints[0].y) / 2;
-    } else {
-      // Fallback to midpoint
-      controlHandleX = (sourceX + targetX) / 2;
-      controlHandleY = (sourceY + targetY) / 2;
-    }
-    if (labelOverride) {
-      controlHandleX = labelOverride.x;
-      controlHandleY = labelOverride.y;
-    }
-  } else {
-    // CURVED MODE
-    const hasCustomOffset = currentOffset.x !== 0 || currentOffset.y !== 0;
-
-    // Get handle directions from handle IDs
-    const sourceDir = getHandleDirection(sourceHandleId, 'source');
-    const targetDir = getHandleDirection(targetHandleId, 'target');
-
-    // Curve factor: minimum 40px for short edges, scales with length, capped at 80px
-    const curveFactor = Math.max(40, Math.min(edgeLength * 0.3, 80));
-
-    // Calculate control points for cubic bezier
-    let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
-
-    if (hasCustomOffset) {
-      // User has dragged the control point - use quadratic bezier through that point
-      const midX = (sourceX + targetX) / 2;
-      const midY = (sourceY + targetY) / 2;
-
-      const controlX = midX + currentOffset.x + (sourceLane.x + targetLane.x) / 2;
-      const controlY = midY + currentOffset.y + (sourceLane.y + targetLane.y) / 2;
-
-      // Convert quadratic to cubic bezier
-      cp1x = sourceX + (2/3) * (controlX - sourceX);
-      cp1y = sourceY + (2/3) * (controlY - sourceY);
-      cp2x = targetX + (2/3) * (controlX - targetX);
-      cp2y = targetY + (2/3) * (controlY - targetY);
-    } else {
-      // Natural S-curve using handle directions
-      cp1x = sourceX + sourceDir.dx * curveFactor;
-      cp1y = sourceY + sourceDir.dy * curveFactor;
-      cp2x = targetX + targetDir.dx * curveFactor;
-      cp2y = targetY + targetDir.dy * curveFactor;
-
-      // Parallel edges bend through their own lane
-      cp1x += sourceLane.x;
-      cp1y += sourceLane.y;
-      cp2x += targetLane.x;
-      cp2y += targetLane.y;
-    }
-
-    // Midpoint of cubic bezier at t=0.5
-    controlHandleX = 0.125 * sourceX + 0.375 * cp1x + 0.375 * cp2x + 0.125 * targetX;
-    controlHandleY = 0.125 * sourceY + 0.375 * cp1y + 0.375 * cp2y + 0.125 * targetY;
-
-    // Arrow angles based on control points
-    startAngle = Math.atan2(cp1y - sourceY, cp1x - sourceX);
-    endAngle = Math.atan2(targetY - cp2y, targetX - cp2x);
-
-    // Arrow offsets
-    const endOffsetX = hasEndArrow ? arrowLength * Math.cos(endAngle) : 0;
-    const endOffsetY = hasEndArrow ? arrowLength * Math.sin(endAngle) : 0;
-    const startOffsetX = hasStartArrow ? arrowLength * Math.cos(startAngle) : 0;
-    const startOffsetY = hasStartArrow ? arrowLength * Math.sin(startAngle) : 0;
-
-    // Adjusted endpoints and control points
-    const adjustedSourceX = sourceX + startOffsetX;
-    const adjustedSourceY = sourceY + startOffsetY;
-    const adjustedTargetX = targetX - endOffsetX;
-    const adjustedTargetY = targetY - endOffsetY;
-    const adjustedCp1x = hasStartArrow ? cp1x + startOffsetX * 0.5 : cp1x;
-    const adjustedCp1y = hasStartArrow ? cp1y + startOffsetY * 0.5 : cp1y;
-    const adjustedCp2x = hasEndArrow ? cp2x - endOffsetX * 0.5 : cp2x;
-    const adjustedCp2y = hasEndArrow ? cp2y - endOffsetY * 0.5 : cp2y;
-
-    // Cubic bezier path
-    edgePath = `M ${adjustedSourceX} ${adjustedSourceY} C ${adjustedCp1x} ${adjustedCp1y} ${adjustedCp2x} ${adjustedCp2y} ${adjustedTargetX} ${adjustedTargetY}`;
-  }
-
-  // Label position is at the control handle (which is on the curve at t=0.5)
-  const labelX = controlHandleX;
-  const labelY = controlHandleY;
-
-  // Create arrow pointing in the direction of the line
-  const createEndArrow = (): string => {
-    const tipX = targetX;
-    const tipY = targetY;
-    const baseX = tipX - arrowLength * Math.cos(endAngle);
-    const baseY = tipY - arrowLength * Math.sin(endAngle);
-    const leftX = baseX - (arrowWidth / 2) * Math.sin(endAngle);
-    const leftY = baseY + (arrowWidth / 2) * Math.cos(endAngle);
-    const rightX = baseX + (arrowWidth / 2) * Math.sin(endAngle);
-    const rightY = baseY - (arrowWidth / 2) * Math.cos(endAngle);
-
-    return `${tipX},${tipY} ${leftX},${leftY} ${rightX},${rightY}`;
-  };
-
-  const createStartArrow = (): string => {
-    const tipX = sourceX;
-    const tipY = sourceY;
-    const arrowAngle = startAngle + Math.PI;
-    const baseX = tipX - arrowLength * Math.cos(arrowAngle);
-    const baseY = tipY - arrowLength * Math.sin(arrowAngle);
-    const leftX = baseX - (arrowWidth / 2) * Math.sin(arrowAngle);
-    const leftY = baseY + (arrowWidth / 2) * Math.cos(arrowAngle);
-    const rightX = baseX + (arrowWidth / 2) * Math.sin(arrowAngle);
-    const rightY = baseY - (arrowWidth / 2) * Math.cos(arrowAngle);
-
-    return `${tipX},${tipY} ${leftX},${leftY} ${rightX},${rightY}`;
-  };
+  const createEndArrow = (): string => arrowPolygon(targetX, targetY, route.endAngle);
+  const createStartArrow = (): string => arrowPolygon(sourceX, sourceY, route.startAngle + Math.PI);
 
   // Apply dimmed opacity
   const edgeOpacity = isDimmed ? 0.3 : 1;

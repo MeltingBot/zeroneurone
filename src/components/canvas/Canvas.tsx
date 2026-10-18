@@ -36,6 +36,7 @@ import { SimpleEdge } from './SimpleEdge';
 import { ContextMenu } from './ContextMenu';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { LinkContextMenu } from './LinkContextMenu';
+import { computeHandleSlots as computeLinkHandleSlots, type HandleSlots } from '../../utils/edgeRouting';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
 import { usePlugins } from '../../plugins/usePlugins';
 import { AlignDropdown } from './AlignDropdown';
@@ -481,55 +482,23 @@ function calculateBestHandles(
   }
 }
 
-type HandleSlots = { source: number; target: number };
-
-const HANDLE_SLOT_SPACING = 12;
-const HANDLE_SLOT_SPAN = 48;
-
-/**
- * Links leaving the same node side would start from the same point (and share their first segments
- * in orthogonal mode), whatever their other end. Spread every link of a side along it, ordered by
- * the position of its other end so the lines do not cross on their way out; parallel links keep
- * their order at both ends.
- */
+/** Handle slots of every link, from the handles it is drawn between (see utils/edgeRouting). */
 function computeHandleSlots(
   links: Link[],
   nodePositions: Map<string, Position>,
   linkAnchorMode: 'auto' | 'manual',
   parallelLookup: Map<string, { index: number; count: number }>
 ): Map<string, HandleSlots> {
-  type SlotEntry = { linkId: string; end: 'source' | 'target'; order: number; tie: number };
-  const sides = new Map<string, SlotEntry[]>();
-  for (const link of links) {
-    const { sourceHandle, targetHandle } = resolveLinkHandles(link, nodePositions, linkAnchorMode);
-    const tie = parallelLookup.get(link.id)?.index ?? 0;
-    const ends = [
-      { end: 'source' as const, nodeId: link.fromId, handle: sourceHandle, otherId: link.toId },
-      { end: 'target' as const, nodeId: link.toId, handle: targetHandle, otherId: link.fromId },
-    ];
-    for (const { end, nodeId, handle, otherId } of ends) {
-      const side = handle.split('-')[1];
-      const other = nodePositions.get(otherId);
-      const order = other ? (side === 'top' || side === 'bottom' ? other.x : other.y) : 0;
-      const key = `${nodeId}:${side}`;
-      let entries = sides.get(key);
-      if (!entries) { entries = []; sides.set(key, entries); }
-      entries.push({ linkId: link.id, end, order, tie });
-    }
-  }
-
-  const slots = new Map<string, HandleSlots>();
-  for (const entries of sides.values()) {
-    if (entries.length < 2) continue;
-    entries.sort((a, b) => a.order - b.order || a.tie - b.tie);
-    const spacing = Math.min(HANDLE_SLOT_SPACING, HANDLE_SLOT_SPAN / (entries.length - 1));
-    entries.forEach((entry, i) => {
-      const slot = slots.get(entry.linkId) ?? { source: 0, target: 0 };
-      slot[entry.end] = (i - (entries.length - 1) / 2) * spacing;
-      slots.set(entry.linkId, slot);
-    });
-  }
-  return slots;
+  return computeLinkHandleSlots(
+    links.map(link => ({
+      id: link.id,
+      fromId: link.fromId,
+      toId: link.toId,
+      ...resolveLinkHandles(link, nodePositions, linkAnchorMode),
+      tie: parallelLookup.get(link.id)?.index ?? 0,
+    })),
+    nodePositions
+  );
 }
 
 /** Handles a link is drawn between: per-link anchor override, else dossier anchor mode. */

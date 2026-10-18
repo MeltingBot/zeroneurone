@@ -197,7 +197,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
       const settings = currentDossier.settings;
       const svgString = buildSVGExport(elements, links, {
-        linkAnchorMode: settings?.linkAnchorMode ?? 'auto',
+        // Same default as the canvas
+        linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
         linkCurveMode: settings?.linkCurveMode ?? 'curved',
         assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
       });

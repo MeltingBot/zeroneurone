@@ -8,8 +8,10 @@
  * - Thumbnails of image assets
  */
 
-import type { Element, Link, Asset, Dossier, Report, Position } from '../types';
+import type { Element, Link, Asset, Dossier, Report } from '../types';
 import { fileService } from './fileService';
+import { computeLinkRoutes, computeNodeLayout } from './svgExportService';
+import { arrowPolygon } from '../utils/edgeRouting';
 import { escapeJsonForScript, safeColor, sanitizeUrl } from '../utils/escapeHtml';
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
@@ -144,164 +146,98 @@ function resolveColor(color: string | undefined, defaultColor: string): string {
   return safeColor(color, defaultColor);
 }
 
-// Resolve absolute position for elements in groups
-// Child elements have positions relative to their parent group
-function resolveAbsolutePosition(element: Element, elementsMap: Map<string, Element>): Position {
-  if (!element.parentGroupId) return element.position;
-  const parent = elementsMap.get(element.parentGroupId);
-  if (!parent) return element.position;
-  const parentPos = resolveAbsolutePosition(parent, elementsMap);
-  return {
-    x: parentPos.x + element.position.x,
-    y: parentPos.y + element.position.y,
-  };
-}
-
-// Get group bounds from stored position and dimensions
-// Groups in React Flow have their own position (top-left corner) and explicit width/height
-function getGroupBounds(group: Element): { x: number; y: number; width: number; height: number } {
-  const { x, y } = group.position;
-  const width = group.visual?.customWidth || 300;
-  const height = group.visual?.customHeight || 200;
-  return { x, y, width, height };
-}
-
-// Generate SVG for the graph
-function generateGraphSVG(elements: Element[], links: Link[], thumbnails: Record<string, string> = {}, noElementsLabel = 'No elements'): string {
+// Generate SVG for the graph: same layout and link routing as the canvas and the SVG export
+function generateGraphSVG(
+  elements: Element[],
+  links: Link[],
+  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal' },
+  thumbnails: Record<string, string> = {},
+  noElementsLabel = 'No elements'
+): string {
   if (elements.length === 0) {
     return `<svg viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" class="svg-text">${escapeXml(noElementsLabel)}</text></svg>`;
   }
 
-  const elementMap = new Map(elements.map((e) => [e.id, e]));
+  // Absolute top-left corners (groups resolved) and drawn sizes
+  const layout = computeNodeLayout(elements);
 
-  // Pre-compute absolute positions for all elements
-  const absolutePositions = new Map<string, Position>();
+  // Bounds of the laid-out elements
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const el of elements) {
-    absolutePositions.set(el.id, resolveAbsolutePosition(el, elementMap));
+    const pos = layout.positions.get(el.id)!;
+    const dims = layout.dimensions.get(el.id)!;
+    minX = Math.min(minX, pos.x);
+    minY = Math.min(minY, pos.y);
+    maxX = Math.max(maxX, pos.x + dims.width);
+    maxY = Math.max(maxY, pos.y + dims.height);
   }
-
-  // Calculate bounds using absolute positions
-  const positions = Array.from(absolutePositions.values());
-  const minX = Math.min(...positions.map((p) => p.x)) - 150;
-  const maxX = Math.max(...positions.map((p) => p.x)) + 150;
-  const minY = Math.min(...positions.map((p) => p.y)) - 150;
-  const maxY = Math.max(...positions.map((p) => p.y)) + 150;
-  const width = maxX - minX;
-  const height = maxY - minY;
+  minX -= 100;
+  minY -= 100;
+  const width = maxX - minX + 100;
+  const height = maxY - minY + 100;
 
   let svg = `<svg id="graph-svg" viewBox="${minX} ${minY} ${width} ${height}" preserveAspectRatio="xMidYMid meet">`;
-
-  // Defs for markers (arrows)
-  svg += `
-    <defs>
-      <marker id="arrow-light" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-        <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
-      </marker>
-      <marker id="arrow-dark" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-        <polygon points="0 0, 10 3.5, 0 7" fill="#9ca3af" />
-      </marker>
-    </defs>
-  `;
 
   // Draw groups first (background)
   const groups = elements.filter((e) => e.isGroup);
   for (const group of groups) {
-    const bounds = getGroupBounds(group);
+    const pos = layout.positions.get(group.id)!;
+    const dims = layout.dimensions.get(group.id)!;
     const color = resolveColor(group.visual?.color, '#e5e7eb');
     const borderColor = resolveColor(group.visual?.borderColor, '#d1d5db');
 
-    const groupCenterX = bounds.x + bounds.width / 2;
-    const groupCenterY = bounds.y + bounds.height / 2;
+    const groupCenterX = pos.x + dims.width / 2;
+    const groupCenterY = pos.y + dims.height / 2;
 
     svg += `
       <g class="group" data-element-id="${group.id}" data-x="${groupCenterX}" data-y="${groupCenterY}" style="cursor: pointer;">
         <rect
-          x="${bounds.x}" y="${bounds.y}"
-          width="${bounds.width}" height="${bounds.height}"
+          x="${pos.x}" y="${pos.y}"
+          width="${dims.width}" height="${dims.height}"
           fill="${color}" fill-opacity="0.3"
           stroke="${borderColor}" stroke-width="2" stroke-dasharray="4,4"
           rx="8"
         />
-        <text x="${bounds.x + 8}" y="${bounds.y + 18}" class="svg-text" font-size="12" font-weight="600">${escapeXml(group.label || '')}</text>
+        <text x="${pos.x + 8}" y="${pos.y + 18}" class="svg-text" font-size="12" font-weight="600">${escapeXml(group.label || '')}</text>
       </g>
     `;
   }
 
   // Draw links
-  for (const link of links) {
-    const fromPos = absolutePositions.get(link.fromId);
-    const toPos = absolutePositions.get(link.toId);
-    if (!fromPos || !toPos) continue;
-
+  for (const { link, route, hasStartArrow, hasEndArrow } of computeLinkRoutes(links, layout, routeSettings)) {
     const color = resolveColor(link.visual?.color, '#9ca3af');
+    const thickness = link.visual?.thickness ?? 2;
     const style = link.visual?.style || 'solid';
     const strokeDasharray = style === 'dashed' ? '8,4' : style === 'dotted' ? '2,4' : 'none';
-    const hasArrow = link.direction === 'forward' || link.direction === 'both';
-
-    // Calculate offset for link label
-    const midX = (fromPos.x + toPos.x) / 2;
-    const midY = (fromPos.y + toPos.y) / 2;
+    const arrows = [
+      hasEndArrow ? arrowPolygon(route.targetPoint.x, route.targetPoint.y, route.endAngle) : null,
+      hasStartArrow ? arrowPolygon(route.sourcePoint.x, route.sourcePoint.y, route.startAngle + Math.PI) : null,
+    ].filter((points): points is string => points !== null)
+      .map((points) => `<polygon points="${points}" fill="${color}" />`)
+      .join('');
 
     svg += `
-      <g class="link" data-link-id="${link.id}" data-from="${link.fromId}" data-to="${link.toId}" data-x="${midX}" data-y="${midY}" style="cursor: pointer;">
-        <line
-          x1="${fromPos.x}" y1="${fromPos.y}"
-          x2="${toPos.x}" y2="${toPos.y}"
-          stroke="${color}"
-          stroke-width="2"
-          stroke-dasharray="${strokeDasharray}"
-          ${hasArrow ? 'class="arrow-line"' : ''}
-        />
-        ${link.label ? `<text x="${midX}" y="${midY - 8}" text-anchor="middle" class="svg-text-secondary" font-size="12">${escapeXml(link.label)}</text>` : ''}
+      <g class="link" data-link-id="${link.id}" data-from="${link.fromId}" data-to="${link.toId}" data-x="${route.labelX}" data-y="${route.labelY}" style="cursor: pointer;">
+        <path d="${route.path}" fill="none" stroke="${color}" stroke-width="${thickness}" stroke-dasharray="${strokeDasharray}" stroke-linecap="round" />
+        ${arrows}
+        ${link.label ? `<text x="${route.labelX}" y="${route.labelY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-label" font-size="12">${escapeXml(link.label)}</text>` : ''}
       </g>
     `;
-  }
-
-  // Size calculation (same as svgExportService)
-  const SIZE_MAP: Record<string, number> = { small: 40, medium: 56, large: 72 };
-  function getBaseSize(size: string | number): number {
-    if (typeof size === 'number') return size;
-    return SIZE_MAP[size] ?? 56;
-  }
-  function computeNodeDimensions(el: Element): { width: number; height: number } {
-    if (el.visual?.customWidth && el.visual?.customHeight) {
-      return { width: el.visual.customWidth, height: el.visual.customHeight };
-    }
-    const baseSize = getBaseSize(el.visual?.size || 'medium');
-    const label = el.label || '';
-    const estimatedTextWidth = label.length * 7 + 24;
-    const shape = el.visual?.shape || 'rectangle';
-    if (shape === 'rectangle') {
-      const width = Math.min(Math.max(estimatedTextWidth * 1.2, 120), 280);
-      const height = Math.max(baseSize * 0.5, 40);
-      return { width, height };
-    }
-    if (shape === 'square') {
-      const size = Math.max(baseSize, 60);
-      return { width: size, height: size };
-    }
-    if (shape === 'circle') {
-      const size = Math.min(Math.max(estimatedTextWidth * 0.8, baseSize, 50), 150);
-      return { width: size, height: size };
-    }
-    if (shape === 'diamond') {
-      const size = Math.min(Math.max(estimatedTextWidth * 0.9, baseSize, 60), 150);
-      return { width: size, height: size };
-    }
-    return { width: baseSize, height: baseSize };
   }
 
   // Draw nodes (not groups)
   for (const el of elements) {
     if (el.isGroup) continue;
 
-    const pos = absolutePositions.get(el.id);
-    if (!pos) continue;
-    const { x, y } = pos;
+    const pos = layout.positions.get(el.id);
+    const dims = layout.dimensions.get(el.id);
+    if (!pos || !dims) continue;
+    // Centre of the element (positions are top-left corners, as on the canvas)
+    const x = pos.x + dims.width / 2;
+    const y = pos.y + dims.height / 2;
     const color = resolveColor(el.visual?.color, '#3b82f6');
     const borderColor = resolveColor(el.visual?.borderColor, color);
     const shape = el.visual?.shape || 'rectangle';
-    const dims = computeNodeDimensions(el);
 
     // Find thumbnail for this element
     let thumbDataUrl = '';
@@ -525,7 +461,17 @@ export async function exportInteractiveReport(
   const thumbnails = await generateThumbnails(assets);
 
   // Generate SVG
-  const graphSvg = generateGraphSVG(elements, links, thumbnails, i18nStrings.noElements);
+  const graphSvg = generateGraphSVG(
+    elements,
+    links,
+    {
+      // Same defaults as the canvas
+      linkAnchorMode: dossier.settings?.linkAnchorMode ?? 'manual',
+      linkCurveMode: dossier.settings?.linkCurveMode ?? 'curved',
+    },
+    thumbnails,
+    i18nStrings.noElements
+  );
 
   // Build TOC and report HTML
   const tocItems: { id: string; title: string }[] = [];
@@ -692,12 +638,11 @@ main{display:flex;flex:1;overflow:hidden}
 #graph-svg{width:100%;height:100%}
 #graph-svg .svg-text{fill:var(--text-primary)}
 #graph-svg .svg-text-secondary{fill:var(--text-secondary)}
-#graph-svg .arrow-line{marker-end:url(#arrow-light)}
-[data-theme="dark"] #graph-svg .arrow-line{marker-end:url(#arrow-dark)}
+#graph-svg .link-label{paint-order:stroke fill;stroke:var(--bg-primary);stroke-width:3px}
 #graph-svg .node:hover{filter:brightness(1.1)}
 #graph-svg .node.highlighted circle,#graph-svg .node.highlighted rect,#graph-svg .node.highlighted polygon,#graph-svg .node.highlighted ellipse{stroke:var(--accent);stroke-width:3}
 #graph-svg .group.highlighted rect{stroke:var(--accent);stroke-width:3}
-#graph-svg .link.highlighted line{stroke:var(--accent);stroke-width:4}
+#graph-svg .link.highlighted path{stroke:var(--accent);stroke-width:4}#graph-svg .link.highlighted polygon{fill:var(--accent)}
 #graph-controls{position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;gap:4px}
 #element-tooltip{position:absolute;background:var(--bg-primary);border:1px solid var(--border-default);border-radius:4px;padding:12px;max-width:300px;box-shadow:0 4px 12px rgba(0,0,0,.1);display:none;z-index:100}
 #element-tooltip.visible{display:block}

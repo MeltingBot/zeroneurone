@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.65.9
+
+### Corrections
+
+- **Export SVG** — les liens sont tracés comme à l'écran : liens qui
+  partagent un élément répartis le long de son côté, liens parallèles
+  distincts avec chacun leur flèche, couloirs et déplacements à angle droit.
+- **Rapport interactif** — le graphe reprend la disposition et les tracés
+  du canevas : éléments à leur place exacte, liens selon le mode de tracé
+  du dossier (droit, courbe, angle droit), épaisseur et flèches conservées.
+- **Poignées des liens à l'export** — sans réglage dans le dossier, l'export
+  SVG et le rapport utilisent les mêmes poignées que le canevas.
+
 ## 2.65.8
 
 ### Corrections

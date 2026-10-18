@@ -220,3 +220,47 @@ describe('exportInteractiveReport — report rendering', () => {
     expect(anchor!.textContent).toBe('Alice');
   });
 });
+
+describe('exportInteractiveReport graph', () => {
+  const A = '11111111-1111-4111-8111-111111111111';
+  const B = '22222222-2222-4222-8222-222222222222';
+  const makeLink = (id: string): Link => ({
+    id, dossierId: 'd1', fromId: A, toId: B, sourceHandle: 'source-right', targetHandle: 'target-left',
+    label: id, notes: '', tags: [], properties: [], directed: true, direction: 'forward',
+    confidence: null, source: '', date: null, dateRange: null,
+    visual: { color: '#333333', style: 'solid', thickness: 2 }, curveOffset: { x: 0, y: 0 },
+    createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01'),
+  } as Link);
+
+  async function graph(dossierSettings: Partial<Dossier['settings']>) {
+    const elements = [
+      makeElement({ id: A, label: 'A', position: { x: 0, y: 0 } }),
+      makeElement({ id: B, label: 'B', position: { x: 600, y: 0 } }),
+    ];
+    const blob = await exportInteractiveReport(
+      { ...DOSSIER, settings: dossierSettings } as Dossier,
+      makeReport('text'), elements, [makeLink('l1'), makeLink('l2'), makeLink('l3')], []
+    );
+    const doc = new DOMParser().parseFromString(await blob.text(), 'text/html');
+    return doc.querySelector('#graph-svg')!;
+  }
+
+  for (const linkCurveMode of ['straight', 'curved', 'orthogonal'] as const) {
+    it(`draws parallel links apart with their own arrow (${linkCurveMode})`, async () => {
+      const svg = await graph({ linkCurveMode });
+      const links = Array.from(svg.querySelectorAll('.link'));
+      const paths = links.map(l => l.querySelector('path')!.getAttribute('d'));
+      const tips = links.map(l => l.querySelector('polygon')!.getAttribute('points')!.split(' ')[0]);
+      expect(links).toHaveLength(3);
+      expect(new Set(paths).size).toBe(3);
+      expect(new Set(tips).size).toBe(3);
+    });
+  }
+
+  it('places elements by their top-left corner, as on the canvas', async () => {
+    const svg = await graph({});
+    const node = svg.querySelector(`.node[data-element-id="${A}"] rect`)!;
+    expect(node.getAttribute('x')).toBe('0');
+    expect(node.getAttribute('y')).toBe('0');
+  });
+});

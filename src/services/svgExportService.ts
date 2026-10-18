@@ -1,5 +1,6 @@
 import type { Element, Link, Position, ElementSize } from '../types';
 import { safeColor } from '../utils/escapeHtml';
+import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
 
 // ============================================================================
 // TYPES
@@ -135,19 +136,6 @@ export function resolveAbsolutePosition(element: Element, elementsMap: Map<strin
 // EDGE GEOMETRY (replicates CustomEdge.tsx logic)
 // ============================================================================
 
-function getHandleDirection(handleId: string | null, type: 'source' | 'target'): { dx: number; dy: number } {
-  const defaultDir = type === 'source' ? { dx: 1, dy: 0 } : { dx: -1, dy: 0 };
-  if (!handleId) return defaultDir;
-  const position = handleId.split('-')[1];
-  switch (position) {
-    case 'top': return { dx: 0, dy: -1 };
-    case 'bottom': return { dx: 0, dy: 1 };
-    case 'left': return { dx: -1, dy: 0 };
-    case 'right': return { dx: 1, dy: 0 };
-    default: return defaultDir;
-  }
-}
-
 function calculateBestHandles(sourcePos: Position, targetPos: Position): { sourceHandle: string; targetHandle: string } {
   const dx = targetPos.x - sourcePos.x;
   const dy = targetPos.y - sourcePos.y;
@@ -188,194 +176,9 @@ function getStrokeDasharray(style: string, thickness: number): string | undefine
   }
 }
 
-interface EdgeGeometry {
-  path: string;
-  labelX: number;
-  labelY: number;
-  startAngle: number;
-  endAngle: number;
-  sourcePoint: Position;
-  targetPoint: Position;
-}
-
-function computeEdgeGeometry(
-  sourcePos: Position,
-  sourceDims: NodeDimensions,
-  targetPos: Position,
-  targetDims: NodeDimensions,
-  sourceHandleId: string | null,
-  targetHandleId: string | null,
-  curveMode: 'straight' | 'curved' | 'orthogonal',
-  parallelOffset: number,
-  curveOffset: { x: number; y: number }
-): EdgeGeometry {
-  const srcPoint = getConnectionPoint(sourcePos, sourceDims, sourceHandleId);
-  const tgtPoint = getConnectionPoint(targetPos, targetDims, targetHandleId);
-
-  const sourceX = srcPoint.x;
-  const sourceY = srcPoint.y;
-  const targetX = tgtPoint.x;
-  const targetY = tgtPoint.y;
-
-  const edgeDx = targetX - sourceX;
-  const edgeDy = targetY - sourceY;
-  const edgeLength = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
-  const perpX = edgeLength > 0 ? -edgeDy / edgeLength : 0;
-  const perpY = edgeLength > 0 ? edgeDx / edgeLength : 0;
-
-  let edgePath: string;
-  let labelX: number;
-  let labelY: number;
-  let startAngle: number;
-  let endAngle: number;
-
-  if (curveMode === 'straight') {
-    const midX = (sourceX + targetX) / 2 + perpX * parallelOffset;
-    const midY = (sourceY + targetY) / 2 + perpY * parallelOffset;
-    labelX = midX;
-    labelY = midY;
-    startAngle = Math.atan2(edgeDy, edgeDx);
-    endAngle = startAngle;
-
-    const sx = sourceX + perpX * parallelOffset;
-    const sy = sourceY + perpY * parallelOffset;
-    const tx = targetX + perpX * parallelOffset;
-    const ty = targetY + perpY * parallelOffset;
-    edgePath = `M ${sx} ${sy} L ${tx} ${ty}`;
-  } else if (curveMode === 'orthogonal') {
-    const sourceDir = getHandleDirection(sourceHandleId, 'source');
-    const targetDir = getHandleDirection(targetHandleId, 'target');
-    const srcHorizontal = sourceDir.dx !== 0;
-    const tgtHorizontal = targetDir.dx !== 0;
-    const minSegment = 20;
-    let waypoints: Position[] = [];
-
-    if (srcHorizontal && tgtHorizontal) {
-      const midX = (sourceX + targetX) / 2 + parallelOffset;
-      waypoints = [{ x: midX, y: sourceY }, { x: midX, y: targetY }];
-    } else if (!srcHorizontal && !tgtHorizontal) {
-      const midY = (sourceY + targetY) / 2 + parallelOffset;
-      waypoints = [{ x: sourceX, y: midY }, { x: targetX, y: midY }];
-    } else if (srcHorizontal && !tgtHorizontal) {
-      const goingRight = sourceDir.dx > 0;
-      const targetLeft = targetX < sourceX;
-      if ((goingRight && !targetLeft) || (!goingRight && targetLeft)) {
-        waypoints = [{ x: targetX, y: sourceY + parallelOffset }];
-      } else {
-        const detourX = sourceX + sourceDir.dx * minSegment;
-        const midY = (sourceY + targetY) / 2;
-        waypoints = [
-          { x: detourX, y: sourceY },
-          { x: detourX, y: midY + parallelOffset },
-          { x: targetX, y: midY + parallelOffset },
-        ];
-      }
-    } else {
-      const goingDown = sourceDir.dy > 0;
-      const targetBelow = targetY > sourceY;
-      if ((goingDown && targetBelow) || (!goingDown && !targetBelow)) {
-        waypoints = [{ x: sourceX + parallelOffset, y: targetY }];
-      } else {
-        const detourY = sourceY + sourceDir.dy * minSegment;
-        const midX = (sourceX + targetX) / 2;
-        waypoints = [
-          { x: sourceX, y: detourY },
-          { x: midX + parallelOffset, y: detourY },
-          { x: midX + parallelOffset, y: targetY },
-        ];
-      }
-    }
-
-    if (waypoints.length > 0) {
-      startAngle = Math.atan2(waypoints[0].y - sourceY, waypoints[0].x - sourceX);
-      const lastWp = waypoints[waypoints.length - 1];
-      endAngle = Math.atan2(targetY - lastWp.y, targetX - lastWp.x);
-    } else {
-      startAngle = Math.atan2(edgeDy, edgeDx);
-      endAngle = startAngle;
-    }
-
-    let pathParts = [`M ${sourceX} ${sourceY}`];
-    for (const wp of waypoints) {
-      pathParts.push(`L ${wp.x} ${wp.y}`);
-    }
-    pathParts.push(`L ${targetX} ${targetY}`);
-    edgePath = pathParts.join(' ');
-
-    if (waypoints.length >= 2) {
-      const midIndex = Math.floor(waypoints.length / 2);
-      const wp1 = midIndex === 0 ? { x: sourceX, y: sourceY } : waypoints[midIndex - 1];
-      const wp2 = waypoints[midIndex];
-      labelX = (wp1.x + wp2.x) / 2;
-      labelY = (wp1.y + wp2.y) / 2;
-    } else if (waypoints.length === 1) {
-      labelX = (sourceX + waypoints[0].x) / 2;
-      labelY = (sourceY + waypoints[0].y) / 2;
-    } else {
-      labelX = (sourceX + targetX) / 2;
-      labelY = (sourceY + targetY) / 2;
-    }
-  } else {
-    // Curved mode
-    const hasCustomOffset = curveOffset.x !== 0 || curveOffset.y !== 0;
-    const sourceDir = getHandleDirection(sourceHandleId, 'source');
-    const targetDir = getHandleDirection(targetHandleId, 'target');
-    const curveFactor = Math.max(40, Math.min(edgeLength * 0.3, 80));
-
-    let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
-
-    if (hasCustomOffset) {
-      const midX = (sourceX + targetX) / 2;
-      const midY = (sourceY + targetY) / 2;
-      const controlX = midX + curveOffset.x + perpX * parallelOffset;
-      const controlY = midY + curveOffset.y + perpY * parallelOffset;
-      cp1x = sourceX + (2 / 3) * (controlX - sourceX);
-      cp1y = sourceY + (2 / 3) * (controlY - sourceY);
-      cp2x = targetX + (2 / 3) * (controlX - targetX);
-      cp2y = targetY + (2 / 3) * (controlY - targetY);
-    } else {
-      cp1x = sourceX + sourceDir.dx * curveFactor;
-      cp1y = sourceY + sourceDir.dy * curveFactor;
-      cp2x = targetX + targetDir.dx * curveFactor;
-      cp2y = targetY + targetDir.dy * curveFactor;
-      if (parallelOffset !== 0) {
-        cp1x += perpX * parallelOffset;
-        cp1y += perpY * parallelOffset;
-        cp2x += perpX * parallelOffset;
-        cp2y += perpY * parallelOffset;
-      }
-    }
-
-    labelX = 0.125 * sourceX + 0.375 * cp1x + 0.375 * cp2x + 0.125 * targetX;
-    labelY = 0.125 * sourceY + 0.375 * cp1y + 0.375 * cp2y + 0.125 * targetY;
-    startAngle = Math.atan2(cp1y - sourceY, cp1x - sourceX);
-    endAngle = Math.atan2(targetY - cp2y, targetX - cp2x);
-
-    edgePath = `M ${sourceX} ${sourceY} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${targetX} ${targetY}`;
-  }
-
-  return { path: edgePath, labelX, labelY, startAngle, endAngle, sourcePoint: srcPoint, targetPoint: tgtPoint };
-}
-
 // ============================================================================
 // SVG BUILDING
 // ============================================================================
-
-function buildArrowPolygon(
-  tipX: number,
-  tipY: number,
-  angle: number
-): string {
-  const arrowLength = 16;
-  const arrowWidth = 12;
-  const baseX = tipX - arrowLength * Math.cos(angle);
-  const baseY = tipY - arrowLength * Math.sin(angle);
-  const leftX = baseX - (arrowWidth / 2) * Math.sin(angle);
-  const leftY = baseY + (arrowWidth / 2) * Math.cos(angle);
-  const rightX = baseX + (arrowWidth / 2) * Math.sin(angle);
-  const rightY = baseY - (arrowWidth / 2) * Math.cos(angle);
-  return `${tipX},${tipY} ${leftX},${leftY} ${rightX},${rightY}`;
-}
 
 function buildNodeSVG(element: Element, pos: Position, dims: NodeDimensions, imageDataUrl?: string): string {
   const color = resolveColor(element.visual.color);
@@ -556,7 +359,7 @@ function buildAnnotationSVG(element: Element, pos: Position, dims: NodeDimension
 
 function buildEdgeSVG(
   link: Link,
-  geometry: EdgeGeometry,
+  geometry: EdgeRoute,
   hasStartArrow: boolean,
   hasEndArrow: boolean
 ): string {
@@ -573,12 +376,11 @@ function buildEdgeSVG(
 
   // Arrows
   if (hasEndArrow) {
-    const points = buildArrowPolygon(geometry.targetPoint.x, geometry.targetPoint.y, geometry.endAngle);
+    const points = arrowPolygon(geometry.targetPoint.x, geometry.targetPoint.y, geometry.endAngle);
     parts.push(`    <polygon points="${points}" fill="${color}"/>`);
   }
   if (hasStartArrow) {
-    const reverseAngle = geometry.startAngle + Math.PI;
-    const points = buildArrowPolygon(geometry.sourcePoint.x, geometry.sourcePoint.y, reverseAngle);
+    const points = arrowPolygon(geometry.sourcePoint.x, geometry.sourcePoint.y, geometry.startAngle + Math.PI);
     parts.push(`    <polygon points="${points}" fill="${color}"/>`);
   }
 
@@ -591,6 +393,119 @@ function buildEdgeSVG(
 }
 
 // ============================================================================
+// LAYOUT AND LINK ROUTES (shared with the interactive report)
+// ============================================================================
+
+export interface NodeLayout {
+  /** Absolute top-left corner of every element */
+  positions: Map<string, Position>;
+  dimensions: Map<string, NodeDimensions>;
+}
+
+/** Absolute positions (groups resolved) and drawn sizes of the elements. */
+export function computeNodeLayout(elements: Element[]): NodeLayout {
+  const elementsMap = new Map<string, Element>();
+  for (const el of elements) elementsMap.set(el.id, el);
+  const positions = new Map<string, Position>();
+  const dimensions = new Map<string, NodeDimensions>();
+
+  for (const el of elements) {
+    positions.set(el.id, resolveAbsolutePosition(el, elementsMap));
+    if (el.isGroup) {
+      // Groups use customWidth/customHeight or defaults
+      dimensions.set(el.id, { width: el.visual.customWidth || 200, height: el.visual.customHeight || 150 });
+    } else if (el.isAnnotation) {
+      dimensions.set(el.id, { width: el.visual.customWidth || 160, height: el.visual.customHeight || 60 });
+    } else {
+      dimensions.set(el.id, computeNodeDimensions(el));
+    }
+  }
+  return { positions, dimensions };
+}
+
+export interface RoutedLink {
+  link: Link;
+  route: EdgeRoute;
+  hasStartArrow: boolean;
+  hasEndArrow: boolean;
+}
+
+/**
+ * Route of every link whose ends are laid out: handles, parallel ranks, slots along shared node
+ * sides, then the same routing as the canvas (utils/edgeRouting).
+ */
+export function computeLinkRoutes(
+  links: Link[],
+  layout: NodeLayout,
+  settings: Pick<SVGExportSettings, 'linkAnchorMode' | 'linkCurveMode'>
+): RoutedLink[] {
+  const { positions, dimensions } = layout;
+  const placed: { link: Link; sourceHandle: string; targetHandle: string; parallelIndex: number; parallelCount: number }[] = [];
+  const pairGroups = new Map<string, Link[]>();
+  for (const link of links) {
+    if (!positions.has(link.fromId) || !positions.has(link.toId)) continue;
+    if (!dimensions.has(link.fromId) || !dimensions.has(link.toId)) continue;
+    const key = link.fromId < link.toId ? `${link.fromId}-${link.toId}` : `${link.toId}-${link.fromId}`;
+    const group = pairGroups.get(key) ?? [];
+    group.push(link);
+    pairGroups.set(key, group);
+  }
+  for (const group of pairGroups.values()) {
+    group.forEach((link, index) => {
+      const sourcePos = positions.get(link.fromId)!;
+      const targetPos = positions.get(link.toId)!;
+      const sourceDims = dimensions.get(link.fromId)!;
+      const targetDims = dimensions.get(link.toId)!;
+      let sourceHandle = link.sourceHandle ?? 'source-right';
+      let targetHandle = link.targetHandle ?? 'target-left';
+      if ((link.anchorMode ?? settings.linkAnchorMode) === 'auto') {
+        const best = calculateBestHandles(
+          { x: sourcePos.x + sourceDims.width / 2, y: sourcePos.y + sourceDims.height / 2 },
+          { x: targetPos.x + targetDims.width / 2, y: targetPos.y + targetDims.height / 2 }
+        );
+        sourceHandle = best.sourceHandle;
+        targetHandle = best.targetHandle;
+      }
+      placed.push({ link, sourceHandle, targetHandle, parallelIndex: index, parallelCount: group.length });
+    });
+  }
+  const handleSlots = computeHandleSlots(
+    placed.map(r => ({
+      id: r.link.id, fromId: r.link.fromId, toId: r.link.toId,
+      sourceHandle: r.sourceHandle, targetHandle: r.targetHandle, tie: r.parallelIndex,
+    })),
+    positions
+  );
+
+  return placed.map(({ link, sourceHandle, targetHandle, parallelIndex, parallelCount }) => {
+    const sourcePoint = getConnectionPoint(positions.get(link.fromId)!, dimensions.get(link.fromId)!, sourceHandle);
+    const targetPoint = getConnectionPoint(positions.get(link.toId)!, dimensions.get(link.toId)!, targetHandle);
+    const direction = link.direction ?? (link.directed ? 'forward' : 'none');
+    const hasEndArrow = direction === 'forward' || direction === 'both';
+    const hasStartArrow = direction === 'backward' || direction === 'both';
+    const slots = handleSlots.get(link.id);
+    const route = computeEdgeRoute({
+      sourceX: sourcePoint.x,
+      sourceY: sourcePoint.y,
+      targetX: targetPoint.x,
+      targetY: targetPoint.y,
+      sourceHandleId: sourceHandle,
+      targetHandleId: targetHandle,
+      curveMode: settings.linkCurveMode,
+      parallelIndex,
+      parallelCount,
+      sourceSlot: slots?.source ?? 0,
+      targetSlot: slots?.target ?? 0,
+      // Each route style keeps its own manual offset
+      offset: (settings.linkCurveMode === 'orthogonal' ? link.orthogonalOffset : link.curveOffset) ?? { x: 0, y: 0 },
+      hasStartArrow,
+      hasEndArrow,
+    });
+    return { link, route, hasStartArrow, hasEndArrow };
+  });
+}
+
+// ============================================================================
 // MAIN EXPORT FUNCTION
 // ============================================================================
 
@@ -599,9 +514,6 @@ export function buildSVGExport(
   links: Link[],
   settings: SVGExportSettings
 ): string {
-  const elementsMap = new Map<string, Element>();
-  for (const el of elements) elementsMap.set(el.id, el);
-
   // Separate elements by type, exclude dimmed/hidden (isDimmed handled at canvas level, not in data)
   const groups: Element[] = [];
   const annotations: Element[] = [];
@@ -613,90 +525,13 @@ export function buildSVGExport(
     else normalElements.push(el);
   }
 
-  // Compute absolute positions and dimensions
-  const positionsMap = new Map<string, Position>();
-  const dimensionsMap = new Map<string, NodeDimensions>();
-
-  for (const el of elements) {
-    const absPos = resolveAbsolutePosition(el, elementsMap);
-    positionsMap.set(el.id, absPos);
-
-    if (el.isGroup) {
-      // Groups use customWidth/customHeight or defaults
-      dimensionsMap.set(el.id, {
-        width: el.visual.customWidth || 200,
-        height: el.visual.customHeight || 150,
-      });
-    } else if (el.isAnnotation) {
-      dimensionsMap.set(el.id, {
-        width: el.visual.customWidth || 160,
-        height: el.visual.customHeight || 60,
-      });
-    } else {
-      dimensionsMap.set(el.id, computeNodeDimensions(el));
-    }
-  }
-
-  // Compute parallel edge counts
-  const parallelEdgesMap = new Map<string, { link: Link; index: number }[]>();
-  for (const link of links) {
-    const key = link.fromId < link.toId
-      ? `${link.fromId}-${link.toId}`
-      : `${link.toId}-${link.fromId}`;
-    if (!parallelEdgesMap.has(key)) parallelEdgesMap.set(key, []);
-    const entries = parallelEdgesMap.get(key)!;
-    entries.push({ link, index: entries.length });
-  }
+  const layout = computeNodeLayout(elements);
+  const positionsMap = layout.positions;
+  const dimensionsMap = layout.dimensions;
 
   // Build edge SVGs
-  const edgeSvgs: string[] = [];
-  for (const link of links) {
-    const sourcePos = positionsMap.get(link.fromId);
-    const targetPos = positionsMap.get(link.toId);
-    const sourceDims = dimensionsMap.get(link.fromId);
-    const targetDims = dimensionsMap.get(link.toId);
-    if (!sourcePos || !targetPos || !sourceDims || !targetDims) continue;
-
-    // Determine handles
-    let sourceHandle = link.sourceHandle;
-    let targetHandle = link.targetHandle;
-    if ((link.anchorMode ?? settings.linkAnchorMode) === 'auto') {
-      const best = calculateBestHandles(
-        { x: sourcePos.x + sourceDims.width / 2, y: sourcePos.y + sourceDims.height / 2 },
-        { x: targetPos.x + targetDims.width / 2, y: targetPos.y + targetDims.height / 2 }
-      );
-      sourceHandle = best.sourceHandle;
-      targetHandle = best.targetHandle;
-    }
-
-    // Parallel offset
-    const key = link.fromId < link.toId
-      ? `${link.fromId}-${link.toId}`
-      : `${link.toId}-${link.fromId}`;
-    const entries = parallelEdgesMap.get(key)!;
-    const entry = entries.find(e => e.link === link)!;
-    const parallelCount = entries.length;
-    const parallelSpacing = 30;
-    const parallelOffset = parallelCount > 1
-      ? (entry.index - (parallelCount - 1) / 2) * parallelSpacing
-      : 0;
-
-    const geometry = computeEdgeGeometry(
-      sourcePos, sourceDims,
-      targetPos, targetDims,
-      sourceHandle, targetHandle,
-      settings.linkCurveMode,
-      parallelOffset,
-      link.curveOffset ?? { x: 0, y: 0 }
-    );
-
-    // Direction → arrows
-    const direction = link.direction ?? (link.directed ? 'forward' : 'none');
-    const hasEndArrow = direction === 'forward' || direction === 'both';
-    const hasStartArrow = direction === 'backward' || direction === 'both';
-
-    edgeSvgs.push(buildEdgeSVG(link, geometry, hasStartArrow, hasEndArrow));
-  }
+  const edgeSvgs = computeLinkRoutes(links, layout, settings)
+    .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow));
 
   // Build node SVGs
   const assetDataUrls = settings.assetDataUrls;
