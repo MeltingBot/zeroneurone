@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.66.0
+
+### Nouveautés
+
+- **Histogramme d'activité** — le bouton « Activité » de la timeline affiche
+  la répartition des événements par heure de la journée, jour de la semaine
+  ou mois de l'année (horaires d'appels, jours de connexion, saisonnalité).
+  Un clic sur une barre met en évidence les événements correspondants ; les
+  dates trop imprécises pour le découpage sont comptées à part.
+- **Causalités à la demande** — au repos, un compteur signale les événements
+  précédés ou suivis de près par un événement d'un élément lié ; un clic sur
+  un événement affiche ses causes et conséquences potentielles et estompe
+  le reste (Échap pour revenir). Une seule cause par élément lié : la plus
+  proche.
+
+### Corrections
+
+- **Axe de la timeline** — les dates ne se chevauchent plus : mois abrégés,
+  année en repère, écart adapté à la longueur des libellés.
+- **Dossier exemple** — dates en heure locale.
+
 ## 2.65.10
 
 ### Corrections

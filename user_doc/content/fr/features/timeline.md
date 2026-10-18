@@ -54,6 +54,7 @@ Chaque élément occupe sa propre ligne. Adapté pour une vue d'ensemble de la c
 | Contrôle | Fonction |
 |----------|----------|
 | **Ancien/Récent** | Inverser l'ordre vertical |
+| **Activité** | Histogramme de répartition par heure, jour ou mois (voir [Histogramme d'activité](#histogramme-dactivité)) |
 | **Causalité** | Signale les événements précédés ou suivis de près par un événement d'un élément lié (compteur) ; cliquer sur un événement affiche ses causes et conséquences potentielles, Échap pour revenir |
 
 ### Mode Couloirs (swimlanes)

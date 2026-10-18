@@ -54,6 +54,7 @@ Each element occupies its own row. Suited for an overview of the chronology.
 | Control | Function |
 |---------|----------|
 | **Old/Recent** | Reverse vertical order |
+| **Activity** | Breakdown histogram by hour, weekday or month (see [Activity histogram](#activity-histogram)) |
 | **Causality** | Marks events closely preceded or followed by an event of a linked element (counter); click an event to show its potential causes and consequences, Esc to go back |
 
 ### Swimlane Mode
