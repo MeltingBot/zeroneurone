@@ -224,9 +224,11 @@ function CustomEdgeComponent(props: EdgeProps) {
   const edgeDy = targetY - sourceY;
   const edgeLength = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
 
-  // Perpendicular vector for parallel offset
-  const perpX = edgeLength > 0 ? -edgeDy / edgeLength : 0;
-  const perpY = edgeLength > 0 ? edgeDx / edgeLength : 0;
+  // Perpendicular vector for parallel offset. Its side must not depend on the edge direction,
+  // otherwise two edges drawn in opposite directions between the same nodes land on the same side.
+  const parallelSide = sourceX < targetX || (sourceX === targetX && sourceY <= targetY) ? 1 : -1;
+  const perpX = edgeLength > 0 ? (-edgeDy / edgeLength) * parallelSide : 0;
+  const perpY = edgeLength > 0 ? (edgeDx / edgeLength) * parallelSide : 0;
 
   // Determine path mode
   const isStraight = curveMode === 'straight';
@@ -239,7 +241,29 @@ function CustomEdgeComponent(props: EdgeProps) {
   let startAngle: number;
   let endAngle: number;
 
-  if (isStraight) {
+  if (isStraight && parallelOffset !== 0 && edgeLength > 0) {
+    // STRAIGHT LINE MODE, parallel edge: leave the handle, run alongside the others, come back to
+    // the target handle, so every edge stays attached and keeps its own arrow.
+    const ux = edgeDx / edgeLength;
+    const uy = edgeDy / edgeLength;
+    const fan = Math.min(30, edgeLength / 4);
+    const shiftX = perpX * parallelOffset;
+    const shiftY = perpY * parallelOffset;
+    const p1 = { x: sourceX + ux * fan + shiftX, y: sourceY + uy * fan + shiftY };
+    const p2 = { x: targetX - ux * fan + shiftX, y: targetY - uy * fan + shiftY };
+
+    controlHandleX = (p1.x + p2.x) / 2;
+    controlHandleY = (p1.y + p2.y) / 2;
+    startAngle = Math.atan2(p1.y - sourceY, p1.x - sourceX);
+    endAngle = Math.atan2(targetY - p2.y, targetX - p2.x);
+
+    const adjustedSourceX = sourceX + (hasStartArrow ? arrowLength * Math.cos(startAngle) : 0);
+    const adjustedSourceY = sourceY + (hasStartArrow ? arrowLength * Math.sin(startAngle) : 0);
+    const adjustedTargetX = targetX - (hasEndArrow ? arrowLength * Math.cos(endAngle) : 0);
+    const adjustedTargetY = targetY - (hasEndArrow ? arrowLength * Math.sin(endAngle) : 0);
+
+    edgePath = `M ${adjustedSourceX} ${adjustedSourceY} L ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${adjustedTargetX} ${adjustedTargetY}`;
+  } else if (isStraight) {
     // STRAIGHT LINE MODE
     // Midpoint for label (with parallel offset for multiple edges)
     const midX = (sourceX + targetX) / 2 + perpX * parallelOffset;
@@ -282,20 +306,45 @@ function CustomEdgeComponent(props: EdgeProps) {
 
     let waypoints: { x: number; y: number }[] = [];
 
+    // Parallel edges each get their own lane: a short stub leaves the handle, then the edge runs
+    // `parallelOffset` away on fixed axes (so edges drawn in opposite directions stay apart too).
+    // Offsetting only the middle segment collapses when both nodes are aligned (zero-length segment).
+    const laneStub = 12;
+    const sourceStub = { x: sourceX + sourceDir.dx * laneStub, y: sourceY + sourceDir.dy * laneStub };
+    const targetStub = { x: targetX + targetDir.dx * laneStub, y: targetY + targetDir.dy * laneStub };
+
     if (srcHorizontal && tgtHorizontal) {
       // Both horizontal: route via vertical middle segment
-      const midX = (sourceX + targetX) / 2 + parallelOffset;
-      waypoints = [
-        { x: midX, y: sourceY },
-        { x: midX, y: targetY },
-      ];
+      const midX = (sourceX + targetX) / 2;
+      waypoints = parallelOffset === 0
+        ? [
+          { x: midX, y: sourceY },
+          { x: midX, y: targetY },
+        ]
+        : [
+          sourceStub,
+          { x: sourceStub.x, y: sourceY + parallelOffset },
+          { x: midX, y: sourceY + parallelOffset },
+          { x: midX, y: targetY + parallelOffset },
+          { x: targetStub.x, y: targetY + parallelOffset },
+          targetStub,
+        ];
     } else if (!srcHorizontal && !tgtHorizontal) {
       // Both vertical: route via horizontal middle segment
-      const midY = (sourceY + targetY) / 2 + parallelOffset;
-      waypoints = [
-        { x: sourceX, y: midY },
-        { x: targetX, y: midY },
-      ];
+      const midY = (sourceY + targetY) / 2;
+      waypoints = parallelOffset === 0
+        ? [
+          { x: sourceX, y: midY },
+          { x: targetX, y: midY },
+        ]
+        : [
+          sourceStub,
+          { x: sourceX + parallelOffset, y: sourceStub.y },
+          { x: sourceX + parallelOffset, y: midY },
+          { x: targetX + parallelOffset, y: midY },
+          { x: targetX + parallelOffset, y: targetStub.y },
+          targetStub,
+        ];
     } else if (srcHorizontal && !tgtHorizontal) {
       // Source horizontal, target vertical: single corner
       // Go horizontal first, then vertical
@@ -307,7 +356,15 @@ function CustomEdgeComponent(props: EdgeProps) {
 
       if ((goingRight && !targetLeft) || (!goingRight && targetLeft)) {
         // Direct corner works
-        waypoints = [{ x: cornerX, y: cornerY + parallelOffset }];
+        waypoints = parallelOffset === 0
+          ? [{ x: cornerX, y: cornerY }]
+          : [
+            sourceStub,
+            { x: sourceStub.x, y: sourceY + parallelOffset },
+            { x: targetX + parallelOffset, y: sourceY + parallelOffset },
+            { x: targetX + parallelOffset, y: targetStub.y },
+            targetStub,
+          ];
       } else {
         // Need to route around with extra segment
         const detourX = sourceX + sourceDir.dx * minSegment;
@@ -327,7 +384,15 @@ function CustomEdgeComponent(props: EdgeProps) {
 
       if ((goingDown && targetBelow) || (!goingDown && !targetBelow)) {
         // Direct corner works
-        waypoints = [{ x: cornerX + parallelOffset, y: cornerY }];
+        waypoints = parallelOffset === 0
+          ? [{ x: cornerX, y: cornerY }]
+          : [
+            sourceStub,
+            { x: sourceX + parallelOffset, y: sourceStub.y },
+            { x: sourceX + parallelOffset, y: targetY + parallelOffset },
+            { x: targetStub.x, y: targetY + parallelOffset },
+            targetStub,
+          ];
       } else {
         // Need to route around with extra segment
         const detourY = sourceY + sourceDir.dy * minSegment;
