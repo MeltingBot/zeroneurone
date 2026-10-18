@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.65.8
+
+### Corrections
+
+- **Import ANB (i2 Analyst's Notebook)** — l'import lit maintenant la
+  structure du fichier au lieu de deviner : les liens relient les bons
+  éléments (plus de liens manquants ni décalés), chaque élément prend le
+  type de la palette en tag (« Anonyme », type par défaut d'i2, devient
+  « Générique ») et ses attributs gardent leur nom.
+- **Import ANB : dates, flèches, couleurs** — les événements et les liens
+  datés apparaissent sur la timeline, à l'heure affichée par Analyst's
+  Notebook ; flèches, couleurs de trait et sources sont repris ; les blocs
+  de texte deviennent des annotations. Un avertissement signale un fichier
+  dont la structure n'est pas celle attendue.
+- **Import et export ANX** — les dates des liens apparaissent sur la
+  timeline, comme un instant et non une période en cours ; les dates de
+  lien saisies dans ZeroNeurone sont exportées.
+
 ## 2.65.7
 
 ### Corrections
