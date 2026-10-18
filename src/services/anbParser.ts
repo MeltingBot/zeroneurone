@@ -481,6 +481,48 @@ function firstNewClassPos(b: Uint8Array, name: string): number {
   return Infinity;
 }
 
+/**
+ * i2 date attributes, local wall clock: "2026 10 18 7 25 45" (Y M D h m s) or "12/07/1990".
+ * Returns whether a time of day is set (00:00:00 counts as a plain date).
+ */
+export function parseAttributeDate(value: string): { date: Date; hasTime: boolean } | null {
+  let m = value.match(/^(\d{4}) (\d{1,2}) (\d{1,2})(?: (\d{1,2}) (\d{1,2}) (\d{1,2}))?$/);
+  if (m) {
+    const [h, min, sec] = [m[4], m[5], m[6]].map(v => Number(v ?? 0));
+    return {
+      date: new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), h, min, sec),
+      hasTime: h + min + sec > 0,
+    };
+  }
+  m = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return { date: new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])), hasTime: false };
+  return null;
+}
+
+/**
+ * End of a dated item from its attributes, whatever the palette names them: one date-time attribute
+ * matches the start (same instant, or off by a time-zone offset since attributes hold the analyst's
+ * wall clock) and exactly one other date-time attribute is later. The end is the start plus the
+ * duration between both attributes. Null when that is ambiguous or absent.
+ */
+export function findEventEnd(start: Date, attributes: ANBAttribute[]): Date | null {
+  const times = attributes
+    .map(a => parseAttributeDate(a.value))
+    .filter((p): p is { date: Date; hasTime: boolean } => p !== null && p.hasTime)
+    .map(p => p.date.getTime());
+  const QUARTER = 15 * 60_000;
+  const isZoneShift = (delta: number) => Math.abs(delta) <= 14 * 3_600_000 && delta % QUARTER === 0;
+  const startTime = start.getTime();
+  const startCandidates = times.filter(t => isZoneShift(t - startTime));
+  if (startCandidates.length === 0) return null;
+  // Prefer the exact match, then the smallest shift
+  const startAttr = startCandidates.reduce((best, t) =>
+    Math.abs(t - startTime) < Math.abs(best - startTime) ? t : best);
+  const later = times.filter(t => t > startAttr);
+  if (later.length !== 1) return null;
+  return new Date(startTime + (later[0] - startAttr));
+}
+
 // ============================================================================
 // MAIN PARSER
 // ============================================================================

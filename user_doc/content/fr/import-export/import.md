@@ -330,7 +330,7 @@ Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
 | Type de la palette | Tag ; « Anonyme », type par défaut d'i2, devient « Générique » |
 | Icône du type | Icône |
 | Attributs | Propriétés (dates et dates-heures typées) |
-| Date et heure | Événement ponctuel sur la timeline |
+| Date et heure | Événement sur la timeline : ponctuel, ou période si un attribut date-heure donne le début et un autre la fin |
 | Bloc de texte | Annotation |
 
 Icônes, cadres, cercles, événements et lignes de thème deviennent des éléments. La date d'une ligne de thème n'est pas reprise.

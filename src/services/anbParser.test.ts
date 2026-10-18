@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import CFB from 'cfb';
-import { parseANBContents, readUStr, type ANBLink } from './anbParser';
+import { findEventEnd, parseANBContents, readUStr, type ANBLink } from './anbParser';
 
 // Real charts live in doc_perso/ (git-ignored: they contain real case data). Skipped when absent.
 const DIR = resolve(__dirname, '../../doc_perso');
@@ -32,6 +32,29 @@ describe('readUStr', () => {
   });
 });
 
+describe('findEventEnd', () => {
+  const attr = (value: string) => ({ name: 'x', value });
+  const start = new Date(2026, 9, 18, 7, 25, 45);
+
+  it('ends the event at the later date-time attribute', () => {
+    expect(findEventEnd(start, [attr('2026 10 18 7 25 45'), attr('2026 10 18 7 52 55')]))
+      .toEqual(new Date(2026, 9, 18, 7, 52, 55));
+  });
+
+  it('keeps the duration when attributes hold another time zone than the start', () => {
+    const utcStart = new Date(start.getTime() - 2 * 3_600_000);
+    expect(findEventEnd(utcStart, [attr('2026 10 18 7 25 45'), attr('2026 10 18 7 52 55')]))
+      .toEqual(new Date(utcStart.getTime() + (27 * 60 + 10) * 1000));
+  });
+
+  it('gives up when no attribute matches the start or several could be the end', () => {
+    expect(findEventEnd(start, [attr('2026 10 18 9 1 7'), attr('2026 10 18 9 30 0')])).toBeNull();
+    expect(findEventEnd(start, [attr('2026 10 18 7 25 45'), attr('2026 10 18 8 0 0'), attr('2026 10 18 9 0 0')])).toBeNull();
+    expect(findEventEnd(start, [attr('2026 10 18 7 25 45')])).toBeNull();
+    expect(findEventEnd(start, [attr('12/07/1990'), attr('rouge')])).toBeNull();
+  });
+});
+
 describe.skipIf(!existsSync(TEST))('recent chart with full French palette', () => {
   const chart = parseANBContents(contents(TEST));
   const byLabel = (l: string) => chart.items.find(i => i.label === l)!;
@@ -56,6 +79,9 @@ describe.skipIf(!existsSync(TEST))('recent chart with full French palette', () =
     expect(byLabel('Toto').attributes).toEqual([{ name: 'Date de naissance', value: '1990 7 12 0 0 0' }]);
     expect(byLabel('Titre Evènement').attributes.map(a => a.value))
       .toEqual(['2026 10 18 7 25 45', '2026 10 18 7 52 55']);
+    // Start 07:25:45 in Paris (stored UTC), end attribute 07:52:55: the event lasts 27 min 10 s
+    const event = byLabel('Titre Evènement');
+    expect(findEventEnd(event.date!, event.attributes)).toEqual(new Date(Date.UTC(2026, 9, 18, 5, 52, 55)));
   });
 
   it('reads source and description of chart items', () => {

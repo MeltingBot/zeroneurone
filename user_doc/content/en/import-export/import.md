@@ -330,7 +330,7 @@ The `lcx:LibraryCatalogue` hierarchy is parsed: non-abstract ancestor types are 
 | Palette type | Tag; "Anonymous", i2's default type, becomes "Generic" |
 | Type icon | Icon |
 | Attributes | Properties (typed dates and date-times) |
-| Date and time | One-off timeline event |
+| Date and time | Timeline event: one-off, or a period when one date-time attribute gives the start and another the end |
 | Text block | Annotation |
 
 Icons, boxes, circles, events and theme lines become elements. A theme line's date is not kept.

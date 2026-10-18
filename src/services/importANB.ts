@@ -13,7 +13,15 @@ import type {
 } from '../types';
 import { DEFAULT_ELEMENT_VISUAL, DEFAULT_LINK_VISUAL } from '../types';
 import type { ImportResult } from './importService';
-import { parseANBContents, type ANBAttribute, type ANBIssue, type ANBItem, type ANBLink } from './anbParser';
+import {
+  findEventEnd,
+  parseANBContents,
+  parseAttributeDate,
+  type ANBAttribute,
+  type ANBIssue,
+  type ANBItem,
+  type ANBLink,
+} from './anbParser';
 
 // ============================================================================
 // i18n
@@ -121,24 +129,6 @@ function formatTypeName(name: string): string {
   if (generic) return generic;
   if (name !== name.toUpperCase()) return name;
   return name.charAt(0) + name.slice(1).toLowerCase();
-}
-
-/**
- * i2 date attributes, local wall clock: "2026 10 18 7 25 45" (Y M D h m s) or "12/07/1990".
- * Returns whether a time of day is set (00:00:00 counts as a plain date).
- */
-function parseAttributeDate(value: string): { date: Date; hasTime: boolean } | null {
-  let m = value.match(/^(\d{4}) (\d{1,2}) (\d{1,2})(?: (\d{1,2}) (\d{1,2}) (\d{1,2}))?$/);
-  if (m) {
-    const [h, min, sec] = [m[4], m[5], m[6]].map(v => Number(v ?? 0));
-    return {
-      date: new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), h, min, sec),
-      hasTime: h + min + sec > 0,
-    };
-  }
-  m = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return { date: new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])), hasTime: false };
-  return null;
 }
 
 function attributeToProperty(attr: ANBAttribute): Property {
@@ -257,12 +247,12 @@ function buildElement(
     tags: item.typeName ? [formatTypeName(item.typeName)] : [],
     properties,
     date,
-    // The timeline reads events, not `date`. An i2 date is an instant: end = start, since an
-    // empty end means "ongoing" in ZN
+    // The timeline reads events, not `date`. An i2 date is an instant (end = start, since an empty
+    // end means "ongoing" in ZN), unless start/end attributes give the event a duration
     events: date ? [{
       id: generateUUID(),
       date,
-      dateEnd: date,
+      dateEnd: findEventEnd(date, item.attributes) ?? date,
       label: '',
       precision: item.dateHasTime ? 'minute' : 'day',
       ...(item.source ? { source: item.source } : {}),
