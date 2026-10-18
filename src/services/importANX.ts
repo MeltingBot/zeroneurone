@@ -443,6 +443,8 @@ export async function importANX(
         events.push({
           id: generateUUID(),
           date: eDate,
+          // A card date is an instant; an empty end would mean "ongoing" in ZN
+          dateEnd: eDate,
           label: card.getAttribute('Summary') || `Event ${c}`,
           description: card.getAttribute('Text') || undefined,
           source: [eSrcType, eSrcRef].filter(Boolean).join(' — ') || undefined,
@@ -564,6 +566,7 @@ export async function importANX(
       // ── Source & Date from Card[0] ──
       let linkSource = 'i2 ANB';
       let linkDate: Date | null = null;
+      let linkHasTime = false;
       const linkCards = Array.from(linkEl.querySelectorAll('CardCollection > Card'));
       if (linkCards.length > 0) {
         const card0 = linkCards[0];
@@ -571,6 +574,7 @@ export async function importANX(
         if (dateStr && card0.getAttribute('DateSet') === 'true') {
           const parsed = parseDateValue(dateStr);
           if (parsed) linkDate = parsed;
+          linkHasTime = card0.getAttribute('TimeSet') === 'true';
         }
         const srcRef = card0.getAttribute('SourceReference') || '';
         const srcType = card0.getAttribute('SourceType') || '';
@@ -592,7 +596,11 @@ export async function importANX(
         confidence: mapGradeToConfidence(gradeOne),
         source: linkSource,
         date: linkDate,
-        dateRange: null,
+        // The timeline reads dateRange, not `date`. A card date is an instant: end = start, since
+        // an empty end means "ongoing" in ZN
+        dateRange: linkDate
+          ? { start: linkDate, end: linkDate, precision: linkHasTime ? 'minute' : 'day' }
+          : null,
         directed: direction !== 'none',
         direction,
         visual: {

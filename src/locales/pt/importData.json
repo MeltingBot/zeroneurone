@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "Formato ANB inválido: stream Contents ausente",
       "importError": "Erro de importação i2 ANB: {{message}}",
-      "unknownError": "Erro desconhecido"
+      "unknownError": "Erro desconhecido",
+      "noItems": "Nenhum elemento i2 encontrado no gráfico"
     },
     "warnings": {
-      "entityNoId": "Entidade sem ID ignorada",
-      "linkMissingEntity": "Ligação ignorada: entidade de origem/destino não encontrada"
+      "itemCountMismatch": "Elementos lidos: {{found}} de {{expected}}",
+      "endIdsInvalid": "Tabela de extremidades ilegível: ligações não importadas",
+      "linkCountMismatch": "Ligações lidas: {{found}} de {{expected}}",
+      "unresolvedLinks": "{{count}} ligações sem extremidades ignoradas",
+      "unknownTypes": "{{count}} elementos sem tipo de paleta",
+      "missingPositions": "{{count}} elementos sem posição"
     }
   },
   "fec": {

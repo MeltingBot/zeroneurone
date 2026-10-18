@@ -149,7 +149,7 @@ Certaines notions de ZeroNeurone n'ont pas d'équivalent dans i2 et ne sont pas 
 
 Le niveau de confiance est transmis dans le grade 1 d'i2 (1 à 5). Dans un dossier en [modèle Europol ou Amirauté]({{< relref "features/evaluation" >}}), la fiabilité de la source est transmise dans le grade 1 et l'exactitude de l'information dans le grade 2, par position dans la grille (A = 1).
 
-Le format binaire natif `.anb` n'est pas proposé à l'export : sa structure n'est pas documentée publiquement, et ZeroNeurone ne sait le lire que partiellement, par reconnaissance de motifs.
+Le format binaire natif `.anb` n'est pas proposé à l'export : sa structure n'est pas documentée publiquement. ZeroNeurone sait le lire, mais en écrire un fichier qu'i2 accepte demanderait de reproduire toute la palette et les styles internes.
 
 ---
 

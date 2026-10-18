@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "Invalid ANB format: missing Contents stream",
       "importError": "i2 ANB import error: {{message}}",
-      "unknownError": "Unknown error"
+      "unknownError": "Unknown error",
+      "noItems": "No i2 item found in the chart"
     },
     "warnings": {
-      "entityNoId": "Entity without ID skipped",
-      "linkMissingEntity": "Link skipped: source/target entity not found"
+      "itemCountMismatch": "Items read: {{found}} of {{expected}}",
+      "endIdsInvalid": "Link end table unreadable: links not imported",
+      "linkCountMismatch": "Links read: {{found}} of {{expected}}",
+      "unresolvedLinks": "{{count}} links without ends skipped",
+      "unknownTypes": "{{count}} items without palette type",
+      "missingPositions": "{{count}} items without position"
     }
   },
   "fec": {

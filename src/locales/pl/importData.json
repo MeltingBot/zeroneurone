@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "Nieprawidłowy format ANB: brak strumienia Contents",
       "importError": "Błąd importu i2 ANB: {{message}}",
-      "unknownError": "Nieznany błąd"
+      "unknownError": "Nieznany błąd",
+      "noItems": "Nie znaleziono żadnego elementu i2 na wykresie"
     },
     "warnings": {
-      "entityNoId": "Pominięto encję bez ID",
-      "linkMissingEntity": "Pominięto łącze: nie znaleziono encji źródłowej/docelowej"
+      "itemCountMismatch": "Odczytane elementy: {{found}} z {{expected}}",
+      "endIdsInvalid": "Tabela końców nieczytelna: łącza nie zostały zaimportowane",
+      "linkCountMismatch": "Odczytane łącza: {{found}} z {{expected}}",
+      "unresolvedLinks": "Pominięto łącza bez końców: {{count}}",
+      "unknownTypes": "Elementy bez typu palety: {{count}}",
+      "missingPositions": "Elementy bez pozycji: {{count}}"
     }
   },
   "fec": {

@@ -317,47 +317,46 @@ The `lcx:LibraryCatalogue` hierarchy is parsed: non-abstract ancestor types are 
 
 ### ANB (i2 Analyst's Notebook - binary)
 
-**Proprietary binary format** from i2 Analyst's Notebook (.anb).
+**Proprietary binary format** from i2 Analyst's Notebook (.anb), read directly: no need to export to ANX from i2.
 
-#### Imported Data (Entities)
+#### Imported Data (Elements)
 
 | ANB Data | ZeroNeurone Property |
 |----------|---------------------|
-| Label / Identity | Element label |
+| Label | Element label |
 | Description | Notes |
-| X/Y position (binary) | Canvas position |
-| EntityType.Name | Tag |
-| EntityType.Colour (COLORREF) | Color |
-| IconStyle.Enlargement | Size (small/medium/large) |
-| EntityType.IconFile | Lucide icon |
-| DatabaseProperty[] | Typed properties |
-| Attribute[] | Typed properties |
-| GradeOneIndex (1-5) | Confidence (20-100) |
-| Card.DateTime | Date + Event |
-| Card.Text | Notes (appended) |
-| Multiple Cards | Events |
+| Source type, source | Source |
+| Position | Canvas position (uniform scale) |
+| Palette type | Tag; "Anonymous", i2's default type, becomes "Generic" |
+| Type icon | Icon |
+| Attributes | Properties (typed dates and date-times) |
+| Date and time | One-off timeline event |
+| Text block | Annotation |
+
+Icons, boxes, circles, events and theme lines become elements. A theme line's date is not kept.
+
+Times entered in i2 are stored in UTC and shown in the computer's time zone; a date without time stays a calendar day.
 
 #### Imported Data (Links)
 
 | ANB Data | ZeroNeurone Property |
 |----------|---------------------|
-| Label | Link label |
-| ArrowStyle | Direction |
-| LineWidth | Thickness |
-| LineColour / LinkType.Colour | Color |
-| Strength → DotStyle | Style (solid/dashed/dotted) |
-| LinkType.Name | Tag |
+| Ends | Linked elements |
+| Arrows | Direction |
+| Label | Link label (empty for an attachment to a theme line) |
+| Date and time | One-off timeline period (end = start) |
+| Source type, source | Source |
+| Line colour | Color (black, i2's default, keeps ZN's) |
 
 #### Limitations
 
 {{< hint warning >}}
-ANB import is based on reverse-engineering of i2's proprietary binary format. The following limitations apply:
+ANB import is based on reverse-engineering of i2's binary format. Tested on charts with custom palettes and on a recent chart using the full i2 palette.
 
-- **Version compatibility**: tested on ANB exports from i2 AN 8.x — earlier or later versions may have structural differences.
-- **Intelligence cards (Cards)**: 0x818D records are imported as separate elements linked to their parent entity; parent matching is based on spatial proximity of X coordinates.
-- **Images**: images embedded in ANB entities are not imported.
-- **Groups**: i2 visual groups are not imported.
-- **Custom icons**: only standard i2 icons are mapped to Lucide React; custom icons are ignored.
+- **Cards**: intelligence cards attached to items are not imported.
+- **Images**: embedded images are not imported.
+- **Icons**: only common i2 icons have an equivalent; others get the default icon.
+- If the file structure differs from what is expected, the import reports it in a warning instead of producing wrong links.
 {{< /hint >}}
 
 ---

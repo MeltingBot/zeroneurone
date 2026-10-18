@@ -149,7 +149,7 @@ Some ZeroNeurone notions have no i2 counterpart and are not carried over. Groups
 
 The confidence level is sent as i2 grade 1 (1 to 5). In a dossier using the [Europol or Admiralty model]({{< relref "features/evaluation" >}}), source reliability is sent as grade 1 and information accuracy as grade 2, by position in the grid (A = 1).
 
-The native binary `.anb` format is not offered for export: its structure is not publicly documented, and ZeroNeurone only reads it partially, by pattern recognition.
+The native binary `.anb` format is not offered for export: its structure is not publicly documented. ZeroNeurone can read it, but writing a file i2 accepts would mean reproducing the whole palette and internal styles.
 
 ---
 

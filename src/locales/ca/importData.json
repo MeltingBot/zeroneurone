@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "Format ANB no vàlid: manca el stream Contents",
       "importError": "Error d'importació i2 ANB: {{message}}",
-      "unknownError": "Error desconegut"
+      "unknownError": "Error desconegut",
+      "noItems": "No s'ha trobat cap element i2 al gràfic"
     },
     "warnings": {
-      "entityNoId": "Entitat sense ID omesa",
-      "linkMissingEntity": "Enllaç omès: entitat origen/destinació no trobada"
+      "itemCountMismatch": "Elements llegits: {{found}} de {{expected}}",
+      "endIdsInvalid": "Taula d'extrems il·legible: enllaços no importats",
+      "linkCountMismatch": "Enllaços llegits: {{found}} de {{expected}}",
+      "unresolvedLinks": "{{count}} enllaços sense extrems omesos",
+      "unknownTypes": "{{count}} elements sense tipus de paleta",
+      "missingPositions": "{{count}} elements sense posició"
     }
   },
   "fec": {

@@ -1,10 +1,10 @@
 /**
  * Export to i2 Analyst's Notebook Exchange format (.anx).
  *
- * The native .anb container is deliberately not a target: importANB.ts reads it
- * by scanning bytes for GUID patterns and *infers* the serialisation markers
- * rather than reading the class registry that declares them. Reading that way
- * works because anything not understood can be skipped; writing cannot.
+ * The native .anb container is deliberately not a target: anbParser.ts reads the
+ * chart items and links it needs and skips the palette, styles and print settings
+ * it does not understand. Reading that way works because anything not understood
+ * can be skipped; writing cannot.
  *
  * ## The rule that governs this emitter
  *
@@ -515,12 +515,14 @@ export function buildANXExport(dossier: Dossier, elements: Element[], links: Lin
     const end1 = idMap.get(link.fromId)!;
     const end2 = idMap.get(link.toId)!;
 
-    collectDate(link.date);
+    // Dates entered in ZN live in dateRange; `date` only comes from older imports
+    const linkWhen = link.date ?? link.dateRange?.start ?? null;
+    collectDate(linkWhen);
 
     const attributes = attributesFor(link, (link.tags ?? []).slice(1).map((t) => ({ key: ATTR_TAG, value: t })));
 
     const cards: string[] = [];
-    const linkDate = formatI2Date(link.date);
+    const linkDate = formatI2Date(linkWhen);
     if (linkDate) {
       cards.push(
         `        <Card Summary="${escapeAttr(link.label)}" Text="" DateTime="${linkDate}" DateSet="true" TimeSet="true" SourceReference="${escapeAttr(sourceToPlainText(link.source, getSourceSchemeNames()))}" SourceType="ZeroNeurone" />`,

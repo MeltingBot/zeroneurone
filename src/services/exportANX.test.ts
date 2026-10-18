@@ -365,4 +365,23 @@ describe('buildANXExport — round trip through importANX', () => {
     expect(links[0].label).toBe('travaille chez');
     expect(links[0].direction).toBe('forward');
   });
+
+  it('carries a link date entered in ZN (dateRange) back onto the timeline', async () => {
+    const when = new Date(2026, 9, 18, 8, 30);
+    const source = [
+      makeElement({ id: 'e1', label: 'A', position: { x: 0, y: 0 } }),
+      makeElement({ id: 'e2', label: 'B', position: { x: 200, y: 0 } }),
+    ];
+    const sourceLinks = [makeLink({
+      id: 'l1', fromId: 'e1', toId: 'e2', label: 'appel',
+      dateRange: { start: when, end: null } as never,
+    })];
+
+    await importANX(buildANXExport(DOSSIER, source, sourceLinks), 'd-target' as never);
+    const [link] = await db.links.where({ dossierId: 'd-target' }).toArray();
+    expect(link.dateRange?.start).toEqual(when);
+    // An instant, not an ongoing period
+    expect(link.dateRange?.end).toEqual(when);
+    expect(link.dateRange?.precision).toBe('minute');
+  });
 });

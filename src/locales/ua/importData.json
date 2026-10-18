@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "Невірний формат ANB: відсутній потік Contents",
       "importError": "Помилка імпорту i2 ANB: {{message}}",
-      "unknownError": "Невідома помилка"
+      "unknownError": "Невідома помилка",
+      "noItems": "У діаграмі не знайдено жодного елемента i2"
     },
     "warnings": {
-      "entityNoId": "Пропущено об'єкт без ID",
-      "linkMissingEntity": "Зв'язок пропущено: об'єкт джерело/ціль не знайдено"
+      "itemCountMismatch": "Прочитано елементів: {{found}} з {{expected}}",
+      "endIdsInvalid": "Таблиця кінців нечитабельна: зв'язки не імпортовано",
+      "linkCountMismatch": "Прочитано зв'язків: {{found}} з {{expected}}",
+      "unresolvedLinks": "Пропущено зв'язків без кінців: {{count}}",
+      "unknownTypes": "Елементів без типу палітри: {{count}}",
+      "missingPositions": "Елементів без позиції: {{count}}"
     }
   },
   "fec": {

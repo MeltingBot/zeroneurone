@@ -1,0 +1,654 @@
+/**
+ * i2 Analyst's Notebook (.anb) — structural parser for the `Contents` stream.
+ *
+ * The stream is an MFC CArchive with i2's own object table on top:
+ *  - Strings are MFC CStrings: `FF FE FF` + length (u8, or `FF` + u16, or `FFFF` + u32) + UTF-16LE.
+ *  - A class is introduced once as `FF FF <schema u16> <len u16> <ASCII name>` and later referred to
+ *    by a u16 tag with the high bit set. The first object of a class also writes its base-class
+ *    chain as `<CString name> <u32 version>` pairs; later objects omit it.
+ *  - Objects reference each other through u32 ids (palette types, attribute classes, chart items).
+ *
+ * Chart layout (stable across ANB versions seen so far):
+ *   palette ... u32 itemCount, itemCount × chart item (LCI_Icon, LCI_Box, LCI_Event, ...),
+ *   itemCount × u32 end id (one per item, same order), u32 linkCount,
+ *   linkCount × (u32 end id A, u32 end id B, LCI_Link object).
+ *
+ * Every chart item and link carries a CI_ChartItem block:
+ *   u32 itemId, 3 × CString, 3 × u32 grade, CString GUID "{...}".
+ */
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ANBAttribute {
+  name: string;
+  value: string;
+}
+
+export interface ANBItem {
+  /** i2 representation, from the class name: Icon, Box, Circle, Theme, Event, TextBlock... */
+  kind: string;
+  guid: string;
+  label: string;
+  description: string;
+  /** Source type and source reference of the item, joined; '' when absent */
+  source: string;
+  typeName: string | null;
+  typeIcon: string | null;
+  /** Palette colour of the type, null when the palette keeps i2's default */
+  typeColor: string | null;
+  /** Explicit line colour set on the item (LineColour), null when absent */
+  color: string | null;
+  /** Raw i2 chart coordinates, null when the position block could not be read */
+  x: number | null;
+  y: number | null;
+  date: Date | null;
+  /** False when i2 holds a date without time of day */
+  dateHasTime: boolean;
+  attributes: ANBAttribute[];
+}
+
+export interface ANBLink {
+  guid: string;
+  /** Indices into ANBChart.items */
+  fromIndex: number;
+  toIndex: number;
+  label: string;
+  description: string;
+  source: string;
+  date: Date | null;
+  dateHasTime: boolean;
+  /** Line colour from the link's line style, else its LineColour property; null when unknown */
+  color: string | null;
+  /** Arrow tips in raw chart coordinates: none, one (head at one end) or two (both ends) */
+  arrowHeads: Array<{ x: number; y: number }>;
+}
+
+export type ANBIssue =
+  | { code: 'noItems' }
+  | { code: 'itemCountMismatch'; expected: number; found: number }
+  | { code: 'endIdsInvalid' }
+  | { code: 'linkCountMismatch'; expected: number; found: number }
+  | { code: 'unresolvedLinks'; count: number }
+  | { code: 'unknownTypes'; count: number }
+  | { code: 'missingPositions'; count: number };
+
+export interface ANBChart {
+  items: ANBItem[];
+  links: ANBLink[];
+  issues: ANBIssue[];
+}
+
+// ============================================================================
+// PRIMITIVES
+// ============================================================================
+
+const CLSID_TAIL = [0xc4, 0x29, 0xd6, 0x28, 0x95, 0x4c, 0x8d, 0xef, 0xa6, 0x66, 0x76, 0x3f, 0x5b, 0x70];
+const CHAIN_NAME = /^[A-Z]{2,4}_[A-Za-z0-9]+$/;
+const CLASS_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+const utf16 = new TextDecoder('utf-16le');
+
+function u16(b: Uint8Array, p: number): number {
+  return b[p] | (b[p + 1] << 8);
+}
+
+function u32(b: Uint8Array, p: number): number {
+  return (b[p] | (b[p + 1] << 8) | (b[p + 2] << 16) | (b[p + 3] << 24)) >>> 0;
+}
+
+function i32(b: Uint8Array, p: number): number {
+  return b[p] | (b[p + 1] << 8) | (b[p + 2] << 16) | (b[p + 3] << 24);
+}
+
+function f64(b: Uint8Array, p: number): number {
+  return new DataView(b.buffer, b.byteOffset + p, 8).getFloat64(0, true);
+}
+
+interface UStr { value: string; end: number }
+
+/** MFC CString (Unicode form) at p, or null. */
+export function readUStr(b: Uint8Array, p: number): UStr | null {
+  if (p < 0 || p + 4 > b.length) return null;
+  if (b[p] !== 0xff || b[p + 1] !== 0xfe || b[p + 2] !== 0xff) return null;
+  let n = b[p + 3];
+  let q = p + 4;
+  if (n === 0xff) {
+    if (q + 2 > b.length) return null;
+    n = u16(b, q);
+    q += 2;
+    if (n === 0xffff) {
+      if (q + 4 > b.length) return null;
+      n = u32(b, q);
+      q += 4;
+    }
+  }
+  const end = q + n * 2;
+  if (end > b.length) return null;
+  return { value: n === 0 ? '' : utf16.decode(b.subarray(q, end)), end };
+}
+
+function indexOfBytes(b: Uint8Array, pattern: number[], from: number, to: number): number {
+  const last = Math.min(to, b.length) - pattern.length;
+  outer: for (let p = Math.max(0, from); p <= last; p++) {
+    for (let k = 0; k < pattern.length; k++) {
+      if (b[p + k] !== pattern[k]) continue outer;
+    }
+    return p;
+  }
+  return -1;
+}
+
+/** New-class declaration `FF FF schema len name` at p: returns the name and the position after it. */
+function readNewClass(b: Uint8Array, p: number): { name: string; end: number } | null {
+  if (b[p] !== 0xff || b[p + 1] !== 0xff || b[p + 3] !== 0x00) return null;
+  const len = u16(b, p + 4);
+  if (len < 3 || len > 48 || p + 6 + len > b.length) return null;
+  let name = '';
+  for (let k = 0; k < len; k++) name += String.fromCharCode(b[p + 6 + k]);
+  return CLASS_NAME.test(name) ? { name, end: p + 6 + len } : null;
+}
+
+/** Skip a base-class chain (`CString name` + `u32 version`, repeated). */
+function skipChain(b: Uint8Array, p: number): number {
+  for (;;) {
+    const s = readUStr(b, p);
+    if (!s || !CHAIN_NAME.test(s.value)) return p;
+    p = s.end + 4;
+  }
+}
+
+/** Class reference at p: a new-class declaration or a u16 tag. */
+function readClassRef(b: Uint8Array, p: number): { name: string | null; tag: number | null; end: number } {
+  const nc = readNewClass(b, p);
+  if (nc) return { name: nc.name, tag: null, end: nc.end };
+  return { name: null, tag: u16(b, p), end: p + 2 };
+}
+
+/**
+ * OLE Automation date → Date. With a time zone (time of day set) i2 stores UTC; without one
+ * (date only) the value is a calendar day, kept at local midnight.
+ */
+function oleDateToDate(v: number, utc: boolean): Date | null {
+  if (!Number.isFinite(v) || v <= 1 || v > 2_958_465) return null;
+  const instant = new Date(Date.UTC(1899, 11, 30) + Math.round(v * 86_400_000));
+  if (utc) return instant;
+  return new Date(
+    instant.getUTCFullYear(), instant.getUTCMonth(), instant.getUTCDate(),
+    instant.getUTCHours(), instant.getUTCMinutes(), instant.getUTCSeconds()
+  );
+}
+
+function colorRefToHex(r: number, g: number, bl: number): string {
+  return `#${[r, g, bl].map(c => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// ============================================================================
+// PALETTE DEFINITIONS
+// ============================================================================
+
+interface Definition { name: string; nameEnd: number }
+
+/**
+ * Index palette objects (entity types, link types, attribute classes) by their u32 id.
+ * A definition is `u32 id`, a class reference, an optional `u32 version`, then the name CString.
+ */
+function buildDefinitions(b: Uint8Array, limit: number): Map<number, Definition> {
+  const defs = new Map<number, Definition>();
+  const add = (id: number, s: UStr) => {
+    if (id > 0 && id < 0x1000000 && !defs.has(id)) defs.set(id, { name: s.value, nameEnd: s.end });
+  };
+
+  for (let p = 10; p < limit; p++) {
+    if (b[p] !== 0xff || b[p + 1] !== 0xfe || b[p + 2] !== 0xff) continue;
+    const s = readUStr(b, p);
+    if (!s) continue;
+    if (s.value) {
+      const tag = u16(b, p - 2);
+      const tagBeforeVersion = u16(b, p - 6);
+      if (tag >= 0x8000 && tag !== 0xffff) add(u32(b, p - 6), s);
+      else if (tagBeforeVersion >= 0x8000 && tagBeforeVersion !== 0xffff && u32(b, p - 4) < 16) add(u32(b, p - 10), s);
+    }
+    p = s.end - 1;
+  }
+
+  for (let p = 4; p < limit; p++) {
+    if (b[p] !== 0xff || b[p + 1] !== 0xff) continue;
+    const nc = readNewClass(b, p);
+    if (!nc) continue;
+    const s = readUStr(b, nc.end + 4);
+    if (s && s.value && !CHAIN_NAME.test(s.value)) add(u32(b, p - 4), s);
+    p = nc.end - 1;
+  }
+  return defs;
+}
+
+/** Entity type layout after its name: u32 parent, u32, u32, CString icon, u32, R G B flag. */
+function readTypeVisual(b: Uint8Array, def: Definition): { icon: string | null; color: string | null } {
+  const icon = readUStr(b, def.nameEnd + 12);
+  if (!icon) return { icon: null, color: null };
+  const c = icon.end + 4;
+  const isDefault = b[c + 3] === 0xff;
+  return { icon: icon.value || null, color: isDefault ? null : colorRefToHex(b[c], b[c + 1], b[c + 2]) };
+}
+
+// ============================================================================
+// CHART ITEM BLOCKS
+// ============================================================================
+
+interface CIBlock {
+  idPos: number;
+  strings: string[];
+  guid: string;
+  end: number;
+}
+
+/** Find CI_ChartItem blocks in [from, to), in stream order. */
+function findChartItemBlocks(b: Uint8Array, from: number, to: number, max: number): CIBlock[] {
+  const blocks: CIBlock[] = [];
+  for (let p = Math.max(from, 4); p < to && blocks.length < max; p++) {
+    if (b[p] !== 0xff || b[p + 1] !== 0xfe || b[p + 2] !== 0xff) continue;
+    const strings: string[] = [];
+    let q = p;
+    for (let k = 0; k < 3; k++) {
+      const s = readUStr(b, q);
+      if (!s) break;
+      strings.push(s.value);
+      q = s.end;
+    }
+    if (strings.length !== 3) continue;
+    const g = readUStr(b, q + 12);
+    if (!g || g.value.length !== 38 || g.value[0] !== '{' || g.value[37] !== '}') continue;
+    blocks.push({ idPos: p - 4, strings, guid: g.value, end: g.end });
+    p = g.end - 1;
+  }
+  return blocks;
+}
+
+/** Property bag after the CLSID: u16 count, then (CString name, class ref, 14-byte VARIANT). */
+function readPropertyBag(b: Uint8Array, p: number): { props: Map<string, Uint8Array>; end: number } | null {
+  p = skipChain(b, p);
+  const count = u16(b, p);
+  if (count > 64) return null;
+  p += 2;
+  const props = new Map<string, Uint8Array>();
+  for (let k = 0; k < count; k++) {
+    const name = readUStr(b, p);
+    if (!name) return null;
+    const ref = readClassRef(b, name.end);
+    p = ref.name ? skipChain(b, ref.end) : ref.end;
+    props.set(name.value, b.subarray(p, p + 14));
+    p += 14;
+  }
+  return { props, end: p };
+}
+
+/** COLORREF stored in a VT_I4 property value. */
+function propColor(value: Uint8Array | undefined): string | null {
+  if (!value || value.length < 6 || u16(value, 0) !== 3) return null;
+  return colorRefToHex(value[2], value[3], value[4]);
+}
+
+interface ItemTail {
+  key: string | null;
+  color: string | null;
+  labelText: string | null;
+  /** Position of the label CString, -1 when not found */
+  labelPos: number;
+  identity: string | null;
+  fields: Array<{ ref: number; value: string }>;
+}
+
+/** Read what follows the GUID up to `limit`: label, card attributes, property bag and NB_Key. */
+function readItemTail(b: Uint8Array, from: number, limit: number): ItemTail {
+  const tail: ItemTail = { key: null, color: null, labelText: null, labelPos: -1, identity: null, fields: [] };
+  const clsid = indexOfBytes(b, CLSID_TAIL, from, limit);
+  const fieldsLimit = clsid >= 0 ? clsid : limit;
+
+  // Label CString, u32 ref, u32 0, then either identity CString (icons, boxes...) or 16 zero
+  // bytes + u32 (events); then u32 count, count × (u32 attribute, CString value)
+  for (let p = from; p < fieldsLimit; p++) {
+    if (b[p] !== 0xff || b[p + 1] !== 0xfe || b[p + 2] !== 0xff) continue;
+    const label = readUStr(b, p);
+    if (!label || !label.value) continue;
+    let identity = readUStr(b, label.end + 8);
+    let countPos: number;
+    if (identity) {
+      countPos = identity.end;
+    } else if (b.subarray(label.end + 8, label.end + 24).every(v => v === 0)) {
+      countPos = label.end + 28;
+      identity = { value: '', end: countPos };
+    } else {
+      continue;
+    }
+    const count = u32(b, countPos);
+    if (count > 200) continue;
+    const fields: Array<{ ref: number; value: string }> = [];
+    let q = countPos + 4;
+    let ok = true;
+    for (let k = 0; k < count; k++) {
+      const v = readUStr(b, q + 4);
+      if (!v) { ok = false; break; }
+      fields.push({ ref: u32(b, q), value: v.value });
+      q = v.end;
+    }
+    if (!ok) continue;
+    tail.labelText = label.value;
+    tail.labelPos = p;
+    tail.identity = identity.value;
+    tail.fields = fields;
+    break;
+  }
+
+  if (clsid >= 0) {
+    const bag = readPropertyBag(b, clsid + CLSID_TAIL.length);
+    if (bag) {
+      tail.color = propColor(bag.props.get('LineColour'));
+      const key = readUStr(b, skipChain(b, bag.end + 4));
+      if (key) tail.key = key.value;
+    }
+  }
+  return tail;
+}
+
+interface Timeable {
+  date: Date | null;
+  dateHasTime: boolean;
+  x: number | null;
+  y: number | null;
+  /** Position after the empty CString and its u32, -1 when the block could not be read */
+  end: number;
+}
+
+/**
+ * Timeable block (26 bytes): u32, u16, f64 OLE date, u16 time zone id, u16, u32, u32 flag.
+ * Then empty CString, u32, i32 x, i32 y. The zone id is 0 when only a date is set.
+ */
+function readTimeable(b: Uint8Array, p: number): Timeable {
+  const dateHasTime = u16(b, p + 14) !== 0;
+  const date = oleDateToDate(f64(b, p + 6), dateHasTime);
+  const marker = readUStr(b, p + 26);
+  if (!marker || marker.value !== '') return { date, dateHasTime, x: null, y: null, end: -1 };
+  return { date, dateHasTime, x: i32(b, marker.end + 4), y: i32(b, marker.end + 8), end: marker.end + 4 };
+}
+
+/**
+ * Line styles defined once at chart level: `u32 id`, CString "WST_Line", u32 version, R G B, u32,
+ * u32 width. Links whose objects reference them carry no inline definition.
+ */
+function readDefaultLineStyles(b: Uint8Array): Map<number, string> {
+  const styles = new Map<number, string>();
+  const marker = [0xff, 0xfe, 0xff, 0x08, ...Array.from('WST_Line').flatMap(c => [c.charCodeAt(0), 0])];
+  for (let p = indexOfBytes(b, marker, 4, b.length); p >= 0; p = indexOfBytes(b, marker, p + 1, b.length)) {
+    const colour = p + marker.length + 4;
+    if (!styles.has(u32(b, p - 4))) styles.set(u32(b, p - 4), colorRefToHex(b[colour], b[colour + 1], b[colour + 2]));
+  }
+  return styles;
+}
+
+/**
+ * A link's drawing, between its timeable block and its label: arrow objects, then one line object
+ * (WWG_MultiLine, WWG_BentLine...), then the WWG_Label object (u16 tag + point) before the label.
+ *
+ * WWG_Arrow: class ref, i32 tip x/y, u32 style ref, [12-byte inline style definition the first time
+ * the style appears: R G B, u32, u32 width], i32 x/y, 8 bytes. The tip lies on the end it points to.
+ * WWG_MultiLine: class ref, point, style ref [+ definition], point (20 or 32 data bytes).
+ * WWG_BentLine: class ref, point, style ref [+ definition], point, u32, 2 points (40 or 52 bytes).
+ * `arrowClass.tag` holds the tag learnt for WWG_Arrow once its class has been declared; `styles`
+ * collects style colours in stream order.
+ */
+function readLinkDrawing(
+  b: Uint8Array,
+  from: number,
+  labelPos: number,
+  arrowClass: { declaredAt: number; tag: number | null },
+  styles: Map<number, string>
+): { heads: Array<{ x: number; y: number }>; color: string | null } {
+  const heads: Array<{ x: number; y: number }> = [];
+  const labelTag = labelPos - 10;
+  const lineLimit = labelTag - 22;
+  const styleRefs: number[] = [];
+  const recordStyle = (data: number, withDefinition: boolean) => {
+    const ref = u32(b, data + 8);
+    if (withDefinition) styles.set(ref, colorRefToHex(b[data + 12], b[data + 13], b[data + 14]));
+    styleRefs.push(ref);
+  };
+
+  let q = u16(b, from) === 0 ? from + 2 : from;
+  while (heads.length < 2) {
+    let data: number;
+    const nc = b[q] === 0xff && b[q + 1] === 0xff ? readNewClass(b, q) : null;
+    if (nc) {
+      if (nc.name !== 'WWG_Arrow') break;
+      arrowClass.declaredAt = Math.min(arrowClass.declaredAt, q);
+      data = skipChain(b, nc.end);
+    } else {
+      const tag = u16(b, q);
+      if (tag < 0x8000 || q < arrowClass.declaredAt) break;
+      if (arrowClass.tag !== null && tag !== arrowClass.tag) break;
+      data = q + 2;
+    }
+    const x = i32(b, data);
+    const y = i32(b, data + 4);
+    const gap = (off: number) => Math.abs(i32(b, data + off) - x) + Math.abs(i32(b, data + off + 4) - y);
+    const withDefinition = gap(24) < gap(12);
+    const end = data + (withDefinition ? 24 : 12) + 16;
+    if (end > lineLimit) break;
+    if (!nc) arrowClass.tag = u16(b, q);
+    recordStyle(data, withDefinition);
+    heads.push({ x, y });
+    q = end;
+  }
+
+  // Line object: the class reference whose data length ends exactly at the label tag
+  let lineStyle: number | null = null;
+  for (let c = q; c < labelTag - 20 && lineStyle === null; c++) {
+    const nc = b[c] === 0xff && b[c + 1] === 0xff ? readNewClass(b, c) : null;
+    if (!nc && u16(b, c) < 0x8000) continue;
+    const data = nc ? skipChain(b, nc.end) : c + 2;
+    const length = labelTag - data;
+    if (length !== 20 && length !== 32 && length !== 40 && length !== 52) continue;
+    recordStyle(data, length === 32 || length === 52);
+    lineStyle = styleRefs[styleRefs.length - 1];
+  }
+
+  const ref = lineStyle ?? styleRefs[0];
+  return { heads, color: ref !== undefined ? styles.get(ref) ?? null : null };
+}
+
+/** CI_ChartItem strings: description, source type, source reference. */
+function joinSource(strings: string[]): string {
+  return [strings[1], strings[2]].filter(Boolean).join(' — ');
+}
+
+/** Position right after the GUID's LWG class reference, past its base-class chain. */
+function afterLwgRef(b: Uint8Array, guidEnd: number): { name: string | null; tag: number | null; blockPos: number } {
+  const ref = readClassRef(b, skipChain(b, guidEnd));
+  return { name: ref.name, tag: ref.tag, blockPos: ref.name ? skipChain(b, ref.end) : ref.end };
+}
+
+/** Position of the first declaration of a class, or Infinity. */
+function firstNewClassPos(b: Uint8Array, name: string): number {
+  const ascii = Array.from(name, c => c.charCodeAt(0));
+  const pattern = [0xff, 0xff, -1, 0x00, ascii.length, 0x00, ...ascii];
+  outer: for (let p = 0; p + pattern.length <= b.length; p++) {
+    for (let k = 0; k < pattern.length; k++) {
+      if (pattern[k] >= 0 && b[p + k] !== pattern[k]) continue outer;
+    }
+    return p;
+  }
+  return Infinity;
+}
+
+// ============================================================================
+// MAIN PARSER
+// ============================================================================
+
+export function parseANBContents(b: Uint8Array): ANBChart {
+  const issues: ANBIssue[] = [];
+
+  // ── Class declarations (needed to find item and link sections) ──
+  let firstItemPos = -1;
+  let firstLinkPos = -1;
+  for (let p = 0; p + 6 < b.length; p++) {
+    if (b[p] !== 0xff || b[p + 1] !== 0xff) continue;
+    const nc = readNewClass(b, p);
+    if (!nc) continue;
+    if (firstItemPos < 0 && nc.name.startsWith('LCI_') && nc.name !== 'LCI_Chart' && nc.name !== 'LCI_Link') {
+      firstItemPos = p;
+    }
+    if (nc.name === 'LCI_Link') { firstLinkPos = p; break; }
+    p = nc.end - 1;
+  }
+  if (firstItemPos < 4) return { items: [], links: [], issues: [{ code: 'noItems' }] };
+
+  const itemCount = u32(b, firstItemPos - 4);
+  const defs = buildDefinitions(b, firstItemPos);
+
+  // ── End ids: one per item, written just before the link count ──
+  let endIds: number[] = [];
+  let itemsEnd = b.length;
+  if (firstLinkPos > 0) {
+    const endStart = firstLinkPos - 12 - 4 * itemCount;
+    if (endStart > firstItemPos) {
+      endIds = Array.from({ length: itemCount }, (_, k) => u32(b, endStart + 4 * k));
+      itemsEnd = endStart;
+    }
+    if (new Set(endIds).size !== itemCount) {
+      issues.push({ code: 'endIdsInvalid' });
+      endIds = [];
+      itemsEnd = firstLinkPos;
+    }
+  }
+
+  // ── Chart items ──
+  // One extra block allowed so that a surplus (e.g. CI blocks inside cards) is reported, not truncated
+  const blocks = findChartItemBlocks(b, firstItemPos, itemsEnd, itemCount + 1);
+  if (blocks.length !== itemCount) {
+    issues.push({ code: 'itemCountMismatch', expected: itemCount, found: blocks.length });
+  }
+
+  const items: ANBItem[] = [];
+  const tagToKind = new Map<number, string>();
+  const pendingKinds: string[] = [];
+  let unknownTypes = 0;
+  let missingPositions = 0;
+
+  for (let i = 0; i < blocks.length; i++) {
+    const blk = blocks[i];
+    const prevEnd = i > 0 ? blocks[i - 1].end : firstItemPos - 1;
+    const nextStart = i + 1 < blocks.length ? blocks[i + 1].idPos : itemsEnd;
+    const lwg = afterLwgRef(b, blk.end);
+
+    // Record start: the LCI class reference. Its tag is the LWG tag minus 2 (class + first
+    // object are declared together), so later records are found by value, not by pattern.
+    let kind = '?';
+    let typeRefPos = -1;
+    if (lwg.name) {
+      kind = lwg.name.replace(/^LWG_/, '');
+      pendingKinds.push(kind);
+      for (let q = blk.idPos; q > prevEnd; q--) {
+        const nc = b[q] === 0xff && b[q + 1] === 0xff ? readNewClass(b, q) : null;
+        if (nc && nc.name.startsWith('LCI_')) {
+          const chain = readUStr(b, nc.end);
+          typeRefPos = chain ? chain.end + 4 : nc.end;
+          break;
+        }
+      }
+    } else if (lwg.tag !== null) {
+      if (!tagToKind.has(lwg.tag)) tagToKind.set(lwg.tag, pendingKinds.pop() ?? '?');
+      kind = tagToKind.get(lwg.tag)!;
+      const lciTag = lwg.tag - 2;
+      for (let q = blk.idPos - 2; q > prevEnd; q--) {
+        if (u16(b, q) === lciTag) { typeRefPos = q + 2; break; }
+      }
+    }
+
+    const typeDef = typeRefPos > 0 ? defs.get(u32(b, typeRefPos)) : undefined;
+    if (!typeDef) unknownTypes++;
+    const visual = typeDef ? readTypeVisual(b, typeDef) : { icon: null, color: null };
+
+    const time = readTimeable(b, lwg.blockPos);
+    if (time.x === null) missingPositions++;
+
+    const tail = readItemTail(b, blk.end, nextStart);
+    const attributes: ANBAttribute[] = tail.fields.map(f => ({
+      name: defs.get(f.ref)?.name ?? `Attribut ${f.ref}`,
+      value: f.value,
+    }));
+
+    items.push({
+      kind,
+      guid: blk.guid,
+      label: tail.key || tail.identity || tail.labelText || '',
+      description: blk.strings[0],
+      source: joinSource(blk.strings),
+      typeName: typeDef?.name ?? null,
+      typeIcon: visual.icon,
+      typeColor: visual.color,
+      color: tail.color,
+      x: time.x,
+      y: time.y,
+      date: time.date,
+      dateHasTime: time.dateHasTime,
+      attributes,
+    });
+  }
+  if (unknownTypes > 0) issues.push({ code: 'unknownTypes', count: unknownTypes });
+  if (missingPositions > 0) issues.push({ code: 'missingPositions', count: missingPositions });
+
+  // ── Links: u32 count, then (end A, end B, LCI_Link object) ──
+  const links: ANBLink[] = [];
+  if (firstLinkPos > 0 && endIds.length === blocks.length && endIds.length > 0) {
+    const linkCount = u32(b, firstLinkPos - 12);
+    const endIndex = new Map(endIds.map((id, k) => [id, k]));
+    const linkBlocks = findChartItemBlocks(b, firstLinkPos, b.length, linkCount + 1);
+    if (linkBlocks.length !== linkCount) {
+      issues.push({ code: 'linkCountMismatch', expected: linkCount, found: linkBlocks.length });
+    }
+
+    let unresolved = 0;
+    let searchFrom = firstLinkPos - 8;
+    const arrowClass = { declaredAt: firstNewClassPos(b, 'WWG_Arrow'), tag: null as number | null };
+    const lineStyles = readDefaultLineStyles(b);
+    for (let i = 0; i < linkBlocks.length; i++) {
+      const blk = linkBlocks[i];
+      const nextStart = i + 1 < linkBlocks.length ? linkBlocks[i + 1].idPos : b.length;
+
+      let pairPos = -1;
+      for (let q = searchFrom; q < blk.idPos; q++) {
+        if (endIndex.has(u32(b, q)) && endIndex.has(u32(b, q + 4)) && b[q + 9] >= 0x80) {
+          pairPos = q;
+          break;
+        }
+      }
+      searchFrom = blk.end;
+      if (pairPos < 0) { unresolved++; continue; }
+
+      const lwg = afterLwgRef(b, blk.end);
+      const time = readTimeable(b, lwg.blockPos);
+      const tail = readItemTail(b, blk.end, nextStart);
+      const drawing = time.end > 0 && tail.labelPos > 0
+        ? readLinkDrawing(b, time.end, tail.labelPos, arrowClass, lineStyles)
+        : { heads: [], color: null };
+
+      links.push({
+        guid: blk.guid,
+        fromIndex: endIndex.get(u32(b, pairPos))!,
+        toIndex: endIndex.get(u32(b, pairPos + 4))!,
+        label: tail.labelText ?? '',
+        description: blk.strings[0],
+        source: joinSource(blk.strings),
+        date: time.date,
+        dateHasTime: time.dateHasTime,
+        // Line style colour, else the explicit LineColour property
+        color: drawing.color ?? tail.color,
+        arrowHeads: drawing.heads,
+      });
+    }
+    if (unresolved > 0) issues.push({ code: 'unresolvedLinks', count: unresolved });
+  }
+
+  return { items, links, issues };
+}

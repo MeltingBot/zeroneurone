@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "ANB formatu baliogabea: Contents korrontea falta da",
       "importError": "i2 ANB inportazio-errorea: {{message}}",
-      "unknownError": "Errore ezezaguna"
+      "unknownError": "Errore ezezaguna",
+      "noItems": "Ez da i2 elementurik aurkitu grafikoan"
     },
     "warnings": {
-      "entityNoId": "ID gabeko entitatea saltatu da",
-      "linkMissingEntity": "Lotura saltatu da: iturri/helburu entitatea ez da aurkitu"
+      "itemCountMismatch": "Irakurritako elementuak: {{found}} / {{expected}}",
+      "endIdsInvalid": "Muturren taula irakurtezina: loturak ez dira inportatu",
+      "linkCountMismatch": "Irakurritako loturak: {{found}} / {{expected}}",
+      "unresolvedLinks": "Muturrik gabeko {{count}} lotura saltatu dira",
+      "unknownTypes": "Paleta-motarik gabeko {{count}} elementu",
+      "missingPositions": "Posiziorik gabeko {{count}} elementu"
     }
   },
   "fec": {

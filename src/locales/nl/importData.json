@@ -131,11 +131,16 @@
     "errors": {
       "invalidChart": "Ongeldig ANB-formaat: Contents-stream ontbreekt",
       "importError": "i2 ANB importfout: {{message}}",
-      "unknownError": "Onbekende fout"
+      "unknownError": "Onbekende fout",
+      "noItems": "Geen i2-element gevonden in de grafiek"
     },
     "warnings": {
-      "entityNoId": "Entiteit zonder ID overgeslagen",
-      "linkMissingEntity": "Koppeling overgeslagen: bron-/doelobject niet gevonden"
+      "itemCountMismatch": "Gelezen elementen: {{found}} van {{expected}}",
+      "endIdsInvalid": "Tabel met eindpunten onleesbaar: koppelingen niet geïmporteerd",
+      "linkCountMismatch": "Gelezen koppelingen: {{found}} van {{expected}}",
+      "unresolvedLinks": "{{count}} koppelingen zonder eindpunten overgeslagen",
+      "unknownTypes": "{{count}} elementen zonder palettype",
+      "missingPositions": "{{count}} elementen zonder positie"
     }
   },
   "fec": {

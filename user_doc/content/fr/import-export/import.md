@@ -317,47 +317,46 @@ Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
 
 ### ANB (i2 Analyst's Notebook - binaire)
 
-**Format binaire propriétaire** i2 Analyst's Notebook (.anb).
+**Format binaire propriétaire** i2 Analyst's Notebook (.anb), lu directement : inutile d'exporter en ANX depuis i2.
 
-#### Données importées (Entités)
+#### Données importées (Éléments)
 
 | Donnée ANB | Propriété ZeroNeurone |
 |------------|----------------------|
-| Label / Identity | Label de l'élément |
+| Libellé | Label de l'élément |
 | Description | Notes |
-| Position X/Y (binaire) | Position sur le canvas |
-| EntityType.Name | Tag |
-| EntityType.Colour (COLORREF) | Couleur |
-| IconStyle.Enlargement | Taille (small/medium/large) |
-| EntityType.IconFile | Icône Lucide |
-| DatabaseProperty[] | Propriétés typées |
-| Attribute[] | Propriétés typées |
-| GradeOneIndex (1-5) | Confiance (20-100) |
-| Card.DateTime | Date + Événement |
-| Card.Text | Notes (complément) |
-| Cards multiples | Événements |
+| Type de source, source | Source |
+| Position | Position sur le canvas (échelle uniforme) |
+| Type de la palette | Tag ; « Anonyme », type par défaut d'i2, devient « Générique » |
+| Icône du type | Icône |
+| Attributs | Propriétés (dates et dates-heures typées) |
+| Date et heure | Événement ponctuel sur la timeline |
+| Bloc de texte | Annotation |
+
+Icônes, cadres, cercles, événements et lignes de thème deviennent des éléments. La date d'une ligne de thème n'est pas reprise.
+
+Les heures saisies dans i2 sont enregistrées en UTC et s'affichent dans le fuseau de l'ordinateur ; une date sans heure reste un jour calendaire.
 
 #### Données importées (Liens)
 
 | Donnée ANB | Propriété ZeroNeurone |
 |------------|----------------------|
-| Label | Label du lien |
-| ArrowStyle | Direction |
-| LineWidth | Épaisseur |
-| LineColour / LinkType.Colour | Couleur |
-| Strength → DotStyle | Style (solid/dashed/dotted) |
-| LinkType.Name | Tag |
+| Extrémités | Éléments reliés |
+| Flèches | Direction |
+| Libellé | Label du lien (vide pour un rattachement à une ligne de thème) |
+| Date et heure | Période ponctuelle sur la timeline (fin = début) |
+| Type de source, source | Source |
+| Couleur de trait | Couleur (le noir, couleur par défaut d'i2, garde celle de ZN) |
 
 #### Réserves
 
 {{< hint warning >}}
-L'import ANB est basé sur une analyse du format binaire propriétaire i2 (rétro-ingénierie). Les réserves suivantes s'appliquent :
+L'import ANB repose sur une analyse du format binaire i2 (rétro-ingénierie). Testé sur des graphiques à palette personnalisée et sur un graphique récent utilisant la palette i2 complète.
 
-- **Compatibilité de version** : testé sur les exports ANB d'i2 AN 8.x — les versions antérieures ou postérieures peuvent présenter des différences structurelles.
-- **Cartes de renseignement (Cards)** : les fiches de type 0x818D sont importées comme éléments séparés liés à leur entité parente ; la correspondance parent est basée sur la proximité spatiale des coordonnées X.
-- **Images** : les images incorporées dans les entités ANB ne sont pas importées.
-- **Groupes** : les groupes visuels i2 ne sont pas importés.
-- **Icônes personnalisées** : seules les icônes i2 standard sont mappées vers Lucide React ; les icônes personnalisées sont ignorées.
+- **Cartes** : les cartes de renseignement associées aux éléments ne sont pas importées.
+- **Images** : les images incorporées ne sont pas importées.
+- **Icônes** : seules les icônes i2 courantes ont un équivalent ; les autres prennent l'icône par défaut.
+- Si la structure du fichier diffère de celle attendue, l'import le signale par un avertissement plutôt que de produire des liens faux.
 {{< /hint >}}
 
 ---
