@@ -6,7 +6,12 @@
     "query": "Zoekopdracht",
     "views": "Weergaven",
     "report": "Rapport",
-    "collapsePanel": "Paneel inklappen"
+    "collapsePanel": "Paneel inklappen",
+    "panelPosition": "Paneelpositie",
+    "panelDockRight": "Paneel naar rechts",
+    "panelDockBottom": "Paneel naar beneden",
+    "panelDockLeft": "Paneel naar links",
+    "panelDetach": "Paneel loskoppelen"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Toevoegen"
     },
     "warnings": {
-      "noName": "Het element heeft geen naam"
+      "noName": "Het element heeft geen naam",
+      "duplicateName": "Een ander element heeft al deze naam",
+      "showDuplicate": "Tonen"
     },
     "hints": {
       "goToTab": "Ga naar tabblad {{name}}"

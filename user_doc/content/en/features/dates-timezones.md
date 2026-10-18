@@ -11,6 +11,8 @@ weight: 6
 
 All times are shown in the system time zone (computer setting). It is shown in the dossier panel, **Dates** section.
 
+For old dates, the offset is the one in force at the time: before 1911, Paris used local mean time, hence a `UTC+0:09:21` offset.
+
 A date entered without a time means the whole day.
 
 ---

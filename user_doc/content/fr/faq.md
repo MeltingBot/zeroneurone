@@ -196,7 +196,7 @@ Une photo avec des **coordonnées GPS** ? L'élément atterrit directement sur l
 
 ### Je peux déplacer le panneau latéral ?
 
-Oui. Bouton **⇄** dans la barre d'outils — cycle entre droite, bas, gauche et fenêtre détachée. Le choix est mémorisé (sauf le mode détaché).
+Oui. Bouton de position dans l'en-tête du panneau — menu droite, bas, gauche ou fenêtre détachée. Le choix est mémorisé (sauf le mode détaché).
 
 ---
 

@@ -6,7 +6,12 @@
     "query": "Zapytanie",
     "views": "Widoki",
     "report": "Raport",
-    "collapsePanel": "Zwiń panel"
+    "collapsePanel": "Zwiń panel",
+    "panelPosition": "Położenie panelu",
+    "panelDockRight": "Panel na prawo",
+    "panelDockBottom": "Panel na dole",
+    "panelDockLeft": "Panel na lewo",
+    "panelDetach": "Odłącz panel"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Dodaj"
     },
     "warnings": {
-      "noName": "Element nie ma nazwy"
+      "noName": "Element nie ma nazwy",
+      "duplicateName": "Inny element ma już tę nazwę",
+      "showDuplicate": "Pokaż"
     },
     "hints": {
       "goToTab": "Przejdź do karty {{name}}"

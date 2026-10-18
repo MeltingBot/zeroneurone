@@ -306,11 +306,7 @@
       "activeFilters": "Iragazki aktiboak",
       "shortcuts": "Teklatuko lasterbideak",
       "documentation": "Dokumentazioa",
-      "supportKofi": "Ko-fi-n lagundu",
-      "panelDockRight": "Panela eskuinera",
-      "panelDockBottom": "Panela behera",
-      "panelDockLeft": "Panela ezkerrera",
-      "panelDetach": "Panela askatu"
+      "supportKofi": "Ko-fi-n lagundu"
     },
     "collab": {
       "leaveTitle": "Lankidetza saioa utzi",

@@ -306,11 +306,7 @@
       "activeFilters": "Actieve filters",
       "shortcuts": "Sneltoetsen",
       "documentation": "Documentatie",
-      "supportKofi": "Steun op Ko-fi",
-      "panelDockRight": "Paneel naar rechts",
-      "panelDockBottom": "Paneel naar beneden",
-      "panelDockLeft": "Paneel naar links",
-      "panelDetach": "Paneel loskoppelen"
+      "supportKofi": "Steun op Ko-fi"
     },
     "collab": {
       "leaveTitle": "Samenwerkingssessie verlaten",

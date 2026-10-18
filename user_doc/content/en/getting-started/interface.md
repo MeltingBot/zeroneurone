@@ -19,7 +19,6 @@ ZeroNeurone's interface is organized around the central canvas, with contextual 
 | Name | Dossier name (click to rename) |
 | 🔍 | Quick search (Ctrl+K) |
 | Views | Toggle Canvas / Map / Timeline |
-| ⇄ | Cycle panel position (right / bottom / left / detached) |
 | ⋯ | Menu: Export, Import, Settings |
 
 ### 2. Central Canvas
@@ -44,7 +43,7 @@ The unified panel contains all tabs:
 
 #### Panel Position
 
-The ⇄ button in the toolbar cycles through 4 positions:
+The position button, in the panel header (next to "Collapse"), opens a menu with 4 positions:
 
 | Position | Description |
 |----------|-------------|
@@ -53,7 +52,7 @@ The ⇄ button in the toolbar cycles through 4 positions:
 | **Left** | Panel on the left |
 | **Detached** | Separate window — ideal for multi-monitor setups |
 
-The choice is remembered across sessions (except detached mode, which resets to right on reload).
+The choice is remembered across sessions (except detached mode, which resets to right on reload). In detached mode, the same menu, in the separate window, docks the panel back.
 
 
 ## View Modes

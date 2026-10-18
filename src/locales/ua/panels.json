@@ -6,7 +6,12 @@
     "query": "Запит",
     "views": "Види",
     "report": "Звіт",
-    "collapsePanel": "Згорнути панель"
+    "collapsePanel": "Згорнути панель",
+    "panelPosition": "Розташування панелі",
+    "panelDockRight": "Панель праворуч",
+    "panelDockBottom": "Панель знизу",
+    "panelDockLeft": "Панель ліворуч",
+    "panelDetach": "Від'єднати панель"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Додати"
     },
     "warnings": {
-      "noName": "Елемент не має назви"
+      "noName": "Елемент не має назви",
+      "duplicateName": "Інший елемент уже має цю назву",
+      "showDuplicate": "Показати"
     },
     "hints": {
       "goToTab": "Перейти на вкладку {{name}}"

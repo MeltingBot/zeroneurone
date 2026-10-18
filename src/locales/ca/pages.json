@@ -306,11 +306,7 @@
       "activeFilters": "Filtres actius",
       "shortcuts": "Dreceres de teclat",
       "documentation": "Documentació",
-      "supportKofi": "Donar suport a Ko-fi",
-      "panelDockRight": "Panell a la dreta",
-      "panelDockBottom": "Panell a baix",
-      "panelDockLeft": "Panell a l'esquerra",
-      "panelDetach": "Separar panell"
+      "supportKofi": "Donar suport a Ko-fi"
     },
     "collab": {
       "leaveTitle": "Abandonar la sessió col·laborativa",

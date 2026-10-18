@@ -11,6 +11,8 @@ weight: 6
 
 Toutes les heures sont affichées dans le fuseau du système (réglage de l'ordinateur). Il est indiqué dans le panneau du dossier, section **Dates**.
 
+Pour les dates anciennes, le décalage est celui en vigueur à l'époque : avant 1911, Paris vivait à l'heure solaire locale, d'où un décalage de `UTC+0:09:21`.
+
 Une date saisie sans heure correspond à la journée entière.
 
 ---

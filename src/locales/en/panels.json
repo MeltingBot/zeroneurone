@@ -6,7 +6,12 @@
     "query": "Query",
     "views": "Views",
     "report": "Report",
-    "collapsePanel": "Collapse panel"
+    "collapsePanel": "Collapse panel",
+    "panelPosition": "Panel position",
+    "panelDockRight": "Dock panel right",
+    "panelDockBottom": "Dock panel bottom",
+    "panelDockLeft": "Dock panel left",
+    "panelDetach": "Detach panel"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Add"
     },
     "warnings": {
-      "noName": "Element has no name"
+      "noName": "Element has no name",
+      "duplicateName": "Another element already has this name",
+      "showDuplicate": "Show"
     },
     "hints": {
       "goToTab": "Go to tab {{name}}"

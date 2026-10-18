@@ -306,11 +306,7 @@
       "activeFilters": "Aktive Filter",
       "shortcuts": "Tastenkürzel",
       "documentation": "Dokumentation",
-      "supportKofi": "Auf Ko-fi unterstützen",
-      "panelDockRight": "Panel nach rechts",
-      "panelDockBottom": "Panel nach unten",
-      "panelDockLeft": "Panel nach links",
-      "panelDetach": "Panel abtrennen"
+      "supportKofi": "Auf Ko-fi unterstützen"
     },
     "collab": {
       "leaveTitle": "Kollaborative Sitzung verlassen",

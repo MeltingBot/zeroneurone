@@ -128,7 +128,6 @@ interface UIState {
   openSidePanel: (tab?: SidePanelTab) => void;
   closeSidePanel: () => void;
   setSidePanelTab: (tab: SidePanelTab) => void;
-  togglePanelSide: () => void;
   setPanelSide: (side: 'left' | 'right' | 'bottom' | 'detached') => void;
 
   // Actions - Tool
@@ -271,11 +270,6 @@ export const useUIStore = create<UIState>()(
 
   setSidePanelTab: (tab) => {
     set({ sidePanelTab: tab, sidePanelOpen: true });
-  },
-
-  togglePanelSide: () => {
-    const cycle = { right: 'bottom', bottom: 'left', left: 'detached', detached: 'right' } as const;
-    set((state) => ({ panelSide: cycle[state.panelSide] ?? 'right' }));
   },
 
   setPanelSide: (side) => {

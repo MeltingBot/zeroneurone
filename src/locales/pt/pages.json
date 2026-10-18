@@ -306,11 +306,7 @@
       "activeFilters": "Filtros ativos",
       "shortcuts": "Atalhos de teclado",
       "documentation": "Documentação",
-      "supportKofi": "Apoiar no Ko-fi",
-      "panelDockRight": "Painel à direita",
-      "panelDockBottom": "Painel em baixo",
-      "panelDockLeft": "Painel à esquerda",
-      "panelDetach": "Desanexar painel"
+      "supportKofi": "Apoiar no Ko-fi"
     },
     "collab": {
       "leaveTitle": "Abandonar a sessão colaborativa",

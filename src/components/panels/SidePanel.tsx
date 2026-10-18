@@ -11,7 +11,7 @@ import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
 import { ReportPanel } from './ReportPanel';
 import { QueryPanel } from './QueryPanel';
-import { Info, Filter, Eye, Network, PanelRightClose, FileText, Code2, icons } from 'lucide-react';
+import { Info, Filter, Eye, Network, PanelRightClose, PanelLeftClose, PanelBottomClose, PanelRight, PanelLeft, PanelBottom, ExternalLink, Check, FileText, Code2, icons } from 'lucide-react';
 import { IconButton } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { useDetachedWindow } from '../../hooks/useDetachedWindow';
@@ -25,6 +25,15 @@ const MIN_HEIGHT = 200;
 const MAX_HEIGHT = 500;
 const DEFAULT_HEIGHT = 300;
 const HEIGHT_STORAGE_KEY = 'zeroneurone:sidepanel-height';
+
+type PanelSide = 'left' | 'right' | 'bottom' | 'detached';
+
+const PANEL_POSITIONS: { side: PanelSide; icon: typeof Info; labelKey: string }[] = [
+  { side: 'right', icon: PanelRight, labelKey: 'tabs.panelDockRight' },
+  { side: 'bottom', icon: PanelBottom, labelKey: 'tabs.panelDockBottom' },
+  { side: 'left', icon: PanelLeft, labelKey: 'tabs.panelDockLeft' },
+  { side: 'detached', icon: ExternalLink, labelKey: 'tabs.panelDetach' },
+];
 
 type TabId = 'detail' | 'insights' | 'filters' | 'query' | 'views' | 'report' | (string & {});
 
@@ -74,10 +83,35 @@ export function SidePanel() {
   const isBottom = panelSide === 'bottom';
   const isDetached = panelSide === 'detached';
 
+  const [positionMenuOpen, setPositionMenuOpen] = useState(false);
+  const positionMenuRef = useRef<HTMLDivElement>(null);
+
   // Reset collapsed state when dock mode changes
   useEffect(() => {
     setIsCollapsed(false);
+    setPositionMenuOpen(false);
   }, [panelSide]);
+
+  // Close the position menu on outside click / Escape. Listens on the panel's
+  // own document so it also works when the panel lives in the detached window.
+  useEffect(() => {
+    if (!positionMenuOpen) return;
+    const doc = positionMenuRef.current?.ownerDocument ?? document;
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (positionMenuRef.current?.contains(target) || target.closest?.('[data-panel-position-trigger]')) return;
+      setPositionMenuOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPositionMenuOpen(false);
+    };
+    doc.addEventListener('mousedown', onMouseDown);
+    doc.addEventListener('keydown', onKeyDown);
+    return () => {
+      doc.removeEventListener('mousedown', onMouseDown);
+      doc.removeEventListener('keydown', onKeyDown);
+    };
+  }, [positionMenuOpen]);
 
   // Detached window
   const detachedContainer = useDetachedWindow(isDetached, () => setPanelSide('right'));
@@ -344,6 +378,9 @@ export function SidePanel() {
     );
   }
 
+  const CurrentPositionIcon = PANEL_POSITIONS.find((p) => p.side === panelSide)?.icon ?? PanelRight;
+  const CollapseIcon = isBottom ? PanelBottomClose : panelSide === 'left' ? PanelLeftClose : PanelRightClose;
+
   // --- Panel body (shared between docked and detached) ---
   const panelBody = (
     <aside
@@ -374,7 +411,7 @@ export function SidePanel() {
       )}
 
       {/* Header with tabs */}
-      <header className="border-b border-border-default shrink-0">
+      <header className="relative border-b border-border-default shrink-0">
         <div className="flex items-center h-10 px-1 overflow-hidden">
           <div className="flex items-center gap-0.5 flex-1 min-w-0">
             {tabs.map((tab) => {
@@ -401,15 +438,52 @@ export function SidePanel() {
             })}
           </div>
 
-          {/* Collapse button (not in detached mode) */}
-          {!isDetached && (
-            <div className="ml-auto shrink-0">
+          <div className="ml-auto shrink-0 flex items-center">
+            {/* Panel position */}
+            <IconButton
+              onClick={() => setPositionMenuOpen((v) => !v)}
+              title={t('tabs.panelPosition')}
+              aria-haspopup="menu"
+              aria-expanded={positionMenuOpen}
+              data-panel-position-trigger
+            >
+              <CurrentPositionIcon size={14} />
+            </IconButton>
+            {/* Collapse button (not in detached mode) */}
+            {!isDetached && (
               <IconButton onClick={() => setIsCollapsed(true)} title={t('tabs.collapsePanel')}>
-                <PanelRightClose size={14} />
+                <CollapseIcon size={14} />
               </IconButton>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {positionMenuOpen && (
+          <div
+            ref={positionMenuRef}
+            role="menu"
+            className="absolute right-1 top-full mt-1 bg-bg-primary border border-border-default rounded shadow-lg z-50 py-1 min-w-[180px]"
+          >
+            {PANEL_POSITIONS.map(({ side, icon: Icon, labelKey }) => (
+              <button
+                key={side}
+                role="menuitemradio"
+                aria-checked={panelSide === side}
+                onClick={() => {
+                  setPositionMenuOpen(false);
+                  setPanelSide(side);
+                }}
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-bg-tertiary ${
+                  panelSide === side ? 'text-text-primary font-medium' : 'text-text-secondary'
+                }`}
+              >
+                <Icon size={14} />
+                <span className="flex-1 text-left">{t(labelKey)}</span>
+                {panelSide === side && <Check size={12} />}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* Tab content */}

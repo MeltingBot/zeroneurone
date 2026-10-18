@@ -6,7 +6,12 @@
     "query": "Abfrage",
     "views": "Ansichten",
     "report": "Bericht",
-    "collapsePanel": "Panel einklappen"
+    "collapsePanel": "Panel einklappen",
+    "panelPosition": "Panelposition",
+    "panelDockRight": "Panel nach rechts",
+    "panelDockBottom": "Panel nach unten",
+    "panelDockLeft": "Panel nach links",
+    "panelDetach": "Panel abtrennen"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Hinzufügen"
     },
     "warnings": {
-      "noName": "Das Element hat keinen Namen"
+      "noName": "Das Element hat keinen Namen",
+      "duplicateName": "Ein anderes Element trägt bereits diesen Namen",
+      "showDuplicate": "Anzeigen"
     },
     "hints": {
       "goToTab": "Zum Tab {{name}}"

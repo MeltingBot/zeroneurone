@@ -6,7 +6,12 @@
     "query": "Requête",
     "views": "Vues",
     "report": "Rapport",
-    "collapsePanel": "Réduire le panneau"
+    "collapsePanel": "Réduire le panneau",
+    "panelPosition": "Position du panneau",
+    "panelDockRight": "Panneau à droite",
+    "panelDockBottom": "Panneau en bas",
+    "panelDockLeft": "Panneau à gauche",
+    "panelDetach": "Détacher le panneau"
   },
   "dossier": {
     "sections": {
@@ -126,7 +131,9 @@
       "add": "Ajouter"
     },
     "warnings": {
-      "noName": "L'élément n'a pas de nom"
+      "noName": "L'élément n'a pas de nom",
+      "duplicateName": "Un autre élément porte déjà ce nom",
+      "showDuplicate": "Voir"
     },
     "hints": {
       "goToTab": "Aller à l'onglet {{name}}"

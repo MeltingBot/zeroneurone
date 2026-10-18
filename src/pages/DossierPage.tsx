@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, PanelLeft, PanelRight, PanelBottom, ExternalLink, MoreVertical, Tags } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, MoreVertical, Tags } from 'lucide-react';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal, JsonMappingImportModal, TagSetManagerModal } from '../components/modals';
@@ -77,7 +77,7 @@ export function DossierPage() {
     unloadDossier,
   } = useDossierStore();
 
-  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide, togglePanelSide } = useUIStore();
+  const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide } = useUIStore();
   const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetDossierState: resetViewState, loadViewportForDossier, saveViewportForDossier, requestFitView } = useViewStore();
 
   const syncMode = useSyncStore((state) => state.mode);
@@ -628,22 +628,6 @@ export function DossierPage() {
           {/* Secondary buttons — visible on large screens */}
           <div className="hidden lg:flex items-center gap-1">
             <div className="w-px h-4 bg-border-default mx-0.5" />
-            {/* Panel dock mode toggle */}
-            <button
-              onClick={togglePanelSide}
-              className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary rounded transition-colors"
-              title={
-                panelSide === 'right' ? t('dossier.header.panelDockBottom', 'Panneau en bas') :
-                panelSide === 'bottom' ? t('dossier.header.panelDockLeft', 'Panneau a gauche') :
-                panelSide === 'left' ? t('dossier.header.panelDetach', 'Detacher le panneau') :
-                t('dossier.header.panelDockRight', 'Panneau a droite')
-              }
-            >
-              {panelSide === 'right' ? <PanelBottom size={14} /> :
-               panelSide === 'bottom' ? <PanelLeft size={14} /> :
-               panelSide === 'left' ? <ExternalLink size={14} /> :
-               <PanelRight size={14} />}
-            </button>
             {/* Dark mode toggle */}
             <button
               onClick={toggleThemeMode}
@@ -699,19 +683,6 @@ export function DossierPage() {
             </button>
             {headerMenuOpen && (
               <div className="absolute right-0 top-full mt-1 bg-bg-primary border border-border-default rounded shadow-lg z-50 py-1 min-w-[180px]">
-                <button
-                  onClick={() => { togglePanelSide(); setHeaderMenuOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
-                >
-                  {panelSide === 'right' ? <PanelBottom size={14} /> :
-                   panelSide === 'bottom' ? <PanelLeft size={14} /> :
-                   panelSide === 'left' ? <ExternalLink size={14} /> :
-                   <PanelRight size={14} />}
-                  {panelSide === 'right' ? t('dossier.header.panelDockBottom', 'Panneau en bas') :
-                   panelSide === 'bottom' ? t('dossier.header.panelDockLeft', 'Panneau a gauche') :
-                   panelSide === 'left' ? t('dossier.header.panelDetach', 'Detacher le panneau') :
-                   t('dossier.header.panelDockRight', 'Panneau a droite')}
-                </button>
                 <button
                   onClick={() => { toggleThemeMode(); setHeaderMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"

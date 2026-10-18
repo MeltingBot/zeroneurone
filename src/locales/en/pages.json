@@ -307,11 +307,7 @@
       "activeFilters": "Active filters",
       "shortcuts": "Keyboard shortcuts",
       "documentation": "Documentation",
-      "supportKofi": "Support on Ko-fi",
-      "panelDockRight": "Dock panel right",
-      "panelDockBottom": "Dock panel bottom",
-      "panelDockLeft": "Dock panel left",
-      "panelDetach": "Detach panel"
+      "supportKofi": "Support on Ko-fi"
     },
     "collab": {
       "leaveTitle": "Leave collaborative session",

@@ -307,11 +307,7 @@
       "activeFilters": "Filtres actifs",
       "shortcuts": "Raccourcis clavier",
       "documentation": "Documentation",
-      "supportKofi": "Soutenir sur Ko-fi",
-      "panelDockRight": "Panneau à droite",
-      "panelDockBottom": "Panneau en bas",
-      "panelDockLeft": "Panneau à gauche",
-      "panelDetach": "Détacher le panneau"
+      "supportKofi": "Soutenir sur Ko-fi"
     },
     "collab": {
       "leaveTitle": "Quitter la session collaborative",

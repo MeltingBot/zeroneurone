@@ -19,7 +19,6 @@ L'interface de ZeroNeurone est organisée autour du canvas central, avec des pan
 | Nom | Nom du dossier (cliquez pour renommer) |
 | 🔍 | Recherche rapide (Ctrl+K) |
 | Vues | Bascule Canvas / Carte / Timeline |
-| ⇄ | Changer la position du panneau (droite / bas / gauche / détaché) |
 | ⋯ | Menu : Export, Import, Paramètres |
 
 ### 2. Canvas central
@@ -44,7 +43,7 @@ Le panneau unique regroupe tous les onglets :
 
 #### Position du panneau
 
-Le bouton ⇄ dans la barre d'outils cycle entre 4 positions :
+Le bouton de position, dans l'en-tête du panneau (à côté de « Réduire »), ouvre un menu avec 4 positions :
 
 | Position | Description |
 |----------|-------------|
@@ -53,7 +52,7 @@ Le bouton ⇄ dans la barre d'outils cycle entre 4 positions :
 | **Gauche** | Panneau à gauche |
 | **Détaché** | Fenêtre séparée — idéal pour le multi-écran |
 
-Le choix est mémorisé entre les sessions (sauf le mode détaché qui revient à droite au rechargement).
+Le choix est mémorisé entre les sessions (sauf le mode détaché qui revient à droite au rechargement). En mode détaché, le même menu, dans la fenêtre séparée, permet de réancrer le panneau.
 
 
 ## Modes de vue

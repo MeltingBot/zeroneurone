@@ -6,7 +6,12 @@
     "query": "Consulta",
     "views": "Vistes",
     "report": "Informe",
-    "collapsePanel": "Contraure el panell"
+    "collapsePanel": "Contraure el panell",
+    "panelPosition": "Posició del panell",
+    "panelDockRight": "Panell a la dreta",
+    "panelDockBottom": "Panell a baix",
+    "panelDockLeft": "Panell a l'esquerra",
+    "panelDetach": "Separar panell"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Afegir"
     },
     "warnings": {
-      "noName": "L'element no té nom"
+      "noName": "L'element no té nom",
+      "duplicateName": "Un altre element ja té aquest nom",
+      "showDuplicate": "Veure"
     },
     "hints": {
       "goToTab": "Anar a la pestanya {{name}}"

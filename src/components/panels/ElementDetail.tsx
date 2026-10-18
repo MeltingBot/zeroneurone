@@ -188,6 +188,54 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const debouncedNotes = useDebounce(notes, 500);
   const debouncedSource = useDebounce(source, 500);
 
+  // Another element already carries this name (trimmed, case-insensitive)
+  // Joined as a string so the selector result stays referentially stable
+  const duplicateIdsKey = useDossierStore((s) => {
+    const normalized = debouncedLabel.trim().toLocaleLowerCase();
+    if (!normalized) return '';
+    return s.elements
+      .filter((el) => el.id !== element.id && (el.label || '').trim().toLocaleLowerCase() === normalized)
+      .map((el) => el.id)
+      .join(',');
+  });
+  const isDuplicateName = duplicateIdsKey !== '';
+  const duplicateCursorRef = useRef(0);
+
+  // Center the view on a duplicate without changing the selection (cycles on repeated clicks)
+  const showDuplicate = useCallback(() => {
+    const ids = duplicateIdsKey.split(',');
+    const targetId = ids[duplicateCursorRef.current % ids.length];
+    duplicateCursorRef.current += 1;
+    const target = useDossierStore.getState().elements.find((el) => el.id === targetId);
+    if (!target) return;
+
+    const { activeTabId, memberSet } = useTabStore.getState();
+    if (activeTabId && !memberSet.has(target.id)) {
+      const targetTab = canvasTabs.find((tab) => tab.memberElementIds.includes(target.id));
+      if (targetTab) setActiveTab(targetTab.id);
+    }
+
+    const mode = useViewStore.getState().displayMode;
+    if (mode === 'map' && target.geo) {
+      window.dispatchEvent(new CustomEvent('map:flyToElement', { detail: { elementId: target.id } }));
+    } else if (mode === 'timeline') {
+      window.dispatchEvent(new CustomEvent('timeline:scrollToElement', { detail: { elementId: target.id } }));
+    } else {
+      const sizeMap: Record<string, number> = { small: 40, medium: 56, large: 72 };
+      const baseSize = typeof target.visual?.size === 'number'
+        ? target.visual.size
+        : sizeMap[target.visual?.size ?? 'medium'] ?? 56;
+      const centerX = target.position.x + (target.visual?.customWidth ?? baseSize) / 2;
+      const centerY = target.position.y + (target.visual?.customHeight ?? baseSize) / 2;
+      const zoom = 1.0;
+      useViewStore.getState().requestViewportChange({
+        x: -centerX * zoom + (window.innerWidth - 350) / 2,
+        y: -centerY * zoom + window.innerHeight / 2,
+        zoom,
+      });
+    }
+  }, [duplicateIdsKey, canvasTabs, setActiveTab]);
+
   // Sync local state when element changes (different element selected)
   useEffect(() => {
     // IMPORTANT: Blur any focused input FIRST (before resetting state)
@@ -1024,6 +1072,19 @@ export function ElementDetail({ element }: ElementDetailProps) {
             />
             {!label && (
               <p className="text-xs text-warning">{t('detail.warnings.noName')}</p>
+            )}
+            {label && isDuplicateName && (
+              <p className="text-xs text-warning">
+                {t('detail.warnings.duplicateName')}
+                {' · '}
+                <button
+                  type="button"
+                  onClick={showDuplicate}
+                  className="underline hover:text-text-primary"
+                >
+                  {t('detail.warnings.showDuplicate')}
+                </button>
+              </p>
             )}
           </div>
 

@@ -222,11 +222,18 @@ export function parseDateWithPrecision(
  */
 export function activeTimeZoneLabel(at: Date = new Date()): string {
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  const offsetMin = -at.getTimezoneOffset();
-  const sign = offsetMin >= 0 ? '+' : '-';
-  const abs = Math.abs(offsetMin);
-  const offset = abs % 60 === 0 ? `${sign}${abs / 60}` : `${sign}${Math.floor(abs / 60)}:${pad(abs % 60)}`;
-  return `${zone} (UTC${offsetMin === 0 ? '' : offset})`;
+  // Historical offsets (local mean time, e.g. Paris before 1911: +0:09:21) are
+  // not whole minutes: getTimezoneOffset() returns fractional minutes.
+  const offsetSec = Math.round(-at.getTimezoneOffset() * 60);
+  const sign = offsetSec >= 0 ? '+' : '-';
+  const abs = Math.abs(offsetSec);
+  const h = Math.floor(abs / 3600);
+  const m = Math.floor((abs % 3600) / 60);
+  const s = abs % 60;
+  const offset = s !== 0
+    ? `${sign}${h}:${pad(m)}:${pad(s)}`
+    : m !== 0 ? `${sign}${h}:${pad(m)}` : `${sign}${h}`;
+  return `${zone} (UTC${offsetSec === 0 ? '' : offset})`;
 }
 
 // ============================================================================

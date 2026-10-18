@@ -306,11 +306,7 @@
       "activeFilters": "Активні фільтри",
       "shortcuts": "Клавіатурні скорочення",
       "documentation": "Документація",
-      "supportKofi": "Підтримати на Ko-fi",
-      "panelDockRight": "Панель праворуч",
-      "panelDockBottom": "Панель знизу",
-      "panelDockLeft": "Панель ліворуч",
-      "panelDetach": "Від'єднати панель"
+      "supportKofi": "Підтримати на Ko-fi"
     },
     "collab": {
       "leaveTitle": "Покинути сеанс співпраці",

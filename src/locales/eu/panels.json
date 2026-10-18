@@ -6,7 +6,12 @@
     "query": "Kontsulta",
     "views": "Ikuspegiak",
     "report": "Txostena",
-    "collapsePanel": "Panela tolestu"
+    "collapsePanel": "Panela tolestu",
+    "panelPosition": "Panelaren kokapena",
+    "panelDockRight": "Panela eskuinera",
+    "panelDockBottom": "Panela behera",
+    "panelDockLeft": "Panela ezkerrera",
+    "panelDetach": "Panela askatu"
   },
   "dossier": {
     "sections": {
@@ -125,7 +130,9 @@
       "add": "Gehitu"
     },
     "warnings": {
-      "noName": "Elementuak ez du izenik"
+      "noName": "Elementuak ez du izenik",
+      "duplicateName": "Beste elementu batek badu izen hau",
+      "showDuplicate": "Ikusi"
     },
     "hints": {
       "goToTab": "Joan {{name}} fitxara"
