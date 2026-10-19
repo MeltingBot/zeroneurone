@@ -796,6 +796,21 @@
     "filterAll": "wszystkie (I)",
     "filterAny": "co najmniej jeden (LUB)",
     "addCondition": "dodaj warunek",
-    "filterField": "(pole)"
+    "filterField": "(pole)",
+    "tables": "Tabele",
+    "includeTable": "Importuj {{name}}",
+    "tableNotIncluded": "Ta tabela nie jest zaznaczona: nie zostanie zaimportowana.",
+    "refTable": "Tabela, na którą wskazuje odwołanie",
+    "fromTables": "z {{count}} tabel",
+    "diagram": {
+      "id": "Identyfikator wierszy",
+      "noId": "brak identyfikatora",
+      "dragHint": "Przeciągnij na tabelę, aby na nią wskazać",
+      "addRef": "pole",
+      "removeHint": "Kliknij, aby usunąć odwołanie {{field}}",
+      "hint": "Przeciągnij pole na tabelę, aby je połączyć; kliknij strzałkę, aby ją usunąć.",
+      "matchedHint": "Odsetek wartości znalezionych wśród identyfikatorów tabeli docelowej"
+    },
+    "refTableNotIncluded": "Tabela nie jest zaznaczona: zachowane jako właściwość"
   }
 }

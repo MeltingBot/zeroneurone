@@ -794,6 +794,21 @@
     "filterAll": "tutte (E)",
     "filterAny": "almeno una (O)",
     "addCondition": "aggiungi una condizione",
-    "filterField": "(campo)"
+    "filterField": "(campo)",
+    "tables": "Tabelle",
+    "includeTable": "Importa {{name}}",
+    "tableNotIncluded": "Questa tabella non è selezionata: non verrà importata.",
+    "refTable": "Tabella a cui punta il riferimento",
+    "fromTables": "da {{count}} tabelle",
+    "diagram": {
+      "id": "Identificativo delle righe",
+      "noId": "nessun identificativo",
+      "dragHint": "Trascina su una tabella per puntarvi",
+      "addRef": "campo",
+      "removeHint": "Clic per rimuovere il riferimento {{field}}",
+      "hint": "Trascina un campo su una tabella per collegarlo; clicca una freccia per rimuoverla.",
+      "matchedHint": "Quota di valori trovati tra gli identificativi della tabella di destinazione"
+    },
+    "refTableNotIncluded": "Tabella non selezionata: mantenuto come proprietà"
   }
 }

@@ -794,6 +794,21 @@
     "filterAll": "totes (I)",
     "filterAny": "almenys una (O)",
     "addCondition": "afegeix una condició",
-    "filterField": "(camp)"
+    "filterField": "(camp)",
+    "tables": "Taules",
+    "includeTable": "Importa {{name}}",
+    "tableNotIncluded": "Aquesta taula no està marcada: no s'importarà.",
+    "refTable": "Taula a la qual apunta la referència",
+    "fromTables": "de {{count}} taules",
+    "diagram": {
+      "id": "Identificador de les files",
+      "noId": "sense identificador",
+      "dragHint": "Arrossegueu a una taula per apuntar-hi",
+      "addRef": "camp",
+      "removeHint": "Feu clic per treure la referència {{field}}",
+      "hint": "Arrossegueu un camp a una taula per enllaçar-lo; feu clic en una fletxa per treure-la.",
+      "matchedHint": "Proporció de valors trobats entre els identificadors de la taula de destinació"
+    },
+    "refTableNotIncluded": "Taula no marcada: es conserva com a propietat"
   }
 }

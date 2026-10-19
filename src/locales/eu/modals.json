@@ -794,6 +794,21 @@
     "filterAll": "guztiak (ETA)",
     "filterAny": "gutxienez bat (EDO)",
     "addCondition": "baldintza bat gehitu",
-    "filterField": "(eremua)"
+    "filterField": "(eremua)",
+    "tables": "Taulak",
+    "includeTable": "Inportatu {{name}}",
+    "tableNotIncluded": "Taula hau ez dago markatuta: ez da inportatuko.",
+    "refTable": "Erreferentziak adierazten duen taula",
+    "fromTables": "{{count}} taulatatik",
+    "diagram": {
+      "id": "Errenkaden identifikatzailea",
+      "noId": "identifikatzailerik ez",
+      "dragHint": "Arrastatu taula batera hara seinalatzeko",
+      "addRef": "eremua",
+      "removeHint": "Egin klik {{field}} erreferentzia kentzeko",
+      "hint": "Arrastatu eremu bat taula batera lotzeko; egin klik gezi batean kentzeko.",
+      "matchedHint": "Helburuko taularen identifikatzaileen artean aurkitutako balioen proportzioa"
+    },
+    "refTableNotIncluded": "Taula ez dago markatuta: propietate gisa gordeta"
   }
 }

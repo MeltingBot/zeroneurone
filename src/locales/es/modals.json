@@ -794,6 +794,21 @@
     "filterAll": "todas (Y)",
     "filterAny": "alguna (O)",
     "addCondition": "añadir una condición",
-    "filterField": "(campo)"
+    "filterField": "(campo)",
+    "tables": "Tablas",
+    "includeTable": "Importar {{name}}",
+    "tableNotIncluded": "Esta tabla no está marcada: no se importará.",
+    "refTable": "Tabla a la que apunta la referencia",
+    "fromTables": "de {{count}} tablas",
+    "diagram": {
+      "id": "Identificador de las filas",
+      "noId": "sin identificador",
+      "dragHint": "Arrastrar a una tabla para apuntar a ella",
+      "addRef": "campo",
+      "removeHint": "Clic para quitar la referencia {{field}}",
+      "hint": "Arrastre un campo a una tabla para enlazarlo; haga clic en una flecha para quitarla.",
+      "matchedHint": "Proporción de valores encontrados entre los identificadores de la tabla destino"
+    },
+    "refTableNotIncluded": "Tabla no marcada: se conserva como propiedad"
   }
 }

@@ -40,6 +40,8 @@ export interface FieldMapping {
   propKey: string;
   /** Coordinate order for 'polygon' targets. */
   coordOrder?: CoordOrder;
+  /** 'ref' targets: key of the record source (table) the ids point into; absent = the same table. */
+  refSource?: string;
 }
 
 /** Config for turning an array-of-objects field into linked child elements. */
@@ -326,6 +328,34 @@ export function childFieldsOf(records: Record<string, unknown>[], fieldKey: stri
  * Returns the set of such field keys, so links can be created without the user
  * manually designating them.
  */
+/**
+ * Comparison form of an id. A CSV converted to JSON writes the same number as
+ * 12, "12", 12.0, "12.0" or "012": they are one id. Anything else (codes like
+ * "P-12", "2024/0153") is compared as trimmed text.
+ */
+export function idKey(v: unknown): string {
+  const s = valueToString(v).trim();
+  if (/^[+-]?\d+(\.0+)?$/.test(s)) return String(parseInt(s, 10));
+  return s;
+}
+
+/**
+ * A field holding the record's own id again (a number copied under another
+ * name, e.g. UNA = id): on ≥ 95 % of the records where both are set they are
+ * equal. Such a field identifies the record; it does not point to another one.
+ */
+export function isIdAlias(records: Record<string, unknown>[], fieldKey: string, idFieldKey: string | undefined): boolean {
+  if (!idFieldKey || fieldKey === idFieldKey) return false;
+  let both = 0, equal = 0;
+  for (const r of records) {
+    const a = r[fieldKey], b = r[idFieldKey];
+    if (isBlank(a) || isBlank(b) || Array.isArray(a)) continue;
+    both++;
+    if (idKey(a) === idKey(b)) equal++;
+  }
+  return both > 0 && equal / both >= 0.95;
+}
+
 export function detectReferenceFields(
   records: Record<string, unknown>[],
   fields: FieldInfo[],
@@ -336,17 +366,17 @@ export function detectReferenceFields(
   const idSet = new Set<string>();
   for (const r of records) {
     const v = r[idFieldKey];
-    if (!isBlank(v)) idSet.add(valueToString(v).trim());
+    if (!isBlank(v)) idSet.add(idKey(v));
   }
   if (idSet.size === 0) return refs;
   for (const f of fields) {
-    if (f.key === idFieldKey || f.kind !== 'scalar') continue;
+    if (f.key === idFieldKey || f.kind !== 'scalar' || isIdAlias(records, f.key, idFieldKey)) continue;
     let total = 0, match = 0;
     for (const r of records) {
       const v = r[f.key];
       const vals = Array.isArray(v) ? v : (isBlank(v) ? [] : [v]);
       for (const x of vals) {
-        const s = valueToString(x).trim();
+        const s = idKey(x);
         if (!s) continue;
         total++;
         if (idSet.has(s)) match++;
@@ -416,4 +446,166 @@ export function coerceForTarget(
     default:
       return valueToString(value);
   }
+}
+
+// ─── Several tables in one payload ─────────────────────────────────────────
+
+/** Ids held by a record set under its id field (blank ones skipped). */
+export function idValuesOf(records: Record<string, unknown>[], idFieldKey: string | undefined): Set<string> {
+  const ids = new Set<string>();
+  if (!idFieldKey) return ids;
+  for (const r of records) {
+    const v = r[idFieldKey];
+    if (!isBlank(v)) ids.add(idKey(v));
+  }
+  return ids;
+}
+
+/** A table other records may point into: its source key, a display name and its ids. */
+export interface SourceIds {
+  key: string;
+  name: string;
+  ids: Set<string>;
+}
+
+/**
+ * Comparable stem of a table or field name: "societes" / "societe_id" /
+ * "SocieteId" / "id_societe" / "IdSociete" → "societe".
+ */
+export function nameStem(name: string): string {
+  return lastSegment(name)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/(?<=[a-z])Ids?$/, '')
+    .replace(/^id(?=[A-Z])|^id[_\-\s]+/i, '')
+    .toLowerCase()
+    .replace(/[_\-\s]?(ids?|ref|refs|key)$/, '')
+    .replace(/ies$/, 'y')
+    .replace(/s$/, '');
+}
+
+/**
+ * Cross-table references: scalar fields whose values are mostly (≥ 50 %) ids
+ * of another table, mapped to that table's key. When several tables match —
+ * small numeric ids often exist in each of them — the one whose name matches
+ * the field ("societe_id" → "societes") wins, else the best match. A field that
+ * matches its own table's ids just as well is left to {@link detectReferenceFields}
+ * unless its name points to another table.
+ */
+export function detectCrossReferences(
+  records: Record<string, unknown>[],
+  fields: FieldInfo[],
+  ownIdKey: string | undefined,
+  ownIds: Set<string>,
+  others: SourceIds[],
+): Map<string, string> {
+  const result = new Map<string, string>();
+  if (others.length === 0) return result;
+  for (const f of fields) {
+    if (f.kind !== 'scalar' || f.key === ownIdKey || isIdAlias(records, f.key, ownIdKey)) continue;
+    const vals: string[] = [];
+    for (const r of records) {
+      const v = r[f.key];
+      for (const x of Array.isArray(v) ? v : (isBlank(v) ? [] : [v])) {
+        const s = idKey(x);
+        if (s) vals.push(s);
+      }
+    }
+    if (vals.length === 0) continue;
+    const ratio = (ids: Set<string>) => vals.filter((v) => ids.has(v)).length / vals.length;
+    const stem = nameStem(f.key);
+    // "procedure_id" names "procedures", and "crpj_Procédure" too (prefix shared by the tables)
+    const names = (table: string) => {
+      const t = nameStem(table);
+      return stem !== '' && (t === stem || /[_\-\s.]/.test(t.charAt(t.length - stem.length - 1)) && t.endsWith(stem));
+    };
+    const candidates = others
+      .map((o) => ({ o, r: ratio(o.ids), named: names(o.name) }))
+      .filter((c) => c.r >= 0.5)
+      .sort((a, b) => Number(b.named) - Number(a.named) || b.r - a.r);
+    const best = candidates[0];
+    if (!best) continue;
+    const ownRatio = ownIds.size > 0 ? ratio(ownIds) : 0;
+    if (!best.named && ownRatio >= best.r) continue; // as good inside its own table
+    result.set(f.key, best.o.key);
+  }
+  return result;
+}
+
+/** Default mapping of a record set's fields, as the import opens it. */
+export function autoFieldMappings(
+  records: Record<string, unknown>[],
+  scalarFields: FieldInfo[],
+  childArrayFields: FieldInfo[],
+  crossRefs: Map<string, string> = new Map(),
+): { mapping: Record<string, FieldMapping>; childMappings: Record<string, ChildMapping>; labelTemplate: string } {
+  const idFieldKey = scalarFields.find((f) => guessTarget(f.key) === 'id')?.key;
+  const refSet = detectReferenceFields(records, scalarFields, idFieldKey);
+  const polySet = detectPolygonFields(records, scalarFields);
+  const latlngSet = detectLatLngFields(records, scalarFields);
+  const linkSet = detectLinkFields(records, scalarFields);
+  const mapping: Record<string, FieldMapping> = {};
+  for (const f of scalarFields) {
+    const g = guessTarget(f.key);
+    const crossTarget = crossRefs.get(f.key);
+    if (polySet.has(f.key)) {
+      mapping[f.key] = { enabled: true, target: 'polygon', propKey: lastSegment(f.key), coordOrder: guessCoordOrder(records, f.key) };
+    } else if (latlngSet.has(f.key)) {
+      // Single field holding "lat, lng" → geo point.
+      mapping[f.key] = { enabled: true, target: 'latlng', propKey: lastSegment(f.key) };
+    } else if (crossTarget) {
+      // Ids of another table → links to its elements, labelled after the field.
+      mapping[f.key] = { enabled: true, target: 'ref', propKey: '', refSource: crossTarget };
+    } else if (refSet.has(f.key)) {
+      // Reference field → create links; empty label by default (cleaner than the field name).
+      mapping[f.key] = { enabled: true, target: 'ref', propKey: '' };
+    } else if (linkSet.has(f.key)) {
+      // URL → link-typed property.
+      mapping[f.key] = { enabled: true, target: 'link', propKey: lastSegment(f.key) };
+    } else {
+      // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
+      mapping[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
+    }
+  }
+  // Child (linked sub-element) config per array-of-objects field — disabled by default.
+  const childMappings: Record<string, ChildMapping> = {};
+  for (const f of childArrayFields) {
+    const sub = childFieldsOf(records, f.key);
+    const tag = lastSegment(f.key);
+    childMappings[f.key] = { enabled: false, tag, labelTemplate: guessLabelTemplate(sub), linkLabel: tag };
+  }
+  return { mapping, childMappings, labelTemplate: guessLabelTemplate(scalarFields) };
+}
+
+
+/**
+ * Tables keyed by a shared id: in some exports (e.g. a CSV per entity, all
+ * carrying the case number in "id") the id of the child tables is not their
+ * own row number but the id of a hub record. The hub is the table whose ids
+ * are unique and hold (≥ 90 %) the ids of the most other tables; those tables
+ * ("members") then point their id at the hub. No hub when ids are only row
+ * numbers of their own tables.
+ */
+export function findSharedIdHub(
+  tables: { key: string; ids: Set<string>; unique: boolean }[],
+): { hub: string | null; members: Set<string> } {
+  const within = (inner: Set<string>, outer: Set<string>) => {
+    if (inner.size === 0) return 0;
+    let n = 0;
+    for (const id of inner) if (outer.has(id)) n++;
+    return n / inner.size;
+  };
+  let hub: string | null = null;
+  let best = new Set<string>();
+  for (const candidate of tables) {
+    if (!candidate.unique || candidate.ids.size === 0) continue;
+    const members = new Set(
+      tables.filter((t) => t.key !== candidate.key && within(t.ids, candidate.ids) >= 0.9).map((t) => t.key),
+    );
+    // Most tables held wins; on a tie, the larger id set (the hub holds its members)
+    const better = members.size > best.size
+      || (members.size === best.size && members.size > 0 && hub !== null
+        && candidate.ids.size > (tables.find((t) => t.key === hub)?.ids.size ?? 0));
+    if (better) { hub = candidate.key; best = members; }
+  }
+  return best.size > 0 ? { hub, members: best } : { hub: null, members: new Set() };
 }

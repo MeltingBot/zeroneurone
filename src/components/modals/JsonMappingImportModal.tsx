@@ -12,14 +12,8 @@ import {
   sourceKey,
   collectFields,
   childFieldsOf,
-  detectReferenceFields,
-  detectPolygonFields,
-  detectLinkFields,
-  detectLatLngFields,
   isUrl,
-  guessCoordOrder,
   toLngLatCoords,
-  guessLabelTemplate,
   guessTarget,
   lastSegment,
   applyTemplate,
@@ -29,7 +23,15 @@ import {
   flattenRecord,
   computeSignature,
   signatureOverlap,
+  autoFieldMappings,
+  detectCrossReferences,
+  idValuesOf,
+  idKey,
+  findSharedIdHub,
   type FieldMapping,
+  type FieldInfo,
+  type RecordSource,
+  type SourceIds,
   type MappingTarget,
   type CoordOrder,
   type ChildMapping,
@@ -38,6 +40,7 @@ import {
 import { computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { JsonMappingManagerModal } from './JsonMappingManagerModal';
+import { JsonTablesDiagram, type DiagramTable } from './JsonTablesDiagram';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 const LAYOUTS: LayoutType[] = ['force', 'clusters', 'hierarchy', 'circular', 'grid'];
@@ -60,6 +63,34 @@ const LARGE_TEXT = 1_000_000;  // chars: above this, don't render the JSON in th
 type FilterOp = 'contains' | 'equals' | 'nonempty';
 interface FilterCond { field: string; op: FilterOp; value: string }
 
+/** Everything the analyst sets for one table (record source) of the payload */
+interface SourceConfig {
+  fieldSig: string;
+  mapping: Record<string, FieldMapping>;
+  childMappings: Record<string, ChildMapping>;
+  labelTemplate: string;
+  tagName: string;
+  filters: FilterCond[];
+  filterMode: 'all' | 'any';
+  maxImport: number;
+}
+
+/** Display name of a record source */
+const sourceName = (s: RecordSource, wholeObject: string) => (s.kind === 'single' ? wholeObject : s.path || '(racine)');
+
+/** Fields of a record source, from a flattened sample */
+function fieldsOf(raw: Record<string, unknown>[]) {
+  const records = raw.slice(0, SAMPLE).map((r) => flattenRecord(r));
+  const fields = collectFields(records);
+  return {
+    records,
+    fields,
+    scalarFields: fields.filter((f) => f.kind === 'scalar'),
+    childArrayFields: fields.filter((f) => f.kind === 'objectArray'),
+    fieldSig: fields.map((f) => `${f.key}:${f.kind}`).join('|'),
+  };
+}
+
 /** Whether a condition is usable (has a field, and a value unless 'nonempty'). */
 const condActive = (c: FilterCond) => !!c.field && (c.op === 'nonempty' || c.value.trim() !== '');
 
@@ -81,6 +112,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [error, setError] = useState<string | null>(null);
   const [loadedInfo, setLoadedInfo] = useState<string | null>(null);
   const [srcKey, setSrcKey] = useState('');
+  // Several tables: each keeps its own config, the checked ones are imported together
+  const [configs, setConfigs] = useState<Record<string, SourceConfig>>({});
+  const [included, setIncluded] = useState<Set<string>>(new Set());
   const [mapping, setMapping] = useState<Record<string, FieldMapping>>({});
   const [childMappings, setChildMappings] = useState<Record<string, ChildMapping>>({});
   const [labelTemplate, setLabelTemplate] = useState('');
@@ -106,7 +140,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   useEffect(() => { if (isOpen) loadTemplates(); }, [isOpen, loadTemplates]);
 
   const reset = useCallback(() => {
-    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setSrcKey('');
+    setText(''); setParsed(null); setError(null); setLoadedInfo(null); setSrcKey(''); setConfigs({}); setIncluded(new Set());
     setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
     setFilters([]); setFilterMode('all'); setMaxImport(2000);
@@ -143,50 +177,117 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   // Scalar fields map to the parent element; array-of-objects fields can become linked children.
   const scalarFields = useMemo(() => fields.filter((f) => f.kind === 'scalar'), [fields]);
   const childArrayFields = useMemo(() => fields.filter((f) => f.kind === 'objectArray'), [fields]);
-
-  // Initialise mappings + label template whenever the field set changes
   const fieldSig = fields.map((f) => `${f.key}:${f.kind}`).join('|');
+
+  // ── Several tables ────────────────────────────────────────────────────
+  const activeKey = selectedSource ? sourceKey(selectedSource) : '';
+  const defaultKey = useMemo(() => { const d = pickDefaultSource(sources); return d ? sourceKey(d) : ''; }, [sources]);
+  // Tables other records can point into: arrays of objects
+  const tableSources = useMemo(() => sources.filter((src) => src.kind === 'array'), [sources]);
+  const wholeObject = t('importJsonMapping.wholeObject');
+
+  /** The config being edited, as a snapshot */
+  const snapshot = (): SourceConfig => ({ fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport });
+
+  /** Id field of a table: the one its config maps to 'id', else a top-level "id" */
+  const idFieldOf = useCallback((key: string, scalar: FieldInfo[]) => {
+    const cfg = key === activeKey ? { mapping } : configs[key];
+    const mapped = cfg && Object.entries(cfg.mapping).find(([, m]) => m.enabled && m.target === 'id')?.[0];
+    return mapped ?? scalar.find((f) => guessTarget(f.key) === 'id')?.key;
+  }, [activeKey, mapping, configs]);
+
+  // Ids of every table, so a field can be recognised as pointing into another one
+  const tableIds = useMemo((): SourceIds[] => tableSources.map((src) => {
+    const key = sourceKey(src);
+    const raw = rawRecordsForSource(parsed, src);
+    const { scalarFields: scalar } = fieldsOf(raw);
+    return { key, name: src.path, ids: idValuesOf(raw, idFieldOf(key, scalar)) };
+  }), [tableSources, parsed, idFieldOf]);
+
+  // Tables all keyed by a shared id (e.g. the case number in every "id"):
+  // the hub and the tables whose id points at it
+  const sharedIdHub = useMemo(() => findSharedIdHub(tableSources.map((src) => {
+    const raw = rawRecordsForSource(parsed, src);
+    const idField = fieldsOf(raw).scalarFields.find((f) => guessTarget(f.key) === 'id')?.key;
+    const ids = idValuesOf(raw, idField);
+    const filled = idField ? raw.filter((r) => !isBlank(r[idField])).length : 0;
+    return { key: sourceKey(src), ids, unique: ids.size > 0 && ids.size === filled };
+  })), [tableSources, parsed]);
+
+  /** Default config of a table, references to the other tables included */
+  const autoConfigFor = useCallback((key: string): SourceConfig | null => {
+    const src = sources.find((x) => sourceKey(x) === key);
+    if (!src) return null;
+    const f = fieldsOf(rawRecordsForSource(parsed, src));
+    const own = tableIds.find((x) => x.key === key);
+    const ownIdKey = f.scalarFields.find((x) => guessTarget(x.key) === 'id')?.key;
+    const crossRefs = detectCrossReferences(f.records, f.scalarFields, ownIdKey, own?.ids ?? new Set(), tableIds.filter((x) => x.key !== key));
+    const auto = autoFieldMappings(f.records, f.scalarFields, f.childArrayFields, crossRefs);
+    // Its "id" is the hub's id (shared key): a reference to the hub, not its own identifier
+    if (ownIdKey && sharedIdHub.hub && sharedIdHub.members.has(key)) {
+      auto.mapping[ownIdKey] = { enabled: true, target: 'ref', propKey: '', refSource: sharedIdHub.hub };
+    }
+    return {
+      fieldSig: f.fieldSig,
+      ...auto,
+      // Tables beyond the main one get their name as tag, to tell their elements apart
+      tagName: key === defaultKey ? '' : (src.kind === 'array' ? lastSegment(src.path) : ''),
+      filters: [],
+      filterMode: 'all',
+      maxImport: 2000,
+    };
+  }, [sources, parsed, tableIds, defaultKey, sharedIdHub]);
+
+  /** Open another table: keep the current one's settings for later */
+  const selectSource = (key: string) => {
+    if (key === activeKey) return;
+    if (activeKey) setConfigs((c) => ({ ...c, [activeKey]: snapshot() }));
+    setSrcKey(key);
+  };
+
+  /** Change one field of a table's mapping, open or not */
+  const updateTableField = (key: string, field: string, patch: Partial<FieldMapping>) => {
+    if (key === activeKey) {
+      setMapping((m) => (m[field] ? { ...m, [field]: { ...m[field], ...patch } } : m));
+      return;
+    }
+    setConfigs((c) => {
+      const cfg = c[key] ?? autoConfigFor(key);
+      if (!cfg?.mapping[field]) return c;
+      return { ...c, [key]: { ...cfg, mapping: { ...cfg.mapping, [field]: { ...cfg.mapping[field], ...patch } } } };
+    });
+  };
+
+  /** From the diagram: point a field into a table, or make it a plain property again */
+  const setTableRef = (key: string, field: string, target: string | null) =>
+    updateTableField(key, field, target === null
+      ? { target: 'property', refSource: undefined }
+      : { enabled: true, target: 'ref', refSource: target === key ? undefined : target });
+
+  const toggleIncluded = (key: string) => setIncluded((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+
+  // Initialise the table being opened: its saved settings, else the defaults
   useEffect(() => {
     if (fields.length === 0) { setMapping({}); setChildMappings({}); return; }
-    // Auto-detect the id field, reference fields, and polygon fields.
-    const idFieldKey = scalarFields.find((f) => guessTarget(f.key) === 'id')?.key;
-    const refSet = detectReferenceFields(records, scalarFields, idFieldKey);
-    const polySet = detectPolygonFields(records, scalarFields);
-    const latlngSet = detectLatLngFields(records, scalarFields);
-    const linkSet = detectLinkFields(records, scalarFields);
-    const next: Record<string, FieldMapping> = {};
-    for (const f of scalarFields) {
-      const g = guessTarget(f.key);
-      if (polySet.has(f.key)) {
-        next[f.key] = { enabled: true, target: 'polygon', propKey: lastSegment(f.key), coordOrder: guessCoordOrder(records, f.key) };
-      } else if (latlngSet.has(f.key)) {
-        // Single field holding "lat, lng" → geo point.
-        next[f.key] = { enabled: true, target: 'latlng', propKey: lastSegment(f.key) };
-      } else if (refSet.has(f.key)) {
-        // Reference field → create links; empty label by default (cleaner than the field name).
-        next[f.key] = { enabled: true, target: 'ref', propKey: '' };
-      } else if (linkSet.has(f.key)) {
-        // URL → link-typed property.
-        next[f.key] = { enabled: true, target: 'link', propKey: lastSegment(f.key) };
-      } else {
-        // Noise fields (id, hash, score…) start disabled but keep a sane target if re-enabled.
-        next[f.key] = { enabled: g !== 'ignore', target: g === 'ignore' ? 'property' : g, propKey: lastSegment(f.key) };
-      }
-    }
-    setMapping(next);
-    // Child (linked sub-element) config per array-of-objects field — disabled by default.
-    const childNext: Record<string, ChildMapping> = {};
-    for (const f of childArrayFields) {
-      const sub = childFieldsOf(records, f.key);
-      const tag = lastSegment(f.key);
-      childNext[f.key] = { enabled: false, tag, labelTemplate: guessLabelTemplate(sub), linkLabel: tag };
-    }
-    setChildMappings(childNext);
-    setLabelTemplate(guessLabelTemplate(scalarFields));
+    // Saved settings are read, not watched: only opening a table re-runs this
+    const saved = configs[activeKey];
+    const cfg = saved && saved.fieldSig === fieldSig ? saved : autoConfigFor(activeKey);
+    if (!cfg) return;
+    setMapping(cfg.mapping);
+    setChildMappings(cfg.childMappings);
+    setLabelTemplate(cfg.labelTemplate);
+    setTagName(cfg.tagName);
+    setFilters(cfg.filters);
+    setFilterMode(cfg.filterMode);
+    setMaxImport(cfg.maxImport);
     setSuggestionDismissed(false);
     setSelectedTemplateId('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldSig]);
+  }, [fieldSig, activeKey]);
 
   // Signature of the current shape + best-matching saved template (suggestion).
   const signature = useMemo(() => computeSignature(fields), [fields]);
@@ -244,6 +345,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       const srcs = findRecordSources(data);
       const def = pickDefaultSource(srcs);
       setSrcKey(def ? sourceKey(def) : '');
+      setConfigs({});
+      setIncluded(new Set(def ? [sourceKey(def)] : []));
       if (!def) setError(t('importJsonMapping.noArray'));
     } catch {
       setParsed(null);
@@ -297,6 +400,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       for (const f of scalarFields) if (next[f.key]) next[f.key] = { ...next[f.key], enabled: target };
       return next;
     });
+  const setFieldRefSource = (key: string, refSource: string | undefined) =>
+    setMapping((m) => ({ ...m, [key]: { ...m[key], refSource } }));
   const setFieldOrder = (key: string, coordOrder: CoordOrder) =>
     setMapping((m) => ({ ...m, [key]: { ...m[key], coordOrder } }));
   const setChild = (key: string, patch: Partial<ChildMapping>) =>
@@ -314,13 +419,78 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       return next;
     });
 
+  /** Records each checked table would import (its filters and cap applied) */
+  const planFor = useCallback((key: string, cfg: SourceConfig) => {
+    const src = sources.find((x) => sourceKey(x) === key);
+    if (!src) return null;
+    const raw = rawRecordsForSource(parsed, src);
+    const active = cfg.filters.filter(condActive);
+    const filtered = active.length === 0
+      ? raw
+      : raw.filter((r) => (cfg.filterMode === 'all' ? active.every((c) => evalCond(r, c)) : active.some((c) => evalCond(r, c))));
+    const capped = cfg.maxImport > 0 ? filtered.slice(0, cfg.maxImport) : filtered;
+    return { key, src, cfg, raw: capped };
+  }, [sources, parsed]);
+
+  // How many elements the checked tables give (the open one as edited)
+  const includedCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const key of included) {
+      if (key === activeKey) { counts.set(key, importCount); continue; }
+      const cfg = configs[key] ?? autoConfigFor(key);
+      const plan = cfg ? planFor(key, cfg) : null;
+      counts.set(key, plan?.raw.length ?? 0);
+    }
+    return counts;
+  }, [included, activeKey, importCount, configs, autoConfigFor, planFor]);
+  const totalImportCount = [...includedCounts.values()].reduce((sum, n) => sum + n, 0);
+
+  // The checked tables and their references, for the diagram
+  const diagramTables = useMemo((): DiagramTable[] => tableSources
+    .filter((src) => included.has(sourceKey(src)))
+    .map((src) => {
+      const key = sourceKey(src);
+      const m = key === activeKey ? mapping : (configs[key] ?? autoConfigFor(key))?.mapping ?? {};
+      const raw = rawRecordsForSource(parsed, src);
+      const scalar = key === activeKey ? scalarFields : fieldsOf(raw).scalarFields;
+      const idField = scalar.find((f) => m[f.key]?.enabled && m[f.key]?.target === 'id')?.key;
+      const flats = raw.slice(0, SAMPLE).map((r) => flattenRecord(r));
+      const refs = scalar
+        .filter((f) => m[f.key]?.enabled && m[f.key]?.target === 'ref')
+        .map((f) => {
+          const target = m[f.key].refSource || key;
+          // Share of the field's values found among the target's ids: tells a sound link from a broken one
+          const ids = tableIds.find((x) => x.key === target)?.ids ?? new Set<string>();
+          let total = 0, found = 0;
+          for (const r of flats) {
+            const v = r[f.key];
+            for (const x of Array.isArray(v) ? v : (isBlank(v) ? [] : [v])) {
+              const k = idKey(x);
+              if (!k) continue;
+              total++;
+              if (ids.has(k)) found++;
+            }
+          }
+          return { field: f.key, target, matched: total > 0 ? found / total : 0 };
+        });
+      const candidates = scalar
+        .filter((f) => f.key !== idField && !(m[f.key]?.enabled && m[f.key]?.target === 'ref'))
+        .map((f) => f.key);
+      return { key, name: src.path, count: includedCounts.get(key) ?? 0, idField, refs, candidates };
+    }), [tableSources, included, activeKey, mapping, configs, autoConfigFor, scalarFields, parsed, includedCounts, tableIds]);
+
   const handleImport = useCallback(async () => {
     const dossier = useDossierStore.getState().currentDossier;
-    if (!dossier || importCount === 0) return;
+    if (!dossier || totalImportCount === 0) return;
+    // Settings of every checked table — the open one as being edited
+    const all: Record<string, SourceConfig> = { ...configs, [activeKey]: snapshot() };
+    const plans = sources
+      .map((src) => sourceKey(src))
+      .filter((key) => included.has(key))
+      .map((key) => { const cfg = all[key] ?? autoConfigFor(key); return cfg ? planFor(key, cfg) : null; })
+      .filter((p): p is NonNullable<typeof p> => !!p && p.raw.length > 0);
+    if (plans.length === 0) return;
     setCreating(true);
-    // Apply filter + cap, then flatten the records to import.
-    const toImport = maxImport > 0 ? filteredRaw.slice(0, maxImport) : filteredRaw;
-    const allRecords = toImport.map((r) => flattenRecord(r));
     try {
       const tagStore = useTagSetStore.getState();
       // Ensure a tag exists and return a base visual derived from it.
@@ -339,28 +509,15 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         return base;
       };
 
-      const tn = tagName.trim();
-      const parentVisual = await ensureVisual(tn);
-
-      // Resolve visuals for each enabled child-array field's tag.
-      const enabledChildren = childArrayFields.filter((f) => childMappings[f.key]?.enabled && childMappings[f.key]?.tag.trim());
-      const childVisuals: Record<string, ElementVisual> = {};
-      for (const f of enabledChildren) childVisuals[f.key] = await ensureVisual(childMappings[f.key].tag);
-
-      // Pivot fields: a shared value → one dedup'd node linking every record that has it.
-      const pivotFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'pivot');
-      const pivotTagOf = (key: string) => (mapping[key]?.propKey.trim() || lastSegment(key));
-      const pivotVisuals: Record<string, ElementVisual> = {};
-      for (const f of pivotFields) pivotVisuals[f.key] = await ensureVisual(pivotTagOf(f.key));
+      const now = new Date();
+      const elements: Element[] = [];
+      const links: Link[] = [];
+      const assetDownloads: { elementId: string; urls: string[] }[] = [];
+      // Pivots are shared across tables: one node per tag and value
       const pivotByKey = new Map<string, Element>();
       let pivotIdx = 0;
 
-      const now = new Date();
-      const cols = Math.max(1, Math.ceil(Math.sqrt(allRecords.length)));
-      const elements: Element[] = [];
-      const links: Link[] = [];
-
-      const buildProps = (flat: Record<string, unknown>, fieldList: typeof scalarFields, getMap: (k: string) => FieldMapping | undefined) => {
+      const buildProps = (flat: Record<string, unknown>, fieldList: FieldInfo[], getMap: (k: string) => FieldMapping | undefined) => {
         const properties: Property[] = [];
         let source = '';
         let lat: number | null = null, lng: number | null = null;
@@ -394,130 +551,168 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         createdAt: now, updatedAt: now,
       });
 
-      // Reference-link config: the field that holds each record's id, and the fields
-      // whose value(s) are ids of other records (→ links between created elements).
-      const idField = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'id')?.key;
-      const refFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'ref');
-      const polyFieldKey = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'polygon')?.key;
-      const polyOrder: CoordOrder = polyFieldKey ? (mapping[polyFieldKey]?.coordOrder ?? 'latlng') : 'latlng';
-      const latlngFieldKey = scalarFields.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'latlng')?.key;
-      const assetFields = scalarFields.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'asset');
-      const idToElement = new Map<string, string>();
-      const parentEls: Element[] = [];
-      const assetDownloads: { elementId: string; urls: string[] }[] = [];
+      // Per table: id value → element, and the parent element of each record
+      const idMaps = new Map<string, Map<string, string>>();
+      const built: { key: string; mapping: Record<string, FieldMapping>; scalar: FieldInfo[]; flats: Record<string, unknown>[]; parents: Element[] }[] = [];
+      let originY = 0;
 
-      allRecords.forEach((flat, i) => {
-        const { properties, source, lat, lng } = buildProps(flat, scalarFields, (k) => mapping[k]);
-        let geo: GeoData | null = null;
-        if (polyFieldKey) {
-          const coords = toLngLatCoords(flat[polyFieldKey], polyOrder);
-          if (coords.length >= 3) geo = { type: 'polygon', coordinates: coords, center: computePolygonCenter(coords) };
-        }
-        if (!geo && latlngFieldKey) {
-          const p = parseLatLngPair(valueToString(flat[latlngFieldKey]));
-          if (p) geo = { type: 'point', lat: p.lat, lng: p.lng };
-        }
-        if (!geo && lat != null && lng != null) geo = { type: 'point', lat, lng };
-        const parent = mkElement({
-          label: applyTemplate(labelTemplate, flat) || t('importJsonMapping.noLabel'),
-          tags: tn ? [tn] : [], properties, source, geo,
-          visual: { ...parentVisual },
-          position: { x: (i % cols) * 380, y: Math.floor(i / cols) * 320 },
-        });
-        elements.push(parent);
-        parentEls.push(parent);
-        if (idField) {
-          const idv = valueToString(flat[idField]).trim();
-          if (idv && !idToElement.has(idv)) idToElement.set(idv, parent.id);
-        }
-        // Collect media URLs to download + attach after the element is created.
-        if (assetFields.length > 0) {
-          const urls: string[] = [];
-          for (const af of assetFields) {
-            const raw = flat[af.key];
-            const vals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
-            for (const v of vals) { const s = valueToString(v).trim(); if (isUrl(s)) urls.push(s); }
+      for (const plan of plans) {
+        const { cfg } = plan;
+        // A reference into a table that is not imported keeps its value as a
+        // property: no link can be made, the data must not be lost
+        const mapping: Record<string, FieldMapping> = Object.fromEntries(Object.entries(cfg.mapping).map(([k, m]) => (
+          m.target === 'ref' && m.refSource && !included.has(m.refSource)
+            ? [k, { ...m, target: 'property' as const, propKey: lastSegment(k), refSource: undefined }]
+            : [k, m]
+        )));
+        const flats = plan.raw.map((r) => flattenRecord(r));
+        const { scalarFields: scalar, childArrayFields: childArrays } = fieldsOf(rawRecordsForSource(parsed, plan.src));
+        const tn = cfg.tagName.trim();
+        const parentVisual = await ensureVisual(tn);
+
+        // Resolve visuals for each enabled child-array field's tag.
+        const enabledChildren = childArrays.filter((f) => cfg.childMappings[f.key]?.enabled && cfg.childMappings[f.key]?.tag.trim());
+        const childVisuals: Record<string, ElementVisual> = {};
+        for (const f of enabledChildren) childVisuals[f.key] = await ensureVisual(cfg.childMappings[f.key].tag);
+
+        // Pivot fields: a shared value → one dedup'd node linking every record that has it.
+        const pivotFields = scalar.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'pivot');
+        const pivotTagOf = (key: string) => (mapping[key]?.propKey.trim() || lastSegment(key));
+        const pivotVisuals: Record<string, ElementVisual> = {};
+        for (const f of pivotFields) pivotVisuals[f.key] = await ensureVisual(pivotTagOf(f.key));
+
+        const idField = scalar.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'id')?.key;
+        const polyFieldKey = scalar.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'polygon')?.key;
+        const polyOrder: CoordOrder = polyFieldKey ? (mapping[polyFieldKey]?.coordOrder ?? 'latlng') : 'latlng';
+        const latlngFieldKey = scalar.find((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'latlng')?.key;
+        const assetFields = scalar.filter((f) => mapping[f.key]?.enabled && mapping[f.key]?.target === 'asset');
+        const idToElement = new Map<string, string>();
+        const parents: Element[] = [];
+        const cols = Math.max(1, Math.ceil(Math.sqrt(flats.length)));
+
+        flats.forEach((flat, i) => {
+          const { properties, source, lat, lng } = buildProps(flat, scalar, (k) => mapping[k]);
+          let geo: GeoData | null = null;
+          if (polyFieldKey) {
+            const coords = toLngLatCoords(flat[polyFieldKey], polyOrder);
+            if (coords.length >= 3) geo = { type: 'polygon', coordinates: coords, center: computePolygonCenter(coords) };
           }
-          if (urls.length) assetDownloads.push({ elementId: parent.id, urls });
-        }
-
-        // Pivot nodes: link this record to a dedup'd node per shared value.
-        for (const pf of pivotFields) {
-          const tag = pivotTagOf(pf.key);
-          const raw = flat[pf.key];
-          const vals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
-          for (const v of vals) {
-            const val = valueToString(v).trim();
-            if (!val) continue;
-            const key = `${tag}\u0000${val}`;
-            let pivot = pivotByKey.get(key);
-            if (!pivot) {
-              pivot = mkElement({
-                label: val,
-                tags: tag ? [tag] : [],
-                visual: { ...pivotVisuals[pf.key] },
-                position: { x: -360, y: (pivotIdx++) * 130 },
-              });
-              elements.push(pivot);
-              pivotByKey.set(key, pivot);
+          if (!geo && latlngFieldKey) {
+            const p = parseLatLngPair(valueToString(flat[latlngFieldKey]));
+            if (p) geo = { type: 'point', lat: p.lat, lng: p.lng };
+          }
+          if (!geo && lat != null && lng != null) geo = { type: 'point', lat, lng };
+          const parent = mkElement({
+            label: applyTemplate(cfg.labelTemplate, flat) || t('importJsonMapping.noLabel'),
+            tags: tn ? [tn] : [], properties, source, geo,
+            visual: { ...parentVisual },
+            position: { x: (i % cols) * 380, y: originY + Math.floor(i / cols) * 320 },
+          });
+          elements.push(parent);
+          parents.push(parent);
+          if (idField) {
+            const idv = idKey(flat[idField]);
+            if (idv && !idToElement.has(idv)) idToElement.set(idv, parent.id);
+          }
+          // Collect media URLs to download + attach after the element is created.
+          if (assetFields.length > 0) {
+            const urls: string[] = [];
+            for (const af of assetFields) {
+              const raw = flat[af.key];
+              const vals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
+              for (const v of vals) { const s = valueToString(v).trim(); if (isUrl(s)) urls.push(s); }
             }
-            links.push({
-              id: crypto.randomUUID(), dossierId: dossier.id, fromId: parent.id, toId: pivot.id,
-              sourceHandle: null, targetHandle: null,
-              label: '', notes: '', tags: [], properties: [],
-              directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
-              visual: { color: '#9ca3af', style: 'dashed', thickness: 2 },
-              curveOffset: { x: 0, y: 0 },
-              createdAt: now, updatedAt: now,
-            });
+            if (urls.length) assetDownloads.push({ elementId: parent.id, urls });
           }
-        }
 
-        // Linked children from array-of-objects fields
-        let childIdx = 0;
-        for (const f of enabledChildren) {
-          const cm = childMappings[f.key];
-          const arr = flat[f.key];
-          if (!Array.isArray(arr)) continue;
-          const subFields = childFieldsOf([flat], f.key);
-          for (const item of arr) {
-            if (item == null || typeof item !== 'object') continue;
-            const childFlat = flattenRecord(item);
-            const cp = buildProps(childFlat, subFields, (k) => ({ enabled: true, target: guessTarget(k) === 'date' ? 'date' : 'property', propKey: lastSegment(k) }));
-            const child = mkElement({
-              label: applyTemplate(cm.labelTemplate, childFlat) || t('importJsonMapping.noLabel'),
-              tags: cm.tag.trim() ? [cm.tag.trim()] : [], properties: cp.properties, source: cp.source,
-              visual: { ...childVisuals[f.key] },
-              position: { x: parent.position.x + (childIdx % 3) * 175, y: parent.position.y + 160 + Math.floor(childIdx / 3) * 110 },
-            });
-            elements.push(child);
-            links.push({
-              id: crypto.randomUUID(), dossierId: dossier.id, fromId: parent.id, toId: child.id,
-              sourceHandle: null, targetHandle: null,
-              label: cm.linkLabel.trim(), notes: '', tags: [], properties: [],
-              directed: true, direction: 'forward', confidence: null, source: '', date: null, dateRange: null,
-              visual: { color: '#9ca3af', style: 'solid', thickness: 2 },
-              curveOffset: { x: 0, y: 0 },
-              createdAt: now, updatedAt: now,
-            });
-            childIdx++;
+          // Pivot nodes: link this record to a dedup'd node per shared value.
+          for (const pf of pivotFields) {
+            const tag = pivotTagOf(pf.key);
+            const raw = flat[pf.key];
+            const vals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
+            for (const v of vals) {
+              const val = valueToString(v).trim();
+              if (!val) continue;
+              const key = `${tag}\u0000${val}`;
+              let pivot = pivotByKey.get(key);
+              if (!pivot) {
+                pivot = mkElement({
+                  label: val,
+                  tags: tag ? [tag] : [],
+                  visual: { ...pivotVisuals[pf.key] },
+                  position: { x: -360, y: (pivotIdx++) * 130 },
+                });
+                elements.push(pivot);
+                pivotByKey.set(key, pivot);
+              }
+              links.push({
+                id: crypto.randomUUID(), dossierId: dossier.id, fromId: parent.id, toId: pivot.id,
+                sourceHandle: null, targetHandle: null,
+                label: '', notes: '', tags: [], properties: [],
+                directed: false, direction: 'none', confidence: null, source: '', date: null, dateRange: null,
+                visual: { color: '#9ca3af', style: 'dashed', thickness: 2 },
+                curveOffset: { x: 0, y: 0 },
+                createdAt: now, updatedAt: now,
+              });
+            }
           }
-        }
-      });
 
-      // Second pass: resolve reference fields (ids of other records) into DIRECTED links.
-      // Reciprocal references (A→B and B→A) collapse into a single bidirectional link.
-      if (idField && refFields.length > 0) {
-        const edgeSet = new Set<string>();
-        const edges: { from: string; to: string; label: string }[] = [];
-        allRecords.forEach((flat, i) => {
-          const fromId = parentEls[i].id;
+          // Linked children from array-of-objects fields
+          let childIdx = 0;
+          for (const f of enabledChildren) {
+            const cm = cfg.childMappings[f.key];
+            const arr = flat[f.key];
+            if (!Array.isArray(arr)) continue;
+            const subFields = childFieldsOf([flat], f.key);
+            for (const item of arr) {
+              if (item == null || typeof item !== 'object') continue;
+              const childFlat = flattenRecord(item);
+              const cp = buildProps(childFlat, subFields, (k) => ({ enabled: true, target: guessTarget(k) === 'date' ? 'date' : 'property', propKey: lastSegment(k) }));
+              const child = mkElement({
+                label: applyTemplate(cm.labelTemplate, childFlat) || t('importJsonMapping.noLabel'),
+                tags: cm.tag.trim() ? [cm.tag.trim()] : [], properties: cp.properties, source: cp.source,
+                visual: { ...childVisuals[f.key] },
+                position: { x: parent.position.x + (childIdx % 3) * 175, y: parent.position.y + 160 + Math.floor(childIdx / 3) * 110 },
+              });
+              elements.push(child);
+              links.push({
+                id: crypto.randomUUID(), dossierId: dossier.id, fromId: parent.id, toId: child.id,
+                sourceHandle: null, targetHandle: null,
+                label: cm.linkLabel.trim(), notes: '', tags: [], properties: [],
+                directed: true, direction: 'forward', confidence: null, source: '', date: null, dateRange: null,
+                visual: { color: '#9ca3af', style: 'solid', thickness: 2 },
+                curveOffset: { x: 0, y: 0 },
+                createdAt: now, updatedAt: now,
+              });
+              childIdx++;
+            }
+          }
+        });
+
+        idMaps.set(plan.key, idToElement);
+        built.push({ key: plan.key, mapping, scalar, flats, parents });
+        // Next table below this one, before the layout rearranges everything
+        originY += (Math.ceil(flats.length / cols) + 1) * 320;
+      }
+
+      // Second pass: resolve reference fields (ids of records of the same or
+      // another table) into DIRECTED links. Reciprocal references (A→B and
+      // B→A) collapse into a single bidirectional link.
+      const edgeSet = new Set<string>();
+      const edges: { from: string; to: string; label: string }[] = [];
+      for (const b of built) {
+        const refFields = b.scalar.filter((f) => b.mapping[f.key]?.enabled && b.mapping[f.key]?.target === 'ref');
+        if (refFields.length === 0) continue;
+        b.flats.forEach((flat, i) => {
+          const fromId = b.parents[i].id;
           for (const rf of refFields) {
+            const targetIds = idMaps.get(b.mapping[rf.key]?.refSource || b.key);
+            if (!targetIds) continue;
             const raw = flat[rf.key];
             const refVals = Array.isArray(raw) ? raw : (isBlank(raw) ? [] : [raw]);
-            const label = (mapping[rf.key]?.propKey ?? '').trim();
+            const label = (b.mapping[rf.key]?.propKey ?? '').trim();
             for (const rv of refVals) {
-              const targetId = idToElement.get(valueToString(rv).trim());
+              const targetId = targetIds.get(idKey(rv));
               if (!targetId || targetId === fromId) continue;
               const key = `${fromId}|${targetId}`;
               if (edgeSet.has(key)) continue;
@@ -526,22 +721,22 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
             }
           }
         });
-        const donePairs = new Set<string>();
-        for (const e of edges) {
-          const pair = [e.from, e.to].sort().join('|');
-          if (donePairs.has(pair)) continue; // emit one link per unordered pair
-          donePairs.add(pair);
-          const bidi = edgeSet.has(`${e.to}|${e.from}`);
-          links.push({
-            id: crypto.randomUUID(), dossierId: dossier.id, fromId: e.from, toId: e.to,
-            sourceHandle: null, targetHandle: null,
-            label: e.label, notes: '', tags: [], properties: [],
-            directed: true, direction: bidi ? 'both' : 'forward', confidence: null, source: '', date: null, dateRange: null,
-            visual: { color: '#6b7280', style: 'solid', thickness: 2 },
-            curveOffset: { x: 0, y: 0 },
-            createdAt: now, updatedAt: now,
-          });
-        }
+      }
+      const donePairs = new Set<string>();
+      for (const e of edges) {
+        const pair = [e.from, e.to].sort().join('|');
+        if (donePairs.has(pair)) continue; // emit one link per unordered pair
+        donePairs.add(pair);
+        const bidi = edgeSet.has(`${e.to}|${e.from}`);
+        links.push({
+          id: crypto.randomUUID(), dossierId: dossier.id, fromId: e.from, toId: e.to,
+          sourceHandle: null, targetHandle: null,
+          label: e.label, notes: '', tags: [], properties: [],
+          directed: true, direction: bidi ? 'both' : 'forward', confidence: null, source: '', date: null, dateRange: null,
+          visual: { color: '#6b7280', style: 'solid', thickness: 2 },
+          curveOffset: { x: 0, y: 0 },
+          createdAt: now, updatedAt: now,
+        });
       }
 
       // Lay the subgraph out properly (force/hierarchy/… respecting the links)
@@ -575,7 +770,10 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       setError(String(e));
       setCreating(false);
     }
-  }, [filteredRaw, maxImport, importCount, scalarFields, childArrayFields, mapping, childMappings, ignoreEmpty, labelTemplate, tagName, layout, t, handleClose]);
+    // snapshot() reads the edited state listed here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalImportCount, activeKey, configs, sources, included, autoConfigFor, planFor, parsed, ignoreEmpty, layout, t, handleClose,
+    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -583,7 +781,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
   if (!isOpen) return null;
 
-  const canImport = importCount > 0 && labelTemplate.trim().length > 0 && !creating;
+  // Every checked table needs a label template (the open one as edited)
+  const labelsOk = [...included].every((key) => (key === activeKey ? labelTemplate : (configs[key]?.labelTemplate ?? '{}')).trim().length > 0);
+  const canImport = totalImportCount > 0 && labelsOk && !creating;
 
   return (
     <>
@@ -697,21 +897,49 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                 </div>
               )}
 
-              {/* Record source */}
+              {/* Tables: tick the ones to import, click one to set its mapping */}
               {sources.length > 1 && (
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.arrayRoot')}</label>
-                  <select
-                    value={selectedSource ? sourceKey(selectedSource) : ''}
-                    onChange={(e) => setSrcKey(e.target.value)}
-                    className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
-                  >
-                    {sources.map((s) => (
-                      <option key={sourceKey(s)} value={sourceKey(s)}>
-                        {s.kind === 'single' ? t('importJsonMapping.wholeObject') : `${s.path || '(racine)'} — ${s.length}`}
-                      </option>
-                    ))}
-                  </select>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.tables')}</label>
+                  <div className="flex flex-wrap gap-1.5" data-testid="json-mapping-tables">
+                    {sources.map((src) => {
+                      const key = sourceKey(src);
+                      const active = key === activeKey;
+                      const on = included.has(key);
+                      return (
+                        <div
+                          key={key}
+                          className={`flex items-center gap-1.5 pl-2 pr-1 py-0.5 text-xs rounded border ${active ? 'border-accent bg-accent/10' : 'border-border-default bg-bg-primary'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={on}
+                            onChange={() => toggleIncluded(key)}
+                            aria-label={t('importJsonMapping.includeTable', { name: sourceName(src, wholeObject) })}
+                            className="rounded border-border-default"
+                          />
+                          <button
+                            onClick={() => selectSource(key)}
+                            className={`px-1 ${active ? 'text-text-primary font-medium' : 'text-text-secondary hover:text-text-primary'}`}
+                          >
+                            {sourceName(src, wholeObject)}
+                            <span className="text-text-tertiary"> — {on ? (includedCounts.get(key) ?? 0) : src.length}</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!included.has(activeKey) && (
+                    <p className="text-[10px] text-text-tertiary">{t('importJsonMapping.tableNotIncluded')}</p>
+                  )}
+                  {diagramTables.length >= 2 && (
+                    <JsonTablesDiagram
+                      tables={diagramTables}
+                      activeKey={activeKey}
+                      onOpen={selectSource}
+                      onSetRef={setTableRef}
+                    />
+                  )}
                 </div>
               )}
 
@@ -866,12 +1094,31 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                             <option value="lnglat">lng, lat</option>
                           </select>
                         ) : showKey && m.enabled ? (
-                          <input
-                            type="text"
-                            value={m.propKey}
-                            onChange={(e) => setFieldKey(f.key, e.target.value)}
-                            className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
-                          />
+                          <div className="flex flex-col gap-1">
+                            {m.target === 'ref' && tableSources.length > 1 && (
+                              <select
+                                value={m.refSource || activeKey}
+                                onChange={(e) => setFieldRefSource(f.key, e.target.value === activeKey ? undefined : e.target.value)}
+                                title={t('importJsonMapping.refTable')}
+                                aria-label={t('importJsonMapping.refTable')}
+                                className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                              >
+                                {tableSources.map((src) => (
+                                  <option key={sourceKey(src)} value={sourceKey(src)}>→ {sourceName(src, wholeObject)}</option>
+                                ))}
+                              </select>
+                            )}
+                            {m.target === 'ref' && m.refSource && !included.has(m.refSource) && (
+                              <span className="text-[10px] text-warning leading-tight">{t('importJsonMapping.refTableNotIncluded')}</span>
+                            )}
+                            <input
+                              type="text"
+                              value={m.propKey}
+                              onChange={(e) => setFieldKey(f.key, e.target.value)}
+                              placeholder={m.target === 'ref' ? t('importJsonMapping.linkLabel') : undefined}
+                              className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                            />
+                          </div>
                         ) : <span />}
                       </div>
                     );
@@ -932,7 +1179,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
               {/* Preview */}
               <div className="text-xs text-text-secondary">
-                {t('importJsonMapping.willCreate', { count: importCount })}
+                {t('importJsonMapping.willCreate', { count: included.size > 1 ? totalImportCount : importCount })}
+                {included.size > 1 && <span className="text-text-tertiary"> ({t('importJsonMapping.fromTables', { count: included.size })})</span>}
                 {matchedCount !== recordCount && <span className="text-text-tertiary"> ({t('importJsonMapping.matchedOf', { matched: matchedCount, total: recordCount })})</span>}
                 {importCount < matchedCount && <span className="text-warning"> — {t('importJsonMapping.capped', { max: maxImport })}</span>}
                 {previewLabel && (

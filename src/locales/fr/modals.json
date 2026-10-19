@@ -803,6 +803,21 @@
     "filterAll": "toutes (ET)",
     "filterAny": "au moins une (OU)",
     "addCondition": "ajouter une condition",
-    "filterField": "(champ)"
+    "filterField": "(champ)",
+    "tables": "Tableaux",
+    "includeTable": "Importer {{name}}",
+    "tableNotIncluded": "Ce tableau n'est pas coché : il ne sera pas importé.",
+    "refTable": "Tableau visé par la référence",
+    "fromTables": "depuis {{count}} tableaux",
+    "diagram": {
+      "id": "Identifiant des lignes",
+      "noId": "pas d'identifiant",
+      "dragHint": "Tirer vers un tableau pour y pointer",
+      "addRef": "champ",
+      "removeHint": "Cliquer pour retirer la référence {{field}}",
+      "hint": "Tirez un champ vers un tableau pour le relier ; cliquez une flèche pour la retirer.",
+      "matchedHint": "Part des valeurs retrouvées parmi les identifiants du tableau visé"
+    },
+    "refTableNotIncluded": "Tableau non coché : gardé comme propriété"
   }
 }

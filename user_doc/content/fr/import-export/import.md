@@ -102,6 +102,21 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 
 **Filtrer / limiter l'import :** on peut ne garder que les enregistrements satisfaisant une ou **plusieurs conditions** (champ *contient / égale / est non vide*), combinées en **ET** ou **OU**, et fixer un **plafond** (par défaut 2000 ; `0` = illimité). Utile pour les très gros jeux : on importe un sous-ensemble exploitable plutôt que des dizaines de milliers de nœuds.
 
+**Plusieurs tableaux :** quand le JSON contient plusieurs tableaux d'objets (ex. `sinistres`, `assures`, `declarations`), chacun apparaît en onglet avec son nombre d'enregistrements.
+
+- **Cocher** les tableaux à importer ; chacun garde son propre mapping (libellé, champs, tag, filtres) ; les tableaux ajoutés reçoivent par défaut un tag à leur nom.
+- Les **références entre tableaux** sont détectées : un champ `assure_id` dont les valeurs se retrouvent parmi les `id` du tableau `assures` crée les liens vers ses enregistrements. Le tableau visé se change sur la ligne du champ.
+- Les identifiants issus d'un CSV sont rapprochés (`12`, `"12"`, `12.0` désignent le même enregistrement) ; un champ qui recopie l'`id` est ignoré.
+- **Identifiant commun** : si les `id` de plusieurs tableaux reprennent ceux d'un tableau principal (un numéro de procédure présent partout), chaque tableau est relié à ce tableau principal.
+- Une référence vers un tableau **non coché** est conservée en propriété.
+
+Dès que deux tableaux sont cochés, un **schéma** montre les tableaux et leurs liens, avec la part des valeurs retrouvées dans le tableau visé :
+
+- **tirer** le point d'un champ vers un tableau pour le relier ;
+- **cliquer** une flèche pour retirer la référence ;
+- **+ champ** pour transformer un autre champ en référence ;
+- cliquer le nom d'un tableau ouvre son mapping.
+
 Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que les enregistrements retenus sont tous importés.
 
 **Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**. Les modèles peuvent aussi être **exportés / importés** en fichier `.json` pour les **partager** entre postes ou utilisateurs.

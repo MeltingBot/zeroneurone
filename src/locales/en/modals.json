@@ -803,6 +803,21 @@
     "filterAll": "all (AND)",
     "filterAny": "any (OR)",
     "addCondition": "add a condition",
-    "filterField": "(field)"
+    "filterField": "(field)",
+    "tables": "Tables",
+    "includeTable": "Import {{name}}",
+    "tableNotIncluded": "This table is not ticked: it will not be imported.",
+    "refTable": "Table the reference points to",
+    "fromTables": "from {{count}} tables",
+    "diagram": {
+      "id": "Row identifier",
+      "noId": "no identifier",
+      "dragHint": "Drag onto a table to point there",
+      "addRef": "field",
+      "removeHint": "Click to remove the reference {{field}}",
+      "hint": "Drag a field onto a table to link it; click an arrow to remove it.",
+      "matchedHint": "Share of values found among the target table's identifiers"
+    },
+    "refTableNotIncluded": "Table not ticked: kept as a property"
   }
 }

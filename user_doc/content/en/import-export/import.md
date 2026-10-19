@@ -100,6 +100,21 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label (with a *toggle all* checkbox);
 - the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
 
+**Several arrays:** when the JSON holds several arrays of objects (e.g. `claims`, `insured`, `statements`), each one shows as a tab with its record count.
+
+- **Tick** the arrays to import; each keeps its own mapping (label, fields, tag, filters); added arrays get a tag named after them by default.
+- **References between arrays** are detected: an `insured_id` field whose values are found among the `id`s of the `insured` array creates links to its records. The target array can be changed on the field's row.
+- Ids coming from a CSV are matched (`12`, `"12"`, `12.0` point to the same record); a field copying the `id` is ignored.
+- **Shared id**: when the `id`s of several arrays repeat those of a main array (a case number found everywhere), each array is linked to that main array.
+- A reference to an **unticked** array is kept as a property.
+
+As soon as two arrays are ticked, a **diagram** shows the arrays and their links, with the share of values found in the target array:
+
+- **drag** a field's dot onto an array to link it;
+- **click** an arrow to remove the reference;
+- **+ field** turns another field into a reference;
+- clicking an array's name opens its mapping.
+
 **Filter / limit the import:** you can keep only records matching one or **several conditions** (field *contains / equals / is non-empty*), combined with **AND** or **OR**, and set a **cap** (default 2000; `0` = unlimited). Useful for very large datasets: import a usable subset instead of tens of thousands of nodes.
 
 **Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while the retained records are all imported.

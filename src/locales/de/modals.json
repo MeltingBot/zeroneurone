@@ -794,6 +794,21 @@
     "filterAll": "alle (UND)",
     "filterAny": "mindestens eine (ODER)",
     "addCondition": "Bedingung hinzufügen",
-    "filterField": "(Feld)"
+    "filterField": "(Feld)",
+    "tables": "Tabellen",
+    "includeTable": "{{name}} importieren",
+    "tableNotIncluded": "Diese Tabelle ist nicht markiert: Sie wird nicht importiert.",
+    "refTable": "Tabelle, auf die die Referenz zeigt",
+    "fromTables": "aus {{count}} Tabellen",
+    "diagram": {
+      "id": "Zeilenkennung",
+      "noId": "keine Kennung",
+      "dragHint": "Auf eine Tabelle ziehen, um darauf zu verweisen",
+      "addRef": "Feld",
+      "removeHint": "Klicken, um die Referenz {{field}} zu entfernen",
+      "hint": "Ziehen Sie ein Feld auf eine Tabelle, um es zu verknüpfen; klicken Sie auf einen Pfeil, um ihn zu entfernen.",
+      "matchedHint": "Anteil der Werte, die unter den Kennungen der Zieltabelle gefunden wurden"
+    },
+    "refTableNotIncluded": "Tabelle nicht markiert: als Eigenschaft behalten"
   }
 }

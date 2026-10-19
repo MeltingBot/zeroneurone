@@ -794,6 +794,21 @@
     "filterAll": "alle (EN)",
     "filterAny": "ten minste één (OF)",
     "addCondition": "voorwaarde toevoegen",
-    "filterField": "(veld)"
+    "filterField": "(veld)",
+    "tables": "Tabellen",
+    "includeTable": "{{name}} importeren",
+    "tableNotIncluded": "Deze tabel is niet aangevinkt: hij wordt niet geïmporteerd.",
+    "refTable": "Tabel waarnaar de verwijzing wijst",
+    "fromTables": "uit {{count}} tabellen",
+    "diagram": {
+      "id": "Rij-identificatie",
+      "noId": "geen identificatie",
+      "dragHint": "Naar een tabel slepen om ernaar te verwijzen",
+      "addRef": "veld",
+      "removeHint": "Klik om de verwijzing {{field}} te verwijderen",
+      "hint": "Sleep een veld naar een tabel om het te koppelen; klik op een pijl om hem te verwijderen.",
+      "matchedHint": "Aandeel waarden gevonden onder de identificaties van de doeltabel"
+    },
+    "refTableNotIncluded": "Tabel niet aangevinkt: als eigenschap behouden"
   }
 }
