@@ -115,6 +115,8 @@ Système de plugins par emplacements (menus, panneaux, en-tête, raccourcis, rap
 
 ## Installation
 
+Prérequis : Node 22.13 ou plus.
+
 ```bash
 git clone https://github.com/MeltingBot/zeroneurone.git
 cd zeroneurone

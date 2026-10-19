@@ -10,7 +10,7 @@
  *   node scripts/build-plugins.mjs --skip-build # just copy + generate manifest (if already built)
  */
 import { execSync } from 'node:child_process';
-import { copyFileSync, readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
+import { copyFileSync, readFileSync, writeFileSync, existsSync, realpathSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,9 @@ const pluginsDir = resolve(znRoot, 'public/plugins');
 const manifestPath = resolve(pluginsDir, 'manifest.json');
 
 const skipBuild = process.argv.includes('--skip-build');
+
+// public/plugins/ only holds generated files (gitignored): absent on a fresh clone
+mkdirSync(pluginsDir, { recursive: true });
 
 // ─── YPSI plugin registry ────────────────────────────────────
 // All metadata lives here — the manifest is generated, never hand-edited.

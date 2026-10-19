@@ -8,6 +8,9 @@
     "lodash": "4.17.21"
   },
   "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "licenses": "node scripts/generate-third-party-licenses.mjs",
     "predev": "npm run sync:workers",

@@ -6,18 +6,44 @@ base de données. Seule la collaboration temps réel demande un processus Node
 
 Exemple utilisé ici : `https://serveur.exemple/Zeroneurone/`, sur Ubuntu 24.04.
 
+## 0. Prérequis : Node 22.13 ou plus
+
+Le build demande **Node 22.13 minimum** (pdf.js 6 ; Vite 7 demande au moins
+20.19). Le paquet `nodejs` d'Ubuntu 24.04 fournit Node 18 : le build échoue alors,
+par exemple sur `Cannot find module 'pdfjs-dist/legacy/build/pdf.worker.min.mjs'`.
+
+```bash
+node --version          # doit afficher v22.13 ou plus
+# Sinon, via NodeSource :
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+Node n'est nécessaire que sur la machine qui construit, pas sur le serveur Apache
+(sauf pour le relais de collaboration, section 5).
+
 ## 1. Build
+
+Construire **hors du répertoire servi par Apache** (par exemple `/opt/zeroneurone`) :
+ne copier ensuite que `dist/`. Cloner directement dans `/var/www/html/...`
+exposerait les sources, `node_modules/` et `.git/`.
 
 Le chemin de base se fixe au build, via `VITE_BASE`. Il est sensible à la casse
 et doit correspondre exactement au répertoire servi par Apache.
 
 ```bash
+git clone https://github.com/MeltingBot/zeroneurone.git /opt/zeroneurone
+cd /opt/zeroneurone
 npm ci
-npm run build:plugins
 VITE_BASE=/Zeroneurone/ npm run build
 ```
 
 Sans `VITE_BASE`, l'application est construite pour la racine du domaine (`/`).
+
+`npm run build:plugins` ne sert que dans le monorepo qui contient les sources des
+plugins. Sur un clone de ZeroNeurone seul, il n'y a rien à construire : déposer
+plutôt les plugins déjà compilés (`*.js` + `manifest.json`) dans `plugins/` du
+répertoire servi.
 
 Les plugins externes (`plugins/*.js`) n'ont pas besoin d'être reconstruits pour
 chaque chemin : ZN leur transmet le chemin de base (`api.basePath`). Seul
@@ -33,7 +59,9 @@ sudo cp docs/apache/htaccess /var/www/html/Zeroneurone/.htaccess   # contenu en 
 ```
 
 `--delete` retire les anciens fichiers hachés, mais supprime aussi le
-`.htaccess` : recopier ce dernier après chaque déploiement.
+`.htaccess` : recopier ce dernier après chaque déploiement. Si des plugins ont été
+déposés à la main dans `plugins/` du répertoire servi, ajouter
+`--exclude=/plugins/` pour qu'ils ne soient pas effacés.
 
 ## 3. Modules et autorisations Apache
 

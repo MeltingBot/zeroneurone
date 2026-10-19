@@ -115,6 +115,8 @@ Slot-based plugin system (menus, panels, header, shortcuts, report, import/expor
 
 ## Installation
 
+Requirement: Node 22.13 or later.
+
 ```bash
 git clone https://github.com/MeltingBot/zeroneurone.git
 cd zeroneurone
