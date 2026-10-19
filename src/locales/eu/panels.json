@@ -11,7 +11,8 @@
     "panelDockRight": "Panela eskuinera",
     "panelDockBottom": "Panela behera",
     "panelDockLeft": "Panela ezkerrera",
-    "panelDetach": "Panela askatu"
+    "panelDetach": "Panela askatu",
+    "suggestions": "Iradokizunak"
   },
   "dossier": {
     "sections": {
@@ -619,5 +620,78 @@
     "unsavedChangesMessage": "Atal honek gorde gabeko aldaketak ditu. Irten aurretik gorde nahi dituzu?",
     "unsavedSave": "Gorde",
     "unsavedDiscard": "Baztertu"
+  },
+  "suggestions": {
+    "analyze": "Espedientea aztertu",
+    "scope": "Hautapenera mugatua",
+    "wholeDossier": "Espediente osoa",
+    "none": "Iradokizunik ez",
+    "checkAll": "Denak markatu",
+    "count_one": "Iradokizun {{count}}",
+    "count_other": "{{count}} iradokizun",
+    "acceptN": "Onartu ({{count}})",
+    "dismissN": "Baztertu ({{count}})",
+    "accept": "Onartu",
+    "dismiss": "Baztertu",
+    "pivotNew_one": "Sortu eta elementu {{count}} lotu",
+    "pivotNew_other": "Sortu eta {{count}} elementu lotu",
+    "pivotExisting_one": "Elementu {{count}} lotu",
+    "pivotExisting_other": "{{count}} elementu lotu",
+    "more": "{{count}} gehiago",
+    "reason": {
+      "sharedValue": "{{key}}: {{value}}",
+      "sharedSource": "Iturria: {{value}}",
+      "inZone": "Eremuaren barruan",
+      "nearby": "{{distance}}-ra",
+      "meeting_one": "Elkarrekin {{distance}}-ra, {{date}}",
+      "meeting_other": "Elkarrekin {{distance}}-ra, {{date}} ({{count}} aldiz)",
+      "meetingApart_one": "{{distance}}-ra, {{date}} eta gero {{dateOther}}",
+      "meetingApart_other": "{{distance}}-ra, {{date}} eta gero {{dateOther}} ({{count}} aldiz)"
+    },
+    "linkLabel": {
+      "sharedValue": "{{key}} bera",
+      "sharedSource": "iturri bera",
+      "inZone": "hemen kokatua",
+      "nearby": "gertu",
+      "meeting": "kopresentzia"
+    },
+    "nearbyRadius": "Erradioa",
+    "meetingWindow": "Topaketen leihoa",
+    "window": {
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "hours_one": "{{count}} h",
+      "hours_other": "{{count}} h",
+      "days_one": "Egun {{count}}",
+      "days_other": "{{count}} egun"
+    },
+    "meetingsTruncated": "Topaketak etenda: posizio gehiegi erradio eta leiho honetarako",
+    "places": "Tokiak gehienez",
+    "meetings": "Topaketak gehienez",
+    "reviewDismissed_one": "Baztertuak ({{count}})",
+    "reviewDismissed_other": "Baztertuak ({{count}})",
+    "backToPending": "Itzuli iradokizunetara",
+    "noneDismissed": "Ez dago iradokizun baztertutik",
+    "restore": "Berrezarri",
+    "restoreN": "Berrezarri ({{count}})",
+    "shownShort_one": "Elementu {{count}} ikusgai",
+    "shownShort_other": "{{count}} elementu ikusgai",
+    "search": "Bilatu",
+    "clearSearch": "Bilaketa garbitu",
+    "noMatch": "Emaitzarik ez",
+    "and": "eta",
+    "placesHint": "Elementuen kokapenak mapan, datak kontuan hartu gabe",
+    "meetingsHint": "Data duten gertaerak leku berean eta une berean",
+    "maxStay": "egonaldiak gehienez",
+    "noLimit": "mugarik gabe",
+    "maxStayHint": "Hortik aurrera, datatutako kokapen bat (etxebizitza, egoitza, alokairua) ez da topaketetan kontuan hartzen",
+    "rules": {
+      "values": "Propietateak",
+      "sources": "Iturriak",
+      "zones": "Eremuak",
+      "valuesHint": "Balio bera propietate berean (telefonoa, IBAN…)",
+      "sourcesHint": "Erantsitako fitxategi bera edo aipatutako web orri bera",
+      "zonesHint": "Puntua edo eremu txikia eremu handiago baten barruan"
+    }
   }
 }

@@ -194,7 +194,8 @@
       "tabs": "Pestañas",
       "copyAsMermaid": "Copiar como Mermaid",
       "selectLinks": "Seleccionar sus enlaces",
-      "selectAllLinks": "Seleccionar todos los enlaces"
+      "selectAllLinks": "Seleccionar todos los enlaces",
+      "suggestLinks": "Sugerir enlaces"
     },
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",

@@ -15,3 +15,4 @@ export { useQueryStore } from './queryStore';
 export { useJsonMappingStore } from './jsonMappingStore';
 export { useClipboardStore } from './clipboardStore';
 export { useTutorialStore, getTutorialStatus } from './tutorialStore';
+export { useSuggestionsStore } from './suggestionsStore';

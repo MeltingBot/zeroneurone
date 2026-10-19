@@ -194,7 +194,8 @@
       "tabs": "Separadores",
       "copyAsMermaid": "Copiar como Mermaid",
       "selectLinks": "Selecionar as suas ligações",
-      "selectAllLinks": "Selecionar todas as ligações"
+      "selectAllLinks": "Selecionar todas as ligações",
+      "suggestLinks": "Sugerir ligações"
     },
     "viewToolbar": {
       "undo": "Anular (Ctrl+Z)",

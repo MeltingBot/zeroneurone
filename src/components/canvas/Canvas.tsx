@@ -44,7 +44,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, toast } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast } from '../../stores';
 import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
@@ -2672,8 +2672,13 @@ export function Canvas() {
       addTabMembers(activeTabId, [annotation.id]);
     }
 
+    pushAction({
+      type: 'create-element',
+      undo: {},
+      redo: { elements: [annotation], elementIds: [annotation.id] },
+    });
     selectElement(annotation.id);
-  }, [canvasContextMenu, createElement, selectElement, activeTabId, addTabMembers]);
+  }, [canvasContextMenu, createElement, selectElement, pushAction, activeTabId, addTabMembers]);
 
   // Selection handlers for canvas context menu (work without contextMenu state)
   const handleSelectionCopy = useCallback(() => {
@@ -2749,7 +2754,7 @@ export function Canvas() {
     pushAction({
       type: 'create-elements',
       undo: {},
-      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
+      redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
   }, [elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
@@ -2945,7 +2950,7 @@ export function Canvas() {
     pushAction({
       type: 'create-elements',
       undo: {},
-      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
+      redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
     });
 
     // Select all pasted elements
@@ -3107,7 +3112,7 @@ export function Canvas() {
     pushAction({
       type: 'create-elements',
       undo: {},
-      redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
+      redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
     });
     selectElements(newElementIds);
   }, [contextMenu, elements, links, getSelectedElementIds, currentDossier, pasteElements, selectElements, pushAction, activeTabId, addTabMembers]);
@@ -3353,6 +3358,12 @@ export function Canvas() {
     [selectLink, toggleLink, startEditingLink]
   );
 
+  // Link suggestions for the selected elements, shown in their side-panel tab
+  const handleSuggestLinks = useCallback(() => {
+    useSuggestionsStore.getState().analyze(getSelectedElementIds());
+    useUIStore.getState().setSidePanelTab('suggestions');
+  }, [getSelectedElementIds]);
+
   // Links shown on the canvas (filters, tab, hidden elements applied) touching
   // the selected elements — or all of them when nothing is selected.
   const handleSelectLinks = useCallback(() => {
@@ -3407,7 +3418,7 @@ export function Canvas() {
           pushAction({
             type: 'create-elements',
             undo: {},
-            redo: { elements: shifted, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
+            redo: { elements: shifted, links: placedLinks, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
           });
           selectElements(placedIds);
           toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
@@ -3802,13 +3813,6 @@ export function Canvas() {
         }
         break;
 
-      case 'create-elements':
-      case 'create-element':
-        // Delete created elements
-        if (action.redo.elementIds) {
-          await deleteElements(action.redo.elementIds);
-        }
-        break;
 
       case 'update-element':
         // Restore previous values
@@ -3958,15 +3962,6 @@ export function Canvas() {
         }
         break;
 
-      case 'create-elements':
-      case 'create-element':
-        // Re-create elements
-        if (action.redo.elements) {
-          for (const el of action.redo.elements) {
-            await createElement(el.label, el.position, el);
-          }
-        }
-        break;
 
       case 'update-element':
         // Re-apply changes
@@ -4289,7 +4284,7 @@ export function Canvas() {
           pushAction({
             type: 'create-elements',
             undo: {},
-            redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
+            redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
           });
           selectElements(newElementIds);
         }
@@ -4303,6 +4298,7 @@ export function Canvas() {
         const my = bounds ? (lastMousePosRef.current.y - bounds.top - viewport.y) / viewport.zoom : 0;
         const el = await createElement('', { x: mx, y: my });
         if (activeTabId) addTabMembers(activeTabId, [el.id]);
+        pushAction({ type: 'create-element', undo: {}, redo: { elements: [el], elementIds: [el.id] } });
         selectElement(el.id);
       }
 
@@ -4318,6 +4314,7 @@ export function Canvas() {
           visual: { color: '#ffffff', borderColor: '#e5e7eb', shape: 'rectangle', size: 'medium', icon: null, image: null, customWidth: 200 },
         });
         if (activeTabId) addTabMembers(activeTabId, [annotation.id]);
+        pushAction({ type: 'create-element', undo: {}, redo: { elements: [annotation], elementIds: [annotation.id] } });
         selectElement(annotation.id);
       }
 
@@ -4536,7 +4533,7 @@ export function Canvas() {
         pushAction({
           type: 'create-elements',
           undo: {},
-          redo: { elements: newElements, elementIds: newElementIds, linkIds: newLinkIds },
+          redo: { elements: newElements, links: newLinks, elementIds: newElementIds, linkIds: newLinkIds },
         });
 
         // Select all pasted elements
@@ -4950,6 +4947,7 @@ export function Canvas() {
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
               onSelectLinks={allEdges.length > 0 ? handleSelectLinks : undefined}
+              onSuggestLinks={handleSuggestLinks}
               onClose={closeCanvasContextMenu}
               pluginExtensions={[
                 ...canvasPlugins,

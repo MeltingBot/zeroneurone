@@ -194,7 +194,8 @@
       "tabs": "Fitxak",
       "copyAsMermaid": "Kopiatu Mermaid gisa",
       "selectLinks": "Haien loturak hautatu",
-      "selectAllLinks": "Lotura guztiak hautatu"
+      "selectAllLinks": "Lotura guztiak hautatu",
+      "suggestLinks": "Loturak iradoki"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",

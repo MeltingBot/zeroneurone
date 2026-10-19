@@ -106,6 +106,12 @@ A link represents a relationship between two elements. Links are **first-class c
 
 **Drag** from an element to empty space to simultaneously create a new element and the link connecting them.
 
+### Link a Whole Selection
+
+With several elements selected, **drag a link from one of them** to another element: every selected element is linked to the target. A single **Ctrl+Z** undoes all the links created.
+
+To spot missing links, see also [link suggestions]({{< relref "link-suggestions" >}}).
+
 
 ### Link Properties
 
@@ -141,6 +147,17 @@ Click-drag on the canvas background to draw a selection rectangle.
 
 **Ctrl+click** to add or remove an element from the selection.
 
+### Select Links
+
+| Action | Result |
+|--------|--------|
+| **Shift+click** or **Ctrl+click** a link | Adds the link to the selection, or removes it |
+| **Ctrl+Shift+A** | Selects all shown links |
+| Right-click the background → **Select their links** | Replaces the element selection with the links touching them |
+| Right-click the background, nothing selected → **Select all links** | Same as Ctrl+Shift+A |
+
+Shown links take filters, hidden elements and the active tab into account.
+
 ### Batch Operations
 
 With multiple elements selected:
@@ -152,6 +169,10 @@ With multiple elements selected:
 - Move as a group
 - Align elements
 - Distribute elements
+
+With several links selected, the **Bulk edit** panel changes at once the **label**, direction, style, thickness, color, tags, properties and confidence. If the links don't all share the same label, the field shows "Multiple values"; leaving it empty changes nothing.
+
+Each bulk edit is undone with a single **Ctrl+Z**.
 
 ### Copy / Paste
 

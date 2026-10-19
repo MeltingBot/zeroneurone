@@ -194,7 +194,8 @@
       "tabs": "Pestanyes",
       "copyAsMermaid": "Copiar com a Mermaid",
       "selectLinks": "Selecciona els seus enllaços",
-      "selectAllLinks": "Selecciona tots els enllaços"
+      "selectAllLinks": "Selecciona tots els enllaços",
+      "suggestLinks": "Suggerir enllaços"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",

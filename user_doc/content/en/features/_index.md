@@ -15,6 +15,7 @@ Explore the main features of ZeroNeurone.
 - [Advanced Queries]({{< relref "queries" >}}) — Structured query language (ZNQuery)
 - [Canvas Tabs]({{< relref "canvas-tabs" >}}) — Organize dossiers into thematic workspaces
 - [Graph analysis]({{< relref "graph-analysis" >}}) — Clusters, centrality, paths
+- [Link suggestions]({{< relref "link-suggestions" >}}) — Shared values, sources, places and meetings
 - [Map view]({{< relref "map-view" >}}) — Geolocation
 - [Timeline]({{< relref "timeline" >}}) — Chronological visualization
 - [Temporal Mode]({{< relref "temporal-mode" >}}) — Navigate through time on the canvas and the map

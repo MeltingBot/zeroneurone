@@ -40,6 +40,7 @@ import { tagSetRepository, customIconRepository } from '../db/repositories';
 import { sanitizeSvgIcon } from '../utils/svgIcon';
 import { normalizeGeo, computePolygonCenter, computePolygonAreaKm2, openRing, isGeoInRange } from '../utils/geo';
 import { isLambert93CrsName, lambert93ToWgs84 } from '../utils/lambert93';
+import { remapDismissedSuggestions } from './linkSuggestions';
 import { splitCSVRecords } from '../utils/csv';
 import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
 import type { ExportData, ExportedAssetMeta } from './exportService';
@@ -421,6 +422,7 @@ class ImportService {
 
       // Import elements and links (with optional position offset)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
+      await this.applyImportedDismissedSuggestions(data.dossier?.dismissedSuggestions, targetDossierId, elementIdMap);
 
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0) {
@@ -608,6 +610,31 @@ class ImportService {
   }
 
   /**
+   * Add the link suggestions dismissed in the imported dossier to the target's,
+   * rewritten for the new element ids, so they don't come back after import.
+   */
+  private async applyImportedDismissedSuggestions(
+    raw: unknown,
+    targetDossierId: DossierId,
+    elementIdMap: ReadonlyMap<string, string>
+  ): Promise<void> {
+    if (!Array.isArray(raw) || raw.length === 0) return;
+    const imported = remapDismissedSuggestions(raw.filter((id): id is string => typeof id === 'string'), elementIdMap);
+    if (imported.length === 0) return;
+    const { useDossierStore } = await import('../stores/dossierStore');
+    const store = useDossierStore.getState();
+    const isOpen = store.currentDossier?.id === targetDossierId;
+    const dossier = isOpen ? store.currentDossier : await db.dossiers.get(targetDossierId);
+    if (!dossier) return;
+    const dismissedSuggestions = [...new Set([...(dossier.dismissedSuggestions ?? []), ...imported])];
+    if (isOpen) {
+      await store.updateDossier(targetDossierId, { dismissedSuggestions });
+    } else {
+      await db.dossiers.update(targetDossierId, { dismissedSuggestions });
+    }
+  }
+
+  /**
    * Apply default display settings for imported dossiers
    * Sets curved links with auto anchoring for better readability
    */
@@ -745,6 +772,7 @@ class ImportService {
 
       // Import elements and links (no assets for JSON-only import)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result);
+      await this.applyImportedDismissedSuggestions(data.dossier?.dismissedSuggestions, targetDossierId, elementIdMap);
 
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0) {

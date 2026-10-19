@@ -11,7 +11,8 @@
     "panelDockRight": "Panel a la derecha",
     "panelDockBottom": "Panel abajo",
     "panelDockLeft": "Panel a la izquierda",
-    "panelDetach": "Separar panel"
+    "panelDetach": "Separar panel",
+    "suggestions": "Sugerencias"
   },
   "dossier": {
     "sections": {
@@ -619,5 +620,78 @@
     "unsavedChangesMessage": "Esta sección tiene cambios sin guardar. ¿Desea guardarlos antes de salir?",
     "unsavedSave": "Guardar",
     "unsavedDiscard": "Descartar"
+  },
+  "suggestions": {
+    "analyze": "Analizar el expediente",
+    "scope": "Limitado a la selección",
+    "wholeDossier": "Todo el expediente",
+    "none": "Ninguna sugerencia",
+    "checkAll": "Marcar todo",
+    "count_one": "{{count}} sugerencia",
+    "count_other": "{{count}} sugerencias",
+    "acceptN": "Aceptar ({{count}})",
+    "dismissN": "Descartar ({{count}})",
+    "accept": "Aceptar",
+    "dismiss": "Descartar",
+    "pivotNew_one": "Crear y enlazar {{count}} elemento",
+    "pivotNew_other": "Crear y enlazar {{count}} elementos",
+    "pivotExisting_one": "Enlazar {{count}} elemento",
+    "pivotExisting_other": "Enlazar {{count}} elementos",
+    "more": "{{count}} más",
+    "reason": {
+      "sharedValue": "{{key}}: {{value}}",
+      "sharedSource": "Fuente: {{value}}",
+      "inZone": "Dentro de la zona",
+      "nearby": "A {{distance}}",
+      "meeting_one": "Juntos a {{distance}}, {{date}}",
+      "meeting_other": "Juntos a {{distance}}, {{date}} ({{count}} veces)",
+      "meetingApart_one": "A {{distance}}, {{date}} y luego {{dateOther}}",
+      "meetingApart_other": "A {{distance}}, {{date}} y luego {{dateOther}} ({{count}} veces)"
+    },
+    "linkLabel": {
+      "sharedValue": "mismo {{key}}",
+      "sharedSource": "misma fuente",
+      "inZone": "situado en",
+      "nearby": "cerca",
+      "meeting": "copresencia"
+    },
+    "nearbyRadius": "Radio",
+    "meetingWindow": "Ventana de encuentros",
+    "window": {
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "hours_one": "{{count}} h",
+      "hours_other": "{{count}} h",
+      "days_one": "{{count}} día",
+      "days_other": "{{count}} días"
+    },
+    "meetingsTruncated": "Encuentros interrumpidos: demasiadas posiciones para este radio y esta ventana",
+    "places": "Lugares a menos de",
+    "meetings": "Encuentros a menos de",
+    "reviewDismissed_one": "Descartadas ({{count}})",
+    "reviewDismissed_other": "Descartadas ({{count}})",
+    "backToPending": "Volver a las sugerencias",
+    "noneDismissed": "Ninguna sugerencia descartada",
+    "restore": "Restablecer",
+    "restoreN": "Restablecer ({{count}})",
+    "shownShort_one": "{{count}} elemento visible",
+    "shownShort_other": "{{count}} elementos visibles",
+    "search": "Buscar",
+    "clearSearch": "Borrar búsqueda",
+    "noMatch": "Sin resultados",
+    "and": "y",
+    "placesHint": "Posiciones de los elementos en el mapa, sin tener en cuenta las fechas",
+    "meetingsHint": "Eventos fechados en el mismo lugar y al mismo tiempo",
+    "maxStay": "estancias hasta",
+    "noLimit": "sin límite",
+    "maxStayHint": "Más allá, una posición fechada (domicilio, sede, alquiler) se ignora en los encuentros",
+    "rules": {
+      "values": "Propiedades",
+      "sources": "Fuentes",
+      "zones": "Zonas",
+      "valuesHint": "Mismo valor en la misma propiedad (teléfono, IBAN…)",
+      "sourcesHint": "Mismo archivo adjunto o misma página web citada",
+      "zonesHint": "Punto o zona pequeña dentro de una zona mayor"
+    }
   }
 }

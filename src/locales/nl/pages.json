@@ -194,7 +194,8 @@
       "tabs": "Tabbladen",
       "copyAsMermaid": "Kopiëren als Mermaid",
       "selectLinks": "Hun verbindingen selecteren",
-      "selectAllLinks": "Alle verbindingen selecteren"
+      "selectAllLinks": "Alle verbindingen selecteren",
+      "suggestLinks": "Verbindingen voorstellen"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",

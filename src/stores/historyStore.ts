@@ -7,7 +7,7 @@ interface HistoryAction {
         'create-elements' | 'delete-elements' | 'move-elements' |
         'extract-to-element' | 'dissolve-group' | 'remove-from-group' |
         'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters' |
-        'add-asset' | 'merge-elements' | 'update-bulk';
+        'add-asset' | 'merge-elements' | 'update-bulk' | 'dismiss-suggestions';
   // Data for undoing the action
   undo: {
     elements?: Element[];
@@ -193,6 +193,17 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           await store.updateLink(action.undo.linkId, action.undo.linkChanges);
         }
         break;
+
+      case 'dismiss-suggestions': {
+        // Restore the dismissals, then refresh the list so the suggestion is back
+        const snap = action.undo.snapshot as { dossierId: string; dismissedSuggestions: string[] } | undefined;
+        if (snap) {
+          await store.updateDossier(snap.dossierId, { dismissedSuggestions: snap.dismissedSuggestions });
+          const { useSuggestionsStore } = await import('./suggestionsStore');
+          useSuggestionsStore.getState().refresh();
+        }
+        break;
+      }
 
       case 'update-bulk':
         // Restore each item's previous values of the fields the bulk edit touched
@@ -413,6 +424,16 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           await store.updateLink(action.redo.linkId, action.redo.linkChanges);
         }
         break;
+
+      case 'dismiss-suggestions': {
+        const snap = action.redo.snapshot as { dossierId: string; dismissedSuggestions: string[] } | undefined;
+        if (snap) {
+          await store.updateDossier(snap.dossierId, { dismissedSuggestions: snap.dismissedSuggestions });
+          const { useSuggestionsStore } = await import('./suggestionsStore');
+          useSuggestionsStore.getState().refresh();
+        }
+        break;
+      }
 
       case 'update-bulk':
         for (const call of action.redo.bulkCalls || []) {

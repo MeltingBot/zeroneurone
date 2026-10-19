@@ -106,6 +106,12 @@ Un lien représente une relation entre deux éléments. Les liens sont des **cit
 
 **Glisser** depuis un élément vers le vide pour créer simultanément un nouvel élément et le lien qui les relie.
 
+### Relier toute une sélection
+
+Avec plusieurs éléments sélectionnés, **glissez un lien depuis l'un d'eux** vers un autre élément : chaque élément sélectionné est relié à la cible. Un seul **Ctrl+Z** annule tous les liens créés.
+
+Pour repérer les liens qui manquent, voir aussi les [suggestions de liens]({{< relref "link-suggestions" >}}).
+
 
 ### Propriétés d'un lien
 
@@ -141,6 +147,17 @@ Cliquez-glissez sur le fond du canvas pour dessiner un rectangle de sélection.
 
 **Ctrl+clic** pour ajouter ou retirer un élément de la sélection.
 
+### Sélectionner des liens
+
+| Action | Résultat |
+|--------|----------|
+| **Maj+clic** ou **Ctrl+clic** sur un lien | Ajoute le lien à la sélection, ou l'en retire |
+| **Ctrl+Shift+A** | Sélectionne tous les liens affichés |
+| Clic droit sur le fond → **Sélectionner leurs liens** | Remplace la sélection d'éléments par les liens qui les touchent |
+| Clic droit sur le fond, sans sélection → **Sélectionner tous les liens** | Comme Ctrl+Shift+A |
+
+Les liens affichés tiennent compte des filtres, des éléments masqués et de l'onglet actif.
+
 ### Opérations groupées
 
 Avec plusieurs éléments sélectionnés :
@@ -152,6 +169,10 @@ Avec plusieurs éléments sélectionnés :
 - Déplacer en groupe
 - Aligner les éléments
 - Distribuer les éléments
+
+Avec plusieurs liens sélectionnés, le panneau **Modification en masse** modifie en une fois le **libellé**, la direction, le style, l'épaisseur, la couleur, les tags, les propriétés et la confiance. Si les liens n'ont pas tous le même libellé, le champ affiche « Valeurs multiples » ; le laisser vide ne change rien.
+
+Chaque modification en masse s'annule en un seul **Ctrl+Z**.
 
 ### Copier / coller
 

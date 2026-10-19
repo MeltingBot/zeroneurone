@@ -194,7 +194,8 @@
       "tabs": "Вкладки",
       "copyAsMermaid": "Копіювати як Mermaid",
       "selectLinks": "Виділити їхні зв'язки",
-      "selectAllLinks": "Виділити всі зв'язки"
+      "selectAllLinks": "Виділити всі зв'язки",
+      "suggestLinks": "Запропонувати зв'язки"
     },
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",

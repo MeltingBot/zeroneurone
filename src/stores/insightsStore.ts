@@ -17,7 +17,7 @@ interface InsightsState {
   computeProgress: number;
   computePhase: string;
   highlightedElementIds: Set<ElementId>;
-  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | null;
+  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | 'suggestion' | null;
   selectedClusterId: number | null;
 
   // Path finding
@@ -37,6 +37,8 @@ interface InsightsState {
   highlightBridges: () => void;
   highlightIsolated: () => void;
   highlightSimilarPair: (elementId1: ElementId, elementId2: ElementId) => void;
+  /** Highlight the elements of a link suggestion (panel hover) */
+  highlightSuggestion: (elementIds: ElementId[]) => void;
   findPaths: (fromId: ElementId, toId: ElementId) => void;
   findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number) => void;
   highlightPath: (pathIndex: number) => void;
@@ -156,6 +158,14 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     set({
       highlightedElementIds: new Set(isolated),
       highlightType: 'isolated',
+      selectedClusterId: null,
+    });
+  },
+
+  highlightSuggestion: (elementIds) => {
+    set({
+      highlightedElementIds: new Set(elementIds),
+      highlightType: 'suggestion',
       selectedClusterId: null,
     });
   },

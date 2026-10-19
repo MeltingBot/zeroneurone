@@ -194,7 +194,8 @@
       "tabs": "Tabs",
       "copyAsMermaid": "Copy as Mermaid",
       "selectLinks": "Select their links",
-      "selectAllLinks": "Select all links"
+      "selectAllLinks": "Select all links",
+      "suggestLinks": "Suggest links"
     },
     "viewToolbar": {
       "undo": "Undo (Ctrl+Z)",

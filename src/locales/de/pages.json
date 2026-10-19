@@ -194,7 +194,8 @@
       "tabs": "Tabs",
       "copyAsMermaid": "Als Mermaid kopieren",
       "selectLinks": "Ihre Verbindungen auswählen",
-      "selectAllLinks": "Alle Verbindungen auswählen"
+      "selectAllLinks": "Alle Verbindungen auswählen",
+      "suggestLinks": "Verbindungen vorschlagen"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",

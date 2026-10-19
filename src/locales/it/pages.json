@@ -194,7 +194,8 @@
       "tabs": "Schede",
       "copyAsMermaid": "Copia come Mermaid",
       "selectLinks": "Seleziona i loro collegamenti",
-      "selectAllLinks": "Seleziona tutti i collegamenti"
+      "selectAllLinks": "Seleziona tutti i collegamenti",
+      "suggestLinks": "Suggerisci collegamenti"
     },
     "viewToolbar": {
       "undo": "Annulla (Ctrl+Z)",

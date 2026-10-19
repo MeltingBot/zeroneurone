@@ -194,7 +194,8 @@
       "tabs": "Karty",
       "copyAsMermaid": "Kopiuj jako Mermaid",
       "selectLinks": "Zaznacz ich połączenia",
-      "selectAllLinks": "Zaznacz wszystkie połączenia"
+      "selectAllLinks": "Zaznacz wszystkie połączenia",
+      "suggestLinks": "Zaproponuj połączenia"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",

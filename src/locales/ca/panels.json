@@ -11,7 +11,8 @@
     "panelDockRight": "Panell a la dreta",
     "panelDockBottom": "Panell a baix",
     "panelDockLeft": "Panell a l'esquerra",
-    "panelDetach": "Separar panell"
+    "panelDetach": "Separar panell",
+    "suggestions": "Suggeriments"
   },
   "dossier": {
     "sections": {
@@ -619,5 +620,78 @@
     "unsavedChangesMessage": "Aquesta secció conté canvis no desats. Voleu desar-los abans de sortir?",
     "unsavedSave": "Desar",
     "unsavedDiscard": "Descartar"
+  },
+  "suggestions": {
+    "analyze": "Analitzar l'expedient",
+    "scope": "Limitat a la selecció",
+    "wholeDossier": "Tot l'expedient",
+    "none": "Cap suggeriment",
+    "checkAll": "Marcar-ho tot",
+    "count_one": "{{count}} suggeriment",
+    "count_other": "{{count}} suggeriments",
+    "acceptN": "Acceptar ({{count}})",
+    "dismissN": "Descartar ({{count}})",
+    "accept": "Acceptar",
+    "dismiss": "Descartar",
+    "pivotNew_one": "Crear i enllaçar {{count}} element",
+    "pivotNew_other": "Crear i enllaçar {{count}} elements",
+    "pivotExisting_one": "Enllaçar {{count}} element",
+    "pivotExisting_other": "Enllaçar {{count}} elements",
+    "more": "{{count}} més",
+    "reason": {
+      "sharedValue": "{{key}}: {{value}}",
+      "sharedSource": "Font: {{value}}",
+      "inZone": "Dins la zona",
+      "nearby": "A {{distance}}",
+      "meeting_one": "Junts a {{distance}}, {{date}}",
+      "meeting_other": "Junts a {{distance}}, {{date}} ({{count}} vegades)",
+      "meetingApart_one": "A {{distance}}, {{date}} i després {{dateOther}}",
+      "meetingApart_other": "A {{distance}}, {{date}} i després {{dateOther}} ({{count}} vegades)"
+    },
+    "linkLabel": {
+      "sharedValue": "mateix {{key}}",
+      "sharedSource": "mateixa font",
+      "inZone": "situat a",
+      "nearby": "a prop",
+      "meeting": "copresència"
+    },
+    "nearbyRadius": "Radi",
+    "meetingWindow": "Finestra de trobades",
+    "window": {
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "hours_one": "{{count}} h",
+      "hours_other": "{{count}} h",
+      "days_one": "{{count}} dia",
+      "days_other": "{{count}} dies"
+    },
+    "meetingsTruncated": "Trobades interrompudes: massa posicions per a aquest radi i aquesta finestra",
+    "places": "Llocs a menys de",
+    "meetings": "Trobades a menys de",
+    "reviewDismissed_one": "Descartats ({{count}})",
+    "reviewDismissed_other": "Descartats ({{count}})",
+    "backToPending": "Tornar als suggeriments",
+    "noneDismissed": "Cap suggeriment descartat",
+    "restore": "Restablir",
+    "restoreN": "Restablir ({{count}})",
+    "shownShort_one": "{{count}} element visible",
+    "shownShort_other": "{{count}} elements visibles",
+    "search": "Cerca",
+    "clearSearch": "Esborra la cerca",
+    "noMatch": "Cap resultat",
+    "and": "i",
+    "placesHint": "Posicions dels elements al mapa, sense tenir en compte les dates",
+    "meetingsHint": "Esdeveniments datats al mateix lloc i al mateix moment",
+    "maxStay": "estades fins a",
+    "noLimit": "sense límit",
+    "maxStayHint": "Més enllà, una posició datada (domicili, seu, lloguer) s'ignora a les trobades",
+    "rules": {
+      "values": "Propietats",
+      "sources": "Fonts",
+      "zones": "Zones",
+      "valuesHint": "Mateix valor a la mateixa propietat (telèfon, IBAN…)",
+      "sourcesHint": "Mateix fitxer adjunt o mateixa pàgina web citada",
+      "zonesHint": "Punt o zona petita dins d'una zona més gran"
+    }
   }
 }

@@ -456,6 +456,39 @@ flowchart LR
 
 ---
 
+### GeoJSON
+
+A `.geojson` (or `.json`) `FeatureCollection` file, exported from QGIS or an open-data portal for instance. Each feature becomes an element placed on the [map]({{< relref "map-view" >}}).
+
+#### Geometries
+
+| Geometry | Import |
+|----------|--------|
+| `Point` | Element with a position |
+| `MultiPoint` | First point kept |
+| `Polygon` | Element with a zone (outer ring, holes ignored) |
+| `MultiPolygon` | Largest part kept (a summary warning says so) |
+| `LineString` | Ignored |
+
+#### Label and Properties
+
+Before importing, an options step lets you:
+
+- choose the **property used as label** (only filled properties are offered, with a sample value);
+- tick the **properties to import** (**All** / **None**): an unticked property is ignored.
+
+A feature with no value for the chosen label takes a usual name (`name`, `nom`…), else "Feature N" after its position in the file.
+
+#### Projections
+
+Standard GeoJSON is in **WGS 84** (longitude/latitude in degrees).
+
+- A **Lambert 93** file (`EPSG:2154`, common in French open data) declaring its projection in `crs` is **converted automatically**.
+- Other projections are refused with a message: reproject the file to `EPSG:4326` first, with QGIS (*Export* → CRS EPSG:4326) or `ogr2ogr -t_srs EPSG:4326 out.geojson in.geojson`.
+- A feature with out-of-range coordinates is skipped, with a warning.
+
+---
+
 ### OSINT Industries
 
 **JSON format** exported from OSINT Industries.

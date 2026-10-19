@@ -15,6 +15,7 @@ Explorez les fonctionnalités principales de ZeroNeurone.
 - [Requêtes avancées]({{< relref "queries" >}}) — Langage de requêtes structuré (ZNQuery)
 - [Onglets du canvas]({{< relref "canvas-tabs" >}}) — Organiser le dossier en axes thématiques
 - [Analyse de graphe]({{< relref "graph-analysis" >}}) — Clusters, centralité, chemins
+- [Suggestions de liens]({{< relref "link-suggestions" >}}) — Valeurs, sources, lieux et rencontres en commun
 - [Vue carte]({{< relref "map-view" >}}) — Géolocalisation
 - [Timeline]({{< relref "timeline" >}}) — Visualisation chronologique
 - [Mode temporel]({{< relref "temporal-mode" >}}) — Naviguer dans le temps sur le canvas et la carte

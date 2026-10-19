@@ -314,6 +314,11 @@ export interface Dossier {
    * the Y.Doc meta map, so every collaborator works with the same model.
    */
   evaluationModel?: EvaluationModel;
+  /**
+   * Ids of the link suggestions the analyst dismissed (see linkSuggestions.ts),
+   * so they don't come back. Shared through the Y.Doc meta map.
+   */
+  dismissedSuggestions?: string[];
 }
 
 export interface DossierSettings {
@@ -634,7 +639,7 @@ export interface Toast {
 
 export type ToolType = 'select' | 'create-element' | 'create-link';
 
-export type SidePanelTab = 'detail' | 'insights' | 'views' | 'filters' | 'query' | 'report' | (string & {});
+export type SidePanelTab = 'detail' | 'insights' | 'suggestions' | 'views' | 'filters' | 'query' | 'report' | (string & {});
 
 // ============================================================================
 // DEFAULT VALUES

@@ -11,7 +11,8 @@ import { ViewsPanel } from './ViewsPanel';
 import { InsightsPanel } from './InsightsPanel';
 import { ReportPanel } from './ReportPanel';
 import { QueryPanel } from './QueryPanel';
-import { Info, Filter, Eye, Network, PanelRightClose, PanelLeftClose, PanelBottomClose, PanelRight, PanelLeft, PanelBottom, ExternalLink, Check, FileText, Code2, icons } from 'lucide-react';
+import { SuggestionsPanel } from './SuggestionsPanel';
+import { Info, Filter, Eye, Network, PanelRightClose, PanelLeftClose, PanelBottomClose, PanelRight, PanelLeft, PanelBottom, ExternalLink, Check, FileText, Code2, Lightbulb, icons } from 'lucide-react';
 import { IconButton } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { useDetachedWindow } from '../../hooks/useDetachedWindow';
@@ -35,7 +36,7 @@ const PANEL_POSITIONS: { side: PanelSide; icon: typeof Info; labelKey: string }[
   { side: 'detached', icon: ExternalLink, labelKey: 'tabs.panelDetach' },
 ];
 
-type TabId = 'detail' | 'insights' | 'filters' | 'query' | 'views' | 'report' | (string & {});
+type TabId = 'detail' | 'insights' | 'suggestions' | 'filters' | 'query' | 'views' | 'report' | (string & {});
 
 interface Tab {
   id: TabId;
@@ -55,6 +56,7 @@ export function SidePanel() {
   const hasActiveFilters = useViewStore((s) => s.hasActiveFilters);
   const displayMode = useViewStore((s) => s.displayMode);
   const highlightedElementIds = useInsightsStore((s) => s.highlightedElementIds);
+  const highlightType = useInsightsStore((s) => s.highlightType);
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const panelSide = useUIStore((s) => s.panelSide);
   const setPanelSide = useUIStore((s) => s.setPanelSide);
@@ -189,7 +191,8 @@ export function SidePanel() {
 
   const panelPlugins = usePlugins('panel:right');
   const filtersActive = hasActiveFilters();
-  const insightsActive = highlightedElementIds.size > 0;
+  // A suggestion hovered in its own tab is not an Insights highlight
+  const insightsActive = highlightedElementIds.size > 0 && highlightType !== 'suggestion';
   const isCanvasMode = displayMode === 'canvas';
 
   // Switch away from views tab when leaving canvas mode
@@ -201,7 +204,7 @@ export function SidePanel() {
 
   // Switch away from removed plugin tabs
   useEffect(() => {
-    const builtinIds = ['detail', 'insights', 'filters', 'query', 'views', 'report'];
+    const builtinIds = ['detail', 'insights', 'suggestions', 'filters', 'query', 'views', 'report'];
     if (!builtinIds.includes(activeTab) && !panelPlugins.some((p) => p.id === activeTab)) {
       setActiveTab('detail');
     }
@@ -210,6 +213,7 @@ export function SidePanel() {
   const tabs: Tab[] = [
     { id: 'detail', label: t('tabs.detail'), icon: Info },
     { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
+    { id: 'suggestions', label: t('tabs.suggestions'), icon: Lightbulb },
     { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
     { id: 'query', label: t('tabs.query'), icon: Code2, badge: queryFilterActive },
     ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
@@ -276,6 +280,12 @@ export function SidePanel() {
         return (
           <div className="flex-1 overflow-y-auto">
             <InsightsPanel />
+          </div>
+        );
+      case 'suggestions':
+        return (
+          <div className="flex-1 overflow-hidden">
+            <SuggestionsPanel />
           </div>
         );
       case 'filters':

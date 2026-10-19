@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
@@ -28,6 +28,8 @@ interface CanvasContextMenuProps {
   onQueryFromSelection?: () => void;
   // Select the links of the selection (all links when nothing is selected)
   onSelectLinks?: () => void;
+  // Link suggestions restricted to the selection
+  onSuggestLinks?: () => void;
   onClose: () => void;
   pluginExtensions?: ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -51,6 +53,7 @@ function CanvasContextMenuComponent({
   onFindSimilar,
   onQueryFromSelection,
   onSelectLinks,
+  onSuggestLinks,
   onClose,
   pluginExtensions,
   menuContext,
@@ -82,6 +85,7 @@ function CanvasContextMenuComponent({
           submenu('analyze', cm('analyze'), ScanSearch, [
             selectedCount === 1 && onFindSimilar && { id: 'find-similar', label: cm('findSimilar'), icon: Search, onSelect: onFindSimilar },
             selectedCount > 1 && onQueryFromSelection && { id: 'query-selection', label: cm('queryFromSelection'), icon: Search, onSelect: onQueryFromSelection },
+            onSuggestLinks && { id: 'suggest-links', label: cm('suggestLinks'), icon: Lightbulb, onSelect: onSuggestLinks },
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },

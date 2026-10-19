@@ -130,6 +130,8 @@ interface DossierState {
 
   // Actions - Links
   createLink: (fromId: ElementId, toId: ElementId, options?: Partial<Link>) => Promise<Link>;
+  /** Many links in one Y.Doc transaction (link:created emitted for each) */
+  createLinks: (specs: { fromId: ElementId; toId: ElementId; options?: Partial<Link> }[]) => Link[];
   updateLink: (id: LinkId, changes: LinkChanges) => Promise<void>;
   deleteLink: (id: LinkId) => Promise<void>;
   deleteLinks: (ids: LinkId[]) => Promise<void>;
@@ -602,6 +604,38 @@ function applyFirstTagVisual(
 // STORE IMPLEMENTATION
 // ============================================================================
 
+/** A new link with the default fields, `options` overriding them */
+function makeLink(dossierId: DossierId, fromId: ElementId, toId: ElementId, options?: Partial<Link>): Link {
+  const now = new Date();
+  return {
+    id: crypto.randomUUID(),
+    dossierId,
+    fromId,
+    toId,
+    sourceHandle: null,
+    targetHandle: null,
+    label: '',
+    notes: '',
+    tags: [],
+    properties: [],
+    directed: false,
+    direction: 'none',
+    confidence: null,
+    source: '',
+    date: null,
+    dateRange: null,
+    visual: {
+      color: '#9ca3af',
+      style: 'solid',
+      thickness: 2,
+    },
+    curveOffset: { x: 0, y: 0 },
+    createdAt: now,
+    updatedAt: now,
+    ...options,
+  };
+}
+
 export const useDossierStore = create<DossierState>((set, get) => ({
   currentDossier: null,
   elements: [],
@@ -754,6 +788,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (metaRetPolicy !== undefined) joinerChanges.retentionPolicy = metaRetPolicy as Dossier['retentionPolicy'];
         const metaEvalModel = metaMap.get('evaluationModel');
         if (isEvaluationModel(metaEvalModel)) joinerChanges.evaluationModel = metaEvalModel;
+        const metaDismissed = metaMap.get('dismissedSuggestions');
+        if (Array.isArray(metaDismissed)) joinerChanges.dismissedSuggestions = metaDismissed as string[];
         dossier = { ...dossier, ...joinerChanges };
         await dossierRepository.update(id, joinerChanges);
       }
@@ -1048,6 +1084,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             if (!deferredMeta.has('evaluationModel')) {
               deferredMeta.set('evaluationModel', getEvaluationModel(srcDossier));
             }
+            if (!deferredMeta.has('dismissedSuggestions') && srcDossier.dismissedSuggestions?.length) {
+              deferredMeta.set('dismissedSuggestions', srcDossier.dismissedSuggestions);
+            }
           });
 
           // File binaries only go into the Y.Doc for peers to fetch: a local
@@ -1117,6 +1156,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (changes.retentionDays !== undefined) metaMap.set('retentionDays', changes.retentionDays);
         if (changes.retentionPolicy !== undefined) metaMap.set('retentionPolicy', changes.retentionPolicy);
         if (changes.evaluationModel !== undefined) metaMap.set('evaluationModel', changes.evaluationModel);
+        if (changes.dismissedSuggestions !== undefined) metaMap.set('dismissedSuggestions', changes.dismissedSuggestions);
       });
     }
 
@@ -1515,34 +1555,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       throw new Error('Y.Doc not available');
     }
 
-    const now = new Date();
-    const link: Link = {
-      id: crypto.randomUUID(),
-      dossierId: currentDossier.id,
-      fromId,
-      toId,
-      sourceHandle: null,
-      targetHandle: null,
-      label: '',
-      notes: '',
-      tags: [],
-      properties: [],
-      directed: false,
-      direction: 'none',
-      confidence: null,
-      source: '',
-      date: null,
-      dateRange: null,
-      visual: {
-        color: '#9ca3af',
-        style: 'solid',
-        thickness: 2,
-      },
-      curveOffset: { x: 0, y: 0 },
-      createdAt: now,
-      updatedAt: now,
-      ...options,
-    };
+    const link = makeLink(currentDossier.id, fromId, toId, options);
 
     // Add to Y.Doc
     const { links: linksMap } = getYMaps(ydoc);
@@ -1561,6 +1574,18 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     emitPluginEvent('link:created', currentDossier.id, link.id);
     return link;
+  },
+
+  createLinks: (specs) => {
+    const { currentDossier, pasteElements } = get();
+    assertWritable(get);
+    if (!currentDossier) {
+      throw new Error('No dossier loaded');
+    }
+    const links = specs.map(({ fromId, toId, options }) => makeLink(currentDossier.id, fromId, toId, options));
+    pasteElements([], links);
+    for (const link of links) emitPluginEvent('link:created', currentDossier.id, link.id);
+    return links;
   },
 
   updateLink: async (id: LinkId, changes: LinkChanges) => {
@@ -2957,6 +2982,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const metaRetentionPolicy = metaMap.get('retentionPolicy') as string | undefined;
       const rawEvalModel = metaMap.get('evaluationModel');
       const metaEvaluationModel = isEvaluationModel(rawEvalModel) ? rawEvalModel : undefined;
+      const rawDismissed = metaMap.get('dismissedSuggestions');
+      const metaDismissed = Array.isArray(rawDismissed) ? rawDismissed as string[] : undefined;
 
       const hasMetaChanges =
         (metaName !== undefined && metaName !== currentDossier.name) ||
@@ -2967,7 +2994,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentDossier.properties || [])) ||
         (metaRetentionDays !== undefined && metaRetentionDays !== (currentDossier.retentionDays ?? null)) ||
         (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentDossier.retentionPolicy || 'warn')) ||
-        (metaEvaluationModel !== undefined && metaEvaluationModel !== getEvaluationModel(currentDossier));
+        (metaEvaluationModel !== undefined && metaEvaluationModel !== getEvaluationModel(currentDossier)) ||
+        (metaDismissed !== undefined && JSON.stringify(metaDismissed) !== JSON.stringify(currentDossier.dismissedSuggestions || []));
 
       if (hasMetaChanges) {
         const changes: Partial<Dossier> = {};
@@ -2980,6 +3008,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (metaRetentionDays !== undefined) changes.retentionDays = metaRetentionDays;
         if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Dossier['retentionPolicy'];
         if (metaEvaluationModel !== undefined) changes.evaluationModel = metaEvaluationModel;
+        if (metaDismissed !== undefined) changes.dismissedSuggestions = metaDismissed;
 
         updatedDossier = {
           ...currentDossier,

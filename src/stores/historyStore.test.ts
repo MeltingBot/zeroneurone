@@ -11,6 +11,7 @@ const dossierStore = {
   updateElement: vi.fn().mockResolvedValue(undefined),
   updateLink: vi.fn().mockResolvedValue(undefined),
   updateElements: vi.fn().mockResolvedValue(undefined),
+  updateDossier: vi.fn().mockResolvedValue(undefined),
   updateLinks: vi.fn().mockResolvedValue(undefined),
   updateElementPositions: vi.fn().mockResolvedValue(undefined),
   removeAsset: vi.fn().mockResolvedValue(undefined),
@@ -34,6 +35,7 @@ const viewStore = {
 };
 
 const reportStore = { restoreSection: vi.fn().mockResolvedValue(undefined) };
+const suggestionsStore = { refresh: vi.fn() };
 
 vi.mock('./dossierStore', () => ({
   useDossierStore: { getState: () => dossierStore },
@@ -46,6 +48,9 @@ vi.mock('./viewStore', () => ({
 }));
 vi.mock('./reportStore', () => ({
   useReportStore: { getState: () => reportStore },
+}));
+vi.mock('./suggestionsStore', () => ({
+  useSuggestionsStore: { getState: () => suggestionsStore },
 }));
 
 function element(id: string): Element {
@@ -406,6 +411,21 @@ describe('update-bulk', () => {
     expect(dossierStore.updateLink).toHaveBeenCalledWith('l1', { label: 'avant' });
     expect(history().past).toHaveLength(0);
     expect(history().future).toHaveLength(1);
+  });
+});
+
+describe('dismiss-suggestions', () => {
+  it('undo restores the previous dismissals, redo the new ones', async () => {
+    push({
+      type: 'dismiss-suggestions',
+      undo: { snapshot: { dossierId: 'd1', dismissedSuggestions: ['x'] } },
+      redo: { snapshot: { dossierId: 'd1', dismissedSuggestions: ['x', 'y'] } },
+    });
+    await history().undo();
+    expect(dossierStore.updateDossier).toHaveBeenLastCalledWith('d1', { dismissedSuggestions: ['x'] });
+    expect(suggestionsStore.refresh).toHaveBeenCalledTimes(1);
+    await history().redo();
+    expect(dossierStore.updateDossier).toHaveBeenLastCalledWith('d1', { dismissedSuggestions: ['x', 'y'] });
   });
 });
 

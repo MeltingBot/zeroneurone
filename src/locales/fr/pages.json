@@ -194,7 +194,8 @@
       "tabs": "Onglets",
       "copyAsMermaid": "Copier en Mermaid",
       "selectLinks": "Sélectionner leurs liens",
-      "selectAllLinks": "Sélectionner tous les liens"
+      "selectAllLinks": "Sélectionner tous les liens",
+      "suggestLinks": "Suggérer des liens"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",

@@ -11,7 +11,8 @@
     "panelDockRight": "Paneel naar rechts",
     "panelDockBottom": "Paneel naar beneden",
     "panelDockLeft": "Paneel naar links",
-    "panelDetach": "Paneel loskoppelen"
+    "panelDetach": "Paneel loskoppelen",
+    "suggestions": "Suggesties"
   },
   "dossier": {
     "sections": {
@@ -619,5 +620,78 @@
     "unsavedChangesMessage": "Deze sectie bevat niet-opgeslagen wijzigingen. Wilt u deze opslaan voordat u vertrekt?",
     "unsavedSave": "Opslaan",
     "unsavedDiscard": "Verwerpen"
+  },
+  "suggestions": {
+    "analyze": "Dossier analyseren",
+    "scope": "Beperkt tot selectie",
+    "wholeDossier": "Hele dossier",
+    "none": "Geen suggesties",
+    "checkAll": "Alles aanvinken",
+    "count_one": "{{count}} suggestie",
+    "count_other": "{{count}} suggesties",
+    "acceptN": "Accepteren ({{count}})",
+    "dismissN": "Negeren ({{count}})",
+    "accept": "Accepteren",
+    "dismiss": "Negeren",
+    "pivotNew_one": "Maken en {{count}} element verbinden",
+    "pivotNew_other": "Maken en {{count}} elementen verbinden",
+    "pivotExisting_one": "{{count}} element verbinden",
+    "pivotExisting_other": "{{count}} elementen verbinden",
+    "more": "nog {{count}}",
+    "reason": {
+      "sharedValue": "{{key}}: {{value}}",
+      "sharedSource": "Bron: {{value}}",
+      "inZone": "Binnen de zone",
+      "nearby": "Op {{distance}}",
+      "meeting_one": "Samen, {{distance}} uit elkaar, {{date}}",
+      "meeting_other": "Samen, {{distance}} uit elkaar, {{date}} ({{count}} keer)",
+      "meetingApart_one": "Op {{distance}}, {{date}} en daarna {{dateOther}}",
+      "meetingApart_other": "Op {{distance}}, {{date}} en daarna {{dateOther}} ({{count}} keer)"
+    },
+    "linkLabel": {
+      "sharedValue": "zelfde {{key}}",
+      "sharedSource": "zelfde bron",
+      "inZone": "ligt in",
+      "nearby": "dichtbij",
+      "meeting": "copresentie"
+    },
+    "nearbyRadius": "Straal",
+    "meetingWindow": "Tijdvenster voor ontmoetingen",
+    "window": {
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "hours_one": "{{count}} u",
+      "hours_other": "{{count}} u",
+      "days_one": "{{count}} dag",
+      "days_other": "{{count}} dagen"
+    },
+    "meetingsTruncated": "Ontmoetingen afgebroken: te veel posities voor deze straal en dit venster",
+    "places": "Plaatsen binnen",
+    "meetings": "Ontmoetingen binnen",
+    "reviewDismissed_one": "Genegeerd ({{count}})",
+    "reviewDismissed_other": "Genegeerd ({{count}})",
+    "backToPending": "Terug naar suggesties",
+    "noneDismissed": "Geen genegeerde suggesties",
+    "restore": "Herstellen",
+    "restoreN": "Herstellen ({{count}})",
+    "shownShort_one": "{{count}} getoond element",
+    "shownShort_other": "{{count}} getoonde elementen",
+    "search": "Zoeken",
+    "clearSearch": "Zoekopdracht wissen",
+    "noMatch": "Geen resultaten",
+    "and": "en",
+    "placesHint": "Posities van de elementen op de kaart, zonder data",
+    "meetingsHint": "Gedateerde gebeurtenissen op dezelfde plaats, op hetzelfde moment",
+    "maxStay": "verblijven tot",
+    "noLimit": "onbeperkt",
+    "maxStayHint": "Daarboven wordt een gedateerde positie (woning, zetel, huur) genegeerd bij ontmoetingen",
+    "rules": {
+      "values": "Eigenschappen",
+      "sources": "Bronnen",
+      "zones": "Zones",
+      "valuesHint": "Zelfde waarde voor dezelfde eigenschap (telefoon, IBAN…)",
+      "sourcesHint": "Zelfde bijlage of geciteerde webpagina",
+      "zonesHint": "Punt of kleine zone binnen een grotere zone"
+    }
   }
 }

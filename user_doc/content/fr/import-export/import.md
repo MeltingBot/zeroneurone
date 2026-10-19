@@ -456,6 +456,39 @@ flowchart LR
 
 ---
 
+### GeoJSON
+
+Fichier `.geojson` (ou `.json`) de type `FeatureCollection`, par exemple exporté de QGIS ou d'un portail de données publiques. Chaque entité devient un élément placé sur la [carte]({{< relref "map-view" >}}).
+
+#### Géométries
+
+| Géométrie | Import |
+|-----------|--------|
+| `Point` | Élément avec position |
+| `MultiPoint` | Premier point conservé |
+| `Polygon` | Élément avec zone (contour extérieur, trous ignorés) |
+| `MultiPolygon` | Plus grande partie conservée (un avertissement récapitulatif l'indique) |
+| `LineString` | Ignorée |
+
+#### Libellé et propriétés
+
+Avant l'import, une étape d'options permet de :
+
+- choisir la **propriété qui sert de libellé** (seules les propriétés renseignées sont proposées, avec un exemple de valeur) ;
+- cocher les **propriétés à importer** (**Tout** / **Aucune**) : une propriété décochée est ignorée.
+
+Une entité sans valeur pour le libellé choisi prend un nom usuel (`name`, `nom`…), sinon « Feature N » selon sa position dans le fichier.
+
+#### Projections
+
+Le GeoJSON standard est en **WGS 84** (longitude/latitude en degrés).
+
+- Un fichier en **Lambert 93** (`EPSG:2154`, fréquent dans les données publiques françaises) qui déclare sa projection dans `crs` est **converti automatiquement**.
+- Les autres projections sont refusées avec un message : reprojetez d'abord le fichier en `EPSG:4326`, par exemple avec QGIS (*Exporter* → SCR EPSG:4326) ou `ogr2ogr -t_srs EPSG:4326 sortie.geojson entree.geojson`.
+- Une entité aux coordonnées hors limites est ignorée, avec un avertissement.
+
+---
+
 ### OSINT Industries
 
 **Format JSON** exporté depuis OSINT Industries.
