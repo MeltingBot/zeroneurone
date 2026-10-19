@@ -309,13 +309,26 @@ export function ElementDetail({ element }: ElementDetailProps) {
     lastSyncedSourceRef.current = element.source;
   }, [element.source, element.id]);
 
-  // Note: We intentionally don't sync on element.geo changes
-  // The [element.id] effect handles initial load when element changes
-  // Local state (geoLat, geoLng, lastSavedGeo) is managed by:
-  // - User typing in inputs
-  // - Map picker selection
-  // - Save button (handleValidateGeoClick)
-  // - Clear button (handleClearGeo)
+  // Local geo state (geoLat, geoLng, lastSavedGeo) is managed by the inputs,
+  // the map picker, Save and Clear. A change made elsewhere while this panel is
+  // open — metadata import from the Files section, a drag on the map, undo, a
+  // collaborator — is taken over too, unless the analyst is typing other
+  // coordinates (inputs no longer matching the saved position).
+  const elementCenter = element.geo ? getGeoCenter(element.geo) : null;
+  const elementLat = elementCenter?.lat ?? null;
+  const elementLng = elementCenter?.lng ?? null;
+  useEffect(() => {
+    if (elementLat === (lastSavedGeo?.lat ?? null) && elementLng === (lastSavedGeo?.lng ?? null)) return;
+    const typing = geoLat.trim() !== (lastSavedGeo?.lat?.toString() ?? '')
+      || geoLng.trim() !== (lastSavedGeo?.lng?.toString() ?? '');
+    if (typing) return;
+    const next = elementLat !== null && elementLng !== null ? { lat: elementLat, lng: elementLng } : null;
+    setGeoLat(next?.lat.toString() ?? '');
+    setGeoLng(next?.lng.toString() ?? '');
+    setLastSavedGeo(next);
+    // Only the element's position drives this sync; the local values are read, not watched
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elementLat, elementLng]);
 
   // Save debounced label - only if still editing the same element
   useEffect(() => {

@@ -143,7 +143,9 @@ async function extractExifMetadata(file: File): Promise<ExtractedMetadata | null
 
   // GPS coordinates
   if (data.latitude != null && data.longitude != null) {
-    geo = { lat: data.latitude, lng: data.longitude };
+    // Degrees-minutes-seconds conversion leaves float noise (-0.21000000000000002):
+    // 7 decimals is ~1 cm, far below GPS precision
+    geo = { lat: Number(data.latitude.toFixed(7)), lng: Number(data.longitude.toFixed(7)) };
   }
 
   if (properties.length === 0 && !geo) return null;

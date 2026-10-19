@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.67.1
+
+### Corrections
+
+- **Coordonnées GPS des photos** — importées par le bouton « Extraire les
+  métadonnées » de la section Fichiers, elles n'apparaissaient pas dans la
+  localisation : le panneau de détail, déjà ouvert, gardait l'ancienne
+  position. Il reprend maintenant toute position modifiée ailleurs (import de
+  métadonnées, carte, annulation, collaborateur), sauf pendant une saisie.
+- **Précision des coordonnées EXIF** — arrondies à 7 décimales (environ 1 cm)
+  au lieu d'afficher le bruit de conversion (`-0.21000000000000002`).
+
 ## 2.67.0
 
 ### Nouveautés
