@@ -1,5 +1,51 @@
 # Changelog
 
+## 2.67.0
+
+### Nouveautés
+
+- **Suggestions de liens** — un nouvel onglet du panneau latéral (ampoule)
+  repère les liens que les données laissent supposer ; ZN propose, l'analyste
+  accepte ou écarte, rien n'est créé sans son accord. L'analyse se lance à la
+  demande (bouton, ou clic droit → Analyser → Suggérer des liens sur une
+  sélection) et porte sur les éléments affichés : filtres, éléments masqués,
+  onglet et requête ZNQuery en mode filtre s'appliquent.
+  - **Propriétés** — même valeur pour la même propriété, écritures comparées
+    après normalisation (téléphones, emails, IBAN, plaques ; noms de propriété
+    sans casse ni accents). Le texte libre partagé par la majorité est écarté
+    comme bruit ; un identifiant ne l'est jamais.
+  - **Sources** — même pièce jointe (même empreinte) ou même page web citée.
+  - **Zones** — point ou petite zone à l'intérieur d'une zone plus grande.
+  - **Lieux à moins de** — positions proches, sans les dates (rayon réglable).
+  - **Rencontres à moins de** — mêmes lieu et moment à partir des événements
+    datés et géolocalisés : rayon, fenêtre (±15 min à ±7 jours) et durée
+    maximale des séjours (un domicile daté sur des années n'est pas un lieu de
+    rendez-vous). Heure et distance confirmées sur les points réels, foules
+    ignorées ; tient des dizaines de milliers de positions.
+  - Partagée par 3 éléments ou plus, une valeur donne un **pivot** : un élément
+    pour la valeur relié à tous, ou l'élément existant qui la porte déjà.
+  - Un lien accepté **garde la preuve** : notes avec toutes les raisons, valeurs
+    en propriétés, source partagée, date ou période de la rencontre (visible
+    sur la timeline).
+  - Survol pour mettre en évidence, recherche dans la liste, acceptation ou
+    refus groupés, tout annulable en un Ctrl+Z.
+  - **Suggestions écartées** — elles ne reviennent pas, se revoient et se
+    rétablissent ; un refus porte sur une raison, pas sur la paire. Les refus
+    sont partagés en collaboration, conservés à l'export ZIP, ne contiennent
+    aucune valeur en clair et se nettoient seuls quand les données disparaissent.
+
+### Améliorations
+
+- **Annuler la création d'un élément** — un élément créé avec E, une
+  annotation créée avec N ou par le clic droit s'annulent avec Ctrl+Z.
+- **Documentation** — pages suggestions de liens, sélection et édition en masse
+  des liens, import GeoJSON (FR, EN).
+
+### Corrections
+
+- **Refaire un collage ou une duplication** — Ctrl+Shift+Z recrée aussi les
+  liens collés ou dupliqués (seuls les éléments revenaient).
+
 ## 2.66.3
 
 ### Améliorations

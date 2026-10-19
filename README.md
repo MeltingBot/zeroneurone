@@ -10,7 +10,7 @@ Un tableau blanc infini avec des capacités d'analyse de graphe.
 
 *Langue : Français | [English](README.en.md)*
 
-![Version](https://img.shields.io/badge/version-2.66.3-blue)
+![Version](https://img.shields.io/badge/version-2.67.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -60,6 +60,7 @@ Documentation utilisateur : [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - Communautés (Louvain), centralité (degré, intermédiarité), ponts entre clusters
 - Plus court chemin, mode focus sur le voisinage à N niveaux, nœuds isolés
 - Similarité des libellés pour repérer les doublons
+- Suggestions de liens à la demande : valeurs et sources communes, inclusion dans une zone, lieux proches, rencontres (même endroit, même moment) ; l'analyste accepte ou écarte, le lien garde la preuve
 
 ### Rapport et synthèse
 - Rapport rédigé en Markdown avec références cliquables vers les éléments
@@ -141,6 +142,7 @@ Pour un hébergement Apache classique, y compris dans un sous-répertoire (`VITE
 | Dupliquer | `Ctrl+D` |
 | Annuler / Rétablir | `Ctrl+Z` / `Ctrl+Shift+Z` |
 | Supprimer la sélection | `Suppr` / `Retour arrière` |
+| Sélectionner tous les liens | `Ctrl+Shift+A` |
 | Nouvel élément / groupe / annotation | `E` / `G` / `N` |
 | Vue Canvas / Carte / Timeline / Matrice | `1` / `2` / `3` / `4` |
 | Verrouiller la session (chiffrement) | `Alt+L` |

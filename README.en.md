@@ -10,7 +10,7 @@ An infinite whiteboard with graph-analysis capabilities.
 
 *Language: [Français](README.md) | English*
 
-![Version](https://img.shields.io/badge/version-2.66.3-blue)
+![Version](https://img.shields.io/badge/version-2.67.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -60,6 +60,7 @@ User documentation: [doc.zeroneurone.com](https://doc.zeroneurone.com)
 - Communities (Louvain), centrality (degree, betweenness), bridges between clusters
 - Shortest path, focus mode on the N-level neighbourhood, isolated nodes
 - Label similarity to spot duplicates
+- On-demand link suggestions: shared values and sources, zone containment, nearby places, meetings (same place, same time); the analyst accepts or dismisses, the link keeps the evidence
 
 ### Report and synthesis
 - Report written in Markdown with clickable references to elements
@@ -141,6 +142,7 @@ For a plain Apache host, including under a sub-directory (`VITE_BASE=/Zeroneuron
 | Duplicate | `Ctrl+D` |
 | Undo / Redo | `Ctrl+Z` / `Ctrl+Shift+Z` |
 | Delete selection | `Delete` / `Backspace` |
+| Select all links | `Ctrl+Shift+A` |
 | New element / group / annotation | `E` / `G` / `N` |
 | Canvas / Map / Timeline / Matrix view | `1` / `2` / `3` / `4` |
 | Lock the session (encryption) | `Alt+L` |
