@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.68.0
+
+### Nouveautés
+
+- **Import JSON multi-tableaux** — un JSON qui contient plusieurs tableaux
+  d'objets n'importe plus seulement le premier : chaque tableau se coche et
+  garde son propre mapping (libellé, champs, tag, filtres). Les tableaux
+  ajoutés reçoivent un tag à leur nom.
+  - **Références entre tableaux** — un champ dont les valeurs se retrouvent
+    parmi les `id` d'un autre tableau crée les liens vers ses enregistrements ;
+    le tableau visé se change sur la ligne du champ. Noms préfixés reconnus
+    (`crpj_procedure`), champ qui recopie l'`id` ignoré.
+  - **Identifiants issus d'un CSV** — `12`, `"12"`, `12.0` désignent le même
+    enregistrement.
+  - **Identifiant commun** — quand les `id` de plusieurs tableaux reprennent
+    ceux d'un tableau principal (un numéro de procédure présent partout),
+    chaque tableau est relié à ce tableau principal.
+  - Une référence vers un tableau non coché est conservée en propriété.
+  - **Schéma des tableaux** — les tableaux cochés et leurs liens, avec la part
+    des valeurs retrouvées ; tirer un champ vers un tableau pour le relier,
+    cliquer une flèche pour la retirer, « + champ » pour en ajouter. Disposé en
+    colonnes pour que les flèches ne traversent pas les tableaux.
+
+### Améliorations
+
+- **Documentation** — import JSON multi-tableaux (FR, EN).
+
 ## 2.67.1
 
 ### Corrections
