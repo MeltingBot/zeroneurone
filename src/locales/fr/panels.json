@@ -309,7 +309,8 @@
       "elementsSection": "Éléments ({{count}})",
       "linksSection": "Liens ({{count}})",
       "setEvaluationAll": "Appliquer la même cotation à toute la sélection",
-      "clearConfidenceAll": "Effacer la confiance de toute la sélection"
+      "clearConfidenceAll": "Effacer la confiance de toute la sélection",
+      "mixedValues": "Valeurs multiples"
     },
     "copyDate": "Copier la date",
     "timeZone": {

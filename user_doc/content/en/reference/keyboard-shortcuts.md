@@ -25,6 +25,7 @@ Complete list of ZeroNeurone keyboard shortcuts.
 | **Click** | Select an element |
 | **Ctrl+click** | Add/remove from selection |
 | **Ctrl+A** | Select all |
+| **Ctrl+Shift+A** | Select all links |
 | **Rectangle** | Area selection (click-drag on background) |
 
 ## Editing

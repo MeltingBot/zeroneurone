@@ -192,7 +192,9 @@
       "analyze": "Analitzar",
       "organize": "Organitzar",
       "tabs": "Pestanyes",
-      "copyAsMermaid": "Copiar com a Mermaid"
+      "copyAsMermaid": "Copiar com a Mermaid",
+      "selectLinks": "Selecciona els seus enllaços",
+      "selectAllLinks": "Selecciona tots els enllaços"
     },
     "viewToolbar": {
       "undo": "Desfer (Ctrl+Z)",

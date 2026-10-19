@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.66.3
+
+### Améliorations
+
+- **Import GeoJSON** — les `MultiPolygon` sont importés (plus grande partie
+  conservée, un seul avertissement récapitulatif). Les fichiers en Lambert 93
+  (`EPSG:2154`, fréquent dans les données publiques françaises) sont convertis
+  en WGS 84 à l'import ; les autres projections sont refusées avec un message
+  demandant de reprojeter en EPSG:4326.
+- **Import GeoJSON : libellé et propriétés** — une étape avant l'import fait
+  choisir la propriété qui sert de libellé et cocher les propriétés à importer.
+- **Liens depuis une sélection** — tirer un lien depuis un élément d'une
+  sélection multiple relie tous les éléments sélectionnés à la cible.
+- **Sélection de liens** — Maj/Ctrl+clic ajoute ou retire un lien de la
+  sélection ; Ctrl+Shift+A sélectionne tous les liens affichés ; le menu du
+  canvas propose « Sélectionner leurs liens » (ou « tous les liens »).
+- **Édition en masse** — le libellé des liens se modifie pour toute la
+  sélection, et chaque modification en masse s'annule en un Ctrl+Z.
+
+### Corrections
+
+- **Carte** — une coordonnée hors limites (fichier projeté importé tel quel)
+  ne fait plus planter la vue Carte ; l'élément est ignoré.
+- **Import GeoJSON** — les entités sans nom sont numérotées selon leur position
+  dans le fichier (« Feature 1 » était répété).
+- **Annuler sur le canvas** — la création d'un lien, la fusion d'éléments et
+  l'ajout d'une pièce jointe s'annulent à nouveau avec Ctrl+Z (l'action
+  disparaissait de l'historique sans effet).
+- **Fenêtre d'import** — les options CSV sont masquées pendant les étapes
+  d'options GeoJSON et FEC.
+
 ## 2.66.2
 
 ### Améliorations

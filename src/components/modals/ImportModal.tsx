@@ -47,6 +47,16 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     aggregate: FECAggregate;
   } | null>(null);
   const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
+  // Étape d'options GeoJSON : choix de la propriété qui sert de libellé
+  const [pendingGeoJSON, setPendingGeoJSON] = useState<{
+    fileName: string;
+    content: string;
+    featureCount: number;
+    fields: Array<{ key: string; sample: string }>;
+  } | null>(null);
+  const [geoJSONLabelField, setGeoJSONLabelField] = useState('');
+  const [geoJSONFields, setGeoJSONFields] = useState<Set<string>>(new Set());
+  const geoJSONLabelId = useId();
 
   const { dossiers, createDossier, deleteDossier, currentDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
@@ -107,6 +117,20 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           setIsProcessing(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }
+        return;
+      }
+    }
+
+    // GeoJSON avec propriétés : l'utilisateur choisit le champ de libellé
+    if (/\.(geo)?json$/i.test(file.name)) {
+      const content = await importService.readFileAsText(file);
+      const analysis = importService.analyzeGeoJSONFields(content);
+      if (analysis && analysis.fields.length > 0) {
+        setPendingGeoJSON({ fileName: file.name, content, featureCount: analysis.featureCount, fields: analysis.fields });
+        setGeoJSONLabelField(analysis.suggested ?? analysis.fields[0].key);
+        setGeoJSONFields(new Set(analysis.fields.map((f) => f.key)));
+        setImportResult(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
     }
@@ -286,23 +310,26 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     }
   }, [targetDossierId, createMissingElements, createDossier, deleteDossier, navigate, onClose, t, isOnDossierPage, currentDossier, enterImportPlacementMode, requestFitView]);
 
-  // Confirmation de l'étape d'options FEC : le dossier est créé ici seulement.
-  const handleFecImport = useCallback(async () => {
-    if (!pendingFEC) return;
+  // Confirmation d'une étape d'options (FEC, GeoJSON) : le dossier est créé
+  // ici seulement, et supprimé si l'import échoue.
+  const runPendingImport = useCallback(async (
+    dossierName: string,
+    run: (dossierId: string) => Promise<ImportResult>,
+    clearPending: () => void,
+  ) => {
     setIsProcessing(true);
     let dossierId = targetDossierId;
     let createdNewDossier = false;
     try {
       if (targetDossierId === 'new') {
-        const name = pendingFEC.fileName.replace(/\.(txt|fec)$/i, '');
-        const dossier = await createDossier(name, '');
+        const dossier = await createDossier(dossierName, '');
         dossierId = dossier.id;
         createdNewDossier = true;
       }
-      const result = await importFEC(pendingFEC.content, dossierId, fecOptions);
+      const result = await run(dossierId);
       setImportResult(result);
       if (result.success) {
-        setPendingFEC(null);
+        clearPending();
         toast.success(t('import.success'));
         requestFitView();
         setTimeout(() => {
@@ -328,7 +355,36 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [pendingFEC, fecOptions, targetDossierId, createDossier, deleteDossier, navigate, onClose, requestFitView, t]);
+  }, [targetDossierId, createDossier, deleteDossier, navigate, onClose, requestFitView, t]);
+
+  const handleFecImport = useCallback(() => {
+    if (!pendingFEC) return;
+    return runPendingImport(
+      pendingFEC.fileName.replace(/\.(txt|fec)$/i, ''),
+      (dossierId) => importFEC(pendingFEC.content, dossierId, fecOptions),
+      () => setPendingFEC(null),
+    );
+  }, [pendingFEC, fecOptions, runPendingImport]);
+
+  const handleGeoJSONImport = useCallback(() => {
+    if (!pendingGeoJSON) return;
+    return runPendingImport(
+      pendingGeoJSON.fileName.replace(/\.(geo)?json$/i, ''),
+      (dossierId) => importService.importFromGeoJSON(pendingGeoJSON.content, dossierId, {
+        labelField: geoJSONLabelField,
+        fields: [...geoJSONFields],
+      }),
+      () => setPendingGeoJSON(null),
+    );
+  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, runPendingImport]);
+
+  const toggleGeoJSONField = useCallback((key: string) => {
+    setGeoJSONFields((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -338,6 +394,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     setImportResult(null);
     setTargetDossierId('new');
     setPendingFEC(null);
+    setPendingGeoJSON(null);
     onClose();
   }, [onClose]);
 
@@ -444,6 +501,87 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </div>
           )}
 
+          {/* Étape d'options GeoJSON */}
+          {pendingGeoJSON && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-text-primary">{t('import.geojson.optionsTitle')}</p>
+              <p className="text-xs text-text-tertiary">
+                <span className="font-mono">{pendingGeoJSON.fileName}</span>
+                {' · '}
+                {t('import.geojson.featureCount', { count: pendingGeoJSON.featureCount })}
+              </p>
+              <div>
+                <label htmlFor={geoJSONLabelId} className="block text-xs font-medium text-text-primary mb-1">
+                  {t('import.geojson.labelField')}
+                </label>
+                <select
+                  id={geoJSONLabelId}
+                  value={geoJSONLabelField}
+                  onChange={(e) => setGeoJSONLabelField(e.target.value)}
+                  data-testid="geojson-label-field"
+                  className="w-full px-2 py-1.5 text-sm rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+                >
+                  {pendingGeoJSON.fields.map((field) => (
+                    <option key={field.key} value={field.key}>
+                      {field.key} — {field.sample.length > 40 ? `${field.sample.slice(0, 40)}…` : field.sample}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-text-primary">{t('import.geojson.fields')}</span>
+                  <div className="flex gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setGeoJSONFields(new Set(pendingGeoJSON.fields.map((f) => f.key)))}
+                      className="text-text-secondary hover:text-text-primary"
+                    >
+                      {t('import.geojson.all')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGeoJSONFields(new Set())}
+                      className="text-text-secondary hover:text-text-primary"
+                    >
+                      {t('import.geojson.none')}
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-48 overflow-y-auto border border-border-default rounded divide-y divide-border-default" data-testid="geojson-fields">
+                  {pendingGeoJSON.fields.filter((field) => field.key !== geoJSONLabelField).map((field) => (
+                    <label key={field.key} className="flex items-center gap-2 px-2 py-1 text-xs cursor-pointer hover:bg-bg-secondary">
+                      <input
+                        type="checkbox"
+                        checked={geoJSONFields.has(field.key)}
+                        onChange={() => toggleGeoJSONField(field.key)}
+                        className="rounded border-border-default"
+                      />
+                      <span className="font-mono text-text-primary shrink-0">{field.key}</span>
+                      <span className="text-text-tertiary truncate">{field.sample}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingGeoJSON(null)}
+                  className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
+                >
+                  {t('common:actions.cancel')}
+                </button>
+                <button
+                  onClick={handleGeoJSONImport}
+                  disabled={isProcessing}
+                  data-testid="geojson-import-confirm"
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-accent-hover disabled:opacity-40"
+                >
+                  {isProcessing ? t('import.importing') : t('import.geojson.confirm')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Déchiffrement .znzip */}
           {pendingEncryptedFile && (
             <div className="p-3 border border-border-default rounded bg-bg-secondary space-y-2">
@@ -495,7 +633,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           )}
 
           {/* Import button */}
-          {!pendingFEC && (
+          {!pendingFEC && !pendingGeoJSON && (
           <button
             onClick={triggerFileSelect}
             disabled={isProcessing}
@@ -519,40 +657,44 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           </button>
           )}
 
-          {/* Options for CSV */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="createMissing"
-              checked={createMissingElements}
-              onChange={(e) => setCreateMissingElements(e.target.checked)}
-              className="rounded border-border-default"
-            />
-            <label htmlFor="createMissing" className="text-xs text-text-secondary">
-              {t('import.createMissing')}
-            </label>
-          </div>
+          {/* Options and template for CSV — irrelevant during a FEC or GeoJSON options step */}
+          {!pendingFEC && !pendingGeoJSON && (
+            <>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="createMissing"
+                checked={createMissingElements}
+                onChange={(e) => setCreateMissingElements(e.target.checked)}
+                className="rounded border-border-default"
+              />
+              <label htmlFor="createMissing" className="text-xs text-text-secondary">
+                {t('import.createMissing')}
+              </label>
+            </div>
 
-          {/* CSV Template */}
-          <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet size={14} className="text-text-secondary" />
-                <span className="text-xs font-medium text-text-primary">{t('import.csvTemplate.title')}</span>
+            {/* CSV Template */}
+            <div className="p-3 bg-bg-secondary rounded-lg border border-border-default">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet size={14} className="text-text-secondary" />
+                  <span className="text-xs font-medium text-text-primary">{t('import.csvTemplate.title')}</span>
+                </div>
+                <button
+                  onClick={downloadCSVTemplate}
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
+                >
+                  <Download size={12} />
+                  {t('import.csvTemplate.download')}
+                </button>
               </div>
-              <button
-                onClick={downloadCSVTemplate}
-                className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary hover:text-accent hover:bg-accent/5 rounded transition-colors"
-              >
-                <Download size={12} />
-                {t('import.csvTemplate.download')}
-              </button>
+              <div className="text-xs text-text-tertiary space-y-1">
+                <SafeHtml as="p" html={t('import.csvTemplate.format')} />
+                <p>{t('import.csvTemplate.description')}</p>
+              </div>
             </div>
-            <div className="text-xs text-text-tertiary space-y-1">
-              <SafeHtml as="p" html={t('import.csvTemplate.format')} />
-              <p>{t('import.csvTemplate.description')}</p>
-            </div>
-          </div>
+            </>
+          )}
 
           {/* Import result */}
           {importResult && (

@@ -12,9 +12,11 @@ import {
   Minus,
   X,
 } from 'lucide-react';
-import { useDossierStore, useSelectionStore, useTagSetStore } from '../../stores';
+import { useDossierStore, useSelectionStore, useTagSetStore, useHistoryStore } from '../../stores';
 import type {
+  Element,
   ElementShape,
+  Link,
   ElementVisual,
   LinkDirection,
   LinkStyle,
@@ -76,6 +78,76 @@ export function MultiSelectionDetail() {
   } = useDossierStore();
 
   const { selectedElementIds, selectedLinkIds } = useSelectionStore();
+  const pushAction = useHistoryStore((s) => s.pushAction);
+
+  // Runs a bulk edit as ONE undoable step. `run` receives recording versions of
+  // updateElements/updateLinks: before each call, the current value of every
+  // field it touches is saved (earliest wins), so undo restores the selection
+  // as it was; redo replays the calls in order. Values are read from the store
+  // state at the start — the Y.js → store sync is deferred to the next frame.
+  const withUndo = useCallback(
+    async (run: (update: {
+      updateElements: typeof updateElements;
+      updateLinks: typeof updateLinks;
+    }) => Promise<void>) => {
+      const state = useDossierStore.getState();
+      const elementById = new Map(state.elements.map((el) => [el.id, el]));
+      const linkById = new Map(state.links.map((link) => [link.id, link]));
+      const undoElements = new Map<string, Record<string, unknown>>();
+      const undoLinks = new Map<string, Record<string, unknown>>();
+      const calls: { kind: 'elements' | 'links'; ids: string[]; changes: Record<string, unknown> }[] = [];
+
+      const saveBefore = (
+        undo: Map<string, Record<string, unknown>>,
+        item: Record<string, unknown> | undefined,
+        id: string,
+        changes: Record<string, unknown>,
+      ) => {
+        if (!item) return;
+        const prev = undo.get(id) ?? {};
+        for (const key of Object.keys(changes)) {
+          if (key === 'visual') {
+            // Visual is merged key by key: save only the keys being changed
+            // (undefined when absent, which the merge writes back as absent)
+            const prevVisual = (prev.visual ?? {}) as Record<string, unknown>;
+            const itemVisual = (item.visual ?? {}) as Record<string, unknown>;
+            for (const vKey of Object.keys(changes.visual as object)) {
+              if (!(vKey in prevVisual)) prevVisual[vKey] = itemVisual[vKey];
+            }
+            prev.visual = prevVisual;
+          } else if (!(key in prev)) {
+            // The store skips undefined fields: restore "unset" as null
+            prev[key] = item[key] === undefined ? null : structuredClone(item[key]);
+          }
+        }
+        undo.set(id, prev);
+      };
+
+      await run({
+        updateElements: async (ids, changes) => {
+          ids.forEach((id) => saveBefore(undoElements, elementById.get(id) as unknown as Record<string, unknown>, id, changes as Record<string, unknown>));
+          calls.push({ kind: 'elements', ids: [...ids], changes: structuredClone(changes) as Record<string, unknown> });
+          await updateElements(ids, changes);
+        },
+        updateLinks: async (ids, changes) => {
+          ids.forEach((id) => saveBefore(undoLinks, linkById.get(id) as unknown as Record<string, unknown>, id, changes as Record<string, unknown>));
+          calls.push({ kind: 'links', ids: [...ids], changes: structuredClone(changes) as Record<string, unknown> });
+          await updateLinks(ids, changes);
+        },
+      });
+
+      if (calls.length === 0) return;
+      pushAction({
+        type: 'update-bulk',
+        undo: {
+          bulkElements: [...undoElements].map(([id, changes]) => ({ id, changes: changes as Partial<Element> })),
+          bulkLinks: [...undoLinks].map(([id, changes]) => ({ id, changes: changes as Partial<Link> })),
+        },
+        redo: { bulkCalls: calls as { kind: 'elements' | 'links'; ids: string[]; changes: Partial<Element> }[] },
+      });
+    },
+    [updateElements, updateLinks, pushAction]
+  );
 
   // Get selected items
   const selectedElements = useMemo(
@@ -126,7 +198,7 @@ export function MultiSelectionDetail() {
   const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
   const handleAddTag = useCallback(
-    async (tag: string) => {
+    (tag: string) => withUndo(async ({ updateElements, updateLinks }) => {
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
 
@@ -164,15 +236,15 @@ export function MultiSelectionDetail() {
       if (tagSet && (tagSet.suggestedProperties.length > 0 || hasVisual)) {
         setSuggestedPropsTagSet(tag);
       }
-    },
-    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks, addExistingTag]
+    }),
+    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, addExistingTag, withUndo]
   );
 
   // Apply chosen suggested properties to every selected element/link (skipping
   // items that already have a property with the same key). Optionally also apply
   // the tag's appearance (color/shape/icon) to every selected element.
   const handleApplySuggestedProperties = useCallback(
-    async (properties: Property[], applyVisual?: boolean) => {
+    (properties: Property[], applyVisual?: boolean) => withUndo(async ({ updateElements, updateLinks }) => {
       const dv = applyVisual
         ? useTagSetStore.getState().getByName(suggestedPropsTagSet ?? '')?.defaultVisual
         : null;
@@ -198,12 +270,12 @@ export function MultiSelectionDetail() {
           await updateLinks([link.id], { properties: [...link.properties, ...toAdd] });
         }
       }
-    },
-    [selectedElements, selectedLinks, updateElements, updateLinks, suggestedPropsTagSet]
+    }),
+    [selectedElements, selectedLinks, suggestedPropsTagSet, withUndo]
   );
 
   const handleRemoveTag = useCallback(
-    async (tagToRemove: string) => {
+    (tagToRemove: string) => withUndo(async ({ updateElements, updateLinks }) => {
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
 
@@ -224,15 +296,15 @@ export function MultiSelectionDetail() {
           }
         }
       }
-    },
-    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, updateElements, updateLinks]
+    }),
+    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, withUndo]
   );
 
   // ============================================================================
   // HANDLERS - Properties (bulk via PropertiesEditor)
   // ============================================================================
 
-  const handleBulkPropertiesChange = useCallback(async (newProperties: Property[]) => {
+  const handleBulkPropertiesChange = useCallback((newProperties: Property[]) => withUndo(async ({ updateElements, updateLinks }) => {
     const allItems = [...selectedElements, ...selectedLinks];
     if (allItems.length === 0) return;
 
@@ -288,14 +360,14 @@ export function MultiSelectionDetail() {
         }
       }
     }
-  }, [mergedProperties, selectedElements, selectedLinks, updateElements, updateLinks]);
+  }), [mergedProperties, selectedElements, selectedLinks, withUndo]);
 
   // ============================================================================
   // HANDLERS - Confidence
   // ============================================================================
 
   const handleConfidenceChange = useCallback(
-    async (value: number | null) => {
+    (value: number | null) => withUndo(async ({ updateElements, updateLinks }) => {
       // null resets the confidence to "not set" on the whole selection
       const confidence = value === null ? null : Math.round(value / 10) * 10 as Confidence;
       const elementIds = Array.from(selectedElementIds);
@@ -307,15 +379,15 @@ export function MultiSelectionDetail() {
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { confidence });
       }
-    },
-    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
+    }),
+    [selectedElementIds, selectedLinkIds, withUndo]
   );
 
   // Two-axis grading: the composed value is applied as a whole to the selection
   const evaluationScale = getModelScale(useEvaluationModel());
   const [bulkEvaluation, setBulkEvaluation] = useState<Evaluation | null>(null);
   const handleEvaluationChange = useCallback(
-    async (evaluation: Evaluation | null) => {
+    (evaluation: Evaluation | null) => withUndo(async ({ updateElements, updateLinks }) => {
       setBulkEvaluation(evaluation);
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
@@ -326,8 +398,8 @@ export function MultiSelectionDetail() {
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { evaluation });
       }
-    },
-    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
+    }),
+    [selectedElementIds, selectedLinkIds, withUndo]
   );
 
   // ============================================================================
@@ -335,7 +407,7 @@ export function MultiSelectionDetail() {
   // ============================================================================
 
   const handleColorChange = useCallback(
-    async (color: string) => {
+    (color: string) => withUndo(async ({ updateElements, updateLinks }) => {
       // Pass only changed property — store/Y.Map merge with current visual
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
@@ -345,8 +417,8 @@ export function MultiSelectionDetail() {
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { visual: { color } });
       }
-    },
-    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
+    }),
+    [selectedElementIds, selectedLinkIds, withUndo]
   );
 
   // ============================================================================
@@ -354,7 +426,7 @@ export function MultiSelectionDetail() {
   // ============================================================================
 
   const handleFontSizeChange = useCallback(
-    async (fontSize: FontSize) => {
+    (fontSize: FontSize) => withUndo(async ({ updateElements, updateLinks }) => {
       const elementIds = Array.from(selectedElementIds);
       const linkIds = Array.from(selectedLinkIds);
       if (elementIds.length > 0) {
@@ -363,8 +435,8 @@ export function MultiSelectionDetail() {
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { visual: { fontSize } });
       }
-    },
-    [selectedElementIds, selectedLinkIds, updateElements, updateLinks]
+    }),
+    [selectedElementIds, selectedLinkIds, withUndo]
   );
 
   // ============================================================================
@@ -372,24 +444,24 @@ export function MultiSelectionDetail() {
   // ============================================================================
 
   const handleShapeChange = useCallback(
-    async (shape: ElementShape) => {
+    (shape: ElementShape) => withUndo(async ({ updateElements }) => {
       const elementIds = Array.from(selectedElementIds);
       if (elementIds.length > 0) {
         await updateElements(elementIds, { visual: { shape, customWidth: undefined, customHeight: undefined } });
       }
-    },
-    [selectedElementIds, updateElements]
+    }),
+    [selectedElementIds, withUndo]
   );
 
 
   const handleBorderColorChange = useCallback(
-    async (borderColor: string) => {
+    (borderColor: string) => withUndo(async ({ updateElements }) => {
       const elementIds = Array.from(selectedElementIds);
       if (elementIds.length > 0) {
         await updateElements(elementIds, { visual: { borderColor } });
       }
-    },
-    [selectedElementIds, updateElements]
+    }),
+    [selectedElementIds, withUndo]
   );
 
   // ============================================================================
@@ -397,33 +469,49 @@ export function MultiSelectionDetail() {
   // ============================================================================
 
   const handleDirectionChange = useCallback(
-    async (direction: LinkDirection) => {
+    (direction: LinkDirection) => withUndo(async ({ updateLinks }) => {
       const linkIds = Array.from(selectedLinkIds);
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { direction, directed: direction !== 'none' });
       }
-    },
-    [selectedLinkIds, updateLinks]
+    }),
+    [selectedLinkIds, withUndo]
+  );
+
+  // Label shared by every selected link, null when they differ
+  const commonLinkLabel = useMemo(() => {
+    const labels = new Set(selectedLinks.map((link) => link.label));
+    return labels.size === 1 ? [...labels][0] : null;
+  }, [selectedLinks]);
+
+  const handleLabelCommit = useCallback(
+    (label: string) => withUndo(async ({ updateLinks }) => {
+      const linkIds = Array.from(selectedLinkIds);
+      if (linkIds.length > 0) {
+        await updateLinks(linkIds, { label });
+      }
+    }),
+    [selectedLinkIds, withUndo]
   );
 
   const handleStyleChange = useCallback(
-    async (style: LinkStyle) => {
+    (style: LinkStyle) => withUndo(async ({ updateLinks }) => {
       const linkIds = Array.from(selectedLinkIds);
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { visual: { style } });
       }
-    },
-    [selectedLinkIds, updateLinks]
+    }),
+    [selectedLinkIds, withUndo]
   );
 
   const handleThicknessChange = useCallback(
-    async (thickness: number) => {
+    (thickness: number) => withUndo(async ({ updateLinks }) => {
       const linkIds = Array.from(selectedLinkIds);
       if (linkIds.length > 0) {
         await updateLinks(linkIds, { visual: { thickness } });
       }
-    },
-    [selectedLinkIds, updateLinks]
+    }),
+    [selectedLinkIds, withUndo]
   );
 
   return (
@@ -684,9 +772,20 @@ export function MultiSelectionDetail() {
           id="bulk-links"
           title={t('detail.multi.linksSection', { count: linkCount })}
           icon={<span className="w-4 h-0.5 bg-current" />}
-          defaultOpen={false}
+          defaultOpen={elementCount === 0}
         >
           <div className="space-y-4">
+            {/* Label */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-text-tertiary">{t('detail.labels.label')}</label>
+              <BulkTextInput
+                key={`${[...selectedLinkIds].join(',')}|${commonLinkLabel ?? ''}`}
+                initial={commonLinkLabel}
+                placeholder={t('detail.multi.mixedValues')}
+                onCommit={handleLabelCommit}
+              />
+            </div>
+
             {/* Direction */}
             <div className="space-y-1.5">
               <label className="text-xs text-text-tertiary">{t('detail.labels.direction')}</label>
@@ -754,5 +853,36 @@ export function MultiSelectionDetail() {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Text field applied to the whole selection on blur or Enter. `initial` is the
+ * value shared by every item, or null when they differ (the field then starts
+ * empty and leaving it empty changes nothing). Escape reverts.
+ */
+function BulkTextInput({ initial, placeholder, onCommit }: {
+  initial: string | null;
+  placeholder: string;
+  onCommit: (value: string) => void;
+}) {
+  const [value, setValue] = useState(initial ?? '');
+  const commit = () => {
+    const next = value.trim();
+    if (initial === null ? next !== '' : next !== initial) onCommit(next);
+  };
+  return (
+    <input
+      type="text"
+      value={value}
+      placeholder={initial === null ? placeholder : undefined}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        else if (e.key === 'Escape') setValue(initial ?? '');
+      }}
+      className="w-full px-2 py-1.5 text-sm rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+    />
   );
 }

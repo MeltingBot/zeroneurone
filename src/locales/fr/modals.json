@@ -80,7 +80,17 @@
       "confirm": "Importer",
       "includeGenToGen": "Inclure les flux entre comptes généraux (TVA, OD, paie…)"
     },
-    "evaluationModelKept": "Le fichier utilise le modèle d'évaluation « {{imported}} » ; l'enquête conserve le sien (« {{current}} »). Les cotations d'une autre échelle sont conservées et affichées en grisé."
+    "evaluationModelKept": "Le fichier utilise le modèle d'évaluation « {{imported}} » ; l'enquête conserve le sien (« {{current}} »). Les cotations d'une autre échelle sont conservées et affichées en grisé.",
+    "geojson": {
+      "optionsTitle": "Options d'import GeoJSON",
+      "featureCount_one": "{{count}} entité",
+      "featureCount_other": "{{count}} entités",
+      "labelField": "Libellé des éléments",
+      "confirm": "Importer",
+      "fields": "Propriétés à importer",
+      "all": "Tout",
+      "none": "Aucune"
+    }
   },
   "export": {
     "title": "Exporter le dossier",

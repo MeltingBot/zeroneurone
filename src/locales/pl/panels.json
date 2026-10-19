@@ -294,7 +294,8 @@
       "elementsSection": "Elementy ({{count}})",
       "linksSection": "Połączenia ({{count}})",
       "setEvaluationAll": "Zastosuj tę samą ocenę do całego zaznaczenia",
-      "clearConfidenceAll": "Wyczyść pewność dla całego zaznaczenia"
+      "clearConfidenceAll": "Wyczyść pewność dla całego zaznaczenia",
+      "mixedValues": "Różne wartości"
     },
     "copyDate": "Kopiuj datę",
     "timeZone": {

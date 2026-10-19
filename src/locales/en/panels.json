@@ -308,7 +308,8 @@
       "elementsSection": "Elements ({{count}})",
       "linksSection": "Links ({{count}})",
       "setEvaluationAll": "Apply the same grading to the whole selection",
-      "clearConfidenceAll": "Clear confidence for the whole selection"
+      "clearConfidenceAll": "Clear confidence for the whole selection",
+      "mixedValues": "Multiple values"
     },
     "copyDate": "Copy date",
     "timeZone": {

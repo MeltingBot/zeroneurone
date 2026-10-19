@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
@@ -26,6 +26,8 @@ interface CanvasContextMenuProps {
   // Query actions
   onFindSimilar?: () => void;
   onQueryFromSelection?: () => void;
+  // Select the links of the selection (all links when nothing is selected)
+  onSelectLinks?: () => void;
   onClose: () => void;
   pluginExtensions?: ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -48,6 +50,7 @@ function CanvasContextMenuComponent({
   onCopyAsMermaid,
   onFindSimilar,
   onQueryFromSelection,
+  onSelectLinks,
   onClose,
   pluginExtensions,
   menuContext,
@@ -82,6 +85,9 @@ function CanvasContextMenuComponent({
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
+        ] : [],
+        onSelectLinks ? [
+          { id: 'select-links', label: cm(hasSelection ? 'selectLinks' : 'selectAllLinks'), icon: Spline, shortcut: hasSelection ? undefined : 'Ctrl+Shift+A', onSelect: onSelectLinks },
         ] : [],
         [
           { id: 'add-element', label: cm('addElement'), icon: Plus, shortcut: 'E', onSelect: onCreateElement },

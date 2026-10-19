@@ -80,7 +80,17 @@
       "confirm": "Importeren",
       "includeGenToGen": "Stromen tussen grootboekrekeningen opnemen (btw, diverse boekingen, loon…)"
     },
-    "evaluationModelKept": "Het bestand gebruikt het beoordelingsmodel \"{{imported}}\"; het dossier behoudt het eigen model (\"{{current}}\"). Waarderingen in een andere schaal blijven behouden en worden grijs weergegeven."
+    "evaluationModelKept": "Het bestand gebruikt het beoordelingsmodel \"{{imported}}\"; het dossier behoudt het eigen model (\"{{current}}\"). Waarderingen in een andere schaal blijven behouden en worden grijs weergegeven.",
+    "geojson": {
+      "optionsTitle": "GeoJSON-importopties",
+      "featureCount_one": "{{count}} object",
+      "featureCount_other": "{{count}} objecten",
+      "labelField": "Elementlabel",
+      "confirm": "Importeren",
+      "fields": "Te importeren eigenschappen",
+      "all": "Alle",
+      "none": "Geen"
+    }
   },
   "export": {
     "title": "Dossier exporteren",

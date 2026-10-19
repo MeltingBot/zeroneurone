@@ -295,7 +295,8 @@
       "elementsSection": "Elementi ({{count}})",
       "linksSection": "Collegamenti ({{count}})",
       "setEvaluationAll": "Applica la stessa valutazione a tutta la selezione",
-      "clearConfidenceAll": "Cancella l'affidabilità per tutta la selezione"
+      "clearConfidenceAll": "Cancella l'affidabilità per tutta la selezione",
+      "mixedValues": "Valori multipli"
     },
     "copyDate": "Copia data",
     "timeZone": {

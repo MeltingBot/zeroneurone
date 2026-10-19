@@ -192,7 +192,9 @@
       "analyze": "Analysieren",
       "organize": "Anordnen",
       "tabs": "Tabs",
-      "copyAsMermaid": "Als Mermaid kopieren"
+      "copyAsMermaid": "Als Mermaid kopieren",
+      "selectLinks": "Ihre Verbindungen auswählen",
+      "selectAllLinks": "Alle Verbindungen auswählen"
     },
     "viewToolbar": {
       "undo": "Rückgängig (Strg+Z)",

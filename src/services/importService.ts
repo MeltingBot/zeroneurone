@@ -38,7 +38,8 @@ import { useTagSetStore } from '../stores/tagSetStore';
 import { useCustomIconStore } from '../stores/customIconStore';
 import { tagSetRepository, customIconRepository } from '../db/repositories';
 import { sanitizeSvgIcon } from '../utils/svgIcon';
-import { normalizeGeo, computePolygonCenter } from '../utils/geo';
+import { normalizeGeo, computePolygonCenter, computePolygonAreaKm2, openRing, isGeoInRange } from '../utils/geo';
+import { isLambert93CrsName, lambert93ToWgs84 } from '../utils/lambert93';
 import { splitCSVRecords } from '../utils/csv';
 import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
 import type { ExportData, ExportedAssetMeta } from './exportService';
@@ -902,13 +903,54 @@ class ImportService {
   }
 
   /**
+   * Properties of a GeoJSON FeatureCollection that hold a value in at least one
+   * feature, in file order, so the user can pick the one that names elements.
+   * `suggested` is the first usual name key (name, nom, label…) found, else the
+   * first field. Returns null when the content is not a FeatureCollection.
+   */
+  analyzeGeoJSONFields(content: string): {
+    featureCount: number;
+    fields: Array<{ key: string; sample: string }>;
+    suggested: string | null;
+  } | null {
+    let data: { type?: unknown; features?: unknown };
+    try {
+      data = JSON.parse(content);
+    } catch {
+      return null;
+    }
+    if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features)) return null;
+
+    const samples = new Map<string, string>();
+    for (const feature of data.features as Array<{ properties?: Record<string, unknown> | null }>) {
+      for (const [key, value] of Object.entries(feature?.properties || {})) {
+        if (!samples.has(key) && value !== null && value !== undefined && String(value).trim() !== '') {
+          samples.set(key, String(value).trim());
+        }
+      }
+    }
+    const fields = [...samples].map(([key, sample]) => ({ key, sample }));
+    const nameKeys = ['name', 'nom', 'label', 'libelle', 'title', 'titre', 'toponyme'];
+    const suggested = nameKeys
+      .map(k => fields.find(f => f.key.toLowerCase() === k))
+      .find(Boolean)?.key ?? fields[0]?.key ?? null;
+    return { featureCount: data.features.length, fields, suggested };
+  }
+
+  /**
    * Import from GeoJSON file (FeatureCollection with Points and Polygons)
-   * Points → elements with geo point, Polygons → elements with geo zone
+   * Points → elements with geo point, Polygons → elements with geo zone.
+   * `labelField` names the property used as element label; features where it
+   * is empty fall back to the usual name keys. `fields`, when given, lists the
+   * properties to import: the others are ignored (the label field is kept).
    */
   async importFromGeoJSON(
     content: string,
-    targetDossierId: DossierId
+    targetDossierId: DossierId,
+    options: { labelField?: string; fields?: string[] } = {}
   ): Promise<ImportResult> {
+    const { labelField } = options;
+    const keptFields = options.fields ? new Set(options.fields) : null;
     const result: ImportResult = {
       success: false,
       elementsImported: 0,
@@ -943,17 +985,34 @@ class ImportService {
       const gridSpacing = 200;
       const gridCols = 10;
 
-      for (const feature of features) {
+      let multiPolygonsReduced = 0;
+      let outOfRange = 0;
+
+      // GeoJSON is WGS 84 degrees, but French public data often ships in
+      // Lambert 93 with a legacy `crs` member: convert it on the fly.
+      const toWgs84 = isLambert93CrsName(data.crs?.properties?.name) ? lambert93ToWgs84 : null;
+      const reproject = (c: unknown): unknown =>
+        Array.isArray(c) && typeof c[0] === 'number' && typeof c[1] === 'number'
+          ? toWgs84!([c[0], c[1]])
+          : Array.isArray(c) ? c.map(reproject) : c;
+
+      for (const [featureIndex, feature] of features.entries()) {
         if (!feature.geometry) {
           result.warnings.push('Feature sans géométrie ignorée');
           continue;
         }
 
-        const props = feature.properties || {};
-        const label = String(
+        const props = keptFields
+          ? Object.fromEntries(Object.entries(feature.properties || {})
+              .filter(([key]) => keptFields.has(key) || key === labelField))
+          : feature.properties || {};
+        const chosenLabel = labelField ? props[labelField] : null;
+        const label = chosenLabel !== null && chosenLabel !== undefined && String(chosenLabel).trim() !== ''
+          ? String(chosenLabel).trim()
+          : String(
           props.name || props.label || props.nom || props.title ||
           props.NAME || props.LABEL || props.NOM ||
-          feature.id || `Feature ${result.elementsImported + 1}`
+          feature.id || `Feature ${featureIndex + 1}`
         );
 
         // Extract metadata from properties
@@ -996,7 +1055,7 @@ class ImportService {
         ]);
         const properties: Property[] = [];
         for (const [key, value] of Object.entries(props)) {
-          if (!knownProps.has(key) && value !== null && value !== undefined) {
+          if (!knownProps.has(key) && key !== labelField && value !== null && value !== undefined) {
             // Handle prop_ prefixed keys from ZN geojson export
             const propKey = key.startsWith('prop_') ? key.slice(5) : key;
             properties.push({ key: propKey, value: String(value), type: 'text' });
@@ -1013,34 +1072,41 @@ class ImportService {
         // Build geo data based on geometry type
         let geo: GeoData | null = null;
         const geomType = feature.geometry.type;
+        if (toWgs84) {
+          feature.geometry.coordinates = reproject(feature.geometry.coordinates);
+        }
 
         if (geomType === 'Point') {
           const coords = feature.geometry.coordinates as [number, number];
           if (Array.isArray(coords) && coords.length >= 2) {
             geo = { type: 'point', lat: coords[1], lng: coords[0] };
           }
-        } else if (geomType === 'Polygon') {
-          const rings = feature.geometry.coordinates as [number, number][][];
-          if (Array.isArray(rings) && rings.length > 0) {
-            // Take outer ring, remove closing point (last = first in GeoJSON)
-            const outerRing = rings[0];
-            const coords = outerRing.length > 1 &&
-              outerRing[0][0] === outerRing[outerRing.length - 1][0] &&
-              outerRing[0][1] === outerRing[outerRing.length - 1][1]
-              ? outerRing.slice(0, -1)
-              : outerRing;
+        } else if (geomType === 'Polygon' || geomType === 'MultiPolygon') {
+          // ZN holds one ring per element: outer ring of a Polygon, or of the
+          // largest part of a MultiPolygon. Holes are dropped.
+          const parts = (geomType === 'Polygon'
+            ? [feature.geometry.coordinates]
+            : feature.geometry.coordinates) as [number, number][][][];
+          const outerRings = Array.isArray(parts)
+            ? parts
+                .filter(rings => Array.isArray(rings) && Array.isArray(rings[0]))
+                .map(rings => openRing(rings[0]))
+                .filter(ring => ring.length >= 3)
+            : [];
 
-            if (coords.length >= 3) {
-              geo = {
-                type: 'polygon',
-                coordinates: coords as [number, number][],
-                center: computePolygonCenter(coords as [number, number][]),
-              };
-            } else {
-              result.warnings.push(`"${label}": polygone avec moins de 3 points, ignoré`);
-              continue;
-            }
+          if (outerRings.length === 0) {
+            result.warnings.push(`"${label}": polygone avec moins de 3 points, ignoré`);
+            continue;
           }
+          const coords = outerRings.reduce((largest, ring) =>
+            computePolygonAreaKm2(ring) > computePolygonAreaKm2(largest) ? ring : largest
+          );
+          if (outerRings.length > 1) multiPolygonsReduced++;
+          geo = {
+            type: 'polygon',
+            coordinates: coords,
+            center: computePolygonCenter(coords),
+          };
         } else if (geomType === 'MultiPoint') {
           // Import first point only
           const coords = feature.geometry.coordinates as [number, number][];
@@ -1061,6 +1127,10 @@ class ImportService {
 
         if (!geo) {
           result.warnings.push(`"${label}": coordonnées invalides, ignoré`);
+          continue;
+        }
+        if (!isGeoInRange(geo)) {
+          outOfRange++;
           continue;
         }
 
@@ -1106,6 +1176,22 @@ class ImportService {
 
         await db.elements.add(element);
         result.elementsImported++;
+      }
+
+      if (outOfRange > 0) {
+        // GeoJSON is WGS 84 degrees (RFC 7946); metres mean a projected file.
+        const crsName = data.crs?.properties?.name;
+        const message = `${outOfRange} entité(s) aux coordonnées hors WGS 84 (latitude/longitude en degrés)`
+          + (crsName ? `, projection déclarée : ${crsName}` : '')
+          + '. Reprojeter le fichier en EPSG:4326 (WGS 84) avant import.';
+        if (result.elementsImported === 0) result.errors.push(message);
+        else result.warnings.push(`${message} Ces entités sont ignorées.`);
+      }
+
+      if (multiPolygonsReduced > 0) {
+        result.warnings.push(
+          `${multiPolygonsReduced} MultiPolygon réduit(s) à leur plus grand polygone`
+        );
       }
 
       // Update dossier timestamp

@@ -80,7 +80,17 @@
       "confirm": "Import",
       "includeGenToGen": "Include flows between general accounts (VAT, misc. entries, payroll…)"
     },
-    "evaluationModelKept": "The file uses the \"{{imported}}\" evaluation model; the dossier keeps its own (\"{{current}}\"). Gradings in another scale are kept and shown greyed out."
+    "evaluationModelKept": "The file uses the \"{{imported}}\" evaluation model; the dossier keeps its own (\"{{current}}\"). Gradings in another scale are kept and shown greyed out.",
+    "geojson": {
+      "optionsTitle": "GeoJSON import options",
+      "featureCount_one": "{{count}} feature",
+      "featureCount_other": "{{count}} features",
+      "labelField": "Element label",
+      "confirm": "Import",
+      "fields": "Properties to import",
+      "all": "All",
+      "none": "None"
+    }
   },
   "export": {
     "title": "Export dossier",

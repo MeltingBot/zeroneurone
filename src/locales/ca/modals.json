@@ -80,7 +80,17 @@
       "confirm": "Importar",
       "includeGenToGen": "Incloure fluxos entre comptes generals (IVA, assentaments diversos, nòmines…)"
     },
-    "evaluationModelKept": "El fitxer fa servir el model d'avaluació «{{imported}}»; l'expedient conserva el seu («{{current}}»). Les valoracions d'una altra escala es conserven i es mostren en gris."
+    "evaluationModelKept": "El fitxer fa servir el model d'avaluació «{{imported}}»; l'expedient conserva el seu («{{current}}»). Les valoracions d'una altra escala es conserven i es mostren en gris.",
+    "geojson": {
+      "optionsTitle": "Opcions d'importació GeoJSON",
+      "featureCount_one": "{{count}} entitat",
+      "featureCount_other": "{{count}} entitats",
+      "labelField": "Etiqueta dels elements",
+      "confirm": "Importa",
+      "fields": "Propietats a importar",
+      "all": "Totes",
+      "none": "Cap"
+    }
   },
   "export": {
     "title": "Exportar l'expedient",

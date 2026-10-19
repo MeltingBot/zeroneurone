@@ -10,6 +10,8 @@ const dossierStore = {
   deleteLinks: vi.fn().mockResolvedValue(undefined),
   updateElement: vi.fn().mockResolvedValue(undefined),
   updateLink: vi.fn().mockResolvedValue(undefined),
+  updateElements: vi.fn().mockResolvedValue(undefined),
+  updateLinks: vi.fn().mockResolvedValue(undefined),
   updateElementPositions: vi.fn().mockResolvedValue(undefined),
   removeAsset: vi.fn().mockResolvedValue(undefined),
   addAsset: vi.fn().mockResolvedValue(undefined),
@@ -359,3 +361,51 @@ describe('unhandled action types', () => {
     warn.mockRestore();
   });
 });
+
+describe('update-bulk', () => {
+  const action = {
+    type: 'update-bulk',
+    undo: {
+      bulkElements: [{ id: 'e1', changes: { visual: { color: '#111111' } } }],
+      bulkLinks: [
+        { id: 'l1', changes: { label: 'avant' } },
+        { id: 'l2', changes: { label: '' } },
+      ],
+    },
+    redo: {
+      bulkCalls: [
+        { kind: 'elements', ids: ['e1'], changes: { visual: { color: '#ff0000' } } },
+        { kind: 'links', ids: ['l1', 'l2'], changes: { label: 'détient' } },
+      ],
+    },
+  };
+
+  it('undo restores every item to its own previous values', async () => {
+    push(action);
+    await history().undo();
+
+    expect(dossierStore.updateElement).toHaveBeenCalledWith('e1', { visual: { color: '#111111' } });
+    expect(dossierStore.updateLink).toHaveBeenCalledWith('l1', { label: 'avant' });
+    expect(dossierStore.updateLink).toHaveBeenCalledWith('l2', { label: '' });
+  });
+
+  it('redo replays the bulk calls in order', async () => {
+    push(action);
+    await history().undo();
+    await history().redo();
+
+    expect(dossierStore.updateElements).toHaveBeenCalledWith(['e1'], { visual: { color: '#ff0000' } });
+    expect(dossierStore.updateLinks).toHaveBeenCalledWith(['l1', 'l2'], { label: 'détient' });
+  });
+
+  it('applyUndo runs an action popped by an external handler, stacks untouched', async () => {
+    push(action);
+    const popped = history().popUndo()!;
+    await history().applyUndo(popped);
+
+    expect(dossierStore.updateLink).toHaveBeenCalledWith('l1', { label: 'avant' });
+    expect(history().past).toHaveLength(0);
+    expect(history().future).toHaveLength(1);
+  });
+});
+

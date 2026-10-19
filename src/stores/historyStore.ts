@@ -7,7 +7,7 @@ interface HistoryAction {
         'create-elements' | 'delete-elements' | 'move-elements' |
         'extract-to-element' | 'dissolve-group' | 'remove-from-group' |
         'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters' |
-        'add-asset' | 'merge-elements';
+        'add-asset' | 'merge-elements' | 'update-bulk';
   // Data for undoing the action
   undo: {
     elements?: Element[];
@@ -24,6 +24,9 @@ interface HistoryAction {
     // Opaque snapshots for non-element operations
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     snapshot?: any;
+    // For update-bulk: previous values of the changed fields, per item
+    bulkElements?: { id: string; changes: Partial<Element> }[];
+    bulkLinks?: { id: string; changes: Partial<Link> }[];
   };
   // Data for redoing the action
   redo: {
@@ -43,6 +46,8 @@ interface HistoryAction {
     // Opaque snapshots for non-element operations
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     snapshot?: any;
+    // For update-bulk: the bulk updates to replay, in order
+    bulkCalls?: { kind: 'elements' | 'links'; ids: string[]; changes: Partial<Element> | Partial<Link> }[];
   };
 }
 
@@ -55,6 +60,10 @@ interface HistoryState {
   pushAction: (action: HistoryAction) => void;
   undo: () => Promise<void>;
   redo: () => Promise<void>;
+  /** Execute an action's undo/redo without touching the stacks (for external
+   *  handlers that popped it themselves and don't handle its type) */
+  applyUndo: (action: HistoryAction) => Promise<void>;
+  applyRedo: (action: HistoryAction) => Promise<void>;
   popUndo: () => HistoryAction | null;
   popRedo: () => HistoryAction | null;
   canUndo: () => boolean;
@@ -110,7 +119,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       past: state.past.slice(0, -1),
       future: [action, ...state.future],
     }));
+    await get().applyUndo(action);
+  },
 
+  applyUndo: async (action) => {
     // Import dynamically to avoid circular dependencies
     const { useDossierStore } = await import('./dossierStore');
     const store = useDossierStore.getState();
@@ -179,6 +191,16 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         // Restore previous link values
         if (action.undo.linkId && action.undo.linkChanges) {
           await store.updateLink(action.undo.linkId, action.undo.linkChanges);
+        }
+        break;
+
+      case 'update-bulk':
+        // Restore each item's previous values of the fields the bulk edit touched
+        for (const { id, changes } of action.undo.bulkElements || []) {
+          await store.updateElement(id, changes);
+        }
+        for (const { id, changes } of action.undo.bulkLinks || []) {
+          await store.updateLink(id, changes);
         }
         break;
 
@@ -333,7 +355,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       past: [...state.past, action],
       future: state.future.slice(1),
     }));
+    await get().applyRedo(action);
+  },
 
+  applyRedo: async (action) => {
     // Import dynamically to avoid circular dependencies
     const { useDossierStore } = await import('./dossierStore');
     const store = useDossierStore.getState();
@@ -386,6 +411,16 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         // Re-apply link changes
         if (action.redo.linkId && action.redo.linkChanges) {
           await store.updateLink(action.redo.linkId, action.redo.linkChanges);
+        }
+        break;
+
+      case 'update-bulk':
+        for (const call of action.redo.bulkCalls || []) {
+          if (call.kind === 'elements') {
+            await store.updateElements(call.ids, call.changes as Parameters<typeof store.updateElements>[1]);
+          } else {
+            await store.updateLinks(call.ids, call.changes as Parameters<typeof store.updateLinks>[1]);
+          }
         }
         break;
 

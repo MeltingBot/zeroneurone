@@ -294,7 +294,8 @@
       "elementsSection": "Elemente ({{count}})",
       "linksSection": "Verbindungen ({{count}})",
       "setEvaluationAll": "Dieselbe Bewertung auf die gesamte Auswahl anwenden",
-      "clearConfidenceAll": "Vertrauen für die gesamte Auswahl löschen"
+      "clearConfidenceAll": "Vertrauen für die gesamte Auswahl löschen",
+      "mixedValues": "Mehrere Werte"
     },
     "copyDate": "Datum kopieren",
     "timeZone": {

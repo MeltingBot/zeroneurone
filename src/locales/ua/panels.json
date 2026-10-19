@@ -294,7 +294,8 @@
       "elementsSection": "Елементи ({{count}})",
       "linksSection": "Зв'язки ({{count}})",
       "setEvaluationAll": "Застосувати ту саму оцінку до всього виділення",
-      "clearConfidenceAll": "Очистити достовірність для всього виділення"
+      "clearConfidenceAll": "Очистити достовірність для всього виділення",
+      "mixedValues": "Різні значення"
     },
     "copyDate": "Копіювати дату",
     "timeZone": {

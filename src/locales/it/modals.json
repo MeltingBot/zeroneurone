@@ -80,7 +80,17 @@
       "confirm": "Importa",
       "includeGenToGen": "Includi flussi tra conti generali (IVA, scritture varie, paghe…)"
     },
-    "evaluationModelKept": "Il file usa il modello di valutazione \"{{imported}}\"; il fascicolo mantiene il proprio (\"{{current}}\"). Le valutazioni in un'altra scala sono conservate e mostrate in grigio."
+    "evaluationModelKept": "Il file usa il modello di valutazione \"{{imported}}\"; il fascicolo mantiene il proprio (\"{{current}}\"). Le valutazioni in un'altra scala sono conservate e mostrate in grigio.",
+    "geojson": {
+      "optionsTitle": "Opzioni di importazione GeoJSON",
+      "featureCount_one": "{{count}} entità",
+      "featureCount_other": "{{count}} entità",
+      "labelField": "Etichetta degli elementi",
+      "confirm": "Importa",
+      "fields": "Proprietà da importare",
+      "all": "Tutte",
+      "none": "Nessuna"
+    }
   },
   "export": {
     "title": "Esporta il fascicolo",

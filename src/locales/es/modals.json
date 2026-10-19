@@ -80,7 +80,17 @@
       "confirm": "Importar",
       "includeGenToGen": "Incluir flujos entre cuentas generales (IVA, asientos varios, nóminas…)"
     },
-    "evaluationModelKept": "El archivo usa el modelo de evaluación \"{{imported}}\"; el expediente conserva el suyo (\"{{current}}\"). Las valoraciones de otra escala se conservan y se muestran en gris."
+    "evaluationModelKept": "El archivo usa el modelo de evaluación \"{{imported}}\"; el expediente conserva el suyo (\"{{current}}\"). Las valoraciones de otra escala se conservan y se muestran en gris.",
+    "geojson": {
+      "optionsTitle": "Opciones de importación GeoJSON",
+      "featureCount_one": "{{count}} entidad",
+      "featureCount_other": "{{count}} entidades",
+      "labelField": "Etiqueta de los elementos",
+      "confirm": "Importar",
+      "fields": "Propiedades a importar",
+      "all": "Todas",
+      "none": "Ninguna"
+    }
   },
   "export": {
     "title": "Exportar el expediente",

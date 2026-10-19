@@ -80,7 +80,17 @@
       "confirm": "Inportatu",
       "includeGenToGen": "Sartu kontu orokorren arteko fluxuak (BEZ, idazpen orokorrak, nominak…)"
     },
-    "evaluationModelKept": "Fitxategiak \"{{imported}}\" ebaluazio-eredua erabiltzen du; espedienteak berea mantentzen du (\"{{current}}\"). Beste eskala bateko kalifikazioak gorde egiten dira eta grisez erakusten dira."
+    "evaluationModelKept": "Fitxategiak \"{{imported}}\" ebaluazio-eredua erabiltzen du; espedienteak berea mantentzen du (\"{{current}}\"). Beste eskala bateko kalifikazioak gorde egiten dira eta grisez erakusten dira.",
+    "geojson": {
+      "optionsTitle": "GeoJSON inportazio-aukerak",
+      "featureCount_one": "Entitate {{count}}",
+      "featureCount_other": "{{count}} entitate",
+      "labelField": "Elementuen etiketa",
+      "confirm": "Inportatu",
+      "fields": "Inportatu beharreko propietateak",
+      "all": "Denak",
+      "none": "Bat ere ez"
+    }
   },
   "export": {
     "title": "Espediente esportatu",

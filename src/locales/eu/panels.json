@@ -294,7 +294,8 @@
       "elementsSection": "Elementuak ({{count}})",
       "linksSection": "Loturak ({{count}})",
       "setEvaluationAll": "Kalifikazio bera aplikatu hautapen osoari",
-      "clearConfidenceAll": "Ezabatu hautapen osoaren konfiantza"
+      "clearConfidenceAll": "Ezabatu hautapen osoaren konfiantza",
+      "mixedValues": "Hainbat balio"
     },
     "copyDate": "Data kopiatu",
     "timeZone": {

@@ -192,7 +192,9 @@
       "analyze": "Analizar",
       "organize": "Organizar",
       "tabs": "Pestañas",
-      "copyAsMermaid": "Copiar como Mermaid"
+      "copyAsMermaid": "Copiar como Mermaid",
+      "selectLinks": "Seleccionar sus enlaces",
+      "selectAllLinks": "Seleccionar todos los enlaces"
     },
     "viewToolbar": {
       "undo": "Deshacer (Ctrl+Z)",

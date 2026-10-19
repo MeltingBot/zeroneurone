@@ -192,7 +192,9 @@
       "analyze": "Аналіз",
       "organize": "Упорядкувати",
       "tabs": "Вкладки",
-      "copyAsMermaid": "Копіювати як Mermaid"
+      "copyAsMermaid": "Копіювати як Mermaid",
+      "selectLinks": "Виділити їхні зв'язки",
+      "selectAllLinks": "Виділити всі зв'язки"
     },
     "viewToolbar": {
       "undo": "Скасувати (Ctrl+Z)",

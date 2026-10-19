@@ -25,6 +25,7 @@ Liste complète des raccourcis clavier de ZeroNeurone.
 | **Clic** | Sélectionner un élément |
 | **Ctrl+clic** | Ajouter/retirer de la sélection |
 | **Ctrl+A** | Sélectionner tout |
+| **Ctrl+Shift+A** | Sélectionner tous les liens |
 | **Rectangle** | Sélection par zone (clic-glisser sur le fond) |
 
 ## Édition

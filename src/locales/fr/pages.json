@@ -192,7 +192,9 @@
       "analyze": "Analyser",
       "organize": "Organiser",
       "tabs": "Onglets",
-      "copyAsMermaid": "Copier en Mermaid"
+      "copyAsMermaid": "Copier en Mermaid",
+      "selectLinks": "Sélectionner leurs liens",
+      "selectAllLinks": "Sélectionner tous les liens"
     },
     "viewToolbar": {
       "undo": "Annuler (Ctrl+Z)",

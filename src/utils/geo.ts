@@ -27,8 +27,23 @@ export function parseLatLngPair(text: string): { lat: number; lng: number } | nu
   }
   if (nums.length < 2) return null;
   const [lat, lng] = nums;
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  if (!isValidLngLat(lng, lat)) return null;
   return { lat, lng };
+}
+
+/** True when lng/lat are WGS 84 degrees MapLibre accepts */
+export function isValidLngLat(lng: unknown, lat: unknown): boolean {
+  return typeof lng === 'number' && typeof lat === 'number' &&
+    Number.isFinite(lng) && Number.isFinite(lat) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+/** True when every coordinate of a point or zone is in WGS 84 range */
+export function isGeoInRange(geo: GeoData): boolean {
+  if (isGeoPoint(geo)) return isValidLngLat(geo.lng, geo.lat);
+  return isValidLngLat(geo.center?.lng, geo.center?.lat) &&
+    Array.isArray(geo.coordinates) &&
+    geo.coordinates.every(c => Array.isArray(c) && isValidLngLat(c[0], c[1]));
 }
 
 export function isGeoPolygon(geo: GeoData | null | undefined): geo is GeoPolygon {
@@ -52,6 +67,14 @@ export function computePolygonCenter(coordinates: [number, number][]): { lat: nu
     { lat: 0, lng: 0 }
   );
   return { lat: sum.lat / n, lng: sum.lng / n };
+}
+
+/** GeoJSON ring without its closing point (last = first), as ZN stores polygons */
+export function openRing(ring: [number, number][]): [number, number][] {
+  const n = ring.length;
+  return n > 1 && ring[0][0] === ring[n - 1][0] && ring[0][1] === ring[n - 1][1]
+    ? ring.slice(0, -1)
+    : ring;
 }
 
 /** Approximate area in km² (Shoelace formula on equirectangular projection) */

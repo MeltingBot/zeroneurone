@@ -80,7 +80,19 @@
       "confirm": "Importuj",
       "includeGenToGen": "Uwzględnij przepływy między kontami głównymi (VAT, zapisy różne, płace…)"
     },
-    "evaluationModelKept": "Plik używa modelu oceny „{{imported}}”; teczka zachowuje własny („{{current}}”). Oceny w innej skali zostają zachowane i są wyświetlane na szaro."
+    "evaluationModelKept": "Plik używa modelu oceny „{{imported}}”; teczka zachowuje własny („{{current}}”). Oceny w innej skali zostają zachowane i są wyświetlane na szaro.",
+    "geojson": {
+      "optionsTitle": "Opcje importu GeoJSON",
+      "featureCount_one": "{{count}} obiekt",
+      "featureCount_other": "{{count}} obiektów",
+      "labelField": "Etykieta elementów",
+      "confirm": "Importuj",
+      "featureCount_few": "{{count}} obiekty",
+      "featureCount_many": "{{count}} obiektów",
+      "fields": "Właściwości do importu",
+      "all": "Wszystkie",
+      "none": "Żadne"
+    }
   },
   "export": {
     "title": "Eksportuj teczka",

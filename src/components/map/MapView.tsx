@@ -9,7 +9,7 @@ import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml';
 import type { Element, GeoData, GeoPolygon } from '../../types';
-import { getGeoCenter, isGeoPolygon, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
+import { getGeoCenter, isGeoPolygon, isGeoInRange, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
 import { MapPin, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
@@ -754,7 +754,9 @@ export function MapView() {
         }
       }
     });
-    return result;
+    // Out-of-range coordinates (e.g. a projected file imported as degrees)
+    // would make MapLibre throw and take the whole map down: skip them.
+    return result.filter(r => isGeoInRange(r.geoData || { type: 'point', ...r.geo }));
   }, [elements, selectedDate, periodWindow, elementLinkVisibility, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, temporalTrace, isVisibleViaLink, activeTabId, tabMemberSet, tabGhostIds]);
 
   // Legacy geoElements for compatibility (preserves full GeoData including polygons).

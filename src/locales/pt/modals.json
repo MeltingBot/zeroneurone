@@ -80,7 +80,17 @@
       "confirm": "Importar",
       "includeGenToGen": "Incluir fluxos entre contas gerais (IVA, lançamentos diversos, salários…)"
     },
-    "evaluationModelKept": "O ficheiro usa o modelo de avaliação \"{{imported}}\"; o dossiê mantém o seu (\"{{current}}\"). As classificações noutra escala são mantidas e apresentadas a cinzento."
+    "evaluationModelKept": "O ficheiro usa o modelo de avaliação \"{{imported}}\"; o dossiê mantém o seu (\"{{current}}\"). As classificações noutra escala são mantidas e apresentadas a cinzento.",
+    "geojson": {
+      "optionsTitle": "Opções de importação GeoJSON",
+      "featureCount_one": "{{count}} entidade",
+      "featureCount_other": "{{count}} entidades",
+      "labelField": "Rótulo dos elementos",
+      "confirm": "Importar",
+      "fields": "Propriedades a importar",
+      "all": "Todas",
+      "none": "Nenhuma"
+    }
   },
   "export": {
     "title": "Exportar o dossiê",

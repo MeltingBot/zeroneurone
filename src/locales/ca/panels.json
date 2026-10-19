@@ -294,7 +294,8 @@
       "elementsSection": "Elements ({{count}})",
       "linksSection": "Enllaços ({{count}})",
       "setEvaluationAll": "Aplicar la mateixa valoració a tota la selecció",
-      "clearConfidenceAll": "Esborra la confiança de tota la selecció"
+      "clearConfidenceAll": "Esborra la confiança de tota la selecció",
+      "mixedValues": "Diversos valors"
     },
     "copyDate": "Copiar la data",
     "timeZone": {

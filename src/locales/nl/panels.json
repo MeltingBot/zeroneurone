@@ -294,7 +294,8 @@
       "elementsSection": "Elementen ({{count}})",
       "linksSection": "Verbindingen ({{count}})",
       "setEvaluationAll": "Dezelfde waardering toepassen op de hele selectie",
-      "clearConfidenceAll": "Betrouwbaarheid voor de hele selectie wissen"
+      "clearConfidenceAll": "Betrouwbaarheid voor de hele selectie wissen",
+      "mixedValues": "Meerdere waarden"
     },
     "copyDate": "Datum kopiëren",
     "timeZone": {

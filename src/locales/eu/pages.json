@@ -192,7 +192,9 @@
       "analyze": "Aztertu",
       "organize": "Antolatu",
       "tabs": "Fitxak",
-      "copyAsMermaid": "Kopiatu Mermaid gisa"
+      "copyAsMermaid": "Kopiatu Mermaid gisa",
+      "selectLinks": "Haien loturak hautatu",
+      "selectAllLinks": "Lotura guztiak hautatu"
     },
     "viewToolbar": {
       "undo": "Desegin (Ctrl+Z)",

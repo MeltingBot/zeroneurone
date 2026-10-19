@@ -192,7 +192,9 @@
       "analyze": "Analyseren",
       "organize": "Ordenen",
       "tabs": "Tabbladen",
-      "copyAsMermaid": "Kopiëren als Mermaid"
+      "copyAsMermaid": "Kopiëren als Mermaid",
+      "selectLinks": "Hun verbindingen selecteren",
+      "selectAllLinks": "Alle verbindingen selecteren"
     },
     "viewToolbar": {
       "undo": "Ongedaan maken (Ctrl+Z)",

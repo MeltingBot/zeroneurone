@@ -815,6 +815,8 @@ export function Canvas() {
   const selectElement = useSelectionStore((s) => s.selectElement);
   const selectElements = useSelectionStore((s) => s.selectElements);
   const selectLink = useSelectionStore((s) => s.selectLink);
+  const selectLinks = useSelectionStore((s) => s.selectLinks);
+  const toggleLink = useSelectionStore((s) => s.toggleLink);
   const selectBoth = useSelectionStore((s) => s.selectBoth);
   const clearSelection = useSelectionStore((s) => s.clearSelection);
   const getSelectedElementIds = useSelectionStore((s) => s.getSelectedElementIds);
@@ -2370,10 +2372,24 @@ export function Canvas() {
             ? (connection.sourceHandle ?? null)
             : (connection.targetHandle ?? null),
         });
+
+        // Drawn from an element of a multi-selection: link every other selected
+        // element to the same target too (auto anchors), as one undo step.
+        const selected = useSelectionStore.getState().selectedElementIds;
+        const others = selected.has(fromId)
+          ? useDossierStore.getState().elements.filter(
+              (el) => selected.has(el.id) && el.id !== fromId && el.id !== toId && !el.isAnnotation
+            )
+          : [];
+        const links = [created];
+        for (const el of others) {
+          links.push(await createLink(el.id, toId));
+        }
+
         pushAction({
           type: 'create-link',
           undo: {},
-          redo: { linkIds: [created.id], links: [created] },
+          redo: { linkIds: links.map((l) => l.id), links },
         });
         connectStartNodeRef.current = null;
       }
@@ -3302,7 +3318,8 @@ export function Canvas() {
   // Handle edge click (with double-click detection)
   const handleEdgeClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
-      const isShiftKey = event.shiftKey;
+      // Shift / Ctrl / Cmd adds the link to the selection, or removes it
+      const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
 
       // Double-click detection
       const clickData = edgeClickCountRef.current;
@@ -3318,7 +3335,8 @@ export function Canvas() {
 
       if (clickData.count === 1) {
         // First click - select and start timer
-        selectLink(edge.id, isShiftKey);
+        if (isMultiSelect) toggleLink(edge.id);
+        else selectLink(edge.id);
         clickData.timer = setTimeout(() => {
           clickData.count = 0;
         }, 300);
@@ -3332,8 +3350,18 @@ export function Canvas() {
         startEditingLink(edge.id);
       }
     },
-    [selectLink, startEditingLink]
+    [selectLink, toggleLink, startEditingLink]
   );
+
+  // Links shown on the canvas (filters, tab, hidden elements applied) touching
+  // the selected elements — or all of them when nothing is selected.
+  const handleSelectLinks = useCallback(() => {
+    const selected = useSelectionStore.getState().selectedElementIds;
+    const ids = allEdges
+      .filter((edge) => selected.size === 0 || selected.has(edge.source) || selected.has(edge.target))
+      .map((edge) => edge.id);
+    selectLinks(ids);
+  }, [allEdges, selectLinks]);
 
   // Focus canvas wrapper when component mounts (for keyboard events after view switch)
   useEffect(() => {
@@ -3905,6 +3933,11 @@ export function Canvas() {
           }
         }
         break;
+
+      default:
+        // Types without canvas-specific handling (create-link, update-bulk,
+        // merge-elements, add-asset…) use the history store's own executor
+        await useHistoryStore.getState().applyUndo(action);
     }
   }, [popUndo, createElement, createLink, deleteElements, updateElement, updateLink, updateElementPositions, pasteElements, elementMap]);
 
@@ -4061,6 +4094,9 @@ export function Canvas() {
         vs.showAllElements();
         break;
       }
+
+      default:
+        await useHistoryStore.getState().applyRedo(action);
     }
   }, [popRedo, deleteElements, deleteLinks, createElement, createLink, updateElement, updateLink, updateElementPositions, elementMap, pasteElements]);
 
@@ -4140,6 +4176,13 @@ export function Canvas() {
           await deleteLinks(selectedLks);
         }
         clearSelection();
+      }
+
+      // Select all visible links with Ctrl+Shift+A
+      if (event.key.toLowerCase() === 'a' && isCtrlOrMeta && event.shiftKey) {
+        event.preventDefault();
+        selectLinks(allEdges.map((edge) => edge.id));
+        return;
       }
 
       // Select all with Ctrl+A (only visible elements in active tab)
@@ -4318,6 +4361,8 @@ export function Canvas() {
     clearSelection,
     selectElements,
     selectElement,
+    selectLinks,
+    allEdges,
     createElement,
     createGroup,
     pasteElements,
@@ -4904,6 +4949,7 @@ export function Canvas() {
               onCopyAsMermaid={handleCopyAsMermaid}
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
+              onSelectLinks={allEdges.length > 0 ? handleSelectLinks : undefined}
               onClose={closeCanvasContextMenu}
               pluginExtensions={[
                 ...canvasPlugins,

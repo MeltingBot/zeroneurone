@@ -192,7 +192,9 @@
       "analyze": "Analizuj",
       "organize": "Organizuj",
       "tabs": "Karty",
-      "copyAsMermaid": "Kopiuj jako Mermaid"
+      "copyAsMermaid": "Kopiuj jako Mermaid",
+      "selectLinks": "Zaznacz ich połączenia",
+      "selectAllLinks": "Zaznacz wszystkie połączenia"
     },
     "viewToolbar": {
       "undo": "Cofnij (Ctrl+Z)",
