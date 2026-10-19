@@ -6,6 +6,7 @@
  */
 
 import type { Element, Link, Dossier, Confidence } from '../types';
+import { appPath } from '../utils/basePath';
 
 // ============================================================================
 // TYPE MAPPING DEFINITIONS (minimal structure for import)
@@ -39,7 +40,7 @@ async function loadTypeMap(): Promise<Map<string, TypeInfo>> {
   }
 
   try {
-    const response = await fetch('/extra/master.json');
+    const response = await fetch(appPath('/extra/master.json'));
     if (!response.ok) {
       console.warn('Could not load master.json for type mapping');
       return new Map();

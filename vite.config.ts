@@ -33,8 +33,15 @@ function writeVersionFile(): Plugin {
   }
 }
 
+// Base path for deployments under a sub-directory (e.g. VITE_BASE=/Zeroneurone/).
+// Defaults to the domain root. Normalised to a leading and trailing slash, as
+// Vite and the router expect.
+const base = `/${(process.env.VITE_BASE || '').replace(/^\/+|\/+$/g, '')}/`.replace(/\/\/$/, '/')
+const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -55,20 +62,21 @@ export default defineConfig({
         theme_color: '#111827',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/',
+        start_url: base,
+        scope: base,
         icons: [
           {
-            src: '/logo-192.png',
+            src: 'logo-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/logo-512.png',
+            src: 'logo-512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/logo-512.png',
+            src: 'logo-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -77,7 +85,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}'],
-        navigateFallbackDenylist: [/^\/version\.json$/, /^\/plugins\//],
+        navigateFallbackDenylist: [new RegExp(`^${escapedBase}version\\.json$`), new RegExp(`^${escapedBase}plugins/`)],
         // Exclude version.json and plugins from SW precache (always fetched fresh)
         globIgnores: ['version.json', 'plugins/**'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB

@@ -12,7 +12,7 @@ async function testParsers() {
 
   try {
     // Read as string first, then convert to ArrayBuffer properly
-    const gedcom551Text = readFileSync('doc_perso/exemple_arbre.ged', 'utf-8');
+    const gedcom551Text = readFileSync('doc_perso/fixtures/gedcom/exemple_arbre.ged', 'utf-8');
     const encoder = new TextEncoder();
     const gedcom551Buffer = encoder.encode(gedcom551Text).buffer;
     const gedcom551 = await parseGedcom(gedcom551Buffer, 'exemple_arbre.ged');
@@ -51,7 +51,7 @@ async function testParsers() {
   console.log('\n\n=== Testing GEDCOM 7.0 Parser ===\n');
 
   try {
-    const gedcom70Text = readFileSync('doc_perso/exemple_arbre_v7.ged', 'utf-8');
+    const gedcom70Text = readFileSync('doc_perso/fixtures/gedcom/exemple_arbre_v7.ged', 'utf-8');
     const encoder = new TextEncoder();
     const gedcom70Buffer = encoder.encode(gedcom70Text).buffer;
     const gedcom70 = await parseGedcom(gedcom70Buffer, 'exemple_arbre_v7.ged');
@@ -73,7 +73,7 @@ async function testParsers() {
   console.log('\n\n=== Testing GeneWeb Parser ===\n');
 
   try {
-    const gwContent = readFileSync('doc_perso/exemple_arbre.gw', 'utf-8');
+    const gwContent = readFileSync('doc_perso/fixtures/gedcom/exemple_arbre.gw', 'utf-8');
     const gw = parseGeneWeb(gwContent, 'exemple_arbre.gw');
 
     console.log(`Format: ${gw.format}`);

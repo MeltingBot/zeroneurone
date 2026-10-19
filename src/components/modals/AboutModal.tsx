@@ -1,6 +1,7 @@
 import { Github, Heart, ExternalLink, Coffee } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../common';
+import { appPath } from '../../utils/basePath';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
       <div className="space-y-6">
           {/* Logo and version */}
           <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="Zero Neurone" className="w-20 h-auto" />
+            <img src={appPath('/logo.png')} alt="Zero Neurone" className="w-20 h-auto" />
             <div>
               <h3 className="text-lg font-semibold text-text-primary">ZeroNeurone</h3>
               <p className="text-xs text-text-tertiary">

@@ -28,6 +28,7 @@ import {
 } from '../../db/database';
 import { backupService } from '../../services/backupService';
 import { db as dexieDb } from '../../db/database';
+import { appPath } from '../../utils/basePath';
 
 interface StorageModalProps {
   isOpen: boolean;
@@ -194,7 +195,7 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
     setPurgeAllMessage(null);
     try {
       await purgeAllDossiers();
-      window.location.replace('/');
+      window.location.replace(appPath('/'));
     } catch (error) {
       console.error('Purge all failed:', error);
       setPurgeAllMessage(t('storage.purgeAll.error'));

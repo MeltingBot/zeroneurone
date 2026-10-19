@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.66.2
+
+### Améliorations
+
+- **Déploiement en sous-répertoire** — l'application peut être servie sous
+  un chemin (`https://serveur.exemple/Zeroneurone/`) en fixant `VITE_BASE`
+  au build. Routeur, manifeste PWA, service worker, worker pdf.js, plugins
+  externes et liens de partage suivent ce chemin. Sans `VITE_BASE`, rien ne
+  change (racine du domaine).
+- **API plugin** — `api.basePath` donne le chemin de base de l'application,
+  à préfixer aux URL de ses propres fichiers (`plugins/`…).
+- **Documentation** — guide de déploiement sur Apache (LAMP), y compris en
+  sous-répertoire, avec un `.htaccess` d'exemple (`docs/deploiement-apache-fr.md`).
+
 ## 2.66.1
 
 ### Améliorations

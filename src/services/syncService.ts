@@ -17,6 +17,7 @@ import type { SyncState } from '../types/yjs';
 import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
+import { appUrl } from '../utils/basePath';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
@@ -662,7 +663,7 @@ class SyncService {
    * @param encryptionKey - The E2E encryption key
    * @param dossierName - Optional display name
    * @param asyncEnabled - Whether async buffering is enabled (default: false)
-   * @param baseUrl - Optional base URL (defaults to current origin)
+   * @param baseUrl - Optional base URL (defaults to the app's origin + base path)
    */
   async buildShareUrl(
     dossierId: string,
@@ -671,7 +672,7 @@ class SyncService {
     asyncEnabled?: boolean,
     baseUrl?: string
   ): Promise<string> {
-    const base = baseUrl || window.location.origin;
+    const base = baseUrl || appUrl('/').replace(/\/$/, '');
 
     // Derive hashed room ID from UUID + key (server cannot correlate)
     const hashedRoomId = await deriveRoomId(dossierId, encryptionKey);

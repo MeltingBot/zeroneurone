@@ -10,7 +10,7 @@ An infinite whiteboard with graph-analysis capabilities.
 
 *Language: [Français](README.md) | English*
 
-![Version](https://img.shields.io/badge/version-2.66.1-blue)
+![Version](https://img.shields.io/badge/version-2.66.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -125,6 +125,8 @@ npm run dev
 The application runs at `http://localhost:5173`.
 
 For deployment, `docker-compose.yml` provides the application and the relay server behind Traefik.
+
+For a plain Apache host, including under a sub-directory (`VITE_BASE=/Zeroneurone/ npm run build`), see [docs/deploiement-apache-fr.md](docs/deploiement-apache-fr.md) (in French).
 
 ## Usage
 

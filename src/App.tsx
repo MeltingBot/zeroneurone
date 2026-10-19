@@ -15,6 +15,7 @@ import { db, cleanOrphanedOpfs } from './db/database';
 import { syncService } from './services/syncService';
 import { setPluginNavigate } from './plugins/pluginAPI';
 import { PluginUiHost } from './components/plugins/PluginUiHost';
+import { appPath } from './utils/basePath';
 
 /**
  * Lit _encryptionMeta directement via l'API IndexedDB native, sans passer par
@@ -93,7 +94,7 @@ function GlobalErrorFallback() {
           </button>
           <button
             onClick={() => {
-              window.location.href = '/';
+              window.location.href = appPath('/');
             }}
             className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary"
           >
@@ -324,7 +325,7 @@ function App() {
     <ErrorBoundary fallback={<GlobalErrorFallback />}>
       <MinResolutionGuard>
         <EncryptionGate>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <NavigateRef />
             <Routes>
               <Route path="/" element={<HomePage />} />

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '../stores/toastStore';
+import { appPath } from '../utils/basePath';
 
 const CHECK_THROTTLE_MS = 60_000; // Don't re-check within 60s
 
@@ -20,7 +21,7 @@ export function useVersionCheck() {
       lastCheckRef.current = now;
 
       try {
-        const res = await fetch(`/version.json?t=${now}`);
+        const res = await fetch(appPath(`/version.json?t=${now}`));
         if (!res.ok) return;
         const data = await res.json();
         const remoteVersion = data.version as string;

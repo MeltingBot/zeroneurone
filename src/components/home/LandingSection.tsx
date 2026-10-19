@@ -7,6 +7,7 @@ import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
 import { useTutorialStore } from '../../stores/tutorialStore';
 import type { HomeCardRegistration } from '../../types/plugins';
+import { appPath } from '../../utils/basePath';
 
 interface LandingSectionProps {
   onNewDossier: () => void;
@@ -87,7 +88,7 @@ export function LandingSection({
         <div className="flex flex-col items-center text-center mb-12">
           {/* Logo */}
           <img
-            src="/logo.png"
+            src={appPath('/logo.png')}
             alt="Zero Neurone"
             className="w-64 h-auto mb-6"
           />

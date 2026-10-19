@@ -13,6 +13,8 @@
  * "getOrInsertComputed is not a function" in browsers that lack them. The
  * worker in public/ must come from the same build (see sync-workers.mjs).
  */
+import { appPath } from '../utils/basePath';
+
 type Pdfjs = typeof import('pdfjs-dist/legacy/build/pdf.mjs');
 
 let pdfjsPromise: Promise<Pdfjs> | null = null;
@@ -20,7 +22,7 @@ let pdfjsPromise: Promise<Pdfjs> | null = null;
 export function loadPdfjs(): Promise<Pdfjs> {
   pdfjsPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs').then((lib) => {
     // Stable URL from public/ — survives SW cache mismatches across deploys.
-    lib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+    lib.GlobalWorkerOptions.workerSrc = appPath('/pdf.worker.min.mjs');
     return lib;
   });
   return pdfjsPromise;

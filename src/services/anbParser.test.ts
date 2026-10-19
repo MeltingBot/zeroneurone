@@ -4,8 +4,8 @@ import { resolve } from 'node:path';
 import CFB from 'cfb';
 import { findEventEnd, parseANBContents, readUStr, type ANBLink } from './anbParser';
 
-// Real charts live in doc_perso/ (git-ignored: they contain real case data). Skipped when absent.
-const DIR = resolve(__dirname, '../../doc_perso');
+// Real charts live in doc_perso/fixtures/anb/ (git-ignored: they contain real case data). Skipped when absent.
+const DIR = resolve(__dirname, '../../doc_perso/fixtures/anb');
 const TEST = resolve(DIR, 'Test ANB pour import ZN.anb');
 const RELATIONAL = resolve(DIR, 'RELATIONNEL ST MAIXENT.anb');
 const EVENTS = resolve(DIR, 'EVENEMENTIEL SIMPLIFIE.anb');

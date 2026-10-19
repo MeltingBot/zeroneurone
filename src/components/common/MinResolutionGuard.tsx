@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { Monitor, Smartphone } from 'lucide-react';
+import { appPath } from '../../utils/basePath';
 
 const MIN_WIDTH = 1024;
 const MIN_HEIGHT = 600;
@@ -46,7 +47,7 @@ export function MinResolutionGuard({ children }: MinResolutionGuardProps) {
         <div className="max-w-md w-full bg-bg-primary border border-border-default rounded p-6 space-y-6 text-center">
           {/* Logo */}
           <div className="flex justify-center">
-            <img src="/logo.png" alt="zeroneurone" className="h-16 w-auto" />
+            <img src={appPath('/logo.png')} alt="zeroneurone" className="h-16 w-auto" />
           </div>
 
           {/* Icon */}

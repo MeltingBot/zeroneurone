@@ -4,6 +4,7 @@ import { verifyIntegrity } from '../plugins/pluginIntegrity';
 import { buildSandboxedAPI } from '../plugins/pluginSandbox';
 import type { PluginManifestV2, PluginEntry, TrustLevel, Permission } from '../plugins/pluginManifest';
 import { DEFAULT_COMMUNITY_PERMISSIONS } from '../plugins/pluginManifest';
+import { appPath } from '../utils/basePath';
 
 // ─── React shim Blob URLs ───────────────────────────────────
 // Plugins loaded via Blob URL can't resolve bare specifiers like
@@ -68,7 +69,7 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
   let manifest: PluginManifestV2;
 
   try {
-    const res = await fetch('/plugins/manifest.json');
+    const res = await fetch(appPath('/plugins/manifest.json'));
     if (!res.ok) return; // No manifest = no external plugins
     manifest = await res.json();
   } catch {
@@ -103,7 +104,7 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
     }
 
     try {
-      const fileRes = await fetch(`/plugins/${entry.file}`);
+      const fileRes = await fetch(appPath(`/plugins/${entry.file}`));
       if (!fileRes.ok) {
         console.warn(`[ZN] Plugin "${entry.id}": ${entry.file} returned ${fileRes.status}`);
         continue;

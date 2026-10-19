@@ -10,7 +10,7 @@ Un tableau blanc infini avec des capacités d'analyse de graphe.
 
 *Langue : Français | [English](README.en.md)*
 
-![Version](https://img.shields.io/badge/version-2.66.1-blue)
+![Version](https://img.shields.io/badge/version-2.66.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
@@ -125,6 +125,8 @@ npm run dev
 L'application est accessible sur `http://localhost:5173`.
 
 Pour un déploiement, `docker-compose.yml` fournit l'application et le serveur relais derrière Traefik.
+
+Pour un hébergement Apache classique, y compris dans un sous-répertoire (`VITE_BASE=/Zeroneurone/ npm run build`), voir [docs/deploiement-apache-fr.md](docs/deploiement-apache-fr.md).
 
 ## Utilisation
 

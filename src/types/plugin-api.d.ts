@@ -449,6 +449,9 @@ export interface PluginAPI {
 
   /** ZeroNeurone version (semver) */
   version: string;
+  /** Path the app is served under ('/' or e.g. '/Zeroneurone/'), with trailing slash.
+   *  Prefix it to any URL of the app's own files (plugins/, ...). Absent before ZN 2.66.2. */
+  basePath?: string;
   /** Capabilities of this ZeroNeurone */
   features: PluginFeatures;
 

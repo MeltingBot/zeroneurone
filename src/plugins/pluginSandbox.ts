@@ -192,6 +192,7 @@ export function buildSandboxedAPI(
   api.generateUUID = scopedAPI.generateUUID;
   // What the host can do: a plugin tests it before relying on a capability.
   api.version = scopedAPI.version;
+  api.basePath = scopedAPI.basePath;
   api.features = scopedAPI.features;
 
   // --- Stores ---

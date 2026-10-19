@@ -82,6 +82,7 @@ import {
   removeSharedValue,
   type PluginDataRemoteChange,
 } from '../services/yjs/pluginDataSync';
+import { appPath } from '../utils/basePath';
 
 // ─── Navigation ────────────────────────────────────────────────
 // react-router navigate function is set at runtime by NavigateRef in App.tsx
@@ -128,6 +129,9 @@ export const pluginAPI = {
   // ─── Host version and capabilities ──────────────────────────
   /** ZeroNeurone version (semver) */
   version: __APP_VERSION__,
+  /** Path the app is served under ('/' or e.g. '/Zeroneurone/'), with trailing slash.
+   *  Prefix it to any URL of the app's own files (plugins/, ...). */
+  basePath: import.meta.env.BASE_URL,
   /** Capabilities a plugin can test before relying on them */
   features: {
     /** Source fields render `[label](https://…)` and `[label](asset:<sha256 prefix>)` as links */
@@ -301,7 +305,7 @@ export const pluginAPI = {
       if (_navigate) {
         _navigate(path);
       } else {
-        window.location.href = path;
+        window.location.href = appPath(path);
       }
     },
   },
