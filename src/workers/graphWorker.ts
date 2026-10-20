@@ -16,6 +16,7 @@ import dagre from '@dagrejs/dagre';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import type { ElementShape, ElementSize } from '../types';
 import { findArticulationPoints, detectSimilarLabels } from '../services/graph/algorithms';
+import { removeOverlaps } from '../utils/removeOverlaps';
 
 // ============================================================================
 // TYPES
@@ -293,7 +294,7 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
 
   // AABB overlap removal on final positions. Dense clouds (many mostly
   // unlinked nodes) need many passes to converge; it stops as soon as clean.
-  removeOverlaps(nodeData, 24, 200);
+  removeOverlaps(nodeData, { gap: 24, passes: 200 });
 
   const positions: Record<string, { x: number; y: number }> = {};
   for (const n of nodeData) {
@@ -415,31 +416,7 @@ function applyClustersLayout(
       n.y = (n.y - subCy) * scale;
     }
 
-    for (let pass = 0; pass < 60; pass++) {
-      let any = false;
-      for (let i = 0; i < nodeArr.length; i++) {
-        for (let j = i + 1; j < nodeArr.length; j++) {
-          const a = nodeArr[i], b = nodeArr[j];
-          const ox = (a.w / 2 + b.w / 2 + GAP) - Math.abs(a.x - b.x);
-          const oy = (a.h / 2 + b.h / 2 + GAP) - Math.abs(a.y - b.y);
-          if (ox > 0 && oy > 0) {
-            any = true;
-            if (ox < oy) {
-              const push = ox / 2 + 1;
-              if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
-            } else {
-              const push = oy / 2 + 1;
-              if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
-            }
-          } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
-            any = true;
-            b.x += (a.w / 2 + b.w / 2 + GAP) * (Math.random() - 0.5) * 2;
-            b.y += (a.h / 2 + b.h / 2 + GAP) * (Math.random() - 0.5) * 2;
-          }
-        }
-      }
-      if (!any) break;
-    }
+    removeOverlaps(nodeArr, { gap: GAP, passes: 60, coincident: 'centered' });
 
     let radius = 0;
     for (const n of nodeArr) {
@@ -625,7 +602,7 @@ function applyRandomLayout(graph: Graph, elements: SerializedElement[], center: 
     });
   });
 
-  removeOverlaps(nodeData, 24, 20);
+  removeOverlaps(nodeData, { gap: 24, passes: 20 });
 
   const positions: Record<string, { x: number; y: number }> = {};
   for (const n of nodeData) {
@@ -634,43 +611,6 @@ function applyRandomLayout(graph: Graph, elements: SerializedElement[], center: 
 
   postProgress(100, 'done');
   return positions;
-}
-
-/**
- * AABB overlap removal: iteratively push apart any pair whose bounding boxes
- * (plus gap) intersect, on the axis of least overlap. Mutates nodeData in place.
- */
-function removeOverlaps(
-  nodeData: { id: string; x: number; y: number; w: number; h: number }[],
-  gap: number,
-  passes: number,
-): void {
-  for (let pass = 0; pass < passes; pass++) {
-    let hasOverlap = false;
-    for (let i = 0; i < nodeData.length; i++) {
-      for (let j = i + 1; j < nodeData.length; j++) {
-        const a = nodeData[i];
-        const b = nodeData[j];
-        const overlapX = (a.w / 2 + b.w / 2 + gap) - Math.abs(a.x - b.x);
-        const overlapY = (a.h / 2 + b.h / 2 + gap) - Math.abs(a.y - b.y);
-        if (overlapX > 0 && overlapY > 0) {
-          hasOverlap = true;
-          if (overlapX < overlapY) {
-            const push = overlapX / 2 + 1;
-            if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
-          } else {
-            const push = overlapY / 2 + 1;
-            if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
-          }
-        } else if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) {
-          hasOverlap = true;
-          b.x += (a.w / 2 + b.w / 2 + gap) * Math.random();
-          b.y += (a.h / 2 + b.h / 2 + gap) * Math.random();
-        }
-      }
-    }
-    if (!hasOverlap) break;
-  }
 }
 
 /**
@@ -731,7 +671,9 @@ function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: S
     ranksep,
     edgesep: 10,
     acyclicer: 'greedy',
-    ranker: 'network-simplex',
+    // network-simplex gives the tightest ranks but grows steeply: ~2 s at
+    // 1,500 nodes, over a minute at 5,000. tight-tree stays around 2 s there.
+    ranker: nodeCount >= 1500 ? 'tight-tree' : 'network-simplex',
   });
   g.setDefaultEdgeLabel(() => ({}));
 
@@ -780,31 +722,7 @@ function applyHierarchyLayout(graph: Graph, links: SerializedLink[], elements: S
 
   // Post-process: resolve remaining overlaps (axis-aligned bounding box check)
   const gap = 24;
-  for (let pass = 0; pass < 15; pass++) {
-    let hasOverlap = false;
-    for (let i = 0; i < nodeData.length; i++) {
-      for (let j = i + 1; j < nodeData.length; j++) {
-        const a = nodeData[i];
-        const b = nodeData[j];
-        const overlapX = (a.w / 2 + b.w / 2 + gap) - Math.abs(a.x - b.x);
-        const overlapY = (a.h / 2 + b.h / 2 + gap) - Math.abs(a.y - b.y);
-
-        if (overlapX > 0 && overlapY > 0) {
-          hasOverlap = true;
-          if (overlapX < overlapY) {
-            const push = overlapX / 2 + 1;
-            if (a.x < b.x) { a.x -= push; b.x += push; }
-            else { a.x += push; b.x -= push; }
-          } else {
-            const push = overlapY / 2 + 1;
-            if (a.y < b.y) { a.y -= push; b.y += push; }
-            else { a.y += push; b.y -= push; }
-          }
-        }
-      }
-    }
-    if (!hasOverlap) break;
-  }
+  removeOverlaps(nodeData, { gap: gap, passes: 15, coincident: 'none' });
 
   // Center around target center
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;

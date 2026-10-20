@@ -217,14 +217,10 @@ export const elementRepository = {
   },
 
   async updatePositions(updates: { id: ElementId; position: Position }[]): Promise<void> {
-    await db.transaction('rw', db.elements, async () => {
-      for (const { id, position } of updates) {
-        await db.elements.update(id, {
-          position,
-          updatedAt: new Date(),
-        });
-      }
-    });
+    // One read and one write for the whole batch (a layout moves thousands);
+    // ids no longer stored are skipped, as update() does.
+    const updatedAt = new Date();
+    await db.elements.bulkUpdate(updates.map(({ id, position }) => ({ key: id, changes: { position, updatedAt } })));
   },
 
   async addTag(id: ElementId, tag: string): Promise<void> {

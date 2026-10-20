@@ -26,6 +26,11 @@ class SearchService {
   private indexedIds = new Set<string>();
   // Map elementId → concatenated extractedText from its assets
   private assetTextMap = new Map<string, string>();
+  // What each indexed document was built from: an unchanged one is not
+  // re-indexed (a move or a layout re-syncs every element, but changes none
+  // of the indexed text). Same object and asset text → skipped outright;
+  // otherwise the document content is compared.
+  private indexedFrom = new Map<string, { source: Element | Link; assetText: string; content: string }>();
 
   /**
    * Load and index all elements and links for an dossier (full rebuild).
@@ -41,6 +46,7 @@ class SearchService {
     if (this.currentDossierId !== dossierId) {
       this.index = this.createIndex();
       this.indexedIds.clear();
+      this.indexedFrom.clear();
       this.currentDossierId = dossierId;
     }
 
@@ -84,6 +90,7 @@ class SearchService {
     for (const id of this.indexedIds) {
       if (!currentIds.has(id)) {
         try { this.index.discard(id); } catch { /* already gone */ }
+        this.indexedFrom.delete(id);
       }
     }
 
@@ -94,38 +101,45 @@ class SearchService {
    * Index or re-index a single element
    */
   indexElement(element: Element): void {
-    const doc = this.elementToDocument(element);
-
-    // Remove existing if present
-    try {
-      this.index.discard(doc.id);
-    } catch {
-      // Document didn't exist, that's fine
-    }
-
-    this.index.add(doc);
+    const assetText = this.assetTextMap.get(element.id) || '';
+    const previous = this.indexedFrom.get(element.id);
+    if (previous && previous.source === element && previous.assetText === assetText) return;
+    this.indexDocument(this.elementToDocument(element), element, assetText);
   }
 
   /**
    * Index or re-index a single link
    */
   indexLink(link: Link): void {
-    const doc = this.linkToDocument(link);
+    const previous = this.indexedFrom.get(link.id);
+    if (previous && previous.source === link) return;
+    this.indexDocument(this.linkToDocument(link), link, '');
+  }
 
-    // Remove existing if present
-    try {
-      this.index.discard(doc.id);
-    } catch {
-      // Document didn't exist, that's fine
+  /** (Re-)index a document, unless its content is what is already indexed. */
+  private indexDocument(doc: SearchDocument, source: Element | Link, assetText: string): void {
+    const content = JSON.stringify(doc);
+    const previous = this.indexedFrom.get(doc.id);
+    if (previous?.content === content) {
+      this.indexedFrom.set(doc.id, { source, assetText, content });
+      return;
     }
-
+    if (previous || this.index.has(doc.id)) {
+      try {
+        this.index.discard(doc.id);
+      } catch {
+        // Document didn't exist, that's fine
+      }
+    }
     this.index.add(doc);
+    this.indexedFrom.set(doc.id, { source, assetText, content });
   }
 
   /**
    * Remove an element from the index
    */
   removeElement(elementId: string): void {
+    this.indexedFrom.delete(elementId);
     try {
       this.index.discard(elementId);
     } catch {
@@ -137,6 +151,7 @@ class SearchService {
    * Remove a link from the index
    */
   removeLink(linkId: string): void {
+    this.indexedFrom.delete(linkId);
     try {
       this.index.discard(linkId);
     } catch {
@@ -178,6 +193,8 @@ class SearchService {
    */
   clear(): void {
     this.index = this.createIndex();
+    this.indexedIds.clear();
+    this.indexedFrom.clear();
     this.currentDossierId = null;
   }
 

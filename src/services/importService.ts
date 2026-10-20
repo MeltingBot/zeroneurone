@@ -1,3 +1,4 @@
+import type { Table } from 'dexie';
 import JSZip from 'jszip';
 import { db } from '../db/database';
 import { getPlugins } from '../plugins/pluginRegistry';
@@ -170,6 +171,17 @@ export interface ImportBoundingBox {
   width: number;
   height: number;
   elementCount: number;
+}
+
+/**
+ * Writes rows in a few transactions instead of one per row: thousands of
+ * single-row transactions kept the import waiting on IndexedDB for seconds.
+ * Batches leave the event loop free in between, so progress can be shown.
+ */
+async function bulkAddInBatches<T>(table: Table<T, string>, rows: T[], size = 500): Promise<void> {
+  for (let i = 0; i < rows.length; i += size) {
+    await table.bulkAdd(rows.slice(i, i + size));
+  }
 }
 
 class ImportService {
@@ -1587,7 +1599,8 @@ class ImportService {
       elementIdMap.set(importedElement.id, newId);
     }
 
-    // Second pass: import elements with mapped IDs
+    // Second pass: import elements with mapped IDs, written in batches below
+    const elements: Element[] = [];
     for (const importedElement of data.elements) {
       const newId = elementIdMap.get(importedElement.id)!;
 
@@ -1646,11 +1659,13 @@ class ImportService {
         childIds: newChildIds,
       };
 
-      await db.elements.add(element);
-      result.elementsImported++;
+      elements.push(element);
     }
+    await bulkAddInBatches(db.elements, elements);
+    result.elementsImported += elements.length;
 
     // Import links with updated element IDs
+    const links: Link[] = [];
     for (const importedLink of data.links) {
       const newFromId = elementIdMap.get(importedLink.fromId);
       const newToId = elementIdMap.get(importedLink.toId);
@@ -1681,9 +1696,10 @@ class ImportService {
         updatedAt: new Date(),
       };
 
-      await db.links.add(link);
-      result.linksImported++;
+      links.push(link);
     }
+    await bulkAddInBatches(db.links, links);
+    result.linksImported += links.length;
 
     // Import tabs with remapped element IDs (only for new dossier, not merge)
     // When merging (positionOffset is set), imported elements go to the active tab instead

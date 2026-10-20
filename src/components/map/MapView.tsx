@@ -41,14 +41,89 @@ interface ResolvedGeoElement {
   secondaryEvent?: boolean;
 }
 
-// Link layer managed via MapLibre layers + markers
-interface LinkLayer {
-  sourceId: string;
-  outlineLayerId: string;
-  lineLayerId: string;
-  labelMarker?: maplibregl.Marker;
-  arrowStart?: maplibregl.Marker;
-  arrowEnd?: maplibregl.Marker;
+// Links are drawn by a fixed set of layers over two sources (lines, arrows),
+// whatever their number: a source and layers per link made each addLayer
+// re-validate the whole style and each frame walk a thousand sources.
+const LINK_LINES_SOURCE = 'link-lines';
+const LINK_ARROWS_SOURCE = 'link-arrows';
+const LINK_OUTLINE_LAYER = 'link-outline';
+const LINK_LINE_LAYERS = { solid: 'link-line-solid', dashed: 'link-line-dashed', dotted: 'link-line-dotted' } as const;
+const LINK_ARROWS_LAYER = 'link-arrows';
+const LINK_DASHES = { dashed: [10, 6], dotted: [3, 6] } as const;
+
+/** Adds the link sources and layers, unless a style already has them. */
+function ensureLinkLayers(map: maplibregl.Map) {
+  if (map.getSource(LINK_LINES_SOURCE)) return;
+  const empty: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+  map.addSource(LINK_LINES_SOURCE, { type: 'geojson', data: empty });
+  map.addSource(LINK_ARROWS_SOURCE, { type: 'geojson', data: empty });
+  const lineLayout = { 'line-cap': 'round', 'line-join': 'round' } as const;
+  map.addLayer({
+    id: LINK_OUTLINE_LAYER,
+    type: 'line',
+    source: LINK_LINES_SOURCE,
+    paint: {
+      'line-color': '#ffffff',
+      'line-width': ['+', ['get', 'width'], 4],
+      'line-opacity': ['*', 0.9, ['get', 'opacity']],
+    },
+    layout: lineLayout,
+  });
+  for (const style of ['solid', 'dashed', 'dotted'] as const) {
+    map.addLayer({
+      id: LINK_LINE_LAYERS[style],
+      type: 'line',
+      source: LINK_LINES_SOURCE,
+      filter: ['==', ['get', 'style'], style],
+      paint: {
+        'line-color': ['get', 'color'],
+        'line-width': ['get', 'width'],
+        'line-opacity': ['get', 'opacity'],
+        ...(style === 'solid' ? {} : { 'line-dasharray': [...LINK_DASHES[style]] }),
+      },
+      layout: lineLayout,
+    });
+  }
+  map.addLayer({
+    id: LINK_ARROWS_LAYER,
+    type: 'symbol',
+    source: LINK_ARROWS_SOURCE,
+    layout: {
+      'icon-image': ['get', 'icon'],
+      'icon-rotate': ['get', 'rotate'],
+      'icon-rotation-alignment': 'viewport',
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+    },
+    paint: { 'icon-opacity': ['get', 'opacity'] },
+  });
+}
+
+/** Arrow icon in a link colour: the former DOM arrow (same path, white
+ *  outline, soft shadow), drawn once per colour at 2× for sharpness. */
+function ensureArrowImage(map: maplibregl.Map, fill: string): string {
+  const id = `link-arrow-${fill}`;
+  if (map.hasImage(id)) return id;
+  const ratio = 2, size = 24;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size * ratio;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return id;
+  ctx.scale(ratio, ratio);
+  ctx.translate(2, 2);
+  const path = new Path2D('M10 2 L18 18 L10 13 L2 18 Z');
+  ctx.shadowColor = 'rgba(0,0,0,0.4)';
+  ctx.shadowBlur = 2;
+  ctx.shadowOffsetY = 1 * ratio;
+  ctx.fillStyle = fill;
+  ctx.fill(path);
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke(path);
+  map.addImage(id, ctx.getImageData(0, 0, canvas.width, canvas.height), { pixelRatio: ratio });
+  return id;
 }
 
 // Supercluster point feature
@@ -287,7 +362,9 @@ export function MapView() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const clusterMarkersRef = useRef<Map<number, maplibregl.Marker>>(new Map());
-  const linkLayersRef = useRef<Map<string, LinkLayer>>(new Map());
+  // Link labels stay DOM overlays (boxed text, never hidden by collisions)
+  const linkLabelMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const selectLinkRef = useRef<(id: string) => void>(() => {});
   const superclusterRef = useRef<Supercluster<{ elementId: string }, Supercluster.AnyProps> | null>(null);
   const clusterStateRef = useRef<Map<string, ClusterState>>(new Map());
   const elementIdToFirstMarkerKeyRef = useRef<Map<string, string>>(new Map());
@@ -948,6 +1025,18 @@ export function MapView() {
       }
     });
 
+    // Link lines: registered once by layer id, valid across style reloads
+    // (the layer is re-added under the same id). The outline is the widest.
+    map.on('click', LINK_OUTLINE_LAYER, (e) => {
+      const linkId = e.features?.[0]?.properties?.linkId;
+      if (typeof linkId === 'string') {
+        e.preventDefault();
+        selectLinkRef.current(linkId);
+      }
+    });
+    map.on('mouseenter', LINK_OUTLINE_LAYER, () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', LINK_OUTLINE_LAYER, () => { map.getCanvas().style.cursor = ''; });
+
     map.on('zoomend', () => {
       // Zooming re-clusters from scratch — drop any manual spiderfy expansion.
       forceSpiderfyKeysRef.current = new Set();
@@ -988,18 +1077,9 @@ export function MapView() {
       markersRef.current.clear();
       clusterMarkersRef.current.forEach(m => m.remove());
       clusterMarkersRef.current.clear();
-      // Clean up link layers
-      linkLayersRef.current.forEach(ll => {
-        ll.labelMarker?.remove();
-        ll.arrowStart?.remove();
-        ll.arrowEnd?.remove();
-        try {
-          if (map.getLayer(ll.lineLayerId)) map.removeLayer(ll.lineLayerId);
-          if (map.getLayer(ll.outlineLayerId)) map.removeLayer(ll.outlineLayerId);
-          if (map.getSource(ll.sourceId)) map.removeSource(ll.sourceId);
-        } catch { /* map already removed */ }
-      });
-      linkLayersRef.current.clear();
+      // Link layers go with the map; their label overlays are DOM
+      linkLabelMarkersRef.current.forEach(m => m.remove());
+      linkLabelMarkersRef.current.clear();
       map.remove();
       mapRef.current = null;
     };
@@ -1017,13 +1097,8 @@ export function MapView() {
     if (baseLayerInitRef.current) { baseLayerInitRef.current = false; return; }
     const map = mapRef.current;
     if (!map) return;
-    // setStyle removes all sources/layers — clear link refs so the effect recreates them
-    linkLayersRef.current.forEach(ll => {
-      ll.labelMarker?.remove();
-      ll.arrowStart?.remove();
-      ll.arrowEnd?.remove();
-    });
-    linkLayersRef.current.clear();
+    // setStyle removes the link sources and layers; the link effect, re-run
+    // on styledata below, adds them back
     map.setStyle(buildMapStyle(resolveLayerId(activeBaseLayer, themeMode === 'dark', ofmVariant), is3DRef.current));
     // Re-flag as loaded once the new style is actually in place.
     //
@@ -1506,14 +1581,16 @@ export function MapView() {
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
   // element's first/base marker as the representative for link layers.
+  const geoElementById = useMemo(() => new Map(effectiveGeoElements.map(el => [el.id, el])), [effectiveGeoElements]);
   const getVisibleLngLat = useCallback((elementId: string): [number, number] | null => {
     const firstKey = elementIdToFirstMarkerKeyRef.current.get(elementId) ?? elementId;
     const state = clusterStateRef.current.get(firstKey);
     if (state?.clustered && state.clusterCenter) return state.clusterCenter;
-    const el = effectiveGeoElements.find(e => e.id === elementId);
+    const el = geoElementById.get(elementId);
     if (!el) return null;
-    return [getGeoCenter(el.geo).lng, getGeoCenter(el.geo).lat];
-  }, [effectiveGeoElements]);
+    const center = getGeoCenter(el.geo);
+    return [center.lng, center.lat];
+  }, [geoElementById]);
 
   // Check if two elements are in the same cluster (via their representative marker)
   const areInSameCluster = useCallback((id1: string, id2: string): boolean => {
@@ -1532,15 +1609,6 @@ export function MapView() {
     return Math.atan2(dy, dx) * (180 / Math.PI);
   }, []);
 
-  // Create arrow marker element
-  const createArrowElement = useCallback((color: string, angle: number, size: number = 20): HTMLDivElement => {
-    const el = document.createElement('div');
-    el.className = 'link-arrow-icon';
-    const fill = safeColor(color, '#a8a29e');
-    el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 20 20" style="transform: rotate(${-angle + 90}deg);"><path d="M10 2 L18 18 L10 13 L2 18 Z" fill="${fill}" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
-    el.style.pointerEvents = 'none';
-    return el;
-  }, []);
 
   // Get position along line (0 = start, 1 = end)
   const getPointOnLine = useCallback((from: [number, number], to: [number, number], ratio: number): [number, number] => {
@@ -1550,38 +1618,35 @@ export function MapView() {
     ];
   }, []);
 
-  // Update links - uses MapLibre GeoJSON sources + layers
+  useEffect(() => { selectLinkRef.current = selectLink; }, [selectLink]);
+
+  // Update links: one feature per link in the line source, one per arrow in
+  // the arrow source; labels are DOM overlays kept in step by id
   useEffect(() => {
     if (!mapRef.current || !mapLoadedRef.current) return;
 
     const map = mapRef.current;
-    const existingLinkLayers = linkLayersRef.current;
-    const currentLinkIds = new Set(geoLinks.map((l) => l.id));
-
-    // Remove link layers that no longer exist
-    existingLinkLayers.forEach((ll, id) => {
-      if (!currentLinkIds.has(id)) {
-        ll.labelMarker?.remove();
-        ll.arrowStart?.remove();
-        ll.arrowEnd?.remove();
-        try {
-          if (map.getLayer(ll.lineLayerId)) map.removeLayer(ll.lineLayerId);
-          if (map.getLayer(ll.outlineLayerId)) map.removeLayer(ll.outlineLayerId);
-          if (map.getSource(ll.sourceId)) map.removeSource(ll.sourceId);
-        } catch { /* ignore */ }
-        existingLinkLayers.delete(id);
-      }
-    });
+    try {
+      ensureLinkLayers(map);
+    } catch (err) {
+      console.warn('Failed to add link layers', err);
+      return;
+    }
 
     // Build element geo lookup for polygon edge snapping
     const elementGeoMap = new Map<string, GeoData>();
     effectiveGeoElements.forEach(el => { if (el.geo) elementGeoMap.set(el.id, el.geo); });
 
-    // Add or update link layers
+    const lineFeatures: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+    const arrowFeatures: GeoJSON.Feature<GeoJSON.Point>[] = [];
+    const labels = new Map<string, { text: string; at: [number, number] }>();
+
     geoLinks.forEach((link) => {
       let fromLngLat = getVisibleLngLat(link.fromId);
       let toLngLat = getVisibleLngLat(link.toId);
       if (!fromLngLat || !toLngLat) return;
+      // Both ends in the same cluster: nothing to draw
+      if (areInSameCluster(link.fromId, link.toId)) return;
 
       // Snap link endpoints to polygon edge, unless the other point is inside the zone
       const fromGeo = elementGeoMap.get(link.fromId);
@@ -1599,190 +1664,64 @@ export function MapView() {
 
       const endpointDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
       const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
-      const linkOpacity = isLinkDimmed ? 0.3 : 1;
+      const opacity = isLinkDimmed ? 0.3 : 1;
 
-      // Skip if both in same cluster
-      if (areInSameCluster(link.fromId, link.toId)) {
-        const existing = existingLinkLayers.get(link.id);
-        if (existing) {
-          try {
-            if (map.getLayer(existing.outlineLayerId)) map.setPaintProperty(existing.outlineLayerId, 'line-opacity', 0);
-            if (map.getLayer(existing.lineLayerId)) map.setPaintProperty(existing.lineLayerId, 'line-opacity', 0);
-          } catch { /* ignore */ }
-          existing.labelMarker?.getElement()?.style.setProperty('display', 'none');
-          if (existing.arrowStart) existing.arrowStart.getElement().style.display = 'none';
-          if (existing.arrowEnd) existing.arrowEnd.getElement().style.display = 'none';
-        }
-        return;
-      }
-
-      const color = link.visual.color || '#6b6560';
-      const weight = Math.max(2, (link.visual.thickness || 2));
-      const dashArray = link.visual.style === 'dashed' ? [10, 6] :
-                       link.visual.style === 'dotted' ? [3, 6] : undefined;
+      const color = safeColor(link.visual.color, '#6b6560');
+      const width = Math.max(2, (link.visual.thickness || 2));
+      const style = link.visual.style === 'dashed' || link.visual.style === 'dotted' ? link.visual.style : 'solid';
       const direction = link.direction || (link.directed ? 'forward' : 'none');
-      const needsEndArrow = direction === 'forward' || direction === 'both';
-      const needsStartArrow = direction === 'backward' || direction === 'both';
       const angle = calculateAngle(fromLngLat, toLngLat);
 
-      const tooltipContent = link.label
-        ? (anonymousMode
-            ? '\u2588\u2588\u2588'
-            : link.label)
-        : null;
-
-      const geojsonData: GeoJSON.Feature<GeoJSON.LineString> = {
+      lineFeatures.push({
         type: 'Feature',
         geometry: { type: 'LineString', coordinates: [fromLngLat, toLngLat] },
-        properties: {},
+        properties: { linkId: link.id, color, width, opacity, style },
+      });
+
+      const arrow = (ratio: number, rotate: number) => {
+        arrowFeatures.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: getPointOnLine(fromLngLat!, toLngLat!, ratio) },
+          properties: { icon: ensureArrowImage(map, safeColor(color, '#a8a29e')), rotate, opacity },
+        });
       };
+      // Same screen rotation as the former DOM arrows
+      if (direction === 'forward' || direction === 'both') arrow(0.92, -angle + 90);
+      if (direction === 'backward' || direction === 'both') arrow(0.08, -angle - 90);
 
-      const existingLL = existingLinkLayers.get(link.id);
-
-      if (existingLL) {
-        // Update existing
-        try {
-          const src = map.getSource(existingLL.sourceId) as maplibregl.GeoJSONSource;
-          if (src) src.setData(geojsonData);
-
-          if (map.getLayer(existingLL.outlineLayerId)) {
-            map.setPaintProperty(existingLL.outlineLayerId, 'line-width', weight + 4);
-            map.setPaintProperty(existingLL.outlineLayerId, 'line-opacity', 0.9 * linkOpacity);
-          }
-          if (map.getLayer(existingLL.lineLayerId)) {
-            map.setPaintProperty(existingLL.lineLayerId, 'line-color', color);
-            map.setPaintProperty(existingLL.lineLayerId, 'line-width', weight);
-            map.setPaintProperty(existingLL.lineLayerId, 'line-opacity', linkOpacity);
-            if (dashArray) map.setPaintProperty(existingLL.lineLayerId, 'line-dasharray', dashArray);
-          }
-        } catch { /* source/layer may not exist after style change */ }
-
-        // Update label
-        const midpoint = getPointOnLine(fromLngLat, toLngLat, 0.5);
-        if (tooltipContent) {
-          if (existingLL.labelMarker) {
-            existingLL.labelMarker.setLngLat(midpoint);
-            existingLL.labelMarker.getElement().textContent = tooltipContent;
-            existingLL.labelMarker.getElement().style.display = '';
-          } else {
-            const labelEl = document.createElement('div');
-            labelEl.className = 'link-label-overlay';
-            labelEl.textContent = tooltipContent;
-            existingLL.labelMarker = new maplibregl.Marker({ element: labelEl, anchor: 'center' })
-              .setLngLat(midpoint)
-              .addTo(map);
-          }
-        } else if (existingLL.labelMarker) {
-          existingLL.labelMarker.remove();
-          existingLL.labelMarker = undefined;
-        }
-
-        // Update arrows
-        if (needsEndArrow) {
-          const endPos = getPointOnLine(fromLngLat, toLngLat, 0.92);
-          if (existingLL.arrowEnd) {
-            existingLL.arrowEnd.setLngLat(endPos);
-            existingLL.arrowEnd.getElement().innerHTML = createArrowElement(color, angle).innerHTML;
-            existingLL.arrowEnd.getElement().style.display = '';
-          } else {
-            existingLL.arrowEnd = new maplibregl.Marker({ element: createArrowElement(color, angle), anchor: 'center' })
-              .setLngLat(endPos).addTo(map);
-          }
-        } else if (existingLL.arrowEnd) {
-          existingLL.arrowEnd.remove();
-          existingLL.arrowEnd = undefined;
-        }
-
-        if (needsStartArrow) {
-          const startPos = getPointOnLine(fromLngLat, toLngLat, 0.08);
-          if (existingLL.arrowStart) {
-            existingLL.arrowStart.setLngLat(startPos);
-            existingLL.arrowStart.getElement().innerHTML = createArrowElement(color, angle + 180).innerHTML;
-            existingLL.arrowStart.getElement().style.display = '';
-          } else {
-            existingLL.arrowStart = new maplibregl.Marker({ element: createArrowElement(color, angle + 180), anchor: 'center' })
-              .setLngLat(startPos).addTo(map);
-          }
-        } else if (existingLL.arrowStart) {
-          existingLL.arrowStart.remove();
-          existingLL.arrowStart = undefined;
-        }
-      } else {
-        // Create new link layers
-        const sourceId = `link-src-${link.id}`;
-        const outlineLayerId = `link-outline-${link.id}`;
-        const lineLayerId = `link-line-${link.id}`;
-
-        try {
-          map.addSource(sourceId, { type: 'geojson', data: geojsonData });
-
-          map.addLayer({
-            id: outlineLayerId,
-            type: 'line',
-            source: sourceId,
-            paint: {
-              'line-color': '#ffffff',
-              'line-width': weight + 4,
-              'line-opacity': 0.9 * linkOpacity,
-            },
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-          });
-
-          map.addLayer({
-            id: lineLayerId,
-            type: 'line',
-            source: sourceId,
-            paint: {
-              'line-color': color,
-              'line-width': weight,
-              'line-opacity': linkOpacity,
-              ...(dashArray ? { 'line-dasharray': dashArray } : {}),
-            },
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-          });
-
-          // Click handler on line
-          map.on('click', lineLayerId, (e) => {
-            e.preventDefault();
-            selectLink(link.id);
-          });
-          map.on('mouseenter', lineLayerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-          map.on('mouseleave', lineLayerId, () => { map.getCanvas().style.cursor = ''; });
-        } catch (err) {
-          console.warn('Failed to add link layer', link.id, err);
-          return;
-        }
-
-        // Label marker
-        let labelMarker: maplibregl.Marker | undefined;
-        if (tooltipContent) {
-          const labelEl = document.createElement('div');
-          labelEl.className = 'link-label-overlay';
-          labelEl.textContent = tooltipContent;
-          const midpoint = getPointOnLine(fromLngLat, toLngLat, 0.5);
-          labelMarker = new maplibregl.Marker({ element: labelEl, anchor: 'center' })
-            .setLngLat(midpoint)
-            .addTo(map);
-        }
-
-        // Arrow markers
-        let arrowEnd: maplibregl.Marker | undefined;
-        let arrowStart: maplibregl.Marker | undefined;
-        if (needsEndArrow) {
-          const endPos = getPointOnLine(fromLngLat, toLngLat, 0.92);
-          arrowEnd = new maplibregl.Marker({ element: createArrowElement(color, angle), anchor: 'center' })
-            .setLngLat(endPos).addTo(map);
-        }
-        if (needsStartArrow) {
-          const startPos = getPointOnLine(fromLngLat, toLngLat, 0.08);
-          arrowStart = new maplibregl.Marker({ element: createArrowElement(color, angle + 180), anchor: 'center' })
-            .setLngLat(startPos).addTo(map);
-        }
-
-        existingLinkLayers.set(link.id, { sourceId, outlineLayerId, lineLayerId, labelMarker, arrowStart, arrowEnd });
+      if (link.label) {
+        labels.set(link.id, {
+          text: anonymousMode ? '\u2588\u2588\u2588' : link.label,
+          at: getPointOnLine(fromLngLat, toLngLat, 0.5),
+        });
       }
     });
-  }, [geoLinks, selectLink, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, createArrowElement, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements, queryFilterActive, queryMatchLinkIds]);
+
+    (map.getSource(LINK_LINES_SOURCE) as maplibregl.GeoJSONSource | undefined)
+      ?.setData({ type: 'FeatureCollection', features: lineFeatures });
+    (map.getSource(LINK_ARROWS_SOURCE) as maplibregl.GeoJSONSource | undefined)
+      ?.setData({ type: 'FeatureCollection', features: arrowFeatures });
+
+    const labelMarkers = linkLabelMarkersRef.current;
+    labelMarkers.forEach((marker, id) => {
+      if (!labels.has(id)) {
+        marker.remove();
+        labelMarkers.delete(id);
+      }
+    });
+    labels.forEach(({ text, at }, id) => {
+      const existing = labelMarkers.get(id);
+      if (existing) {
+        existing.setLngLat(at);
+        existing.getElement().textContent = text;
+        return;
+      }
+      const labelEl = document.createElement('div');
+      labelEl.className = 'link-label-overlay';
+      labelEl.textContent = text;
+      labelMarkers.set(id, new maplibregl.Marker({ element: labelEl, anchor: 'center' }).setLngLat(at).addTo(map));
+    });
+  }, [geoLinks, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements, queryFilterActive, queryMatchLinkIds]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {

@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.70.0
+
+### Performances
+
+Mesures sur un dossier de 5 100 éléments et 4 570 liens.
+
+- **Carte** — les liens sont dessinés par une seule source et quelques calques
+  fixes au lieu d'une source et de deux calques par lien (et de flèches en
+  éléments HTML) : basculer vers la carte passe de 10–13 s à environ 3 s, sans
+  gel de plusieurs secondes, et chaque déplacement de la carte ne reconstruit
+  plus un millier de calques. Les flèches sont dessinées dans la carte et
+  s'atténuent avec leur lien.
+- **Arrangements** — la résolution des chevauchements ne compare plus toutes
+  les paires d'éléments (grille spatiale) ; au-delà de 1 500 éléments, la
+  hiérarchie utilise un classement plus rapide. Hiérarchie : 59 s → 8 s ;
+  Force : 22 s → 16 s ; Clusters : 8 s → 6 s.
+- **Recherche** — l'index n'est plus reconstruit en entier à chaque
+  modification (un déplacement, un arrangement) : seuls les éléments dont le
+  texte a changé sont réindexés.
+- **Positions** — un arrangement écrit toutes les positions en une seule
+  opération au lieu d'une par élément.
+- **Import JSON et ZIP** — éléments et liens écrits par lots au lieu d'une
+  transaction par ligne.
+
 ## 2.69.0
 
 ### Nouveautés
