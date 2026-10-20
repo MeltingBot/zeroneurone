@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { execSync } from 'child_process'
+import { resolve } from 'path'
 import type { Plugin } from 'vite'
 
 // Read version from package.json
@@ -18,17 +19,21 @@ const getGitCommit = () => {
   }
 }
 
-// Write version.json to dist/ at build time for runtime version checking
+// Write version.json to the build output (dist/, or --outDir) for runtime version checking
 function writeVersionFile(): Plugin {
+  let outDir = 'dist'
   return {
     name: 'write-version-file',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
     closeBundle() {
       const data = JSON.stringify({
         version: pkg.version,
         buildTime: new Date().toISOString(),
       })
-      mkdirSync('dist', { recursive: true })
-      writeFileSync('dist/version.json', data)
+      mkdirSync(outDir, { recursive: true })
+      writeFileSync(resolve(outDir, 'version.json'), data)
     },
   }
 }
