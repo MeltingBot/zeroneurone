@@ -212,6 +212,7 @@ const ALL_PERMISSIONS: Permission[] = [
   'stores:view:read',
   'stores:report:read', 'stores:report:write',
   'stores:insights:read',
+  'stores:query:read',
   'stores:tagSet:read', 'stores:tagSet:write',
   'stores:tab:read', 'stores:tab:write',
   'stores:ui:read', 'stores:ui:write',

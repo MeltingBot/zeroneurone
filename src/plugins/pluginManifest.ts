@@ -11,6 +11,7 @@ export type Permission =
   | 'stores:view:read'
   | 'stores:report:read'
   | 'stores:insights:read'
+  | 'stores:query:read'
   | 'stores:tagSet:read'
   | 'stores:tab:read'
   | 'stores:ui:read'

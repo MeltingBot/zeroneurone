@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.70.1
+
+### Corrections
+
+- **Requête active lisible par les plugins** — l'API plugin expose le store
+  de requête en lecture (`stores.useQueryStore` : `isFilterActive`,
+  `matchingElementIds`, `matchingLinkIds`, permission `stores:query:read`).
+  OneNeurone peut ainsi limiter le contexte envoyé à l'IA à la requête
+  appliquée sur le canvas ; il envoyait jusqu'ici tout le dossier.
+
 ## 2.70.0
 
 ### Performances

@@ -49,6 +49,7 @@ import { useSelectionStore } from '../stores/selectionStore';
 import { useViewStore } from '../stores/viewStore';
 import { useReportStore } from '../stores/reportStore';
 import { useInsightsStore } from '../stores/insightsStore';
+import { useQueryStore } from '../stores/queryStore';
 import { useTagSetStore } from '../stores/tagSetStore';
 import { useTabStore } from '../stores/tabStore';
 import { useUIStore } from '../stores/uiStore';
@@ -183,6 +184,7 @@ export const pluginAPI = {
     useViewStore,
     useReportStore,
     useInsightsStore,
+    useQueryStore,
     useTagSetStore,
     useTabStore,
     useUIStore,

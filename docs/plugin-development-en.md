@@ -1247,7 +1247,7 @@ Since v2.39.0, ZN supports **manifest v2** with trust levels and permissions. Ma
 
 #### Available Permissions
 
-**Stores (read-only):** `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:report:read`, `stores:insights:read`, `stores:tagSet:read`, `stores:tab:read`, `stores:ui:read`
+**Stores (read-only):** `stores:dossier:read`, `stores:selection:read`, `stores:view:read`, `stores:report:read`, `stores:insights:read`, `stores:query:read`, `stores:tagSet:read`, `stores:tab:read`, `stores:ui:read`
 
 **Stores (read + write):** `stores:dossier:write`, `stores:report:write`, `stores:tagSet:write`, `stores:tab:write`, `stores:ui:write`
 
@@ -1347,6 +1347,7 @@ The `api` object passed to `register()` provides:
 | `stores.useViewStore` | Current dossier ID, viewport, filters |
 | `stores.useReportStore` | Report sections, add/update/delete |
 | `stores.useInsightsStore` | Graph analysis: clusters, centrality, bridges |
+| `stores.useQueryStore` | Query applied on the canvas: elements and links found |
 | `stores.useTagSetStore` | TagSets: create, update, suggested properties |
 | `stores.useTabStore` | Canvas tabs: create, rename, members |
 | `stores.useUIStore` | UI state: toasts, modals (prefer `api.toast` for notifications) |

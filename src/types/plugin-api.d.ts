@@ -156,6 +156,16 @@ export interface InsightsStoreAPI {
   betweennessCentrality: Map<string, number> | null;
 }
 
+/** Subset of useQueryStore relevant to plugins: the query filter applied on the canvas */
+export interface QueryStoreAPI {
+  /** True when a query result is applied as a filter on the canvas */
+  isFilterActive: boolean;
+  /** Elements found, plus the ends of the links found */
+  matchingElementIds: Set<string>;
+  /** Links found */
+  matchingLinkIds: Set<string>;
+}
+
 /** Subset of useTagSetStore relevant to plugins */
 export interface TagSetStoreAPI {
   tagSets: Map<TagSetId, TagSet>;
@@ -422,6 +432,7 @@ export interface PluginAPI {
     useViewStore: () => ViewStoreAPI;
     useReportStore: () => ReportStoreAPI;
     useInsightsStore: () => InsightsStoreAPI;
+    useQueryStore: () => QueryStoreAPI;
     useTagSetStore: () => TagSetStoreAPI;
     useTabStore: () => TabStoreAPI;
     useUIStore: () => UIStoreAPI;
