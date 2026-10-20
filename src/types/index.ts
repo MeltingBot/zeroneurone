@@ -520,6 +520,9 @@ export interface ViewFilters {
   dateFrom: Date | null;
   dateTo: Date | null;
   hasGeo: boolean | null;
+  /** Keys of date/datetime properties left off the timeline (e.g. a birth
+   *  date); the elements themselves stay visible everywhere. */
+  excludedDateProperties?: string[];
 }
 
 // ============================================================================
@@ -674,6 +677,7 @@ export const DEFAULT_FILTERS: ViewFilters = {
   dateFrom: null,
   dateTo: null,
   hasGeo: null,
+  excludedDateProperties: [],
 };
 
 // Saturated colors for nodes - work well on both light and dark backgrounds

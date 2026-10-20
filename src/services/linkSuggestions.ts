@@ -24,7 +24,7 @@
  * itself (a phone number, an IBAN…).
  */
 import type { Asset, Element, Link } from '../types';
-import { computePolygonAreaKm2, getGeoCenter, isGeoPolygon, pointInPolygon } from '../utils/geo';
+import { closestPointOnPolygon, computePolygonAreaKm2, getGeoCenter, isGeoPolygon, pointInPolygon } from '../utils/geo';
 import { assetHashOf, findAssetByHash, isWebScheme, parseSourceLinks } from '../utils/sourceLinks';
 
 export type SuggestionRule = 'sharedValue' | 'sharedSource' | 'inZone' | 'nearby' | 'meeting';
@@ -92,6 +92,13 @@ export interface SuggestionOptions {
   candidateIds?: ReadonlySet<string> | null;
   /** Rules without settings, each on unless set to false */
   rules?: { sharedValue?: boolean; sharedSource?: boolean; inZone?: boolean };
+  /**
+   * Only suggestions joining an element tagged `a` to one tagged `b` (the same
+   * tag twice: within it). The places rule then compares every `a` with every
+   * `b`, crowds included — the analyst drew both sets — and measures up to the
+   * edge of a zone.
+   */
+  between?: { a: string; b: string } | null;
 }
 
 /**
@@ -405,6 +412,60 @@ function findNearbyPairs(candidates: Element[], radius: number): Array<[string, 
   return pairs;
 }
 
+/**
+ * nearby between two sets: every element of `as` against every element of
+ * `bs` within `radius` metres, crowds included. A zone (polygon) counts from
+ * its edge; a point inside it is left to the zone rule when `insideToZones`.
+ * Two zones are not compared.
+ */
+function findNearbyBetween(as: Element[], bs: Element[], radius: number, insideToZones: boolean): Array<[string, string, number]> {
+  interface Shape { id: string; lat: number; lng: number; coords?: [number, number][]; minLat: number; maxLat: number; minLng: number; maxLng: number }
+  const shapeOf = (el: Element): Shape | null => {
+    if (!el.geo) return null;
+    if (isGeoPolygon(el.geo)) {
+      const coords = el.geo.coordinates;
+      if (coords.length < 3) return null;
+      const lngs = coords.map(c => c[0]), lats = coords.map(c => c[1]);
+      const c = getGeoCenter(el.geo);
+      return { id: el.id, lat: c.lat, lng: c.lng, coords, minLat: Math.min(...lats), maxLat: Math.max(...lats), minLng: Math.min(...lngs), maxLng: Math.max(...lngs) };
+    }
+    if (el.geo.type !== 'point') return null;
+    const { lat, lng } = el.geo;
+    return { id: el.id, lat, lng, minLat: lat, maxLat: lat, minLng: lng, maxLng: lng };
+  };
+  const left = as.map(shapeOf).filter((x): x is Shape => !!x);
+  const right = bs.map(shapeOf).filter((x): x is Shape => !!x);
+  const dLat = radius / 111320;
+  const pairs = new Map<string, [string, string, number]>();
+  for (const a of left) {
+    for (const b of right) {
+      if (a.id === b.id || (a.coords && b.coords)) continue;
+      // Bounding boxes grown by the radius must meet
+      const dLng = radius / (111320 * Math.max(Math.cos((Math.max(Math.abs(a.lat), Math.abs(b.lat)) * Math.PI) / 180), 0.01));
+      if (a.minLat - dLat > b.maxLat || b.minLat - dLat > a.maxLat || a.minLng - dLng > b.maxLng || b.minLng - dLng > a.maxLng) continue;
+      let d: number;
+      const zone = a.coords ? a : b.coords ? b : null;
+      if (zone) {
+        const point = zone === a ? b : a;
+        if (pointInPolygon(zone.coords!, [point.lng, point.lat])) {
+          if (insideToZones) continue;
+          d = 0;
+        } else {
+          const [lng, lat] = closestPointOnPolygon(zone.coords!, [point.lng, point.lat]);
+          d = distanceMeters(point, { lat, lng });
+        }
+      } else {
+        d = distanceMeters(a, b);
+      }
+      if (d > radius) continue;
+      const key = pairKey(a.id, b.id);
+      const prev = pairs.get(key);
+      if (!prev || d < prev[2]) pairs.set(key, a.id < b.id ? [a.id, b.id, Math.round(d)] : [b.id, a.id, Math.round(d)]);
+    }
+  }
+  return [...pairs.values()];
+}
+
 interface Presence {
   elementId: string;
   lat: number;
@@ -641,7 +702,12 @@ export function analyzeLinkSuggestions(
   const sourcesOn = options.rules?.sharedSource !== false;
   const zonesOn = options.rules?.inZone !== false;
   const linkable = elements.filter(isCandidate);
-  const candidates = candidateIds ? linkable.filter(el => candidateIds.has(el.id)) : linkable;
+  const between = options.between?.a && options.between?.b ? options.between : null;
+  const tagsById = new Map(elements.map(el => [el.id, el.tags]));
+  const hasTag = (id: string, tag: string) => tagsById.get(id)?.includes(tag) ?? false;
+  const shown = candidateIds ? linkable.filter(el => candidateIds.has(el.id)) : linkable;
+  // Between two tags: only their elements take part
+  const candidates = between ? shown.filter(el => hasTag(el.id, between.a) || hasTag(el.id, between.b)) : shown;
   const linked = new Set(links.map(l => pairKey(l.fromId, l.toId)));
   const isLinked = (a: string, b: string) => linked.has(pairKey(a, b));
   const inScope = (ids: Iterable<string>) => {
@@ -699,7 +765,10 @@ export function analyzeLinkSuggestions(
   }
 
   if (nearbyRadius && nearbyRadius > 0) {
-    for (const [a, b, distance] of findNearbyPairs(candidates, nearbyRadius)) {
+    const nearby = between
+      ? findNearbyBetween(candidates.filter(el => hasTag(el.id, between.a)), candidates.filter(el => hasTag(el.id, between.b)), nearbyRadius, zonesOn)
+      : findNearbyPairs(candidates, nearbyRadius);
+    for (const [a, b, distance] of nearby) {
       if (!isLinked(a, b)) addLinkReason(a, b, { rule: 'nearby', distance });
     }
   }
@@ -718,8 +787,17 @@ export function analyzeLinkSuggestions(
     }
   }
 
+  // Between two tags: a link joins an `a` to a `b`, a pivot gathers both
+  const joinsTags = (s: Suggestion) => {
+    if (!between) return true;
+    if (s.kind === 'link') {
+      return (hasTag(s.fromId, between.a) && hasTag(s.toId, between.b)) || (hasTag(s.fromId, between.b) && hasTag(s.toId, between.a));
+    }
+    const ids = [...s.memberIds, ...(s.existingId ? [s.existingId] : [])];
+    return ids.some(id => hasTag(id, between.a)) && ids.some(id => hasTag(id, between.b));
+  };
   const inScopeOf = (s: Suggestion) =>
-    inScope(s.kind === 'link' ? [s.fromId, s.toId] : [...s.memberIds, ...(s.existingId ? [s.existingId] : [])]);
+    joinsTags(s) && inScope(s.kind === 'link' ? [s.fromId, s.toId] : [...s.memberIds, ...(s.existingId ? [s.existingId] : [])]);
 
   const sortedLinks = [...linkSuggestions.values()]
     .map(s => ({ ...s, reasons: [...s.reasons].sort((a, b) => RULE_RANK[a.rule] - RULE_RANK[b.rule]) }))

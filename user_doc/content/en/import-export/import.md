@@ -95,7 +95,8 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 
 **Settings:**
 - **enable / disable** each field (noisy fields — id, hash, score… — are off by default);
-- a **tag** applied to all elements + an *ignore empty values* option;
+- a **tag** applied to all elements + an *ignore empty values* option; the tag field (like the sub-elements one) lists the dossier's existing tags (tag families and tags) on click and filters as you type; a new name shows with **+** and is created at import;
+- **Notes** target: the field goes to the element's notes. Several fields sent to **Notes** are joined as paragraphs, each starting with the field name in bold (the **Property key** box lets you rename that heading). A single field: plain text;
 - **Media (attachment)** target: a media URL is **downloaded and attached** to the element (subject to what the remote server allows — some sources block downloads; failures are reported);
 - **linked sub-elements**: a nested array of objects (e.g. contacts, addresses, observations) becomes **child elements** linked to the parent, each with their own **tag**, label and link label (with a *toggle all* checkbox);
 - the imported graph's **layout** (force, clusters, hierarchy…) before you **click to position** it on the canvas.
@@ -106,6 +107,7 @@ For **arbitrary JSON** (an API export, another tool's output…) that doesn't fo
 - **References between arrays** are detected: an `insured_id` field whose values are found among the `id`s of the `insured` array creates links to its records. The target array can be changed on the field's row.
 - Ids coming from a CSV are matched (`12`, `"12"`, `12.0` point to the same record); a field copying the `id` is ignored.
 - **Shared id**: when the `id`s of several arrays repeat those of a main array (a case number found everywhere), each array is linked to that main array.
+- **Merge into** (next to the tag): for an array whose field references another ticked array (e.g. its `id` is the case number of `crpj_Procédure`), choose that array. The array then creates no element per record: each record's fields become properties (or notes) of the referenced element, its sub-element lists become sub-elements linked directly to it, and its pivots and links start from it. A record whose reference matches nothing stays an element of its own. Default: **— (one element per record)**.
 - A reference to an **unticked** array is kept as a property.
 
 As soon as two arrays are ticked, a **diagram** shows the arrays and their links, with the share of values found in the target array:
@@ -113,13 +115,16 @@ As soon as two arrays are ticked, a **diagram** shows the arrays and their links
 - **drag** a field's dot onto an array to link it;
 - **click** an arrow to remove the reference;
 - **+ field** turns another field into a reference;
-- clicking an array's name opens its mapping.
+- clicking an array's name opens its mapping;
+- **no identifier** on an array means its `id` field references another array (it has no identifier of its own): this is normal for arrays keyed by the case number.
 
 **Filter / limit the import:** you can keep only records matching one or **several conditions** (field *contains / equals / is non-empty*), combined with **AND** or **OR**, and set a **cap** (default 2000; `0` = unlimited). Useful for very large datasets: import a usable subset instead of tens of thousands of nodes.
 
 **Large JSON files** are handled: content isn't rendered in the text area beyond ~1 MB, detection uses a sample (the first 2000 records) while the retained records are all imported.
 
 **Reusable templates:** a mapping can be **saved** as a named template (reusable across all dossiers), then **reloaded** or managed (rename / delete). When you paste JSON whose fields match a saved template, a banner offers to **apply it automatically**. Templates can also be **exported / imported** as a `.json` file to **share** them between machines or users.
+
+A template saves every ticked array (mapping, label template, tag, sub-elements, filters, cap) and the list of ticked arrays; loading it restores them. With a template selected, **Save** updates it; with none selected, you are asked for a name and a new template is created. Older single-array templates still apply to the open array.
 
 The import happens as a single **undoable** batch (Ctrl+Z).
 
@@ -487,10 +492,11 @@ A `.geojson` (or `.json`) `FeatureCollection` file, exported from QGIS or an ope
 
 #### Label and Properties
 
-Before importing, an options step lets you:
+Before importing, from the home page as from inside the dossier, an options step lets you:
 
 - choose the **property used as label** (only filled properties are offered, with a sample value);
-- tick the **properties to import** (**All** / **None**): an unticked property is ignored.
+- tick the **properties to import** (**All** / **None**): an unticked property is ignored;
+- choose a **Tag**: an existing tag or a new name. An existing tag family gives its look (color, shape, icon), unless the file sets a color or shape; a new name creates the tag family. Empty: no tag.
 
 A feature with no value for the chosen label takes a usual name (`name`, `nom`…), else "Feature N" after its position in the file.
 
@@ -728,6 +734,12 @@ From an open dossier, the **Import** button in the toolbar lets you add data dir
 
 **All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
+From the home page, importing a file into an **existing dossier** opens that dossier and runs the import there: options step (GeoJSON, FEC), then placement on the canvas.
+
+The dossier's comments are kept when importing into it.
+
+During the import, the import window shows **Elements: N · links: M**, for every format.
+
 ### Placement Mode
 
 After selecting a file, a **placement mode** activates:
@@ -736,7 +748,7 @@ After selecting a file, a **placement mode** activates:
 2. **Click on the canvas** to choose where imported elements are placed
 3. Press **Escape** to cancel
 
-Elements are positioned with the top-left corner at the click location.
+Elements are positioned with the top-left corner at the click location. While writing, the top bar shows **Importing…** with the count.
 
 {{< hint info >}}
 Placement mode is especially useful when the dossier already contains elements, to avoid overlapping.

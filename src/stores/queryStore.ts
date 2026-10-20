@@ -7,6 +7,7 @@ import { evaluateQuery } from '../services/query/evaluator';
 import { queryRepository } from '../db/repositories/queryRepository';
 import { useDossierStore } from './dossierStore';
 import { useSelectionStore } from './selectionStore';
+import { useViewStore } from './viewStore';
 
 interface QueryState {
   // Current query
@@ -47,6 +48,11 @@ interface QueryState {
   toggleFilter: () => void;
   selectAllResults: () => void;
   deselectAllResults: () => void;
+  /** Select what the query did not find, of the kind it found (elements, links
+   *  or both); when that is already the selection, select the results again */
+  invertResults: () => void;
+  /** Whether the selection is exactly what invertResults selects */
+  isInverseSelected: () => boolean;
   clearRecentQueries: () => void;
 
   // Saved queries
@@ -57,6 +63,34 @@ interface QueryState {
 
   // Table
   setTableColumns: (columns: string[]) => void;
+}
+
+/**
+ * Elements the filter keeps in view: those the query found, and the ends of
+ * the links it found — a query on links alone would otherwise leave them lost
+ * among the dimmed elements, or dim nothing at all.
+ */
+/** What the query did not find, of the kind it found; hidden elements left out */
+function inverseOf(results: { elementIds: Set<string>; linkIds: Set<string> }): { elements: string[]; links: string[] } {
+  const { elements, links } = useDossierStore.getState();
+  const { hiddenElementIds } = useViewStore.getState();
+  return {
+    elements: results.elementIds.size > 0
+      ? elements.filter((el) => !results.elementIds.has(el.id) && !hiddenElementIds.has(el.id)).map((el) => el.id)
+      : [],
+    links: results.linkIds.size > 0
+      ? links.filter((l) => !results.linkIds.has(l.id) && !hiddenElementIds.has(l.fromId) && !hiddenElementIds.has(l.toId)).map((l) => l.id)
+      : [],
+  };
+}
+
+export function withLinkEnds(results: { elementIds: Set<string>; linkIds: Set<string> }): Set<string> {
+  if (results.linkIds.size === 0) return results.elementIds;
+  const ids = new Set(results.elementIds);
+  for (const link of useDossierStore.getState().links) {
+    if (results.linkIds.has(link.id)) { ids.add(link.fromId); ids.add(link.toId); }
+  }
+  return ids;
 }
 
 export const useQueryStore = create<QueryState>((set, get) => ({
@@ -142,7 +176,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
 
     set({
       results,
-      matchingElementIds: isActive ? results.elementIds : new Set(),
+      matchingElementIds: isActive ? withLinkEnds(results) : new Set(),
       matchingLinkIds: isActive ? results.linkIds : new Set(),
       isFilterActive: isActive,
       ...recentUpdate,
@@ -167,6 +201,27 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     results.linkIds.forEach((id) => sel.deselectLink(id));
   },
 
+  invertResults: () => {
+    const { results } = get();
+    if (!results) return;
+    if (get().isInverseSelected()) {
+      useSelectionStore.getState().selectBoth([...results.elementIds], [...results.linkIds], false);
+      return;
+    }
+    const { elements: otherElements, links: otherLinks } = inverseOf(results);
+    useSelectionStore.getState().selectBoth(otherElements, otherLinks, false);
+  },
+
+  isInverseSelected: () => {
+    const { results } = get();
+    if (!results) return false;
+    const { selectedElementIds, selectedLinkIds } = useSelectionStore.getState();
+    const inverse = inverseOf(results);
+    if (inverse.elements.length + inverse.links.length === 0) return false;
+    return inverse.elements.length === selectedElementIds.size && inverse.links.length === selectedLinkIds.size
+      && inverse.elements.every((id) => selectedElementIds.has(id)) && inverse.links.every((id) => selectedLinkIds.has(id));
+  },
+
   clearRecentQueries: () => set({ recentQueries: [] }),
 
   clear: () => {
@@ -188,7 +243,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     } else if (results) {
       set({
         isFilterActive: true,
-        matchingElementIds: results.elementIds,
+        matchingElementIds: withLinkEnds(results),
         matchingLinkIds: results.linkIds,
       });
     }

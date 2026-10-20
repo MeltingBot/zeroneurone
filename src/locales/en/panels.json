@@ -362,6 +362,10 @@
       "reliableSources": "Reliable sources",
       "reliableSourcesDesc": "Keep only sources graded as reliable"
     },
+    "dateProperties": {
+      "title": "Date properties on the timeline",
+      "badge": "{{key}} off the timeline"
+    },
     "property": {
       "hasProperty": "Has property",
       "showAsBadge": "Show as badge on elements"
@@ -408,6 +412,8 @@
     "selectAll": "Select all results",
     "saveAsView": "Save as view",
     "recentQueries": "Recent",
+    "showResults": "Show results",
+    "invertSelection": "Invert selection",
     "deselectAll": "Deselect all results",
     "clearHistory": "Clear history",
     "syntaxExample1": "tag = \"person\" AND city = \"Paris\"",
@@ -693,6 +699,14 @@
     "search": "Search",
     "clearSearch": "Clear search",
     "noMatch": "No match",
+    "between": "Between",
+    "betweenFirst": "First tag",
+    "betweenSecond": "Second tag",
+    "betweenClear": "Clear the tag filter",
+    "openDetail": "Open details",
+    "sortLabel": "Sort",
+    "sortRelevance": "Relevance",
+    "sortDistance": "Distance",
     "and": "and",
     "placesHint": "Positions of the elements on the map, dates ignored",
     "meetingsHint": "Dated events at the same place, at the same time",

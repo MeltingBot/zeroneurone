@@ -348,6 +348,10 @@
       "reliableSources": "Verlässliche Quellen",
       "reliableSourcesDesc": "Nur als verlässlich bewertete Quellen behalten"
     },
+    "dateProperties": {
+      "title": "Datumseigenschaften auf der Zeitleiste",
+      "badge": "{{key}} nicht auf der Zeitleiste"
+    },
     "property": {
       "hasProperty": "Hat die Eigenschaft",
       "showAsBadge": "Als Badge auf Elementen anzeigen"
@@ -394,6 +398,8 @@
     "selectAll": "Alle Ergebnisse auswählen",
     "saveAsView": "Als Ansicht speichern",
     "recentQueries": "Letzte",
+    "showResults": "Ergebnisse anzeigen",
+    "invertSelection": "Auswahl umkehren",
     "deselectAll": "Alle Ergebnisse abwählen",
     "clearHistory": "Verlauf löschen",
     "syntaxExample1": "tag = \"Person\" AND stadt = \"Paris\"",
@@ -679,6 +685,14 @@
     "search": "Suchen",
     "clearSearch": "Suche löschen",
     "noMatch": "Kein Treffer",
+    "between": "Zwischen",
+    "betweenFirst": "Erster Tag",
+    "betweenSecond": "Zweiter Tag",
+    "betweenClear": "Tag-Filter entfernen",
+    "openDetail": "Details öffnen",
+    "sortLabel": "Sortieren",
+    "sortRelevance": "Relevanz",
+    "sortDistance": "Entfernung",
     "and": "und",
     "placesHint": "Positionen der Elemente auf der Karte, ohne Daten",
     "meetingsHint": "Datierte Ereignisse am selben Ort zur selben Zeit",

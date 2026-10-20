@@ -13,6 +13,8 @@ export type MappingTarget =
   | 'date'
   | 'country'
   | 'source'
+  /** Text → element description (notes); several fields are joined as paragraphs. */
+  | 'notes'
   | 'lat'
   | 'lng'
   /** Record identifier — used as the key that {@link MappingTarget} 'ref' fields point to. */
@@ -52,14 +54,32 @@ export interface ChildMapping {
   linkLabel: string;
 }
 
-/** Reusable mapping config (everything except the JSON data itself). */
-export interface MappingConfig {
+export type FilterOp = 'contains' | 'equals' | 'nonempty';
+export interface FilterCond { field: string; op: FilterOp; value: string }
+
+/** Settings of one table (record source) of a payload. */
+export interface TableConfig {
   labelTemplate: string;
   tagName: string;
-  ignoreEmpty: boolean;
-  layout: string;
   mapping: Record<string, FieldMapping>;
   childMappings: Record<string, ChildMapping>;
+  filters?: FilterCond[];
+  filterMode?: 'all' | 'any';
+  maxImport?: number;
+  /** Reference field whose target element receives each record (its fields,
+   *  sub-elements and links) instead of an element of its own. */
+  mergeField?: string;
+}
+
+/** Reusable mapping config (everything except the JSON data itself). The
+ *  top-level table settings are those of the table open at save time. */
+export interface MappingConfig extends TableConfig {
+  ignoreEmpty: boolean;
+  layout: string;
+  /** Every table set up at save time, by source key; absent in single-table templates. */
+  tables?: Record<string, TableConfig>;
+  /** Source keys of the tables imported together. */
+  included?: string[];
 }
 
 /** A saved, named mapping template, matched to incoming JSON by field signature. */

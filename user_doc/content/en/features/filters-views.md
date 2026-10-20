@@ -24,6 +24,12 @@ The **Filters** panel allows you to show or hide elements based on various crite
 | **Hidden elements** | Manage manually hidden elements |
 | **Isolated** | Elements without connections |
 
+### Date Properties on the Timeline
+
+When the timeline is shown, the **Date properties on the timeline** section lists the dossier's date and date-time property keys, with how many elements fill each one. Uncheck one (a birth date, for instance) to take it off the timeline. Elements stay visible in the other views; event dates and link periods are not affected.
+
+A **\<key\> off the timeline** badge appears in the active filters; **Clear all** brings it back.
+
 ### Combine Filters
 
 Filters are cumulative (logical AND): an element must satisfy **all** active criteria to be displayed.
@@ -44,6 +50,7 @@ A **view** captures the current state of your workspace:
 - Active filters
 - Viewport position (zoom, pan)
 - Hidden elements
+- Date properties taken off the timeline
 - (Optional) Element positions
 
 ### Save a View

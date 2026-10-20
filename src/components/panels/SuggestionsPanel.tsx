@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TagCombobox } from '../modals/TagCombobox';
+import { revealElement } from '../../utils/revealElement';
 import { Check, RotateCcw, Search, X } from 'lucide-react';
-import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useViewStore } from '../../stores';
-import { MAX_STAYS, MEETING_WINDOWS, NEARBY_RADII } from '../../stores/suggestionsStore';
+import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
+import { MAX_STAYS, MEETING_WINDOWS, NEARBY_RADII, PLACE_RADII } from '../../stores/suggestionsStore';
 import type { Suggestion, SuggestionReason } from '../../services/linkSuggestions';
+import type { Element } from '../../types';
 
 /** Compact select of the settings row: same height as the checkbox labels */
 const SELECT_CLASS = 'h-6 px-1.5 text-xs rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent disabled:opacity-50';
 
 /** Rows rendered at once: enough to work through, light enough for big dossiers */
-const MAX_ROWS = 200;
+/** Rows rendered at once; the list grows by as many on demand */
+const ROWS_STEP = 200;
 
 /** Lowercase without accents, for the list search */
 function fold(text: string): string {
@@ -20,6 +24,18 @@ function involvedIds(s: Suggestion): string[] {
   return s.kind === 'link' ? [s.fromId, s.toId] : [...s.memberIds, ...(s.existingId ? [s.existingId] : [])];
 }
 
+/** Distance a suggestion is about, in metres: nearest place or meeting, 0 for
+ *  a point in a zone; Infinity when it has none (values, sources, pivots) */
+function distanceOf(sg: Suggestion): number {
+  if (sg.kind !== 'link') return Infinity;
+  let d = Infinity;
+  for (const r of sg.reasons) {
+    if (r.rule === 'inZone') d = 0;
+    else if ((r.rule === 'nearby' || r.rule === 'meeting') && r.distance !== undefined) d = Math.min(d, r.distance);
+  }
+  return d;
+}
+
 export function SuggestionsPanel() {
   const { t, i18n } = useTranslation('panels');
   const elements = useDossierStore((s) => s.elements);
@@ -28,7 +44,7 @@ export function SuggestionsPanel() {
   const {
     suggestions, dismissedSuggestions, dossierId, scope, nearbyRadius, meetingRadius, maxStay, placesEnabled, meetingsEnabled, meetingWindow,
     valuesEnabled, sourcesEnabled, zonesEnabled, setRuleEnabled,
-    shownCount, meetingsTruncated,
+    shownCount, meetingsTruncated, between, setBetween,
     analyze, refresh, setNearbyRadius, setMeetingRadius, setMaxStay, setPlacesEnabled, setMeetingsEnabled, setMeetingWindow, accept, dismiss, restore,
   } = useSuggestionsStore();
   const highlightSuggestion = useInsightsStore((s) => s.highlightSuggestion);
@@ -39,6 +55,15 @@ export function SuggestionsPanel() {
   /** Reviewing the dismissed suggestions instead of the pending ones */
   const [reviewDismissed, setReviewDismissed] = useState(false);
   const [search, setSearch] = useState('');
+  // Rows shown of a given list; another list (search, new analysis) starts over
+  const [rowsShown, setRowsShown] = useState<{ list: unknown; limit: number }>({ list: null, limit: ROWS_STEP });
+  // Tags typed for the between filter, applied once picked
+  const [betweenA, setBetweenA] = useState(between?.a ?? '');
+  const [betweenB, setBetweenB] = useState(between?.b ?? '');
+  const applyBetween = (a: string, b: string) => {
+    const next = a.trim() && b.trim() ? { a: a.trim(), b: b.trim() } : null;
+    if ((next?.a ?? '') !== (between?.a ?? '') || (next?.b ?? '') !== (between?.b ?? '')) setBetween(next);
+  };
 
   // Leaving the tab must not leave the canvas dimmed
   useEffect(() => () => {
@@ -170,7 +195,64 @@ export function SuggestionsPanel() {
     return visible.filter((_, i) => searchIndex[i].includes(query));
   }, [visible, search, searchIndex]);
 
-  const shown = searched?.slice(0, MAX_ROWS) ?? [];
+  // Sorted by distance: places, meetings and zones first, nearest first (a
+  // point in a zone is at 0 m); the others keep their order after them
+  const [sortBy, setSortBy] = useState<'relevance' | 'distance'>('relevance');
+  const sorted = useMemo(
+    () => (searched && sortBy === 'distance' ? [...searched].sort((a, b) => distanceOf(a) - distanceOf(b)) : searched),
+    [searched, sortBy],
+  );
+  const hasDistances = !!searched?.some((sg) => distanceOf(sg) !== Infinity);
+  const rowLimit = rowsShown.list === sorted ? rowsShown.limit : ROWS_STEP;
+
+  // An element name in a row: selects it alone, brings it on screen and shows
+  // its summary under the row (a second click hides it)
+  const [focus, setFocus] = useState<{ row: string; id: string } | null>(null);
+  const setSidePanelTab = useUIStore((s) => s.setSidePanelTab);
+  const nameButton = (row: string, id: string) => (
+    <button
+      type="button"
+      onClick={() => {
+        if (focus?.row === row && focus.id === id) { setFocus(null); return; }
+        selectElements([id]);
+        revealElement(id);
+        setFocus({ row, id });
+      }}
+      className={`text-left hover:underline ${focus?.row === row && focus.id === id ? 'text-accent' : ''}`}
+    >
+      {label(id)}
+    </button>
+  );
+  // Between two tags, the element of the first tag comes first on every row
+  const orderedPair = (fromId: string, toId: string): [string, string] => {
+    const first = between ? elementById.get(toId)?.tags.includes(between.a) && !elementById.get(fromId)?.tags.includes(between.a) : false;
+    return first ? [toId, fromId] : [fromId, toId];
+  };
+  const propertyText = (value: unknown) => (value instanceof Date ? dateFormat.format(value) : String(value ?? ''));
+  const preview = (el: Element) => (
+    <div className="mt-1.5 p-2 rounded border border-border-default bg-bg-primary space-y-1" data-testid="suggestion-preview">
+      {el.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {el.tags.map((tag) => (
+            <span key={tag} className="px-1.5 py-0.5 text-[10px] rounded bg-bg-tertiary text-text-secondary">{tag}</span>
+          ))}
+        </div>
+      )}
+      {el.properties.slice(0, 6).map((p, i) => (
+        <p key={i} className="text-xs text-text-secondary break-words">
+          <span className="text-text-tertiary">{p.key} :</span> {propertyText(p.value)}
+        </p>
+      ))}
+      <button
+        type="button"
+        onClick={() => setSidePanelTab('detail')}
+        className="text-xs text-text-secondary hover:text-text-primary underline"
+      >
+        {t('suggestions.openDetail')}
+      </button>
+    </div>
+  );
+  const shown = sorted?.slice(0, rowLimit) ?? [];
   const checkedIds = shown.filter((s) => checked.has(s.id)).map((s) => s.id);
   const allChecked = shown.length > 0 && checkedIds.length === shown.length;
   // Bulk buttons from two rows on: a single row already has its own buttons
@@ -226,7 +308,7 @@ export function SuggestionsPanel() {
               data-testid="suggestions-nearby-radius"
               className={SELECT_CLASS}
             >
-              {NEARBY_RADII.map((radius) => (
+              {PLACE_RADII.map((radius) => (
                 <option key={radius} value={radius}>{formatDistance(radius)}</option>
               ))}
             </select>
@@ -289,6 +371,36 @@ export function SuggestionsPanel() {
             </select>
           </div>
         </div>
+        <div className="flex items-center gap-1.5 text-xs text-text-secondary" data-testid="suggestions-between">
+          <span className="shrink-0">{t('suggestions.between')}</span>
+          <TagCombobox
+            value={betweenA}
+            onChange={setBetweenA}
+            onPick={(a) => applyBetween(a, betweenB)}
+            allowNew={false}
+            aria-label={t('suggestions.betweenFirst')}
+            className={`${SELECT_CLASS} w-28`}
+          />
+          <span className="shrink-0">{t('suggestions.and')}</span>
+          <TagCombobox
+            value={betweenB}
+            onChange={setBetweenB}
+            onPick={(b) => applyBetween(betweenA, b)}
+            allowNew={false}
+            aria-label={t('suggestions.betweenSecond')}
+            className={`${SELECT_CLASS} w-28`}
+          />
+          {between && (
+            <button
+              onClick={() => { setBetweenA(''); setBetweenB(''); setBetween(null); }}
+              title={t('suggestions.betweenClear')}
+              aria-label={t('suggestions.betweenClear')}
+              className="p-0.5 rounded text-text-tertiary hover:text-text-primary"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
         {visible && meetingsTruncated && (
           <p className="text-xs text-warning">{t('suggestions.meetingsTruncated')}</p>
         )}
@@ -342,6 +454,19 @@ export function SuggestionsPanel() {
             {t('suggestions.count', { count: searched.length })}
             {shownCount !== null && ` · ${t('suggestions.shownShort', { count: shownCount })}`}
           </span>
+          {hasDistances && (
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'relevance' | 'distance')}
+              aria-label={t('suggestions.sortLabel')}
+              title={t('suggestions.sortLabel')}
+              data-testid="suggestions-sort"
+              className={SELECT_CLASS}
+            >
+              <option value="relevance">{t('suggestions.sortRelevance')}</option>
+              <option value="distance">{t('suggestions.sortDistance')}</option>
+            </select>
+          )}
           {bulk && reviewDismissed && (
             <button
               onClick={() => handleRestore(checkedIds)}
@@ -404,15 +529,14 @@ export function SuggestionsPanel() {
                 onChange={() => toggle(s.id)}
                 className="mt-0.5 rounded border-border-default"
               />
-              <button
-                onClick={() => selectElements(involvedIds(s))}
-                className="flex-1 min-w-0 text-left"
-              >
+              <div className="flex-1 min-w-0">
                 {s.kind === 'link' ? (
                   <>
-                    <span className="block text-sm text-text-primary truncate" title={`${label(s.fromId)} — ${label(s.toId)}`}>
-                      {label(s.fromId)} — {label(s.toId)}
-                    </span>
+                    {orderedPair(s.fromId, s.toId).map((id, i) => (
+                      <span key={id} className={`block text-sm break-words line-clamp-2 ${i === 0 ? 'text-text-primary' : 'text-text-secondary'}`} title={label(id)}>
+                        {nameButton(s.id, id)}
+                      </span>
+                    ))}
                     {s.reasons.map((reason, i) => (
                       <span key={i} className="block text-xs text-text-tertiary break-words">
                         {reasonText(reason)}
@@ -422,7 +546,7 @@ export function SuggestionsPanel() {
                 ) : (
                   <>
                     <span className="block text-sm text-text-primary truncate" title={s.existingId ? label(s.existingId) : s.reason.value}>
-                      {s.existingId ? label(s.existingId) : s.reason.value}
+                      {s.existingId ? nameButton(s.id, s.existingId) : s.reason.value}
                     </span>
                     <span className="block text-xs text-text-tertiary break-words">
                       {t(s.existingId ? 'suggestions.pivotExisting' : 'suggestions.pivotNew', { count: s.memberIds.length })}
@@ -431,7 +555,8 @@ export function SuggestionsPanel() {
                     </span>
                   </>
                 )}
-              </button>
+                {focus?.row === s.id && elementById.get(focus.id) && preview(elementById.get(focus.id)!)}
+              </div>
               <div className="flex gap-0.5 opacity-60 group-hover:opacity-100">
                 {reviewDismissed ? (
                   <button
@@ -468,9 +593,15 @@ export function SuggestionsPanel() {
               </div>
             </li>
           ))}
-          {searched.length > MAX_ROWS && (
-            <li className="px-3 py-2 text-xs text-text-tertiary">
-              {t('suggestions.more', { count: searched.length - MAX_ROWS })}
+          {searched.length > rowLimit && (
+            <li className="px-3 py-2">
+              <button
+                onClick={() => setRowsShown({ list: sorted, limit: rowLimit + ROWS_STEP })}
+                data-testid="suggestions-more"
+                className="text-xs text-text-secondary hover:text-text-primary underline"
+              >
+                {t('suggestions.more', { count: Math.min(ROWS_STEP, searched.length - rowLimit) })}
+              </button>
             </li>
           )}
         </ul>

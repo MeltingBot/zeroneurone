@@ -110,6 +110,17 @@ export function DossierPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [redactConfirmOpen, setRedactConfirmOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+
+  // File chosen on the home page for this dossier: once it is loaded, the
+  // import modal opens with it (options step, then placement on the canvas).
+  const pendingDossierImport = useUIStore((state) => state.pendingDossierImport);
+  const setPendingDossierImport = useUIStore((state) => state.setPendingDossierImport);
+  const pendingImportFile = pendingDossierImport && !isLoading && currentDossier?.id === id && pendingDossierImport.dossierId === id
+    ? pendingDossierImport.file
+    : null;
+  useEffect(() => {
+    if (pendingImportFile) setDisplayMode('canvas');
+  }, [pendingImportFile, setDisplayMode]);
   const [jsonMappingOpen, setJsonMappingOpen] = useState(false);
   const [jsonMappingInitial, setJsonMappingInitial] = useState<string | undefined>(undefined);
 
@@ -770,8 +781,9 @@ export function DossierPage() {
 
       {/* Import modal (simplified for current dossier) */}
       <ImportIntoCurrentModal
-        isOpen={importOpen}
-        onClose={() => setImportOpen(false)}
+        isOpen={importOpen || pendingImportFile !== null}
+        onClose={() => { setImportOpen(false); setPendingDossierImport(null); }}
+        initialFile={pendingImportFile}
         onOpenJsonMapping={() => setJsonMappingOpen(true)}
       />
       <JsonMappingImportModal

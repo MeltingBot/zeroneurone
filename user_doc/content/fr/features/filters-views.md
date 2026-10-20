@@ -24,6 +24,12 @@ Le panneau **Filtres** permet d'afficher ou masquer des éléments selon différ
 | **Éléments masqués** | Gérer les éléments cachés manuellement |
 | **Isolés** | Éléments sans connexion |
 
+### Propriétés date sur la timeline
+
+Quand la timeline est affichée, la section **Propriétés date sur la timeline** liste les propriétés de type date et date-heure du dossier, avec le nombre d'éléments qui renseignent chacune. Décochez-en une (une date de naissance, par exemple) pour la retirer de la timeline. Les éléments restent visibles dans les autres vues ; les dates des événements et les périodes des liens ne sont pas concernées.
+
+Un badge **\<clé\> hors timeline** apparaît dans les filtres actifs ; **Tout effacer** la rétablit.
+
 ### Combiner les filtres
 
 Les filtres se cumulent (ET logique) : un élément doit satisfaire **tous** les critères actifs pour être affiché.
@@ -44,6 +50,7 @@ Une **vue** capture l'état actuel de votre espace de travail :
 - Filtres actifs
 - Position du viewport (zoom, pan)
 - Éléments masqués
+- Propriétés date retirées de la timeline
 - (Optionnel) Positions des éléments
 
 ### Sauvegarder une vue

@@ -22,6 +22,7 @@ const GeoPicker = lazy(() => import('./GeoPicker').then(m => ({ default: m.GeoPi
 import { EventsEditor } from './EventsEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
+import { revealElement } from '../../utils/revealElement';
 import { EvaluationInput } from './EvaluationInput';
 import { parsePropertyDate } from '../../utils/dates';
 import { SourceField } from '../common/SourceField';
@@ -206,35 +207,8 @@ export function ElementDetail({ element }: ElementDetailProps) {
     const ids = duplicateIdsKey.split(',');
     const targetId = ids[duplicateCursorRef.current % ids.length];
     duplicateCursorRef.current += 1;
-    const target = useDossierStore.getState().elements.find((el) => el.id === targetId);
-    if (!target) return;
-
-    const { activeTabId, memberSet } = useTabStore.getState();
-    if (activeTabId && !memberSet.has(target.id)) {
-      const targetTab = canvasTabs.find((tab) => tab.memberElementIds.includes(target.id));
-      if (targetTab) setActiveTab(targetTab.id);
-    }
-
-    const mode = useViewStore.getState().displayMode;
-    if (mode === 'map' && target.geo) {
-      window.dispatchEvent(new CustomEvent('map:flyToElement', { detail: { elementId: target.id } }));
-    } else if (mode === 'timeline') {
-      window.dispatchEvent(new CustomEvent('timeline:scrollToElement', { detail: { elementId: target.id } }));
-    } else {
-      const sizeMap: Record<string, number> = { small: 40, medium: 56, large: 72 };
-      const baseSize = typeof target.visual?.size === 'number'
-        ? target.visual.size
-        : sizeMap[target.visual?.size ?? 'medium'] ?? 56;
-      const centerX = target.position.x + (target.visual?.customWidth ?? baseSize) / 2;
-      const centerY = target.position.y + (target.visual?.customHeight ?? baseSize) / 2;
-      const zoom = 1.0;
-      useViewStore.getState().requestViewportChange({
-        x: -centerX * zoom + (window.innerWidth - 350) / 2,
-        y: -centerY * zoom + window.innerHeight / 2,
-        zoom,
-      });
-    }
-  }, [duplicateIdsKey, canvasTabs, setActiveTab]);
+    revealElement(targetId);
+  }, [duplicateIdsKey]);
 
   // Sync local state when element changes (different element selected)
   useEffect(() => {

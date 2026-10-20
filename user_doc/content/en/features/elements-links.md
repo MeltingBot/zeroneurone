@@ -158,6 +158,10 @@ Click-drag on the canvas background to draw a selection rectangle.
 
 Shown links take filters, hidden elements and the active tab into account.
 
+### Selection Across Views
+
+If the selection changed in another view (map, timeline, matrix), the canvas centers on it when you come back: zoom 1 at most, several elements framed together. An unchanged selection keeps your position. The map already zooms on the selection when opened.
+
 ### Batch Operations
 
 With multiple elements selected:

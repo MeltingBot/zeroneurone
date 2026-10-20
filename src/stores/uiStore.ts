@@ -46,6 +46,8 @@ export interface ImportPlacementData {
     createMissingElements?: boolean;
     /** FEC aggregation options chosen in the options step. */
     fec?: import('../services/importFEC').FECImportOptions;
+    /** GeoJSON label property and kept properties chosen in the options step. */
+    geojson?: { labelField?: string; fields?: string[]; tag?: string };
   };
   /** Pre-built elements/links to place directly (e.g. JSON mapping import).
       Positions are relative to boundingBox.min and shifted to the click point.
@@ -110,6 +112,10 @@ interface UIState {
   // Import placement mode
   importPlacementMode: boolean;
   importPlacementData: ImportPlacementData | null;
+  /** File chosen on the home page for an existing dossier: the dossier page
+      hands it to its own import modal once loaded (options, then placement). */
+  pendingDossierImport: { dossierId: string; file: File } | null;
+  setPendingDossierImport: (pending: { dossierId: string; file: File } | null) => void;
 
   // Capture system for report screenshots
   captureHandlers: Map<DisplayMode, CaptureHandler>;
@@ -216,6 +222,8 @@ export const useUIStore = create<UIState>()(
   metadataImportQueue: [],
   importPlacementMode: false,
   importPlacementData: null,
+  pendingDossierImport: null,
+  setPendingDossierImport: (pending) => set({ pendingDossierImport: pending }),
   captureHandlers: new Map(),
 
   // Capture system

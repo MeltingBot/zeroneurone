@@ -1,5 +1,64 @@
 # Changelog
 
+## 2.69.0
+
+### Nouveautés
+
+- **Import JSON personnalisé**
+  - **Cible « Notes »** — un champ peut remplir les notes de l'élément ;
+    plusieurs champs s'y ajoutent en paragraphes, chacun précédé du nom de son
+    champ (renommable).
+  - **Fusionner dans** — une table dont un champ renvoie à une autre table
+    (un `id` qui est le numéro de procédure) peut être versée dans l'élément
+    qu'elle désigne : ses champs deviennent des propriétés, ses sous-listes
+    des sous-éléments liés directement, sans élément intermédiaire. Une ligne
+    sans correspondance reste un élément.
+  - **Modèles multi-tables** — un modèle enregistre toutes les tables cochées
+    (mapping, libellé, tag, sous-éléments, filtres) et les recoche au
+    chargement ; « Enregistrer » met à jour le modèle sélectionné.
+  - **Choix du tag** — le tag d'une table ou des sous-éléments se choisit parmi
+    les tags existants ou se crée.
+- **Tag à l'import GeoJSON** — l'étape d'options propose un tag ; une famille
+  existante donne son apparence, un nouveau nom la crée.
+- **Progression de l'import** — les éléments et liens écrits s'affichent
+  pendant l'import, pour tous les formats, y compris en mode placement.
+- **Suggestions de liens**
+  - **Entre deux tags** — ne garder que les suggestions reliant un élément
+    d'un tag à un élément d'un autre (infractions proches de sites GeoJSON) ;
+    la proximité compare alors tous les éléments des deux tags, sans plafond
+    de voisins, et mesure la distance jusqu'au bord d'une zone.
+  - **Rayon jusqu'à 50 km** pour la règle « Lieux » (les rencontres restent
+    à 5 km au plus).
+  - **Noms cliquables** — un clic centre la vue sur l'élément et affiche sa
+    fiche résumée sous la ligne ; un élément par ligne, libellés longs lisibles.
+  - **Tri par distance** et liste complète au-delà de 200 suggestions.
+- **Requêtes** — « Afficher les résultats » cadre la vue sur ce que la requête
+  a trouvé ; « Inverser la sélection » sélectionne ce qui ne correspond pas, et
+  revient aux résultats au second clic. Une requête sur des liens met en
+  évidence leurs extrémités en mode filtre.
+- **Timeline : exclure des propriétés date** — dans le panneau Filtres, sur la
+  timeline, chaque propriété date ou date-heure (une date de naissance) se
+  retire de la frise ; enregistré avec les vues.
+- **Retour sur une vue** — une sélection faite sur la carte ou la timeline est
+  centrée en revenant sur le canvas, et la timeline défile jusqu'à l'élément
+  choisi ailleurs.
+
+### Corrections
+
+- **Import depuis l'accueil dans une enquête existante** — rien n'apparaissait
+  (les éléments restaient en base sans s'afficher). L'enquête s'ouvre
+  maintenant et l'import passe par ses options puis par le placement.
+- **Options GeoJSON depuis l'enquête** — l'étape de choix du libellé et des
+  propriétés manquait, et les choix faits étaient perdus au placement.
+- **Commentaires conservés à l'import** — un import avec placement effaçait
+  les commentaires de l'enquête ; les éléments importés sont maintenant
+  ajoutés sans reconstruire le document, y compris en session partagée.
+- **Import ANB dans l'enquête ouverte** — les éléments n'apparaissaient pas.
+- **Événements CSV sur un élément existant** — ajoutés sans écraser les
+  autres champs modifiés entre-temps (session partagée).
+- **Build** — `version.json` s'écrivait aussi à la fermeture du serveur de
+  tests, dans un dossier parasite du dépôt ; il ne s'écrit plus qu'au build.
+
 ## 2.68.0
 
 ### Nouveautés

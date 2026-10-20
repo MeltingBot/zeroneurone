@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryStore } from '../../stores/queryStore';
+import { useQueryStore, withLinkEnds } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
 import { useViewStore } from '../../stores/viewStore';
+import { useSelectionStore } from '../../stores/selectionStore';
 import { QueryBuilderText } from './QueryBuilderText';
 import { QueryBuilderVisual } from './QueryBuilderVisual';
 import { QueryResultsTable } from './QueryResultsTable';
 import { SavedQueriesList } from './SavedQueriesList';
-import { X, Type, LayoutList, Filter, Table2, CheckSquare, SquareDashed, Eye, History, SearchX, Trash2 } from 'lucide-react';
+import { X, Type, LayoutList, Filter, Table2, CheckSquare, SquareDashed, Eye, History, SearchX, Trash2, Crosshair, ArrowLeftRight } from 'lucide-react';
+import { revealElements } from '../../utils/revealElement';
 
 export function QueryPanel() {
   const { t } = useTranslation('panels');
@@ -23,6 +25,16 @@ export function QueryPanel() {
   const loadSavedQueries = useQueryStore((s) => s.loadSavedQueries);
   const selectAllResults = useQueryStore((s) => s.selectAllResults);
   const deselectAllResults = useQueryStore((s) => s.deselectAllResults);
+  const invertResults = useQueryStore((s) => s.invertResults);
+  // Re-read on every selection change: the invert button shows whether it is on
+  useSelectionStore((s) => s.selectedElementIds);
+  useSelectionStore((s) => s.selectedLinkIds);
+  const inverted = useQueryStore.getState().isInverseSelected();
+  // Frame what the query found, link ends included
+  const showResults = () => {
+    const found = useQueryStore.getState().results;
+    if (found) revealElements(withLinkEnds(found));
+  };
   const recentQueries = useQueryStore((s) => s.recentQueries);
   const clearRecentQueries = useQueryStore((s) => s.clearRecentQueries);
   const currentDossier = useDossierStore((s) => s.currentDossier);
@@ -187,6 +199,15 @@ export function QueryPanel() {
             {(results.elementIds.size > 0 || results.linkIds.size > 0) && (
               <>
                 <button
+                  onClick={showResults}
+                  data-testid="query-show-results"
+                  className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
+                  title={t('query.showResults')}
+                  aria-label={t('query.showResults')}
+                >
+                  <Crosshair size={12} />
+                </button>
+                <button
                   onClick={selectAllResults}
                   className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
                   title={t('query.selectAll')}
@@ -199,6 +220,18 @@ export function QueryPanel() {
                   title={t('query.deselectAll')}
                 >
                   <SquareDashed size={12} />
+                </button>
+                <button
+                  onClick={invertResults}
+                  data-testid="query-invert"
+                  aria-pressed={inverted}
+                  className={`flex items-center gap-1 px-1.5 py-1 text-xs rounded transition-colors ${
+                    inverted ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                  }`}
+                  title={t('query.invertSelection')}
+                  aria-label={t('query.invertSelection')}
+                >
+                  <ArrowLeftRight size={12} />
                 </button>
               </>
             )}

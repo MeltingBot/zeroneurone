@@ -236,9 +236,13 @@ Après exécution, deux modes d'affichage sont disponibles (cumulables) :
 
 Les boutons de mode se trouvent en bas du panneau requêtes, à côté du compteur de résultats.
 
+Quand la requête trouve des liens, le filtre canvas garde en évidence les éléments situés aux deux extrémités des liens trouvés et atténue le reste.
+
 ### Actions sur les résultats
 
+- **Afficher les résultats** (icône cible) : cadre la vue sur ce que la requête a trouvé, extrémités des liens comprises (canvas ; carte pour les éléments géolocalisés ; la timeline se place sur le premier)
 - **Tout sélectionner** : sélectionne tous les éléments et liens correspondants sur le canvas
+- **Inverser la sélection** : sélectionne ce que la requête n'a pas trouvé, du même type que ses résultats (les autres éléments, ou les autres liens) ; les éléments masqués sont exclus. Un second clic resélectionne les résultats ; le bouton reste en évidence tant que l'inverse est sélectionné
 - **Sauvegarder comme vue** : crée une vue sauvegardée à partir des résultats de la requête
 - **Clic sur une ligne** (mode table) : sélectionne l'élément et centre la vue dessus
 

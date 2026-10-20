@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useId } from 'react';
+import { useState, useCallback, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertCircle, Download, FileSpreadsheet, FileJson } from 'lucide-react';
 import { importService } from '../../services/importService';
@@ -14,6 +14,10 @@ import {
   type FECImportOptions,
 } from '../../services/importFEC';
 import { FECOptionsPanel } from './FECOptionsPanel';
+import { GeoJSONOptionsPanel, type PendingGeoJSON } from './GeoJSONOptionsPanel';
+import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
+import { withImportProgress } from '../../services/importProgress';
+import { ImportProgressLine } from './ImportProgressLine';
 import { startMermaidPlacement } from '../../services/mermaidPlacement';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
@@ -25,6 +29,8 @@ interface ImportIntoCurrentModalProps {
   onClose: () => void;
   /** Open the advanced "map a custom JSON" modal (closes this one first). */
   onOpenJsonMapping?: () => void;
+  /** File chosen elsewhere (home page): processed as soon as the modal opens. */
+  initialFile?: File | null;
 }
 
 /**
@@ -108,7 +114,7 @@ function estimateElementCount(file: File, content: string): number {
  * Supports all formats: ZIP, CSV, JSON, GraphML, GEDCOM, etc.
  * All imports go through placement mode so the user can choose where to place elements.
  */
-export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: ImportIntoCurrentModalProps) {
+export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, initialFile }: ImportIntoCurrentModalProps) {
   const { t, i18n } = useTranslation('modals');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,15 +125,18 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
     aggregate: FECAggregate;
   } | null>(null);
   const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
+  const [pendingGeoJSON, setPendingGeoJSON] = useState<(PendingGeoJSON & { file: File }) | null>(null);
+  const [geoJSONLabelField, setGeoJSONLabelField] = useState('');
+  const [geoJSONFields, setGeoJSONFields] = useState<Set<string>>(new Set());
+  const [geoJSONTag, setGeoJSONTag] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentDossier } = useDossierStore();
+  const { currentDossier, loadDossier } = useDossierStore();
   const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !currentDossier) return;
+  const processFile = useCallback(async (file: File) => {
+    if (!currentDossier) return;
 
     const dossierId = currentDossier.id;
 
@@ -144,8 +153,11 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
           if (fileInputRef.current) fileInputRef.current.value = '';
           return;
         }
-        const result = await importANB(buffer, dossierId);
+        const snapshot = await snapshotBeforeImport(dossierId);
+        const result = await withImportProgress(() => importANB(buffer, dossierId));
         if (result.success) {
+          await commitImportToYDoc(snapshot);
+          await loadDossier(dossierId);
           toast.success(t('import.success'));
           requestFitView();
           onClose();
@@ -217,6 +229,19 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
         return;
       }
 
+      // GeoJSON avec propriétés → choix du libellé et des champs avant le mode placement
+      if (/\.(geo)?json$/i.test(file.name)) {
+        const analysis = importService.analyzeGeoJSONFields(content);
+        if (analysis && analysis.fields.length > 0) {
+          setPendingGeoJSON({ file, fileName: file.name, content, featureCount: analysis.featureCount, fields: analysis.fields });
+          setGeoJSONLabelField(analysis.suggested ?? analysis.fields[0].key);
+          setGeoJSONFields(new Set(analysis.fields.map((f) => f.key)));
+          setIsProcessing(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+      }
+
       // Validate content is parseable before entering placement mode
       if (file.name.endsWith('.json') || file.name.endsWith('.excalidraw')) {
         try {
@@ -261,7 +286,20 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
         fileInputRef.current.value = '';
       }
     }
-  }, [currentDossier, createMissingElements, enterImportPlacementMode, onClose, t, requestFitView]);
+  }, [currentDossier, createMissingElements, enterImportPlacementMode, onClose, t, requestFitView, loadDossier]);
+
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) processFile(file);
+  }, [processFile]);
+
+  // File handed over by the home page: process it once the modal is open.
+  const handledInitialFile = useRef<File | null>(null);
+  useEffect(() => {
+    if (!isOpen || !initialFile || handledInitialFile.current === initialFile) return;
+    handledInitialFile.current = initialFile;
+    processFile(initialFile);
+  }, [isOpen, initialFile, processFile]);
 
   // Confirmation des options FEC → mode placement avec les options choisies.
   const handleFecConfirm = useCallback(() => {
@@ -290,6 +328,30 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
     onClose();
   }, [pendingFEC, fecOptions, currentDossier, createMissingElements, enterImportPlacementMode, onClose]);
 
+  // Confirmation des options GeoJSON → mode placement avec le libellé et les champs choisis.
+  const handleGeoJSONConfirm = useCallback(() => {
+    if (!pendingGeoJSON || !currentDossier) return;
+    const gridSize = Math.ceil(Math.sqrt(Math.max(1, pendingGeoJSON.featureCount)));
+    enterImportPlacementMode({
+      boundingBox: {
+        minX: 0,
+        minY: 0,
+        maxX: gridSize * 200,
+        maxY: gridSize * 150,
+        width: gridSize * 200,
+        height: gridSize * 150,
+        elementCount: pendingGeoJSON.featureCount,
+      },
+      file: pendingGeoJSON.file,
+      dossierId: currentDossier.id,
+      fileContent: pendingGeoJSON.content,
+      importOptions: { createMissingElements, geojson: { labelField: geoJSONLabelField, fields: [...geoJSONFields], tag: geoJSONTag } },
+      onComplete: () => setError(null),
+    });
+    setPendingGeoJSON(null);
+    onClose();
+  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, currentDossier, createMissingElements, enterImportPlacementMode, onClose]);
+
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -297,6 +359,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
   const handleClose = useCallback(() => {
     setError(null);
     setPendingFEC(null);
+    setPendingGeoJSON(null);
     onClose();
   }, [onClose]);
 
@@ -386,8 +449,40 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
             </div>
           )}
 
+          {/* Étape d'options GeoJSON */}
+          {pendingGeoJSON && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-text-primary">{t('import.geojson.optionsTitle')}</p>
+              <GeoJSONOptionsPanel
+                pending={pendingGeoJSON}
+                labelField={geoJSONLabelField}
+                onLabelFieldChange={setGeoJSONLabelField}
+                fields={geoJSONFields}
+                onFieldsChange={setGeoJSONFields}
+                tag={geoJSONTag}
+                onTagChange={setGeoJSONTag}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingGeoJSON(null)}
+                  className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
+                >
+                  {t('common:actions.cancel')}
+                </button>
+                <button
+                  onClick={handleGeoJSONConfirm}
+                  disabled={isProcessing}
+                  data-testid="geojson-import-confirm"
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-accent-hover disabled:opacity-40"
+                >
+                  {t('import.geojson.confirm')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Import button */}
-          {!pendingFEC && (
+          {!pendingFEC && !pendingGeoJSON && (
           <button
             onClick={triggerFileSelect}
             disabled={isProcessing}
@@ -398,6 +493,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
               <div className="text-sm font-medium text-text-primary">
                 {isProcessing ? t('import.importing') : t('importIntoCurrent.selectFile')}
               </div>
+              <ImportProgressLine className="text-xs text-text-secondary mt-1" />
               <div className="text-xs text-text-tertiary mt-1">
                 {t('import.supportedFormats')}
               </div>
@@ -411,7 +507,9 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
           </button>
           )}
 
-          {/* CSV options */}
+          {/* CSV options — irrelevant during a FEC or GeoJSON options step */}
+          {!pendingFEC && !pendingGeoJSON && (
+          <>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -445,6 +543,9 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping }: I
               <p>{t('import.csvTemplate.description')}</p>
             </div>
           </div>
+
+          </>
+          )}
 
           {/* Advanced: custom JSON mapping */}
           {onOpenJsonMapping && (

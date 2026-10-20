@@ -54,6 +54,9 @@ export interface TimelineItem {
 const MIN_ZOOM = 0.002; // pixels per day (allows viewing centuries)
 const MAX_ZOOM = 1000; // pixels per day (900 = ~1h visible at 800px width)
 const ROW_HEIGHT = 36;
+// Selection held when the timeline was last left (the store replaces the Set
+// on every change, so identity tells whether it changed in another view)
+let selectionWhenTimelineLeft: ReadonlySet<string> | null = null;
 const ROW_GAP = 8;
 // Scatter mode: a bar too short for its content shows it just after the bar
 // (each item has its own row, so the space on the right is free)
@@ -88,6 +91,7 @@ export function TimelineView() {
   const themeMode = useUIStore((state) => state.themeMode);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  const excludedDateProperties = filters.excludedDateProperties;
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
@@ -474,7 +478,9 @@ export function TimelineView() {
       });
     });
 
-    // 3. Process element properties with type "date" or "datetime"
+    // 3. Process element properties with type "date" or "datetime", except
+    // the keys left off the timeline in the filters panel
+    const excludedDateKeys = new Set(excludedDateProperties);
     elements.forEach((element) => {
       // Skip hidden elements or elements not in active tab
       if (hiddenElementIds.has(element.id)) return;
@@ -485,6 +491,7 @@ export function TimelineView() {
 
       element.properties.forEach((prop, index) => {
         if ((prop.type !== 'date' && prop.type !== 'datetime') || !prop.value) return;
+        if (excludedDateKeys.has(prop.key)) return;
 
         // Imported text is read like everywhere else (UTC midnight = a local day)
         const propDate = parsePropertyDate(prop.value);
@@ -536,7 +543,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language]);
+  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language, excludedDateProperties]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -1131,22 +1138,56 @@ export function TimelineView() {
     setViewStart(new Date(timeBounds.min.getTime() - paddingMs));
   }, [timeBounds, getContainerWidth]);
 
+  // Bring an item on screen: its start date centred and, one row per item
+  // (not in swimlanes, where rows are lanes), its row scrolled to the middle
+  const revealItem = useCallback((item: { start: Date; row: number }) => {
+    const daysVisible = getContainerWidth() / zoom;
+    setViewStart(new Date(item.start.getTime() - (daysVisible / 2) * 24 * 60 * 60 * 1000));
+    const container = containerRef.current;
+    if (container && timelineMode !== 'swimlane') {
+      container.scrollTop = Math.max(0, item.row * (ROW_HEIGHT + ROW_GAP) - container.clientHeight / 2);
+    }
+  }, [zoom, getContainerWidth, setViewStart, timelineMode]);
+
   // ── Listen for scrollToElement events (from search modal) ──────────────
   useEffect(() => {
     const handler = (e: Event) => {
       const elementId = (e as CustomEvent).detail?.elementId as string | undefined;
       if (!elementId) return;
       // Find the first timeline item for this element
-      const item = items.find(it => it.sourceId === elementId);
-      if (!item) return;
-      // Center view on item's start date
-      const containerWidth = getContainerWidth();
-      const daysVisible = containerWidth / zoom;
-      setViewStart(new Date(item.start.getTime() - (daysVisible / 2) * 24 * 60 * 60 * 1000));
+      const item = itemsWithRows.find(it => it.sourceId === elementId);
+      if (item) revealItem(item);
     };
     window.addEventListener('timeline:scrollToElement', handler);
     return () => window.removeEventListener('timeline:scrollToElement', handler);
-  }, [items, zoom, getContainerWidth]);
+  }, [itemsWithRows, revealItem]);
+
+  // Arriving on the timeline with an element selected elsewhere (canvas, map):
+  // bring it on screen, unless it already is. A selection unchanged since the
+  // timeline was left keeps its position. Once per opening of the view.
+  const revealedOnOpenRef = useRef(false);
+  // Decided on the first mount only: refs survive StrictMode's remount,
+  // whose cleanup would otherwise record the selection as already seen
+  const selectionChangedRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    selectionChangedRef.current ??= useSelectionStore.getState().selectedElementIds !== selectionWhenTimelineLeft;
+    return () => { selectionWhenTimelineLeft = useSelectionStore.getState().selectedElementIds; };
+  }, []);
+  useEffect(() => {
+    if (revealedOnOpenRef.current || itemsWithRows.length === 0) return;
+    revealedOnOpenRef.current = true;
+    if (selectedElementIds.size === 0 || !selectionChangedRef.current) return;
+    const item = itemsWithRows.find(it => it.sourceId !== undefined && selectedElementIds.has(it.sourceId));
+    if (!item) return;
+    const viewEndMs = viewStart.getTime() + (getContainerWidth() / zoom) * 24 * 60 * 60 * 1000;
+    const startMs = item.start.getTime();
+    const onScreenX = startMs >= viewStart.getTime() && startMs <= viewEndMs;
+    const container = containerRef.current;
+    const top = item.row * (ROW_HEIGHT + ROW_GAP);
+    const onScreenY = timelineMode === 'swimlane' || !container
+      || (top >= container.scrollTop && top + ROW_HEIGHT <= container.scrollTop + container.clientHeight);
+    if (!onScreenX || !onScreenY) revealItem(item);
+  }, [itemsWithRows, selectedElementIds, viewStart, zoom, getContainerWidth, timelineMode, revealItem]);
 
   // Cleanup mouse events and RAF
   useEffect(() => {

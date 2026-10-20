@@ -348,6 +348,10 @@
       "reliableSources": "Betrouwbare bronnen",
       "reliableSourcesDesc": "Alleen als betrouwbaar gewaardeerde bronnen behouden"
     },
+    "dateProperties": {
+      "title": "Datumeigenschappen op de tijdlijn",
+      "badge": "{{key}} niet op de tijdlijn"
+    },
     "property": {
       "hasProperty": "Heeft eigenschap",
       "showAsBadge": "Tonen als badge op elementen"
@@ -394,6 +398,8 @@
     "selectAll": "Alles selecteren",
     "saveAsView": "Opslaan als weergave",
     "recentQueries": "Recent",
+    "showResults": "Resultaten tonen",
+    "invertSelection": "Selectie omkeren",
     "deselectAll": "Alle resultaten deselecteren",
     "clearHistory": "Geschiedenis wissen",
     "syntaxExample1": "tag = \"persoon\" AND stad = \"Parijs\"",
@@ -679,6 +685,14 @@
     "search": "Zoeken",
     "clearSearch": "Zoekopdracht wissen",
     "noMatch": "Geen resultaten",
+    "between": "Tussen",
+    "betweenFirst": "Eerste tag",
+    "betweenSecond": "Tweede tag",
+    "betweenClear": "Tagfilter wissen",
+    "openDetail": "Details openen",
+    "sortLabel": "Sorteren",
+    "sortRelevance": "Relevantie",
+    "sortDistance": "Afstand",
     "and": "en",
     "placesHint": "Posities van de elementen op de kaart, zonder data",
     "meetingsHint": "Gedateerde gebeurtenissen op dezelfde plaats, op hetzelfde moment",

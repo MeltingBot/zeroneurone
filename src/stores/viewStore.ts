@@ -438,7 +438,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
       (filters.evaluationInfos?.length ?? 0) > 0 ||
       filters.dateFrom !== null ||
       filters.dateTo !== null ||
-      filters.hasGeo !== null
+      filters.hasGeo !== null ||
+      (filters.excludedDateProperties?.length ?? 0) > 0
     );
   },
 

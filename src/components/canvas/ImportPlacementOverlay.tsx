@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useReactFlow } from '@xyflow/react';
 import { X, Download } from 'lucide-react';
 import { useUIStore } from '../../stores';
+import { useImportProgress } from '../../services/importProgress';
+import { ImportProgressLine } from '../modals/ImportProgressLine';
 
 /**
  * Visual overlay shown when importing into existing dossier.
@@ -18,6 +20,8 @@ export function ImportPlacementOverlay() {
   const exitImportPlacementMode = useUIStore((state) => state.exitImportPlacementMode);
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // After the click the import runs: the bar reports it instead of asking to click
+  const importing = useImportProgress().active;
 
   // Track mouse position for preview
   useEffect(() => {
@@ -74,8 +78,9 @@ export function ImportPlacementOverlay() {
       >
         <Download size={16} className="text-accent" />
         <span className="text-sm text-text-primary">
-          {t('dossier.importPlacement.instructions')}
+          {importing ? t('dossier.importPlacement.importing') : t('dossier.importPlacement.instructions')}
         </span>
+        <ImportProgressLine />
         <button
           onClick={exitImportPlacementMode}
           className="p-1 text-text-tertiary hover:text-text-primary rounded"

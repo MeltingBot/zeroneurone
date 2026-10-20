@@ -158,6 +158,10 @@ Cliquez-glissez sur le fond du canvas pour dessiner un rectangle de sélection.
 
 Les liens affichés tiennent compte des filtres, des éléments masqués et de l'onglet actif.
 
+### Sélection et changement de vue
+
+Si la sélection a changé dans une autre vue (carte, timeline, matrice), le canvas se centre dessus à votre retour : zoom 1 au plus, plusieurs éléments cadrés ensemble. Une sélection inchangée conserve votre position. La carte, elle, zoome déjà sur la sélection à son ouverture.
+
 ### Opérations groupées
 
 Avec plusieurs éléments sélectionnés :

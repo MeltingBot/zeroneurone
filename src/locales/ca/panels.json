@@ -348,6 +348,10 @@
       "reliableSources": "Fonts fiables",
       "reliableSourcesDesc": "Conservar només les fonts valorades com a fiables"
     },
+    "dateProperties": {
+      "title": "Propietats de data a la línia de temps",
+      "badge": "{{key}} fora de la línia de temps"
+    },
     "property": {
       "hasProperty": "Té la propietat",
       "showAsBadge": "Mostrar com a insígnia als elements"
@@ -394,6 +398,8 @@
     "selectAll": "Seleccionar tots",
     "saveAsView": "Desar com a vista",
     "recentQueries": "Recents",
+    "showResults": "Mostra els resultats",
+    "invertSelection": "Inverteix la selecció",
     "deselectAll": "Desseleccionar tots els resultats",
     "clearHistory": "Esborrar historial",
     "syntaxExample1": "tag = \"persona\" AND ciutat = \"París\"",
@@ -679,6 +685,14 @@
     "search": "Cerca",
     "clearSearch": "Esborra la cerca",
     "noMatch": "Cap resultat",
+    "between": "Entre",
+    "betweenFirst": "Primera etiqueta",
+    "betweenSecond": "Segona etiqueta",
+    "betweenClear": "Treu el filtre d'etiquetes",
+    "openDetail": "Obre la fitxa",
+    "sortLabel": "Ordena",
+    "sortRelevance": "Rellevància",
+    "sortDistance": "Distància",
     "and": "i",
     "placesHint": "Posicions dels elements al mapa, sense tenir en compte les dates",
     "meetingsHint": "Esdeveniments datats al mateix lloc i al mateix moment",

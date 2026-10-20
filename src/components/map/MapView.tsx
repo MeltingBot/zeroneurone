@@ -2241,6 +2241,22 @@ export function MapView() {
     return () => window.removeEventListener('map:flyToElement', handler);
   }, [geoElements]);
 
+  // ── Listen for fitElements events (query results, several elements) ──
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ids = new Set(((e as CustomEvent).detail?.elementIds as string[] | undefined) ?? []);
+      if (!mapRef.current || ids.size === 0) return;
+      const coords = geoElements.filter(el => ids.has(el.id))
+        .map(el => { const c = getGeoCenter(el.geo); return [c.lng, c.lat] as [number, number]; });
+      if (coords.length === 0) return;
+      if (coords.length === 1) { mapRef.current.flyTo({ center: coords[0], zoom: 14 }); return; }
+      const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+      mapRef.current.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+    };
+    window.addEventListener('map:fitElements', handler);
+    return () => window.removeEventListener('map:fitElements', handler);
+  }, [geoElements]);
+
   // ── Auto-zoom to selected elements on mount ──────────────
   const didAutoZoomRef = useRef(false);
   useEffect(() => {

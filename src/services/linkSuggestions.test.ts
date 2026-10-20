@@ -522,3 +522,45 @@ describe('evidenceOf (what an accepted link keeps)', () => {
     expect(evidence.date).toBeUndefined();
   });
 });
+
+describe('computeLinkSuggestions — between two tags', () => {
+  const tagged = (id: string, tag: string, geo: GeoData) => el(id, { tags: [tag], geo } as Partial<Element>);
+  const point = (id: string, tag: string, lat: number, lng: number) => tagged(id, tag, { type: 'point', lat, lng });
+  const between = { a: 'Infraction', b: 'Commissariat' };
+
+  it('keeps only pairs joining the two tags', () => {
+    const elements = [point('i1', 'Infraction', 46, 0), point('i2', 'Infraction', 46.0002, 0), point('c', 'Commissariat', 46.0004, 0)];
+    const pairs = (computeLinkSuggestions(elements, [], [], { nearbyRadius: 100, between }) as LinkSuggestion[])
+      .map((s) => [s.fromId, s.toId].sort().join('-')).sort();
+    expect(pairs).toEqual(['c-i1', 'c-i2']); // no i1-i2
+  });
+
+  it('ignores the crowd limit: thirty offences around one police station', () => {
+    const offences = Array.from({ length: 30 }, (_, i) => point(`i${i}`, 'Infraction', 46 + i * 0.00001, 0));
+    const station = point('c', 'Commissariat', 46.0001, 0);
+    const found = computeLinkSuggestions([...offences, station], [], [], { nearbyRadius: 100, between }) as LinkSuggestion[];
+    expect(found).toHaveLength(30);
+    expect(found.every((s) => s.fromId === 'c' || s.toId === 'c')).toBe(true);
+  });
+
+  it('measures from the edge of a zone; a point inside is left to the zone rule', () => {
+    // 0.01° square ≈ 1.1 km a side; offence 50 m east of its edge, another inside
+    const zone = tagged('z', 'Commissariat', { type: 'polygon', coordinates: [[0, 46], [0.01, 46], [0.01, 46.01], [0, 46.01]], center: { lng: 0.005, lat: 46.005 } });
+    const outside = point('near', 'Infraction', 46.005, 0.01 + 50 / (111320 * Math.cos((46.005 * Math.PI) / 180)));
+    const inside = point('in', 'Infraction', 46.005, 0.005);
+    const far = point('far', 'Infraction', 46.005, 0.02);
+    const found = computeLinkSuggestions([zone, outside, inside, far], [], [], { nearbyRadius: 100, between }) as LinkSuggestion[];
+    const byOther = new Map(found.map((s) => [s.fromId === 'z' ? s.toId : s.fromId, s.reasons.map((r) => r.rule)]));
+    expect([...byOther.keys()].sort()).toEqual(['in', 'near']);
+    expect(byOther.get('near')).toEqual(['nearby']);
+    expect(byOther.get('in')).toEqual(['inZone']);
+    const near = found.find((s) => s.fromId === 'near' || s.toId === 'near')!;
+    expect(near.reasons[0].distance).toBeGreaterThan(40);
+    expect(near.reasons[0].distance).toBeLessThan(60);
+  });
+
+  it('without a between filter the crowd limit still applies', () => {
+    const offences = Array.from({ length: 30 }, (_, i) => point(`i${i}`, 'Infraction', 46 + i * 0.00001, 0));
+    expect(computeLinkSuggestions([...offences, point('c', 'Commissariat', 46.0001, 0)], [], [], { nearbyRadius: 100 })).toEqual([]);
+  });
+});

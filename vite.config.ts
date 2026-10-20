@@ -24,6 +24,9 @@ function writeVersionFile(): Plugin {
   let outDir = 'dist'
   return {
     name: 'write-version-file',
+    // closeBundle also fires when a dev or Vitest server closes, with Vitest's
+    // placeholder outDir: write only for an actual build.
+    apply: 'build',
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir)
     },

@@ -95,7 +95,8 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 
 **Réglages :**
 - **activer / désactiver** chaque champ (les champs bruités — id, hash, score… — sont décochés par défaut) ;
-- **tag** appliqué à tous les éléments + option *ignorer les valeurs vides* ;
+- **tag** appliqué à tous les éléments + option *ignorer les valeurs vides* ; le champ tag (comme celui des sous-éléments) liste au clic les tags existants du dossier (familles de tags et tags), se filtre à la frappe ; un nouveau nom s'affiche avec **+** et est créé à l'import ;
+- cible **Notes** : le champ va dans les notes de l'élément. Plusieurs champs vers **Notes** sont réunis en paragraphes, chacun commençant par le nom du champ en gras (la case **Clé propriété** permet de renommer ce titre). Un seul champ : texte brut ;
 - cible **Média (pièce jointe)** : une URL de média est **téléchargée et attachée** comme pièce jointe à l'élément (selon ce que le serveur distant autorise — certaines sources bloquent le téléchargement ; les échecs sont rapportés) ;
 - **sous-éléments liés** : un tableau d'objets imbriqués (ex. contacts, adresses, observations) devient des **éléments enfants** reliés au parent, avec leur propre **tag**, libellé et libellé de lien (case *tout activer/désactiver*) ;
 - **disposition** du graphe importé (force, clusters, hiérarchie…) avant de **cliquer pour le positionner** sur le canvas.
@@ -108,6 +109,7 @@ Pour du **JSON quelconque** (export d'API, sortie d'un autre outil…) qui ne su
 - Les **références entre tableaux** sont détectées : un champ `assure_id` dont les valeurs se retrouvent parmi les `id` du tableau `assures` crée les liens vers ses enregistrements. Le tableau visé se change sur la ligne du champ.
 - Les identifiants issus d'un CSV sont rapprochés (`12`, `"12"`, `12.0` désignent le même enregistrement) ; un champ qui recopie l'`id` est ignoré.
 - **Identifiant commun** : si les `id` de plusieurs tableaux reprennent ceux d'un tableau principal (un numéro de procédure présent partout), chaque tableau est relié à ce tableau principal.
+- **Fusionner dans** (à côté du tag) : pour un tableau dont un champ référence un autre tableau coché (ex. son `id` est le numéro de procédure de `crpj_Procédure`), choisissez ce tableau. Le tableau ne crée alors aucun élément par enregistrement : les champs de chaque enregistrement deviennent des propriétés (ou des notes) de l'élément référencé, ses listes de sous-éléments deviennent des sous-éléments reliés directement à lui, et ses pivots et liens partent de lui. Un enregistrement dont la référence ne correspond à rien reste un élément à part. Par défaut : **— (un élément par ligne)**.
 - Une référence vers un tableau **non coché** est conservée en propriété.
 
 Dès que deux tableaux sont cochés, un **schéma** montre les tableaux et leurs liens, avec la part des valeurs retrouvées dans le tableau visé :
@@ -115,11 +117,14 @@ Dès que deux tableaux sont cochés, un **schéma** montre les tableaux et leurs
 - **tirer** le point d'un champ vers un tableau pour le relier ;
 - **cliquer** une flèche pour retirer la référence ;
 - **+ champ** pour transformer un autre champ en référence ;
-- cliquer le nom d'un tableau ouvre son mapping.
+- cliquer le nom d'un tableau ouvre son mapping ;
+- **pas d'identifiant** sur un tableau signifie que son champ `id` référence un autre tableau (il n'a pas d'identifiant propre) : c'est normal pour les tableaux indexés par le numéro de procédure.
 
 Les **gros fichiers JSON** sont gérés : le contenu n'est pas affiché dans la zone de texte au-delà de ~1 Mo, la détection s'appuie sur un échantillon (les 2000 premiers enregistrements) tandis que les enregistrements retenus sont tous importés.
 
 **Modèles réutilisables :** un mapping peut être **enregistré** comme modèle nommé (réutilisable entre tous les dossiers), puis **rechargé** ou géré (renommer / supprimer). Lorsqu'un JSON dont les champs correspondent à un modèle enregistré est collé, une bannière propose de **l'appliquer automatiquement**. Les modèles peuvent aussi être **exportés / importés** en fichier `.json` pour les **partager** entre postes ou utilisateurs.
+
+Un modèle enregistre chaque tableau coché (mapping, modèle de libellé, tag, sous-éléments, filtres, plafond) et la liste des tableaux cochés ; le charger les restaure. Avec un modèle sélectionné, **Enregistrer** le met à jour ; sans modèle sélectionné, un nom est demandé et un nouveau modèle est créé. Les anciens modèles à un seul tableau s'appliquent toujours au tableau ouvert.
 
 L'import se fait en un seul lot **annulable** (Ctrl+Z).
 
@@ -487,10 +492,11 @@ Fichier `.geojson` (ou `.json`) de type `FeatureCollection`, par exemple export�
 
 #### Libellé et propriétés
 
-Avant l'import, une étape d'options permet de :
+Avant l'import, depuis l'accueil comme depuis le dossier, une étape d'options permet de :
 
 - choisir la **propriété qui sert de libellé** (seules les propriétés renseignées sont proposées, avec un exemple de valeur) ;
-- cocher les **propriétés à importer** (**Tout** / **Aucune**) : une propriété décochée est ignorée.
+- cocher les **propriétés à importer** (**Tout** / **Aucune**) : une propriété décochée est ignorée ;
+- choisir un **Tag** : un tag existant ou un nouveau nom. Une famille de tags existante donne son apparence (couleur, forme, icône), sauf si le fichier fixe une couleur ou une forme ; un nouveau nom crée la famille de tags. Vide : aucun tag.
 
 Une entité sans valeur pour le libellé choisi prend un nom usuel (`name`, `nom`…), sinon « Feature N » selon sa position dans le fichier.
 
@@ -728,6 +734,12 @@ Depuis un dossier ouvert, le bouton **Importer** dans la barre d'outils permet d
 
 **Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
+Depuis la page d'accueil, importer un fichier dans un **dossier existant** ouvre ce dossier et y lance l'import : étape d'options (GeoJSON, FEC), puis placement sur le canvas.
+
+Les commentaires du dossier sont conservés lors d'un import dans ce dossier.
+
+Pendant l'import, la fenêtre d'import affiche **Éléments : N · liens : M**, quel que soit le format.
+
 ### Mode placement
 
 Après sélection du fichier, un **mode placement** s'active :
@@ -736,7 +748,7 @@ Après sélection du fichier, un **mode placement** s'active :
 2. **Cliquez sur le canvas** pour choisir l'emplacement des éléments importés
 3. Appuyez sur **Echap** pour annuler
 
-Les éléments sont positionnés avec le coin supérieur gauche à l'endroit du clic.
+Les éléments sont positionnés avec le coin supérieur gauche à l'endroit du clic. Pendant l'écriture, la barre du haut affiche **Import en cours…** avec le décompte.
 
 {{< hint info >}}
 Le mode placement est particulièrement utile quand le dossier contient déjà des éléments, pour éviter les superpositions.

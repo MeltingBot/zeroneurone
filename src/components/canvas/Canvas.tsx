@@ -6,6 +6,7 @@ import {
   Background,
   BackgroundVariant,
   useReactFlow,
+  useStore as useFlowStore,
   applyNodeChanges,
   type Connection,
   type Node,
@@ -66,7 +67,8 @@ import { serializeQuery } from '../../services/query/serializer';
 import { insightsService } from '../../services/insightsService';
 import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
-import { syncService } from '../../services/syncService';
+import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
+import { withImportProgress } from '../../services/importProgress';
 import { elementRepository } from '../../db/repositories/elementRepository';
 
 /** Capture tab membership for undo restore (tabId → elementIds[]) */
@@ -265,6 +267,52 @@ function CanvasZoomControls() {
       </button>
     </>
   );
+}
+
+// Selection held when the canvas was last left (the store replaces the Set on
+// every change, so identity tells whether it changed in another view)
+let selectionWhenCanvasLeft: ReadonlySet<string> | null = null;
+
+// Arriving on the canvas with a selection made elsewhere (map, timeline):
+// centre it, at most at zoom 1 like the search. A selection unchanged since
+// the canvas was left keeps the restored viewport. Once per mount, when the
+// pane has its size.
+function RevealSelectionOnOpen() {
+  const { getInternalNode, setCenter } = useReactFlow();
+  const width = useFlowStore((s) => s.width);
+  const height = useFlowStore((s) => s.height);
+  const doneRef = useRef(false);
+  // Decided on the first mount only: refs survive StrictMode's remount,
+  // whose cleanup would otherwise record the selection as already seen
+  const changedRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    changedRef.current ??= useSelectionStore.getState().selectedElementIds !== selectionWhenCanvasLeft;
+    return () => { selectionWhenCanvasLeft = useSelectionStore.getState().selectedElementIds; };
+  }, []);
+
+  useEffect(() => {
+    if (doneRef.current || width === 0 || height === 0) return;
+    doneRef.current = true;
+    const ids = useSelectionStore.getState().selectedElementIds;
+    if (ids.size === 0 || !changedRef.current) return;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const id of ids) {
+      const node = getInternalNode(id);
+      if (!node) continue; // not on this tab, or hidden
+      const { x, y } = node.internals.positionAbsolute;
+      const w = node.measured?.width ?? node.width ?? 56;
+      const h = node.measured?.height ?? node.height ?? 56;
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h);
+    }
+    if (minX === Infinity) return;
+    const pad = 1.3;
+    const zoom = Math.min(1, width / ((maxX - minX) * pad), height / ((maxY - minY) * pad));
+    setCenter((minX + maxX) / 2, (minY + maxY) / 2, { zoom, duration: 300 });
+  }, [width, height, getInternalNode, setCenter]);
+
+  return null;
 }
 
 // Viewport controller - watches for pending viewport changes and applies them
@@ -3393,203 +3441,192 @@ export function Canvas() {
       setIsImportingPlacement(true);
 
       try {
-        // Calculate flow position from click
-        if (!reactFlowWrapper.current) return;
-        const bounds = reactFlowWrapper.current.getBoundingClientRect();
-        const flowPosition = {
-          x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
-          y: (event.clientY - bounds.top - viewport.y) / viewport.zoom,
-        };
+        // Counted for the progress shown in the placement bar
+        await withImportProgress(async () => {
+          // Calculate flow position from click
+          if (!reactFlowWrapper.current) return;
+          const bounds = reactFlowWrapper.current.getBoundingClientRect();
+          const flowPosition = {
+            x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
+            y: (event.clientY - bounds.top - viewport.y) / viewport.zoom,
+          };
 
-        // Calculate offset: we want the top-left of the bounding box to be at the click position
-        const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
-        const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
+          // Calculate offset: we want the top-left of the bounding box to be at the click position
+          const offsetX = flowPosition.x - importPlacementData.boundingBox.minX;
+          const offsetY = flowPosition.y - importPlacementData.boundingBox.minY;
 
-        // ── Pre-built elements/links (e.g. JSON mapping import): shift to click + paste ──
-        if (importPlacementData.prebuilt) {
-          const shifted = importPlacementData.prebuilt.elements.map((el) => ({
-            ...el,
-            position: { x: el.position.x + offsetX, y: el.position.y + offsetY },
-          }));
-          const placedLinks = importPlacementData.prebuilt.links;
-          pasteElements(shifted, placedLinks);
-          const placedIds = shifted.map((e) => e.id);
-          if (activeTabId) addTabMembers(activeTabId, placedIds);
-          pushAction({
-            type: 'create-elements',
-            undo: {},
-            redo: { elements: shifted, links: placedLinks, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
-          });
-          selectElements(placedIds);
-          toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
-          importPlacementData.onComplete?.();
-          setIsImportingPlacement(false);
-          exitImportPlacementMode();
-
-          // Download + attach media assets (after creation). Network-dependent (CORS):
-          // attach what succeeds, report failures. Runs async; doesn't block placement.
-          const assetJobs = importPlacementData.prebuilt.assets ?? [];
-          if (assetJobs.length > 0) {
-            void (async () => {
-              let ok = 0, fail = 0;
-              for (const job of assetJobs) {
-                for (const url of job.urls) {
-                  try {
-                    const res = await fetch(url);
-                    if (!res.ok) { fail++; continue; }
-                    const blob = await res.blob();
-                    if (blob.size > 50 * 1024 * 1024) { fail++; continue; } // 50 MB hard cap
-                    const name = (url.split('/').pop() || 'media').split('?')[0] || 'media';
-                    await addAsset(job.elementId, new File([blob], name, { type: blob.type || 'application/octet-stream' }));
-                    ok++;
-                  } catch { fail++; }
-                }
-              }
-              if (ok > 0 || fail > 0) toast.success(tPages('dossier.importPlacement.mediaResult', { ok, fail }));
-            })();
-          }
-          return;
-        }
-
-        if (!importPlacementData.file) { setIsImportingPlacement(false); exitImportPlacementMode(); return; }
-        let result: Awaited<ReturnType<typeof importService.importFromZip>>;
-        const fileName = importPlacementData.file.name.toLowerCase();
-        // Snapshot element IDs before import (for tab assignment after reload)
-        const preImportIds = new Set(elements.map(e => e.id));
-
-        if (importPlacementData.fileContent != null) {
-          // ── Non-ZIP format: import then shift new elements ──
-          const content = importPlacementData.fileContent;
-          const invId = importPlacementData.dossierId;
-
-          // Snapshot existing element IDs before import
-          const existingElements = await elementRepository.getByDossier(invId);
-          const existingIds = new Set(existingElements.map(e => e.id));
-
-          // Dispatch to the appropriate import function
-          if (fileName.endsWith('.osintracker')) {
-            result = await importService.importFromOsintracker(content, invId);
-          } else if (fileName.endsWith('.csv')) {
-            result = await importService.importFromCSV(content, invId, {
-              createMissingElements: importPlacementData.importOptions?.createMissingElements ?? true,
+          // ── Pre-built elements/links (e.g. JSON mapping import): shift to click + paste ──
+          if (importPlacementData.prebuilt) {
+            const shifted = importPlacementData.prebuilt.elements.map((el) => ({
+              ...el,
+              position: { x: el.position.x + offsetX, y: el.position.y + offsetY },
+            }));
+            const placedLinks = importPlacementData.prebuilt.links;
+            pasteElements(shifted, placedLinks);
+            const placedIds = shifted.map((e) => e.id);
+            if (activeTabId) addTabMembers(activeTabId, placedIds);
+            pushAction({
+              type: 'create-elements',
+              undo: {},
+              redo: { elements: shifted, links: placedLinks, elementIds: placedIds, linkIds: placedLinks.map((l) => l.id) },
             });
-          } else if (fileName.endsWith('.gexf')) {
-            const { importGEXF } = await import('../../services/importGephi');
-            result = await importGEXF(content, invId);
-          } else if (fileName.endsWith('.anx')) {
-            const { importANX } = await import('../../services/importANX');
-            result = await importANX(content, invId);
-          } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml') || fileName.endsWith('.drawio')) {
-            const { isANXFormat } = await import('../../services/importANX');
-            const { isDrawioFormat, importDrawio } = await import('../../services/importDrawio');
-            if (isDrawioFormat(content)) {
-              result = await importDrawio(content, invId);
-            } else if (isANXFormat(content)) {
+            selectElements(placedIds);
+            toast.success(tPages('dossier.importPlacement.success', { count: shifted.length }));
+            importPlacementData.onComplete?.();
+            setIsImportingPlacement(false);
+            exitImportPlacementMode();
+
+            // Download + attach media assets (after creation). Network-dependent (CORS):
+            // attach what succeeds, report failures. Runs async; doesn't block placement.
+            const assetJobs = importPlacementData.prebuilt.assets ?? [];
+            if (assetJobs.length > 0) {
+              void (async () => {
+                let ok = 0, fail = 0;
+                for (const job of assetJobs) {
+                  for (const url of job.urls) {
+                    try {
+                      const res = await fetch(url);
+                      if (!res.ok) { fail++; continue; }
+                      const blob = await res.blob();
+                      if (blob.size > 50 * 1024 * 1024) { fail++; continue; } // 50 MB hard cap
+                      const name = (url.split('/').pop() || 'media').split('?')[0] || 'media';
+                      await addAsset(job.elementId, new File([blob], name, { type: blob.type || 'application/octet-stream' }));
+                      ok++;
+                    } catch { fail++; }
+                  }
+                }
+                if (ok > 0 || fail > 0) toast.success(tPages('dossier.importPlacement.mediaResult', { ok, fail }));
+              })();
+            }
+            return;
+          }
+
+          if (!importPlacementData.file) { setIsImportingPlacement(false); exitImportPlacementMode(); return; }
+          let result: Awaited<ReturnType<typeof importService.importFromZip>>;
+          const fileName = importPlacementData.file.name.toLowerCase();
+          // Snapshot element IDs before import (for tab assignment after reload)
+          const preImportIds = new Set(elements.map(e => e.id));
+          const snapshot = await snapshotBeforeImport(importPlacementData.dossierId);
+
+          if (importPlacementData.fileContent != null) {
+            // ── Non-ZIP format: import then shift new elements ──
+            const content = importPlacementData.fileContent;
+            const invId = importPlacementData.dossierId;
+
+            const existingIds = snapshot.elementIds;
+            const geojsonOptions = importPlacementData.importOptions?.geojson;
+
+            // Dispatch to the appropriate import function
+            if (geojsonOptions || fileName.endsWith('.geojson')) {
+              result = await importService.importFromGeoJSON(content, invId, geojsonOptions);
+            } else if (fileName.endsWith('.osintracker')) {
+              result = await importService.importFromOsintracker(content, invId);
+            } else if (fileName.endsWith('.csv')) {
+              result = await importService.importFromCSV(content, invId, {
+                createMissingElements: importPlacementData.importOptions?.createMissingElements ?? true,
+              });
+            } else if (fileName.endsWith('.gexf')) {
+              const { importGEXF } = await import('../../services/importGephi');
+              result = await importGEXF(content, invId);
+            } else if (fileName.endsWith('.anx')) {
               const { importANX } = await import('../../services/importANX');
               result = await importANX(content, invId);
-            } else {
-              result = await importService.importFromGraphML(content, invId);
-            }
-          } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {
-            result = await importService.importFromGenealogy(importPlacementData.file, invId);
-          } else if (fileName.endsWith('.txt') || fileName.endsWith('.fec')) {
-            const { importFEC, isFECFormat } = await import('../../services/importFEC');
-            result = isFECFormat(content)
-              ? await importFEC(content, invId, importPlacementData.importOptions?.fec)
-              : { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
-          } else if (fileName.endsWith('.json') || fileName.endsWith('.excalidraw')) {
-            result = await importService.importFromJSON(content, invId);
-          } else {
-            // Fallback: try JSON
-            try {
-              JSON.parse(content);
-              result = await importService.importFromJSON(content, invId);
-            } catch {
-              result = { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
-            }
-          }
-
-          // Shift newly created elements to the click position
-          if (result.success && result.elementsImported > 0) {
-            const allElements = await elementRepository.getByDossier(invId);
-            const newElements = allElements.filter(e => !existingIds.has(e.id));
-
-            if (newElements.length > 0) {
-              // Compute bounding box of new elements
-              let minX = Infinity, minY = Infinity;
-              for (const el of newElements) {
-                if (el.position.x < minX) minX = el.position.x;
-                if (el.position.y < minY) minY = el.position.y;
+            } else if (fileName.endsWith('.graphml') || fileName.endsWith('.xml') || fileName.endsWith('.drawio')) {
+              const { isANXFormat } = await import('../../services/importANX');
+              const { isDrawioFormat, importDrawio } = await import('../../services/importDrawio');
+              if (isDrawioFormat(content)) {
+                result = await importDrawio(content, invId);
+              } else if (isANXFormat(content)) {
+                const { importANX } = await import('../../services/importANX');
+                result = await importANX(content, invId);
+              } else {
+                result = await importService.importFromGraphML(content, invId);
               }
-
-              // Shift so top-left of new elements lands at click position
-              const shiftX = flowPosition.x - minX;
-              const shiftY = flowPosition.y - minY;
-
-              const positionUpdates = newElements.map(el => ({
-                id: el.id,
-                position: {
-                  x: el.position.x + shiftX,
-                  y: el.position.y + shiftY,
-                },
-              }));
-
-              await elementRepository.updatePositions(positionUpdates);
+            } else if (fileName.endsWith('.ged') || fileName.endsWith('.gw')) {
+              result = await importService.importFromGenealogy(importPlacementData.file, invId);
+            } else if (fileName.endsWith('.txt') || fileName.endsWith('.fec')) {
+              const { importFEC, isFECFormat } = await import('../../services/importFEC');
+              result = isFECFormat(content)
+                ? await importFEC(content, invId, importPlacementData.importOptions?.fec)
+                : { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
+            } else if (fileName.endsWith('.json') || fileName.endsWith('.excalidraw')) {
+              result = await importService.importFromJSON(content, invId);
+            } else {
+              // Fallback: try JSON
+              try {
+                JSON.parse(content);
+                result = await importService.importFromJSON(content, invId);
+              } catch {
+                result = { success: false, elementsImported: 0, linksImported: 0, assetsImported: 0, reportImported: false, errors: ['Unsupported format'], warnings: [] };
+              }
             }
-          }
-        } else {
-          // ── ZIP format: import with built-in offset ──
-          result = await importService.importFromZip(
-            importPlacementData.file,
-            importPlacementData.dossierId,
-            { x: offsetX, y: offsetY }
-          );
-        }
 
-        if (result.success) {
-          toast.success(tPages('dossier.importPlacement.success', {
-            count: result.elementsImported
-          }));
+            // Shift newly created elements to the click position
+            if (result.success && result.elementsImported > 0) {
+              const allElements = await elementRepository.getByDossier(invId);
+              const newElements = allElements.filter(e => !existingIds.has(e.id));
 
-          // Save shared-mode state before closing Y.Doc so we can restore it after reload
-          const syncState = syncService.getState();
-          const wasShared = syncState.mode === 'shared';
-          const savedEncryptionKey = syncService.getEncryptionKey();
-          const savedRoomId = syncState.roomId;
+              if (newElements.length > 0) {
+                // Compute bounding box of new elements
+                let minX = Infinity, minY = Infinity;
+                for (const el of newElements) {
+                  if (el.position.x < minX) minX = el.position.x;
+                  if (el.position.y < minY) minY = el.position.y;
+                }
 
-          // Close Y.Doc, delete its persistence, and reload from Dexie
-          // This forces rebuild of Y.Doc from Dexie which now includes imported elements
-          await syncService.close();
-          await syncService.deleteLocalData(importPlacementData.dossierId);
-          await loadDossier(importPlacementData.dossierId);
+                // Shift so top-left of new elements lands at click position
+                const shiftX = flowPosition.x - minX;
+                const shiftY = flowPosition.y - minY;
 
-          // Restore shared mode if we were collaborating
-          if (wasShared && savedEncryptionKey && savedRoomId) {
-            await syncService.openShared(
+                const positionUpdates = newElements.map(el => ({
+                  id: el.id,
+                  position: {
+                    x: el.position.x + shiftX,
+                    y: el.position.y + shiftY,
+                  },
+                }));
+
+                await elementRepository.updatePositions(positionUpdates);
+              }
+            }
+          } else {
+            // ── ZIP format: import with built-in offset ──
+            result = await importService.importFromZip(
+              importPlacementData.file,
               importPlacementData.dossierId,
-              savedEncryptionKey,
-              savedRoomId
+              { x: offsetX, y: offsetY }
             );
           }
 
-          // Request fitView to show all elements including imported ones
-          requestFitView();
+          if (result.success) {
+            toast.success(tPages('dossier.importPlacement.success', {
+              count: result.elementsImported
+            }));
 
-          // Add imported elements to active tab
-          if (activeTabId) {
-            const importedIds = useDossierStore.getState().elements
-              .filter(el => !preImportIds.has(el.id))
-              .map(el => el.id);
-            if (importedIds.length > 0) {
-              addTabMembers(activeTabId, importedIds);
+            // The import wrote to Dexie: bring it into the open Y.Doc (kept, with
+            // its comments and shared session), then reload assets and report.
+            await commitImportToYDoc(snapshot);
+            await loadDossier(importPlacementData.dossierId);
+
+            // Request fitView to show all elements including imported ones
+            requestFitView();
+
+            // Add imported elements to active tab
+            if (activeTabId) {
+              const importedIds = useDossierStore.getState().elements
+                .filter(el => !preImportIds.has(el.id))
+                .map(el => el.id);
+              if (importedIds.length > 0) {
+                addTabMembers(activeTabId, importedIds);
+              }
             }
-          }
 
-          // Call completion callback if provided
-          importPlacementData.onComplete?.();
-        } else {
-          toast.error(result.errors[0] || tPages('dossier.importPlacement.error'));
-        }
+            // Call completion callback if provided
+            importPlacementData.onComplete?.();
+          } else {
+            toast.error(result.errors[0] || tPages('dossier.importPlacement.error'));
+          }
+        });
       } catch (error) {
         toast.error(tPages('dossier.importPlacement.error'));
       } finally {
@@ -4798,6 +4835,7 @@ export function Canvas() {
             />
             <CanvasCaptureHandler />
             <ViewportController />
+            <RevealSelectionOnOpen />
             <FitViewController />
             <DraggableMinimap />
             <ImportPlacementOverlay />

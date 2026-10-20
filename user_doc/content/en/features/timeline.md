@@ -26,6 +26,8 @@ Elements having a **date** appear on the timeline:
 - **Point**: single date
 - Horizontal position = moment in time
 
+A date property (a birth date, for instance) can be taken off the timeline from the **Filters** panel → **Date properties on the timeline**. See [Filters and Views]({{< relref "filters-views" >}}).
+
 
 ### Links with Period
 
@@ -139,6 +141,8 @@ Zoom automatically adjusts the scale:
 | **Ctrl+click** | Adds to selection |
 
 Selection is synchronized with the canvas: selecting on the timeline selects on the canvas, and vice versa.
+
+If the selection changed in another view, the timeline scrolls to the selected element's date and row when you come back. An unchanged selection keeps your position.
 
 ---
 

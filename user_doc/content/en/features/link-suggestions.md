@@ -60,7 +60,7 @@ Settings are remembered in your browser; they are not shared with other collabor
 
 ### Places and Meetings
 
-**Places within** compares the positions of the elements on the map, without dates: two places close to each other.
+**Places within** compares the positions of the elements on the map, without dates: two places close to each other. Radius options: 50 m, 100 m, 500 m, 1 km, 5 km, 10 km, 20 km, 50 km. The meetings radius stays at 5 km max.
 
 **Meetings within** compares **dated presences**: each element's dated, located events, and the element itself when it has a position and a date.
 
@@ -76,6 +76,14 @@ The reason reads:
 
 The time and distance shown are those of the real points.
 
+### Between Two Tags
+
+The **Between [tag] and [tag]** line keeps only the suggestions joining an element of the first tag to an element of the second, for all rules. Pick the two tags; the cross clears the filter.
+
+In this mode, the **Places within** rule compares every element of one tag with every element of the other, with no crowd limit (normally a point with more than 10 neighbors yields nothing). When one of them is a zone (polygon), the distance is measured to the zone's edge; a point inside the zone is reported by the **Zones** rule. On each row, the element of the first tag is listed first.
+
+Example: offences near sites imported from GeoJSON.
+
 {{< hint warning >}}
 **A suggestion is not evidence.** A meeting can be a coincidence; a shared value, a typo. Check the original elements before accepting, and keep a small radius for meetings.
 {{< /hint >}}
@@ -86,6 +94,8 @@ The time and distance shown are those of the real points.
 
 - **Hover** a suggestion: its elements are highlighted on the canvas
 - **Click** the suggestion: selects its elements
+- **Click an element's name**: it is selected alone and centered in the current view (canvas, map or timeline), and a summary shows under the row (tags, first 6 properties, **Open details** link to the Detail tab). Click the name again to hide it. Each element is on its own line; a long name wraps (2 lines at most)
+- **Relevance / Distance**, next to the count (shown when suggestions have distances): sorted by distance, places, meetings and zones come first, nearest first (a point in a zone counts as 0 m); the others follow in their order
 - **✓** accepts, **✕** dismisses
 - **Ticking several rows** (or the header box to tick all) shows **Accept (N)** and **Dismiss (N)**
 - The **Search** field filters the list by element name or reason text
@@ -121,7 +131,7 @@ A dismissed suggestion does not come back in later analyses.
 
 ## Large Dossiers
 
-The analysis handles dossiers of thousands of elements and tens of thousands of dated events. The list shows the first 200 suggestions; use the search or the filters to narrow down.
+The analysis handles dossiers of thousands of elements and tens of thousands of dated events. The list shows suggestions 200 at a time: the **N more** button shows the next 200. Use the search or the filters to narrow down.
 
 If the message **"Meetings stopped: too many positions for this radius and window"** shows, reduce the radius or the window of meetings.
 

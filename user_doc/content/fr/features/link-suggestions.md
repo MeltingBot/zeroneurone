@@ -60,7 +60,7 @@ Les réglages sont retenus dans votre navigateur ; ils ne sont pas partagés ave
 
 ### Lieux et rencontres
 
-**Lieux à moins de** compare la position des éléments sur la carte, sans les dates : deux lieux proches.
+**Lieux à moins de** compare la position des éléments sur la carte, sans les dates : deux lieux proches. Rayons proposés : 50 m, 100 m, 500 m, 1 km, 5 km, 10 km, 20 km, 50 km. Le rayon des rencontres reste limité à 5 km.
 
 **Rencontres à moins de** compare les **présences datées** : les événements datés et géolocalisés de chaque élément, et l'élément lui-même s'il a une position et une date.
 
@@ -76,6 +76,14 @@ La raison indique :
 
 L'heure et la distance affichées sont celles des points réels.
 
+### Entre deux tags
+
+La ligne **Entre [tag] et [tag]** restreint les suggestions à celles qui relient un élément du premier tag à un élément du second, pour toutes les règles. Choisissez les deux tags ; la croix efface le filtre.
+
+Dans ce mode, la règle **Lieux à moins de** compare chaque élément d'un tag à chaque élément de l'autre, sans limite de foule (d'ordinaire, un point qui a plus de 10 voisins ne produit rien). Quand l'un des deux est une zone (polygone), la distance est mesurée jusqu'au bord de la zone ; un point situé dans la zone est signalé par la règle **Zones**. Sur chaque ligne, l'élément du premier tag est cité en premier.
+
+Exemple : des infractions à proximité de sites importés en GeoJSON.
+
 {{< hint warning >}}
 **Une suggestion n'est pas une preuve.** Une rencontre peut être une coïncidence ; une valeur partagée, une erreur de saisie. Vérifiez les éléments d'origine avant d'accepter, et gardez un petit rayon pour les rencontres.
 {{< /hint >}}
@@ -86,6 +94,8 @@ L'heure et la distance affichées sont celles des points réels.
 
 - **Survol** d'une suggestion : ses éléments sont mis en évidence sur le canvas
 - **Clic** sur la suggestion : sélectionne ses éléments
+- **Clic sur le nom** d'un élément : il est sélectionné seul et centré dans la vue courante (canvas, carte ou timeline), et un résumé s'affiche sous la ligne (tags, 6 premières propriétés, lien **Ouvrir la fiche** vers l'onglet Détail). Un second clic sur le nom le masque. Chaque élément est sur sa propre ligne ; un nom long passe à la ligne (2 lignes au plus)
+- **Pertinence / Distance**, à côté du compteur (affiché quand des suggestions ont une distance) : en tri par distance, les lieux, rencontres et zones passent en tête, du plus proche au plus loin (un point dans une zone compte pour 0 m) ; les autres suivent dans leur ordre
 - **✓** accepte, **✕** écarte
 - **Cocher plusieurs lignes** (ou la case de tête pour tout cocher) affiche **Accepter (N)** et **Écarter (N)**
 - Le champ **Rechercher** filtre la liste par nom d'élément ou par texte des raisons
@@ -121,7 +131,7 @@ Une suggestion écartée ne revient pas aux analyses suivantes.
 
 ## Gros dossiers
 
-L'analyse tient des dossiers de plusieurs milliers d'éléments et de dizaines de milliers d'événements datés. La liste affiche les 200 premières suggestions ; utilisez la recherche ou les filtres pour cibler.
+L'analyse tient des dossiers de plusieurs milliers d'éléments et de dizaines de milliers d'événements datés. La liste affiche les suggestions par tranches de 200 : le bouton **N de plus** affiche les 200 suivantes. Utilisez la recherche ou les filtres pour cibler.
 
 Si le message **« Rencontres interrompues : trop de positions pour ce rayon et cette fenêtre »** apparaît, réduisez le rayon ou la fenêtre des rencontres.
 

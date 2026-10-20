@@ -17,6 +17,7 @@ import type {
   Confidence,
   ElementShape,
   ElementVisual,
+  TagSetDefaultVisual,
   ElementEvent,
   LinkStyle,
   Property,
@@ -975,9 +976,22 @@ class ImportService {
   async importFromGeoJSON(
     content: string,
     targetDossierId: DossierId,
-    options: { labelField?: string; fields?: string[] } = {}
+    options: { labelField?: string; fields?: string[]; tag?: string } = {}
   ): Promise<ImportResult> {
     const { labelField } = options;
+    // Tag given to every feature; an existing tag family lends its look, a
+    // new name creates one (as the custom JSON import does)
+    const tagName = options.tag?.trim() || '';
+    let tagVisual: TagSetDefaultVisual | null = null;
+    if (tagName) {
+      const tagStore = useTagSetStore.getState();
+      if (!tagStore.isLoaded) await tagStore.load();
+      const tagSet = tagStore.getByName(tagName) ?? await tagStore.create({
+        name: tagName, description: '', defaultVisual: { color: '#fcd34d', shape: 'circle', icon: null },
+        suggestedProperties: [], isBuiltIn: false,
+      });
+      tagVisual = tagSet.defaultVisual;
+    }
     const keptFields = options.fields ? new Set(options.fields) : null;
     const result: ImportResult = {
       success: false,
@@ -1067,10 +1081,13 @@ class ImportService {
           if (conf >= 0 && conf <= 100) confidence = conf as Confidence;
         }
 
-        // Extract color/shape from properties (for re-import of ZN geojson exports)
-        const color = String(props.color || props.couleur || DEFAULT_ELEMENT_VISUAL.color);
+        if (tagName && !tags.includes(tagName)) tags.push(tagName);
+
+        // Extract color/shape from properties (for re-import of ZN geojson
+        // exports), else from the chosen tag family
+        const color = String(props.color || props.couleur || tagVisual?.color || DEFAULT_ELEMENT_VISUAL.color);
         const shapeRaw = String(props.shape || props.forme || '');
-        const shape = this.isValidShape(shapeRaw) ? shapeRaw as ElementShape : DEFAULT_ELEMENT_VISUAL.shape;
+        const shape = this.isValidShape(shapeRaw) ? shapeRaw as ElementShape : (tagVisual?.shape ?? DEFAULT_ELEMENT_VISUAL.shape);
 
         // Build custom properties from remaining keys
         const knownProps = new Set([
@@ -1191,6 +1208,7 @@ class ImportService {
             ...DEFAULT_ELEMENT_VISUAL,
             color,
             shape,
+            ...(tagVisual?.icon ? { icon: tagVisual.icon } : {}),
           },
           assetIds: [],
           parentGroupId: null,

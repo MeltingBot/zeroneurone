@@ -348,6 +348,10 @@
       "reliableSources": "Надійні джерела",
       "reliableSourcesDesc": "Залишити лише джерела, оцінені як надійні"
     },
+    "dateProperties": {
+      "title": "Властивості дати в хронології",
+      "badge": "{{key}} поза хронологією"
+    },
     "property": {
       "hasProperty": "Має властивість",
       "showAsBadge": "Показувати як значок на елементах"
@@ -394,6 +398,8 @@
     "selectAll": "Вибрати все",
     "saveAsView": "Зберегти як вигляд",
     "recentQueries": "Нещодавні",
+    "showResults": "Показати результати",
+    "invertSelection": "Інвертувати виділення",
     "deselectAll": "Зняти вибір з усіх результатів",
     "clearHistory": "Очистити історію",
     "syntaxExample1": "tag = \"особа\" AND місто = \"Париж\"",
@@ -699,6 +705,14 @@
     "search": "Пошук",
     "clearSearch": "Очистити пошук",
     "noMatch": "Нічого не знайдено",
+    "between": "Між",
+    "betweenFirst": "Перший тег",
+    "betweenSecond": "Другий тег",
+    "betweenClear": "Прибрати фільтр тегів",
+    "openDetail": "Відкрити картку",
+    "sortLabel": "Сортувати",
+    "sortRelevance": "Релевантність",
+    "sortDistance": "Відстань",
     "and": "і",
     "placesHint": "Розташування елементів на мапі, без урахування дат",
     "meetingsHint": "Датовані події в тому самому місці й у той самий час",

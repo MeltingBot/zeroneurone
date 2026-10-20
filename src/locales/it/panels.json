@@ -349,6 +349,10 @@
       "reliableSources": "Fonti affidabili",
       "reliableSourcesDesc": "Mantieni solo le fonti valutate come affidabili"
     },
+    "dateProperties": {
+      "title": "Proprietà data sulla timeline",
+      "badge": "{{key}} fuori dalla timeline"
+    },
     "property": {
       "hasProperty": "Ha la proprietà",
       "showAsBadge": "Mostra come badge sugli elementi"
@@ -395,6 +399,8 @@
     "selectAll": "Seleziona tutti",
     "saveAsView": "Salva come vista",
     "recentQueries": "Recenti",
+    "showResults": "Mostra risultati",
+    "invertSelection": "Inverti selezione",
     "deselectAll": "Deseleziona tutti i risultati",
     "clearHistory": "Cancella cronologia",
     "syntaxExample1": "tag = \"persona\" AND città = \"Parigi\"",
@@ -680,6 +686,14 @@
     "search": "Cerca",
     "clearSearch": "Cancella ricerca",
     "noMatch": "Nessun risultato",
+    "between": "Tra",
+    "betweenFirst": "Primo tag",
+    "betweenSecond": "Secondo tag",
+    "betweenClear": "Rimuovi il filtro dei tag",
+    "openDetail": "Apri la scheda",
+    "sortLabel": "Ordina",
+    "sortRelevance": "Pertinenza",
+    "sortDistance": "Distanza",
     "and": "e",
     "placesHint": "Posizioni degli elementi sulla mappa, senza tenere conto delle date",
     "meetingsHint": "Eventi datati nello stesso luogo, nello stesso momento",

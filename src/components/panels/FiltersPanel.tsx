@@ -222,6 +222,7 @@ export function FiltersPanel() {
     hideElements,
     showElement,
     showAllElements,
+    displayMode,
   } = useViewStore();
   const { isolated } = useInsightsStore();
   const selectElements = useSelectionStore((s) => s.selectElements);
@@ -308,6 +309,27 @@ export function FiltersPanel() {
     elements.forEach((el) => el.properties.forEach((prop) => keySet.add(prop.key)));
     return Array.from(keySet).sort();
   }, [elements]);
+
+  // Date/datetime property keys, with how many elements fill them: on the
+  // timeline each can be left off (a birth date is rarely an event)
+  const datePropertyCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    elements.forEach((el) => el.properties.forEach((prop) => {
+      if ((prop.type === 'date' || prop.type === 'datetime') && prop.value) {
+        counts.set(prop.key, (counts.get(prop.key) || 0) + 1);
+      }
+    }));
+    return Array.from(counts.entries())
+      .map(([key, count]) => ({ key, count }))
+      .sort((a, b) => a.key.localeCompare(b.key));
+  }, [elements]);
+  const excludedDateProperties = filters.excludedDateProperties ?? [];
+  const toggleDateProperty = useCallback((key: string) => {
+    const current = filters.excludedDateProperties ?? [];
+    setFilters({
+      excludedDateProperties: current.includes(key) ? current.filter((k) => k !== key) : [...current, key],
+    });
+  }, [filters.excludedDateProperties, setFilters]);
 
   // Quick filter params
   const quickFilterParams: QuickFilterParams = useMemo(
@@ -546,6 +568,29 @@ export function FiltersPanel() {
           )}
         </div>
 
+        {/* Date properties shown on the timeline */}
+        {displayMode === 'timeline' && datePropertyCounts.length > 0 && (
+          <div className="space-y-1.5" data-testid="filters-date-properties">
+            <label className="text-xs font-medium text-text-secondary">
+              {t('filters.dateProperties.title')}
+            </label>
+            <div className="space-y-1">
+              {datePropertyCounts.map(({ key, count }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!excludedDateProperties.includes(key)}
+                    onChange={() => toggleDateProperty(key)}
+                    className="w-3.5 h-3.5 rounded border-border-default text-accent focus:ring-accent focus:ring-offset-0"
+                  />
+                  <span className="text-xs text-text-primary truncate">{key}</span>
+                  <span className="ml-auto text-[10px] text-text-tertiary">{count}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Grading filter (Europol / Admiralty) or confidence filter */}
         {evaluationScale ? (
           <div className="space-y-2">
@@ -639,6 +684,13 @@ export function FiltersPanel() {
                   onRemove={() => handlePropertyChange('')}
                 />
               )}
+              {excludedDateProperties.map((key) => (
+                <FilterBadge
+                  key={`date-${key}`}
+                  label={t('filters.dateProperties.badge', { key })}
+                  onRemove={() => toggleDateProperty(key)}
+                />
+              ))}
               {filters.minConfidence !== null && evaluationModel === 'zeroneurone' && (
                 <FilterBadge
                   label={`≥${filters.minConfidence}%`}

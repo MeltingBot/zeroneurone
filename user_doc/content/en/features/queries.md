@@ -236,9 +236,13 @@ After execution, two display modes are available (can be combined):
 
 Mode buttons are at the bottom of the queries panel, next to the results counter.
 
+When the query finds links, the canvas filter keeps the elements at both ends of the found links highlighted and dims the rest.
+
 ### Result actions
 
+- **Show results** (target icon): frames the view on what the query found, link ends included (canvas; map for geolocated elements; the timeline goes to the first one)
 - **Select all**: selects all matching elements and links on the canvas
+- **Invert selection**: selects what the query did not find, of the same kind as its results (the other elements, or the other links); hidden elements are left out. Clicking again selects the results again; the button stays highlighted while the inverse is selected
 - **Save as view**: creates a saved view from the current query results
 - **Click a row** (table mode): selects the element and centers the viewport on it
 

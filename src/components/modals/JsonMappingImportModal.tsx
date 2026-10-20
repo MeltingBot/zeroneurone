@@ -36,10 +36,14 @@ import {
   type CoordOrder,
   type ChildMapping,
   type MappingConfig,
+  type TableConfig,
+  type FilterCond,
+  type FilterOp,
 } from '../../utils/jsonMapping';
 import { computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { JsonMappingManagerModal } from './JsonMappingManagerModal';
+import { TagCombobox } from './TagCombobox';
 import { JsonTablesDiagram, type DiagramTable } from './JsonTablesDiagram';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 
@@ -53,15 +57,13 @@ interface JsonMappingImportModalProps {
   initialJson?: string;
 }
 
-const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'link', 'asset', 'source', 'lat', 'lng', 'latlng', 'id', 'ref', 'pivot', 'polygon'];
+const TARGETS: MappingTarget[] = ['property', 'date', 'country', 'link', 'asset', 'notes', 'source', 'lat', 'lng', 'latlng', 'id', 'ref', 'pivot', 'polygon'];
 
 // Large-file handling: sample records for the UI (detection/preview), but import them all.
 const SAMPLE = 2000;           // records used for field detection / preview
 const LAYOUT_CAP = 3000;       // skip auto-layout above this element count (force layout too slow)
 const LARGE_TEXT = 1_000_000;  // chars: above this, don't render the JSON in the textarea
 
-type FilterOp = 'contains' | 'equals' | 'nonempty';
-interface FilterCond { field: string; op: FilterOp; value: string }
 
 /** Everything the analyst sets for one table (record source) of the payload */
 interface SourceConfig {
@@ -73,6 +75,18 @@ interface SourceConfig {
   filters: FilterCond[];
   filterMode: 'all' | 'any';
   maxImport: number;
+  /** Reference field whose target element receives the records (no element per record) */
+  mergeField?: string;
+}
+
+/**
+ * The table a table's records are folded into, when its merge field is a
+ * reference to another imported table; null otherwise (one element per record).
+ */
+function mergeTargetOf(key: string, cfg: Pick<SourceConfig, 'mergeField' | 'mapping'>, included: Set<string>): string | null {
+  const m = cfg.mergeField ? cfg.mapping[cfg.mergeField] : undefined;
+  if (!m?.enabled || m.target !== 'ref' || !m.refSource || m.refSource === key || !included.has(m.refSource)) return null;
+  return m.refSource;
 }
 
 /** Display name of a record source */
@@ -119,6 +133,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const [childMappings, setChildMappings] = useState<Record<string, ChildMapping>>({});
   const [labelTemplate, setLabelTemplate] = useState('');
   const [tagName, setTagName] = useState('');
+  const [mergeField, setMergeField] = useState<string | undefined>(undefined);
   const [ignoreEmpty, setIgnoreEmpty] = useState(true);
   const [layout, setLayout] = useState<LayoutType>('force');
   const [creating, setCreating] = useState(false);
@@ -132,6 +147,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const templates = useJsonMappingStore((s) => s.templates);
   const loadTemplates = useJsonMappingStore((s) => s.load);
   const saveTemplate = useJsonMappingStore((s) => s.save);
+  const updateTemplate = useJsonMappingStore((s) => s.update);
+  const [templateSaved, setTemplateSaved] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [savingName, setSavingName] = useState<string | null>(null);
   const [suggestionDismissed, setSuggestionDismissed] = useState(false);
@@ -141,7 +158,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
   const reset = useCallback(() => {
     setText(''); setParsed(null); setError(null); setLoadedInfo(null); setSrcKey(''); setConfigs({}); setIncluded(new Set());
-    setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
+    setMapping({}); setChildMappings({}); setLabelTemplate(''); setTagName(''); setMergeField(undefined); setIgnoreEmpty(true); setLayout('force'); setCreating(false);
     setSavingName(null); setSuggestionDismissed(false); setSelectedTemplateId('');
     setFilters([]); setFilterMode('all'); setMaxImport(2000);
   }, []);
@@ -187,7 +204,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   const wholeObject = t('importJsonMapping.wholeObject');
 
   /** The config being edited, as a snapshot */
-  const snapshot = (): SourceConfig => ({ fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport });
+  const snapshot = (): SourceConfig => ({ fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField });
 
   /** Id field of a table: the one its config maps to 'id', else a top-level "id" */
   const idFieldOf = useCallback((key: string, scalar: FieldInfo[]) => {
@@ -284,8 +301,8 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     setFilters(cfg.filters);
     setFilterMode(cfg.filterMode);
     setMaxImport(cfg.maxImport);
+    setMergeField(cfg.mergeField);
     setSuggestionDismissed(false);
-    setSelectedTemplateId('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldSig, activeKey]);
 
@@ -303,38 +320,98 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
   }, [templates, signature, fields.length, suggestionDismissed]);
 
   // Apply a saved config: only fields present in the current shape are overridden.
+  // A multi-table template sets every table of the payload it knows, and the
+  // tables to import together; an older one sets the open table only.
   const applyConfig = useCallback((cfg: MappingConfig) => {
-    setLabelTemplate(cfg.labelTemplate);
-    setTagName(cfg.tagName);
+    const keep = <T,>(current: Record<string, T>, saved: Record<string, T>) => {
+      const nxt = { ...current };
+      for (const k of Object.keys(saved)) if (nxt[k]) nxt[k] = saved[k];
+      return nxt;
+    };
+    const own = cfg.tables?.[activeKey] ?? (cfg.tables ? null : cfg);
     setIgnoreEmpty(cfg.ignoreEmpty);
     setLayout((LAYOUTS.includes(cfg.layout as LayoutType) ? cfg.layout : 'force') as LayoutType);
-    setMapping((prev) => {
-      const nxt = { ...prev };
-      for (const k of Object.keys(cfg.mapping)) if (nxt[k]) nxt[k] = cfg.mapping[k];
-      return nxt;
-    });
-    setChildMappings((prev) => {
-      const nxt = { ...prev };
-      for (const k of Object.keys(cfg.childMappings)) if (nxt[k]) nxt[k] = cfg.childMappings[k];
-      return nxt;
-    });
+    if (own) {
+      setLabelTemplate(own.labelTemplate);
+      setTagName(own.tagName);
+      setMapping((prev) => keep(prev, own.mapping));
+      setChildMappings((prev) => keep(prev, own.childMappings));
+      if (own.filters) setFilters(own.filters);
+      if (own.filterMode) setFilterMode(own.filterMode);
+      if (own.maxImport !== undefined) setMaxImport(own.maxImport);
+      setMergeField(own.mergeField);
+    }
+    if (cfg.tables) {
+      const present = new Set(sources.map((src) => sourceKey(src)));
+      const others: Record<string, SourceConfig> = {};
+      for (const [key, saved] of Object.entries(cfg.tables)) {
+        if (key === activeKey || !present.has(key)) continue;
+        const base = configs[key] ?? autoConfigFor(key);
+        if (!base) continue;
+        others[key] = {
+          ...base,
+          labelTemplate: saved.labelTemplate,
+          tagName: saved.tagName,
+          mapping: keep(base.mapping, saved.mapping),
+          childMappings: keep(base.childMappings, saved.childMappings),
+          filters: saved.filters ?? base.filters,
+          filterMode: saved.filterMode ?? base.filterMode,
+          maxImport: saved.maxImport ?? base.maxImport,
+          mergeField: saved.mergeField,
+        };
+      }
+      setConfigs((c) => ({ ...c, ...others }));
+      const inc = (cfg.included ?? []).filter((key) => present.has(key));
+      if (inc.length > 0) setIncluded(new Set(inc));
+    }
     setSuggestionDismissed(true);
-  }, []);
+  }, [activeKey, sources, configs, autoConfigFor]);
 
-  const handleSaveTemplate = useCallback(async (name: string) => {
-    const n = name.trim();
-    if (!n) return;
-    const config: MappingConfig = { labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings };
+  // With a template selected, saving updates it; otherwise it asks for a name
+  // and creates one (`name`).
+  const handleSaveTemplate = useCallback(async (name: string | null) => {
+    const selected = templates.find((x) => x.id === selectedTemplateId);
+    const n = name?.trim() ?? '';
+    if (!selected && !n) return;
+    // Every checked table, the open one as being edited
+    const all: Record<string, SourceConfig> = { ...configs, [activeKey]: snapshot() };
+    const tables: Record<string, TableConfig> = {};
+    for (const key of new Set([activeKey, ...included])) {
+      const c = all[key] ?? autoConfigFor(key);
+      if (!c) continue;
+      tables[key] = {
+        labelTemplate: c.labelTemplate, tagName: c.tagName, mapping: c.mapping, childMappings: c.childMappings,
+        filters: c.filters, filterMode: c.filterMode, maxImport: c.maxImport, mergeField: c.mergeField,
+      };
+    }
+    // Updating: keep the template's tables this payload does not have
+    const present = new Set(sources.map((src) => sourceKey(src)));
+    const kept = Object.entries(selected?.config.tables ?? {}).filter(([key]) => !present.has(key));
+    const config: MappingConfig = {
+      labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings,
+      filters, filterMode, maxImport, mergeField,
+      tables: { ...Object.fromEntries(kept), ...tables }, included: [...included],
+    };
     try {
-      const tpl = await saveTemplate(n, signature, config);
-      setSelectedTemplateId(tpl.id);
+      if (selected) {
+        await updateTemplate(selected.id, { signature, config });
+        setTemplateSaved(true);
+        setTimeout(() => setTemplateSaved(false), 1500);
+      } else {
+        const tpl = await saveTemplate(n, signature, config);
+        setSelectedTemplateId(tpl.id);
+      }
       setSavingName(null);
       setError(null);
     } catch (e) {
       console.error('Save mapping template failed', e);
       setError(t('importJsonMapping.saveTemplateError'));
     }
-  }, [labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings, signature, saveTemplate, t]);
+    // snapshot() reads the edited state listed here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [labelTemplate, tagName, ignoreEmpty, layout, mapping, childMappings, signature, saveTemplate, t,
+    configs, activeKey, included, autoConfigFor, fieldSig, filters, filterMode, maxImport, mergeField,
+    templates, selectedTemplateId, sources, updateTemplate]);
 
   const parse = useCallback((raw: string) => {
     if (!raw.trim()) { setError(null); setParsed(null); return; }
@@ -347,6 +424,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       setSrcKey(def ? sourceKey(def) : '');
       setConfigs({});
       setIncluded(new Set(def ? [sourceKey(def)] : []));
+      setSelectedTemplateId('');
       if (!def) setError(t('importJsonMapping.noArray'));
     } catch {
       setParsed(null);
@@ -443,7 +521,29 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     }
     return counts;
   }, [included, activeKey, importCount, configs, autoConfigFor, planFor]);
-  const totalImportCount = [...includedCounts.values()].reduce((sum, n) => sum + n, 0);
+  // References of the open table to another checked table: each can carry
+  // its records into the element they point to
+  const mergeSelectId = useId();
+  const mergeCandidates = useMemo(() => scalarFields
+    .filter((f) => {
+      const m = mapping[f.key];
+      return m?.enabled && m.target === 'ref' && !!m.refSource && m.refSource !== activeKey && included.has(m.refSource);
+    })
+    .map((f) => {
+      const src = sources.find((x) => sourceKey(x) === mapping[f.key].refSource);
+      return { field: f.key, table: src ? sourceName(src, wholeObject) : String(mapping[f.key].refSource) };
+    }), [scalarFields, mapping, activeKey, included, sources, wholeObject]);
+
+  // Records of a table folded into another one create no element
+  const mergedTables = useMemo(() => {
+    const merged = new Set<string>();
+    for (const key of included) {
+      const cfg = key === activeKey ? { mapping, mergeField } : configs[key];
+      if (cfg && mergeTargetOf(key, cfg, included)) merged.add(key);
+    }
+    return merged;
+  }, [included, activeKey, mapping, mergeField, configs]);
+  const totalImportCount = [...includedCounts.entries()].reduce((sum, [key, n]) => sum + (mergedTables.has(key) ? 0 : n), 0);
 
   // The checked tables and their references, for the diagram
   const diagramTables = useMemo((): DiagramTable[] => tableSources
@@ -490,6 +590,10 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       .map((key) => { const cfg = all[key] ?? autoConfigFor(key); return cfg ? planFor(key, cfg) : null; })
       .filter((p): p is NonNullable<typeof p> => !!p && p.raw.length > 0);
     if (plans.length === 0) return;
+    // Tables folded into another one come after it: their records look up
+    // the elements it created
+    const mergeTargets = new Map(plans.map((p) => [p.key, mergeTargetOf(p.key, p.cfg, included)]));
+    plans.sort((a, b) => Number(!!mergeTargets.get(a.key)) - Number(!!mergeTargets.get(b.key)));
     setCreating(true);
     try {
       const tagStore = useTagSetStore.getState();
@@ -520,6 +624,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       const buildProps = (flat: Record<string, unknown>, fieldList: FieldInfo[], getMap: (k: string) => FieldMapping | undefined) => {
         const properties: Property[] = [];
         let source = '';
+        const notesParts: { key: string; text: string }[] = [];
         let lat: number | null = null, lng: number | null = null;
         for (const f of fieldList) {
           const m = getMap(f.key);
@@ -532,6 +637,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
           switch (m.target) {
             case 'id': case 'ref': case 'polygon': case 'latlng': case 'asset': case 'pivot': break; // handled separately
             case 'source': source = source ? `${source} | ${coerced}` : String(coerced); break;
+            case 'notes': notesParts.push({ key: propKey, text: String(coerced) }); break;
             case 'lat': lat = coerced as number; break;
             case 'lng': lng = coerced as number; break;
             case 'date': properties.push({ key: propKey, value: coerced as Date, type: 'date' }); break;
@@ -540,11 +646,17 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
             default: properties.push({ key: propKey, value: coerced as string, type: 'text' });
           }
         }
-        return { properties, source, lat, lng };
+        // Several fields mapped to the notes: each paragraph names its field,
+        // on every element alike (even when a record fills only one of them).
+        const notesFields = fieldList.filter((f) => { const m = getMap(f.key); return m?.enabled && m.target === 'notes'; }).length;
+        const notes = notesParts
+          .map((p) => (notesFields > 1 ? `**${p.key}** : ${p.text}` : p.text))
+          .join('\n\n');
+        return { properties, source, notes, lat, lng };
       };
 
       const mkElement = (partial: Partial<Element> & { label: string; visual: ElementVisual; position: { x: number; y: number } }): Element => ({
-        id: crypto.randomUUID(), dossierId: dossier.id, label: partial.label, notes: '', tags: partial.tags ?? [],
+        id: crypto.randomUUID(), dossierId: dossier.id, label: partial.label, notes: partial.notes ?? '', tags: partial.tags ?? [],
         properties: partial.properties ?? [], confidence: null, source: partial.source ?? '', date: null, dateRange: null,
         position: partial.position, isPositionLocked: false, geo: partial.geo ?? null, events: [],
         visual: partial.visual, assetIds: [], parentGroupId: null, isGroup: false, isAnnotation: false, childIds: [],
@@ -553,6 +665,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
 
       // Per table: id value → element, and the parent element of each record
       const idMaps = new Map<string, Map<string, string>>();
+      const elementById = new Map<string, Element>();
       const built: { key: string; mapping: Record<string, FieldMapping>; scalar: FieldInfo[]; flats: Record<string, unknown>[]; parents: Element[] }[] = [];
       let originY = 0;
 
@@ -589,9 +702,12 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
         const idToElement = new Map<string, string>();
         const parents: Element[] = [];
         const cols = Math.max(1, Math.ceil(Math.sqrt(flats.length)));
+        // Folded into another table: id value → element of that table
+        const mergeKey = mergeTargets.get(plan.key);
+        const hostIds = mergeKey ? idMaps.get(mergeKey) : undefined;
 
         flats.forEach((flat, i) => {
-          const { properties, source, lat, lng } = buildProps(flat, scalar, (k) => mapping[k]);
+          const { properties, source, notes, lat, lng } = buildProps(flat, scalar, (k) => mapping[k]);
           let geo: GeoData | null = null;
           if (polyFieldKey) {
             const coords = toLngLatCoords(flat[polyFieldKey], polyOrder);
@@ -602,13 +718,29 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
             if (p) geo = { type: 'point', lat: p.lat, lng: p.lng };
           }
           if (!geo && lat != null && lng != null) geo = { type: 'point', lat, lng };
-          const parent = mkElement({
-            label: applyTemplate(cfg.labelTemplate, flat) || t('importJsonMapping.noLabel'),
-            tags: tn ? [tn] : [], properties, source, geo,
-            visual: { ...parentVisual },
-            position: { x: (i % cols) * 380, y: originY + Math.floor(i / cols) * 320 },
-          });
-          elements.push(parent);
+          // Folded record: its fields go to the element it refers to, which
+          // also takes its sub-elements, pivots and links below. Without a
+          // match it stays an element of its own, so nothing is lost.
+          const host = hostIds && cfg.mergeField
+            ? elementById.get(hostIds.get(idKey(flat[cfg.mergeField])) ?? '')
+            : undefined;
+          let parent: Element;
+          if (host) {
+            host.properties.push(...properties);
+            if (source) host.source = host.source ? `${host.source} | ${source}` : source;
+            if (notes) host.notes = host.notes ? `${host.notes}\n\n${notes}` : notes;
+            if (geo && !host.geo) host.geo = geo;
+            parent = host;
+          } else {
+            parent = mkElement({
+              label: applyTemplate(cfg.labelTemplate, flat) || t('importJsonMapping.noLabel'),
+              tags: tn ? [tn] : [], properties, source, notes, geo,
+              visual: { ...parentVisual },
+              position: { x: (i % cols) * 380, y: originY + Math.floor(i / cols) * 320 },
+            });
+            elements.push(parent);
+            elementById.set(parent.id, parent);
+          }
           parents.push(parent);
           if (idField) {
             const idv = idKey(flat[idField]);
@@ -773,7 +905,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
     // snapshot() reads the edited state listed here
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalImportCount, activeKey, configs, sources, included, autoConfigFor, planFor, parsed, ignoreEmpty, layout, t, handleClose,
-    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport]);
+    fieldSig, mapping, childMappings, labelTemplate, tagName, filters, filterMode, maxImport, mergeField]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -867,8 +999,11 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                   {templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.name}</option>)}
                 </select>
                 {savingName === null ? (
-                  <button onClick={() => setSavingName('')} className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default">
-                    <Save size={12} /> {t('importJsonMapping.saveTemplate')}
+                  <button
+                    onClick={() => (templates.some((x) => x.id === selectedTemplateId) ? handleSaveTemplate(null) : setSavingName(''))}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded border border-border-default"
+                  >
+                    {templateSaved ? <Check size={12} className="text-success" /> : <Save size={12} />} {t('importJsonMapping.saveTemplate')}
                   </button>
                 ) : (
                   <span className="inline-flex items-center gap-1">
@@ -960,14 +1095,31 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-medium text-text-secondary">{t('importJsonMapping.tag')}</label>
-                  <input
-                    type="text"
+                  <TagCombobox
                     value={tagName}
-                    onChange={(e) => setTagName(e.target.value)}
+                    onChange={setTagName}
                     placeholder={t('importJsonMapping.tagPlaceholder')}
+                    aria-label={t('importJsonMapping.tag')}
                     className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
                   />
                 </div>
+                {mergeCandidates.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <label htmlFor={mergeSelectId} className="text-xs font-medium text-text-secondary">{t('importJsonMapping.mergeInto')}</label>
+                    <select
+                      id={mergeSelectId}
+                      value={mergeCandidates.some((c) => c.field === mergeField) ? mergeField : ''}
+                      onChange={(e) => setMergeField(e.target.value || undefined)}
+                      data-testid="json-mapping-merge"
+                      className="px-2 py-1 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary"
+                    >
+                      <option value="">{t('importJsonMapping.mergeNone')}</option>
+                      {mergeCandidates.map((c) => (
+                        <option key={c.field} value={c.field}>{c.table} ({c.field})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                   <input type="checkbox" checked={ignoreEmpty} onChange={(e) => setIgnoreEmpty(e.target.checked)} className="rounded border-border-default" />
                   {t('importJsonMapping.ignoreEmpty')}
@@ -1062,7 +1214,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                   {scalarFields.map((f) => {
                     const m = mapping[f.key];
                     if (!m) return null;
-                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref' || m.target === 'link' || m.target === 'pivot';
+                    const showKey = m.target === 'property' || m.target === 'date' || m.target === 'country' || m.target === 'ref' || m.target === 'link' || m.target === 'pivot' || m.target === 'notes';
                     return (
                       <div key={f.key} className={`grid grid-cols-[24px_1fr_1fr_130px_100px] gap-2 px-2 py-1 items-center ${m.enabled ? '' : 'opacity-45'}`}>
                         <input
@@ -1155,7 +1307,7 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
                           <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 pl-6">
                             <label className="flex flex-col gap-0.5">
                               <span className="text-[10px] text-text-tertiary">{t('importJsonMapping.childTag')}</span>
-                              <input type="text" value={cm.tag} onChange={(e) => setChild(f.key, { tag: e.target.value })} className="px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary" />
+                              <TagCombobox value={cm.tag} onChange={(tag) => setChild(f.key, { tag })} aria-label={t('importJsonMapping.childTag')} className="w-full px-1 py-0.5 text-xs bg-bg-primary border border-border-default rounded focus:outline-none focus:border-accent text-text-primary" />
                             </label>
                             <label className="flex flex-col gap-0.5">
                               <span className="text-[10px] text-text-tertiary">{t('importJsonMapping.childLabel')}</span>

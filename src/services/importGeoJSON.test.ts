@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { importService } from './importService';
 import { db } from '../db/database';
+import { useTagSetStore } from '../stores/tagSetStore';
 import type { GeoPolygon } from '../types';
 
 const square = (x: number, y: number, size: number): [number, number][] => [
@@ -135,6 +136,39 @@ describe('importFromGeoJSON', () => {
     expect(el.label).toBe('SURF-1');
     expect(el.properties.map(p => p.key)).toEqual(['NATURE']);
     expect(el.notes).toBe('');
+  });
+});
+
+describe('importFromGeoJSON tag option', () => {
+  const point = (name: string, extra: Record<string, unknown> = {}) => ({
+    type: 'Feature', properties: { name, ...extra }, geometry: { type: 'Point', coordinates: [2.35, 48.85] },
+  });
+
+  beforeEach(async () => {
+    await db.elements.clear();
+    await useTagSetStore.getState().load();
+  });
+
+  it('tags every feature and takes the look of an existing tag family', async () => {
+    const store = useTagSetStore.getState();
+    if (!store.getByName('Commissariat')) {
+      await store.create({ name: 'Commissariat', description: '', defaultVisual: { color: '#2563eb', shape: 'square', icon: 'shield' }, suggestedProperties: [], isBuiltIn: false });
+    }
+    await importService.importFromGeoJSON(collection(point('A'), point('B', { color: '#dc2626' })), 'd-tag', { tag: 'Commissariat' });
+    const els = await db.elements.where('dossierId').equals('d-tag').sortBy('label');
+    expect(els.map(e => e.tags)).toEqual([['Commissariat'], ['Commissariat']]);
+    expect(els[0].visual).toMatchObject({ color: '#2563eb', shape: 'square', icon: 'shield' });
+    // A colour carried by the file wins over the family's
+    expect(els[1].visual.color).toBe('#dc2626');
+  });
+
+  it('creates the tag family for a new name, and adds no tag when none is given', async () => {
+    await importService.importFromGeoJSON(collection(point('C')), 'd-new', { tag: 'Zone neuve' });
+    expect(useTagSetStore.getState().getByName('Zone neuve')).toBeDefined();
+    expect((await db.elements.where('dossierId').equals('d-new').first())?.tags).toEqual(['Zone neuve']);
+
+    await importService.importFromGeoJSON(collection(point('D')), 'd-none');
+    expect((await db.elements.where('dossierId').equals('d-none').first())?.tags).toEqual([]);
   });
 });
 

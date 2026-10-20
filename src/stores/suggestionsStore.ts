@@ -15,6 +15,9 @@ export type SuggestionLabeler = (reason: SuggestionReason) => string;
 
 /** Radii offered to the places and meeting rules, in metres */
 export const NEARBY_RADII = [50, 100, 500, 1000, 5000] as const;
+/** The places rule reaches further (sites of a sector, offences around a
+ *  zone); meetings stop at 5 km, where "same place" means little */
+export const PLACE_RADII = [...NEARBY_RADII, 10000, 20000, 50000] as const;
 const NEARBY_RADIUS_KEY = 'zn:suggestions:radius';
 const DEFAULT_NEARBY_RADIUS = 100;
 
@@ -90,6 +93,8 @@ interface SuggestionsState {
   shownCount: number | null;
   /** The meeting rule stopped before the end (too many positions for radius and window) */
   meetingsTruncated: boolean;
+  /** Only suggestions joining an element of tag `a` to one of tag `b`; null for all */
+  between: { a: string; b: string } | null;
 
   analyze: (scope?: string[] | null) => void;
   /** Run the last analysis again (after an undo/redo touching dismissals) */
@@ -101,6 +106,8 @@ interface SuggestionsState {
   setPlacesEnabled: (on: boolean) => void;
   setMeetingsEnabled: (on: boolean) => void;
   setMeetingWindow: (window: number) => void;
+  /** Restrict to suggestions between two tags (both set) and re-run the analysis shown */
+  setBetween: (between: { a: string; b: string } | null) => void;
   /** Create the links (and pivot elements) of these suggestions, as one undo step */
   /** `describe` gives the full text of a reason, kept in the link's notes */
   accept: (ids: string[], labelFor: SuggestionLabeler, describe: SuggestionLabeler) => Promise<void>;
@@ -147,7 +154,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   dismissedSuggestions: [],
   dossierId: null,
   scope: null,
-  nearbyRadius: readChoice(NEARBY_RADIUS_KEY, NEARBY_RADII, DEFAULT_NEARBY_RADIUS),
+  nearbyRadius: readChoice(NEARBY_RADIUS_KEY, PLACE_RADII, DEFAULT_NEARBY_RADIUS),
   meetingWindow: readChoice(MEETING_WINDOW_KEY, MEETING_WINDOWS, DEFAULT_MEETING_WINDOW),
   meetingRadius: readChoice(MEETING_RADIUS_KEY, NEARBY_RADII, DEFAULT_NEARBY_RADIUS),
   maxStay: readChoice(MAX_STAY_KEY, MAX_STAYS, DEFAULT_MAX_PRESENCE_MS),
@@ -158,6 +165,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   meetingsEnabled: readFlag(MEETINGS_KEY),
   shownCount: null,
   meetingsTruncated: false,
+  between: null,
 
   analyze: (scope = null) => {
     const { elements, links, assets, currentDossier, updateDossier } = useDossierStore.getState();
@@ -172,6 +180,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
         ? { radius: get().meetingRadius, window: get().meetingWindow, maxPresence: get().maxStay || null }
         : null,
       candidateIds: shown,
+      between: get().between,
     });
     set({
       suggestions, dismissedSuggestions, scope, meetingsTruncated,
@@ -183,7 +192,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     // gone): the dossier keeps no trace of what was removed from it. Only on
     // a complete analysis — a filtered or interrupted one doesn't see every pair.
     const kept = dismissed.filter(id => !staleDismissalIds.has(id));
-    if (currentDossier && !shown && !meetingsTruncated && kept.length < dismissed.length) {
+    if (currentDossier && !shown && !get().between && !meetingsTruncated && kept.length < dismissed.length) {
       void updateDossier(currentDossier.id, { dismissedSuggestions: kept });
     }
   },
@@ -227,6 +236,11 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   setMeetingWindow: (window) => {
     set({ meetingWindow: window });
     saveChoice(MEETING_WINDOW_KEY, window);
+  },
+
+  setBetween: (between) => {
+    set({ between: between && between.a && between.b ? between : null });
+    get().refresh();
   },
 
   accept: async (ids, labelFor, describe) => {
@@ -312,5 +326,5 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     get().refresh();
   },
 
-  reset: () => set({ suggestions: null, dismissedSuggestions: [], scope: null, dossierId: null, shownCount: null, meetingsTruncated: false }),
+  reset: () => set({ suggestions: null, dismissedSuggestions: [], scope: null, dossierId: null, shownCount: null, meetingsTruncated: false, between: null }),
 }));

@@ -79,7 +79,7 @@ npm run build            # Production build
 npm run preview          # Preview production build
 
 # Type checking
-npm run typecheck        # Run TypeScript compiler check
+npx tsc -b               # Type check (the root tsconfig only references app/node: `tsc --noEmit` alone checks nothing)
 ```
 
 ## Architecture Decisions
@@ -245,7 +245,7 @@ When the user asks for a **bump** (feat, new feature) or **minibump** (fix, patc
 3. Add/update i18n translations for any new UI strings (11 languages)
 4. Update user documentation at `doc.zeroneurone.com` if applicable
 5. Update version badge in `README.md`
-6. `npx tsc --noEmit` + `npm run build` — must pass
+6. `npx tsc -b` + `npm run build` — must pass
 7. Commit with message `feat: vX.Y.Z - <description>`
 8. Tag: `git tag -a vX.Y.Z -m "<description>"`
 9. Push commit + tags: `git push && git push --tags`
@@ -254,7 +254,7 @@ When the user asks for a **bump** (feat, new feature) or **minibump** (fix, patc
 1. Bump version in `package.json`
 2. Update `CHANGELOG.md` with new section
 3. Update version badge in `README.md`
-4. `npx tsc --noEmit` + `npm run build` — must pass
+4. `npx tsc -b` + `npm run build` — must pass
 5. Commit with message `fix: vX.Y.Z - <description>`
 6. Tag: `git tag -a vX.Y.Z -m "<description>"`
 7. Push commit + tags: `git push && git push --tags`

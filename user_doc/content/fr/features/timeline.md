@@ -26,6 +26,8 @@ Les éléments ayant une **date** apparaissent sur la timeline :
 - **Point** : date unique
 - Position horizontale = moment dans le temps
 
+Une propriété date (une date de naissance, par exemple) peut être retirée de la timeline depuis le panneau **Filtres** → **Propriétés date sur la timeline**. Voir [Filtres et vues]({{< relref "filters-views" >}}).
+
 
 ### Liens avec période
 
@@ -139,6 +141,8 @@ Le zoom ajuste automatiquement l'échelle :
 | **Ctrl+clic** | Ajoute à la sélection |
 
 La sélection est synchronisée avec le canvas : sélectionner sur la timeline sélectionne sur le canvas, et inversement.
+
+Si la sélection a changé dans une autre vue, la timeline défile jusqu'à la date et la ligne de l'élément sélectionné à votre retour. Une sélection inchangée conserve votre position.
 
 ---
 

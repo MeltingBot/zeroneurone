@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
 import { importANX, isANXFormat } from '../../services/importANX';
@@ -16,6 +16,9 @@ import {
   type FECImportOptions,
 } from '../../services/importFEC';
 import { FECOptionsPanel } from './FECOptionsPanel';
+import { GeoJSONOptionsPanel, type PendingGeoJSON } from './GeoJSONOptionsPanel';
+import { ImportProgressLine } from './ImportProgressLine';
+import { withImportProgress } from '../../services/importProgress';
 import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
@@ -29,7 +32,6 @@ interface ImportModalProps {
 export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const { t, i18n } = useTranslation('modals');
   const navigate = useNavigate();
-  const location = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [createMissingElements, setCreateMissingElements] = useState(true);
@@ -48,22 +50,24 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   } | null>(null);
   const [fecOptions, setFecOptions] = useState<FECImportOptions>(DEFAULT_FEC_OPTIONS);
   // Étape d'options GeoJSON : choix de la propriété qui sert de libellé
-  const [pendingGeoJSON, setPendingGeoJSON] = useState<{
-    fileName: string;
-    content: string;
-    featureCount: number;
-    fields: Array<{ key: string; sample: string }>;
-  } | null>(null);
+  const [pendingGeoJSON, setPendingGeoJSON] = useState<PendingGeoJSON | null>(null);
   const [geoJSONLabelField, setGeoJSONLabelField] = useState('');
   const [geoJSONFields, setGeoJSONFields] = useState<Set<string>>(new Set());
-  const geoJSONLabelId = useId();
+  const [geoJSONTag, setGeoJSONTag] = useState('');
 
-  const { dossiers, createDossier, deleteDossier, currentDossier } = useDossierStore();
-  const enterImportPlacementMode = useUIStore((state) => state.enterImportPlacementMode);
+  const { dossiers, createDossier, deleteDossier } = useDossierStore();
+  const setPendingDossierImport = useUIStore((state) => state.setPendingDossierImport);
   const requestFitView = useViewStore((state) => state.requestFitView);
 
-  // Check if we're currently on an dossier page
-  const isOnDossierPage = location.pathname.startsWith('/dossier/');
+  // An existing dossier shows its Y.Doc, not what an import writes to Dexie:
+  // open it and let its own import modal run (options, placement, Y.Doc sync).
+  const importIntoExistingDossier = useCallback((file: File) => {
+    setPendingDossierImport({ dossierId: targetDossierId, file });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setTargetDossierId('new');
+    onClose();
+    navigate(`/dossier/${targetDossierId}`);
+  }, [targetDossierId, setPendingDossierImport, onClose, navigate]);
 
   const handleDecryptAndImport = useCallback(async (encFile: File, password: string) => {
     setZnzipError(null);
@@ -73,7 +77,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       setPendingEncryptedFile(null);
       setZnzipPassword('');
       // Simuler un FileList pour réutiliser handleFileSelect
-      await processFile(decryptedFile);
+      await withImportProgress(() => processFile(decryptedFile));
     } catch (err) {
       setZnzipError(err instanceof Error ? err.message : 'Mot de passe incorrect');
     } finally {
@@ -92,6 +96,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       setZnzipPassword('');
       setZnzipError(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    if (targetDossierId !== 'new') {
+      importIntoExistingDossier(file);
       return;
     }
 
@@ -137,75 +146,32 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
     setIsProcessing(true);
     setImportResult(null);
-    await processFile(file);
+    await withImportProgress(() => processFile(file));
     setIsProcessing(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetDossierId]);
+  }, [targetDossierId, importIntoExistingDossier]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const processFile = useCallback(async (file: File) => {
     setIsProcessing(true);
     setImportResult(null);
 
+    // Decrypted .znzip into an existing dossier
+    if (targetDossierId !== 'new') {
+      setIsProcessing(false);
+      importIntoExistingDossier(file);
+      return;
+    }
+
     let dossierId = targetDossierId;
     let createdNewDossier = false;
 
     try {
-      // Determine target dossier
-      const isImportingIntoExisting = targetDossierId !== 'new';
-
-      if (targetDossierId === 'new') {
-        // Create new dossier with file name (without extension)
-        const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|drawio|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
-        const dossier = await createDossier(name, '');
-        dossierId = dossier.id;
-        createdNewDossier = true;
-      }
-
-      // Special case: importing ZIP into existing dossier while on canvas
-      // → Enter placement mode so user can choose where to place elements
-      if (isImportingIntoExisting && file.name.endsWith('.zip') && isOnDossierPage && currentDossier?.id === targetDossierId) {
-        // Parse the ZIP to get bounding box
-        const parseResult = await importService.parseZipForPlacement(file);
-
-        if (parseResult.success && parseResult.boundingBox.elementCount > 0) {
-          // Enter placement mode - the modal will close automatically
-          enterImportPlacementMode({
-            boundingBox: parseResult.boundingBox,
-            file,
-            dossierId,
-            onComplete: () => {
-              // Reset state after successful import
-              setImportResult(null);
-              setTargetDossierId('new');
-            }
-          });
-
-          // Clear the file input
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          setIsProcessing(false);
-          return;
-        } else if (!parseResult.success) {
-          // If parsing failed, show error and don't proceed
-          setImportResult({
-            success: false,
-            elementsImported: 0,
-            linksImported: 0,
-            assetsImported: 0,
-          reportImported: false,
-            errors: [parseResult.error || t('import.unknownError')],
-            warnings: [],
-          });
-          setIsProcessing(false);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          return;
-        }
-        // If bounding box is empty, fall through to regular import
-      }
+      // Create new dossier with file name (without extension)
+      const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|xml|drawio|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
+      const dossier = await createDossier(name, '');
+      dossierId = dossier.id;
+      createdNewDossier = true;
 
       let result: ImportResult;
 
@@ -308,7 +274,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         fileInputRef.current.value = '';
       }
     }
-  }, [targetDossierId, createMissingElements, createDossier, deleteDossier, navigate, onClose, t, isOnDossierPage, currentDossier, enterImportPlacementMode, requestFitView]);
+  }, [targetDossierId, createMissingElements, createDossier, deleteDossier, navigate, onClose, t, requestFitView, importIntoExistingDossier]);
 
   // Confirmation d'une étape d'options (FEC, GeoJSON) : le dossier est créé
   // ici seulement, et supprimé si l'import échoue.
@@ -326,7 +292,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         dossierId = dossier.id;
         createdNewDossier = true;
       }
-      const result = await run(dossierId);
+      const result = await withImportProgress(() => run(dossierId));
       setImportResult(result);
       if (result.success) {
         clearPending();
@@ -373,18 +339,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       (dossierId) => importService.importFromGeoJSON(pendingGeoJSON.content, dossierId, {
         labelField: geoJSONLabelField,
         fields: [...geoJSONFields],
+        tag: geoJSONTag,
       }),
       () => setPendingGeoJSON(null),
     );
-  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, runPendingImport]);
-
-  const toggleGeoJSONField = useCallback((key: string) => {
-    setGeoJSONFields((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
-  }, []);
+  }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, runPendingImport]);
 
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
@@ -475,6 +434,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           {/* Étape d'options FEC */}
           {pendingFEC && (
             <div className="space-y-2">
+              <ImportProgressLine />
               <p className="text-xs font-medium text-text-primary">{t('import.fec.optionsTitle')}</p>
               <FECOptionsPanel
                 fileName={pendingFEC.fileName}
@@ -504,65 +464,17 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           {/* Étape d'options GeoJSON */}
           {pendingGeoJSON && (
             <div className="space-y-2">
+              <ImportProgressLine />
               <p className="text-xs font-medium text-text-primary">{t('import.geojson.optionsTitle')}</p>
-              <p className="text-xs text-text-tertiary">
-                <span className="font-mono">{pendingGeoJSON.fileName}</span>
-                {' · '}
-                {t('import.geojson.featureCount', { count: pendingGeoJSON.featureCount })}
-              </p>
-              <div>
-                <label htmlFor={geoJSONLabelId} className="block text-xs font-medium text-text-primary mb-1">
-                  {t('import.geojson.labelField')}
-                </label>
-                <select
-                  id={geoJSONLabelId}
-                  value={geoJSONLabelField}
-                  onChange={(e) => setGeoJSONLabelField(e.target.value)}
-                  data-testid="geojson-label-field"
-                  className="w-full px-2 py-1.5 text-sm rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
-                >
-                  {pendingGeoJSON.fields.map((field) => (
-                    <option key={field.key} value={field.key}>
-                      {field.key} — {field.sample.length > 40 ? `${field.sample.slice(0, 40)}…` : field.sample}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-text-primary">{t('import.geojson.fields')}</span>
-                  <div className="flex gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setGeoJSONFields(new Set(pendingGeoJSON.fields.map((f) => f.key)))}
-                      className="text-text-secondary hover:text-text-primary"
-                    >
-                      {t('import.geojson.all')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGeoJSONFields(new Set())}
-                      className="text-text-secondary hover:text-text-primary"
-                    >
-                      {t('import.geojson.none')}
-                    </button>
-                  </div>
-                </div>
-                <div className="max-h-48 overflow-y-auto border border-border-default rounded divide-y divide-border-default" data-testid="geojson-fields">
-                  {pendingGeoJSON.fields.filter((field) => field.key !== geoJSONLabelField).map((field) => (
-                    <label key={field.key} className="flex items-center gap-2 px-2 py-1 text-xs cursor-pointer hover:bg-bg-secondary">
-                      <input
-                        type="checkbox"
-                        checked={geoJSONFields.has(field.key)}
-                        onChange={() => toggleGeoJSONField(field.key)}
-                        className="rounded border-border-default"
-                      />
-                      <span className="font-mono text-text-primary shrink-0">{field.key}</span>
-                      <span className="text-text-tertiary truncate">{field.sample}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <GeoJSONOptionsPanel
+                pending={pendingGeoJSON}
+                labelField={geoJSONLabelField}
+                onLabelFieldChange={setGeoJSONLabelField}
+                fields={geoJSONFields}
+                onFieldsChange={setGeoJSONFields}
+                tag={geoJSONTag}
+                onTagChange={setGeoJSONTag}
+              />
               <div className="flex gap-2">
                 <button
                   onClick={() => setPendingGeoJSON(null)}
@@ -644,6 +556,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               <div className="text-sm font-medium text-text-primary">
                 {isProcessing ? t('import.importing') : t('import.selectFile')}
               </div>
+              <ImportProgressLine className="text-xs text-text-secondary mt-1" />
               <div className="text-xs text-text-tertiary mt-1">
                 {t('import.supportedFormats')}
               </div>
