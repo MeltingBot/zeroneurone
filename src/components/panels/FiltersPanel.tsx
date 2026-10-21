@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   X,
@@ -14,11 +14,15 @@ import {
   MessageSquare,
   MousePointer2,
   SquareDashed,
+  Plus,
+  Check,
 } from 'lucide-react';
-import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useSelectionStore } from '../../stores';
+import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore } from '../../stores';
+import { useFilterOutcome, useShownSelection } from '../../hooks/useFilterOutcome';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence, Element, Comment, EvaluationModel, ViewFilters } from '../../types';
-import { EVALUATION_GRIDS, getModelScale, matchesEvaluationFilters } from '../../utils/evaluation';
+import { datePropertyRules, elementDateIntervals } from '../../utils/temporalUtils';
+import { EVALUATION_GRIDS, getModelScale, } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter } from '../../utils/geo';
 
@@ -50,6 +54,13 @@ interface QuickFilterDef {
 /** Same set of grading codes, whatever the order they were ticked in */
 function sameCodes(a: readonly string[] | null | undefined, b: readonly string[]): boolean {
   return !!a && a.length === b.length && b.every((code) => a.includes(code));
+}
+
+/** Elements with no date at all, as the timeline and the map date them
+ *  (period, events, date properties kept in the filters panel) */
+function undatedElementIds(elements: Element[], filters: ViewFilters): string[] {
+  const rules = datePropertyRules(filters);
+  return elements.filter((el) => elementDateIntervals(el, rules).length === 0).map((el) => el.id);
 }
 
 const QUICK_FILTER_DEFS: QuickFilterDef[] = [
@@ -125,10 +136,8 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     labelKey: 'noDate',
     descKey: 'noDateDesc',
     icon: <Calendar size={12} />,
-    apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
-      const noDateElements = elements
-        .filter((el) => !el.date && (!el.dateRange || (!el.dateRange.start && !el.dateRange.end)))
-        .map((el) => el.id);
+    apply: ({ elements, filters, hideElements, hiddenElementIds, showAllElements }) => {
+      const noDateElements = undatedElementIds(elements, filters);
       const allHidden = noDateElements.every((id) => hiddenElementIds.has(id));
       if (allHidden) {
         showAllElements();
@@ -136,10 +145,8 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
         hideElements(noDateElements);
       }
     },
-    isActive: ({ elements, hiddenElementIds }) => {
-      const noDateElements = elements
-        .filter((el) => !el.date && (!el.dateRange || (!el.dateRange.start && !el.dateRange.end)))
-        .map((el) => el.id);
+    isActive: ({ elements, filters, hiddenElementIds }) => {
+      const noDateElements = undatedElementIds(elements, filters);
       return noDateElements.length > 0 && noDateElements.every((id) => hiddenElementIds.has(id));
     },
   },
@@ -207,6 +214,14 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
   },
 ];
 
+/** Date property keys selected in the filters panel (empty: all of them) */
+function selectedDateKeys(dateKeys: string[], included?: string[], excluded?: string[]): string[] {
+  if (included && included.length > 0) return dateKeys.filter((key) => included.includes(key));
+  // Former form (the keys left out), from a view saved with it
+  if (excluded && excluded.length > 0) return dateKeys.filter((key) => !excluded.includes(key));
+  return [];
+}
+
 export function FiltersPanel() {
   const { t } = useTranslation('panels');
   const { t: tCommon } = useTranslation('common');
@@ -222,13 +237,11 @@ export function FiltersPanel() {
     hideElements,
     showElement,
     showAllElements,
-    displayMode,
   } = useViewStore();
   const { isolated } = useInsightsStore();
-  const selectElements = useSelectionStore((s) => s.selectElements);
-  const deselectElement = useSelectionStore((s) => s.deselectElement);
 
   const isActive = hasActiveFilters();
+  const hideFilteredOut = useUIStore((s) => s.hideFilteredOut);
   const evaluationModel = useEvaluationModel();
   const evaluationScale = getModelScale(evaluationModel);
 
@@ -241,54 +254,18 @@ export function FiltersPanel() {
     [filters, setFilters]
   );
 
-  // IDs of elements matching current filters (visible + matching all active criteria)
-  const matchingIds = useMemo(() => {
-    return elements.filter((el) => {
-      // Check hidden
-      if (hiddenElementIds.has(el.id)) return false;
-
-      // Check text search
-      if (filters.textSearch) {
-        const searchLower = filters.textSearch.toLowerCase();
-        const matchesLabel = el.label.toLowerCase().includes(searchLower);
-        const matchesNotes = el.notes.toLowerCase().includes(searchLower);
-        if (!matchesLabel && !matchesNotes) return false;
-      }
-
-      // Check tags
-      if (filters.includeTags.length > 0) {
-        const hasTag = filters.includeTags.some((tag) => el.tags.includes(tag));
-        if (!hasTag) return false;
-      }
-
-      // Check property
-      if (filters.hasProperty) {
-        const hasProp = el.properties.some((p) => p.key === filters.hasProperty);
-        if (!hasProp) return false;
-      }
-
-      // Check confidence (ZeroNeurone model) or grading (other models)
-      if (filters.minConfidence !== null && evaluationModel === 'zeroneurone') {
-        if (el.confidence === null || el.confidence < filters.minConfidence) return false;
-      }
-      if (!matchesEvaluationFilters(el.evaluation, evaluationModel, filters.evaluationSources, filters.evaluationInfos)) {
-        return false;
-      }
-
-      return true;
-    }).map((el) => el.id);
-  }, [elements, hiddenElementIds, filters, evaluationModel]);
+  // Elements the views show: kept by the filters and by the query applied on
+  // the canvas, counted as the views do
+  const outcome = useFilterOutcome();
+  const matchingIds = outcome.shownIds;
+  const queryActive = outcome.queryCount !== null;
+  const queryOutputMode = useQueryStore((s) => s.outputMode);
 
   const matchingCount = matchingIds.length;
 
-  const handleSelectMatching = useCallback(() => {
-    if (matchingIds.length === 0) return;
-    selectElements(matchingIds, true);
-  }, [matchingIds, selectElements]);
-
-  const handleDeselectMatching = useCallback(() => {
-    matchingIds.forEach((id) => deselectElement(id));
-  }, [matchingIds, deselectElement]);
+  // One toggle, shared with the query panel: deselects once everything shown
+  // is selected, selects otherwise
+  const { allSelected: allMatchingSelected, toggle: toggleMatchingSelection } = useShownSelection(outcome);
 
   // Get all unique tags from elements with counts
   const tagsWithCounts = useMemo(() => {
@@ -310,8 +287,8 @@ export function FiltersPanel() {
     return Array.from(keySet).sort();
   }, [elements]);
 
-  // Date/datetime property keys, with how many elements fill them: on the
-  // timeline each can be left off (a birth date is rarely an event)
+  // Date/datetime property keys, with how many elements fill them: they date
+  // the elements on the timeline and the map (a birth date is rarely an event)
   const datePropertyCounts = useMemo(() => {
     const counts = new Map<string, number>();
     elements.forEach((el) => el.properties.forEach((prop) => {
@@ -323,13 +300,33 @@ export function FiltersPanel() {
       .map(([key, count]) => ({ key, count }))
       .sort((a, b) => a.key.localeCompare(b.key));
   }, [elements]);
-  const excludedDateProperties = filters.excludedDateProperties ?? [];
+  // Like the tags: no date property selected means all of them date the
+  // elements; selecting some keeps only those. The selection itself is
+  // stored, so a date property imported later is not counted unasked.
+  const dateKeys = useMemo(() => datePropertyCounts.map(({ key }) => key), [datePropertyCounts]);
+  const includedDateProperties = filters.includedDateProperties;
+  const excludedDateProperties = filters.excludedDateProperties;
+  const selectedDateProperties = useMemo(
+    () => selectedDateKeys(dateKeys, includedDateProperties, excludedDateProperties),
+    [dateKeys, includedDateProperties, excludedDateProperties]
+  );
   const toggleDateProperty = useCallback((key: string) => {
-    const current = filters.excludedDateProperties ?? [];
-    setFilters({
-      excludedDateProperties: current.includes(key) ? current.filter((k) => k !== key) : [...current, key],
-    });
-  }, [filters.excludedDateProperties, setFilters]);
+    // Read the store, not the render: quick successive clicks stay right
+    const current = useViewStore.getState().filters;
+    const before = selectedDateKeys(dateKeys, current.includedDateProperties, current.excludedDateProperties);
+    const selected = before.includes(key) ? before.filter((k) => k !== key) : [...before, key];
+    setFilters({ includedDateProperties: selected, excludedDateProperties: [] });
+  }, [dateKeys, setFilters]);
+  const clearDateProperties = useCallback(
+    () => setFilters({ includedDateProperties: [], excludedDateProperties: [] }),
+    [setFilters]
+  );
+  // A former choice leaving every key out reads as no selection: all dates
+  const allDatesExcluded = !(includedDateProperties?.length) && dateKeys.length > 0
+    && dateKeys.every((key) => excludedDateProperties?.includes(key));
+  useEffect(() => {
+    if (allDatesExcluded) clearDateProperties();
+  }, [allDatesExcluded, clearDateProperties]);
 
   // Quick filter params
   const quickFilterParams: QuickFilterParams = useMemo(
@@ -396,24 +393,17 @@ export function FiltersPanel() {
             {matchingCount > 0 && (
               <>
                 <button
-                  onClick={handleSelectMatching}
+                  onClick={toggleMatchingSelection}
+                  aria-pressed={allMatchingSelected}
                   className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-                  title={t('filters.selectMatchingDesc')}
+                  title={t(allMatchingSelected ? 'filters.deselectMatchingDesc' : 'filters.selectMatchingDesc')}
                 >
-                  <MousePointer2 size={12} />
-                  {t('filters.selectMatching')}
-                </button>
-                <button
-                  onClick={handleDeselectMatching}
-                  className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
-                  title={t('filters.deselectMatchingDesc')}
-                >
-                  <SquareDashed size={12} />
-                  {t('filters.deselectMatching')}
+                  {allMatchingSelected ? <SquareDashed size={12} /> : <MousePointer2 size={12} />}
+                  {t(allMatchingSelected ? 'filters.deselectMatching' : 'filters.selectMatching')}
                 </button>
               </>
             )}
-            {(isActive || hiddenElementIds.size > 0) && (
+            {(isActive || hiddenElementIds.size > 0 || queryActive) && (
               <button
                 onClick={() => {
                   useHistoryStore.getState().pushAction({
@@ -423,6 +413,11 @@ export function FiltersPanel() {
                   });
                   clearFilters();
                   showAllElements();
+                  // The query applied on the views counts as a filter here: its
+                  // filter goes too (the query itself stays in its panel)
+                  if (queryActive) {
+                    useQueryStore.getState().setOutputMode(queryOutputMode === 'both' ? 'table' : 'none');
+                  }
                 }}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded"
               >
@@ -432,6 +427,12 @@ export function FiltersPanel() {
             )}
           </div>
         </div>
+        {/* Filters and query both narrow the views: say what each keeps */}
+        {queryActive && outcome.filterCount < outcome.total && (
+          <div className="mt-1 text-xs text-text-tertiary">
+            {t('filters.countBreakdown', { filters: outcome.filterCount, query: outcome.queryCount })}
+          </div>
+        )}
         {hiddenElementIds.size > 0 && (
           <p className="text-[10px] text-text-tertiary mt-1">
             {t('filters.hiddenCount', { count: hiddenElementIds.size })}
@@ -568,26 +569,41 @@ export function FiltersPanel() {
           )}
         </div>
 
-        {/* Date properties shown on the timeline */}
-        {displayMode === 'timeline' && datePropertyCounts.length > 0 && (
+        {/* Date properties that date the elements on the timeline and the map */}
+        {datePropertyCounts.length > 0 && (
           <div className="space-y-1.5" data-testid="filters-date-properties">
             <label className="text-xs font-medium text-text-secondary">
-              {t('filters.dateProperties.title')}
+              {t('filters.dateProperties.title')} ({datePropertyCounts.length})
             </label>
-            <div className="space-y-1">
-              {datePropertyCounts.map(({ key, count }) => (
-                <label key={key} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!excludedDateProperties.includes(key)}
-                    onChange={() => toggleDateProperty(key)}
-                    className="w-3.5 h-3.5 rounded border-border-default text-accent focus:ring-accent focus:ring-offset-0"
-                  />
-                  <span className="text-xs text-text-primary truncate">{key}</span>
-                  <span className="ml-auto text-[10px] text-text-tertiary">{count}</span>
-                </label>
-              ))}
+            <div className="flex flex-wrap gap-1.5">
+              {datePropertyCounts.map(({ key, count }) => {
+                const isSelected = selectedDateProperties.includes(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleDateProperty(key)}
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
+                      isSelected
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+                    }`}
+                  >
+                    {key}
+                    <span className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-text-tertiary'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+            {dateKeys.length >= 2 && (
+              <DateRangesEditor
+                dateKeys={dateKeys}
+                ranges={filters.dateRangeProperties ?? []}
+                onChange={(dateRangeProperties) => setFilters({ dateRangeProperties })}
+              />
+            )}
           </div>
         )}
 
@@ -658,13 +674,33 @@ export function FiltersPanel() {
         )}
 
         {/* Active filters summary */}
-        {isActive && (
+        {(isActive || queryActive) && (
           <div className="p-2 bg-accent/5 border border-accent/20 rounded">
-            <div className="flex items-center gap-1 text-xs text-accent mb-1">
-              <Filter size={10} />
-              {t('filters.activeFilters')}
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1 text-xs text-accent">
+                <Filter size={10} />
+                {t('filters.activeFilters')}
+              </div>
+              <button
+                onClick={() => useUIStore.setState((s) => ({ hideFilteredOut: !s.hideFilteredOut }))}
+                aria-pressed={hideFilteredOut}
+                title={t('filters.hideFilteredOutHint')}
+                className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border ${
+                  hideFilteredOut
+                    ? 'bg-accent text-white border-accent'
+                    : 'text-text-secondary border-border-default hover:border-accent'
+                }`}
+              >
+                {t('filters.hideFilteredOut')}
+              </button>
             </div>
             <div className="flex flex-wrap gap-1">
+              {queryActive && (
+                <FilterBadge
+                  label={t('filters.queryBadge')}
+                  onRemove={() => useQueryStore.getState().setOutputMode(queryOutputMode === 'both' ? 'table' : 'none')}
+                />
+              )}
               {filters.textSearch && (
                 <FilterBadge
                   label={`"${filters.textSearch}"`}
@@ -684,13 +720,15 @@ export function FiltersPanel() {
                   onRemove={() => handlePropertyChange('')}
                 />
               )}
-              {excludedDateProperties.map((key) => (
+              {selectedDateProperties.length > 0 && (
                 <FilterBadge
-                  key={`date-${key}`}
-                  label={t('filters.dateProperties.badge', { key })}
-                  onRemove={() => toggleDateProperty(key)}
+                  label={t('filters.dateProperties.badge', {
+                    kept: selectedDateProperties.length,
+                    total: datePropertyCounts.length,
+                  })}
+                  onRemove={clearDateProperties}
                 />
-              ))}
+              )}
               {filters.minConfidence !== null && evaluationModel === 'zeroneurone' && (
                 <FilterBadge
                   label={`≥${filters.minConfidence}%`}
@@ -805,5 +843,90 @@ function FilterBadge({ label, onRemove }: FilterBadgeProps) {
         <X size={10} />
       </button>
     </span>
+  );
+}
+
+type DateRange = { start: string; end: string };
+
+/** Pairs of date properties read as one period (start → end), e.g. the start
+ *  and end of the facts: one bar on the timeline, one span on the map */
+function DateRangesEditor({ dateKeys, ranges, onChange }: {
+  dateKeys: string[];
+  ranges: DateRange[];
+  onChange: (ranges: DateRange[]) => void;
+}) {
+  const { t } = useTranslation('panels');
+  const [adding, setAdding] = useState(false);
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const selectClass = 'flex-1 min-w-0 px-1.5 py-1 text-xs rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent';
+
+  const add = () => {
+    if (!start || !end || start === end) return;
+    if (!ranges.some((r) => r.start === start && r.end === end)) onChange([...ranges, { start, end }]);
+    setAdding(false);
+    setStart('');
+    setEnd('');
+  };
+
+  return (
+    <div className="space-y-1 pt-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-text-tertiary">{t('filters.dateProperties.ranges')}</span>
+        {!adding && (
+          <button
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-0.5 text-[10px] text-text-secondary hover:text-text-primary"
+            title={t('filters.dateProperties.rangesHint')}
+          >
+            <Plus size={10} />
+            {t('filters.dateProperties.addRange')}
+          </button>
+        )}
+      </div>
+      {ranges.map((range) => (
+        <div
+          key={`${range.start}→${range.end}`}
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-border-default bg-bg-secondary text-text-primary"
+        >
+          <span className="truncate">{range.start} → {range.end}</span>
+          <button
+            onClick={() => onChange(ranges.filter((r) => r !== range))}
+            className="ml-auto shrink-0 text-text-tertiary hover:text-text-primary"
+            aria-label={t('filters.dateProperties.removeRange')}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+      {adding && (
+        <div className="flex items-center gap-1">
+          <select value={start} onChange={(e) => setStart(e.target.value)} className={selectClass} aria-label={t('filters.dateProperties.rangeStart')}>
+            <option value="">{t('filters.dateProperties.rangeStart')}</option>
+            {dateKeys.map((key) => <option key={key} value={key}>{key}</option>)}
+          </select>
+          <span className="text-xs text-text-tertiary">→</span>
+          <select value={end} onChange={(e) => setEnd(e.target.value)} className={selectClass} aria-label={t('filters.dateProperties.rangeEnd')}>
+            <option value="">{t('filters.dateProperties.rangeEnd')}</option>
+            {dateKeys.filter((key) => key !== start).map((key) => <option key={key} value={key}>{key}</option>)}
+          </select>
+          <button
+            onClick={add}
+            disabled={!start || !end}
+            className="shrink-0 p-1 rounded text-text-secondary hover:text-text-primary disabled:opacity-40"
+            aria-label={t('filters.dateProperties.addRange')}
+          >
+            <Check size={12} />
+          </button>
+          <button
+            onClick={() => setAdding(false)}
+            className="shrink-0 p-1 rounded text-text-secondary hover:text-text-primary"
+            aria-label={t('filters.dateProperties.cancelRange')}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

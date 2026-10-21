@@ -4,6 +4,7 @@ import { useQueryStore, withLinkEnds } from '../../stores/queryStore';
 import { useDossierStore } from '../../stores/dossierStore';
 import { useViewStore } from '../../stores/viewStore';
 import { useSelectionStore } from '../../stores/selectionStore';
+import { useFilterOutcome, useShownSelection } from '../../hooks/useFilterOutcome';
 import { QueryBuilderText } from './QueryBuilderText';
 import { QueryBuilderVisual } from './QueryBuilderVisual';
 import { QueryResultsTable } from './QueryResultsTable';
@@ -18,6 +19,7 @@ export function QueryPanel() {
   const setEditorMode = useQueryStore((s) => s.setEditorMode);
   const outputMode = useQueryStore((s) => s.outputMode);
   const setOutputMode = useQueryStore((s) => s.setOutputMode);
+  const outcome = useFilterOutcome();
   const results = useQueryStore((s) => s.results);
   const clear = useQueryStore((s) => s.clear);
   const setText = useQueryStore((s) => s.setText);
@@ -30,6 +32,20 @@ export function QueryPanel() {
   useSelectionStore((s) => s.selectedElementIds);
   useSelectionStore((s) => s.selectedLinkIds);
   const inverted = useQueryStore.getState().isInverseSelected();
+  // Applied on the canvas, the query selects what the views show, like the
+  // filters panel (same toggle, same state); otherwise its own results
+  const shownSelection = useShownSelection(outcome);
+  const queryOnCanvas = outcome.queryCount !== null;
+  const allResultsSelected = queryOnCanvas ? shownSelection.allSelected : (() => {
+    if (!results || (results.elementIds.size === 0 && results.linkIds.size === 0)) return false;
+    const { selectedElementIds, selectedLinkIds } = useSelectionStore.getState();
+    for (const id of results.elementIds) if (!selectedElementIds.has(id)) return false;
+    for (const id of results.linkIds) if (!selectedLinkIds.has(id)) return false;
+    return true;
+  })();
+  const toggleResultsSelection = queryOnCanvas
+    ? shownSelection.toggle
+    : allResultsSelected ? deselectAllResults : selectAllResults;
   // Frame what the query found, link ends included
   const showResults = () => {
     const found = useQueryStore.getState().results;
@@ -105,63 +121,9 @@ export function QueryPanel() {
         </button>
       </div>
 
-      {/* Editor */}
-      <div className={`overflow-y-auto ${showTable ? '' : 'flex-1'}`} style={showTable ? { maxHeight: '40%' } : undefined}>
-        {editorMode === 'text' ? <QueryBuilderText /> : <QueryBuilderVisual />}
-
-        {/* Saved queries */}
-        <SavedQueriesList />
-      </div>
-
-      {/* Table results */}
-      {showTable && (
-        <div className="flex-1 overflow-hidden border-t border-border-default">
-          <QueryResultsTable />
-        </div>
-      )}
-
-      {/* Zero results indicator (#7) */}
-      {results && results.elementIds.size === 0 && results.linkIds.size === 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 border-t border-border-default bg-warning/5">
-          <SearchX size={14} className="text-warning shrink-0" />
-          <span className="text-xs text-text-secondary">{t('query.zeroResults')}</span>
-        </div>
-      )}
-
-      {/* Recent queries (#12) */}
-      {showHistory && recentQueries.length > 0 && (
-        <div className="border-t border-border-default px-3 py-2">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1">
-              <History size={12} className="text-text-tertiary" />
-              <span className="text-[10px] font-medium text-text-tertiary uppercase">{t('query.recentQueries')}</span>
-            </div>
-            <button
-              onClick={() => {
-                clearRecentQueries();
-                setShowHistory(false);
-              }}
-              className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-text-tertiary hover:text-text-primary hover:bg-bg-secondary rounded transition-colors"
-              title={t('query.clearHistory')}
-            >
-              <Trash2 size={10} />
-              {t('query.clearHistory')}
-            </button>
-          </div>
-          {recentQueries.map((q, i) => (
-            <button
-              key={i}
-              onClick={() => handleApplyHistory(q)}
-              className="block w-full text-left px-2 py-1 text-xs font-mono text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded truncate transition-colors"
-            >
-              {q}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Results bar */}
-      <div className="border-t border-border-default px-3 py-2 flex items-center gap-2">
+      {/* Results bar, at the top like the filters header; wraps in a narrow
+          panel rather than pushing buttons out */}
+      <div className="border-b border-border-default bg-bg-secondary px-3 py-2 flex flex-wrap items-center gap-x-2 gap-y-1">
         {/* Clear button */}
         {currentAst && (
           <button
@@ -194,6 +156,12 @@ export function QueryPanel() {
             <span className="text-xs text-text-secondary">
               {results.elementIds.size} {t('query.elements')}, {results.linkIds.size} {t('query.links')}
             </span>
+            {/* Filters narrow the views too: say how many elements are shown */}
+            {outcome.queryCount !== null && outcome.filterCount < outcome.total && (
+              <span className="text-xs text-text-tertiary" title={t('query.shownWithFiltersHint')}>
+                {t('query.shownWithFilters', { count: outcome.shownIds.length })}
+              </span>
+            )}
 
             {/* Select all (#6) */}
             {(results.elementIds.size > 0 || results.linkIds.size > 0) && (
@@ -207,19 +175,15 @@ export function QueryPanel() {
                 >
                   <Crosshair size={12} />
                 </button>
+                {/* One toggle: deselects once every result is selected, selects otherwise */}
                 <button
-                  onClick={selectAllResults}
+                  onClick={toggleResultsSelection}
+                  aria-pressed={allResultsSelected}
                   className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
-                  title={t('query.selectAll')}
+                  title={t(allResultsSelected ? 'query.deselectAll' : 'query.selectAll')}
+                  aria-label={t(allResultsSelected ? 'query.deselectAll' : 'query.selectAll')}
                 >
-                  <CheckSquare size={12} />
-                </button>
-                <button
-                  onClick={deselectAllResults}
-                  className="flex items-center gap-1 px-1.5 py-1 text-xs text-text-secondary hover:text-text-primary rounded hover:bg-bg-secondary transition-colors"
-                  title={t('query.deselectAll')}
-                >
-                  <SquareDashed size={12} />
+                  {allResultsSelected ? <SquareDashed size={12} /> : <CheckSquare size={12} />}
                 </button>
                 <button
                   onClick={invertResults}
@@ -275,6 +239,62 @@ export function QueryPanel() {
           </>
         )}
       </div>
+      {/* Zero results indicator (#7) */}
+      {results && results.elementIds.size === 0 && results.linkIds.size === 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-border-default bg-warning/5">
+          <SearchX size={14} className="text-warning shrink-0" />
+          <span className="text-xs text-text-secondary">{t('query.zeroResults')}</span>
+        </div>
+      )}
+      {/* Recent queries (#12) */}
+      {showHistory && recentQueries.length > 0 && (
+        <div className="border-b border-border-default px-3 py-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1">
+              <History size={12} className="text-text-tertiary" />
+              <span className="text-[10px] font-medium text-text-tertiary uppercase">{t('query.recentQueries')}</span>
+            </div>
+            <button
+              onClick={() => {
+                clearRecentQueries();
+                setShowHistory(false);
+              }}
+              className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-text-tertiary hover:text-text-primary hover:bg-bg-secondary rounded transition-colors"
+              title={t('query.clearHistory')}
+            >
+              <Trash2 size={10} />
+              {t('query.clearHistory')}
+            </button>
+          </div>
+          {recentQueries.map((q, i) => (
+            <button
+              key={i}
+              onClick={() => handleApplyHistory(q)}
+              className="block w-full text-left px-2 py-1 text-xs font-mono text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded truncate transition-colors"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Editor */}
+      <div className={`overflow-y-auto ${showTable ? '' : 'flex-1'}`} style={showTable ? { maxHeight: '40%' } : undefined}>
+        {editorMode === 'text' ? <QueryBuilderText /> : <QueryBuilderVisual />}
+
+        {/* Saved queries */}
+        <SavedQueriesList />
+      </div>
+
+      {/* Table results */}
+      {showTable && (
+        <div className="flex-1 overflow-hidden border-t border-border-default">
+          <QueryResultsTable />
+        </div>
+      )}
+
+
+
     </div>
   );
 }

@@ -1,5 +1,6 @@
 // ZNQuery Serializer — AST → ZNQuery text
-// Produces minimal parentheses, dates as ISO, quoted strings.
+// Wraps every nested group in parentheses (the groups of the visual
+// builder stay visible in the text), dates as ISO, quoted strings.
 
 import type { QueryNode, QueryCondition } from './types';
 import { OPERATOR_SYMBOLS } from './types';
@@ -83,8 +84,9 @@ function serializeNode(node: QueryNode, parent: ParentContext): string {
     case 'and': {
       const parts = node.children.map(c => serializeNode(c, 'and'));
       const text = parts.join(' AND ');
-      // AND binds tighter than OR, so only wrap in parens if parent is NOT
-      if (parent === 'not') {
+      // A nested group keeps its parentheses even where precedence makes them
+      // optional (AND inside OR): the text shows the structure that was built
+      if (parent !== 'root') {
         return `(${text})`;
       }
       return text;
@@ -93,8 +95,8 @@ function serializeNode(node: QueryNode, parent: ParentContext): string {
     case 'or': {
       const parts = node.children.map(c => serializeNode(c, 'or'));
       const text = parts.join(' OR ');
-      // Wrap in parens if parent is AND or NOT (AND binds tighter)
-      if (parent === 'and' || parent === 'not') {
+      // A nested group keeps its parentheses, needed or not (see AND)
+      if (parent !== 'root') {
         return `(${text})`;
       }
       return text;

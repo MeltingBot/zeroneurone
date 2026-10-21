@@ -224,6 +224,8 @@ export function buildSandboxedAPI(
   addStore('useReportStore', 'stores:report:read', 'stores:report:write');
   addStore('useInsightsStore', 'stores:insights:read');
   addStore('useQueryStore', 'stores:query:read');
+  // What the views show: read-only, like the view store
+  if (has(permissions, 'stores:view:read')) api.filterOutcome = scopedAPI.filterOutcome;
   addStore('useTagSetStore', 'stores:tagSet:read', 'stores:tagSet:write');
   addStore('useTabStore', 'stores:tab:read', 'stores:tab:write');
   addStore('useUIStore', 'stores:ui:read', 'stores:ui:write');

@@ -499,6 +499,10 @@ export interface View {
   elementPositions?: { id: ElementId; position: Position }[];
   /** Optional active tab when view was saved */
   activeTabId?: TabId | null;
+  /** Elements outside the filters hidden rather than dimmed (absent in views saved before) */
+  hideFilteredOut?: boolean;
+  /** Query applied when the view was saved; null: none (absent in views saved before) */
+  query?: { text: string; outputMode: 'canvas' | 'table' | 'both' | 'none' } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -520,9 +524,15 @@ export interface ViewFilters {
   dateFrom: Date | null;
   dateTo: Date | null;
   hasGeo: boolean | null;
-  /** Keys of date/datetime properties left off the timeline (e.g. a birth
-   *  date); the elements themselves stay visible everywhere. */
+  /** Keys of the date/datetime properties that date the elements on the
+   *  timeline and the map; empty means all of them. Kept as a selection so
+   *  that a date property imported later is not counted unasked. */
+  includedDateProperties?: string[];
+  /** Former form of the same choice (the keys left out), still read for the
+   *  views saved with it; ignored when `includedDateProperties` is set. */
   excludedDateProperties?: string[];
+  /** Pairs of date properties read as one period (start → end) */
+  dateRangeProperties?: { start: string; end: string }[];
 }
 
 // ============================================================================
@@ -677,7 +687,9 @@ export const DEFAULT_FILTERS: ViewFilters = {
   dateFrom: null,
   dateTo: null,
   hasGeo: null,
+  includedDateProperties: [],
   excludedDateProperties: [],
+  dateRangeProperties: [],
 };
 
 // Saturated colors for nodes - work well on both light and dark backgrounds

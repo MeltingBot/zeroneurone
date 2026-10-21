@@ -308,6 +308,8 @@
   "filters": {
     "title": "Filters",
     "elementsCount": "{{matching}}/{{total}} elementen",
+    "countBreakdown": "Filters {{filters}} · Query {{query}}",
+    "queryBadge": "Query",
     "active": "{{count}} actieve filter(s)",
     "clearAll": "Alles wissen",
     "selectMatching": "Selecteren",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Gefilterde elementen uit selectie verwijderen",
     "hiddenCount": "{{count}} verborgen element(en)",
     "activeFilters": "Actieve filters",
+    "hideFilteredOut": "Verbergen",
+    "hideFilteredOutHint": "Elementen buiten het filter in alle weergaven verbergen in plaats van dimmen",
     "noName": "Naamloos",
     "show": "Tonen",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Alleen als betrouwbaar gewaardeerde bronnen behouden"
     },
     "dateProperties": {
-      "title": "Datumeigenschappen op de tijdlijn",
-      "badge": "{{key}} niet op de tijdlijn"
+      "title": "Datumeigenschappen",
+      "badge": "Datums {{kept}}/{{total}}",
+      "ranges": "Perioden",
+      "addRange": "Periode",
+      "rangesHint": "Twee datums als één periode lezen (bv. begin en einde van de feiten)",
+      "removeRange": "Periode verwijderen",
+      "rangeStart": "Begin",
+      "rangeEnd": "Einde",
+      "cancelRange": "Annuleren"
     },
     "property": {
       "hasProperty": "Heeft eigenschap",
@@ -377,6 +388,8 @@
     "modeVisual": "Visueel",
     "execute": "Uitvoeren",
     "clear": "Wissen",
+    "shownWithFilters": "→ {{count}} getoond",
+    "shownWithFiltersHint": "Met de actieve filters",
     "elements": "elementen",
     "links": "verbindingen",
     "filterMode": "Canvas filter",

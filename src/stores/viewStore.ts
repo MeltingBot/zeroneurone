@@ -269,7 +269,11 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   clearFilters: () => {
-    set({ filters: { ...DEFAULT_FILTERS } });
+    // The date periods are a setting, not a filter (they narrow nothing and
+    // are not listed among the active filters): they stay
+    set((state) => ({
+      filters: { ...DEFAULT_FILTERS, dateRangeProperties: state.filters.dateRangeProperties ?? [] },
+    }));
   },
 
   addIncludeTag: (tag) => {
@@ -361,6 +365,14 @@ export const useViewStore = create<ViewState>((set, get) => ({
     // Capture active tab for restoration
     const { useTabStore } = await import('./tabStore');
     const currentActiveTabId = useTabStore.getState().activeTabId;
+    // The view keeps what narrows the display: filters, how the rest shows
+    // (dimmed or hidden), and the query applied
+    const { useUIStore } = await import('./uiStore');
+    const { useQueryStore } = await import('./queryStore');
+    const queryState = useQueryStore.getState();
+    const query = queryState.currentAst && queryState.outputMode !== 'none'
+      ? { text: queryState.currentText, outputMode: queryState.outputMode }
+      : null;
 
     const view: View = {
       id: generateUUID(),
@@ -371,6 +383,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
       hiddenElementIds: Array.from(state.hiddenElementIds),
       displayMode: state.displayMode,
       activeTabId: currentActiveTabId,
+      hideFilteredOut: useUIStore.getState().hideFilteredOut,
+      query,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -395,6 +409,27 @@ export const useViewStore = create<ViewState>((set, get) => ({
       hiddenElementIds: new Set(view.hiddenElementIds),
       displayMode: view.displayMode,
     });
+
+    // Restore how the rest shows and the query (views saved before these
+    // existed leave them as they are)
+    if (view.hideFilteredOut !== undefined) {
+      import('./uiStore').then(({ useUIStore }) => {
+        useUIStore.setState({ hideFilteredOut: view.hideFilteredOut! });
+      });
+    }
+    if (view.query !== undefined) {
+      import('./queryStore').then(({ useQueryStore }) => {
+        const queryStore = useQueryStore.getState();
+        if (view.query) {
+          // Mode first: running the query (setText) computes what it keeps on
+          // the views only when it is applied to them
+          queryStore.setOutputMode(view.query.outputMode);
+          queryStore.setText(view.query.text);
+        } else {
+          queryStore.clear();
+        }
+      });
+    }
 
     // Restore active tab if saved
     if (view.activeTabId !== undefined) {
@@ -439,6 +474,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
       filters.dateFrom !== null ||
       filters.dateTo !== null ||
       filters.hasGeo !== null ||
+      (filters.includedDateProperties?.length ?? 0) > 0 ||
       (filters.excludedDateProperties?.length ?? 0) > 0
     );
   },

@@ -111,7 +111,7 @@ describe('serializer — logical operators', () => {
 
 // ── Parenthesization ──
 
-describe('serializer — minimal parentheses', () => {
+describe('serializer — parentheses', () => {
   it('no parens for flat AND', () => {
     roundTrip('a = "1" AND b = "2" AND c = "3"', 'a = "1" AND b = "2" AND c = "3"');
   });
@@ -135,8 +135,9 @@ describe('serializer — minimal parentheses', () => {
     expect(serializeQuery(ast)).toBe('(a = "1" OR b = "2") AND c = "3"');
   });
 
-  it('no extra parens for AND inside OR', () => {
-    // OR(AND(a,b), c) → a AND b OR c
+  it('keeps the parens of an AND group inside OR', () => {
+    // OR(AND(a,b), c) → (a AND b) OR c: optional by precedence, but the
+    // group built in the visual editor must show in the text
     const ast: QueryOr = {
       type: 'or',
       children: [
@@ -147,8 +148,12 @@ describe('serializer — minimal parentheses', () => {
         { type: 'condition', field: 'c', operator: 'eq', value: '3' },
       ],
     };
-    // AND binds tighter than OR, so no parens needed
-    expect(serializeQuery(ast)).toBe('a = "1" AND b = "2" OR c = "3"');
+    expect(serializeQuery(ast)).toBe('(a = "1" AND b = "2") OR c = "3"');
+  });
+
+  it('keeps the parens of a group under NOT, and none at the top', () => {
+    roundTrip('NOT (a = "1" OR b = "2")', 'NOT (a = "1" OR b = "2")');
+    roundTrip('a = "1" OR b = "2"', 'a = "1" OR b = "2"');
   });
 });
 

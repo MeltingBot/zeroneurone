@@ -1,6 +1,6 @@
 import type { Element, ElementEvent, Link } from '../types';
 import type { DatePrecision } from '../types';
-import { effectivePrecision, endOfLocalDay, endOfPrecision, formatPreciseDate, formatSourceTime, isDayOnly } from './dates';
+import { effectivePrecision, endOfLocalDay, endOfPrecision, formatPreciseDate, formatSourceTime, isDayOnly, parsePropertyDate } from './dates';
 
 /**
  * Temporal helpers shared by the map navigator and the canvas time cursor.
@@ -69,6 +69,134 @@ export function eventInterval(event: ElementEvent): TimeInterval | null {
   };
 }
 
+/**
+ * Whether a date property dates the elements, per the filters panel: the
+ * selected keys when there is a selection, otherwise every key but the ones
+ * left out in the former form of the choice.
+ */
+export function datePropertyKeeper(
+  filters: { includedDateProperties?: string[]; excludedDateProperties?: string[] },
+): (key: string) => boolean {
+  const included = filters.includedDateProperties ?? [];
+  if (included.length > 0) {
+    const set = new Set(included);
+    return (key) => set.has(key);
+  }
+  const excluded = new Set(filters.excludedDateProperties ?? []);
+  return (key) => !excluded.has(key);
+}
+
+/** Two date properties read as one period (e.g. "Début des faits" → "Fin des faits") */
+export interface DatePropertyRange {
+  start: string;
+  end: string;
+}
+
+/** How date properties date the elements: which keys count, which pairs are periods */
+export interface DatePropertyRules {
+  keep: (key: string) => boolean;
+  ranges: DatePropertyRange[];
+}
+
+/** The date property rules of the filters panel */
+export function datePropertyRules(filters: {
+  includedDateProperties?: string[];
+  excludedDateProperties?: string[];
+  dateRangeProperties?: DatePropertyRange[];
+}): DatePropertyRules {
+  return { keep: datePropertyKeeper(filters), ranges: filters.dateRangeProperties ?? [] };
+}
+
+/** A bare key filter reads as rules without periods */
+export type DatePropertyRulesLike = DatePropertyRules | ((key: string) => boolean);
+function toRules(rules: DatePropertyRulesLike): DatePropertyRules {
+  return typeof rules === 'function' ? { keep: rules, ranges: [] } : rules;
+}
+
+/** One date of an element taken from its properties: a point, or a declared period */
+export interface PropertyDateSpan extends TimeInterval {
+  /** Key of the date, or of the start of the period */
+  key: string;
+  /** Key of the end, for a period */
+  endKey?: string;
+  start: Date;
+  end?: Date;
+  /** Whether the start carries a time */
+  datetime: boolean;
+  timeZone?: string;
+  /** Index of the (start) property in the element's properties */
+  index: number;
+}
+
+/**
+ * Dates an element takes from its date and date-time properties, per the
+ * rules: a pair declared as a period gives one span from its start to its end
+ * when the element fills both (start not after end); every other kept date is
+ * a point, covering its day (date) or its minute (date-time).
+ */
+export function propertyDateSpans(element: Element, rulesLike: DatePropertyRulesLike): PropertyDateSpan[] {
+  const rules = toRules(rulesLike);
+  const dated: { key: string; index: number; date: Date; datetime: boolean; timeZone?: string }[] = [];
+  (element.properties ?? []).forEach((prop, index) => {
+    if ((prop.type !== 'date' && prop.type !== 'datetime') || !prop.value) return;
+    if (!rules.keep(prop.key)) return;
+    const date = parsePropertyDate(prop.value);
+    if (!date) return;
+    dated.push({ key: prop.key, index, date, datetime: prop.type === 'datetime', timeZone: prop.timeZone });
+  });
+
+  const spans: PropertyDateSpan[] = [];
+  const used = new Set<number>();
+  for (const range of rules.ranges) {
+    const start = dated.find((p) => p.key === range.start && !used.has(p.index));
+    const end = dated.find((p) => p.key === range.end && !used.has(p.index));
+    if (!start || !end || start === end || end.date.getTime() < start.date.getTime()) continue;
+    used.add(start.index);
+    used.add(end.index);
+    const from = toMinuteStart(start.date);
+    spans.push({
+      key: start.key, endKey: end.key, start: start.date, end: end.date,
+      from: from.getTime(), until: dateEndInclusive(toMinuteStart(end.date)),
+      datetime: start.datetime, timeZone: start.timeZone, index: start.index,
+    });
+  }
+  for (const p of dated) {
+    if (used.has(p.index)) continue;
+    const from = toMinuteStart(p.date);
+    spans.push({
+      key: p.key, start: p.date, from: from.getTime(), until: dateEndInclusive(from),
+      datetime: p.datetime, timeZone: p.timeZone, index: p.index,
+    });
+  }
+  return spans;
+}
+
+/**
+ * Intervals of an element's date and date-time properties, per the rules
+ * (see propertyDateSpans).
+ */
+export function propertyDateIntervals(element: Element, rules: DatePropertyRulesLike): TimeInterval[] {
+  return propertyDateSpans(element, rules).map(({ from, until }) => ({ from, until }));
+}
+
+/**
+ * Every interval that dates an element as a fact: its period, its dated
+ * events and its date properties that `keep` accepts (`Element.date`, the
+ * collection date, is left out as everywhere else). The filters (no date,
+ * period) read the same dates as the timeline and the canvas.
+ */
+export function elementDateIntervals(element: Element, keep: DatePropertyRulesLike): TimeInterval[] {
+  const intervals: TimeInterval[] = [];
+  const range = elementRangeInterval(element);
+  if (range) intervals.push(range);
+  for (const event of element.events ?? []) {
+    const interval = eventInterval(event);
+    if (interval) intervals.push(interval);
+  }
+  intervals.push(...propertyDateIntervals(element, keep));
+  return intervals;
+}
+
 /** Interval of a link, covering both `date` and `dateRange` when present. */
 export function linkInterval(link: Link): TimeInterval | null {
   let interval: TimeInterval | null = null;
@@ -96,7 +224,12 @@ export function overlaps(interval: TimeInterval, window: TimeInterval): boolean 
  * Distinct factual dates of the dossier (minute precision), sorted ascending:
  * the steps of the temporal navigator.
  */
-export function collectTemporalDates(elements: Element[], links: Link[]): Date[] {
+export function collectTemporalDates(
+  elements: Element[],
+  links: Link[],
+  /** Date properties that date the elements (none when absent) */
+  keepDateProperty?: DatePropertyRulesLike,
+): Date[] {
   const times = new Set<number>();
   const add = (d: Date | string | null | undefined) => {
     if (!d) return;
@@ -110,6 +243,9 @@ export function collectTemporalDates(elements: Element[], links: Link[]): Date[]
     }
     add(el.dateRange?.start);
     add(el.dateRange?.end);
+    if (keepDateProperty) {
+      for (const interval of propertyDateIntervals(el, keepDateProperty)) add(new Date(interval.from));
+    }
   }
   for (const link of links) {
     add(link.date);
@@ -184,6 +320,8 @@ export function computeCanvasTemporalClassification(
   links: Link[],
   instant: Date,
   periodEnd: Date | null = null,
+  /** Date properties that date the elements (none when absent) */
+  keepDateProperty?: DatePropertyRulesLike,
 ): CanvasTemporalClassification {
   const window = navigatorWindow(instant, periodEnd);
 
@@ -236,6 +374,13 @@ export function computeCanvasTemporalClassification(
     if (ownRange) {
       hasTemporalData = true;
       if (overlaps(ownRange, window)) isActive = true;
+    }
+
+    if (keepDateProperty) {
+      for (const interval of propertyDateIntervals(el, keepDateProperty)) {
+        hasTemporalData = true;
+        if (overlaps(interval, window)) isActive = true;
+      }
     }
 
     if (isActive) {

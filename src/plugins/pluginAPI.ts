@@ -50,6 +50,7 @@ import { useViewStore } from '../stores/viewStore';
 import { useReportStore } from '../stores/reportStore';
 import { useInsightsStore } from '../stores/insightsStore';
 import { useQueryStore } from '../stores/queryStore';
+import { getFilterOutcome } from '../hooks/useFilterOutcome';
 import { useTagSetStore } from '../stores/tagSetStore';
 import { useTabStore } from '../stores/tabStore';
 import { useUIStore } from '../stores/uiStore';
@@ -143,6 +144,19 @@ export const pluginAPI = {
     sharedPluginData: true,
     /** pluginServices: a plugin offers a named service, another one uses it when it is there */
     pluginServices: true,
+    /** filterOutcome(): what the views show, kept by the filters and the query */
+    filterOutcome: true,
+  },
+
+  // ─── What the views show (filters + query) ──────────────────
+  /**
+   * Elements the views show: kept by the filters panel and by the query
+   * applied on the canvas, counted as the filters and query panels count
+   * them. `shownIds.length < total` when something narrows the views.
+   */
+  filterOutcome(): { total: number; shownIds: string[]; filterCount: number; queryCount: number | null } {
+    const { total, shownIds, filterCount, queryCount } = getFilterOutcome();
+    return { total, shownIds, filterCount, queryCount };
   },
 
   // ─── Services between plugins ───────────────────────────────

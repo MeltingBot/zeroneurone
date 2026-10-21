@@ -322,6 +322,8 @@
   "filters": {
     "title": "Filters",
     "elementsCount": "{{matching}}/{{total}} elements",
+    "countBreakdown": "Filters {{filters}} · Query {{query}}",
+    "queryBadge": "Query",
     "active": "{{count}} active filter(s)",
     "clearAll": "Clear all",
     "selectMatching": "Select",
@@ -330,6 +332,8 @@
     "deselectMatchingDesc": "Remove filtered elements from selection",
     "hiddenCount": "{{count}} hidden element(s)",
     "activeFilters": "Active filters",
+    "hideFilteredOut": "Hide",
+    "hideFilteredOutHint": "Hide elements outside the filter instead of dimming them, in every view",
     "noName": "Unnamed",
     "show": "Show",
     "sections": {
@@ -363,8 +367,15 @@
       "reliableSourcesDesc": "Keep only sources graded as reliable"
     },
     "dateProperties": {
-      "title": "Date properties on the timeline",
-      "badge": "{{key}} off the timeline"
+      "title": "Date properties",
+      "badge": "Dates {{kept}}/{{total}}",
+      "ranges": "Periods",
+      "addRange": "Period",
+      "rangesHint": "Read two dates as one period (e.g. start and end of the facts)",
+      "removeRange": "Remove the period",
+      "rangeStart": "Start",
+      "rangeEnd": "End",
+      "cancelRange": "Cancel"
     },
     "property": {
       "hasProperty": "Has property",
@@ -391,6 +402,8 @@
     "modeVisual": "Visual",
     "execute": "Execute",
     "clear": "Clear",
+    "shownWithFilters": "→ {{count}} shown",
+    "shownWithFiltersHint": "With the active filters",
     "elements": "elements",
     "links": "links",
     "filterMode": "Canvas filter",

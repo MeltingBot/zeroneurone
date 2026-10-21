@@ -308,6 +308,8 @@
   "filters": {
     "title": "Filtry",
     "elementsCount": "{{matching}}/{{total}} elementów",
+    "countBreakdown": "Filtry {{filters}} · Zapytanie {{query}}",
+    "queryBadge": "Zapytanie",
     "active": "{{count}} aktywnych filtrów",
     "clearAll": "Wyczyść wszystko",
     "selectMatching": "Zaznacz",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Usuń filtrowane elementy z zaznaczenia",
     "hiddenCount": "{{count}} ukrytych elementów",
     "activeFilters": "Aktywne filtry",
+    "hideFilteredOut": "Ukryj",
+    "hideFilteredOutHint": "Ukryj elementy spoza filtra zamiast je przyciemniać, we wszystkich widokach",
     "noName": "Bez nazwy",
     "show": "Pokaż",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Zachowaj tylko źródła ocenione jako wiarygodne"
     },
     "dateProperties": {
-      "title": "Właściwości daty na osi czasu",
-      "badge": "{{key}} poza osią czasu"
+      "title": "Właściwości daty",
+      "badge": "Daty {{kept}}/{{total}}",
+      "ranges": "Okresy",
+      "addRange": "Okres",
+      "rangesHint": "Odczytaj dwie daty jako jeden okres (np. początek i koniec zdarzeń)",
+      "removeRange": "Usuń okres",
+      "rangeStart": "Początek",
+      "rangeEnd": "Koniec",
+      "cancelRange": "Anuluj"
     },
     "property": {
       "hasProperty": "Ma właściwość",
@@ -377,6 +388,8 @@
     "modeVisual": "Wizualny",
     "execute": "Wykonaj",
     "clear": "Wyczyść",
+    "shownWithFilters": "→ {{count}} wyświetlonych",
+    "shownWithFiltersHint": "Z aktywnymi filtrami",
     "elements": "elementy",
     "links": "połączenia",
     "filterMode": "Filtr canvas",

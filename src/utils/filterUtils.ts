@@ -1,5 +1,6 @@
 import type { Element, EvaluationModel, Link, ViewFilters } from '../types';
 import { matchesEvaluationFilters } from './evaluation';
+import { dateEndInclusive, datePropertyRules, elementDateIntervals, overlaps, toMinuteStart } from './temporalUtils';
 
 /**
  * Check if an element matches the given filters
@@ -61,15 +62,15 @@ export function elementMatchesFilters(
     }
   }
 
-  // Date range filters
-  if (filters.dateFrom !== null && element.date) {
-    if (new Date(element.date) < new Date(filters.dateFrom)) {
-      return false;
-    }
-  }
-
-  if (filters.dateTo !== null && element.date) {
-    if (new Date(element.date) > new Date(filters.dateTo)) {
+  // Period filter: kept when one of its dates (period, events, date
+  // properties kept) meets the period; an undated element stays
+  if (filters.dateFrom !== null || filters.dateTo !== null) {
+    const period = {
+      from: filters.dateFrom !== null ? toMinuteStart(filters.dateFrom).getTime() : -Infinity,
+      until: filters.dateTo !== null ? dateEndInclusive(toMinuteStart(filters.dateTo)) : Infinity,
+    };
+    const intervals = elementDateIntervals(element, datePropertyRules(filters));
+    if (intervals.length > 0 && !intervals.some((interval) => overlaps(interval, period))) {
       return false;
     }
   }

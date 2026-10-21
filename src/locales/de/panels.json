@@ -308,6 +308,8 @@
   "filters": {
     "title": "Filter",
     "elementsCount": "{{matching}}/{{total}} Elemente",
+    "countBreakdown": "Filter {{filters}} · Abfrage {{query}}",
+    "queryBadge": "Abfrage",
     "active": "{{count}} aktive(r) Filter",
     "clearAll": "Alle löschen",
     "selectMatching": "Auswählen",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Gefilterte Elemente aus Auswahl entfernen",
     "hiddenCount": "{{count}} ausgeblendete(s) Element(e)",
     "activeFilters": "Aktive Filter",
+    "hideFilteredOut": "Ausblenden",
+    "hideFilteredOutHint": "Elemente außerhalb des Filters in allen Ansichten ausblenden statt abschwächen",
     "noName": "Unbenannt",
     "show": "Einblenden",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Nur als verlässlich bewertete Quellen behalten"
     },
     "dateProperties": {
-      "title": "Datumseigenschaften auf der Zeitleiste",
-      "badge": "{{key}} nicht auf der Zeitleiste"
+      "title": "Datumseigenschaften",
+      "badge": "Daten {{kept}}/{{total}}",
+      "ranges": "Zeiträume",
+      "addRange": "Zeitraum",
+      "rangesHint": "Zwei Daten als einen Zeitraum lesen (z. B. Beginn und Ende der Tat)",
+      "removeRange": "Zeitraum entfernen",
+      "rangeStart": "Beginn",
+      "rangeEnd": "Ende",
+      "cancelRange": "Abbrechen"
     },
     "property": {
       "hasProperty": "Hat die Eigenschaft",
@@ -377,6 +388,8 @@
     "modeVisual": "Visuell",
     "execute": "Ausführen",
     "clear": "Löschen",
+    "shownWithFilters": "→ {{count}} angezeigt",
+    "shownWithFiltersHint": "Mit den aktiven Filtern",
     "elements": "Elemente",
     "links": "Verbindungen",
     "filterMode": "Canvas-Filter",
