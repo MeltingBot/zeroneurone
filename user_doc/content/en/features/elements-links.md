@@ -20,7 +20,7 @@ An element represents any concept: person, place, organization, object, event, d
 
 | Property | Description |
 |----------|-------------|
-| **Label** | Name displayed on the canvas. If another element already has this name, a warning is shown; **Show** centers the view on it (repeated clicks: next duplicate) |
+| **Label** | Name displayed on the canvas. If another element already has this name, a warning is shown; **Show** centers the view on it (repeated clicks: next duplicate). The target button, right of the label, centers the view on the element itself (canvas, map or timeline) |
 | **Notes** | Free-form description, long text |
 | **Tags** | Labels for categorization |
 | **Confidence / grading** | Certainty level (0-100%) or Europol / Admiralty grading, depending on the dossier's [evaluation model]({{< relref "evaluation" >}}) |

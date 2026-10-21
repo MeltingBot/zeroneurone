@@ -346,6 +346,8 @@
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",
+    "offMapLinked": "{{count}} gekoppeld(e) element(en) zonder locatie",
+    "offMapSelectRest": "De overige {{count}} selecteren",
     "addLocation": "Voeg coördinaten toe aan elementen om ze op de kaart te zien",
     "pickLocation": "Klik op de kaart om de positie te bepalen",
     "elementsLocated": "{{count}} element(en) gelokaliseerd",

@@ -299,6 +299,7 @@
       "mixedValues": "Meerdere waarden"
     },
     "copyDate": "Datum kopiëren",
+    "revealElement": "Weergave op element centreren",
     "timeZone": {
       "title": "Tijdzone van de ingevoerde tijd",
       "search": "Stad of zone",

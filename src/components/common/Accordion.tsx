@@ -1,6 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
+
+/**
+ * Open/closed choices made by the user, per panel kind ("element", "link"...),
+ * kept for the session: switching from one element to another keeps the same
+ * sections open, to compare values quickly. A section the user never toggled
+ * keeps its own defaultOpen.
+ */
+const rememberedOpen = new Map<string, boolean>();
+const AccordionMemoryContext = createContext<string | null>(null);
+
+export function AccordionMemory({ scope, children }: { scope: string; children: ReactNode }) {
+  return <AccordionMemoryContext.Provider value={scope}>{children}</AccordionMemoryContext.Provider>;
+}
 
 interface AccordionSectionProps {
   id: string;
@@ -26,7 +39,11 @@ export function AccordionSection({
   onToggle,
   dataTutorial,
 }: AccordionSectionProps) {
-  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  const scope = useContext(AccordionMemoryContext);
+  const memoryKey = scope ? `${scope}:${id}` : null;
+  const [internalIsOpen, setInternalIsOpen] = useState(
+    () => (memoryKey ? rememberedOpen.get(memoryKey) : undefined) ?? defaultOpen
+  );
 
   const isControlled = controlledIsOpen !== undefined;
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
@@ -36,8 +53,9 @@ export function AccordionSection({
       onToggle?.(id, !isOpen);
     } else {
       setInternalIsOpen(!isOpen);
+      if (memoryKey) rememberedOpen.set(memoryKey, !isOpen);
     }
-  }, [id, isOpen, isControlled, onToggle]);
+  }, [id, isOpen, isControlled, onToggle, memoryKey]);
 
   return (
     <div className="border-b border-border-default last:border-b-0" data-tutorial={dataTutorial}>

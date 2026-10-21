@@ -7,7 +7,7 @@ export { Modal } from './Modal';
 export { EmptyState } from './EmptyState';
 export { DropdownMenu, DropdownItem } from './DropdownMenu';
 export { ToastContainer } from './Toast';
-export { Accordion, AccordionSection } from './Accordion';
+export { Accordion, AccordionSection, AccordionMemory } from './Accordion';
 export { ViewToolbar } from './ViewToolbar';
 export { DropdownPortal } from './DropdownPortal';
 export { MarkdownEditor, MarkdownPreview } from './MarkdownEditor';

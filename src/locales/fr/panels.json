@@ -314,6 +314,7 @@
       "mixedValues": "Valeurs multiples"
     },
     "copyDate": "Copier la date",
+    "revealElement": "Centrer la vue sur l’élément",
     "timeZone": {
       "title": "Fuseau de l'heure saisie",
       "search": "Ville ou fuseau",

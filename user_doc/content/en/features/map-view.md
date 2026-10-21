@@ -142,6 +142,18 @@ Links between geolocated elements are displayed as lines on the map.
 - Directed links display an arrow
 - Click on a link to select it
 
+## Elements Without Location
+
+A geolocated element directly linked to elements without location (no
+coordinates, no located event) shows a dashed `+N` badge under its label.
+
+- Click the badge to unfold these elements around the marker, joined by dashed
+  lines; click again to fold them
+- Click an unfolded element to open its details
+- Beyond 12 elements, the last `+N` chip selects all the others
+- Hidden or filtered-out elements are not counted; in temporal mode, only
+  active links count
+
 ---
 
 ## Geographic Zones

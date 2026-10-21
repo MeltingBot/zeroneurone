@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.72.0
+
+### Nouveautés
+
+- **Éléments sans position sur la carte** — un élément géolocalisé lié à des
+  éléments sans position affiche une pastille `+N` sous son étiquette. Un clic
+  la déploie : ces éléments apparaissent en étiquettes autour du marqueur,
+  reliés par des traits pointillés, et un clic sur l'un d'eux ouvre son
+  détail. Seuls les voisins directs comptent, en respectant filtres, masquage,
+  onglet et, en mode temporel, les liens actifs.
+- **Centrer sur l'élément** — un bouton à côté du nom, dans le panneau de
+  détail, centre la vue sur l'élément (canvas, carte ou timeline).
+
+### Améliorations
+
+- **Sections du panneau mémorisées** — les sections ouvertes ou fermées du
+  détail restent dans le même état en passant d'un élément à un autre (de même
+  pour les liens), pour comparer les valeurs rapidement.
+- **Disposition par clusters plus rapide** — le placement de centaines de
+  clusters prend une fraction de seconde au lieu de plusieurs.
+
 ## 2.71.1
 
 ### Corrections

@@ -13,7 +13,7 @@ import { ReportPanel } from './ReportPanel';
 import { QueryPanel } from './QueryPanel';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { Info, Filter, Eye, Network, PanelRightClose, PanelLeftClose, PanelBottomClose, PanelRight, PanelLeft, PanelBottom, ExternalLink, Check, FileText, Code2, Lightbulb, icons } from 'lucide-react';
-import { IconButton } from '../common';
+import { IconButton, AccordionMemory } from '../common';
 import { usePlugins } from '../../plugins/usePlugins';
 import { useDetachedWindow } from '../../hooks/useDetachedWindow';
 
@@ -255,7 +255,9 @@ export function SidePanel() {
     if (selectedElements.length === 1) {
       return (
         <div className="flex-1 overflow-y-auto">
-          <ElementDetail key={selectedElements[0].id} element={selectedElements[0]} />
+          <AccordionMemory scope="element">
+            <ElementDetail key={selectedElements[0].id} element={selectedElements[0]} />
+          </AccordionMemory>
         </div>
       );
     }
@@ -263,7 +265,9 @@ export function SidePanel() {
     if (selectedLinks.length === 1) {
       return (
         <div className="flex-1 overflow-y-auto">
-          <LinkDetail link={selectedLinks[0]} />
+          <AccordionMemory scope="link">
+            <LinkDetail link={selectedLinks[0]} />
+          </AccordionMemory>
         </div>
       );
     }

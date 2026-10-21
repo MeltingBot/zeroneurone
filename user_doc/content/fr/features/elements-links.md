@@ -20,7 +20,7 @@ Un élément représente n'importe quel concept : personne, lieu, organisation, 
 
 | Propriété | Description |
 |-----------|-------------|
-| **Label** | Nom affiché sur le canvas. Si un autre élément porte déjà ce nom, un avertissement s'affiche ; **Voir** centre la vue sur lui (clics successifs : doublon suivant) |
+| **Label** | Nom affiché sur le canvas. Si un autre élément porte déjà ce nom, un avertissement s'affiche ; **Voir** centre la vue sur lui (clics successifs : doublon suivant). Le bouton cible, à droite du libellé, centre la vue sur l'élément lui-même (canvas, carte ou timeline) |
 | **Notes** | Description libre, texte long |
 | **Tags** | Étiquettes pour catégoriser |
 | **Confiance / cotation** | Niveau de certitude (0-100%) ou cotation Europol / Amirauté, selon le [modèle d'évaluation]({{< relref "evaluation" >}}) du dossier |

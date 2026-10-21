@@ -41,6 +41,8 @@ The unified panel contains all tabs:
 | **Views** | Save/load configurations |
 | **Report** | Write and export reports |
 
+In the **Detail** tab, sections you open or close stay that way from one element to the next (and from one link to the next), so values can be compared quickly.
+
 #### Panel Position
 
 The position button, in the panel header (next to "Collapse"), opens a menu with 4 positions:

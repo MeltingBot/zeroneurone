@@ -299,6 +299,7 @@
       "mixedValues": "Vários valores"
     },
     "copyDate": "Copiar data",
+    "revealElement": "Centrar a vista no elemento",
     "timeZone": {
       "title": "Fuso horário da hora introduzida",
       "search": "Cidade ou fuso",

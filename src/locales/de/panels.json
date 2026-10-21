@@ -299,6 +299,7 @@
       "mixedValues": "Mehrere Werte"
     },
     "copyDate": "Datum kopieren",
+    "revealElement": "Ansicht auf Element zentrieren",
     "timeZone": {
       "title": "Zeitzone der eingegebenen Uhrzeit",
       "search": "Stadt oder Zone",

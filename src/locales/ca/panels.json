@@ -299,6 +299,7 @@
       "mixedValues": "Diversos valors"
     },
     "copyDate": "Copiar la data",
+    "revealElement": "Centra la vista en l’element",
     "timeZone": {
       "title": "Fus horari de l'hora introduïda",
       "search": "Ciutat o fus",

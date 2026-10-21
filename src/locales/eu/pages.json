@@ -346,6 +346,8 @@
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",
+    "offMapLinked": "Kokapenik gabeko {{count}} elementu lotu",
+    "offMapSelectRest": "Hautatu beste {{count}}ak",
     "addLocation": "Gehitu koordenatuak elementuei mapan ikusteko",
     "pickLocation": "Egin klik mapan posizioa ezartzeko",
     "elementsLocated": "{{count}} elementu kokatuta",

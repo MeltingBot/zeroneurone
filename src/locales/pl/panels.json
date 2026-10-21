@@ -299,6 +299,7 @@
       "mixedValues": "Różne wartości"
     },
     "copyDate": "Kopiuj datę",
+    "revealElement": "Wyśrodkuj widok na elemencie",
     "timeZone": {
       "title": "Strefa czasowa wpisanej godziny",
       "search": "Miasto lub strefa",

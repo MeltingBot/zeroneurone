@@ -299,6 +299,7 @@
       "mixedValues": "Varios valores"
     },
     "copyDate": "Copiar fecha",
+    "revealElement": "Centrar la vista en el elemento",
     "timeZone": {
       "title": "Zona horaria de la hora introducida",
       "search": "Ciudad o zona",

@@ -405,6 +405,10 @@ export function MapView() {
   const clusterMarkersRef = useRef<Map<number, maplibregl.Marker>>(new Map());
   // Link labels stay DOM overlays (boxed text, never hidden by collisions)
   const linkLabelMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  // Unlocated neighbours unfolded around their located element (one overlay per element)
+  const offMapMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  // Pixel spread of each element marker (spiderfy), so the overlays follow it
+  const markerOffsetsRef = useRef<Map<string, [number, number]>>(new Map());
   const selectLinkRef = useRef<(id: string) => void>(() => {});
   const superclusterRef = useRef<Supercluster<{ elementId: string }, Supercluster.AnyProps> | null>(null);
   const clusterStateRef = useRef<Map<string, ClusterState>>(new Map());
@@ -944,6 +948,46 @@ export function MapView() {
     });
   }, [links, geoElementIds, temporalMode, selectedDate, isLinkActiveAtTime]);
 
+  // Direct neighbours with no position at all (no coordinates, no located
+  // event), per located element on the map: shown as a "+N" badge on its
+  // marker, unfolded around it on click. Hidden, filtered-out and out-of-tab
+  // neighbours do not count, nor, in temporal mode, those of inactive links.
+  const offMapNeighbors = useMemo(() => {
+    const result = new Map<string, Element[]>();
+    if (showDensity) return result;
+    const byId = new Map(elements.map((el) => [el.id, el]));
+    const isUnlocated = (el: Element) => !el.geo && !(el.events || []).some((e) => e.geo);
+    const seen = new Map<string, Set<string>>();
+    for (const link of links) {
+      if (temporalMode && selectedDate && !isLinkActiveAtTime(link)) continue;
+      for (const [anchorId, otherId] of [[link.fromId, link.toId], [link.toId, link.fromId]]) {
+        if (!geoElementIds.has(anchorId) || effectiveDimmedIds.has(anchorId)) continue;
+        const other = byId.get(otherId);
+        if (!other || other.isAnnotation || !isUnlocated(other)) continue;
+        if (!isOnMap(otherId) || effectiveDimmedIds.has(otherId)) continue;
+        let ids = seen.get(anchorId);
+        if (!ids) { ids = new Set(); seen.set(anchorId, ids); }
+        if (ids.has(otherId)) continue;
+        ids.add(otherId);
+        const list = result.get(anchorId);
+        if (list) list.push(other); else result.set(anchorId, [other]);
+      }
+    }
+    for (const list of result.values()) list.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+    return result;
+  }, [showDensity, elements, links, temporalMode, selectedDate, isLinkActiveAtTime, geoElementIds, effectiveDimmedIds, isOnMap]);
+
+  // Located elements whose unlocated neighbours are unfolded
+  const [offMapExpanded, setOffMapExpanded] = useState<Set<string>>(new Set());
+  const toggleOffMapRef = useRef((_elementId: string) => {});
+  toggleOffMapRef.current = (elementId: string) => {
+    setOffMapExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(elementId)) next.delete(elementId); else next.add(elementId);
+      return next;
+    });
+  };
+
   // Temporal mode: events of each element at the instant/period, same rule as
   // the canvas. Shown as a badge under the element's primary marker.
   const temporalEventSummaries = useMemo(() => {
@@ -1003,7 +1047,7 @@ export function MapView() {
   }, [assetMap]);
 
   // Create custom marker HTML
-  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number, isBreadcrumb?: boolean, eventSummary?: TemporalEventSummary): string => {
+  const createMarkerHtml = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, unresolvedCommentCount?: number, isBreadcrumb?: boolean, eventSummary?: TemporalEventSummary, offMap?: { count: number; expanded: boolean }): string => {
     const color = safeColor(element.visual.color, '#f5f5f4');
     const borderColor = safeColor(element.visual.borderColor, '#a8a29e');
 
@@ -1027,6 +1071,10 @@ export function MapView() {
     const eventBadge = eventSummary && !anonymousMode
       ? `<div class="map-event-badge" style="display:flex;align-items:center;gap:3px;max-width:160px;margin:2px auto 0;background:var(--color-bg-primary, #ffffff);border:1px solid var(--color-accent, #e07a5f);border-radius:3px;padding:1px 4px;box-shadow:0 1px 2px rgba(0,0,0,0.1);font-size:9px;color:var(--color-text-primary, #3d3833);white-space:nowrap;cursor:pointer;"><span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(eventSummary.label)}</span>${eventSummary.moreCount > 0 ? `<span style="flex-shrink:0;color:var(--color-text-tertiary, #a8a29e);">+${eventSummary.moreCount}</span>` : ''}</div>`
       : '';
+    // Linked elements with no position: dashed like the lines that unfold them
+    const offMapBadge = offMap && offMap.count > 0
+      ? `<div class="map-offmap-badge" title="${escapeHtml(t('map.offMapLinked', { count: offMap.count }))}" style="width:fit-content;margin:2px auto 0;background:var(--color-bg-primary, #ffffff);border:1px dashed ${offMap.expanded ? 'var(--color-accent, #e07a5f)' : 'var(--color-text-tertiary, #a8a29e)'};border-radius:3px;padding:0 4px;font-size:9px;font-weight:600;line-height:13px;color:var(--color-text-secondary, #6b6560);cursor:pointer;">+${offMap.count}</div>`
+      : '';
     const commentBadge = showCommentBadges && unresolvedCommentCount && unresolvedCommentCount > 0
       ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background-color:#f59e0b;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3);z-index:10;">${unresolvedCommentCount}</div>`
       : '';
@@ -1042,7 +1090,7 @@ export function MapView() {
           <div style="padding:2px 3px;background:var(--color-bg-primary, #ffffff);border-top:1px solid var(--color-border-default, #e8e3db);">
             <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);display:block;text-align:center;${labelOverflow}">${displayLabel}</span>
           </div>
-        </div>${eventBadge}`;
+        </div>${offMapBadge}${eventBadge}`;
     } else {
       return `
         <div class="map-marker-simple" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;${dimmedStyle}">
@@ -1051,15 +1099,16 @@ export function MapView() {
           <div style="background:var(--color-bg-primary, #ffffff);border:1px solid var(--color-border-default, #e8e3db);border-radius:3px;padding:1px 4px;box-shadow:0 1px 2px rgba(0,0,0,0.1);">
             <span style="font-size:9px;font-weight:500;color:var(--color-text-primary, #3d3833);white-space:nowrap;">${displayLabel}</span>
           </div>
+          ${offMapBadge}
           ${eventBadge}
         </div>`;
     }
   }, [getThumbnail, anonymousMode, hideMedia, showCommentBadges, t]);
 
   // Create marker DOM element
-  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number, isBreadcrumb?: boolean, eventSummary?: TemporalEventSummary): HTMLDivElement => {
+  const createMarkerElement = useCallback((element: Element, isSelected: boolean, isDimmed: boolean, commentCount?: number, isBreadcrumb?: boolean, eventSummary?: TemporalEventSummary, offMap?: { count: number; expanded: boolean }): HTMLDivElement => {
     const el = document.createElement('div');
-    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, isBreadcrumb, eventSummary);
+    el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, isBreadcrumb, eventSummary, offMap);
     el.style.cursor = 'pointer';
     return el;
   }, [createMarkerHtml]);
@@ -1084,7 +1133,7 @@ export function MapView() {
 
     map.on('click', (e) => {
       // Only clear selection if clicking on the map background (not a marker)
-      if (!(e.originalEvent.target as HTMLElement).closest('.map-marker-card, .map-marker-simple, .cluster-icon')) {
+      if (!(e.originalEvent.target as HTMLElement).closest('.map-marker-card, .map-marker-simple, .cluster-icon, .map-offmap')) {
         clearSelection();
         // Collapse any force-expanded (spiderfied) cluster
         if (forceSpiderfyKeysRef.current.size > 0) {
@@ -1144,6 +1193,8 @@ export function MapView() {
       // Clean up markers
       markersRef.current.forEach(m => m.remove());
       markersRef.current.clear();
+      offMapMarkersRef.current.forEach(m => m.remove());
+      offMapMarkersRef.current.clear();
       clusterMarkersRef.current.forEach(m => m.remove());
       clusterMarkersRef.current.clear();
       // Link layers go with the map; their label overlays are DOM
@@ -1486,6 +1537,9 @@ export function MapView() {
       const commentCount = unresolvedCommentCounts.get(element.id);
       // Event badge only on the element's primary marker (not breadcrumbs/siblings)
       const eventSummary = element._clusterExclude ? undefined : temporalEventSummaries.get(element.id);
+      // Unlocated neighbours: on the element's primary marker only
+      const offMapCount = element._clusterExclude || element._isBreadcrumb ? 0 : (offMapNeighbors.get(element.id)?.length ?? 0);
+      const offMap = offMapCount > 0 ? { count: offMapCount, expanded: offMapExpanded.has(element.id) } : undefined;
       const state = newClusterState.get(markerKey);
       const isClustered = state?.clustered ?? false;
 
@@ -1495,6 +1549,7 @@ export function MapView() {
       // Keep the marker at its true geographic position; the spiderfy spread is a pixel
       // offset combined with the base anchor offset ([0, -8]) so it stays constant on zoom.
       const markerOffset: [number, number] = offset ? [offset[0], offset[1] - 8] : [0, -8];
+      if (offMap) markerOffsetsRef.current.set(element.id, offset ?? [0, 0]);
 
       if (existingMarker) {
         // Update position (true center) and spiderfy spread (pixel offset)
@@ -1506,11 +1561,11 @@ export function MapView() {
         const el = existingMarker.getElement();
         const isBeingEdited = editingZoneId === element.id;
         el.style.display = (isClustered || isBeingEdited) ? 'none' : '';
-        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary);
+        el.innerHTML = createMarkerHtml(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary, offMap);
         el.setAttribute('title', anonymousMode ? '' : (element.label || ''));
       } else {
         // Create new marker
-        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary);
+        const markerEl = createMarkerElement(element, isSelected, isDimmed, commentCount, element._isBreadcrumb, eventSummary, offMap);
         const isBeingEdited = editingZoneId === element.id;
         markerEl.style.display = (isClustered || isBeingEdited) ? 'none' : '';
         markerEl.setAttribute('title', anonymousMode ? '' : (element.label || ''));
@@ -1528,6 +1583,11 @@ export function MapView() {
         const markerEventId = element._eventId;
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
+          // Unlocated-neighbours badge: unfold or fold them instead of selecting
+          if ((e.target as HTMLElement).closest('.map-offmap-badge')) {
+            toggleOffMapRef.current(markerId);
+            return;
+          }
           // Event badge: open the dated list instead of selecting
           const badge = (e.target as HTMLElement).closest<HTMLElement>('.map-event-badge');
           if (badge) {
@@ -1707,12 +1767,113 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity, offMapNeighbors, offMapExpanded]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
   // element's first/base marker as the representative for link layers.
   const geoElementById = useMemo(() => new Map(effectiveGeoElements.map(el => [el.id, el])), [effectiveGeoElements]);
+
+  // Unlocated neighbours unfolded around their element: chips on a circle,
+  // joined by dashed lines, in pixels so the spread holds on zoom. Rebuilt
+  // whole on each change (a few dozen nodes at most).
+  useEffect(() => {
+    const map = mapRef.current;
+    const overlays = offMapMarkersRef.current;
+    overlays.forEach((m) => m.remove());
+    overlays.clear();
+    if (!map || showDensity) return;
+
+    const MAX_CHIPS = 12;
+    for (const anchorId of offMapExpanded) {
+      const neighbours = offMapNeighbors.get(anchorId);
+      const anchor = geoElementById.get(anchorId);
+      if (!neighbours || neighbours.length === 0 || !anchor) continue;
+      const firstKey = elementIdToFirstMarkerKeyRef.current.get(anchorId) ?? anchorId;
+      if (clusterStateRef.current.get(firstKey)?.clustered) continue;
+
+      const shown = neighbours.slice(0, neighbours.length > MAX_CHIPS ? MAX_CHIPS - 1 : MAX_CHIPS);
+      const rest = neighbours.slice(shown.length);
+      const slots = shown.length + (rest.length > 0 ? 1 : 0);
+      const radius = Math.max(80, slots * 17);
+      const inner = 30; // lines start clear of the marker itself
+
+      const root = document.createElement('div');
+      root.className = 'map-offmap';
+      root.style.cssText = 'position:relative;width:0;height:0;';
+      const svgNs = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNs, 'svg');
+      svg.setAttribute('width', String(2 * radius));
+      svg.setAttribute('height', String(2 * radius));
+      svg.style.cssText = `position:absolute;left:${-radius}px;top:${-radius}px;overflow:visible;pointer-events:none;`;
+      root.appendChild(svg);
+
+      const chipStyle = 'position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;max-width:140px;background:var(--color-bg-primary, #ffffff);border-radius:3px;padding:1px 5px;box-shadow:0 1px 2px rgba(0,0,0,0.12);font-size:10px;color:var(--color-text-primary, #3d3833);white-space:nowrap;cursor:pointer;';
+      for (let i = 0; i < slots; i++) {
+        const angle = -Math.PI / 2 + (2 * Math.PI * i) / slots;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        const line = document.createElementNS(svgNs, 'line');
+        line.setAttribute('x1', String(radius + Math.cos(angle) * inner));
+        line.setAttribute('y1', String(radius + Math.sin(angle) * inner));
+        line.setAttribute('x2', String(radius + x));
+        line.setAttribute('y2', String(radius + y));
+        line.setAttribute('stroke', 'var(--color-text-secondary, #6b6560)');
+        line.setAttribute('stroke-width', '1.5');
+        line.setAttribute('stroke-dasharray', '3 2');
+        svg.appendChild(line);
+
+        const chip = document.createElement('div');
+        chip.style.cssText = `${chipStyle}left:${x}px;top:${y}px;`;
+        const el = shown[i];
+        if (el) {
+          const isSelected = selectedElementIds.has(el.id);
+          chip.style.border = `1px solid ${isSelected ? 'var(--color-accent, #e07a5f)' : 'var(--color-border-default, #e8e3db)'}`;
+          const dot = document.createElement('span');
+          dot.style.cssText = `flex-shrink:0;width:7px;height:7px;border-radius:50%;background:${safeColor(el.visual.color, '#f5f5f4')};border:1px solid ${safeColor(el.visual.borderColor, '#a8a29e')};`;
+          const text = document.createElement('span');
+          text.style.cssText = 'overflow:hidden;text-overflow:ellipsis;';
+          if (anonymousMode) {
+            text.innerHTML = '<span style="display:inline-block;background:var(--color-text-primary,#3d3833);border-radius:2px;width:2.5em;height:0.8em;"></span>';
+          } else {
+            text.textContent = el.label || t('map.unnamed');
+            chip.title = el.label || '';
+          }
+          chip.append(dot, text);
+          chip.addEventListener('click', (e) => { e.stopPropagation(); selectElement(el.id); });
+        } else {
+          chip.style.border = '1px dashed var(--color-text-tertiary, #a8a29e)';
+          chip.style.color = 'var(--color-text-secondary, #6b6560)';
+          chip.textContent = `+${rest.length}`;
+          chip.title = t('map.offMapSelectRest', { count: rest.length });
+          chip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            useSelectionStore.getState().selectElements(rest.map((n) => n.id));
+          });
+        }
+        root.appendChild(chip);
+      }
+
+      const center = getGeoCenter(anchor.geo);
+      const offset = markerOffsetsRef.current.get(anchorId) ?? [0, 0];
+      overlays.set(anchorId, new maplibregl.Marker({ element: root, anchor: 'center', offset })
+        .setLngLat([center.lng, center.lat])
+        .addTo(map));
+    }
+  }, [offMapExpanded, offMapNeighbors, geoElementById, clusteringVersion, selectedElementIds, anonymousMode, showDensity, selectElement, t]);
+
+  // Fold an element whose neighbours are no longer listed (filtered, removed...)
+  useEffect(() => {
+    setOffMapExpanded((prev) => {
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (offMapNeighbors.has(id)) next.add(id); else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [offMapNeighbors]);
+
   const getVisibleLngLat = useCallback((elementId: string): [number, number] | null => {
     const firstKey = elementIdToFirstMarkerKeyRef.current.get(elementId) ?? elementId;
     const state = clusterStateRef.current.get(firstKey);

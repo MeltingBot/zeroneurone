@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, Lock, LockOpen, Layers, Code, Copy } from 'lucide-react';
+import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Paperclip, Calendar, MessageSquare, Lock, LockOpen, Layers, Code, Copy, LocateFixed } from 'lucide-react';
 import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore, useSelectionStore } from '../../stores';
 import type { Element, Link, Confidence, Evaluation, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
 import { getModelScale } from '../../utils/evaluation';
@@ -1036,7 +1036,18 @@ export function ElementDetail({ element }: ElementDetailProps) {
         <div className="space-y-4">
           {/* Label */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text-secondary">{t('detail.labels.name')}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-text-secondary">{t('detail.labels.name')}</label>
+              <button
+                type="button"
+                onClick={() => revealElement(element.id)}
+                className="p-0.5 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary"
+                title={t('detail.revealElement')}
+                aria-label={t('detail.revealElement')}
+              >
+                <LocateFixed size={14} />
+              </button>
+            </div>
             <input
               type="text"
               value={label}

@@ -346,6 +346,8 @@
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",
+    "offMapLinked": "{{count}} element(s) enllaçat(s) sense posició",
+    "offMapSelectRest": "Selecciona els altres {{count}}",
     "addLocation": "Afegiu coordenades als elements per veure'ls al mapa",
     "pickLocation": "Feu clic al mapa per definir la posició",
     "elementsLocated": "{{count}} element(s) localitzat(s)",

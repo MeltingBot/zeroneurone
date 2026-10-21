@@ -313,6 +313,7 @@
       "mixedValues": "Multiple values"
     },
     "copyDate": "Copy date",
+    "revealElement": "Center view on element",
     "timeZone": {
       "title": "Time zone of the typed hours",
       "search": "City or zone",

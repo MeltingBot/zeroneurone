@@ -41,6 +41,8 @@ Le panneau unique regroupe tous les onglets :
 | **Vues** | Sauvegarder/charger des configurations |
 | **Rapport** | Rédiger et exporter un rapport |
 
+Dans l'onglet **Détail**, les sections ouvertes ou fermées restent dans le même état d'un élément à l'autre (et d'un lien à l'autre), ce qui permet de comparer rapidement les valeurs.
+
 #### Position du panneau
 
 Le bouton de position, dans l'en-tête du panneau (à côté de « Réduire »), ouvre un menu avec 4 positions :

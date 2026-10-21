@@ -347,6 +347,8 @@
   },
   "map": {
     "noGeoElements": "No geolocated elements",
+    "offMapLinked": "{{count}} linked element(s) without location",
+    "offMapSelectRest": "Select the other {{count}}",
     "addLocation": "Add coordinates to elements to see them on the map",
     "pickLocation": "Click on the map to set location",
     "elementsLocated": "{{count}} element(s) located",

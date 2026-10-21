@@ -300,6 +300,7 @@
       "mixedValues": "Valori multipli"
     },
     "copyDate": "Copia data",
+    "revealElement": "Centra la vista sull’elemento",
     "timeZone": {
       "title": "Fuso orario dell'ora inserita",
       "search": "Città o fuso",

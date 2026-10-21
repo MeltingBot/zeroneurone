@@ -142,6 +142,19 @@ Les liens entre éléments géolocalisés sont affichés comme des lignes sur la
 - Les liens dirigés affichent une flèche
 - Cliquez sur un lien pour le sélectionner
 
+## Éléments sans position
+
+Un élément géolocalisé lié directement à des éléments sans position (ni
+coordonnées, ni événement localisé) affiche sous son étiquette une pastille
+`+N` à bordure pointillée.
+
+- Cliquez sur la pastille pour déployer ces éléments autour du marqueur, reliés
+  par des traits pointillés ; un second clic les replie
+- Cliquez sur un élément déployé pour ouvrir son détail
+- Au-delà de 12 éléments, la dernière étiquette `+N` sélectionne tous les autres
+- Les éléments masqués ou hors filtres ne sont pas comptés ; en mode temporel,
+  seuls comptent les liens actifs
+
 ---
 
 ## Zones géographiques
