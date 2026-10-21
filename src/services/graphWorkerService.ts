@@ -55,6 +55,8 @@ export type LayoutType = 'force' | 'clusters' | 'circular' | 'grid' | 'random' |
 export interface LayoutOptions {
   layoutType: LayoutType;
   center?: { x: number; y: number };
+  /** Locked elements as discs (canvas centre + radius): clusters are packed around them */
+  obstacles?: { x: number; y: number; r: number }[];
 }
 
 type ProgressCallback = (percent: number, phase: string) => void;

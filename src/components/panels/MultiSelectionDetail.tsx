@@ -11,6 +11,7 @@ import {
   ArrowLeftRight,
   Minus,
   X,
+  Loader2,
 } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useTagSetStore, useHistoryStore } from '../../stores';
 import type {
@@ -63,6 +64,29 @@ const FONT_SIZES: { value: FontSize; label: string }[] = [
 /** `target` taking the value, type and source zone of `source` */
 function withValueOf(target: Property, source: Property): Property {
   return { key: target.key, value: source.value, type: source.type, ...(source.timeZone ? { timeZone: source.timeZone } : {}) };
+}
+
+/**
+ * Applies a tag change to many items in as few store calls as possible: items
+ * that end up with the same tag list are updated together, unchanged ones skipped.
+ */
+async function updateTagsGrouped<T extends { id: string; tags: string[] }, C>(
+  items: T[],
+  nextTags: (tags: string[]) => string[],
+  update: (ids: T['id'][], changes: C) => Promise<void>,
+): Promise<void> {
+  const groups = new Map<string, { tags: string[]; ids: T['id'][] }>();
+  for (const item of items) {
+    const tags = nextTags(item.tags);
+    if (tags.length === item.tags.length && tags.every((tag, i) => tag === item.tags[i])) continue;
+    const key = JSON.stringify(tags);
+    const group = groups.get(key) ?? { tags, ids: [] };
+    group.ids.push(item.id);
+    groups.set(key, group);
+  }
+  for (const { tags, ids } of groups.values()) {
+    await update(ids, { tags } as C);
+  }
 }
 
 export function MultiSelectionDetail() {
@@ -160,6 +184,10 @@ export function MultiSelectionDetail() {
     [links, selectedLinkIds]
   );
 
+  // Tag being added to or removed from the selection: shown on its chip while
+  // the update runs (several seconds on a few hundred items)
+  const [pendingTag, setPendingTag] = useState<string | null>(null);
+
   const elementCount = selectedElements.length;
   const linkCount = selectedLinks.length;
 
@@ -170,6 +198,14 @@ export function MultiSelectionDetail() {
     selectedLinks.forEach((link) => link.tags.forEach((t) => tags.add(t)));
     return Array.from(tags).sort();
   }, [selectedElements, selectedLinks]);
+
+  // A tag being added shows its chip (with the pending mark) right away
+  const chipTags = useMemo(
+    () => pendingTag && !allSelectedTags.includes(pendingTag)
+      ? [...allSelectedTags, pendingTag].sort()
+      : allSelectedTags,
+    [allSelectedTags, pendingTag]
+  );
 
   // Common properties: only those with the same key, type AND value across ALL selected items
   const mergedProperties = useMemo(() => {
@@ -197,33 +233,19 @@ export function MultiSelectionDetail() {
   // Suggested-properties popup (shown after adding a TagSet tag to the selection)
   const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
 
+  const withPendingTag = useCallback(async (tag: string, run: () => Promise<void>) => {
+    setPendingTag(tag);
+    try {
+      await run();
+    } finally {
+      setPendingTag(null);
+    }
+  }, []);
+
   const handleAddTag = useCallback(
-    (tag: string) => withUndo(async ({ updateElements, updateLinks }) => {
-      const elementIds = Array.from(selectedElementIds);
-      const linkIds = Array.from(selectedLinkIds);
-
-      // Add tag to elements
-      if (elementIds.length > 0) {
-        const updates = selectedElements.map((el) => ({
-          id: el.id,
-          tags: el.tags.includes(tag) ? el.tags : [...el.tags, tag],
-        }));
-        // Update each element with its specific new tags array
-        for (const update of updates) {
-          await updateElements([update.id], { tags: update.tags });
-        }
-      }
-
-      // Add tag to links
-      if (linkIds.length > 0) {
-        const updates = selectedLinks.map((link) => ({
-          id: link.id,
-          tags: link.tags.includes(tag) ? link.tags : [...link.tags, tag],
-        }));
-        for (const update of updates) {
-          await updateLinks([update.id], { tags: update.tags });
-        }
-      }
+    (tag: string) => withPendingTag(tag, () => withUndo(async ({ updateElements, updateLinks }) => {
+      await updateTagsGrouped(selectedElements, (tags) => tags.includes(tag) ? tags : [...tags, tag], updateElements);
+      await updateTagsGrouped(selectedLinks, (tags) => tags.includes(tag) ? tags : [...tags, tag], updateLinks);
 
       // Save to dossier suggestions
       addExistingTag(tag);
@@ -236,8 +258,8 @@ export function MultiSelectionDetail() {
       if (tagSet && (tagSet.suggestedProperties.length > 0 || hasVisual)) {
         setSuggestedPropsTagSet(tag);
       }
-    }),
-    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, addExistingTag, withUndo]
+    })),
+    [selectedElements, selectedLinks, addExistingTag, withUndo, withPendingTag]
   );
 
   // Apply chosen suggested properties to every selected element/link (skipping
@@ -275,29 +297,11 @@ export function MultiSelectionDetail() {
   );
 
   const handleRemoveTag = useCallback(
-    (tagToRemove: string) => withUndo(async ({ updateElements, updateLinks }) => {
-      const elementIds = Array.from(selectedElementIds);
-      const linkIds = Array.from(selectedLinkIds);
-
-      // Remove tag from elements
-      if (elementIds.length > 0) {
-        for (const el of selectedElements) {
-          if (el.tags.includes(tagToRemove)) {
-            await updateElements([el.id], { tags: el.tags.filter((t) => t !== tagToRemove) });
-          }
-        }
-      }
-
-      // Remove tag from links
-      if (linkIds.length > 0) {
-        for (const link of selectedLinks) {
-          if (link.tags.includes(tagToRemove)) {
-            await updateLinks([link.id], { tags: link.tags.filter((t) => t !== tagToRemove) });
-          }
-        }
-      }
-    }),
-    [selectedElementIds, selectedLinkIds, selectedElements, selectedLinks, withUndo]
+    (tagToRemove: string) => withPendingTag(tagToRemove, () => withUndo(async ({ updateElements, updateLinks }) => {
+      await updateTagsGrouped(selectedElements, (tags) => tags.filter((t) => t !== tagToRemove), updateElements);
+      await updateTagsGrouped(selectedLinks, (tags) => tags.filter((t) => t !== tagToRemove), updateLinks);
+    })),
+    [selectedElements, selectedLinks, withUndo, withPendingTag]
   );
 
   // ============================================================================
@@ -558,21 +562,27 @@ export function MultiSelectionDetail() {
           </p>
 
           {/* Current tags in selection */}
-          {allSelectedTags.length > 0 && (
+          {chipTags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {allSelectedTags.map((tag) => (
+              {chipTags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-bg-tertiary text-text-secondary rounded"
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-bg-tertiary text-text-secondary rounded ${tag === pendingTag ? 'opacity-60' : ''}`}
+                  aria-busy={tag === pendingTag}
                 >
                   {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-error"
-                    title={t('detail.multi.removeFromSelection')}
-                  >
-                    <X size={10} />
-                  </button>
+                  {tag === pendingTag ? (
+                    <Loader2 size={10} className="animate-spin" />
+                  ) : (
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      disabled={pendingTag !== null}
+                      className="hover:text-error disabled:opacity-40 disabled:hover:text-text-secondary"
+                      title={t('detail.multi.removeFromSelection')}
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
                 </span>
               ))}
             </div>

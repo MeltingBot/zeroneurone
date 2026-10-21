@@ -81,6 +81,8 @@ interface ViewState {
 
   // Pending fitView request (to be applied by Canvas via React Flow)
   pendingFitView: boolean;
+  /** Nodes to frame for the pending fitView; null = every node */
+  pendingFitViewIds: string[] | null;
 
   // Display mode
   displayMode: DisplayMode;
@@ -125,7 +127,7 @@ interface ViewState {
   loadViewportForDossier: (dossierId: DossierId) => boolean;
   requestViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
   clearPendingViewport: () => void;
-  requestFitView: () => void;
+  requestFitView: (nodeIds?: string[]) => void;
   clearPendingFitView: () => void;
 
   // Actions - Display mode
@@ -167,6 +169,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   viewport: { x: 0, y: 0, zoom: 1 },
   pendingViewport: null,
   pendingFitView: false,
+  pendingFitViewIds: null,
   displayMode: 'canvas',
   filters: { ...DEFAULT_FILTERS },
   hiddenElementIds: new Set(),
@@ -248,12 +251,12 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({ pendingViewport: null });
   },
 
-  requestFitView: () => {
-    set({ pendingFitView: true });
+  requestFitView: (nodeIds) => {
+    set({ pendingFitView: true, pendingFitViewIds: nodeIds?.length ? nodeIds : null });
   },
 
   clearPendingFitView: () => {
-    set({ pendingFitView: false });
+    set({ pendingFitView: false, pendingFitViewIds: null });
   },
 
   // Display mode
@@ -484,6 +487,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({
       viewport: { x: 0, y: 0, zoom: 1 },
       pendingFitView: false,
+      pendingFitViewIds: null,
       filters: { ...DEFAULT_FILTERS },
       hiddenElementIds: new Set(),
       focusElementId: null,

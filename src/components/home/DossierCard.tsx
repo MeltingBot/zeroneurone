@@ -31,9 +31,16 @@ export function DossierCard({
   const navigate = useNavigate();
   const [stats, setStats] = useState({ elementCount: 0, linkCount: 0 });
 
+  // Recount on every list reload (loadDossiers gives new objects), not only on
+  // mount: the first count can run before the writes of the dossier just left,
+  // or of an import into an existing dossier, reach Dexie.
   useEffect(() => {
-    dossierRepository.getStats(dossier.id).then(setStats);
-  }, [dossier.id]);
+    let cancelled = false;
+    dossierRepository.getStats(dossier.id).then((s) => {
+      if (!cancelled) setStats(s);
+    });
+    return () => { cancelled = true; };
+  }, [dossier]);
 
   const handleOpen = () => {
     navigate(`/dossier/${dossier.id}`);

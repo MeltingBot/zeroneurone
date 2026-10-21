@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.71.1
+
+### Corrections
+
+- **Éléments verrouillés respectés par les dispositions** — un élément dont
+  la position est verrouillée ne bouge plus lors d'une disposition
+  automatique (ni le groupe qui le contient) : le reste est placé autour, sans
+  le recouvrir, puis la vue cadre le résultat avec les éléments verrouillés.
+- **Verrouiller une sélection** — le menu contextuel de la sélection propose
+  « Verrouiller la position » (ou « Déverrouiller » si tous les éléments
+  sélectionnés le sont déjà).
+- **Disposition par clusters plus compacte** — des centaines de petits
+  clusters forment un nuage rond au lieu de s'étaler en ligne.
+- **Tags sur une grande sélection** — ajouter ou retirer un tag sur des
+  centaines d'éléments est nettement plus rapide ; la puce du tag indique
+  l'opération en cours.
+- **Compteurs des cartes dossier** — le nombre d'éléments et de liens se met
+  à jour au retour sur la liste et après un import dans un dossier existant.
+- **Zoom arrière** — le canvas descend plus bas pour embrasser les très
+  grands dossiers.
+
 ## 2.71.0
 
 ### Nouveautés

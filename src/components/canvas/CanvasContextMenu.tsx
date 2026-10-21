@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
@@ -21,6 +21,9 @@ interface CanvasContextMenuProps {
   onDuplicateSelection?: () => void;
   onDeleteSelection?: () => void;
   onHideSelection?: () => void;
+  // Position lock: "unlock" when every selected element is already locked
+  selectionLocked?: boolean;
+  onToggleLockSelection?: () => void;
   onGroupSelection?: () => void;
   onCopyAsMermaid?: () => void;
   // Query actions
@@ -48,6 +51,8 @@ function CanvasContextMenuComponent({
   onDuplicateSelection,
   onDeleteSelection,
   onHideSelection,
+  selectionLocked = false,
+  onToggleLockSelection,
   onGroupSelection,
   onCopyAsMermaid,
   onFindSimilar,
@@ -89,6 +94,12 @@ function CanvasContextMenuComponent({
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
+          onToggleLockSelection && {
+            id: 'lock',
+            label: selectionLocked ? cm('unlockPosition') : cm('lockPosition'),
+            icon: selectionLocked ? LockOpen : Lock,
+            onSelect: onToggleLockSelection,
+          },
         ] : [],
         onSelectLinks ? [
           { id: 'select-links', label: cm(hasSelection ? 'selectLinks' : 'selectAllLinks'), icon: Spline, shortcut: hasSelection ? undefined : 'Ctrl+Shift+A', onSelect: onSelectLinks },

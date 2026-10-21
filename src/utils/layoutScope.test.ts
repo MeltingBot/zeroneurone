@@ -83,3 +83,33 @@ describe('buildLayoutScope', () => {
     expect(scope.elements.find((el) => el.id === 'N')!.isGroup).toBe(false);
   });
 });
+
+describe('buildLayoutScope with locked elements', () => {
+  const ids = (scope: ReturnType<typeof buildLayoutScope>) => scope.elements.map((el) => el.id).sort();
+
+  it('leaves a locked element out of the whole-dossier layout', () => {
+    const lockedA = { ...a, isPositionLocked: true };
+    const scope = buildLayoutScope([group, c1, c2, lockedA, b], links, new Set());
+    expect(ids(scope)).toEqual(['G', 'b']);
+    expect(scope.links.every((l) => l.fromId !== 'a' && l.toId !== 'a')).toBe(true);
+  });
+
+  it('leaves a locked element out of a selection layout', () => {
+    const lockedA = { ...a, isPositionLocked: true };
+    const scope = buildLayoutScope([group, c1, c2, lockedA, b], links, new Set(['a', 'b', 'G']));
+    expect(ids(scope)).toEqual(['G', 'b']);
+  });
+
+  it('keeps a group in place when one of its children is locked', () => {
+    const lockedC1 = { ...c1, isPositionLocked: true };
+    const scope = buildLayoutScope([group, lockedC1, c2, a, b], links, new Set());
+    expect(ids(scope)).toEqual(['a', 'b']);
+  });
+
+  it('arranges the unlocked children inside a group, not the locked one', () => {
+    const c3 = makeElement({ id: 'c3', parentGroupId: 'G', position: { x: 200, y: 10 } });
+    const lockedC1 = { ...c1, isPositionLocked: true };
+    const scope = buildLayoutScope([group, lockedC1, c2, c3, a, b], links, new Set(['c1', 'c2', 'c3']));
+    expect(ids(scope)).toEqual(['c2', 'c3']);
+  });
+});

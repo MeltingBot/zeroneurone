@@ -335,7 +335,7 @@ function ViewportController() {
 // FitView controller - watches for pending fitView requests and applies them
 function FitViewController() {
   const { fitView, getNodes } = useReactFlow();
-  const { pendingFitView, clearPendingFitView } = useViewStore();
+  const { pendingFitView, pendingFitViewIds, clearPendingFitView } = useViewStore();
 
   useEffect(() => {
     if (!pendingFitView) return;
@@ -350,12 +350,16 @@ function FitViewController() {
       const hasMeasuredNodes = nodes.length > 0 && nodes.some(n => n.measured?.width);
       if (hasMeasuredNodes || attempts >= maxAttempts) {
         clearInterval(interval);
-        fitView({ padding: 0.2, duration: 300 });
+        fitView({
+          padding: 0.2,
+          duration: 300,
+          ...(pendingFitViewIds ? { nodes: pendingFitViewIds.map((id) => ({ id })) } : {}),
+        });
         clearPendingFitView();
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [pendingFitView, fitView, clearPendingFitView, getNodes]);
+  }, [pendingFitView, pendingFitViewIds, fitView, clearPendingFitView, getNodes]);
 
   return null;
 }
@@ -2841,6 +2845,22 @@ export function Canvas() {
     clearSelection();
   }, [elements, links, getSelectedElementIds, deleteElements, clearSelection, pushAction]);
 
+  // Canvas menu (right-click on the selection box): lock or unlock every
+  // selected element; unlock only when all of them are already locked
+  const selectionLocked = useMemo(() => {
+    if (selectedElementIds.size === 0) return false;
+    for (const id of selectedElementIds) {
+      if (!elementMap.get(id)?.isPositionLocked) return false;
+    }
+    return true;
+  }, [selectedElementIds, elementMap]);
+
+  const handleSelectionToggleLock = useCallback(async () => {
+    const ids = getSelectedElementIds();
+    if (ids.length === 0) return;
+    await Promise.all(ids.map(id => updateElement(id, { isPositionLocked: !selectionLocked })));
+  }, [getSelectedElementIds, selectionLocked, updateElement]);
+
   const handleSelectionHide = useCallback(() => {
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length === 0) return;
@@ -4841,7 +4861,7 @@ export function Canvas() {
             defaultViewport={viewport}
             snapToGrid={snapToGrid}
             snapGrid={[gridSize, gridSize]}
-            minZoom={0.02}
+            minZoom={0.005}
             maxZoom={4}
             selectionMode={SelectionMode.Partial}
             connectionMode={ConnectionMode.Loose}
@@ -5015,6 +5035,8 @@ export function Canvas() {
               onDuplicateSelection={handleSelectionDuplicate}
               onDeleteSelection={handleSelectionDelete}
               onHideSelection={handleSelectionHide}
+              selectionLocked={selectionLocked}
+              onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onCopyAsMermaid={handleCopyAsMermaid}
               onFindSimilar={handleFindSimilar}

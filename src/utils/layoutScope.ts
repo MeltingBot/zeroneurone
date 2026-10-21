@@ -10,6 +10,10 @@
  * Exception: when the selection only holds children of the same group, they
  * are arranged inside that group (relative coordinates, group stays put).
  *
+ * Locked elements (isPositionLocked) never move: they are left out of the
+ * layout, and so is a group holding a locked element (moving the group would
+ * carry it along).
+ *
  * Layout algorithms treat a position as the node centre while the canvas
  * stores its top-left corner: positions are converted both ways so large
  * nodes (groups) do not overlap their neighbours.
@@ -30,7 +34,13 @@ export interface LayoutScope {
   originalPositions: { id: string; position: Position }[];
   /** Convert a layout result (centre) back to a stored position (top-left). */
   toStoredPosition: (id: string, center: Position) => Position;
+  /** Size of a laid-out node, for overlap checks. */
+  sizeOf: (id: string) => { width: number; height: number };
+  /** Locked blocks that stay put, as canvas rectangles: the result must not cover them. */
+  obstacles: Rect[];
 }
+
+export interface Rect { x: number; y: number; width: number; height: number }
 
 /**
  * Build the layout scope.
@@ -45,7 +55,8 @@ export function buildLayoutScope(
 ): LayoutScope {
   const byId = new Map(elements.map((el) => [el.id, el]));
   const useSelection = selectedIds.size >= 2;
-  const scoped = useSelection ? elements.filter((el) => selectedIds.has(el.id)) : elements;
+  const scoped = (useSelection ? elements.filter((el) => selectedIds.has(el.id)) : elements)
+    .filter((el) => !el.isPositionLocked);
 
   // Selection inside a single group: arrange the children within it.
   const firstParent = scoped[0]?.parentGroupId ?? null;
@@ -56,9 +67,11 @@ export function buildLayoutScope(
     scoped.every((el) => el.parentGroupId === firstParent)
   ) {
     const ids = new Set(scoped.map((el) => el.id));
+    const lockedSiblings = elements.filter((el) => el.parentGroupId === firstParent && el.isPositionLocked);
     return centred(
       scoped.map((el) => (el.isGroup ? groupProxy(el) : el)),
       links.filter((l) => ids.has(l.fromId) && ids.has(l.toId)),
+      lockedSiblings.map(rectOf), // same relative coordinates as the children
     );
   }
 
@@ -78,8 +91,17 @@ export function buildLayoutScope(
   const elementUnit = new Map<string, string>();
   for (const el of elements) elementUnit.set(el.id, unitOf(el));
 
+  // Blocks that must stay put: locked themselves or carrying a locked element
+  const lockedUnits = new Set<string>();
+  for (const el of elements) {
+    if (el.isPositionLocked) lockedUnits.add(elementUnit.get(el.id)!);
+  }
+
   const unitIds = new Set<string>();
-  for (const el of scoped) unitIds.add(elementUnit.get(el.id)!);
+  for (const el of scoped) {
+    const unit = elementUnit.get(el.id)!;
+    if (!lockedUnits.has(unit)) unitIds.add(unit);
+  }
 
   const layoutElements: Element[] = [];
   for (const id of unitIds) {
@@ -98,11 +120,22 @@ export function buildLayoutScope(
     layoutLinks.push({ ...link, fromId: from, toId: to });
   }
 
-  return centred(layoutElements, layoutLinks);
+  const obstacles: Rect[] = [];
+  for (const id of lockedUnits) {
+    const el = byId.get(id);
+    if (el) obstacles.push(rectOf(el.isGroup ? groupProxy(el) : el));
+  }
+
+  return centred(layoutElements, layoutLinks, obstacles);
+}
+
+function rectOf(el: Element): Rect {
+  const { width, height } = computeElementDimensions(el.visual, el.label || '', Boolean(el.visual?.image));
+  return { x: el.position.x, y: el.position.y, width, height };
 }
 
 /** Shift positions from top-left to centre and expose the reverse mapping. */
-function centred(elements: Element[], links: Link[]): LayoutScope {
+function centred(elements: Element[], links: Link[], obstacles: Rect[]): LayoutScope {
   const halfSizes = new Map<string, { hw: number; hh: number }>();
   const originalPositions: { id: string; position: Position }[] = [];
   const centredElements = elements.map((el) => {
@@ -125,6 +158,11 @@ function centred(elements: Element[], links: Link[]): LayoutScope {
       const half = halfSizes.get(id) ?? { hw: 0, hh: 0 };
       return { x: center.x - half.hw, y: center.y - half.hh };
     },
+    sizeOf: (id) => {
+      const half = halfSizes.get(id) ?? { hw: 0, hh: 0 };
+      return { width: half.hw * 2, height: half.hh * 2 };
+    },
+    obstacles,
   };
 }
 

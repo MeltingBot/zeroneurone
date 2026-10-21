@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
 import { layoutService, type LayoutType } from '../../services/layoutService';
 import { graphWorkerService } from '../../services/graphWorkerService';
-import { useDossierStore, useHistoryStore, useSelectionStore } from '../../stores';
+import { useDossierStore, useHistoryStore, useSelectionStore, useViewStore } from '../../stores';
 import type { Position } from '../../types';
 import { buildLayoutScope } from '../../utils/layoutScope';
+import { avoidObstacles } from '../../utils/avoidObstacles';
 
 export function LayoutDropdown() {
   const { t } = useTranslation('pages');
@@ -57,6 +58,13 @@ export function LayoutDropdown() {
       y: scope.elements.reduce((sum, el) => sum + el.position.y, 0) / scope.elements.length,
     };
 
+    // Locked elements as discs, in the layout's coordinate space (centres)
+    const obstacles = scope.obstacles.map((o) => ({
+      x: o.x + o.width / 2,
+      y: o.y + o.height / 2,
+      r: Math.hypot(o.width, o.height) / 2,
+    }));
+
     try {
       let positions: Record<string, Position>;
       try {
@@ -64,17 +72,28 @@ export function LayoutDropdown() {
         positions = await graphWorkerService.computeLayout(
           scope.elements,
           scope.links,
-          { layoutType, center }
+          { layoutType, center, obstacles }
         );
       } catch (error) {
         console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
-        const result = layoutService.applyLayout(layoutType, scope.elements, scope.links, { center });
+        const result = layoutService.applyLayout(layoutType, scope.elements, scope.links, { center, obstacles });
         positions = Object.fromEntries(result.positions);
       }
 
       const newPositions: { id: string; position: Position }[] = [];
       for (const [id, pos] of Object.entries(positions)) {
         newPositions.push({ id, position: scope.toStoredPosition(id, pos) });
+      }
+
+      // Locked elements stayed put: move the whole new block off them
+      const shift = avoidObstacles(
+        newPositions.map(({ id, position }) => ({ ...position, ...scope.sizeOf(id) })),
+        scope.obstacles,
+      );
+      if (shift.x !== 0 || shift.y !== 0) {
+        for (const p of newPositions) {
+          p.position = { x: p.position.x + shift.x, y: p.position.y + shift.y };
+        }
       }
 
       if (newPositions.length > 0) {
@@ -84,6 +103,11 @@ export function LayoutDropdown() {
           redo: { positions: newPositions },
         });
         await updateElementPositions(newPositions);
+        // Frame the result together with the locked elements it was placed around
+        useViewStore.getState().requestFitView([
+          ...newPositions.map((p) => p.id),
+          ...elements.filter((el) => el.isPositionLocked).map((el) => el.id),
+        ]);
       }
     } finally {
       setIsApplying(false);

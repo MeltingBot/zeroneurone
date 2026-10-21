@@ -12,6 +12,7 @@ import dagre from '@dagrejs/dagre';
 import type { Element, Link, Position } from '../types';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { removeOverlaps } from '../utils/removeOverlaps';
+import { packClusters } from '../utils/packClusters';
 
 /**
  * Real rendered footprint of an element, shared with ElementNode so that
@@ -51,6 +52,8 @@ export interface LayoutOptions {
   center?: Position;
   /** Scale factor for the layout */
   scale?: number;
+  /** Locked elements as discs (canvas centre + radius): clusters are packed around them */
+  obstacles?: { x: number; y: number; r: number }[];
 }
 
 export interface LayoutResult {
@@ -162,7 +165,7 @@ function applyClustersLayout(
   elements: Element[],
   options: LayoutOptions
 ): Map<string, Position> {
-  const { center = { x: 0, y: 0 } } = options;
+  const { center = { x: 0, y: 0 }, obstacles = [] } = options;
 
   const dimsMap = buildDimsMap(elements);
 
@@ -330,36 +333,8 @@ function applyClustersLayout(
   // Step 4: pack cluster bounding-circles. Largest at origin, others placed
   // on an Archimedean spiral at the first non-overlapping position.
   layouts.sort((a, b) => b.radius - a.radius);
-  const placed: { cx: number; cy: number; r: number }[] = [];
-  for (const L of layouts) {
-    if (placed.length === 0) {
-      placed.push({ cx: 0, cy: 0, r: L.radius });
-      continue;
-    }
-    let fx = 0, fy = 0, found = false;
-    const step = 0.25;
-    const b = 25;
-    for (let theta = 0; theta < 400; theta += step) {
-      const r = b * theta;
-      const x = r * Math.cos(theta);
-      const y = r * Math.sin(theta);
-      let ok = true;
-      for (const p of placed) {
-        const margin = Math.max(80, 0.12 * (L.radius + p.r));
-        const minDist = L.radius + p.r + margin;
-        const dx = x - p.cx;
-        const dy = y - p.cy;
-        if (dx * dx + dy * dy < minDist * minDist) { ok = false; break; }
-      }
-      if (ok) { fx = x; fy = y; found = true; break; }
-    }
-    if (!found) {
-      fx = placed.reduce((m, p) => Math.max(m, p.cx + p.r), 0) + L.radius + 200;
-      fy = 0;
-    }
-    L.cx = fx; L.cy = fy;
-    placed.push({ cx: fx, cy: fy, r: L.radius });
-  }
+  // Locked elements, in the packing frame (origin = requested centre)
+  packClusters(layouts, obstacles.map((o) => ({ cx: o.x - center.x, cy: o.y - center.y, r: o.r })));
 
   // Step 5: recenter overall bbox onto requested center
   let gMinX = Infinity, gMaxX = -Infinity, gMinY = Infinity, gMaxY = -Infinity;
@@ -371,8 +346,11 @@ function applyClustersLayout(
       gMinY = Math.min(gMinY, y); gMaxY = Math.max(gMaxY, y);
     }
   }
-  const gCx = Number.isFinite(gMinX) ? (gMinX + gMaxX) / 2 : 0;
-  const gCy = Number.isFinite(gMinY) ? (gMinY + gMaxY) / 2 : 0;
+  // Recentre on the requested centre, unless clusters were packed around
+  // locked elements: they must stay where the packing put them
+  const recentre = obstacles.length === 0 && Number.isFinite(gMinX);
+  const gCx = recentre ? (gMinX + gMaxX) / 2 : 0;
+  const gCy = recentre ? (gMinY + gMaxY) / 2 : 0;
 
   const positions = new Map<string, Position>();
   for (const L of layouts) {
