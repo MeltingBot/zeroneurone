@@ -44,6 +44,8 @@ When multiple conditions are present, an **AND/OR** button lets you toggle betwe
 
 Click **Add group** to create a sub-group with the opposite combinator (AND inside an OR group, and vice versa). Maximum nesting depth is 2 levels.
 
+In text mode, each group shows in parentheses, even where AND's precedence over OR would make them optional: `tag = "A" OR (tag = "B" AND tag = "C")`.
+
 ### Negation (NOT)
 
 Each condition or group has a **NOT** button to negate its result. When active, the condition is bordered in orange on the left.
@@ -234,16 +236,18 @@ After execution, two display modes are available (can be combined):
 | **Canvas filter** | Funnel | Dims non-matching elements on the canvas, map, timeline and matrix |
 | **Table** | Grid | Shows results in a sortable table with CSV export |
 
-Mode buttons are at the bottom of the queries panel, next to the results counter.
+Mode buttons are at the top of the queries panel, next to the results counter.
+
+When filters of the **Filters** panel are active too, the views show only the elements both keep: the counter says so ("18 elements, 0 links → 12 shown"). To hide the elements outside the filter instead of dimming them, use **Hide** in the Filters panel (see [Filters and Views]({{< relref "filters-views" >}})).
 
 When the query finds links, the canvas filter keeps the elements at both ends of the found links highlighted and dims the rest.
 
 ### Result actions
 
 - **Show results** (target icon): frames the view on what the query found, link ends included (canvas; map for geolocated elements; the timeline goes to the first one)
-- **Select all**: selects all matching elements and links on the canvas
+- **Select / Deselect** (toggle): selects the results, or removes them from the selection when they are all selected already. When the query filters the canvas, it acts on the elements shown (filters included), like the Filters panel button, with which it stays in sync
 - **Invert selection**: selects what the query did not find, of the same kind as its results (the other elements, or the other links); hidden elements are left out. Clicking again selects the results again; the button stays highlighted while the inverse is selected
-- **Save as view**: creates a saved view from the current query results
+- **Save as view**: creates a saved view that keeps the query, the filters and the dim / hide choice
 - **Click a row** (table mode): selects the element and centers the viewport on it
 
 ### Automatic refresh
@@ -266,7 +270,7 @@ Save frequently used queries for reuse:
 2. Click **Save** in the "Saved queries" section
 3. Name the query
 
-Saved queries are linked to the current dossier.
+Saved queries are linked to the current dossier. When one is loaded, its text is rebuilt from its structure, groups in parentheses included.
 
 ---
 

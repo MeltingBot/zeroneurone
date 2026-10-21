@@ -109,6 +109,29 @@ Les marqueurs reprennent l'apparence des éléments :
 
 Les marqueurs proches sont automatiquement regroupés. Cliquez sur un cluster pour zoomer et voir les marqueurs individuels.
 
+Le compteur de la barre d'outils indique le nombre d'éléments localisés ; quand un filtre ou une requête est actif, il précise combien sont gardés (« 598 / 1034 élément(s) localisé(s) »).
+
+---
+
+## Densité
+
+Le bouton **Densité** remplace les marqueurs et les clusters par une carte de chaleur : elle montre où les éléments se concentrent. Les liens restent affichés en traits fins, sans libellés ni flèches.
+
+Deux sources au choix :
+
+| Source | Ce qui compte |
+|--------|---------------|
+| **Éléments** | Un point par élément affiché, à sa position courante |
+| **Événements** | Un point par événement géolocalisé des éléments affichés |
+
+La densité suit ce qui est affiché : les éléments hors filtre ou hors requête ne comptent pas. Avec le mode temporel, la source Événements ne garde que les événements de la période choisie, ou ceux qui précèdent l'instant choisi (la densité se cumule pendant la lecture).
+
+La légende, en bas à gauche, donne l'échelle de couleurs et un curseur **Intensité** : baissez-le si tout sature, montez-le si tout reste pâle. En mode Événements, **Pondérer par élément** évite qu'un élément très actif (des milliers de points GPS) domine la carte : ses n événements pèsent ensemble √n au lieu de n.
+
+{{< hint info >}}
+Les couleurs sont relatives : une même couleur ne correspond pas à un nombre fixe d'éléments, d'un zoom à l'autre ou d'un dossier à l'autre.
+{{< /hint >}}
+
 ---
 
 ## Liens sur la carte
@@ -186,6 +209,8 @@ Le bouton OpenFreeMap porte un chevron ouvrant le choix de la variante :
 
 Cliquez sur **Temporel** pour naviguer dans le temps, à une date ou sur une période. La barre est la même que sur le canvas : voir [Mode temporel]({{< relref "temporal-mode" >}}).
 
+Les éléments sont datés par leurs événements, leur période et leurs propriétés date retenues dans le panneau **Filtres** (voir [Filtres et vues]({{< relref "filters-views" >}})). Un dossier daté uniquement par des propriétés (« Début des faits ») a donc lui aussi un mode temporel.
+
 ---
 
 ## Barre d'outils
@@ -196,6 +221,7 @@ Cliquez sur **Temporel** pour naviguer dans le temps, à une date ou sur une pé
 | **Fond de carte** | Choisir le fond, et la variante pour OpenFreeMap |
 | **3D** | Activer/désactiver le mode 3D |
 | **Bâtiments** | Afficher/masquer les bâtiments 3D |
+| **Densité** | Carte de chaleur au lieu des marqueurs (source Éléments ou Événements) |
 | **Temporel** | Activer/désactiver le mode temporel |
 | **Sélection** | Zoomer sur les éléments sélectionnés |
 | **Zone** | Dessiner une zone (polygone, cercle ou carré) |

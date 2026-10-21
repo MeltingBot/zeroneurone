@@ -44,6 +44,8 @@ Quand plusieurs conditions sont présentes, un bouton **AND/OR** permet de bascu
 
 Cliquez sur **Ajouter un groupe** pour créer un sous-groupe avec le combinateur opposé (AND dans un groupe OR, et inversement). La profondeur maximale est de 2 niveaux.
 
+En mode texte, chaque groupe apparaît entre parenthèses, même là où la priorité de AND sur OR les rendrait facultatives : `tag = "A" OR (tag = "B" AND tag = "C")`.
+
 ### Négation (NOT)
 
 Chaque condition ou groupe dispose d'un bouton **NOT** pour inverser son résultat. Quand actif, la condition est bordée d'orange à gauche.
@@ -234,16 +236,18 @@ Après exécution, deux modes d'affichage sont disponibles (cumulables) :
 | **Filtre canvas** | Entonnoir | Atténue les éléments non-matchés sur le canvas, la carte, la timeline et la matrice |
 | **Table** | Tableau | Affiche les résultats dans un tableau triable avec export CSV |
 
-Les boutons de mode se trouvent en bas du panneau requêtes, à côté du compteur de résultats.
+Les boutons de mode se trouvent en haut du panneau requêtes, à côté du compteur de résultats.
+
+Quand des filtres du panneau **Filtres** sont aussi actifs, les vues n'affichent que les éléments gardés par les deux : le compteur l'indique (« 18 éléments, 0 liens → 12 affiché(s) »). Pour cacher les éléments hors filtre au lieu de les atténuer, utilisez **Masquer** dans le panneau Filtres (voir [Filtres et vues]({{< relref "filters-views" >}})).
 
 Quand la requête trouve des liens, le filtre canvas garde en évidence les éléments situés aux deux extrémités des liens trouvés et atténue le reste.
 
 ### Actions sur les résultats
 
 - **Afficher les résultats** (icône cible) : cadre la vue sur ce que la requête a trouvé, extrémités des liens comprises (canvas ; carte pour les éléments géolocalisés ; la timeline se place sur le premier)
-- **Tout sélectionner** : sélectionne tous les éléments et liens correspondants sur le canvas
+- **Sélectionner / Désélectionner** (bascule) : sélectionne les résultats, ou les retire de la sélection quand ils sont déjà tous sélectionnés. Quand la requête filtre le canvas, elle porte sur les éléments affichés (filtres compris), comme le bouton du panneau Filtres, avec lequel elle reste synchronisée
 - **Inverser la sélection** : sélectionne ce que la requête n'a pas trouvé, du même type que ses résultats (les autres éléments, ou les autres liens) ; les éléments masqués sont exclus. Un second clic resélectionne les résultats ; le bouton reste en évidence tant que l'inverse est sélectionné
-- **Sauvegarder comme vue** : crée une vue sauvegardée à partir des résultats de la requête
+- **Sauvegarder comme vue** : crée une vue sauvegardée qui garde la requête, les filtres et le choix atténuer / masquer
 - **Clic sur une ligne** (mode table) : sélectionne l'élément et centre la vue dessus
 
 ### Actualisation automatique
@@ -266,7 +270,7 @@ Sauvegardez vos requêtes fréquentes pour les réutiliser :
 2. Cliquez sur **Sauvegarder** dans la section "Requêtes sauvegardées"
 3. Donnez un nom à la requête
 
-Les requêtes sauvegardées sont liées au dossier courant.
+Les requêtes sauvegardées sont liées au dossier courant. À leur chargement, le texte est reconstruit depuis leur structure, groupes entre parenthèses compris.
 
 ---
 

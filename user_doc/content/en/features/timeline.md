@@ -26,7 +26,7 @@ Elements having a **date** appear on the timeline:
 - **Point**: single date
 - Horizontal position = moment in time
 
-A date property (a birth date, for instance) can be taken off the timeline from the **Filters** panel → **Date properties on the timeline**. See [Filters and Views]({{< relref "filters-views" >}}).
+Elements' date properties show too. In the **Filters** panel → **Date properties**, select the ones that count (without the birth date, for instance), and declare two properties as a **period** ("Start of facts → End of facts"): the element then shows as a bar from one to the other. See [Filters and Views]({{< relref "filters-views" >}}).
 
 
 ### Links with Period

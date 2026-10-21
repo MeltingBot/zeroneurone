@@ -1,5 +1,56 @@
 # Changelog
 
+## 2.71.0
+
+### Nouveautés
+
+- **Densité sur la carte** — le bouton « Densité » remplace marqueurs et
+  regroupements par une carte de chaleur, alimentée par les éléments affichés
+  ou par leurs événements géolocalisés. Elle suit les filtres, la requête et
+  le navigateur temporel (en mode instant, la densité des événements se
+  cumule pendant la lecture). Une légende donne l'échelle et un réglage
+  d'intensité ; en mode Événements, « Pondérer par élément » évite qu'un
+  élément très actif domine la carte. Les liens restent en traits fins.
+- **Propriétés date partout** — les propriétés date datent les éléments sur
+  la carte et dans le curseur temporel du canvas, comme sur la timeline : un
+  dossier daté seulement par ses propriétés a désormais un mode temporel sur
+  la carte. La section « Propriétés date » du panneau Filtres est toujours
+  visible et fonctionne comme les tags : aucune puce sélectionnée, toutes les
+  dates comptent ; en sélectionner limite aux dates choisies (une date
+  importée plus tard ne compte pas d'office).
+- **Périodes de dates** — deux propriétés date peuvent être lues comme une
+  période (« Début des faits → Fin des faits ») : barre sur la timeline,
+  période entière sur la carte, le canvas et les filtres.
+- **Masquer au lieu d'atténuer** — le bouton « Masquer » des filtres actifs
+  fait disparaître les éléments hors filtre ou hors requête de toutes les
+  vues (canvas, timeline, carte, matrice).
+- **Filtres et requête cohérents** — les panneaux Filtres et Requête comptent
+  les mêmes éléments affichés (filtres et requête), avec la part de chacun ;
+  la requête apparaît comme un badge « Requête » dans les filtres actifs, et
+  « Tout effacer » la retire aussi des vues. Sélectionner / Désélectionner
+  devient une bascule unique, synchronisée entre les deux panneaux.
+- **Vues enregistrées** — elles gardent aussi le choix atténuer / masquer et
+  la requête appliquée.
+- **Requête** — commandes en haut du panneau ; dans le texte, chaque groupe
+  de conditions apparaît entre parenthèses (y compris pour les requêtes
+  sauvegardées).
+- **API plugin** — `filterOutcome()` donne aux plugins les éléments affichés
+  (filtres et requête), comptés comme dans les panneaux.
+
+### Corrections
+
+- **Sélection tronquée par le canvas** — une sélection faite depuis les
+  filtres ou la requête perdait les éléments et liens non rendus à l'écran
+  (gros dossiers, fort zoom).
+- **Filtre de la requête réactivé à vide** — repasser une requête de « table
+  seule » à « filtre canvas » n'activait aucun filtre.
+- **« Sans date » et filtre de période** — ils lisent les mêmes dates que les
+  vues (période, événements, propriétés date retenues) ; la date de collecte
+  ne date plus les éléments, carte comprise.
+- **Compteur des filtres** — il reprend exactement les critères des vues
+  (recherche texte sur les tags et propriétés, filtres de dates et de
+  géolocalisation compris).
+
 ## 2.70.1
 
 ### Corrections

@@ -109,6 +109,29 @@ Markers reflect the appearance of elements:
 
 Nearby markers are automatically grouped. Click on a cluster to zoom and see individual markers.
 
+The toolbar counter gives the number of located elements; with a filter or a query active, it says how many are kept ("598 / 1034 element(s) located").
+
+---
+
+## Density
+
+The **Density** button replaces markers and clusters with a heatmap: it shows where elements concentrate. Links stay as thin lines, without labels or arrows.
+
+Two sources:
+
+| Source | What counts |
+|--------|-------------|
+| **Elements** | One point per element shown, at its current position |
+| **Events** | One point per located event of the elements shown |
+
+The density follows what is shown: elements outside the filters or the query do not count. With temporal mode, the Events source keeps only the events of the chosen period, or those before the chosen instant (the density builds up while playing).
+
+The legend, bottom left, gives the colour scale and an **Intensity** slider: lower it if everything saturates, raise it if everything stays pale. In Events mode, **Weigh per element** keeps a very active element (thousands of GPS points) from dominating the map: its n events weigh √n together instead of n.
+
+{{< hint info >}}
+Colours are relative: the same colour does not stand for a fixed number of elements, from one zoom or one dossier to another.
+{{< /hint >}}
+
 ---
 
 ## Links on Map
@@ -186,6 +209,8 @@ The OpenFreeMap button carries a chevron that opens the variant picker:
 
 Click **Temporal** to navigate through time, at a date or over a period. The bar is the same as on the canvas: see [Temporal Mode]({{< relref "temporal-mode" >}}).
 
+Elements are dated by their events, their period and the date properties kept in the **Filters** panel (see [Filters and Views]({{< relref "filters-views" >}})). A dossier dated only by properties ("Start of facts") therefore has a temporal mode too.
+
 ---
 
 ## Toolbar
@@ -196,6 +221,7 @@ Click **Temporal** to navigate through time, at a date or over a period. The bar
 | **Base map** | Choose the base map, and the variant for OpenFreeMap |
 | **3D** | Enable/disable 3D mode |
 | **Buildings** | Show/hide 3D buildings |
+| **Density** | Heatmap instead of markers (Elements or Events source) |
 | **Temporal** | Enable/disable temporal mode |
 | **Selection** | Zoom to selected elements |
 | **Zone** | Draw a zone (polygon, circle or square) |

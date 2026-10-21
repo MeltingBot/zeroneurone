@@ -24,15 +24,40 @@ Le panneau **Filtres** permet d'afficher ou masquer des éléments selon différ
 | **Éléments masqués** | Gérer les éléments cachés manuellement |
 | **Isolés** | Éléments sans connexion |
 
-### Propriétés date sur la timeline
+### Propriétés date
 
-Quand la timeline est affichée, la section **Propriétés date sur la timeline** liste les propriétés de type date et date-heure du dossier, avec le nombre d'éléments qui renseignent chacune. Décochez-en une (une date de naissance, par exemple) pour la retirer de la timeline. Les éléments restent visibles dans les autres vues ; les dates des événements et les périodes des liens ne sont pas concernées.
+La section **Propriétés date** liste les propriétés de type date et date-heure du dossier, avec le nombre d'éléments qui renseignent chacune. Ces dates placent les éléments sur la timeline, sur la carte et dans le curseur temporel du canvas.
 
-Un badge **\<clé\> hors timeline** apparaît dans les filtres actifs ; **Tout effacer** la rétablit.
+- **Aucune puce sélectionnée** : toutes les propriétés date comptent.
+- **Sélectionner des puces** : seules celles-ci comptent (par exemple « Début des faits » et « Fin des faits », sans la date de naissance). Une propriété date importée plus tard ne compte pas tant que vous ne la sélectionnez pas.
+
+Un badge **Dates n/total** apparaît alors dans les filtres actifs ; sa croix rétablit toutes les dates.
+
+#### Périodes
+
+Sous les puces, **+ Période** lit deux propriétés date comme une seule période : choisissez le début et la fin (« Début des faits → Fin des faits »), puis validez. Un élément qui renseigne les deux s'affiche comme une barre sur la timeline et reste actif pendant toute la période sur la carte et le canvas. S'il n'en renseigne qu'une, ou si la fin précède le début, les deux dates restent des points.
+
+Les périodes sont un réglage : **Tout effacer** les conserve.
+
+{{< hint info >}}
+La **date de collecte** d'un élément (date d'ajout de l'information) ne le date dans aucune vue ni aucun filtre : seuls comptent sa période, ses événements datés et ses propriétés date.
+{{< /hint >}}
 
 ### Combiner les filtres
 
 Les filtres se cumulent (ET logique) : un élément doit satisfaire **tous** les critères actifs pour être affiché.
+
+### Filtres et requête
+
+Une requête appliquée sur le canvas (panneau **Requête**) restreint les vues en plus des filtres : un élément est affiché s'il est gardé par les deux. L'en-tête du panneau Filtres compte ces éléments affichés ; quand les deux sont actifs, une ligne indique la part de chacun (« Filtres 598 · Requête 44 »). La requête apparaît comme un badge **Requête** dans les filtres actifs ; sa croix retire la requête des vues sans l'effacer.
+
+**Tout effacer** retire les filtres et la requête des vues (la requête reste dans son panneau).
+
+**Sélectionner / Désélectionner** sélectionne les éléments affichés, ou les retire de la sélection quand ils sont déjà tous sélectionnés. Le bouton du panneau Requête fait de même et reste synchronisé.
+
+### Atténuer ou masquer
+
+Par défaut, les éléments hors filtre sont **atténués**. Le bouton **Masquer** de l'encadré « Filtres actifs » les fait disparaître de toutes les vues (canvas, timeline, carte, matrice), liens compris. Ce choix n'est pas conservé d'une session à l'autre, sauf s'il est enregistré dans une vue.
 
 ### Masquer manuellement
 
@@ -47,11 +72,14 @@ Retrouvez les éléments masqués dans **Filtres** → **Éléments masqués**.
 
 Une **vue** capture l'état actuel de votre espace de travail :
 
-- Filtres actifs
+- Filtres actifs, dont les propriétés date retenues et les périodes
+- Le choix atténuer / masquer
+- La requête appliquée (panneau Requête)
 - Position du viewport (zoom, pan)
 - Éléments masqués
-- Propriétés date retirées de la timeline
 - (Optionnel) Positions des éléments
+
+Une vue sauvegardée avant ZeroNeurone 2.71 ne change ni le choix atténuer / masquer ni la requête en cours.
 
 ### Sauvegarder une vue
 

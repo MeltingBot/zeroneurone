@@ -11,7 +11,7 @@ Le canvas et la carte partagent la même barre temporelle : placez-vous à une d
 
 ## Activer
 
-Cliquez sur **Temporel** dans la barre d'outils du canvas ou de la carte. Le bouton n'apparaît que si le dossier contient des dates (événements, périodes de liens).
+Cliquez sur **Temporel** dans la barre d'outils du canvas ou de la carte. Le bouton n'apparaît que si le dossier contient des dates : événements, périodes d'éléments ou de liens, propriétés date retenues dans le panneau **Filtres** (une paire déclarée comme période, « Début des faits → Fin des faits », compte pour toute sa durée). La date de collecte d'un élément ne compte pas. Voir [Filtres et vues]({{< relref "filters-views" >}}).
 
 ---
 
@@ -35,6 +35,7 @@ Les pas suivent les dates du dossier. En mode période, ⏮, ⏭ et ▶ font gli
 | Objet | Rendu |
 |-------|-------|
 | Élément ayant un événement à la date (ou dans la période) | Halo, événement affiché sous l'élément |
+| Élément dont une propriété date tombe à la date (ou dans la période) | Halo |
 | Lien dont la période couvre la date | Halo |
 | Élément relié par un lien actif | Normal |
 | Élément ou lien daté, hors date | Atténué |

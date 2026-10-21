@@ -11,7 +11,7 @@ The canvas and the map share the same time bar: set a date or a period, and what
 
 ## Enable
 
-Click **Temporal** in the canvas or map toolbar. The button only appears when the dossier contains dates (events, link periods).
+Click **Temporal** in the canvas or map toolbar. The button only appears when the dossier contains dates: events, element or link periods, date properties kept in the **Filters** panel (a pair declared as a period, "Start of facts → End of facts", counts for its whole span). An element's collection date does not count. See [Filters and Views]({{< relref "filters-views" >}}).
 
 ---
 
@@ -35,6 +35,7 @@ Steps follow the dossier's dates. In period mode, ⏮, ⏭ and ▶ slide the per
 | Object | Rendering |
 |--------|-----------|
 | Element with an event at the date (or in the period) | Glow, event shown under the element |
+| Element with a date property at the date (or in the period) | Glow |
 | Link whose period covers the date | Glow |
 | Element connected by an active link | Normal |
 | Dated element or link, outside the date | Dimmed |
