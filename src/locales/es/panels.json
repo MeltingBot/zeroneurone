@@ -308,6 +308,8 @@
   "filters": {
     "title": "Filtros",
     "elementsCount": "{{matching}}/{{total}} elementos",
+    "countBreakdown": "Filtros {{filters}} · Consulta {{query}}",
+    "queryBadge": "Consulta",
     "active": "{{count}} filtro(s) activo(s)",
     "clearAll": "Borrar todo",
     "selectMatching": "Seleccionar",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Quitar elementos filtrados de la selección",
     "hiddenCount": "{{count}} elemento(s) oculto(s)",
     "activeFilters": "Filtros activos",
+    "hideFilteredOut": "Ocultar",
+    "hideFilteredOutHint": "Ocultar los elementos fuera del filtro en lugar de atenuarlos, en todas las vistas",
     "noName": "Sin nombre",
     "show": "Mostrar",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Conservar solo las fuentes valoradas como fiables"
     },
     "dateProperties": {
-      "title": "Propiedades de fecha en la línea de tiempo",
-      "badge": "{{key}} fuera de la línea de tiempo"
+      "title": "Propiedades de fecha",
+      "badge": "Fechas {{kept}}/{{total}}",
+      "ranges": "Periodos",
+      "addRange": "Periodo",
+      "rangesHint": "Leer dos fechas como un periodo (p. ej. inicio y fin de los hechos)",
+      "removeRange": "Quitar el periodo",
+      "rangeStart": "Inicio",
+      "rangeEnd": "Fin",
+      "cancelRange": "Cancelar"
     },
     "property": {
       "hasProperty": "Tiene la propiedad",
@@ -377,6 +388,8 @@
     "modeVisual": "Visual",
     "execute": "Ejecutar",
     "clear": "Borrar",
+    "shownWithFilters": "→ {{count}} mostrado(s)",
+    "shownWithFiltersHint": "Con los filtros activos",
     "elements": "elementos",
     "links": "enlaces",
     "filterMode": "Filtro canvas",

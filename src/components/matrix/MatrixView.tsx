@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3 } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { DropdownPortal } from '../common/DropdownPortal';
 import { SourceInline } from '../common/SourceInline';
@@ -158,6 +159,8 @@ export function MatrixView() {
   const historyUndo = useHistoryStore((s) => s.undo);
   const historyRedo = useHistoryStore((s) => s.redo);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  // Hidden by hand, or outside the filters when the user chose to hide them
+  const viewHiddenIds = useHiddenElementIds();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
@@ -211,11 +214,11 @@ export function MatrixView() {
   const visibleElements = useMemo(() => {
     return elements.filter((el) => {
       if (el.isGroup || el.isAnnotation) return false;
-      if (hiddenElementIds.has(el.id)) return false;
+      if (viewHiddenIds.has(el.id)) return false;
       if (activeTabId && !tabMemberSet.has(el.id)) return false;
       return true;
     });
-  }, [elements, hiddenElementIds, activeTabId, tabMemberSet]);
+  }, [elements, viewHiddenIds, activeTabId, tabMemberSet]);
 
   // Collect all unique property keys across visible elements
   const propertyKeys = useMemo(() => {

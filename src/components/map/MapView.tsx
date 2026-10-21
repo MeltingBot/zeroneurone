@@ -10,14 +10,15 @@ import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, isGeoInRange, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
-import { MapPin, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route } from 'lucide-react';
+import { MapPin, Upload, Globe, Map as MapIcon, Search, Building, Pentagon, Trash2, Circle, Square, ChevronDown, Maximize2, Crosshair, Route, Flame } from 'lucide-react';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { ZoneDrawTool } from './ZoneDrawTool';
 import { ZoneEditTool } from './ZoneEditTool';
 import { ZoneLayers, resolveCssColor } from './ZoneLayers';
 import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
-import { toMinuteStart, dateEndInclusive, linkInterval, eventInterval, elementRangeInterval, overlaps, navigatorWindow, shiftNavigator, closestDateIndex, computeCanvasTemporalClassification, summarizeActiveEvents, type TemporalEventSummary } from '../../utils/temporalUtils';
+import { toMinuteStart, dateEndInclusive, linkInterval, eventInterval, propertyDateIntervals, datePropertyRules, type TimeInterval, elementRangeInterval, overlaps, navigatorWindow, shiftNavigator, closestDateIndex, computeCanvasTemporalClassification, summarizeActiveEvents, type TemporalEventSummary } from '../../utils/temporalUtils';
+import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { TemporalEventsPopover } from '../common/TemporalEventsPopover';
 import { toLocalDateKey } from '../../utils/dates';
 import { useHoverPopover } from '../../hooks/useHoverPopover';
@@ -51,6 +52,45 @@ const LINK_LINE_LAYERS = { solid: 'link-line-solid', dashed: 'link-line-dashed',
 const LINK_ARROWS_LAYER = 'link-arrows';
 const LINK_DASHES = { dashed: [10, 6], dotted: [3, 6] } as const;
 
+// Density overlay: one point source and one heatmap layer, drawn under the links
+/** Sequential ramp by density, transparent where there is nothing (also drawn in the legend) */
+const DENSITY_RAMP: [number, string][] = [
+  [0, 'rgba(254, 240, 217, 0)'],
+  [0.05, 'rgba(253, 212, 158, 0.55)'],
+  [0.3, 'rgb(253, 187, 132)'],
+  [0.55, 'rgb(252, 141, 89)'],
+  [0.75, 'rgb(227, 74, 51)'],
+  [1, 'rgb(179, 0, 0)'],
+];
+const DENSITY_SOURCE = 'density-points';
+const DENSITY_LAYER = 'density-heatmap';
+
+/** Weight of one density point: full up to about a hundred points, then
+ *  decreasing with the square root of their number. */
+function densityPointWeight(count: number): number {
+  return Math.min(1, 10 / Math.sqrt(Math.max(1, count)));
+}
+
+/** Adds the density source and layer, unless a style already has them. */
+function ensureDensityLayer(map: maplibregl.Map) {
+  if (map.getSource(DENSITY_SOURCE)) return;
+  map.addSource(DENSITY_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: DENSITY_LAYER,
+    type: 'heatmap',
+    source: DENSITY_SOURCE,
+    paint: {
+      'heatmap-weight': 1,
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 15, 3],
+      // Wide enough at low zoom for a lone point to stay visible
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 12, 6, 24, 15, 50],
+      'heatmap-opacity': 0.8,
+      // Sequential ramp, transparent where there is nothing
+      'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], ...DENSITY_RAMP.flat()],
+    },
+  }, map.getLayer(LINK_OUTLINE_LAYER) ? LINK_OUTLINE_LAYER : undefined);
+}
+
 /** Adds the link sources and layers, unless a style already has them. */
 function ensureLinkLayers(map: maplibregl.Map) {
   if (map.getSource(LINK_LINES_SOURCE)) return;
@@ -65,7 +105,8 @@ function ensureLinkLayers(map: maplibregl.Map) {
     paint: {
       'line-color': '#ffffff',
       'line-width': ['+', ['get', 'width'], 4],
-      'line-opacity': ['*', 0.9, ['get', 'opacity']],
+      // halo: 0 hides the white outline (density shown)
+      'line-opacity': ['*', 0.9, ['get', 'opacity'], ['get', 'halo']],
     },
     layout: lineLayout,
   });
@@ -394,6 +435,10 @@ export function MapView() {
   const setIs3D = (v: boolean | ((prev: boolean) => boolean)) => useUIStore.setState((s) => ({ map3D: typeof v === 'function' ? v(s.map3D) : v }));
   const show3DBuildings = useUIStore((s) => s.map3DBuildings);
   const setShow3DBuildings = (v: boolean | ((prev: boolean) => boolean)) => useUIStore.setState((s) => ({ map3DBuildings: typeof v === 'function' ? v(s.map3DBuildings) : v }));
+  const showDensity = useUIStore((s) => s.mapHeatmap);
+  const densitySource = useUIStore((s) => s.mapHeatmapSource);
+  const densityIntensity = useUIStore((s) => s.mapHeatmapIntensity);
+  const densityPerElement = useUIStore((s) => s.mapHeatmapPerElement);
   const show3DBuildingsRef = useRef(show3DBuildings);
   useEffect(() => { show3DBuildingsRef.current = show3DBuildings; }, [show3DBuildings]);
   const is3DRef = useRef(is3D);
@@ -452,6 +497,8 @@ export function MapView() {
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  // Hidden by hand, or outside the filters when the user chose to hide them
+  const viewHiddenIds = useHiddenElementIds();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
@@ -516,6 +563,19 @@ export function MapView() {
     return counts;
   }, [comments]);
 
+  // Date properties kept in the filters panel date the elements too, as on
+  // the timeline (a dossier may be dated by its properties only)
+  const { includedDateProperties, excludedDateProperties, dateRangeProperties } = filters;
+  const propertyIntervals = useMemo(() => {
+    const keep = datePropertyRules({ includedDateProperties, excludedDateProperties, dateRangeProperties });
+    const byElement = new Map<string, TimeInterval[]>();
+    for (const el of elements) {
+      const intervals = propertyDateIntervals(el, keep);
+      if (intervals.length > 0) byElement.set(el.id, intervals);
+    }
+    return byElement;
+  }, [elements, includedDateProperties, excludedDateProperties, dateRangeProperties]);
+
   // Calculate time range and collect all unique event dates
   const { timeRange, eventDates } = useMemo(() => {
     const allDates: Date[] = [];
@@ -523,6 +583,7 @@ export function MapView() {
       const hasBaseGeo = !!el.geo;
       const hasEventGeo = el.events?.some((e) => e.geo);
       if (hasBaseGeo || hasEventGeo) {
+        for (const interval of propertyIntervals.get(el.id) ?? []) allDates.push(new Date(interval.from));
         if (el.events && el.events.length > 0) {
           el.events.forEach((event) => {
             if (event.geo || hasBaseGeo) {
@@ -531,8 +592,9 @@ export function MapView() {
             }
           });
         }
+        // Element.date is the collection date, not a fact: left out, as on
+        // the timeline and the canvas
         if (hasBaseGeo) {
-          if (el.date) allDates.push(new Date(el.date));
           if (el.dateRange?.start) allDates.push(new Date(el.dateRange.start));
           if (el.dateRange?.end) allDates.push(new Date(el.dateRange.end));
         }
@@ -550,7 +612,7 @@ export function MapView() {
       timeRange: { min: sortedDates[0], max: sortedDates[sortedDates.length - 1] },
       eventDates: sortedDates,
     };
-  }, [elements, links]);
+  }, [elements, links, propertyIntervals]);
 
   // Get position for an element at a specific time
   const getPositionAtTime = useCallback(
@@ -697,13 +759,21 @@ export function MapView() {
     [elementLinkVisibility]
   );
 
+  // Whether an element can be placed on the map: not hidden, and in the active
+  // tab (or a ghost of it)
+  const isOnMap = useCallback(
+    (id: string) =>
+      !viewHiddenIds.has(id) &&
+      (activeTabId === null || tabMemberSet.has(id) || tabGhostIds.has(id)),
+    [viewHiddenIds, activeTabId, tabMemberSet, tabGhostIds]
+  );
+
   // Get elements with resolved geo positions (considering temporal mode)
   const resolvedGeoElements = useMemo((): ResolvedGeoElement[] => {
     const result: ResolvedGeoElement[] = [];
     if (!temporalMode || !selectedDate) {
       elements.forEach((el) => {
-        if (hiddenElementIds.has(el.id)) return;
-        if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
+        if (!isOnMap(el.id)) return;
         const position = getPositionAtTime(el, null);
         if (position) {
           result.push({ element: el, geo: position.geo, geoData: position.geoData, fromEvent: !!position.label, eventLabel: position.label, eventId: position.eventId });
@@ -715,8 +785,7 @@ export function MapView() {
       // Period mode: only what is active inside the period. An element shows at
       // its latest geolocated event of the period; the trace keeps the others.
       elements.forEach((el) => {
-        if (hiddenElementIds.has(el.id)) return;
-        if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
+        if (!isOnMap(el.id)) return;
         const eventsInPeriod = (el.events || [])
           .filter((e) => {
             const interval = eventInterval(e);
@@ -734,10 +803,12 @@ export function MapView() {
           position = { geo: getGeoCenter(el.geo), geoData: el.geo, label: latest.label, eventId: latest.id };
         } else if (eventsInPeriod.length === 0 && (el.events || []).length === 0 && el.geo) {
           const ownRange = elementRangeInterval(el);
-          const ownDate = el.date ? navigatorWindow(el.date, null) : null;
-          if ((ownRange && overlaps(ownRange, periodWindow)) || (!ownRange && ownDate && overlaps(ownDate, periodWindow))) {
+          if (ownRange && overlaps(ownRange, periodWindow)) {
             position = { geo: getGeoCenter(el.geo), geoData: el.geo };
           }
+        }
+        if (!position && (propertyIntervals.get(el.id) ?? []).some((i) => overlaps(i, periodWindow))) {
+          position = getAnyGeoPosition(el);
         }
         if (!position && viaLink) position = getAnyGeoPosition(el);
         if (!position) return;
@@ -762,8 +833,7 @@ export function MapView() {
     }
     const targetTime = toMinuteStart(selectedDate).getTime();
     elements.forEach((el) => {
-      if (hiddenElementIds.has(el.id)) return;
-      if (activeTabId !== null && !tabMemberSet.has(el.id) && !tabGhostIds.has(el.id)) return;
+      if (!isOnMap(el.id)) return;
       const visibleViaActiveLink = isVisibleViaLink(el.id, targetTime);
       const datedEvents = (el.events || []).filter((e) => e.date).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       let visibleByOwnData = false;
@@ -777,11 +847,10 @@ export function MapView() {
           const elStart = toMinuteStart(el.dateRange.start).getTime();
           const elEnd = el.dateRange.end ? dateEndInclusive(toMinuteStart(el.dateRange.end)) : Infinity;
           if (targetTime >= elStart && targetTime <= elEnd) visibleByOwnData = true;
-        } else if (el.date) {
-          const elStart = toMinuteStart(el.date).getTime();
-          const elEnd = dateEndInclusive(toMinuteStart(el.date));
-          if (targetTime >= elStart && targetTime <= elEnd) visibleByOwnData = true;
         }
+      }
+      if (!visibleByOwnData && (propertyIntervals.get(el.id) ?? []).some((i) => targetTime >= i.from && targetTime <= i.until)) {
+        visibleByOwnData = true;
       }
       if (visibleByOwnData || visibleViaActiveLink) {
         const position = getPositionAtTime(el, selectedDate) || getAnyGeoPosition(el);
@@ -834,7 +903,7 @@ export function MapView() {
     // Out-of-range coordinates (e.g. a projected file imported as degrees)
     // would make MapLibre throw and take the whole map down: skip them.
     return result.filter(r => isGeoInRange(r.geoData || { type: 'point', ...r.geo }));
-  }, [elements, selectedDate, periodWindow, elementLinkVisibility, getPositionAtTime, getAnyGeoPosition, hiddenElementIds, temporalMode, temporalTrace, isVisibleViaLink, activeTabId, tabMemberSet, tabGhostIds]);
+  }, [elements, selectedDate, periodWindow, elementLinkVisibility, getPositionAtTime, getAnyGeoPosition, isOnMap, temporalMode, temporalTrace, isVisibleViaLink, propertyIntervals]);
 
   // Legacy geoElements for compatibility (preserves full GeoData including polygons).
   // Enriched with _markerKey/_eventId so a single element can produce several markers
@@ -1206,11 +1275,73 @@ export function MapView() {
   const effectiveGeoElementsRef = useRef(effectiveGeoElements);
   effectiveGeoElementsRef.current = effectiveGeoElements;
 
+  // Elements placed on the map, and how many of them the filters keep
+  const locatedCounts = useMemo(() => {
+    const ids = new Set(geoElements.map((el) => el.id));
+    let kept = 0;
+    for (const id of ids) if (!effectiveDimmedIds.has(id)) kept++;
+    return { total: ids.size, kept };
+  }, [geoElements, effectiveDimmedIds]);
+
+  // Points of the density overlay. Dimmed elements (outside the filters, the
+  // query or the tab) do not count: the density shows what is kept.
+  const densityPoints = useMemo((): GeoJSON.Feature<GeoJSON.Point>[] => {
+    if (!showDensity) return [];
+    const points: GeoJSON.Feature<GeoJSON.Point>[] = [];
+    const add = (geo: GeoData, w = 1) => {
+      if (!isGeoInRange(geo)) return;
+      const c = getGeoCenter(geo);
+      points.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lng, c.lat] }, properties: { w } });
+    };
+    if (densitySource === 'elements') {
+      // One point per element shown, at its current position
+      for (const el of effectiveGeoElements) {
+        if (el._clusterExclude || effectiveDimmedIds.has(el.id)) continue;
+        add(el.geo);
+      }
+      return points;
+    }
+    // Every located event; with the navigator, those of the period, or those
+    // up to the instant (the density builds up while playing)
+    const instant = temporalMode && selectedDate && !periodWindow ? toMinuteStart(selectedDate).getTime() : null;
+    for (const el of elements) {
+      if (!isOnMap(el.id) || effectiveDimmedIds.has(el.id)) continue;
+      const kept: GeoData[] = [];
+      for (const ev of el.events || []) {
+        if (!ev.geo) continue;
+        if (periodWindow) {
+          const interval = eventInterval(ev);
+          if (!interval || !overlaps(interval, periodWindow)) continue;
+        } else if (instant !== null) {
+          if (!ev.date || toMinuteStart(ev.date).getTime() > instant) continue;
+        }
+        kept.push(ev.geo);
+      }
+      // Per element: n events weigh sqrt(n) together, not n
+      const w = densityPerElement && kept.length > 0 ? 1 / Math.sqrt(kept.length) : 1;
+      for (const geo of kept) add(geo, w);
+    }
+    return points;
+  }, [showDensity, densitySource, densityPerElement, effectiveGeoElements, effectiveDimmedIds, elements, isOnMap, temporalMode, selectedDate, periodWindow]);
+
   // Rebuild Supercluster and update markers
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
     const zoom = Math.floor(map.getZoom());
+
+    // Density shown: no markers nor clusters; links join the elements directly
+    if (showDensity) {
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current.clear();
+      clusterMarkersRef.current.forEach((marker) => marker.remove());
+      clusterMarkersRef.current.clear();
+      superclusterRef.current = null;
+      clusterMetaRef.current = new Map();
+      clusterStateRef.current = new Map();
+      elementIdToFirstMarkerKeyRef.current = new Map();
+      return;
+    }
 
     // Build supercluster index
     const sc = new Supercluster<{ elementId: string; markerKey: string }>({
@@ -1576,7 +1707,7 @@ export function MapView() {
       }
     });
 
-  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries]);
+  }, [effectiveGeoElements, selectedElementIds, effectiveDimmedIds, unresolvedCommentCounts, createMarkerHtml, createMarkerElement, selectElement, setFocusedEventId, updateElement, pushAction, anonymousMode, hideMedia, clusteringVersion, editingZoneId, eventZoneIds, temporalEventSummaries, showDensity]);
 
   // Get visible position for an element (considering clustering). Cluster state is keyed by
   // markerKey (one element can produce multiple markers for co-temporal events); we pick the
@@ -1664,10 +1795,12 @@ export function MapView() {
 
       const endpointDimmed = effectiveDimmedIds.has(link.fromId) || effectiveDimmedIds.has(link.toId);
       const isLinkDimmed = endpointDimmed && !(queryFilterActive && queryMatchLinkIds.has(link.id));
-      const opacity = isLinkDimmed ? 0.3 : 1;
+      // Density shown: links are thin, discreet lines without arrows or labels,
+      // which would cover the density
+      const opacity = (isLinkDimmed ? 0.3 : 1) * (showDensity ? 0.6 : 1);
 
       const color = safeColor(link.visual.color, '#6b6560');
-      const width = Math.max(2, (link.visual.thickness || 2));
+      const width = showDensity ? 1 : Math.max(2, (link.visual.thickness || 2));
       const style = link.visual.style === 'dashed' || link.visual.style === 'dotted' ? link.visual.style : 'solid';
       const direction = link.direction || (link.directed ? 'forward' : 'none');
       const angle = calculateAngle(fromLngLat, toLngLat);
@@ -1675,8 +1808,9 @@ export function MapView() {
       lineFeatures.push({
         type: 'Feature',
         geometry: { type: 'LineString', coordinates: [fromLngLat, toLngLat] },
-        properties: { linkId: link.id, color, width, opacity, style },
+        properties: { linkId: link.id, color, width, opacity, style, halo: showDensity ? 0 : 1 },
       });
+      if (showDensity) return;
 
       const arrow = (ratio: number, rotate: number) => {
         arrowFeatures.push({
@@ -1721,7 +1855,27 @@ export function MapView() {
       labelEl.textContent = text;
       labelMarkers.set(id, new maplibregl.Marker({ element: labelEl, anchor: 'center' }).setLngLat(at).addTo(map));
     });
-  }, [geoLinks, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements, queryFilterActive, queryMatchLinkIds]);
+  }, [geoLinks, clusteringVersion, getVisibleLngLat, areInSameCluster, calculateAngle, getPointOnLine, anonymousMode, effectiveDimmedIds, effectiveGeoElements, queryFilterActive, queryMatchLinkIds, showDensity]);
+
+  // Density overlay: rebuilt after a style change (clusteringVersion)
+  useEffect(() => {
+    if (!mapRef.current || !mapLoadedRef.current) return;
+    const map = mapRef.current;
+    if (!showDensity && !map.getLayer(DENSITY_LAYER)) return;
+    try {
+      ensureDensityLayer(map);
+    } catch (err) {
+      console.warn('Failed to add density layer', err);
+      return;
+    }
+    (map.getSource(DENSITY_SOURCE) as maplibregl.GeoJSONSource | undefined)
+      ?.setData({ type: 'FeatureCollection', features: densityPoints });
+    // Lighter points as they get numerous, so that thousands of them do not
+    // turn whole regions into the top colour (a lone point keeps full weight)
+    map.setPaintProperty(DENSITY_LAYER, 'heatmap-weight',
+      ['*', ['coalesce', ['get', 'w'], 1], densityPointWeight(densityPoints.length) * densityIntensity]);
+    map.setLayoutProperty(DENSITY_LAYER, 'visibility', showDensity ? 'visible' : 'none');
+  }, [densityPoints, showDensity, densityIntensity, clusteringVersion]);
 
   // Fit map to markers
   const handleFit = useCallback(() => {
@@ -2050,8 +2204,8 @@ export function MapView() {
     for (const r of resolvedGeoElements) {
       const el = r.element;
       const hasEventNow = (el.events || []).some(e => e.date && toMinuteStart(e.date).getTime() === targetMinute);
-      const startsNow = (el.date && toMinuteStart(el.date).getTime() === targetMinute) ||
-        (el.dateRange?.start && toMinuteStart(el.dateRange.start).getTime() === targetMinute);
+      const startsNow = (el.dateRange?.start && toMinuteStart(el.dateRange.start).getTime() === targetMinute)
+        || (propertyIntervals.get(el.id) ?? []).some((i) => i.from === targetMinute);
       if (hasEventNow || startsNow) {
         activeCoords.push([r.geo.lng, r.geo.lat]);
       }
@@ -2141,7 +2295,7 @@ export function MapView() {
       clearTimeout(advanceTimeout);
       clearTimeout(safetyTimeout);
     };
-  }, [temporalMode, selectedDate, periodEnd, resolvedGeoElements, temporalFollowCamera, advanceDate]);
+  }, [temporalMode, selectedDate, periodEnd, resolvedGeoElements, temporalFollowCamera, advanceDate, propertyIntervals]);
 
   // ── Listen for flyToPolygon events from detail panel ──────────────
   useEffect(() => {
@@ -2266,7 +2420,11 @@ export function MapView() {
         leftContent={
           <div className="flex items-center gap-3">
             <span className="text-xs text-text-secondary">
-              {t('map.elementsLocated', { count: geoElements.length })}
+              {showDensity
+                ? t('map.densityPoints', { count: densityPoints.length })
+                : locatedCounts.kept < locatedCounts.total
+                  ? t('map.elementsLocatedFiltered', { kept: locatedCounts.kept, count: locatedCounts.total })
+                  : t('map.elementsLocated', { count: locatedCounts.total })}
               {geoLinks.length > 0 && (
                 <span className="ml-2 text-text-tertiary">{t('map.linksCount', { count: geoLinks.length })}</span>
               )}
@@ -2403,6 +2561,30 @@ export function MapView() {
               )}
             </div>
 
+            {/* Density overlay, fed by the elements shown or by their events */}
+            <div className="flex items-center mr-2">
+              <button
+                onClick={() => useUIStore.setState((s) => ({ mapHeatmap: !s.mapHeatmap }))}
+                className={`px-2 h-6 text-[10px] flex items-center gap-1 border border-border-default ${showDensity ? 'rounded-l bg-accent text-white' : 'rounded text-text-secondary hover:bg-bg-tertiary'}`}
+                title={t('map.densityHint', 'Densité au lieu des marqueurs')}
+              >
+                <Flame size={11} />
+                {t('map.density', 'Densité')}
+              </button>
+              {showDensity && (['elements', 'events'] as const).map((src, i) => (
+                <button
+                  key={src}
+                  onClick={() => useUIStore.setState({ mapHeatmapSource: src })}
+                  title={src === 'elements'
+                    ? t('map.densityElementsHint', 'Un point par élément affiché')
+                    : t('map.densityEventsHint', 'Un point par événement localisé : un élément très actif pèse plus')}
+                  className={`px-2 h-6 text-[10px] border border-l-0 border-border-default ${i === 1 ? 'rounded-r' : ''} ${densitySource === src ? 'bg-bg-tertiary text-text-primary font-medium' : 'text-text-secondary hover:bg-bg-tertiary'}`}
+                >
+                  {src === 'elements' ? t('map.densityElements', 'Éléments') : t('map.densityEvents', 'Événements')}
+                </button>
+              ))}
+            </div>
+
             {/* Temporal mode toggle */}
             {timeRange && (
               <TemporalToggleButton active={temporalMode} onClick={handleToggleTemporal} />
@@ -2481,6 +2663,44 @@ export function MapView() {
 
       {/* Map container */}
       <div ref={mapContainerRef} className="flex-1" style={{ isolation: 'isolate' }} data-report-capture="map" />
+
+      {/* Density legend: the colour scale, and the intensity when it saturates
+          (or stays too faint) on a dossier */}
+      {showDensity && (
+        <div className="absolute bottom-8 left-2 z-10 w-44 px-2 py-1.5 bg-bg-primary border border-border-default rounded text-[10px] text-text-secondary">
+          <div
+            className="h-2 rounded"
+            style={{ background: `linear-gradient(to right, ${DENSITY_RAMP.map(([, color]) => color).join(', ')})` }}
+          />
+          <div className="flex justify-between mt-0.5">
+            <span>{t('map.densityLow', 'Faible')}</span>
+            <span>{t('map.densityHigh', 'Forte')}</span>
+          </div>
+          <label className="flex items-center gap-1.5 mt-1" title={t('map.densityIntensityHint', 'Baisser si tout sature, monter si tout est pâle')}>
+            <span className="shrink-0">{t('map.densityIntensity', 'Intensité')}</span>
+            <input
+              type="range"
+              min={-2}
+              max={2}
+              step={0.25}
+              value={Math.log2(densityIntensity)}
+              onChange={(e) => useUIStore.setState({ mapHeatmapIntensity: 2 ** Number(e.target.value) })}
+              className="flex-1 min-w-0 w-full h-1 accent-accent cursor-pointer"
+            />
+          </label>
+          {densitySource === 'events' && (
+            <label className="flex items-center gap-1.5 mt-1 cursor-pointer" title={t('map.densityPerElementHint', "Un élément très actif (milliers de points GPS) ne domine plus la carte")}>
+              <input
+                type="checkbox"
+                checked={densityPerElement}
+                onChange={(e) => useUIStore.setState({ mapHeatmapPerElement: e.target.checked })}
+                className="w-3 h-3 accent-accent"
+              />
+              <span>{t('map.densityPerElement', 'Pondérer par élément')}</span>
+            </label>
+          )}
+        </div>
+      )}
 
       {/* Empty state overlay */}
       {showEmptyState && (

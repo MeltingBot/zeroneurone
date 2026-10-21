@@ -147,7 +147,15 @@ export const useQueryStore = create<QueryState>((set, get) => ({
 
   setOutputMode: (mode) => {
     const isActive = mode === 'canvas' || mode === 'both';
-    set({ outputMode: mode, isFilterActive: isActive && get().results !== null });
+    const { results } = get();
+    // What the query keeps on the views is computed only when it applies to
+    // them: switching it on again (e.g. from table only) must fill it
+    set({
+      outputMode: mode,
+      isFilterActive: isActive && results !== null,
+      matchingElementIds: isActive && results ? withLinkEnds(results) : new Set(),
+      matchingLinkIds: isActive && results ? results.linkIds : new Set(),
+    });
   },
 
   execute: () => {
@@ -279,7 +287,9 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     const ast = query.ast as QueryNode;
     set({
       currentAst: ast,
-      currentText: query.queryText,
+      // Text rebuilt from the saved structure: a query saved before groups
+      // were always parenthesized shows them too (same results either way)
+      currentText: ast ? serializeQuery(ast) : query.queryText,
       parseError: null,
       outputMode: query.defaultOutput,
       tableColumns: query.tableColumns || ['label', 'tags', 'confidence', 'date'],

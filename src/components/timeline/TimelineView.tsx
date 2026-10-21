@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
+import { datePropertyRules, propertyDateSpans } from '../../utils/temporalUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, ChartColumnBig, Upload, Clock } from 'lucide-react';
 import { fileService } from '../../services/fileService';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -15,7 +17,7 @@ import { ActivityHistogramBar } from './ActivityHistogramBar';
 import { histogramBucket, type HistogramMode } from './activityHistogram';
 import { computeCausalConnections } from './causality';
 import type { DatePrecision, Element as ZNElement } from '../../types';
-import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue, parsePropertyDate } from '../../utils/dates';
+import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue } from '../../utils/dates';
 import { formatItemDates } from './timelineDates';
 
 export interface TimelineItem {
@@ -91,7 +93,9 @@ export function TimelineView() {
   const themeMode = useUIStore((state) => state.themeMode);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
   const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
-  const excludedDateProperties = filters.excludedDateProperties;
+  // Hidden by hand, or outside the filters when the user chose to hide them
+  const viewHiddenIds = useHiddenElementIds();
+  const { includedDateProperties, excludedDateProperties, dateRangeProperties } = filters;
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
@@ -236,7 +240,7 @@ export function TimelineView() {
     if (showCreatedAt) {
       // Elements by createdAt
       elements.forEach((element) => {
-        if (hiddenElementIds.has(element.id)) return;
+        if (viewHiddenIds.has(element.id)) return;
         if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
 
         const createdDate = new Date(element.createdAt);
@@ -271,7 +275,7 @@ export function TimelineView() {
         const fromElement = elements.find(el => el.id === link.fromId);
         const toElement = elements.find(el => el.id === link.toId);
         if (!fromElement || !toElement) return;
-        if (hiddenElementIds.has(fromElement.id) || hiddenElementIds.has(toElement.id)) return;
+        if (viewHiddenIds.has(fromElement.id) || viewHiddenIds.has(toElement.id)) return;
         if (activeTabId !== null) {
           const fromVisible = tabMemberSet.has(fromElement.id) || tabGhostIds.has(fromElement.id);
           const toVisible = tabMemberSet.has(toElement.id) || tabGhostIds.has(toElement.id);
@@ -341,7 +345,7 @@ export function TimelineView() {
       if (!fromElement || !toElement) return;
 
       // Skip if either element is hidden
-      if (hiddenElementIds.has(fromElement.id) || hiddenElementIds.has(toElement.id)) return;
+      if (viewHiddenIds.has(fromElement.id) || viewHiddenIds.has(toElement.id)) return;
       // Skip if either element is not visible in active tab
       if (activeTabId !== null) {
         const fromVisible = tabMemberSet.has(fromElement.id) || tabGhostIds.has(fromElement.id);
@@ -404,7 +408,7 @@ export function TimelineView() {
     // 2. Process element events
     elements.forEach((element) => {
       // Skip hidden elements or elements not in active tab
-      if (hiddenElementIds.has(element.id)) return;
+      if (viewHiddenIds.has(element.id)) return;
       if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
       if (!element.events || element.events.length === 0) return;
 
@@ -478,39 +482,35 @@ export function TimelineView() {
       });
     });
 
-    // 3. Process element properties with type "date" or "datetime", except
-    // the keys left off the timeline in the filters panel
-    const excludedDateKeys = new Set(excludedDateProperties);
+    // 3. Process element properties with type "date" or "datetime", as chosen
+    // in the filters panel; a pair declared as a period gives one bar
+    const dateRules = datePropertyRules({ includedDateProperties, excludedDateProperties, dateRangeProperties });
     elements.forEach((element) => {
       // Skip hidden elements or elements not in active tab
-      if (hiddenElementIds.has(element.id)) return;
+      if (viewHiddenIds.has(element.id)) return;
       if (activeTabId !== null && !tabMemberSet.has(element.id) && !tabGhostIds.has(element.id)) return;
       if (!element.properties || element.properties.length === 0) return;
 
       const isElementDimmed = dimmedElementIds.has(element.id) || (activeTabId !== null && tabGhostIds.has(element.id));
 
-      element.properties.forEach((prop, index) => {
-        if ((prop.type !== 'date' && prop.type !== 'datetime') || !prop.value) return;
-        if (excludedDateKeys.has(prop.key)) return;
-
-        // Imported text is read like everywhere else (UTC midnight = a local day)
-        const propDate = parsePropertyDate(prop.value);
-        if (!propDate) return;
-        const isDateTime = prop.type === 'datetime';
-
-        const propTime = propDate.getTime();
-        if (propTime < minTime) minTime = propTime;
-        if (propTime > maxTime) maxTime = propTime;
+      // Imported text is read like everywhere else (UTC midnight = a local day)
+      for (const span of propertyDateSpans(element, dateRules)) {
+        const startTime = span.start.getTime();
+        const endTime = (span.end ?? span.start).getTime();
+        if (startTime < minTime) minTime = startTime;
+        if (endTime > maxTime) maxTime = endTime;
 
         const elementLabel = element.label || t('timeline.unnamed');
 
         itemsList.push({
-          id: `prop-${element.id}-${index}`,
-          label: `${elementLabel}: ${prop.key}`,
-          start: propDate,
-          end: undefined, // Properties are point-in-time
-          precision: isDateTime ? 'minute' : 'day',
-          ...(isDateTime && prop.timeZone ? { timeZone: prop.timeZone } : {}),
+          id: `prop-${element.id}-${span.index}`,
+          label: span.endKey
+            ? `${elementLabel}: ${span.key} → ${span.endKey}`
+            : `${elementLabel}: ${span.key}`,
+          start: span.start,
+          end: span.end, // A point unless a pair is declared as a period
+          precision: span.datetime ? 'minute' : 'day',
+          ...(span.datetime && span.timeZone ? { timeZone: span.timeZone } : {}),
           color: element.visual.color,
           type: 'property',
           sourceId: element.id,
@@ -521,7 +521,7 @@ export function TimelineView() {
           thumbShape: element.visual.shape || 'circle',
           thumbImageId: element.assetIds?.[0] || undefined,
         });
-      });
+      }
     });
 
     // Sort by start date (oldest first by default, will be reversed in itemsWithRows if newestFirst)
@@ -543,7 +543,7 @@ export function TimelineView() {
         max: new Date(maxTime + padding),
       },
     };
-  }, [elements, links, comments, hiddenElementIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language, excludedDateProperties]);
+  }, [elements, links, comments, viewHiddenIds, dimmedElementIds, activeTabId, tabMemberSet, tabGhostIds, queryFilterActive, queryMatchLinkIds, showCreatedAt, i18n.language, includedDateProperties, excludedDateProperties, dateRangeProperties]);
 
   // Load thumbnails for items with images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});

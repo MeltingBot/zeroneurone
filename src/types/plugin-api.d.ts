@@ -402,6 +402,20 @@ export interface PluginFeatures {
   sharedPluginData?: boolean;
   /** pluginServices (2.64+) */
   pluginServices?: boolean;
+  /** filterOutcome() (2.71+) */
+  filterOutcome?: boolean;
+}
+
+/** What the views show, kept by the filters panel and the query applied on the canvas */
+export interface FilterOutcomeAPI {
+  /** Elements not hidden by hand */
+  total: number;
+  /** Elements the views show; fewer than `total` when something narrows them */
+  shownIds: string[];
+  /** Elements kept by the filters alone */
+  filterCount: number;
+  /** Elements kept by the query alone (link ends included); null without a query filter */
+  queryCount: number | null;
 }
 
 // ─── Main API type ────────────────────────────────────────────
@@ -465,6 +479,9 @@ export interface PluginAPI {
   basePath?: string;
   /** Capabilities of this ZeroNeurone */
   features: PluginFeatures;
+
+  /** What the views show (filters + query), counted as the filters panel does (2.71+, `features.filterOutcome`) */
+  filterOutcome?: () => FilterOutcomeAPI;
 
   // Services (export, import, navigation)
   services: ServicesAPI;

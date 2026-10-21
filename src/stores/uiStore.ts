@@ -105,6 +105,19 @@ interface UIState {
   mapOfmVariant: 'auto' | 'positron' | 'liberty' | 'dark' | 'fiord';
   map3D: boolean;
   map3DBuildings: boolean;
+  /** Density overlay on the map, in place of markers and clusters */
+  mapHeatmap: boolean;
+  /** What feeds the density: the elements shown, or every located event */
+  mapHeatmapSource: 'elements' | 'events';
+  /** Multiplier on the density points' weight, set from the map legend */
+  mapHeatmapIntensity: number;
+  /** Events density: an element's events weigh 1/sqrt(n) each, so that one
+   *  very active element (thousands of GPS points) does not swamp the map */
+  mapHeatmapPerElement: boolean;
+
+  /** Elements outside the filters or the query: dimmed (default) or hidden in every view.
+   *  Not persisted, so a new session never opens on a partial dossier. */
+  hideFilteredOut: boolean;
 
   // Metadata import queue
   metadataImportQueue: MetadataImportItem[];
@@ -219,6 +232,11 @@ export const useUIStore = create<UIState>()(
   mapOfmVariant: 'auto',
   map3D: false,
   map3DBuildings: false,
+  mapHeatmap: false,
+  mapHeatmapSource: 'elements',
+  mapHeatmapIntensity: 1,
+  mapHeatmapPerElement: false,
+  hideFilteredOut: false,
   metadataImportQueue: [],
   importPlacementMode: false,
   importPlacementData: null,
@@ -416,7 +434,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings }),
+      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

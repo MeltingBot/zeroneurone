@@ -308,6 +308,8 @@
   "filters": {
     "title": "Filtres",
     "elementsCount": "{{matching}}/{{total}} elements",
+    "countBreakdown": "Filtres {{filters}} · Consulta {{query}}",
+    "queryBadge": "Consulta",
     "active": "{{count}} filtre(s) actiu(s)",
     "clearAll": "Esborrar tot",
     "selectMatching": "Seleccionar",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Treure els elements filtrats de la selecció",
     "hiddenCount": "{{count}} element(s) amagat(s)",
     "activeFilters": "Filtres actius",
+    "hideFilteredOut": "Amagar",
+    "hideFilteredOutHint": "Amagar els elements fora del filtre en lloc d'atenuar-los, a totes les vistes",
     "noName": "Sense nom",
     "show": "Mostrar",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Conservar només les fonts valorades com a fiables"
     },
     "dateProperties": {
-      "title": "Propietats de data a la línia de temps",
-      "badge": "{{key}} fora de la línia de temps"
+      "title": "Propietats de data",
+      "badge": "Dates {{kept}}/{{total}}",
+      "ranges": "Períodes",
+      "addRange": "Període",
+      "rangesHint": "Llegir dues dates com un període (p. ex. inici i fi dels fets)",
+      "removeRange": "Treure el període",
+      "rangeStart": "Inici",
+      "rangeEnd": "Fi",
+      "cancelRange": "Cancel·lar"
     },
     "property": {
       "hasProperty": "Té la propietat",
@@ -377,6 +388,8 @@
     "modeVisual": "Visual",
     "execute": "Executar",
     "clear": "Esborrar",
+    "shownWithFilters": "→ {{count}} mostrat(s)",
+    "shownWithFiltersHint": "Amb els filtres actius",
     "elements": "elements",
     "links": "enllaços",
     "filterMode": "Filtre canvas",

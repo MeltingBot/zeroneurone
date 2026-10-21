@@ -682,6 +682,17 @@ Navigation interne react-router. Routes disponibles :
 api.services.navigateTo(`/dossier/${newDossierId}`);
 ```
 
+## Elements affiches (`api.filterOutcome()`, ZN 2.71+)
+
+Ce que les vues affichent : les elements gardes par le panneau Filtres et par la requete appliquee sur le canvas, comptes comme le font les panneaux Filtres et Requete. Lecture seule ; testez `api.features?.filterOutcome`. Pour un plugin `community`, la permission `stores:view:read` suffit.
+
+```typescript
+const { total, shownIds, filterCount, queryCount } = api.filterOutcome();
+if (shownIds.length < total) {
+  // Les vues sont restreintes : travailler sur shownIds
+}
+```
+
 ## Services entre plugins (`api.pluginServices`, ZN 2.64+)
 
 Un plugin peut offrir un service aux autres plugins, et utiliser celui d'un autre plugin lorsqu'il est present. ZN ne fait que tenir le registre : il n'appelle jamais un service lui-meme. Testez `api.features?.pluginServices` avant de vous en servir. Pour un plugin `community`, la permission `pluginServices` est necessaire.

@@ -308,6 +308,8 @@
   "filters": {
     "title": "Фільтри",
     "elementsCount": "{{matching}}/{{total}} елементів",
+    "countBreakdown": "Фільтри {{filters}} · Запит {{query}}",
+    "queryBadge": "Запит",
     "active": "{{count}} активних фільтрів",
     "clearAll": "Очистити все",
     "selectMatching": "Вибрати",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Видалити відфільтровані елементи з вибору",
     "hiddenCount": "{{count}} прихованих елементів",
     "activeFilters": "Активні фільтри",
+    "hideFilteredOut": "Приховати",
+    "hideFilteredOutHint": "Приховувати елементи поза фільтром замість затемнення, у всіх поданнях",
     "noName": "Без назви",
     "show": "Показати",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Залишити лише джерела, оцінені як надійні"
     },
     "dateProperties": {
-      "title": "Властивості дати в хронології",
-      "badge": "{{key}} поза хронологією"
+      "title": "Властивості дати",
+      "badge": "Дати {{kept}}/{{total}}",
+      "ranges": "Періоди",
+      "addRange": "Період",
+      "rangesHint": "Читати дві дати як один період (напр. початок і кінець подій)",
+      "removeRange": "Прибрати період",
+      "rangeStart": "Початок",
+      "rangeEnd": "Кінець",
+      "cancelRange": "Скасувати"
     },
     "property": {
       "hasProperty": "Має властивість",
@@ -377,6 +388,8 @@
     "modeVisual": "Візуальний",
     "execute": "Виконати",
     "clear": "Очистити",
+    "shownWithFilters": "→ {{count}} показано",
+    "shownWithFiltersHint": "З активними фільтрами",
     "elements": "елементів",
     "links": "зв'язків",
     "filterMode": "Фільтр полотна",

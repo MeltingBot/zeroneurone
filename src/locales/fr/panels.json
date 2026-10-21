@@ -323,6 +323,8 @@
   "filters": {
     "title": "Filtres",
     "elementsCount": "{{matching}}/{{total}} éléments",
+    "countBreakdown": "Filtres {{filters}} · Requête {{query}}",
+    "queryBadge": "Requête",
     "active": "{{count}} filtre(s) actif(s)",
     "clearAll": "Tout effacer",
     "selectMatching": "Sélectionner",
@@ -331,6 +333,8 @@
     "deselectMatchingDesc": "Retirer les éléments filtrés de la sélection",
     "hiddenCount": "{{count}} élément(s) masqué(s)",
     "activeFilters": "Filtres actifs",
+    "hideFilteredOut": "Masquer",
+    "hideFilteredOutHint": "Masquer les éléments hors filtre au lieu de les atténuer, dans toutes les vues",
     "noName": "Sans nom",
     "show": "Afficher",
     "sections": {
@@ -364,8 +368,15 @@
       "reliableSourcesDesc": "Ne garder que les sources cotées fiables"
     },
     "dateProperties": {
-      "title": "Propriétés date sur la timeline",
-      "badge": "{{key}} hors timeline"
+      "title": "Propriétés date",
+      "badge": "Dates {{kept}}/{{total}}",
+      "ranges": "Périodes",
+      "addRange": "Période",
+      "rangesHint": "Lire deux dates comme une période (ex. début et fin des faits)",
+      "removeRange": "Retirer la période",
+      "rangeStart": "Début",
+      "rangeEnd": "Fin",
+      "cancelRange": "Annuler"
     },
     "property": {
       "hasProperty": "Possède la propriété",
@@ -392,6 +403,8 @@
     "modeVisual": "Visuel",
     "execute": "Exécuter",
     "clear": "Effacer",
+    "shownWithFilters": "→ {{count}} affiché(s)",
+    "shownWithFiltersHint": "Avec les filtres actifs",
     "elements": "éléments",
     "links": "liens",
     "filterMode": "Filtre canvas",

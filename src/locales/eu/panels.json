@@ -308,6 +308,8 @@
   "filters": {
     "title": "Iragazkiak",
     "elementsCount": "{{matching}}/{{total}} elementu",
+    "countBreakdown": "Iragazkiak {{filters}} · Kontsulta {{query}}",
+    "queryBadge": "Kontsulta",
     "active": "{{count}} iragazki aktibo",
     "clearAll": "Dena garbitu",
     "selectMatching": "Hautatu",
@@ -316,6 +318,8 @@
     "deselectMatchingDesc": "Kendu iragazitako elementuak hautaketatik",
     "hiddenCount": "{{count}} elementu ezkutatuta",
     "activeFilters": "Iragazki aktiboak",
+    "hideFilteredOut": "Ezkutatu",
+    "hideFilteredOutHint": "Iragazkitik kanpoko elementuak ezkutatu, ahuldu ordez, ikuspegi guztietan",
     "noName": "Izenik gabe",
     "show": "Erakutsi",
     "sections": {
@@ -349,8 +353,15 @@
       "reliableSourcesDesc": "Fidagarri gisa kalifikatutako iturriak soilik mantendu"
     },
     "dateProperties": {
-      "title": "Data-propietateak denbora-lerroan",
-      "badge": "{{key}} denbora-lerrotik kanpo"
+      "title": "Data-propietateak",
+      "badge": "Datak {{kept}}/{{total}}",
+      "ranges": "Aldiak",
+      "addRange": "Aldia",
+      "rangesHint": "Bi data aldi bakar gisa irakurri (adib. gertaeren hasiera eta amaiera)",
+      "removeRange": "Aldia kendu",
+      "rangeStart": "Hasiera",
+      "rangeEnd": "Amaiera",
+      "cancelRange": "Utzi"
     },
     "property": {
       "hasProperty": "Propietatea du",
@@ -377,6 +388,8 @@
     "modeVisual": "Bisuala",
     "execute": "Exekutatu",
     "clear": "Garbitu",
+    "shownWithFilters": "→ {{count}} erakutsita",
+    "shownWithFiltersHint": "Iragazki aktiboekin",
     "elements": "elementuak",
     "links": "loturak",
     "filterMode": "Canvas iragazkia",

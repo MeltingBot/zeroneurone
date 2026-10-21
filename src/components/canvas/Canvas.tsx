@@ -56,8 +56,10 @@ import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { dateLocale, formatPropertyValue } from '../../utils/dates';
-import { collectTemporalDates, computeCanvasTemporalClassification, closestDateIndex, shiftNavigator, summarizeActiveEvents, sameEventSummary, type TemporalEventSummary } from '../../utils/temporalUtils';
+import { isRenderedPartOf } from '../../utils/selectionEcho';
+import { collectTemporalDates, datePropertyRules, computeCanvasTemporalClassification, closestDateIndex, shiftNavigator, summarizeActiveEvents, sameEventSummary, type TemporalEventSummary } from '../../utils/temporalUtils';
 import { TemporalNavigatorBar, TemporalToggleButton } from '../common/TemporalNavigatorBar';
 import { isMappableJson } from '../../utils/jsonMapping';
 import { isMermaidFlowchart } from '../../services/importMermaid';
@@ -887,6 +889,8 @@ export function Canvas() {
     showElement,
     requestFitView,
   } = useViewStore();
+  // Hidden by hand, or outside the filters when the user chose to hide them
+  const viewHiddenIds = useHiddenElementIds();
 
   // Tab filtering
   const activeTabId = useTabStore((s) => s.activeTabId);
@@ -1069,12 +1073,24 @@ export function Canvas() {
   // (viewStore.canvasTemporal), never persisted nor synced.
   const canvasTemporal = useViewStore((s) => s.canvasTemporal);
   const setCanvasTemporal = useViewStore((s) => s.setCanvasTemporal);
-  const temporalDates = useMemo(() => collectTemporalDates(elements, links), [elements, links]);
+  // Date properties kept in the filters panel date the elements, as on the
+  // timeline and the map
+  const includedDateProperties = useViewStore((s) => s.filters.includedDateProperties);
+  const excludedDateProperties = useViewStore((s) => s.filters.excludedDateProperties);
+  const dateRangeProperties = useViewStore((s) => s.filters.dateRangeProperties);
+  const keepDateProperty = useMemo(
+    () => datePropertyRules({ includedDateProperties, excludedDateProperties, dateRangeProperties }),
+    [includedDateProperties, excludedDateProperties, dateRangeProperties]
+  );
+  const temporalDates = useMemo(
+    () => collectTemporalDates(elements, links, keepDateProperty),
+    [elements, links, keepDateProperty]
+  );
   const [isTemporalPlaying, setIsTemporalPlaying] = useState(false);
   const temporalClassification = useMemo(() => {
     if (!canvasTemporal.active || !canvasTemporal.date) return null;
-    return computeCanvasTemporalClassification(elements, links, canvasTemporal.date, canvasTemporal.periodEnd);
-  }, [canvasTemporal.active, canvasTemporal.date, canvasTemporal.periodEnd, elements, links]);
+    return computeCanvasTemporalClassification(elements, links, canvasTemporal.date, canvasTemporal.periodEnd, keepDateProperty);
+  }, [canvasTemporal.active, canvasTemporal.date, canvasTemporal.periodEnd, elements, links, keepDateProperty]);
 
   const handleToggleTemporal = useCallback(() => {
     if (!canvasTemporal.active && temporalDates.length > 0) {
@@ -1446,7 +1462,7 @@ export function Canvas() {
 
     // Tab filtering: on "Tous" all elements pass, on specific tab only members + ghosts
     const visible = elements.filter((el) => {
-      if (hiddenElementIds.has(el.id)) return false;
+      if (viewHiddenIds.has(el.id)) return false;
       if (temporalHiddenElementIds.has(el.id)) return false;
       if (activeTabId !== null && !tabMemberSet.has(el.id) && !localGhostIds.has(el.id)) return false;
       return true;
@@ -1482,7 +1498,7 @@ export function Canvas() {
     }
 
     return result;
-  }, [elements, hiddenElementIds, temporalHiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, propertyDateLocale, activeTabId, tabMemberSet, localGhostIds]);
+  }, [elements, viewHiddenIds, temporalHiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, propertyDateLocale, activeTabId, tabMemberSet, localGhostIds]);
 
   // --- Measured dimensions cache ---
   // React Flow (controlled mode) sends dimension changes via onNodesChange after ResizeObserver
@@ -1930,6 +1946,7 @@ export function Canvas() {
 
     const visibleLinks = links.filter(link => {
       if (temporalHiddenLinkIds.has(link.id)) return false;
+      if (viewHiddenIds.has(link.fromId) || viewHiddenIds.has(link.toId)) return false;
       const fromPos = nodePositions.get(link.fromId);
       const toPos = nodePositions.get(link.toId);
       if (!fromPos || !toPos) return true;
@@ -2107,7 +2124,7 @@ export function Canvas() {
     prevEdgesArrayRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, canvasTemporal.showUndated, propertyDateLocale]);
+  }, [links, edgeVersion, wrapperSize, selectedLinkIds, selectedElementIds, dimmedElementIds, emphasizedElementIds, linkAnchorMode, linkCurveMode, editingLinkId, stopEditing, confidenceDisplay, displayedProperties, remoteUsersByLink, queryFilterActive, queryMatchLinkIds, temporalClassification, temporalHiddenLinkIds, canvasTemporal.showUndated, propertyDateLocale, viewHiddenIds]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
   // Start with a small batch and grow to full count over a few frames.
@@ -2157,6 +2174,8 @@ export function Canvas() {
   const edges = edgeRenderLimit >= allEdges.length
     ? allEdges
     : allEdges.slice(0, edgeRenderLimit);
+  const edgesRef = useRef(edges);
+  edgesRef.current = edges;
 
 
   // Track starting positions for undo
@@ -4604,6 +4623,17 @@ export function Canvas() {
   const pendingSelectionRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
   const SELECTION_THROTTLE_MS = 80;
 
+  // Whether React Flow's selected nodes/edges are exactly the rendered part of
+  // the selection in the store
+  const isRenderedPartOfSelection = useCallback((selNodes: Node[], selEdges: Edge[]) => {
+    const { selectedElementIds: storeEls, selectedLinkIds: storeLinks } = useSelectionStore.getState();
+    return isRenderedPartOf(
+      selNodes.map((n) => n.id), storeEls, new Set(nodesRef.current.map((n) => n.id)),
+    ) && isRenderedPartOf(
+      selEdges.map((e) => e.id), storeLinks, new Set(edgesRef.current.map((e) => e.id)),
+    );
+  }, []);
+
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: { nodes: Node[]; edges: Edge[] }) => {
       if (isHandlingSelectionRef.current) return;
@@ -4619,6 +4649,11 @@ export function Canvas() {
         if (!pending) return;
         pendingSelectionRef.current = null;
 
+        // Echo of a selection made elsewhere (filters, query): React Flow only
+        // reports what it renders, and edges off screen are not rendered.
+        // Writing that back would drop them from the selection.
+        if (isRenderedPartOfSelection(pending.nodes, pending.edges)) return;
+
         if (pending.nodes.length > 0 || pending.edges.length > 0) {
           isHandlingSelectionRef.current = true;
           selectBoth(
@@ -4632,7 +4667,7 @@ export function Canvas() {
         }
       }, SELECTION_THROTTLE_MS);
     },
-    [selectBoth]
+    [selectBoth, isRenderedPartOfSelection]
   );
 
 
