@@ -215,7 +215,15 @@
       "extractToElement": "Elementu gisa erauzi",
       "applyToCount": "Hautatutako {{count}} elementuri aplikatuko zaie",
       "apply": "Aplikatu",
-      "applyTagVisual": "Aplikatu etiketaren itxura (forma, kolorea, ikonoa)"
+      "applyTagVisual": "Aplikatu etiketaren itxura (forma, kolorea, ikonoa)",
+      "saveToTag": "Gorde etiketan",
+      "newTag": "berria",
+      "alreadyInTag": "dagoeneko etiketan",
+      "save": "Gorde",
+      "savedToTag_one": "Propietate {{count}} gorde da \"{{name}}\" etiketan",
+      "savedToTag_other": "{{count}} propietate gorde dira \"{{name}}\" etiketan",
+      "savedToTag": "{{count}} propietate gorde dira \"{{name}}\" etiketan",
+      "saveToTagError": "Ezin izan da etiketan gorde"
     },
     "appearance": {
       "title": "Itxura",
@@ -720,6 +728,13 @@
       "valuesHint": "Balio bera propietate berean (telefonoa, IBAN…)",
       "sourcesHint": "Erantsitako fitxategi bera edo aipatutako web orri bera",
       "zonesHint": "Puntua edo eremu txikia eremu handiago baten barruan"
+    },
+    "keys": {
+      "all": "guztiak",
+      "hint": "Alderatutako propietateak",
+      "search": "Iragazi",
+      "selectAll": "Guztiak",
+      "selectNone": "Bat ere ez"
     }
   }
 }

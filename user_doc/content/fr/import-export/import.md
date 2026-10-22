@@ -343,7 +343,8 @@ Les fichiers `.xml` contenant du format ANX sont détectés automatiquement.
 
 | Donnée ANB | Propriété ZeroNeurone |
 |------------|----------------------|
-| Libellé | Label de l'élément |
+| Libellé | Label de l'élément (le texte affiché dans i2) |
+| Identité | Propriété `i2_identity`, quand elle diffère du libellé (identité générée par i2, par exemple) |
 | Description | Notes |
 | Type de source, source | Source |
 | Position | Position sur le canvas (échelle uniforme) |

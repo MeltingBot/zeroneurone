@@ -1,6 +1,8 @@
 import { useMemo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3 } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, Filter, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3 } from 'lucide-react';
+import { matrixFiltersToQuery } from '../../utils/matrixFilterQuery';
+import { serializeQuery } from '../../services/query/serializer';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
 import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
@@ -311,6 +313,22 @@ export function MatrixView() {
   }, [propertyKeys]);
 
   const hasActiveFilters = Object.values(columnFilters).some((v) => v.length > 0);
+
+  // Column filters handed to the other views as a ZNQuery filter (added to
+  // the query already applied, if any). The column filters stay: the matrix
+  // only dims what a query leaves out, it would show every row again
+  const filterQuery = useMemo(() => matrixFiltersToQuery(columnFilters, elements), [columnFilters, elements]);
+  const queryText = useQueryStore((s) => s.currentText);
+  const filtersApplied = !!filterQuery.ast && queryFilterActive && queryText.includes(serializeQuery(filterQuery.ast));
+  const applyFiltersToViews = useCallback(() => {
+    if (!filterQuery.ast) return;
+    const query = useQueryStore.getState();
+    const ast = query.isFilterActive && query.currentAst
+      ? { type: 'and' as const, children: [query.currentAst, filterQuery.ast] }
+      : filterQuery.ast;
+    if (query.outputMode !== 'canvas' && query.outputMode !== 'both') query.setOutputMode('canvas');
+    query.setAst(ast);
+  }, [filterQuery]);
 
   const hasCustomizations = hiddenColumns.size > 0
     || Object.keys(columnWidths).length > 0
@@ -858,6 +876,26 @@ export function MatrixView() {
             >
               <Upload size={14} />
             </button>
+
+            {/* Column filters → filter of every view */}
+            {hasActiveFilters && (
+              <button
+                onClick={applyFiltersToViews}
+                disabled={!filterQuery.ast || filtersApplied}
+                data-testid="matrix-apply-filters"
+                className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+                  filterQuery.ast && !filtersApplied ? 'hover:bg-bg-tertiary text-text-secondary' : 'opacity-30 cursor-not-allowed text-text-tertiary'
+                }`}
+                title={filtersApplied
+                  ? t('matrix.filtersApplied')
+                  : filterQuery.ast
+                  ? t('matrix.applyFilters')
+                  : t('matrix.applyFiltersUnsupported', { columns: filterQuery.unsupported.map((c) => allColumns.find((col) => col.key === c)?.label ?? c).join(', ') })}
+              >
+                <Filter size={14} />
+                {t('matrix.applyFiltersShort')}
+              </button>
+            )}
 
             {/* Reset view */}
             <button

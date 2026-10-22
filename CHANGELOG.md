@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.73.0
+
+### Nouveautés
+
+- **Suggestions : choix des propriétés comparées** — un bouton à côté de la
+  règle « Propriétés » déplie la liste des propriétés texte du dossier (avec le
+  nombre d'éléments qui portent chacune) : on ne garde que les identifiants
+  (téléphone, IBAN, numéro de procédure…) et on écarte descriptions et
+  catégories. Choix retenu par dossier dans le navigateur ; une propriété
+  nouvelle est cochée par défaut ; décocher ne supprime aucun refus.
+- **Matrice : appliquer les filtres à toutes les vues** — le bouton « Toutes
+  les vues » transforme les filtres de colonnes en requête ZNQuery appliquée en
+  filtre (`"Type d'enquête" CONTAINS "flagra"`), ajoutée à la requête déjà
+  active. Canvas, carte, timeline et suggestions suivent alors les mêmes
+  éléments. Une colonne sans requête équivalente (confiance, date, oui/non)
+  bloque le bouton plutôt que de garder d'autres lignes.
+- **Enregistrer les propriétés dans un tag** — depuis le détail d'un élément,
+  ses propriétés (nom et type, jamais la valeur) deviennent des propriétés
+  suggérées d'un de ses tags dans les jeux de tags ; le tag est créé s'il
+  n'existe pas.
+
+### Améliorations
+
+- **Suggestions : membres d'un pivot** — « Créer et relier N éléments » déplie
+  la liste des éléments concernés, chacun cliquable (sélection, recentrage,
+  fiche résumée).
+
+### Corrections
+
+- **Suggestions : paires déjà connectées** — deux éléments déjà reliés au même
+  élément ne sont plus proposés. Un élément relié à plus de 50 autres (unité,
+  catégorie) ne compte pas comme élément commun.
+- **Import ANB : libellé affiché** — quand i2 génère une identité
+  (`nhJ1j2j-8wS1…`), l'élément prend le libellé affiché dans i2 ; l'identité
+  est conservée dans la propriété `i2_identity`.
+
 ## 2.72.0
 
 ### Nouveautés

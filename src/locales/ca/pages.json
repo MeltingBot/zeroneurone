@@ -498,7 +498,11 @@
     "copyCell": "Copiar cel·la",
     "copyRow": "Copiar fila",
     "copySelection": "Copiar selecció ({{count}})",
-    "evaluation": "Val."
+    "evaluation": "Val.",
+    "applyFilters": "Aplica aquests filtres a totes les vistes (consulta ZNQuery)",
+    "applyFiltersShort": "Totes les vistes",
+    "applyFiltersUnsupported": "Cap consulta equivalent per a: {{columns}}",
+    "filtersApplied": "Ja aplicats a les vistes"
   },
   "report": {
     "title": "Informe",

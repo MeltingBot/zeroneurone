@@ -90,9 +90,22 @@ Cliquez sur l'**icone de telechargement** dans la barre d'outils pour exporter l
 | Compteur d'elements | Affiche elements filtres / total et nombre de proprietes |
 | Colonnes | Basculer la visibilite des colonnes (tout / rien) |
 | Export | Telecharger le CSV |
+| Toutes les vues | Appliquer les filtres de colonnes aux autres vues (voir ci-dessous) |
 | Reset | Restaurer tri, colonnes et filtres par defaut |
 | Annuler/Retablir | Annuler/retablir la derniere action |
 | Mode anonyme | Caviarder les noms et valeurs |
+
+### Appliquer les filtres aux autres vues
+
+Les filtres de colonnes ne valent que pour la matrice. Le bouton **Toutes les vues**, affiché dès qu'un filtre est rempli, les transforme en [requête ZNQuery]({{< relref "queries" >}}) appliquée en filtre : le canvas, la carte, la timeline et les [suggestions de liens]({{< relref "link-suggestions" >}}) gardent alors les mêmes éléments.
+
+- Un filtre « flagra » sur la colonne *Type d'enquête* devient `"Type d'enquête" CONTAINS "flagra"`, sans tenir compte de la casse.
+- Si une requête filtre déjà les vues, les filtres de colonnes s'y ajoutent (`AND`).
+- Les filtres de colonnes restent en place ; le bouton est grisé tant que la requête les contient.
+- Une colonne sans requête équivalente bloque le bouton (son infobulle la nomme) : confiance ou cotation, propriété date ou oui/non, filtre sur « — », propriété portant le nom d'un champ réservé (`source`, `date`…).
+- Sur la colonne *Type*, la requête cherche dans tous les tags de l'élément, pas seulement le premier.
+
+Pour garder aussi ce qui est relié aux éléments trouvés, modifiez ensuite la requête : `WITHIN 2 HOPS OF ("Type d'enquête" CONTAINS "flagra")`.
 
 ---
 

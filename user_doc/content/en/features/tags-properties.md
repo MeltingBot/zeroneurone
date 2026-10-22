@@ -117,6 +117,16 @@ Properties allow you to add structured data to your elements and links.
 3. Click **+ Add property**
 4. Choose the type and enter the value
 
+### Save Properties to a Tag
+
+To reuse an element's properties on other elements with the same tag, click **Save to tag** under its properties (shown when the element has at least one tag and one property).
+
+1. Choose the tag: a tag missing from the tag sets is marked "new" and will be created
+2. Tick the properties to save; those the tag already suggests are greyed out ("already in tag")
+3. **Save**
+
+Only each property's **name** and **type** are saved, never its value (for a choice list, the known choices are kept). The properties become suggested properties of the tag in the [tag sets](#tag-sets): they will be offered each time this tag is added.
+
 
 ### Predefined Properties
 

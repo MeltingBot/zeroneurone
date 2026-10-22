@@ -498,7 +498,11 @@
     "copyCell": "Gelaxka kopiatu",
     "copyRow": "Errenkada kopiatu",
     "copySelection": "Hautapena kopiatu ({{count}})",
-    "evaluation": "Kalif."
+    "evaluation": "Kalif.",
+    "applyFilters": "Aplikatu iragazki hauek ikuspegi guztiei (ZNQuery kontsulta)",
+    "applyFiltersShort": "Ikuspegi guztiak",
+    "applyFiltersUnsupported": "Ez dago kontsulta baliokiderik: {{columns}}",
+    "filtersApplied": "Ikuspegiei aplikatuta daude jada"
   },
   "report": {
     "title": "Txostena",

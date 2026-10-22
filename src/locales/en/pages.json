@@ -513,7 +513,11 @@
     "copyCell": "Copy cell",
     "copyRow": "Copy row",
     "copySelection": "Copy selection ({{count}})",
-    "evaluation": "Grade"
+    "evaluation": "Grade",
+    "applyFilters": "Apply these filters to every view (ZNQuery query)",
+    "applyFiltersShort": "All views",
+    "applyFiltersUnsupported": "No equivalent query for: {{columns}}",
+    "filtersApplied": "Already applied to the views"
   },
   "report": {
     "title": "Report",

@@ -514,7 +514,11 @@
     "copyCell": "Copier la cellule",
     "copyRow": "Copier la ligne",
     "copySelection": "Copier la sélection ({{count}})",
-    "evaluation": "Cot."
+    "evaluation": "Cot.",
+    "applyFilters": "Appliquer ces filtres à toutes les vues (requête ZNQuery)",
+    "applyFiltersShort": "Toutes les vues",
+    "applyFiltersUnsupported": "Pas de requête équivalente pour : {{columns}}",
+    "filtersApplied": "Déjà appliqués aux vues"
   },
   "report": {
     "title": "Rapport",

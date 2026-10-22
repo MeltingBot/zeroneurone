@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import CFB from 'cfb';
-import { findEventEnd, parseANBContents, readUStr, type ANBLink } from './anbParser';
+import { findEventEnd, itemLabel, parseANBContents, readUStr, type ANBLink } from './anbParser';
 
 // Real charts live in doc_perso/fixtures/anb/ (git-ignored: they contain real case data). Skipped when absent.
 const DIR = resolve(__dirname, '../../doc_perso/fixtures/anb');
@@ -203,5 +203,16 @@ describe.skipIf(!existsSync(EVENTS))('legacy event chart', () => {
     expect(chart.links.filter(l => l.date).length).toBeGreaterThan(0);
     expect(chart.links.filter(l => l.arrowHeads.length > 0)).toHaveLength(9);
     expect(chart.links.every(l => l.color !== null)).toBe(true);
+  });
+});
+
+describe('itemLabel', () => {
+  it('shows the label, not a generated identity, when they differ', () => {
+    expect(itemLabel({ key: 'nhJ1j2j-8wS1CimGWE9bHgAA', identity: 'nhJ1j2j-8wS1CimGWE9bHgAA', labelText: 'DUPONT Jean' }))
+      .toBe('DUPONT Jean');
+  });
+  it('keeps the key for events (first CString is the type) and themes', () => {
+    expect(itemLabel({ key: 'Fait 1', identity: '', labelText: 'Date et heure' })).toBe('Fait 1');
+    expect(itemLabel({ key: 'Faits', identity: null, labelText: null })).toBe('Faits');
   });
 });

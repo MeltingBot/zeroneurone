@@ -25,7 +25,9 @@ L'analyse porte sur les **éléments affichés** :
 
 Une ligne « N éléments affichés » le signale. Tant que l'onglet est ouvert, la liste suit les changements de filtre, de requête ou d'onglet.
 
-Les liens existants comptent toujours, même vers des éléments masqués : une paire déjà reliée n'est jamais reproposée.
+Les liens existants comptent toujours, même vers des éléments masqués : une paire déjà reliée n'est jamais reproposée. Deux éléments déjà reliés **au même élément** ne le sont pas non plus : ils sont déjà connectés. Un élément relié à plus de 50 autres (une unité, une catégorie) ne compte pas comme élément commun, il relie trop de choses pour que ce soit significatif.
+
+Les filtres de colonnes de la [vue matrice]({{< relref "matrix-view" >}}) ne s'appliquent qu'à la matrice : le bouton **Toutes les vues** les transforme en requête appliquée en filtre, que l'analyse suit.
 
 ---
 
@@ -35,13 +37,21 @@ Chaque règle se coche ou se décoche dans le panneau. Par exemple, pour ne cher
 
 | Règle | Ce qu'elle repère | Réglages |
 |-------|-------------------|----------|
-| **Propriétés** | Même valeur pour la même propriété (téléphone, IBAN, email, plaque…) | — |
+| **Propriétés** | Même valeur pour la même propriété (téléphone, IBAN, email, plaque…) | Propriétés comparées |
 | **Sources** | Même pièce jointe, ou même page web citée en source | — |
 | **Zones** | Un point ou une petite zone à l'intérieur d'une zone plus grande (un site dans sa commune) | — |
 | **Lieux à moins de** | Deux éléments placés à moins d'une distance, sans tenir compte des dates | Rayon |
 | **Rencontres à moins de** | Deux éléments au même endroit **au même moment** | Rayon, fenêtre de temps, durée des séjours |
 
 Les réglages sont retenus dans votre navigateur ; ils ne sont pas partagés avec les autres collaborateurs.
+
+### Propriétés : choisir celles à comparer
+
+Le bouton à côté de **Propriétés** (« toutes », ou « 3/12 ») déplie la liste des propriétés texte du dossier, avec le nombre d'éléments qui portent chacune. Décochez celles qui n'identifient rien (une description, une catégorie) pour ne garder que les identifiants : téléphone, IBAN, plaque, numéro de procédure… Un filtre apparaît au-delà de 8 propriétés, avec **Toutes** et **Aucune**.
+
+- Le choix est retenu **par dossier**, dans votre navigateur.
+- Une propriété apparue ensuite est cochée par défaut.
+- Décocher une propriété ne supprime pas les refus qui la concernent.
 
 ### Propriétés : comment les valeurs sont comparées
 
@@ -94,6 +104,7 @@ Exemple : des infractions à proximité de sites importés en GeoJSON.
 
 - **Survol** d'une suggestion : ses éléments sont mis en évidence sur le canvas
 - **Clic** sur la suggestion : sélectionne ses éléments
+- **Clic sur « Créer et relier N éléments »** (ou « Relier N éléments ») d'un pivot : déplie la liste de ses éléments, dont chaque nom se clique comme ci-dessous
 - **Clic sur le nom** d'un élément : il est sélectionné seul et centré dans la vue courante (canvas, carte ou timeline), et un résumé s'affiche sous la ligne (tags, 6 premières propriétés, lien **Ouvrir la fiche** vers l'onglet Détail). Un second clic sur le nom le masque. Chaque élément est sur sa propre ligne ; un nom long passe à la ligne (2 lignes au plus)
 - **Pertinence / Distance**, à côté du compteur (affiché quand des suggestions ont une distance) : en tri par distance, les lieux, rencontres et zones passent en tête, du plus proche au plus loin (un point dans une zone compte pour 0 m) ; les autres suivent dans leur ordre
 - **✓** accepte, **✕** écarte

@@ -215,7 +215,15 @@
       "extractToElement": "Extraheren als element",
       "applyToCount": "Wordt toegepast op {{count}} geselecteerde items",
       "apply": "Toepassen",
-      "applyTagVisual": "Uiterlijk van de tag toepassen (vorm, kleur, pictogram)"
+      "applyTagVisual": "Uiterlijk van de tag toepassen (vorm, kleur, pictogram)",
+      "saveToTag": "Opslaan in tag",
+      "newTag": "nieuw",
+      "alreadyInTag": "al in tag",
+      "save": "Opslaan",
+      "savedToTag_one": "{{count}} eigenschap opgeslagen in tag \"{{name}}\"",
+      "savedToTag_other": "{{count}} eigenschappen opgeslagen in tag \"{{name}}\"",
+      "savedToTag": "{{count}} eigenschappen opgeslagen in tag \"{{name}}\"",
+      "saveToTagError": "Opslaan in tag mislukt"
     },
     "appearance": {
       "title": "Weergave",
@@ -720,6 +728,13 @@
       "valuesHint": "Zelfde waarde voor dezelfde eigenschap (telefoon, IBAN…)",
       "sourcesHint": "Zelfde bijlage of geciteerde webpagina",
       "zonesHint": "Punt of kleine zone binnen een grotere zone"
+    },
+    "keys": {
+      "all": "alle",
+      "hint": "Vergeleken eigenschappen",
+      "search": "Filteren",
+      "selectAll": "Alle",
+      "selectNone": "Geen"
     }
   }
 }

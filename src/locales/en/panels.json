@@ -229,7 +229,15 @@
       "extractToElement": "Extract to element",
       "applyToCount": "Will be applied to {{count}} selected items",
       "apply": "Apply",
-      "applyTagVisual": "Apply the tag's appearance (color, shape, icon)"
+      "applyTagVisual": "Apply the tag's appearance (color, shape, icon)",
+      "saveToTag": "Save to tag",
+      "newTag": "new",
+      "alreadyInTag": "already in tag",
+      "save": "Save",
+      "savedToTag_one": "{{count}} property saved to tag \"{{name}}\"",
+      "savedToTag_other": "{{count}} properties saved to tag \"{{name}}\"",
+      "savedToTag": "{{count}} properties saved to tag \"{{name}}\"",
+      "saveToTagError": "Could not save to tag"
     },
     "appearance": {
       "title": "Appearance",
@@ -734,6 +742,13 @@
       "valuesHint": "Same value under the same property (phone, IBAN…)",
       "sourcesHint": "Same attached file or cited web page",
       "zonesHint": "Point or small zone inside a larger zone"
+    },
+    "keys": {
+      "all": "all",
+      "hint": "Compared properties",
+      "search": "Filter",
+      "selectAll": "All",
+      "selectNone": "None"
     }
   }
 }

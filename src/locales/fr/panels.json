@@ -230,7 +230,15 @@
       "extractToElement": "Extraire en élément",
       "applyToCount": "Sera appliqué à {{count}} éléments sélectionnés",
       "apply": "Appliquer",
-      "applyTagVisual": "Appliquer l'apparence du tag (forme, couleur, icône)"
+      "applyTagVisual": "Appliquer l'apparence du tag (forme, couleur, icône)",
+      "saveToTag": "Enregistrer dans le tag",
+      "newTag": "nouveau",
+      "alreadyInTag": "déjà dans le tag",
+      "save": "Enregistrer",
+      "savedToTag_one": "{{count}} propriété enregistrée dans le tag \"{{name}}\"",
+      "savedToTag_other": "{{count}} propriétés enregistrées dans le tag \"{{name}}\"",
+      "savedToTag": "{{count}} propriétés enregistrées dans le tag \"{{name}}\"",
+      "saveToTagError": "Impossible d'enregistrer dans le tag"
     },
     "appearance": {
       "title": "Apparence",
@@ -735,6 +743,13 @@
       "valuesHint": "Même valeur pour la même propriété (téléphone, IBAN…)",
       "sourcesHint": "Même pièce jointe ou même page web citée",
       "zonesHint": "Point ou petite zone à l'intérieur d'une zone plus grande"
+    },
+    "keys": {
+      "all": "toutes",
+      "hint": "Propriétés comparées",
+      "search": "Filtrer",
+      "selectAll": "Toutes",
+      "selectNone": "Aucune"
     }
   }
 }

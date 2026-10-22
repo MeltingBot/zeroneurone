@@ -509,7 +509,11 @@
     "copyCell": "Zelle kopieren",
     "copyRow": "Zeile kopieren",
     "copySelection": "Auswahl kopieren ({{count}})",
-    "evaluation": "Bew."
+    "evaluation": "Bew.",
+    "applyFilters": "Diese Filter auf alle Ansichten anwenden (ZNQuery-Abfrage)",
+    "applyFiltersShort": "Alle Ansichten",
+    "applyFiltersUnsupported": "Keine gleichwertige Abfrage für: {{columns}}",
+    "filtersApplied": "Bereits auf die Ansichten angewendet"
   },
   "report": {
     "title": "Bericht",

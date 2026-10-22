@@ -14,6 +14,7 @@ import { yMapToElement } from '../../services/yjs/elementMapper';
 import { TagsEditor } from './TagsEditor';
 import { PropertiesEditor } from './PropertiesEditor';
 import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
+import { SaveToTagSetPopup } from './SaveToTagSetPopup';
 import { VisualEditor } from './VisualEditor';
 import { AssetsPanel } from './AssetsPanel';
 // GeoPicker pulls in maplibre-gl, by far the heaviest dependency. The panel is
@@ -170,6 +171,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
   const [lastSavedGeo, setLastSavedGeo] = useState<{ lat: number; lng: number } | null>(initCenter);
   const [showGeoPicker, setShowGeoPicker] = useState(false);
   const [suggestedPropsTagSet, setSuggestedPropsTagSet] = useState<string | null>(null);
+  const [showSaveToTagSet, setShowSaveToTagSet] = useState(false);
 
   // Track which element we're editing to avoid saving to wrong element
   const editingElementIdRef = useRef<string | null>(null);
@@ -1497,6 +1499,16 @@ export function ElementDetail({ element }: ElementDetailProps) {
           onToggleDisplayProperty={togglePropertyDisplay}
           onExtractToElement={handleExtractProperty}
         />
+        {element.tags.length > 0 && element.properties.some((p) => p.key.trim()) && (
+          <button
+            type="button"
+            onClick={() => setShowSaveToTagSet(true)}
+            className="mt-2 inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-secondary"
+          >
+            <Tag size={12} />
+            {t('detail.properties.saveToTag')}
+          </button>
+        )}
       </AccordionSection>
 
       {/* Appearance */}
@@ -1603,6 +1615,16 @@ export function ElementDetail({ element }: ElementDetailProps) {
           existingPropertyKeys={(Array.isArray(element.properties) ? element.properties : []).map((p) => p.key)}
           onApply={handleApplySuggestedProperties}
           onClose={() => setSuggestedPropsTagSet(null)}
+        />
+      )}
+
+      {/* Save properties to a tag of the referential */}
+      {showSaveToTagSet && (
+        <SaveToTagSetPopup
+          tags={element.tags}
+          properties={Array.isArray(element.properties) ? element.properties : []}
+          definitions={propertySuggestions}
+          onClose={() => setShowSaveToTagSet(false)}
         />
       )}
     </div>

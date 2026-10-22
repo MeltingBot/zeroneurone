@@ -25,7 +25,9 @@ The analysis covers the **shown elements**:
 
 A "N shown elements" line says so. While the tab is open, the list follows filter, query and tab changes.
 
-Existing links always count, even to hidden elements: a pair already linked is never suggested again.
+Existing links always count, even to hidden elements: a pair already linked is never suggested again. Neither are two elements already linked **to the same element**: they are already connected. An element linked to more than 50 others (a unit, a category) does not count as a common element: it joins too much to mean anything.
+
+The column filters of the [matrix view]({{< relref "matrix-view" >}}) apply to the matrix only: the **All views** button turns them into a query applied as a filter, which the analysis follows.
 
 ---
 
@@ -35,13 +37,21 @@ Each rule can be ticked or unticked in the panel. To look only for place and tim
 
 | Rule | What it spots | Settings |
 |------|---------------|----------|
-| **Properties** | Same value under the same property (phone, IBAN, email, plate…) | — |
+| **Properties** | Same value under the same property (phone, IBAN, email, plate…) | Compared properties |
 | **Sources** | Same attached file, or same web page cited as source | — |
 | **Zones** | A point or small zone inside a larger zone (a site in its town) | — |
 | **Places within** | Two elements placed closer than a distance, dates ignored | Radius |
 | **Meetings within** | Two elements at the same place **at the same time** | Radius, time window, stay length |
 
 Settings are remembered in your browser; they are not shared with other collaborators.
+
+### Properties: Choosing Which to Compare
+
+The button next to **Properties** ("all", or "3/12") unfolds the list of the dossier's text properties, with how many elements carry each. Untick those that identify nothing (a description, a category) to keep only identifiers: phone, IBAN, plate, case number… A filter shows beyond 8 properties, with **All** and **None**.
+
+- The choice is remembered **per dossier**, in your browser.
+- A property that appears later is ticked by default.
+- Unticking a property does not remove the dismissals about it.
 
 ### Properties: How Values Are Compared
 
@@ -94,6 +104,7 @@ Example: offences near sites imported from GeoJSON.
 
 - **Hover** a suggestion: its elements are highlighted on the canvas
 - **Click** the suggestion: selects its elements
+- **Click "Create and link N elements"** (or "Link N elements") on a pivot: unfolds the list of its elements, each name clickable as below
 - **Click an element's name**: it is selected alone and centered in the current view (canvas, map or timeline), and a summary shows under the row (tags, first 6 properties, **Open details** link to the Detail tab). Click the name again to hide it. Each element is on its own line; a long name wraps (2 lines at most)
 - **Relevance / Distance**, next to the count (shown when suggestions have distances): sorted by distance, places, meetings and zones come first, nearest first (a point in a zone counts as 0 m); the others follow in their order
 - **✓** accepts, **✕** dismisses

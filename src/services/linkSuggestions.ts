@@ -92,6 +92,8 @@ export interface SuggestionOptions {
   candidateIds?: ReadonlySet<string> | null;
   /** Rules without settings, each on unless set to false */
   rules?: { sharedValue?: boolean; sharedSource?: boolean; inZone?: boolean };
+  /** Property keys left out of the shared values rule, folded (see foldKey) */
+  excludedKeys?: ReadonlySet<string> | null;
   /**
    * Only suggestions joining an element tagged `a` to one tagged `b` (the same
    * tag twice: within it). The places rule then compares every `a` with every
@@ -183,7 +185,7 @@ function pivotId(rule: string, key: string | undefined, normValue: string): stri
 }
 
 /** Property key as compared: "Téléphone", "telephone" and " TELEPHONE " are one key */
-function foldKey(key: string | undefined): string {
+export function foldKey(key: string | undefined): string {
   return (key ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 }
 
@@ -229,7 +231,7 @@ interface ValueGroup {
 }
 
 /** sharedValue: groups of elements with the same normalized value under the same key */
-function groupSharedValues(candidates: Element[]): ValueGroup[] {
+function groupSharedValues(candidates: Element[], excludedKeys?: ReadonlySet<string> | null): ValueGroup[] {
   const groups = new Map<string, ValueGroup>();
   const elementsPerKey = new Map<string, number>();
 
@@ -240,6 +242,7 @@ function groupSharedValues(candidates: Element[]): ValueGroup[] {
       const norm = normalizeValue(prop.value);
       if (!norm) continue;
       const key = foldKey(prop.key);
+      if (excludedKeys?.has(key)) continue;
       if (!keysSeen.has(key)) {
         keysSeen.add(key);
         elementsPerKey.set(key, (elementsPerKey.get(key) ?? 0) + 1);
@@ -710,6 +713,27 @@ export function analyzeLinkSuggestions(
   const candidates = between ? shown.filter(el => hasTag(el.id, between.a) || hasTag(el.id, between.b)) : shown;
   const linked = new Set(links.map(l => pairKey(l.fromId, l.toId)));
   const isLinked = (a: string, b: string) => linked.has(pairKey(a, b));
+  // Direct neighbours: a pair already joined through one same element is
+  // connected, a link between them would add nothing. Not through a hub (a
+  // unit, a category linked to most of the dossier): it joins everything, so
+  // it tells nothing — like a value shared by too many (MAX_GROUP_SIZE)
+  const neighbours = new Map<string, Set<string>>();
+  for (const l of links) {
+    if (l.fromId === l.toId) continue;
+    (neighbours.get(l.fromId) ?? neighbours.set(l.fromId, new Set()).get(l.fromId)!).add(l.toId);
+    (neighbours.get(l.toId) ?? neighbours.set(l.toId, new Set()).get(l.toId)!).add(l.fromId);
+  }
+  /** An element directly linked to every one of these, if any */
+  const sharesNeighbour = (ids: readonly string[]): boolean => {
+    const sets = ids.map(id => neighbours.get(id));
+    if (sets.some(set => !set)) return false;
+    const [smallest, ...others] = (sets as Set<string>[]).sort((x, y) => x.size - y.size);
+    for (const n of smallest) {
+      if ((neighbours.get(n)?.size ?? 0) > MAX_GROUP_SIZE) continue;
+      if (others.every(set => set.has(n))) return true;
+    }
+    return false;
+  };
   const inScope = (ids: Iterable<string>) => {
     if (!scope) return true;
     for (const id of ids) if (scope.has(id)) return true;
@@ -728,6 +752,7 @@ export function analyzeLinkSuggestions(
   const linkSuggestions = new Map<string, LinkSuggestion>();
 
   const addLinkReason = (fromId: string, toId: string, reason: SuggestionReason) => {
+    if (sharesNeighbour([fromId, toId])) return;
     const id = linkSuggestionId(fromId, toId);
     const existing = linkSuggestions.get(id);
     if (existing) existing.reasons.push(reason);
@@ -735,7 +760,7 @@ export function analyzeLinkSuggestions(
   };
 
   const groups = [
-    ...(valuesOn ? groupSharedValues(candidates) : []),
+    ...(valuesOn ? groupSharedValues(candidates, options.excludedKeys) : []),
     ...(sourcesOn ? groupSharedSources(candidates, assets) : []),
   ];
   for (const group of groups) {
@@ -754,7 +779,7 @@ export function analyzeLinkSuggestions(
     } else if (members.length === 2) {
       const [a, b] = members;
       if (!isLinked(a, b)) addLinkReason(a, b, reason);
-    } else {
+    } else if (!sharesNeighbour(members)) {
       const id = pivotId(group.rule, foldKey(group.key), norm ?? group.value.toLowerCase());
       pivots.push({ kind: 'pivot', id, reason, memberIds: members, existingId: null });
     }
@@ -828,12 +853,15 @@ export function analyzeLinkSuggestions(
   const existing = new Set(elements.map(el => el.id));
   const ran: Record<string, boolean> = { sharedValue: valuesOn, sharedSource: sourcesOn, inZone: zonesOn, nearby: false, meeting: false };
   const staleDismissalIds = new Set<string>();
+  // Property keys left out count as a rule that did not run, for their key
+  const keysNarrowed = valuesOn && !!options.excludedKeys?.size;
   for (const id of dismissed ?? []) {
-    const link = /^link:([^:]+):([a-zA-Z]+)/.exec(id);
-    if (link && !ran[link[2]]) {
+    const link = /^link:([^:]+):([a-zA-Z]+)(?::(.*))?$/.exec(id);
+    const keyLeftOut = !!link && link[2] === 'sharedValue' && !!options.excludedKeys?.has(link[3] ?? '');
+    if (link && (!ran[link[2]] || keyLeftOut)) {
       const [a, b] = link[1].split('|');
       if (!existing.has(a) || !existing.has(b)) staleDismissalIds.add(id);
-    } else if (!link && !(valuesOn && sourcesOn)) {
+    } else if (!link && !(valuesOn && sourcesOn && !keysNarrowed)) {
       continue;
     } else if (!liveIds.has(id)) {
       staleDismissalIds.add(id);

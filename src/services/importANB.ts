@@ -239,6 +239,7 @@ function buildElement(
   const date = item.kind === 'Theme' ? null : item.date;
   const properties: Property[] = item.attributes.map(attributeToProperty);
   properties.push({ key: 'i2_entity_id', value: item.guid, type: 'text' });
+  if (item.identity) properties.push({ key: 'i2_identity', value: item.identity, type: 'text' });
 
   return {
     ...base,

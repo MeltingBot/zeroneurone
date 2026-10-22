@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagCombobox } from '../modals/TagCombobox';
 import { revealElement } from '../../utils/revealElement';
-import { Check, RotateCcw, Search, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, RotateCcw, Search, X } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
 import { MAX_STAYS, MEETING_WINDOWS, NEARBY_RADII, PLACE_RADII } from '../../stores/suggestionsStore';
-import type { Suggestion, SuggestionReason } from '../../services/linkSuggestions';
+import { foldKey, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
 import type { Element } from '../../types';
 
 /** Compact select of the settings row: same height as the checkbox labels */
@@ -14,6 +14,27 @@ const SELECT_CLASS = 'h-6 px-1.5 text-xs rounded border border-border-default bg
 /** Rows rendered at once: enough to work through, light enough for big dossiers */
 /** Rows rendered at once; the list grows by as many on demand */
 const ROWS_STEP = 200;
+
+/** Property keys the shared values rule can compare (text and links), most used first */
+function comparableKeys(elements: Element[]): { key: string; label: string; count: number }[] {
+  const byKey = new Map<string, { label: string; count: number }>();
+  for (const el of elements) {
+    const seen = new Set<string>();
+    for (const prop of el.properties || []) {
+      if (prop.type && prop.type !== 'text' && prop.type !== 'link') continue;
+      if (String(prop.value ?? '').trim() === '') continue;
+      const key = foldKey(prop.key);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      const found = byKey.get(key);
+      if (found) found.count++;
+      else byKey.set(key, { label: prop.key.trim(), count: 1 });
+    }
+  }
+  return [...byKey]
+    .map(([key, v]) => ({ key, ...v }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
 
 /** Lowercase without accents, for the list search */
 function fold(text: string): string {
@@ -44,7 +65,7 @@ export function SuggestionsPanel() {
   const {
     suggestions, dismissedSuggestions, dossierId, scope, nearbyRadius, meetingRadius, maxStay, placesEnabled, meetingsEnabled, meetingWindow,
     valuesEnabled, sourcesEnabled, zonesEnabled, setRuleEnabled,
-    shownCount, meetingsTruncated, between, setBetween,
+    shownCount, meetingsTruncated, between, setBetween, excludedKeys, setExcludedKeys, loadExcludedKeys,
     analyze, refresh, setNearbyRadius, setMeetingRadius, setMaxStay, setPlacesEnabled, setMeetingsEnabled, setMeetingWindow, accept, dismiss, restore,
   } = useSuggestionsStore();
   const highlightSuggestion = useInsightsStore((s) => s.highlightSuggestion);
@@ -63,6 +84,22 @@ export function SuggestionsPanel() {
   const applyBetween = (a: string, b: string) => {
     const next = a.trim() && b.trim() ? { a: a.trim(), b: b.trim() } : null;
     if ((next?.a ?? '') !== (between?.a ?? '') || (next?.b ?? '') !== (between?.b ?? '')) setBetween(next);
+  };
+
+  // Property keys compared by the shared values rule (left-out ones are per dossier)
+  useEffect(() => { loadExcludedKeys(currentDossierId); }, [currentDossierId, loadExcludedKeys]);
+  const propertyKeys = useMemo(() => comparableKeys(elements), [elements]);
+  const excludedSet = useMemo(() => new Set(excludedKeys), [excludedKeys]);
+  const keptCount = propertyKeys.filter((k) => !excludedSet.has(k.key)).length;
+  const [keysOpen, setKeysOpen] = useState(false);
+  const [keySearch, setKeySearch] = useState('');
+  const listedKeys = useMemo(() => {
+    const query = fold(keySearch.trim());
+    return query ? propertyKeys.filter((k) => fold(k.label).includes(query)) : propertyKeys;
+  }, [propertyKeys, keySearch]);
+  const setKeysKept = (keys: string[], kept: boolean) => {
+    const touched = new Set(keys);
+    setExcludedKeys(kept ? excludedKeys.filter((k) => !touched.has(k)) : [...excludedKeys, ...keys]);
   };
 
   // Leaving the tab must not leave the canvas dimmed
@@ -208,6 +245,13 @@ export function SuggestionsPanel() {
   // An element name in a row: selects it alone, brings it on screen and shows
   // its summary under the row (a second click hides it)
   const [focus, setFocus] = useState<{ row: string; id: string } | null>(null);
+  // Pivot rows whose members are listed
+  const [openPivots, setOpenPivots] = useState<Set<string>>(new Set());
+  const togglePivot = (id: string) => setOpenPivots((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   const setSidePanelTab = useUIStore((s) => s.setSidePanelTab);
   const nameButton = (row: string, id: string) => (
     <button
@@ -284,9 +328,71 @@ export function SuggestionsPanel() {
                 className="rounded border-border-default"
               />
               {t(labelKey)}
+              {rule === 'values' && propertyKeys.length > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setKeysOpen((v) => !v); }}
+                  disabled={!valuesEnabled}
+                  title={t('suggestions.keys.hint')}
+                  aria-expanded={keysOpen}
+                  data-testid="suggestions-keys-toggle"
+                  className="inline-flex items-center gap-0.5 px-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50"
+                >
+                  {keptCount === propertyKeys.length ? t('suggestions.keys.all') : `${keptCount}/${propertyKeys.length}`}
+                  {keysOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+              )}
             </label>
           ))}
         </div>
+        {keysOpen && valuesEnabled && propertyKeys.length > 0 && (
+          <div className="rounded border border-border-default bg-bg-primary" data-testid="suggestions-keys">
+            <div className="flex items-center gap-2 px-2 py-1 border-b border-border-default text-xs">
+              {propertyKeys.length > 8 ? (
+                <input
+                  type="text"
+                  value={keySearch}
+                  onChange={(e) => setKeySearch(e.target.value)}
+                  placeholder={t('suggestions.keys.search')}
+                  aria-label={t('suggestions.keys.search')}
+                  className="flex-1 min-w-0 px-1.5 py-0.5 text-xs rounded border border-border-default bg-bg-primary text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
+                />
+              ) : (
+                <span className="flex-1" />
+              )}
+              <button
+                type="button"
+                onClick={() => setKeysKept(listedKeys.map((k) => k.key), true)}
+                className="text-text-secondary hover:text-text-primary underline"
+              >
+                {t('suggestions.keys.selectAll')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setKeysKept(listedKeys.map((k) => k.key), false)}
+                className="text-text-secondary hover:text-text-primary underline"
+              >
+                {t('suggestions.keys.selectNone')}
+              </button>
+            </div>
+            <ul className="max-h-40 overflow-y-auto py-0.5">
+              {listedKeys.map((k) => (
+                <li key={k.key}>
+                  <label className="flex items-center gap-1.5 px-2 py-0.5 text-xs text-text-primary hover:bg-bg-secondary">
+                    <input
+                      type="checkbox"
+                      checked={!excludedSet.has(k.key)}
+                      onChange={(e) => setKeysKept([k.key], e.target.checked)}
+                      className="rounded border-border-default"
+                    />
+                    <span className="flex-1 min-w-0 truncate" title={k.label}>{k.label}</span>
+                    <span className="text-text-tertiary">{k.count}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs text-text-secondary">
           <label className="flex items-center gap-1.5 h-6" title={t('suggestions.placesHint')}>
             <input
@@ -549,10 +655,28 @@ export function SuggestionsPanel() {
                       {s.existingId ? nameButton(s.id, s.existingId) : s.reason.value}
                     </span>
                     <span className="block text-xs text-text-tertiary break-words">
-                      {t(s.existingId ? 'suggestions.pivotExisting' : 'suggestions.pivotNew', { count: s.memberIds.length })}
+                      <button
+                        type="button"
+                        onClick={() => togglePivot(s.id)}
+                        aria-expanded={openPivots.has(s.id)}
+                        data-testid="suggestion-pivot-members"
+                        className="inline-flex items-center gap-0.5 hover:text-text-primary hover:underline"
+                      >
+                        {t(s.existingId ? 'suggestions.pivotExisting' : 'suggestions.pivotNew', { count: s.memberIds.length })}
+                        {openPivots.has(s.id) ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      </button>
                       {' · '}
                       {s.reason.rule === 'sharedValue' ? s.reason.key : reasonText(s.reason)}
                     </span>
+                    {openPivots.has(s.id) && (
+                      <ul className="mt-1 pl-2 border-l border-border-default space-y-0.5">
+                        {s.memberIds.map((id) => (
+                          <li key={id} className="text-xs text-text-secondary break-words" title={label(id)}>
+                            {nameButton(s.id, id)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </>
                 )}
                 {focus?.row === s.id && elementById.get(focus.id) && preview(elementById.get(focus.id)!)}

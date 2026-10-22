@@ -117,6 +117,16 @@ Les propriétés permettent d'ajouter des données structurées à vos élément
 3. Cliquez **+ Ajouter une propriété**
 4. Choisissez le type et entrez la valeur
 
+### Enregistrer les propriétés dans un tag
+
+Pour réutiliser les propriétés d'un élément sur d'autres éléments du même tag, cliquez **Enregistrer dans le tag** sous ses propriétés (affiché quand l'élément a au moins un tag et une propriété).
+
+1. Choisissez le tag : un tag absent des jeux de tags est marqué « nouveau » et sera créé
+2. Cochez les propriétés à enregistrer ; celles que le tag propose déjà sont grisées (« déjà dans le tag »)
+3. **Enregistrer**
+
+Seuls le **nom** et le **type** de chaque propriété sont enregistrés, jamais sa valeur (pour une liste de choix, les choix connus sont repris). Les propriétés deviennent des propriétés suggérées du tag dans les [jeux de tags](#jeux-de-tags) : elles seront proposées à chaque ajout de ce tag.
+
 
 ### Propriétés prédéfinies
 

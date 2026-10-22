@@ -37,6 +37,26 @@ const SOURCES_KEY = 'zn:suggestions:sources';
 const ZONES_KEY = 'zn:suggestions:zones';
 const PLACES_KEY = 'zn:suggestions:places';
 const MEETINGS_KEY = 'zn:suggestions:meetings';
+/** Property keys left out, per dossier (keys differ from one dossier to the next) */
+const EXCLUDED_KEYS_PREFIX = 'zn:suggestions:excludedKeys:';
+
+function readExcludedKeys(dossierId: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(EXCLUDED_KEYS_PREFIX + dossierId) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveExcludedKeys(dossierId: string, keys: string[]): void {
+  try {
+    if (keys.length > 0) localStorage.setItem(EXCLUDED_KEYS_PREFIX + dossierId, JSON.stringify(keys));
+    else localStorage.removeItem(EXCLUDED_KEYS_PREFIX + dossierId);
+  } catch {
+    // Per-viewer convenience only
+  }
+}
 
 /** What this viewer picked last time (a convenience: storage may be unavailable) */
 function readChoice(key: string, allowed: readonly number[], fallback: number): number {
@@ -95,6 +115,9 @@ interface SuggestionsState {
   meetingsTruncated: boolean;
   /** Only suggestions joining an element of tag `a` to one of tag `b`; null for all */
   between: { a: string; b: string } | null;
+  /** Property keys (folded) the shared values rule leaves out, for keysDossierId */
+  excludedKeys: string[];
+  keysDossierId: string | null;
 
   analyze: (scope?: string[] | null) => void;
   /** Run the last analysis again (after an undo/redo touching dismissals) */
@@ -108,6 +131,10 @@ interface SuggestionsState {
   setMeetingWindow: (window: number) => void;
   /** Restrict to suggestions between two tags (both set) and re-run the analysis shown */
   setBetween: (between: { a: string; b: string } | null) => void;
+  /** Read this dossier's left-out property keys (once per dossier) */
+  loadExcludedKeys: (dossierId: string | null) => void;
+  /** Leave these property keys (folded) out of the shared values rule */
+  setExcludedKeys: (keys: string[]) => void;
   /** Create the links (and pivot elements) of these suggestions, as one undo step */
   /** `describe` gives the full text of a reason, kept in the link's notes */
   accept: (ids: string[], labelFor: SuggestionLabeler, describe: SuggestionLabeler) => Promise<void>;
@@ -166,9 +193,12 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   shownCount: null,
   meetingsTruncated: false,
   between: null,
+  excludedKeys: [],
+  keysDossierId: null,
 
   analyze: (scope = null) => {
     const { elements, links, assets, currentDossier, updateDossier } = useDossierStore.getState();
+    get().loadExcludedKeys(currentDossier?.id ?? null);
     const dismissed = currentDossier?.dismissedSuggestions ?? [];
     const shown = shownElementIds(elements, getEvaluationModel(currentDossier));
     const { suggestions, dismissedSuggestions, staleDismissalIds, meetingsTruncated } = analyzeLinkSuggestions(elements, links, assets, {
@@ -181,6 +211,7 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
         : null,
       candidateIds: shown,
       between: get().between,
+      excludedKeys: new Set(get().excludedKeys),
     });
     set({
       suggestions, dismissedSuggestions, scope, meetingsTruncated,
@@ -236,6 +267,19 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   setMeetingWindow: (window) => {
     set({ meetingWindow: window });
     saveChoice(MEETING_WINDOW_KEY, window);
+  },
+
+  loadExcludedKeys: (dossierId) => {
+    if (dossierId === get().keysDossierId) return;
+    set({ keysDossierId: dossierId, excludedKeys: dossierId ? readExcludedKeys(dossierId) : [] });
+  },
+
+  setExcludedKeys: (keys) => {
+    const unique = [...new Set(keys)];
+    set({ excludedKeys: unique });
+    const { keysDossierId } = get();
+    if (keysDossierId) saveExcludedKeys(keysDossierId, unique);
+    get().refresh();
   },
 
   setBetween: (between) => {

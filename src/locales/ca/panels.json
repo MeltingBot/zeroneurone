@@ -215,7 +215,15 @@
       "extractToElement": "Extreure com a element",
       "applyToCount": "S'aplicarà a {{count}} elements seleccionats",
       "apply": "Aplicar",
-      "applyTagVisual": "Aplicar l'aparença de l'etiqueta (forma, color, icona)"
+      "applyTagVisual": "Aplicar l'aparença de l'etiqueta (forma, color, icona)",
+      "saveToTag": "Desa a l'etiqueta",
+      "newTag": "nova",
+      "alreadyInTag": "ja a l'etiqueta",
+      "save": "Desa",
+      "savedToTag_one": "{{count}} propietat desada a l'etiqueta \"{{name}}\"",
+      "savedToTag_other": "{{count}} propietats desades a l'etiqueta \"{{name}}\"",
+      "savedToTag": "{{count}} propietats desades a l'etiqueta \"{{name}}\"",
+      "saveToTagError": "No s'ha pogut desar a l'etiqueta"
     },
     "appearance": {
       "title": "Aparença",
@@ -720,6 +728,13 @@
       "valuesHint": "Mateix valor a la mateixa propietat (telèfon, IBAN…)",
       "sourcesHint": "Mateix fitxer adjunt o mateixa pàgina web citada",
       "zonesHint": "Punt o zona petita dins d'una zona més gran"
+    },
+    "keys": {
+      "all": "totes",
+      "hint": "Propietats comparades",
+      "search": "Filtra",
+      "selectAll": "Totes",
+      "selectNone": "Cap"
     }
   }
 }

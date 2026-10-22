@@ -509,7 +509,11 @@
     "copyCell": "Cel kopiëren",
     "copyRow": "Rij kopiëren",
     "copySelection": "Selectie kopiëren ({{count}})",
-    "evaluation": "Waard."
+    "evaluation": "Waard.",
+    "applyFilters": "Deze filters op alle weergaven toepassen (ZNQuery-query)",
+    "applyFiltersShort": "Alle weergaven",
+    "applyFiltersUnsupported": "Geen gelijkwaardige query voor: {{columns}}",
+    "filtersApplied": "Al op de weergaven toegepast"
   },
   "report": {
     "title": "Rapport",

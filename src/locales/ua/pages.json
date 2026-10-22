@@ -509,7 +509,11 @@
     "copyCell": "Копіювати комірку",
     "copyRow": "Копіювати рядок",
     "copySelection": "Копіювати вибране ({{count}})",
-    "evaluation": "Оцін."
+    "evaluation": "Оцін.",
+    "applyFilters": "Застосувати ці фільтри до всіх подань (запит ZNQuery)",
+    "applyFiltersShort": "Усі подання",
+    "applyFiltersUnsupported": "Немає рівноцінного запиту для: {{columns}}",
+    "filtersApplied": "Уже застосовано до подань"
   },
   "report": {
     "title": "Звіт",

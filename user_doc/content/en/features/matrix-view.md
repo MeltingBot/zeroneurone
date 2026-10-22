@@ -90,9 +90,22 @@ Click the **download icon** in the toolbar to export the current view as CSV.
 | Element count | Shows filtered / total elements and property count |
 | Columns | Toggle column visibility (show all / hide all) |
 | Export | Download CSV |
+| All views | Apply the column filters to the other views (see below) |
 | Reset | Restore default sort, columns, and filters |
 | Undo/Redo | Undo/redo last action |
 | Anonymous mode | Redact element names and values |
+
+### Apply the filters to the other views
+
+Column filters apply to the matrix only. The **All views** button, shown once a filter is filled in, turns them into a [ZNQuery]({{< relref "queries" >}}) applied as a filter: the canvas, map, timeline and [link suggestions]({{< relref "link-suggestions" >}}) then keep the same elements.
+
+- A "flagra" filter on the *Type d'enquête* column becomes `"Type d'enquête" CONTAINS "flagra"`, case aside.
+- If a query already filters the views, the column filters are added to it (`AND`).
+- The column filters stay in place; the button is greyed out while the query contains them.
+- A column with no equivalent query blocks the button (its tooltip names it): confidence or grading, date or yes/no property, a filter on "—", a property named like a reserved field (`source`, `date`…).
+- On the *Type* column, the query looks in all the element's tags, not only the first.
+
+To also keep what is linked to the elements found, edit the query afterwards: `WITHIN 2 HOPS OF ("Type d'enquête" CONTAINS "flagra")`.
 
 ---
 

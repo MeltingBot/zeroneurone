@@ -564,3 +564,59 @@ describe('computeLinkSuggestions — between two tags', () => {
     expect(computeLinkSuggestions([...offences, point('c', 'Commissariat', 46.0001, 0)], [], [], { nearbyRadius: 100 })).toEqual([]);
   });
 });
+
+describe('property keys left out', () => {
+  const elements = [
+    el('a', { properties: props({ Téléphone: '06 12 34 56 78', Ville: 'Lyon' }) }),
+    el('b', { properties: props({ telephone: '0612345678', ville: 'lyon' }) }),
+  ];
+
+  it('compares only the keys kept, whatever their case or accents', () => {
+    const [s] = computeLinkSuggestions(elements, [], [], { excludedKeys: new Set(['ville']) }) as LinkSuggestion[];
+    expect(s.reasons.map(r => r.key)).toEqual(['Téléphone']);
+    expect(computeLinkSuggestions(elements, [], [], { excludedKeys: new Set(['ville', 'telephone']) })).toEqual([]);
+  });
+
+  it('keeps the dismissals of a key left out', () => {
+    const [s] = computeLinkSuggestions(elements, [], []) as LinkSuggestion[];
+    const dismissed = new Set(dismissalIds(s));
+    const { staleDismissalIds } = analyzeLinkSuggestions(elements, [], [], { dismissed, excludedKeys: new Set(['ville']) });
+    expect(staleDismissalIds.size).toBe(0);
+  });
+
+  it('keeps pivot dismissals while keys are left out', () => {
+    const three = [...elements, el('c', { properties: props({ Téléphone: '+33 6 12 34 56 78' }) })];
+    const pivot = computeLinkSuggestions(three, [], []).find(s => s.kind === 'pivot') as PivotSuggestion;
+    const { staleDismissalIds } = analyzeLinkSuggestions(three, [], [], { dismissed: new Set([pivot.id]), excludedKeys: new Set(['telephone']) });
+    expect(staleDismissalIds.size).toBe(0);
+  });
+});
+
+describe('pairs already joined through one element', () => {
+  const phone = { téléphone: '06 12 34 56 78' };
+
+  it('suggests no link between two elements linked to the same element', () => {
+    const elements = [el('a', { properties: props(phone) }), el('b', { properties: props(phone) }), el('c')];
+    expect(computeLinkSuggestions(elements, [link('a', 'c'), link('c', 'b')], [])).toEqual([]);
+    // One step further (a–c–d–b) they are not joined by one element
+    const four = [...elements, el('d')];
+    expect(computeLinkSuggestions(four, [link('a', 'c'), link('c', 'd'), link('d', 'b')], [])).toHaveLength(1);
+  });
+
+  it('suggests no pivot when every member is linked to the same element', () => {
+    const elements = ['a', 'b', 'c'].map(id => el(id, { properties: props(phone) })).concat(el('owner'));
+    const all = ['a', 'b', 'c'].map(id => link(id, 'owner'));
+    expect(computeLinkSuggestions(elements, all, [])).toEqual([]);
+    expect(computeLinkSuggestions(elements, all.slice(0, 2), []).filter(s => s.kind === 'pivot')).toHaveLength(1);
+  });
+});
+
+describe('pairs joined through a hub', () => {
+  it('still suggests a pair whose only common element is linked to most of the dossier', () => {
+    const phone = { téléphone: '06 12 34 56 78' };
+    const others = Array.from({ length: 60 }, (_, i) => el(`p${i}`));
+    const elements = [el('a', { properties: props(phone) }), el('b', { properties: props(phone) }), el('unit'), ...others];
+    const links = [link('a', 'unit'), link('b', 'unit'), ...others.map(o => link(o.id, 'unit'))];
+    expect(computeLinkSuggestions(elements, links, [])).toHaveLength(1);
+  });
+});

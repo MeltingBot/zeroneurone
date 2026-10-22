@@ -509,7 +509,11 @@
     "copyCell": "Copia cella",
     "copyRow": "Copia riga",
     "copySelection": "Copia selezione ({{count}})",
-    "evaluation": "Val."
+    "evaluation": "Val.",
+    "applyFilters": "Applica questi filtri a tutte le viste (query ZNQuery)",
+    "applyFiltersShort": "Tutte le viste",
+    "applyFiltersUnsupported": "Nessuna query equivalente per: {{columns}}",
+    "filtersApplied": "Già applicati alle viste"
   },
   "report": {
     "title": "Report",

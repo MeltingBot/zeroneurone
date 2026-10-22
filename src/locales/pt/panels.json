@@ -215,7 +215,15 @@
       "extractToElement": "Extrair como elemento",
       "applyToCount": "Será aplicado a {{count}} itens selecionados",
       "apply": "Aplicar",
-      "applyTagVisual": "Aplicar a aparência da etiqueta (forma, cor, ícone)"
+      "applyTagVisual": "Aplicar a aparência da etiqueta (forma, cor, ícone)",
+      "saveToTag": "Guardar na etiqueta",
+      "newTag": "nova",
+      "alreadyInTag": "já na etiqueta",
+      "save": "Guardar",
+      "savedToTag_one": "{{count}} propriedade guardada na etiqueta \"{{name}}\"",
+      "savedToTag_other": "{{count}} propriedades guardadas na etiqueta \"{{name}}\"",
+      "savedToTag": "{{count}} propriedades guardadas na etiqueta \"{{name}}\"",
+      "saveToTagError": "Não foi possível guardar na etiqueta"
     },
     "appearance": {
       "title": "Aparência",
@@ -720,6 +728,13 @@
       "valuesHint": "Mesmo valor na mesma propriedade (telefone, IBAN…)",
       "sourcesHint": "Mesmo anexo ou mesma página web citada",
       "zonesHint": "Ponto ou pequena zona dentro de uma zona maior"
+    },
+    "keys": {
+      "all": "todas",
+      "hint": "Propriedades comparadas",
+      "search": "Filtrar",
+      "selectAll": "Todas",
+      "selectNone": "Nenhuma"
     }
   }
 }

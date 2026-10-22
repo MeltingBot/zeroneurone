@@ -215,7 +215,15 @@
       "extractToElement": "Als Element extrahieren",
       "applyToCount": "Wird auf {{count}} ausgewählte Objekte angewendet",
       "apply": "Anwenden",
-      "applyTagVisual": "Erscheinungsbild des Tags übernehmen (Form, Farbe, Symbol)"
+      "applyTagVisual": "Erscheinungsbild des Tags übernehmen (Form, Farbe, Symbol)",
+      "saveToTag": "Im Tag speichern",
+      "newTag": "neu",
+      "alreadyInTag": "bereits im Tag",
+      "save": "Speichern",
+      "savedToTag_one": "{{count}} Eigenschaft im Tag \"{{name}}\" gespeichert",
+      "savedToTag_other": "{{count}} Eigenschaften im Tag \"{{name}}\" gespeichert",
+      "savedToTag": "{{count}} Eigenschaften im Tag \"{{name}}\" gespeichert",
+      "saveToTagError": "Speichern im Tag fehlgeschlagen"
     },
     "appearance": {
       "title": "Darstellung",
@@ -720,6 +728,13 @@
       "valuesHint": "Gleicher Wert derselben Eigenschaft (Telefon, IBAN…)",
       "sourcesHint": "Gleiche angehängte Datei oder zitierte Webseite",
       "zonesHint": "Punkt oder kleine Zone innerhalb einer größeren Zone"
+    },
+    "keys": {
+      "all": "alle",
+      "hint": "Verglichene Eigenschaften",
+      "search": "Filtern",
+      "selectAll": "Alle",
+      "selectNone": "Keine"
     }
   }
 }

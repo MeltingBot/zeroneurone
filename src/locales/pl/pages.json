@@ -509,7 +509,11 @@
     "copyCell": "Kopiuj komórkę",
     "copyRow": "Kopiuj wiersz",
     "copySelection": "Kopiuj zaznaczenie ({{count}})",
-    "evaluation": "Ocena"
+    "evaluation": "Ocena",
+    "applyFilters": "Zastosuj te filtry do wszystkich widoków (zapytanie ZNQuery)",
+    "applyFiltersShort": "Wszystkie widoki",
+    "applyFiltersUnsupported": "Brak równoważnego zapytania dla: {{columns}}",
+    "filtersApplied": "Już zastosowane do widoków"
   },
   "report": {
     "title": "Raport",
