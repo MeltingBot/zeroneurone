@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeResizer, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
+import { LOW_DETAIL_HANDLE_ID, requestHandleMeasure, takeEstimatedHandles } from './lowDetailHandles';
 import { Loader2, Gauge } from 'lucide-react';
 import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element, EvaluationModel } from '../../types';
@@ -311,10 +312,18 @@ function ElementNodeComponent({ data }: NodeProps) {
   const firstAssetId = (hasThumbnail && !hideMedia) ? element.assetIds?.[0] : undefined;
   const hdImageUrl = useHdImage(firstAssetId, width, height);
 
+  // Bounds estimated when the overview ended (node was off screen): measure
+  // the real handles now that the node is mounted in full detail.
+  const updateNodeInternals = useUpdateNodeInternals();
+  const fullDetail = !isLowDetail || !!isEditing;
+  useEffect(() => {
+    if (fullDetail && takeEstimatedHandles(element.id)) requestHandleMeasure(element.id, updateNodeInternals);
+  }, [fullDetail, element.id, updateNodeInternals]);
+
   // Zoomed far out, a node is a few pixels tall: its label, tags, badges,
   // thumbnail and resizer are invisible but still cost DOM — the dominant
   // expense when the whole graph is on screen. Render the shape alone.
-  // Handles are kept: React Flow anchors edges to them.
+  // Handles are kept, reduced to one: React Flow anchors edges to them.
   if (isLowDetail && !isEditing) {
     return (
       <div className={`relative ${isDimmed ? 'opacity-30' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
@@ -329,21 +338,20 @@ function ElementNodeComponent({ data }: NodeProps) {
               : element.visual.borderColor,
           }}
         />
-        {/* Handles exist only to anchor edges, and links store their ids. An
-            unlinked node needs none — at 5 000 nodes that is 8 DOM elements
-            saved each. Link creation by dragging is impossible at this zoom
-            anyway, so nothing is lost. */}
+        {/* Handles exist only to anchor edges. Zoomed this far out, edges come
+            without handle ids and attach to a node's first handle, so one
+            centred handle replaces eight (see lowDetailHandles.ts). An
+            unlinked node needs none. Link creation by dragging is impossible
+            at this zoom anyway. */}
         {hasLinks && (
-          <>
-        <Handle type="source" position={Position.Top} id="source-top" className="!opacity-0 !w-1 !h-1" style={handleShift('top')} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" className="!opacity-0 !w-1 !h-1" style={handleShift('bottom')} />
-        <Handle type="source" position={Position.Left} id="source-left" className="!opacity-0 !w-1 !h-1" style={handleShift('left')} />
-        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" style={handleShift('right')} />
-        <Handle type="target" position={Position.Top} id="target-top" className="!opacity-0 !w-1 !h-1" style={handleShift('top')} />
-        <Handle type="target" position={Position.Bottom} id="target-bottom" className="!opacity-0 !w-1 !h-1" style={handleShift('bottom')} />
-        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" style={handleShift('left')} />
-        <Handle type="target" position={Position.Right} id="target-right" className="!opacity-0 !w-1 !h-1" style={handleShift('right')} />
-          </>
+          <Handle
+            type="source"
+            position={Position.Top}
+            id={LOW_DETAIL_HANDLE_ID}
+            isConnectable={false}
+            className="!opacity-0 !w-px !h-px !min-w-0 !min-h-0 !border-0"
+            style={{ top: '50%', left: '50%' }}
+          />
         )}
       </div>
     );

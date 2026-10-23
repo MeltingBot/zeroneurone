@@ -387,7 +387,27 @@ let forceAssetResync = false;
 /** Exported so loadDossier's safety re-syncs can force asset reprocessing. */
 export function setForceAssetResync() { forceAssetResync = true; }
 
-function setupYDocObserver(
+/**
+ * Full re-read of the elements map into `target`, used only when incremental
+ * sync detects drift. An element that fails to parse (partial-sync window)
+ * keeps its last-known state rather than vanishing from the canvas.
+ */
+function rebuildElementsFromYDoc(elementsMap: Y.Map<any>, target: Map<string, Element>): void {
+  const previous = new Map(target);
+  target.clear();
+  elementsMap.forEach((ymap, key) => {
+    try {
+      const element = yMapToElement(ymap as Y.Map<any>);
+      if (element.id) target.set(element.id, element);
+    } catch {
+      const fallback = previous.get(key);
+      if (fallback) target.set(key, fallback);
+    }
+  });
+}
+
+/** Exported for tests only. */
+export function setupYDocObserver(
   ydoc: Y.Doc,
   syncToZustand: () => void
 ): () => void {
@@ -3019,71 +3039,50 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     // --- ELEMENTS: incremental sync ---
-    // structuralElChange (add/remove) → full rebuild
-    // elIdsChanged (field updates) → re-parse only changed elements, merge into state
-    // neither → keep existing state (no change)
+    // Only the ids the observer reported are re-read: present in the Y.Doc →
+    // parsed and set, absent → removed. Untouched elements keep their object
+    // identity, so a single add or delete in a 10k dossier costs one parse
+    // instead of 10k, and Canvas memos stay valid.
     let elements = stateElements;
     let elementsDidChange = false;
 
-    if (structuralElChange) {
-      const elementsById = new Map<string, Element>();
-      const stateElementsById = new Map(stateElements.map((e) => [e.id, e]));
-      elementsMap.forEach((ymap, key) => {
-        try {
-          const element = yMapToElement(ymap as Y.Map<any>);
-          if (element.id) elementsById.set(element.id, element);
-        } catch (err) {
-          // Parse failure (typically MissingPositionError during a partial-sync
-          // window). Preserve the last-known element from Zustand state so it
-          // doesn't vanish from the canvas, rather than silently dropping it.
-          const fallback = stateElementsById.get(key);
-          if (fallback) {
-            elementsById.set(key, fallback);
-            if (err instanceof MissingPositionError) {
-              console.warn(
-                '[_syncFromYDoc] Element',
-                key.slice(0, 8),
-                'has invalid position in Y.Doc — preserving local position',
-                fallback.position,
-              );
-            }
-          }
-        }
-      });
-      const newElements = Array.from(elementsById.values());
-      // Defensive: don't wipe state if Y.Doc parsing failed
-      if (newElements.length === 0 && stateElements.length > 0 && elementsMap.size > 0) {
-        console.warn('[_syncFromYDoc] Y.Doc parsing failed on structural element change. Skipping elements.');
-      } else {
-        elements = newElements;
-        elementsDidChange = true;
-      }
-    } else if (elIdsChanged.size > 0) {
-      // Incremental: only re-parse changed elements, keep all others as-is
-      const stateMap = new Map(stateElements.map(e => [e.id, e]));
+    if (elIdsChanged.size > 0) {
+      const stateMap = new Map(stateElements.map((e) => [e.id, e]));
       let changed = false;
       for (const id of elIdsChanged) {
         const ymap = elementsMap.get(id) as Y.Map<any> | undefined;
-        if (ymap) {
-          try {
-            const updated = yMapToElement(ymap);
-            if (updated.id) {
-              stateMap.set(updated.id, updated);
-              changed = true;
-            }
-          } catch (err) {
-            // MissingPositionError or similar: skip the update silently —
-            // stateMap already holds the previous (valid) value for this id,
-            // so it stays on the canvas with its known-good position.
-            if (err instanceof MissingPositionError) {
-              console.warn(
-                '[_syncFromYDoc] Skipped position-less update for',
-                id.slice(0, 8),
-                '— keeping local state',
-              );
-            }
+        if (!ymap) {
+          // Counts as a change even when a local delete already removed it
+          // from state: the Dexie row still has to go (see persistence below).
+          stateMap.delete(id);
+          changed = true;
+          continue;
+        }
+        try {
+          const updated = yMapToElement(ymap);
+          if (updated.id) {
+            stateMap.set(updated.id, updated);
+            changed = true;
+          }
+        } catch (err) {
+          // MissingPositionError during a partial-sync window: keep the
+          // last-known element (if any) on the canvas with its valid position.
+          // A new element whose position has not arrived yet is picked up by
+          // the deep change that brings it.
+          if (err instanceof MissingPositionError) {
+            console.warn(
+              '[_syncFromYDoc] Skipped position-less update for',
+              id.slice(0, 8),
+              '— keeping local state',
+            );
           }
         }
+      }
+      if (structuralElChange && stateMap.size !== elementsMap.size) {
+        // State drifted from the Y.Doc (an event missed before the observer
+        // was attached, or a parse failure): rebuild once from the Y.Doc.
+        rebuildElementsFromYDoc(elementsMap, stateMap);
+        changed = true;
       }
       if (changed) {
         elements = Array.from(stateMap.values());
@@ -3091,34 +3090,39 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     }
 
-    // --- LINKS: incremental sync ---
+    // --- LINKS: incremental sync (same rules as elements) ---
     let links = stateLinks;
     let linksDidChange = false;
 
-    if (structuralLkChange) {
-      const linksById = new Map<string, Link>();
-      linksMap.forEach((ymap) => {
-        try {
-          const link = yMapToLink(ymap as Y.Map<any>);
-          if (link.id) linksById.set(link.id, link);
-        } catch {}
-      });
-      links = Array.from(linksById.values());
-      linksDidChange = true;
-    } else if (lkIdsChanged.size > 0) {
-      const stateMap = new Map(stateLinks.map(l => [l.id, l]));
+    if (lkIdsChanged.size > 0) {
+      const stateMap = new Map(stateLinks.map((l) => [l.id, l]));
       let changed = false;
       for (const id of lkIdsChanged) {
         const ymap = linksMap.get(id) as Y.Map<any> | undefined;
-        if (ymap) {
-          try {
-            const updated = yMapToLink(ymap);
-            if (updated.id) {
-              stateMap.set(updated.id, updated);
-              changed = true;
-            }
-          } catch {}
+        if (!ymap) {
+          // Counts as a change even when a local delete already removed it
+          // from state: the Dexie row still has to go (see persistence below).
+          stateMap.delete(id);
+          changed = true;
+          continue;
         }
+        try {
+          const updated = yMapToLink(ymap);
+          if (updated.id) {
+            stateMap.set(updated.id, updated);
+            changed = true;
+          }
+        } catch {}
+      }
+      if (structuralLkChange && stateMap.size !== linksMap.size) {
+        stateMap.clear();
+        linksMap.forEach((ymap) => {
+          try {
+            const link = yMapToLink(ymap as Y.Map<any>);
+            if (link.id) stateMap.set(link.id, link);
+          } catch {}
+        });
+        changed = true;
       }
       if (changed) {
         links = Array.from(stateMap.values());
@@ -3219,40 +3223,33 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       comments,
     });
 
-    // Persist to IndexedDB — only changed collections.
-    // For structural changes (add/remove), we must also DELETE entries that
-    // disappeared from Y.Doc: bulkUpsert alone leaves stale rows in Dexie,
-    // which then resurrect on next loadDossier if Y.Doc happens to be empty
-    // (e.g. last element deleted via collab) and migration kicks in.
+    // Persist to IndexedDB — only the rows that changed. Rows that left the
+    // Y.Doc are deleted too: left in Dexie, they would resurrect on the next
+    // loadDossier if the Y.Doc happened to be empty (e.g. last element
+    // deleted via collab) and migration kicked in.
     const dossierId = currentDossier.id;
     const dbPromises: Promise<any>[] = [];
     if (elementsDidChange) {
+      const changedEls = elements.filter((el) => elIdsChanged.has(el.id));
+      if (changedEls.length > 0) {
+        dbPromises.push(elementRepository.bulkUpsert(changedEls.map((el) => ({ ...el, dossierId }))));
+      }
       if (structuralElChange) {
-        const newIds = new Set(elements.map((el) => el.id));
-        const deletedIds = Array.from(elIdsChanged).filter((id) => !newIds.has(id));
+        const deletedIds = Array.from(elIdsChanged).filter((id) => !elementsMap.has(id));
         if (deletedIds.length > 0) {
           dbPromises.push(elementRepository.deleteMany(deletedIds));
-        }
-        dbPromises.push(elementRepository.bulkUpsert(elements.map((el) => ({ ...el, dossierId }))));
-      } else {
-        const changedEls = elements.filter((el) => elIdsChanged.has(el.id));
-        if (changedEls.length > 0) {
-          dbPromises.push(elementRepository.bulkUpsert(changedEls.map((el) => ({ ...el, dossierId }))));
         }
       }
     }
     if (linksDidChange) {
+      const changedLks = links.filter((lk) => lkIdsChanged.has(lk.id));
+      if (changedLks.length > 0) {
+        dbPromises.push(linkRepository.bulkUpsert(changedLks.map((lk) => ({ ...lk, dossierId }))));
+      }
       if (structuralLkChange) {
-        const newIds = new Set(links.map((lk) => lk.id));
-        const deletedIds = Array.from(lkIdsChanged).filter((id) => !newIds.has(id));
+        const deletedIds = Array.from(lkIdsChanged).filter((id) => !linksMap.has(id));
         if (deletedIds.length > 0) {
           dbPromises.push(linkRepository.deleteMany(deletedIds));
-        }
-        dbPromises.push(linkRepository.bulkUpsert(links.map((lk) => ({ ...lk, dossierId }))));
-      } else {
-        const changedLks = links.filter((lk) => lkIdsChanged.has(lk.id));
-        if (changedLks.length > 0) {
-          dbPromises.push(linkRepository.bulkUpsert(changedLks.map((lk) => ({ ...lk, dossierId }))));
         }
       }
     }

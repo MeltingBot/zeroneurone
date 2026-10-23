@@ -28,6 +28,7 @@ import '@xyflow/react/dist/style.css';
 
 
 import { ElementNode, type ElementNodeData } from './ElementNode';
+import { LowDetailHandleRepair } from './lowDetailHandles';
 import { GroupNode, type GroupNodeData } from './GroupNode';
 import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
@@ -1953,7 +1954,10 @@ export function Canvas() {
       if (viewHiddenIds.has(link.fromId) || viewHiddenIds.has(link.toId)) return false;
       const fromPos = nodePositions.get(link.fromId);
       const toPos = nodePositions.get(link.toId);
-      if (!fromPos || !toPos) return true;
+      // An endpoint with no position is not displayed (outside the active
+      // tab, filtered, hidden): the edge cannot be drawn. Letting it through
+      // would also take a place under MAX_RENDERED_EDGES from a drawable one.
+      if (!fromPos || !toPos) return false;
       const fromVisible = fromPos.x >= vLeft && fromPos.x <= vRight && fromPos.y >= vTop && fromPos.y <= vBottom;
       const toVisible = toPos.x >= vLeft && toPos.x <= vRight && toPos.y >= vTop && toPos.y <= vBottom;
       return fromVisible || toVisible;
@@ -2175,9 +2179,25 @@ export function Canvas() {
     return () => { if (edgeProgressionRef.current) clearTimeout(edgeProgressionRef.current); };
   }, [allEdges]);
 
-  const edges = edgeRenderLimit >= allEdges.length
+  const cappedEdges = edgeRenderLimit >= allEdges.length
     ? allEdges
     : allEdges.slice(0, edgeRenderLimit);
+  // Zoomed far out, element nodes carry a single handle: edges drop their
+  // handle ids so React Flow anchors them to a node's first handle. The
+  // per-edge cache keeps these objects stable across renders.
+  const lowDetailEdgeCacheRef = useRef(new WeakMap<Edge, Edge>());
+  const edges = useMemo(() => {
+    if (!isLowDetail) return cappedEdges;
+    const cache = lowDetailEdgeCacheRef.current;
+    return cappedEdges.map((e) => {
+      let lod = cache.get(e);
+      if (!lod) {
+        lod = { ...e, sourceHandle: null, targetHandle: null };
+        cache.set(e, lod);
+      }
+      return lod;
+    });
+  }, [cappedEdges, isLowDetail]);
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
 
@@ -4889,6 +4909,7 @@ export function Canvas() {
               style={{ backgroundColor: 'var(--color-bg-canvas)' }}
             />
             <CanvasCaptureHandler />
+            <LowDetailHandleRepair isLowDetail={isLowDetail} />
             <ViewportController />
             <RevealSelectionOnOpen />
             <FitViewController />

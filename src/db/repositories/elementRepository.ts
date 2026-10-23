@@ -144,15 +144,9 @@ export const elementRepository = {
     const dossierId = elements[0].dossierId;
 
     await db.transaction('rw', [db.elements, db.links, db.dossiers], async () => {
-      // Delete associated links
-      for (const id of ids) {
-        await db.links
-          .where('fromId')
-          .equals(id)
-          .or('toId')
-          .equals(id)
-          .delete();
-      }
+      // Delete associated links: two indexed queries, not two per id
+      await db.links.where('fromId').anyOf(ids).delete();
+      await db.links.where('toId').anyOf(ids).delete();
 
       // Delete elements
       await db.elements.where('id').anyOf(ids).delete();
