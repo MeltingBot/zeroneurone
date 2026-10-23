@@ -940,7 +940,7 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
   );
   return (
     <div className={`relative ${isDimmed ? 'opacity-15' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
-      {/* Kept by a filter or a query: a halo of constant on-screen size
+      {/* Kept by a filter or a query: a solid halo of constant on-screen margin
           (--zn-inv-zoom, set by the canvas) so the results stand out from afar */}
       {isHighlighted && !isDimmed && (
         <div
@@ -948,11 +948,11 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
           style={{
             left: '50%',
             top: '50%',
-            width: `calc(${Math.max(width, height)}px + 16px * var(--zn-inv-zoom, 1))`,
-            height: `calc(${Math.max(width, height)}px + 16px * var(--zn-inv-zoom, 1))`,
+            width: `calc(${Math.max(width, height)}px + 10px * var(--zn-inv-zoom, 1))`,
+            height: `calc(${Math.max(width, height)}px + 10px * var(--zn-inv-zoom, 1))`,
             transform: 'translate(-50%, -50%)',
-            border: 'calc(3px * var(--zn-inv-zoom, 1)) solid var(--color-accent)',
-            backgroundColor: 'color-mix(in srgb, var(--color-accent) 35%, transparent)',
+            // Solid, no outline: neighbouring halos merge into one patch
+            backgroundColor: 'var(--color-accent)',
           }}
         />
       )}

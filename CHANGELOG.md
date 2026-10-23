@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.75.1
+
+### Corrections
+
+- **Halo des résultats en dézoom** — les anneaux qui se chevauchaient
+  dessinaient des boucles façon crayon. Les éléments retenus par un filtre ou
+  une requête sont désormais posés sur un disque plein de la couleur
+  d'accent, sans contour : les voisins se fondent en une seule tache.
+
 ## 2.75.0
 
 ### Onglets : des zones de travail distinctes
