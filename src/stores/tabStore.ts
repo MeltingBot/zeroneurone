@@ -87,6 +87,9 @@ async function syncTabToYDoc(
   });
 }
 
+/** Most canvas tabs a dossier can hold. */
+export const MAX_TABS = 10;
+
 export const useTabStore = create<TabState>((set, get) => ({
   tabs: [],
   activeTabId: null,

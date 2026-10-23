@@ -325,6 +325,7 @@
       "rename": "Berrizendatu",
       "delete": "Fitxa ezabatu",
       "deleteConfirm": "{{name}} fitxa ezabatu? Elementuak ez dira ezabatuko.",
+      "newFromSelection": "Fitxa berria hautapenarekin",
       "addToTab": "Fitxara gehitu...",
       "removeFromTab": "Fitxatik kendu",
       "emptyState": "Fitxa honetan elementurik ez",

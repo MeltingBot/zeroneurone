@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
-import { useTabStore, useViewStore, useDossierStore, useHistoryStore } from '../../stores';
+import { useTabStore, useViewStore, useDossierStore, useHistoryStore, MAX_TABS } from '../../stores';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import type { TabId, DossierId } from '../../types';
 
@@ -46,8 +46,6 @@ export function TabBar({ dossierId }: TabBarProps) {
       requestViewportChange(tab.viewport);
     }
   };
-
-  const MAX_TABS = 10;
 
   const switchToAll = () => {
     if (activeTabId === null) return;

@@ -325,6 +325,7 @@
       "rename": "Zmień nazwę",
       "delete": "Usuń kartę",
       "deleteConfirm": "Usunąć kartę {{name}}? Elementy nie zostaną usunięte.",
+      "newFromSelection": "Nowa karta z zaznaczeniem",
       "addToTab": "Dodaj do karty...",
       "removeFromTab": "Usuń z karty",
       "emptyState": "Brak elementów w tej karcie",

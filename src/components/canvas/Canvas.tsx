@@ -46,7 +46,7 @@ import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { ViewToolbar } from '../common/ViewToolbar';
 
-import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast } from '../../stores';
+import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast, MAX_TABS } from '../../stores';
 import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
@@ -907,6 +907,8 @@ export function Canvas() {
   const excludeFromTab = useTabStore((s) => s.excludeFromTab);
   const getTabsForElement = useTabStore((s) => s.getTabsForElement);
   const setActiveTab = useTabStore((s) => s.setActiveTab);
+  const createTab = useTabStore((s) => s.createTab);
+  const saveTabViewport = useTabStore((s) => s.saveTabViewport);
 
   // Synchronous ghost computation — no useEffect delay
   const localGhostIds = useMemo(() => {
@@ -5005,6 +5007,17 @@ export function Canvas() {
                   : [contextMenu.elementId];
                 addTabMembers(tabId, ids);
               }}
+              onNewTabFromSelection={currentDossier && canvasTabs.length < MAX_TABS ? async () => {
+                const ids = selectedElementIds.size > 1
+                  ? Array.from(selectedElementIds)
+                  : [contextMenu.elementId];
+                // Same naming as the tab bar; the canvas stays where it is,
+                // the selection being on screen.
+                if (activeTabId !== null) saveTabViewport(activeTabId, viewport);
+                const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
+                await addTabMembers(tab.id, ids);
+                setActiveTab(tab.id);
+              } : undefined}
               onRemoveFromTab={() => {
                 if (!activeTabId) return;
                 const id = contextMenu.elementId;

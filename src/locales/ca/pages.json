@@ -325,6 +325,7 @@
       "rename": "Reanomenar",
       "delete": "Eliminar pestanya",
       "deleteConfirm": "Eliminar la pestanya {{name}}? Els elements no seran eliminats.",
+      "newFromSelection": "Nova pestanya amb la selecció",
       "addToTab": "Afegir a pestanya...",
       "removeFromTab": "Treure de pestanya",
       "emptyState": "Cap element en aquesta pestanya",

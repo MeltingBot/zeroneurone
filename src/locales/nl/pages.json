@@ -325,6 +325,7 @@
       "rename": "Hernoemen",
       "delete": "Tabblad verwijderen",
       "deleteConfirm": "Tabblad {{name}} verwijderen? Elementen worden niet verwijderd.",
+      "newFromSelection": "Nieuw tabblad met selectie",
       "addToTab": "Toevoegen aan tabblad...",
       "removeFromTab": "Verwijderen uit tabblad",
       "emptyState": "Geen elementen in dit tabblad",

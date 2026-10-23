@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Image, Group, Ungroup,
-  BoxSelect, Lock, LockOpen, Layers, ArrowRight, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2, Code,
+  BoxSelect, Lock, LockOpen, Layers, ArrowRight, Plus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2, Code,
 } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -48,6 +48,8 @@ interface ContextMenuProps {
   tabs: CanvasTab[];
   activeTabId: TabId | null;
   onAddToTab: (tabId: TabId) => void;
+  /** Create a tab holding the selection and open it; absent when no more tab fits */
+  onNewTabFromSelection?: () => void;
   onRemoveFromTab: () => void;
   isGhostElement: boolean;
   elementTabIds: TabId[];
@@ -105,6 +107,7 @@ function ContextMenuComponent({
   tabs,
   activeTabId,
   onAddToTab,
+  onNewTabFromSelection,
   onRemoveFromTab,
   isGhostElement,
   elementTabIds,
@@ -173,7 +176,7 @@ function ContextMenuComponent({
   ]);
 
   // ── Tabs: go to source tab (ghosts), add to tab, remove from the active tab ──
-  const tabsItem = tabs.length > 0 ? submenu('tabs', cm('tabs'), Layers, [
+  const tabsItem = tabs.length > 0 || onNewTabFromSelection ? submenu('tabs', cm('tabs'), Layers, [
     ...(isGhostElement
       ? elementTabIds
           .filter((tid) => tid !== activeTabId)
@@ -186,7 +189,13 @@ function ContextMenuComponent({
             onSelect: () => onGoToTab(tab.id),
           }))
       : []),
-    { id: 'add-to-tab-header', label: t('dossier.tabs.addToTab'), kind: 'header' as const },
+    !!onNewTabFromSelection && {
+      id: 'new-tab-from-selection',
+      label: t('dossier.tabs.newFromSelection'),
+      icon: Plus,
+      onSelect: onNewTabFromSelection,
+    },
+    tabs.length > 0 && { id: 'add-to-tab-header', label: t('dossier.tabs.addToTab'), kind: 'header' as const },
     ...tabs.map((tab) => {
       const isInTab = elementTabIds.includes(tab.id);
       return {
