@@ -186,24 +186,8 @@ export const useTabStore = create<TabState>((set, get) => ({
       });
     });
 
-    // Reassign orphaned elements to the first remaining tab
-    const { tabs, addMembers } = get();
-    if (tabs.length > 0) {
-      const { useDossierStore } = await import('./dossierStore');
-      const elements = useDossierStore.getState().elements;
-      const allMembers = new Set<ElementId>();
-      for (const tab of tabs) {
-        for (const id of tab.memberElementIds) {
-          allMembers.add(id);
-        }
-      }
-      const orphanIds = elements
-        .filter((el) => !allMembers.has(el.id))
-        .map((el) => el.id);
-      if (orphanIds.length > 0) {
-        await addMembers(tabs[0].id, orphanIds);
-      }
-    }
+    // Its elements stay in the dossier, visible in "All": an element may
+    // belong to no tab.
   },
 
   // ── Restore (undo delete) ────────────────────────────
@@ -311,14 +295,10 @@ export const useTabStore = create<TabState>((set, get) => ({
     const tab = tabs.find((t) => t.id === tabId);
     if (!tab) return;
 
-    // Safety: never orphan an element — skip those present in only this tab
-    const safeToRemove = elementIds.filter((id) => {
-      const otherTabs = tabs.filter((t) => t.id !== tabId && t.memberElementIds.includes(id));
-      return otherTabs.length > 0;
-    });
-    if (safeToRemove.length === 0) return;
+    // An element may leave its last tab: it stays in the dossier ("All")
+    const removeSet = new Set(elementIds.filter((id) => tab.memberElementIds.includes(id)));
+    if (removeSet.size === 0) return;
 
-    const removeSet = new Set(safeToRemove);
     const updatedMembers = tab.memberElementIds.filter((id) => !removeSet.has(id));
     await tabRepository.update(tabId, { memberElementIds: updatedMembers });
 

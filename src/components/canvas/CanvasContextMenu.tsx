@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -41,6 +41,8 @@ interface CanvasContextMenuProps {
   activeTabId?: TabId | null;
   /** Send the selection to another tab and out of the active one; absent outside a tab */
   onMoveSelectionToTab?: (tabId: TabId) => void;
+  /** Take the selection out of the open tab; absent outside a tab */
+  onRemoveSelectionFromTab?: () => void;
   onClose: () => void;
   pluginExtensions?: ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -72,6 +74,7 @@ function CanvasContextMenuComponent({
   onNewTabFromSelection,
   activeTabId = null,
   onMoveSelectionToTab,
+  onRemoveSelectionFromTab,
   onClose,
   pluginExtensions,
   menuContext,
@@ -106,7 +109,7 @@ function CanvasContextMenuComponent({
             onSuggestLinks && { id: 'suggest-links', label: cm('suggestLinks'), icon: Lightbulb, onSelect: onSuggestLinks },
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
-          (onNewTabFromSelection || (tabs.length > 0 && onAddSelectionToTab)) && submenu('tabs', cm('tabs'), Layers, [
+          (onNewTabFromSelection || onRemoveSelectionFromTab || (tabs.length > 0 && onAddSelectionToTab)) && submenu('tabs', cm('tabs'), Layers, [
             onNewTabFromSelection && {
               id: 'new-tab-from-selection',
               label: t('dossier.tabs.newFromSelection'),
@@ -129,6 +132,12 @@ function CanvasContextMenuComponent({
               icon: Layers,
               onSelect: () => onAddSelectionToTab(tab.id),
             })) : []),
+            onRemoveSelectionFromTab && {
+              id: 'remove-from-tab',
+              label: t('dossier.tabs.removeFromTab'),
+              icon: X,
+              onSelect: onRemoveSelectionFromTab,
+            },
           ]),
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
           onToggleLockSelection && {

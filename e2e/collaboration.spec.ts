@@ -163,9 +163,9 @@ test('two peers editing at once converge', async ({ browser }) => {
   }
 
   // ── B reloads: same state on both sides, nothing left pending ───────────
-  // On open, elements in no tab join the first tab (self-healing, here B's
-  // paste): that write must reach A too. It used to stay blocked there,
-  // waiting on edits B made before reconnecting, which nobody asked for.
+  // Edits B makes while reconnecting must reach A too. They used to stay
+  // blocked there, waiting on writes B made before connecting, which nobody
+  // asked for (an emptied tab on A).
   await b.reload();
   await waitForAppLoad(b).catch(() => {});
   await b.waitForSelector('.react-flow__node', { timeout: 120_000 });

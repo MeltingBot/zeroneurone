@@ -308,8 +308,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         const { useTabStore } = await import('./tabStore');
         const tabs = useTabStore.getState();
         // The created tab goes as a whole; the other tabs get their members
-        // back. Adds before removals: removeMembers keeps an element that
-        // would be left in no tab at all.
+        // back. Adds before removals: an element moving between two tabs is
+        // never, even briefly, in neither.
         const others = snap.changes.filter((c) => c.tabId !== snap.createdTab?.id);
         for (const c of others) {
           if (c.removed.length > 0) await useTabStore.getState().addMembers(c.tabId, c.removed);

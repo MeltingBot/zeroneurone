@@ -88,7 +88,6 @@ export function DossierPage() {
   const canvasTabs = useTabStore((state) => state.tabs);
   const activeTabId = useTabStore((state) => state.activeTabId);
   const setActiveTab = useTabStore((state) => state.setActiveTab);
-  const addTabMembers = useTabStore((state) => state.addMembers);
 
   const setReadOnly = useDossierStore((s) => s.setReadOnly);
   const deleteDossier = useDossierStore((s) => s.deleteDossier);
@@ -243,27 +242,6 @@ export function DossierPage() {
       setRedactConfirmOpen(true);
     }
   }, [currentDossier?.id, retentionExpiredDays]);
-
-  // Self-healing: reassign orphaned elements to the first tab
-  const orphanHealedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!currentDossier || elements.length === 0 || canvasTabs.length === 0) return;
-    if (orphanHealedRef.current === currentDossier.id) return;
-    orphanHealedRef.current = currentDossier.id;
-
-    const allMembers = new Set<string>();
-    for (const tab of canvasTabs) {
-      for (const id of tab.memberElementIds) {
-        allMembers.add(id);
-      }
-    }
-    const orphanIds = elements
-      .filter((el) => !allMembers.has(el.id))
-      .map((el) => el.id);
-    if (orphanIds.length > 0) {
-      addTabMembers(canvasTabs[0].id, orphanIds);
-    }
-  }, [currentDossier, elements, canvasTabs, addTabMembers]);
 
   // Load search index: full rebuild on dossier load, incremental updates after
   const searchInitializedRef = useRef<string | null>(null);

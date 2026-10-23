@@ -219,8 +219,8 @@ function ContextMenuComponent({
         onSelect: () => onAddToTab(tab.id),
       };
     }),
-    // Remove: ghost → dismiss, member in >1 tab → unassign
-    !!activeTabId && (isGhostElement || (elementTabIds.includes(activeTabId) && elementTabIds.length > 1)) && {
+    // Any member of the open tab can leave it (it stays in "All"); a ghost is set aside
+    !!activeTabId && (isGhostElement || elementTabIds.includes(activeTabId)) && {
       id: 'remove-from-tab',
       label: t('dossier.tabs.removeFromTab'),
       icon: X,

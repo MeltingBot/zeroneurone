@@ -47,13 +47,20 @@ Right-click on a tab → **Delete tab**.
 
 ## Working with Elements in Tabs
 
-### Add Elements to a Tab
+Right-click an element or a selection, then the **Tabs** submenu:
 
-Right-click an element → **Add to tab...** → select the target tab.
+| Action | Effect |
+|--------|--------|
+| **New tab with selection** | Creates a tab holding the selection and opens it. From inside a tab, the selection leaves its original tab |
+| **Move to tab...** | The selection joins the chosen tab and leaves the open one (shown inside a tab only) |
+| **Add to tab...** | The selection joins the chosen tab and also stays where it was |
+| **Remove from tab** | The selection leaves the open tab |
 
-### Remove Elements from a Tab
+These actions are undone with **Ctrl+Z**.
 
-Right-click an element → **Remove from tab**.
+{{< hint info >}}
+**An element may belong to no tab.** An element created in **All**, or removed from its last tab, stays in the dossier and visible in **All**. It is never filed into a tab automatically.
+{{< /hint >}}
 
 ### Navigate Between Tabs
 

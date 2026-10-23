@@ -50,10 +50,20 @@ Clic-droit sur un onglet → **Supprimer l'onglet**.
 
 ## Ajouter et retirer des elements
 
-| Action | Methode |
-|--------|---------|
-| **Ajouter a un onglet** | Clic-droit sur un element → **Ajouter a l'onglet...** → choisir l'onglet |
-| **Retirer d'un onglet** | Clic-droit sur un element → **Retirer de l'onglet** |
+Clic-droit sur un element ou sur une selection, puis sous-menu **Onglets** :
+
+| Action | Effet |
+|--------|-------|
+| **Nouvel onglet avec la selection** | Cree un onglet contenant la selection et l'ouvre. Depuis un onglet, la selection quitte l'onglet d'origine |
+| **Deplacer vers l'onglet...** | La selection rejoint l'onglet choisi et quitte l'onglet ouvert (visible uniquement dans un onglet) |
+| **Ajouter a l'onglet...** | La selection rejoint l'onglet choisi et reste aussi ou elle etait |
+| **Retirer de l'onglet** | La selection quitte l'onglet ouvert |
+
+Ces actions s'annulent avec **Ctrl+Z**.
+
+{{< hint info >}}
+**Un element peut n'appartenir a aucun onglet.** Un element cree dans **Tous**, ou retire de son dernier onglet, reste dans le dossier et visible dans **Tous**. Il n'est jamais range automatiquement dans un onglet.
+{{< /hint >}}
 
 ---
 

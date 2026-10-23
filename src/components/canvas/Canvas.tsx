@@ -2970,6 +2970,21 @@ export function Canvas() {
     });
   }, [activeTabId, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
 
+  // Take `ids` out of the active tab: members leave it (they stay in "All"),
+  // ghosts are set aside. Membership changes go through the history.
+  const removeIdsFromActiveTab = useCallback(async (ids: string[]) => {
+    const tabId = activeTabId;
+    if (tabId === null || ids.length === 0) return;
+    const members = tabMembers(tabId);
+    const removed = ids.filter((id) => members.has(id));
+    const ghosts = ids.filter((id) => !members.has(id));
+    if (ghosts.length > 0) await excludeFromTab(tabId, ghosts);
+    if (removed.length > 0) {
+      await removeTabMembers(tabId, removed);
+      pushTabMembership({ changes: [{ tabId, added: [], removed }], activeBefore: tabId, activeAfter: tabId });
+    }
+  }, [activeTabId, tabMembers, excludeFromTab, removeTabMembers, pushTabMembership]);
+
   // Add `ids` to a tab, keeping them where they are.
   const addIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
     const target = tabMembers(tabId);
@@ -5082,17 +5097,9 @@ export function Canvas() {
                 tabId,
                 selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
               ) : undefined}
-              onRemoveFromTab={() => {
-                if (!activeTabId) return;
-                const id = contextMenu.elementId;
-                if (!tabMemberSet.has(id)) {
-                  // Ghost → dismiss (exclude from ghost computation)
-                  excludeFromTab(activeTabId, [id]);
-                } else {
-                  // Member → remove from tab membership
-                  removeTabMembers(activeTabId, [id]);
-                }
-              }}
+              onRemoveFromTab={() => removeIdsFromActiveTab(
+                selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
+              )}
               isGhostElement={activeTabId !== null && !tabMemberSet.has(contextMenu.elementId)}
               elementTabIds={getTabsForElement(contextMenu.elementId).map(t => t.id)}
               onGoToTab={(tabId) => {
@@ -5146,6 +5153,7 @@ export function Canvas() {
               onNewTabFromSelection={canCreateTab ? () => createTabFromIds(Array.from(selectedElementIds)) : undefined}
               activeTabId={activeTabId}
               onMoveSelectionToTab={activeTabId !== null ? (tabId) => moveIdsToTab(tabId, Array.from(selectedElementIds)) : undefined}
+              onRemoveSelectionFromTab={activeTabId !== null ? () => removeIdsFromActiveTab(Array.from(selectedElementIds)) : undefined}
               onClose={closeCanvasContextMenu}
               pluginExtensions={[
                 ...canvasPlugins,
