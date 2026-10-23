@@ -146,12 +146,12 @@ export const linkRepository = {
   async deleteMany(ids: LinkId[]): Promise<void> {
     if (ids.length === 0) return;
 
-    const links = await db.links.where('id').anyOf(ids).toArray();
-    if (links.length === 0) return;
-
-    const dossierId = links[0].dossierId;
-
+    // Read and delete in one transaction (see elementRepository.deleteMany)
     await db.transaction('rw', [db.links, db.dossiers], async () => {
+      const first = await db.links.where('id').anyOf(ids).first();
+      if (!first) return;
+      const dossierId = first.dossierId;
+
       await db.links.where('id').anyOf(ids).delete();
       await db.dossiers.update(dossierId, {
         updatedAt: new Date(),

@@ -138,12 +138,13 @@ export const elementRepository = {
   async deleteMany(ids: ElementId[]): Promise<void> {
     if (ids.length === 0) return;
 
-    const elements = await db.elements.where('id').anyOf(ids).toArray();
-    if (elements.length === 0) return;
-
-    const dossierId = elements[0].dossierId;
-
+    // Read and delete in one transaction: a write landing in between (an undo
+    // restoring these very rows) would otherwise be deleted right after.
     await db.transaction('rw', [db.elements, db.links, db.dossiers], async () => {
+      const first = await db.elements.where('id').anyOf(ids).first();
+      if (!first) return;
+      const dossierId = first.dossierId;
+
       // Delete associated links: two indexed queries, not two per id
       await db.links.where('fromId').anyOf(ids).delete();
       await db.links.where('toId').anyOf(ids).delete();

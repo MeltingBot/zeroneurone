@@ -406,6 +406,41 @@ function rebuildElementsFromYDoc(elementsMap: Y.Map<any>, target: Map<string, El
   });
 }
 
+/**
+ * Rewrites the Dexie copy of a dossier's elements and links from the store
+ * when its row counts differ (cheap check: count() reads no row). Not an
+ * integrity check: an add and a delete both missed leave the counts equal.
+ * The store is read right before each write: IndexedDB runs transactions in
+ * order, so a newer write from the incremental sync, queued after, wins.
+ */
+export async function reconcileDexieMirror(
+  dossierId: string,
+  get: () => { currentDossier: Dossier | null; elements: Element[]; links: Link[] },
+): Promise<boolean> {
+  const [elementRows, linkRows] = await Promise.all([
+    db.elements.where({ dossierId }).count(),
+    db.links.where({ dossierId }).count(),
+  ]);
+  const state = get();
+  if (state.currentDossier?.id !== dossierId) return false;
+  if (elementRows === state.elements.length && linkRows === state.links.length) return false;
+
+  await elementRepository.bulkUpsert(get().elements.map((el) => ({ ...el, dossierId })));
+  await linkRepository.bulkUpsert(get().links.map((lk) => ({ ...lk, dossierId })));
+  // Rows the Y.Doc no longer has: found by key alone, nothing decrypted
+  const [elementKeys, linkKeys] = await Promise.all([
+    db.elements.where({ dossierId }).primaryKeys(),
+    db.links.where({ dossierId }).primaryKeys(),
+  ]);
+  const liveElements = new Set(get().elements.map((el) => el.id));
+  const liveLinks = new Set(get().links.map((lk) => lk.id));
+  const staleElements = (elementKeys as string[]).filter((k) => !liveElements.has(k));
+  const staleLinks = (linkKeys as string[]).filter((k) => !liveLinks.has(k));
+  if (staleElements.length > 0) await db.elements.bulkDelete(staleElements);
+  if (staleLinks.length > 0) await db.links.bulkDelete(staleLinks);
+  return true;
+}
+
 /** Exported for tests only. */
 export function setupYDocObserver(
   ydoc: Y.Doc,
@@ -1052,6 +1087,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       });
 
       emitPluginEvent('dossier:opened', id);
+
+      // The Dexie copy is written incrementally from Y.Doc changes. Content
+      // already in the Y.Doc when the observer was attached (a dossier joined
+      // through a share link, a rebuilt Y.Doc) never went through it: rewrite
+      // the copy once when its row counts differ from the Y.Doc.
+      void reconcileDexieMirror(id, get).catch((err) => onPersistFailure(err, 'dexie.reconcile'));
 
       // In shared mode, schedule safety re-syncs to catch data that arrives
       // after the initial Y.Doc read. This covers:
