@@ -21,6 +21,7 @@ import { appUrl } from '../utils/basePath';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
+const messageYjsSyncStep1 = 0;
 const messageYjsUpdate = 2;
 
 // Storage key for signaling server URL
@@ -404,6 +405,20 @@ class SyncService {
     });
   }
 
+  /**
+   * Sends our state vector (sync step 1) to the room: peers answer, through
+   * the y-websocket protocol, with exactly the updates we do not have.
+   */
+  private requestMissingUpdates(): void {
+    const ws = this.websocketProvider?.ws;
+    if (!this.ydoc || !ws || ws.readyState !== WebSocket.OPEN) return;
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, messageSync);
+    encoding.writeVarUint(encoder, messageYjsSyncStep1);
+    encoding.writeVarUint8Array(encoder, Y.encodeStateVector(this.ydoc));
+    ws.send(encoding.toUint8Array(encoder));
+  }
+
   // ============================================================================
   // WEBSOCKET CONNECTION
   // ============================================================================
@@ -534,6 +549,15 @@ class SyncService {
         // When peer count drops to 0 (we're alone), mark sync as complete
         if (peerCount === 0 && previousPeerCount > 0) {
           this.setState({ syncing: false });
+        }
+
+        // Someone joined: ask for what they have and we lack. The relay only
+        // forwards messages, so the newcomer's own sync request reaches us
+        // but nobody asks for theirs: edits made before connecting (offline,
+        // or during a reload) would never arrive, and every later edit of
+        // theirs would wait forever on them.
+        if (peerCount > previousPeerCount) {
+          this.requestMissingUpdates();
         }
 
         // When peer count increases (someone joined), re-broadcast our state

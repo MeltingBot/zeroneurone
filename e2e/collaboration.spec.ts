@@ -162,13 +162,23 @@ test('two peers editing at once converge', async ({ browser }) => {
     }, { timeout: 15_000 }).toBe(true);
   }
 
-  // ── B reloads: same elements and links from its local copy and the relay ─
-  // Tab membership is left out here: after a reload, elements that belonged
-  // to no tab (B's paste) show up in a tab on B only. Seen on v2.73.0 as well,
-  // to be looked at on its own (claudedocs/TODO.md).
+  // ── B reloads: same state on both sides, nothing left pending ───────────
+  // On open, elements in no tab join the first tab (self-healing, here B's
+  // paste): that write must reach A too. It used to stay blocked there,
+  // waiting on edits B made before reconnecting, which nobody asked for.
   await b.reload();
   await waitForAppLoad(b).catch(() => {});
   await b.waitForSelector('.react-flow__node', { timeout: 120_000 });
-  const contentOnly = (f: Awaited<ReturnType<typeof fingerprint>>) => JSON.stringify({ elements: f.elements, links: f.links });
-  await expect.poll(async () => contentOnly(await fingerprint(b)) === contentOnly(final), { timeout: 60_000 }).toBe(true);
+  const content = (f: Awaited<ReturnType<typeof fingerprint>>) => JSON.stringify({ elements: f.elements, links: f.links });
+  await expect.poll(async () => content(await fingerprint(b)) === content(final), { timeout: 60_000 }).toBe(true);
+  await expect.poll(async () => JSON.stringify(await fingerprint(b)) === JSON.stringify(await fingerprint(a)),
+    { timeout: 30_000 }).toBe(true);
+  for (const page of [a, b]) {
+    const pending = await page.evaluate(async () => {
+      const { syncService } = await import('/src/services/syncService.ts');
+      const ydoc = syncService.getYDoc() as unknown as { store: { pendingStructs: unknown; pendingDs: unknown } };
+      return ydoc.store.pendingStructs !== null || ydoc.store.pendingDs !== null;
+    });
+    expect(pending).toBe(false);
+  }
 });
