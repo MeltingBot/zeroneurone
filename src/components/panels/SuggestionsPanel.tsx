@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TagCombobox } from '../modals/TagCombobox';
 import { revealElement } from '../../utils/revealElement';
-import { Check, ChevronDown, ChevronUp, RotateCcw, Search, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Loader2, RotateCcw, Search, X } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
 import { MAX_STAYS, MEETING_WINDOWS, NEARBY_RADII, PLACE_RADII } from '../../stores/suggestionsStore';
 import { foldKey, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
@@ -297,6 +297,21 @@ export function SuggestionsPanel() {
     </div>
   );
   const shown = sorted?.slice(0, rowLimit) ?? [];
+  // The analysis runs on the main thread: paint the busy state first, then
+  // compute. Two frames: the first schedules the paint, the second runs after it.
+  const [analyzing, setAnalyzing] = useState(false);
+  const runAnalysis = useCallback(() => {
+    setChecked(new Set());
+    setAnalyzing(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try {
+        analyze(null);
+      } finally {
+        setAnalyzing(false);
+      }
+    }));
+  }, [analyze]);
+
   const checkedIds = shown.filter((s) => checked.has(s.id)).map((s) => s.id);
   const allChecked = shown.length > 0 && checkedIds.length === shown.length;
   // Bulk buttons from two rows on: a single row already has its own buttons
@@ -306,12 +321,14 @@ export function SuggestionsPanel() {
     <div className="flex flex-col h-full">
       <div className="p-3 space-y-2 border-b border-border-default">
         <button
-          onClick={() => { setChecked(new Set()); analyze(null); }}
-          disabled={elements.length < 2}
+          onClick={runAnalysis}
+          disabled={elements.length < 2 || analyzing}
+          aria-busy={analyzing}
           data-testid="suggestions-analyze"
-          className="w-full px-3 py-1.5 text-sm rounded border border-border-default text-text-primary bg-bg-secondary hover:bg-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded border border-border-default text-text-primary bg-bg-secondary hover:bg-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t('suggestions.analyze')}
+          {analyzing && <Loader2 size={14} className="animate-spin" />}
+          {analyzing ? t('suggestions.analyzing') : t('suggestions.analyze')}
         </button>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary">
           {([

@@ -651,6 +651,7 @@
   },
   "suggestions": {
     "analyze": "Analisar o dossiê",
+    "analyzing": "Analisando…",
     "scope": "Limitado à seleção",
     "wholeDossier": "Todo o dossiê",
     "none": "Nenhuma sugestão",

@@ -651,6 +651,7 @@
   },
   "suggestions": {
     "analyze": "Akte analysieren",
+    "analyzing": "Analyse läuft…",
     "scope": "Auf Auswahl beschränkt",
     "wholeDossier": "Ganze Akte",
     "none": "Keine Vorschläge",

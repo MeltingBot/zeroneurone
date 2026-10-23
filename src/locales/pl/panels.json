@@ -651,6 +651,7 @@
   },
   "suggestions": {
     "analyze": "Analizuj sprawę",
+    "analyzing": "Analizowanie…",
     "scope": "Ograniczone do zaznaczenia",
     "wholeDossier": "Cała sprawa",
     "none": "Brak sugestii",

@@ -651,6 +651,7 @@
   },
   "suggestions": {
     "analyze": "Analitzar l'expedient",
+    "analyzing": "Anàlisi…",
     "scope": "Limitat a la selecció",
     "wholeDossier": "Tot l'expedient",
     "none": "Cap suggeriment",

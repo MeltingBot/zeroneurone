@@ -665,6 +665,7 @@
   },
   "suggestions": {
     "analyze": "Analyze dossier",
+    "analyzing": "Analyzing…",
     "scope": "Limited to selection",
     "wholeDossier": "Whole dossier",
     "none": "No suggestions",

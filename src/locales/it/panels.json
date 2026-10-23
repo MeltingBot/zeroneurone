@@ -652,6 +652,7 @@
   },
   "suggestions": {
     "analyze": "Analizza il fascicolo",
+    "analyzing": "Analisi in corso…",
     "scope": "Limitato alla selezione",
     "wholeDossier": "Tutto il fascicolo",
     "none": "Nessun suggerimento",

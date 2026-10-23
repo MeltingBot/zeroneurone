@@ -666,6 +666,7 @@
   },
   "suggestions": {
     "analyze": "Analyser le dossier",
+    "analyzing": "Analyse…",
     "scope": "Limité à la sélection",
     "wholeDossier": "Tout le dossier",
     "none": "Aucune suggestion",

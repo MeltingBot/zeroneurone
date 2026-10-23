@@ -651,6 +651,7 @@
   },
   "suggestions": {
     "analyze": "Dossier analyseren",
+    "analyzing": "Analyseren…",
     "scope": "Beperkt tot selectie",
     "wholeDossier": "Hele dossier",
     "none": "Geen suggesties",
