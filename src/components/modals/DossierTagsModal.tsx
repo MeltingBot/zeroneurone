@@ -85,7 +85,7 @@ export function DossierTagsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow"
+        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow flex flex-col max-h-[calc(100dvh-2rem)]"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
@@ -105,7 +105,7 @@ export function DossierTagsModal({
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 overflow-y-auto min-h-0 space-y-4">
           {/* Dossier name */}
           <div className="text-xs text-text-secondary">
             {dossier.name}
