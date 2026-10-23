@@ -125,6 +125,7 @@ Dans un onglet, tout porte sur **ses elements** :
 |----------------|-----------------------------|
 | **Requetes et filtres** | Resultats, compteurs, **Selectionner** et **Inverser** se limitent aux elements de l'onglet. La requete est relancee quand on change d'onglet |
 | **Arranger** | Seuls les elements de l'onglet bougent, autour de leur position actuelle. Le resultat est place sans chevaucher les autres elements du dossier : la vue **Tous** reste lisible |
+| **Analyses** | Clusters, centralite, ponts, isoles, chemins et cycles du panneau Analyses portent sur l'onglet. « Trouver les chemins » depuis le clic droit cherche dans tout le dossier |
 | **Compteurs** | La barre du canvas affiche le nombre d'elements de l'onglet et de liens entre eux |
 | **Extensions** (OneNeurone...) | Recoivent les elements de l'onglet |
 

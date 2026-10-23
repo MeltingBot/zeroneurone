@@ -23,7 +23,7 @@ import {
   Ungroup,
 } from 'lucide-react';
 import { computeElementDimensions } from '../../utils/elementDimensions';
-import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore } from '../../stores';
+import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
@@ -94,17 +94,32 @@ export function InsightsPanel() {
   // changes neither its clusters, its bridges nor its centrality. Keying the
   // recompute on the structure alone avoids relaunching a full analysis on
   // every drag — the dominant source of recomputes on a large dossier.
+  // In a canvas tab, the analysis covers its members and the links between them
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const analyzed = useMemo(() => {
+    if (activeTabId === null) return { elements, links };
+    return {
+      elements: elements.filter((el) => tabMemberSet.has(el.id)),
+      links: links.filter((l) => tabMemberSet.has(l.fromId) && tabMemberSet.has(l.toId)),
+    };
+  }, [activeTabId, tabMemberSet, elements, links]);
+
   const structureKey = useMemo(
-    () => graphStructureSignature(elements, links),
-    [elements, links]
+    () => graphStructureSignature(analyzed.elements, analyzed.links),
+    [analyzed]
   );
 
   // Auto-compute insights when the structure changes (debounced)
   useEffect(() => {
-    if (elements.length === 0) return;
+    // Empty tab: drop the results of the previous one
+    if (analyzed.elements.length === 0) {
+      useInsightsStore.getState().clear();
+      return;
+    }
 
     const timer = setTimeout(() => {
-      computeInsights(elements, links);
+      computeInsights(analyzed.elements, analyzed.links);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -453,7 +468,7 @@ export function InsightsPanel() {
     );
   }, [elements, i18n.language]);
 
-  const hasData = elements.length > 0;
+  const hasData = analyzed.elements.length > 0;
   const hasInsights =
     clusters.length > 0 ||
     centrality.length > 0 ||
@@ -494,7 +509,7 @@ export function InsightsPanel() {
             {!pathMode ? (
               <button
                 onClick={handleStartPathFinding}
-                disabled={elements.length < 2}
+                disabled={analyzed.elements.length < 2}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-bg-secondary hover:bg-bg-tertiary border border-border-default rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Route size={14} />
@@ -661,7 +676,7 @@ export function InsightsPanel() {
             {!cycleMode ? (
               <button
                 onClick={handleStartCycles}
-                disabled={elements.length < 3}
+                disabled={analyzed.elements.length < 3}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-bg-secondary hover:bg-bg-tertiary border border-border-default rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RotateCw size={14} />

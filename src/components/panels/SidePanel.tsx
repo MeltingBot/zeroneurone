@@ -62,6 +62,10 @@ export function SidePanel() {
   const setPanelSide = useUIStore((s) => s.setPanelSide);
   const activeTab = useUIStore((s) => s.sidePanelTab) as TabId;
   const setActiveTab = useUIStore((s) => s.setSidePanelTab);
+  const panelTabOrder = useUIStore((s) => s.panelTabOrder);
+  const setPanelTabOrder = useUIStore((s) => s.setPanelTabOrder);
+  const [draggedPanelTab, setDraggedPanelTab] = useState<string | null>(null);
+  const [panelTabDropTarget, setPanelTabDropTarget] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [width, setWidth] = useState(() => {
     const stored = localStorage.getItem(WIDTH_STORAGE_KEY);
@@ -210,13 +214,13 @@ export function SidePanel() {
     }
   }, [panelPlugins, activeTab]);
 
-  const tabs: Tab[] = [
+  const allTabs: Tab[] = [
     { id: 'detail', label: t('tabs.detail'), icon: Info },
     { id: 'insights', label: t('tabs.insights'), icon: Network, badge: insightsActive },
     { id: 'suggestions', label: t('tabs.suggestions'), icon: Lightbulb },
     { id: 'filters', label: t('tabs.filters'), icon: Filter, badge: filtersActive },
     { id: 'query', label: t('tabs.query'), icon: Code2, badge: queryFilterActive },
-    ...(isCanvasMode ? [{ id: 'views' as TabId, label: t('tabs.views'), icon: Eye }] : []),
+    { id: 'views', label: t('tabs.views'), icon: Eye },
     { id: 'report', label: t('tabs.report'), icon: FileText },
     ...panelPlugins.map((p) => ({
       id: p.id as TabId,
@@ -224,6 +228,33 @@ export function SidePanel() {
       icon: icons[p.icon as keyof typeof icons] || Info,
     })),
   ];
+  // The user's order first; tabs not in it (a new plugin) keep theirs, after
+  const rankOf = (id: string, natural: number) => {
+    const i = panelTabOrder.indexOf(id);
+    return i >= 0 ? i : panelTabOrder.length + natural;
+  };
+  const orderedTabs = allTabs
+    .map((tab, natural) => ({ tab, rank: rankOf(tab.id, natural) }))
+    .sort((a, b) => a.rank - b.rank)
+    .map(({ tab }) => tab);
+  // Views only make sense on the canvas
+  const tabs = orderedTabs.filter((tab) => tab.id !== 'views' || isCanvasMode);
+
+  // Drag a tab icon onto another: it takes its place. The whole order is
+  // saved, hidden tabs (Views outside the canvas) included.
+  const handleTabDrop = (targetId: string) => {
+    const draggedId = draggedPanelTab;
+    setDraggedPanelTab(null);
+    setPanelTabDropTarget(null);
+    if (!draggedId || draggedId === targetId) return;
+    const ids = orderedTabs.map((tab) => tab.id as string);
+    const from = ids.indexOf(draggedId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, draggedId);
+    setPanelTabOrder(ids);
+  };
 
   // Render detail content based on selection
   const renderDetailContent = () => {
@@ -436,10 +467,32 @@ export function SidePanel() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   title={tab.label}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', tab.id);
+                    setDraggedPanelTab(tab.id);
+                  }}
+                  onDragOver={(e) => {
+                    if (!draggedPanelTab) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (panelTabDropTarget !== tab.id) setPanelTabDropTarget(tab.id);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleTabDrop(tab.id);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedPanelTab(null);
+                    setPanelTabDropTarget(null);
+                  }}
                   className={`relative flex items-center gap-1 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                     isActive
                       ? 'bg-accent/10 text-accent px-2'
                       : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary px-1.5'
+                  } ${draggedPanelTab === tab.id ? 'opacity-50' : ''} ${
+                    panelTabDropTarget === tab.id && draggedPanelTab !== tab.id ? 'outline outline-1 outline-accent' : ''
                   }`}
                 >
                   <Icon size={14} />

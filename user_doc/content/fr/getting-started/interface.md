@@ -41,6 +41,8 @@ Le panneau unique regroupe tous les onglets :
 | **Vues** | Sauvegarder/charger des configurations |
 | **Rapport** | Rédiger et exporter un rapport |
 
+**Glissez une icône d'onglet** sur une autre, dans l'en-tête du panneau, pour changer l'ordre. Il est mémorisé ; les onglets ajoutés ensuite (extensions) se placent à la fin.
+
 Dans l'onglet **Détail**, les sections ouvertes ou fermées restent dans le même état d'un élément à l'autre (et d'un lien à l'autre), ce qui permet de comparer rapidement les valeurs.
 
 #### Position du panneau

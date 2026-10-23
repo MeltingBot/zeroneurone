@@ -41,6 +41,8 @@ The unified panel contains all tabs:
 | **Views** | Save/load configurations |
 | **Report** | Write and export reports |
 
+**Drag a tab icon** onto another, in the panel header, to change the order. It is remembered; tabs added later (extensions) go at the end.
+
 In the **Detail** tab, sections you open or close stay that way from one element to the next (and from one link to the next), so values can be compared quickly.
 
 #### Panel Position

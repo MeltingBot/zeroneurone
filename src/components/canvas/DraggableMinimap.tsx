@@ -21,10 +21,25 @@ const DEFAULT_HEIGHT = 120;
 const HANDLE_HEIGHT = 20;
 const INITIAL_MARGIN = 12;
 
+/**
+ * Where the minimap sits: a distance from the nearest corner's two edges.
+ * Anchored to the right (or bottom), it keeps its distance to that edge when
+ * the canvas is resized, e.g. when the side panel is widened.
+ */
+interface MinimapAnchor {
+  h: 'left' | 'right';
+  x: number;
+  v: 'top' | 'bottom';
+  y: number;
+}
+
+const TOTAL_HEIGHT = DEFAULT_HEIGHT + HANDLE_HEIGHT;
+
 export function DraggableMinimap() {
   const { t } = useTranslation('pages');
   const containerRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [anchor, setAnchor] = useState<MinimapAnchor>({ h: 'right', x: INITIAL_MARGIN, v: 'bottom', y: INITIAL_MARGIN });
+  const [parentSize, setParentSize] = useState<{ width: number; height: number } | null>(null);
   const isDraggingRef = useRef(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const showMinimap = useUIStore((state) => state.showMinimap);
@@ -32,18 +47,16 @@ export function DraggableMinimap() {
   const themeMode = useUIStore((state) => state.themeMode);
   const isDark = themeMode === 'dark';
 
-  // Initialize position to bottom-right on mount
+  // Follow the canvas size, to keep the minimap inside it
   useEffect(() => {
-    if (position !== null) return;
     const parent = containerRef.current?.parentElement;
-    if (parent) {
-      const rect = parent.getBoundingClientRect();
-      setPosition({
-        x: rect.width - DEFAULT_WIDTH - INITIAL_MARGIN,
-        y: rect.height - DEFAULT_HEIGHT - HANDLE_HEIGHT - INITIAL_MARGIN,
-      });
-    }
-  }, [position]);
+    if (!parent) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setParentSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+    });
+    observer.observe(parent);
+    return () => observer.disconnect();
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -67,17 +80,19 @@ export function DraggableMinimap() {
       if (!parent) return;
 
       const parentRect = parent.getBoundingClientRect();
-      const totalWidth = DEFAULT_WIDTH;
-      const totalHeight = DEFAULT_HEIGHT + HANDLE_HEIGHT;
+      // Top-left corner, constrained within the canvas
+      const left = Math.max(0, Math.min(e.clientX - dragOffsetRef.current.x, parentRect.width - DEFAULT_WIDTH));
+      const top = Math.max(0, Math.min(e.clientY - dragOffsetRef.current.y, parentRect.height - TOTAL_HEIGHT));
+      const right = parentRect.width - left - DEFAULT_WIDTH;
+      const bottom = parentRect.height - top - TOTAL_HEIGHT;
 
-      let newX = e.clientX - dragOffsetRef.current.x;
-      let newY = e.clientY - dragOffsetRef.current.y;
-
-      // Constrain within parent bounds
-      newX = Math.max(0, Math.min(newX, parentRect.width - totalWidth));
-      newY = Math.max(0, Math.min(newY, parentRect.height - totalHeight));
-
-      setPosition({ x: newX, y: newY });
+      // Anchor to the nearest corner
+      setAnchor({
+        h: right < left ? 'right' : 'left',
+        x: right < left ? right : left,
+        v: bottom < top ? 'bottom' : 'top',
+        y: bottom < top ? bottom : top,
+      });
     };
 
     const handleMouseUp = () => {
@@ -92,6 +107,10 @@ export function DraggableMinimap() {
     };
   }, []);
 
+  // Canvas narrower than the stored distance: stay inside it
+  const x = parentSize ? Math.min(anchor.x, Math.max(0, parentSize.width - DEFAULT_WIDTH)) : anchor.x;
+  const y = parentSize ? Math.min(anchor.y, Math.max(0, parentSize.height - TOTAL_HEIGHT)) : anchor.y;
+
   const nodeColor = useCallback((node: { data?: { element?: { visual?: { color?: string } } } }) => {
     const color = node.data?.element?.visual?.color;
     const fallback = isDark ? '#64748b' : '#94a3b8';
@@ -101,18 +120,13 @@ export function DraggableMinimap() {
     return color;
   }, [isDark]);
 
-  if (position === null) {
-    // Render invisible to measure parent, will re-render with position
-    return <div ref={containerRef} style={{ position: 'absolute', visibility: 'hidden' }} />;
-  }
-
   return (
     <div
       ref={containerRef}
       style={{
         position: 'absolute',
-        left: position.x,
-        top: position.y,
+        [anchor.h]: x,
+        [anchor.v]: y,
         width: DEFAULT_WIDTH,
         display: showMinimap ? undefined : 'none',
       }}

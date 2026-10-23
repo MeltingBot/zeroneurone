@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.75.3
+
+### Améliorations
+
+- **Analyses limitées à l'onglet** — dans un onglet, clusters, centralité,
+  ponts, isolés, doublons, chemins et cycles du panneau Analyses portent sur
+  ses éléments et les liens entre eux. Relancées au changement d'onglet.
+- **Ordre des onglets du panneau** — glisser une icône (Détails, Analyses,
+  Filtres...) sur une autre change l'ordre, mémorisé.
+
+### Corrections
+
+- **Minimap cachée par le panneau** — elle s'accroche au coin le plus proche
+  et garde sa distance au bord quand on élargit le panneau ou la fenêtre.
+
 ## 2.75.2
 
 ### Recherche

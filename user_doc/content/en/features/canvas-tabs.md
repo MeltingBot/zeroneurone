@@ -90,6 +90,7 @@ Inside a tab, everything applies to **its elements**:
 |---------|-------------------|
 | **Queries and filters** | Results, counts, **Select** and **Invert** only cover the tab's elements. The query runs again when you switch tabs |
 | **Arrange** | Only the tab's elements move, around their current position. The result is placed clear of the other elements of the dossier, so the **All** view stays readable |
+| **Insights** | Clusters, centrality, bridges, isolated nodes, paths and cycles in the Insights panel cover the tab. "Find paths" from the right-click menu searches the whole dossier |
 | **Counts** | The canvas toolbar shows the number of elements in the tab and of links between them |
 | **Extensions** (OneNeurone...) | Receive the tab's elements |
 

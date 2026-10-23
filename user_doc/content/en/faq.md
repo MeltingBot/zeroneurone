@@ -196,7 +196,7 @@ A photo with **GPS coordinates**? The element lands straight on the map. Clicked
 
 ### Can I move the side panel?
 
-Yes. Position button in the panel header — menu with right, bottom, left or detached window. The choice is remembered (except detached mode).
+Yes. Position button in the panel header — menu with right, bottom, left or detached window. The choice is remembered (except detached mode). Its tabs can be reordered too: drag an icon onto another.
 
 ---
 
