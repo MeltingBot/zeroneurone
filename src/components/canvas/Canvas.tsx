@@ -1879,6 +1879,45 @@ export function Canvas() {
   // local nodes during drag for smooth visual updates
   const displayNodes = isDraggingRef.current ? localNodes : nodes;
 
+  // Many nodes leaving at once (switching to a smaller tab): React Flow drops
+  // them from its store before their components unmount, and each still
+  // subscribed component then reads a missing node and throws, an error React
+  // swallows. At 10 000 nodes that is most of a second. So they leave in two
+  // renders: first kept but hidden (unmounted cleanly), then removed. Nodes
+  // arriving wait for the second render too: placed among thousands of
+  // siblings being removed, each insertion scans them.
+  const RETIRE_IN_TWO_STEPS = 500;
+  const lastFlowNodesRef = useRef<Node[]>([]);
+  const [retireTick, setRetireTick] = useState(0);
+  const flowNodes = useMemo(() => {
+    const last = lastFlowNodesRef.current;
+    let result = displayNodes;
+    // Cheap guard first: only a large drop in count can hide a large exit.
+    if (displayNodes.length + RETIRE_IN_TWO_STEPS <= last.length) {
+      const kept = new Set(displayNodes.map((n) => n.id));
+      const leaving: Node[] = [];
+      for (const n of last) {
+        if (!n.hidden && !kept.has(n.id)) leaving.push({ ...n, hidden: true, selected: false });
+      }
+      if (leaving.length >= RETIRE_IN_TWO_STEPS) {
+        // Same order as before for the nodes that stay: a reordered node is
+        // moved in the DOM, and each move scans its siblings.
+        const next = new Map(displayNodes.map((n) => [n.id, n]));
+        const leavingById = new Map(leaving.map((n) => [n.id, n]));
+        result = last.flatMap((n) => next.get(n.id) ?? leavingById.get(n.id) ?? []);
+      }
+    }
+    lastFlowNodesRef.current = result;
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayNodes, retireTick]);
+  const hasRetiringNodes = flowNodes !== displayNodes;
+  useEffect(() => {
+    if (!hasRetiringNodes) return;
+    const id = requestAnimationFrame(() => setRetireTick((t) => t + 1));
+    return () => cancelAnimationFrame(id);
+  }, [hasRetiringNodes, flowNodes]);
+
   // Track node positions in a ref (updated every frame, but doesn't trigger re-renders)
   const nodePositionsRef = useRef(new Map<string, Position>());
   // Version counter to trigger edge recomputation on drag-end / structural changes
@@ -4876,7 +4915,7 @@ export function Canvas() {
           }}
         >
           <ReactFlow
-            nodes={displayNodes}
+            nodes={flowNodes}
             edges={edges}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}

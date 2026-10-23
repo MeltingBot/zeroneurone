@@ -87,7 +87,8 @@ test('a new tab can be made from the selection', async ({ page }) => {
   // elements selected), the one a rubber-band selection leads to.
   const ids3 = await page.evaluate(async () => {
     (await import('/src/stores/tabStore.ts')).useTabStore.getState().setActiveTab(null);
-    await new Promise((r) => setTimeout(r, 500));
+    // Let the canvas settle on "All" (no ghost left on screen)
+    await new Promise((r) => setTimeout(r, 1500));
     const ids = [...document.querySelectorAll('.react-flow__node')].slice(0, 4).map((n) => n.getAttribute('data-id')!);
     const sel = (await import('/src/stores/selectionStore.ts')).useSelectionStore;
     sel.getState().selectElements(ids);

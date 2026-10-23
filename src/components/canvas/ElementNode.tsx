@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { Handle, Position, NodeResizer, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
 import { LOW_DETAIL_HANDLE_ID, requestHandleMeasure, takeEstimatedHandles } from './lowDetailHandles';
 import { Loader2, Gauge } from 'lucide-react';
@@ -96,10 +97,10 @@ function isLikelyCountryCode(value: string): boolean {
   return /^[A-Z]{2}$/i.test(value.trim());
 }
 
-function ElementNodeComponent({ data }: NodeProps) {
+function FullElementNode({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, isLowDetail, hasLinks, activeEvents } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, activeEvents } = nodeData;
   const confidenceBadge = showConfidenceIndicator
     ? getEvaluationBadge(element.confidence, element.evaluation, evaluationModel ?? 'zeroneurone')
     : null;
@@ -225,14 +226,6 @@ function ElementNodeComponent({ data }: NodeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [element.visual.customWidth, element.visual.customHeight, element.visual.shape, element.label, baseSize, hasThumbnail]);
 
-  // Shape styles with sketchy borders
-  const shapeStyles: Record<string, string> = {
-    circle: 'sketchy-circle',
-    square: 'sketchy-border',
-    diamond: 'sketchy-border rotate-45',
-    rectangle: 'sketchy-border',
-    hexagon: 'sketchy-hexagon',
-  };
 
   // Handle visibility: show when hovered or selected
   const handleOpacity = isHovered || isSelected ? 'opacity-100' : 'opacity-0';
@@ -315,47 +308,9 @@ function ElementNodeComponent({ data }: NodeProps) {
   // Bounds estimated when the overview ended (node was off screen): measure
   // the real handles now that the node is mounted in full detail.
   const updateNodeInternals = useUpdateNodeInternals();
-  const fullDetail = !isLowDetail || !!isEditing;
   useEffect(() => {
-    if (fullDetail && takeEstimatedHandles(element.id)) requestHandleMeasure(element.id, updateNodeInternals);
-  }, [fullDetail, element.id, updateNodeInternals]);
-
-  // Zoomed far out, a node is a few pixels tall: its label, tags, badges,
-  // thumbnail and resizer are invisible but still cost DOM — the dominant
-  // expense when the whole graph is on screen. Render the shape alone.
-  // Handles are kept, reduced to one: React Flow anchors edges to them.
-  if (isLowDetail && !isEditing) {
-    return (
-      <div className={`relative ${isDimmed ? 'opacity-30' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
-        <div
-          className={`w-full h-full ${shapeStyles[element.visual.shape]} ${isSelected ? 'selection-ring' : ''}`}
-          style={{
-            backgroundColor: getThemeAwareColor(element.visual.color, themeMode === 'dark'),
-            borderWidth: element.visual.borderWidth ?? 2,
-            borderStyle: isGhost ? 'dashed' : (element.visual.borderStyle ?? 'solid'),
-            borderColor: themeMode === 'dark'
-              ? getThemeAwareColor(element.visual.borderColor, true)
-              : element.visual.borderColor,
-          }}
-        />
-        {/* Handles exist only to anchor edges. Zoomed this far out, edges come
-            without handle ids and attach to a node's first handle, so one
-            centred handle replaces eight (see lowDetailHandles.ts). An
-            unlinked node needs none. Link creation by dragging is impossible
-            at this zoom anyway. */}
-        {hasLinks && (
-          <Handle
-            type="source"
-            position={Position.Top}
-            id={LOW_DETAIL_HANDLE_ID}
-            isConnectable={false}
-            className="!opacity-0 !w-px !h-px !min-w-0 !min-h-0 !border-0"
-            style={{ top: '50%', left: '50%' }}
-          />
-        )}
-      </div>
-    );
-  }
+    if (takeEstimatedHandles(element.id)) requestHandleMeasure(element.id, updateNodeInternals);
+  }, [element.id, updateNodeInternals]);
 
   return (
     <div
@@ -600,7 +555,7 @@ function ElementNodeComponent({ data }: NodeProps) {
         className={`
           relative w-full h-full
           flex flex-col items-center justify-center overflow-hidden
-          ${shapeStyles[element.visual.shape]}
+          ${SHAPE_CLASSES[element.visual.shape]}
           ${isSelected ? 'selection-ring' : 'node-shadow'}
         `}
         style={{
@@ -955,6 +910,70 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   }
 
   return true;
+}
+
+/** Sketchy outline of each shape */
+const SHAPE_CLASSES: Record<string, string> = {
+  circle: 'sketchy-circle',
+  square: 'sketchy-border',
+  diamond: 'sketchy-border rotate-45',
+  rectangle: 'sketchy-border',
+  hexagon: 'sketchy-hexagon',
+};
+
+/**
+ * Zoomed far out, a node is a few pixels tall: its label, tags, badges,
+ * thumbnail and resizer are invisible but still cost DOM — the dominant
+ * expense when the whole graph is on screen. Render the shape alone, with no
+ * hook and no store subscription: at 10 000 nodes, the full component's
+ * twenty hooks (six store subscriptions each) are what mounting costs.
+ * Same footprint as the full render, so React Flow measures nothing new.
+ */
+function LowDetailElementNode({ data }: { data: ElementNodeData }) {
+  const { element, isSelected, isDimmed, isGhost, thumbnail, hasLinks } = data;
+  const dark = data.themeMode === 'dark';
+  const hasThumbnail = Boolean(thumbnail) && element.visual.hideMedia !== true;
+  const { width, height } = computeElementDimensions(
+    element.visual,
+    element.label || i18n.t('common:empty.unnamed'),
+    hasThumbnail,
+  );
+  return (
+    <div className={`relative ${isDimmed ? 'opacity-30' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
+      <div
+        className={`w-full h-full ${SHAPE_CLASSES[element.visual.shape]} ${isSelected ? 'selection-ring' : ''}`}
+        style={{
+          backgroundColor: getThemeAwareColor(element.visual.color, dark),
+          borderWidth: element.visual.borderWidth ?? 2,
+          borderStyle: isGhost ? 'dashed' : (element.visual.borderStyle ?? 'solid'),
+          borderColor: dark ? getThemeAwareColor(element.visual.borderColor, true) : element.visual.borderColor,
+        }}
+      />
+      {/* Handles exist only to anchor edges. Zoomed this far out, edges come
+          without handle ids and attach to a node's first handle, so one
+          centred handle replaces eight (see lowDetailHandles.ts). An unlinked
+          node needs none. Link creation by dragging is impossible at this
+          zoom anyway. */}
+      {hasLinks && (
+        <Handle
+          type="source"
+          position={Position.Top}
+          id={LOW_DETAIL_HANDLE_ID}
+          isConnectable={false}
+          className="!opacity-0 !w-px !h-px !min-w-0 !min-h-0 !border-0"
+          style={{ top: '50%', left: '50%' }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Picks the rendering by level of detail. No hook here: the two branches differ. */
+function ElementNodeComponent(props: NodeProps) {
+  const data = props.data as ElementNodeData;
+  return data.isLowDetail && !data.isEditing
+    ? <LowDetailElementNode data={data} />
+    : <FullElementNode {...props} />;
 }
 
 // Memoize to prevent re-renders during drag of other nodes
