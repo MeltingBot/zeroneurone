@@ -26,4 +26,13 @@ describe('avoidObstacles', () => {
       expect(locked.some((o) => overlaps(moved, o))).toBe(false);
     }
   });
+
+  it('goes right of all obstacles when no spot is free nearby', () => {
+    const node: Rect[] = [{ x: 0, y: 0, width: 100, height: 100 }];
+    const wall: Rect[] = [{ x: -50000, y: -50000, width: 100000, height: 100000 }];
+    const shift = avoidObstacles(node, wall);
+    const moved = { ...node[0], x: node[0].x + shift.x, y: node[0].y + shift.y };
+    expect(overlaps(moved, wall[0])).toBe(false);
+    expect(moved.x).toBeGreaterThan(50000);
+  });
 });

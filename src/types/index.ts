@@ -533,6 +533,9 @@ export interface ViewFilters {
   excludedDateProperties?: string[];
   /** Pairs of date properties read as one period (start → end) */
   dateRangeProperties?: { start: string; end: string }[];
+  /** Canvas tabs the "All" view keeps (members of at least one); empty = all.
+   *  Ignored inside a tab, which already narrows the views to its members. */
+  includeTabs?: string[];
 }
 
 // ============================================================================
@@ -690,6 +693,7 @@ export const DEFAULT_FILTERS: ViewFilters = {
   includedDateProperties: [],
   excludedDateProperties: [],
   dateRangeProperties: [],
+  includeTabs: [],
 };
 
 // Saturated colors for nodes - work well on both light and dark backgrounds

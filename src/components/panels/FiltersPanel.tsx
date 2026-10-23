@@ -17,7 +17,7 @@ import {
   Plus,
   Check,
 } from 'lucide-react';
-import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore } from '../../stores';
+import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore, useTabStore } from '../../stores';
 import { useFilterOutcome, useShownSelection } from '../../hooks/useFilterOutcome';
 import { ProgressiveList } from '../common/ProgressiveList';
 import type { Confidence, Element, Comment, EvaluationModel, ViewFilters } from '../../types';
@@ -241,6 +241,14 @@ export function FiltersPanel() {
   const { isolated } = useInsightsStore();
 
   const isActive = hasActiveFilters();
+  // Tabs filter: in the "All" view only (a tab already narrows the views)
+  const canvasTabs = useTabStore((s) => s.tabs);
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const includeTabs = filters.includeTabs ?? [];
+  const handleTabToggle = useCallback((tabId: string) => {
+    const current = useViewStore.getState().filters.includeTabs ?? [];
+    setFilters({ includeTabs: current.includes(tabId) ? current.filter((id) => id !== tabId) : [...current, tabId] });
+  }, [setFilters]);
   const hideFilteredOut = useUIStore((s) => s.hideFilteredOut);
   const evaluationModel = useEvaluationModel();
   const evaluationScale = getModelScale(evaluationModel);
@@ -386,7 +394,7 @@ export function FiltersPanel() {
           <div className="flex items-center gap-2">
             <Filter size={14} className="text-text-secondary" />
             <span className="text-sm font-medium text-text-primary">
-              {t('filters.elementsCount', { matching: matchingCount, total: elements.length })}
+              {t('filters.elementsCount', { matching: matchingCount, total: activeTabId !== null ? outcome.total : elements.length })}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -492,6 +500,37 @@ export function FiltersPanel() {
             )}
           </div>
         </div>
+
+        {/* Tabs filter ("All" view) */}
+        {activeTabId === null && canvasTabs.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-text-secondary">
+              {t('filters.sections.tabs')}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {canvasTabs.map((tab) => {
+                const isSelected = includeTabs.includes(tab.id);
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabToggle(tab.id)}
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
+                      isSelected
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+                    }`}
+                  >
+                    {tab.name}
+                    <span className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-text-tertiary'}`}>
+                      {tab.memberElementIds.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Tags filter */}
         <div className="space-y-1.5">

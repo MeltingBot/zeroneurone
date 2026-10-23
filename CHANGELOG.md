@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.75.0
+
+### Onglets : des zones de travail distinctes
+
+- **Requêtes et filtres limités à l'onglet** — dans un onglet, résultats,
+  compteurs, « Sélectionner » et « Inverser » ne portent plus que sur ses
+  éléments, au lieu de tout le dossier (une sélection par requête prenait des
+  éléments invisibles). La requête est relancée au changement d'onglet.
+- **Arranger dans un onglet** — seuls les éléments de l'onglet bougent, autour
+  de leur position, et le résultat est placé sans chevaucher le reste du
+  dossier : la vue « Tous » reste lisible. Le menu signale les éléments aussi
+  présents dans d'autres onglets, qui suivent l'arrangement. Une sélection
+  ne déplace que ses éléments de l'onglet.
+- **Filtre « Onglets »** — dans « Tous », le panneau Filtres permet de ne
+  garder que les éléments d'un ou plusieurs onglets, sur toutes les vues.
+- **Réordonner les onglets** par glisser-déposer dans la barre.
+- **Compteurs** — dans un onglet, la barre du canvas et le panneau Filtres
+  comptent ses éléments, plus ceux du dossier.
+- **Extensions** — dans un onglet, `filterOutcome()` renvoie ses éléments
+  (OneNeurone limite son contexte à l'onglet ouvert).
+
+### Lisibilité
+
+- **Résultats visibles en dézoom** — en vue d'ensemble, les éléments retenus
+  par un filtre ou une requête sont entourés d'un anneau de taille constante à
+  l'écran, et les autres plus estompés.
+- **Menu d'une sélection** — un clic droit sur un élément d'une sélection
+  multiple affiche « N sélectionnés » en en-tête, et non le nom d'un seul
+  élément.
+
 ## 2.74.1
 
 ### Corrections

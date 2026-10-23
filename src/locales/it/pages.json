@@ -268,7 +268,9 @@
           "description": "Organizza gli elementi per livelli (alberi, organigrammi)"
         }
       },
-      "scopeSelection": "Applicato solo a {{count}} elementi selezionati"
+      "scopeSelection": "Applicato solo a {{count}} elementi selezionati",
+      "sharedTabElements_one": "Include {{count}} elemento di un'altra scheda",
+      "sharedTabElements_other": "Include {{count}} elementi di altre schede"
     },
     "align": {
       "button": "Allinea",

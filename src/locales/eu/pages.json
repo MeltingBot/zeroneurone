@@ -268,7 +268,9 @@
           "description": "Elementuak mailaka antolatu (zuhaitzak, organogramak)"
         }
       },
-      "scopeSelection": "{{count}} hautatutako elementuetan bakarrik aplikatzen da"
+      "scopeSelection": "{{count}} hautatutako elementuetan bakarrik aplikatzen da",
+      "sharedTabElements_one": "Beste fitxa bateko elementu {{count}} barne",
+      "sharedTabElements_other": "Beste fitxetako {{count}} elementu barne"
     },
     "align": {
       "button": "Lerrokatu",

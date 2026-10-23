@@ -18,6 +18,7 @@ export function TabBar({ dossierId }: TabBarProps) {
   const addMembers = useTabStore((s) => s.addMembers);
   const renameTab = useTabStore((s) => s.renameTab);
   const deleteTab = useTabStore((s) => s.deleteTab);
+  const reorderTab = useTabStore((s) => s.reorderTab);
   const saveTabViewport = useTabStore((s) => s.saveTabViewport);
   const viewport = useViewStore((s) => s.viewport);
   const requestViewportChange = useViewStore((s) => s.requestViewportChange);
@@ -28,6 +29,9 @@ export function TabBar({ dossierId }: TabBarProps) {
   const [editValue, setEditValue] = useState('');
   const [contextMenu, setContextMenu] = useState<{ tabId: TabId; x: number; y: number } | null>(null);
   const [pendingDeleteTabId, setPendingDeleteTabId] = useState<TabId | null>(null);
+  // Drag to reorder: the tab dragged and the one it would take the place of
+  const [draggedTabId, setDraggedTabId] = useState<TabId | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<TabId | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +89,24 @@ export function TabBar({ dossierId }: TabBarProps) {
       renameTab(editingTabId, editValue.trim());
     }
     setEditingTabId(null);
+  };
+
+  // Dropped on another tab: take its place (after it when moving right,
+  // before it when moving left). Orders are renumbered 0..n-1; only the tabs
+  // whose rank changes are written.
+  const handleDrop = (targetId: TabId) => {
+    const draggedId = draggedTabId;
+    setDraggedTabId(null);
+    setDropTargetId(null);
+    if (!draggedId || draggedId === targetId) return;
+    const from = tabs.findIndex((tab) => tab.id === draggedId);
+    const to = tabs.findIndex((tab) => tab.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = tabs.filter((tab) => tab.id !== draggedId);
+    next.splice(to, 0, tabs[from]);
+    next.forEach((tab, rank) => {
+      if (tab.order !== rank) reorderTab(tab.id, rank);
+    });
   };
 
   const handleContextMenu = (e: React.MouseEvent, tabId: TabId) => {
@@ -174,6 +196,28 @@ export function TabBar({ dossierId }: TabBarProps) {
               onClose={tabs.length > 1 ? () => {
                 setPendingDeleteTabId(tab.id);
               } : undefined}
+              draggable={tabs.length > 1 && editingTabId === null}
+              isDragged={draggedTabId === tab.id}
+              isDropTarget={dropTargetId === tab.id && draggedTabId !== tab.id}
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', tab.id);
+                setDraggedTabId(tab.id);
+              }}
+              onDragOver={(e) => {
+                if (!draggedTabId) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dropTargetId !== tab.id) setDropTargetId(tab.id);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDrop(tab.id);
+              }}
+              onDragEnd={() => {
+                setDraggedTabId(null);
+                setDropTargetId(null);
+              }}
             />
           ))}
         </div>
@@ -233,6 +277,13 @@ interface TabButtonProps {
   onEditCommit?: () => void;
   editInputRef?: React.RefObject<HTMLInputElement | null>;
   onClose?: () => void;
+  draggable?: boolean;
+  isDragged?: boolean;
+  isDropTarget?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
 }
 
 function TabButton({
@@ -247,6 +298,13 @@ function TabButton({
   onEditCommit,
   editInputRef,
   onClose,
+  draggable,
+  isDragged,
+  isDropTarget,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: TabButtonProps) {
   // Focus input when entering edit mode
   useEffect(() => {
@@ -262,10 +320,15 @@ function TabButton({
         isActive
           ? 'bg-bg-secondary text-text-primary font-medium border border-border-default'
           : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
-      }`}
+      } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'outline outline-1 outline-accent' : ''}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
     >
       {isEditing ? (
         <input

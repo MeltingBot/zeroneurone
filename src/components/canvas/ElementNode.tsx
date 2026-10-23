@@ -327,7 +327,7 @@ function FullElementNode({ data }: NodeProps) {
         width,
         height,
         ...(isHighlighted && !isDimmed
-          ? { filter: 'drop-shadow(0 0 6px var(--color-accent)) drop-shadow(0 0 2px var(--color-accent))' }
+          ? { filter: 'drop-shadow(0 0 calc(6px * var(--zn-inv-zoom, 1)) var(--color-accent)) drop-shadow(0 0 2px var(--color-accent))' }
           : {}),
       }}
     >
@@ -930,7 +930,7 @@ const SHAPE_CLASSES: Record<string, string> = {
  * Same footprint as the full render, so React Flow measures nothing new.
  */
 function LowDetailElementNode({ data }: { data: ElementNodeData }) {
-  const { element, isSelected, isDimmed, isGhost, thumbnail, hasLinks } = data;
+  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, hasLinks } = data;
   const dark = data.themeMode === 'dark';
   const hasThumbnail = Boolean(thumbnail) && element.visual.hideMedia !== true;
   const { width, height } = computeElementDimensions(
@@ -939,7 +939,23 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
     hasThumbnail,
   );
   return (
-    <div className={`relative ${isDimmed ? 'opacity-30' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
+    <div className={`relative ${isDimmed ? 'opacity-15' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
+      {/* Kept by a filter or a query: a halo of constant on-screen size
+          (--zn-inv-zoom, set by the canvas) so the results stand out from afar */}
+      {isHighlighted && !isDimmed && (
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: '50%',
+            top: '50%',
+            width: `calc(${Math.max(width, height)}px + 16px * var(--zn-inv-zoom, 1))`,
+            height: `calc(${Math.max(width, height)}px + 16px * var(--zn-inv-zoom, 1))`,
+            transform: 'translate(-50%, -50%)',
+            border: 'calc(3px * var(--zn-inv-zoom, 1)) solid var(--color-accent)',
+            backgroundColor: 'color-mix(in srgb, var(--color-accent) 35%, transparent)',
+          }}
+        />
+      )}
       <div
         className={`w-full h-full ${SHAPE_CLASSES[element.visual.shape]} ${isSelected ? 'selection-ring' : ''}`}
         style={{

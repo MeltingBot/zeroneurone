@@ -12,6 +12,14 @@ import { DEFAULT_FILTERS } from '../types';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
 import { onPersistFailure } from '../utils/persistError';
+import { useTabStore } from './tabStore';
+
+/** The tabs filter counts in the "All" view only, and for tabs that still exist */
+function tabFilterApplies(includeTabs: string[] | undefined): boolean {
+  if (!includeTabs || includeTabs.length === 0) return false;
+  const { activeTabId, tabs } = useTabStore.getState();
+  return activeTabId === null && tabs.some((tab) => includeTabs.includes(tab.id));
+}
 
 interface TimelineState {
   zoom: number;
@@ -478,7 +486,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
       filters.dateTo !== null ||
       filters.hasGeo !== null ||
       (filters.includedDateProperties?.length ?? 0) > 0 ||
-      (filters.excludedDateProperties?.length ?? 0) > 0
+      (filters.excludedDateProperties?.length ?? 0) > 0 ||
+      tabFilterApplies(filters.includeTabs)
     );
   },
 

@@ -268,7 +268,11 @@
           "description": "Organizuje elementy według poziomów (drzewa, schematy organizacyjne)"
         }
       },
-      "scopeSelection": "Stosowane tylko do {{count}} wybranych elementów"
+      "scopeSelection": "Stosowane tylko do {{count}} wybranych elementów",
+      "sharedTabElements_one": "Zawiera {{count}} element z innej karty",
+      "sharedTabElements_few": "Zawiera {{count}} elementy z innych kart",
+      "sharedTabElements_many": "Zawiera {{count}} elementów z innych kart",
+      "sharedTabElements_other": "Zawiera {{count}} elementu z innych kart"
     },
     "align": {
       "button": "Wyrównaj",

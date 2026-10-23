@@ -17,6 +17,7 @@ import { parseFlexibleDate } from '../../utils';
 import { evaluationStrength, formatEvaluation, getModelScale, isInModel, sanitizeEvaluation } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
+import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
 
 type SortDirection = 'asc' | 'desc';
@@ -185,6 +186,7 @@ export function MatrixView() {
   const lastClickedRowRef = useRef<number>(-1);
 
   // Compute dimmed element IDs (same logic as Timeline/Map/Canvas)
+  const tabFilterIds = useTabFilterIds();
   const dimmedElementIds = useMemo(() => {
     let dimmed: Set<string>;
     if (insightsHighlightedIds.size > 0) {
@@ -199,7 +201,7 @@ export function MatrixView() {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
     } else {
-      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
     // ZNQuery filter: dim elements not matching the query
     if (queryFilterActive && queryMatchElementIds.size > 0) {
@@ -210,7 +212,7 @@ export function MatrixView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
 
   // Filter elements: exclude groups, annotations, hidden; respect tabs
   const visibleElements = useMemo(() => {

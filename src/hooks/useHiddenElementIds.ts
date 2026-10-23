@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useDossierStore, useQueryStore, useUIStore, useViewStore } from '../stores';
 import { getDimmedElementIds } from '../utils/filterUtils';
 import { useEvaluationModel } from './useEvaluationModel';
+import { useTabFilterIds } from './useTabFilterIds';
 
 /**
  * Elements a view leaves out: those hidden by hand, plus, when the user chose
@@ -17,9 +18,10 @@ export function useHiddenElementIds(): Set<string> {
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
   const evaluationModel = useEvaluationModel();
 
+  const tabFilterIds = useTabFilterIds();
   return useMemo(() => {
     if (!hideFilteredOut) return hiddenElementIds;
-    const hidden = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+    const hidden = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     if (queryFilterActive && queryMatchElementIds.size > 0) {
       for (const el of elements) {
         if (!queryMatchElementIds.has(el.id)) hidden.add(el.id);
@@ -28,5 +30,5 @@ export function useHiddenElementIds(): Set<string> {
     if (hidden.size === 0) return hiddenElementIds;
     for (const id of hiddenElementIds) hidden.add(id);
     return hidden;
-  }, [hideFilteredOut, hiddenElementIds, elements, filters, evaluationModel, queryFilterActive, queryMatchElementIds]);
+  }, [hideFilteredOut, hiddenElementIds, elements, filters, evaluationModel, queryFilterActive, queryMatchElementIds, tabFilterIds]);
 }

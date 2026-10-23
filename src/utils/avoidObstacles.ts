@@ -2,7 +2,8 @@
  * Shift for a freshly laid-out block so it does not cover fixed rectangles
  * (locked elements). The block moves as a whole, keeping its shape: candidate
  * offsets are tried on a square spiral around the original spot, nearest
- * first, until no node overlaps an obstacle.
+ * first, until no node overlaps an obstacle. If none is free, the block goes
+ * to the right of all the obstacles.
  */
 import type { Position } from '../types';
 import type { Rect } from './layoutScope';
@@ -13,7 +14,8 @@ export function avoidObstacles(nodes: Rect[], obstacles: Rect[]): Position {
   if (nodes.length === 0 || obstacles.length === 0) return { x: 0, y: 0 };
 
   // Spatial hash of the obstacles (inflated by the gap)
-  const cell = Math.max(200, ...obstacles.map((o) => Math.max(o.width, o.height) + GAP));
+  let cell = 200;
+  for (const o of obstacles) cell = Math.max(cell, Math.max(o.width, o.height) + GAP);
   const grid = new Map<string, Rect[]>();
   for (const o of obstacles) {
     const r = { x: o.x - GAP, y: o.y - GAP, width: o.width + 2 * GAP, height: o.height + 2 * GAP };
@@ -60,5 +62,8 @@ export function avoidObstacles(nodes: Rect[], obstacles: Rect[]): Position {
       if (!collides(c.x * step, c.y * step)) return { x: c.x * step, y: c.y * step };
     }
   }
-  return { x: 0, y: 0 };
+  // No free spot nearby: right of everything, always clear
+  let obstaclesMaxX = -Infinity;
+  for (const o of obstacles) obstaclesMaxX = Math.max(obstaclesMaxX, o.x + o.width);
+  return { x: obstaclesMaxX + 2 * GAP - minX, y: 0 };
 }

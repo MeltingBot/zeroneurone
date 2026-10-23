@@ -268,7 +268,9 @@
           "description": "Organitza els elements per nivells (arbres, organigrames)"
         }
       },
-      "scopeSelection": "Aplica només a {{count}} elements seleccionats"
+      "scopeSelection": "Aplica només a {{count}} elements seleccionats",
+      "sharedTabElements_one": "Inclou {{count}} element d'una altra pestanya",
+      "sharedTabElements_other": "Inclou {{count}} elements d'altres pestanyes"
     },
     "align": {
       "button": "Alinear",

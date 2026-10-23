@@ -1,4 +1,4 @@
-import type { Element, EvaluationModel, Link, ViewFilters } from '../types';
+import type { CanvasTab, Element, EvaluationModel, Link, TabId, ViewFilters } from '../types';
 import { matchesEvaluationFilters } from './evaluation';
 import { dateEndInclusive, datePropertyRules, elementDateIntervals, overlaps, toMinuteStart } from './temporalUtils';
 
@@ -95,13 +95,35 @@ export function linkShouldBeDimmed(
 }
 
 /**
+ * Elements kept by the tabs filter: members of at least one chosen tab.
+ * Null when it does not apply: nothing chosen, chosen tabs gone, or a tab is
+ * open (the views already show its members only).
+ */
+export function tabFilterElementIds(
+  filters: ViewFilters,
+  tabs: CanvasTab[],
+  activeTabId: TabId | null,
+): Set<string> | null {
+  const chosen = filters.includeTabs ?? [];
+  if (activeTabId !== null || chosen.length === 0) return null;
+  const chosenTabs = tabs.filter((tab) => chosen.includes(tab.id));
+  if (chosenTabs.length === 0) return null;
+  const ids = new Set<string>();
+  for (const tab of chosenTabs) for (const id of tab.memberElementIds) ids.add(id);
+  return ids;
+}
+
+/**
  * Get the set of element IDs that should be dimmed based on filters
+ *
+ * @param tabFilterIds Elements kept by the tabs filter (tabFilterElementIds), null if it does not apply
  */
 export function getDimmedElementIds(
   elements: Element[],
   filters: ViewFilters,
   hiddenElementIds: Set<string>,
-  evaluationModel: EvaluationModel = 'zeroneurone'
+  evaluationModel: EvaluationModel = 'zeroneurone',
+  tabFilterIds: ReadonlySet<string> | null = null,
 ): Set<string> {
   const dimmedIds = new Set<string>();
 
@@ -116,7 +138,8 @@ export function getDimmedElementIds(
       ((filters.evaluationSources?.length ?? 0) > 0 || (filters.evaluationInfos?.length ?? 0) > 0)) ||
     filters.dateFrom !== null ||
     filters.dateTo !== null ||
-    filters.hasGeo !== null;
+    filters.hasGeo !== null ||
+    tabFilterIds !== null;
 
   if (!hasActiveFilters) {
     return dimmedIds;
@@ -126,7 +149,7 @@ export function getDimmedElementIds(
     // Skip hidden elements
     if (hiddenElementIds.has(element.id)) continue;
 
-    if (!elementMatchesFilters(element, filters, evaluationModel)) {
+    if ((tabFilterIds && !tabFilterIds.has(element.id)) || !elementMatchesFilters(element, filters, evaluationModel)) {
       dimmedIds.add(element.id);
     }
   }

@@ -18,6 +18,7 @@ The **Filters** panel allows you to show or hide elements based on various crite
 |--------|-------------|
 | **Text search** | Filter by label or notes |
 | **Tags** | Include/exclude by tags |
+| **Tabs** | In **All**: keep only the elements of the ticked tabs |
 | **Confidence** | Minimum confidence threshold (ZeroNeurone model) |
 | **Grading** | Accepted source and information codes (Europol and Admiralty models) |
 | **Properties** | Elements having a specific property |

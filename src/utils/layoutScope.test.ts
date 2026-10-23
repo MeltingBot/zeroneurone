@@ -113,3 +113,31 @@ describe('buildLayoutScope with locked elements', () => {
     expect(ids(scope)).toEqual(['c2', 'c3']);
   });
 });
+
+describe('buildLayoutScope in a canvas tab', () => {
+  const ids = (scope: ReturnType<typeof buildLayoutScope>) => scope.elements.map((el) => el.id).sort();
+
+  it('moves only the tab members and turns every other block into an obstacle', () => {
+    const scope = buildLayoutScope(elements, links, new Set(), new Set(['a', 'b']));
+    expect(ids(scope)).toEqual(['a', 'b']);
+    // G (top-level block) is an obstacle; its children are not counted on their own
+    expect(scope.obstacles).toHaveLength(1);
+    expect(scope.obstacles[0]).toMatchObject({ x: 100, y: 100, width: 400, height: 300 });
+  });
+
+  it('ignores selected elements outside the tab', () => {
+    const scope = buildLayoutScope(elements, links, new Set(['a', 'b', 'G']), new Set(['a', 'b']));
+    expect(ids(scope)).toEqual(['a', 'b']);
+  });
+
+  it('falls back to the whole tab when fewer than 2 selected elements are members', () => {
+    const scope = buildLayoutScope(elements, links, new Set(['a', 'G']), new Set(['a', 'b']));
+    expect(ids(scope)).toEqual(['a', 'b']);
+  });
+
+  it('keeps unselected members clear as obstacles', () => {
+    const scope = buildLayoutScope(elements, links, new Set(['a', 'G']), new Set(['a', 'b', 'G']));
+    expect(ids(scope)).toEqual(['G', 'a']);
+    expect(scope.obstacles.map((o) => o.x)).toEqual([800]);
+  });
+});

@@ -117,6 +117,25 @@ Les modifications d'onglets (creation, renommage, ajout/retrait d'elements) appa
 
 ---
 
+## Requetes, filtres et disposition dans un onglet
+
+Dans un onglet, tout porte sur **ses elements** :
+
+| Fonctionnalite | Comportement dans un onglet |
+|----------------|-----------------------------|
+| **Requetes et filtres** | Resultats, compteurs, **Selectionner** et **Inverser** se limitent aux elements de l'onglet. La requete est relancee quand on change d'onglet |
+| **Arranger** | Seuls les elements de l'onglet bougent, autour de leur position actuelle. Le resultat est place sans chevaucher les autres elements du dossier : la vue **Tous** reste lisible |
+| **Compteurs** | La barre du canvas affiche le nombre d'elements de l'onglet et de liens entre eux |
+| **Extensions** (OneNeurone...) | Recoivent les elements de l'onglet |
+
+{{< hint warning >}}
+**Elements partages** : un element present dans plusieurs onglets n'a qu'une position. Arranger un onglet le deplace aussi dans les autres. Le menu **Arranger** l'indique (« Inclut N elements d'autres onglets »).
+{{< /hint >}}
+
+Dans **Tous**, le panneau **Filtres** propose un filtre **Onglets** : cochez un ou plusieurs onglets pour ne garder que leurs elements, dans toutes les vues (canvas, carte, timeline, matrice).
+
+---
+
 ## Interaction avec les autres fonctionnalites
 
 | Fonctionnalite | Comportement |

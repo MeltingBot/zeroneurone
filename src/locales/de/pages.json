@@ -268,7 +268,9 @@
           "description": "Ordnet Elemente nach Ebenen (Bäume, Organigramme)"
         }
       },
-      "scopeSelection": "Wird nur auf {{count}} ausgewählte Elemente angewendet"
+      "scopeSelection": "Wird nur auf {{count}} ausgewählte Elemente angewendet",
+      "sharedTabElements_one": "Enthält {{count}} Element aus einem anderen Tab",
+      "sharedTabElements_other": "Enthält {{count}} Elemente aus anderen Tabs"
     },
     "align": {
       "button": "Ausrichten",

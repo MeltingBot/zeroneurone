@@ -46,16 +46,22 @@ export interface Rect { x: number; y: number; width: number; height: number }
  * Build the layout scope.
  *
  * @param selectedIds Selection used as scope when it holds >= 2 elements;
- *                    otherwise the whole dossier is laid out.
+ *                    otherwise the whole dossier (or the pool) is laid out.
+ * @param pool        Members of the open canvas tab. Only they can move, and
+ *                    every other block becomes an obstacle, so that each tab
+ *                    keeps its own zone and the "All" view has no overlap.
  */
 export function buildLayoutScope(
   elements: Element[],
   links: Link[],
   selectedIds: ReadonlySet<string>,
+  pool?: ReadonlySet<string>,
 ): LayoutScope {
   const byId = new Map(elements.map((el) => [el.id, el]));
-  const useSelection = selectedIds.size >= 2;
-  const scoped = (useSelection ? elements.filter((el) => selectedIds.has(el.id)) : elements)
+  const candidates = pool ? elements.filter((el) => pool.has(el.id)) : elements;
+  const selectedCandidates = candidates.filter((el) => selectedIds.has(el.id));
+  const useSelection = selectedCandidates.length >= 2;
+  const scoped = (useSelection ? selectedCandidates : candidates)
     .filter((el) => !el.isPositionLocked);
 
   // Selection inside a single group: arrange the children within it.
@@ -120,8 +126,12 @@ export function buildLayoutScope(
     layoutLinks.push({ ...link, fromId: from, toId: to });
   }
 
+  // Obstacles: the locked blocks; in a tab, every block that does not move
+  const obstacleUnits = pool
+    ? new Set([...elementUnit.values()].filter((unit) => !unitIds.has(unit)))
+    : lockedUnits;
   const obstacles: Rect[] = [];
-  for (const id of lockedUnits) {
+  for (const id of obstacleUnits) {
     const el = byId.get(id);
     if (el) obstacles.push(rectOf(el.isGroup ? groupProxy(el) : el));
   }

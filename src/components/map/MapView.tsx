@@ -22,6 +22,7 @@ import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { TemporalEventsPopover } from '../common/TemporalEventsPopover';
 import { toLocalDateKey } from '../../utils/dates';
 import { useHoverPopover } from '../../hooks/useHoverPopover';
+import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { useFocusElementEvent } from '../../hooks/useFocusElementEvent';
 
 // Element with geo coordinates (resolved for a specific time)
@@ -512,6 +513,7 @@ export function MapView() {
   const tabGhostIds = useTabStore((s) => s.ghostIds);
 
   // Calculate dimmed element IDs based on filters, focus, and insights highlighting
+  const tabFilterIds = useTabFilterIds();
   const dimmedElementIds = useMemo(() => {
     let dimmed: Set<string>;
     if (insightsHighlightedIds.size > 0) {
@@ -526,7 +528,7 @@ export function MapView() {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
     } else {
-      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
     // ZNQuery canvas filter: dim elements not matching the query
     if (queryFilterActive && queryMatchElementIds.size > 0) {
@@ -537,7 +539,7 @@ export function MapView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
 
   // Extend dimming: tab ghost elements appear dimmed on map
   const effectiveDimmedIds = useMemo(() => {

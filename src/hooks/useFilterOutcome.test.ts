@@ -51,4 +51,10 @@ describe('computeFilterOutcome', () => {
     expect(o.total).toBe(3);
     expect(o.shownIds).not.toContain('x');
   });
+
+  it('counts and shows only the members of the open tab', () => {
+    const o = computeFilterOutcome(elements, links, personne, none, 'zeroneurone', false, none, none, new Set(['p1', 'o1']));
+    expect(o).toMatchObject({ total: 2, filterCount: 1 });
+    expect(o.shownIds).toEqual(['p1']);
+  });
 });

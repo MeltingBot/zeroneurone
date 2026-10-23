@@ -73,6 +73,7 @@ import { metadataService } from '../../services/metadataService';
 import { importService } from '../../services/importService';
 import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importCommit';
 import { withImportProgress } from '../../services/importProgress';
+import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { elementRepository } from '../../db/repositories/elementRepository';
 
 /** Capture tab membership for undo restore (tabId → elementIds[]) */
@@ -1174,6 +1175,7 @@ export function Canvas() {
   // Stabilized: returns the same Set reference if contents haven't changed,
   // preventing unnecessary cascading to nodes and edges useMemos.
   const prevDimmedRef = useRef(new Set<string>());
+  const tabFilterIds = useTabFilterIds();
   const dimmedElementIds = useMemo(() => {
     let newDimmed: Set<string>;
 
@@ -1196,7 +1198,7 @@ export function Canvas() {
       });
     } else {
       // Otherwise use filter-based dimming
-      newDimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+      newDimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
 
     // ZNQuery canvas filter: dim elements not matching the query
@@ -1228,7 +1230,7 @@ export function Canvas() {
     }
     prevDimmedRef.current = newDimmed;
     return newDimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, temporalClassification, canvasTemporal.showUndated]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, temporalClassification, canvasTemporal.showUndated, tabFilterIds]);
 
   // Emphasized (glow) element IDs: the positive "result set" of an active
   // narrowing — insights highlight, ZNQuery filter, or view filters. These are
@@ -4731,10 +4733,18 @@ export function Canvas() {
     return () => window.removeEventListener('paste', handlePaste);
   }, [viewport, pasteElements, currentDossier, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
 
+  // Halo scale at load and after a programmatic viewport change (fit, tab switch)
+  useEffect(() => {
+    reactFlowWrapper.current?.style.setProperty('--zn-inv-zoom', String(1 / Math.max(viewport.zoom, 0.01)));
+  }, [viewport.zoom]);
+
   // Handle viewport change
   const handleViewportChange = useCallback(
     ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       setViewport({ x, y, zoom });
+      // Halos keep their on-screen size: read by the nodes through CSS, so
+      // zooming re-renders nothing
+      reactFlowWrapper.current?.style.setProperty('--zn-inv-zoom', String(1 / Math.max(zoom, 0.01)));
       // Only re-render on a threshold crossing: setting the same value is a
       // no-op in React, so this stays free during a pan.
       setIsZoomedOut((prev) => {
@@ -4797,6 +4807,15 @@ export function Canvas() {
     [selectBoth, isRenderedPartOfSelection]
   );
 
+  // Toolbar counts: the dossier, or in a tab its members and the links between them
+  const toolbarCounts = useMemo(() => {
+    if (activeTabId === null) return { elements: elements.length, links: links.length };
+    let elementCount = 0;
+    for (const el of elements) if (tabMemberSet.has(el.id)) elementCount++;
+    let linkCount = 0;
+    for (const link of links) if (tabMemberSet.has(link.fromId) && tabMemberSet.has(link.toId)) linkCount++;
+    return { elements: elementCount, links: linkCount };
+  }, [activeTabId, tabMemberSet, elements, links]);
 
   return (
     <ReactFlowProvider>
@@ -4808,11 +4827,11 @@ export function Canvas() {
               <div className="flex items-center gap-2 text-xs text-text-secondary">
                 <span className="flex items-center gap-1">
                   <Box size={12} />
-                  {elements.length}
+                  {toolbarCounts.elements}
                 </span>
                 <span className="flex items-center gap-1">
                   <Link2 size={12} />
-                  {links.length}
+                  {toolbarCounts.links}
                 </span>
               </div>
               {selectedElementIds.size + selectedLinkIds.size > 0 && (
@@ -5079,6 +5098,7 @@ export function Canvas() {
               isGroup={!!elementMap.get(contextMenu.elementId)?.isGroup}
               isInGroup={!!elementMap.get(contextMenu.elementId)?.parentGroupId}
               hasMultipleSelected={selectedElementIds.size > 1}
+              selectedCount={selectedElementIds.size}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onDissolveGroup={handleDissolveGroup}
               onRemoveFromGroup={handleRemoveFromGroup}

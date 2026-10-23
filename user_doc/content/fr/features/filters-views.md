@@ -18,6 +18,7 @@ Le panneau **Filtres** permet d'afficher ou masquer des éléments selon différ
 |--------|-------------|
 | **Recherche texte** | Filtre par label ou notes |
 | **Tags** | Inclure/exclure par tags |
+| **Onglets** | Dans **Tous** : ne garder que les éléments des onglets cochés |
 | **Confiance** | Seuil minimum de confiance (modèle ZeroNeurone) |
 | **Cotation** | Codes source et information acceptés (modèles Europol et Amirauté) |
 | **Propriétés** | Éléments ayant une propriété spécifique |

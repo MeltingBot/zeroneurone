@@ -268,7 +268,9 @@
           "description": "Rangschikt elementen per niveau (bomen, organogrammen)"
         }
       },
-      "scopeSelection": "Toegepast op alleen {{count}} geselecteerde elementen"
+      "scopeSelection": "Toegepast op alleen {{count}} geselecteerde elementen",
+      "sharedTabElements_one": "Bevat {{count}} element uit een ander tabblad",
+      "sharedTabElements_other": "Bevat {{count}} elementen uit andere tabbladen"
     },
     "align": {
       "button": "Uitlijnen",

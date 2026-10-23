@@ -268,7 +268,11 @@
           "description": "Організовує елементи за рівнями (дерева, органіграми)"
         }
       },
-      "scopeSelection": "Застосовується лише до {{count}} вибраних елементів"
+      "scopeSelection": "Застосовується лише до {{count}} вибраних елементів",
+      "sharedTabElements_one": "Містить {{count}} елемент з інших вкладок",
+      "sharedTabElements_few": "Містить {{count}} елементи з інших вкладок",
+      "sharedTabElements_many": "Містить {{count}} елементів з інших вкладок",
+      "sharedTabElements_other": "Містить {{count}} елементів з інших вкладок"
     },
     "align": {
       "button": "Вирівняти",

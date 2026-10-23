@@ -8,6 +8,7 @@ import { queryRepository } from '../db/repositories/queryRepository';
 import { useDossierStore } from './dossierStore';
 import { useSelectionStore } from './selectionStore';
 import { useViewStore } from './viewStore';
+import { useTabStore } from './tabStore';
 
 interface QueryState {
   // Current query
@@ -70,18 +71,45 @@ interface QueryState {
  * the links it found — a query on links alone would otherwise leave them lost
  * among the dimmed elements, or dim nothing at all.
  */
-/** What the query did not find, of the kind it found; hidden elements left out */
+/** Members of the open canvas tab; null outside a tab (whole dossier) */
+export function activeTabPool(): ReadonlySet<string> | null {
+  const { activeTabId, memberSet } = useTabStore.getState();
+  return activeTabId !== null ? memberSet : null;
+}
+
+/** What the query did not find, of the kind it found; hidden elements and, in a tab, non-members left out */
 function inverseOf(results: { elementIds: Set<string>; linkIds: Set<string> }): { elements: string[]; links: string[] } {
   const { elements, links } = useDossierStore.getState();
   const { hiddenElementIds } = useViewStore.getState();
+  const pool = activeTabPool();
+  const kept = (id: string) => !hiddenElementIds.has(id) && (!pool || pool.has(id));
   return {
     elements: results.elementIds.size > 0
-      ? elements.filter((el) => !results.elementIds.has(el.id) && !hiddenElementIds.has(el.id)).map((el) => el.id)
+      ? elements.filter((el) => !results.elementIds.has(el.id) && kept(el.id)).map((el) => el.id)
       : [],
     links: results.linkIds.size > 0
-      ? links.filter((l) => !results.linkIds.has(l.id) && !hiddenElementIds.has(l.fromId) && !hiddenElementIds.has(l.toId)).map((l) => l.id)
+      ? links.filter((l) => !results.linkIds.has(l.id) && kept(l.fromId) && kept(l.toId)).map((l) => l.id)
       : [],
   };
+}
+
+/**
+ * Keep the results inside the open tab: its members, and the links between
+ * them. The query runs on the whole dossier so that conditions following
+ * links still see the elements outside the tab.
+ */
+function scopeToTab(results: QueryResult): QueryResult {
+  const pool = activeTabPool();
+  if (!pool) return results;
+  const elementIds = new Set<string>();
+  for (const id of results.elementIds) if (pool.has(id)) elementIds.add(id);
+  const linkIds = new Set<string>();
+  if (results.linkIds.size > 0) {
+    for (const link of useDossierStore.getState().links) {
+      if (results.linkIds.has(link.id) && pool.has(link.fromId) && pool.has(link.toId)) linkIds.add(link.id);
+    }
+  }
+  return { ...results, elementIds, linkIds };
 }
 
 export function withLinkEnds(results: { elementIds: Set<string>; linkIds: Set<string> }): Set<string> {
@@ -169,7 +197,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
     const elements = dossierState.elements;
     const links = dossierState.links;
 
-    const results = evaluateQuery(currentAst, elements, links);
+    const results = scopeToTab(evaluateQuery(currentAst, elements, links));
     const isActive = outputMode === 'canvas' || outputMode === 'both';
 
     // Track in recent queries (deduplicate, max 5)
@@ -307,5 +335,12 @@ useDossierStore.subscribe((state, prevState) => {
     if (currentAst) {
       useQueryStore.getState().execute();
     }
+  }
+});
+
+// Re-execute when the open tab or its members change: results stay inside the tab
+useTabStore.subscribe((state, prevState) => {
+  if (state.activeTabId !== prevState.activeTabId || state.memberSet !== prevState.memberSet) {
+    if (useQueryStore.getState().currentAst) useQueryStore.getState().execute();
   }
 });

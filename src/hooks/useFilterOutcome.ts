@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
-import { useDossierStore, useQueryStore, useSelectionStore, useViewStore } from '../stores';
+import { useDossierStore, useQueryStore, useSelectionStore, useTabStore, useViewStore } from '../stores';
 import { getDimmedElementIds } from '../utils/filterUtils';
 import { useEvaluationModel } from './useEvaluationModel';
+import { getTabFilterIds, useTabFilterIds } from './useTabFilterIds';
 import { getEvaluationModel } from '../utils/evaluation';
 import type { Element, EvaluationModel, Link, ViewFilters } from '../types';
 
@@ -32,11 +33,15 @@ export function useFilterOutcome(): FilterOutcome {
   const queryMatchLinkIds = useQueryStore((s) => s.matchingLinkIds);
   const links = useDossierStore((s) => s.links);
   const evaluationModel = useEvaluationModel();
+  const activeTabId = useTabStore((s) => s.activeTabId);
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const pool = activeTabId !== null ? tabMemberSet : null;
+  const tabFilterIds = useTabFilterIds();
 
   return useMemo(
     () => computeFilterOutcome(elements, links, filters, hiddenElementIds, evaluationModel,
-      queryFilterActive, queryMatchElementIds, queryMatchLinkIds),
-    [elements, links, filters, hiddenElementIds, evaluationModel, queryFilterActive, queryMatchElementIds, queryMatchLinkIds]
+      queryFilterActive, queryMatchElementIds, queryMatchLinkIds, pool, tabFilterIds),
+    [elements, links, filters, hiddenElementIds, evaluationModel, queryFilterActive, queryMatchElementIds, queryMatchLinkIds, pool, tabFilterIds]
   );
 }
 
@@ -45,8 +50,10 @@ export function getFilterOutcome(): FilterOutcome {
   const { elements, links, currentDossier } = useDossierStore.getState();
   const { filters, hiddenElementIds } = useViewStore.getState();
   const { isFilterActive, matchingElementIds, matchingLinkIds } = useQueryStore.getState();
+  const { activeTabId, memberSet } = useTabStore.getState();
   return computeFilterOutcome(elements, links, filters, hiddenElementIds,
-    getEvaluationModel(currentDossier), isFilterActive, matchingElementIds, matchingLinkIds);
+    getEvaluationModel(currentDossier), isFilterActive, matchingElementIds, matchingLinkIds,
+    activeTabId !== null ? memberSet : null, getTabFilterIds());
 }
 
 /** What the filters and the query keep (the computation behind useFilterOutcome) */
@@ -59,8 +66,12 @@ export function computeFilterOutcome(
   queryFilterActive: boolean,
   queryMatchElementIds: Set<string>,
   queryMatchLinkIds: Set<string>,
+  /** Members of the open canvas tab: only they count; null for the whole dossier */
+  pool: ReadonlySet<string> | null = null,
+  /** Elements kept by the tabs filter of the "All" view; null if it does not apply */
+  tabFilterIds: ReadonlySet<string> | null = null,
 ): FilterOutcome {
-  const dimmedByFilters = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+  const dimmedByFilters = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
   const queryActive = queryFilterActive && queryMatchElementIds.size > 0;
   let total = 0;
   let filterCount = 0;
@@ -68,6 +79,7 @@ export function computeFilterOutcome(
   const shownIds: string[] = [];
   for (const el of elements) {
     if (hiddenElementIds.has(el.id)) continue;
+    if (pool && !pool.has(el.id)) continue;
     total++;
     const byFilters = !dimmedByFilters.has(el.id);
     const byQuery = !queryActive || queryMatchElementIds.has(el.id);

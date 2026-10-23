@@ -268,7 +268,9 @@
           "description": "Organizes elements by levels (trees, org charts)"
         }
       },
-      "scopeSelection": "Applies to {{count}} selected elements only"
+      "scopeSelection": "Applies to {{count}} selected elements only",
+      "sharedTabElements_one": "Includes {{count}} element from another tab",
+      "sharedTabElements_other": "Includes {{count}} elements from other tabs"
     },
     "align": {
       "button": "Align",

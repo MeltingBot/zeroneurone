@@ -19,6 +19,7 @@ import { computeCausalConnections } from './causality';
 import type { DatePrecision, Element as ZNElement } from '../../types';
 import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue } from '../../utils/dates';
 import { formatItemDates } from './timelineDates';
+import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 
 export interface TimelineItem {
   id: string;
@@ -105,6 +106,7 @@ export function TimelineView() {
   const tabGhostIds = useTabStore((s) => s.ghostIds);
 
   // Calculate dimmed element IDs based on filters, focus, insights, and query
+  const tabFilterIds = useTabFilterIds();
   const dimmedElementIds = useMemo(() => {
     let dimmed: Set<string>;
     if (insightsHighlightedIds.size > 0) {
@@ -119,7 +121,7 @@ export function TimelineView() {
         if (!visibleIds.has(el.id)) dimmed.add(el.id);
       });
     } else {
-      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+      dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
     // ZNQuery filter: dim elements not matching the query
     if (queryFilterActive && queryMatchElementIds.size > 0) {
@@ -130,7 +132,7 @@ export function TimelineView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel]);
+  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
 
   // Persisted timeline state (survives view switches)
   const tl = useViewStore((s) => s.timeline);

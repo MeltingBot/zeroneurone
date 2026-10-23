@@ -38,6 +38,8 @@ interface ContextMenuProps {
   isGroup: boolean;
   isInGroup: boolean;
   hasMultipleSelected: boolean;
+  /** Elements selected; the menu acts on all of them when there are several */
+  selectedCount: number;
   onGroupSelection?: () => void;
   onDissolveGroup: () => void;
   onRemoveFromGroup: () => void;
@@ -101,6 +103,7 @@ function ContextMenuComponent({
   isGroup,
   isInGroup,
   hasMultipleSelected,
+  selectedCount,
   onGroupSelection,
   onDissolveGroup,
   onRemoveFromGroup,
@@ -235,7 +238,11 @@ function ContextMenuComponent({
       onClose={onClose}
       header={
         <span className="text-xs font-medium text-text-primary truncate block max-w-56">
-          {hasTwoSelected ? `${elementLabel} ↔ ${otherSelectedLabel}` : elementLabel}
+          {hasTwoSelected
+            ? `${elementLabel} ↔ ${otherSelectedLabel}`
+            : selectedCount > 2
+              ? t('dossier.toolbar.selectedCount', { count: selectedCount })
+              : elementLabel}
         </span>
       }
       sections={[

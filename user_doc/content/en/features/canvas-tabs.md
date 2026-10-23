@@ -82,6 +82,25 @@ Ghost elements provide continuity: you see the connections across tabs without h
 
 ---
 
+## Queries, Filters and Layout in a Tab
+
+Inside a tab, everything applies to **its elements**:
+
+| Feature | Behavior in a tab |
+|---------|-------------------|
+| **Queries and filters** | Results, counts, **Select** and **Invert** only cover the tab's elements. The query runs again when you switch tabs |
+| **Arrange** | Only the tab's elements move, around their current position. The result is placed clear of the other elements of the dossier, so the **All** view stays readable |
+| **Counts** | The canvas toolbar shows the number of elements in the tab and of links between them |
+| **Extensions** (OneNeurone...) | Receive the tab's elements |
+
+{{< hint warning >}}
+**Shared elements**: an element in several tabs has a single position. Arranging one tab moves it in the others too. The **Arrange** menu says so ("Includes N elements from other tabs").
+{{< /hint >}}
+
+In **All**, the **Filters** panel offers a **Tabs** filter: tick one or more tabs to keep only their elements, in every view (canvas, map, timeline, matrix).
+
+---
+
 ## Interaction with Other Features
 
 ### Search

@@ -8,6 +8,7 @@ import { useQueryStore } from './queryStore';
 import { useTabStore } from './tabStore';
 import { getDimmedElementIds } from '../utils/filterUtils';
 import { getEvaluationModel } from '../utils/evaluation';
+import { getTabFilterIds } from '../hooks/useTabFilterIds';
 
 /** Label of a created link, from the reason that justified it (translated by the panel) */
 export type SuggestionLabeler = (reason: SuggestionReason) => string;
@@ -155,7 +156,7 @@ function shownElementIds(elements: Element[], evaluationModel: ReturnType<typeof
   const { isFilterActive, matchingElementIds } = useQueryStore.getState();
   const { activeTabId, memberSet } = useTabStore.getState();
 
-  const filteredOut = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel);
+  const filteredOut = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, getTabFilterIds());
   const queryNarrows = isFilterActive && matchingElementIds.size > 0;
   if (hiddenElementIds.size === 0 && filteredOut.size === 0 && !queryNarrows && activeTabId === null) return null;
 

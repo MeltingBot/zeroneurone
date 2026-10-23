@@ -152,10 +152,15 @@ export const pluginAPI = {
   /**
    * Elements the views show: kept by the filters panel and by the query
    * applied on the canvas, counted as the filters and query panels count
-   * them. `shownIds.length < total` when something narrows the views.
+   * them. `shownIds.length < total` when something narrows the views; an
+   * open canvas tab does too: `total` counts the whole dossier (elements not
+   * hidden by hand), `shownIds` the tab members kept.
    */
   filterOutcome(): { total: number; shownIds: string[]; filterCount: number; queryCount: number | null } {
-    const { total, shownIds, filterCount, queryCount } = getFilterOutcome();
+    const { shownIds, filterCount, queryCount } = getFilterOutcome();
+    const { hiddenElementIds } = useViewStore.getState();
+    let total = 0;
+    for (const el of _useDossierStore.getState().elements) if (!hiddenElementIds.has(el.id)) total++;
     return { total, shownIds, filterCount, queryCount };
   },
 
