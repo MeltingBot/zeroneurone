@@ -29,6 +29,7 @@ import '@xyflow/react/dist/style.css';
 
 import { ElementNode, type ElementNodeData } from './ElementNode';
 import { LowDetailHandleRepair } from './lowDetailHandles';
+import type { TabMembershipSnapshot } from '../../stores/historyStore';
 import { GroupNode, type GroupNodeData } from './GroupNode';
 import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
@@ -2922,25 +2923,61 @@ export function Canvas() {
     await Promise.all(ids.map(id => updateElement(id, { isPositionLocked: !selectionLocked })));
   }, [getSelectedElementIds, selectionLocked, updateElement]);
 
+  // Tab membership changes go through the history: each records, per tab,
+  // only the elements really added or removed, so Ctrl+Z puts things back.
+  const tabMembers = useCallback((tabId: string) =>
+    new Set(useTabStore.getState().tabs.find((t) => t.id === tabId)?.memberElementIds ?? []), []);
+  const pushTabMembership = useCallback((snapshot: TabMembershipSnapshot) => {
+    if (snapshot.changes.every((c) => c.added.length === 0 && c.removed.length === 0) && !snapshot.createdTab) return;
+    pushAction({ type: 'tab-membership', undo: { snapshot }, redo: { snapshot } });
+  }, [pushAction]);
+
   // New canvas tab holding `ids`, opened. Same naming as the tab bar; the
   // canvas stays where it is, the elements being on screen. Made from inside
   // a tab, the elements move: they leave the tab they came from.
   const canCreateTab = !!currentDossier && canvasTabs.length < MAX_TABS;
   const createTabFromIds = useCallback(async (ids: string[]) => {
     if (!currentDossier || ids.length === 0) return;
-    if (activeTabId !== null) saveTabViewport(activeTabId, viewport);
+    const from = activeTabId;
+    const removed = from !== null ? ids.filter((id) => tabMembers(from).has(id)) : [];
+    if (from !== null) saveTabViewport(from, viewport);
     const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
     await addTabMembers(tab.id, ids);
-    if (activeTabId !== null) await removeTabMembers(activeTabId, ids);
+    if (from !== null) await removeTabMembers(from, ids);
     setActiveTab(tab.id);
-  }, [currentDossier, activeTabId, viewport, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab]);
+    pushTabMembership({
+      changes: [{ tabId: tab.id, added: ids, removed: [] }, ...(from !== null ? [{ tabId: from, added: [], removed }] : [])],
+      createdTab: tab,
+      activeBefore: from,
+      activeAfter: tab.id,
+    });
+  }, [currentDossier, activeTabId, viewport, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab, tabMembers, pushTabMembership]);
 
   // Send `ids` to another tab and out of the active one (they stay in "All").
   const moveIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
-    if (activeTabId === null || tabId === activeTabId || ids.length === 0) return;
+    const from = activeTabId;
+    if (from === null || tabId === from || ids.length === 0) return;
+    const target = tabMembers(tabId);
+    const source = tabMembers(from);
+    const added = ids.filter((id) => !target.has(id));
+    const removed = ids.filter((id) => source.has(id));
     await addTabMembers(tabId, ids);
-    await removeTabMembers(activeTabId, ids);
-  }, [activeTabId, addTabMembers, removeTabMembers]);
+    await removeTabMembers(from, ids);
+    pushTabMembership({
+      changes: [{ tabId, added, removed: [] }, { tabId: from, added: [], removed }],
+      activeBefore: from,
+      activeAfter: from,
+    });
+  }, [activeTabId, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
+
+  // Add `ids` to a tab, keeping them where they are.
+  const addIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
+    const target = tabMembers(tabId);
+    const added = ids.filter((id) => !target.has(id));
+    if (added.length === 0) return;
+    await addTabMembers(tabId, added);
+    pushTabMembership({ changes: [{ tabId, added, removed: [] }], activeBefore: activeTabId, activeAfter: activeTabId });
+  }, [activeTabId, addTabMembers, tabMembers, pushTabMembership]);
 
   const handleSelectionHide = useCallback(() => {
     const selectedEls = getSelectedElementIds();
@@ -5034,12 +5071,10 @@ export function Canvas() {
               onToggleLock={handleToggleLock}
               tabs={canvasTabs}
               activeTabId={activeTabId}
-              onAddToTab={(tabId) => {
-                const ids = selectedElementIds.size > 1
-                  ? Array.from(selectedElementIds)
-                  : [contextMenu.elementId];
-                addTabMembers(tabId, ids);
-              }}
+              onAddToTab={(tabId) => addIdsToTab(
+                tabId,
+                selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
+              )}
               onNewTabFromSelection={canCreateTab ? () => createTabFromIds(
                 selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
               ) : undefined}
@@ -5107,7 +5142,7 @@ export function Canvas() {
               onSelectLinks={allEdges.length > 0 ? handleSelectLinks : undefined}
               onSuggestLinks={handleSuggestLinks}
               tabs={canvasTabs}
-              onAddSelectionToTab={(tabId) => addTabMembers(tabId, Array.from(selectedElementIds))}
+              onAddSelectionToTab={(tabId) => addIdsToTab(tabId, Array.from(selectedElementIds))}
               onNewTabFromSelection={canCreateTab ? () => createTabFromIds(Array.from(selectedElementIds)) : undefined}
               activeTabId={activeTabId}
               onMoveSelectionToTab={activeTabId !== null ? (tabId) => moveIdsToTab(tabId, Array.from(selectedElementIds)) : undefined}

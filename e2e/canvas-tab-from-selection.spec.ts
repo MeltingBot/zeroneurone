@@ -89,7 +89,9 @@ test('a new tab can be made from the selection', async ({ page }) => {
     (await import('/src/stores/tabStore.ts')).useTabStore.getState().setActiveTab(null);
     // Let the canvas settle on "All" (no ghost left on screen)
     await new Promise((r) => setTimeout(r, 1500));
-    const ids = [...document.querySelectorAll('.react-flow__node')].slice(0, 4).map((n) => n.getAttribute('data-id')!);
+    // From the store: each tab keeps its own viewport, the screen may show few nodes
+    const d = (await import('/src/stores/dossierStore.ts')).useDossierStore.getState();
+    const ids = d.elements.slice(10, 14).map((e) => e.id);
     const sel = (await import('/src/stores/selectionStore.ts')).useSelectionStore;
     sel.getState().selectElements(ids);
     return [...sel.getState().selectedElementIds];
@@ -118,6 +120,7 @@ test('a new tab can be made from the selection', async ({ page }) => {
   // Fourth, inside Tab 3: "Move to tab" sends the selection to Tab 1 and out
   // of Tab 3.
   const moved = menuSelection.slice(0, 2);
+  const beforeMove = await readTabs(page);
   await page.evaluate(async (ids) => {
     (await import('/src/stores/selectionStore.ts')).useSelectionStore.getState().selectElements(ids);
   }, moved);
@@ -133,4 +136,49 @@ test('a new tab can be made from the selection', async ({ page }) => {
     expect(afterMove.members['Tab 1']).toContain(id);
     expect(afterMove.members['Tab 3']).not.toContain(id);
   }
+
+  // Ctrl+Z puts the moved elements back in Tab 3, Ctrl+Shift+Z moves them again
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(800);
+  // Exactly as before the move (an element already in Tab 1 stays there)
+  const undone = await readTabs(page);
+  expect(undone.members['Tab 1']).toEqual(beforeMove.members['Tab 1']);
+  expect(undone.members['Tab 3']).toEqual(beforeMove.members['Tab 3']);
+  await page.keyboard.press('Control+Shift+z');
+  await page.waitForTimeout(800);
+  const redone = await readTabs(page);
+  for (const id of moved) {
+    expect(redone.members['Tab 1']).toContain(id);
+    expect(redone.members['Tab 3']).not.toContain(id);
+  }
+
+  // A tab made from the selection inside Tab 3: undo removes it and gives its
+  // elements back to Tab 3; redo brings it back with them.
+  // Right-click on one of them (element menu), the whole tab on screen
+  const split = (await readTabs(page)).members['Tab 3'].slice(0, 2);
+  await page.click('[data-testid="fit-view"]');
+  await page.waitForTimeout(800);
+  await page.evaluate(async (ids) => {
+    (await import('/src/stores/selectionStore.ts')).useSelectionStore.getState().selectElements(ids);
+  }, split);
+  await page.waitForTimeout(300);
+  await page.locator(`.react-flow__node[data-id="${split[0]}"]`).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Tabs' }).hover();
+  await page.getByRole('menuitem', { name: 'New tab with selection' }).click();
+  await page.waitForTimeout(800);
+  expect((await readTabs(page)).members['Tab 4']).toEqual([...split].sort());
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(800);
+  const noTab4 = await readTabs(page);
+  expect(noTab4.members['Tab 4']).toBeUndefined();
+  expect(noTab4.active).toBe('Tab 3');
+  for (const id of split) expect(noTab4.members['Tab 3']).toContain(id);
+  await page.keyboard.press('Control+Shift+z');
+  await page.waitForTimeout(800);
+  const tab4Again = await readTabs(page);
+  expect(tab4Again.members['Tab 4']).toEqual([...split].sort());
+  expect(tab4Again.active).toBe('Tab 4');
+  for (const id of split) expect(tab4Again.members['Tab 3']).not.toContain(id);
 });

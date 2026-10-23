@@ -1,5 +1,26 @@
 import { create } from 'zustand';
-import type { Element, Link } from '../types';
+import type { CanvasTab, Element, Link } from '../types';
+
+/**
+ * Snapshot of a 'tab-membership' action: per tab, the elements it gained and
+ * lost (only real changes, so an undo never takes out an element that was
+ * already there), the tab created for the occasion if any, and the tab open
+ * before and after.
+ */
+export interface TabMembershipSnapshot {
+  changes: { tabId: string; added: string[]; removed: string[] }[];
+  createdTab?: CanvasTab;
+  activeBefore: string | null;
+  activeAfter: string | null;
+}
+
+/** Open a tab again after undo/redo, if it still exists ("All" otherwise) */
+function reopenTab(tabId: string | null) {
+  import('./tabStore').then(({ useTabStore }) => {
+    const tabs = useTabStore.getState();
+    tabs.setActiveTab(tabId && tabs.tabs.some((t) => t.id === tabId) ? tabId : null);
+  });
+}
 
 interface HistoryAction {
   type: 'create-element' | 'delete-element' | 'update-element' | 'move-element' |
@@ -7,7 +28,7 @@ interface HistoryAction {
         'create-elements' | 'delete-elements' | 'move-elements' |
         'extract-to-element' | 'dissolve-group' | 'remove-from-group' |
         'create-group' | 'delete-tab' | 'delete-view' | 'delete-section' | 'clear-filters' |
-        'add-asset' | 'merge-elements' | 'update-bulk' | 'dismiss-suggestions';
+        'add-asset' | 'merge-elements' | 'update-bulk' | 'dismiss-suggestions' | 'tab-membership';
   // Data for undoing the action
   undo: {
     elements?: Element[];
@@ -281,6 +302,26 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         }
         break;
 
+      case 'tab-membership': {
+        // Elements sent to, moved between or gathered in a new canvas tab
+        const snap = action.undo.snapshot as TabMembershipSnapshot;
+        const { useTabStore } = await import('./tabStore');
+        const tabs = useTabStore.getState();
+        // The created tab goes as a whole; the other tabs get their members
+        // back. Adds before removals: removeMembers keeps an element that
+        // would be left in no tab at all.
+        const others = snap.changes.filter((c) => c.tabId !== snap.createdTab?.id);
+        for (const c of others) {
+          if (c.removed.length > 0) await useTabStore.getState().addMembers(c.tabId, c.removed);
+        }
+        if (snap.createdTab) await tabs.deleteTab(snap.createdTab.id);
+        for (const c of others) {
+          if (c.added.length > 0) await useTabStore.getState().removeMembers(c.tabId, c.added);
+        }
+        reopenTab(snap.activeBefore);
+        break;
+      }
+
       case 'delete-tab':
         // Restore deleted tab
         if (action.undo.snapshot) {
@@ -512,6 +553,28 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           }
         }
         break;
+
+      case 'tab-membership': {
+        const snap = action.redo.snapshot as TabMembershipSnapshot;
+        const { useTabStore } = await import('./tabStore');
+        const tabs = useTabStore.getState();
+        // The created tab comes back with its members in one write: restoreTab
+        // writes the Y.Doc asynchronously, members added after could be lost.
+        if (snap.createdTab) {
+          const own = snap.changes.find((c) => c.tabId === snap.createdTab!.id);
+          await tabs.restoreTab({ ...snap.createdTab, memberElementIds: own?.added ?? [] });
+        }
+        // Adds before removals (see undo)
+        const others = snap.changes.filter((c) => c.tabId !== snap.createdTab?.id);
+        for (const c of others) {
+          if (c.added.length > 0) await useTabStore.getState().addMembers(c.tabId, c.added);
+        }
+        for (const c of others) {
+          if (c.removed.length > 0) await useTabStore.getState().removeMembers(c.tabId, c.removed);
+        }
+        reopenTab(snap.activeAfter);
+        break;
+      }
 
       case 'delete-tab':
         // Re-delete tab
