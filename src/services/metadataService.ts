@@ -53,6 +53,24 @@ async function extractPdfMetadata(arrayBuffer: ArrayBuffer): Promise<ExtractedMe
 
   const properties: Property[] = [];
 
+  // Descriptive fields: the Info dictionary first, XMP (Dublin Core) when it
+  // is empty there; some producers fill only one of the two.
+  const xmp = meta?.metadata as { get(name: string): unknown } | null | undefined;
+  const text = (value: unknown): string | null => {
+    const v = Array.isArray(value) ? value.filter((x) => typeof x === 'string').join(', ') : value;
+    return typeof v === 'string' && v.trim() ? v.trim() : null;
+  };
+  const described: [string, unknown, string][] = [
+    ['Auteur', info?.Author, 'dc:creator'],
+    ['Titre', info?.Title, 'dc:title'],
+    ['Sujet', info?.Subject, 'dc:description'],
+    ['Mots-clés', info?.Keywords, 'pdf:keywords'],
+  ];
+  for (const [key, fromInfo, xmpName] of described) {
+    const value = text(fromInfo) ?? text(xmp?.get(xmpName));
+    if (value) properties.push({ key, value, type: 'text' });
+  }
+
   if (info) {
     if (info.Producer && typeof info.Producer === 'string') {
       properties.push({ key: 'Producteur', value: info.Producer, type: 'text' });
