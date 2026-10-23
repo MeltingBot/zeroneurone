@@ -379,7 +379,9 @@ Technically, no limit. Practically, beyond 10 it can get confusing. But it works
 
 ### What about large dossiers?
 
-ZeroNeurone handles dossiers with **1500+ elements and links** in collaborative mode. Beyond 500 elements, edges are hidden during pan/zoom for fluidity. Locally, performance is excellent up to several thousand elements.
+ZeroNeurone is measured and tested, collaboration included, on dossiers of **10,000 elements and 15,000 links**. Creating, deleting, undoing and switching tabs stay fast. Fully zoomed out, each element is drawn as a plain shape to keep the view smooth. Beyond 500 elements, edges are hidden during pan/zoom.
+
+Tip: a **tab** only draws its elements (and their direct neighbours). Working in a tab lightens the display of a large dossier.
 
 ### Can I work offline during a shared session?
 

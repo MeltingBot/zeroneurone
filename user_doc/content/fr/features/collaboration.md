@@ -285,7 +285,8 @@ Le serveur de signalisation est basé sur `y-websocket`. Consultez la documentat
 - Les gros fichiers peuvent ralentir la synchronisation initiale
 - Une bonne connexion internet améliore l'expérience
 - Dossiers avec **500+ éléments** : les liens sont masqués pendant le pan/zoom pour la fluidité
-- Testé avec **1500+ éléments et liens** en mode collaboratif
+- Testé avec **10 000 éléments et 15 000 liens** en mode collaboratif
+- **Tous les participants doivent utiliser la même version** de ZeroNeurone : certaines corrections (modifications faites hors connexion, éléments hors onglet) ne jouent que si chacun est à jour
 
 ### Organisation
 

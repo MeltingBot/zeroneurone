@@ -285,7 +285,8 @@ The signaling server is based on `y-websocket`. See technical documentation for 
 - Large files can slow initial synchronization
 - A good internet connection improves the experience
 - Dossiers with **500+ elements**: edges are hidden during pan/zoom for fluidity
-- Tested with **1500+ elements and links** in collaborative mode
+- Tested with **10,000 elements and 15,000 links** in collaborative mode
+- **All participants should run the same ZeroNeurone version**: some fixes (edits made offline, elements outside tabs) only apply when everyone is up to date
 
 ### Organization
 

@@ -1,5 +1,63 @@
 # Changelog
 
+## 2.74.0
+
+### Collaboration : mettre à jour tous les participants
+
+Avant de compter sur cette version dans un dossier partagé, faites-la installer
+par **tous** les participants :
+
+- un participant resté en 2.73 ou avant range encore d'office, à l'ouverture
+  du dossier, les éléments hors onglet dans le premier onglet, et ce rangement
+  s'applique chez tout le monde ;
+- la protection contre les modifications bloquées (voir Corrections) ne joue
+  que si le participant déjà connecté est à jour.
+
+### Nouveautés
+
+- **Onglets depuis la sélection** — clic droit sur un élément ou une sélection,
+  sous-menu Onglets : « Nouvel onglet avec la sélection », « Déplacer vers
+  l'onglet… » (la sélection quitte l'onglet ouvert), « Ajouter à l'onglet… » et
+  « Retirer de l'onglet », aussi dans le menu de la sélection. Toutes ces
+  actions s'annulent avec Ctrl+Z.
+- **Un élément peut n'appartenir à aucun onglet** — un élément créé dans
+  « Tous », ou retiré de son dernier onglet, reste dans le dossier et visible
+  dans « Tous ». Il n'est plus rangé d'office dans le premier onglet à
+  l'ouverture suivante, ni à la suppression d'un onglet.
+- **Suggestions : indicateur d'analyse** — le bouton « Analyser le dossier »
+  affiche « Analyse… » pendant le calcul.
+
+### Performances (mesurées à 10 000 éléments et 15 000 liens)
+
+- **Créer et supprimer** — un ajout ou une suppression ne relit et ne réécrit
+  plus tout le dossier. Créer un élément rend la main en 0,1 s au lieu de 4 s ;
+  supprimer un élément fige l'écran 0,07 s au lieu de 0,4 s.
+- **Vue d'ensemble** — un seul point d'accroche par nœud dézoomé au lieu de
+  huit, et un rendu sans abonnement aux données : déplacer un nœud fige l'écran
+  0,4 s au lieu de 9,7 s, le zoom à la molette reste fluide.
+- **Changement d'onglet** — vers un petit onglet : 0,2 s au lieu de 0,9 s ;
+  vers un onglet de 10 000 éléments en vue d'ensemble : 1,0 s au lieu de 1,5 s.
+
+### Corrections
+
+- **Annuler une suppression** — les éléments et liens reviennent d'un coup,
+  dans leur onglet (ils revenaient un par un : près de deux minutes pour 500
+  éléments, et hors de l'onglet).
+- **Liens d'un onglet** — dans un gros dossier, un onglet pouvait n'afficher
+  qu'une partie de ses liens (16 sur 307) : les liens entre éléments hors onglet
+  prenaient leur place sous le plafond d'affichage.
+- **Collaboration : modifications bloquées** — ce qu'un participant écrivait
+  avant de se connecter (hors ligne, pendant un rechargement) n'arrivait jamais
+  chez les autres, et ses modifications suivantes y restaient bloquées : un
+  onglet pouvait se vider chez un collègue. Chaque participant demande
+  maintenant au nouvel arrivant ce qui lui manque.
+- **Collaboration : copie locale** — chez celui qui rejoint un dossier partagé,
+  la copie locale (accueil, export depuis l'accueil, sauvegarde, plugins) est
+  complétée à l'ouverture.
+- **Métadonnées PDF** — auteur, titre, sujet et mots-clés sont lus (dictionnaire
+  du document, ou métadonnées XMP). Pour un fichier déjà joint : bouton
+  « Extraire les métadonnées » du fichier.
+
 ## 2.73.0
 
 ### Nouveautés
