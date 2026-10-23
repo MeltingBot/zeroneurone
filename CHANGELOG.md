@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.74.1
+
+### Corrections
+
+- **Fenêtres d'export et d'import sur un petit écran** — sur un écran de
+  portable, la fenêtre d'export dépassait en haut et en bas, sans défilement :
+  il fallait dézoomer la page pour atteindre l'export PNG. Les fenêtres
+  d'export, d'import, d'import dans le dossier ouvert et des tags du dossier
+  tiennent dans la hauteur de l'écran et leur contenu défile.
+
 ## 2.74.0
 
 ### Collaboration : mettre à jour tous les participants
