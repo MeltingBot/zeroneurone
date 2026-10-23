@@ -326,6 +326,7 @@
       "delete": "Excluir aba",
       "deleteConfirm": "Excluir aba {{name}}? Os elementos não serão excluídos.",
       "newFromSelection": "Nova aba com a seleção",
+      "moveToTab": "Mover para a aba...",
       "addToTab": "Adicionar à aba...",
       "removeFromTab": "Remover da aba",
       "emptyState": "Nenhum elemento nesta aba",

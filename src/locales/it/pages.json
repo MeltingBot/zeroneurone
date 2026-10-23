@@ -326,6 +326,7 @@
       "delete": "Elimina scheda",
       "deleteConfirm": "Eliminare la scheda {{name}}? Gli elementi non verranno eliminati.",
       "newFromSelection": "Nuova scheda con la selezione",
+      "moveToTab": "Sposta nella scheda...",
       "addToTab": "Aggiungi a scheda...",
       "removeFromTab": "Rimuovi da scheda",
       "emptyState": "Nessun elemento in questa scheda",

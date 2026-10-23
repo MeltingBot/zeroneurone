@@ -50,6 +50,8 @@ interface ContextMenuProps {
   onAddToTab: (tabId: TabId) => void;
   /** Create a tab holding the selection and open it; absent when no more tab fits */
   onNewTabFromSelection?: () => void;
+  /** Send to another tab and out of the active one; absent outside a tab */
+  onMoveToTab?: (tabId: TabId) => void;
   onRemoveFromTab: () => void;
   isGhostElement: boolean;
   elementTabIds: TabId[];
@@ -108,6 +110,7 @@ function ContextMenuComponent({
   activeTabId,
   onAddToTab,
   onNewTabFromSelection,
+  onMoveToTab,
   onRemoveFromTab,
   isGhostElement,
   elementTabIds,
@@ -195,6 +198,15 @@ function ContextMenuComponent({
       icon: Plus,
       onSelect: onNewTabFromSelection,
     },
+    ...(onMoveToTab && tabs.some((tab) => tab.id !== activeTabId) ? [
+      { id: 'move-to-tab-header', label: t('dossier.tabs.moveToTab'), kind: 'header' as const },
+      ...tabs.filter((tab) => tab.id !== activeTabId).map((tab) => ({
+        id: `move-to-tab-${tab.id}`,
+        label: tab.name,
+        icon: ArrowRight,
+        onSelect: () => onMoveToTab(tab.id),
+      })),
+    ] : []),
     tabs.length > 0 && { id: 'add-to-tab-header', label: t('dossier.tabs.addToTab'), kind: 'header' as const },
     ...tabs.map((tab) => {
       const isInTab = elementTabIds.includes(tab.id);

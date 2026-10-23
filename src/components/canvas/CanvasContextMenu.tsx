@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen, Layers } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -38,6 +38,9 @@ interface CanvasContextMenuProps {
   tabs?: CanvasTab[];
   onAddSelectionToTab?: (tabId: TabId) => void;
   onNewTabFromSelection?: () => void;
+  activeTabId?: TabId | null;
+  /** Send the selection to another tab and out of the active one; absent outside a tab */
+  onMoveSelectionToTab?: (tabId: TabId) => void;
   onClose: () => void;
   pluginExtensions?: ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -67,6 +70,8 @@ function CanvasContextMenuComponent({
   tabs = [],
   onAddSelectionToTab,
   onNewTabFromSelection,
+  activeTabId = null,
+  onMoveSelectionToTab,
   onClose,
   pluginExtensions,
   menuContext,
@@ -108,6 +113,15 @@ function CanvasContextMenuComponent({
               icon: Plus,
               onSelect: onNewTabFromSelection,
             },
+            ...(onMoveSelectionToTab && tabs.some((tab) => tab.id !== activeTabId) ? [
+              { id: 'move-to-tab-header', label: t('dossier.tabs.moveToTab'), kind: 'header' as const },
+              ...tabs.filter((tab) => tab.id !== activeTabId).map((tab) => ({
+                id: `move-to-tab-${tab.id}`,
+                label: tab.name,
+                icon: ArrowRight,
+                onSelect: () => onMoveSelectionToTab(tab.id),
+              })),
+            ] : []),
             tabs.length > 0 && onAddSelectionToTab && { id: 'add-to-tab-header', label: t('dossier.tabs.addToTab'), kind: 'header' as const },
             ...(onAddSelectionToTab ? tabs.map((tab) => ({
               id: `add-to-tab-${tab.id}`,

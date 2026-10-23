@@ -326,6 +326,7 @@
       "delete": "Tab löschen",
       "deleteConfirm": "Tab {{name}} löschen? Elemente werden nicht gelöscht.",
       "newFromSelection": "Neuer Tab mit der Auswahl",
+      "moveToTab": "In Tab verschieben...",
       "addToTab": "Zu Tab hinzufügen...",
       "removeFromTab": "Aus Tab entfernen",
       "emptyState": "Keine Elemente in diesem Tab",

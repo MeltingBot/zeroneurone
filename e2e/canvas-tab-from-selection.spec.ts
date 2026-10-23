@@ -10,6 +10,17 @@ import { buildLargeDossierJson } from './fixtures/large-dossier';
  * exactly the selection is created and opened, even when the dossier has no
  * tab yet. Dev server only: reaches the stores through Vite's module URLs.
  */
+/** Members of every tab, by name, and the active tab's name. */
+async function readTabs(page: import('@playwright/test').Page) {
+  return page.evaluate(async () => {
+    const s = (await import('/src/stores/tabStore.ts')).useTabStore.getState();
+    return {
+      active: s.tabs.find((t) => t.id === s.activeTabId)?.name ?? null,
+      members: Object.fromEntries(s.tabs.map((t) => [t.name, [...t.memberElementIds].sort()])),
+    };
+  });
+}
+
 test('a new tab can be made from the selection', async ({ page }) => {
   test.setTimeout(120_000);
   await setupCleanEnvironment(page);
@@ -68,6 +79,9 @@ test('a new tab can be made from the selection', async ({ page }) => {
   expect(tab2.count).toBe(2);
   expect(tab2.name).toBe('Tab 2');
   expect(tab2.members).toEqual([...ids2].sort());
+  // Made from inside Tab 1: the elements moved, they left Tab 1.
+  const afterSplit = await readTabs(page);
+  expect(afterSplit.members['Tab 1']).toEqual(ids.filter((id) => !ids2.includes(id)).sort());
 
   // Third, from the selection menu (right-click on the canvas background with
   // elements selected), the one a rubber-band selection leads to.
@@ -99,4 +113,23 @@ test('a new tab can be made from the selection', async ({ page }) => {
   });
   expect(tab3.count).toBe(3);
   expect(tab3.members).toEqual([...menuSelection].sort());
+
+  // Fourth, inside Tab 3: "Move to tab" sends the selection to Tab 1 and out
+  // of Tab 3.
+  const moved = menuSelection.slice(0, 2);
+  await page.evaluate(async (ids) => {
+    (await import('/src/stores/selectionStore.ts')).useSelectionStore.getState().selectElements(ids);
+  }, moved);
+  await page.waitForTimeout(300);
+  await page.mouse.click(pane.x + 40, pane.y + pane.height - 40, { button: 'right' });
+  await page.getByRole('menuitem', { name: 'Tabs' }).hover();
+  // Under the "Move to tab..." header, Tab 1 comes first
+  await page.getByRole('menuitem', { name: 'Tab 1' }).first().click();
+  await page.waitForTimeout(500);
+  const afterMove = await readTabs(page);
+  expect(afterMove.active).toBe('Tab 3');
+  for (const id of moved) {
+    expect(afterMove.members['Tab 1']).toContain(id);
+    expect(afterMove.members['Tab 3']).not.toContain(id);
+  }
 });
