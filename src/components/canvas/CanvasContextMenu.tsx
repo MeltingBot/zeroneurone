@@ -1,6 +1,7 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen, Layers } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
 import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
@@ -33,6 +34,10 @@ interface CanvasContextMenuProps {
   onSelectLinks?: () => void;
   // Link suggestions restricted to the selection
   onSuggestLinks?: () => void;
+  // Canvas tabs: add the selection to one, or make a new one from it
+  tabs?: CanvasTab[];
+  onAddSelectionToTab?: (tabId: TabId) => void;
+  onNewTabFromSelection?: () => void;
   onClose: () => void;
   pluginExtensions?: ContextMenuExtension[];
   menuContext?: MenuContext;
@@ -59,6 +64,9 @@ function CanvasContextMenuComponent({
   onQueryFromSelection,
   onSelectLinks,
   onSuggestLinks,
+  tabs = [],
+  onAddSelectionToTab,
+  onNewTabFromSelection,
   onClose,
   pluginExtensions,
   menuContext,
@@ -93,6 +101,21 @@ function CanvasContextMenuComponent({
             onSuggestLinks && { id: 'suggest-links', label: cm('suggestLinks'), icon: Lightbulb, onSelect: onSuggestLinks },
           ]),
           selectedCount > 1 && onGroupSelection && { id: 'group', label: cm('group'), icon: Group, onSelect: onGroupSelection },
+          (onNewTabFromSelection || (tabs.length > 0 && onAddSelectionToTab)) && submenu('tabs', cm('tabs'), Layers, [
+            onNewTabFromSelection && {
+              id: 'new-tab-from-selection',
+              label: t('dossier.tabs.newFromSelection'),
+              icon: Plus,
+              onSelect: onNewTabFromSelection,
+            },
+            tabs.length > 0 && onAddSelectionToTab && { id: 'add-to-tab-header', label: t('dossier.tabs.addToTab'), kind: 'header' as const },
+            ...(onAddSelectionToTab ? tabs.map((tab) => ({
+              id: `add-to-tab-${tab.id}`,
+              label: tab.name,
+              icon: Layers,
+              onSelect: () => onAddSelectionToTab(tab.id),
+            })) : []),
+          ]),
           onHideSelection && { id: 'hide', label: cm('hide'), icon: EyeOff, onSelect: onHideSelection },
           onToggleLockSelection && {
             id: 'lock',

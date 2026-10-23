@@ -68,4 +68,35 @@ test('a new tab can be made from the selection', async ({ page }) => {
   expect(tab2.count).toBe(2);
   expect(tab2.name).toBe('Tab 2');
   expect(tab2.members).toEqual([...ids2].sort());
+
+  // Third, from the selection menu (right-click on the canvas background with
+  // elements selected), the one a rubber-band selection leads to.
+  const ids3 = await page.evaluate(async () => {
+    (await import('/src/stores/tabStore.ts')).useTabStore.getState().setActiveTab(null);
+    await new Promise((r) => setTimeout(r, 500));
+    const ids = [...document.querySelectorAll('.react-flow__node')].slice(0, 4).map((n) => n.getAttribute('data-id')!);
+    const sel = (await import('/src/stores/selectionStore.ts')).useSelectionStore;
+    sel.getState().selectElements(ids);
+    return [...sel.getState().selectedElementIds];
+  });
+  expect(ids3.length).toBeGreaterThan(1);
+  await page.waitForTimeout(300);
+  const pane = (await page.locator('.react-flow__pane').boundingBox())!;
+  // Bottom-left: the grid fills the top, the minimap sits bottom-right.
+  await page.mouse.click(pane.x + 40, pane.y + pane.height - 40, { button: 'right' });
+  // The selection as the menu sees it (the app prunes what is not displayed)
+  const menuSelection = await page.evaluate(async () =>
+    [...(await import('/src/stores/selectionStore.ts')).useSelectionStore.getState().selectedElementIds]);
+  await expect(page.getByText(`${menuSelection.length} selected`).last()).toBeVisible();
+  await page.getByRole('menuitem', { name: 'Tabs' }).hover();
+  await page.getByRole('menuitem', { name: 'New tab with selection' }).click();
+  await page.waitForTimeout(500);
+  const tab3 = await page.evaluate(async () => {
+    const { useTabStore } = await import('/src/stores/tabStore.ts');
+    const s = useTabStore.getState();
+    const active = s.tabs.find((t) => t.id === s.activeTabId);
+    return { count: s.tabs.length, members: active ? [...active.memberElementIds].sort() : [] };
+  });
+  expect(tab3.count).toBe(3);
+  expect(tab3.members).toEqual([...menuSelection].sort());
 });

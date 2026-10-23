@@ -2883,6 +2883,17 @@ export function Canvas() {
     await Promise.all(ids.map(id => updateElement(id, { isPositionLocked: !selectionLocked })));
   }, [getSelectedElementIds, selectionLocked, updateElement]);
 
+  // New canvas tab holding `ids`, opened. Same naming as the tab bar; the
+  // canvas stays where it is, the elements being on screen.
+  const canCreateTab = !!currentDossier && canvasTabs.length < MAX_TABS;
+  const createTabFromIds = useCallback(async (ids: string[]) => {
+    if (!currentDossier || ids.length === 0) return;
+    if (activeTabId !== null) saveTabViewport(activeTabId, viewport);
+    const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
+    await addTabMembers(tab.id, ids);
+    setActiveTab(tab.id);
+  }, [currentDossier, activeTabId, viewport, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, setActiveTab]);
+
   const handleSelectionHide = useCallback(() => {
     const selectedEls = getSelectedElementIds();
     if (selectedEls.length === 0) return;
@@ -5007,17 +5018,9 @@ export function Canvas() {
                   : [contextMenu.elementId];
                 addTabMembers(tabId, ids);
               }}
-              onNewTabFromSelection={currentDossier && canvasTabs.length < MAX_TABS ? async () => {
-                const ids = selectedElementIds.size > 1
-                  ? Array.from(selectedElementIds)
-                  : [contextMenu.elementId];
-                // Same naming as the tab bar; the canvas stays where it is,
-                // the selection being on screen.
-                if (activeTabId !== null) saveTabViewport(activeTabId, viewport);
-                const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
-                await addTabMembers(tab.id, ids);
-                setActiveTab(tab.id);
-              } : undefined}
+              onNewTabFromSelection={canCreateTab ? () => createTabFromIds(
+                selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
+              ) : undefined}
               onRemoveFromTab={() => {
                 if (!activeTabId) return;
                 const id = contextMenu.elementId;
@@ -5077,6 +5080,9 @@ export function Canvas() {
               onQueryFromSelection={handleQueryFromSelection}
               onSelectLinks={allEdges.length > 0 ? handleSelectLinks : undefined}
               onSuggestLinks={handleSuggestLinks}
+              tabs={canvasTabs}
+              onAddSelectionToTab={(tabId) => addTabMembers(tabId, Array.from(selectedElementIds))}
+              onNewTabFromSelection={canCreateTab ? () => createTabFromIds(Array.from(selectedElementIds)) : undefined}
               onClose={closeCanvasContextMenu}
               pluginExtensions={[
                 ...canvasPlugins,
