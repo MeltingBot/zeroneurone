@@ -97,14 +97,24 @@ export const tabRepository = {
     dossierId: DossierId,
     elementId: string,
   ): Promise<void> {
+    return this.removeElementsFromAllTabs(dossierId, [elementId]);
+  },
+
+  /** One read and one write per affected tab, whatever the number of ids */
+  async removeElementsFromAllTabs(
+    dossierId: DossierId,
+    elementIds: string[],
+  ): Promise<void> {
+    if (elementIds.length === 0) return;
+    const gone = new Set(elementIds);
     const tabs = await db.canvasTabs.where({ dossierId }).toArray();
     const updates = tabs
-      .filter(tab => tab.memberElementIds.includes(elementId) || (tab.excludedElementIds ?? []).includes(elementId))
+      .filter(tab => tab.memberElementIds.some(id => gone.has(id)) || (tab.excludedElementIds ?? []).some(id => gone.has(id)))
       .map(tab => ({
         key: tab.id,
         changes: {
-          memberElementIds: tab.memberElementIds.filter(id => id !== elementId),
-          excludedElementIds: (tab.excludedElementIds ?? []).filter(id => id !== elementId),
+          memberElementIds: tab.memberElementIds.filter(id => !gone.has(id)),
+          excludedElementIds: (tab.excludedElementIds ?? []).filter(id => !gone.has(id)),
           updatedAt: new Date(),
         },
       }));

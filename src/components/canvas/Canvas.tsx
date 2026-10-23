@@ -3948,45 +3948,19 @@ export function Canvas() {
     if (!action) return;
 
     switch (action.type) {
+      // Deletions (elements, links) are undone by the history store: one
+      // Y.Doc transaction for the lot, tab membership restored. Re-creating
+      // them here one by one cost a render each, seconds for a few hundred.
       case 'delete-elements':
       case 'delete-element':
-        // Restore deleted elements
-        if (action.undo.elements) {
-          for (const el of action.undo.elements) {
-            await createElement(el.label, el.position, {
-              ...el,
-              id: el.id, // Keep original ID
-            });
-          }
-        }
-        // Restore deleted links
-        if (action.undo.links) {
-          for (const link of action.undo.links) {
-            await createLink(link.fromId, link.toId, {
-              ...link,
-              id: link.id,
-            });
-          }
-        }
+      case 'delete-link':
+        await useHistoryStore.getState().applyUndo(action);
         break;
-
 
       case 'update-element':
         // Restore previous values
         if (action.undo.elementId && action.undo.changes) {
           await updateElement(action.undo.elementId, action.undo.changes);
-        }
-        break;
-
-      case 'delete-link':
-        // Restore deleted links
-        if (action.undo.links) {
-          for (const link of action.undo.links) {
-            await createLink(link.fromId, link.toId, {
-              ...link,
-              id: link.id,
-            });
-          }
         }
         break;
 

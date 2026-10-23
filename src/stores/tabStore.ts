@@ -48,6 +48,8 @@ interface TabState {
 
   // Actions - Cascade (element deleted)
   removeElementFromAllTabs: (dossierId: DossierId, elementId: ElementId) => Promise<void>;
+  /** Batch form: one store update and one Y.Doc transaction for all ids */
+  removeElementsFromAllTabs: (dossierId: DossierId, elementIds: ElementId[]) => Promise<void>;
 
   // Actions - Y.js sync (called by dossierStore._syncFromYDoc)
   _syncTabsFromYDoc: (remoteTabs: CanvasTab[]) => void;
@@ -398,36 +400,35 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Cascade ───────────────────────────────────────────
 
   removeElementFromAllTabs: async (dossierId, elementId) => {
+    await get().removeElementsFromAllTabs(dossierId, [elementId]);
+  },
+
+  removeElementsFromAllTabs: async (dossierId, elementIds) => {
+    if (elementIds.length === 0) return;
+    const gone = new Set(elementIds);
     // Collect affected tabs before mutating
     const affectedTabs = get().tabs.filter(
-      (t) => t.memberElementIds.includes(elementId) || t.excludedElementIds.includes(elementId),
+      (t) => t.memberElementIds.some((id) => gone.has(id)) || t.excludedElementIds.some((id) => gone.has(id)),
     );
 
-    await tabRepository.removeElementFromAllTabs(dossierId, elementId);
+    await tabRepository.removeElementsFromAllTabs(dossierId, elementIds);
+    const without = (set: Set<string>) => {
+      const next = new Set(set);
+      for (const id of gone) next.delete(id);
+      return next;
+    };
     set((s) => ({
       tabs: s.tabs.map((t) => ({
         ...t,
-        memberElementIds: t.memberElementIds.filter((id) => id !== elementId),
-        excludedElementIds: t.excludedElementIds.filter((id) => id !== elementId),
+        memberElementIds: t.memberElementIds.filter((id) => !gone.has(id)),
+        excludedElementIds: t.excludedElementIds.filter((id) => !gone.has(id)),
       })),
-      memberSet: (() => {
-        const newSet = new Set(s.memberSet);
-        newSet.delete(elementId);
-        return newSet;
-      })(),
-      ghostIds: (() => {
-        const newSet = new Set(s.ghostIds);
-        newSet.delete(elementId);
-        return newSet;
-      })(),
-      excludedSet: (() => {
-        const newSet = new Set(s.excludedSet);
-        newSet.delete(elementId);
-        return newSet;
-      })(),
+      memberSet: without(s.memberSet),
+      ghostIds: without(s.ghostIds),
+      excludedSet: without(s.excludedSet),
     }));
 
-    // Sync cleaned memberElementIds/excludedElementIds to Y.Doc
+    // Sync cleaned memberElementIds/excludedElementIds to Y.Doc, one transaction
     if (affectedTabs.length > 0) {
       const { syncService } = await import('../services/syncService');
       const ydoc = syncService.getYDoc();
@@ -440,8 +441,8 @@ export const useTabStore = create<TabState>((set, get) => ({
           for (const tab of affectedTabs) {
             const ymap = tabsMap.get(tab.id) as Y.Map<any> | undefined;
             if (ymap) {
-              ymap.set('memberElementIds', tab.memberElementIds.filter((id) => id !== elementId));
-              ymap.set('excludedElementIds', tab.excludedElementIds.filter((id) => id !== elementId));
+              ymap.set('memberElementIds', tab.memberElementIds.filter((id) => !gone.has(id)));
+              ymap.set('excludedElementIds', tab.excludedElementIds.filter((id) => !gone.has(id)));
               ymap.set('updatedAt', new Date().toISOString());
             }
           }

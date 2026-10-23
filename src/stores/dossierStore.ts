@@ -1478,13 +1478,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Also delete from Dexie for backwards compatibility
     await elementRepository.deleteMany(ids).catch((err) => onPersistFailure(err, 'element.deleteMany'));
 
-    // Cascade: remove from all canvas tabs
+    // Cascade: remove from all canvas tabs, in one pass, awaited: an undo
+    // right after must not be overtaken by removals still running.
     const invId = get().currentDossier?.id;
     if (invId) {
-      import('./tabStore').then(({ useTabStore }) => {
-        const tabStore = useTabStore.getState();
-        ids.forEach(id => tabStore.removeElementFromAllTabs(invId, id));
-      });
+      await useTabStore.getState().removeElementsFromAllTabs(invId, ids)
+        .catch((err) => onPersistFailure(err, 'tab.removeElements'));
       ids.forEach(id => emitPluginEvent('element:deleted', invId, id));
     }
   },
@@ -1766,14 +1765,20 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }
     });
 
-    // Persist to Dexie in background (fire-and-forget)
+    // Persist to Dexie in background (fire-and-forget), one write per table:
+    // a paste or an undo can bring back hundreds of rows.
     const invId = get().currentDossier?.id;
     if (invId) {
-      for (const el of newElements) {
-        elementRepository.create(invId, el.label, el.position, { ...el }).catch((err) => onPersistFailure(err, 'element.create'));
+      if (newElements.length > 0) {
+        elementRepository.bulkUpsert(newElements.map((el) => ({ ...el, dossierId: invId })))
+          .catch((err) => onPersistFailure(err, 'element.bulkUpsert'));
       }
-      for (const link of newLinks) {
-        linkRepository.create(invId, link.fromId, link.toId, { ...link }).catch((err) => onPersistFailure(err, 'link.create'));
+      if (newLinks.length > 0) {
+        linkRepository.bulkUpsert(newLinks.map((link) => ({ ...link, dossierId: invId })))
+          .catch((err) => onPersistFailure(err, 'link.bulkUpsert'));
+      }
+      if (newElements.length > 0 || newLinks.length > 0) {
+        dossierRepository.update(invId, {}).catch((err) => onPersistFailure(err, 'dossier.update'));
       }
     }
 
