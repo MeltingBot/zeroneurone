@@ -162,12 +162,20 @@ class SearchService {
   /**
    * Search the index
    */
-  search(query: string, limit = 20): SearchResult[] {
+  search(query: string, limit = 20, mode: 'fuzzy' | 'exact' = 'fuzzy'): SearchResult[] {
     if (!query.trim()) {
       return [];
     }
 
-    const results = this.index.search(query);
+    // Exact: no typo, every word required; only the word being typed (the
+    // last one) may be a prefix, so results show up while typing
+    const results = mode === 'exact'
+      ? this.index.search(query, {
+          fuzzy: false,
+          prefix: (_term: string, i: number, terms: string[]) => i === terms.length - 1,
+          combineWith: 'AND',
+        })
+      : this.index.search(query);
 
     return results.slice(0, limit).map((result) => ({
       id: result.id,

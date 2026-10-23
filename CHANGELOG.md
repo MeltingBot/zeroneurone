@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.75.2
+
+### Recherche
+
+- **Large ou Strict** — deux boutons dans la recherche (Ctrl+K) pour limiter
+  les résultats trop larges. **Large** (comportement d'avant) tolère les
+  fautes et se contente d'un mot ; **Strict** exige tous les mots, sans faute,
+  le dernier pouvant être un début de mot pendant la frappe. Le choix est
+  mémorisé.
+
 ## 2.75.1
 
 ### Corrections

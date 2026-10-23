@@ -58,3 +58,28 @@ describe('searchService.syncIncremental', () => {
     expect(searchService.search('Quetzal').map((r) => r.id)).toEqual(['el-5000']);
   });
 });
+
+describe('searchService.search modes', () => {
+  beforeEach(() => {
+    searchService.clear();
+    searchService.loadDossier('modes', [
+      element(1, { label: 'Jean Martin', tags: [] }),
+      element(2, { label: 'Jean Dupont', tags: [] }),
+      element(3, { label: 'Paul Marin', tags: [] }),
+    ], []);
+  });
+  const ids = (q: string, mode: 'fuzzy' | 'exact') => searchService.search(q, 20, mode).map((r) => r.id).sort();
+
+  it('fuzzy: any word, typos allowed', () => {
+    expect(ids('jean martin', 'fuzzy')).toEqual(['el-1', 'el-2', 'el-3']);
+  });
+
+  it('exact: every word, no typo', () => {
+    expect(ids('jean martin', 'exact')).toEqual(['el-1']);
+    expect(ids('martin', 'exact')).toEqual(['el-1']);
+  });
+
+  it('exact: the word being typed matches as a prefix', () => {
+    expect(ids('jean mar', 'exact')).toEqual(['el-1']);
+  });
+});

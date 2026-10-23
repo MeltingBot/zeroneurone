@@ -43,12 +43,16 @@ La recherche porte sur :
 **Texte extrait** : Le contenu textuel des PDF, DOCX, ODT et fichiers texte attaches aux elements est automatiquement indexe. Voir [Fichiers joints - Extraction de texte]({{< relref "attachments#extraction-de-texte" >}}).
 {{< /hint >}}
 
-### Recherche floue
+### Large ou Strict
 
-La recherche tolère les fautes de frappe mineures :
+Deux boutons à droite du champ règlent la tolérance. Le choix est mémorisé.
 
-- "dupond" trouve "Dupont"
-- "marie" trouve "Marie", "Mariée"
+| Mode | Fautes de frappe | Plusieurs mots | Début de mot |
+|------|------------------|----------------|--------------|
+| **Large** (par défaut) | Tolérées : "dupond" trouve "Dupont" | Un seul suffit | Accepté pour chaque mot |
+| **Strict** | Aucune | Tous doivent être présents | Seulement pour le dernier mot tapé |
+
+Exemple : "jean martin" trouve en **Large** tous les Jean et tous les Martin, en **Strict** seulement Jean Martin.
 
 ---
 

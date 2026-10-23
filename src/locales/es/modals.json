@@ -155,6 +155,12 @@
   },
   "search": {
     "title": "Buscar",
+    "mode": {
+      "fuzzy": "Aproximada",
+      "exact": "Exacta",
+      "fuzzyDesc": "Admite errores, basta una palabra",
+      "exactDesc": "Todas las palabras, sin errores"
+    },
     "placeholder": "Buscar elementos y enlaces...",
     "noResults": "Sin resultados para \"{{query}}\"",
     "resultsCount": "{{count}} resultado(s)",

@@ -157,6 +157,12 @@
   },
   "search": {
     "title": "Szukaj",
+    "mode": {
+      "fuzzy": "Przybliżone",
+      "exact": "Dokładne",
+      "fuzzyDesc": "Dopuszcza literówki, wystarczy jedno słowo",
+      "exactDesc": "Wszystkie słowa, bez błędów"
+    },
     "placeholder": "Szukaj elementów i połączeń...",
     "noResults": "Brak wyników dla \"{{query}}\"",
     "resultsCount": "{{count}} wyników",

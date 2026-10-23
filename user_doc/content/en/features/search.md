@@ -43,12 +43,16 @@ Search covers:
 **Extracted text**: Text content from PDF, DOCX, ODT and text files attached to elements is automatically indexed. See [Attachments - Text Extraction]({{< relref "attachments#text-extraction" >}}).
 {{< /hint >}}
 
-### Fuzzy Search
+### Broad or Strict
 
-Search tolerates minor typos:
+Two buttons next to the search field set how tolerant it is. The choice is remembered.
 
-- "dupond" finds "Dupont"
-- "marie" finds "Marie", "Married"
+| Mode | Typos | Several words | Word start |
+|------|-------|---------------|------------|
+| **Broad** (default) | Allowed: "dupond" finds "Dupont" | Any one is enough | Accepted for every word |
+| **Strict** | None | All must be present | Only for the last word typed |
+
+Example: "jean martin" finds every Jean and every Martin in **Broad**, only Jean Martin in **Strict**.
 
 ---
 

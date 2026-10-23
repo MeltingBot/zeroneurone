@@ -15,6 +15,8 @@ interface SearchModalProps {
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const { t, i18n } = useTranslation('modals');
+  const searchMode = useUIStore((s) => s.searchMode);
+  const setSearchMode = useUIStore((s) => s.setSearchMode);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -73,13 +75,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
 
     const timer = setTimeout(() => {
-      const searchResults = searchService.search(query, 20);
+      const searchResults = searchService.search(query, 20, searchMode);
       setResults(searchResults);
       setSelectedIndex(0);
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [query, onClose]);
+  }, [query, onClose, searchMode]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -406,6 +408,23 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             className="flex-1 bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none"
             data-testid="search-input"
           />
+          <div className="flex items-center shrink-0 rounded border border-border-default overflow-hidden">
+            {(['fuzzy', 'exact'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => { setSearchMode(mode); inputRef.current?.focus(); }}
+                aria-pressed={searchMode === mode}
+                title={t(`search.mode.${mode}Desc`)}
+                className={`px-2 py-0.5 text-xs ${
+                  searchMode === mode
+                    ? 'bg-bg-tertiary text-text-primary font-medium'
+                    : 'text-text-tertiary hover:text-text-primary'
+                }`}
+              >
+                {t(`search.mode.${mode}`)}
+              </button>
+            ))}
+          </div>
           <button
             onClick={onClose}
             className="p-1 text-text-tertiary hover:text-text-primary"

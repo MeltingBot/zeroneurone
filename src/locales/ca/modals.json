@@ -155,6 +155,12 @@
   },
   "search": {
     "title": "Cercar",
+    "mode": {
+      "fuzzy": "Aproximada",
+      "exact": "Exacta",
+      "fuzzyDesc": "Admet errors, n'hi ha prou amb una paraula",
+      "exactDesc": "Totes les paraules, sense errors"
+    },
     "placeholder": "Cercar elements i enllaços...",
     "noResults": "Sense resultats per a \"{{query}}\"",
     "resultsCount": "{{count}} resultat(s)",

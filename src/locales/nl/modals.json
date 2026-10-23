@@ -155,6 +155,12 @@
   },
   "search": {
     "title": "Zoeken",
+    "mode": {
+      "fuzzy": "Bij benadering",
+      "exact": "Exact",
+      "fuzzyDesc": "Staat typefouten toe, één woord volstaat",
+      "exactDesc": "Alle woorden, zonder fouten"
+    },
     "placeholder": "Elementen en verbindingen zoeken...",
     "noResults": "Geen resultaten voor \"{{query}}\"",
     "resultsCount": "{{count}} resultaten",

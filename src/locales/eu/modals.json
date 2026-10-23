@@ -155,6 +155,12 @@
   },
   "search": {
     "title": "Bilatu",
+    "mode": {
+      "fuzzy": "Gutxi gorabehera",
+      "exact": "Zehatza",
+      "fuzzyDesc": "Akatsak onartzen ditu, hitz bat nahikoa",
+      "exactDesc": "Hitz guztiak, akatsik gabe"
+    },
     "placeholder": "Elementuak eta loturak bilatu...",
     "noResults": "Ez dago emaitzarik \"{{query}}\"-rako",
     "resultsCount": "{{count}} emaitza",

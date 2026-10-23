@@ -155,6 +155,12 @@
   },
   "search": {
     "title": "Suchen",
+    "mode": {
+      "fuzzy": "Unscharf",
+      "exact": "Exakt",
+      "fuzzyDesc": "Erlaubt Tippfehler, ein Wort genügt",
+      "exactDesc": "Alle Wörter, ohne Fehler"
+    },
     "placeholder": "Elemente und Verbindungen suchen...",
     "noResults": "Keine Ergebnisse für \"{{query}}\"",
     "resultsCount": "{{count}} Ergebnis(se)",
