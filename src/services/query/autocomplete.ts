@@ -210,6 +210,7 @@ function operatorsForType(type: FieldType): { symbol: string; label: string }[] 
       { symbol: 'CONTAINS', label: 'contains' },
       { symbol: 'STARTS', label: 'starts with' },
       { symbol: 'ENDS', label: 'ends with' },
+      { symbol: 'LIKE', label: 'approximate' },
       { symbol: 'MATCHES', label: 'regex' },
       { symbol: 'IN', label: 'in set' },
     ];

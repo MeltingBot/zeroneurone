@@ -179,7 +179,7 @@
       "setKeyObject": "Instellen als uitlijnreferentie",
       "clearKeyObject": "Uitlijnreferentie verwijderen",
       "findSimilar": "Vergelijkbare zoeken",
-      "findSimilarNoTags": "Dit element heeft geen tags voor vergelijkbare zoekopdracht",
+      "findSimilarNoTags": "Dit element heeft geen label of tags om te vergelijken",
       "queryFromSelection": "Zoekopdracht uit selectie",
       "editLinkLabel": "Label bewerken",
       "resetLinkRoute": "Verloop herstellen",

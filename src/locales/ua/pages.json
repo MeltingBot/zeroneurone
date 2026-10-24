@@ -179,7 +179,7 @@
       "setKeyObject": "Встановити як орієнтир вирівнювання",
       "clearKeyObject": "Прибрати орієнтир вирівнювання",
       "findSimilar": "Знайти подібні",
-      "findSimilarNoTags": "Цей елемент не має тегів для пошуку подібних",
+      "findSimilarNoTags": "Цей елемент не має ні назви, ні тегів для порівняння",
       "queryFromSelection": "Запит з виділення",
       "editLinkLabel": "Редагувати мітку",
       "resetLinkRoute": "Скинути траєкторію",

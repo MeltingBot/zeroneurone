@@ -48,13 +48,13 @@ function getOperatorsForField(field: string): QueryOperator[] {
     case 'date':
       return [...base, 'gt', 'lt', 'gte', 'lte', 'in'];
     case 'string':
-      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'matches', 'in'];
+      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'like', 'matches', 'in'];
     case 'boolean':
       return base;
     case 'geo':
       return [...base, 'near'];
     default:
-      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'matches', 'in'];
+      return [...base, 'gt', 'lt', 'gte', 'lte', 'contains', 'starts', 'ends', 'like', 'matches', 'in'];
   }
 }
 

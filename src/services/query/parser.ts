@@ -172,7 +172,7 @@ function tokenize(input: string): Token[] | ParseError {
     if (input[i] === '-' && i + 1 < input.length && /\d/.test(input[i + 1])) {
       const prev = tokens[tokens.length - 1];
       const isAfterOperator = !prev || prev.type.startsWith('OP_') || prev.type === 'LPAREN' || prev.type === 'COMMA'
-        || (prev.type === 'IDENTIFIER' && ['CONTAINS', 'STARTS', 'ENDS', 'MATCHES', 'NEAR'].includes(prev.value.toUpperCase()));
+        || (prev.type === 'IDENTIFIER' && ['CONTAINS', 'STARTS', 'ENDS', 'LIKE', 'MATCHES', 'NEAR'].includes(prev.value.toUpperCase()));
       if (isAfterOperator) {
         let num = '-';
         i++;
@@ -413,6 +413,10 @@ class Parser {
         this.advance();
         return this.buildCondition(field, 'ends');
       }
+      if (kw === 'LIKE') {
+        this.advance();
+        return this.buildCondition(field, 'like');
+      }
       if (kw === 'MATCHES') {
         this.advance();
         return this.buildCondition(field, 'matches');
@@ -443,7 +447,7 @@ class Parser {
     throw this.error(
       `Expected operator after field '${field.value}'`,
       t.position,
-      '=, !=, >, <, >=, <=, CONTAINS, STARTS, ENDS, MATCHES, EXISTS, NOT EXISTS, IN, NEAR',
+      '=, !=, >, <, >=, <=, CONTAINS, STARTS, ENDS, LIKE, MATCHES, EXISTS, NOT EXISTS, IN, NEAR',
     );
   }
 

@@ -72,6 +72,10 @@ describe('serializer — simple conditions', () => {
     roundTrip('notes CONTAINS "test"', 'notes CONTAINS "test"');
   });
 
+  it('LIKE', () => {
+    roundTrip('label LIKE "jean martin"', 'label LIKE "jean martin"');
+  });
+
   it('MATCHES regex', () => {
     roundTrip('"Numero SIREN" MATCHES /^[0-9]{9}$/', '"Numero SIREN" MATCHES /^[0-9]{9}$/');
   });

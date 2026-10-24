@@ -179,7 +179,7 @@
       "setKeyObject": "Définir comme objet de référence",
       "clearKeyObject": "Retirer l'objet de référence",
       "findSimilar": "Chercher les similaires",
-      "findSimilarNoTags": "Cet élément n'a aucun tag pour la recherche de similaires",
+      "findSimilarNoTags": "Cet élément n'a ni libellé ni tag à comparer",
       "queryFromSelection": "Requête depuis sélection",
       "editLinkLabel": "Editer le label",
       "resetLinkRoute": "Réinitialiser le tracé",

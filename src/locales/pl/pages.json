@@ -179,7 +179,7 @@
       "setKeyObject": "Ustaw jako odniesienie wyrównania",
       "clearKeyObject": "Usuń odniesienie wyrównania",
       "findSimilar": "Znajdź podobne",
-      "findSimilarNoTags": "Ten element nie ma tagów do wyszukiwania podobnych",
+      "findSimilarNoTags": "Ten element nie ma etykiety ani tagów do porównania",
       "queryFromSelection": "Zapytanie z zaznaczenia",
       "editLinkLabel": "Edytuj etykietę",
       "resetLinkRoute": "Resetuj przebieg",

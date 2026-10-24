@@ -3010,17 +3010,23 @@ export function Canvas() {
     if (!targetId) return;
     const el = elements.find(e => e.id === targetId);
     if (!el) return;
-    if (el.tags.filter(Boolean).length === 0) {
+    // Same tags, or a label close to it (LIKE: case, accents, small typos)
+    const label = el.label.trim();
+    const tags = el.tags.filter(Boolean);
+    if (tags.length === 0 && !label) {
       useUIStore.getState().showToast('warning', tPages('dossier.findSimilarNoTags'));
       return;
     }
 
-    const conditions: import('../../services/query/types').QueryCondition[] = el.tags.filter(Boolean).map(tag => ({
-      type: 'condition' as const,
-      field: 'tag',
-      operator: 'eq' as const,
-      value: tag,
-    }));
+    const conditions: import('../../services/query/types').QueryCondition[] = [
+      ...(label ? [{ type: 'condition' as const, field: 'label', operator: 'like' as const, value: label }] : []),
+      ...tags.map(tag => ({
+        type: 'condition' as const,
+        field: 'tag',
+        operator: 'eq' as const,
+        value: tag,
+      })),
+    ];
 
     const ast = conditions.length === 1
       ? conditions[0]

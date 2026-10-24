@@ -11,6 +11,7 @@ Le panneau **Requêtes** permet de filtrer vos données avec un langage structur
 
 - Onglet **Requêtes** dans le panneau latéral
 - Depuis la recherche rapide (Ctrl+K), tapez `?` suivi de votre requête
+- Clic droit sur un élément → **Analyser** → **Chercher les similaires** : requête sur un libellé proche (`LIKE`) ou les mêmes tags, par exemple `label LIKE "Jean Martin" OR tag = "Personne"`
 
 ---
 
@@ -71,6 +72,7 @@ Les chaînes de caractères se mettent entre guillemets. Les dates s'écrivent a
 ```
 tag = "personne"
 label CONTAINS "bank"
+label LIKE "jean martn"
 confidence > 70
 date >= 2024-01-01
 tag = "entreprise" AND country = "FR"
@@ -191,6 +193,7 @@ ville = "Paris"
 | `CONTAINS` | Contient la sous-chaîne |
 | `STARTS` | Commence par |
 | `ENDS` | Termine par |
+| `LIKE` | Approché : casse et accents ignorés, chaque mot doit ressembler à un mot du champ (environ 1 faute pour 5 lettres, mots de 3 lettres ou moins exacts) |
 | `MATCHES` | Expression régulière |
 
 ### Ensemble

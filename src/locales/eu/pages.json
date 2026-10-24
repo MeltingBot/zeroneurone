@@ -179,7 +179,7 @@
       "setKeyObject": "Lerrokatze-erreferentzia gisa ezarri",
       "clearKeyObject": "Lerrokatze-erreferentzia kendu",
       "findSimilar": "Antzekoak bilatu",
-      "findSimilarNoTags": "Elementu honek ez du etiketarik antzekoen bilaketarako",
+      "findSimilarNoTags": "Elementu honek ez du konparatzeko etiketarik ez tagik",
       "queryFromSelection": "Kontsulta hautapenetik",
       "editLinkLabel": "Etiketa editatu",
       "resetLinkRoute": "Berrezarri ibilbidea",

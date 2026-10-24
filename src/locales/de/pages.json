@@ -179,7 +179,7 @@
       "setKeyObject": "Als Ausrichtungsreferenz festlegen",
       "clearKeyObject": "Ausrichtungsreferenz entfernen",
       "findSimilar": "Ähnliche finden",
-      "findSimilarNoTags": "Dieses Element hat keine Tags für die Ähnlichkeitssuche",
+      "findSimilarNoTags": "Dieses Element hat weder Bezeichnung noch Tags zum Vergleichen",
       "queryFromSelection": "Abfrage aus Auswahl",
       "editLinkLabel": "Label bearbeiten",
       "resetLinkRoute": "Verlauf zurücksetzen",

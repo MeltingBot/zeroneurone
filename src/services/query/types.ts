@@ -49,6 +49,7 @@ export type QueryOperator =
   | 'eq' | 'neq'
   | 'gt' | 'lt' | 'gte' | 'lte'
   | 'contains' | 'starts' | 'ends'
+  | 'like'
   | 'matches'
   | 'exists' | 'not_exists'
   | 'in'
@@ -90,6 +91,7 @@ export const OPERATOR_KEYWORDS: Record<string, QueryOperator> = {
   'CONTAINS': 'contains',
   'STARTS': 'starts',
   'ENDS': 'ends',
+  'LIKE': 'like',
   'MATCHES': 'matches',
   'EXISTS': 'exists',
   'NOT EXISTS': 'not_exists',
@@ -107,6 +109,7 @@ export const OPERATOR_SYMBOLS: Record<QueryOperator, string> = {
   contains: 'CONTAINS',
   starts: 'STARTS',
   ends: 'ENDS',
+  like: 'LIKE',
   matches: 'MATCHES',
   exists: 'EXISTS',
   not_exists: 'NOT EXISTS',

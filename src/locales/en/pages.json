@@ -179,7 +179,7 @@
       "setKeyObject": "Set as alignment reference",
       "clearKeyObject": "Clear alignment reference",
       "findSimilar": "Find similar",
-      "findSimilarNoTags": "This element has no tags for similarity search",
+      "findSimilarNoTags": "This element has no label or tags to compare",
       "queryFromSelection": "Query from selection",
       "editLinkLabel": "Edit label",
       "resetLinkRoute": "Reset route",

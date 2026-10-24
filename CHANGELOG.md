@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.75.5
+
+### Améliorations
+
+- **ZNQuery : opérateur `LIKE`** — recherche approchée sur un texte : casse et
+  accents ignorés, chaque mot doit ressembler à un mot du champ (environ une
+  faute pour cinq lettres). `label LIKE "jean martn"` trouve « Jean Martin ».
+- **Chercher les similaires** — compare aussi le libellé (`LIKE`), plus
+  seulement les tags : fonctionne sur un élément sans tag.
+
 ## 2.75.4
 
 ### Corrections

@@ -3,6 +3,7 @@
 
 import type { Element, Link } from '../../types';
 import { formatEvaluation } from '../../utils/evaluation';
+import { fuzzyMatch } from '../../utils/fuzzyMatch';
 import type { QueryNode, QueryCondition, QueryWithin, QueryOperator, QueryValue, QueryResult } from './types';
 
 // ── Evaluation context ──
@@ -238,6 +239,11 @@ function matchValue(
       case 'starts': return fStr.startsWith(qStr);
       case 'ends': return fStr.endsWith(qStr);
     }
+  }
+
+  // LIKE — approximate text match (case, accents and small typos ignored)
+  if (operator === 'like') {
+    return fuzzyMatch(toString(fieldValue), toString(queryValue));
   }
 
   // IN — set membership (case-insensitive string match)

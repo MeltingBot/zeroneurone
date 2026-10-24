@@ -11,6 +11,7 @@ The **Queries** panel lets you filter your data with a structured language. Two 
 
 - **Queries** tab in the side panel
 - From quick search (Ctrl+K), type `?` followed by your query
+- Right-click an element → **Analyze** → **Find similar**: query on a close label (`LIKE`) or the same tags, e.g. `label LIKE "Jean Martin" OR tag = "Person"`
 
 ---
 
@@ -71,6 +72,7 @@ String values go in double quotes. Dates use ISO format (YYYY-MM-DD).
 ```
 tag = "person"
 label CONTAINS "bank"
+label LIKE "jean martn"
 confidence > 70
 date >= 2024-01-01
 tag = "company" AND country = "FR"
@@ -191,6 +193,7 @@ city = "Paris"
 | `CONTAINS` | Contains the substring |
 | `STARTS` | Starts with |
 | `ENDS` | Ends with |
+| `LIKE` | Approximate: case and accents ignored, each word must resemble a word of the field (about 1 typo per 5 letters, words of 3 letters or less exact) |
 | `MATCHES` | Regular expression |
 
 ### Set membership

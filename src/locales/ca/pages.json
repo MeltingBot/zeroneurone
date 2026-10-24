@@ -179,7 +179,7 @@
       "setKeyObject": "Definir com a referència d'alineació",
       "clearKeyObject": "Treure referència d'alineació",
       "findSimilar": "Cercar similars",
-      "findSimilarNoTags": "Aquest element no té tags per cercar similars",
+      "findSimilarNoTags": "Aquest element no té etiqueta ni tags per comparar",
       "queryFromSelection": "Consulta des de selecció",
       "editLinkLabel": "Editar etiqueta",
       "resetLinkRoute": "Restableix el traçat",

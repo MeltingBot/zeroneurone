@@ -101,6 +101,17 @@ describe('evaluator — label', () => {
     expect(r.elementIds.size).toBe(1);
   });
 
+  it('LIKE: approximate, every word, case and accents ignored', () => {
+    const els = [
+      makeElement({ label: 'Jean Martin' }),
+      makeElement({ label: 'Jean Dupont' }),
+      makeElement({ label: 'Société Générale' }),
+    ];
+    expect(query('label LIKE "jean martn"', els).elementIds.has(els[0].id)).toBe(true);
+    expect(query('label LIKE "jean martn"', els).elementIds.size).toBe(1);
+    expect(query('label LIKE "societe generale"', els).elementIds.has(els[2].id)).toBe(true);
+  });
+
   it('STARTS', () => {
     const els = [
       makeElement({ label: 'Jean-Pierre' }),
