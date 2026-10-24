@@ -1,5 +1,5 @@
 import MiniSearch from 'minisearch';
-import type { Asset, Element, Link, SearchDocument, SearchResult, Property } from '../types';
+import type { Asset, Comment, Element, Link, SearchDocument, SearchResult, Property } from '../types';
 import { getCountryByCode, getCountryName } from '../data/countries';
 
 class SearchService {
@@ -12,7 +12,7 @@ class SearchService {
 
   private createIndex(): MiniSearch<SearchDocument> {
     return new MiniSearch<SearchDocument>({
-      fields: ['label', 'notes', 'tags', 'properties', 'extractedText'],
+      fields: ['label', 'notes', 'tags', 'properties', 'extractedText', 'comments'],
       storeFields: ['id', 'type', 'label', 'dossierId'],
       searchOptions: {
         boost: { label: 3, tags: 2, notes: 1 },
@@ -26,11 +26,13 @@ class SearchService {
   private indexedIds = new Set<string>();
   // Map elementId → concatenated extractedText from its assets
   private assetTextMap = new Map<string, string>();
+  // Map element/link id → concatenated content of its comments
+  private commentTextMap = new Map<string, string>();
   // What each indexed document was built from: an unchanged one is not
   // re-indexed (a move or a layout re-syncs every element, but changes none
   // of the indexed text). Same object and asset text → skipped outright;
   // otherwise the document content is compared.
-  private indexedFrom = new Map<string, { source: Element | Link; assetText: string; content: string }>();
+  private indexedFrom = new Map<string, { source: Element | Link; assetText: string; commentText: string; content: string }>();
 
   /**
    * Load and index all elements and links for an dossier (full rebuild).
@@ -40,7 +42,8 @@ class SearchService {
     dossierId: string,
     elements: Element[],
     links: Link[],
-    assets: Asset[] = []
+    assets: Asset[] = [],
+    comments: Comment[] = [],
   ): void {
     // Reset if different dossier
     if (this.currentDossierId !== dossierId) {
@@ -51,6 +54,7 @@ class SearchService {
     }
 
     this.buildAssetTextMap(elements, assets);
+    this.buildCommentTextMap(comments);
 
     // Index elements
     for (const element of elements) {
@@ -69,8 +73,9 @@ class SearchService {
    * Incrementally sync the search index with the current elements/links.
    * Detects adds, removes, and updates.
    */
-  syncIncremental(elements: Element[], links: Link[], assets: Asset[] = []): void {
+  syncIncremental(elements: Element[], links: Link[], assets: Asset[] = [], comments: Comment[] = []): void {
     this.buildAssetTextMap(elements, assets);
+    this.buildCommentTextMap(comments);
     const currentIds = new Set<string>();
 
     // Process elements: add/update
@@ -102,26 +107,28 @@ class SearchService {
    */
   indexElement(element: Element): void {
     const assetText = this.assetTextMap.get(element.id) || '';
+    const commentText = this.commentTextMap.get(element.id) || '';
     const previous = this.indexedFrom.get(element.id);
-    if (previous && previous.source === element && previous.assetText === assetText) return;
-    this.indexDocument(this.elementToDocument(element), element, assetText);
+    if (previous && previous.source === element && previous.assetText === assetText && previous.commentText === commentText) return;
+    this.indexDocument(this.elementToDocument(element), element, assetText, commentText);
   }
 
   /**
    * Index or re-index a single link
    */
   indexLink(link: Link): void {
+    const commentText = this.commentTextMap.get(link.id) || '';
     const previous = this.indexedFrom.get(link.id);
-    if (previous && previous.source === link) return;
-    this.indexDocument(this.linkToDocument(link), link, '');
+    if (previous && previous.source === link && previous.commentText === commentText) return;
+    this.indexDocument(this.linkToDocument(link), link, '', commentText);
   }
 
   /** (Re-)index a document, unless its content is what is already indexed. */
-  private indexDocument(doc: SearchDocument, source: Element | Link, assetText: string): void {
+  private indexDocument(doc: SearchDocument, source: Element | Link, assetText: string, commentText: string): void {
     const content = JSON.stringify(doc);
     const previous = this.indexedFrom.get(doc.id);
     if (previous?.content === content) {
-      this.indexedFrom.set(doc.id, { source, assetText, content });
+      this.indexedFrom.set(doc.id, { source, assetText, commentText, content });
       return;
     }
     if (previous || this.index.has(doc.id)) {
@@ -132,7 +139,7 @@ class SearchService {
       }
     }
     this.index.add(doc);
-    this.indexedFrom.set(doc.id, { source, assetText, content });
+    this.indexedFrom.set(doc.id, { source, assetText, commentText, content });
   }
 
   /**
@@ -222,6 +229,15 @@ class SearchService {
     return `${p.key} ${value}`;
   }
 
+  private buildCommentTextMap(comments: Comment[]): void {
+    this.commentTextMap.clear();
+    for (const comment of comments) {
+      if (!comment.content) continue;
+      const previous = this.commentTextMap.get(comment.targetId);
+      this.commentTextMap.set(comment.targetId, previous ? `${previous} ${comment.content}` : comment.content);
+    }
+  }
+
   private buildAssetTextMap(elements: Element[], assets: Asset[]): void {
     this.assetTextMap.clear();
     if (assets.length === 0) return;
@@ -248,7 +264,8 @@ class SearchService {
       properties: element.properties
         .map((p) => this.formatPropertyForIndex(p))
         .join(' '),
-      extractedText: this.assetTextMap.get(element.id) || ''
+      extractedText: this.assetTextMap.get(element.id) || '',
+      comments: this.commentTextMap.get(element.id) || '',
     };
   }
 
@@ -264,6 +281,7 @@ class SearchService {
         .map((p) => this.formatPropertyForIndex(p))
         .join(' '),
       extractedText: '',
+      comments: this.commentTextMap.get(link.id) || '',
     };
   }
 }

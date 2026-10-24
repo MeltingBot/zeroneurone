@@ -68,6 +68,7 @@ export function DossierPage() {
     elements,
     links,
     assets,
+    comments,
     isLoading,
     loadingPhase,
     loadingDetail,
@@ -250,13 +251,13 @@ export function DossierPage() {
 
     if (searchInitializedRef.current !== currentDossier.id) {
       // First load or dossier changed: full rebuild
-      searchService.loadDossier(currentDossier.id, elements, links, assets);
+      searchService.loadDossier(currentDossier.id, elements, links, assets, comments);
       searchInitializedRef.current = currentDossier.id;
     } else {
       // Subsequent changes: incremental sync (only diffs)
-      searchService.syncIncremental(elements, links, assets);
+      searchService.syncIncremental(elements, links, assets, comments);
     }
-  }, [currentDossier, elements, links, assets]);
+  }, [currentDossier, elements, links, assets, comments]);
 
   // Load saved views for this dossier
   useEffect(() => {

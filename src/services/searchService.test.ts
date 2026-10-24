@@ -83,3 +83,20 @@ describe('searchService.search modes', () => {
     expect(ids('jean mar', 'exact')).toEqual(['el-1']);
   });
 });
+
+describe('searchService comments', () => {
+  const comment = (targetId: string, content: string) => ({
+    id: `c-${targetId}`, dossierId: 'c', targetId, targetType: 'element', authorName: 'A', authorColor: '#000',
+    content, resolved: false, resolvedBy: null, resolvedAt: null, createdAt: new Date(),
+  }) as unknown as import('../types').Comment;
+
+  it('finds an element by the text of its comments, and forgets it once the comment is gone', () => {
+    searchService.clear();
+    const elements = [element(1, { label: 'Alpha' }), element(2, { label: 'Beta' })];
+    searchService.loadDossier('c', elements, [], [], [comment('el-2', 'vérifier le virement suspect')]);
+    expect(searchService.search('virement').map((r) => r.id)).toEqual(['el-2']);
+
+    searchService.syncIncremental(elements, [], [], []);
+    expect(searchService.search('virement')).toEqual([]);
+  });
+});

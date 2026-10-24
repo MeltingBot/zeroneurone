@@ -596,6 +596,8 @@ export interface SearchDocument {
   tags: string;
   properties: string;
   extractedText: string;
+  /** Text of the comments on the element or link */
+  comments: string;
 }
 
 export interface SearchResult {

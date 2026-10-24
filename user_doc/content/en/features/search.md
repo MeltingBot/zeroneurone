@@ -38,6 +38,7 @@ Search covers:
 | **Tags** | Medium |
 | **Properties** | Normal |
 | **Extracted text** | Normal |
+| **Comments** | Normal |
 
 {{< hint info >}}
 **Extracted text**: Text content from PDF, DOCX, ODT and text files attached to elements is automatically indexed. See [Attachments - Text Extraction]({{< relref "attachments#text-extraction" >}}).

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.75.4
+
+### Corrections
+
+- **Recherche dans les commentaires** — la recherche (Ctrl+K) ignorait les
+  commentaires. Leur texte, résolus compris, est indexé avec l'élément ou le
+  lien commenté, et le résultat montre l'extrait avec son auteur.
+
 ## 2.75.3
 
 ### Améliorations

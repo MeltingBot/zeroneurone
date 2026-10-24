@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Box, Link2, X, Tag } from 'lucide-react';
+import { Search, Box, Link2, X, Tag, MessageSquare } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useTabStore, useUIStore } from '../../stores';
 import { useQueryStore } from '../../stores/queryStore';
 import { searchService } from '../../services/searchService';
@@ -24,7 +24,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const { elements, links, assets } = useDossierStore();
+  const { elements, links, assets, comments } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
   const { requestViewportChange } = useViewStore();
   const canvasTabs = useTabStore((s) => s.tabs);
@@ -312,6 +312,29 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     [elementsMap, linksMap, query]
   );
 
+  // First comment on the result containing the query, centred on the match
+  const getMatchingComment = useCallback(
+    (result: SearchResult): { author: string; text: string } | null => {
+      const queryLower = query.trim().toLowerCase();
+      if (!queryLower) return null;
+      const comment = comments.find((c) => c.targetId === result.id && c.content.toLowerCase().includes(queryLower));
+      if (!comment) return null;
+      const content = comment.content.replace(/\s+/g, ' ').trim();
+      const maxLen = 100;
+      if (content.length <= maxLen) return { author: comment.authorName, text: content };
+      const matchIdx = content.toLowerCase().indexOf(queryLower);
+      const half = Math.floor((maxLen - queryLower.length) / 2);
+      let start = Math.max(0, matchIdx - half);
+      const end = Math.min(content.length, start + maxLen);
+      if (end - start < maxLen) start = Math.max(0, end - maxLen);
+      return {
+        author: comment.authorName,
+        text: (start > 0 ? '...' : '') + content.substring(start, end) + (end < content.length ? '...' : ''),
+      };
+    },
+    [comments, query]
+  );
+
   // Get matching extracted text snippet from assets
   const getMatchingExtractedText = useCallback(
     (result: SearchResult): string[] | null => {
@@ -446,6 +469,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             const tags = getResultTags(result);
             const notes = getResultNotes(result);
             const extractedSnippets = getMatchingExtractedText(result);
+            const matchingComment = matchingProp ? null : getMatchingComment(result);
             const tabNames = getResultTabNames(result);
 
             return (
@@ -482,8 +506,16 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       <span className="text-text-tertiary">{matchingProp.key}:</span> {matchingProp.value}
                     </div>
                   )}
+                  {/* Matching comment */}
+                  {matchingComment && (
+                    <div className="flex items-center gap-1 text-xs text-text-secondary truncate mt-0.5">
+                      <MessageSquare size={10} className="shrink-0 text-text-tertiary" />
+                      <span className="text-text-tertiary shrink-0">{matchingComment.author}:</span>
+                      <span className="truncate">{highlightMatch(matchingComment.text, query)}</span>
+                    </div>
+                  )}
                   {/* Notes excerpt */}
-                  {notes && !matchingProp && !extractedSnippets && (
+                  {notes && !matchingProp && !matchingComment && !extractedSnippets && (
                     <div className="text-xs text-text-tertiary truncate mt-0.5">
                       {highlightMatch(notes, query)}
                     </div>
