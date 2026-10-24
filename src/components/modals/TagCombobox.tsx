@@ -12,6 +12,8 @@ interface TagComboboxProps {
   allowNew?: boolean;
   /** Called once the value is settled: an option picked, Enter, or leaving the field */
   onPick?: (value: string) => void;
+  /** Tags offered instead of every tag of the dossier and its families */
+  options?: readonly string[];
 }
 
 /**
@@ -19,7 +21,7 @@ interface TagComboboxProps {
  * dossier) or typed: a name not in the list is created at import. Opening the
  * list shows every tag; typing filters it.
  */
-export function TagCombobox({ value, onChange, placeholder, className = '', 'aria-label': ariaLabel, allowNew = true, onPick }: TagComboboxProps) {
+export function TagCombobox({ value, onChange, placeholder, className = '', 'aria-label': ariaLabel, allowNew = true, onPick, options }: TagComboboxProps) {
   const tagSets = useTagSetStore((s) => s.tagSets);
   const isLoaded = useTagSetStore((s) => s.isLoaded);
   const elements = useDossierStore((s) => s.elements);
@@ -32,11 +34,12 @@ export function TagCombobox({ value, onChange, placeholder, className = '', 'ari
   }, [isLoaded]);
 
   const names = useMemo(() => {
+    if (options) return [...options].sort((a, b) => a.localeCompare(b));
     const set = new Set<string>();
     tagSets.forEach((ts) => set.add(ts.name));
     elements.forEach((el) => el.tags.forEach((tag) => set.add(tag)));
     return [...set].sort((a, b) => a.localeCompare(b));
-  }, [tagSets, elements]);
+  }, [tagSets, elements, options]);
 
   const query = value.trim();
   const shown = typed && query ? names.filter((n) => n.toLowerCase().includes(query.toLowerCase())) : names;

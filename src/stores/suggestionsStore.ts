@@ -8,22 +8,21 @@ import { useQueryStore } from './queryStore';
 import { useTabStore } from './tabStore';
 import { getDimmedElementIds } from '../utils/filterUtils';
 import { getEvaluationModel } from '../utils/evaluation';
+import { datePropertyRules } from '../utils/temporalUtils';
 import { getTabFilterIds } from '../hooks/useTabFilterIds';
 
 /** Label of a created link, from the reason that justified it (translated by the panel) */
 export type SuggestionLabeler = (reason: SuggestionReason) => string;
 
 
-/** Radii offered to the places and meeting rules, in metres */
-export const NEARBY_RADII = [50, 100, 500, 1000, 5000] as const;
-/** The places rule reaches further (sites of a sector, offences around a
- *  zone); meetings stop at 5 km, where "same place" means little */
-export const PLACE_RADII = [...NEARBY_RADII, 10000, 20000, 50000] as const;
+/** Bounds of the distance the places and meeting rules accept, in metres:
+ *  the analyst types it */
+export const RADIUS_BOUNDS = { min: 1, max: 100_000 } as const;
 const NEARBY_RADIUS_KEY = 'zn:suggestions:radius';
 const DEFAULT_NEARBY_RADIUS = 100;
 
-/** Time windows offered for the meeting rule, in ms */
-export const MEETING_WINDOWS = [15 * 60_000, 3600_000, 86400_000, 7 * 86400_000] as const;
+/** Bounds of the meeting rule time window, in ms: the analyst types it */
+export const WINDOW_BOUNDS = { min: 60_000, max: 365 * 86400_000 } as const;
 const MEETING_WINDOW_KEY = 'zn:suggestions:meetingWindow';
 const DEFAULT_MEETING_WINDOW = 3600_000;
 
@@ -70,6 +69,21 @@ function readChoice(key: string, allowed: readonly number[], fallback: number): 
   }
 }
 
+/** A typed amount, within its bounds */
+export function clampAmount(value: number, bounds: { min: number; max: number }): number {
+  return Math.min(bounds.max, Math.max(bounds.min, Math.round(value)));
+}
+
+function readAmount(key: string, bounds: { min: number; max: number }, fallback: number): number {
+  try {
+    const raw = localStorage.getItem(key);
+    const stored = Number(raw);
+    return raw !== null && Number.isFinite(stored) && stored > 0 ? clampAmount(stored, bounds) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function readFlag(key: string): boolean {
   try {
     return localStorage.getItem(key) !== '0';
@@ -84,6 +98,13 @@ function saveChoice(key: string, value: number): void {
   } catch {
     // Per-viewer convenience only
   }
+}
+
+/** A link a checked suggestion would draw */
+export interface PreviewPair {
+  id: string;
+  fromId: string;
+  toId: string;
 }
 
 interface SuggestionsState {
@@ -114,6 +135,14 @@ interface SuggestionsState {
   shownCount: number | null;
   /** The meeting rule stopped before the end (too many positions for radius and window) */
   meetingsTruncated: boolean;
+  /** Elements left out as crowds by the last analysis (too many neighbours) */
+  crowdedCount: number;
+  /** Suggestions checked in the list: kept while the side panel shows another tab */
+  checked: Set<string>;
+  setChecked: (next: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
+  /** Links the checked suggestions would draw, shown on the canvas until accepted */
+  previewPairs: PreviewPair[];
+  setPreviewPairs: (pairs: PreviewPair[]) => void;
   /** Only suggestions joining an element of tag `a` to one of tag `b`; null for all */
   between: { a: string; b: string } | null;
   /** Property keys (folded) the shared values rule leaves out, for keysDossierId */
@@ -182,9 +211,9 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   dismissedSuggestions: [],
   dossierId: null,
   scope: null,
-  nearbyRadius: readChoice(NEARBY_RADIUS_KEY, PLACE_RADII, DEFAULT_NEARBY_RADIUS),
-  meetingWindow: readChoice(MEETING_WINDOW_KEY, MEETING_WINDOWS, DEFAULT_MEETING_WINDOW),
-  meetingRadius: readChoice(MEETING_RADIUS_KEY, NEARBY_RADII, DEFAULT_NEARBY_RADIUS),
+  nearbyRadius: readAmount(NEARBY_RADIUS_KEY, RADIUS_BOUNDS, DEFAULT_NEARBY_RADIUS),
+  meetingWindow: readAmount(MEETING_WINDOW_KEY, WINDOW_BOUNDS, DEFAULT_MEETING_WINDOW),
+  meetingRadius: readAmount(MEETING_RADIUS_KEY, RADIUS_BOUNDS, DEFAULT_NEARBY_RADIUS),
   maxStay: readChoice(MAX_STAY_KEY, MAX_STAYS, DEFAULT_MAX_PRESENCE_MS),
   valuesEnabled: readFlag(VALUES_KEY),
   sourcesEnabled: readFlag(SOURCES_KEY),
@@ -193,6 +222,15 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   meetingsEnabled: readFlag(MEETINGS_KEY),
   shownCount: null,
   meetingsTruncated: false,
+  crowdedCount: 0,
+  checked: new Set(),
+  setChecked: (next) => set({ checked: typeof next === 'function' ? next(get().checked) : next }),
+  previewPairs: [],
+  setPreviewPairs: (pairs) => {
+    const current = get().previewPairs;
+    const same = pairs.length === current.length && pairs.every((p, i) => p.id === current[i].id);
+    if (!same) set({ previewPairs: pairs });
+  },
   between: null,
   excludedKeys: [],
   keysDossierId: null,
@@ -202,20 +240,23 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     get().loadExcludedKeys(currentDossier?.id ?? null);
     const dismissed = currentDossier?.dismissedSuggestions ?? [];
     const shown = shownElementIds(elements, getEvaluationModel(currentDossier));
-    const { suggestions, dismissedSuggestions, staleDismissalIds, meetingsTruncated } = analyzeLinkSuggestions(elements, links, assets, {
+    const { suggestions, dismissedSuggestions, staleDismissalIds, meetingsTruncated, crowdedCount } = analyzeLinkSuggestions(elements, links, assets, {
       dismissed: new Set(dismissed),
       scope: scope ? new Set(scope) : null,
       rules: { sharedValue: get().valuesEnabled, sharedSource: get().sourcesEnabled, inZone: get().zonesEnabled },
       nearbyRadius: get().placesEnabled ? get().nearbyRadius : null,
       meeting: get().meetingsEnabled
-        ? { radius: get().meetingRadius, window: get().meetingWindow, maxPresence: get().maxStay || null }
+        ? {
+          radius: get().meetingRadius, window: get().meetingWindow, maxPresence: get().maxStay || null,
+          dateProperties: datePropertyRules(useViewStore.getState().filters),
+        }
         : null,
       candidateIds: shown,
       between: get().between,
       excludedKeys: new Set(get().excludedKeys),
     });
     set({
-      suggestions, dismissedSuggestions, scope, meetingsTruncated,
+      suggestions, dismissedSuggestions, scope, meetingsTruncated, crowdedCount,
       dossierId: currentDossier?.id ?? null,
       shownCount: shown ? shown.size : null,
     });
@@ -235,8 +276,9 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   },
 
   setNearbyRadius: (radius) => {
-    set({ nearbyRadius: radius });
-    saveChoice(NEARBY_RADIUS_KEY, radius);
+    const value = clampAmount(radius, RADIUS_BOUNDS);
+    set({ nearbyRadius: value });
+    saveChoice(NEARBY_RADIUS_KEY, value);
   },
 
   setMaxStay: (ms) => {
@@ -245,8 +287,9 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   },
 
   setMeetingRadius: (radius) => {
-    set({ meetingRadius: radius });
-    saveChoice(MEETING_RADIUS_KEY, radius);
+    const value = clampAmount(radius, RADIUS_BOUNDS);
+    set({ meetingRadius: value });
+    saveChoice(MEETING_RADIUS_KEY, value);
   },
 
   setRuleEnabled: (rule, on) => {
@@ -266,8 +309,9 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
   },
 
   setMeetingWindow: (window) => {
-    set({ meetingWindow: window });
-    saveChoice(MEETING_WINDOW_KEY, window);
+    const value = clampAmount(window, WINDOW_BOUNDS);
+    set({ meetingWindow: value });
+    saveChoice(MEETING_WINDOW_KEY, value);
   },
 
   loadExcludedKeys: (dossierId) => {
@@ -371,5 +415,5 @@ export const useSuggestionsStore = create<SuggestionsState>((set, get) => ({
     get().refresh();
   },
 
-  reset: () => set({ suggestions: null, dismissedSuggestions: [], scope: null, dossierId: null, shownCount: null, meetingsTruncated: false, between: null }),
+  reset: () => set({ suggestions: null, dismissedSuggestions: [], scope: null, dossierId: null, shownCount: null, meetingsTruncated: false, crowdedCount: 0, checked: new Set(), previewPairs: [], between: null }),
 }));

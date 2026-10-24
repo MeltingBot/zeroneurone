@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
 import { insightsService, type PathResult, type CycleResult } from '../services/insightsService';
 import { graphWorkerService, SupersededError } from '../services/graphWorkerService';
+import { useProgressStore } from './progressStore';
 
 interface InsightsState {
   // Results
@@ -17,7 +18,7 @@ interface InsightsState {
   computeProgress: number;
   computePhase: string;
   highlightedElementIds: Set<ElementId>;
-  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | 'suggestion' | null;
+  highlightType: 'cluster' | 'centrality' | 'bridge' | 'isolated' | 'similar' | 'path' | 'cycle' | 'suggestion' | 'between' | null;
   selectedClusterId: number | null;
 
   // Path finding
@@ -39,6 +40,8 @@ interface InsightsState {
   highlightSimilarPair: (elementId1: ElementId, elementId2: ElementId) => void;
   /** Highlight the elements of a link suggestion (panel hover) */
   highlightSuggestion: (elementIds: ElementId[]) => void;
+  /** What links two combined tabs: shared elements, direct links or relays */
+  highlightBetween: (elementIds: ElementId[]) => void;
   findPaths: (fromId: ElementId, toId: ElementId) => void;
   findAllPaths: (fromId: ElementId, toId: ElementId, maxDepth?: number) => void;
   highlightPath: (pathIndex: number) => void;
@@ -76,6 +79,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   // Actions
   computeInsights: (elements, links) => {
     set({ isComputing: true, computeProgress: 0, computePhase: 'starting' });
+    const progress = useProgressStore.getState();
+    progress.start('insights', 'activity.insights', 0);
 
     // Use Web Worker for off-main-thread computation
     graphWorkerService.computeInsights(
@@ -83,6 +88,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       links,
       (percent, phase) => {
         set({ computeProgress: percent, computePhase: phase });
+        useProgressStore.getState().update('insights', percent);
       }
     ).then((results) => {
       // Also update the insightsService graph for path finding (fast, stays on main thread)
@@ -99,6 +105,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
         computeProgress: 100,
         computePhase: 'done',
       });
+      useProgressStore.getState().end('insights');
     }).catch((error) => {
       // A superseded request is not a failure: a newer computation is already
       // running and will set the state. Falling back here would compute the
@@ -119,6 +126,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
           computedAt: results.computedAt,
           isComputing: false,
         });
+        useProgressStore.getState().end('insights');
       }, 10);
     });
   },
@@ -158,6 +166,14 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     set({
       highlightedElementIds: new Set(isolated),
       highlightType: 'isolated',
+      selectedClusterId: null,
+    });
+  },
+
+  highlightBetween: (elementIds) => {
+    set({
+      highlightedElementIds: new Set(elementIds),
+      highlightType: 'between',
       selectedClusterId: null,
     });
   },

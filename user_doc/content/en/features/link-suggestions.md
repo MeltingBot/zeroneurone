@@ -70,13 +70,15 @@ The button next to **Properties** ("all", or "3/12") unfolds the list of the dos
 
 ### Places and Meetings
 
-**Places within** compares the positions of the elements on the map, without dates: two places close to each other. Radius options: 50 m, 100 m, 500 m, 1 km, 5 km, 10 km, 20 km, 50 km. The meetings radius stays at 5 km max.
+**Places within** compares the positions of the elements on the map, without dates: two places close to each other.
 
-**Meetings within** compares **dated presences**: each element's dated, located events, and the element itself when it has a position and a date.
+The radius and the window are typed freely, with their unit (m or km; min, h or days), from 1 m to 100 km and from 1 min to 365 days. The value applies on Enter or when leaving the field.
 
-- Two presences count when they are within the **radius** and their times overlap, give or take the **window** (±15 min to ±7 days).
+**Meetings within** compares **dated presences**: each element's dated, located events, and the element itself when it has a position and a date. The date properties kept in the [filters]({{< relref "filters-views" >}}) count too, at the element's position: a dossier imported with dates as properties works without events. A `date` property (no time) covers the whole day: pick a window in days.
+
+- Two presences count when they are within the **radius** and their times overlap, give or take the **window**.
 - **Stays up to**: a presence longer than this setting (a home, a head office or a lease dated over years) is ignored. It is an existence, not a meeting. 7 days by default; "no limit" brings it back.
-- A point crossing more than 10 other elements within the radius is a **crowd** (a stadium, a station, a dense GPS trail): it yields no suggestion.
+- A point crossing more than 10 other elements within the radius is a **crowd** (a stadium, a station, a dense GPS trail): it yields no suggestion. The panel tells how many elements were left out; filtering **between two tags** keeps them.
 
 The reason reads:
 
@@ -88,11 +90,11 @@ The time and distance shown are those of the real points.
 
 ### Between Two Tags
 
-The **Between [tag] and [tag]** line keeps only the suggestions joining an element of the first tag to an element of the second, for all rules. Pick the two tags; the cross clears the filter.
+The **Between [tag] and [tag]** line keeps only the suggestions joining an element of the first tag to an element of the second, for all rules. Only the tags present in the open tab are offered. A single tag compares its elements with each other (the second field shows "same tag"); the cross clears the filter.
 
-In this mode, the **Places within** rule compares every element of one tag with every element of the other, with no crowd limit (normally a point with more than 10 neighbors yields nothing). When one of them is a zone (polygon), the distance is measured to the zone's edge; a point inside the zone is reported by the **Zones** rule. On each row, the element of the first tag is listed first.
+In this mode, the **Places within** and **Meetings within** rules compare every element of one tag with every element of the other, with no crowd limit (normally a point with more than 10 neighbors yields nothing). When one of them is a zone (polygon), the distance is measured to the zone's edge; a point inside the zone is reported by the **Zones** rule. On each row, the element of the first tag is listed first.
 
-Example: offences near sites imported from GeoJSON.
+Examples: offences near sites imported from GeoJSON; offences close in space and time (Offence tag alone, 5 km, ±15 days) to spot series.
 
 {{< hint warning >}}
 **A suggestion is not evidence.** A meeting can be a coincidence; a shared value, a typo. Check the original elements before accepting, and keep a small radius for meetings.
@@ -102,12 +104,13 @@ Example: offences near sites imported from GeoJSON.
 
 ## Handle the Suggestions
 
-- **Hover** a suggestion: its elements are highlighted on the canvas
+- **Hover** a suggestion: its elements are highlighted on the canvas and the proposed link shows as a moving dashed line
 - **Click** the suggestion: selects its elements
 - **Click "Create and link N elements"** (or "Link N elements") on a pivot: unfolds the list of its elements, each name clickable as below
 - **Click an element's name**: it is selected alone and centered in the current view (canvas, map or timeline), and a summary shows under the row (tags, first 6 properties, **Open details** link to the Detail tab). Click the name again to hide it. Each element is on its own line; a long name wraps (2 lines at most)
 - **Relevance / Distance**, next to the count (shown when suggestions have distances): sorted by distance, places, meetings and zones come first, nearest first (a point in a zone counts as 0 m); the others follow in their order
 - **✓** accepts, **✕** dismisses
+- **Ticking a row** frames the canvas on its elements and keeps the proposed link dashed, even on another tab of the panel, until it is unticked, accepted or dismissed. This link is not created in the dossier
 - **Ticking several rows** (or the header box to tick all) shows **Accept (N)** and **Dismiss (N)**
 - The **Search** field filters the list by element name or reason text
 

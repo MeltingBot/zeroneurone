@@ -334,7 +334,9 @@
       "emptyState": "Cap element en aquesta pestanya",
       "emptyHint": "Clic dret als elements per afegir-los",
       "ghostBadge": "A {{tabs}}",
-      "navigateTo": "Anar a pestanya {{name}}"
+      "navigateTo": "Anar a pestanya {{name}}",
+      "combine": "Combinar",
+      "uncombine": "Deixar de combinar"
     },
     "retentionExpiredBanner": "Retenció expirada des de fa {{days}} dia/es",
     "retentionDeleteConfirm": "Aquesta expedient s'eliminarà definitivament, sense possibilitat d'anul·lació.",

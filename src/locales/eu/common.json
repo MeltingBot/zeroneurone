@@ -300,5 +300,11 @@
     "noMatch": "Emaitzarik ez",
     "indexing": "Indexatzen…",
     "loadError": "Ezin da PDF hau bistaratu"
+  },
+  "activity": {
+    "insights": "Grafoaren analisia",
+    "layout": "Antolaketa",
+    "view": "Ikuspegi aldaketa",
+    "suggestions": "Lotura-iradokizunak"
   }
 }

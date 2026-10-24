@@ -336,7 +336,9 @@
       "emptyState": "Brak elementów w tej karcie",
       "emptyHint": "Kliknij prawym przyciskiem na elementy, aby je dodać",
       "ghostBadge": "W {{tabs}}",
-      "navigateTo": "Przejdź do karty {{name}}"
+      "navigateTo": "Przejdź do karty {{name}}",
+      "combine": "Połącz",
+      "uncombine": "Nie łącz"
     },
     "retentionExpiredBanner": "Retencja wygasła {{days}} dni temu",
     "retentionDeleteConfirm": "To dochodzenie zostanie trwale usunięte. Tej czynności nie można cofnąć.",

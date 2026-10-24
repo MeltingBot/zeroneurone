@@ -1,5 +1,40 @@
 # Changelog
 
+## 2.75.6
+
+### Suggestions de liens
+
+- **Rencontres datées par les propriétés** — les propriétés de date retenues
+  dans les filtres datent l'élément à sa position, comme sur la carte et la
+  timeline : un dossier importé avec ses dates en propriétés trouve ses
+  rencontres sans événements.
+- **Rayon et fenêtre libres** — distance et période se saisissent avec leur
+  unité (1 m à 100 km, 1 min à 365 jours) au lieu de listes fixes.
+- **Entre tags** — un seul tag compare ses éléments entre eux (« même tag ») ;
+  seuls les tags de l'onglet ouvert sont proposés. Les rencontres y gardent
+  aussi les foules, comme les lieux.
+- **Éléments ignorés signalés** — le panneau indique combien d'éléments ont été
+  écartés pour trop de voisins, et comment les garder.
+- **Aperçu du lien** — au survol ou à la coche d'une suggestion, le lien proposé
+  s'affiche en pointillés animés sur le canvas ; cocher cadre la vue sur ses
+  éléments. L'aperçu reste en passant sur un autre onglet du panneau.
+
+### Onglets
+
+- **Combiner des onglets** — Ctrl+clic sur un onglet l'affiche avec l'onglet
+  ouvert ; les nouveaux éléments vont toujours dans l'onglet ouvert.
+- **Entre deux onglets** — avec deux onglets affichés, le panneau Analyses
+  montre ce qui les relie : éléments communs, liens directs, relais.
+
+### Performances
+
+- **Barre d'activité** — un fin trait sous la barre de vue suit les calculs
+  longs (analyses, disposition, suggestions, changement de vue).
+- **Dispositions compactes** — force et clusters disposent chaque groupe
+  séparément puis les rassemblent, isolés en grille, au lieu de les disperser.
+- **Calculs en arrière-plan** — une nouvelle analyse remplace celle en attente
+  sans bloquer une disposition ou une recherche de chemin.
+
 ## 2.75.5
 
 ### Améliorations

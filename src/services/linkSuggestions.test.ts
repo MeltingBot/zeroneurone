@@ -311,6 +311,51 @@ describe('computeLinkSuggestions — meeting', () => {
     expect(rules({ nearbyRadius: 100 })).toEqual(['nearby']);
   });
 
+  describe('dated by properties', () => {
+    const fact = (id: string, lat: number, props: { key: string; value: string; type: string }[]) =>
+      el(id, { geo: { type: 'point', lat, lng: 0 }, properties: props } as Partial<Element>);
+    const facts = () => [
+      fact('a', 46, [{ key: 'Date faits', value: '2026-03-12T22:00', type: 'datetime' }]),
+      fact('b', 46.0003, [{ key: 'Date faits', value: '2026-03-12T22:40', type: 'datetime' }]),
+    ];
+    const meetings = (elements: Element[], dateProperties?: ((key: string) => boolean) | null) =>
+      computeLinkSuggestions(elements, [], [], { meeting: { radius: 100, window: HOUR, dateProperties } }) as LinkSuggestion[];
+
+    it('reads the kept date properties at the element position', () => {
+      const [s] = meetings(facts(), () => true);
+      expect(s.reasons.map(r => r.rule)).toEqual(['meeting']);
+    });
+
+    it('leaves them out when the filters leave the key out, or without the choice', () => {
+      expect(meetings(facts(), (key) => key !== 'Date faits')).toEqual([]);
+      expect(meetings(facts())).toEqual([]);
+    });
+
+    it('reads a date without time over a window of days', () => {
+      const elements = [
+        fact('a', 46, [{ key: 'Date', value: '2026-03-12', type: 'date' }]),
+        fact('b', 46.0003, [{ key: 'Date', value: '2026-03-14', type: 'date' }]),
+      ];
+      const DAY = 24 * HOUR;
+      const found = computeLinkSuggestions(elements, [], [], { meeting: { radius: 100, window: 3 * DAY, dateProperties: () => true } });
+      expect(found).toHaveLength(1);
+      expect(computeLinkSuggestions(elements, [], [], { meeting: { radius: 100, window: DAY, dateProperties: () => true } })).toEqual([]);
+    });
+
+    it('keeps a crowd of facts between two tags, leaves it out otherwise', () => {
+      const day = (n: number) => `2026-03-${String(10 + n).padStart(2, '0')}`;
+      const crowd = Array.from({ length: 12 }, (_, i) =>
+        el(`f${i}`, { tags: ['Infraction'], geo: { type: 'point', lat: 46 + i * 0.001, lng: 0 },
+          properties: [{ key: 'Date', value: day(i % 5), type: 'date' }] } as Partial<Element>));
+      const meeting = { radius: 5000, window: 30 * 24 * HOUR, dateProperties: () => true };
+      expect(computeLinkSuggestions(crowd, [], [], { meeting })).toEqual([]);
+      const found = computeLinkSuggestions(crowd, [], [], { meeting, between: { a: 'Infraction', b: 'Infraction' } });
+      expect(found).toHaveLength(12 * 11 / 2);
+      expect(analyzeLinkSuggestions(crowd, [], [], { meeting }).crowdedCount).toBe(12);
+      expect(analyzeLinkSuggestions(crowd, [], [], { meeting, between: { a: 'Infraction', b: 'Infraction' } }).crowdedCount).toBe(0);
+    });
+  });
+
   it('confirms on the real points: no meeting when only the grouped points would match', () => {
     // a1 and a2 fall in one 100 m cell and one 1 h slot; b is 55 m from a1 but
     // 90 min after it, and within the hour of a2 but 145 m away

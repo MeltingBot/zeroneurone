@@ -319,6 +319,21 @@ button {
   visibility: hidden;
 }
 
+/* Link a checked suggestion would draw: dashed, moving along the line */
+.suggestion-preview-line {
+  stroke: var(--color-accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 9 6;
+  animation: suggestion-preview-dash 0.6s linear infinite;
+}
+@keyframes suggestion-preview-dash {
+  to { stroke-dashoffset: -15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .suggestion-preview-line { animation: none; }
+}
+
 /* Modal shadow - floating paper */
 .modal-shadow {
   box-shadow:
@@ -506,4 +521,19 @@ button {
 .textLayer span.pdf-match-current {
   background: color-mix(in srgb, var(--color-warning), transparent 25%);
   outline: 1px solid var(--color-warning);
+}
+
+/* Activity bar (computation of unknown length): a segment sliding across */
+@keyframes activity-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(400%); }
+}
+.activity-bar-indeterminate {
+  animation: activity-slide 1.2s ease-in-out infinite;
+}
+
+/* The canvas surface takes keyboard focus: no outline there, it would read as
+   the activity bar right under the toolbar */
+.zn-canvas-surface:focus-visible {
+  outline: none;
 }

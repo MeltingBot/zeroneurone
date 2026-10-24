@@ -335,7 +335,9 @@
       "emptyState": "No elements in this tab",
       "emptyHint": "Right-click on elements to add them",
       "ghostBadge": "On {{tabs}}",
-      "navigateTo": "Go to tab {{name}}"
+      "navigateTo": "Go to tab {{name}}",
+      "combine": "Combine",
+      "uncombine": "Uncombine"
     },
     "retentionExpiredBanner": "Retention expired {{days}} day(s) ago",
     "retentionDeleteConfirm": "This dossier will be permanently deleted. This action cannot be undone.",

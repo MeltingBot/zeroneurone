@@ -147,7 +147,8 @@ export function DraggableMinimap() {
           <X size={10} />
         </button>
       </div>
-      <MiniMap
+      {/* Hidden: not mounted at all, it would still draw every node */}
+      {showMinimap && <MiniMap
         nodeColor={nodeColor}
         bgColor={isDark ? '#1a1816' : '#faf8f5'}
         maskColor={isDark ? 'rgba(200,200,200,0.1)' : 'rgba(0,0,0,0.08)'}
@@ -163,7 +164,7 @@ export function DraggableMinimap() {
         }}
         pannable
         zoomable
-      />
+      />}
     </div>
   );
 }

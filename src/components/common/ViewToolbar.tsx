@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Undo2, Redo2, Image, ImageOff, Eye, EyeOff, MessageCircle, MessageCircleOff } from 'lucide-react';
 import { useUIStore, useHistoryStore } from '../../stores';
+import { ActivityBar } from './ActivityBar';
 
 interface ViewToolbarProps {
   /** Left side content (e.g., element count) */
@@ -32,7 +33,8 @@ export function ViewToolbar({
   const canRedoNow = canRedo();
 
   return (
-    <div className="min-h-10 flex items-center flex-wrap px-3 py-1 border-b border-border-default bg-bg-primary shrink-0 gap-x-2 gap-y-1">
+    <div className="relative min-h-10 flex items-center flex-wrap px-3 py-1 border-b border-border-default bg-bg-primary shrink-0 gap-x-2 gap-y-1">
+      <ActivityBar />
       {/* Left side (stays on the first line when the right side wraps) */}
       <div className="flex items-center flex-wrap gap-x-2 gap-y-1 min-w-0 self-start min-h-8">
         {leftContent}

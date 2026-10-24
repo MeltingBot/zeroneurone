@@ -335,7 +335,9 @@
       "emptyState": "Aucun élément dans cet onglet",
       "emptyHint": "Clic droit sur des éléments pour les ajouter",
       "ghostBadge": "Sur {{tabs}}",
-      "navigateTo": "Aller à l'onglet {{name}}"
+      "navigateTo": "Aller à l'onglet {{name}}",
+      "combine": "Combiner",
+      "uncombine": "Ne plus combiner"
     },
     "retentionExpiredBanner": "Rétention expirée depuis {{days}} jour(s)",
     "retentionDeleteConfirm": "Ce dossier sera définitivement supprimé, sans annulation possible.",

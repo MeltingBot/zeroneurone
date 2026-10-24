@@ -39,11 +39,15 @@ function StatItem({ icon, value, label, onClick, highlight }: StatItemProps) {
 interface StatsOverviewProps {
   onStatClick?: (stat: 'elements' | 'links' | 'clusters' | 'isolated' | 'bridges' | 'duplicates') => void;
   activeStat?: string | null;
+  /** Elements and links analysed (the open tab or combined tabs); the dossier by default */
+  counts?: { elements: number; links: number };
 }
 
-export function StatsOverview({ onStatClick, activeStat }: StatsOverviewProps) {
+export function StatsOverview({ onStatClick, activeStat, counts }: StatsOverviewProps) {
   const { t } = useTranslation('common');
-  const { elements, links } = useDossierStore();
+  const { elements: dossierElements, links: dossierLinks } = useDossierStore();
+  const elements = { length: counts?.elements ?? dossierElements.length };
+  const links = { length: counts?.links ?? dossierLinks.length };
   const { clusters, isolated, bridges, similarLabels } = useInsightsStore();
 
   const stats = useMemo(() => ({

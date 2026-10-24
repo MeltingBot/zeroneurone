@@ -334,7 +334,9 @@
       "emptyState": "Keine Elemente in diesem Tab",
       "emptyHint": "Rechtsklick auf Elemente zum Hinzufügen",
       "ghostBadge": "In {{tabs}}",
-      "navigateTo": "Zu Tab {{name}} wechseln"
+      "navigateTo": "Zu Tab {{name}} wechseln",
+      "combine": "Kombinieren",
+      "uncombine": "Nicht mehr kombinieren"
     },
     "retentionExpiredBanner": "Aufbewahrung abgelaufen seit {{days}} Tag(en)",
     "retentionDeleteConfirm": "Diese Akte wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",

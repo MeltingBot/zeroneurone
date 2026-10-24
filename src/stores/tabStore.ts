@@ -12,11 +12,14 @@ import { tabRepository } from '../db/repositories/tabRepository';
 interface TabState {
   // Data
   tabs: CanvasTab[];
-  /** null when no tabs exist, otherwise always a real tab ID */
+  /** null in the "All" view (or when no tabs exist), otherwise the open tab */
   activeTabId: TabId | null;
+  /** Tabs shown together with the open one (Ctrl+click): the view covers
+   *  their members too. New elements still go to the open tab. */
+  extraTabIds: TabId[];
 
   // Derived sets (recomputed on tab/link changes)
-  /** Element IDs that are members of the active tab */
+  /** Element IDs that are members of the open tab, or of any combined tab */
   memberSet: Set<ElementId>;
   /** Element IDs that are ghosts (linked to members but not members themselves) */
   ghostIds: Set<ElementId>;
@@ -32,6 +35,8 @@ interface TabState {
 
   // Actions - Navigation
   setActiveTab: (tabId: TabId | null) => void;
+  /** Show a tab together with the open one, or stop showing it */
+  toggleCombinedTab: (tabId: TabId) => void;
 
   // Actions - Membership
   addMembers: (tabId: TabId, elementIds: ElementId[]) => Promise<void>;
@@ -92,9 +97,28 @@ async function syncTabToYDoc(
 /** Most canvas tabs a dossier can hold. */
 export const MAX_TABS = 10;
 
+/** Tabs the view shows: the open one first, then the combined ones */
+export function openTabIds(state: { activeTabId: TabId | null; extraTabIds: TabId[] }): TabId[] {
+  return state.activeTabId === null ? [] : [state.activeTabId, ...state.extraTabIds];
+}
+
+/** Members and dismissed ghosts of the tabs the view shows */
+function viewSets(tabs: CanvasTab[], activeTabId: TabId | null, extraTabIds: TabId[]) {
+  const ids = openTabIds({ activeTabId, extraTabIds });
+  const memberSet = new Set<ElementId>();
+  const excludedSet = new Set<ElementId>();
+  for (const tab of tabs) {
+    if (!ids.includes(tab.id)) continue;
+    for (const id of tab.memberElementIds) memberSet.add(id);
+    for (const id of tab.excludedElementIds) excludedSet.add(id);
+  }
+  return { memberSet, excludedSet };
+}
+
 export const useTabStore = create<TabState>((set, get) => ({
   tabs: [],
   activeTabId: null,
+  extraTabIds: [],
   memberSet: new Set(),
   ghostIds: new Set(),
   excludedSet: new Set(),
@@ -107,6 +131,7 @@ export const useTabStore = create<TabState>((set, get) => ({
     set({
       tabs,
       activeTabId: firstTab?.id ?? null,
+      extraTabIds: [],
       memberSet: firstTab ? new Set(firstTab.memberElementIds) : new Set(),
       ghostIds: new Set(),
       excludedSet: firstTab ? new Set(firstTab.excludedElementIds) : new Set(),
@@ -157,16 +182,21 @@ export const useTabStore = create<TabState>((set, get) => ({
     await tabRepository.delete(tabId);
     set((s) => {
       const newTabs = s.tabs.filter((t) => t.id !== tabId);
+      const extras = s.extraTabIds.filter((id) => id !== tabId);
       if (s.activeTabId === tabId) {
-        // Switch to the first remaining tab, or null if none left
-        const fallback = newTabs.length > 0 ? newTabs[0] : null;
+        // A combined tab takes over, else the first remaining tab, or null
+        const fallbackId = extras[0] ?? newTabs[0]?.id ?? null;
+        const extraTabIds = extras.filter((id) => id !== fallbackId);
         return {
           tabs: newTabs,
-          activeTabId: fallback?.id ?? null,
-          memberSet: fallback ? new Set(fallback.memberElementIds) : new Set(),
+          activeTabId: fallbackId,
+          extraTabIds,
           ghostIds: new Set(),
-          excludedSet: fallback ? new Set(fallback.excludedElementIds) : new Set(),
+          ...viewSets(newTabs, fallbackId, extraTabIds),
         };
+      }
+      if (extras.length !== s.extraTabIds.length) {
+        return { tabs: newTabs, extraTabIds: extras, ...viewSets(newTabs, s.activeTabId, extras) };
       }
       return { tabs: newTabs };
     });
@@ -236,7 +266,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   setActiveTab: (tabId) => {
     if (tabId === null) {
       // No tabs exist
-      set({ activeTabId: null, memberSet: new Set(), ghostIds: new Set(), excludedSet: new Set() });
+      set({ activeTabId: null, extraTabIds: [], memberSet: new Set(), ghostIds: new Set(), excludedSet: new Set() });
       return;
     }
     const { tabs } = get();
@@ -244,9 +274,37 @@ export const useTabStore = create<TabState>((set, get) => ({
     if (!tab) return;
     set({
       activeTabId: tabId,
+      extraTabIds: [],
       memberSet: new Set(tab.memberElementIds),
       ghostIds: new Set(), // Reset — will be recomputed by useEffect
       excludedSet: new Set(tab.excludedElementIds),
+    });
+  },
+
+  toggleCombinedTab: (tabId) => {
+    const { tabs, activeTabId, extraTabIds } = get();
+    if (!tabs.some((t) => t.id === tabId)) return;
+    // From "All": just open it
+    if (activeTabId === null) {
+      get().setActiveTab(tabId);
+      return;
+    }
+    let nextActive: TabId = activeTabId;
+    let nextExtras: TabId[];
+    if (tabId === activeTabId) {
+      // Leaving the open tab: the first combined one takes over
+      if (extraTabIds.length === 0) return;
+      nextActive = extraTabIds[0];
+      nextExtras = extraTabIds.slice(1);
+    } else if (extraTabIds.includes(tabId)) {
+      nextExtras = extraTabIds.filter((id) => id !== tabId);
+    } else {
+      nextExtras = [...extraTabIds, tabId];
+    }
+    set({
+      activeTabId: nextActive,
+      extraTabIds: nextExtras,
+      ...viewSets(tabs, nextActive, nextExtras),
     });
   },
 
@@ -278,10 +336,10 @@ export const useTabStore = create<TabState>((set, get) => ({
           ? { ...t, memberElementIds: updatedMembers, ...(excludedChanged ? { excludedElementIds: updatedExcluded } : {}), updatedAt: new Date() }
           : t,
       );
-      const isActive = s.activeTabId === tabId;
-      const newMemberSet = isActive ? new Set(updatedMembers) : s.memberSet;
-      const newExcludedSet = isActive && excludedChanged ? new Set(updatedExcluded) : s.excludedSet;
-      return { tabs: newTabs, memberSet: newMemberSet, excludedSet: newExcludedSet };
+      const inView = openTabIds(s).includes(tabId);
+      return inView
+        ? { tabs: newTabs, ...viewSets(newTabs, s.activeTabId, s.extraTabIds) }
+        : { tabs: newTabs };
     });
 
     syncTabToYDoc(tabId, {
@@ -306,9 +364,10 @@ export const useTabStore = create<TabState>((set, get) => ({
       const newTabs = s.tabs.map((t) =>
         t.id === tabId ? { ...t, memberElementIds: updatedMembers, updatedAt: new Date() } : t,
       );
-      const newMemberSet =
-        s.activeTabId === tabId ? new Set(updatedMembers) : s.memberSet;
-      return { tabs: newTabs, memberSet: newMemberSet };
+      const inView = openTabIds(s).includes(tabId);
+      return inView
+        ? { tabs: newTabs, memberSet: viewSets(newTabs, s.activeTabId, s.extraTabIds).memberSet }
+        : { tabs: newTabs };
     });
 
     syncTabToYDoc(tabId, { memberElementIds: updatedMembers });
@@ -332,8 +391,8 @@ export const useTabStore = create<TabState>((set, get) => ({
       const newTabs = s.tabs.map((t) =>
         t.id === tabId ? { ...t, excludedElementIds: updatedExcluded, updatedAt: new Date() } : t,
       );
-      const isActive = s.activeTabId === tabId;
-      const newExcludedSet = isActive ? new Set(updatedExcluded) : s.excludedSet;
+      const isActive = openTabIds(s).includes(tabId);
+      const newExcludedSet = isActive ? viewSets(newTabs, s.activeTabId, s.extraTabIds).excludedSet : s.excludedSet;
       // Remove excluded elements from ghostIds immediately
       const newGhostIds = isActive
         ? (() => { const g = new Set(s.ghostIds); newExclusions.forEach((id) => g.delete(id)); return g; })()
@@ -445,16 +504,21 @@ export const useTabStore = create<TabState>((set, get) => ({
       };
     }).sort((a, b) => a.order - b.order);
 
-    // Recalculate memberSet/excludedSet if active tab data changed
-    const activeTab = mergedTabs.find(t => t.id === activeTabId);
+    // Recalculate memberSet/excludedSet from the tabs in view. Combined tabs
+    // deleted remotely drop out; the open tab deleted remotely falls back.
+    // In the "All" view (null), nothing changes.
+    const exists = (id: TabId) => mergedTabs.some(t => t.id === id);
+    let extras = get().extraTabIds.filter(exists);
+    let nextActive: TabId | null = activeTabId;
+    if (activeTabId !== null && !exists(activeTabId)) {
+      nextActive = extras[0] ?? mergedTabs[0]?.id ?? null;
+      extras = extras.filter((id) => id !== nextActive);
+    }
     set({
       tabs: mergedTabs,
-      memberSet: activeTab ? new Set(activeTab.memberElementIds) : new Set(),
-      excludedSet: activeTab ? new Set(activeTab.excludedElementIds) : new Set(),
-      // activeTabId stays unchanged — if tab was deleted remotely, fallback
-      ...(activeTab ? {} : mergedTabs.length > 0
-        ? { activeTabId: mergedTabs[0].id, memberSet: new Set(mergedTabs[0].memberElementIds), excludedSet: new Set(mergedTabs[0].excludedElementIds) }
-        : { activeTabId: null, memberSet: new Set(), excludedSet: new Set() }),
+      activeTabId: nextActive,
+      extraTabIds: extras,
+      ...viewSets(mergedTabs, nextActive, extras),
     });
   },
 
@@ -480,6 +544,7 @@ export const useTabStore = create<TabState>((set, get) => ({
     set({
       tabs: [],
       activeTabId: null,
+      extraTabIds: [],
       memberSet: new Set(),
       ghostIds: new Set(),
       excludedSet: new Set(),

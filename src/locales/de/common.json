@@ -299,5 +299,11 @@
     "noMatch": "Keine Treffer",
     "indexing": "Indexierung…",
     "loadError": "Dieses PDF kann nicht angezeigt werden"
+  },
+  "activity": {
+    "insights": "Graphanalyse",
+    "layout": "Anordnung",
+    "view": "Ansichtswechsel",
+    "suggestions": "Verknüpfungsvorschläge"
   }
 }

@@ -70,13 +70,15 @@ Le bouton à côté de **Propriétés** (« toutes », ou « 3/12 ») déplie la
 
 ### Lieux et rencontres
 
-**Lieux à moins de** compare la position des éléments sur la carte, sans les dates : deux lieux proches. Rayons proposés : 50 m, 100 m, 500 m, 1 km, 5 km, 10 km, 20 km, 50 km. Le rayon des rencontres reste limité à 5 km.
+**Lieux à moins de** compare la position des éléments sur la carte, sans les dates : deux lieux proches.
 
-**Rencontres à moins de** compare les **présences datées** : les événements datés et géolocalisés de chaque élément, et l'élément lui-même s'il a une position et une date.
+Le rayon et la fenêtre se saisissent librement, avec leur unité (m ou km ; min, h ou jours), de 1 m à 100 km et de 1 min à 365 jours. La valeur s'applique à l'Entrée ou en quittant le champ.
 
-- Deux présences comptent si elles sont à moins du **rayon** et que leurs moments se recouvrent, à la **fenêtre** près (±15 min à ±7 jours).
+**Rencontres à moins de** compare les **présences datées** : les événements datés et géolocalisés de chaque élément, et l'élément lui-même s'il a une position et une date. Les propriétés de date retenues dans les [filtres]({{< relref "filters-views" >}}) comptent aussi, à la position de l'élément : un dossier importé avec des dates en propriétés fonctionne sans événements. Une propriété `date` (sans heure) couvre la journée : choisissez alors une fenêtre en jours.
+
+- Deux présences comptent si elles sont à moins du **rayon** et que leurs moments se recouvrent, à la **fenêtre** près.
 - **Séjours jusqu'à** : une présence plus longue que ce réglage (un domicile, un siège ou un bail datés sur des années) est ignorée. C'est une existence, pas une rencontre. Par défaut 7 jours ; « sans limite » la réintègre.
-- Un point qui croise plus de 10 autres éléments dans le rayon est une **foule** (un stade, une gare, une trace GPS dense) : il ne produit pas de suggestion.
+- Un point qui croise plus de 10 autres éléments dans le rayon est une **foule** (un stade, une gare, une trace GPS dense) : il ne produit pas de suggestion. Le panneau indique combien d'éléments ont été ignorés ; filtrer **entre deux tags** les garde.
 
 La raison indique :
 
@@ -88,11 +90,11 @@ L'heure et la distance affichées sont celles des points réels.
 
 ### Entre deux tags
 
-La ligne **Entre [tag] et [tag]** restreint les suggestions à celles qui relient un élément du premier tag à un élément du second, pour toutes les règles. Choisissez les deux tags ; la croix efface le filtre.
+La ligne **Entre [tag] et [tag]** restreint les suggestions à celles qui relient un élément du premier tag à un élément du second, pour toutes les règles. Seuls les tags présents dans l'onglet ouvert sont proposés. Un seul tag compare ses éléments entre eux (le second champ affiche « même tag ») ; la croix efface le filtre.
 
-Dans ce mode, la règle **Lieux à moins de** compare chaque élément d'un tag à chaque élément de l'autre, sans limite de foule (d'ordinaire, un point qui a plus de 10 voisins ne produit rien). Quand l'un des deux est une zone (polygone), la distance est mesurée jusqu'au bord de la zone ; un point situé dans la zone est signalé par la règle **Zones**. Sur chaque ligne, l'élément du premier tag est cité en premier.
+Dans ce mode, les règles **Lieux à moins de** et **Rencontres à moins de** comparent chaque élément d'un tag à chaque élément de l'autre, sans limite de foule (d'ordinaire, un point qui a plus de 10 voisins ne produit rien). Quand l'un des deux est une zone (polygone), la distance est mesurée jusqu'au bord de la zone ; un point situé dans la zone est signalé par la règle **Zones**. Sur chaque ligne, l'élément du premier tag est cité en premier.
 
-Exemple : des infractions à proximité de sites importés en GeoJSON.
+Exemples : des infractions à proximité de sites importés en GeoJSON ; des infractions proches dans l'espace et le temps (tag Infraction seul, 5 km, ±15 jours) pour repérer des séries.
 
 {{< hint warning >}}
 **Une suggestion n'est pas une preuve.** Une rencontre peut être une coïncidence ; une valeur partagée, une erreur de saisie. Vérifiez les éléments d'origine avant d'accepter, et gardez un petit rayon pour les rencontres.
@@ -102,12 +104,13 @@ Exemple : des infractions à proximité de sites importés en GeoJSON.
 
 ## Traiter les suggestions
 
-- **Survol** d'une suggestion : ses éléments sont mis en évidence sur le canvas
+- **Survol** d'une suggestion : ses éléments sont mis en évidence sur le canvas et le lien proposé apparaît en pointillés animés
 - **Clic** sur la suggestion : sélectionne ses éléments
 - **Clic sur « Créer et relier N éléments »** (ou « Relier N éléments ») d'un pivot : déplie la liste de ses éléments, dont chaque nom se clique comme ci-dessous
 - **Clic sur le nom** d'un élément : il est sélectionné seul et centré dans la vue courante (canvas, carte ou timeline), et un résumé s'affiche sous la ligne (tags, 6 premières propriétés, lien **Ouvrir la fiche** vers l'onglet Détail). Un second clic sur le nom le masque. Chaque élément est sur sa propre ligne ; un nom long passe à la ligne (2 lignes au plus)
 - **Pertinence / Distance**, à côté du compteur (affiché quand des suggestions ont une distance) : en tri par distance, les lieux, rencontres et zones passent en tête, du plus proche au plus loin (un point dans une zone compte pour 0 m) ; les autres suivent dans leur ordre
 - **✓** accepte, **✕** écarte
+- **Cocher une ligne** cadre le canvas sur ses éléments et garde le lien proposé en pointillés, même en passant sur un autre onglet du panneau, jusqu'à ce qu'elle soit décochée, acceptée ou écartée. Ce lien n'est pas créé dans le dossier
 - **Cocher plusieurs lignes** (ou la case de tête pour tout cocher) affiche **Accepter (N)** et **Écarter (N)**
 - Le champ **Rechercher** filtre la liste par nom d'élément ou par texte des raisons
 

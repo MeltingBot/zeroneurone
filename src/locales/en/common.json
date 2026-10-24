@@ -296,5 +296,11 @@
     "noMatch": "No match",
     "indexing": "Indexing…",
     "loadError": "Unable to display this PDF"
+  },
+  "activity": {
+    "insights": "Graph analysis",
+    "layout": "Layout",
+    "view": "Switching view",
+    "suggestions": "Link suggestions"
   }
 }

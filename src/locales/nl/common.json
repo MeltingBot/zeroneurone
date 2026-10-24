@@ -306,5 +306,11 @@
     "noMatch": "Geen resultaten",
     "indexing": "Indexeren…",
     "loadError": "Deze PDF kan niet worden weergegeven"
+  },
+  "activity": {
+    "insights": "Grafiekanalyse",
+    "layout": "Indeling",
+    "view": "Weergave wisselen",
+    "suggestions": "Linksuggesties"
   }
 }

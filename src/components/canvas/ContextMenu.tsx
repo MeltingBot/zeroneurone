@@ -57,6 +57,8 @@ interface ContextMenuProps {
   onRemoveFromTab: () => void;
   isGhostElement: boolean;
   elementTabIds: TabId[];
+  /** Tabs the view shows: the open one and those combined with it */
+  viewTabIds?: TabId[];
   onGoToTab: (tabId: TabId) => void;
   // Query actions
   onFindSimilar?: () => void;
@@ -117,6 +119,7 @@ function ContextMenuComponent({
   onRemoveFromTab,
   isGhostElement,
   elementTabIds,
+  viewTabIds = [],
   onGoToTab,
   onFindSimilar,
   onQueryFromSelection,
@@ -222,8 +225,8 @@ function ContextMenuComponent({
         onSelect: () => onAddToTab(tab.id),
       };
     }),
-    // Any member of the open tab can leave it (it stays in "All"); a ghost is set aside
-    !!activeTabId && (isGhostElement || elementTabIds.includes(activeTabId)) && {
+    // Any member of the tabs in view can leave them (it stays in "All"); a ghost is set aside
+    !!activeTabId && (isGhostElement || elementTabIds.some((id) => viewTabIds.includes(id))) && {
       id: 'remove-from-tab',
       label: t('dossier.tabs.removeFromTab'),
       icon: X,

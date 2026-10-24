@@ -306,5 +306,11 @@
     "noMatch": "Brak wyników",
     "indexing": "Indeksowanie…",
     "loadError": "Nie można wyświetlić tego pliku PDF"
+  },
+  "activity": {
+    "insights": "Analiza grafu",
+    "layout": "Układ",
+    "view": "Zmiana widoku",
+    "suggestions": "Sugestie powiązań"
   }
 }

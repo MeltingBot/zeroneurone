@@ -33,6 +33,7 @@ import type { TabMembershipSnapshot } from '../../stores/historyStore';
 import { GroupNode, type GroupNodeData } from './GroupNode';
 import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
+import { SuggestionPreviewLines } from './SuggestionPreviewLines';
 import { AlignmentGuides, computeGuides, type Guide } from './AlignmentGuides';
 import { CustomEdge } from './CustomEdge';
 import { SimpleEdge } from './SimpleEdge';
@@ -481,8 +482,10 @@ function elementToNode(
     data: {
       element,
       isSelected: isGhost ? false : isSelected,
-      isDimmed: isGhost || isDimmed,
-      isHighlighted: !isGhost && !!isHighlighted,
+      // A ghost highlighted by Insights (a relay between two tabs, a path
+      // through another tab) shows with its glow instead of faded
+      isDimmed: (isGhost && !isHighlighted) || isDimmed,
+      isHighlighted: !!isHighlighted,
       isGhost,
       thumbnail,
       onResize: isGhost ? undefined : onResize,
@@ -901,6 +904,7 @@ export function Canvas() {
 
   // Tab filtering
   const activeTabId = useTabStore((s) => s.activeTabId);
+  const extraTabIds = useTabStore((s) => s.extraTabIds);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const tabExcludedSet = useTabStore((s) => s.excludedSet);
   const canvasTabs = useTabStore((s) => s.tabs);
@@ -1549,9 +1553,9 @@ export function Canvas() {
   }, [links]);
 
   const nodes = useMemo(() => {
-    const activeTabChanged = prevActiveTabIdRef.current !== activeTabId;
+    // Switching tab is not a global change: only the nodes whose ghost status
+    // changes are rebuilt (see the ghost status diff below)
     const globalSettingsChanged =
-      activeTabChanged ||
       prevShowConfRef.current !== confidenceDisplay ||
       prevTagModeRef.current !== tagDisplayMode ||
       prevTagSizeRef.current !== tagDisplaySize ||
@@ -1712,12 +1716,16 @@ export function Canvas() {
       }
     }
 
-    // Ghost status diff (membership change: member ↔ ghost)
-    if (prevTabMemberSetRef.current !== tabMemberSet) {
+    // Ghost status diff: a node is a ghost inside a tab when it is not a
+    // member. Switching tab (or to "All", where nothing is a ghost) rebuilds
+    // only the nodes whose status changes.
+    if (prevTabMemberSetRef.current !== tabMemberSet || prevActiveTabIdRef.current !== activeTabId) {
+      const prevTab = prevActiveTabIdRef.current;
+      const prevMembers = prevTabMemberSetRef.current;
       for (const ns of nodeStructures) {
-        const wasMember = prevTabMemberSetRef.current.has(ns.el.id);
-        const isMember = tabMemberSet.has(ns.el.id);
-        if (wasMember !== isMember) needsRebuild.add(ns.el.id);
+        const wasGhost = prevTab !== null && !prevMembers.has(ns.el.id);
+        const isGhost = activeTabId !== null && !tabMemberSet.has(ns.el.id);
+        if (wasGhost !== isGhost) needsRebuild.add(ns.el.id);
       }
     }
 
@@ -2244,6 +2252,7 @@ export function Canvas() {
   }, [cappedEdges, isLowDetail]);
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
+
 
 
   // Track starting positions for undo
@@ -2934,58 +2943,74 @@ export function Canvas() {
     pushAction({ type: 'tab-membership', undo: { snapshot }, redo: { snapshot } });
   }, [pushAction]);
 
+  // Tabs the view shows: the open one, and those combined with it
+  const viewTabIds = useMemo(
+    () => (activeTabId === null ? [] : [activeTabId, ...extraTabIds]),
+    [activeTabId, extraTabIds],
+  );
+
   // New canvas tab holding `ids`, opened. Same naming as the tab bar; the
   // canvas stays where it is, the elements being on screen. Made from inside
-  // a tab, the elements move: they leave the tab they came from.
+  // a tab (or combined tabs), the elements move: they leave the tabs they came from.
   const canCreateTab = !!currentDossier && canvasTabs.length < MAX_TABS;
   const createTabFromIds = useCallback(async (ids: string[]) => {
     if (!currentDossier || ids.length === 0) return;
     const from = activeTabId;
-    const removed = from !== null ? ids.filter((id) => tabMembers(from).has(id)) : [];
+    const sources = viewTabIds.map((tabId) => ({ tabId, removed: ids.filter((id) => tabMembers(tabId).has(id)) }));
     if (from !== null) saveTabViewport(from, viewport);
     const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
     await addTabMembers(tab.id, ids);
-    if (from !== null) await removeTabMembers(from, ids);
+    for (const { tabId, removed } of sources) if (removed.length > 0) await removeTabMembers(tabId, removed);
     setActiveTab(tab.id);
     pushTabMembership({
-      changes: [{ tabId: tab.id, added: ids, removed: [] }, ...(from !== null ? [{ tabId: from, added: [], removed }] : [])],
+      changes: [{ tabId: tab.id, added: ids, removed: [] }, ...sources.map(({ tabId, removed }) => ({ tabId, added: [], removed }))],
       createdTab: tab,
       activeBefore: from,
       activeAfter: tab.id,
     });
-  }, [currentDossier, activeTabId, viewport, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab, tabMembers, pushTabMembership]);
+  }, [currentDossier, activeTabId, viewTabIds, viewport, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab, tabMembers, pushTabMembership]);
 
-  // Send `ids` to another tab and out of the active one (they stay in "All").
+  // Send `ids` to another tab and out of the tabs in view (they stay in "All").
   const moveIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
     const from = activeTabId;
-    if (from === null || tabId === from || ids.length === 0) return;
+    if (from === null || ids.length === 0) return;
+    const sources = viewTabIds.filter((id) => id !== tabId);
+    if (sources.length === 0) return;
     const target = tabMembers(tabId);
-    const source = tabMembers(from);
     const added = ids.filter((id) => !target.has(id));
-    const removed = ids.filter((id) => source.has(id));
+    const removals = sources.map((sourceId) => ({ tabId: sourceId, removed: ids.filter((id) => tabMembers(sourceId).has(id)) }));
     await addTabMembers(tabId, ids);
-    await removeTabMembers(from, ids);
+    for (const { tabId: sourceId, removed } of removals) if (removed.length > 0) await removeTabMembers(sourceId, removed);
     pushTabMembership({
-      changes: [{ tabId, added, removed: [] }, { tabId: from, added: [], removed }],
+      changes: [{ tabId, added, removed: [] }, ...removals.map(({ tabId: sourceId, removed }) => ({ tabId: sourceId, added: [], removed }))],
       activeBefore: from,
       activeAfter: from,
     });
-  }, [activeTabId, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
+  }, [activeTabId, viewTabIds, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
 
-  // Take `ids` out of the active tab: members leave it (they stay in "All"),
-  // ghosts are set aside. Membership changes go through the history.
+  // Take `ids` out of the tabs in view: members leave them (they stay in
+  // "All"), ghosts are set aside. Membership changes go through the history.
   const removeIdsFromActiveTab = useCallback(async (ids: string[]) => {
-    const tabId = activeTabId;
-    if (tabId === null || ids.length === 0) return;
-    const members = tabMembers(tabId);
-    const removed = ids.filter((id) => members.has(id));
-    const ghosts = ids.filter((id) => !members.has(id));
-    if (ghosts.length > 0) await excludeFromTab(tabId, ghosts);
-    if (removed.length > 0) {
-      await removeTabMembers(tabId, removed);
-      pushTabMembership({ changes: [{ tabId, added: [], removed }], activeBefore: tabId, activeAfter: tabId });
+    if (activeTabId === null || ids.length === 0) return;
+    const inView = new Set<string>();
+    const removals = viewTabIds.map((tabId) => {
+      const members = tabMembers(tabId);
+      const removed = ids.filter((id) => members.has(id));
+      removed.forEach((id) => inView.add(id));
+      return { tabId, removed };
+    });
+    const ghosts = ids.filter((id) => !inView.has(id));
+    for (const tabId of viewTabIds) if (ghosts.length > 0) await excludeFromTab(tabId, ghosts);
+    const changed = removals.filter(({ removed }) => removed.length > 0);
+    if (changed.length > 0) {
+      for (const { tabId, removed } of changed) await removeTabMembers(tabId, removed);
+      pushTabMembership({
+        changes: changed.map(({ tabId, removed }) => ({ tabId, added: [], removed })),
+        activeBefore: activeTabId,
+        activeAfter: activeTabId,
+      });
     }
-  }, [activeTabId, tabMembers, excludeFromTab, removeTabMembers, pushTabMembership]);
+  }, [activeTabId, viewTabIds, tabMembers, excludeFromTab, removeTabMembers, pushTabMembership]);
 
   // Add `ids` to a tab, keeping them where they are.
   const addIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
@@ -3010,7 +3035,9 @@ export function Canvas() {
     if (!targetId) return;
     const el = elements.find(e => e.id === targetId);
     if (!el) return;
-    // Same tags, or a label close to it (LIKE: case, accents, small typos)
+    // A label close to it (LIKE: case, accents, small typos) AND one of its
+    // tags; either part alone when the element lacks the other
+    type Q = import('../../services/query/types').QueryNode;
     const label = el.label.trim();
     const tags = el.tags.filter(Boolean);
     if (tags.length === 0 && !label) {
@@ -3018,19 +3045,14 @@ export function Canvas() {
       return;
     }
 
-    const conditions: import('../../services/query/types').QueryCondition[] = [
-      ...(label ? [{ type: 'condition' as const, field: 'label', operator: 'like' as const, value: label }] : []),
-      ...tags.map(tag => ({
-        type: 'condition' as const,
-        field: 'tag',
-        operator: 'eq' as const,
-        value: tag,
-      })),
-    ];
-
-    const ast = conditions.length === 1
-      ? conditions[0]
-      : { type: 'or' as const, children: conditions } as import('../../services/query/types').QueryOr;
+    const tagConditions: Q[] = tags.map(tag => ({ type: 'condition' as const, field: 'tag', operator: 'eq' as const, value: tag }));
+    const tagPart: Q | null = tagConditions.length === 0 ? null
+      : tagConditions.length === 1 ? tagConditions[0]
+      : { type: 'or' as const, children: tagConditions };
+    const labelPart: Q | null = label ? { type: 'condition' as const, field: 'label', operator: 'like' as const, value: label } : null;
+    const ast: Q = labelPart && tagPart
+      ? { type: 'and' as const, children: [labelPart, tagPart] }
+      : (labelPart ?? tagPart)!;
 
     const text = serializeQuery(ast);
     useQueryStore.getState().setText(text);
@@ -4922,7 +4944,7 @@ export function Canvas() {
         {/* Canvas */}
         <div
           ref={reactFlowWrapper}
-          className={`flex-1 relative outline-none ${importPlacementMode ? 'cursor-crosshair' : ''} ${isViewportMoving && elements.length > 500 ? 'edges-hidden' : ''}`}
+          className={`zn-canvas-surface flex-1 relative outline-none ${importPlacementMode ? 'cursor-crosshair' : ''} ${isViewportMoving && elements.length > 500 ? 'edges-hidden' : ''}`}
           data-testid="canvas"
           data-tutorial="canvas"
           data-report-capture="canvas"
@@ -5027,6 +5049,7 @@ export function Canvas() {
             <FitViewController />
             <DraggableMinimap />
             <ImportPlacementOverlay />
+            <SuggestionPreviewLines />
           </ReactFlow>
 
           {/* Alignment guides overlay */}
@@ -5128,6 +5151,7 @@ export function Canvas() {
               )}
               isGhostElement={activeTabId !== null && !tabMemberSet.has(contextMenu.elementId)}
               elementTabIds={getTabsForElement(contextMenu.elementId).map(t => t.id)}
+              viewTabIds={viewTabIds}
               onGoToTab={(tabId) => {
                 setActiveTab(tabId);
                 closeContextMenu();

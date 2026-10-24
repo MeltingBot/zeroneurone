@@ -334,7 +334,9 @@
       "emptyState": "Fitxa honetan elementurik ez",
       "emptyHint": "Egin eskuin-klik elementuetan gehitzeko",
       "ghostBadge": "{{tabs}}(e)n",
-      "navigateTo": "{{name}} fitxara joan"
+      "navigateTo": "{{name}} fitxara joan",
+      "combine": "Konbinatu",
+      "uncombine": "Ez konbinatu"
     },
     "retentionExpiredBanner": "Atxikipena iraungita duela {{days}} egun",
     "retentionDeleteConfirm": "Espediente hau behin betiko ezabatuko da. Ekintza hau ezin da desegin.",

@@ -301,5 +301,11 @@
     "noMatch": "Cap resultat",
     "indexing": "S'està indexant…",
     "loadError": "No es pot mostrar aquest PDF"
+  },
+  "activity": {
+    "insights": "Anàlisi del graf",
+    "layout": "Disposició",
+    "view": "Canvi de vista",
+    "suggestions": "Suggeriments d'enllaços"
   }
 }

@@ -4,9 +4,10 @@ import { TagCombobox } from '../modals/TagCombobox';
 import { revealElement } from '../../utils/revealElement';
 import { Check, ChevronDown, ChevronUp, Loader2, RotateCcw, Search, X } from 'lucide-react';
 import { useDossierStore, useInsightsStore, useQueryStore, useSelectionStore, useSuggestionsStore, useTabStore, useUIStore, useViewStore } from '../../stores';
-import { MAX_STAYS, MEETING_WINDOWS, NEARBY_RADII, PLACE_RADII } from '../../stores/suggestionsStore';
+import { MAX_STAYS } from '../../stores/suggestionsStore';
 import { foldKey, type Suggestion, type SuggestionReason } from '../../services/linkSuggestions';
 import type { Element } from '../../types';
+import { useProgressStore } from '../../stores/progressStore';
 
 /** Compact select of the settings row: same height as the checkbox labels */
 const SELECT_CLASS = 'h-6 px-1.5 text-xs rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent disabled:opacity-50';
@@ -57,6 +58,75 @@ function distanceOf(sg: Suggestion): number {
   return d;
 }
 
+interface AmountUnit { factor: number; label: string }
+
+/** Amount typed by the analyst, with its unit; the value is in the smallest
+ *  unit (metres, ms) and is committed on Enter or on leaving the field */
+function AmountField({ value, units, onCommit, disabled, label, testId }: {
+  value: number;
+  units: AmountUnit[];
+  onCommit: (value: number) => void;
+  disabled: boolean;
+  label: string;
+  testId: string;
+}) {
+  const fit = useCallback((v: number) => [...units].reverse().find((u) => v % u.factor === 0) ?? units[0], [units]);
+  const [factor, setFactor] = useState(() => fit(value).factor);
+  const [text, setText] = useState(() => String(value / fit(value).factor));
+  // A value changed elsewhere (bounds) is shown afresh; our own commit keeps
+  // the unit and the text as typed
+  const [committed, setCommitted] = useState(value);
+  const [shown, setShown] = useState(value);
+  if (shown !== value) {
+    setShown(value);
+    if (committed !== value) {
+      const unit = fit(value);
+      setFactor(unit.factor);
+      setText(String(value / unit.factor));
+    }
+  }
+
+  const commit = (amount: string, unitFactor: number) => {
+    const n = Number(amount.replace(',', '.'));
+    if (!Number.isFinite(n) || n <= 0) {
+      setText(String(value / unitFactor));
+      return;
+    }
+    const next = Math.round(n * unitFactor);
+    if (next === value) return;
+    setCommitted(next);
+    onCommit(next);
+  };
+
+  return (
+    <span className="inline-flex items-center gap-1">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => commit(text, factor)}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit(text, factor); }}
+        disabled={disabled}
+        aria-label={label}
+        title={label}
+        data-testid={testId}
+        className={`${SELECT_CLASS} w-12 text-right`}
+      />
+      <select
+        value={factor}
+        onChange={(e) => { const f = Number(e.target.value); setFactor(f); commit(text, f); }}
+        disabled={disabled}
+        aria-label={label}
+        data-testid={`${testId}-unit`}
+        className={SELECT_CLASS}
+      >
+        {units.map((u) => <option key={u.factor} value={u.factor}>{u.label}</option>)}
+      </select>
+    </span>
+  );
+}
+
 export function SuggestionsPanel() {
   const { t, i18n } = useTranslation('panels');
   const elements = useDossierStore((s) => s.elements);
@@ -65,13 +135,16 @@ export function SuggestionsPanel() {
   const {
     suggestions, dismissedSuggestions, dossierId, scope, nearbyRadius, meetingRadius, maxStay, placesEnabled, meetingsEnabled, meetingWindow,
     valuesEnabled, sourcesEnabled, zonesEnabled, setRuleEnabled,
-    shownCount, meetingsTruncated, between, setBetween, excludedKeys, setExcludedKeys, loadExcludedKeys,
+    shownCount, meetingsTruncated, crowdedCount, between, setBetween, excludedKeys, setExcludedKeys, loadExcludedKeys,
     analyze, refresh, setNearbyRadius, setMeetingRadius, setMaxStay, setPlacesEnabled, setMeetingsEnabled, setMeetingWindow, accept, dismiss, restore,
   } = useSuggestionsStore();
   const highlightSuggestion = useInsightsStore((s) => s.highlightSuggestion);
   const clearHighlight = useInsightsStore((s) => s.clearHighlight);
   const selectElements = useSelectionStore((s) => s.selectElements);
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  // In the store: the checks and their links on the canvas outlive a switch
+  // to another tab of the side panel
+  const checked = useSuggestionsStore((s) => s.checked);
+  const setChecked = useSuggestionsStore((s) => s.setChecked);
   const [busy, setBusy] = useState(false);
   /** Reviewing the dismissed suggestions instead of the pending ones */
   const [reviewDismissed, setReviewDismissed] = useState(false);
@@ -80,9 +153,11 @@ export function SuggestionsPanel() {
   const [rowsShown, setRowsShown] = useState<{ list: unknown; limit: number }>({ list: null, limit: ROWS_STEP });
   // Tags typed for the between filter, applied once picked
   const [betweenA, setBetweenA] = useState(between?.a ?? '');
-  const [betweenB, setBetweenB] = useState(between?.b ?? '');
+  // One tag compares it with itself: the second field then stays empty
+  const [betweenB, setBetweenB] = useState(between && between.b !== between.a ? between.b : '');
   const applyBetween = (a: string, b: string) => {
-    const next = a.trim() && b.trim() ? { a: a.trim(), b: b.trim() } : null;
+    const first = a.trim() || b.trim();
+    const next = first ? { a: first, b: b.trim() && a.trim() ? b.trim() : first } : null;
     if ((next?.a ?? '') !== (between?.a ?? '') || (next?.b ?? '') !== (between?.b ?? '')) setBetween(next);
   };
 
@@ -115,6 +190,16 @@ export function SuggestionsPanel() {
   const queryMatchElementIds = useQueryStore((s) => s.matchingElementIds);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
+  // Tags offered by the filter: those carried in the open tab (any other finds nothing)
+  const tabTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const el of elements) {
+      if (activeTabId !== null && !tabMemberSet.has(el.id)) continue;
+      for (const tag of el.tags) set.add(tag);
+    }
+    return [...set];
+  }, [elements, activeTabId, tabMemberSet]);
+
   useEffect(() => {
     refresh();
   }, [filters, hiddenElementIds, queryFilterActive, queryMatchElementIds, activeTabId, tabMemberSet, refresh]);
@@ -158,6 +243,17 @@ export function SuggestionsPanel() {
 
   const formatDate = useCallback((iso?: string) => (iso ? dateFormat.format(new Date(iso)) : ''), [dateFormat]);
 
+  const distanceUnits = useMemo<AmountUnit[]>(() => [{ factor: 1, label: 'm' }, { factor: 1000, label: 'km' }], []);
+  // Unit names from the window labels, without their number
+  const windowUnits = useMemo<AmountUnit[]>(() => {
+    const name = (key: string) => t(`suggestions.window.${key}`, { count: 2 }).replace(/\d+/, '').trim();
+    return [
+      { factor: 60_000, label: name('minutes') },
+      { factor: 3600_000, label: name('hours') },
+      { factor: 86400_000, label: name('days') },
+    ];
+  }, [t]);
+
   const reasonText = useCallback((reason: SuggestionReason) => {
     switch (reason.rule) {
       case 'sharedValue': return t('suggestions.reason.sharedValue', { key: reason.key, value: reason.value });
@@ -197,7 +293,7 @@ export function SuggestionsPanel() {
     } finally {
       setBusy(false);
     }
-  }, [clearHighlight]);
+  }, [clearHighlight, setChecked]);
 
   const handleAccept = useCallback(
     (ids: string[]) => run(() => accept(ids, linkLabel, reasonText), ids),
@@ -206,11 +302,17 @@ export function SuggestionsPanel() {
   const handleDismiss = useCallback((ids: string[]) => run(() => dismiss(ids), ids), [run, dismiss]);
   const handleRestore = useCallback((ids: string[]) => run(() => restore(ids), ids), [run, restore]);
 
-  const toggle = (id: string) => setChecked((prev) => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
+  // Checking a suggestion brings its elements on the canvas
+  const toggle = (s: Suggestion) => {
+    if (!checked.has(s.id) && useViewStore.getState().displayMode === 'canvas') {
+      useViewStore.getState().requestFitView(involvedIds(s));
+    }
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(s.id)) next.delete(s.id); else next.add(s.id);
+      return next;
+    });
+  };
 
   // List search: element names and reason texts, accents and case aside
   // Searchable text of each suggestion, built once per list (and only once the
@@ -303,16 +405,31 @@ export function SuggestionsPanel() {
   const runAnalysis = useCallback(() => {
     setChecked(new Set());
     setAnalyzing(true);
+    useProgressStore.getState().start('suggestions', 'activity.suggestions');
     requestAnimationFrame(() => requestAnimationFrame(() => {
       try {
         analyze(null);
       } finally {
         setAnalyzing(false);
+        useProgressStore.getState().end('suggestions');
       }
     }));
-  }, [analyze]);
+  }, [analyze, setChecked]);
 
   const checkedIds = shown.filter((s) => checked.has(s.id)).map((s) => s.id);
+
+  // The checked suggestions draw their links on the canvas, until unchecked,
+  // accepted or dismissed (they then leave the list), the panel open or not;
+  // the hovered one too, while hovered
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const previewPairs = shown.filter((s) => checked.has(s.id) || s.id === hoveredId).flatMap((s) => {
+    if (s.kind === 'link') return [{ id: s.id, fromId: s.fromId, toId: s.toId }];
+    const hub = s.existingId;
+    return hub ? s.memberIds.map((m) => ({ id: `${s.id}:${m}`, fromId: hub, toId: m })) : [];
+  });
+  const setPreviewPairs = useSuggestionsStore((st) => st.setPreviewPairs);
+  // Every render: the store only changes when the pairs do
+  useEffect(() => { setPreviewPairs(previewPairs); });
   const allChecked = shown.length > 0 && checkedIds.length === shown.length;
   // Bulk buttons from two rows on: a single row already has its own buttons
   const bulk = checkedIds.length >= 2;
@@ -422,19 +539,14 @@ export function SuggestionsPanel() {
             {t('suggestions.places')}
           </label>
           <div className="flex items-center gap-1.5">
-            <select
+            <AmountField
               value={nearbyRadius}
-              onChange={(e) => { setNearbyRadius(Number(e.target.value)); refresh(); }}
+              units={distanceUnits}
+              onCommit={(v) => { setNearbyRadius(v); refresh(); }}
               disabled={!placesEnabled}
-              aria-label={t('suggestions.nearbyRadius')}
-              title={t('suggestions.nearbyRadius')}
-              data-testid="suggestions-nearby-radius"
-              className={SELECT_CLASS}
-            >
-              {PLACE_RADII.map((radius) => (
-                <option key={radius} value={radius}>{formatDistance(radius)}</option>
-              ))}
-            </select>
+              label={t('suggestions.nearbyRadius')}
+              testId="suggestions-nearby-radius"
+            />
           </div>
           <label className="flex items-center gap-1.5 h-6" title={t('suggestions.meetingsHint')}>
             <input
@@ -447,33 +559,23 @@ export function SuggestionsPanel() {
             {t('suggestions.meetings')}
           </label>
           <div className="flex items-center gap-1.5">
-            <select
+            <AmountField
               value={meetingRadius}
-              onChange={(e) => { setMeetingRadius(Number(e.target.value)); refresh(); }}
+              units={distanceUnits}
+              onCommit={(v) => { setMeetingRadius(v); refresh(); }}
               disabled={!meetingsEnabled}
-              aria-label={t('suggestions.nearbyRadius')}
-              title={t('suggestions.nearbyRadius')}
-              data-testid="suggestions-meeting-radius"
-              className={SELECT_CLASS}
-            >
-              {NEARBY_RADII.map((radius) => (
-                <option key={radius} value={radius}>{formatDistance(radius)}</option>
-              ))}
-            </select>
-            <span className={meetingsEnabled ? '' : 'opacity-50'}>{t('suggestions.and')}</span>
-            <select
+              label={t('suggestions.nearbyRadius')}
+              testId="suggestions-meeting-radius"
+            />
+            <span className={meetingsEnabled ? '' : 'opacity-50'}>{t('suggestions.and')} ±</span>
+            <AmountField
               value={meetingWindow}
-              onChange={(e) => { setMeetingWindow(Number(e.target.value)); refresh(); }}
+              units={windowUnits}
+              onCommit={(v) => { setMeetingWindow(v); refresh(); }}
               disabled={!meetingsEnabled}
-              aria-label={t('suggestions.meetingWindow')}
-              title={t('suggestions.meetingWindow')}
-              data-testid="suggestions-meeting-window"
-              className={SELECT_CLASS}
-            >
-              {MEETING_WINDOWS.map((window) => (
-                <option key={window} value={window}>±{formatWindow(window)}</option>
-              ))}
-            </select>
+              label={t('suggestions.meetingWindow')}
+              testId="suggestions-meeting-window"
+            />
           </div>
           <span className={`pl-5 ${meetingsEnabled ? '' : 'opacity-50'}`} title={t('suggestions.maxStayHint')}>
             {t('suggestions.maxStay')}
@@ -501,6 +603,7 @@ export function SuggestionsPanel() {
             onChange={setBetweenA}
             onPick={(a) => applyBetween(a, betweenB)}
             allowNew={false}
+            options={tabTags}
             aria-label={t('suggestions.betweenFirst')}
             className={`${SELECT_CLASS} w-28`}
           />
@@ -510,6 +613,8 @@ export function SuggestionsPanel() {
             onChange={setBetweenB}
             onPick={(b) => applyBetween(betweenA, b)}
             allowNew={false}
+            options={tabTags}
+            placeholder={between && between.a === between.b ? t('suggestions.betweenSame') : undefined}
             aria-label={t('suggestions.betweenSecond')}
             className={`${SELECT_CLASS} w-28`}
           />
@@ -524,6 +629,9 @@ export function SuggestionsPanel() {
             </button>
           )}
         </div>
+        {visible && !between && crowdedCount > 0 && (
+          <p className="text-xs text-text-tertiary" data-testid="suggestions-crowded">{t('suggestions.crowded', { count: crowdedCount })}</p>
+        )}
         {visible && meetingsTruncated && (
           <p className="text-xs text-warning">{t('suggestions.meetingsTruncated')}</p>
         )}
@@ -642,14 +750,14 @@ export function SuggestionsPanel() {
           {shown.map((s) => (
             <li
               key={s.id}
-              onMouseEnter={() => highlightSuggestion(involvedIds(s))}
-              onMouseLeave={clearHighlight}
+              onMouseEnter={() => { highlightSuggestion(involvedIds(s)); setHoveredId(s.id); }}
+              onMouseLeave={() => { clearHighlight(); setHoveredId(null); }}
               className="group flex items-start gap-2 px-3 py-2 hover:bg-bg-secondary"
             >
               <input
                 type="checkbox"
                 checked={checked.has(s.id)}
-                onChange={() => toggle(s.id)}
+                onChange={() => toggle(s)}
                 className="mt-0.5 rounded border-border-default"
               />
               <div className="flex-1 min-w-0">

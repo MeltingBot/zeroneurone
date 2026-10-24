@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
 import { useTabStore, useViewStore, useDossierStore, useHistoryStore, MAX_TABS } from '../../stores';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
+import { useProgressStore } from '../../stores/progressStore';
 import type { TabId, DossierId } from '../../types';
 
 interface TabBarProps {
@@ -14,6 +15,8 @@ export function TabBar({ dossierId }: TabBarProps) {
   const tabs = useTabStore((s) => s.tabs);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const setActiveTab = useTabStore((s) => s.setActiveTab);
+  const extraTabIds = useTabStore((s) => s.extraTabIds);
+  const toggleCombinedTab = useTabStore((s) => s.toggleCombinedTab);
   const createTab = useTabStore((s) => s.createTab);
   const addMembers = useTabStore((s) => s.addMembers);
   const renameTab = useTabStore((s) => s.renameTab);
@@ -35,20 +38,46 @@ export function TabBar({ dossierId }: TabBarProps) {
   const editInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Changing what the view shows can take a moment on a large dossier: show
+  // the activity bar first, let it paint (two frames), then switch, and drop
+  // the bar once the new view has painted.
+  const withActivity = (change: () => void) => {
+    const progress = useProgressStore.getState();
+    progress.start('view', 'activity.view');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try {
+        change();
+      } finally {
+        requestAnimationFrame(() => useProgressStore.getState().end('view'));
+      }
+    }));
+  };
+
   // Switch tab with viewport save/restore
   const switchTab = (tabId: TabId) => {
-    if (tabId === activeTabId) return;
+    if (tabId === activeTabId && extraTabIds.length === 0) return;
     // Save current viewport for the tab we're leaving
     if (activeTabId !== null) {
       saveTabViewport(activeTabId, viewport);
     }
-    // Switch
-    setActiveTab(tabId);
-    // Restore viewport for the new tab
-    const tab = tabs.find((t) => t.id === tabId);
-    if (tab && (tab.viewport.x !== 0 || tab.viewport.y !== 0 || tab.viewport.zoom !== 1)) {
-      requestViewportChange(tab.viewport);
+    withActivity(() => {
+      setActiveTab(tabId);
+      // Restore viewport for the new tab
+      const tab = tabs.find((t) => t.id === tabId);
+      if (tab && (tab.viewport.x !== 0 || tab.viewport.y !== 0 || tab.viewport.zoom !== 1)) {
+        requestViewportChange(tab.viewport);
+      }
+    });
+  };
+
+  // Ctrl/Cmd+click: show the tab together with the open one, or stop
+  const handleTabClick = (e: React.MouseEvent, tabId: TabId) => {
+    // From "All" there is nothing to combine with: open it (viewport restored)
+    if ((e.ctrlKey || e.metaKey) && activeTabId !== null) {
+      withActivity(() => toggleCombinedTab(tabId));
+      return;
     }
+    switchTab(tabId);
   };
 
   const switchToAll = () => {
@@ -57,7 +86,7 @@ export function TabBar({ dossierId }: TabBarProps) {
     if (activeTabId !== null) {
       saveTabViewport(activeTabId, viewport);
     }
-    setActiveTab(null);
+    withActivity(() => setActiveTab(null));
   };
 
   const handleCreate = async () => {
@@ -185,7 +214,8 @@ export function TabBar({ dossierId }: TabBarProps) {
               key={tab.id}
               label={tab.name}
               isActive={activeTabId === tab.id}
-              onClick={() => switchTab(tab.id)}
+              isCombined={extraTabIds.includes(tab.id)}
+              onClick={(e) => handleTabClick(e, tab.id)}
               onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
               onContextMenu={(e) => handleContextMenu(e, tab.id)}
               isEditing={editingTabId === tab.id}
@@ -239,6 +269,17 @@ export function TabBar({ dossierId }: TabBarProps) {
         <TabContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
+          combineLabel={
+            activeTabId === null || contextMenu.tabId === activeTabId && extraTabIds.length === 0
+              ? null
+              : extraTabIds.includes(contextMenu.tabId) || contextMenu.tabId === activeTabId
+                ? t('dossier.tabs.uncombine')
+                : t('dossier.tabs.combine')
+          }
+          onCombine={() => {
+            toggleCombinedTab(contextMenu.tabId);
+            setContextMenu(null);
+          }}
           onRename={handleRenameFromContext}
           onDelete={tabs.length > 1 ? handleDeleteFromContext : undefined}
           onClose={() => setContextMenu(null)}
@@ -268,7 +309,9 @@ export function TabBar({ dossierId }: TabBarProps) {
 interface TabButtonProps {
   label: string;
   isActive: boolean;
-  onClick: () => void;
+  /** Shown together with the open tab (Ctrl+click) */
+  isCombined?: boolean;
+  onClick: (e: React.MouseEvent) => void;
   onDoubleClick?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
   isEditing?: boolean;
@@ -289,6 +332,7 @@ interface TabButtonProps {
 function TabButton({
   label,
   isActive,
+  isCombined,
   onClick,
   onDoubleClick,
   onContextMenu,
@@ -319,7 +363,9 @@ function TabButton({
       className={`group flex items-center gap-1 px-2 h-6 text-xs rounded cursor-pointer select-none shrink-0 transition-colors ${
         isActive
           ? 'bg-bg-secondary text-text-primary font-medium border border-border-default'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+          : isCombined
+            ? 'bg-bg-secondary text-text-primary border border-border-default'
+            : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
       } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'outline outline-1 outline-accent' : ''}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
@@ -373,13 +419,16 @@ function TabButton({
 interface TabContextMenuProps {
   x: number;
   y: number;
+  /** "Combine" / "Uncombine" with the open tab; null when not offered */
+  combineLabel: string | null;
+  onCombine: () => void;
   onRename: () => void;
   onDelete?: () => void;
   onClose: () => void;
   t: (key: string) => string;
 }
 
-function TabContextMenu({ x, y, onRename, onDelete, onClose, t }: TabContextMenuProps) {
+function TabContextMenu({ x, y, combineLabel, onCombine, onRename, onDelete, onClose, t }: TabContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -405,6 +454,14 @@ function TabContextMenu({ x, y, onRename, onDelete, onClose, t }: TabContextMenu
       className="fixed z-50 min-w-[140px] py-1 bg-bg-primary border border-border-default rounded shadow-md"
       style={{ left: x, top: y }}
     >
+      {combineLabel && (
+        <button
+          onClick={onCombine}
+          className="w-full px-3 py-1.5 text-xs text-left text-text-primary hover:bg-bg-tertiary"
+        >
+          {combineLabel}
+        </button>
+      )}
       <button
         onClick={onRename}
         className="w-full px-3 py-1.5 text-xs text-left text-text-primary hover:bg-bg-tertiary"

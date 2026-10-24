@@ -303,5 +303,11 @@
     "noMatch": "Nenhum resultado",
     "indexing": "A indexar…",
     "loadError": "Não é possível apresentar este PDF"
+  },
+  "activity": {
+    "insights": "Análise do grafo",
+    "layout": "Disposição",
+    "view": "Mudança de vista",
+    "suggestions": "Sugestões de ligações"
   }
 }

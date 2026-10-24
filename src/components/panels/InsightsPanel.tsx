@@ -30,6 +30,8 @@ import { MergeElementsModal } from '../modals/MergeElementsModal';
 import type { Element } from '../../types';
 import { DEFAULT_FILTERS } from '../../types';
 import { graphStructureSignature } from '../../services/graph/structureSignature';
+import { computeBetweenTabs, type BetweenTabs } from '../../utils/betweenTabs';
+import { useProgressStore } from '../../stores/progressStore';
 import { dateLocale } from '../../utils/dates';
 
 export function InsightsPanel() {
@@ -105,6 +107,16 @@ export function InsightsPanel() {
     };
   }, [activeTabId, tabMemberSet, elements, links]);
 
+  // Exactly two tabs in view (one combined with the open one): what links them
+  const extraTabIds = useTabStore((s) => s.extraTabIds);
+  const canvasTabs = useTabStore((s) => s.tabs);
+  const betweenTabs = useMemo(
+    () => (activeTabId !== null && extraTabIds.length === 1
+      ? computeBetweenTabs(canvasTabs, activeTabId, extraTabIds[0], links)
+      : null),
+    [activeTabId, extraTabIds, canvasTabs, links],
+  );
+
   const structureKey = useMemo(
     () => graphStructureSignature(analyzed.elements, analyzed.links),
     [analyzed]
@@ -115,14 +127,24 @@ export function InsightsPanel() {
     // Empty tab: drop the results of the previous one
     if (analyzed.elements.length === 0) {
       useInsightsStore.getState().clear();
+      useProgressStore.getState().end('insights');
       return;
     }
 
+    // The bar shows from now on, not once the debounce is over
+    useProgressStore.getState().start('insights', 'activity.insights', 0);
+    let started = false;
     const timer = setTimeout(() => {
+      started = true;
       computeInsights(analyzed.elements, analyzed.links);
     }, 300);
 
-    return () => clearTimeout(timer);
+    // Cancelled before it started (panel closed, scope changed again): drop
+    // the bar; a rescheduled run shows it again right away
+    return () => {
+      clearTimeout(timer);
+      if (!started) useProgressStore.getState().end('insights');
+    };
     // elements/links are read inside but deliberately not dependencies: only a
     // structural change should retrigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -480,6 +502,7 @@ export function InsightsPanel() {
     <div className="flex flex-col h-full">
       {/* Stats Overview */}
       <StatsOverview
+        counts={{ elements: analyzed.elements.length, links: analyzed.links.length }}
         onStatClick={handleStatClick}
         activeStat={highlightType}
       />
@@ -502,6 +525,9 @@ export function InsightsPanel() {
             </p>
           </div>
         )}
+
+        {/* What links the two tabs in view */}
+        {betweenTabs && <BetweenTabsSection between={betweenTabs} />}
 
         {/* Path Finding Section */}
         <div className="border-b border-border-default">
@@ -1123,6 +1149,65 @@ interface InsightSectionProps {
   onToggle: () => void;
   description?: string;
   children: React.ReactNode;
+}
+
+// ── Between two tabs ─────────────────────────────────────
+
+function BetweenTabsSection({ between }: { between: BetweenTabs }) {
+  const { t } = useTranslation('panels');
+  const highlightBetween = useInsightsStore((s) => s.highlightBetween);
+  const clearHighlight = useInsightsStore((s) => s.clearHighlight);
+  const highlightType = useInsightsStore((s) => s.highlightType);
+  const [active, setActive] = useState<'common' | 'direct' | 'relays' | null>(null);
+
+  const rows = [
+    { key: 'common' as const, count: between.common.length, elementIds: between.common, linkIds: [] as string[] },
+    { key: 'direct' as const, count: between.directLinks.length, elementIds: between.directEnds, linkIds: between.directLinks },
+    { key: 'relays' as const, count: between.relays.length, elementIds: between.relays, linkIds: [] as string[] },
+  ];
+
+  const toggle = (row: typeof rows[number]) => {
+    if (active === row.key && highlightType === 'between') {
+      clearHighlight();
+      setActive(null);
+      return;
+    }
+    highlightBetween(row.elementIds);
+    // Relays belong to other tabs (ghosts here): highlight only, never select
+    // them, or a Delete would reach elements the view does not show as selected
+    if (row.key !== 'relays') useSelectionStore.getState().selectBoth(row.elementIds, row.linkIds, false);
+    setActive(row.key);
+  };
+
+  return (
+    <div className="border-b border-border-default p-3 space-y-1.5">
+      <div className="text-xs font-medium text-text-secondary truncate" title={t('insights.between.title', { a: between.nameA, b: between.nameB })}>
+        {t('insights.between.title', { a: between.nameA, b: between.nameB })}
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {rows.map((row) => {
+          const isActive = active === row.key && highlightType === 'between';
+          return (
+            <button
+              key={row.key}
+              onClick={() => toggle(row)}
+              disabled={row.count === 0}
+              aria-pressed={isActive}
+              title={t(`insights.between.${row.key}Desc`)}
+              className={`flex flex-col items-center px-2 py-1.5 rounded border text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isActive
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border-default bg-bg-secondary text-text-secondary hover:border-accent'
+              }`}
+            >
+              <span className="text-sm font-semibold text-text-primary">{row.count}</span>
+              {t(`insights.between.${row.key}`)}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function InsightSection({

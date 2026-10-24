@@ -6,6 +6,7 @@ import { graphWorkerService } from '../../services/graphWorkerService';
 import { useDossierStore, useHistoryStore, useSelectionStore, useTabStore, useViewStore } from '../../stores';
 import type { Position } from '../../types';
 import { buildLayoutScope } from '../../utils/layoutScope';
+import { useProgressStore } from '../../stores/progressStore';
 import { avoidObstacles } from '../../utils/avoidObstacles';
 
 export function LayoutDropdown() {
@@ -20,6 +21,8 @@ export function LayoutDropdown() {
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);
   const tabs = useTabStore((s) => s.tabs);
+  const extraTabIds = useTabStore((s) => s.extraTabIds);
+  const viewTabIds = activeTabId === null ? [] : [activeTabId, ...extraTabIds];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -43,6 +46,7 @@ export function LayoutDropdown() {
 
     setIsApplying(true);
     setIsOpen(false);
+    useProgressStore.getState().start('layout', 'activity.layout', 0);
 
     // Scope: >= 2 selected elements -> induced sub-graph, else whole dossier.
     // In a tab, only its members move and they keep clear of everything else.
@@ -51,6 +55,7 @@ export function LayoutDropdown() {
     const scope = buildLayoutScope(elements, links, selectedElementIds, pool);
     if (scope.elements.length === 0) {
       setIsApplying(false);
+      useProgressStore.getState().end('layout');
       return;
     }
 
@@ -77,7 +82,8 @@ export function LayoutDropdown() {
         positions = await graphWorkerService.computeLayout(
           scope.elements,
           scope.links,
-          { layoutType, center, obstacles }
+          { layoutType, center, obstacles },
+          (percent) => useProgressStore.getState().update('layout', percent),
         );
       } catch (error) {
         console.error('[LayoutDropdown] Worker layout failed, falling back:', error);
@@ -116,6 +122,7 @@ export function LayoutDropdown() {
       }
     } finally {
       setIsApplying(false);
+      useProgressStore.getState().end('layout');
     }
   }, [elements, links, updateElementPositions, pushAction, selectedElementIds, activeTabId, tabMemberSet]);
 
@@ -131,7 +138,7 @@ export function LayoutDropdown() {
   if (isOpen && activeTabId !== null) {
     const inOtherTabs = new Set<string>();
     for (const tab of tabs) {
-      if (tab.id !== activeTabId) for (const id of tab.memberElementIds) inOtherTabs.add(id);
+      if (!viewTabIds.includes(tab.id)) for (const id of tab.memberElementIds) inOtherTabs.add(id);
     }
     const moving = scopedSelectionCount >= 2
       ? [...selectedElementIds].filter((id) => tabMemberSet.has(id))

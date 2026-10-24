@@ -334,7 +334,9 @@
       "emptyState": "Nenhum elemento nesta aba",
       "emptyHint": "Clique direito nos elementos para adicioná-los",
       "ghostBadge": "Em {{tabs}}",
-      "navigateTo": "Ir para aba {{name}}"
+      "navigateTo": "Ir para aba {{name}}",
+      "combine": "Combinar",
+      "uncombine": "Deixar de combinar"
     },
     "retentionExpiredBanner": "Retenção expirada há {{days}} dia(s)",
     "retentionDeleteConfirm": "Esto dossiê será excluída permanentemente, sem possibilidade de anulação.",

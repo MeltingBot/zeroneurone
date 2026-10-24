@@ -334,7 +334,9 @@
       "emptyState": "Sin elementos en esta pestaña",
       "emptyHint": "Clic derecho en elementos para añadirlos",
       "ghostBadge": "En {{tabs}}",
-      "navigateTo": "Ir a pestaña {{name}}"
+      "navigateTo": "Ir a pestaña {{name}}",
+      "combine": "Combinar",
+      "uncombine": "Dejar de combinar"
     },
     "retentionExpiredBanner": "Retención vencida hace {{days}} día(s)",
     "retentionDeleteConfirm": "Esta expediente se eliminará permanentemente, sin posibilidad de anulación.",

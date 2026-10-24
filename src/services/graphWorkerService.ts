@@ -65,11 +65,29 @@ type ProgressCallback = (percent: number, phase: string) => void;
 // SERVICE
 // ============================================================================
 
+type RequestKind = 'insights' | 'layout' | 'paths';
+
+interface PendingRequest {
+  id: number;
+  resolve: (value: any) => void;
+  reject: (reason: any) => void;
+  onProgress: ProgressCallback | null;
+}
+
+const RESULT_KIND: Record<string, RequestKind> = {
+  insightsResult: 'insights',
+  layoutResult: 'layout',
+  pathResult: 'paths',
+};
+
 class GraphWorkerService {
   private worker: Worker | null = null;
-  private pendingResolve: ((value: any) => void) | null = null;
-  private pendingReject: ((reason: any) => void) | null = null;
-  private progressCallback: ProgressCallback | null = null;
+  // One pending request per kind: a new insights request replaces the previous
+  // insights request, never a layout or a path search. The worker handles
+  // messages in order, so each answer is matched to its request by id; an
+  // answer to a replaced request is dropped.
+  private pending = new Map<RequestKind, PendingRequest>();
+  private nextId = 1;
 
   private getWorker(): Worker {
     if (!this.worker) {
@@ -79,42 +97,61 @@ class GraphWorkerService {
       );
       this.worker.onmessage = (event) => this.handleMessage(event.data);
       this.worker.onerror = (error) => {
-        if (this.pendingReject) {
-          this.pendingReject(error);
-          this.pendingResolve = null;
-          this.pendingReject = null;
-        }
+        // The worker itself failed: every request still waiting fails with it
+        for (const request of this.pending.values()) request.reject(error);
+        this.pending.clear();
       };
     }
     return this.worker;
   }
 
-  private handleMessage(response: any) {
-    switch (response.type) {
-      case 'progress':
-        this.progressCallback?.(response.percent, response.phase);
-        break;
-      case 'insightsResult':
-        this.pendingResolve?.(response.data);
-        this.pendingResolve = null;
-        this.pendingReject = null;
-        break;
-      case 'layoutResult':
-        this.pendingResolve?.(response.positions);
-        this.pendingResolve = null;
-        this.pendingReject = null;
-        break;
-      case 'pathResult':
-        this.pendingResolve?.(response.paths);
-        this.pendingResolve = null;
-        this.pendingReject = null;
-        break;
-      case 'error':
-        this.pendingReject?.(new Error(response.message));
-        this.pendingResolve = null;
-        this.pendingReject = null;
-        break;
+  /** The pending request this response answers, if it is still awaited */
+  private takeMatching(requestId: number | undefined, kind?: RequestKind): PendingRequest | null {
+    for (const [k, request] of this.pending) {
+      if (kind && k !== kind) continue;
+      if (request.id === requestId) {
+        this.pending.delete(k);
+        return request;
+      }
     }
+    return null;
+  }
+
+  private handleMessage(response: any) {
+    if (response.type === 'progress') {
+      for (const request of this.pending.values()) {
+        if (request.id === response.requestId) request.onProgress?.(response.percent, response.phase);
+      }
+      return;
+    }
+    if (response.type === 'error') {
+      this.takeMatching(response.requestId)?.reject(new Error(response.message));
+      return;
+    }
+    const kind = RESULT_KIND[response.type];
+    if (!kind) return;
+    const request = this.takeMatching(response.requestId, kind);
+    if (!request) return; // Stale: its request was replaced
+    request.resolve(
+      response.type === 'insightsResult' ? response.data
+        : response.type === 'layoutResult' ? response.positions
+        : response.paths,
+    );
+  }
+
+  /** Send a request, replacing (and settling) the previous one of the same kind */
+  private send<T>(kind: RequestKind, message: Record<string, unknown>, onProgress: ProgressCallback | null): Promise<T> {
+    const worker = this.getWorker();
+    const previous = this.pending.get(kind);
+    if (previous) {
+      this.pending.delete(kind);
+      previous.reject(new SupersededError(`${kind} superseded by a newer request`));
+    }
+    const id = this.nextId++;
+    return new Promise<T>((resolve, reject) => {
+      this.pending.set(kind, { id, resolve, reject, onProgress });
+      worker.postMessage({ ...message, requestId: id });
+    });
   }
 
   private serializeElements(elements: Element[]): SerializedElement[] {
@@ -145,88 +182,51 @@ class GraphWorkerService {
   /**
    * Compute all graph insights in the worker thread.
    */
-  async computeInsights(
+  computeInsights(
     elements: Element[],
     links: Link[],
     onProgress?: ProgressCallback
   ): Promise<WorkerInsightsData> {
-    this.progressCallback = onProgress ?? null;
-    const worker = this.getWorker();
-
-    // A single pending slot means a new request used to overwrite the previous
-    // one, leaving its promise unsettled for ever while the worker kept
-    // chewing on the superseded message. Reject the old one explicitly so its
-    // caller can stop waiting.
-    this.supersedePending('computeInsights superseded by a newer request');
-
-    return new Promise((resolve, reject) => {
-      this.pendingResolve = resolve;
-      this.pendingReject = reject;
-      worker.postMessage({
-        type: 'computeInsights',
-        elements: this.serializeElements(elements),
-        links: this.serializeLinks(links),
-      });
-    });
-  }
-
-  /** Settle whatever request is still in flight before starting another. */
-  private supersedePending(reason: string): void {
-    const reject = this.pendingReject;
-    this.pendingResolve = null;
-    this.pendingReject = null;
-    reject?.(new SupersededError(reason));
+    return this.send('insights', {
+      type: 'computeInsights',
+      elements: this.serializeElements(elements),
+      links: this.serializeLinks(links),
+    }, onProgress ?? null);
   }
 
   /**
    * Compute layout positions in the worker thread.
    */
-  async computeLayout(
+  computeLayout(
     elements: Element[],
     links: Link[],
     options: LayoutOptions,
     onProgress?: ProgressCallback
   ): Promise<Record<string, { x: number; y: number }>> {
-    this.progressCallback = onProgress ?? null;
-    const worker = this.getWorker();
-    this.supersedePending('computeLayout superseded by a newer request');
-
-    return new Promise((resolve, reject) => {
-      this.pendingResolve = resolve;
-      this.pendingReject = reject;
-      worker.postMessage({
-        type: 'computeLayout',
-        elements: this.serializeElements(elements),
-        links: this.serializeLinks(links),
-        options,
-      });
-    });
+    return this.send('layout', {
+      type: 'computeLayout',
+      elements: this.serializeElements(elements),
+      links: this.serializeLinks(links),
+      options,
+    }, onProgress ?? null);
   }
 
   /**
    * Find paths between two elements in the worker thread.
    */
-  async findPaths(
+  findPaths(
     elements: Element[],
     links: Link[],
     fromId: string,
     toId: string
   ): Promise<{ path: string[]; length: number }[]> {
-    this.progressCallback = null;
-    const worker = this.getWorker();
-    this.supersedePending('findPaths superseded by a newer request');
-
-    return new Promise((resolve, reject) => {
-      this.pendingResolve = resolve;
-      this.pendingReject = reject;
-      worker.postMessage({
-        type: 'findPaths',
-        elements: this.serializeElements(elements),
-        links: this.serializeLinks(links),
-        fromId,
-        toId,
-      });
-    });
+    return this.send('paths', {
+      type: 'findPaths',
+      elements: this.serializeElements(elements),
+      links: this.serializeLinks(links),
+      fromId,
+      toId,
+    }, null);
   }
 
   /**
@@ -237,9 +237,8 @@ class GraphWorkerService {
       this.worker.terminate();
       this.worker = null;
     }
-    this.pendingResolve = null;
-    this.pendingReject = null;
-    this.progressCallback = null;
+    for (const request of this.pending.values()) request.reject(new SupersededError('worker terminated'));
+    this.pending.clear();
   }
 }
 

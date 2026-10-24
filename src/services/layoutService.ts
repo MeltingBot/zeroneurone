@@ -13,6 +13,7 @@ import type { Element, Link, Position } from '../types';
 import { computeElementDimensions } from '../utils/elementDimensions';
 import { removeOverlaps } from '../utils/removeOverlaps';
 import { packClusters } from '../utils/packClusters';
+import { connectedComponents } from '../utils/connectedComponents';
 
 /**
  * Real rendered footprint of an element, shared with ElementNode so that
@@ -77,6 +78,20 @@ function applyForceLayout(
 
   // Per-node real dimensions for size-aware spacing
   const dimsMap = buildDimsMap(elements);
+
+  // Several groups not linked to each other: lay each out and pack them
+  // tightly, isolated elements in a grid, instead of letting them drift apart
+  const components = connectedComponents(graph);
+  if (components.length > 1) {
+    return packGroupsLayout(
+      graph,
+      components.filter((c) => c.length >= 2),
+      components.filter((c) => c.length === 1).map((c) => c[0]),
+      dimsMap,
+      center,
+      options.obstacles ?? [],
+    );
+  }
 
   // Assign random initial positions if nodes don't have any
   graph.forEachNode((node) => {
@@ -200,6 +215,23 @@ function applyClustersLayout(
     else singletons.push(nodes[0]);
   }
 
+  return packGroupsLayout(graph, realClusters, singletons, dimsMap, center, obstacles);
+}
+
+/**
+ * Lay each group out on its own (ForceAtlas2 on its induced sub-graph, sized
+ * to its node area), gather the singletons in a grid, then pack the groups
+ * tightly around the centre. Shared by the clusters layout (groups =
+ * communities) and the force layout (groups = connected components).
+ */
+function packGroupsLayout(
+  graph: Graph,
+  realClusters: string[][],
+  singletons: string[],
+  dimsMap: ReturnType<typeof buildDimsMap>,
+  center: Position,
+  obstacles: { x: number; y: number; r: number }[],
+): Map<string, Position> {
   type ClusterLayout = {
     nodes: { id: string; x: number; y: number; w: number; h: number }[];
     radius: number;

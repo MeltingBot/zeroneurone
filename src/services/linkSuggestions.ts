@@ -9,7 +9,8 @@
  *   - inZone       : an element's position falls inside another element's zone
  *   - nearby       : two points closer than a radius the analyst picks
  *   - meeting      : two elements at the same place at the same time — dated,
- *                    located events (or the element's own date and position),
+ *                    located events (or the element's own date, or its date properties kept in
+ *                    the filters, at its position),
  *                    within the radius and a time window the analyst picks
  *
  * A value shared by two elements gives a link between them. Shared by three or
@@ -26,6 +27,7 @@
 import type { Asset, Element, Link } from '../types';
 import { closestPointOnPolygon, computePolygonAreaKm2, getGeoCenter, isGeoPolygon, pointInPolygon } from '../utils/geo';
 import { assetHashOf, findAssetByHash, isWebScheme, parseSourceLinks } from '../utils/sourceLinks';
+import { propertyDateSpans, type DatePropertyRulesLike } from '../utils/temporalUtils';
 
 export type SuggestionRule = 'sharedValue' | 'sharedSource' | 'inZone' | 'nearby' | 'meeting';
 
@@ -82,6 +84,9 @@ export interface SuggestionOptions {
     window: number;
     /** Longest presence counted, in ms (default a week); null for no limit */
     maxPresence?: number | null;
+    /** Date properties that date an element at its own position, as on the
+     *  timeline and the map (the filters' choice); absent or null: none */
+    dateProperties?: DatePropertyRulesLike | null;
   } | null;
   /**
    * Elements the analysis works on (those the views show: filters, query,
@@ -366,11 +371,11 @@ export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number
  * distance. Points are bucketed in a grid of radius-sized cells so only the
  * neighbouring cells are compared.
  */
-function findNearbyPairs(candidates: Element[], radius: number): Array<[string, string, number]> {
+function findNearbyPairs(candidates: Element[], radius: number): { pairs: Array<[string, string, number]>; crowded: string[] } {
   const points = candidates
     .filter(el => el.geo?.type === 'point')
     .map(el => ({ id: el.id, lat: (el.geo as { lat: number }).lat, lng: (el.geo as { lng: number }).lng }));
-  if (points.length < 2) return [];
+  if (points.length < 2) return { pairs: [], crowded: [] };
 
   const cellLat = radius / 111320;
   // Cells as wide as the radius at the highest latitude (where a degree of
@@ -404,15 +409,19 @@ function findNearbyPairs(candidates: Element[], radius: number): Array<[string, 
   }
 
   const pairs: Array<[string, string, number]> = [];
+  const crowded: string[] = [];
   for (const [id, found] of neighbours) {
-    if (found.length > MAX_NEARBY_NEIGHBOURS) continue;
+    if (found.length > MAX_NEARBY_NEIGHBOURS) {
+      crowded.push(id);
+      continue;
+    }
     for (const { id: other, d } of found) {
       if (id < other && (neighbours.get(other)?.length ?? 0) <= MAX_NEARBY_NEIGHBOURS) {
         pairs.push([id, other, Math.round(d)]);
       }
     }
   }
-  return pairs;
+  return { pairs, crowded };
 }
 
 /**
@@ -494,7 +503,7 @@ function toTime(value: unknown): number | null {
 export const DEFAULT_MAX_PRESENCE_MS = 7 * 86400_000;
 
 /** Where and when an element was: its dated, located events, and itself when it has both */
-function presencesOf(el: Element, maxPresence: number | null): Presence[] {
+function presencesOf(el: Element, maxPresence: number | null, dateProperties: DatePropertyRulesLike | null): Presence[] {
   const out: Presence[] = [];
   const add = (geo: Element['geo'] | undefined, start: number | null, end: number | null) => {
     if (!geo || start === null) return;
@@ -504,6 +513,9 @@ function presencesOf(el: Element, maxPresence: number | null): Presence[] {
   };
   add(el.geo, toTime(el.date) ?? toTime(el.dateRange?.start), toTime(el.dateRange?.end));
   for (const ev of el.events || []) add(ev.geo, toTime(ev.date), toTime(ev.dateEnd));
+  if (el.geo && dateProperties) {
+    for (const span of propertyDateSpans(el, dateProperties)) add(el.geo, span.start.getTime(), span.end ? span.end.getTime() : null);
+  }
   return out;
 }
 
@@ -531,16 +543,20 @@ function lowerBound(sorted: Presence[], t: number): number {
  * window-long time slot collapse into one presence; presences are indexed by
  * cell and sorted by time, so only nearby cells within the window are read;
  * a presence crossing more than MAX_NEARBY_NEIGHBOURS other elements is a
- * crowd — detected early, and it counts for nothing.
+ * crowd — detected early, and it counts for nothing, unless `keepCrowds`
+ * (between two tags: the analyst drew both sets).
  *
  * Collapsed presences only find candidates: every co-presence is checked again
  * on the real points, so the reported time and distance are exact and the
  * radius and window are the ones shown. The count is the number of confirmed
  * occasions (slot pairs), not of point pairs.
  */
-function findMeetings(candidates: Element[], radius: number, window: number, maxPresence: number | null) {
-  const raw = candidates.flatMap(el => presencesOf(el, maxPresence));
-  if (raw.length < 2) return { meetings: [], truncated: false };
+function findMeetings(
+  candidates: Element[], radius: number, window: number, maxPresence: number | null,
+  dateProperties: DatePropertyRulesLike | null, keepCrowds: boolean,
+) {
+  const raw = candidates.flatMap(el => presencesOf(el, maxPresence, dateProperties));
+  if (raw.length < 2) return { meetings: [], truncated: false, crowded: [] };
 
   const cellLat = radius / 111320;
   const maxAbsLat = Math.max(...raw.map(p => Math.abs(p.lat)));
@@ -601,17 +617,19 @@ function findMeetings(candidates: Element[], radius: number, window: number, max
     }
   };
 
-  // Pass 1: crowds, stopping as soon as a presence meets too many elements
+  // Pass 1: crowds, stopping as soon as a presence meets too many elements.
+  // Kept when the analyst drew both sets (between two tags), as for nearby.
   const crowded = new Set<Presence>();
-  for (const p of presences) {
+  for (const p of keepCrowds ? [] : presences) {
     const met = new Set<string>();
     forEachMatch(p, q => {
       met.add(q.elementId);
       return met.size <= MAX_NEARBY_NEIGHBOURS;
     });
     if (met.size > MAX_NEARBY_NEIGHBOURS) crowded.add(p);
-    if (truncated) return { meetings: [], truncated };
+    if (truncated) return { meetings: [], truncated, crowded: [] };
   }
+  const crowdedIds = [...new Set([...crowded].map(p => p.elementId))];
 
   /** First real co-presence behind two candidate presences, or null when none
    *  is within the radius and the window (the collapsing only approximates) */
@@ -661,9 +679,9 @@ function findMeetings(candidates: Element[], radius: number, window: number, max
       }
       return !truncated;
     });
-    if (truncated) return { meetings: [], truncated };
+    if (truncated) return { meetings: [], truncated, crowded: crowdedIds };
   }
-  return { meetings: [...byPair.values()], truncated };
+  return { meetings: [...byPair.values()], truncated, crowded: crowdedIds };
 }
 
 /** Order of the rules in a link suggestion's reasons, strongest first */
@@ -699,6 +717,8 @@ export function analyzeLinkSuggestions(
   /** Dismissals the dossier no longer needs (see below) */
   staleDismissalIds: Set<string>;
   meetingsTruncated: boolean;
+  /** Elements the places and meeting rules left out as crowds (not between two tags) */
+  crowdedCount: number;
 } {
   const { dismissed, scope, nearbyRadius, meeting, candidateIds } = options;
   const valuesOn = options.rules?.sharedValue !== false;
@@ -749,6 +769,8 @@ export function analyzeLinkSuggestions(
 
   const pivots: PivotSuggestion[] = [];
   let meetingsTruncated = false;
+  /** Elements a places rule left out for having too many neighbours */
+  const crowdedIds = new Set<string>();
   const linkSuggestions = new Map<string, LinkSuggestion>();
 
   const addLinkReason = (fromId: string, toId: string, reason: SuggestionReason) => {
@@ -790,18 +812,24 @@ export function analyzeLinkSuggestions(
   }
 
   if (nearbyRadius && nearbyRadius > 0) {
-    const nearby = between
-      ? findNearbyBetween(candidates.filter(el => hasTag(el.id, between.a)), candidates.filter(el => hasTag(el.id, between.b)), nearbyRadius, zonesOn)
-      : findNearbyPairs(candidates, nearbyRadius);
-    for (const [a, b, distance] of nearby) {
+    let pairs: Array<[string, string, number]>;
+    if (between) {
+      pairs = findNearbyBetween(candidates.filter(el => hasTag(el.id, between.a)), candidates.filter(el => hasTag(el.id, between.b)), nearbyRadius, zonesOn);
+    } else {
+      const found = findNearbyPairs(candidates, nearbyRadius);
+      pairs = found.pairs;
+      for (const id of found.crowded) crowdedIds.add(id);
+    }
+    for (const [a, b, distance] of pairs) {
       if (!isLinked(a, b)) addLinkReason(a, b, { rule: 'nearby', distance });
     }
   }
 
   if (meeting && meeting.radius > 0 && meeting.window > 0) {
     const maxPresence = meeting.maxPresence === undefined ? DEFAULT_MAX_PRESENCE_MS : meeting.maxPresence;
-    const found = findMeetings(candidates, meeting.radius, meeting.window, maxPresence);
+    const found = findMeetings(candidates, meeting.radius, meeting.window, maxPresence, meeting.dateProperties ?? null, !!between);
     meetingsTruncated = found.truncated;
+    for (const id of found.crowded) crowdedIds.add(id);
     for (const m of found.meetings) {
       if (!isLinked(m.a, m.b)) {
         addLinkReason(m.a, m.b, {
@@ -868,7 +896,7 @@ export function analyzeLinkSuggestions(
     }
   }
 
-  return { suggestions: split(false), dismissedSuggestions: split(true), liveIds, staleDismissalIds, meetingsTruncated };
+  return { suggestions: split(false), dismissedSuggestions: split(true), liveIds, staleDismissalIds, meetingsTruncated, crowdedCount: crowdedIds.size };
 }
 
 /**

@@ -18,6 +18,7 @@ import type { ElementShape, ElementSize } from '../types';
 import { findArticulationPoints, detectSimilarLabels } from '../services/graph/algorithms';
 import { removeOverlaps } from '../utils/removeOverlaps';
 import { packClusters } from '../utils/packClusters';
+import { connectedComponents } from '../utils/connectedComponents';
 
 // ============================================================================
 // TYPES
@@ -63,18 +64,25 @@ interface InsightsData {
   similarLabels: { elementId1: string; elementId2: string; similarity: number }[];
 }
 
-type WorkerRequest =
+// Every request carries an id, echoed by its responses (progress included),
+// so the main thread can tell a stale answer from the one it waits for.
+type WorkerRequest = { requestId?: number } & (
   | { type: 'computeInsights'; elements: SerializedElement[]; links: SerializedLink[] }
   | { type: 'computeLayout'; elements: SerializedElement[]; links: SerializedLink[]; options: LayoutOptions }
   | { type: 'findPaths'; elements: SerializedElement[]; links: SerializedLink[]; fromId: string; toId: string }
-  | { type: 'cancel' };
+  | { type: 'cancel' }
+);
 
-type WorkerResponse =
+type WorkerResponse = { requestId?: number } & (
   | { type: 'insightsResult'; data: InsightsData }
   | { type: 'layoutResult'; positions: Record<string, { x: number; y: number }> }
   | { type: 'pathResult'; paths: { path: string[]; length: number }[] }
   | { type: 'progress'; percent: number; phase: string }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+);
+
+/** Id of the request being computed, echoed by progress messages */
+let currentRequestId: number | undefined;
 
 // ============================================================================
 // GRAPH BUILDING
@@ -234,6 +242,20 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
   // Per-node real dimensions for size-aware spacing
   const dimsMap = buildDimsMap(elements);
 
+  // Several groups not linked to each other: lay each out and pack them
+  // tightly, isolated elements in a grid, instead of letting them drift apart
+  const components = connectedComponents(graph);
+  if (components.length > 1) {
+    return packGroupsLayout(
+      graph,
+      components.filter((c) => c.length >= 2),
+      components.filter((c) => c.length === 1).map((c) => c[0]),
+      dimsMap,
+      center,
+      [],
+    );
+  }
+
   // Random initial positions for nodes without coordinates
   graph.forEachNode((node) => {
     if (!graph.getNodeAttribute(node, 'x')) {
@@ -343,6 +365,23 @@ function applyClustersLayout(
     else singletons.push(nodes[0]);
   }
 
+  return packGroupsLayout(graph, realClusters, singletons, dimsMap, center, obstacles);
+}
+
+/**
+ * Lay each group out on its own (ForceAtlas2 on its induced sub-graph, sized
+ * to its node area), gather the singletons in a grid, then pack the groups
+ * tightly around the centre. Shared by the clusters layout (groups =
+ * communities) and the force layout (groups = connected components).
+ */
+function packGroupsLayout(
+  graph: Graph,
+  realClusters: string[][],
+  singletons: string[],
+  dimsMap: ReturnType<typeof buildDimsMap>,
+  center: { x: number; y: number },
+  obstacles: { x: number; y: number; r: number }[],
+): Record<string, { x: number; y: number }> {
   type ClusterLayout = {
     nodes: { id: string; x: number; y: number; w: number; h: number }[];
     radius: number;
@@ -748,7 +787,7 @@ function findPaths(elements: SerializedElement[], links: SerializedLink[], fromI
 // ============================================================================
 
 function postProgress(percent: number, phase: string) {
-  self.postMessage({ type: 'progress', percent, phase } satisfies WorkerResponse);
+  self.postMessage({ type: 'progress', percent, phase, requestId: currentRequestId } satisfies WorkerResponse);
 }
 
 // ============================================================================
@@ -757,22 +796,24 @@ function postProgress(percent: number, phase: string) {
 
 self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
+  const requestId = request.requestId;
+  currentRequestId = requestId;
 
   try {
     switch (request.type) {
       case 'computeInsights': {
         const data = computeInsights(request.elements, request.links);
-        self.postMessage({ type: 'insightsResult', data } satisfies WorkerResponse);
+        self.postMessage({ type: 'insightsResult', data, requestId } satisfies WorkerResponse);
         break;
       }
       case 'computeLayout': {
         const positions = computeLayout(request.elements, request.links, request.options);
-        self.postMessage({ type: 'layoutResult', positions } satisfies WorkerResponse);
+        self.postMessage({ type: 'layoutResult', positions, requestId } satisfies WorkerResponse);
         break;
       }
       case 'findPaths': {
         const paths = findPaths(request.elements, request.links, request.fromId, request.toId);
-        self.postMessage({ type: 'pathResult', paths } satisfies WorkerResponse);
+        self.postMessage({ type: 'pathResult', paths, requestId } satisfies WorkerResponse);
         break;
       }
       case 'cancel':
@@ -780,6 +821,6 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
         break;
     }
   } catch (err) {
-    self.postMessage({ type: 'error', message: (err as Error).message } satisfies WorkerResponse);
+    self.postMessage({ type: 'error', message: (err as Error).message, requestId } satisfies WorkerResponse);
   }
 };

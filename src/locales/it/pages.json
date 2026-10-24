@@ -334,7 +334,9 @@
       "emptyState": "Nessun elemento in questa scheda",
       "emptyHint": "Clic destro sugli elementi per aggiungerli",
       "ghostBadge": "In {{tabs}}",
-      "navigateTo": "Vai alla scheda {{name}}"
+      "navigateTo": "Vai alla scheda {{name}}",
+      "combine": "Combina",
+      "uncombine": "Non combinare"
     },
     "retentionExpiredBanner": "Conservazione scaduta da {{days}} giorno/i",
     "retentionDeleteConfirm": "Questa fascicolo verrà eliminata definitivamente, senza possibilità di annullamento.",

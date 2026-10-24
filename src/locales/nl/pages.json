@@ -334,7 +334,9 @@
       "emptyState": "Geen elementen in dit tabblad",
       "emptyHint": "Rechts-klik op elementen om toe te voegen",
       "ghostBadge": "In {{tabs}}",
-      "navigateTo": "Ga naar tabblad {{name}}"
+      "navigateTo": "Ga naar tabblad {{name}}",
+      "combine": "Combineren",
+      "uncombine": "Niet meer combineren"
     },
     "retentionExpiredBanner": "Bewaring verlopen sinds {{days}} dag(en)",
     "retentionDeleteConfirm": "Dit dossier wordt definitief verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
