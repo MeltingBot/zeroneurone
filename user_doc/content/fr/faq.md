@@ -379,9 +379,11 @@ Techniquement, pas de limite. Pratiquement, au-delà de 10 ça peut devenir conf
 
 ### Et les gros dossiers ?
 
-ZeroNeurone est mesuré et testé, collaboration comprise, sur des dossiers de **10 000 éléments et 15 000 liens**. Créer, supprimer, annuler et changer d'onglet restent rapides. Tout dézoomé, chaque élément est dessiné en forme simple pour garder la vue fluide. Au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom.
+ZeroNeurone est mesuré et testé, collaboration comprise, sur des dossiers de **10 000 éléments et 15 000 liens**. Créer, supprimer, annuler et changer d'onglet restent rapides. Tout dézoomé, le graphe entier (éléments et liens) est dessiné d'un seul bloc : déplacement et zoom restent fluides, et tous les liens sont visibles. En zoom rapproché, au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom.
 
-Astuce : un **onglet** ne dessine que ses éléments (et leurs voisins directs). Travailler dans un onglet allège l'affichage d'un gros dossier.
+**Limite opérationnelle : environ 12 000 éléments sur un même onglet.** Au-delà, le dossier s'ouvre et s'affiche, mais la navigation perd en fluidité.
+
+Pour un dossier plus volumineux, **segmentez-le en onglets** (par thème, par source, par période) : un onglet ne dessine que ses éléments et leurs voisins directs, la navigation reste rapide quel que soit le volume total du dossier. Voir [Onglets du canvas]({{< relref "features/canvas-tabs" >}}).
 
 ### Je peux bosser offline pendant une session partagée ?
 

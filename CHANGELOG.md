@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.76.2
+
+### Améliorations
+
+- **Vue d'ensemble fluide sur les gros dossiers** — tout dézoomé (sous 35 %,
+  à partir de 400 éléments), le graphe entier est dessiné sur un seul canvas
+  au lieu d'un nœud par élément. À 10 000 éléments et 15 000 liens : image
+  médiane du déplacement 69 → 20 ms, du zoom 145 → 17 ms, et les 15 000 liens
+  s'affichent (800 auparavant). Clic, Maj+clic, sélection au cadre et
+  double-clic (zoom sur le point) restent disponibles ; l'édition reprend en
+  zoomant.
+- **Documentation** — limite opérationnelle d'environ 12 000 éléments par
+  onglet, et conseil de segmenter un gros dossier en onglets (FAQ, onglets).
+
+### Corrections
+
+- **Bench de rendu** — `e2e/render-perf.spec.ts` envoyait des événements
+  souris simulés que le canvas ignore : ses mesures de déplacement portaient
+  sur une vue immobile. Il utilise désormais de vrais gestes et vérifie que la
+  vue a bougé.
+
 ## 2.76.1
 
 ### Améliorations

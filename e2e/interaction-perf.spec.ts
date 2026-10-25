@@ -190,6 +190,9 @@ test('interaction performance on a heavy dossier', async ({ page }) => {
 
   await setupCleanEnvironment(page);
   await waitForAppLoad(page);
+  // Measures node drags in the zoomed-out view, which only the DOM path offers:
+  // the overview layer (on by default) is navigation and selection only.
+  await page.evaluate(async () => (await import('/src/stores/uiStore.ts')).useUIStore.getState().setCanvasOverviewLayer(false));
 
   const dir = mkdtempSync(join(tmpdir(), 'zn-bench-'));
   const file = join(dir, 'heavy.json');

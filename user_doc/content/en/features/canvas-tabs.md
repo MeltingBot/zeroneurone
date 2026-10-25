@@ -151,6 +151,7 @@ Each collaborator navigates tabs independently. Creating, renaming, deleting, or
 ## Tips
 
 - Use tabs to split a complex dossier by theme, hypothesis, or timeline period.
+- Large dossier: keep to **about 12,000 elements per tab**. A tab only draws its elements and their direct neighbours, so navigation stays smooth even when the whole dossier is much larger.
 - The **All** view is always available and shows every element, regardless of tab assignment.
 - Ghost elements let you see cross-tab connections without switching context.
 - Combine tabs with saved views: each view remembers its tab, filters, and viewport.

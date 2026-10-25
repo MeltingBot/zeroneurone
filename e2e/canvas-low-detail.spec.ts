@@ -18,6 +18,8 @@ test('edges survive a round trip through the low-detail overview', async ({ page
   page.on('console', (m) => { if (/008/.test(m.text())) logs.push(m.text().slice(0, 160)); });
   await setupCleanEnvironment(page);
   await waitForAppLoad(page);
+  // The overview layer (on by default) replaces low detail: test the DOM path
+  await page.evaluate(async () => (await import('/src/stores/uiStore.ts')).useUIStore.getState().setCanvasOverviewLayer(false));
   const file = join(mkdtempSync(join(tmpdir(), 'zn-')), 'h.json');
   writeFileSync(file, buildLargeDossierJson(1000));
   await page.click('[data-testid="import-button"]');

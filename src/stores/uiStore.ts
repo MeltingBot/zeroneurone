@@ -96,6 +96,9 @@ interface UIState {
   // Minimap
   showMinimap: boolean;
 
+  /** Canvas overview layer: zoomed far out on a large board, nodes and links drawn on one canvas */
+  canvasOverviewLayer: boolean;
+
   /** Search (Ctrl+K): 'fuzzy' tolerates typos and matches any word, 'exact' needs every word */
   searchMode: 'fuzzy' | 'exact';
 
@@ -189,6 +192,7 @@ interface UIState {
 
   // Actions - Minimap
   toggleMinimap: () => void;
+  setCanvasOverviewLayer: (enabled: boolean) => void;
   setSearchMode: (mode: 'fuzzy' | 'exact') => void;
   setPanelTabOrder: (order: string[]) => void;
 
@@ -235,6 +239,7 @@ export const useUIStore = create<UIState>()(
   anonymousMode: false,
   showCommentBadges: true,
   showMinimap: true,
+  canvasOverviewLayer: true,
   searchMode: 'fuzzy',
   panelTabOrder: [],
   snapToGrid: false,
@@ -384,6 +389,7 @@ export const useUIStore = create<UIState>()(
   toggleMinimap: () => {
     set((state) => ({ showMinimap: !state.showMinimap }));
   },
+  setCanvasOverviewLayer: (enabled) => set({ canvasOverviewLayer: enabled }),
 
   // Snap-to-grid and alignment guides
   toggleSnapToGrid: () => {
@@ -449,7 +455,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
+      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, canvasOverviewLayer: state.canvasOverviewLayer, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
       onRehydrateStorage: () => (state) => {
         // Apply theme on rehydration
         if (state?.themeMode) {

@@ -1,0 +1,174 @@
+/**
+ * Canvas overview layer: zoomed far out on a large dossier, React Flow keeps
+ * its nodes hidden and this single <canvas> draws every node and every link.
+ * React Flow still owns the input (pan, zoom, click, Shift+box): the canvas
+ * lets every event through and the Canvas component hit-tests the scene.
+ *
+ * Redraws follow React Flow's store directly (transform, size), outside
+ * React: panning re-renders no component.
+ */
+
+import { memo, useEffect, useLayoutEffect, useRef, type MutableRefObject } from 'react';
+import { useStoreApi, type ReactFlowState } from '@xyflow/react';
+import { Canvas2DOverviewRenderer, type OverviewRenderer } from './overviewRenderer';
+import { hitPoint, hitRect } from './overviewHitTest';
+import type { OverviewScene } from './overviewTypes';
+
+/** Reach of a click around a node, in screen pixels. */
+const HIT_TOLERANCE_PX = 4;
+
+export interface OverviewHandle {
+  /** Node id under a client point, or null. */
+  hitTestClient: (clientX: number, clientY: number) => string | null;
+  /** Redraw at another pixel ratio (sharper PNG export); `restore` goes back. */
+  redrawAt: (dpr: number) => void;
+  restore: () => void;
+}
+
+interface OverviewLayerProps {
+  active: boolean;
+  scene: OverviewScene | null;
+  /** Theme mode, to re-read the accent colour when it changes. */
+  themeMode: string;
+  handleRef: MutableRefObject<OverviewHandle | null>;
+  /** End of a Shift+box selection: indices of the nodes it touched. */
+  onBoxSelect: (scene: OverviewScene, nodeIndices: number[]) => void;
+}
+
+type SelectionRect = NonNullable<ReactFlowState['userSelectionRect']>;
+
+function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSelect }: OverviewLayerProps) {
+  const store = useStoreApi();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rendererRef = useRef<OverviewRenderer | null>(null);
+  const frameRef = useRef(0);
+  const dprRef = useRef(1);
+  const sceneRef = useRef(scene);
+  const activeRef = useRef(active);
+  const onBoxSelectRef = useRef(onBoxSelect);
+  sceneRef.current = scene;
+  activeRef.current = active;
+  onBoxSelectRef.current = onBoxSelect;
+  /** Selection rectangle being drawn, kept: React Flow clears it before onSelectionEnd. */
+  const boxRef = useRef<SelectionRect | null>(null);
+  const pendingRef = useRef<number[] | null>(null);
+
+  const drawNow = () => {
+    const renderer = rendererRef.current;
+    const canvas = canvasRef.current;
+    if (!renderer || !canvas) return;
+    const { transform, width, height } = store.getState();
+    renderer.resize(width, height, dprRef.current);
+    const stats = renderer.draw(
+      activeRef.current ? { x: transform[0], y: transform[1], zoom: transform[2] } : { x: 0, y: 0, zoom: 0 },
+      pendingRef.current ? { pendingIndices: pendingRef.current } : undefined,
+    );
+    // Read by the benches and the e2e spec
+    canvas.dataset.nodesDrawn = String(stats.nodesDrawn);
+    canvas.dataset.linksDrawn = String(stats.linksDrawn);
+    canvas.dataset.drawMs = stats.ms.toFixed(1);
+    canvas.dataset.sceneNodes = String(sceneRef.current?.nodeCount ?? 0);
+    canvas.dataset.sceneLinks = String(sceneRef.current?.linkCount ?? 0);
+  };
+  const drawNowRef = useRef(drawNow);
+  drawNowRef.current = drawNow;
+
+  const schedule = () => {
+    if (frameRef.current) return;
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = 0;
+      drawNowRef.current();
+    });
+  };
+  const scheduleRef = useRef(schedule);
+  scheduleRef.current = schedule;
+
+  // Renderer lifetime
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    dprRef.current = window.devicePixelRatio || 1;
+    rendererRef.current = new Canvas2DOverviewRenderer(canvasRef.current);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+      rendererRef.current?.destroy();
+      rendererRef.current = null;
+    };
+  }, []);
+
+  // Scene or theme changed: draw before paint, so entering the overview shows no blank frame
+  useLayoutEffect(() => {
+    const renderer = rendererRef.current;
+    const canvas = canvasRef.current;
+    if (!renderer || !canvas) return;
+    const accent = getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb';
+    renderer.setScene(active ? scene : null, { accent });
+    drawNowRef.current();
+  }, [active, scene, themeMode]);
+
+  // Follow React Flow's viewport and selection rectangle without re-rendering
+  useEffect(() => store.subscribe((s, prev) => {
+    if (s.transform !== prev.transform || s.width !== prev.width || s.height !== prev.height) {
+      scheduleRef.current();
+    }
+    if (!activeRef.current) return;
+    if (s.userSelectionActive && s.userSelectionRect && s.userSelectionRect !== prev.userSelectionRect) {
+      boxRef.current = s.userSelectionRect;
+      const sc = sceneRef.current;
+      pendingRef.current = sc ? hitRect(sc, ...toFlowRect(s.userSelectionRect, s.transform)) : null;
+      scheduleRef.current();
+    }
+    if (prev.userSelectionActive && !s.userSelectionActive) {
+      const box = boxRef.current;
+      const sc = sceneRef.current;
+      boxRef.current = null;
+      pendingRef.current = null;
+      if (box && sc) onBoxSelectRef.current(sc, hitRect(sc, ...toFlowRect(box, s.transform)));
+      scheduleRef.current();
+    }
+  }), [store]);
+
+  // Imperative access for the canvas (click hit-test, export)
+  useEffect(() => {
+    handleRef.current = {
+      hitTestClient: (clientX, clientY) => {
+        const sc = sceneRef.current;
+        const canvas = canvasRef.current;
+        if (!sc || !canvas || !activeRef.current) return null;
+        const rect = canvas.getBoundingClientRect();
+        const [tx, ty, zoom] = store.getState().transform;
+        const fx = (clientX - rect.left - tx) / zoom;
+        const fy = (clientY - rect.top - ty) / zoom;
+        const i = hitPoint(sc, fx, fy, HIT_TOLERANCE_PX / zoom);
+        return i >= 0 ? sc.ids[i] : null;
+      },
+      redrawAt: (dpr) => {
+        dprRef.current = dpr;
+        drawNowRef.current();
+      },
+      restore: () => {
+        dprRef.current = window.devicePixelRatio || 1;
+        drawNowRef.current();
+      },
+    };
+    return () => { handleRef.current = null; };
+  }, [handleRef, store]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      data-testid="canvas-overview"
+      data-active={active ? 'true' : 'false'}
+      className="absolute inset-0 pointer-events-none"
+      // Above the dotted background (z -1), under React Flow's pane (z 1)
+      style={{ zIndex: 0, width: '100%', height: '100%', display: active ? 'block' : 'none' }}
+    />
+  );
+}
+
+function toFlowRect(r: SelectionRect, transform: [number, number, number]): [number, number, number, number] {
+  const [tx, ty, zoom] = transform;
+  return [(r.x - tx) / zoom, (r.y - ty) / zoom, (r.x + r.width - tx) / zoom, (r.y + r.height - ty) / zoom];
+}
+
+export const OverviewLayer = memo(OverviewLayerComponent);

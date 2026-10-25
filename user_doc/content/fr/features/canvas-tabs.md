@@ -153,6 +153,7 @@ Dans **Tous**, le panneau **Filtres** propose un filtre **Onglets** : cochez un 
 ## Bonnes pratiques
 
 - Decoupez un dossier complexe par **theme** ou **hypothese** (un onglet par axe d'analyse)
+- Gros dossier : restez sous **environ 12 000 elements par onglet**. Un onglet ne dessine que ses elements et leurs voisins directs, la navigation reste fluide meme si le dossier entier est bien plus gros
 - La vue **Tous** affiche toujours l'integralite des elements, quel que soit leur onglet
 - Les elements fantomes offrent une vision des connexions inter-onglets sans navigation supplementaire
 

@@ -379,9 +379,11 @@ Technically, no limit. Practically, beyond 10 it can get confusing. But it works
 
 ### What about large dossiers?
 
-ZeroNeurone is measured and tested, collaboration included, on dossiers of **10,000 elements and 15,000 links**. Creating, deleting, undoing and switching tabs stay fast. Fully zoomed out, each element is drawn as a plain shape to keep the view smooth. Beyond 500 elements, edges are hidden during pan/zoom.
+ZeroNeurone is measured and tested, collaboration included, on dossiers of **10,000 elements and 15,000 links**. Creating, deleting, undoing and switching tabs stay fast. Fully zoomed out, the whole graph (elements and links) is drawn in one pass: panning and zooming stay smooth, and every link is visible. Zoomed in, beyond 500 elements, links are hidden during pan/zoom.
 
-Tip: a **tab** only draws its elements (and their direct neighbours). Working in a tab lightens the display of a large dossier.
+**Operational limit: about 12,000 elements on a single tab.** Beyond that, the dossier opens and displays, but navigation becomes less smooth.
+
+For a larger dossier, **split it into tabs** (by theme, source or period): a tab only draws its elements and their direct neighbours, so navigation stays fast whatever the total size of the dossier. See [Canvas tabs]({{< relref "features/canvas-tabs" >}}).
 
 ### Can I work offline during a shared session?
 
