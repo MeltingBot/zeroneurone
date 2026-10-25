@@ -260,6 +260,7 @@
     "applyVisual": "Itxura (etiketa nagusi hau duten elementuak)",
     "applyProperties": "Falta diren propietateak, hutsik (etiketa duten elementuak)",
     "applyProgress": "Eguneratutako elementuak: {{done}}/{{total}}",
+    "customColor": "Kolore pertsonalizatua",
     "title": "Etiketa paleta",
     "titleNew": "Etiketa berria",
     "titleEdit": "\"{{name}}\" editatu",

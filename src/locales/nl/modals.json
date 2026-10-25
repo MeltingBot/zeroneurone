@@ -260,6 +260,7 @@
     "applyVisual": "Uiterlijk (elementen met deze hoofdtag)",
     "applyProperties": "Ontbrekende eigenschappen, leeg (elementen met de tag)",
     "applyProgress": "Bijgewerkte elementen: {{done}}/{{total}}",
+    "customColor": "Eigen kleur",
     "title": "Tagpalet",
     "titleNew": "Nieuwe tag",
     "titleEdit": "\"{{name}}\" bewerken",

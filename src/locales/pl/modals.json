@@ -262,6 +262,7 @@
     "applyVisual": "Wygląd (elementy z tym głównym tagiem)",
     "applyProperties": "Brakujące właściwości, puste (elementy z tagiem)",
     "applyProgress": "Zaktualizowane elementy: {{done}}/{{total}}",
+    "customColor": "Własny kolor",
     "title": "Paleta tagów",
     "titleNew": "Nowy tag",
     "titleEdit": "Edytuj \"{{name}}\"",

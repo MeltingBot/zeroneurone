@@ -4422,8 +4422,11 @@ export function Canvas() {
         return;
       }
 
-      // Delete selected elements
-      if (event.key === 'Delete' || event.key === 'Backspace') {
+      // Delete selected elements. The canvas's own key handler (focus on the
+      // canvas) may have done it already: it bubbles here first. Twice would
+      // stack two history entries, the second without tab membership, and an
+      // undo would bring the elements back outside their tabs.
+      if ((event.key === 'Delete' || event.key === 'Backspace') && !event.defaultPrevented) {
         event.preventDefault();
         const selectedEls = getSelectedElementIds();
         const selectedLks = getSelectedLinkIds();

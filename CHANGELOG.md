@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.76.1
+
+### Améliorations
+
+- **Couleur libre pour une famille de tags** — en plus de la palette, la case
+  « + » ouvre le sélecteur de couleur du navigateur.
+
+### Corrections
+
+- **Zoom après une recherche dans un autre onglet** — le cadrage de l'onglet
+  d'arrivée n'écrase plus le centrage sur le résultat (aussi depuis Suggestions
+  et Analyses) : la dernière demande de vue l'emporte.
+- **Suppression enregistrée deux fois** — la touche Suppr, canvas actif, était
+  traitée deux fois ; un Ctrl+Z pouvait alors remettre les éléments dans le
+  dossier sans leurs onglets.
+
 ## 2.76.0
 
 ### Fusion

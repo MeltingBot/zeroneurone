@@ -54,7 +54,7 @@ Chaque jeu de tags définit :
 |----------|-------------|
 | **Nom** | Nom unique du tag |
 | **Description** | Description du concept |
-| **Couleur** | Couleur par défaut appliquée à l'élément |
+| **Couleur** | Couleur par défaut appliquée à l'élément : une couleur de la palette, ou n'importe quelle teinte avec la case **+** |
 | **Forme** | Forme par défaut (cercle, carré, losange, rectangle, hexagone) |
 | **Icône** | Icône associée |
 | **Propriétés suggérées** | Liste de propriétés pré-typées proposées à l'ajout du tag |

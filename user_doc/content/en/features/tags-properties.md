@@ -54,7 +54,7 @@ Each tag set defines:
 |-----------|-------------|
 | **Name** | Unique tag name |
 | **Description** | Concept description |
-| **Color** | Default color applied to the element |
+| **Color** | Default color applied to the element: a palette color, or any shade with the **+** box |
 | **Shape** | Default shape (circle, square, diamond, rectangle, hexagon) |
 | **Icon** | Associated icon |
 | **Suggested properties** | List of pre-typed properties offered when the tag is applied |

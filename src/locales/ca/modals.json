@@ -260,6 +260,7 @@
     "applyVisual": "Aparença (elements amb aquesta etiqueta principal)",
     "applyProperties": "Propietats que falten, buides (elements amb l'etiqueta)",
     "applyProgress": "Elements actualitzats: {{done}}/{{total}}",
+    "customColor": "Color personalitzat",
     "title": "Paleta d'etiquetes",
     "titleNew": "Nova etiqueta",
     "titleEdit": "Editar \"{{name}}\"",

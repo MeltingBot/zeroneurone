@@ -350,6 +350,28 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
                   title={c}
                 />
               ))}
+              {/* Free colour: any shade, outlined like the palette when chosen */}
+              <label
+                className={`relative w-6 h-6 rounded border overflow-hidden cursor-pointer ${
+                  color !== null && !COLOR_OPTIONS.includes(color)
+                    ? 'border-accent ring-2 ring-accent/30'
+                    : 'border-border-default'
+                }`}
+                style={{ backgroundColor: color !== null && !COLOR_OPTIONS.includes(color) ? color : undefined }}
+                title={t('tagSetEditor.customColor')}
+              >
+                {(color === null || COLOR_OPTIONS.includes(color)) && (
+                  <Plus size={12} className="absolute inset-0 m-auto text-text-tertiary pointer-events-none" />
+                )}
+                <input
+                  type="color"
+                  value={color ?? '#64748b'}
+                  onChange={(e) => setColor(e.target.value)}
+                  aria-label={t('tagSetEditor.customColor')}
+                  data-testid="tagset-custom-color"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </label>
             </div>
           </div>
 

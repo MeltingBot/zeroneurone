@@ -260,6 +260,7 @@
     "applyVisual": "Aparência (elementos com esta etiqueta principal)",
     "applyProperties": "Propriedades em falta, vazias (elementos com a etiqueta)",
     "applyProgress": "Elementos atualizados: {{done}}/{{total}}",
+    "customColor": "Cor personalizada",
     "title": "Paleta de tags",
     "titleNew": "Nova tag",
     "titleEdit": "Editar \"{{name}}\"",

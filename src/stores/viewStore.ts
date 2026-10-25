@@ -253,8 +253,11 @@ export const useViewStore = create<ViewState>((set, get) => ({
     }));
   },
 
+  // The last request wins: centring on a search result right after a tab
+  // switch must not be undone by the tab's framing, applied later (once its
+  // nodes are measured), and the other way round
   requestViewportChange: (viewport) => {
-    set({ pendingViewport: viewport });
+    set({ pendingViewport: viewport, pendingFitView: false, pendingFitViewIds: null });
   },
 
   clearPendingViewport: () => {
@@ -262,7 +265,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   requestFitView: (nodeIds) => {
-    set({ pendingFitView: true, pendingFitViewIds: nodeIds?.length ? nodeIds : null });
+    set({ pendingFitView: true, pendingFitViewIds: nodeIds?.length ? nodeIds : null, pendingViewport: null });
   },
 
   clearPendingFitView: () => {

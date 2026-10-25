@@ -66,3 +66,16 @@ describe('each tab keeps its zoom and centre', () => {
     expect(fit).not.toHaveBeenCalled();
   });
 });
+
+describe('a centring asked right after a tab switch wins', () => {
+  it('drops the framing of a tab never seen when a viewport change follows', async () => {
+    const { useViewStore } = await import('./viewStore');
+    const v = useViewStore.getState();
+    v.requestFitView(['a']);
+    v.requestViewportChange({ x: 1, y: 2, zoom: 1 });
+    expect(useViewStore.getState().pendingFitView).toBe(false);
+    expect(useViewStore.getState().pendingViewport).toEqual({ x: 1, y: 2, zoom: 1 });
+    v.requestFitView(['a']);
+    expect(useViewStore.getState().pendingViewport).toBeNull();
+  });
+});

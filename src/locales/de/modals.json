@@ -260,6 +260,7 @@
     "applyVisual": "Darstellung (Elemente mit diesem Haupt-Tag)",
     "applyProperties": "Fehlende Eigenschaften, leer (Elemente mit dem Tag)",
     "applyProgress": "Aktualisierte Elemente: {{done}}/{{total}}",
+    "customColor": "Eigene Farbe",
     "title": "Tag-Palette",
     "titleNew": "Neuer Tag",
     "titleEdit": "\"{{name}}\" bearbeiten",
