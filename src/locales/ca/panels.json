@@ -346,6 +346,12 @@
       "allProperties": "Totes",
       "all": "Totes"
     },
+    "quickMode": {
+      "label": "Acció dels filtres ràpids",
+      "hide": "Amagar",
+      "only": "Només aquests",
+      "select": "Seleccionar"
+    },
     "quick": {
       "isolated": "Aïllats",
       "isolatedDesc": "Elements sense connexió",
@@ -360,7 +366,7 @@
       "hasComments": "Comentaris",
       "hasCommentsDesc": "Elements amb comentaris sense resoldre",
       "reliableSources": "Fonts fiables",
-      "reliableSourcesDesc": "Conservar només les fonts valorades com a fiables"
+      "reliableSourcesDesc": "Elements de font valorada com a fiable"
     },
     "dateProperties": {
       "title": "Propietats de data",

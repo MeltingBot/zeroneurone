@@ -232,16 +232,18 @@ Le groupe apparaît comme un cadre englobant ses membres. Les groupes et les él
 
 ---
 
-## Fusionner deux éléments
+## Fusionner des éléments
 
-Combinez deux éléments en un seul lorsqu'ils représentent le même concept.
+Combinez plusieurs éléments en un seul lorsqu'ils représentent le même concept.
 
 ### Procédure
 
-1. Sélectionnez exactement **2 éléments** (Ctrl+clic)
+1. Sélectionnez **2 éléments ou plus** (Ctrl+clic, sélection au lasso, ou **Chercher les similaires**)
 2. Clic-droit → **Fusionner**
-3. Choisissez quel élément conserver (son label et son apparence seront gardés)
+3. Choisissez quel élément conserver (son label et son apparence seront gardés). Au-delà de 2, la liste indique le nombre de liens de chacun ; le plus relié est proposé par défaut
 4. Confirmez la fusion
+
+Avant de confirmer, la fenêtre signale les notes qui seront mises bout à bout et le nombre de propriétés après fusion, avec les clés qui porteront plusieurs valeurs. Un seul **Ctrl+Z** annule toute la fusion.
 
 ### Ce qui est fusionné
 
@@ -252,16 +254,16 @@ Combinez deux éléments en un seul lorsqu'ils représentent le même concept.
 | **Événements** | Union (dédupliqués par identifiant) |
 | **Notes** | Concaténées (séparées par ---) |
 | **Fichiers joints** | Union |
-| **Confiance** | Maximum des deux valeurs |
+| **Confiance** | Valeur la plus haute |
 | **Cotation** | Celle de l'élément conservé, sinon celle de l'autre élément |
 | **Source** | Combinées si différentes, une par ligne |
 | **Liens** | Transférés vers l'élément conservé |
 
 ### Gestion des liens en doublon
 
-Si les deux éléments partageaient un lien vers le même tiers, les liens sont fusionnés : labels combinés, propriétés et tags unis.
+Si des éléments fusionnés partageaient un lien vers le même tiers, les liens sont fusionnés : labels combinés, propriétés et tags unis.
 
-Les liens directs entre les deux éléments fusionnés sont supprimés.
+Les liens directs entre éléments fusionnés sont supprimés.
 
 ---
 

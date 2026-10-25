@@ -346,6 +346,12 @@
       "allProperties": "Guztiak",
       "all": "Guztiak"
     },
+    "quickMode": {
+      "label": "Iragazki azkarren ekintza",
+      "hide": "Ezkutatu",
+      "only": "Hauek bakarrik",
+      "select": "Hautatu"
+    },
     "quick": {
       "isolated": "Isolatuak",
       "isolatedDesc": "Konexiorik gabeko elementuak",
@@ -360,7 +366,7 @@
       "hasComments": "Iruzkinak",
       "hasCommentsDesc": "Ebatzi gabeko iruzkindun elementuak",
       "reliableSources": "Iturri fidagarriak",
-      "reliableSourcesDesc": "Fidagarri gisa kalifikatutako iturriak soilik mantendu"
+      "reliableSourcesDesc": "Fidagarri gisa kalifikatutako iturriko elementuak"
     },
     "dateProperties": {
       "title": "Data-propietateak",

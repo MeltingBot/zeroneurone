@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { X, Plus, Sparkles, Check, Pencil } from 'lucide-react';
 import { DropdownPortal, IconPickerCompact, ResolvedIcon, iconNameResolves } from '../common';
 import { useTagSetStore } from '../../stores';
+import { TagDot } from '../common/TagDot';
+import { useTagColors } from '../../hooks/useTagColors';
 
 const TAG_DRAG_MIME = 'application/x-zeroneurone-tag';
 
@@ -39,6 +41,8 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
   // State for drag-and-drop reordering (tag order matters: the first tag drives some exports)
   const [draggingTag, setDraggingTag] = useState<string | null>(null);
   const [dragOverTag, setDragOverTag] = useState<string | null>(null);
+
+  const tagColors = useTagColors();
 
   // Get TagSet store
   const tagSetsMap = useTagSetStore((state) => state.tagSets);
@@ -280,6 +284,7 @@ export function TagsEditor({ tags, onChange, suggestions = [], onNewTag, onTagSe
                     : 'border-transparent'
               }`}
             >
+              <TagDot color={tagColors.get(tag)} />
               {/* Icon edit area */}
               {isEditingIcon ? (
                 <IconPickerCompact

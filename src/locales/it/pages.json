@@ -235,7 +235,8 @@
       "elements": "{{count}} elemento/i",
       "success": "{{count}} elemento/i importato/i",
       "error": "Importazione fallita",
-      "mediaResult": "{{ok}} media allegati, {{fail}} falliti"
+      "mediaResult": "{{ok}} media allegati, {{fail}} falliti",
+      "tabLimit": "Al massimo {{max}} schede: «{{name}}» va nella scheda aperta"
     },
     "layout": {
       "title": "Algoritmi di disposizione",
@@ -329,6 +330,7 @@
       "deleteConfirm": "Eliminare la scheda {{name}}? Gli elementi non verranno eliminati.",
       "newFromSelection": "Nuova scheda con la selezione",
       "moveToTab": "Sposta nella scheda...",
+      "moveHere": "Sposta in questa scheda",
       "addToTab": "Aggiungi a scheda...",
       "removeFromTab": "Rimuovi da scheda",
       "emptyState": "Nessun elemento in questa scheda",

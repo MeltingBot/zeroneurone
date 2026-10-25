@@ -25,6 +25,20 @@ The **Filters** panel allows you to show or hide elements based on various crite
 | **Hidden elements** | Manage manually hidden elements |
 | **Isolated** | Elements without connections |
 
+### Quick Filters
+
+Each quick filter names a set of elements of the view (the open tab, or the whole dossier in **All**): **Isolated**, **No tags**, **No geo**, **No date**, **Low confidence** (or **Reliable sources** with a grading), unresolved **Comments**. Each chip shows its element count.
+
+The three icons right of the title choose what a click does:
+
+| Mode | Effect |
+|------|--------|
+| **Hide** | Hides these elements |
+| **Only these** | Hides all the others |
+| **Select** | Selects these elements (to move, tag or merge them…) |
+
+A second click undoes what the chip did, and only that: elements hidden by hand stay hidden.
+
 ### Date Properties
 
 The **Date properties** section lists the dossier's date and date-time property keys, with how many elements fill each one. These dates place the elements on the timeline, on the map and in the canvas time cursor.

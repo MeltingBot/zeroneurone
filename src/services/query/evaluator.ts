@@ -118,8 +118,11 @@ function resolveField(
   }
 
   // ── Free property lookup (case-insensitive) ──
-  const prop = item.properties.find(p => p.key.toLowerCase() === lower);
-  if (prop) return prop.value;
+  // A key may come back several times (a merge keeps every value): all of
+  // them are read, and a condition matches when one of them does
+  const props = item.properties.filter(p => p.key.toLowerCase() === lower);
+  if (props.length === 1) return props[0].value;
+  if (props.length > 1) return props.flatMap(p => (Array.isArray(p.value) ? p.value : [p.value]));
   return undefined; // Property does not exist
 }
 
@@ -426,7 +429,12 @@ function evaluateCondition(
     if (cond.operator === 'not_exists') {
       return fieldValue.filter(v => v).length === 0;
     }
-    // For other operators: match if ANY tag value matches
+    // "Different from": none of the values is equal (an element holding
+    // "SFR" among its values is not different from "SFR")
+    if (cond.operator === 'neq') {
+      return !fieldValue.some(v => matchValue(v, 'eq', cond.value));
+    }
+    // For other operators: match if ANY value matches
     return fieldValue.some(v => matchValue(v, cond.operator, cond.value));
   }
 

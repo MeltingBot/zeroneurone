@@ -25,7 +25,16 @@
     "title": "Import into dossier",
     "description": "Import data into the current dossier. ZIP files will use placement mode.",
     "selectFile": "Select a file",
-    "emptyZip": "The ZIP file is empty or contains no elements"
+    "emptyZip": "The ZIP file is empty or contains no elements",
+    "tabsTitle": "Tabs to import",
+    "untitledTab": "Untitled",
+    "unassigned": "In no tab",
+    "includeLinked": "Linked elements",
+    "includeReport": "Report (sections)",
+    "tabsConfirm": "Place",
+    "tabsTarget": "Destination",
+    "recreateTabs": "Recreate the tabs",
+    "intoOpenTab": "All in the open tab"
   },
   "import": {
     "title": "Import dossier",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Preparing the archive…",
+      "files": "Attached files: {{done}}/{{total}}",
+      "data": "Dossier data…",
+      "compress": "Compressing: {{percent}}%",
+      "encrypt": "Encrypting…"
+    },
     "title": "Export dossier",
     "description": "Export \"{{name}}\" ({{elements}} elements, {{links}} links)",
     "format": "Format",
@@ -240,6 +256,10 @@
     "createFirst": "Create your first palette"
   },
   "tagSetEditor": {
+    "applyTitle": "Apply to the open dossier",
+    "applyVisual": "Appearance (elements whose main tag it is)",
+    "applyProperties": "Missing properties, empty (elements with the tag)",
+    "applyProgress": "Elements updated: {{done}}/{{total}}",
     "title": "Tag palette",
     "titleNew": "New tag",
     "titleEdit": "Edit \"{{name}}\"",
@@ -623,7 +643,17 @@
     "kept": "Kept",
     "properties": "properties",
     "events": "events",
-    "hint": "The other element will be deleted. Its links will be transferred."
+    "hint": "The other element will be deleted. Its links will be transferred.",
+    "titleMany": "Merge {{count}} elements",
+    "warnNotes": "The notes of {{count}} elements will be put end to end",
+    "warnProperties_one": "{{count}} property after the merge",
+    "warnProperties_other": "{{count}} properties after the merge",
+    "warnPropertiesMulti_one": "{{count}} property after the merge, {{keys}} key(s) with several values",
+    "warnPropertiesMulti_other": "{{count}} properties after the merge, {{keys}} key(s) with several values",
+    "linkCount_one": "{{count}} link",
+    "linkCount_other": "{{count}} links",
+    "hintMany_one": "The other element will be deleted. Its links will be moved.",
+    "hintMany_other": "The {{count}} other elements will be deleted. Their links will be moved."
   },
   "encryption": {
     "title": "Encryption",

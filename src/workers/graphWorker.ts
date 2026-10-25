@@ -19,6 +19,7 @@ import { findArticulationPoints, detectSimilarLabels } from '../services/graph/a
 import { removeOverlaps } from '../utils/removeOverlaps';
 import { packClusters } from '../utils/packClusters';
 import { connectedComponents } from '../utils/connectedComponents';
+import { foldTree } from '../services/leafFolding';
 
 // ============================================================================
 // TYPES
@@ -124,7 +125,7 @@ function computeInsights(elements: SerializedElement[], links: SerializedLink[])
   postProgress(10, 'clusters');
 
   // Clusters (Louvain)
-  let clusters: InsightsData['clusters'] = [];
+  const clusters: InsightsData['clusters'] = [];
   try {
     const communities = louvain(graph);
     const clusterMap = new Map<number, string[]>();
@@ -253,48 +254,60 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
       dimsMap,
       center,
       [],
+      true,
     );
   }
 
+  // Leaves, level by level (a single link, then a group hanging from a hub),
+  // are laid out around their parent afterwards; the parent counts as a block
+  const leafGap = 24;
+  const dims = (id: string) => dimsFor(dimsMap, id);
+  const fold = foldTree(graph, dims, leafGap);
+  const core = fold.core;
+
   // Random initial positions for nodes without coordinates
-  graph.forEachNode((node) => {
-    if (!graph.getNodeAttribute(node, 'x')) {
-      graph.setNodeAttribute(node, 'x', Math.random() * 1000 - 500);
-      graph.setNodeAttribute(node, 'y', Math.random() * 1000 - 500);
+  core.forEachNode((node) => {
+    if (!core.getNodeAttribute(node, 'x')) {
+      core.setNodeAttribute(node, 'x', Math.random() * 1000 - 500);
+      core.setNodeAttribute(node, 'y', Math.random() * 1000 - 500);
     }
   });
 
   postProgress(20, 'ForceAtlas2');
 
   // ForceAtlas2
-  forceAtlas2.assign(graph, {
-    iterations: 500,
-    settings: {
-      gravity: 8,
-      scalingRatio: 100,
-      strongGravityMode: false,
-      slowDown: 2,
-      barnesHutOptimize: graph.order > 100,
-      barnesHutTheta: 0.5,
-      linLogMode: true,
-    },
-  });
+  if (core.order > 1) {
+    forceAtlas2.assign(core, {
+      iterations: 500,
+      settings: {
+        gravity: 8,
+        scalingRatio: 100,
+        strongGravityMode: false,
+        slowDown: 2,
+        barnesHutOptimize: core.order > 100,
+        barnesHutTheta: 0.5,
+        // linLog measured worse on hub and community graphs: about ten times
+        // more crossings, and communities mixed instead of apart
+        linLogMode: false,
+      },
+    });
+  }
 
   postProgress(60, 'normalization');
 
   // Extract raw positions and compute bounding box
   const rawPositions: { node: string; x: number; y: number }[] = [];
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  graph.forEachNode((node) => {
-    const x = graph.getNodeAttribute(node, 'x') as number;
-    const y = graph.getNodeAttribute(node, 'y') as number;
+  core.forEachNode((node) => {
+    const x = core.getNodeAttribute(node, 'x') as number;
+    const y = core.getNodeAttribute(node, 'y') as number;
     rawPositions.push({ node, x, y });
     minX = Math.min(minX, x); maxX = Math.max(maxX, x);
     minY = Math.min(minY, y); maxY = Math.max(maxY, y);
   });
 
-  const nodeCount = graph.order;
-  const targetSize = Math.max(1500, Math.sqrt(nodeCount) * 250);
+  const nodeCount = core.order;
+  const targetSize = nodeCount > 1 ? Math.max(1500, Math.sqrt(nodeCount) * 250) : 0;
   const currentWidth = maxX - minX || 1;
   const currentHeight = maxY - minY || 1;
   const scaleFactor = targetSize / Math.max(currentWidth, currentHeight);
@@ -305,7 +318,7 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
   const nodeData: { id: string; x: number; y: number; w: number; h: number }[] = [];
 
   for (const { node, x, y } of rawPositions) {
-    const d = dimsFor(dimsMap, node);
+    const d = fold.block(node);
     nodeData.push({
       id: node,
       x: (x - centerX) * scaleFactor + center.x,
@@ -319,12 +332,12 @@ function applyForceLayout(graph: Graph, elements: SerializedElement[], center: {
 
   // AABB overlap removal on final positions. Dense clouds (many mostly
   // unlinked nodes) need many passes to converge; it stops as soon as clean.
-  removeOverlaps(nodeData, { gap: 24, passes: 200 });
+  fold.clear(nodeData);
+  removeOverlaps(nodeData, { gap: leafGap, passes: 200 });
 
-  const positions: Record<string, { x: number; y: number }> = {};
-  for (const n of nodeData) {
-    positions[n.id] = { x: n.x, y: n.y };
-  }
+  const placed = new Map<string, { x: number; y: number }>(nodeData.map((n) => [n.id, { x: n.x, y: n.y }]));
+  fold.place(placed);
+  const positions: Record<string, { x: number; y: number }> = Object.fromEntries(placed);
 
   postProgress(100, 'done');
   return positions;
@@ -381,6 +394,9 @@ function packGroupsLayout(
   dimsMap: ReturnType<typeof buildDimsMap>,
   center: { x: number; y: number },
   obstacles: { x: number; y: number; r: number }[],
+  /** Leaves around their parent (force). Not for clusters: measured longer
+   *  links there, communities being packed regardless of what links them */
+  foldLeaves = false,
 ): Record<string, { x: number; y: number }> {
   type ClusterLayout = {
     nodes: { id: string; x: number; y: number; w: number; h: number }[];
@@ -394,33 +410,42 @@ function packGroupsLayout(
 
   const GAP = 32;
 
+  const realDims = (id: string) => dimsFor(dimsMap, id);
   for (const nodes of realClusters) {
-    const dims = new Map<string, { w: number; h: number }>();
-    let totalArea = 0;
-    let maxNodeSize = 0;
-    for (const n of nodes) {
-      const { w, h } = dimsFor(dimsMap, n);
-      dims.set(n, { w, h });
-      totalArea += (w + GAP) * (h + GAP);
-      maxNodeSize = Math.max(maxNodeSize, Math.max(w, h));
-    }
-
-    const sub = new Graph();
-    for (const n of nodes) {
-      const d = dims.get(n)!;
-      sub.addNode(n, {
-        x: Math.random() * 200 - 100,
-        y: Math.random() * 200 - 100,
-        size: Math.max(d.w, d.h) / 2,
-      });
-    }
+    const full = new Graph();
+    for (const n of nodes) full.addNode(n);
     for (const n of nodes) {
       graph.forEachNeighbor(n, (m) => {
-        if (sub.hasNode(m) && !sub.hasEdge(n, m)) {
-          try { sub.addEdge(n, m); } catch { /* dup */ }
+        if (full.hasNode(m) && !full.hasEdge(n, m)) {
+          try { full.addEdge(n, m); } catch { /* dup */ }
         }
       });
     }
+
+    // Leaves, level by level, back around their parent afterwards (force
+    // only); the parent is laid out as a block holding them
+    const fold = foldLeaves ? foldTree(full, realDims, GAP) : null;
+    const sub = fold ? fold.core : full;
+
+    const dims = new Map<string, { w: number; h: number }>();
+    let totalArea = 0;
+    let maxNodeSize = 0;
+    sub.forEachNode((n) => {
+      const { w, h } = fold ? fold.block(n) : realDims(n);
+      dims.set(n, { w, h });
+      // Spacing from the elements' own size: a block (a hub with its leaves)
+      // gets its room from the overlap removal, not by spreading everything
+      const own = realDims(n);
+      totalArea += (own.w + GAP) * (own.h + GAP);
+      maxNodeSize = Math.max(maxNodeSize, Math.max(own.w, own.h));
+      sub.mergeNodeAttributes(n, {
+        x: Math.random() * 200 - 100,
+        y: Math.random() * 200 - 100,
+        // The element's own size, not its block: a hub's block would push its
+        // other neighbours far away; overlap removal makes room for the block
+        size: Math.max(...Object.values(realDims(n))) / 2,
+      });
+    });
 
     forceAtlas2.assign(sub, {
       iterations: 400,
@@ -459,7 +484,20 @@ function packGroupsLayout(
       n.y = (n.y - subCy) * scale;
     }
 
+    fold?.clear(nodeArr);
     removeOverlaps(nodeArr, { gap: GAP, passes: 60, coincident: 'centered' });
+
+    // Leaves back around their parent; parents back to their own size
+    if (fold && sub !== full) {
+      const local = new Map<string, { x: number; y: number }>(nodeArr.map((n) => [n.id, { x: n.x, y: n.y }]));
+      fold.place(local);
+      for (const n of nodeArr) Object.assign(n, realDims(n.id));
+      full.forEachNode((id) => {
+        if (sub.hasNode(id)) return;
+        const p = local.get(id);
+        if (p) nodeArr.push({ id, x: p.x, y: p.y, ...realDims(id) });
+      });
+    }
 
     let radius = 0;
     for (const n of nodeArr) {

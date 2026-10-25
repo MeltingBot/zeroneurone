@@ -33,6 +33,7 @@ import { graphStructureSignature } from '../../services/graph/structureSignature
 import { computeBetweenTabs, type BetweenTabs } from '../../utils/betweenTabs';
 import { useProgressStore } from '../../stores/progressStore';
 import { dateLocale } from '../../utils/dates';
+import { revealElement, revealElements } from '../../utils/revealElement';
 
 export function InsightsPanel() {
   const { t, i18n } = useTranslation('panels');
@@ -185,11 +186,13 @@ export function InsightsPanel() {
 
   // Cluster actions
   const handleClusterClick = useCallback(
-    (clusterId: number) => {
+    (clusterId: number, elementIds: string[]) => {
       if (selectedClusterId === clusterId) {
         clearHighlight();
       } else {
         highlightCluster(clusterId);
+        // The whole community framed on screen
+        revealElements(elementIds);
       }
     },
     [selectedClusterId, highlightCluster, clearHighlight]
@@ -338,6 +341,7 @@ export function InsightsPanel() {
       } else {
         highlightCentralElement(elementId);
         selectElement(elementId);
+        revealElement(elementId);
       }
     },
     [highlightType, highlightedElementIds, highlightCentralElement, selectElement, clearHighlight, clearSelection]
@@ -388,6 +392,7 @@ export function InsightsPanel() {
       }
       highlightSimilarPair(elementId1, elementId2);
       selectElements([elementId1, elementId2]);
+      revealElements([elementId1, elementId2]);
     },
     [highlightSimilarPair, selectElements, selectedElementIds, clearSelection, clearHighlight]
   );
@@ -463,15 +468,19 @@ export function InsightsPanel() {
   // Reflect a path search triggered from outside the panel (e.g. the canvas
   // context menu): open the path UI with the right mode and endpoints so the
   // result list is visible here too, not only highlighted on the canvas.
-  useEffect(() => {
+  // Adjusted during render (not in an effect): applied once per new search,
+  // including the one already running when the panel opens.
+  const externalPath = pathSearchMode && pathFromId && pathToId ? `${pathSearchMode}|${pathFromId}|${pathToId}` : null;
+  const [seenExternalPath, setSeenExternalPath] = useState<string | null>(null);
+  if (externalPath !== seenExternalPath) {
+    setSeenExternalPath(externalPath);
     if (pathSearchMode && pathFromId && pathToId) {
       setPathMode(true);
       setAllPathsMode(pathSearchMode === 'all');
       setPathFrom(pathFromId);
       setPathTo(pathToId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathSearchMode, pathFromId, pathToId]);
+  }
 
   // Get element label by ID
   const getElementLabel = useCallback(
@@ -671,7 +680,7 @@ export function InsightsPanel() {
                         <span key={nodeId} className="flex items-center gap-1">
                           <span
                             className="px-1.5 py-0.5 bg-bg-primary rounded cursor-pointer hover:bg-bg-secondary"
-                            onClick={() => selectElement(nodeId)}
+                            onClick={() => { selectElement(nodeId); revealElement(nodeId); }}
                           >
                             {getElementLabel(nodeId)}
                           </span>
@@ -818,7 +827,7 @@ export function InsightsPanel() {
                     >
                       <div
                         className="flex items-center justify-between cursor-pointer"
-                        onClick={() => handleClusterClick(cluster.id)}
+                        onClick={() => handleClusterClick(cluster.id, cluster.elementIds)}
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-text-primary">
@@ -966,6 +975,7 @@ export function InsightsPanel() {
                         onClick={() => {
                           selectElement(bridgeId);
                           highlightCentralElement(bridgeId);
+                          revealElement(bridgeId);
                         }}
                       >
                         {getElementLabel(bridgeId)}
@@ -1022,7 +1032,7 @@ export function InsightsPanel() {
                       <div
                         key={isolatedId}
                         className="px-2 py-1 text-xs text-text-secondary hover:bg-bg-secondary rounded cursor-pointer"
-                        onClick={() => selectElement(isolatedId)}
+                        onClick={() => { selectElement(isolatedId); revealElement(isolatedId); }}
                       >
                         {getElementLabel(isolatedId)}
                       </div>
@@ -1122,9 +1132,8 @@ export function InsightsPanel() {
         <MergeElementsModal
           isOpen={true}
           onClose={() => setMergePair(null)}
-          element1={mergePair.el1}
-          element2={mergePair.el2}
-          onMerge={async (targetId, sourceId) => {
+          elements={[mergePair.el1, mergePair.el2]}
+          onMerge={async (targetId, [sourceId]) => {
             const snapshot = await mergeElementsAction(targetId, sourceId);
             pushAction({
               type: 'merge-elements',
@@ -1325,10 +1334,12 @@ function ElementAutocomplete({
       .slice(0, 50);
   }, [elements, excludeIds, query]);
 
-  // Reset highlighted index when filtered list changes
-  useEffect(() => {
+  // Reset highlighted index when filtered list changes (during render)
+  const [shownCount, setShownCount] = useState(filteredElements.length);
+  if (shownCount !== filteredElements.length) {
+    setShownCount(filteredElements.length);
     setHighlightedIndex(0);
-  }, [filteredElements.length]);
+  }
 
   // Scroll highlighted item into view
   useEffect(() => {
@@ -1340,13 +1351,15 @@ function ElementAutocomplete({
     }
   }, [highlightedIndex, isOpen]);
 
-  // Reset editing state when value changes externally
-  useEffect(() => {
+  // Reset editing state when value changes externally (during render)
+  const [seenValue, setSeenValue] = useState(value);
+  if (seenValue !== value) {
+    setSeenValue(value);
     if (value) {
       setIsEditing(false);
       setQuery('');
     }
-  }, [value]);
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;

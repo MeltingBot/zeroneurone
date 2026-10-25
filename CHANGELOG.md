@@ -1,5 +1,68 @@
 # Changelog
 
+## 2.76.0
+
+### Fusion
+
+- **Fusionner N éléments** — avec 2 éléments sélectionnés ou plus (par exemple
+  ceux de « Chercher les similaires »), clic droit → Fusionner. L'élément gardé
+  se choisit dans la liste (le plus relié par défaut). La fenêtre signale les
+  notes mises bout à bout et le nombre de propriétés, dont les clés à plusieurs
+  valeurs. Un seul Ctrl+Z annule toute la fusion.
+- **Onglets conservés** — l'élément gardé rejoint les onglets des éléments
+  absorbés ; l'annulation les remet à leur place.
+
+### Import et export
+
+- **Choisir les onglets d'une archive** — à l'import d'un ZIP dans un dossier :
+  onglets à importer, éléments hors onglet, éléments reliés, rapport. Onglets
+  recréés (fusionnés avec un onglet du même nom) ou tout dans l'onglet ouvert.
+- **Import annulable** — un import placé sur le canvas s'annule par Ctrl+Z
+  (éléments, liens, onglets créés) ; les éléments importés restent sélectionnés.
+- **Progression de l'export** — une fenêtre suit la construction de l'archive
+  (fichiers joints, données, compression, chiffrement), depuis le dossier ou la
+  liste des dossiers.
+
+### Onglets
+
+- **Zoom et cadrage par onglet** — chaque onglet retrouve sa vue ; un onglet
+  jamais ouvert se cadre sur ses éléments ; « Tous » retient aussi la sienne.
+- **Déplacer dans cet onglet** — ramène un élément fantôme dans l'onglet ouvert.
+
+### Filtres et requêtes
+
+- **Filtres rapides en trois modes** — masquer, seulement ceux-ci,
+  sélectionner ; le nombre d'éléments s'affiche, le second clic défait
+  seulement ce que le filtre a fait.
+- **Comptes de l'onglet** — tags et propriétés comptés sur l'onglet ouvert ;
+  filtres actifs en haut du panneau ; éléments masqués sur la ligne du compteur.
+- **Résultats lumineux** — vus de loin, les résultats brillent de la couleur de
+  leur élément.
+- **ZNQuery** — accents acceptés dans les noms de champs (`Identité = "…"`) ;
+  toutes les valeurs d'une propriété lues ; `!=` vrai seulement si aucune ne
+  l'est.
+
+### Tags
+
+- **Pastille de couleur** devant chaque tag (filtres, détail).
+- **Appliquer une famille de tags** — apparence et propriétés manquantes
+  appliquées aux éléments du dossier, avec une barre de progression et Ctrl+Z.
+- **Contour des images** — un élément à image prend la couleur de son tag
+  principal en contour.
+
+### Disposition et analyses
+
+- **Force lisible autour d'un élément très relié** — feuilles rangées en
+  anneaux, niveau par niveau ; mesuré : environ dix fois moins de croisements.
+- **Centrer depuis Analyses** — un clic sur un élément ou un cluster le cadre.
+
+### Corrections
+
+- **Propriétés en double** — supprimer ou modifier une « Identité » parmi
+  plusieurs ne touche plus que la ligne voulue.
+- **Export en arrière-plan** — l'export continue quand l'onglet du navigateur
+  est caché.
+
 ## 2.75.6
 
 ### Suggestions de liens

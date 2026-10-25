@@ -25,7 +25,16 @@
     "title": "Espedientera inportatu",
     "description": "Datuak uneko espedientera inportatu. ZIP fitxategiak kokapen moduan inportatuko dira.",
     "selectFile": "Fitxategi bat hautatu",
-    "emptyZip": "ZIP fitxategia hutsik dago edo ez du elementurik"
+    "emptyZip": "ZIP fitxategia hutsik dago edo ez du elementurik",
+    "tabsTitle": "Inportatzeko fitxak",
+    "untitledTab": "Izenik gabe",
+    "unassigned": "Fitxarik gabe",
+    "includeLinked": "Lotutako elementuak",
+    "includeReport": "Txostena (atalak)",
+    "tabsConfirm": "Kokatu",
+    "tabsTarget": "Helmuga",
+    "recreateTabs": "Fitxak berriro sortu",
+    "intoOpenTab": "Dena fitxa irekian"
   },
   "import": {
     "title": "Espediente inportatu",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Artxiboa prestatzen…",
+      "files": "Erantsitako fitxategiak: {{done}}/{{total}}",
+      "data": "Espedientearen datuak…",
+      "compress": "Konprimatzea: % {{percent}}",
+      "encrypt": "Zifratzea…"
+    },
     "title": "Espediente esportatu",
     "description": "\"{{name}}\" esportatu ({{elements}} elementu, {{links}} lotura)",
     "format": "Formatua",
@@ -240,6 +256,10 @@
     "createFirst": "Sortu zure lehen paleta"
   },
   "tagSetEditor": {
+    "applyTitle": "Ireki den espedienteari aplikatu",
+    "applyVisual": "Itxura (etiketa nagusi hau duten elementuak)",
+    "applyProperties": "Falta diren propietateak, hutsik (etiketa duten elementuak)",
+    "applyProgress": "Eguneratutako elementuak: {{done}}/{{total}}",
     "title": "Etiketa paleta",
     "titleNew": "Etiketa berria",
     "titleEdit": "\"{{name}}\" editatu",
@@ -614,7 +634,17 @@
     "kept": "Gordeta",
     "properties": "propietateak",
     "events": "gertaerak",
-    "hint": "Beste elementua ezabatuko da. Bere estekak transferituko dira."
+    "hint": "Beste elementua ezabatuko da. Bere estekak transferituko dira.",
+    "titleMany": "{{count}} elementu bateratu",
+    "warnNotes": "{{count}} elementuren oharrak bata bestearen atzean jarriko dira",
+    "warnProperties_one": "{{count}} propietate bateratu ondoren",
+    "warnProperties_other": "{{count}} propietate bateratu ondoren",
+    "warnPropertiesMulti_one": "{{count}} propietate bateratu ondoren, horietatik {{keys}} gako balio anitzekin",
+    "warnPropertiesMulti_other": "{{count}} propietate bateratu ondoren, horietatik {{keys}} gako balio anitzekin",
+    "linkCount_one": "{{count}} lotura",
+    "linkCount_other": "{{count}} lotura",
+    "hintMany_one": "Beste elementua ezabatuko da. Bere loturak transferituko dira.",
+    "hintMany_other": "Beste {{count}} elementuak ezabatuko dira. Beren loturak transferituko dira."
   },
   "encryption": {
     "title": "Enkriptatzea",

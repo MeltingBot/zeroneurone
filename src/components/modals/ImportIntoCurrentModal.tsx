@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertCircle, Download, FileSpreadsheet, FileJson } from 'lucide-react';
 import { importService } from '../../services/importService';
+import type { ZipTabsOverview } from '../../services/zipTabSelection';
 import { exportService } from '../../services/exportService';
 import { importANB, isANBFormat } from '../../services/importANB';
 import {
@@ -129,6 +130,13 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
   const [geoJSONLabelField, setGeoJSONLabelField] = useState('');
   const [geoJSONFields, setGeoJSONFields] = useState<Set<string>>(new Set());
   const [geoJSONTag, setGeoJSONTag] = useState('');
+  // ZIP with tabs: the analyst picks the tabs to bring in
+  const [pendingZip, setPendingZip] = useState<{ file: File; overview: ZipTabsOverview } | null>(null);
+  const [zipTabIds, setZipTabIds] = useState<Set<string>>(new Set());
+  const [zipUnassigned, setZipUnassigned] = useState(true);
+  const [zipLinked, setZipLinked] = useState(true);
+  const [zipRecreate, setZipRecreate] = useState(true);
+  const [zipReport, setZipReport] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentDossier, loadDossier } = useDossierStore();
@@ -182,6 +190,17 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         // ZIP → parse for exact bounding box, then placement mode
         const parseResult = await importService.parseZipForPlacement(file);
 
+        if (parseResult.success && parseResult.boundingBox.elementCount > 0 && parseResult.tabs && parseResult.tabs.tabs.length > 0) {
+          setPendingZip({ file, overview: parseResult.tabs });
+          setZipTabIds(new Set(parseResult.tabs.tabs.map((tab) => tab.id)));
+          setZipUnassigned(true);
+          setZipLinked(true);
+          setZipRecreate(true);
+          setZipReport(true);
+          setIsProcessing(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
         if (parseResult.success && parseResult.boundingBox.elementCount > 0) {
           enterImportPlacementMode({
             boundingBox: parseResult.boundingBox,
@@ -352,6 +371,28 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     onClose();
   }, [pendingGeoJSON, geoJSONLabelField, geoJSONFields, geoJSONTag, currentDossier, createMissingElements, enterImportPlacementMode, onClose]);
 
+  // Chosen tabs → placement, framed on what they hold
+  const handleZipConfirm = useCallback(async () => {
+    if (!pendingZip || !currentDossier) return;
+    const selection = { tabIds: [...zipTabIds], includeUnassigned: zipUnassigned, includeLinked: zipLinked, recreateTabs: zipRecreate, includeReport: zipReport };
+    setIsProcessing(true);
+    const parsed = await importService.parseZipForPlacement(pendingZip.file, selection);
+    setIsProcessing(false);
+    if (!parsed.success || parsed.boundingBox.elementCount === 0) {
+      setError(parsed.error || t('importIntoCurrent.emptyZip'));
+      return;
+    }
+    enterImportPlacementMode({
+      boundingBox: parsed.boundingBox,
+      file: pendingZip.file,
+      dossierId: currentDossier.id,
+      importOptions: { zipTabs: selection },
+      onComplete: () => setError(null),
+    });
+    setPendingZip(null);
+    onClose();
+  }, [pendingZip, zipTabIds, zipUnassigned, zipLinked, zipRecreate, zipReport, currentDossier, enterImportPlacementMode, onClose, t]);
+
   const triggerFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -360,6 +401,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
     setError(null);
     setPendingFEC(null);
     setPendingGeoJSON(null);
+    setPendingZip(null);
     onClose();
   }, [onClose]);
 
@@ -481,8 +523,99 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
             </div>
           )}
 
+          {/* Archive tabs to bring in */}
+          {pendingZip && (
+            <div className="space-y-2" data-testid="zip-tabs-step">
+              <p className="text-xs font-medium text-text-primary">{t('importIntoCurrent.tabsTitle')}</p>
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {pendingZip.overview.tabs.map((tab) => (
+                  <label key={tab.id} className="flex items-center gap-2 text-xs text-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={zipTabIds.has(tab.id)}
+                      onChange={(e) => setZipTabIds((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(tab.id); else next.delete(tab.id);
+                        return next;
+                      })}
+                      className="rounded border-border-default"
+                    />
+                    <span className="flex-1 truncate text-text-primary">{tab.name || t('importIntoCurrent.untitledTab')}</span>
+                    <span className="text-text-tertiary">{tab.count}</span>
+                  </label>
+                ))}
+                {pendingZip.overview.unassignedCount > 0 && (
+                  <label className="flex items-center gap-2 text-xs text-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={zipUnassigned}
+                      onChange={(e) => setZipUnassigned(e.target.checked)}
+                      className="rounded border-border-default"
+                    />
+                    <span className="flex-1 truncate italic">{t('importIntoCurrent.unassigned')}</span>
+                    <span className="text-text-tertiary">{pendingZip.overview.unassignedCount}</span>
+                  </label>
+                )}
+              </div>
+              <label className="flex items-center gap-2 text-xs text-text-secondary pt-1 border-t border-border-default">
+                <input
+                  type="checkbox"
+                  checked={zipLinked}
+                  onChange={(e) => setZipLinked(e.target.checked)}
+                  data-testid="zip-tabs-linked"
+                  className="rounded border-border-default"
+                />
+                {t('importIntoCurrent.includeLinked')}
+              </label>
+              {pendingZip.overview.reportSections > 0 && (
+                <label className="flex items-center gap-2 text-xs text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={zipReport}
+                    onChange={(e) => setZipReport(e.target.checked)}
+                    data-testid="zip-tabs-report"
+                    className="rounded border-border-default"
+                  />
+                  <span className="flex-1">{t('importIntoCurrent.includeReport')}</span>
+                  <span className="text-text-tertiary">{pendingZip.overview.reportSections}</span>
+                </label>
+              )}
+              <div className="flex flex-col gap-1 pt-1 border-t border-border-default" role="radiogroup" aria-label={t('importIntoCurrent.tabsTarget')}>
+                {([true, false] as const).map((recreate) => (
+                  <label key={String(recreate)} className="flex items-center gap-2 text-xs text-text-secondary">
+                    <input
+                      type="radio"
+                      name="zip-tabs-target"
+                      checked={zipRecreate === recreate}
+                      onChange={() => setZipRecreate(recreate)}
+                      data-testid={recreate ? 'zip-tabs-recreate' : 'zip-tabs-open-tab'}
+                      className="border-border-default"
+                    />
+                    {t(recreate ? 'importIntoCurrent.recreateTabs' : 'importIntoCurrent.intoOpenTab')}
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingZip(null)}
+                  className="flex-1 text-xs text-text-secondary border border-border-default rounded py-1.5 hover:bg-bg-tertiary"
+                >
+                  {t('common:actions.cancel')}
+                </button>
+                <button
+                  onClick={handleZipConfirm}
+                  disabled={isProcessing || (zipTabIds.size === 0 && !(zipUnassigned && pendingZip.overview.unassignedCount > 0))}
+                  data-testid="zip-tabs-confirm"
+                  className="flex-1 text-xs font-medium bg-accent text-white rounded py-1.5 hover:bg-accent-hover disabled:opacity-40"
+                >
+                  {t('importIntoCurrent.tabsConfirm')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Import button */}
-          {!pendingFEC && !pendingGeoJSON && (
+          {!pendingFEC && !pendingGeoJSON && !pendingZip && (
           <button
             onClick={triggerFileSelect}
             disabled={isProcessing}
@@ -507,8 +640,8 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
           </button>
           )}
 
-          {/* CSV options — irrelevant during a FEC or GeoJSON options step */}
-          {!pendingFEC && !pendingGeoJSON && (
+          {/* CSV options — irrelevant during a FEC, GeoJSON or tabs step */}
+          {!pendingFEC && !pendingGeoJSON && !pendingZip && (
           <>
           <div className="flex items-center gap-2">
             <input

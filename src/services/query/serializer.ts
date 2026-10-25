@@ -9,7 +9,7 @@ import { OPERATOR_SYMBOLS } from './types';
 
 function serializeField(field: string): string {
   // Quote if contains spaces or special chars
-  if (/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(field)) {
+  if (/^[\p{L}_][\p{L}\p{N}_.]*$/u.test(field)) {
     return field;
   }
   return `"${field.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;

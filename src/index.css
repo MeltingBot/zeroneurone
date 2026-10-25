@@ -319,6 +319,21 @@ button {
   visibility: hidden;
 }
 
+/* Results seen from afar (filter, query): a soft glow of the element's own
+   colour (--glow-color), fading out from the shape. A plain gradient, no blur
+   or shadow: thousands are drawn at once. Kept discreet: no white core, no
+   additive blending (that read as fairy lights). */
+.result-glow {
+  --glow: var(--glow-color, var(--color-accent));
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--glow) 55%, transparent) 0%,
+    color-mix(in srgb, var(--glow) 40%, transparent) 50%,
+    color-mix(in srgb, var(--glow) 12%, transparent) 80%,
+    transparent 100%
+  );
+}
+
 /* Link a checked suggestion would draw: dashed, moving along the line */
 .suggestion-preview-line {
   stroke: var(--color-accent);

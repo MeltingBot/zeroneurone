@@ -14,6 +14,7 @@ import { computeElementDimensions } from '../utils/elementDimensions';
 import { removeOverlaps } from '../utils/removeOverlaps';
 import { packClusters } from '../utils/packClusters';
 import { connectedComponents } from '../utils/connectedComponents';
+import { foldTree } from './leafFolding';
 
 /**
  * Real rendered footprint of an element, shared with ElementNode so that
@@ -90,38 +91,50 @@ function applyForceLayout(
       dimsMap,
       center,
       options.obstacles ?? [],
+      true,
     );
   }
 
+  // Leaves, level by level (a single link, then a group hanging from a hub),
+  // are laid out around their parent afterwards; the parent counts as a block
+  const gap = 24;
+  const dims = (id: string) => dimsFor(dimsMap, id);
+  const fold = foldTree(graph, dims, gap);
+  const core = fold.core;
+
   // Assign random initial positions if nodes don't have any
-  graph.forEachNode((node) => {
-    if (!graph.getNodeAttribute(node, 'x')) {
-      graph.setNodeAttribute(node, 'x', Math.random() * 1000 - 500);
-      graph.setNodeAttribute(node, 'y', Math.random() * 1000 - 500);
+  core.forEachNode((node) => {
+    if (!core.getNodeAttribute(node, 'x')) {
+      core.setNodeAttribute(node, 'x', Math.random() * 1000 - 500);
+      core.setNodeAttribute(node, 'y', Math.random() * 1000 - 500);
     }
   });
 
   // Run ForceAtlas2 synchronously
-  forceAtlas2.assign(graph, {
-    iterations: 500,
-    settings: {
-      gravity: 8,
-      scalingRatio: 100,
-      strongGravityMode: false,
-      slowDown: 2,
-      barnesHutOptimize: graph.order > 100,
-      barnesHutTheta: 0.5,
-      linLogMode: true,
-    },
-  });
+  if (core.order > 1) {
+    forceAtlas2.assign(core, {
+      iterations: 500,
+      settings: {
+        gravity: 8,
+        scalingRatio: 100,
+        strongGravityMode: false,
+        slowDown: 2,
+        barnesHutOptimize: core.order > 100,
+        barnesHutTheta: 0.5,
+        // linLog measured worse on hub and community graphs: about ten times
+        // more crossings, and communities mixed instead of apart
+        linLogMode: false,
+      },
+    });
+  }
 
   // Extract raw positions and compute bounding box
   const rawPositions: { node: string; x: number; y: number }[] = [];
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
-  graph.forEachNode((node) => {
-    const x = graph.getNodeAttribute(node, 'x') as number;
-    const y = graph.getNodeAttribute(node, 'y') as number;
+  core.forEachNode((node) => {
+    const x = core.getNodeAttribute(node, 'x') as number;
+    const y = core.getNodeAttribute(node, 'y') as number;
     rawPositions.push({ node, x, y });
     minX = Math.min(minX, x);
     maxX = Math.max(maxX, x);
@@ -130,8 +143,8 @@ function applyForceLayout(
   });
 
   // Normalize to target size - larger to spread out and show link labels
-  const nodeCount = graph.order;
-  const targetSize = Math.max(1500, Math.sqrt(nodeCount) * 250);
+  const nodeCount = core.order;
+  const targetSize = nodeCount > 1 ? Math.max(1500, Math.sqrt(nodeCount) * 250) : 0;
   const currentWidth = maxX - minX || 1;
   const currentHeight = maxY - minY || 1;
   const scaleFactor = targetSize / Math.max(currentWidth, currentHeight);
@@ -143,7 +156,7 @@ function applyForceLayout(
   const nodeData: { id: string; x: number; y: number; w: number; h: number }[] = [];
 
   for (const { node, x, y } of rawPositions) {
-    const d = dimsFor(dimsMap, node);
+    const d = fold.block(node);
     nodeData.push({
       id: node,
       x: (x - centerX) * scaleFactor + center.x,
@@ -155,13 +168,14 @@ function applyForceLayout(
 
   // Post-process: AABB overlap removal on final positions
   // More passes for convergence in dense graphs
-  const gap = 24;
+  fold.clear(nodeData);
   removeOverlaps(nodeData, { gap: gap, passes: 15 });
 
   const positions = new Map<string, Position>();
   for (const n of nodeData) {
     positions.set(n.id, { x: n.x, y: n.y });
   }
+  fold.place(positions);
 
   return positions;
 }
@@ -231,6 +245,9 @@ function packGroupsLayout(
   dimsMap: ReturnType<typeof buildDimsMap>,
   center: Position,
   obstacles: { x: number; y: number; r: number }[],
+  /** Leaves around their parent (force). Not for clusters: measured longer
+   *  links there, communities being packed regardless of what links them */
+  foldLeaves = false,
 ): Map<string, Position> {
   type ClusterLayout = {
     nodes: { id: string; x: number; y: number; w: number; h: number }[];
@@ -244,34 +261,43 @@ function packGroupsLayout(
   const GAP = 32;
 
   for (const nodes of realClusters) {
+    const full = new Graph();
+    for (const n of nodes) full.addNode(n);
+    for (const n of nodes) {
+      graph.forEachNeighbor(n, (m) => {
+        if (full.hasNode(m) && !full.hasEdge(n, m)) {
+          try { full.addEdge(n, m); } catch { /* duplicate */ }
+        }
+      });
+    }
+
+    // Leaves, level by level, are put back around their parent afterwards;
+    // the parent is laid out as a block holding them (force only)
+    const realDims = (id: string) => dimsFor(dimsMap, id);
+    const fold = foldLeaves ? foldTree(full, realDims, GAP) : null;
+    const sub = fold ? fold.core : full;
+
     // Pre-compute per-node dimensions so FA2 can use them via `size` attribute
     const dims = new Map<string, { w: number; h: number }>();
     let totalArea = 0;
     let maxNodeSize = 0;
-    for (const n of nodes) {
-      const { w, h } = dimsFor(dimsMap, n);
+    sub.forEachNode((n) => {
+      const { w, h } = fold ? fold.block(n) : realDims(n);
       dims.set(n, { w, h });
-      totalArea += (w + GAP) * (h + GAP);
-      maxNodeSize = Math.max(maxNodeSize, Math.max(w, h));
-    }
-
-    const sub = new Graph();
-    for (const n of nodes) {
-      const d = dims.get(n)!;
-      sub.addNode(n, {
+      // Spacing from the elements' own size: a block (a hub with its leaves)
+      // gets its room from the overlap removal, not by spreading everything
+      const own = realDims(n);
+      totalArea += (own.w + GAP) * (own.h + GAP);
+      maxNodeSize = Math.max(maxNodeSize, Math.max(own.w, own.h));
+      sub.mergeNodeAttributes(n, {
         x: Math.random() * 200 - 100,
         y: Math.random() * 200 - 100,
         // FA2 size attribute: half the largest dimension (treats node as a disc)
-        size: Math.max(d.w, d.h) / 2,
+        // The element's own size, not its block: a hub's block would push its
+        // other neighbours far away; overlap removal makes room for the block
+        size: Math.max(...Object.values(realDims(n))) / 2,
       });
-    }
-    for (const n of nodes) {
-      graph.forEachNeighbor(n, (m) => {
-        if (sub.hasNode(m) && !sub.hasEdge(n, m)) {
-          try { sub.addEdge(n, m); } catch { /* duplicate */ }
-        }
-      });
-    }
+    });
 
     forceAtlas2.assign(sub, {
       iterations: 400,
@@ -313,7 +339,20 @@ function packGroupsLayout(
     }
 
     // Intra-cluster overlap removal (more passes for convergence)
+    fold?.clear(nodeArr);
     removeOverlaps(nodeArr, { gap: GAP, passes: 60, coincident: 'centered' });
+
+    // Leaves back around their parent; parents back to their own size
+    if (fold && sub !== full) {
+      const local = new Map<string, Position>(nodeArr.map((n) => [n.id, { x: n.x, y: n.y }]));
+      fold.place(local);
+      for (const n of nodeArr) Object.assign(n, realDims(n.id));
+      full.forEachNode((id) => {
+        if (sub.hasNode(id)) return;
+        const p = local.get(id);
+        if (p) nodeArr.push({ id, x: p.x, y: p.y, ...realDims(id) });
+      });
+    }
 
     // Cluster bounding radius: max distance from origin to any node's corner
     let radius = 0;
@@ -697,11 +736,12 @@ class LayoutService {
       case 'grid':
         positions = applyGridLayout(graph, elements, { ...options, center });
         break;
-      case 'random':
+      case 'random': {
         // Scale based on number of nodes
         const randomScale = Math.max(400, Math.sqrt(elements.length) * 100);
         positions = applyRandomLayout(graph, elements, { ...options, center, scale: randomScale });
         break;
+      }
       case 'hierarchy':
         positions = applyHierarchyLayout(graph, links, elements, { ...options, center }, elements.length);
         break;

@@ -25,7 +25,16 @@
     "title": "Importar a l'expedient",
     "description": "Importar dades a l'expedient actual. Els fitxers ZIP s'importaran en mode de col·locació.",
     "selectFile": "Seleccionar un fitxer",
-    "emptyZip": "El fitxer ZIP és buit o no conté elements"
+    "emptyZip": "El fitxer ZIP és buit o no conté elements",
+    "tabsTitle": "Pestanyes a importar",
+    "untitledTab": "Sense nom",
+    "unassigned": "Sense pestanya",
+    "includeLinked": "Elements vinculats",
+    "includeReport": "Informe (seccions)",
+    "tabsConfirm": "Col·locar",
+    "tabsTarget": "Destinació",
+    "recreateTabs": "Recrear les pestanyes",
+    "intoOpenTab": "Tot a la pestanya oberta"
   },
   "import": {
     "title": "Importar un expedient",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Preparant l'arxiu…",
+      "files": "Fitxers adjunts: {{done}}/{{total}}",
+      "data": "Dades de l'expedient…",
+      "compress": "Compressió: {{percent}} %",
+      "encrypt": "Xifratge…"
+    },
     "title": "Exportar l'expedient",
     "description": "Exportar \"{{name}}\" ({{elements}} elements, {{links}} enllaços)",
     "format": "Format",
@@ -240,6 +256,10 @@
     "createFirst": "Creeu la vostra primera paleta"
   },
   "tagSetEditor": {
+    "applyTitle": "Aplicar a l'expedient obert",
+    "applyVisual": "Aparença (elements amb aquesta etiqueta principal)",
+    "applyProperties": "Propietats que falten, buides (elements amb l'etiqueta)",
+    "applyProgress": "Elements actualitzats: {{done}}/{{total}}",
     "title": "Paleta d'etiquetes",
     "titleNew": "Nova etiqueta",
     "titleEdit": "Editar \"{{name}}\"",
@@ -614,7 +634,17 @@
     "kept": "Conservat",
     "properties": "propietats",
     "events": "esdeveniments",
-    "hint": "L'altre element serà eliminat. Els seus enllaços seran transferits."
+    "hint": "L'altre element serà eliminat. Els seus enllaços seran transferits.",
+    "titleMany": "Fusionar {{count}} elements",
+    "warnNotes": "Les notes de {{count}} elements s'uniran una darrere l'altra",
+    "warnProperties_one": "{{count}} propietat després de la fusió",
+    "warnProperties_other": "{{count}} propietats després de la fusió",
+    "warnPropertiesMulti_one": "{{count}} propietat després de la fusió, {{keys}} clau(s) amb diversos valors",
+    "warnPropertiesMulti_other": "{{count}} propietats després de la fusió, {{keys}} clau(s) amb diversos valors",
+    "linkCount_one": "{{count}} enllaç",
+    "linkCount_other": "{{count}} enllaços",
+    "hintMany_one": "L'altre element s'eliminarà. Els seus enllaços es transferiran.",
+    "hintMany_other": "Els altres {{count}} elements s'eliminaran. Els seus enllaços es transferiran."
   },
   "encryption": {
     "title": "Xifrat",

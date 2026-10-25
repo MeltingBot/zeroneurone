@@ -48,6 +48,8 @@ export interface ImportPlacementData {
     fec?: import('../services/importFEC').FECImportOptions;
     /** GeoJSON label property and kept properties chosen in the options step. */
     geojson?: { labelField?: string; fields?: string[]; tag?: string };
+    /** ZIP into the open dossier: the archive tabs kept */
+    zipTabs?: import('../services/zipTabSelection').ZipTabSelection;
   };
   /** Pre-built elements/links to place directly (e.g. JSON mapping import).
       Positions are relative to boundingBox.min and shifted to the click point.

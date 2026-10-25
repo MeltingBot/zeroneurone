@@ -308,6 +308,7 @@
     "insights": "Análise do grafo",
     "layout": "Disposição",
     "view": "Mudança de vista",
-    "suggestions": "Sugestões de ligações"
+    "suggestions": "Sugestões de ligações",
+    "export": "Criação do arquivo"
   }
 }

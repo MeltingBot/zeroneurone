@@ -61,6 +61,13 @@ Each tag set defines:
 
 When you apply a tag from a set to an element, its appearance (color, shape) is automatically defined and the suggested properties are offered. Suggested properties are also offered when the tag is added to a link or to the dossier itself (**Detail** tab, with nothing selected).
 
+**Apply to existing elements**: editing a tag set does not change the elements already carrying it. With a dossier open, the editor offers **Apply to the open dossier**, with two boxes and the number of elements concerned:
+
+- **Appearance**: the set's color, shape and icon, for the elements whose main (first) tag it is. Only the settings the set defines are applied.
+- **Missing properties**: adds, empty, the suggested properties missing from the elements with the tag; values already filled in stay.
+
+A single **Ctrl+Z** undoes it.
+
 **Import/Export**: Tag sets can be exported and imported in JSON or CSV format for sharing between dossiers. Referenced custom icons are embedded in the JSON. Tag sets used in a dossier are also included in the dossier export (ZIP/JSON) and recreated on import when they do not already exist.
 
 ### Custom Icons (SVG)

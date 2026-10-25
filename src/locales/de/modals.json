@@ -25,7 +25,16 @@
     "title": "In Akte importieren",
     "description": "Daten in die aktuelle Akte importieren. ZIP-Dateien werden im Platzierungsmodus importiert.",
     "selectFile": "Datei auswählen",
-    "emptyZip": "Die ZIP-Datei ist leer oder enthält keine Elemente"
+    "emptyZip": "Die ZIP-Datei ist leer oder enthält keine Elemente",
+    "tabsTitle": "Zu importierende Tabs",
+    "untitledTab": "Ohne Namen",
+    "unassigned": "In keinem Tab",
+    "includeLinked": "Verknüpfte Elemente",
+    "includeReport": "Bericht (Abschnitte)",
+    "tabsConfirm": "Platzieren",
+    "tabsTarget": "Ziel",
+    "recreateTabs": "Tabs neu anlegen",
+    "intoOpenTab": "Alles in den offenen Tab"
   },
   "import": {
     "title": "Akte importieren",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Archiv wird vorbereitet…",
+      "files": "Angehängte Dateien: {{done}}/{{total}}",
+      "data": "Daten des Dossiers…",
+      "compress": "Komprimierung: {{percent}} %",
+      "encrypt": "Verschlüsselung…"
+    },
     "title": "Akte exportieren",
     "description": "\"{{name}}\" exportieren ({{elements}} Elemente, {{links}} Verbindungen)",
     "format": "Format",
@@ -240,6 +256,10 @@
     "createFirst": "Erstellen Sie Ihre erste Palette"
   },
   "tagSetEditor": {
+    "applyTitle": "Auf das offene Dossier anwenden",
+    "applyVisual": "Darstellung (Elemente mit diesem Haupt-Tag)",
+    "applyProperties": "Fehlende Eigenschaften, leer (Elemente mit dem Tag)",
+    "applyProgress": "Aktualisierte Elemente: {{done}}/{{total}}",
     "title": "Tag-Palette",
     "titleNew": "Neuer Tag",
     "titleEdit": "\"{{name}}\" bearbeiten",
@@ -614,7 +634,17 @@
     "kept": "Beibehalten",
     "properties": "Eigenschaften",
     "events": "Ereignisse",
-    "hint": "Das andere Element wird gelöscht. Seine Links werden übertragen."
+    "hint": "Das andere Element wird gelöscht. Seine Links werden übertragen.",
+    "titleMany": "{{count}} Elemente zusammenführen",
+    "warnNotes": "Die Notizen von {{count}} Elementen werden aneinandergehängt",
+    "warnProperties_one": "{{count}} Eigenschaft nach dem Zusammenführen",
+    "warnProperties_other": "{{count}} Eigenschaften nach dem Zusammenführen",
+    "warnPropertiesMulti_one": "{{count}} Eigenschaft nach dem Zusammenführen, davon {{keys}} Schlüssel mit mehreren Werten",
+    "warnPropertiesMulti_other": "{{count}} Eigenschaften nach dem Zusammenführen, davon {{keys}} Schlüssel mit mehreren Werten",
+    "linkCount_one": "{{count}} Verknüpfung",
+    "linkCount_other": "{{count}} Verknüpfungen",
+    "hintMany_one": "Das andere Element wird gelöscht. Seine Verknüpfungen werden übertragen.",
+    "hintMany_other": "Die {{count}} anderen Elemente werden gelöscht. Ihre Verknüpfungen werden übertragen."
   },
   "encryption": {
     "title": "Verschlüsselung",

@@ -17,26 +17,29 @@ import {
   Plus,
   Check,
 } from 'lucide-react';
-import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore, useTabStore } from '../../stores';
+import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore, useTabStore, useSelectionStore } from '../../stores';
 import { useFilterOutcome, useShownSelection } from '../../hooks/useFilterOutcome';
 import { ProgressiveList } from '../common/ProgressiveList';
+import { TagDot } from '../common/TagDot';
+import { useTagColors } from '../../hooks/useTagColors';
 import type { Confidence, Element, Comment, EvaluationModel, ViewFilters } from '../../types';
 import { datePropertyRules, elementDateIntervals } from '../../utils/temporalUtils';
-import { EVALUATION_GRIDS, getModelScale, } from '../../utils/evaluation';
+import { EVALUATION_GRIDS, getModelScale, matchesEvaluationFilters } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter } from '../../utils/geo';
 
-// Quick filter definitions (without labels - those come from translations)
+// Quick filters: each names a set of elements of the view (labels from the
+// translations); the mode chosen next to them says what a click does with it
+type QuickMode = 'hide' | 'only' | 'select';
+const QUICK_MODES: QuickMode[] = ['hide', 'only', 'select'];
+const QUICK_MODE_KEY = 'zn:filters:quickMode';
+
 interface QuickFilterParams {
-  filters: ViewFilters;
-  setFilters: (filters: Partial<ViewFilters>) => void;
-  clearFilters: () => void;
+  /** Elements the view covers: the open tab, or the whole dossier */
+  scope: Element[];
   isolated: string[];
-  hideElements: (ids: string[]) => void;
-  showAllElements: () => void;
-  hiddenElementIds: Set<string>;
-  elements: Element[];
   comments: Comment[];
+  filters: ViewFilters;
   evaluationModel: EvaluationModel;
 }
 
@@ -45,15 +48,9 @@ interface QuickFilterDef {
   labelKey: string;
   descKey: string;
   icon: React.ReactNode;
-  apply: (params: QuickFilterParams) => void;
-  isActive: (params: QuickFilterParams) => boolean;
+  ids: (params: QuickFilterParams) => string[];
   /** Evaluation models the filter is offered in (all when absent) */
   models?: EvaluationModel[];
-}
-
-/** Same set of grading codes, whatever the order they were ticked in */
-function sameCodes(a: readonly string[] | null | undefined, b: readonly string[]): boolean {
-  return !!a && a.length === b.length && b.every((code) => a.includes(code));
 }
 
 /** Elements with no date at all, as the timeline and the map date them
@@ -69,16 +66,9 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     labelKey: 'isolated',
     descKey: 'isolatedDesc',
     icon: <CircleOff size={12} />,
-    apply: ({ isolated, hideElements, hiddenElementIds, showAllElements }) => {
-      const allHidden = isolated.every((id) => hiddenElementIds.has(id));
-      if (allHidden) {
-        showAllElements();
-      } else {
-        hideElements(isolated);
-      }
-    },
-    isActive: ({ isolated, hiddenElementIds }) => {
-      return isolated.length > 0 && isolated.every((id) => hiddenElementIds.has(id));
+    ids: ({ scope, isolated }) => {
+      const set = new Set(isolated);
+      return scope.filter((el) => set.has(el.id)).map((el) => el.id);
     },
   },
   {
@@ -86,83 +76,35 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     labelKey: 'noTags',
     descKey: 'noTagsDesc',
     icon: <Tag size={12} />,
-    apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
-      const noTagElements = elements.filter((el) => el.tags.length === 0).map((el) => el.id);
-      const allHidden = noTagElements.every((id) => hiddenElementIds.has(id));
-      if (allHidden) {
-        showAllElements();
-      } else {
-        hideElements(noTagElements);
-      }
-    },
-    isActive: ({ elements, hiddenElementIds }) => {
-      const noTagElements = elements.filter((el) => el.tags.length === 0).map((el) => el.id);
-      return noTagElements.length > 0 && noTagElements.every((id) => hiddenElementIds.has(id));
-    },
+    ids: ({ scope }) => scope.filter((el) => el.tags.length === 0).map((el) => el.id),
   },
   {
     id: 'no-geo',
     labelKey: 'noGeo',
     descKey: 'noGeoDesc',
     icon: <MapPin size={12} />,
-    apply: ({ elements, hideElements, hiddenElementIds, showAllElements }) => {
-      const noGeoElements = elements
-        .filter((el) => {
-          if (!el.geo) return true;
-          const c = getGeoCenter(el.geo);
-          return c.lat === 0 && c.lng === 0;
-        })
-        .map((el) => el.id);
-      const allHidden = noGeoElements.every((id) => hiddenElementIds.has(id));
-      if (allHidden) {
-        showAllElements();
-      } else {
-        hideElements(noGeoElements);
-      }
-    },
-    isActive: ({ elements, hiddenElementIds }) => {
-      const noGeoElements = elements
-        .filter((el) => {
-          if (!el.geo) return true;
-          const c = getGeoCenter(el.geo);
-          return c.lat === 0 && c.lng === 0;
-        })
-        .map((el) => el.id);
-      return noGeoElements.length > 0 && noGeoElements.every((id) => hiddenElementIds.has(id));
-    },
+    ids: ({ scope }) => scope
+      .filter((el) => {
+        if (!el.geo) return true;
+        const c = getGeoCenter(el.geo);
+        return c.lat === 0 && c.lng === 0;
+      })
+      .map((el) => el.id),
   },
   {
     id: 'no-date',
     labelKey: 'noDate',
     descKey: 'noDateDesc',
     icon: <Calendar size={12} />,
-    apply: ({ elements, filters, hideElements, hiddenElementIds, showAllElements }) => {
-      const noDateElements = undatedElementIds(elements, filters);
-      const allHidden = noDateElements.every((id) => hiddenElementIds.has(id));
-      if (allHidden) {
-        showAllElements();
-      } else {
-        hideElements(noDateElements);
-      }
-    },
-    isActive: ({ elements, filters, hiddenElementIds }) => {
-      const noDateElements = undatedElementIds(elements, filters);
-      return noDateElements.length > 0 && noDateElements.every((id) => hiddenElementIds.has(id));
-    },
+    ids: ({ scope, filters }) => undatedElementIds(scope, filters),
   },
   {
     id: 'low-confidence',
     labelKey: 'lowConfidence',
     descKey: 'lowConfidenceDesc',
     icon: <AlertCircle size={12} />,
-    apply: ({ setFilters, filters }) => {
-      if (filters.minConfidence === 50) {
-        setFilters({ minConfidence: null });
-      } else {
-        setFilters({ minConfidence: 50 });
-      }
-    },
-    isActive: ({ filters }) => filters.minConfidence === 50,
+    // Same rule as the confidence filter: unknown counts as low
+    ids: ({ scope }) => scope.filter((el) => el.confidence === null || el.confidence < 50).map((el) => el.id),
     models: ['zeroneurone'],
   },
   {
@@ -170,16 +112,11 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     labelKey: 'reliableSources',
     descKey: 'reliableSourcesDesc',
     icon: <AlertCircle size={12} />,
-    apply: ({ setFilters, filters, evaluationModel }) => {
+    ids: ({ scope, evaluationModel }) => {
       const scale = getModelScale(evaluationModel);
-      if (!scale) return;
+      if (!scale) return [];
       const reliable = EVALUATION_GRIDS[scale].reliableSources;
-      const isOn = sameCodes(filters.evaluationSources, reliable);
-      setFilters({ evaluationSources: isOn ? null : [...reliable] });
-    },
-    isActive: ({ filters, evaluationModel }) => {
-      const scale = getModelScale(evaluationModel);
-      return !!scale && sameCodes(filters.evaluationSources, EVALUATION_GRIDS[scale].reliableSources);
+      return scope.filter((el) => matchesEvaluationFilters(el.evaluation, evaluationModel, reliable, null)).map((el) => el.id);
     },
     models: ['europol', 'admiralty'],
   },
@@ -188,31 +125,21 @@ const QUICK_FILTER_DEFS: QuickFilterDef[] = [
     labelKey: 'hasComments',
     descKey: 'hasCommentsDesc',
     icon: <MessageSquare size={12} />,
-    apply: ({ elements, comments, hideElements, hiddenElementIds, showAllElements }) => {
-      const elementsWithUnresolvedComments = new Set(
-        comments.filter(c => !c.resolved && c.targetType === 'element').map(c => c.targetId)
-      );
-      const elementsWithoutUnresolved = elements
-        .filter(el => !elementsWithUnresolvedComments.has(el.id))
-        .map(el => el.id);
-      const allHidden = elementsWithoutUnresolved.every(id => hiddenElementIds.has(id));
-      if (allHidden) {
-        showAllElements();
-      } else {
-        hideElements(elementsWithoutUnresolved);
-      }
-    },
-    isActive: ({ elements, comments, hiddenElementIds }) => {
-      const elementsWithUnresolvedComments = new Set(
-        comments.filter(c => !c.resolved && c.targetType === 'element').map(c => c.targetId)
-      );
-      const elementsWithoutUnresolved = elements
-        .filter(el => !elementsWithUnresolvedComments.has(el.id))
-        .map(el => el.id);
-      return elementsWithoutUnresolved.length > 0 && elementsWithoutUnresolved.every(id => hiddenElementIds.has(id));
+    ids: ({ scope, comments }) => {
+      const commented = new Set(comments.filter((c) => !c.resolved && c.targetType === 'element').map((c) => c.targetId));
+      return scope.filter((el) => commented.has(el.id)).map((el) => el.id);
     },
   },
 ];
+
+function readQuickMode(): QuickMode {
+  try {
+    const stored = localStorage.getItem(QUICK_MODE_KEY);
+    return QUICK_MODES.includes(stored as QuickMode) ? (stored as QuickMode) : 'hide';
+  } catch {
+    return 'hide';
+  }
+}
 
 /** Date property keys selected in the filters panel (empty: all of them) */
 function selectedDateKeys(dateKeys: string[], included?: string[], excluded?: string[]): string[] {
@@ -235,6 +162,7 @@ export function FiltersPanel() {
     hasActiveFilters,
     hiddenElementIds,
     hideElements,
+    showElements,
     showElement,
     showAllElements,
   } = useViewStore();
@@ -275,10 +203,20 @@ export function FiltersPanel() {
   // is selected, selects otherwise
   const { allSelected: allMatchingSelected, toggle: toggleMatchingSelection } = useShownSelection(outcome);
 
+  // Counted on what the view covers: the open tab (and combined ones), like
+  // the element total above; the whole dossier in "All"
+  const tabMemberSet = useTabStore((s) => s.memberSet);
+  const scopeElements = useMemo(
+    () => (activeTabId !== null ? elements.filter((el) => tabMemberSet.has(el.id)) : elements),
+    [elements, activeTabId, tabMemberSet]
+  );
+
+  const tagColors = useTagColors();
+
   // Get all unique tags from elements with counts
   const tagsWithCounts = useMemo(() => {
     const tagMap = new Map<string, number>();
-    elements.forEach((el) => {
+    scopeElements.forEach((el) => {
       el.tags.forEach((tag) => {
         tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
       });
@@ -286,28 +224,32 @@ export function FiltersPanel() {
     return Array.from(tagMap.entries())
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count);
-  }, [elements]);
+  }, [scopeElements]);
 
   // Get all unique property keys from elements
   const allPropertyKeys = useMemo(() => {
     const keySet = new Set<string>();
-    elements.forEach((el) => el.properties.forEach((prop) => keySet.add(prop.key)));
+    scopeElements.forEach((el) => el.properties.forEach((prop) => keySet.add(prop.key)));
     return Array.from(keySet).sort();
-  }, [elements]);
+  }, [scopeElements]);
 
   // Date/datetime property keys, with how many elements fill them: they date
   // the elements on the timeline and the map (a birth date is rarely an event)
+  // The keys come from the whole dossier (the choice is one for every view:
+  // a key missing from this tab must stay chosen), the counts from the view
   const datePropertyCounts = useMemo(() => {
     const counts = new Map<string, number>();
+    const scope = activeTabId !== null ? tabMemberSet : null;
     elements.forEach((el) => el.properties.forEach((prop) => {
       if ((prop.type === 'date' || prop.type === 'datetime') && prop.value) {
-        counts.set(prop.key, (counts.get(prop.key) || 0) + 1);
+        const inView = !scope || scope.has(el.id);
+        counts.set(prop.key, (counts.get(prop.key) || 0) + (inView ? 1 : 0));
       }
     }));
     return Array.from(counts.entries())
       .map(([key, count]) => ({ key, count }))
       .sort((a, b) => a.key.localeCompare(b.key));
-  }, [elements]);
+  }, [elements, activeTabId, tabMemberSet]);
   // Like the tags: no date property selected means all of them date the
   // elements; selecting some keeps only those. The selection itself is
   // stored, so a date property imported later is not counted unasked.
@@ -338,20 +280,48 @@ export function FiltersPanel() {
 
   // Quick filter params
   const quickFilterParams: QuickFilterParams = useMemo(
-    () => ({
-      filters,
-      setFilters,
-      clearFilters,
-      isolated,
-      hideElements,
-      showAllElements,
-      hiddenElementIds,
-      elements,
-      comments,
-      evaluationModel,
-    }),
-    [filters, setFilters, clearFilters, isolated, hideElements, showAllElements, hiddenElementIds, elements, comments, evaluationModel]
+    () => ({ scope: scopeElements, isolated, comments, filters, evaluationModel }),
+    [scopeElements, isolated, comments, filters, evaluationModel]
   );
+
+  // Quick filters: the set of each chip, and what a click does with it
+  const [quickMode, setQuickModeState] = useState<QuickMode>(readQuickMode);
+  const setQuickMode = (mode: QuickMode) => {
+    setQuickModeState(mode);
+    try { localStorage.setItem(QUICK_MODE_KEY, mode); } catch { /* per-viewer convenience */ }
+  };
+  const { selectedElementIds, selectElements, clearSelection } = useSelectionStore();
+  const quickSets = useMemo(
+    () => QUICK_FILTER_DEFS
+      .filter((qf) => !qf.models || qf.models.includes(evaluationModel))
+      .map((qf) => ({ qf, ids: qf.ids(quickFilterParams) })),
+    [quickFilterParams, evaluationModel]
+  );
+  const othersOf = (ids: string[]) => {
+    const set = new Set(ids);
+    return scopeElements.filter((el) => !set.has(el.id)).map((el) => el.id);
+  };
+  const quickActive = (ids: string[]): boolean => {
+    if (ids.length === 0) return false;
+    if (quickMode === 'hide') return ids.every((id) => hiddenElementIds.has(id));
+    if (quickMode === 'select') return selectedElementIds.size === ids.length && ids.every((id) => selectedElementIds.has(id));
+    const others = othersOf(ids);
+    return others.length > 0 && others.every((id) => hiddenElementIds.has(id)) && ids.every((id) => !hiddenElementIds.has(id));
+  };
+  // A second click undoes what the chip did, and only that (elements hidden
+  // by hand stay hidden)
+  const applyQuick = (ids: string[]) => {
+    const active = quickActive(ids);
+    if (quickMode === 'hide') {
+      if (active) showElements(ids); else hideElements(ids);
+    } else if (quickMode === 'select') {
+      if (active) clearSelection(); else selectElements(ids);
+    } else {
+      const others = othersOf(ids);
+      if (active) showElements(others);
+      else { showElements(ids); hideElements(others); }
+    }
+  };
 
   // Handle tag toggle
   const handleTagToggle = useCallback(
@@ -396,6 +366,17 @@ export function FiltersPanel() {
             <span className="text-sm font-medium text-text-primary">
               {t('filters.elementsCount', { matching: matchingCount, total: activeTabId !== null ? outcome.total : elements.length })}
             </span>
+            {/* Hidden count on the same line: hiding never shifts the panel down */}
+            {hiddenElementIds.size > 0 && (
+              <span
+                className="flex items-center gap-0.5 text-xs text-text-tertiary"
+                title={t('filters.hiddenCount', { count: hiddenElementIds.size })}
+                data-testid="filters-hidden-count"
+              >
+                <EyeOff size={12} />
+                {hiddenElementIds.size}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1">
             {matchingCount > 0 && (
@@ -441,36 +422,132 @@ export function FiltersPanel() {
             {t('filters.countBreakdown', { filters: outcome.filterCount, query: outcome.queryCount })}
           </div>
         )}
-        {hiddenElementIds.size > 0 && (
-          <p className="text-[10px] text-text-tertiary mt-1">
-            {t('filters.hiddenCount', { count: hiddenElementIds.size })}
-          </p>
-        )}
       </div>
+
+      {/* Active filters summary: on top, out of the scrolled list, always in sight */}
+      {(isActive || queryActive) && (
+        <div className="mx-3 mt-3 p-2 bg-accent/5 border border-accent/20 rounded" data-testid="active-filters">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1 text-xs text-accent">
+              <Filter size={10} />
+              {t('filters.activeFilters')}
+            </div>
+            <button
+              onClick={() => useUIStore.setState((s) => ({ hideFilteredOut: !s.hideFilteredOut }))}
+              aria-pressed={hideFilteredOut}
+              title={t('filters.hideFilteredOutHint')}
+              className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border ${
+                hideFilteredOut
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-text-secondary border-border-default hover:border-accent'
+              }`}
+            >
+              {t('filters.hideFilteredOut')}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+            {queryActive && (
+              <FilterBadge
+                label={t('filters.queryBadge')}
+                onRemove={() => useQueryStore.getState().setOutputMode(queryOutputMode === 'both' ? 'table' : 'none')}
+              />
+            )}
+            {filters.textSearch && (
+              <FilterBadge
+                label={`"${filters.textSearch}"`}
+                onRemove={() => handleTextSearchChange('')}
+              />
+            )}
+            {filters.includeTags.map((tag) => (
+              <FilterBadge
+                key={tag}
+                label={tag}
+                onRemove={() => removeIncludeTag(tag)}
+              />
+            ))}
+            {filters.hasProperty && (
+              <FilterBadge
+                label={filters.hasProperty}
+                onRemove={() => handlePropertyChange('')}
+              />
+            )}
+            {selectedDateProperties.length > 0 && (
+              <FilterBadge
+                label={t('filters.dateProperties.badge', {
+                  kept: selectedDateProperties.length,
+                  total: datePropertyCounts.length,
+                })}
+                onRemove={clearDateProperties}
+              />
+            )}
+            {filters.minConfidence !== null && evaluationModel === 'zeroneurone' && (
+              <FilterBadge
+                label={`≥${filters.minConfidence}%`}
+                onRemove={() => setFilters({ minConfidence: null })}
+              />
+            )}
+            {evaluationScale && (filters.evaluationSources?.length ?? 0) > 0 && (
+              <FilterBadge
+                label={`${tCommon('evaluation.sourceShort')} ${filters.evaluationSources!.join(', ')}`}
+                onRemove={() => setFilters({ evaluationSources: null })}
+              />
+            )}
+            {evaluationScale && (filters.evaluationInfos?.length ?? 0) > 0 && (
+              <FilterBadge
+                label={`${tCommon('evaluation.infoShort')} ${filters.evaluationInfos!.join(', ')}`}
+                onRemove={() => setFilters({ evaluationInfos: null })}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {/* Quick filters */}
+        {/* Quick filters: a set each; the mode says what a click does with it */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-text-secondary">
-            {t('filters.sections.quickFilters')}
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-text-secondary">
+              {t('filters.sections.quickFilters')}
+            </label>
+            <div className="flex items-center rounded border border-border-default overflow-hidden" role="radiogroup" aria-label={t('filters.quickMode.label')}>
+              {QUICK_MODES.map((mode) => {
+                const Icon = mode === 'hide' ? EyeOff : mode === 'only' ? Eye : MousePointer2;
+                return (
+                  <button
+                    key={mode}
+                    role="radio"
+                    aria-checked={quickMode === mode}
+                    onClick={() => setQuickMode(mode)}
+                    title={t(`filters.quickMode.${mode}`)}
+                    aria-label={t(`filters.quickMode.${mode}`)}
+                    data-testid={`quick-mode-${mode}`}
+                    className={`p-1 ${quickMode === mode ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary'}`}
+                  >
+                    <Icon size={12} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="flex flex-wrap gap-1.5">
-            {QUICK_FILTER_DEFS.filter((qf) => !qf.models || qf.models.includes(evaluationModel)).map((qf) => {
-              const active = qf.isActive(quickFilterParams);
+            {quickSets.map(({ qf, ids }) => {
+              const active = quickActive(ids);
               return (
                 <button
                   key={qf.id}
-                  onClick={() => qf.apply(quickFilterParams)}
-                  className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded border transition-colors ${
+                  onClick={() => applyQuick(ids)}
+                  disabled={ids.length === 0}
+                  className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded border transition-colors disabled:opacity-40 ${
                     active
                       ? 'bg-accent text-white border-accent'
                       : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent hover:text-text-primary'
                   }`}
-                  title={t(`filters.quick.${qf.descKey}`)}
+                  title={`${t(`filters.quick.${qf.descKey}`)} · ${t(`filters.quickMode.${quickMode}`)}`}
                 >
                   {qf.icon}
                   {t(`filters.quick.${qf.labelKey}`)}
+                  <span className={active ? 'text-white/80' : 'text-text-tertiary'}>{ids.length}</span>
                 </button>
               );
             })}
@@ -555,6 +632,7 @@ export function FiltersPanel() {
                         : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
                     }`}
                   >
+                    <TagDot color={tagColors.get(tag)} />
                     {tag}
                     <span
                       className={`text-[10px] ${
@@ -712,83 +790,6 @@ export function FiltersPanel() {
         </div>
         )}
 
-        {/* Active filters summary */}
-        {(isActive || queryActive) && (
-          <div className="p-2 bg-accent/5 border border-accent/20 rounded">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1 text-xs text-accent">
-                <Filter size={10} />
-                {t('filters.activeFilters')}
-              </div>
-              <button
-                onClick={() => useUIStore.setState((s) => ({ hideFilteredOut: !s.hideFilteredOut }))}
-                aria-pressed={hideFilteredOut}
-                title={t('filters.hideFilteredOutHint')}
-                className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border ${
-                  hideFilteredOut
-                    ? 'bg-accent text-white border-accent'
-                    : 'text-text-secondary border-border-default hover:border-accent'
-                }`}
-              >
-                {t('filters.hideFilteredOut')}
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {queryActive && (
-                <FilterBadge
-                  label={t('filters.queryBadge')}
-                  onRemove={() => useQueryStore.getState().setOutputMode(queryOutputMode === 'both' ? 'table' : 'none')}
-                />
-              )}
-              {filters.textSearch && (
-                <FilterBadge
-                  label={`"${filters.textSearch}"`}
-                  onRemove={() => handleTextSearchChange('')}
-                />
-              )}
-              {filters.includeTags.map((tag) => (
-                <FilterBadge
-                  key={tag}
-                  label={tag}
-                  onRemove={() => removeIncludeTag(tag)}
-                />
-              ))}
-              {filters.hasProperty && (
-                <FilterBadge
-                  label={filters.hasProperty}
-                  onRemove={() => handlePropertyChange('')}
-                />
-              )}
-              {selectedDateProperties.length > 0 && (
-                <FilterBadge
-                  label={t('filters.dateProperties.badge', {
-                    kept: selectedDateProperties.length,
-                    total: datePropertyCounts.length,
-                  })}
-                  onRemove={clearDateProperties}
-                />
-              )}
-              {filters.minConfidence !== null && evaluationModel === 'zeroneurone' && (
-                <FilterBadge
-                  label={`≥${filters.minConfidence}%`}
-                  onRemove={() => setFilters({ minConfidence: null })}
-                />
-              )}
-              {evaluationScale && (filters.evaluationSources?.length ?? 0) > 0 && (
-                <FilterBadge
-                  label={`${tCommon('evaluation.sourceShort')} ${filters.evaluationSources!.join(', ')}`}
-                  onRemove={() => setFilters({ evaluationSources: null })}
-                />
-              )}
-              {evaluationScale && (filters.evaluationInfos?.length ?? 0) > 0 && (
-                <FilterBadge
-                  label={`${tCommon('evaluation.infoShort')} ${filters.evaluationInfos!.join(', ')}`}
-                  onRemove={() => setFilters({ evaluationInfos: null })}
-                />
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Hidden elements section */}

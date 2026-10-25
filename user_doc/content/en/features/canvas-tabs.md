@@ -66,6 +66,8 @@ These actions are undone with **Ctrl+Z**.
 
 Click a tab name in the bar to switch. Click **All** to see every element.
 
+Each tab keeps its **zoom and framing**: back on a tab, the view is the one you left (stored on this computer). A tab opened for the first time frames its elements. **All** keeps its view too, for the session. This holds however you switch (bar, Alt+arrows, search, Ctrl+Z, saved views).
+
 ---
 
 ## Ghost Elements
@@ -74,9 +76,10 @@ Elements that belong to another tab but are connected to an element in the curre
 
 | Aspect | Behavior |
 |--------|----------|
-| **Appearance** | Semi-transparent |
-| **Badge** | Shows which tab(s) the element belongs to |
-| **Navigation** | Right-click → **Go to tab [name]** to switch to the element's tab |
+| **Appearance** | Semi-transparent, hatched, dashed border |
+| **Tabs it belongs to** | Shown in the element's **Detail** tab |
+| **Navigation** | Right-click → **Tabs** → **Go to tab [name]** to switch to the element's tab |
+| **Bring here** | Right-click → **Tabs** → **Move into this tab**: the element joins the open tab and leaves its other tabs |
 
 Ghost elements provide continuity: you see the connections across tabs without having to switch.
 
@@ -141,7 +144,7 @@ Each collaborator navigates tabs independently. Creating, renaming, deleting, or
 |----------|----------|
 | **ZIP / JSON export** | Tabs are included |
 | **Import new dossier** | Tabs are restored |
-| **Import into existing dossier (merge)** | Imported elements go to the active tab; source tabs are not imported |
+| **Import into existing dossier (merge)** | You pick the archive tabs to import; they are recreated (merged with a tab of the same name) or everything goes to the active tab. See [Import]({{< relref "import-export/import" >}}). |
 
 ---
 

@@ -24,6 +24,9 @@ const tabStore = {
   addMembers: vi.fn().mockResolvedValue(undefined),
   getTabsForElement: vi.fn().mockReturnValue([]),
   restoreTab: vi.fn().mockResolvedValue(undefined),
+  deleteTab: vi.fn().mockResolvedValue(undefined),
+  removeMembers: vi.fn().mockResolvedValue(undefined),
+  tabs: [] as Array<{ id: string; name: string; memberElementIds: string[]; excludedElementIds: string[] }>,
 };
 
 const viewStore = {
@@ -175,6 +178,48 @@ describe('undo / redo dispatch', () => {
 
     expect(tabStore.addMembers).toHaveBeenCalledWith('tab1', ['e1']);
     expect(tabStore.addMembers).toHaveBeenCalledWith('tab2', ['e1']);
+  });
+
+  it('undoes several merges in one action, last first, and replays them in order', async () => {
+    const snap = (sourceId: string) => ({
+      targetId: 't', sourceId, sourceElement: element(sourceId), targetBefore: { notes: sourceId }, linksBefore: [], deletedLinkIds: [],
+    });
+    push({ type: 'merge-elements', undo: { snapshot: [snap('a'), snap('b')] }, redo: { snapshot: [snap('a'), snap('b')] } });
+
+    await history().undo();
+    expect(dossierStore.updateElement.mock.calls.map((c: unknown[]) => c[1])).toEqual([{ notes: 'b' }, { notes: 'a' }]);
+
+    await history().redo();
+    expect(dossierStore.mergeElements.mock.calls.map((c: unknown[]) => c[1])).toEqual(['a', 'b']);
+  });
+
+  it('puts a merged element back in its tabs, and takes the kept one out of those it joined', async () => {
+    tabStore.addMembers.mockClear();
+    push({
+      type: 'merge-elements',
+      undo: { snapshot: { targetId: 't', sourceId: 'a', sourceElement: element('a'), targetBefore: {}, linksBefore: [], deletedLinkIds: [], sourceTabIds: ['telecom'], targetAddedTabIds: ['telecom'] } },
+      redo: { snapshot: { targetId: 't', sourceId: 'a' } },
+    });
+    await history().undo();
+    expect(tabStore.addMembers).toHaveBeenCalledWith('telecom', ['a']);
+    expect(tabStore.removeMembers).toHaveBeenCalledWith('telecom', ['t']);
+  });
+
+  it('removes the tabs an import created on undo, and brings them back on redo', async () => {
+    tabStore.tabs = [
+      { id: 't9', name: 'Énergie', memberElementIds: ['e1'], excludedElementIds: [] },
+      { id: 't1', name: 'Existant', memberElementIds: ['e0'], excludedElementIds: [] },
+    ];
+    push({ type: 'create-elements', undo: { createdTabIds: ['t9'] }, redo: { elementIds: ['e1'], elements: [element('e1')] } });
+
+    await history().undo();
+    expect(dossierStore.deleteElements).toHaveBeenCalledWith(['e1']);
+    expect(tabStore.deleteTab).toHaveBeenCalledTimes(1);
+    expect(tabStore.deleteTab).toHaveBeenCalledWith('t9');
+
+    await history().redo();
+    expect(tabStore.restoreTab).toHaveBeenCalledWith({ id: 't9', name: 'Énergie', memberElementIds: [], excludedElementIds: [] });
+    tabStore.tabs = [];
   });
 
   it('removes created elements on undo and recreates them on redo', async () => {

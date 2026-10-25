@@ -189,7 +189,7 @@ function tokenize(input: string): Token[] | ParseError {
     // Number or Date: starts with digit
     if (/\d/.test(input[i])) {
       let num = '';
-      while (i < input.length && /[\d.\-]/.test(input[i])) {
+      while (i < input.length && /[\d.-]/.test(input[i])) {
         num += input[i];
         i++;
       }
@@ -201,10 +201,11 @@ function tokenize(input: string): Token[] | ParseError {
       continue;
     }
 
-    // Identifier or keyword: starts with letter, _, or dot-prefixed
-    if (/[a-zA-Z_]/.test(input[i])) {
+    // Identifier or keyword: starts with a letter (accented ones included:
+    // `Identité`, `Société`) or _, then letters, digits, _ and dots
+    if (/[\p{L}_]/u.test(input[i])) {
       let id = '';
-      while (i < input.length && /[a-zA-Z0-9_.]/.test(input[i])) {
+      while (i < input.length && /[\p{L}\p{N}_.]/u.test(input[i])) {
         id += input[i];
         i++;
       }

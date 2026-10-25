@@ -87,6 +87,10 @@ export interface MergeSnapshot {
   /** Full previous state of every link the merge retargeted, deleted or rewrote. */
   linksBefore: Link[];
   deletedLinkIds: LinkId[];
+  /** Tabs the source was in (it goes back to them on undo) */
+  sourceTabIds?: string[];
+  /** Tabs the kept element joined, taking the source's place (left on undo) */
+  targetAddedTabIds?: string[];
 }
 
 interface DossierState {
@@ -2333,12 +2337,20 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       await linkRepository.delete(linkId).catch((err) => onPersistFailure(err, 'link.delete(merge)'));
     }
 
-    // Cascade: remove source from all canvas tabs
+    // Tabs: the kept element takes the source's place in its tabs (else it
+    // would show as a ghost there, linked to the members), then the source
+    // leaves them
     const invId = get().currentDossier?.id;
     if (invId) {
-      import('./tabStore').then(({ useTabStore }) => {
-        useTabStore.getState().removeElementFromAllTabs(invId, sourceId);
-      });
+      const { useTabStore } = await import('./tabStore');
+      const tabs = useTabStore.getState();
+      const sourceTabIds = tabs.getTabsForElement(sourceId).map((t) => t.id);
+      const targetTabIds = new Set(tabs.getTabsForElement(targetId).map((t) => t.id));
+      const targetAddedTabIds = sourceTabIds.filter((id) => !targetTabIds.has(id));
+      for (const tabId of targetAddedTabIds) await tabs.addMembers(tabId, [targetId]);
+      await useTabStore.getState().removeElementFromAllTabs(invId, sourceId);
+      mergeSnapshot.sourceTabIds = sourceTabIds;
+      mergeSnapshot.targetAddedTabIds = targetAddedTabIds;
     }
 
     return mergeSnapshot;

@@ -42,6 +42,8 @@ dossier_2024-01-15.zip
 **Recommended** for backup and transfer between machines.
 {{< /hint >}}
 
+While the archive is built (ZIP, encrypted ZIP, Obsidian vault), from the dossier or from the dossier list, a window follows the progress: attached files, dossier data, compression, encryption.
+
 ---
 
 ### JSON

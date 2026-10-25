@@ -235,7 +235,8 @@
       "elements": "{{count}} élément(s)",
       "success": "{{count}} élément(s) importé(s)",
       "error": "Échec de l'import",
-      "mediaResult": "{{ok}} média(s) attaché(s), {{fail}} échec(s)"
+      "mediaResult": "{{ok}} média(s) attaché(s), {{fail}} échec(s)",
+      "tabLimit": "Limite de {{max}} onglets : « {{name}} » va dans l'onglet ouvert"
     },
     "layout": {
       "title": "Algorithmes de layout",
@@ -330,6 +331,7 @@
       "deleteConfirm": "Supprimer l'onglet {{name}} ? Les éléments ne seront pas supprimés.",
       "newFromSelection": "Nouvel onglet avec la sélection",
       "moveToTab": "Déplacer vers l'onglet...",
+      "moveHere": "Déplacer dans cet onglet",
       "addToTab": "Ajouter à l'onglet...",
       "removeFromTab": "Retirer de l'onglet",
       "emptyState": "Aucun élément dans cet onglet",

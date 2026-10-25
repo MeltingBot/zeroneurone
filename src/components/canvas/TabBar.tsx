@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
-import { useTabStore, useViewStore, useDossierStore, useHistoryStore, MAX_TABS } from '../../stores';
+import { useTabStore, useDossierStore, useHistoryStore, MAX_TABS } from '../../stores';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { useProgressStore } from '../../stores/progressStore';
 import type { TabId, DossierId } from '../../types';
@@ -22,9 +22,6 @@ export function TabBar({ dossierId }: TabBarProps) {
   const renameTab = useTabStore((s) => s.renameTab);
   const deleteTab = useTabStore((s) => s.deleteTab);
   const reorderTab = useTabStore((s) => s.reorderTab);
-  const saveTabViewport = useTabStore((s) => s.saveTabViewport);
-  const viewport = useViewStore((s) => s.viewport);
-  const requestViewportChange = useViewStore((s) => s.requestViewportChange);
   const elements = useDossierStore((s) => s.elements);
   const pushAction = useHistoryStore((s) => s.pushAction);
 
@@ -53,21 +50,10 @@ export function TabBar({ dossierId }: TabBarProps) {
     }));
   };
 
-  // Switch tab with viewport save/restore
+  // Switch tab: setActiveTab keeps each tab's zoom and centre
   const switchTab = (tabId: TabId) => {
     if (tabId === activeTabId && extraTabIds.length === 0) return;
-    // Save current viewport for the tab we're leaving
-    if (activeTabId !== null) {
-      saveTabViewport(activeTabId, viewport);
-    }
-    withActivity(() => {
-      setActiveTab(tabId);
-      // Restore viewport for the new tab
-      const tab = tabs.find((t) => t.id === tabId);
-      if (tab && (tab.viewport.x !== 0 || tab.viewport.y !== 0 || tab.viewport.zoom !== 1)) {
-        requestViewportChange(tab.viewport);
-      }
-    });
+    withActivity(() => setActiveTab(tabId));
   };
 
   // Ctrl/Cmd+click: show the tab together with the open one, or stop
@@ -82,10 +68,6 @@ export function TabBar({ dossierId }: TabBarProps) {
 
   const switchToAll = () => {
     if (activeTabId === null) return;
-    // Save current viewport before switching
-    if (activeTabId !== null) {
-      saveTabViewport(activeTabId, viewport);
-    }
     withActivity(() => setActiveTab(null));
   };
 

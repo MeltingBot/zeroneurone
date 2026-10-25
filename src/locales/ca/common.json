@@ -306,6 +306,7 @@
     "insights": "Anàlisi del graf",
     "layout": "Disposició",
     "view": "Canvi de vista",
-    "suggestions": "Suggeriments d'enllaços"
+    "suggestions": "Suggeriments d'enllaços",
+    "export": "Creació de l'arxiu"
   }
 }

@@ -1,42 +1,74 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TriangleAlert } from 'lucide-react';
 import { Modal, Button } from '../common';
+import { useDossierStore } from '../../stores';
+import { mergePreview } from '../../utils/mergePreview';
 import type { Element } from '../../types';
 
 interface MergeElementsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  element1: Element;
-  element2: Element;
-  onMerge: (targetId: string, sourceId: string) => Promise<void>;
+  /** Two elements or more: one is kept, the others are merged into it */
+  elements: Element[];
+  onMerge: (targetId: string, sourceIds: string[]) => Promise<void>;
 }
 
 export function MergeElementsModal({
   isOpen,
   onClose,
-  element1,
-  element2,
+  elements,
   onMerge,
 }: MergeElementsModalProps) {
   const { t } = useTranslation(['modals', 'common']);
-  const [targetId, setTargetId] = useState(element1.id);
+  const links = useDossierStore((s) => s.links);
   const [isLoading, setIsLoading] = useState(false);
 
-  const sourceId = targetId === element1.id ? element2.id : element1.id;
+  // Links per element: the most linked one is kept by default
+  const linkCount = useMemo(() => {
+    const ids = new Set(elements.map((el) => el.id));
+    const counts = new Map<string, number>();
+    for (const l of links) {
+      if (ids.has(l.fromId)) counts.set(l.fromId, (counts.get(l.fromId) ?? 0) + 1);
+      if (ids.has(l.toId)) counts.set(l.toId, (counts.get(l.toId) ?? 0) + 1);
+    }
+    return counts;
+  }, [elements, links]);
+  const [targetId, setTargetId] = useState(() => (
+    elements.length === 2
+      ? elements[0].id
+      : [...elements].sort((a, b) => (linkCount.get(b.id) ?? 0) - (linkCount.get(a.id) ?? 0))[0].id
+  ));
+
+  const target = elements.find((el) => el.id === targetId) ?? elements[0];
+  const sources = useMemo(() => elements.filter((el) => el.id !== target.id), [elements, target]);
+  const preview = useMemo(() => mergePreview(target, sources), [target, sources]);
 
   const handleMerge = async () => {
     setIsLoading(true);
     try {
-      await onMerge(targetId, sourceId);
+      await onMerge(target.id, sources.map((el) => el.id));
       onClose();
     } finally {
       setIsLoading(false);
     }
   };
 
+  const swatch = (el: Element) => (
+    <div
+      className="w-3 h-3 border shrink-0"
+      style={{
+        backgroundColor: el.visual.color,
+        borderColor: el.visual.borderColor,
+        borderRadius: el.visual.shape === 'circle' ? '50%' : el.visual.shape === 'diamond' ? '2px' : '0',
+      }}
+    />
+  );
+
   const renderElementSummary = (el: Element, isTarget: boolean) => (
     <button
       type="button"
+      key={el.id}
       onClick={() => setTargetId(el.id)}
       className={`flex-1 p-3 border text-left transition-colors ${
         isTarget
@@ -45,14 +77,7 @@ export function MergeElementsModal({
       }`}
     >
       <div className="flex items-center gap-2 mb-1">
-        <div
-          className="w-3 h-3 border"
-          style={{
-            backgroundColor: el.visual.color,
-            borderColor: el.visual.borderColor,
-            borderRadius: el.visual.shape === 'circle' ? '50%' : el.visual.shape === 'diamond' ? '2px' : '0',
-          }}
-        />
+        {swatch(el)}
         <span className="text-sm font-medium text-text-primary truncate">
           {el.label || t('common:empty.unnamed')}
         </span>
@@ -70,18 +95,25 @@ export function MergeElementsModal({
     </button>
   );
 
+  const warnings = [
+    preview.notesCount > 1 && t('modals:merge.warnNotes', { count: preview.notesCount }),
+    preview.multiValueKeys > 0
+      ? t('modals:merge.warnPropertiesMulti', { count: preview.propertyCount, keys: preview.multiValueKeys })
+      : preview.propertyCount > target.properties.length && t('modals:merge.warnProperties', { count: preview.propertyCount }),
+  ].filter((w): w is string => typeof w === 'string');
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('modals:merge.title')}
+      title={elements.length > 2 ? t('modals:merge.titleMany', { count: elements.length }) : t('modals:merge.title')}
       width="md"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             {t('common:actions.cancel')}
           </Button>
-          <Button variant="primary" onClick={handleMerge} disabled={isLoading}>
+          <Button variant="primary" onClick={handleMerge} disabled={isLoading} data-testid="merge-confirm">
             {isLoading ? t('modals:merge.merging') : t('modals:merge.confirm')}
           </Button>
         </>
@@ -90,12 +122,43 @@ export function MergeElementsModal({
       <p className="text-sm text-text-secondary mb-3">
         {t('modals:merge.description')}
       </p>
-      <div className="flex gap-2">
-        {renderElementSummary(element1, targetId === element1.id)}
-        {renderElementSummary(element2, targetId === element2.id)}
-      </div>
+      {elements.length === 2 ? (
+        <div className="flex gap-2">
+          {elements.map((el) => renderElementSummary(el, el.id === target.id))}
+        </div>
+      ) : (
+        <div className="max-h-64 overflow-y-auto border border-border-default rounded divide-y divide-border-default" role="radiogroup">
+          {elements.map((el) => (
+            <label key={el.id} className={`flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer ${el.id === target.id ? 'bg-accent/5' : 'hover:bg-bg-secondary'}`}>
+              <input
+                type="radio"
+                name="merge-target"
+                checked={el.id === target.id}
+                onChange={() => setTargetId(el.id)}
+                className="border-border-default"
+              />
+              {swatch(el)}
+              <span className="flex-1 truncate text-text-primary">{el.label || t('common:empty.unnamed')}</span>
+              <span className="text-xs text-text-tertiary shrink-0">
+                {t('modals:merge.linkCount', { count: linkCount.get(el.id) ?? 0 })}
+              </span>
+              {el.id === target.id && <span className="text-xs font-medium text-accent shrink-0">{t('modals:merge.kept')}</span>}
+            </label>
+          ))}
+        </div>
+      )}
+      {warnings.length > 0 && (
+        <div className="mt-3 space-y-1" data-testid="merge-warnings">
+          {warnings.map((w) => (
+            <p key={w} className="flex items-start gap-1.5 text-xs text-warning">
+              <TriangleAlert size={12} className="mt-0.5 shrink-0" />
+              {w}
+            </p>
+          ))}
+        </div>
+      )}
       <p className="text-xs text-text-tertiary mt-3">
-        {t('modals:merge.hint')}
+        {elements.length > 2 ? t('modals:merge.hintMany', { count: sources.length }) : t('modals:merge.hint')}
       </p>
     </Modal>
   );

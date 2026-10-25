@@ -164,12 +164,14 @@ Les éléments peuvent contenir des **événements**. Les champs `event.*` utili
 
 ### Propriétés libres
 
-Tout nom de propriété défini par l'utilisateur peut être utilisé comme champ. Si le nom contient des espaces ou caractères spéciaux, entourez-le de guillemets :
+Tout nom de propriété défini par l'utilisateur peut être utilisé comme champ, accents compris (`Identité = "SFR"`). Si le nom contient des espaces ou caractères spéciaux, entourez-le de guillemets :
 
 ```
 "Numéro SIREN" MATCHES /^[0-9]{9}$/
 ville = "Paris"
 ```
+
+Un élément peut porter plusieurs fois la même propriété (après une fusion, par exemple trois « Identité ») : la condition est vraie si **une** des valeurs la remplit, et `!=` est vrai si **aucune** n'est égale. `Identité != "SFR"` écarte donc un élément qui a « SFR » parmi ses valeurs. Il en va de même pour les tags.
 
 ---
 

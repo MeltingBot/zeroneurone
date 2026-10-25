@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
+import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, Filter, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3 } from 'lucide-react';
 import { matrixFiltersToQuery } from '../../utils/matrixFilterQuery';
@@ -50,8 +51,11 @@ const isDateProperty = (prop: Property) => prop.type === 'date' || prop.type ===
 
 /** Extract a display value for a property key from an element */
 function getPropertyValue(element: Element, key: string): string {
-  const prop = element.properties.find((p) => p.key === key);
-  if (!prop || prop.value == null) return '';
+  // Every value of the key (a merge may leave several)
+  return propertiesOf(element.properties, key).map(displayPropertyValue).join(VALUES_SEPARATOR);
+}
+
+function displayPropertyValue(prop: Property): string {
   if (prop.value instanceof Date || isDateProperty(prop)) {
     // Date and time with the source hour: "28 oct. 2026, 23:59 (05:59 Tokyo)"
     return formatPropertyValue(prop.value, prop.type, i18next.language, prop.timeZone);

@@ -232,16 +232,18 @@ The group appears as a frame containing its members. Groups and elements already
 
 ---
 
-## Merge Two Elements
+## Merge Elements
 
-Combine two elements into one when they represent the same concept.
+Combine several elements into one when they represent the same concept.
 
 ### Procedure
 
-1. Select exactly **2 elements** (Ctrl+click)
+1. Select **2 elements or more** (Ctrl+click, lasso, or **Find similar**)
 2. Right-click → **Merge**
-3. Choose which element to keep (its label and appearance will be preserved)
+3. Choose which element to keep (its label and appearance will be preserved). Beyond 2, the list shows each one's link count; the most linked is offered by default
 4. Confirm the merge
+
+Before you confirm, the window warns about the notes that will be put end to end and the number of properties after the merge, with the keys that will carry several values. A single **Ctrl+Z** undoes the whole merge.
 
 ### What Gets Merged
 
@@ -252,7 +254,7 @@ Combine two elements into one when they represent the same concept.
 | **Events** | Union (deduplicated by identifier) |
 | **Notes** | Concatenated (separated by ---) |
 | **Attachments** | Union |
-| **Confidence** | Maximum of both values |
+| **Confidence** | Highest value |
 | **Grading** | The kept element's, otherwise the other element's |
 | **Source** | Combined if different, one per line |
 | **Links** | Transferred to the kept element |

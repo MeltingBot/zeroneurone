@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
+import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { useTranslation } from 'react-i18next';
 import {
   ReactFlow,
@@ -351,7 +352,10 @@ function FitViewController() {
     const interval = setInterval(() => {
       attempts++;
       const nodes = getNodes();
-      const hasMeasuredNodes = nodes.length > 0 && nodes.some(n => n.measured?.width);
+      // Framing given elements (a tab just opened): wait for them, not for
+      // the nodes still shown from before
+      const wanted = pendingFitViewIds ? new Set(pendingFitViewIds) : null;
+      const hasMeasuredNodes = nodes.length > 0 && nodes.some(n => n.measured?.width && (!wanted || wanted.has(n.id)));
       if (hasMeasuredNodes || attempts >= maxAttempts) {
         clearInterval(interval);
         fitView({
@@ -809,7 +813,7 @@ export function Canvas() {
   // Share modal state
 
   // Merge modal state
-  const [mergeElements, setMergeElements] = useState<{ el1: Element; el2: Element } | null>(null);
+  const [mergeElements, setMergeElements] = useState<Element[] | null>(null);
 
   // Link context menu state
   const [linkContextMenu, setLinkContextMenu] = useState<LinkContextMenuState | null>(null);
@@ -1455,18 +1459,19 @@ export function Canvas() {
 
       let badgeProperty: { value: string; type: string } | null = null;
       if (filters.badgePropertyKey) {
-        const prop = el.properties.find(p => p.key === filters.badgePropertyKey);
-        if (prop && prop.value != null) {
-          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language, prop.timeZone);
-          badgeProperty = { value: valueStr, type: prop.type || 'text' };
+        const props = propertiesOf(el.properties, filters.badgePropertyKey);
+        if (props.length > 0) {
+          const valueStr = props.map((p) => formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)).join(VALUES_SEPARATOR);
+          badgeProperty = { value: valueStr, type: props[0].type || 'text' };
         }
       }
 
       const displayedPropertyValues = displayedProperties
         .map(key => {
-          const prop = el.properties.find(p => p.key === key);
-          if (!prop || prop.value == null) return null;
-          const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language, prop.timeZone);
+          // Every value of the key (a merge may leave several)
+          const props = propertiesOf(el.properties, key);
+          if (props.length === 0) return null;
+          const valueStr = props.map((p) => formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)).join(VALUES_SEPARATOR);
           return { key, value: valueStr };
         })
         .filter((p): p is { key: string; value: string } => p !== null);
@@ -2135,9 +2140,9 @@ export function Canvas() {
 
         const linkDisplayedPropertyValues = displayedProperties
           .map(key => {
-            const prop = link.properties?.find(p => p.key === key);
-            if (!prop || prop.value == null) return null;
-            const valueStr = formatPropertyValue(prop.value, prop.type, i18n.language, prop.timeZone);
+            const props = propertiesOf(link.properties, key);
+            if (props.length === 0) return null;
+            const valueStr = props.map((p) => formatPropertyValue(p.value, p.type, i18n.language, p.timeZone)).join(VALUES_SEPARATOR);
             return { key, value: valueStr };
           })
           .filter((p): p is { key: string; value: string } => p !== null);
@@ -2957,8 +2962,9 @@ export function Canvas() {
     if (!currentDossier || ids.length === 0) return;
     const from = activeTabId;
     const sources = viewTabIds.map((tabId) => ({ tabId, removed: ids.filter((id) => tabMembers(tabId).has(id)) }));
-    if (from !== null) saveTabViewport(from, viewport);
     const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
+    // The new tab opens where the view stands (the elements are on screen)
+    await saveTabViewport(tab.id, viewport);
     await addTabMembers(tab.id, ids);
     for (const { tabId, removed } of sources) if (removed.length > 0) await removeTabMembers(tabId, removed);
     setActiveTab(tab.id);
@@ -2987,6 +2993,25 @@ export function Canvas() {
       activeAfter: from,
     });
   }, [activeTabId, viewTabIds, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
+
+  // Bring ghosts into the open tab: in it, out of the tabs they are in
+  const moveIdsHere = useCallback(async (ids: string[]) => {
+    const here = activeTabId;
+    if (here === null || ids.length === 0) return;
+    const target = tabMembers(here);
+    const added = ids.filter((id) => !target.has(id));
+    const removals = canvasTabs
+      .filter((tab) => tab.id !== here)
+      .map((tab) => ({ tabId: tab.id, removed: ids.filter((id) => tabMembers(tab.id).has(id)) }))
+      .filter(({ removed }) => removed.length > 0);
+    await addTabMembers(here, ids);
+    for (const { tabId, removed } of removals) await removeTabMembers(tabId, removed);
+    pushTabMembership({
+      changes: [{ tabId: here, added, removed: [] }, ...removals.map(({ tabId, removed }) => ({ tabId, added: [], removed }))],
+      activeBefore: here,
+      activeAfter: here,
+    });
+  }, [activeTabId, canvasTabs, addTabMembers, removeTabMembers, tabMembers, pushTabMembership]);
 
   // Take `ids` out of the tabs in view: members leave them (they stay in
   // "All"), ghosts are set aside. Membership changes go through the history.
@@ -3540,12 +3565,12 @@ export function Canvas() {
   );
 
   const handleMergeElements = useCallback(() => {
-    if (!contextMenu || selectedElementIds.size !== 2) return;
-    const ids = Array.from(selectedElementIds);
-    const el1 = elementMap.get(ids[0]);
-    const el2 = elementMap.get(ids[1]);
-    if (el1 && el2) {
-      setMergeElements({ el1, el2 });
+    if (!contextMenu || selectedElementIds.size < 2) return;
+    const chosen = Array.from(selectedElementIds)
+      .map((id) => elementMap.get(id))
+      .filter((el): el is Element => !!el);
+    if (chosen.length >= 2) {
+      setMergeElements(chosen);
       setContextMenu(null);
     }
   }, [contextMenu, selectedElementIds, elementMap]);
@@ -3796,7 +3821,8 @@ export function Canvas() {
             result = await importService.importFromZip(
               importPlacementData.file,
               importPlacementData.dossierId,
-              { x: offsetX, y: offsetY }
+              { x: offsetX, y: offsetY },
+              importPlacementData.importOptions?.zipTabs,
             );
           }
 
@@ -3813,13 +3839,55 @@ export function Canvas() {
             // Request fitView to show all elements including imported ones
             requestFitView();
 
+            // Chosen archive tabs: into the dossier's tab of the same name, or a
+            // new one; what no tab takes (and tabs beyond the limit) goes to the open tab
+            const placed = new Set<string>(result.linkedOnlyIds ?? []);
+            const createdTabIds: string[] = [];
+            for (const plan of result.tabPlan ?? []) {
+              if (plan.memberIds.length === 0) continue;
+              const { tabs } = useTabStore.getState();
+              const key = plan.name.trim().toLowerCase();
+              let target = tabs.find((tab) => tab.name.trim().toLowerCase() === key) ?? null;
+              if (!target && tabs.length < MAX_TABS) {
+                target = await useTabStore.getState().createTab(importPlacementData.dossierId, plan.name);
+                createdTabIds.push(target.id);
+              }
+              if (!target) {
+                toast.warning(tPages('dossier.importPlacement.tabLimit', { name: plan.name, max: MAX_TABS }));
+                continue;
+              }
+              await addTabMembers(target.id, plan.memberIds);
+              plan.memberIds.forEach((id) => placed.add(id));
+            }
+
             // Add imported elements to active tab
             if (activeTabId) {
               const importedIds = useDossierStore.getState().elements
-                .filter(el => !preImportIds.has(el.id))
+                .filter(el => !preImportIds.has(el.id) && !placed.has(el.id))
                 .map(el => el.id);
               if (importedIds.length > 0) {
                 addTabMembers(activeTabId, importedIds);
+              }
+            }
+
+            // One undoable action: Ctrl+Z removes what the import added (and the
+            // tabs it created); the imported elements stay selected
+            {
+              const after = useDossierStore.getState();
+              const newElements = after.elements.filter((el) => !preImportIds.has(el.id));
+              const newLinks = after.links.filter((l) => !snapshot.linkIds.has(l.id));
+              if (newElements.length > 0) {
+                pushAction({
+                  type: 'create-elements',
+                  undo: { createdTabIds },
+                  redo: {
+                    elements: newElements,
+                    links: newLinks,
+                    elementIds: newElements.map((el) => el.id),
+                    linkIds: newLinks.map((l) => l.id),
+                  },
+                });
+                selectElements(newElements.map((el) => el.id));
               }
             }
 
@@ -5123,7 +5191,7 @@ export function Canvas() {
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
               onFindAllPaths={handleFindAllPaths}
-              onMerge={selectedElementIds.size === 2 ? handleMergeElements : undefined}
+              onMerge={selectedElementIds.size >= 2 ? handleMergeElements : undefined}
               isGroup={!!elementMap.get(contextMenu.elementId)?.isGroup}
               isInGroup={!!elementMap.get(contextMenu.elementId)?.parentGroupId}
               hasMultipleSelected={selectedElementIds.size > 1}
@@ -5146,6 +5214,7 @@ export function Canvas() {
                 tabId,
                 selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
               ) : undefined}
+              onMoveHere={activeTabId !== null ? () => moveIdsHere([contextMenu.elementId]) : undefined}
               onRemoveFromTab={() => removeIdsFromActiveTab(
                 selectedElementIds.size > 1 ? Array.from(selectedElementIds) : [contextMenu.elementId],
               )}
@@ -5285,14 +5354,15 @@ export function Canvas() {
           <MergeElementsModal
             isOpen={true}
             onClose={() => setMergeElements(null)}
-            element1={mergeElements.el1}
-            element2={mergeElements.el2}
-            onMerge={async (targetId, sourceId) => {
-              const snapshot = await mergeElementsAction(targetId, sourceId);
+            elements={mergeElements}
+            onMerge={async (targetId, sourceIds) => {
+              // One after the other into the kept element; one Ctrl+Z undoes them all
+              const snapshots = [];
+              for (const sourceId of sourceIds) snapshots.push(await mergeElementsAction(targetId, sourceId));
               pushAction({
                 type: 'merge-elements',
-                undo: { snapshot },
-                redo: { snapshot },
+                undo: { snapshot: snapshots },
+                redo: { snapshot: snapshots },
               });
               clearSelection();
             }}

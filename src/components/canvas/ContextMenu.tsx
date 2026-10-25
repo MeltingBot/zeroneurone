@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Image, Group, Ungroup,
-  BoxSelect, Lock, LockOpen, Layers, ArrowRight, Plus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2, Code,
+  BoxSelect, Lock, LockOpen, Layers, ArrowRight, ArrowDownLeft, Plus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2, Code,
 } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
@@ -54,6 +54,8 @@ interface ContextMenuProps {
   onNewTabFromSelection?: () => void;
   /** Send to another tab and out of the active one; absent outside a tab */
   onMoveToTab?: (tabId: TabId) => void;
+  /** A ghost into the open tab, out of the tabs it is in */
+  onMoveHere?: () => void;
   onRemoveFromTab: () => void;
   isGhostElement: boolean;
   elementTabIds: TabId[];
@@ -116,6 +118,7 @@ function ContextMenuComponent({
   onAddToTab,
   onNewTabFromSelection,
   onMoveToTab,
+  onMoveHere,
   onRemoveFromTab,
   isGhostElement,
   elementTabIds,
@@ -175,7 +178,8 @@ function ContextMenuComponent({
     hasMultipleSelected && !isGroup && onGroupSelection && { id: 'group-selection', label: cm('groupSelection'), icon: Group, onSelect: onGroupSelection },
     isGroup && { id: 'dissolve-group', label: cm('dissolveGroup'), icon: Ungroup, onSelect: onDissolveGroup },
     isInGroup && { id: 'remove-from-group', label: cm('removeFromGroup'), icon: BoxSelect, onSelect: onRemoveFromGroup },
-    hasTwoSelected && onMerge && { id: 'merge', label: cm('merge'), icon: Combine, onSelect: onMerge },
+    // Two elements or more selected (the caller passes onMerge only then)
+    onMerge && { id: 'merge', label: cm('merge'), icon: Combine, onSelect: onMerge },
     {
       id: 'toggle-lock',
       label: isPositionLocked ? cm('unlockPosition') : cm('lockPosition'),
@@ -198,6 +202,12 @@ function ContextMenuComponent({
             onSelect: () => onGoToTab(tab.id),
           }))
       : []),
+    isGhostElement && !!onMoveHere && {
+      id: 'move-here',
+      label: t('dossier.tabs.moveHere'),
+      icon: ArrowDownLeft,
+      onSelect: onMoveHere,
+    },
     !!onNewTabFromSelection && {
       id: 'new-tab-from-selection',
       label: t('dossier.tabs.newFromSelection'),

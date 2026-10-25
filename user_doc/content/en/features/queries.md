@@ -164,7 +164,9 @@ Elements can contain **events**. The `event.*` fields use **ANY** semantics: an 
 
 ### Custom properties
 
-Any user-defined property name can be used as a field. If the name contains spaces or special characters, wrap it in double quotes:
+Any user-defined property name can be used as a field, accents included (`Identité = "SFR"`). An element may carry the same property several times (after a merge, say three "Identité"): a condition holds when **one** of the values meets it, and `!=` holds when **none** is equal, so `Identité != "SFR"` leaves out an element holding "SFR" among its values. The same goes for tags.
+
+If the name contains spaces or special characters, wrap it in double quotes:
 
 ```
 "SIREN Number" MATCHES /^[0-9]{9}$/

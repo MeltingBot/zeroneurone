@@ -25,6 +25,20 @@ Le panneau **Filtres** permet d'afficher ou masquer des éléments selon différ
 | **Éléments masqués** | Gérer les éléments cachés manuellement |
 | **Isolés** | Éléments sans connexion |
 
+### Filtres rapides
+
+Chaque filtre rapide désigne un ensemble d'éléments de la vue (l'onglet ouvert, ou tout le dossier dans **Tous**) : **Isolés**, **Sans tags**, **Sans geo**, **Sans date**, **Confiance faible** (ou **Sources fiables** avec une cotation), **Commentaires** non résolus. Le nombre d'éléments s'affiche sur chaque puce.
+
+Les trois icônes à droite du titre choisissent ce que fait un clic :
+
+| Mode | Effet |
+|------|-------|
+| **Masquer** | Masque ces éléments |
+| **Seulement ceux-ci** | Masque tous les autres |
+| **Sélectionner** | Sélectionne ces éléments (pour les déplacer, les étiqueter, les fusionner…) |
+
+Un second clic défait ce que la puce a fait, et seulement cela : les éléments masqués à la main le restent.
+
 ### Propriétés date
 
 La section **Propriétés date** liste les propriétés de type date et date-heure du dossier, avec le nombre d'éléments qui renseignent chacune. Ces dates placent les éléments sur la timeline, sur la carte et dans le curseur temporel du canvas.

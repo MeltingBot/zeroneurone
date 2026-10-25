@@ -25,7 +25,16 @@
     "title": "Importar no dossiê",
     "description": "Importar dados no dossiê atual. Ficheiros ZIP serão importados em modo de posicionamento.",
     "selectFile": "Selecionar um ficheiro",
-    "emptyZip": "O ficheiro ZIP está vazio ou não contém elementos"
+    "emptyZip": "O ficheiro ZIP está vazio ou não contém elementos",
+    "tabsTitle": "Separadores a importar",
+    "untitledTab": "Sem nome",
+    "unassigned": "Sem separador",
+    "includeLinked": "Elementos ligados",
+    "includeReport": "Relatório (secções)",
+    "tabsConfirm": "Colocar",
+    "tabsTarget": "Destino",
+    "recreateTabs": "Recriar os separadores",
+    "intoOpenTab": "Tudo no separador aberto"
   },
   "import": {
     "title": "Importar um dossiê",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "A preparar o arquivo…",
+      "files": "Ficheiros anexos: {{done}}/{{total}}",
+      "data": "Dados do processo…",
+      "compress": "Compressão: {{percent}} %",
+      "encrypt": "Cifragem…"
+    },
     "title": "Exportar o dossiê",
     "description": "Exportar \"{{name}}\" ({{elements}} elementos, {{links}} ligações)",
     "format": "Formato",
@@ -240,6 +256,10 @@
     "createFirst": "Crie a sua primeira paleta"
   },
   "tagSetEditor": {
+    "applyTitle": "Aplicar ao processo aberto",
+    "applyVisual": "Aparência (elementos com esta etiqueta principal)",
+    "applyProperties": "Propriedades em falta, vazias (elementos com a etiqueta)",
+    "applyProgress": "Elementos atualizados: {{done}}/{{total}}",
     "title": "Paleta de tags",
     "titleNew": "Nova tag",
     "titleEdit": "Editar \"{{name}}\"",
@@ -614,7 +634,17 @@
     "kept": "Mantido",
     "properties": "propriedades",
     "events": "eventos",
-    "hint": "O outro elemento será eliminado. Os seus links serão transferidos."
+    "hint": "O outro elemento será eliminado. Os seus links serão transferidos.",
+    "titleMany": "Fundir {{count}} elementos",
+    "warnNotes": "As notas de {{count}} elementos serão colocadas umas a seguir às outras",
+    "warnProperties_one": "{{count}} propriedade após a fusão",
+    "warnProperties_other": "{{count}} propriedades após a fusão",
+    "warnPropertiesMulti_one": "{{count}} propriedade após a fusão, {{keys}} chave(s) com vários valores",
+    "warnPropertiesMulti_other": "{{count}} propriedades após a fusão, {{keys}} chave(s) com vários valores",
+    "linkCount_one": "{{count}} ligação",
+    "linkCount_other": "{{count}} ligações",
+    "hintMany_one": "O outro elemento será eliminado. As suas ligações serão transferidas.",
+    "hintMany_other": "Os outros {{count}} elementos serão eliminados. As suas ligações serão transferidas."
   },
   "encryption": {
     "title": "Encriptação",

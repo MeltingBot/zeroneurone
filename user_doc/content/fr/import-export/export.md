@@ -42,6 +42,8 @@ enquete_2024-01-15.zip
 **Recommandé** pour la sauvegarde et le transfert entre machines.
 {{< /hint >}}
 
+Pendant la construction de l'archive (ZIP, ZIP chiffré, coffre Obsidian), depuis le dossier ou depuis la liste des dossiers, une fenêtre suit l'avancement : fichiers joints, données du dossier, compression, chiffrement.
+
 ---
 
 ### JSON

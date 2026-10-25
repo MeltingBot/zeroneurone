@@ -301,6 +301,7 @@
     "insights": "Graph analysis",
     "layout": "Layout",
     "view": "Switching view",
-    "suggestions": "Link suggestions"
+    "suggestions": "Link suggestions",
+    "export": "Building the archive"
   }
 }

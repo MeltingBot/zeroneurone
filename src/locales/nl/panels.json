@@ -346,6 +346,12 @@
       "allProperties": "Alle",
       "all": "Alle"
     },
+    "quickMode": {
+      "label": "Actie van snelfilters",
+      "hide": "Verbergen",
+      "only": "Alleen deze",
+      "select": "Selecteren"
+    },
     "quick": {
       "isolated": "Geïsoleerd",
       "isolatedDesc": "Elementen zonder verbinding",
@@ -360,7 +366,7 @@
       "hasComments": "Opmerkingen",
       "hasCommentsDesc": "Elementen met onopgeloste opmerkingen",
       "reliableSources": "Betrouwbare bronnen",
-      "reliableSourcesDesc": "Alleen als betrouwbaar gewaardeerde bronnen behouden"
+      "reliableSourcesDesc": "Elementen uit een als betrouwbaar gewaardeerde bron"
     },
     "dateProperties": {
       "title": "Datumeigenschappen",

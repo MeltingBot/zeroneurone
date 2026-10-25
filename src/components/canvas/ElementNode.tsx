@@ -8,6 +8,7 @@ import { ResolvedIcon, iconNameResolves } from '../common';
 import type { Element, EvaluationModel } from '../../types';
 import { formatEvaluation, getEvaluationBadge } from '../../utils/evaluation';
 import { FONT_SIZE_PX } from '../../types';
+import { getThemeAwareColor } from '../../utils/themeColors';
 import { useUIStore, useTagSetStore, useSyncStore, useCustomIconStore } from '../../stores';
 import { useHdImage } from '../../hooks/useHdImage';
 import { computeElementDimensions, getBaseSize } from '../../utils/elementDimensions';
@@ -205,6 +206,16 @@ function FullElementNode({ data }: NodeProps) {
   // Note: the global hideMedia flag still shows the thumbnail (blurred); the per-element
   // visual.hideMedia flag hides media entirely, rendering the node as label-only.
   const hasThumbnail = Boolean(thumbnail) && element.visual.hideMedia !== true;
+  // An image hides the element's colour: its outline takes the main tag's
+  // colour instead (its family's, else the element's own). Read for images only.
+  const mainTag = hasThumbnail ? element.tags[0] : undefined;
+  const mainTagColor = useTagSetStore((st) => {
+    if (!mainTag) return null;
+    const key = mainTag.trim().toLowerCase();
+    for (const ts of st.tagSets.values()) if (ts.name.trim().toLowerCase() === key) return ts.defaultVisual.color;
+    return null;
+  });
+  const imageOutline = hasThumbnail ? (mainTagColor ?? element.visual.color) : null;
 
   // Shared with the auto-layout engine (graphWorker / layoutService) so that
   // anti-collision spacing matches the actual rendered footprint.
@@ -565,9 +576,11 @@ function FullElementNode({ data }: NodeProps) {
           // Border properties — ghosts always have dashed border
           borderWidth: element.visual.borderWidth ?? 2,
           borderStyle: isGhost ? 'dashed' : (element.visual.borderStyle ?? 'solid'),
-          borderColor: themeMode === 'dark' && !hasThumbnail
-            ? getThemeAwareColor(element.visual.borderColor, true)
-            : element.visual.borderColor,
+          borderColor: imageOutline
+            ? getThemeAwareColor(imageOutline, themeMode === 'dark')
+            : themeMode === 'dark'
+              ? getThemeAwareColor(element.visual.borderColor, true)
+              : element.visual.borderColor,
           // Remote user selection/dragging ring - more prominent when dragging
           boxShadow: (() => {
             if (!remoteSelectors || remoteSelectors.length === 0) return undefined;
@@ -785,55 +798,6 @@ function isLightColor(color: string): boolean {
   return brightness > 128;
 }
 
-// Helper to get color brightness (0-255)
-function getColorBrightness(color: string): number {
-  if (color.startsWith('var(')) return 200; // CSS variables assumed light
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return 200;
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000;
-}
-
-// Darken a color for dark mode
-function darkenColor(color: string, amount: number = 0.6): string {
-  if (color.startsWith('var(')) return '#3a3532'; // fallback dark color for CSS vars
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return '#3a3532';
-  const r = Math.round(parseInt(hex.substr(0, 2), 16) * amount);
-  const g = Math.round(parseInt(hex.substr(2, 2), 16) * amount);
-  const b = Math.round(parseInt(hex.substr(4, 2), 16) * amount);
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-// Get theme-aware background color
-function getThemeAwareColor(color: string, isDarkMode: boolean): string {
-  if (!isDarkMode) return color;
-
-  // Respect an explicit white choice: the auto-darkening below is meant for the
-  // neutral default light-gray, not a deliberate white background the user set.
-  const c = color.trim().toLowerCase();
-  if (c === '#ffffff' || c === '#fff' || c === 'white') return color;
-
-  // In dark mode, invert very light colors to darker equivalents
-  // This ensures elements remain visible on dark canvas
-  const brightness = getColorBrightness(color);
-  if (brightness > 230) {
-    // Very light colors (white, near-white, very light grays) -> invert to dark
-    // Map brightness 230-255 to a dark range (40-60)
-    const darkBrightness = 50;
-    const factor = darkBrightness / brightness;
-    return darkenColor(color, factor);
-  }
-  if (brightness > 200) {
-    // Light colors (light grays, pastels) -> darken moderately
-    return darkenColor(color, 0.5);
-  }
-  // Keep medium and dark colors as-is
-  return color;
-}
-
 // Custom comparison for React.memo - only re-render when data actually changes
 function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   const prevData = prevProps.data as ElementNodeData;
@@ -940,19 +904,20 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
   );
   return (
     <div className={`relative ${isDimmed ? 'opacity-15' : 'opacity-100'} cursor-pointer`} style={{ width, height }}>
-      {/* Kept by a filter or a query: a solid halo of constant on-screen margin
-          (--zn-inv-zoom, set by the canvas) so the results stand out from afar */}
+      {/* Kept by a filter or a query: a glow of constant on-screen reach
+          (--zn-inv-zoom, set by the canvas) so the results stand out from
+          afar (see .result-glow) */}
       {isHighlighted && !isDimmed && (
         <div
-          className="absolute rounded-full pointer-events-none"
+          className="result-glow absolute rounded-full pointer-events-none"
           style={{
             left: '50%',
             top: '50%',
-            width: `calc(${Math.max(width, height)}px + 10px * var(--zn-inv-zoom, 1))`,
-            height: `calc(${Math.max(width, height)}px + 10px * var(--zn-inv-zoom, 1))`,
+            width: `calc(${Math.max(width, height)}px + 22px * var(--zn-inv-zoom, 1))`,
+            height: `calc(${Math.max(width, height)}px + 22px * var(--zn-inv-zoom, 1))`,
             transform: 'translate(-50%, -50%)',
-            // Solid, no outline: neighbouring halos merge into one patch
-            backgroundColor: 'var(--color-accent)',
+            // Each result glows in its own colour
+            ['--glow-color' as string]: getThemeAwareColor(element.visual.color, dark),
           }}
         />
       )}

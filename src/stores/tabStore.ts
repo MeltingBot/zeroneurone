@@ -14,6 +14,8 @@ interface TabState {
   tabs: CanvasTab[];
   /** null in the "All" view (or when no tabs exist), otherwise the open tab */
   activeTabId: TabId | null;
+  /** Where the "All" view stood when left (this session) */
+  allViewport: { x: number; y: number; zoom: number } | null;
   /** Tabs shown together with the open one (Ctrl+click): the view covers
    *  their members too. New elements still go to the open tab. */
   extraTabIds: TabId[];
@@ -74,7 +76,7 @@ interface TabState {
 // Helper: write tab changes to Y.Doc (fire-and-forget, non-blocking)
 async function syncTabToYDoc(
   tabId: string,
-  fields: Record<string, any>,
+  fields: Record<string, unknown>,
 ): Promise<void> {
   const { syncService } = await import('../services/syncService');
   const ydoc = syncService.getYDoc();
@@ -84,7 +86,7 @@ async function syncTabToYDoc(
   setLocalOpPending();
   const { tabs: tabsMap } = getYMaps(ydoc);
   ydoc.transact(() => {
-    const ymap = tabsMap.get(tabId) as Y.Map<any> | undefined;
+    const ymap = tabsMap.get(tabId) as Y.Map<unknown> | undefined;
     if (ymap) {
       for (const [key, value] of Object.entries(fields)) {
         ymap.set(key, value);
@@ -96,6 +98,28 @@ async function syncTabToYDoc(
 
 /** Most canvas tabs a dossier can hold. */
 export const MAX_TABS = 10;
+
+type Viewport = { x: number; y: number; zoom: number };
+
+/**
+ * How the canvas viewport is read and set. Registered by the view store
+ * (which imports this one), so that switching tab, from anywhere, keeps each
+ * tab's zoom and centre.
+ */
+export interface TabViewportBridge {
+  current: () => Viewport;
+  restore: (viewport: Viewport) => void;
+  /** Frame these elements (none: all of them) */
+  fit: (elementIds: string[]) => void;
+  /** Whether the canvas is the view shown (map and timeline keep their own) */
+  canvasShown: () => boolean;
+}
+let viewportBridge: TabViewportBridge | null = null;
+export function setTabViewportBridge(bridge: TabViewportBridge): void {
+  viewportBridge = bridge;
+}
+
+const isSavedViewport = (v: Viewport | undefined) => !!v && (v.x !== 0 || v.y !== 0 || v.zoom !== 1);
 
 /** Tabs the view shows: the open one first, then the combined ones */
 export function openTabIds(state: { activeTabId: TabId | null; extraTabIds: TabId[] }): TabId[] {
@@ -118,6 +142,7 @@ function viewSets(tabs: CanvasTab[], activeTabId: TabId | null, extraTabIds: Tab
 export const useTabStore = create<TabState>((set, get) => ({
   tabs: [],
   activeTabId: null,
+  allViewport: null,
   extraTabIds: [],
   memberSet: new Set(),
   ghostIds: new Set(),
@@ -129,6 +154,7 @@ export const useTabStore = create<TabState>((set, get) => ({
     const tabs = await tabRepository.getByDossier(dossierId);
     const firstTab = tabs.length > 0 ? tabs[0] : null;
     set({
+      allViewport: null,
       tabs,
       activeTabId: firstTab?.id ?? null,
       extraTabIds: [],
@@ -264,21 +290,38 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Navigation ────────────────────────────────────────
 
   setActiveTab: (tabId) => {
-    if (tabId === null) {
-      // No tabs exist
-      set({ activeTabId: null, extraTabIds: [], memberSet: new Set(), ghostIds: new Set(), excludedSet: new Set() });
-      return;
+    const { tabs, activeTabId: previous } = get();
+    const tab = tabId === null ? null : tabs.find((t) => t.id === tabId);
+    if (tabId !== null && !tab) return;
+
+    // Leaving a tab (or "All"): keep where the view stood
+    const switching = previous !== tabId && viewportBridge !== null;
+    if (switching) {
+      const here = viewportBridge!.current();
+      if (previous === null) set({ allViewport: here });
+      else void get().saveTabViewport(previous, here);
     }
-    const { tabs } = get();
-    const tab = tabs.find((t) => t.id === tabId);
-    if (!tab) return;
-    set({
-      activeTabId: tabId,
-      extraTabIds: [],
-      memberSet: new Set(tab.memberElementIds),
-      ghostIds: new Set(), // Reset — will be recomputed by useEffect
-      excludedSet: new Set(tab.excludedElementIds),
-    });
+
+    if (tab === null || tab === undefined) {
+      // "All" (or no tabs exist)
+      set({ activeTabId: null, extraTabIds: [], memberSet: new Set(), ghostIds: new Set(), excludedSet: new Set() });
+    } else {
+      set({
+        activeTabId: tabId,
+        extraTabIds: [],
+        memberSet: new Set(tab.memberElementIds),
+        ghostIds: new Set(), // Reset — will be recomputed by useEffect
+        excludedSet: new Set(tab.excludedElementIds),
+      });
+    }
+
+    // Back to where this tab's view stood, or framed on its elements the
+    // first time. A caller centring an element right after still wins.
+    if (switching && viewportBridge!.canvasShown()) {
+      const saved = tab ? tab.viewport : get().allViewport ?? undefined;
+      if (isSavedViewport(saved)) viewportBridge!.restore(saved!);
+      else viewportBridge!.fit(tab ? tab.memberElementIds : []);
+    }
   },
 
   toggleCombinedTab: (tabId) => {
@@ -407,12 +450,13 @@ export const useTabStore = create<TabState>((set, get) => ({
   // Viewport is LOCAL only — NOT synced via Y.js
 
   saveTabViewport: async (tabId, viewport) => {
-    await tabRepository.update(tabId, { viewport });
+    // In the store at once (a switch back right after reads it), then on disk
     set((s) => ({
       tabs: s.tabs.map((t) =>
         t.id === tabId ? { ...t, viewport, updatedAt: new Date() } : t,
       ),
     }));
+    await tabRepository.update(tabId, { viewport });
   },
 
   // ── Ghost computation ─────────────────────────────────
@@ -478,7 +522,7 @@ export const useTabStore = create<TabState>((set, get) => ({
         const { tabs: tabsMap } = getYMaps(ydoc);
         ydoc.transact(() => {
           for (const tab of affectedTabs) {
-            const ymap = tabsMap.get(tab.id) as Y.Map<any> | undefined;
+            const ymap = tabsMap.get(tab.id) as Y.Map<unknown> | undefined;
             if (ymap) {
               ymap.set('memberElementIds', tab.memberElementIds.filter((id) => !gone.has(id)));
               ymap.set('excludedElementIds', tab.excludedElementIds.filter((id) => !gone.has(id)));
@@ -542,6 +586,7 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   resetDossierState: () => {
     set({
+      allViewport: null,
       tabs: [],
       activeTabId: null,
       extraTabIds: [],

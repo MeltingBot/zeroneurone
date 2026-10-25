@@ -311,6 +311,7 @@
     "insights": "Grafiekanalyse",
     "layout": "Indeling",
     "view": "Weergave wisselen",
-    "suggestions": "Linksuggesties"
+    "suggestions": "Linksuggesties",
+    "export": "Archief maken"
   }
 }

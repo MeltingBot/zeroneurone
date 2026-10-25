@@ -1,5 +1,6 @@
 import type { Table } from 'dexie';
 import JSZip from 'jszip';
+import { selectZipTabs, zipTabsOverview, type ImportedTabPlan, type ZipTabSelection, type ZipTabsOverview } from './zipTabSelection';
 import { db } from '../db/database';
 import { getPlugins } from '../plugins/pluginRegistry';
 import { generateUUID } from '../utils';
@@ -154,6 +155,11 @@ export interface ImportResult {
   reportImported: boolean;
   errors: string[];
   warnings: string[];
+  /** Into an open dossier, from chosen tabs: the tabs to fill, by name */
+  tabPlan?: ImportedTabPlan[];
+  /** New ids of elements brought only as linked ones, filed in a tab left out:
+   *  kept out of the open tab (ghosts of the tabs they are linked from) */
+  linkedOnlyIds?: string[];
 }
 
 export interface CSVImportOptions {
@@ -227,7 +233,10 @@ class ImportService {
    * Parse a ZIP file and return the bounding box without importing
    * Used for placement preview before importing into existing dossier
    */
-  async parseZipForPlacement(file: File): Promise<{ boundingBox: ImportBoundingBox; success: boolean; error?: string }> {
+  async parseZipForPlacement(
+    file: File,
+    selection?: ZipTabSelection,
+  ): Promise<{ boundingBox: ImportBoundingBox; success: boolean; error?: string; tabs?: ZipTabsOverview }> {
     try {
       // Security check
       if (file.size > ZIP_LIMITS.MAX_ZIP_SIZE) {
@@ -245,9 +254,9 @@ class ImportService {
 
       const content = await jsonFile.async('string');
       const data = JSON.parse(content) as ExportData;
-      const boundingBox = this.calculateBoundingBox(data);
+      const boundingBox = this.calculateBoundingBox(selection ? selectZipTabs(data, selection) : data);
 
-      return { boundingBox, success: true };
+      return { boundingBox, success: true, tabs: zipTabsOverview(data) };
     } catch (error) {
       return {
         boundingBox: { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, elementCount: 0 },
@@ -265,7 +274,9 @@ class ImportService {
   async importFromZip(
     file: File,
     targetDossierId: DossierId,
-    positionOffset?: Position
+    positionOffset?: Position,
+    /** Only these tabs of the archive (into an open dossier) */
+    selection?: ZipTabSelection,
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -328,13 +339,20 @@ class ImportService {
         delete rawData.investigation;
       }
 
-      const data = rawData as ExportData;
+      let data = rawData as ExportData;
 
       // Validate structure
       if (!data.version || !data.elements || !data.links) {
         result.errors.push('Format JSON invalide: champs manquants');
         return result;
       }
+
+      // Chosen tabs only: their elements, links and files, before anything is written
+      const tabsLeftOut = new Set(
+        (selection ? (data.tabs ?? []).filter((tab) => !selection.tabIds.includes(tab.id)) : [])
+          .flatMap((tab) => tab.memberElementIds ?? []),
+      );
+      if (selection) data = selectZipTabs(data, selection);
 
       // Check retention expiration on imported dossier
       if (data.dossier?.retentionDays && data.dossier.createdAt) {
@@ -435,10 +453,26 @@ class ImportService {
 
       // Import elements and links (with optional position offset)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result, positionOffset);
+
+      // Chosen tabs merged into an open dossier: the caller fills its tabs of
+      // the same names (through the tab store, synced); the rest goes to the open tab
+      if (selection && selection.recreateTabs !== false && positionOffset && data.tabs && data.tabs.length > 0) {
+        const inChosenTab = new Set(data.tabs.flatMap((tab) => tab.memberElementIds ?? []));
+        result.linkedOnlyIds = data.elements
+          .filter((el) => tabsLeftOut.has(el.id) && !inChosenTab.has(el.id))
+          .map((el) => elementIdMap.get(el.id))
+          .filter((id): id is ElementId => id !== undefined);
+        result.tabPlan = data.tabs.map((importedTab) => ({
+          name: importedTab.name || '',
+          memberIds: (importedTab.memberElementIds || [])
+            .map((oldId: ElementId) => elementIdMap.get(oldId))
+            .filter((id): id is ElementId => id !== undefined),
+        }));
+      }
       await this.applyImportedDismissedSuggestions(data.dossier?.dismissedSuggestions, targetDossierId, elementIdMap);
 
       // Import report if present (with element and link ID remapping)
-      if (data.report && data.report.sections && data.report.sections.length > 0) {
+      if (data.report && data.report.sections && data.report.sections.length > 0 && (!selection || selection.includeReport)) {
         await this.importReport(data.report, targetDossierId, result, elementIdMap, linkIdMap);
       }
 

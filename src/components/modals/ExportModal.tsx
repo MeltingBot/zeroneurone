@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useId } from 'react';
+import { withExportProgress } from '../../services/exportProgress';
 import { useTranslation } from 'react-i18next';
 import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network, NotebookText, FolderTree, Folder } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
@@ -52,8 +53,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     setIsProcessing(true);
     try {
       // Fetch assets, report and tabs for ZIP/JSON export
-      let assets;
-      let report;
+      // The archive formats carry the files and the report (progress shown meanwhile)
+      let assets: Awaited<ReturnType<typeof fileService.getAssetsByDossier>> | undefined;
+      let report: Awaited<ReturnType<typeof reportRepository.getByDossierWithYDoc>> | undefined;
       if (format === 'zip' || format === 'obsidian') {
         assets = await fileService.getAssetsByDossier(currentDossier.id);
         // Use getByDossierWithYDoc to check both Dexie and Y.Doc storage
@@ -91,7 +93,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           }
         : undefined;
 
-      await exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag);
+      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag);
+      await (format === 'zip' || format === 'obsidian' ? withExportProgress(build) : build());
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
     } catch {
@@ -112,7 +115,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const queries = await db.savedQueries.where({ dossierId: currentDossier.id }).toArray();
       const queryHistory = useQueryStore.getState().recentQueries;
 
-      const encBlob = await exportService.exportToEncryptedZip(
+      const encBlob = await withExportProgress(() => exportService.exportToEncryptedZip(
         zipPassword,
         currentDossier,
         elements,
@@ -124,7 +127,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         queries,
         queryHistory,
         comments
-      );
+      ));
 
       const now = new Date();
       const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;

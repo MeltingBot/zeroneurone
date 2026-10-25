@@ -75,6 +75,7 @@ Ces actions s'annulent avec **Ctrl+Z**.
 | **Voir tout** | Cliquez sur **Tous** |
 | **Aller a l'onglet d'un element fantome** | Clic-droit sur l'element → **Aller a l'onglet [nom]** |
 
+Chaque onglet retient son **zoom et son cadrage** : en revenant sur un onglet, la vue est celle que vous aviez laissee (enregistree sur le poste). Un onglet ouvert pour la premiere fois se cadre sur ses elements. **Tous** retient aussi sa vue, le temps de la session. C'est vrai quelle que soit la facon de changer d'onglet (barre, Alt+fleches, recherche, Ctrl+Z, vues enregistrees).
 ---
 
 ## Elements fantomes
@@ -83,9 +84,10 @@ Un element qui appartient a un autre onglet mais qui est connecte a un element d
 
 | Caracteristique | Description |
 |-----------------|-------------|
-| **Apparence** | Semi-transparent |
-| **Badge** | Indique le ou les onglets d'appartenance |
-| **Navigation** | Clic-droit → **Aller a l'onglet [nom]** pour basculer |
+| **Apparence** | Semi-transparent, hachure, bordure en pointilles |
+| **Onglets d'appartenance** | Affiches dans l'onglet **Detail** de l'element |
+| **Navigation** | Clic-droit → **Onglets** → **Aller a l'onglet [nom]** pour basculer |
+| **Ramener ici** | Clic-droit → **Onglets** → **Deplacer dans cet onglet** : l'element rejoint l'onglet ouvert et quitte ses autres onglets |
 
 Les elements fantomes assurent la continuite visuelle : les connexions inter-onglets restent visibles sans changer d'onglet.
 
@@ -113,7 +115,7 @@ Les modifications d'onglets (creation, renommage, ajout/retrait d'elements) appa
 |----------|-------------|
 | **Export ZIP / JSON** | Les onglets sont inclus |
 | **Import d'un dossier** | Les onglets sont restaures |
-| **Import dans un dossier existant (fusion)** | Les elements importes rejoignent l'onglet actif. Les onglets du fichier source ne sont pas importes. |
+| **Import dans un dossier existant (fusion)** | Vous choisissez les onglets de l'archive a importer ; ils sont recrees (fusionnes avec un onglet du meme nom) ou tout va dans l'onglet actif. Voir [Importer]({{< relref "import-export/import" >}}). |
 
 ---
 

@@ -47,6 +47,8 @@ interface HistoryAction {
     snapshot?: any;
     // For update-bulk: previous values of the changed fields, per item
     bulkElements?: { id: string; changes: Partial<Element> }[];
+    // For create-elements: tabs the action created (an import), removed on undo
+    createdTabIds?: string[];
     bulkLinks?: { id: string; changes: Partial<Link> }[];
   };
   // Data for redoing the action
@@ -67,6 +69,8 @@ interface HistoryAction {
     // Opaque snapshots for non-element operations
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     snapshot?: any;
+    // For create-elements: the tabs removed on undo, recreated on redo
+    createdTabs?: CanvasTab[];
     // For update-bulk: the bulk updates to replay, in order
     bulkCalls?: { kind: 'elements' | 'links'; ids: string[]; changes: Partial<Element> | Partial<Link> }[];
   };
@@ -184,6 +188,14 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         // Also delete created links (for paste/duplicate operations)
         if (action.redo.linkIds) {
           await store.deleteLinks(action.redo.linkIds);
+        }
+        // Tabs the action created (an import): kept for redo, then removed
+        if (action.undo.createdTabIds?.length) {
+          const { useTabStore } = await import('./tabStore');
+          const created = new Set(action.undo.createdTabIds);
+          const tabs = useTabStore.getState().tabs.filter((tab) => created.has(tab.id));
+          action.redo.createdTabs = tabs.map((tab) => ({ ...tab, memberElementIds: [], excludedElementIds: [] }));
+          for (const tab of tabs) await useTabStore.getState().deleteTab(tab.id);
         }
         break;
 
@@ -367,13 +379,22 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
       case 'merge-elements': {
         // Put the source element and the dropped links back, then rewind the
-        // target and every link the merge rewrote.
-        const snap = action.undo.snapshot;
-        if (snap) {
+        // target and every link the merge rewrote. Several merges in one action
+        // (N elements into one): undone last first.
+        const snaps = Array.isArray(action.undo.snapshot) ? [...action.undo.snapshot].reverse() : [action.undo.snapshot];
+        for (const snap of snaps) {
+          if (!snap) continue;
           const deleted = new Set<string>(snap.deletedLinkIds);
           const droppedLinks = snap.linksBefore.filter((l: Link) => deleted.has(l.id));
           store.pasteElements([snap.sourceElement], droppedLinks);
           await store.updateElement(snap.targetId, snap.targetBefore);
+          // Tabs: the source back in its own, the kept element out of those it joined
+          if (snap.sourceTabIds?.length || snap.targetAddedTabIds?.length) {
+            const { useTabStore } = await import('./tabStore');
+            const tabs = useTabStore.getState();
+            for (const tabId of snap.sourceTabIds ?? []) await tabs.addMembers(tabId, [snap.sourceId]);
+            for (const tabId of snap.targetAddedTabIds ?? []) await tabs.removeMembers(tabId, [snap.targetId]);
+          }
           for (const before of snap.linksBefore) {
             if (deleted.has(before.id)) continue;
             await store.updateLink(before.id, {
@@ -431,6 +452,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       case 'create-element':
         // Re-create elements in a single batch (one Y.Doc transaction)
         store.pasteElements(action.redo.elements || [], action.redo.links || []);
+        // Tabs the action had created, back before their members
+        if (action.redo.createdTabs?.length) {
+          const { useTabStore } = await import('./tabStore');
+          for (const tab of action.redo.createdTabs) await useTabStore.getState().restoreTab(tab);
+        }
         // Restore tab membership (captured during undo)
         if (action.redo.tabMembership) {
           const { useTabStore } = await import('./tabStore');
@@ -628,8 +654,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       case 'merge-elements':
         // The merge is deterministic given the same two elements, so replaying
         // it is enough — and keeps the snapshot in sync with what it produces.
-        if (action.redo.snapshot) {
-          await store.mergeElements(action.redo.snapshot.targetId, action.redo.snapshot.sourceId);
+        for (const snap of Array.isArray(action.redo.snapshot) ? action.redo.snapshot : [action.redo.snapshot]) {
+          if (snap) await store.mergeElements(snap.targetId, snap.sourceId);
         }
         break;
 

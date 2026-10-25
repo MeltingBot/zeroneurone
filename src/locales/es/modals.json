@@ -25,7 +25,16 @@
     "title": "Importar en el expediente",
     "description": "Importar datos en el expediente actual. Los archivos ZIP se importarán en modo de colocación.",
     "selectFile": "Seleccionar un archivo",
-    "emptyZip": "El archivo ZIP está vacío o no contiene elementos"
+    "emptyZip": "El archivo ZIP está vacío o no contiene elementos",
+    "tabsTitle": "Pestañas a importar",
+    "untitledTab": "Sin nombre",
+    "unassigned": "Sin pestaña",
+    "includeLinked": "Elementos vinculados",
+    "includeReport": "Informe (secciones)",
+    "tabsConfirm": "Colocar",
+    "tabsTarget": "Destino",
+    "recreateTabs": "Recrear las pestañas",
+    "intoOpenTab": "Todo en la pestaña abierta"
   },
   "import": {
     "title": "Importar un expediente",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Preparando el archivo…",
+      "files": "Archivos adjuntos: {{done}}/{{total}}",
+      "data": "Datos del expediente…",
+      "compress": "Compresión: {{percent}} %",
+      "encrypt": "Cifrado…"
+    },
     "title": "Exportar el expediente",
     "description": "Exportar \"{{name}}\" ({{elements}} elementos, {{links}} enlaces)",
     "format": "Formato",
@@ -240,6 +256,10 @@
     "createFirst": "Cree su primera paleta"
   },
   "tagSetEditor": {
+    "applyTitle": "Aplicar al expediente abierto",
+    "applyVisual": "Apariencia (elementos cuya etiqueta principal es esta)",
+    "applyProperties": "Propiedades que faltan, vacías (elementos con la etiqueta)",
+    "applyProgress": "Elementos actualizados: {{done}}/{{total}}",
     "title": "Paleta de tags",
     "titleNew": "Nuevo tag",
     "titleEdit": "Editar \"{{name}}\"",
@@ -614,7 +634,17 @@
     "kept": "Conservado",
     "properties": "propiedades",
     "events": "eventos",
-    "hint": "El otro elemento será eliminado. Sus enlaces serán transferidos."
+    "hint": "El otro elemento será eliminado. Sus enlaces serán transferidos.",
+    "titleMany": "Fusionar {{count}} elementos",
+    "warnNotes": "Las notas de {{count}} elementos se unirán una tras otra",
+    "warnProperties_one": "{{count}} propiedad tras la fusión",
+    "warnProperties_other": "{{count}} propiedades tras la fusión",
+    "warnPropertiesMulti_one": "{{count}} propiedad tras la fusión, {{keys}} clave(s) con varios valores",
+    "warnPropertiesMulti_other": "{{count}} propiedades tras la fusión, {{keys}} clave(s) con varios valores",
+    "linkCount_one": "{{count}} vínculo",
+    "linkCount_other": "{{count}} vínculos",
+    "hintMany_one": "El otro elemento se eliminará. Sus vínculos se transferirán.",
+    "hintMany_other": "Los otros {{count}} elementos se eliminarán. Sus vínculos se transferirán."
   },
   "encryption": {
     "title": "Cifrado",

@@ -12,7 +12,7 @@ import { DEFAULT_FILTERS } from '../types';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
 import { onPersistFailure } from '../utils/persistError';
-import { useTabStore } from './tabStore';
+import { setTabViewportBridge, useTabStore } from './tabStore';
 
 /** The tabs filter counts in the "All" view only, and for tabs that still exist */
 function tabFilterApplies(includeTabs: string[] | undefined): boolean {
@@ -153,6 +153,8 @@ interface ViewState {
   hideElement: (id: ElementId) => void;
   hideElements: (ids: ElementId[]) => void;
   showElement: (id: ElementId) => void;
+  /** Show these again, leaving the other hidden elements hidden */
+  showElements: (ids: ElementId[]) => void;
   showAllElements: () => void;
 
   // Actions - Focus mode
@@ -352,6 +354,14 @@ export const useViewStore = create<ViewState>((set, get) => ({
     });
   },
 
+  showElements: (ids) => {
+    set((state) => {
+      const newSet = new Set(state.hiddenElementIds);
+      ids.forEach((id) => newSet.delete(id));
+      return { hiddenElementIds: newSet };
+    });
+  },
+
   showAllElements: () => {
     set({ hiddenElementIds: new Set() });
   },
@@ -509,3 +519,11 @@ export const useViewStore = create<ViewState>((set, get) => ({
     });
   },
 }));
+
+// Switching tab keeps each tab's zoom and centre (see setActiveTab)
+setTabViewportBridge({
+  current: () => ({ ...useViewStore.getState().viewport }),
+  restore: (viewport) => useViewStore.getState().requestViewportChange(viewport),
+  fit: (elementIds) => useViewStore.getState().requestFitView(elementIds),
+  canvasShown: () => useViewStore.getState().displayMode === 'canvas',
+});

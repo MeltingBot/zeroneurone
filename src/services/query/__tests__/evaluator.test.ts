@@ -918,3 +918,49 @@ describe('WITHIN n HOPS OF', () => {
     expect(r.elementIds.size).toBe(0);
   });
 });
+
+// ── Several rows of the same key (after a merge) ──
+
+describe('evaluator — a key with several values', () => {
+  const merged = makeElement({
+    label: 'SFR',
+    properties: [
+      { key: 'Identité', value: 'SFR SOCIETE FRANCAISE DU RADIOTELEPHONE', type: 'text' },
+      { key: 'Sensibilité', value: 'Sans objet', type: 'text' },
+      { key: 'Identité', value: 'SOCIETE FRANCAISE SU RADIOTELEPHONE', type: 'text' },
+      { key: 'Identité', value: 'SOCIETE FRANCAISE DU RADIOTELEPHONE', type: 'text' },
+    ],
+  });
+  const other = makeElement({ label: 'Autre', properties: [{ key: 'Identité', value: 'ORANGE', type: 'text' }] });
+
+  it('matches a value held by any of the rows, not only the first', () => {
+    const r = query('Identité = "SOCIETE FRANCAISE DU RADIOTELEPHONE"', [merged, other]);
+    expect([...r.elementIds]).toEqual([merged.id]);
+  });
+
+  it('works with LIKE and CONTAINS too', () => {
+    expect([...query('Identité LIKE "societe francaise su radiotelephone"', [merged, other]).elementIds]).toEqual([merged.id]);
+    expect([...query('Identité CONTAINS "SU RADIO"', [merged, other]).elementIds]).toEqual([merged.id]);
+  });
+});
+
+describe('evaluator — "different from" on several values', () => {
+  const both = makeElement({ properties: [{ key: 'Identité', value: 'SFR', type: 'text' }, { key: 'Identité', value: 'SOCIETE DU RADIOTELEPHONE', type: 'text' }] });
+  const other = makeElement({ properties: [{ key: 'Identité', value: 'ORANGE', type: 'text' }] });
+  const tagged = makeElement({ tags: ['Victime', 'Témoin'] });
+
+  it('keeps out an element holding the value among others', () => {
+    expect([...query('Identité != "SFR"', [both, other]).elementIds]).toEqual([other.id]);
+  });
+
+  it('reads tag != as "has not this tag"', () => {
+    expect(query('tag != "Victime"', [tagged]).elementIds.size).toBe(0);
+  });
+});
+
+describe('parser — accented field names', () => {
+  it('reads `Société` and `Identité` without quotes', () => {
+    const el = makeElement({ properties: [{ key: 'Société', value: 'Bosch', type: 'text' }] });
+    expect(query('Société = "bosch"', [el]).elementIds.size).toBe(1);
+  });
+});

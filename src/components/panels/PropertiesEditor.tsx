@@ -8,6 +8,7 @@ import { getLocalizedCountries, getCountryName, getCountryByCode, type Localized
 import { parseFlexibleDate, formatDateForCopy } from '../../utils';
 import { dateFromInputKeys, dateInputKeys, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../../utils/dates';
 import { TimeZoneButton } from '../common/TimeZoneButton';
+import { propertyRowKeys, removePropertyAt, updatePropertyAt } from '../../utils/propertyRows';
 
 interface PropertiesEditorProps {
   properties: Property[];
@@ -86,12 +87,15 @@ export function PropertiesEditor({
   const scrollParentRef = useRef<HTMLDivElement>(null);
 
   // Virtualize property rows: elements can carry thousands of properties (e.g. imported CSV rows).
+  // A key may come back several times (a merge keeps every value): one row key each
+  const rowKeys = useMemo(() => propertyRowKeys(properties), [properties]);
+
   const rowVirtualizer = useVirtualizer({
     count: properties.length,
     getScrollElement: () => scrollParentRef.current,
     estimateSize: () => 40,
     overscan: 6,
-    getItemKey: (index) => properties[index].key,
+    getItemKey: (index) => rowKeys[index],
   });
 
   // Precompute choices lookup to avoid O(n*m) suggestion scans inside the virtualized map
@@ -182,30 +186,28 @@ export function PropertiesEditor({
     setNewTimeZone(timeZone);
   }, [newTimeZone, setNewValueSync]);
 
+  // Rows are addressed by position: several may share a key (after a merge),
+  // and only the one edited or removed must change
   const handleRemoveProperty = useCallback(
-    (keyToRemove: string) => {
-      onChange(properties.filter((prop) => prop.key !== keyToRemove));
+    (index: number) => {
+      onChange(removePropertyAt(properties, index));
     },
     [properties, onChange]
   );
 
   const handleUpdateProperty = useCallback(
-    (key: string, value: Property['value'], type?: PropertyType) => {
-      onChange(
-        properties.map((prop) =>
-          prop.key === key ? { ...prop, value, type: type || prop.type } : prop
-        )
-      );
+    (index: number, value: Property['value'], type?: PropertyType) => {
+      onChange(updatePropertyAt(properties, index, (prop) => ({ ...prop, value, type: type || prop.type })));
     },
     [properties, onChange]
   );
 
   // Changing the zone keeps the typed wall clock: "03:12" now means 03:12 in the new zone
   const handleUpdateTimeZone = useCallback(
-    (key: string, timeZone: string | undefined) => {
+    (index: number, timeZone: string | undefined) => {
       onChange(
-        properties.map((prop) => {
-          if (prop.key !== key) return prop;
+        properties.map((prop, i) => {
+          if (i !== index) return prop;
           const { timeZone: previous, ...rest } = prop;
           const date = parsePropertyDate(prop.value);
           const keys = date ? dateInputKeys(date, previous) : null;
@@ -471,9 +473,9 @@ export function PropertiesEditor({
                 >
                   <PropertyRow
                     property={prop}
-                    onUpdate={(value) => handleUpdateProperty(prop.key, value, prop.type)}
-                    onUpdateTimeZone={(timeZone) => handleUpdateTimeZone(prop.key, timeZone)}
-                    onRemove={() => handleRemoveProperty(prop.key)}
+                    onUpdate={(value) => handleUpdateProperty(virtualRow.index, value, prop.type)}
+                    onUpdateTimeZone={(timeZone) => handleUpdateTimeZone(virtualRow.index, timeZone)}
+                    onRemove={() => handleRemoveProperty(virtualRow.index)}
                     onExtract={onExtractToElement ? () => onExtractToElement(prop) : undefined}
                     isDisplayed={displayedProperties.includes(prop.key)}
                     onToggleDisplay={onToggleDisplayProperty ? () => onToggleDisplayProperty(prop.key) : undefined}

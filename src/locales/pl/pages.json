@@ -235,7 +235,8 @@
       "elements": "{{count}} element(ów)",
       "success": "{{count}} element(ów) zaimportowano",
       "error": "Import nie powiódł się",
-      "mediaResult": "Załączono {{ok}} mediów, {{fail}} nieudanych"
+      "mediaResult": "Załączono {{ok}} mediów, {{fail}} nieudanych",
+      "tabLimit": "Maksymalnie {{max}} kart: „{{name}}” trafia do otwartej karty"
     },
     "layout": {
       "title": "Algorytmy układu",
@@ -331,6 +332,7 @@
       "deleteConfirm": "Usunąć kartę {{name}}? Elementy nie zostaną usunięte.",
       "newFromSelection": "Nowa karta z zaznaczeniem",
       "moveToTab": "Przenieś do karty...",
+      "moveHere": "Przenieś do tej karty",
       "addToTab": "Dodaj do karty...",
       "removeFromTab": "Usuń z karty",
       "emptyState": "Brak elementów w tej karcie",

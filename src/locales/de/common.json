@@ -304,6 +304,7 @@
     "insights": "Graphanalyse",
     "layout": "Anordnung",
     "view": "Ansichtswechsel",
-    "suggestions": "Verknüpfungsvorschläge"
+    "suggestions": "Verknüpfungsvorschläge",
+    "export": "Archiv wird erstellt"
   }
 }

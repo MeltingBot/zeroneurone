@@ -61,6 +61,13 @@ Chaque jeu de tags définit :
 
 Lorsque vous appliquez un tag issu d'un jeu à un élément, son apparence (couleur, forme) est automatiquement définie et les propriétés suggérées sont proposées. Les propriétés suggérées sont aussi proposées quand le tag est ajouté à un lien ou au dossier lui-même (onglet **Détail**, sans sélection).
 
+**Appliquer aux éléments existants** : modifier un jeu de tags ne change pas les éléments qui le portent déjà. Quand un dossier est ouvert, la fenêtre d'édition propose **Appliquer au dossier ouvert**, avec deux cases et le nombre d'éléments concernés :
+
+- **Apparence** : couleur, forme et icône du jeu, pour les éléments dont c'est le tag principal (le premier). Seuls les réglages définis par le jeu sont appliqués.
+- **Propriétés manquantes** : ajoute, vides, les propriétés suggérées qui manquent aux éléments portant le tag ; les valeurs déjà saisies ne changent pas.
+
+Un **Ctrl+Z** annule l'application en une fois.
+
 **Import/Export** : Les jeux de tags peuvent être exportés et importés au format JSON ou CSV pour les partager entre dossiers. Les icônes personnalisées référencées sont embarquées dans le JSON. Les jeux de tags utilisés dans un dossier sont également inclus dans l'export du dossier (ZIP/JSON) et recréés à l'import s'ils n'existent pas déjà.
 
 ### Icônes personnalisées (SVG)

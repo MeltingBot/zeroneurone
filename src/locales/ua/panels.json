@@ -346,6 +346,12 @@
       "allProperties": "Всі",
       "all": "Всі"
     },
+    "quickMode": {
+      "label": "Дія швидких фільтрів",
+      "hide": "Приховати",
+      "only": "Лише ці",
+      "select": "Виділити"
+    },
     "quick": {
       "isolated": "Ізольовані",
       "isolatedDesc": "Елементи без зв'язків",
@@ -360,7 +366,7 @@
       "hasComments": "Коментарі",
       "hasCommentsDesc": "Елементи з невирішеними коментарями",
       "reliableSources": "Надійні джерела",
-      "reliableSourcesDesc": "Залишити лише джерела, оцінені як надійні"
+      "reliableSourcesDesc": "Елементи з джерела, оціненого як надійне"
     },
     "dateProperties": {
       "title": "Властивості дати",

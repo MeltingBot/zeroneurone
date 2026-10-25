@@ -25,7 +25,16 @@
     "title": "Importa nelil fascicolo",
     "description": "Importa dati nelil fascicolo corrente. I file ZIP saranno importati in modalità posizionamento.",
     "selectFile": "Seleziona un file",
-    "emptyZip": "Il file ZIP è vuoto o non contiene elementi"
+    "emptyZip": "Il file ZIP è vuoto o non contiene elementi",
+    "tabsTitle": "Schede da importare",
+    "untitledTab": "Senza nome",
+    "unassigned": "In nessuna scheda",
+    "includeLinked": "Elementi collegati",
+    "includeReport": "Rapporto (sezioni)",
+    "tabsConfirm": "Posiziona",
+    "tabsTarget": "Destinazione",
+    "recreateTabs": "Ricrea le schede",
+    "intoOpenTab": "Tutto nella scheda aperta"
   },
   "import": {
     "title": "Importa un'fascicolo",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Preparazione dell'archivio…",
+      "files": "File allegati: {{done}}/{{total}}",
+      "data": "Dati del fascicolo…",
+      "compress": "Compressione: {{percent}} %",
+      "encrypt": "Cifratura…"
+    },
     "title": "Esporta il fascicolo",
     "description": "Esporta \"{{name}}\" ({{elements}} elementi, {{links}} collegamenti)",
     "format": "Formato",
@@ -240,6 +256,10 @@
     "createFirst": "Crea la tua prima palette"
   },
   "tagSetEditor": {
+    "applyTitle": "Applica al fascicolo aperto",
+    "applyVisual": "Aspetto (elementi con questo tag principale)",
+    "applyProperties": "Proprietà mancanti, vuote (elementi con il tag)",
+    "applyProgress": "Elementi aggiornati: {{done}}/{{total}}",
     "title": "Palette di tag",
     "titleNew": "Nuovo tag",
     "titleEdit": "Modifica \"{{name}}\"",
@@ -614,7 +634,17 @@
     "kept": "Conservato",
     "properties": "proprietà",
     "events": "eventi",
-    "hint": "L'altro elemento verrà eliminato. I suoi link verranno trasferiti."
+    "hint": "L'altro elemento verrà eliminato. I suoi link verranno trasferiti.",
+    "titleMany": "Unisci {{count}} elementi",
+    "warnNotes": "Le note di {{count}} elementi saranno messe una dopo l'altra",
+    "warnProperties_one": "{{count}} proprietà dopo l'unione",
+    "warnProperties_other": "{{count}} proprietà dopo l'unione",
+    "warnPropertiesMulti_one": "{{count}} proprietà dopo l'unione, di cui {{keys}} chiave/i con più valori",
+    "warnPropertiesMulti_other": "{{count}} proprietà dopo l'unione, di cui {{keys}} chiave/i con più valori",
+    "linkCount_one": "{{count}} collegamento",
+    "linkCount_other": "{{count}} collegamenti",
+    "hintMany_one": "L'altro elemento sarà eliminato. I suoi collegamenti saranno trasferiti.",
+    "hintMany_other": "Gli altri {{count}} elementi saranno eliminati. I loro collegamenti saranno trasferiti."
   },
   "encryption": {
     "title": "Crittografia",

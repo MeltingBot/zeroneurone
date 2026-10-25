@@ -2,7 +2,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Modal, Button, Input, IconButton, IconPicker } from '../common';
-import { useTagSetStore, useUIStore } from '../../stores';
+import { useTagSetStore, useUIStore, useDossierStore, useHistoryStore } from '../../stores';
+import { planTagSetApply } from '../../services/tagSetApply';
 import type { TagSet, SuggestedProperty, ElementShape, PropertyType } from '../../types';
 
 interface TagSetEditorModalProps {
@@ -74,12 +75,78 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  // Editing a family with a dossier open: its appearance and suggested
+  // properties can be brought to the elements already carrying the tag
+  const currentDossier = useDossierStore((s) => s.currentDossier);
+  const elements = useDossierStore((s) => s.elements);
+  const [applyVisual, setApplyVisual] = useState(false);
+  const [applyProperties, setApplyProperties] = useState(false);
+  /** While the elements are updated: how many done, out of how many */
+  const [applyProgress, setApplyProgress] = useState<{ done: number; total: number } | null>(null);
+  const applyPlan = useMemo(
+    () => (isEditing && tagSet && currentDossier
+      ? planTagSetApply(elements, tagSet.name, { color, shape, icon }, properties)
+      : null),
+    [isEditing, tagSet, currentDossier, elements, color, shape, icon, properties]
+  );
+
   // Validation
   const nameError = useMemo(() => {
     if (!name.trim()) return t('tagSetEditor.nameRequired');
     if (nameExists(name.trim(), tagSet?.id)) return t('tagSetEditor.nameExists');
     return null;
   }, [name, nameExists, tagSet?.id, t]);
+
+  // One undoable action: each element gets back its own appearance and properties
+  const applyToDossier = useCallback(async () => {
+    if (!applyPlan) return;
+    const store = useDossierStore.getState();
+    const byId = new Map(store.elements.map((el) => [el.id, el]));
+    const visualIds = applyVisual ? applyPlan.visualIds : [];
+    const propertyChanges = applyProperties ? applyPlan.propertyChanges : [];
+    if (visualIds.length === 0 && propertyChanges.length === 0) return;
+
+    const undo = new Map<string, Parameters<typeof store.updateElement>[1]>();
+    for (const id of visualIds) {
+      const el = byId.get(id);
+      if (!el) continue;
+      const previous = Object.fromEntries(Object.keys(applyPlan.visual).map((k) => [k, el.visual[k as keyof typeof el.visual]]));
+      undo.set(id, { visual: previous });
+    }
+    for (const { id, before } of propertyChanges) undo.set(id, { ...undo.get(id), properties: before });
+
+    // The plan is the one shown when saving: the counts no longer move, a bar does
+    const total = visualIds.length + propertyChanges.length;
+    let done = 0;
+    setApplyProgress({ done, total });
+    const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await pause();
+    if (visualIds.length > 0) {
+      await store.updateElements(visualIds, { visual: applyPlan.visual });
+      done += visualIds.length;
+      setApplyProgress({ done, total });
+      await pause();
+    }
+    for (const { id, after } of propertyChanges) {
+      await store.updateElement(id, { properties: after });
+      done++;
+      if (done % 25 === 0 || done === total) {
+        setApplyProgress({ done, total });
+        await pause();
+      }
+    }
+
+    useHistoryStore.getState().pushAction({
+      type: 'update-bulk',
+      undo: { bulkElements: [...undo].map(([id, changes]) => ({ id, changes: changes as Partial<import('../../types').Element> })) },
+      redo: {
+        bulkCalls: [
+          ...(visualIds.length > 0 ? [{ kind: 'elements' as const, ids: visualIds, changes: { visual: applyPlan.visual } as never }] : []),
+          ...propertyChanges.map(({ id, after }) => ({ kind: 'elements' as const, ids: [id], changes: { properties: after } })),
+        ],
+      },
+    });
+  }, [applyPlan, applyVisual, applyProperties]);
 
   const handleSubmit = useCallback(async () => {
     if (nameError) return;
@@ -93,6 +160,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
           defaultVisual: { color, shape, icon },
           suggestedProperties: properties,
         });
+        await applyToDossier();
         showToast('success', t('tagSetEditor.tagModified', { name }));
       } else {
         await create({
@@ -105,7 +173,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
         showToast('success', t('tagSetEditor.tagCreated', { name }));
       }
       onClose();
-    } catch (error) {
+    } catch {
       showToast('error', t('tagSetEditor.saveError'));
     } finally {
       setIsLoading(false);
@@ -122,6 +190,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
     properties,
     update,
     create,
+    applyToDossier,
     showToast,
     onClose,
     t,
@@ -179,6 +248,50 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
       }
     >
       <div className="space-y-6">
+        {/* Bring the family to the elements of the open dossier already tagged */}
+        {applyPlan && (
+          <div className="space-y-1.5 pb-4 border-b border-border-default" data-testid="tagset-apply">
+            <label className="text-xs font-medium text-text-secondary">{t('tagSetEditor.applyTitle')}</label>
+            {applyProgress ? (
+              <div className="space-y-1" aria-live="polite" data-testid="tagset-apply-progress">
+                <p className="text-xs text-text-secondary">
+                  {t('tagSetEditor.applyProgress', { done: applyProgress.done, total: applyProgress.total })}
+                </p>
+                <div className="h-1 bg-bg-tertiary rounded overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-[width]"
+                    style={{ width: `${Math.round((applyProgress.done / Math.max(1, applyProgress.total)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+            <>
+            <label className="flex items-center gap-2 text-xs text-text-secondary">
+              <input
+                type="checkbox"
+                checked={applyVisual}
+                disabled={applyPlan.visualIds.length === 0}
+                onChange={(e) => setApplyVisual(e.target.checked)}
+                className="rounded border-border-default"
+              />
+              <span className="flex-1">{t('tagSetEditor.applyVisual')}</span>
+              <span className="text-text-tertiary">{applyPlan.visualIds.length}</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-text-secondary">
+              <input
+                type="checkbox"
+                checked={applyProperties}
+                disabled={applyPlan.propertyChanges.length === 0}
+                onChange={(e) => setApplyProperties(e.target.checked)}
+                className="rounded border-border-default"
+              />
+              <span className="flex-1">{t('tagSetEditor.applyProperties')}</span>
+              <span className="text-text-tertiary">{applyPlan.propertyChanges.length}</span>
+            </label>
+            </>
+            )}
+          </div>
+        )}
         {/* Name */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-secondary">{t('tagSetEditor.nameLabel')}</label>
@@ -295,6 +408,7 @@ export function TagSetEditorModal({ isOpen, onClose, tagSet }: TagSetEditorModal
             </button>
           </div>
         </div>
+
       </div>
     </Modal>
   );

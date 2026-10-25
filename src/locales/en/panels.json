@@ -360,6 +360,12 @@
       "allProperties": "All",
       "all": "All"
     },
+    "quickMode": {
+      "label": "Quick filter action",
+      "hide": "Hide",
+      "only": "Only these",
+      "select": "Select"
+    },
     "quick": {
       "isolated": "Isolated",
       "isolatedDesc": "Elements without connections",
@@ -374,7 +380,7 @@
       "hasComments": "Comments",
       "hasCommentsDesc": "Elements with unresolved comments",
       "reliableSources": "Reliable sources",
-      "reliableSourcesDesc": "Keep only sources graded as reliable"
+      "reliableSourcesDesc": "Elements from a source graded reliable"
     },
     "dateProperties": {
       "title": "Date properties",

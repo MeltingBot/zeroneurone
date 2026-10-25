@@ -347,6 +347,12 @@
       "allProperties": "Tutte",
       "all": "Tutte"
     },
+    "quickMode": {
+      "label": "Azione dei filtri rapidi",
+      "hide": "Nascondi",
+      "only": "Solo questi",
+      "select": "Seleziona"
+    },
     "quick": {
       "isolated": "Isolati",
       "isolatedDesc": "Elementi senza connessione",
@@ -361,7 +367,7 @@
       "hasComments": "Commenti",
       "hasCommentsDesc": "Elementi con commenti non risolti",
       "reliableSources": "Fonti affidabili",
-      "reliableSourcesDesc": "Mantieni solo le fonti valutate come affidabili"
+      "reliableSourcesDesc": "Elementi da fonte valutata affidabile"
     },
     "dateProperties": {
       "title": "Proprietà data",

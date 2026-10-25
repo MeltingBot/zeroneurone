@@ -235,7 +235,8 @@
       "elements": "{{count}} elementu",
       "success": "{{count}} elementu inportatuta",
       "error": "Inportazio errorea",
-      "mediaResult": "{{ok}} media erantsita, {{fail}} huts"
+      "mediaResult": "{{ok}} media erantsita, {{fail}} huts",
+      "tabLimit": "Gehienez {{max}} fitxa: «{{name}}» fitxa irekira doa"
     },
     "layout": {
       "title": "Antolamendu algoritmoak",
@@ -329,6 +330,7 @@
       "deleteConfirm": "{{name}} fitxa ezabatu? Elementuak ez dira ezabatuko.",
       "newFromSelection": "Fitxa berria hautapenarekin",
       "moveToTab": "Fitxara eraman...",
+      "moveHere": "Fitxa honetara eraman",
       "addToTab": "Fitxara gehitu...",
       "removeFromTab": "Fitxatik kendu",
       "emptyState": "Fitxa honetan elementurik ez",

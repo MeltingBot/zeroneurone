@@ -15,6 +15,7 @@ import { db, cleanOrphanedOpfs } from './db/database';
 import { syncService } from './services/syncService';
 import { setPluginNavigate } from './plugins/pluginAPI';
 import { PluginUiHost } from './components/plugins/PluginUiHost';
+import { ExportProgressModal } from './components/modals/ExportProgressModal';
 import { appPath } from './utils/basePath';
 
 /**
@@ -335,6 +336,7 @@ function App() {
               <Route path="/join/:roomId" element={<JoinPage />} />
             </Routes>
             <ToastContainer />
+            <ExportProgressModal />
             <TutorialOverlay />
             {globalPlugins.map((Plugin, i) => <Plugin key={`gp-${i}`} />)}
             <PluginUiHost />

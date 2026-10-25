@@ -235,7 +235,8 @@
       "elements": "{{count}} element(s)",
       "success": "{{count}} element(s) imported",
       "error": "Import failed",
-      "mediaResult": "{{ok}} media attached, {{fail}} failed"
+      "mediaResult": "{{ok}} media attached, {{fail}} failed",
+      "tabLimit": "{{max}} tabs at most: \"{{name}}\" goes to the open tab"
     },
     "layout": {
       "title": "Layout algorithms",
@@ -330,6 +331,7 @@
       "deleteConfirm": "Delete tab {{name}}? Elements will not be deleted.",
       "newFromSelection": "New tab with selection",
       "moveToTab": "Move to tab...",
+      "moveHere": "Move into this tab",
       "addToTab": "Add to tab...",
       "removeFromTab": "Remove from tab",
       "emptyState": "No elements in this tab",

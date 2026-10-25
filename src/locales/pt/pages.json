@@ -235,7 +235,8 @@
       "elements": "{{count}} elemento(s)",
       "success": "{{count}} elemento(s) importado(s)",
       "error": "Importação falhou",
-      "mediaResult": "{{ok}} média(s) anexada(s), {{fail}} falha(s)"
+      "mediaResult": "{{ok}} média(s) anexada(s), {{fail}} falha(s)",
+      "tabLimit": "Máximo de {{max}} separadores: «{{name}}» vai para o separador aberto"
     },
     "layout": {
       "title": "Algoritmos de disposição",
@@ -329,6 +330,7 @@
       "deleteConfirm": "Excluir aba {{name}}? Os elementos não serão excluídos.",
       "newFromSelection": "Nova aba com a seleção",
       "moveToTab": "Mover para a aba...",
+      "moveHere": "Mover para este separador",
       "addToTab": "Adicionar à aba...",
       "removeFromTab": "Remover da aba",
       "emptyState": "Nenhum elemento nesta aba",

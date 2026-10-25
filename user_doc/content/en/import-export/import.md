@@ -25,6 +25,19 @@ Menu **⋯** → **Import**
 | **Create new dossier** | Creates an independent copy |
 | **Merge** | Adds elements to current dossier |
 
+After a merge (ZIP or another format placed on the canvas), the imported elements are selected and **Ctrl+Z** undoes the import at once: elements, links and created tabs. Attachments, tag families and report sections brought in stay; existing elements changed by the import (CSV events) keep their changes.
+
+#### Choosing the tabs
+
+When the archive has tabs, merging lets you choose which ones to import (all ticked, with their element count):
+
+- **In no tab**: the elements filed in no tab of the archive.
+- **Linked elements** (ticked by default): adds the elements linked directly to the kept ones, even when filed in a tab left out (a victim, an item). They stay in no tab and show as ghosts in the recreated tab.
+- **Recreate the tabs** (default): each chosen tab joins the dossier's tab **with the same name**, or creates a new one (10 tabs at most; beyond that, its elements go to the open tab). Elements in no tab go to the open tab.
+- **All in the open tab**: the archive tabs only serve to choose; everything imported goes to the open tab.
+- Only the links between imported elements and the attachments of these elements are brought in.
+- **Report** (ticked by default, shown when the archive has one): adds its sections; untick it for a partial import, its references to elements left out would lead nowhere.
+
 
 ### Expected Content
 

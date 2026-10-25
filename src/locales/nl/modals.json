@@ -25,7 +25,16 @@
     "title": "Importeren in dossier",
     "description": "Gegevens importeren in het huidige dossier. ZIP-bestanden worden in plaatsingsmodus geïmporteerd.",
     "selectFile": "Bestand selecteren",
-    "emptyZip": "Het ZIP-bestand is leeg of bevat geen elementen"
+    "emptyZip": "Het ZIP-bestand is leeg of bevat geen elementen",
+    "tabsTitle": "Te importeren tabbladen",
+    "untitledTab": "Naamloos",
+    "unassigned": "In geen tabblad",
+    "includeLinked": "Gekoppelde elementen",
+    "includeReport": "Rapport (secties)",
+    "tabsConfirm": "Plaatsen",
+    "tabsTarget": "Bestemming",
+    "recreateTabs": "Tabbladen opnieuw maken",
+    "intoOpenTab": "Alles in het open tabblad"
   },
   "import": {
     "title": "Dossier importeren",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Archief voorbereiden…",
+      "files": "Bijlagen: {{done}}/{{total}}",
+      "data": "Dossiergegevens…",
+      "compress": "Comprimeren: {{percent}}%",
+      "encrypt": "Versleutelen…"
+    },
     "title": "Dossier exporteren",
     "description": "\"{{name}}\" exporteren ({{elements}} elementen, {{links}} verbindingen)",
     "format": "Formaat",
@@ -240,6 +256,10 @@
     "createFirst": "Maak uw eerste palet aan"
   },
   "tagSetEditor": {
+    "applyTitle": "Toepassen op het open dossier",
+    "applyVisual": "Uiterlijk (elementen met deze hoofdtag)",
+    "applyProperties": "Ontbrekende eigenschappen, leeg (elementen met de tag)",
+    "applyProgress": "Bijgewerkte elementen: {{done}}/{{total}}",
     "title": "Tagpalet",
     "titleNew": "Nieuwe tag",
     "titleEdit": "\"{{name}}\" bewerken",
@@ -614,7 +634,17 @@
     "kept": "Behouden",
     "properties": "eigenschappen",
     "events": "gebeurtenissen",
-    "hint": "Het andere element wordt verwijderd. De links worden overgedragen."
+    "hint": "Het andere element wordt verwijderd. De links worden overgedragen.",
+    "titleMany": "{{count}} elementen samenvoegen",
+    "warnNotes": "De notities van {{count}} elementen worden achter elkaar gezet",
+    "warnProperties_one": "{{count}} eigenschap na het samenvoegen",
+    "warnProperties_other": "{{count}} eigenschappen na het samenvoegen",
+    "warnPropertiesMulti_one": "{{count}} eigenschap na het samenvoegen, waarvan {{keys}} sleutel(s) met meerdere waarden",
+    "warnPropertiesMulti_other": "{{count}} eigenschappen na het samenvoegen, waarvan {{keys}} sleutel(s) met meerdere waarden",
+    "linkCount_one": "{{count}} koppeling",
+    "linkCount_other": "{{count}} koppelingen",
+    "hintMany_one": "Het andere element wordt verwijderd. De koppelingen worden overgezet.",
+    "hintMany_other": "De {{count}} andere elementen worden verwijderd. Hun koppelingen worden overgezet."
   },
   "encryption": {
     "title": "Versleuteling",

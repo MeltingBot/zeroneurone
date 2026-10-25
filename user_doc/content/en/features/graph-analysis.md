@@ -28,7 +28,7 @@ The Louvain algorithm automatically detects **communities**: groups of elements 
 | Action | Result |
 |--------|--------|
 | **View** | List of clusters with their members |
-| **Click** | Selects all cluster members |
+| **Click** | Highlights the cluster and frames it on screen |
 | **Color** | Applies a distinct color to each cluster |
 
 ### Interpretation
@@ -168,7 +168,7 @@ Automatically rearrange elements using different algorithms via the **Arrange** 
 
 - Use **Ctrl+Z** to undo a layout
 - **Hierarchy** layout auto-detects roots (elements with no incoming links)
-- **Force** layout adapts to graph size (optimized for large networks)
+- **Force** layout adapts to graph size (optimized for large networks). Elements with a single link are set in rings around the element they hang from, level by level (a group and its items around a hub): a highly linked element stays readable instead of scattering its neighbours
 - A **group** moves as one block with its elements, whatever the layout
 - Selecting only elements of the same group arranges them **inside** the group
 

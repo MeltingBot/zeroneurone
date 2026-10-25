@@ -25,7 +25,16 @@
     "title": "Importer dans le dossier",
     "description": "Importez des données dans le dossier actuel. Les fichiers ZIP seront importés en mode placement.",
     "selectFile": "Sélectionner un fichier",
-    "emptyZip": "Le fichier ZIP est vide ou ne contient aucun élément"
+    "emptyZip": "Le fichier ZIP est vide ou ne contient aucun élément",
+    "tabsTitle": "Onglets à importer",
+    "untitledTab": "Sans nom",
+    "unassigned": "Hors onglet",
+    "includeLinked": "Éléments reliés",
+    "includeReport": "Rapport (sections)",
+    "tabsConfirm": "Placer",
+    "tabsTarget": "Destination",
+    "recreateTabs": "Recréer les onglets",
+    "intoOpenTab": "Tout dans l'onglet ouvert"
   },
   "import": {
     "title": "Importer un dossier",
@@ -94,6 +103,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Préparation de l'archive…",
+      "files": "Fichiers joints : {{done}}/{{total}}",
+      "data": "Données du dossier…",
+      "compress": "Compression : {{percent}} %",
+      "encrypt": "Chiffrement…"
+    },
     "title": "Exporter le dossier",
     "description": "Exporter \"{{name}}\" ({{elements}} éléments, {{links}} liens)",
     "format": "Format",
@@ -240,6 +256,10 @@
     "createFirst": "Créez votre première palette"
   },
   "tagSetEditor": {
+    "applyTitle": "Appliquer au dossier ouvert",
+    "applyVisual": "Apparence (éléments dont c'est le tag principal)",
+    "applyProperties": "Propriétés manquantes, vides (éléments portant le tag)",
+    "applyProgress": "Éléments mis à jour : {{done}}/{{total}}",
     "title": "Palette de tags",
     "titleNew": "Nouveau tag",
     "titleEdit": "Modifier \"{{name}}\"",
@@ -623,7 +643,17 @@
     "kept": "Conservé",
     "properties": "propriétés",
     "events": "événements",
-    "hint": "L'autre élément sera supprimé. Ses liens seront transférés."
+    "hint": "L'autre élément sera supprimé. Ses liens seront transférés.",
+    "titleMany": "Fusionner {{count}} éléments",
+    "warnNotes": "Les notes de {{count}} éléments seront mises bout à bout",
+    "warnProperties_one": "{{count}} propriété après fusion",
+    "warnProperties_other": "{{count}} propriétés après fusion",
+    "warnPropertiesMulti_one": "{{count}} propriété après fusion, dont {{keys}} clé(s) à plusieurs valeurs",
+    "warnPropertiesMulti_other": "{{count}} propriétés après fusion, dont {{keys}} clé(s) à plusieurs valeurs",
+    "linkCount_one": "{{count}} lien",
+    "linkCount_other": "{{count}} liens",
+    "hintMany_one": "L'autre élément sera supprimé. Ses liens seront transférés.",
+    "hintMany_other": "Les {{count}} autres éléments seront supprimés. Leurs liens seront transférés."
   },
   "encryption": {
     "title": "Chiffrement",

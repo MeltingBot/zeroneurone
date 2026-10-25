@@ -311,6 +311,7 @@
     "insights": "Analiza grafu",
     "layout": "Układ",
     "view": "Zmiana widoku",
-    "suggestions": "Sugestie powiązań"
+    "suggestions": "Sugestie powiązań",
+    "export": "Tworzenie archiwum"
   }
 }

@@ -25,7 +25,16 @@
     "title": "Importuj do teczki",
     "description": "Importuj dane do bieżącego teczki. Pliki ZIP będą importowane w trybie rozmieszczenia.",
     "selectFile": "Wybierz plik",
-    "emptyZip": "Plik ZIP jest pusty lub nie zawiera elementów"
+    "emptyZip": "Plik ZIP jest pusty lub nie zawiera elementów",
+    "tabsTitle": "Karty do zaimportowania",
+    "untitledTab": "Bez nazwy",
+    "unassigned": "Poza kartami",
+    "includeLinked": "Powiązane elementy",
+    "includeReport": "Raport (sekcje)",
+    "tabsConfirm": "Umieść",
+    "tabsTarget": "Miejsce docelowe",
+    "recreateTabs": "Odtwórz karty",
+    "intoOpenTab": "Wszystko w otwartej karcie"
   },
   "import": {
     "title": "Importuj teczka",
@@ -96,6 +105,13 @@
     }
   },
   "export": {
+    "progress": {
+      "preparing": "Przygotowywanie archiwum…",
+      "files": "Załączniki: {{done}}/{{total}}",
+      "data": "Dane sprawy…",
+      "compress": "Kompresja: {{percent}}%",
+      "encrypt": "Szyfrowanie…"
+    },
     "title": "Eksportuj teczka",
     "description": "Eksportuj \"{{name}}\" ({{elements}} elementów, {{links}} połączeń)",
     "format": "Format",
@@ -242,6 +258,10 @@
     "createFirst": "Utwórz swoją pierwszą paletę"
   },
   "tagSetEditor": {
+    "applyTitle": "Zastosuj do otwartej sprawy",
+    "applyVisual": "Wygląd (elementy z tym głównym tagiem)",
+    "applyProperties": "Brakujące właściwości, puste (elementy z tagiem)",
+    "applyProgress": "Zaktualizowane elementy: {{done}}/{{total}}",
     "title": "Paleta tagów",
     "titleNew": "Nowy tag",
     "titleEdit": "Edytuj \"{{name}}\"",
@@ -616,7 +636,25 @@
     "kept": "Zachowany",
     "properties": "właściwości",
     "events": "wydarzenia",
-    "hint": "Drugi element zostanie usunięty. Jego linki zostaną przeniesione."
+    "hint": "Drugi element zostanie usunięty. Jego linki zostaną przeniesione.",
+    "titleMany": "Scal elementy ({{count}})",
+    "warnNotes": "Notatki elementów ({{count}}) zostaną połączone jedna po drugiej",
+    "warnProperties_one": "{{count}} właściwość po scaleniu",
+    "warnProperties_few": "{{count}} właściwości po scaleniu",
+    "warnProperties_many": "{{count}} właściwości po scaleniu",
+    "warnProperties_other": "{{count}} właściwości po scaleniu",
+    "warnPropertiesMulti_one": "{{count}} właściwość po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
+    "warnPropertiesMulti_few": "{{count}} właściwości po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
+    "warnPropertiesMulti_many": "{{count}} właściwości po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
+    "warnPropertiesMulti_other": "{{count}} właściwości po scaleniu, w tym kluczy z wieloma wartościami: {{keys}}",
+    "linkCount_one": "{{count}} powiązanie",
+    "linkCount_few": "{{count}} powiązania",
+    "linkCount_many": "{{count}} powiązań",
+    "linkCount_other": "{{count}} powiązania",
+    "hintMany_one": "Drugi element zostanie usunięty. Jego powiązania zostaną przeniesione.",
+    "hintMany_few": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione.",
+    "hintMany_many": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione.",
+    "hintMany_other": "Pozostałe elementy ({{count}}) zostaną usunięte. Ich powiązania zostaną przeniesione."
   },
   "encryption": {
     "title": "Szyfrowanie",

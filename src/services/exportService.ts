@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { reportExportProgress, yieldForPaint } from './exportProgress';
 import type { Dossier, Element, Link, Asset, Report, CanvasTab, View, SavedQuery, Comment, TagSetDefaultVisual, SuggestedProperty, Property } from '../types';
 import { isCustomIconName, customIconIdFromName } from '../types';
 import { useTagSetStore, useCustomIconStore } from '../stores';
@@ -188,7 +189,13 @@ class ExportService {
     // Prepare asset metadata and add files to ZIP
     const assetsMeta: ExportedAssetMeta[] = [];
 
+    let read = 0;
+    if (assets.length > 0) {
+      reportExportProgress('files', 0, assets.length);
+      await yieldForPaint();
+    }
     for (const asset of assets) {
+      reportExportProgress('files', read++, assets.length);
       try {
         const file = await fileService.getAssetFile(asset);
         const arrayBuffer = await file.arrayBuffer();
@@ -214,6 +221,8 @@ class ExportService {
     }
 
     // Add JSON metadata (includes report data for import)
+    reportExportProgress('data', 0, 1);
+    await yieldForPaint();
     const jsonContent = this.exportToJSON(dossier, elements, links, assetsMeta, report, tabs, views, queries, queryHistory, comments);
     zip.file('dossier.json', jsonContent);
 
@@ -234,7 +243,9 @@ class ExportService {
     }
 
     // Generate ZIP blob
-    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    reportExportProgress('compress', 0, 100);
+    await yieldForPaint();
+    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }, ({ percent }) => reportExportProgress('compress', percent, 100));
   }
 
   /**
@@ -255,6 +266,8 @@ class ExportService {
     comments?: Comment[]
   ): Promise<Blob> {
     const zipBlob = await this.exportToZip(dossier, elements, links, assets, report, tabs, views, queries, queryHistory, comments);
+    reportExportProgress('encrypt', 0, 1);
+    await yieldForPaint();
     const encBuf = await encryptZip(zipBlob, password);
     return new Blob([encBuf], { type: 'application/octet-stream' });
   }
@@ -281,7 +294,9 @@ class ExportService {
       vault.file(file.path, file.content);
     }
 
+    let read = 0;
     for (const asset of assets) {
+      reportExportProgress('files', read++, assets.length);
       const path = assetPaths.get(asset.id);
       if (!path) continue;
       try {
@@ -292,7 +307,9 @@ class ExportService {
       }
     }
 
-    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    reportExportProgress('compress', 0, 100);
+    await yieldForPaint();
+    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }, ({ percent }) => reportExportProgress('compress', percent, 100));
   }
 
   /**

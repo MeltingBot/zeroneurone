@@ -235,7 +235,8 @@
       "elements": "{{count}} elemento(s)",
       "success": "{{count}} elemento(s) importado(s)",
       "error": "Error de importación",
-      "mediaResult": "{{ok}} medios adjuntados, {{fail}} fallidos"
+      "mediaResult": "{{ok}} medios adjuntados, {{fail}} fallidos",
+      "tabLimit": "Máximo {{max}} pestañas: «{{name}}» va a la pestaña abierta"
     },
     "layout": {
       "title": "Algoritmos de disposición",
@@ -329,6 +330,7 @@
       "deleteConfirm": "¿Eliminar pestaña {{name}}? Los elementos no serán eliminados.",
       "newFromSelection": "Nueva pestaña con la selección",
       "moveToTab": "Mover a pestaña...",
+      "moveHere": "Mover a esta pestaña",
       "addToTab": "Añadir a pestaña...",
       "removeFromTab": "Quitar de pestaña",
       "emptyState": "Sin elementos en esta pestaña",

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { withExportProgress } from '../../services/exportProgress';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Trash2, Edit2, Upload, Star, Tag, Archive } from 'lucide-react';
@@ -57,12 +58,15 @@ export function DossierCard({
 
   const handleExport = async () => {
     try {
-      const elements = await elementRepository.getByDossier(dossier.id);
-      const links = await linkRepository.getByDossier(dossier.id);
-      const assets = await fileService.getAssetsByDossier(dossier.id);
-      const report = await reportRepository.getByDossierWithYDoc(dossier.id);
-      const tabs = await tabRepository.getByDossier(dossier.id);
-      await exportService.exportDossier('zip', dossier, elements, links, assets, report, tabs);
+      // Progress shown in a window while the archive is built
+      await withExportProgress(async () => {
+        const elements = await elementRepository.getByDossier(dossier.id);
+        const links = await linkRepository.getByDossier(dossier.id);
+        const assets = await fileService.getAssetsByDossier(dossier.id);
+        const report = await reportRepository.getByDossierWithYDoc(dossier.id);
+        const tabs = await tabRepository.getByDossier(dossier.id);
+        await exportService.exportDossier('zip', dossier, elements, links, assets, report, tabs);
+      });
       toast.success(t('home.card.exportSuccess'));
     } catch (error) {
       console.error('[DossierCard] Export error:', error);

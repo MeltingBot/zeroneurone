@@ -235,7 +235,8 @@
       "elements": "{{count}} element(en)",
       "success": "{{count}} element(en) geïmporteerd",
       "error": "Import mislukt",
-      "mediaResult": "{{ok}} media bijgevoegd, {{fail}} mislukt"
+      "mediaResult": "{{ok}} media bijgevoegd, {{fail}} mislukt",
+      "tabLimit": "Maximaal {{max}} tabbladen: „{{name}}” gaat naar het open tabblad"
     },
     "layout": {
       "title": "Indelingsalgoritmen",
@@ -329,6 +330,7 @@
       "deleteConfirm": "Tabblad {{name}} verwijderen? Elementen worden niet verwijderd.",
       "newFromSelection": "Nieuw tabblad met selectie",
       "moveToTab": "Verplaatsen naar tabblad...",
+      "moveHere": "Naar dit tabblad verplaatsen",
       "addToTab": "Toevoegen aan tabblad...",
       "removeFromTab": "Verwijderen uit tabblad",
       "emptyState": "Geen elementen in dit tabblad",

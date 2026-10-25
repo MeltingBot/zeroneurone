@@ -235,7 +235,8 @@
       "elements": "{{count}} element(s)",
       "success": "{{count}} element(s) importat(s)",
       "error": "Error d'importació",
-      "mediaResult": "{{ok}} mèdia adjuntats, {{fail}} fallits"
+      "mediaResult": "{{ok}} mèdia adjuntats, {{fail}} fallits",
+      "tabLimit": "Màxim {{max}} pestanyes: «{{name}}» va a la pestanya oberta"
     },
     "layout": {
       "title": "Algoritmes de disposició",
@@ -329,6 +330,7 @@
       "deleteConfirm": "Eliminar la pestanya {{name}}? Els elements no seran eliminats.",
       "newFromSelection": "Nova pestanya amb la selecció",
       "moveToTab": "Moure a la pestanya...",
+      "moveHere": "Moure a aquesta pestanya",
       "addToTab": "Afegir a pestanya...",
       "removeFromTab": "Treure de pestanya",
       "emptyState": "Cap element en aquesta pestanya",

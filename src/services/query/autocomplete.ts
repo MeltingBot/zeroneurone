@@ -60,7 +60,7 @@ function detectContext(input: string, cursorPos: number): CursorContext {
       return { kind: 'keyword', partial: '' };
     }
     // After field identifier → operator
-    if (/^[a-zA-Z_".]/.test(last)) {
+    if (/^[\p{L}_".]/u.test(last)) {
       return { kind: 'operator', field: unquote(last) };
     }
     return { kind: 'field', partial: '' };
@@ -342,7 +342,7 @@ export function getAutocompleteSuggestions(
       const props = collectPropertyKeys(elements, links);
       for (const { key, count } of props) {
         if (!partial || key.toLowerCase().includes(partial)) {
-          const needsQuote = !/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(key);
+          const needsQuote = !/^[\p{L}_][\p{L}\p{N}_.]*$/u.test(key);
           suggestions.push({
             text: needsQuote ? `"${key}"` : key,
             type: 'field',
