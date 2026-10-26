@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.76.4
+
+### Améliorations
+
+- **Déplacer en vue d'ensemble** — un élément, ou la sélection quand il en
+  fait partie, se déplace par glisser : aperçu en direct, Échap pour annuler,
+  aimantation à la grille si active, annulable (Ctrl+Z). Les éléments
+  verrouillés et fantômes restent en place, un groupe emmène ses enfants.
+  Pour ne rien bouger par mégarde sur une vue dense, il faut saisir l'élément
+  exactement : à côté, le glisser déplace la vue (un élément déjà sélectionné
+  garde une marge de 4 px).
+- **Documentation** — FAQ mise à jour (gros dossiers).
+
 ## 2.76.3
 
 ### Améliorations

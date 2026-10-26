@@ -379,7 +379,7 @@ Technically, no limit. Practically, beyond 10 it can get confusing. But it works
 
 ### What about large dossiers?
 
-ZeroNeurone is measured and tested, collaboration included, on dossiers of **10,000 elements and 15,000 links**. Creating, deleting, undoing and switching tabs stay fast. Zoomed out over more than 1,500 elements on screen, the whole graph (elements and links) is drawn in one pass: panning and zooming stay smooth, and every link is visible. You can select (click, Shift+box) and open the context menu there; to move or link elements, zoom in. Zoomed in, beyond 500 elements, links are hidden during pan/zoom.
+ZeroNeurone is measured and tested, collaboration included, on dossiers of **10,000 elements and 15,000 links**. Creating, deleting, undoing and switching tabs stay fast. Zoomed out over more than 1,500 elements on screen, the whole graph (elements and links) is drawn in one pass: panning and zooming stay smooth, and every link is visible. You can select (click, Shift+box), open the context menu, and move an element or the selection by grabbing it exactly (next to it, dragging pans the view). To link elements, zoom in. Zoomed in, beyond 500 elements, links are hidden during pan/zoom.
 
 **Operational limit: about 12,000 elements on a single tab.** Beyond that, the dossier opens and displays, but navigation becomes less smooth.
 

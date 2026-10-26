@@ -51,7 +51,7 @@ import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { OverviewLayer, type OverviewHandle } from './overview/OverviewLayer';
 import { buildOverviewScene, computeAbsoluteNodePositions, linkFlagsOf, nodeFootprint } from './overview/overviewScene';
 import { linksTouching } from './overview/overviewHitTest';
-import type { OverviewScene } from './overview/overviewTypes';
+import { NODE_GHOST, type OverviewScene } from './overview/overviewTypes';
 import { linkVisualState, type LinkVisualContext } from '../../utils/linkVisualState';
 import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
@@ -2334,6 +2334,132 @@ export function Canvas() {
   }, [overviewEnabled, showMinimap, overviewActive, nodes, themeMode, t]);
   const overviewSceneRef = useRef(overviewScene);
   overviewSceneRef.current = overviewScene;
+
+  // Dragging in the overview: an element, or the selection it belongs to.
+  // The press is taken from React Flow (capture phase) only when it lands on
+  // a movable element, so a press on empty canvas still pans and Shift still
+  // draws a selection box. A press that does not move stays a click.
+  const OVERVIEW_DRAG_THRESHOLD_PX = 3;
+  /** Clicks before this time end a drag: they select nothing. */
+  const suppressClickUntilRef = useRef(0);
+  const overviewDragDepsRef = useRef({ elementMap, updateElementPositions, pushAction, updateDragging, snapToGrid, gridSize });
+  overviewDragDepsRef.current = { elementMap, updateElementPositions, pushAction, updateDragging, snapToGrid, gridSize };
+  const handleOverviewPointerDown = useCallback((event: React.PointerEvent) => {
+    if (!overviewActiveRef.current || event.button !== 0 || event.shiftKey) return;
+    const handle = overviewHandleRef.current;
+    const scene = overviewSceneRef.current;
+    if (!handle || !scene) return;
+    // A drag takes an element only when pressed right on it: the click reach
+    // around tiny nodes covers most of a dense view, which must still pan.
+    // An element already selected keeps that reach (aimed at on purpose).
+    const selected = useSelectionStore.getState().selectedElementIds;
+    let hitId = handle.hitTestClient(event.clientX, event.clientY, 0);
+    if (!hitId) {
+      const near = handle.hitTestClient(event.clientX, event.clientY);
+      if (near && selected.has(near)) hitId = near;
+    }
+    if (!hitId) return;
+    const { elementMap: els } = overviewDragDepsRef.current;
+
+    // What moves: the selection if the element is in it, else the element alone;
+    // never a locked element or a ghost, nor a child whose group moves too
+    const candidates = selected.has(hitId) ? [...selected] : [hitId];
+    const candidateSet = new Set(candidates);
+    const ids = candidates.filter((id) => {
+      const el = els.get(id);
+      const i = scene.indexById.get(id);
+      if (!el || i === undefined || el.isPositionLocked || scene.flags[i] & NODE_GHOST) return false;
+      return !(el.parentGroupId && candidateSet.has(el.parentGroupId));
+    });
+    if (ids.length === 0) return;
+
+    // Drawn nodes to offset: the moved ones and the children of moved groups
+    const moving = new Set(ids);
+    const indices: number[] = [];
+    for (let i = 0; i < scene.nodeCount; i++) {
+      const el = els.get(scene.ids[i]);
+      if (moving.has(scene.ids[i]) || (el?.parentGroupId && moving.has(el.parentGroupId))) indices.push(i);
+    }
+
+    event.preventDefault(); // no compatibility mousedown: d3-zoom does not pan
+    event.stopPropagation(); // nor does React Flow's pane start a selection
+    const startX = event.clientX, startY = event.clientY;
+    const zoom = useViewStore.getState().viewport.zoom || 1;
+    let dragging = false;
+    let cancelled = false;
+    let dx = 0, dy = 0;
+    const swallowClick = () => { suppressClickUntilRef.current = performance.now() + 300; };
+
+    const onMove = (e: PointerEvent) => {
+      if (cancelled) return;
+      if (!dragging) {
+        if (Math.hypot(e.clientX - startX, e.clientY - startY) < OVERVIEW_DRAG_THRESHOLD_PX) return;
+        dragging = true;
+        overviewDragDepsRef.current.updateDragging(ids);
+      }
+      dx = (e.clientX - startX) / zoom;
+      dy = (e.clientY - startY) / zoom;
+      handle.previewOffset(indices, dx, dy);
+    };
+    const stop = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('keydown', onKey, true);
+    };
+    const cancel = () => {
+      cancelled = true;
+      if (!dragging) return;
+      handle.cancelOffset();
+      overviewDragDepsRef.current.updateDragging([]);
+    };
+    const onCancel = () => { stop(); cancel(); };
+    // Escape puts everything back; the button is still down, the release that
+    // follows must not count as a click
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || cancelled) return;
+      e.preventDefault();
+      e.stopPropagation();
+      cancel();
+    };
+    const onUp = () => {
+      stop();
+      if (cancelled) { swallowClick(); return; }
+      if (!dragging) return; // a click: React Flow's pane click selects it
+      swallowClick();
+      const { elementMap: current, updateElementPositions: commit, pushAction: push, updateDragging: setDragging, snapToGrid: snap, gridSize: grid } = overviewDragDepsRef.current;
+      const undoPositions: { id: string; position: Position }[] = [];
+      const redoPositions: { id: string; position: Position }[] = [];
+      for (const id of ids) {
+        const el = current.get(id);
+        if (!el) continue;
+        let x = el.position.x + dx, y = el.position.y + dy;
+        if (snap && grid > 0) { x = Math.round(x / grid) * grid; y = Math.round(y / grid) * grid; }
+        if (x === el.position.x && y === el.position.y) continue;
+        undoPositions.push({ id, position: { ...el.position } });
+        redoPositions.push({ id, position: { x, y } });
+      }
+      setDragging([]);
+      if (redoPositions.length === 0) {
+        handle.cancelOffset();
+        return;
+      }
+      handle.endOffset();
+      push({ type: 'move-elements', undo: { positions: undoPositions }, redo: { positions: redoPositions } });
+      commit(redoPositions);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+    window.addEventListener('keydown', onKey, true);
+  }, []);
+
+  // The click that ends a drag is not a selection click
+  const handleOverviewClickCapture = useCallback((event: React.MouseEvent) => {
+    if (performance.now() > suppressClickUntilRef.current) return;
+    suppressClickUntilRef.current = 0;
+    event.stopPropagation();
+  }, []);
 
   // Shift+box over the overview: same result as React Flow's partial selection
   const handleOverviewBoxSelect = useCallback((scene: OverviewScene, indices: number[]) => {
@@ -5250,6 +5376,8 @@ export function Canvas() {
           data-testid="canvas"
           data-tutorial="canvas"
           data-report-capture="canvas"
+          onPointerDownCapture={handleOverviewPointerDown}
+          onClickCapture={handleOverviewClickCapture}
           onMouseMove={(e) => { lastMousePosRef.current = { x: e.clientX, y: e.clientY }; }}
           onDrop={handleFileDrop}
           onDragOver={handleFileDragOver}

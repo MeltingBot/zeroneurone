@@ -18,11 +18,17 @@ import type { OverviewScene } from './overviewTypes';
 const HIT_TOLERANCE_PX = 4;
 
 export interface OverviewHandle {
-  /** Node id under a client point, or null. */
-  hitTestClient: (clientX: number, clientY: number) => string | null;
+  /** Node id under a client point, or null. `tolerancePx`: reach around nodes (default HIT_TOLERANCE_PX). */
+  hitTestClient: (clientX: number, clientY: number, tolerancePx?: number) => string | null;
   /** Redraw at another pixel ratio (sharper PNG export); `restore` goes back. */
   redrawAt: (dpr: number) => void;
   restore: () => void;
+  /** Drag preview: draws the given scene nodes moved by (dx, dy) flow units. */
+  previewOffset: (indices: readonly number[], dx: number, dy: number) => void;
+  /** Drag cancelled: puts the nodes back. */
+  cancelOffset: () => void;
+  /** Drag committed: keeps the moved drawing until the new scene arrives. */
+  endOffset: () => void;
 }
 
 interface OverviewLayerProps {
@@ -65,6 +71,8 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
   const lastSceneRef = useRef(scene);
   if (scene) lastSceneRef.current = scene;
   onBoxSelectRef.current = onBoxSelect;
+  /** Node coordinates before a drag preview moved them (in place, in the scene arrays). */
+  const dragOriginRef = useRef<{ scene: OverviewScene; indices: readonly number[]; x: Float32Array; y: Float32Array } | null>(null);
   /** Selection rectangle being drawn, kept: React Flow clears it before onSelectionEnd. */
   const boxRef = useRef<SelectionRect | null>(null);
   const pendingRef = useRef<number[] | null>(null);
@@ -183,7 +191,7 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
   // Imperative access for the canvas (click hit-test, export)
   useEffect(() => {
     handleRef.current = {
-      hitTestClient: (clientX, clientY) => {
+      hitTestClient: (clientX, clientY, tolerancePx = HIT_TOLERANCE_PX) => {
         const sc = sceneRef.current;
         const canvas = canvasRef.current;
         if (!sc || !canvas || !activeRef.current) return null;
@@ -191,7 +199,7 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
         const [tx, ty, zoom] = store.getState().transform;
         const fx = (clientX - rect.left - tx) / zoom;
         const fy = (clientY - rect.top - ty) / zoom;
-        const i = hitPoint(sc, fx, fy, HIT_TOLERANCE_PX / zoom);
+        const i = hitPoint(sc, fx, fy, tolerancePx / zoom);
         return i >= 0 ? sc.ids[i] : null;
       },
       redrawAt: (dpr) => {
@@ -201,6 +209,39 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
       restore: () => {
         dprRef.current = window.devicePixelRatio || 1;
         drawNowRef.current();
+      },
+      previewOffset: (indices, dx, dy) => {
+        const sc = lastSceneRef.current;
+        if (!sc) return;
+        let origin = dragOriginRef.current;
+        if (!origin || origin.scene !== sc || origin.indices !== indices) {
+          origin = {
+            scene: sc,
+            indices,
+            x: Float32Array.from(indices, (i) => sc.x[i]),
+            y: Float32Array.from(indices, (i) => sc.y[i]),
+          };
+          dragOriginRef.current = origin;
+        }
+        // In place: links read their ends from the same arrays and follow
+        for (let k = 0; k < indices.length; k++) {
+          sc.x[indices[k]] = origin.x[k] + dx;
+          sc.y[indices[k]] = origin.y[k] + dy;
+        }
+        scheduleRef.current();
+      },
+      cancelOffset: () => {
+        const origin = dragOriginRef.current;
+        dragOriginRef.current = null;
+        if (!origin) return;
+        for (let k = 0; k < origin.indices.length; k++) {
+          origin.scene.x[origin.indices[k]] = origin.x[k];
+          origin.scene.y[origin.indices[k]] = origin.y[k];
+        }
+        scheduleRef.current();
+      },
+      endOffset: () => {
+        dragOriginRef.current = null;
       },
     };
     return () => { handleRef.current = null; };

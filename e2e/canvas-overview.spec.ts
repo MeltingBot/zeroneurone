@@ -103,6 +103,45 @@ test('the overview layer draws the whole graph and keeps selection working', asy
   await page.keyboard.press('Escape');
   await expect.poll(() => selectedLabels(page)).toEqual(['Jean Dupont 0', 'Marie Martin 1']);
 
+  // Drag the selection (first two elements) by 20 screen px right: both move, once undone both return
+  const positions = () => page.evaluate(async () => {
+    const { useDossierStore } = await import('/src/stores/dossierStore.ts');
+    const els = useDossierStore.getState().elements;
+    const pick = (label: string) => els.find((e) => e.label === label)!.position;
+    return { a: pick('Jean Dupont 0'), b: pick('Marie Martin 1'), c: pick('Pierre Bernard 50') };
+  });
+  const before = await positions();
+  const zoom = await page.evaluate(async () => (await import('/src/stores/viewStore.ts')).useViewStore.getState().viewport.zoom);
+  await page.mouse.move(p0.x, p0.y);
+  await page.mouse.down();
+  await page.mouse.move(p0.x + 10, p0.y, { steps: 3 });
+  await page.mouse.move(p0.x + 20, p0.y, { steps: 3 });
+  await page.mouse.up();
+  await expect.poll(async () => Math.round((await positions()).a.x - before.a.x)).toBe(Math.round(20 / zoom));
+  const moved = await positions();
+  expect(Math.round(moved.b.x - before.b.x)).toBe(Math.round(20 / zoom));
+  expect(moved.c).toEqual(before.c);
+  // The drag did not change the selection, nor pan the view
+  await expect.poll(() => selectedLabels(page)).toEqual(['Jean Dupont 0', 'Marie Martin 1']);
+  await page.keyboard.press('Control+z');
+  await expect.poll(async () => (await positions()).a).toEqual(before.a);
+  expect((await positions()).b).toEqual(before.b);
+
+  // A press near an unselected element, not on it, pans the view: in a dense
+  // view the click reach covers most of the screen. Far from the selection,
+  // whose elements keep that reach.
+  const nearC = await toScreen(page, 9020, 0);
+  const viewBefore = await page.evaluate(() =>
+    getComputedStyle(document.querySelector('.react-flow__viewport') as HTMLElement).transform);
+  await page.mouse.move(nearC.x, nearC.y - 2);
+  await page.mouse.down();
+  await page.mouse.move(nearC.x + 15, nearC.y + 10, { steps: 3 });
+  await page.mouse.move(nearC.x + 30, nearC.y + 20, { steps: 3 });
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() =>
+    getComputedStyle(document.querySelector('.react-flow__viewport') as HTMLElement).transform)).not.toBe(viewBefore);
+  expect((await positions()).c).toEqual(before.c);
+
   // The minimap stays, drawn from the overview scene; a click moves the view there
   const minimap = page.locator('[data-testid="overview-minimap"]');
   await expect(minimap).toBeVisible();
