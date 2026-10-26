@@ -55,6 +55,8 @@ Images display as thumbnails on the canvas. When you zoom in or resize a node be
 
 **Hide media on an element** — in the **Files** panel, the "Hide media on node" link shows the element's **label** instead of its image on the canvas. The file stays attached; only the display changes. This setting is per-element (distinct from the global "blur media" toolbar button).
 
+**Blur media on open** — for a sensitive dossier, check **Blur media on open** in the dossier's **Options**: media are blurred each time the dossier is opened, and as soon as the option is turned on (including by a collaborator in a shared session). The toolbar "blur media" button shows them for the session.
+
 
 **Full-screen preview** — the eye icon on the file row opens the image with zoom controls, from 40% to 300%. It opens fitted to width and the window scrolls around it once enlarged: useful for reading a scanned document or examining a detail on a scene photograph. The same controls apply to the PDF preview.
 

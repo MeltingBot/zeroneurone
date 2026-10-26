@@ -54,7 +54,8 @@
       "legacyCancel": "Cancelar",
       "legacyDone": "{{count}} fecha(s) corregida(s)",
       "legacyError": "La corrección ha fallado",
-      "linkArrowByDefault": "Flecha por defecto en las relaciones"
+      "linkArrowByDefault": "Flecha por defecto en las relaciones",
+      "blurMediaOnOpen": "Difuminar medios al abrir"
     },
     "placeholders": {
       "name": "Nombre de el expediente",

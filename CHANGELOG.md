@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.77.0
+
+### Nouveautés
+
+- **Médias floutés à l'ouverture** — nouvelle option du dossier (section
+  Options) : les médias sont floutés à chaque ouverture du dossier, et dès que
+  l'option est activée, y compris par un collaborateur en session partagée. Le
+  bouton « flouter les médias » les rend visibles le temps de la session.
+
+### Améliorations
+
+- **Grille du canvas au dézoom** — le pas de la grille double tant qu'il
+  serait illisible à l'écran (les lignes restent sur la grille d'aimantation),
+  et les points gardent une taille visible.
+- **Layout circulaire** — indisponible au-delà de 1 000 éléments : un seul
+  cercle serait plus large que l'écran, même au zoom minimum. Il reste
+  utilisable sur une sélection ou dans un onglet. À l'import JSON, la grille
+  le remplace au-delà de cette taille.
+
 ## 2.76.5
 
 ### Améliorations

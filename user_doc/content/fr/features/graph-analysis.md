@@ -160,13 +160,14 @@ Réarrangez automatiquement les éléments selon différents algorithmes via le 
 |--------|-------------|-------------|
 | **Force (clusters)** | Algorithme physique qui regroupe les éléments connectés | Visualiser les communautés |
 | **Hiérarchie** | Organisation par niveaux (arbres, organigrammes) | Structures hiérarchiques |
-| **Circulaire** | Disposition en cercle | Vue d'ensemble équilibrée |
+| **Circulaire** | Disposition en cercle (1 000 éléments au plus) | Vue d'ensemble équilibrée |
 | **Grille** | Alignement régulier | Organisation ordonnée |
 | **Dispersion** | Répartition aléatoire | Redistribuer les éléments |
 
 ### Conseils
 
 - Utilisez **Ctrl+Z** pour annuler un layout
+- Au-delà de 1 000 éléments, **Circulaire** est grisé : un seul cercle serait plus large que l'écran, même au zoom minimum. Sélectionnez une partie des éléments (ou travaillez dans un onglet) pour l'utiliser
 - Le layout **Hiérarchie** détecte automatiquement les racines (éléments sans liens entrants)
 - Le layout **Force** s'adapte à la taille du graphe (optimisé pour les grands réseaux). Les éléments à un seul lien sont rangés en anneaux autour de l'élément qui les porte, niveau par niveau (un groupe et ses objets autour d'un élément central) : un élément très relié reste lisible au lieu d'éparpiller ses voisins
 - Un **groupe** se déplace d'un bloc avec ses éléments, quel que soit le layout

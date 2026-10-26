@@ -41,7 +41,7 @@ import {
   type FilterOp,
 } from '../../utils/jsonMapping';
 import { computePolygonCenter, parseLatLngPair } from '../../utils/geo';
-import { layoutService, type LayoutType } from '../../services/layoutService';
+import { layoutService, CIRCULAR_MAX_ELEMENTS, type LayoutType } from '../../services/layoutService';
 import { JsonMappingManagerModal } from './JsonMappingManagerModal';
 import { TagCombobox } from './TagCombobox';
 import { JsonTablesDiagram, type DiagramTable } from './JsonTablesDiagram';
@@ -875,7 +875,9 @@ export function JsonMappingImportModal({ isOpen, onClose, initialJson }: JsonMap
       // instead of the naive build-order grid. Skipped for very large imports
       // (force layout would freeze) — the build-order grid is kept.
       if (elements.length > 1 && elements.length <= LAYOUT_CAP) {
-        const { positions } = layoutService.applyLayout(layout, elements, links);
+        // One ring of that many elements cannot be seen whole: grid instead
+        const applied = layout === 'circular' && elements.length > CIRCULAR_MAX_ELEMENTS ? 'grid' : layout;
+        const { positions } = layoutService.applyLayout(applied, elements, links);
         for (const el of elements) {
           const p = positions.get(el.id);
           if (p) el.position = p;

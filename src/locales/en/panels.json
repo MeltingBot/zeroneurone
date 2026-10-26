@@ -54,7 +54,8 @@
       "legacyCancel": "Cancel",
       "legacyDone": "{{count}} date(s) fixed",
       "legacyError": "Fix failed",
-      "linkArrowByDefault": "Arrow on new links by default"
+      "linkArrowByDefault": "Arrow on new links by default",
+      "blurMediaOnOpen": "Blur media on open"
     },
     "placeholders": {
       "name": "Dossier name",

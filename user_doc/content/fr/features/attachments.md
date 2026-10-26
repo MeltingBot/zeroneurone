@@ -55,6 +55,8 @@ Les images s'affichent en miniature sur le canvas. Lorsque vous zoomez ou redime
 
 **Masquer le média sur un élément** — dans le panneau **Fichiers**, le lien « Masquer le média sur le nœud » affiche le **label** de l'élément à la place de son image sur le canvas. Le fichier reste attaché ; seul l'affichage change. Ce réglage est propre à l'élément (distinct du bouton global « flouter les médias » de la barre d'outils).
 
+**Médias floutés à l'ouverture** — pour un dossier sensible, cochez **Médias floutés à l'ouverture** dans les **Options** du dossier : les médias sont floutés à chaque ouverture du dossier, et dès que l'option est activée (y compris par un collaborateur en session partagée). Le bouton « flouter les médias » de la barre d'outils les rend visibles le temps de la session.
+
 **Aperçu plein écran** — l'icône œil de la ligne du fichier ouvre l'image avec des contrôles de zoom, de 40 % à 300 %. L'image s'ouvre ajustée à la largeur et la fenêtre défile autour d'elle une fois agrandie : utile pour lire un document scanné ou examiner un détail sur une photo de scène. Les mêmes contrôles s'appliquent à l'aperçu PDF.
 
 

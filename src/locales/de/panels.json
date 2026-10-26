@@ -54,7 +54,8 @@
       "legacyCancel": "Abbrechen",
       "legacyDone": "{{count}} Datum/Daten korrigiert",
       "legacyError": "Korrektur fehlgeschlagen",
-      "linkArrowByDefault": "Standardmäßig Pfeil auf Verbindungen"
+      "linkArrowByDefault": "Standardmäßig Pfeil auf Verbindungen",
+      "blurMediaOnOpen": "Medien beim Öffnen unscharf"
     },
     "placeholders": {
       "name": "Name der Akte",

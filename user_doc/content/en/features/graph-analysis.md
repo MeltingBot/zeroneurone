@@ -160,13 +160,14 @@ Automatically rearrange elements using different algorithms via the **Arrange** 
 |--------|-------------|----------|
 | **Force (clusters)** | Physics-based algorithm grouping connected elements | Visualize communities |
 | **Hierarchy** | Level-based organization (trees, org charts) | Hierarchical structures |
-| **Circular** | Circle arrangement | Balanced overview |
+| **Circular** | Circle arrangement (1,000 elements at most) | Balanced overview |
 | **Grid** | Regular alignment | Ordered organization |
 | **Scatter** | Random distribution | Redistribute elements |
 
 ### Tips
 
 - Use **Ctrl+Z** to undo a layout
+- Above 1,000 elements, **Circular** is greyed out: a single circle would be wider than the screen, even at the smallest zoom. Select part of the elements (or work in a tab) to use it
 - **Hierarchy** layout auto-detects roots (elements with no incoming links)
 - **Force** layout adapts to graph size (optimized for large networks). Elements with a single link are set in rings around the element they hang from, level by level (a group and its items around a hub): a highly linked element stays readable instead of scattering its neighbours
 - A **group** moves as one block with its elements, whatever the layout

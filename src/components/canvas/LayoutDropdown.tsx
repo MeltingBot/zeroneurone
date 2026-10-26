@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
-import { layoutService, type LayoutType } from '../../services/layoutService';
+import { layoutService, CIRCULAR_MAX_ELEMENTS, type LayoutType } from '../../services/layoutService';
 import { graphWorkerService } from '../../services/graphWorkerService';
 import { useDossierStore, useHistoryStore, useSelectionStore, useTabStore, useViewStore } from '../../stores';
 import type { Position } from '../../types';
@@ -132,6 +132,12 @@ export function LayoutDropdown() {
   for (const id of selectedElementIds) {
     if (activeTabId === null || tabMemberSet.has(id)) scopedSelectionCount++;
   }
+  // Elements the layout would arrange: the selection, else the tab or the dossier
+  const scopeCount = scopedSelectionCount >= 2
+    ? scopedSelectionCount
+    : activeTabId !== null ? tabMemberSet.size : elements.length;
+  const isUnavailable = (layoutType: LayoutType) =>
+    layoutType === 'circular' && scopeCount > CIRCULAR_MAX_ELEMENTS;
   // In a tab: members that also belong to another tab. They have one position,
   // so laying this tab out pulls them out of the other tab's zone.
   let sharedCount = 0;
@@ -183,7 +189,8 @@ export function LayoutDropdown() {
               <button
                 key={layoutType}
                 onClick={() => handleApplyLayout(layoutType)}
-                className="w-full px-3 py-2 text-left hover:bg-bg-secondary flex flex-col gap-0.5"
+                disabled={isUnavailable(layoutType)}
+                className="w-full px-3 py-2 text-left hover:bg-bg-secondary flex flex-col gap-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               >
                 <span className="text-sm text-text-primary">
                   {t(`dossier.layout.types.${layoutType}.name`)}

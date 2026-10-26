@@ -327,6 +327,8 @@ export interface Dossier {
 export interface DossierOptions {
   /** New links get a forward arrow, unless their direction is given. */
   linkArrowByDefault?: boolean;
+  /** Media blurred each time the dossier is opened (the user can unblur them). */
+  blurMediaOnOpen?: boolean;
 }
 
 export interface DossierSettings {

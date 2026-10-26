@@ -54,7 +54,8 @@
       "legacyCancel": "Utzi",
       "legacyDone": "{{count}} data zuzenduta",
       "legacyError": "Zuzenketak huts egin du",
-      "linkArrowByDefault": "Gezia lehenetsita erlazioetan"
+      "linkArrowByDefault": "Gezia lehenetsita erlazioetan",
+      "blurMediaOnOpen": "Lausotu multimedia irekitzean"
     },
     "placeholders": {
       "name": "Espedienteren izena",

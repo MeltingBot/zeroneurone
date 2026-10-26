@@ -54,7 +54,8 @@
       "legacyCancel": "Cancelar",
       "legacyDone": "{{count}} data(s) corrigida(s)",
       "legacyError": "A correção falhou",
-      "linkArrowByDefault": "Seta por padrão nas relações"
+      "linkArrowByDefault": "Seta por padrão nas relações",
+      "blurMediaOnOpen": "Desfocar média ao abrir"
     },
     "placeholders": {
       "name": "Nome do dossiê",

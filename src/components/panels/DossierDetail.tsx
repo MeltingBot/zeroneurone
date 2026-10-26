@@ -413,6 +413,15 @@ function OptionsSection({ dossier }: { dossier: Dossier }) {
         />
         <span className="text-sm text-text-primary">{t('dossier.labels.linkArrowByDefault')}</span>
       </label>
+      <label className="flex items-center gap-2 cursor-pointer mt-2">
+        <input
+          type="checkbox"
+          checked={options.blurMediaOnOpen === true}
+          onChange={(e) => updateDossier(dossier.id, { options: { ...options, blurMediaOnOpen: e.target.checked } })}
+          className="w-3.5 h-3.5 rounded border-border-default accent-accent"
+        />
+        <span className="text-sm text-text-primary">{t('dossier.labels.blurMediaOnOpen')}</span>
+      </label>
     </AccordionSection>
   );
 }

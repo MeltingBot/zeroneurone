@@ -54,7 +54,8 @@
       "legacyCancel": "Скасувати",
       "legacyDone": "Виправлено дат: {{count}}",
       "legacyError": "Виправлення не вдалося",
-      "linkArrowByDefault": "Стрілка за замовчуванням на зв’язках"
+      "linkArrowByDefault": "Стрілка за замовчуванням на зв’язках",
+      "blurMediaOnOpen": "Розмивати медіа під час відкриття"
     },
     "placeholders": {
       "name": "Назва справа",

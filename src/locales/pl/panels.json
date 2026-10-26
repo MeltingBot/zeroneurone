@@ -54,7 +54,8 @@
       "legacyCancel": "Anuluj",
       "legacyDone": "Poprawiono daty: {{count}}",
       "legacyError": "Poprawka nie powiodła się",
-      "linkArrowByDefault": "Domyślna strzałka na relacjach"
+      "linkArrowByDefault": "Domyślna strzałka na relacjach",
+      "blurMediaOnOpen": "Rozmyj multimedia przy otwarciu"
     },
     "placeholders": {
       "name": "Nazwa teczki",

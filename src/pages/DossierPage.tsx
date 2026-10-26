@@ -201,6 +201,20 @@ export function DossierPage() {
     };
   }, [id, loadDossier, unloadDossier, clearSelection, clearInsights, resetUIState, resetViewState, resetTabState, loadViewportForDossier, saveViewportForDossier, loadTabs, requestFitView]);
 
+  // Option of the dossier: media blurred on opening, and as soon as the option
+  // turns on while open (a joiner gets it from the sync after loading). Never
+  // unblurs: once applied, showing the media is the user's choice.
+  const openDossierId = currentDossier?.id;
+  const blurOption = currentDossier?.options?.blurMediaOnOpen === true;
+  const blurSeenRef = useRef<{ id: string; on: boolean } | null>(null);
+  useEffect(() => {
+    if (!openDossierId) return;
+    const prev = blurSeenRef.current;
+    const wasOn = prev?.id === openDossierId && prev.on;
+    blurSeenRef.current = { id: openDossierId, on: blurOption };
+    if (blurOption && !wasOn) useUIStore.setState({ hideMedia: true });
+  }, [openDossierId, blurOption]);
+
   // Warn once per dossier if the browser can't write media to OPFS (typically
   // a private/incognito window) and the dossier actually has media — otherwise
   // those assets silently stay stuck loading.

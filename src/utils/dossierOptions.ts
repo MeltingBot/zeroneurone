@@ -4,7 +4,8 @@ import type { Dossier, DossierOptions, Link } from '../types';
 export function isDossierOptions(value: unknown): value is DossierOptions {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const v = value as Record<string, unknown>;
-  return v.linkArrowByDefault === undefined || typeof v.linkArrowByDefault === 'boolean';
+  const isFlag = (k: string) => v[k] === undefined || typeof v[k] === 'boolean';
+  return isFlag('linkArrowByDefault') && isFlag('blurMediaOnOpen');
 }
 
 /**

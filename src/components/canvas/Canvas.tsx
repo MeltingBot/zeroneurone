@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ReactFlow,
   ReactFlowProvider,
-  Background,
-  BackgroundVariant,
   useReactFlow,
   useStore as useFlowStore,
   useStoreApi as useFlowStoreApi,
@@ -35,6 +33,7 @@ import type { TabMembershipSnapshot } from '../../stores/historyStore';
 import { GroupNode, type GroupNodeData } from './GroupNode';
 import { AnnotationNode, type AnnotationNodeData } from './AnnotationNode';
 import { DraggableMinimap } from './DraggableMinimap';
+import { CanvasGrid } from './CanvasGrid';
 import { SuggestionPreviewLines } from './SuggestionPreviewLines';
 import { AlignmentGuides, computeGuides, type Guide } from './AlignmentGuides';
 import { CustomEdge } from './CustomEdge';
@@ -5468,13 +5467,7 @@ export function Canvas() {
               onlyRenderVisibleElements
               proOptions={{ hideAttribution: true }}
             >
-              <Background
-                variant={snapToGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots}
-                gap={gridSize}
-                size={snapToGrid ? 0.5 : 1}
-                color="var(--color-border-strong)"
-                style={{ backgroundColor: 'var(--color-bg-canvas)' }}
-              />
+              <CanvasGrid gridSize={gridSize} lines={snapToGrid} />
               {overviewEnabled && (
                 <OverviewLayer
                   active={overviewActive}

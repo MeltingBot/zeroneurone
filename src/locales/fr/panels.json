@@ -54,7 +54,8 @@
       "legacyCancel": "Annuler",
       "legacyDone": "{{count}} date(s) corrigée(s)",
       "legacyError": "Échec de la correction",
-      "linkArrowByDefault": "Flèche par défaut sur les relations"
+      "linkArrowByDefault": "Flèche par défaut sur les relations",
+      "blurMediaOnOpen": "Médias floutés à l'ouverture"
     },
     "placeholders": {
       "name": "Nom du dossier",

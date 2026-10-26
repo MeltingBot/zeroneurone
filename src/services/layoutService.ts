@@ -47,6 +47,9 @@ function dimsFor(map: Map<string, { w: number; h: number }>, id: string): { w: n
 
 export type LayoutType = 'force' | 'clusters' | 'circular' | 'grid' | 'random' | 'hierarchy';
 
+/** Above this, one ring is wider than the canvas at its smallest zoom: the layout is not offered. */
+export const CIRCULAR_MAX_ELEMENTS = 1000;
+
 export interface LayoutOptions {
   /** Padding around the layout bounds */
   padding?: number;
