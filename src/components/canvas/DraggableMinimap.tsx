@@ -130,6 +130,7 @@ export function DraggableMinimap({ scene = null }: DraggableMinimapProps = {}) {
   );
   const bgColor = isDark ? '#1a1816' : '#faf8f5';
   const maskColor = isDark ? 'rgba(200,200,200,0.1)' : 'rgba(0,0,0,0.08)';
+  const viewportColor = isDark ? '#a8a29e' : '#78716c';
 
   return (
     <div
@@ -166,6 +167,7 @@ export function DraggableMinimap({ scene = null }: DraggableMinimapProps = {}) {
           height={DEFAULT_HEIGHT}
           bgColor={bgColor}
           maskColor={maskColor}
+          viewportColor={viewportColor}
           nodeColor={visibleColor}
         />
       )}
@@ -173,6 +175,8 @@ export function DraggableMinimap({ scene = null }: DraggableMinimapProps = {}) {
         nodeColor={nodeColor}
         bgColor={bgColor}
         maskColor={maskColor}
+        maskStrokeColor={viewportColor}
+        maskStrokeWidth={1}
         style={{
           width: DEFAULT_WIDTH,
           height: DEFAULT_HEIGHT,

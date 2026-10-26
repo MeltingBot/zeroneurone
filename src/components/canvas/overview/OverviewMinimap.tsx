@@ -16,6 +16,8 @@ interface OverviewMinimapProps {
   height: number;
   bgColor: string;
   maskColor: string;
+  /** Outline of the viewport window. */
+  viewportColor: string;
   /** Colour of a node (very light colours are replaced to stay visible). */
   nodeColor: (color: string) => string;
 }
@@ -35,8 +37,10 @@ function fit(b: Bounds, width: number, height: number) {
 }
 
 const WHEEL_ZOOM_STEP = 1.2;
+/** Smallest side of the viewport window, in minimap pixels: zoomed in, it would shrink to nothing. */
+const MIN_VIEWPORT_SIZE = 6;
 
-export function OverviewMinimap({ scene, width, height, bgColor, maskColor, nodeColor }: OverviewMinimapProps) {
+export function OverviewMinimap({ scene, width, height, bgColor, maskColor, viewportColor, nodeColor }: OverviewMinimapProps) {
   const store = useStoreApi();
   const { setViewport } = useReactFlow();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -48,8 +52,8 @@ export function OverviewMinimap({ scene, width, height, bgColor, maskColor, node
   const graphBoundsRef = useRef<Bounds>({ minX: 0, minY: 0, maxX: 1, maxY: 1 });
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
-  const propsRef = useRef({ width, height, bgColor, maskColor, nodeColor });
-  propsRef.current = { width, height, bgColor, maskColor, nodeColor };
+  const propsRef = useRef({ width, height, bgColor, maskColor, viewportColor, nodeColor });
+  propsRef.current = { width, height, bgColor, maskColor, viewportColor, nodeColor };
 
   const currentBounds = (): Bounds => {
     if (frozenRef.current) return frozenRef.current;
@@ -69,7 +73,7 @@ export function OverviewMinimap({ scene, width, height, bgColor, maskColor, node
     const canvas = canvasRef.current;
     const sc = sceneRef.current;
     if (!canvas || !sc) return;
-    const { width: w, height: h, bgColor: bg, maskColor: mask, nodeColor: color } = propsRef.current;
+    const { width: w, height: h, bgColor: bg, maskColor: mask, viewportColor: outline, nodeColor: color } = propsRef.current;
     const dpr = window.devicePixelRatio || 1;
     if (canvas.width !== Math.round(w * dpr)) canvas.width = Math.round(w * dpr);
     if (canvas.height !== Math.round(h * dpr)) canvas.height = Math.round(h * dpr);
@@ -102,11 +106,21 @@ export function OverviewMinimap({ scene, width, height, bgColor, maskColor, node
     // Mask everything but the viewport
     const { transform, width: vw, height: vh } = store.getState();
     const [tx, ty, zoom] = transform;
+    let rw = (vw / zoom) * scale;
+    let rh = (vh / zoom) * scale;
+    let rx = offX + (-tx / zoom) * scale;
+    let ry = offY + (-ty / zoom) * scale;
+    // Kept visible when zoomed in: grown around its centre
+    if (rw < MIN_VIEWPORT_SIZE) { rx -= (MIN_VIEWPORT_SIZE - rw) / 2; rw = MIN_VIEWPORT_SIZE; }
+    if (rh < MIN_VIEWPORT_SIZE) { ry -= (MIN_VIEWPORT_SIZE - rh) / 2; rh = MIN_VIEWPORT_SIZE; }
     ctx.fillStyle = mask;
     ctx.beginPath();
     ctx.rect(0, 0, w, h);
-    ctx.rect(offX + (-tx / zoom) * scale, offY + (-ty / zoom) * scale, (vw / zoom) * scale, (vh / zoom) * scale);
+    ctx.rect(rx, ry, rw, rh);
     ctx.fill('evenodd');
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(Math.round(rx) + 0.5, Math.round(ry) + 0.5, Math.max(1, Math.round(rw) - 1), Math.max(1, Math.round(rh) - 1));
   };
   const drawRef = useRef(draw);
   drawRef.current = draw;
@@ -121,7 +135,7 @@ export function OverviewMinimap({ scene, width, height, bgColor, maskColor, node
     }
     graphBoundsRef.current = minX === Infinity ? { minX: 0, minY: 0, maxX: 1, maxY: 1 } : { minX, minY, maxX, maxY };
     drawRef.current();
-  }, [scene, width, height, bgColor, maskColor, nodeColor]);
+  }, [scene, width, height, bgColor, maskColor, viewportColor, nodeColor]);
 
   // Follow the viewport outside React
   useEffect(() => {

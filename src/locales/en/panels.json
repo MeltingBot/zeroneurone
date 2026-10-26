@@ -20,7 +20,8 @@
       "dates": "Dates",
       "properties": "Properties",
       "retention": "Retention",
-      "evaluation": "Information evaluation"
+      "evaluation": "Information evaluation",
+      "options": "Options"
     },
     "labels": {
       "name": "Name",
@@ -52,7 +53,8 @@
       "legacyApply": "Fix",
       "legacyCancel": "Cancel",
       "legacyDone": "{{count}} date(s) fixed",
-      "legacyError": "Fix failed"
+      "legacyError": "Fix failed",
+      "linkArrowByDefault": "Arrow on new links by default"
     },
     "placeholders": {
       "name": "Dossier name",

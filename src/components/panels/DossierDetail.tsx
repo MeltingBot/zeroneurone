@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Settings, Calendar, Timer, Gauge } from 'lucide-react';
+import { FileText, Settings, Calendar, Timer, Gauge, SlidersHorizontal } from 'lucide-react';
 import { useDossierStore } from '../../stores';
 import type { Dossier, EvaluationModel, Property, PropertyDefinition } from '../../types';
 import { TagsEditor } from './TagsEditor';
@@ -271,6 +271,9 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
       {/* Rétention */}
       <RetentionSection dossier={dossier} />
 
+      {/* Options */}
+      <OptionsSection dossier={dossier} />
+
       {/* Propriétés */}
       <AccordionSection
         id="properties"
@@ -384,6 +387,32 @@ function EvaluationSection({ dossier }: { dossier: Dossier }) {
           </div>
         )}
       </div>
+    </AccordionSection>
+  );
+}
+
+/** Per-dossier options; future ones go in this section too. */
+function OptionsSection({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation('panels');
+  const updateDossier = useDossierStore((s) => s.updateDossier);
+  const options = dossier.options ?? {};
+
+  return (
+    <AccordionSection
+      id="options"
+      title={t('dossier.sections.options')}
+      icon={<SlidersHorizontal size={12} />}
+      defaultOpen={false}
+    >
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={options.linkArrowByDefault === true}
+          onChange={(e) => updateDossier(dossier.id, { options: { ...options, linkArrowByDefault: e.target.checked } })}
+          className="w-3.5 h-3.5 rounded border-border-default accent-accent"
+        />
+        <span className="text-sm text-text-primary">{t('dossier.labels.linkArrowByDefault')}</span>
+      </label>
     </AccordionSection>
   );
 }

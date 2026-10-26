@@ -5,6 +5,7 @@ import { MapPin, X, Check, Map as MapIcon, Tag, FileText, Settings, Palette, Pap
 import { useDossierStore, useTagSetStore, useTabStore, useHistoryStore, useViewStore, useUIStore, useSelectionStore } from '../../stores';
 import type { Element, Link, Confidence, Evaluation, ElementEvent, Property, PropertyDefinition, GeoData } from '../../types';
 import { getModelScale } from '../../utils/evaluation';
+import { withDossierLinkDefaults } from '../../utils/dossierOptions';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter, isGeoPolygon, computePolygonAreaKm2, computePolygonCenter, parseLatLngPair } from '../../utils/geo';
 import { parseFlexibleDate, formatDateForCopy } from '../../utils';
@@ -610,7 +611,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
       }
 
       const newElement = await createElement(label, position, options);
-      const newLink = await createLink(element.id, newElement.id);
+      const newLink = await createLink(element.id, newElement.id, withDossierLinkDefaults(useDossierStore.getState().currentDossier));
 
       // Remove the extracted property from the source element
       const remaining = (element.properties || []).filter(
@@ -677,7 +678,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           end: new Date(event.dateEnd),
         };
       }
-      const newLink = await createLink(element.id, newElement.id, linkOptions);
+      const newLink = await createLink(element.id, newElement.id, withDossierLinkDefaults(useDossierStore.getState().currentDossier, linkOptions));
 
       // Remove the extracted event from the source element
       const remaining = (element.events || []).filter((e) => e.id !== event.id);

@@ -125,6 +125,8 @@ Pour repérer les liens qui manquent, voir aussi les [suggestions de liens]({{< 
 | **Dirigé** | Flèche indiquant le sens |
 | **Propriétés** | Champs personnalisés |
 
+Pour qu'un lien tracé à la main (glisser d'un élément à un autre, élément lié) porte d'office une flèche vers la cible, cochez **Flèche par défaut sur les relations** dans les **Options** du dossier (panneau du dossier). Les suggestions acceptées, les imports et les plugins n'en tiennent pas compte.
+
 ### Apparence des liens
 
 | Option | Valeurs |

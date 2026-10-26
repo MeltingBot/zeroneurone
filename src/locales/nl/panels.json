@@ -20,7 +20,8 @@
       "dates": "Datums",
       "properties": "Eigenschappen",
       "retention": "Bewaring",
-      "evaluation": "Beoordeling van informatie"
+      "evaluation": "Beoordeling van informatie",
+      "options": "Opties"
     },
     "labels": {
       "name": "Naam",
@@ -52,7 +53,8 @@
       "legacyApply": "Corrigeren",
       "legacyCancel": "Annuleren",
       "legacyDone": "{{count}} datum/datums gecorrigeerd",
-      "legacyError": "Correctie mislukt"
+      "legacyError": "Correctie mislukt",
+      "linkArrowByDefault": "Standaard pijl op relaties"
     },
     "placeholders": {
       "name": "Naam van het dossier",

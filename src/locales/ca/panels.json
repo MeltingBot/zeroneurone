@@ -20,7 +20,8 @@
       "dates": "Dates",
       "properties": "Propietats",
       "retention": "Retenció",
-      "evaluation": "Avaluació de la informació"
+      "evaluation": "Avaluació de la informació",
+      "options": "Opcions"
     },
     "labels": {
       "name": "Nom",
@@ -52,7 +53,8 @@
       "legacyApply": "Corregir",
       "legacyCancel": "Cancel·lar",
       "legacyDone": "{{count}} data(es) corregida(es)",
-      "legacyError": "La correcció ha fallat"
+      "legacyError": "La correcció ha fallat",
+      "linkArrowByDefault": "Fletxa per defecte a les relacions"
     },
     "placeholders": {
       "name": "Nom de l'expedient",

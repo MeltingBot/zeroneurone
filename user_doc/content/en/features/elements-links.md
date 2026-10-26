@@ -125,6 +125,8 @@ To spot missing links, see also [link suggestions]({{< relref "link-suggestions"
 | **Directed** | Arrow indicating direction |
 | **Properties** | Custom fields |
 
+To give a hand-drawn link (drag from one element to another, linked element) an arrow towards the target from the start, check **Arrow on new links by default** in the dossier's **Options** (dossier panel). Accepted suggestions, imports and plugins ignore it.
+
 ### Link Appearance
 
 | Option | Values |

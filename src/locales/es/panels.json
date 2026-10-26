@@ -20,7 +20,8 @@
       "dates": "Fechas",
       "properties": "Propiedades",
       "retention": "Retención",
-      "evaluation": "Evaluación de la información"
+      "evaluation": "Evaluación de la información",
+      "options": "Opciones"
     },
     "labels": {
       "name": "Nombre",
@@ -52,7 +53,8 @@
       "legacyApply": "Corregir",
       "legacyCancel": "Cancelar",
       "legacyDone": "{{count}} fecha(s) corregida(s)",
-      "legacyError": "La corrección ha fallado"
+      "legacyError": "La corrección ha fallado",
+      "linkArrowByDefault": "Flecha por defecto en las relaciones"
     },
     "placeholders": {
       "name": "Nombre de el expediente",

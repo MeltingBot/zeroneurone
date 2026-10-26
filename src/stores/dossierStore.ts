@@ -31,6 +31,7 @@ import { syncService } from '../services/syncService';
 import { deriveRoomId } from '../services/cryptoService';
 import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
+import { isDossierOptions } from '../utils/dossierOptions';
 import { useHistoryStore } from './historyStore';
 import { getYMaps } from '../types/yjs';
 import { attachPluginDataSync } from '../services/yjs/pluginDataSync';
@@ -849,6 +850,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (isEvaluationModel(metaEvalModel)) joinerChanges.evaluationModel = metaEvalModel;
         const metaDismissed = metaMap.get('dismissedSuggestions');
         if (Array.isArray(metaDismissed)) joinerChanges.dismissedSuggestions = metaDismissed as string[];
+        const metaOptions = metaMap.get('options');
+        if (isDossierOptions(metaOptions)) joinerChanges.options = metaOptions;
         dossier = { ...dossier, ...joinerChanges };
         await dossierRepository.update(id, joinerChanges);
       }
@@ -1152,6 +1155,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
             if (!deferredMeta.has('dismissedSuggestions') && srcDossier.dismissedSuggestions?.length) {
               deferredMeta.set('dismissedSuggestions', srcDossier.dismissedSuggestions);
             }
+            if (!deferredMeta.has('options') && srcDossier.options) {
+              deferredMeta.set('options', srcDossier.options);
+            }
           });
 
           // File binaries only go into the Y.Doc for peers to fetch: a local
@@ -1222,6 +1228,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (changes.retentionPolicy !== undefined) metaMap.set('retentionPolicy', changes.retentionPolicy);
         if (changes.evaluationModel !== undefined) metaMap.set('evaluationModel', changes.evaluationModel);
         if (changes.dismissedSuggestions !== undefined) metaMap.set('dismissedSuggestions', changes.dismissedSuggestions);
+        if (changes.options !== undefined) metaMap.set('options', changes.options);
       });
     }
 
@@ -3062,6 +3069,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const metaEvaluationModel = isEvaluationModel(rawEvalModel) ? rawEvalModel : undefined;
       const rawDismissed = metaMap.get('dismissedSuggestions');
       const metaDismissed = Array.isArray(rawDismissed) ? rawDismissed as string[] : undefined;
+      const rawOptions = metaMap.get('options');
+      const metaOptions = isDossierOptions(rawOptions) ? rawOptions : undefined;
 
       const hasMetaChanges =
         (metaName !== undefined && metaName !== currentDossier.name) ||
@@ -3073,7 +3082,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         (metaRetentionDays !== undefined && metaRetentionDays !== (currentDossier.retentionDays ?? null)) ||
         (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentDossier.retentionPolicy || 'warn')) ||
         (metaEvaluationModel !== undefined && metaEvaluationModel !== getEvaluationModel(currentDossier)) ||
-        (metaDismissed !== undefined && JSON.stringify(metaDismissed) !== JSON.stringify(currentDossier.dismissedSuggestions || []));
+        (metaDismissed !== undefined && JSON.stringify(metaDismissed) !== JSON.stringify(currentDossier.dismissedSuggestions || [])) ||
+        (metaOptions !== undefined && JSON.stringify(metaOptions) !== JSON.stringify(currentDossier.options || {}));
 
       if (hasMetaChanges) {
         const changes: Partial<Dossier> = {};
@@ -3087,6 +3097,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Dossier['retentionPolicy'];
         if (metaEvaluationModel !== undefined) changes.evaluationModel = metaEvaluationModel;
         if (metaDismissed !== undefined) changes.dismissedSuggestions = metaDismissed;
+        if (metaOptions !== undefined) changes.options = metaOptions;
 
         updatedDossier = {
           ...currentDossier,

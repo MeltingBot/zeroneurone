@@ -20,7 +20,8 @@
       "dates": "Дати",
       "properties": "Властивості",
       "retention": "Зберігання",
-      "evaluation": "Оцінка інформації"
+      "evaluation": "Оцінка інформації",
+      "options": "Параметри"
     },
     "labels": {
       "name": "Назва",
@@ -52,7 +53,8 @@
       "legacyApply": "Виправити",
       "legacyCancel": "Скасувати",
       "legacyDone": "Виправлено дат: {{count}}",
-      "legacyError": "Виправлення не вдалося"
+      "legacyError": "Виправлення не вдалося",
+      "linkArrowByDefault": "Стрілка за замовчуванням на зв’язках"
     },
     "placeholders": {
       "name": "Назва справа",

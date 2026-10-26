@@ -20,7 +20,8 @@
       "dates": "Daty",
       "properties": "Właściwości",
       "retention": "Retencja",
-      "evaluation": "Ocena informacji"
+      "evaluation": "Ocena informacji",
+      "options": "Opcje"
     },
     "labels": {
       "name": "Nazwa",
@@ -52,7 +53,8 @@
       "legacyApply": "Popraw",
       "legacyCancel": "Anuluj",
       "legacyDone": "Poprawiono daty: {{count}}",
-      "legacyError": "Poprawka nie powiodła się"
+      "legacyError": "Poprawka nie powiodła się",
+      "linkArrowByDefault": "Domyślna strzałka na relacjach"
     },
     "placeholders": {
       "name": "Nazwa teczki",

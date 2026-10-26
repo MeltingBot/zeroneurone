@@ -20,7 +20,8 @@
       "dates": "Dates",
       "properties": "Propriétés",
       "retention": "Rétention",
-      "evaluation": "Évaluation de l'information"
+      "evaluation": "Évaluation de l'information",
+      "options": "Options"
     },
     "labels": {
       "name": "Nom",
@@ -52,7 +53,8 @@
       "legacyApply": "Corriger",
       "legacyCancel": "Annuler",
       "legacyDone": "{{count}} date(s) corrigée(s)",
-      "legacyError": "Échec de la correction"
+      "legacyError": "Échec de la correction",
+      "linkArrowByDefault": "Flèche par défaut sur les relations"
     },
     "placeholders": {
       "name": "Nom du dossier",

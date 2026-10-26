@@ -46,6 +46,7 @@ import { isLambert93CrsName, lambert93ToWgs84 } from '../utils/lambert93';
 import { remapDismissedSuggestions } from './linkSuggestions';
 import { splitCSVRecords } from '../utils/csv';
 import { getEvaluationModel, isEvaluationModel, sanitizeEvaluation } from '../utils/evaluation';
+import { isDossierOptions } from '../utils/dossierOptions';
 import type { ExportData, ExportedAssetMeta } from './exportService';
 import { fileService, FileValidationError } from './fileService';
 import { parseOsintrackerFile, dataUrlToFile } from './importOsintracker';
@@ -470,6 +471,7 @@ class ImportService {
         }));
       }
       await this.applyImportedDismissedSuggestions(data.dossier?.dismissedSuggestions, targetDossierId, elementIdMap);
+      await this.applyImportedOptions(data.dossier?.options, targetDossierId);
 
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0 && (!selection || selection.includeReport)) {
@@ -682,6 +684,26 @@ class ImportService {
   }
 
   /**
+   * Take the dossier options of the archive the target has not set itself:
+   * an option chosen in the target dossier always wins.
+   */
+  private async applyImportedOptions(raw: unknown, targetDossierId: DossierId): Promise<void> {
+    if (!isDossierOptions(raw)) return;
+    const { useDossierStore } = await import('../stores/dossierStore');
+    const store = useDossierStore.getState();
+    const isOpen = store.currentDossier?.id === targetDossierId;
+    const dossier = isOpen ? store.currentDossier : await db.dossiers.get(targetDossierId);
+    if (!dossier) return;
+    const options = { ...raw, ...dossier.options };
+    if (JSON.stringify(options) === JSON.stringify(dossier.options ?? {})) return;
+    if (isOpen) {
+      await store.updateDossier(targetDossierId, { options });
+    } else {
+      await db.dossiers.update(targetDossierId, { options });
+    }
+  }
+
+  /**
    * Apply default display settings for imported dossiers
    * Sets curved links with auto anchoring for better readability
    */
@@ -820,6 +842,7 @@ class ImportService {
       // Import elements and links (no assets for JSON-only import)
       await this.importElementsAndLinks(data, targetDossierId, elementIdMap, assetIdMap, linkIdMap, result);
       await this.applyImportedDismissedSuggestions(data.dossier?.dismissedSuggestions, targetDossierId, elementIdMap);
+      await this.applyImportedOptions(data.dossier?.options, targetDossierId);
 
       // Import report if present (with element and link ID remapping)
       if (data.report && data.report.sections && data.report.sections.length > 0) {

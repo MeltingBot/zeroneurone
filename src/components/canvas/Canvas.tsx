@@ -62,6 +62,7 @@ import { computeElementDimensions } from '../../utils/elementDimensions';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { sourceWebLinks } from '../../utils/sourceLinks';
 import { getEvaluationBadge } from '../../utils/evaluation';
+import { withDossierLinkDefaults } from '../../utils/dossierOptions';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
@@ -2788,14 +2789,15 @@ export function Canvas() {
         const fromId = swap ? connection.target : connection.source;
         const toId = swap ? connection.source : connection.target;
 
-        const created = await createLink(fromId, toId, {
+        const linkDossier = useDossierStore.getState().currentDossier;
+        const created = await createLink(fromId, toId, withDossierLinkDefaults(linkDossier, {
           sourceHandle: swap
             ? (connection.targetHandle ?? null)
             : (connection.sourceHandle ?? null),
           targetHandle: swap
             ? (connection.sourceHandle ?? null)
             : (connection.targetHandle ?? null),
-        });
+        }));
 
         // Drawn from an element of a multi-selection: link every other selected
         // element to the same target too (auto anchors), as one undo step.
@@ -2807,7 +2809,7 @@ export function Canvas() {
           : [];
         const links = [created];
         for (const el of others) {
-          links.push(await createLink(el.id, toId));
+          links.push(await createLink(el.id, toId, withDossierLinkDefaults(linkDossier)));
         }
 
         pushAction({

@@ -319,6 +319,14 @@ export interface Dossier {
    * so they don't come back. Shared through the Y.Doc meta map.
    */
   dismissedSuggestions?: string[];
+  /** Per-dossier options, shared through the Y.Doc meta map as one object. */
+  options?: DossierOptions;
+}
+
+/** Per-dossier options. Each one is optional: absent = default behaviour. */
+export interface DossierOptions {
+  /** New links get a forward arrow, unless their direction is given. */
+  linkArrowByDefault?: boolean;
 }
 
 export interface DossierSettings {

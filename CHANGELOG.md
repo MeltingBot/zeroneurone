@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.76.5
+
+### Améliorations
+
+- **Options du dossier** — nouvelle section du panneau du dossier, entre
+  Rétention et Propriétés. Première option : **flèche par défaut sur les
+  relations**, pour les liens tracés à la main (glisser, élément lié) ; les
+  suggestions acceptées, les imports et les plugins n'en tiennent pas compte.
+  Partagée en session collaborative et reprise à l'import.
+
+### Corrections
+
+- **Onglet du panneau latéral** — l'onglet ouvert est conservé après un
+  rechargement de la page, au lieu de revenir sur Détail.
+- **Minimap** — le cadre de la vue reste visible quand on zoome (contour et
+  taille minimale), au lieu de se réduire à rien.
+
 ## 2.76.4
 
 ### Améliorations

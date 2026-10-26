@@ -20,7 +20,8 @@
       "dates": "Date",
       "properties": "Proprietà",
       "retention": "Conservazione",
-      "evaluation": "Valutazione delle informazioni"
+      "evaluation": "Valutazione delle informazioni",
+      "options": "Opzioni"
     },
     "labels": {
       "name": "Nome",
@@ -52,7 +53,8 @@
       "legacyApply": "Correggi",
       "legacyCancel": "Annulla",
       "legacyDone": "{{count}} data/e corretta/e",
-      "legacyError": "Correzione non riuscita"
+      "legacyError": "Correzione non riuscita",
+      "linkArrowByDefault": "Freccia predefinita sulle relazioni"
     },
     "placeholders": {
       "name": "Nome delil fascicolo",

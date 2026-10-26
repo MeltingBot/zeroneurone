@@ -20,7 +20,8 @@
       "dates": "Daten",
       "properties": "Eigenschaften",
       "retention": "Aufbewahrung",
-      "evaluation": "Informationsbewertung"
+      "evaluation": "Informationsbewertung",
+      "options": "Optionen"
     },
     "labels": {
       "name": "Name",
@@ -52,7 +53,8 @@
       "legacyApply": "Korrigieren",
       "legacyCancel": "Abbrechen",
       "legacyDone": "{{count}} Datum/Daten korrigiert",
-      "legacyError": "Korrektur fehlgeschlagen"
+      "legacyError": "Korrektur fehlgeschlagen",
+      "linkArrowByDefault": "Standardmäßig Pfeil auf Verbindungen"
     },
     "placeholders": {
       "name": "Name der Akte",

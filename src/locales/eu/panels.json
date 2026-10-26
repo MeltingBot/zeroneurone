@@ -20,7 +20,8 @@
       "dates": "Datak",
       "properties": "Propietateak",
       "retention": "Atxikipena",
-      "evaluation": "Informazioaren ebaluazioa"
+      "evaluation": "Informazioaren ebaluazioa",
+      "options": "Aukerak"
     },
     "labels": {
       "name": "Izena",
@@ -52,7 +53,8 @@
       "legacyApply": "Zuzendu",
       "legacyCancel": "Utzi",
       "legacyDone": "{{count}} data zuzenduta",
-      "legacyError": "Zuzenketak huts egin du"
+      "legacyError": "Zuzenketak huts egin du",
+      "linkArrowByDefault": "Gezia lehenetsita erlazioetan"
     },
     "placeholders": {
       "name": "Espedienteren izena",

@@ -459,7 +459,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
+      partialize: (state) => ({ themeMode: state.themeMode, sidePanelTab: state.sidePanelTab, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
       onRehydrateStorage: () => (state) => {
         // v2.76.2 saved this flag: drop what it stored, the default applies
         if (state) state.canvasOverviewLayer = CANVAS_OVERVIEW_DEFAULT;

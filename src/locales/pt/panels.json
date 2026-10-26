@@ -20,7 +20,8 @@
       "dates": "Datas",
       "properties": "Propriedades",
       "retention": "Retenção",
-      "evaluation": "Avaliação da informação"
+      "evaluation": "Avaliação da informação",
+      "options": "Opções"
     },
     "labels": {
       "name": "Nome",
@@ -52,7 +53,8 @@
       "legacyApply": "Corrigir",
       "legacyCancel": "Cancelar",
       "legacyDone": "{{count}} data(s) corrigida(s)",
-      "legacyError": "A correção falhou"
+      "legacyError": "A correção falhou",
+      "linkArrowByDefault": "Seta por padrão nas relações"
     },
     "placeholders": {
       "name": "Nome do dossiê",
