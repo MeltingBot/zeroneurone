@@ -8,7 +8,7 @@
  * React: panning re-renders no component.
  */
 
-import { memo, useEffect, useLayoutEffect, useRef, type MutableRefObject } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useStoreApi, type ReactFlowState } from '@xyflow/react';
 import { Canvas2DOverviewRenderer, type OverviewRenderer } from './overviewRenderer';
 import { hitPoint, hitRect } from './overviewHitTest';
@@ -48,6 +48,22 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
   const onBoxSelectRef = useRef(onBoxSelect);
   sceneRef.current = scene;
   activeRef.current = active;
+
+  // Leaving the overview, the canvas stays up until React Flow has its nodes:
+  // they reach its store an effect later than this render, and hiding the
+  // canvas at once would show an empty frame in between.
+  const [lingering, setLingering] = useState(false);
+  const [prevActive, setPrevActive] = useState(active);
+  if (prevActive !== active) {
+    setPrevActive(active);
+    setLingering(!active);
+  }
+  const visible = active || lingering;
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
+  /** Last scene drawn, kept on screen while lingering (the canvas passes none any more). */
+  const lastSceneRef = useRef(scene);
+  if (scene) lastSceneRef.current = scene;
   onBoxSelectRef.current = onBoxSelect;
   /** Selection rectangle being drawn, kept: React Flow clears it before onSelectionEnd. */
   const boxRef = useRef<SelectionRect | null>(null);
@@ -60,7 +76,7 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
     const { transform, width, height } = store.getState();
     renderer.resize(width, height, dprRef.current);
     const stats = renderer.draw(
-      activeRef.current ? { x: transform[0], y: transform[1], zoom: transform[2] } : { x: 0, y: 0, zoom: 0 },
+      visibleRef.current ? { x: transform[0], y: transform[1], zoom: transform[2] } : { x: 0, y: 0, zoom: 0 },
       pendingRef.current ? { pendingIndices: pendingRef.current } : undefined,
     );
     // Read by the benches and the e2e spec
@@ -96,15 +112,51 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
     };
   }, []);
 
-  // Scene or theme changed: draw before paint, so entering the overview shows no blank frame
+  // Accent colour, read once per theme after paint: getComputedStyle forces a
+  // style recalculation of the whole page, which costs most of a second while
+  // React Flow is unmounting thousands of nodes (entering the overview)
+  const accentRef = useRef('#2563eb');
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    accentRef.current = getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb';
+    rendererRef.current?.setScene(visibleRef.current ? lastSceneRef.current : null, { accent: accentRef.current });
+    scheduleRef.current();
+  }, [themeMode]);
+
+  // Scene changed: draw before paint, so entering the overview shows no blank frame
   useLayoutEffect(() => {
     const renderer = rendererRef.current;
-    const canvas = canvasRef.current;
-    if (!renderer || !canvas) return;
-    const accent = getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb';
-    renderer.setScene(active ? scene : null, { accent });
+    if (!renderer) return;
+    renderer.setScene(visible ? lastSceneRef.current : null, { accent: accentRef.current });
     drawNowRef.current();
-  }, [active, scene, themeMode]);
+  }, [visible, scene]);
+
+  // End of lingering: once React Flow's store holds shown nodes, two frames
+  // for them to be painted, then the canvas goes. Bounded, whatever happens.
+  useEffect(() => {
+    if (!lingering) return;
+    let frame = 0;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => setLingering(false));
+      });
+    };
+    const hasShownNodes = () => store.getState().nodes.some((n) => !n.hidden);
+    if (hasShownNodes()) finish();
+    const unsubscribe = store.subscribe((s, prev) => {
+      if (s.nodes !== prev.nodes && hasShownNodes()) finish();
+    });
+    const timeout = setTimeout(() => setLingering(false), 1500);
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+      cancelAnimationFrame(frame);
+    };
+  }, [lingering, store]);
 
   // Follow React Flow's viewport and selection rectangle without re-rendering
   useEffect(() => store.subscribe((s, prev) => {
@@ -161,7 +213,7 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
       data-active={active ? 'true' : 'false'}
       className="absolute inset-0 pointer-events-none"
       // Above the dotted background (z -1), under React Flow's pane (z 1)
-      style={{ zIndex: 0, width: '100%', height: '100%', display: active ? 'block' : 'none' }}
+      style={{ zIndex: 0, width: '100%', height: '100%', display: visible ? 'block' : 'none' }}
     />
   );
 }

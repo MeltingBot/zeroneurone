@@ -11,7 +11,8 @@ import { buildLargeDossierJson } from './fixtures/large-dossier';
  * link. Clicks, Shift+box and double-click are hit-tested on that canvas.
  */
 
-const COUNT = 1000;
+/** Above the 1 500 nodes on screen that switch to the overview once fitted. */
+const COUNT = 2000;
 
 test.describe.configure({ mode: 'serial', timeout: 3 * 60 * 1000 });
 
@@ -88,11 +89,50 @@ test('the overview layer draws the whole graph and keeps selection working', asy
   await page.keyboard.up('Shift');
   await expect.poll(() => selectedLabels(page)).toEqual(['Jean Dupont 0', 'Marie Martin 1']);
 
+  // Right-click on an element of the selection: the element menu, for the selection
+  await page.mouse.click(p0.x, p0.y, { button: 'right' });
+  const menu = page.locator('[role="menu"]').first();
+  await expect(menu).toBeVisible();
+  await expect(menu).toContainText('Jean Dupont 0 ↔ Marie Martin 1');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[role="menu"]')).toHaveCount(0);
+  // Right-click on empty canvas: the canvas menu, selection untouched
+  await page.mouse.click(empty.x, empty.y, { button: 'right' });
+  await expect(menu).toBeVisible();
+  await expect(menu).not.toContainText('↔');
+  await page.keyboard.press('Escape');
+  await expect.poll(() => selectedLabels(page)).toEqual(['Jean Dupont 0', 'Marie Martin 1']);
+
+  // The minimap stays, drawn from the overview scene; a click moves the view there
+  const minimap = page.locator('[data-testid="overview-minimap"]');
+  await expect(minimap).toBeVisible();
+  const transformBefore = await page.evaluate(() =>
+    getComputedStyle(document.querySelector('.react-flow__viewport') as HTMLElement).transform);
+  const mapBox = (await minimap.boundingBox())!;
+  await page.mouse.click(mapBox.x + mapBox.width * 0.8, mapBox.y + mapBox.height * 0.3);
+  await expect.poll(() => page.evaluate(() =>
+    getComputedStyle(document.querySelector('.react-flow__viewport') as HTMLElement).transform)).not.toBe(transformBefore);
+  await expect(overview).toHaveAttribute('data-active', 'true');
+  await page.click('[data-testid="fit-view"]');
+  await page.waitForTimeout(800);
+
   // Double-click zooms in: React Flow's nodes come back, the canvas goes
   const mid = await toScreen(page, 9000, 700);
   await page.mouse.dblclick(mid.x, mid.y);
   await expect(overview).toHaveAttribute('data-active', 'false', { timeout: 5000 });
   await expect.poll(() => page.locator('.react-flow__node').count()).toBeGreaterThan(0);
+  // The canvas minimap stays (React Flow's would cost one component per node)
+  await expect(page.locator('[data-testid="overview-minimap"]')).toBeVisible();
+  await expect(page.locator('.react-flow__minimap')).toHaveCount(0);
+
+  // Zoomed out over a few hundred nodes, React Flow stays: they can be dragged and linked
+  await page.evaluate(async () => {
+    const { useViewStore } = await import('/src/stores/viewStore.ts');
+    useViewStore.getState().requestViewportChange({ x: 20, y: 20, zoom: 0.3 });
+  });
+  await page.waitForTimeout(1000);
+  await expect(overview).toHaveAttribute('data-active', 'false');
+  await expect.poll(() => page.locator('.react-flow__node').count()).toBeGreaterThan(50);
   // Zooming in creates nothing
   const elementCount = await page.evaluate(async () => {
     const { useDossierStore } = await import('/src/stores/dossierStore.ts');

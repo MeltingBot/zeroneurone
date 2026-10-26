@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { MiniMap } from '@xyflow/react';
 import { GripHorizontal, X } from 'lucide-react';
 import { useUIStore } from '../../stores';
+import { OverviewMinimap } from './overview/OverviewMinimap';
+import type { OverviewScene } from './overview/overviewTypes';
 
 // Check if a hex color is very light (luminance > 0.85)
 function isLightColor(hex: string): boolean {
@@ -35,7 +37,12 @@ interface MinimapAnchor {
 
 const TOTAL_HEIGHT = DEFAULT_HEIGHT + HANDLE_HEIGHT;
 
-export function DraggableMinimap() {
+interface DraggableMinimapProps {
+  /** Nodes to draw on a canvas instead of React Flow's minimap (overview layer on). */
+  scene?: OverviewScene | null;
+}
+
+export function DraggableMinimap({ scene = null }: DraggableMinimapProps = {}) {
   const { t } = useTranslation('pages');
   const containerRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<MinimapAnchor>({ h: 'right', x: INITIAL_MARGIN, v: 'bottom', y: INITIAL_MARGIN });
@@ -111,14 +118,18 @@ export function DraggableMinimap() {
   const x = parentSize ? Math.min(anchor.x, Math.max(0, parentSize.width - DEFAULT_WIDTH)) : anchor.x;
   const y = parentSize ? Math.min(anchor.y, Math.max(0, parentSize.height - TOTAL_HEIGHT)) : anchor.y;
 
-  const nodeColor = useCallback((node: { data?: { element?: { visual?: { color?: string } } } }) => {
-    const color = node.data?.element?.visual?.color;
+  // Very light colours (white, near-white) are replaced with a visible gray
+  const visibleColor = useCallback((color: string | undefined) => {
     const fallback = isDark ? '#64748b' : '#94a3b8';
-    if (!color) return fallback;
-    // Detect very light colors (white, near-white) and replace with visible gray
-    if (isLightColor(color)) return fallback;
+    if (!color || isLightColor(color)) return fallback;
     return color;
   }, [isDark]);
+  const nodeColor = useCallback(
+    (node: { data?: { element?: { visual?: { color?: string } } } }) => visibleColor(node.data?.element?.visual?.color),
+    [visibleColor],
+  );
+  const bgColor = isDark ? '#1a1816' : '#faf8f5';
+  const maskColor = isDark ? 'rgba(200,200,200,0.1)' : 'rgba(0,0,0,0.08)';
 
   return (
     <div
@@ -148,10 +159,20 @@ export function DraggableMinimap() {
         </button>
       </div>
       {/* Hidden: not mounted at all, it would still draw every node */}
-      {showMinimap && <MiniMap
+      {showMinimap && scene && (
+        <OverviewMinimap
+          scene={scene}
+          width={DEFAULT_WIDTH}
+          height={DEFAULT_HEIGHT}
+          bgColor={bgColor}
+          maskColor={maskColor}
+          nodeColor={visibleColor}
+        />
+      )}
+      {showMinimap && !scene && <MiniMap
         nodeColor={nodeColor}
-        bgColor={isDark ? '#1a1816' : '#faf8f5'}
-        maskColor={isDark ? 'rgba(200,200,200,0.1)' : 'rgba(0,0,0,0.08)'}
+        bgColor={bgColor}
+        maskColor={maskColor}
         style={{
           width: DEFAULT_WIDTH,
           height: DEFAULT_HEIGHT,

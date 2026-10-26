@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
+import { useCallback, useMemo, useRef, useEffect, useState, type MutableRefObject } from 'react';
 import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { useTranslation } from 'react-i18next';
 import {
@@ -8,6 +8,7 @@ import {
   BackgroundVariant,
   useReactFlow,
   useStore as useFlowStore,
+  useStoreApi as useFlowStoreApi,
   applyNodeChanges,
   type Connection,
   type Node,
@@ -28,7 +29,7 @@ import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Grid3x3, Magnet, Map as MapIcon,
 import '@xyflow/react/dist/style.css';
 
 
-import { ElementNode, type ElementNodeData } from './ElementNode';
+import { ElementNode, LowDetailContext, type ElementNodeData } from './ElementNode';
 import { LowDetailHandleRepair } from './lowDetailHandles';
 import type { TabMembershipSnapshot } from '../../stores/historyStore';
 import { GroupNode, type GroupNodeData } from './GroupNode';
@@ -52,6 +53,7 @@ import { buildOverviewScene, computeAbsoluteNodePositions, linkFlagsOf, nodeFoot
 import { linksTouching } from './overview/overviewHitTest';
 import type { OverviewScene } from './overview/overviewTypes';
 import { linkVisualState, type LinkVisualContext } from '../../utils/linkVisualState';
+import { estimateHandles } from './estimatedHandles';
 import { ViewToolbar } from '../common/ViewToolbar';
 
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast, MAX_TABS } from '../../stores';
@@ -172,9 +174,14 @@ const LOW_DETAIL_ZOOM = 0.35;
  *  board down to flat shapes bought no frame time and only made it unreadable. */
 const LOW_DETAIL_MIN_ELEMENTS = 400;
 
-/** Overview layer (flag canvasOverviewLayer): entered below LOW_DETAIL_ZOOM, left
- *  only once a gesture ends above this zoom. The gap keeps a gesture hovering
- *  around the threshold from flipping 10 000 nodes back and forth. */
+/** Overview layer (flag canvasOverviewLayer): replaces React Flow only when
+ *  zoomed out (below LOW_DETAIL_ZOOM) over so many nodes that mounting them
+ *  would stall. Below that count React Flow stays, nodes can be dragged and
+ *  linked. Left once a gesture ends above OVERVIEW_EXIT_ZOOM or over fewer
+ *  than OVERVIEW_EXIT_VISIBLE nodes: the gaps keep a gesture hovering around
+ *  a threshold from flipping thousands of nodes back and forth. */
+const OVERVIEW_ENTER_VISIBLE = 1500;
+const OVERVIEW_EXIT_VISIBLE = 1000;
 const OVERVIEW_EXIT_ZOOM = 0.4;
 
 const EMPTY_EDGES: Edge[] = [];
@@ -335,6 +342,14 @@ function RevealSelectionOnOpen() {
   return null;
 }
 
+type FlowStoreApi = ReturnType<typeof useFlowStoreApi>;
+
+/** Hands React Flow's store to the canvas, which renders the provider itself. */
+function FlowStoreBridge({ storeRef }: { storeRef: MutableRefObject<FlowStoreApi | null> }) {
+  storeRef.current = useFlowStoreApi();
+  return null;
+}
+
 // Viewport controller - watches for pending viewport changes and applies them
 function ViewportController() {
   const { setViewport } = useReactFlow();
@@ -422,7 +437,6 @@ function elementToNode(
   themeMode?: 'light' | 'dark',
   isGhost?: boolean,
   isHighlighted?: boolean,
-  isLowDetail?: boolean,
   hasLinks?: boolean,
   activeEvents?: TemporalEventSummary,
 ): Node {
@@ -522,7 +536,6 @@ function elementToNode(
       tagDisplayMode,
       tagDisplaySize,
       themeMode,
-      isLowDetail,
       hasLinks,
       activeEvents,
     } satisfies ElementNodeData,
@@ -780,9 +793,9 @@ export function Canvas() {
   const elements = useDossierStore((s) => s.elements);
 
   // Zooming out only strips detail on boards big enough for it to buy anything.
-  // With the overview layer on, zooming out switches to it instead.
+  // With the overview layer on, zooming out far over many nodes switches to it.
   const overviewEnabled = useUIStore((s) => s.canvasOverviewLayer);
-  const isLowDetail = !overviewEnabled && isZoomedOut && elements.length >= LOW_DETAIL_MIN_ELEMENTS;
+  const isLowDetail = isZoomedOut && elements.length >= LOW_DETAIL_MIN_ELEMENTS;
   const links = useDossierStore((s) => s.links);
 
   // Overview layer: zoomed far out on a large board, React Flow keeps its
@@ -792,10 +805,8 @@ export function Canvas() {
   const overviewHandleRef = useRef<OverviewHandle | null>(null);
   const overviewEnabledRef = useRef(overviewEnabled);
   overviewEnabledRef.current = overviewEnabled;
-  /** Nodes on display (active tab and its ghosts), set once they are assembled below. */
-  const displayedCountRef = useRef(0);
-  /** Zoom of the last viewport change, current even before React re-renders. */
-  const liveZoomRef = useRef(useViewStore.getState().viewport.zoom);
+  /** Last viewport change, current even before React re-renders. */
+  const liveViewportRef = useRef(useViewStore.getState().viewport);
   const setOverviewActive = useCallback((next: boolean) => {
     if (overviewActiveRef.current === next) return;
     overviewActiveRef.current = next;
@@ -990,7 +1001,9 @@ export function Canvas() {
     isViewportMovingRef.current = false;
     setIsViewportMoving(false);
     // Leave the overview once the gesture is over, never during it
-    if (overviewActiveRef.current && liveZoomRef.current >= OVERVIEW_EXIT_ZOOM) {
+    const live = liveViewportRef.current;
+    if (overviewActiveRef.current &&
+        (live.zoom >= OVERVIEW_EXIT_ZOOM || countNodesInView(live, OVERVIEW_EXIT_VISIBLE) < OVERVIEW_EXIT_VISIBLE)) {
       setOverviewActive(false);
     }
     cullingViewportRef.current = viewportRef.current;
@@ -1583,7 +1596,6 @@ export function Canvas() {
   const prevThemeRef = useRef(themeMode);
   const prevTabMemberSetRef = useRef(tabMemberSet);
   const prevActiveTabIdRef = useRef(activeTabId);
-  const prevLowDetailRef = useRef(isLowDetail);
   const prevEventSummariesRef = useRef(temporalEventSummaries);
 
   // Which nodes carry at least one link. Stable: it depends on the links
@@ -1604,8 +1616,7 @@ export function Canvas() {
       prevShowConfRef.current !== confidenceDisplay ||
       prevTagModeRef.current !== tagDisplayMode ||
       prevTagSizeRef.current !== tagDisplaySize ||
-      prevThemeRef.current !== themeMode ||
-      prevLowDetailRef.current !== isLowDetail;
+      prevThemeRef.current !== themeMode;
 
     // Helper: build a single node from its structure
     const buildNode = (ns: typeof nodeStructures[number]) => {
@@ -1640,7 +1651,6 @@ export function Canvas() {
         themeMode,
         isGhostNode,
         emphasizedElementIds.has(ns.el.id),
-        isLowDetail,
         linkedNodeIds.has(ns.el.id),
         temporalEventSummaries.get(ns.el.id),
       );
@@ -1679,7 +1689,6 @@ export function Canvas() {
       prevTagModeRef.current = tagDisplayMode;
       prevTagSizeRef.current = tagDisplaySize;
       prevThemeRef.current = themeMode;
-      prevLowDetailRef.current = isLowDetail;
       prevTabMemberSetRef.current = tabMemberSet;
       prevActiveTabIdRef.current = activeTabId;
       return result;
@@ -1832,9 +1841,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, isLowDetail, elementMap, linkedNodeIds]);
-
-  displayedCountRef.current = nodes.length;
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, elementMap, linkedNodeIds]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -1947,6 +1954,33 @@ export function Canvas() {
   const RETIRE_IN_TWO_STEPS = 500;
   const lastFlowNodesRef = useRef<Node[]>([]);
   const overviewNodeCacheRef = useRef(new WeakMap<Node, Node>());
+  const hiddenCopy = (n: Node, dark: boolean, unnamed: string): Node => {
+    const cache = overviewNodeCacheRef.current;
+    let hidden = cache.get(n);
+    if (!hidden) {
+      const size = nodeFootprint(n, dark, unnamed);
+      hidden = { ...n, hidden: true, selected: false, draggable: false, initialWidth: size.width, initialHeight: size.height };
+      cache.set(n, hidden);
+    }
+    return hidden;
+  };
+  // Entering the overview mid-gesture: React Flow applies the new zoom at
+  // once but gets the hidden nodes only a render later (its nodes prop is
+  // synced in an effect). For that one frame it would show the far-out view
+  // with every node visible and mount thousands of them, a blank canvas for
+  // seconds. So the hidden nodes go straight into its store first. Same
+  // cached copies as the render that follows.
+  const flowStoreRef = useRef<FlowStoreApi | null>(null);
+  const hideAllFlowNodesNow = () => {
+    const store = flowStoreRef.current;
+    if (!store) return;
+    const dark = themeMode === 'dark';
+    const unnamed = t('empty.unnamed');
+    store.getState().setNodes(lastFlowNodesRef.current.map((n) => (n.hidden ? n : hiddenCopy(n, dark, unnamed))));
+  };
+  const hideAllFlowNodesNowRef = useRef(hideAllFlowNodesNow);
+  hideAllFlowNodesNowRef.current = hideAllFlowNodesNow;
+  const sizedNodeCacheRef = useRef(new WeakMap<Node, { node: Node; measured: boolean }>());
   const [retireTick, setRetireTick] = useState(0);
   const flowNodes = useMemo(() => {
     const last = lastFlowNodesRef.current;
@@ -1966,27 +2000,52 @@ export function Canvas() {
         result = last.flatMap((n) => next.get(n.id) ?? leavingById.get(n.id) ?? []);
       }
     }
+    // With the overview layer, React Flow must never mount a node only because
+    // it was not measured (its forced initial render): after the overview, or
+    // on a dossier opened zoomed out, that is thousands of full nodes at once
+    // and a blank canvas for seconds. React Flow drops a node's handles when
+    // the object it gets has no `measured`, so a node measured before gets its
+    // size back; one never measured gets an estimated size and handles, and is
+    // measured for real once on screen.
+    const dark = themeMode === 'dark';
+    const unnamed = t('empty.unnamed');
+    if (overviewEnabled) {
+      const sizedCache = sizedNodeCacheRef.current;
+      result = result.map((n) => {
+        const dims = measuredDimensionsRef.current.get(n.id);
+        const cached = sizedCache.get(n);
+        if (cached && cached.measured === Boolean(dims)) return cached.node;
+        let sized: Node;
+        if (dims) {
+          sized = n.measured ? n : { ...n, measured: dims };
+        } else {
+          const size = nodeFootprint(n, dark, unnamed);
+          const shape = (n.data as { element?: Element }).element?.visual.shape;
+          // `measured` too: React Flow holds fitView back until every shown
+          // node has one, then runs it late, at the next real measurement
+          sized = {
+            ...n,
+            measured: size,
+            initialWidth: size.width,
+            initialHeight: size.height,
+            handles: estimateHandles(n.type, shape, size.width, size.height),
+          };
+        }
+        sizedCache.set(n, { node: sized, measured: Boolean(dims) });
+        return sized;
+      });
+    }
+
     // Overview: every node stays in React Flow (keeping its measured size and
     // handles) but hidden, so none is mounted. An empty array would remount
     // them all on the way back. Cached per node: unchanged nodes keep their copy.
     if (overviewActive) {
-      const cache = overviewNodeCacheRef.current;
-      const dark = themeMode === 'dark';
-      const unnamed = t('empty.unnamed');
-      result = result.map((n) => {
-        let hidden = cache.get(n);
-        if (!hidden) {
-          const size = nodeFootprint(n, dark, unnamed);
-          hidden = { ...n, hidden: true, selected: false, draggable: false, initialWidth: size.width, initialHeight: size.height };
-          cache.set(n, hidden);
-        }
-        return hidden;
-      });
+      result = result.map((n) => hiddenCopy(n, dark, unnamed));
     }
     lastFlowNodesRef.current = result;
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayNodes, retireTick, overviewActive]);
+  }, [displayNodes, retireTick, overviewActive, overviewEnabled]);
   const hasRetiringNodes = !overviewActive && flowNodes !== displayNodes;
   useEffect(() => {
     if (!hasRetiringNodes) return;
@@ -1996,6 +2055,19 @@ export function Canvas() {
 
   // Track node positions in a ref (updated every frame, but doesn't trigger re-renders)
   const nodePositionsRef = useRef(new Map<string, Position>());
+  /** Displayed nodes whose corner lies in a viewport (with a margin), counted up to `cap`. */
+  function countNodesInView(v: { x: number; y: number; zoom: number }, cap: number): number {
+    const flow = flowStoreRef.current?.getState();
+    if (!flow || v.zoom <= 0) return 0;
+    const margin = 100;
+    const x0 = -v.x / v.zoom - margin, y0 = -v.y / v.zoom - margin;
+    const x1 = (flow.width - v.x) / v.zoom, y1 = (flow.height - v.y) / v.zoom;
+    let count = 0;
+    for (const p of nodePositionsRef.current.values()) {
+      if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1 && ++count >= cap) break;
+    }
+    return count;
+  }
   // Version counter to trigger edge recomputation on drag-end / structural changes
   const [edgeVersion, setEdgeVersion] = useState(0);
   const edgeVersionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2245,6 +2317,21 @@ export function Canvas() {
       fallbackLabel: t('empty.unnamed'),
     });
   }, [overviewActive, nodes, links, temporalHiddenLinkIds, viewHiddenIds, linkVisualContext, themeMode, t]);
+  // Minimap outside the overview: drawn from the same kind of scene, nodes
+  // only. React Flow's own minimap mounts one subscribed component per node,
+  // which every viewport change then re-evaluates (seconds at 10 000 nodes).
+  const minimapScene = useMemo<OverviewScene | null>(() => {
+    if (!overviewEnabled || !showMinimap || overviewActive) return null;
+    return buildOverviewScene({
+      nodes,
+      links: [],
+      isLinkShown: () => false,
+      linkFlags: () => 0,
+      dark: themeMode === 'dark',
+      fallbackLabel: t('empty.unnamed'),
+      nodesOnly: true,
+    });
+  }, [overviewEnabled, showMinimap, overviewActive, nodes, themeMode, t]);
   const overviewSceneRef = useRef(overviewScene);
   overviewSceneRef.current = overviewScene;
 
@@ -2791,6 +2878,16 @@ export function Canvas() {
   const handlePaneContextMenu = useCallback(
     (event: MouseEvent | React.MouseEvent<globalThis.Element, MouseEvent>) => {
       event.preventDefault();
+      // Overview: nodes are drawn on a canvas, a right-click on one reaches
+      // the pane. Same menu as on the node, acting on the selection when the
+      // element belongs to a multiple one.
+      if (overviewActiveRef.current) {
+        const hitId = overviewHandleRef.current?.hitTestClient(event.clientX, event.clientY);
+        if (hitId) {
+          handleNodeContextMenu(event as React.MouseEvent, { id: hitId } as Node);
+          return;
+        }
+      }
       // Close other context menus
       setContextMenu(null);
       setLinkContextMenu(null);
@@ -2811,7 +2908,7 @@ export function Canvas() {
         canvasY,
       });
     },
-    [viewport]
+    [viewport, handleNodeContextMenu]
   );
 
   // Create element from canvas context menu
@@ -3705,6 +3802,14 @@ export function Canvas() {
   // the selected elements — or all of them when nothing is selected.
   const handleSelectLinks = useCallback(() => {
     const selected = useSelectionStore.getState().selectedElementIds;
+    // Overview: React Flow has no edges, the scene holds every drawn link
+    const scene = overviewSceneRef.current;
+    if (overviewActiveRef.current && scene) {
+      const picked: number[] = [];
+      for (let i = 0; i < scene.nodeCount; i++) if (selected.size === 0 || selected.has(scene.ids[i])) picked.push(i);
+      selectLinks(linksTouching(scene, picked));
+      return;
+    }
     const ids = allEdges
       .filter((edge) => selected.size === 0 || selected.has(edge.source) || selected.has(edge.target))
       .map((edge) => edge.id);
@@ -4949,22 +5054,35 @@ export function Canvas() {
         const next = zoom < LOW_DETAIL_ZOOM;
         return prev === next ? prev : next;
       });
-      liveZoomRef.current = zoom;
+      liveViewportRef.current = { x, y, zoom };
       // Enter the overview as soon as the zoom drops, before React Flow mounts
       // more and more nodes during the gesture
-      if (overviewEnabledRef.current && zoom < LOW_DETAIL_ZOOM && displayedCountRef.current >= LOW_DETAIL_MIN_ELEMENTS) {
+      if (overviewEnabledRef.current && !overviewActiveRef.current && zoom < LOW_DETAIL_ZOOM &&
+          countNodesInView({ x, y, zoom }, OVERVIEW_ENTER_VISIBLE) >= OVERVIEW_ENTER_VISIBLE) {
+        // Called before React Flow stores the new transform
+        hideAllFlowNodesNowRef.current();
         setOverviewActive(true);
       }
     },
     [setViewport, setOverviewActive]
   );
 
-  // Flag switched, or what is displayed crossed the size threshold (a small
-  // tab of a large dossier stays in React Flow): follow at the current zoom
+  // Flag switched, or what is displayed changed (another tab, an import):
+  // follow at the current viewport. A small tab of a large dossier stays in
+  // React Flow.
   useEffect(() => {
-    const allowed = overviewEnabled && nodes.length >= LOW_DETAIL_MIN_ELEMENTS;
-    if (!allowed) setOverviewActive(false);
-    else if (liveZoomRef.current < LOW_DETAIL_ZOOM) setOverviewActive(true);
+    if (!overviewEnabled) {
+      setOverviewActive(false);
+      return;
+    }
+    const live = liveViewportRef.current;
+    if (overviewActiveRef.current) {
+      if (countNodesInView(live, OVERVIEW_EXIT_VISIBLE) < OVERVIEW_EXIT_VISIBLE) setOverviewActive(false);
+    } else if (live.zoom < LOW_DETAIL_ZOOM && countNodesInView(live, OVERVIEW_ENTER_VISIBLE) >= OVERVIEW_ENTER_VISIBLE) {
+      hideAllFlowNodesNowRef.current();
+      setOverviewActive(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overviewEnabled, nodes.length, setOverviewActive]);
 
   // Handle selection change from selection box — throttled to avoid 60fps store updates
@@ -5171,80 +5289,84 @@ export function Canvas() {
             }
           }}
         >
-          <ReactFlow
-            nodes={flowNodes}
-            edges={edges}
-            onNodesChange={handleNodesChange}
-            onEdgesChange={handleEdgesChange}
-            onConnectStart={handleConnectStart}
-            onConnect={handleConnect}
-            onReconnectStart={handleReconnectStart}
-            onReconnect={handleReconnect}
-            onNodeClick={handleNodeClick}
-            onNodeDoubleClick={handleNodeDoubleClick}
-            onNodeContextMenu={handleNodeContextMenu}
-            onEdgeClick={handleEdgeClick}
-            onEdgeDoubleClick={handleEdgeDoubleClick}
-            onEdgeContextMenu={handleEdgeContextMenu}
-            onPaneClick={handlePaneClick}
-            onPaneContextMenu={handlePaneContextMenu}
-            onSelectionContextMenu={handlePaneContextMenu}
-            onDoubleClick={handlePaneDoubleClick}
-            onViewportChange={handleViewportChange}
-            onMoveStart={handleMoveStart}
-            onMoveEnd={handleMoveEnd}
-            onSelectionChange={handleSelectionChange}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            defaultViewport={viewport}
-            snapToGrid={snapToGrid}
-            snapGrid={[gridSize, gridSize]}
-            minZoom={0.005}
-            maxZoom={4}
-            selectionMode={SelectionMode.Partial}
-            connectionMode={ConnectionMode.Loose}
-            connectionRadius={40}
-            edgesReconnectable
-            selectNodesOnDrag={false}
-            selectionOnDrag
-            panOnDrag
-            selectionKeyCode="Shift"
-            deleteKeyCode={null}
-            disableKeyboardA11y
-            panOnScroll
-            zoomOnScroll
-            zoomOnDoubleClick={false}
-            fitView={false}
-            nodeDragThreshold={2}
-            onlyRenderVisibleElements
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background
-              variant={snapToGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots}
-              gap={gridSize}
-              size={snapToGrid ? 0.5 : 1}
-              color="var(--color-border-strong)"
-              style={{ backgroundColor: 'var(--color-bg-canvas)' }}
-            />
-            {overviewEnabled && (
-              <OverviewLayer
-                active={overviewActive}
-                scene={overviewScene}
-                themeMode={themeMode}
-                handleRef={overviewHandleRef}
-                onBoxSelect={handleOverviewBoxSelect}
+          <LowDetailContext.Provider value={isLowDetail}>
+            <ReactFlow
+              nodes={flowNodes}
+              edges={edges}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
+              onConnectStart={handleConnectStart}
+              onConnect={handleConnect}
+              onReconnectStart={handleReconnectStart}
+              onReconnect={handleReconnect}
+              onNodeClick={handleNodeClick}
+              onNodeDoubleClick={handleNodeDoubleClick}
+              onNodeContextMenu={handleNodeContextMenu}
+              onEdgeClick={handleEdgeClick}
+              onEdgeDoubleClick={handleEdgeDoubleClick}
+              onEdgeContextMenu={handleEdgeContextMenu}
+              onPaneClick={handlePaneClick}
+              onPaneContextMenu={handlePaneContextMenu}
+              onSelectionContextMenu={handlePaneContextMenu}
+              onDoubleClick={handlePaneDoubleClick}
+              onViewportChange={handleViewportChange}
+              onMoveStart={handleMoveStart}
+              onMoveEnd={handleMoveEnd}
+              onSelectionChange={handleSelectionChange}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              defaultViewport={viewport}
+              snapToGrid={snapToGrid}
+              snapGrid={[gridSize, gridSize]}
+              minZoom={0.005}
+              maxZoom={4}
+              selectionMode={SelectionMode.Partial}
+              connectionMode={ConnectionMode.Loose}
+              connectionRadius={40}
+              edgesReconnectable
+              selectNodesOnDrag={false}
+              selectionOnDrag
+              panOnDrag
+              selectionKeyCode="Shift"
+              deleteKeyCode={null}
+              disableKeyboardA11y
+              panOnScroll
+              zoomOnScroll
+              zoomOnDoubleClick={false}
+              fitView={false}
+              nodeDragThreshold={2}
+              onlyRenderVisibleElements
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background
+                variant={snapToGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots}
+                gap={gridSize}
+                size={snapToGrid ? 0.5 : 1}
+                color="var(--color-border-strong)"
+                style={{ backgroundColor: 'var(--color-bg-canvas)' }}
               />
-            )}
-            <CanvasCaptureHandler />
-            <LowDetailHandleRepair isLowDetail={isLowDetail} />
-            <ViewportController />
-            <RevealSelectionOnOpen />
-            <FitViewController />
-            {/* Empty in the overview (it skips hidden nodes), which shows the whole graph anyway */}
-            {!overviewActive && <DraggableMinimap />}
-            <ImportPlacementOverlay />
-            <SuggestionPreviewLines />
-          </ReactFlow>
+              {overviewEnabled && (
+                <OverviewLayer
+                  active={overviewActive}
+                  scene={overviewScene}
+                  themeMode={themeMode}
+                  handleRef={overviewHandleRef}
+                  onBoxSelect={handleOverviewBoxSelect}
+                />
+              )}
+              <FlowStoreBridge storeRef={flowStoreRef} />
+              <CanvasCaptureHandler />
+              <LowDetailHandleRepair isLowDetail={isLowDetail} />
+              <ViewportController />
+              <RevealSelectionOnOpen />
+              <FitViewController />
+              {/* With the overview layer, drawn from a scene on a canvas: React Flow's
+                  minimap skips hidden nodes and costs one component per node */}
+              <DraggableMinimap scene={overviewActive ? overviewScene : minimapScene} />
+              <ImportPlacementOverlay />
+              <SuggestionPreviewLines />
+            </ReactFlow>
+          </LowDetailContext.Provider>
 
           {/* Alignment guides overlay */}
           {showAlignGuides && draggedNodeInfo && (
@@ -5391,7 +5513,7 @@ export function Canvas() {
               onCopyAsMermaid={handleCopyAsMermaid}
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
-              onSelectLinks={allEdges.length > 0 ? handleSelectLinks : undefined}
+              onSelectLinks={allEdges.length > 0 || (overviewScene?.linkCount ?? 0) > 0 ? handleSelectLinks : undefined}
               onSuggestLinks={handleSuggestLinks}
               tabs={canvasTabs}
               onAddSelectionToTab={(tabId) => addIdsToTab(tabId, Array.from(selectedElementIds))}

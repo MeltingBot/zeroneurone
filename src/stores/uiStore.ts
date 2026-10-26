@@ -96,7 +96,8 @@ interface UIState {
   // Minimap
   showMinimap: boolean;
 
-  /** Canvas overview layer: zoomed far out on a large board, nodes and links drawn on one canvas */
+  /** Canvas overview layer: zoomed far out on a large board, nodes and links drawn on one canvas.
+   *  Not persisted (no setting in the UI): a change of default reaches everyone. */
   canvasOverviewLayer: boolean;
 
   /** Search (Ctrl+K): 'fuzzy' tolerates typos and matches any word, 'exact' needs every word */
@@ -223,6 +224,9 @@ interface UIState {
   resetDossierState: () => void;
 }
 
+/** Canvas overview layer on unless a test or a bench turns it off (see canvasOverviewLayer). */
+const CANVAS_OVERVIEW_DEFAULT = true;
+
 export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
@@ -239,7 +243,7 @@ export const useUIStore = create<UIState>()(
   anonymousMode: false,
   showCommentBadges: true,
   showMinimap: true,
-  canvasOverviewLayer: true,
+  canvasOverviewLayer: CANVAS_OVERVIEW_DEFAULT,
   searchMode: 'fuzzy',
   panelTabOrder: [],
   snapToGrid: false,
@@ -455,8 +459,10 @@ export const useUIStore = create<UIState>()(
     {
       name: 'zeroneurone-ui-settings',
       // Only persist global preferences, NOT dossier-specific settings (hideMedia, anonymousMode)
-      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, canvasOverviewLayer: state.canvasOverviewLayer, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
+      partialize: (state) => ({ themeMode: state.themeMode, showCommentBadges: state.showCommentBadges, showMinimap: state.showMinimap, searchMode: state.searchMode, panelTabOrder: state.panelTabOrder, snapToGrid: state.snapToGrid, showAlignGuides: state.showAlignGuides, gridSize: state.gridSize, panelSide: state.panelSide === 'detached' ? 'right' : state.panelSide, mapBaseLayer: state.mapBaseLayer, mapOfmVariant: state.mapOfmVariant, map3D: state.map3D, map3DBuildings: state.map3DBuildings, mapHeatmap: state.mapHeatmap, mapHeatmapSource: state.mapHeatmapSource, mapHeatmapIntensity: state.mapHeatmapIntensity, mapHeatmapPerElement: state.mapHeatmapPerElement }),
       onRehydrateStorage: () => (state) => {
+        // v2.76.2 saved this flag: drop what it stored, the default applies
+        if (state) state.canvasOverviewLayer = CANVAS_OVERVIEW_DEFAULT;
         // Apply theme on rehydration
         if (state?.themeMode) {
           document.documentElement.setAttribute('data-theme', state.themeMode);

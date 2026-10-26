@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo, useMemo } from 'react';
+import { useState, useEffect, useRef, memo, useMemo, createContext, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { Handle, Position, NodeResizer, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
@@ -58,7 +58,6 @@ export interface ElementNodeData extends Record<string, unknown> {
   /** Property to display as badge (value and type for country flag) */
   badgeProperty?: { value: string; type: string } | null;
   /** Zoomed far enough out that labels are unreadable: render a plain box. */
-  isLowDetail?: boolean;
   /** Temporal navigator: events of the element at the instant/period */
   activeEvents?: TemporalEventSummary;
   /** Whether any link touches this node — drives whether handles are needed. */
@@ -809,7 +808,6 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isHighlighted !== nextData.isHighlighted) return false;
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
-  if (prevData.isLowDetail !== nextData.isLowDetail) return false;
   if (prevData.activeEvents !== nextData.activeEvents) return false;
   if (prevData.hasLinks !== nextData.hasLinks) return false;
   if (prevData.thumbnail !== nextData.thumbnail) return false;
@@ -949,10 +947,18 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
   );
 }
 
-/** Picks the rendering by level of detail. No hook here: the two branches differ. */
+/**
+ * Zoomed far out on a large board (set by the canvas). A context rather than
+ * node data: switching only re-renders the mounted nodes, instead of
+ * rebuilding every node object, which React Flow then re-adopts one by one.
+ */
+export const LowDetailContext = createContext(false);
+
+/** Picks the rendering by level of detail. Only the context hook here: the two branches differ. */
 function ElementNodeComponent(props: NodeProps) {
   const data = props.data as ElementNodeData;
-  return data.isLowDetail && !data.isEditing
+  const isLowDetail = useContext(LowDetailContext);
+  return isLowDetail && !data.isEditing
     ? <LowDetailElementNode data={data} />
     : <FullElementNode {...props} />;
 }

@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.76.3
+
+### Améliorations
+
+- **Vue d'ensemble seulement quand elle sert** — elle prend le relais quand
+  plus de 1 500 éléments sont à l'écran (zoom sous 35 %), et rend la main en
+  dessous de 1 000. Sur une vue dézoomée peu dense, on peut de nouveau déplacer
+  et relier les éléments.
+- **Menu contextuel en vue d'ensemble** — clic droit sur un élément : son menu,
+  multi-sélection comprise (« A ↔ B », « N sélectionnés »). « Sélectionner les
+  liens » prend tous les liens dessinés.
+- **Minimap à tous les zooms** — dessinée sur un canvas : elle ne coûte plus
+  un composant par élément (clic et glisser pour déplacer la vue, molette pour
+  zoomer).
+- **Import d'un gros dossier plus rapide** — 10 000 éléments : 26 → 17 s. Les
+  éléments jamais affichés ne sont plus tous montés pour être mesurés.
+
+### Corrections
+
+- **Blocage et écran vide au changement de zoom** — en dézoomant, React Flow
+  montait des milliers d'éléments pendant une image avant de basculer ; en
+  zoomant, il montait tous ceux qu'il n'avait jamais mesurés. À 10 000
+  éléments, pire image à l'entrée 2,4–4,6 s → 0,4 s, à la sortie 1,05 →
+  0,3–0,45 s.
+- **Image vide au retour en vue normale** — le canvas reste affiché jusqu'à ce
+  que les éléments soient rendus.
+- **Réglage de la vue d'ensemble** — il n'est plus enregistré dans le
+  navigateur : la valeur stockée par la 2.76.2 est ignorée.
+
 ## 2.76.2
 
 ### Améliorations

@@ -158,6 +158,8 @@ export interface OverviewSceneInput {
   dark: boolean;
   /** Label used to size an element that has none ("Unnamed"). */
   fallbackLabel: string;
+  /** Nodes only, no links and no hit-test grid (the minimap). */
+  nodesOnly?: boolean;
 }
 
 export function buildOverviewScene(input: OverviewSceneInput): OverviewScene {
@@ -209,7 +211,7 @@ export function buildOverviewScene(input: OverviewSceneInput): OverviewScene {
   // Links whose two ends are drawn, self-loops aside (nothing to draw at this size)
   const shownLinks: Link[] = [];
   const ends: number[] = [];
-  for (const link of links) {
+  for (const link of input.nodesOnly ? [] : links) {
     if (link.fromId === link.toId) continue;
     const a = indexById.get(link.fromId);
     const b = indexById.get(link.toId);
@@ -243,7 +245,9 @@ export function buildOverviewScene(input: OverviewSceneInput): OverviewScene {
     nodeCount: n, ids, indexById, x, y, w, h, shape, fill, stroke, remoteColor, borderWidth, borderStyle, flags,
     linkCount: m, linkIds, from, to, linkColor, linkStyle, linkWidth, linkFlags: linkFlagsArr,
     palette,
-    grid: buildGrid(x, y, w, h, shape, n),
+    grid: input.nodesOnly
+      ? { cells: new Map(), large: [], stamp: new Uint32Array(0), stampValue: 0 }
+      : buildGrid(x, y, w, h, shape, n),
   };
 }
 
