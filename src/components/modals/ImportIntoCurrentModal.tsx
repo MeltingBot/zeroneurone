@@ -80,6 +80,11 @@ function estimateElementCount(file: File, content: string): number {
     return matches ? matches.length : 10;
   }
 
+  if (name.endsWith('.gml')) {
+    const matches = content.match(/(^|\s)node\s*\[/g);
+    return matches ? matches.length : 10;
+  }
+
   if (name.endsWith('.anx')) {
     // Count <Entity EntityId= tags in ANX
     const matches = content.match(/<Entity\s+EntityId=/g);
@@ -458,7 +463,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
             onChange={handleFileSelect}
             className="hidden"
           />

@@ -58,6 +58,7 @@ import { ViewToolbar } from '../common/ViewToolbar';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useSyncStore, useTabStore, useQueryStore, useClipboardStore, useSuggestionsStore, toast, MAX_TABS } from '../../stores';
 import type { Element, Link, Position, Asset, EvaluationModel } from '../../types';
 import { computeElementDimensions } from '../../utils/elementDimensions';
+import { buildDegreeMap, scaleByDegree, storedPosition } from '../../utils/degreeSize';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
 import { sourceWebLinks } from '../../utils/sourceLinks';
 import { getEvaluationBadge } from '../../utils/evaluation';
@@ -1360,14 +1361,26 @@ export function Canvas() {
     (elementId: string, width: number, height: number, position?: { x: number; y: number }) => {
       const element = elementMap.get(elementId);
       if (element) {
+        // Enlarged by its links: store the size it has without the option, and
+        // the position that draws it where the resize left it (it grows around
+        // its center)
+        const drawn = scaledElementCacheRef.current.get(elementId);
+        const factor = drawn && drawn.shown !== drawn.src && drawn.shown.visual.customWidth
+          ? drawn.shown.visual.customWidth / computeElementDimensions(drawn.src.visual, drawn.src.label || '', drawn.hasImage).width
+          : 1;
+        const baseWidth = Math.round(width / factor);
+        const baseHeight = Math.round(height / factor);
         updateElement(elementId, {
           visual: {
-            customWidth: width,
-            customHeight: height,
+            customWidth: baseWidth,
+            customHeight: baseHeight,
           },
         });
-        // When resizing from non-bottom-right corners, NodeResizer changes the position
-        if (position) {
+        if (factor !== 1 && drawn) {
+          const topLeft = position ?? drawn.shown.position;
+          updateElementPositions([{ id: elementId, position: { x: topLeft.x + (width - baseWidth) / 2, y: topLeft.y + (height - baseHeight) / 2 } }]);
+        } else if (position) {
+          // When resizing from non-bottom-right corners, NodeResizer changes the position
           updateElementPositions([{ id: elementId, position }]);
         }
         // Switch back from localNodes to store-derived nodes
@@ -1490,6 +1503,23 @@ export function Canvas() {
   const propertyDateLocale = dateLocale(i18n.language);
   const prevPropertyDateLocaleRef = useRef(propertyDateLocale);
 
+  // "Size by number of links" option: elements drawn larger, display only.
+  // Scaled copies are cached so an element keeps the same object (and its
+  // node is not rebuilt) until itself, its degree or its thumbnail changes.
+  const sizeByDegree = currentDossier?.settings?.sizeByDegree === true;
+  const degreeMap = useMemo(() => (sizeByDegree ? buildDegreeMap(links) : null), [sizeByDegree, links]);
+  const scaledElementCacheRef = useRef(new Map<string, { src: Element; degree: number; hasImage: boolean; shown: Element }>());
+  // React Flow (controlled mode) sends dimension changes via onNodesChange after ResizeObserver
+  // measurement. We must persist these on our node objects so the MiniMap's nodeHasDimensions()
+  // check passes. Without this, nodes never get `measured` set and the MiniMap is empty.
+  // The overview layer draws from them too.
+  const measuredDimensionsRef = useRef(new Map<string, { width: number; height: number }>());
+  /** Stored position of an element from where its node is drawn (they differ when enlarged by its links). */
+  const toStoredPosition = useCallback((id: string, drawnPosition: Position): Position => {
+    const entry = scaledElementCacheRef.current.get(id);
+    return entry && entry.shown !== entry.src ? storedPosition(entry.src, entry.shown, drawnPosition) : drawnPosition;
+  }, []);
+
   const nodeStructures = useMemo(() => {
     const prevElements = prevElementsByIdRef.current;
     const cache = nodeStructureCacheRef.current;
@@ -1533,12 +1563,40 @@ export function Canvas() {
     };
 
     // Tab filtering: on "Tous" all elements pass, on specific tab only members + ghosts
-    const visible = elements.filter((el) => {
+    const filtered = elements.filter((el) => {
       if (viewHiddenIds.has(el.id)) return false;
       if (temporalHiddenElementIds.has(el.id)) return false;
       if (activeTabId !== null && !tabMemberSet.has(el.id) && !localGhostIds.has(el.id)) return false;
       return true;
     });
+    const scaledCache = scaledElementCacheRef.current;
+    // A node whose drawn size changes with the option keeps its last measured
+    // size until React Flow measures it again, which never happens while the
+    // overview layer draws the canvas: drop it, the size is then computed.
+    const sizeOf = (el: Element) => `${el.visual.customWidth ?? ''}x${el.visual.customHeight ?? ''}`;
+    let visible = filtered;
+    if (degreeMap) {
+      const nextScaled = new Map<string, { src: Element; degree: number; hasImage: boolean; shown: Element }>();
+      visible = filtered.map((el) => {
+        const degree = degreeMap.get(el.id) ?? 0;
+        const firstAssetId = el.assetIds?.[0];
+        const hasImage = Boolean(firstAssetId && assetMap.get(firstAssetId)) && el.visual.hideMedia !== true;
+        const prev = scaledCache.get(el.id);
+        let entry = prev;
+        if (!prev || prev.src !== el || prev.degree !== degree || prev.hasImage !== hasImage) {
+          entry = { src: el, degree, hasImage, shown: scaleByDegree(el, degree, hasImage) };
+          if (sizeOf(entry.shown) !== sizeOf(prev?.shown ?? el)) measuredDimensionsRef.current.delete(el.id);
+        }
+        nextScaled.set(el.id, entry!);
+        return entry!.shown;
+      });
+      scaledElementCacheRef.current = nextScaled;
+    } else if (scaledCache.size > 0) {
+      for (const [id, entry] of scaledCache) {
+        if (entry.shown !== entry.src) measuredDimensionsRef.current.delete(id);
+      }
+      scaledElementCacheRef.current = new Map();
+    }
 
     const result = visible.map(el => {
       // Reuse cached structure only when nothing affecting its output has changed.
@@ -1570,14 +1628,9 @@ export function Canvas() {
     }
 
     return result;
-  }, [elements, viewHiddenIds, temporalHiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, propertyDateLocale, activeTabId, tabMemberSet, localGhostIds]);
+  }, [elements, degreeMap, viewHiddenIds, temporalHiddenElementIds, assetMap, commentCountMap, filters.badgePropertyKey, displayedProperties, propertyDateLocale, activeTabId, tabMemberSet, localGhostIds]);
 
   // --- Measured dimensions cache ---
-  // React Flow (controlled mode) sends dimension changes via onNodesChange after ResizeObserver
-  // measurement. We must persist these on our node objects so the MiniMap's nodeHasDimensions()
-  // check passes. Without this, nodes never get `measured` set and the MiniMap is empty.
-  const measuredDimensionsRef = useRef(new Map<string, { width: number; height: number }>());
-
   // --- Phase B: Final node assembly (incremental patching for performance) ---
   // Instead of rebuilding ALL nodes on every visual change (selection, dimming, remote presence),
   // we only rebuild nodes whose visual state actually changed. Unchanged nodes keep the same
@@ -2662,7 +2715,7 @@ export function Canvas() {
           // Validate positions before syncing
           const validUpdates = draggingChangesWithPosition.filter(
             u => u.position && Number.isFinite(u.position.x) && Number.isFinite(u.position.y)
-          );
+          ).map((u) => ({ ...u, position: toStoredPosition(u.id, u.position) }));
           if (validUpdates.length > 0) {
             updateElementPositions(validUpdates);
           }
@@ -2701,6 +2754,9 @@ export function Canvas() {
             ));
           }
         }
+
+        // Nodes enlarged by their links are drawn off their stored position
+        for (const update of updates) update.position = toStoredPosition(update.id, update.position);
 
         // Build undo/redo positions from tracked start positions
         const undoPositions: { id: string; position: Position }[] = [];
@@ -2750,7 +2806,7 @@ export function Canvas() {
         setEdgeVersion(v => v + 1);
       }
     },
-    [updateElementPositions, updateDragging, elementMap, pushAction, showAlignGuides]
+    [updateElementPositions, updateDragging, elementMap, pushAction, showAlignGuides, toStoredPosition]
   );
 
   // Handle edge changes - in controlled mode, we don't need to handle edge changes
@@ -3713,11 +3769,12 @@ export function Canvas() {
     for (const el of selectedElements) {
       const firstAssetId = el.assetIds?.[0];
       const hasImage = Boolean(firstAssetId && assetMap.get(firstAssetId)) && el.visual.hideMedia !== true;
-      const { width: w, height: h } = computeElementDimensions(el.visual, el.label || t('empty.unnamed'), hasImage);
-      minX = Math.min(minX, el.position.x);
-      minY = Math.min(minY, el.position.y);
-      maxX = Math.max(maxX, el.position.x + w);
-      maxY = Math.max(maxY, el.position.y + h);
+      const shown = degreeMap ? scaleByDegree(el, degreeMap.get(el.id) ?? 0, hasImage) : el;
+      const { width: w, height: h } = computeElementDimensions(shown.visual, el.label || t('empty.unnamed'), hasImage);
+      minX = Math.min(minX, shown.position.x);
+      minY = Math.min(minY, shown.position.y);
+      maxX = Math.max(maxX, shown.position.x + w);
+      maxY = Math.max(maxY, shown.position.y + h);
     }
 
     const groupPos = { x: minX - padding, y: minY - padding };
@@ -3745,7 +3802,7 @@ export function Canvas() {
     }
 
     clearSelection();
-  }, [groupableSelectedIds, elementMap, assetMap, t, createGroup, clearSelection, pushAction]);
+  }, [groupableSelectedIds, elementMap, assetMap, degreeMap, t, createGroup, clearSelection, pushAction]);
 
   // Dissolve group handler
   const handleDissolveGroup = useCallback(async () => {
@@ -4049,6 +4106,9 @@ export function Canvas() {
             } else if (fileName.endsWith('.gexf')) {
               const { importGEXF } = await import('../../services/importGephi');
               result = await importGEXF(content, invId);
+            } else if (fileName.endsWith('.gml')) {
+              const { importGML } = await import('../../services/importGML');
+              result = await importGML(content, invId);
             } else if (fileName.endsWith('.anx')) {
               const { importANX } = await import('../../services/importANX');
               result = await importANX(content, invId);

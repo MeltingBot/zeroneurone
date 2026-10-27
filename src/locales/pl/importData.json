@@ -114,6 +114,21 @@
       "edgeMissingNode": "Krawędź pominięta: węzeł źródłowy/docelowy nie znaleziony"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "Nieczytelny plik GML: {{message}}",
+      "missingGraph": "Nieprawidłowy format GML: brak listy graph",
+      "noNodes": "Brak węzłów w pliku GML",
+      "importError": "Błąd importu GML: {{message}}",
+      "unknownError": "Nieznany błąd"
+    },
+    "warnings": {
+      "nodeNoId": "Pominięto węzeł bez id",
+      "duplicateNodeId": "Pominięto zduplikowany węzeł (id {{id}})",
+      "edgeNoSourceTarget": "Pominięto krawędź bez źródła/celu",
+      "edgeMissingNode": "Pominięto krawędź: nie znaleziono węzła źródłowego/docelowego"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "Błąd parsowania XML",

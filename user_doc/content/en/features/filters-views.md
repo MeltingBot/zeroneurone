@@ -156,6 +156,7 @@ The **Views** panel also controls general display:
 | **Confidence / grading indicator** | Badge with the confidence (`70%`) or the grading (`B2`) depending on the [evaluation model]({{< relref "evaluation" >}}) |
 | **Tags** | Tag display mode |
 | **Property badges** | Properties displayed on nodes |
+| **Element size by number of links** | Highly linked elements are drawn larger (see [Graph analysis]({{< relref "graph-analysis" >}})) |
 
 
 ### Link Style

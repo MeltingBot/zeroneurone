@@ -114,6 +114,21 @@
       "edgeMissingNode": "Arête ignorée : nœud source/cible non trouvé"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "Fichier GML illisible : {{message}}",
+      "missingGraph": "Format GML invalide : liste graph manquante",
+      "noNodes": "Aucun nœud dans le fichier GML",
+      "importError": "Erreur d'import GML : {{message}}",
+      "unknownError": "Erreur inconnue"
+    },
+    "warnings": {
+      "nodeNoId": "Nœud sans id ignoré",
+      "duplicateNodeId": "Nœud en double ignoré (id {{id}})",
+      "edgeNoSourceTarget": "Arête sans source/cible ignorée",
+      "edgeMissingNode": "Arête ignorée : nœud source/cible non trouvé"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "Erreur de parsing XML",

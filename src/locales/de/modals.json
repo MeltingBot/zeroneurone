@@ -39,7 +39,7 @@
   "import": {
     "title": "Akte importieren",
     "dropzone": "Datei ablegen oder klicken zum Auswählen",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importieren in",
@@ -124,6 +124,8 @@
       "graphmlDesc": "Standard-Graphformat (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Natives Gephi-Format (Positionen, Farben)",
+      "gml": "GML",
+      "gmlDesc": "Textformat (Gephi, yEd, NetworkX, igraph)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Geographisches Format für GIS (QGIS, ArcGIS)",
       "png": "PNG (Bild der Arbeitsfläche)",

@@ -571,6 +571,7 @@
       "both": "Ikony + Etykiety"
     },
     "confidenceIndicator": "Wskaźnik pewności / oceny",
+    "sizeByDegree": "Rozmiar elementów według liczby powiązań",
     "links": "Połączenia",
     "linkShape": "Kształt",
     "linkCurves": "Krzywe",

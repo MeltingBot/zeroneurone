@@ -571,6 +571,7 @@
       "both": "Iconos + Etiquetas"
     },
     "confidenceIndicator": "Indicador de confianza / valoración",
+    "sizeByDegree": "Tamaño de los elementos según el número de vínculos",
     "links": "Enlaces",
     "linkShape": "Forma",
     "linkCurves": "Curvas",

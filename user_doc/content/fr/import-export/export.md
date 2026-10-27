@@ -134,6 +134,25 @@ Le graphe s'ouvre dans Gephi avec la même disposition et les mêmes couleurs qu
 
 ---
 
+### GML
+
+**Format texte** lisible par Gephi, yEd, Cytoscape, NetworkX et igraph.
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.gml` |
+| Contenu | Texte GML (nœuds, arêtes, `graphics`) |
+| Fichiers joints | ❌ Non inclus |
+| Usage | NetworkX, igraph, yEd, Cytoscape |
+
+Positions (centre du nœud), tailles, formes, couleurs, notes, tags, confiance et propriétés sont exportés. Chaque arête indique ses flèches (`targetArrow`, `sourceArrow`) : les liens sans flèche restent non orientés. Les nœuds reçoivent des identifiants numériques ; les noms de propriétés sont réduits aux lettres, chiffres et `_`.
+
+Le GML n'accepte que l'ASCII : les accents et autres caractères spéciaux sont écrits sous forme de codes (`é` → `&#233;`), ce que NetworkX exige. Un logiciel qui ne décode pas ces codes les affichera tels quels ; pour Gephi, préférez le GEXF.
+
+Avec NetworkX, si plusieurs éléments ont le même libellé, lisez le fichier avec `nx.read_gml(chemin, label='id')`.
+
+---
+
 ### ANX (i2 Analyst's Notebook)
 
 **Format d'échange i2** pour transmettre un graphe à un analyste travaillant sous Analyst's Notebook.

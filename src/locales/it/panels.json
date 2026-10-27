@@ -572,6 +572,7 @@
       "both": "Icone + Etichette"
     },
     "confidenceIndicator": "Indicatore di affidabilità / valutazione",
+    "sizeByDegree": "Dimensione degli elementi in base al numero di collegamenti",
     "links": "Collegamenti",
     "linkShape": "Forma",
     "linkCurves": "Curve",

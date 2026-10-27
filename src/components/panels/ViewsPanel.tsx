@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye, EyeOff, Plus, Trash2, Check, LayoutGrid, Tag, Percent, Hash, Search, Settings2, Link2,
-  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight
+  Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight, Scaling
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useHistoryStore } from '../../stores';
 import type { View } from '../../types';
@@ -37,6 +37,7 @@ export function ViewsPanel() {
     setTagDisplaySize,
     setLinkAnchorMode,
     setLinkCurveMode,
+    setSizeByDegree,
   } = useDossierStore();
   const { savedViews, saveView, loadView, deleteView } = useViewStore();
   const [isCreating, setIsCreating] = useState(false);
@@ -53,6 +54,7 @@ export function ViewsPanel() {
   const displayedProperties = settings?.displayedProperties ?? [];
   const linkAnchorMode = settings?.linkAnchorMode ?? 'auto';
   const linkCurveMode = settings?.linkCurveMode ?? 'curved';
+  const sizeByDegree = currentDossier?.settings?.sizeByDegree === true;
 
   // Get all unique property keys from elements and links
   const allPropertyKeys = useMemo(() => {
@@ -213,6 +215,30 @@ export function ViewsPanel() {
             <span
               className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
                 showConfidence ? 'translate-x-4' : ''
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Element size by number of links (this device only, like the settings above) */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <Scaling size={12} />
+            <span>{t('views.sizeByDegree')}</span>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={sizeByDegree}
+            aria-label={t('views.sizeByDegree')}
+            onClick={() => setSizeByDegree(!sizeByDegree)}
+            className={`relative w-8 h-4 rounded-full transition-colors ${
+              sizeByDegree ? 'bg-accent' : 'bg-bg-tertiary'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+                sizeByDegree ? 'translate-x-4' : ''
               }`}
             />
           </button>

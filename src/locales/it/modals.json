@@ -39,7 +39,7 @@
   "import": {
     "title": "Importa un'fascicolo",
     "dropzone": "Trascina un file o clicca per selezionare",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importa in",
@@ -124,6 +124,8 @@
       "graphmlDesc": "Formato grafo standard (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Formato nativo Gephi (posizioni, colori)",
+      "gml": "GML",
+      "gmlDesc": "Formato testo (Gephi, yEd, NetworkX, igraph)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Formato geografico per GIS (QGIS, ArcGIS)",
       "png": "PNG (immagine della lavagna)",

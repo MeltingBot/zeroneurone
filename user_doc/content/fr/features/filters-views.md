@@ -156,6 +156,7 @@ Le panneau **Vues** contrôle aussi l'affichage général :
 | **Indicateur confiance / cotation** | Badge avec la confiance (`70%`) ou la cotation (`B2`) selon le [modèle d'évaluation]({{< relref "evaluation" >}}) |
 | **Tags** | Mode d'affichage des tags |
 | **Propriétés badges** | Propriétés affichées sur les nœuds |
+| **Taille des éléments selon le nombre de liens** | Les éléments très reliés sont dessinés plus grands (voir [Analyse de graphe]({{< relref "graph-analysis" >}})) |
 
 
 ### Style des liens

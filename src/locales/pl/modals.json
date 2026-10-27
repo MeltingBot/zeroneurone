@@ -39,7 +39,7 @@
   "import": {
     "title": "Importuj teczka",
     "dropzone": "Upuść plik lub kliknij, aby wybrać",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importuj do",
@@ -126,6 +126,8 @@
       "graphmlDesc": "Standardowy format grafu (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Natywny format Gephi (pozycje, kolory)",
+      "gml": "GML",
+      "gmlDesc": "Format tekstowy (Gephi, yEd, NetworkX, igraph)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Format geograficzny dla GIS (QGIS, ArcGIS)",
       "png": "PNG (obraz tablicy)",

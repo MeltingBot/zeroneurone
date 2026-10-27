@@ -351,6 +351,8 @@ export interface DossierSettings {
   linkAnchorMode?: 'auto' | 'manual';
   /** Link curve mode: straight lines, curved bezier, or orthogonal (right angles) */
   linkCurveMode?: 'straight' | 'curved' | 'orthogonal';
+  /** Elements drawn larger the more links they have (display only, this device). */
+  sizeByDegree?: boolean;
 }
 
 // ============================================================================

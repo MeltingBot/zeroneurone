@@ -39,7 +39,7 @@
   "import": {
     "title": "Espediente inportatu",
     "dropzone": "Jaregin fitxategia edo egin klik hautatzeko",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Hona inportatu",
@@ -124,6 +124,8 @@
       "graphmlDesc": "Grafo formatu estandarra (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Gephi formatu natiboa (posizioak, koloreak)",
+      "gml": "GML",
+      "gmlDesc": "Testu formatua (Gephi, yEd, NetworkX, igraph)",
       "geojson": "GeoJSON",
       "geojsonDesc": "GIS formatu geografikoa (QGIS, ArcGIS)",
       "png": "PNG (arbelaren irudia)",

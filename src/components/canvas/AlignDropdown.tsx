@@ -186,17 +186,27 @@ export function AlignDropdown() {
     // Get measured dimensions from React Flow nodes
     const rfNodes = getNodes();
     const nodeDims = new Map<string, { width: number; height: number }>();
+    // Where each node is drawn: off its stored position when the dossier
+    // enlarges elements by their links (they grow around their center)
+    const drawnShift = new Map<string, Position>();
+    const byId = new Map(selectedEls.map((el) => [el.id, el]));
     for (const n of rfNodes) {
       if (n.measured?.width && n.measured?.height) {
         nodeDims.set(n.id, { width: n.measured.width, height: n.measured.height });
+      }
+      const el = byId.get(n.id);
+      if (el && (n.position.x !== el.position.x || n.position.y !== el.position.y)) {
+        drawnShift.set(n.id, { x: el.position.x - n.position.x, y: el.position.y - n.position.y });
       }
     }
 
     const selected = selectedEls.map(el => {
       const dims = nodeDims.get(el.id);
+      const shift = drawnShift.get(el.id);
+      const absolute = toAbsolute(el);
       return {
         id: el.id,
-        position: toAbsolute(el),
+        position: shift ? { x: absolute.x - shift.x, y: absolute.y - shift.y } : absolute,
         width: dims?.width,
         height: dims?.height,
         _offset: toRelativeOffset(el),
@@ -212,7 +222,8 @@ export function AlignDropdown() {
     const newPositions = newAbsolutePositions.map(np => {
       const orig = selected.find(s => s.id === np.id);
       const offset = orig?._offset ?? { x: 0, y: 0 };
-      return { id: np.id, position: { x: np.position.x - offset.x, y: np.position.y - offset.y } };
+      const shift = drawnShift.get(np.id) ?? { x: 0, y: 0 };
+      return { id: np.id, position: { x: np.position.x - offset.x + shift.x, y: np.position.y - offset.y + shift.y } };
     });
 
     const oldPositions = selectedEls.map(el => ({ id: el.id, position: { ...el.position } }));

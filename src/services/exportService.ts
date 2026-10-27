@@ -24,7 +24,7 @@ function propertyValueToCSV(prop: Property): string {
 }
 
 
-export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'geojson' | 'anx' | 'obsidian' | 'zip';
+export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'gml' | 'geojson' | 'anx' | 'obsidian' | 'zip';
 
 /** Asset metadata for export (without binary data) */
 export interface ExportedAssetMeta {
@@ -909,6 +909,11 @@ ${edges}
       case 'gexf': {
         const gexf = this.exportToGEXF(dossier, elements, links);
         this.download(gexf, `${baseName}.gexf`, 'application/xml');
+        break;
+      }
+      case 'gml': {
+        const { buildGMLExport } = await import('./exportGML');
+        this.download(buildGMLExport(dossier, elements, links), `${baseName}.gml`, 'text/plain');
         break;
       }
       case 'geojson': {

@@ -585,6 +585,7 @@
       "both": "Icons + Labels"
     },
     "confidenceIndicator": "Confidence / grading indicator",
+    "sizeByDegree": "Element size by number of links",
     "links": "Links",
     "linkShape": "Shape",
     "linkCurves": "Curves",

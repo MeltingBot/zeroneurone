@@ -134,6 +134,25 @@ The graph opens in Gephi with the same layout and colors as on the canvas. Posit
 
 ---
 
+### GML
+
+**Text format** readable by Gephi, yEd, Cytoscape, NetworkX and igraph.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.gml` |
+| Content | GML text (nodes, edges, `graphics`) |
+| Attached files | ❌ Not included |
+| Use | NetworkX, igraph, yEd, Cytoscape |
+
+Positions (node center), sizes, shapes, colors, notes, tags, confidence and properties are exported. Each edge states its arrows (`targetArrow`, `sourceArrow`): links without an arrow stay undirected. Nodes get numeric ids; property names are reduced to letters, digits and `_`.
+
+GML only accepts ASCII: accents and other special characters are written as codes (`é` → `&#233;`), as NetworkX requires. Software that does not decode them will show them as is; for Gephi, prefer GEXF.
+
+With NetworkX, if several elements share a label, read the file with `nx.read_gml(path, label='id')`.
+
+---
+
 ### ANX (i2 Analyst's Notebook)
 
 **i2 exchange format**, to hand a chart over to an analyst working in Analyst's Notebook.

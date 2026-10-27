@@ -301,6 +301,30 @@ Expected structure: object with `nodes` and `edges`, having `attributes` and `vi
 
 ---
 
+### GML
+
+**Text format** (.gml) written by Gephi, yEd, Cytoscape, NetworkX and igraph.
+
+#### Imported data
+
+| GML data | ZeroNeurone property |
+|----------|---------------------|
+| `label` (or `LabelGraphics` › `text` for yEd) | Element label |
+| `graphics` › `x`, `y` | Position (node center) |
+| `graphics` › `w`, `h` | Proportional size |
+| `graphics` › `fill`, `outline` | Color and border |
+| `graphics` › `type` | Shape (ellipse, rectangle, diamond, hexagon) |
+| `notes`, `tags` (separated by ;), `confidence` | Notes, tags, confidence |
+| Other simple keys (`weight`, `age`…) | Properties |
+| `source`, `target` | Link endpoints |
+| `graphics` › `fill`, `width` on an edge | Link color and thickness |
+| `targetArrow`, `sourceArrow` | Link direction |
+| `directed` | Default direction, when the edge does not state its arrows |
+
+Nodes without a position are laid out on a grid. Each node's GML id is kept in the `gml_id` property. For a file exported by Gephi (`Creator "Gephi"`), the Y axis is flipped as for GEXF.
+
+---
+
 ### ANX (i2 Analyst's Notebook)
 
 **XML format** exported from i2 Analyst's Notebook (.anx).
@@ -746,7 +770,7 @@ Each element carries its debit/credit totals, related accounts and payment metho
 
 From an open dossier, the **Import** button in the toolbar lets you add data directly into the current dossier.
 
-**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
+**All formats** listed above are accepted (ZIP, CSV, JSON, GraphML, GEXF, GML, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
 From the home page, importing a file into an **existing dossier** opens that dossier and runs the import there: options step (GeoJSON, FEC), then placement on the canvas.
 

@@ -187,6 +187,7 @@ interface DossierState {
   setTagDisplaySize: (size: 'small' | 'medium' | 'large') => Promise<void>;
   setLinkAnchorMode: (mode: 'auto' | 'manual') => Promise<void>;
   setLinkCurveMode: (mode: 'straight' | 'curved' | 'orthogonal') => Promise<void>;
+  setSizeByDegree: (enabled: boolean) => Promise<void>;
 
   // Internal: sync Y.Doc state to Zustand
   _syncFromYDoc: () => void;
@@ -2974,6 +2975,16 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         },
       };
     });
+  },
+
+  setSizeByDegree: async (enabled: boolean) => {
+    const { currentDossier } = get();
+    if (!currentDossier) return;
+    const settings = { ...currentDossier.settings, sizeByDegree: enabled };
+    await dossierRepository.update(currentDossier.id, { settings });
+    set((state) => (state.currentDossier?.id === currentDossier.id
+      ? { currentDossier: { ...state.currentDossier, settings: { ...state.currentDossier.settings, sizeByDegree: enabled } } }
+      : state));
   },
 
   setLinkCurveMode: async (mode: 'straight' | 'curved' | 'orthogonal') => {

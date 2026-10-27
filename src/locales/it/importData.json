@@ -114,6 +114,21 @@
       "edgeMissingNode": "Arco ignorato: nodo origine/destinazione non trovato"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "File GML illeggibile: {{message}}",
+      "missingGraph": "Formato GML non valido: lista graph mancante",
+      "noNodes": "Nessun nodo nel file GML",
+      "importError": "Errore di importazione GML: {{message}}",
+      "unknownError": "Errore sconosciuto"
+    },
+    "warnings": {
+      "nodeNoId": "Nodo senza id ignorato",
+      "duplicateNodeId": "Nodo duplicato ignorato (id {{id}})",
+      "edgeNoSourceTarget": "Arco senza origine/destinazione ignorato",
+      "edgeMissingNode": "Arco ignorato: nodo di origine/destinazione non trovato"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "Errore di parsing XML",

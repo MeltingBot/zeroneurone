@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network, NotebookText, FolderTree, Folder } from 'lucide-react';
 import { exportService, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
+import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { fileService } from '../../services/fileService';
 import { reportRepository, tabRepository } from '../../db/repositories';
 import { db } from '../../db/database';
@@ -21,6 +22,7 @@ const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; 
   { format: 'csv', labelKey: 'csv', descKey: 'csvDesc', icon: FileSpreadsheet },
   { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
   { format: 'gexf', labelKey: 'gexf', descKey: 'gexfDesc', icon: FileText },
+  { format: 'gml', labelKey: 'gml', descKey: 'gmlDesc', icon: FileText },
   { format: 'anx', labelKey: 'anx', descKey: 'anxDesc', icon: Network },
   { format: 'obsidian', labelKey: 'obsidian', descKey: 'obsidianDesc', icon: NotebookText },
   { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
@@ -199,7 +201,12 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       }
 
       const settings = currentDossier.settings;
-      const svgString = buildSVGExport(elements, links, {
+      // Drawn as on the canvas: larger with more links when the option is on
+      const shownElements = currentDossier.settings?.sizeByDegree
+        ? scaleElementsByDegree(elements, links, (el) =>
+          Boolean(el.assetIds?.[0] && assetDataUrls.has(el.assetIds[0])) && el.visual.hideMedia !== true)
+        : elements;
+      const svgString = buildSVGExport(shownElements, links, {
         // Same default as the canvas
         linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
         linkCurveMode: settings?.linkCurveMode ?? 'curved',

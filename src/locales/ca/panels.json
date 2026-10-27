@@ -571,6 +571,7 @@
       "both": "Icones + Etiquetes"
     },
     "confidenceIndicator": "Indicador de confiança / valoració",
+    "sizeByDegree": "Mida dels elements segons el nombre d'enllaços",
     "links": "Enllaços",
     "linkShape": "Forma",
     "linkCurves": "Corbes",

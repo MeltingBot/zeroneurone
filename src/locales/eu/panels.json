@@ -571,6 +571,7 @@
       "both": "Ikonoak + Etiketak"
     },
     "confidenceIndicator": "Konfiantza / kalifikazio adierazlea",
+    "sizeByDegree": "Elementuen tamaina lotura kopuruaren arabera",
     "links": "Loturak",
     "linkShape": "Forma",
     "linkCurves": "Kurbak",

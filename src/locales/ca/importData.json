@@ -114,6 +114,21 @@
       "edgeMissingNode": "Aresta omesa: node origen/destí no trobat"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "Fitxer GML il·legible: {{message}}",
+      "missingGraph": "Format GML no vàlid: falta la llista graph",
+      "noNodes": "Cap node al fitxer GML",
+      "importError": "Error d'importació GML: {{message}}",
+      "unknownError": "Error desconegut"
+    },
+    "warnings": {
+      "nodeNoId": "Node sense id omès",
+      "duplicateNodeId": "Node duplicat omès (id {{id}})",
+      "edgeNoSourceTarget": "Aresta sense origen/destinació omesa",
+      "edgeMissingNode": "Aresta omesa: node d'origen/destinació no trobat"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "Error d'anàlisi XML",

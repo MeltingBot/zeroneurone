@@ -66,7 +66,17 @@ Frequency of passage on shortest paths.
 
 - **Sorted list** of elements by centrality
 - **Click** to select and center on the element
-- **Sizing**: option to adjust size based on centrality
+- **Size by links**: turn on **Element size by number of links** in the **Views** tab of the side panel (**Canvas display** section) so that each element grows with its number of links
+
+#### Element size by number of links
+
+With this setting, an element is drawn larger according to its number of links: ×1.25 with 4 links, ×1.5 with 9, ×2 with 25, and at most ×3 from 81 links. An element with a single link keeps its size. The element grows around its center. Every link of the dossier counts, including those hidden by a filter or in another tab.
+
+- The enlargement depends on the element's own links only: adding a link does not change the size of other elements. In a dossier where every element has many links, they all grow.
+- The setting does not move elements: after turning it on, run the automatic layout again, which leaves room for the enlarged elements.
+- Only the display changes: turning the setting off gives every element its usual size back. Automatic layout and the SVG export take it into account.
+- The setting is personal: it is kept for this dossier on this device, and collaborators in a shared session keep their own display.
+- An element resized by hand is enlarged from its own size. Resizing it while the setting is on sets its base size: it keeps following its links and returns to that size when the setting is off. Groups and annotations keep their size.
 
 ---
 

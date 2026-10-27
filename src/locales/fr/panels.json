@@ -586,6 +586,7 @@
       "both": "Icônes + Labels"
     },
     "confidenceIndicator": "Indicateur de confiance / cotation",
+    "sizeByDegree": "Taille des éléments selon le nombre de liens",
     "links": "Liaisons",
     "linkShape": "Forme",
     "linkCurves": "Courbes",

@@ -39,7 +39,7 @@
   "import": {
     "title": "Importar un expediente",
     "dropzone": "Suelte un archivo o haga clic para seleccionar",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogía: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar en",
@@ -124,6 +124,8 @@
       "graphmlDesc": "Formato de grafo estándar (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Formato nativo de Gephi (posiciones, colores)",
+      "gml": "GML",
+      "gmlDesc": "Formato de texto (Gephi, yEd, NetworkX, igraph)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Formato geográfico para SIG (QGIS, ArcGIS)",
       "png": "PNG (imagen del lienzo)",

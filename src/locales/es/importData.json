@@ -114,6 +114,21 @@
       "edgeMissingNode": "Arista ignorada: nodo origen/destino no encontrado"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "Archivo GML ilegible: {{message}}",
+      "missingGraph": "Formato GML no válido: falta la lista graph",
+      "noNodes": "Ningún nodo en el archivo GML",
+      "importError": "Error de importación GML: {{message}}",
+      "unknownError": "Error desconocido"
+    },
+    "warnings": {
+      "nodeNoId": "Nodo sin id omitido",
+      "duplicateNodeId": "Nodo duplicado omitido (id {{id}})",
+      "edgeNoSourceTarget": "Arista sin origen/destino omitida",
+      "edgeMissingNode": "Arista omitida: nodo de origen/destino no encontrado"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "Error de análisis XML",

@@ -301,6 +301,30 @@ Structure attendue : objet avec `nodes` et `edges`, possédant des `attributes` 
 
 ---
 
+### GML
+
+**Format texte** (.gml) écrit par Gephi, yEd, Cytoscape, NetworkX et igraph.
+
+#### Données importées
+
+| Donnée GML | Propriété ZeroNeurone |
+|------------|----------------------|
+| `label` (ou `LabelGraphics` › `text` pour yEd) | Label de l'élément |
+| `graphics` › `x`, `y` | Position (centre du nœud) |
+| `graphics` › `w`, `h` | Taille proportionnelle |
+| `graphics` › `fill`, `outline` | Couleur et bordure |
+| `graphics` › `type` | Forme (ellipse, rectangle, losange, hexagone) |
+| `notes`, `tags` (séparés par ;), `confidence` | Notes, tags, confiance |
+| Autres clés simples (`weight`, `age`…) | Propriétés |
+| `source`, `target` | Extrémités du lien |
+| `graphics` › `fill`, `width` sur arête | Couleur et épaisseur du lien |
+| `targetArrow`, `sourceArrow` | Direction du lien |
+| `directed` | Direction par défaut, si l'arête n'indique pas ses flèches |
+
+Les nœuds sans position sont disposés en grille. L'identifiant GML de chaque nœud est conservé dans la propriété `gml_id`. Pour un fichier exporté par Gephi (`Creator "Gephi"`), l'axe Y est inversé comme pour le GEXF.
+
+---
+
 ### ANX (i2 Analyst's Notebook)
 
 **Format XML** exporté depuis i2 Analyst's Notebook (.anx).
@@ -746,7 +770,7 @@ Chaque élément porte ses totaux débit/crédit, ses comptes de rattachement et
 
 Depuis un dossier ouvert, le bouton **Importer** dans la barre d'outils permet d'ajouter des données directement dans le dossier en cours.
 
-**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
+**Tous les formats** listés ci-dessus sont acceptés (ZIP, CSV, JSON, GraphML, GEXF, GML, ANX, Excalidraw, Mermaid, OSINT Industries, OSINTracker, STIX, GEDCOM, GeneWeb, FEC).
 
 Depuis la page d'accueil, importer un fichier dans un **dossier existant** ouvre ce dossier et y lance l'import : étape d'options (GeoJSON, FEC), puis placement sur le canvas.
 

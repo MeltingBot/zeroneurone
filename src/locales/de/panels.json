@@ -571,6 +571,7 @@
       "both": "Symbole + Bezeichnungen"
     },
     "confidenceIndicator": "Vertrauens- / Bewertungsindikator",
+    "sizeByDegree": "Elementgröße nach Anzahl der Verbindungen",
     "links": "Verbindungen",
     "linkShape": "Form",
     "linkCurves": "Kurven",

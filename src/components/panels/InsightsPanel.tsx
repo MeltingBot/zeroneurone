@@ -23,6 +23,7 @@ import {
   Ungroup,
 } from 'lucide-react';
 import { computeElementDimensions } from '../../utils/elementDimensions';
+import { buildDegreeMap, scaleByDegree } from '../../utils/degreeSize';
 import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
@@ -247,14 +248,17 @@ export function InsightsPanel() {
       const thumbnails = new Map(
         useDossierStore.getState().assets.map(a => [a.id, a.thumbnailDataUrl] as const),
       );
+      const { currentDossier, links } = useDossierStore.getState();
+      const degreeMap = currentDossier?.settings?.sizeByDegree ? buildDegreeMap(links) : null;
       for (const el of clusterElements) {
         const firstAssetId = el.assetIds?.[0];
         const hasImage = Boolean(firstAssetId && thumbnails.get(firstAssetId)) && el.visual.hideMedia !== true;
-        const { width: w, height: h } = computeElementDimensions(el.visual, el.label || t('common:empty.unnamed'), hasImage);
-        minX = Math.min(minX, el.position.x);
-        minY = Math.min(minY, el.position.y);
-        maxX = Math.max(maxX, el.position.x + w);
-        maxY = Math.max(maxY, el.position.y + h);
+        const shown = degreeMap ? scaleByDegree(el, degreeMap.get(el.id) ?? 0, hasImage) : el;
+        const { width: w, height: h } = computeElementDimensions(shown.visual, el.label || t('common:empty.unnamed'), hasImage);
+        minX = Math.min(minX, shown.position.x);
+        minY = Math.min(minY, shown.position.y);
+        maxX = Math.max(maxX, shown.position.x + w);
+        maxY = Math.max(maxY, shown.position.y + h);
       }
 
       const groupPos = { x: minX - padding, y: minY - padding };

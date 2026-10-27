@@ -6,6 +6,7 @@ import { graphWorkerService } from '../../services/graphWorkerService';
 import { useDossierStore, useHistoryStore, useSelectionStore, useTabStore, useViewStore } from '../../stores';
 import type { Position } from '../../types';
 import { buildLayoutScope } from '../../utils/layoutScope';
+import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { useProgressStore } from '../../stores/progressStore';
 import { avoidObstacles } from '../../utils/avoidObstacles';
 
@@ -52,15 +53,30 @@ export function LayoutDropdown() {
     // In a tab, only its members move and they keep clear of everything else.
     // Groups are laid out as single blocks so their children follow them.
     const pool = activeTabId !== null ? tabMemberSet : undefined;
-    const scope = buildLayoutScope(elements, links, selectedElementIds, pool);
+    // Sizes as drawn, so the spacing fits elements enlarged by their links
+    const sizeByDegree = useDossierStore.getState().currentDossier?.settings?.sizeByDegree === true;
+    const shown = sizeByDegree ? scaleElementsByDegree(elements, links) : elements;
+    const scope = buildLayoutScope(shown, links, selectedElementIds, pool);
     if (scope.elements.length === 0) {
       setIsApplying(false);
       useProgressStore.getState().end('layout');
       return;
     }
 
+    // Enlarged elements are drawn off their stored position (they grow around
+    // their center): shift from the drawn position to the stored one
+    const drawnShift = new Map<string, Position>();
+    shown.forEach((el, i) => {
+      const src = elements[i];
+      if (el !== src) drawnShift.set(el.id, { x: src.position.x - el.position.x, y: src.position.y - el.position.y });
+    });
+    const toStored = ({ id, position }: { id: string; position: Position }) => {
+      const d = drawnShift.get(id);
+      return { id, position: d ? { x: position.x + d.x, y: position.y + d.y } : position };
+    };
+
     // Save old positions for undo (only scoped nodes move)
-    const oldPositions = scope.originalPositions;
+    const oldPositions = scope.originalPositions.map(toStored);
 
     // Center: centroid of the scoped nodes (same coordinate space as them)
     const center = {
@@ -91,7 +107,7 @@ export function LayoutDropdown() {
         positions = Object.fromEntries(result.positions);
       }
 
-      const newPositions: { id: string; position: Position }[] = [];
+      let newPositions: { id: string; position: Position }[] = [];
       for (const [id, pos] of Object.entries(positions)) {
         newPositions.push({ id, position: scope.toStoredPosition(id, pos) });
       }
@@ -106,6 +122,7 @@ export function LayoutDropdown() {
           p.position = { x: p.position.x + shift.x, y: p.position.y + shift.y };
         }
       }
+      newPositions = newPositions.map(toStored);
 
       if (newPositions.length > 0) {
         pushAction({

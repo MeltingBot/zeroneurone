@@ -66,7 +66,17 @@ Fréquence de passage sur les plus courts chemins.
 
 - **Liste triée** des éléments par centralité
 - **Clic** pour sélectionner et centrer sur l'élément
-- **Dimensionnement** : option pour ajuster la taille selon la centralité
+- **Taille selon les liens** : activez **Taille des éléments selon le nombre de liens** dans l'onglet **Vues** du panneau latéral (section **Affichage sur le canvas**) pour que chaque élément grossisse avec son nombre de liens
+
+#### Taille des éléments selon le nombre de liens
+
+Avec ce réglage, un élément est dessiné plus grand selon son nombre de liens : ×1,25 avec 4 liens, ×1,5 avec 9, ×2 avec 25, et au plus ×3 à partir de 81 liens. Un élément qui n'a qu'un lien garde sa taille. L'élément grossit autour de son centre. Tous les liens du dossier comptent, même ceux masqués par un filtre ou situés dans un autre onglet.
+
+- L'agrandissement dépend des seuls liens de l'élément : ajouter un lien ne change pas la taille des autres éléments. Dans un dossier où tous les éléments ont beaucoup de liens, ils grossissent donc tous.
+- Le réglage ne déplace pas les éléments : après l'avoir activé, relancez la mise en page automatique, qui laisse la place aux éléments agrandis.
+- Seul l'affichage change : désactiver le réglage rend à chaque élément sa taille habituelle. La mise en page automatique et l'export SVG en tiennent compte.
+- Le réglage est personnel : il est retenu pour ce dossier sur cet appareil, et les collaborateurs en session partagée gardent leur propre affichage.
+- Un élément redimensionné à la main est agrandi à partir de sa propre taille. Le redimensionner pendant que le réglage est actif règle sa taille de base : il continue de suivre ses liens et reprend cette taille quand le réglage est désactivé. Les groupes et les annotations gardent leur taille.
 
 ---
 

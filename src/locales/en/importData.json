@@ -114,6 +114,21 @@
       "edgeMissingNode": "Edge skipped: source/target node not found"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "Unreadable GML file: {{message}}",
+      "missingGraph": "Invalid GML format: missing graph list",
+      "noNodes": "No nodes in the GML file",
+      "importError": "GML import error: {{message}}",
+      "unknownError": "Unknown error"
+    },
+    "warnings": {
+      "nodeNoId": "Node without id skipped",
+      "duplicateNodeId": "Duplicate node skipped (id {{id}})",
+      "edgeNoSourceTarget": "Edge without source/target skipped",
+      "edgeMissingNode": "Edge skipped: source/target node not found"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "XML parsing error",

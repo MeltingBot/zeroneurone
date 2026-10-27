@@ -571,6 +571,7 @@
       "both": "Pictogrammen + Labels"
     },
     "confidenceIndicator": "Betrouwbaarheids- / waarderingsindicator",
+    "sizeByDegree": "Grootte van elementen volgens aantal koppelingen",
     "links": "Verbindingen",
     "linkShape": "Vorm",
     "linkCurves": "Curven",

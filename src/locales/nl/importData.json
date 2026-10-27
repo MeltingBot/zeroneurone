@@ -114,6 +114,21 @@
       "edgeMissingNode": "Rand overgeslagen: bron-/doelknooppunt niet gevonden"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "GML-bestand onleesbaar: {{message}}",
+      "missingGraph": "Ongeldig GML-formaat: graph-lijst ontbreekt",
+      "noNodes": "Geen knopen in het GML-bestand",
+      "importError": "GML-importfout: {{message}}",
+      "unknownError": "Onbekende fout"
+    },
+    "warnings": {
+      "nodeNoId": "Knoop zonder id overgeslagen",
+      "duplicateNodeId": "Dubbele knoop overgeslagen (id {{id}})",
+      "edgeNoSourceTarget": "Verbinding zonder bron/doel overgeslagen",
+      "edgeMissingNode": "Verbinding overgeslagen: bron-/doelknoop niet gevonden"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "XML-parseerfout",

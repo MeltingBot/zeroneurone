@@ -114,6 +114,21 @@
       "edgeMissingNode": "Ребро пропущено: вузол джерела/цілі не знайдено"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "Не вдалося прочитати файл GML: {{message}}",
+      "missingGraph": "Недійсний формат GML: відсутній список graph",
+      "noNodes": "У файлі GML немає вузлів",
+      "importError": "Помилка імпорту GML: {{message}}",
+      "unknownError": "Невідома помилка"
+    },
+    "warnings": {
+      "nodeNoId": "Вузол без id пропущено",
+      "duplicateNodeId": "Дубльований вузол пропущено (id {{id}})",
+      "edgeNoSourceTarget": "Ребро без джерела/цілі пропущено",
+      "edgeMissingNode": "Ребро пропущено: вузол джерела/цілі не знайдено"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "Помилка парсингу XML",

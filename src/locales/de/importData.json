@@ -114,6 +114,21 @@
       "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "GML-Datei nicht lesbar: {{message}}",
+      "missingGraph": "Ungültiges GML-Format: graph-Liste fehlt",
+      "noNodes": "Keine Knoten in der GML-Datei",
+      "importError": "GML-Importfehler: {{message}}",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "warnings": {
+      "nodeNoId": "Knoten ohne ID übersprungen",
+      "duplicateNodeId": "Doppelter Knoten übersprungen (ID {{id}})",
+      "edgeNoSourceTarget": "Kante ohne Quelle/Ziel übersprungen",
+      "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "XML-Parsing-Fehler",

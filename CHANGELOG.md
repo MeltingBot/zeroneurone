@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.78.0
+
+### Nouveautés
+
+- **Import et export GML** — format texte de Gephi, yEd, Cytoscape, NetworkX
+  et igraph. À l'import : libellés (y compris `LabelGraphics` de yEd),
+  positions, tailles, formes, couleurs, notes, tags, confiance, propriétés et
+  direction des liens ; les nœuds sans position sont disposés en grille.
+  L'export écrit les mêmes données en ASCII (accents encodés, comme l'exige
+  NetworkX), les flèches de chaque arête et des identifiants numériques.
+- **Taille des éléments selon le nombre de liens** — nouveau réglage de
+  l'onglet Vues (section Affichage sur le canvas) : un élément grossit avec son
+  nombre de liens (×1,25 à 4 liens, jusqu'à ×3 à partir de 81), autour de son
+  centre. Affichage seul, retenu pour ce dossier sur cet appareil ; la mise en
+  page automatique, l'alignement et l'export SVG en tiennent compte.
+
 ## 2.77.0
 
 ### Nouveautés

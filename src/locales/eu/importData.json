@@ -114,6 +114,21 @@
       "edgeMissingNode": "Ertza baztertua: iturri/helburu nodoa ez da aurkitu"
     }
   },
+  "gml": {
+    "errors": {
+      "parseError": "GML fitxategia ezin da irakurri: {{message}}",
+      "missingGraph": "GML formatu baliogabea: graph zerrenda falta da",
+      "noNodes": "Ez dago nodorik GML fitxategian",
+      "importError": "GML inportazio errorea: {{message}}",
+      "unknownError": "Errore ezezaguna"
+    },
+    "warnings": {
+      "nodeNoId": "Id gabeko nodoa baztertu da",
+      "duplicateNodeId": "Nodo bikoiztua baztertu da (id {{id}})",
+      "edgeNoSourceTarget": "Iturburu/helmuga gabeko ertza baztertu da",
+      "edgeMissingNode": "Ertza baztertu da: iturburu/helmuga nodoa ez da aurkitu"
+    }
+  },
   "anx": {
     "errors": {
       "parseError": "XML analisi-errorea",

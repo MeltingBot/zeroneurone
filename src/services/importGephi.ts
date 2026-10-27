@@ -840,7 +840,7 @@ function rgbToHex(r: number, g: number, b: number): string {
 }
 
 /** Infer property type from a value */
-function inferPropertyType(value: unknown): import('../types').PropertyType {
+export function inferPropertyType(value: unknown): import('../types').PropertyType {
   if (typeof value === 'number' || (typeof value === 'string' && value !== '' && !isNaN(Number(value)) && isFinite(Number(value)))) return 'number';
   if (typeof value === 'boolean') return 'boolean';
   return 'text';
@@ -860,7 +860,7 @@ function parseColorToHex(color: string): string | null {
  * with a minimum floor so small nodes remain visible.
  * If all values are identical, returns medium (56px).
  */
-function scaleGephiSizes(rawSizes: (number | null)[]): (number | 'medium')[] {
+export function scaleGephiSizes(rawSizes: (number | null)[]): (number | 'medium')[] {
   const valid = rawSizes.filter((v): v is number => v != null && v > 0);
   if (valid.length === 0) return rawSizes.map(() => 'medium');
 
@@ -880,7 +880,7 @@ function scaleGephiSizes(rawSizes: (number | null)[]): (number | 'medium')[] {
 }
 
 /** Darken a hex color for border usage */
-function darkenColor(hex: string): string {
+export function darkenColor(hex: string): string {
   if (!hex.startsWith('#') || hex.length < 7) return '#737373';
   try {
     const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - 60);
