@@ -12,6 +12,8 @@ Sauvegardez et partagez vos dossiers dans différents formats.
 
 Menu **⋯** → **Exporter**
 
+Les formats sont rangés par usage : **Sauvegarde** (ZIP, JSON), **Graphe** (GraphML, GEXF, GML, DOT, ANX), **Données** (CSV, GeoJSON), **Notes** (Obsidian) et **Image** (PNG, SVG). Choisissez un format, réglez ses options s'il en a, puis **Exporter**. La fenêtre se rouvre sur le dernier format utilisé.
+
 ---
 
 ## Formats disponibles
@@ -102,6 +104,16 @@ Formats de date : voir [Dates et fuseaux horaires]({{< relref "features/dates-ti
 
 Les **événements** rattachés aux éléments sont exportés en lignes `type=event` : un aller-retour export → import reconstruit la chronologie à l'identique.
 
+Options :
+
+| Option | Effet |
+|--------|-------|
+| Contenu | **Tout** (réimportable comme graphe), **Éléments** (avec leurs événements) ou **Liens** seuls. Les liens gardent les noms de leurs éléments dans `de` / `vers` |
+| Séparateur | Virgule, point-virgule ou tabulation. Excel en français attend le point-virgule |
+| Compatible Excel | Prépare le fichier pour un double-clic dans Excel : marque UTF-8 (BOM) pour les accents, et séparateur attendu par Excel dans la langue de l'interface (point-virgule, virgule en anglais). Le séparateur reste modifiable |
+
+L'import de ZeroNeurone reconnaît les trois séparateurs et la marque UTF-8.
+
 
 ---
 
@@ -150,6 +162,25 @@ Positions (centre du nœud), tailles, formes, couleurs, notes, tags, confiance e
 Le GML n'accepte que l'ASCII : les accents et autres caractères spéciaux sont écrits sous forme de codes (`é` → `&#233;`), ce que NetworkX exige. Un logiciel qui ne décode pas ces codes les affichera tels quels ; pour Gephi, préférez le GEXF.
 
 Avec NetworkX, si plusieurs éléments ont le même libellé, lisez le fichier avec `nx.read_gml(chemin, label='id')`.
+
+---
+
+### DOT (Graphviz)
+
+**Format texte** de Graphviz, lisible par Graphviz, NetworkX et Gephi.
+
+| Propriété | Valeur |
+|-----------|--------|
+| Extension | `.dot` |
+| Contenu | Graphe DOT (`digraph` dès qu'un lien a une flèche, sinon `graph`) |
+| Fichiers joints | ❌ Non inclus |
+| Usage | Graphviz, NetworkX, outils d'analyse |
+
+Libellés, formes, couleurs, bordures en tirets, notes (`tooltip`), tags, confiance, source et propriétés sont exportés. Chaque lien indique son sens (`dir`) : les liens sans flèche restent non orientés. Les positions sont écrites en points et épinglées (`pos="x,y!"`) : `neato -n -Tsvg fichier.dot` redessine le graphe tel qu'il est sur le canvas, alors que `dot` refait sa propre mise en page.
+
+Les nœuds gardent leur identifiant DOT d'origine s'ils viennent d'un import DOT, sinon `n0`, `n1`… Un export puis un réimport redonnent les mêmes éléments, liens et positions.
+
+Pour copier seulement une partie du graphe : sélectionnez au moins deux éléments, puis **clic droit → Copier en → DOT (Graphviz)**.
 
 ---
 
@@ -253,6 +284,8 @@ Seuls les éléments avec coordonnées sont exportés.
 | Contenu | Image bitmap |
 | Résolutions | 1x, 2x, 3x, 4x |
 | Usage | Rapport, présentation |
+
+L'image reprend la partie du canvas affichée à l'écran, sans la grille ni la minimap, sur fond blanc. Cochez **Fond transparent** pour la poser sur une diapositive ou un document de couleur. En thème sombre, les textes posés directement sur le fond (annotations, libellés de liens) sont clairs : exportez en thème clair pour un document à fond blanc.
 
 
 ---

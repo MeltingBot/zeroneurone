@@ -39,7 +39,7 @@
   "import": {
     "title": "Importar un expediente",
     "dropzone": "Suelte un archivo o haga clic para seleccionar",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogía: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar en",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Solo metadatos (sin archivos)",
       "csv": "CSV",
-      "csvDesc": "Tablas de elementos y enlaces separadas",
+      "csvDesc": "Una tabla: elementos, enlaces y eventos",
       "graphml": "GraphML",
       "graphmlDesc": "Formato de grafo estándar (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Formato nativo de Gephi (posiciones, colores)",
       "gml": "GML",
       "gmlDesc": "Formato de texto (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Formato de texto Graphviz (NetworkX, Gephi, herramientas de análisis)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Formato geográfico para SIG (QGIS, ArcGIS)",
       "png": "PNG (imagen del lienzo)",
@@ -169,7 +171,37 @@
     "success": "Exportación completada",
     "successFormat": "Exportación {{format}} completada",
     "error": "Error durante la exportación",
-    "errorPng": "Error durante la exportación PNG"
+    "errorPng": "Error durante la exportación PNG",
+    "categories": {
+      "backup": "Copia de seguridad",
+      "graph": "Grafo",
+      "data": "Datos",
+      "notes": "Notas",
+      "image": "Imagen"
+    },
+    "optionsTitle": "Opciones",
+    "zip": {
+      "standard": "Estándar",
+      "encrypted": "Cifrado con contraseña",
+      "password": "Contraseña",
+      "confirm": "Confirmar contraseña",
+      "mismatch": "Las contraseñas no coinciden",
+      "success": "Exportación cifrada descargada (.znzip)"
+    },
+    "png": {
+      "transparent": "Fondo transparente"
+    },
+    "csv": {
+      "content": "Contenido",
+      "all": "Todo",
+      "elements": "Elementos",
+      "links": "Enlaces",
+      "separator": "Separador",
+      "comma": "Coma",
+      "semicolon": "Punto y coma",
+      "tab": "Tabulación",
+      "excel": "Compatible con Excel"
+    }
   },
   "search": {
     "title": "Buscar",

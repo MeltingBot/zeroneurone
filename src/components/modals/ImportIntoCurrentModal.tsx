@@ -20,6 +20,7 @@ import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importC
 import { withImportProgress } from '../../services/importProgress';
 import { ImportProgressLine } from './ImportProgressLine';
 import { startMermaidPlacement } from '../../services/mermaidPlacement';
+import { startDotPlacement } from '../../services/dotPlacement';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -179,6 +180,15 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         }
         setIsProcessing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      // DOT (Graphviz) → built in memory, then placement mode
+      if (/\.(dot|gv)$/i.test(file.name)) {
+        const content = await importService.readFileAsText(file);
+        const res = startDotPlacement(content, dossierId);
+        if (res.ok) onClose();
+        else setError(res.error);
         return;
       }
 
@@ -463,7 +473,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
+            accept=".zip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md"
             onChange={handleFileSelect}
             className="hidden"
           />

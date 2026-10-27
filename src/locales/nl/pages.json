@@ -192,7 +192,9 @@
       "analyze": "Analyseren",
       "organize": "Ordenen",
       "tabs": "Tabbladen",
+      "copyAs": "Kopiëren als",
       "copyAsMermaid": "Kopiëren als Mermaid",
+      "copyAsDot": "Kopiëren als DOT",
       "selectLinks": "Hun verbindingen selecteren",
       "selectAllLinks": "Alle verbindingen selecteren",
       "suggestLinks": "Verbindingen voorstellen"
@@ -350,7 +352,8 @@
     "urlCopied": "URL gekopieerd",
     "urlCopyFailed": "Kopiëren van URL mislukt",
     "mermaidCopied": "Selectie gekopieerd als Mermaid",
-    "mermaidCopyFailed": "Kopiëren naar het klembord mislukt"
+    "mermaidCopyFailed": "Kopiëren naar het klembord mislukt",
+    "dotCopied": "Selectie gekopieerd als DOT"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

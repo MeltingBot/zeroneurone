@@ -69,6 +69,8 @@ export function InsightsPanel() {
     cycles,
     findCycles,
     highlightCycle,
+    focusCycleElement,
+    focusedElementId,
     clearCycles,
     clearHighlight,
     clearPaths,
@@ -90,6 +92,8 @@ export function InsightsPanel() {
   const [pathMaxDepth, setPathMaxDepth] = useState(5);
   // Cycle detection
   const [cycleMode, setCycleMode] = useState(false);
+  /** Row of the element picked in the cycle list (an element can sit in several cycles) */
+  const [focusedCycleIdx, setFocusedCycleIdx] = useState<number | null>(null);
   const [cycleMaxLength, setCycleMaxLength] = useState(6);
   // Respect link direction: only directed circuits (forward/backward), neutral links stay bidirectional
   const [cycleDirected, setCycleDirected] = useState(false);
@@ -775,17 +779,28 @@ export function InsightsPanel() {
                           <span className="text-text-tertiary tabular-nums mr-1">
                             {result.length}
                           </span>
-                          {result.cycle.map((nodeId) => (
-                            <span key={nodeId} className="flex items-center gap-1">
-                              <span className="px-1.5 py-0.5 bg-bg-primary rounded">
-                                {getElementLabel(nodeId)}
+                          {[...result.cycle, result.cycle[0]].map((nodeId, idx) => {
+                            // An element of this cycle, picked: it glows stronger on the canvas
+                            const focused = highlightType === 'cycle' && focusedCycleIdx === cycleIdx && focusedElementId === nodeId;
+                            return (
+                              <span key={idx} className="flex items-center gap-1">
+                                <span
+                                  className={`px-1.5 py-0.5 rounded cursor-pointer ${focused ? 'bg-accent text-white' : 'bg-bg-primary hover:bg-bg-tertiary'}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFocusedCycleIdx(cycleIdx);
+                                    focusCycleElement(cycleIdx, nodeId);
+                                    revealElement(nodeId);
+                                  }}
+                                >
+                                  {getElementLabel(nodeId)}
+                                </span>
+                                {idx < result.cycle.length && (
+                                  <ArrowRight size={10} className="text-text-tertiary" />
+                                )}
                               </span>
-                              <ArrowRight size={10} className="text-text-tertiary" />
-                            </span>
-                          ))}
-                          <span className="px-1.5 py-0.5 bg-bg-primary rounded">
-                            {getElementLabel(result.cycle[0])}
-                          </span>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>

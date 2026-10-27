@@ -135,6 +135,7 @@ export function DraggableMinimap({ scene = null }: DraggableMinimapProps = {}) {
   return (
     <div
       ref={containerRef}
+      data-export-ignore
       style={{
         position: 'absolute',
         [anchor.h]: x,

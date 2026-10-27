@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Węzeł bez ID pominięty",
       "edgeNoSourceTarget": "Krawędź bez źródła/celu pominięta",
-      "edgeMissingNode": "Krawędź pominięta: węzeł źródłowy/docelowy nie znaleziony"
+      "edgeMissingNode": "Krawędź pominięta: węzeł źródłowy/docelowy nie znaleziony",
+      "reciprocalMerged": "Scalone powiązania wzajemne (graf nieskierowany): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Pominięto zduplikowany węzeł (id {{id}})",
       "edgeNoSourceTarget": "Pominięto krawędź bez źródła/celu",
       "edgeMissingNode": "Pominięto krawędź: nie znaleziono węzła źródłowego/docelowego"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "Nieczytelny plik DOT: {{message}}",
+      "empty": "Brak węzłów w pliku DOT",
+      "importError": "Błąd importu DOT: {{message}}",
+      "unknownError": "Nieznany błąd"
+    },
+    "warnings": {
+      "skippedEdges": "Pominięte powiązania (niewidoczne lub od elementu do niego samego): {{count}}"
     }
   },
   "anx": {

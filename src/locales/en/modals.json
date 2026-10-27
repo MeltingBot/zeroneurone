@@ -39,7 +39,7 @@
   "import": {
     "title": "Import dossier",
     "dropzone": "Drop a file or click to select",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogy: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Import into",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Metadata only (without files)",
       "csv": "CSV",
-      "csvDesc": "Separate elements and links tables",
+      "csvDesc": "One table: elements, links and events",
       "graphml": "GraphML",
       "graphmlDesc": "Standard graph format (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Native Gephi format (positions, colors)",
       "gml": "GML",
       "gmlDesc": "Text format (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Graphviz text format (NetworkX, Gephi, analysis tools)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Geographic format for GIS (QGIS, ArcGIS)",
       "png": "PNG (canvas image)",
@@ -169,7 +171,37 @@
     "success": "Export complete",
     "successFormat": "{{format}} export complete",
     "error": "Export error",
-    "errorPng": "PNG export error"
+    "errorPng": "PNG export error",
+    "categories": {
+      "backup": "Backup",
+      "graph": "Graph",
+      "data": "Data",
+      "notes": "Notes",
+      "image": "Image"
+    },
+    "optionsTitle": "Options",
+    "zip": {
+      "standard": "Standard",
+      "encrypted": "Encrypted with password",
+      "password": "Password",
+      "confirm": "Confirm password",
+      "mismatch": "Passwords do not match",
+      "success": "Encrypted export downloaded (.znzip)"
+    },
+    "png": {
+      "transparent": "Transparent background"
+    },
+    "csv": {
+      "content": "Content",
+      "all": "All",
+      "elements": "Elements",
+      "links": "Links",
+      "separator": "Separator",
+      "comma": "Comma",
+      "semicolon": "Semicolon",
+      "tab": "Tab",
+      "excel": "Excel compatible"
+    }
   },
   "search": {
     "title": "Search",

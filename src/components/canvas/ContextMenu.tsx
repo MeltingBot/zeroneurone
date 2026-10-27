@@ -2,13 +2,14 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Focus, Eye, EyeOff, Trash2, X, Route, Waypoints, Copy, CopyPlus, Scissors, Image, Group, Ungroup,
-  BoxSelect, Lock, LockOpen, Layers, ArrowRight, ArrowDownLeft, Plus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2, Code,
+  BoxSelect, Lock, LockOpen, Layers, ArrowRight, ArrowDownLeft, Plus, Combine, Search, ScanSearch, Boxes, ExternalLink, Link2,
 } from 'lucide-react';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
 import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
 import { submenu, type MenuItem } from './contextMenu/types';
+import { copyAsItem } from './contextMenu/copyAsItem';
 
 interface ContextMenuProps {
   x: number;
@@ -30,6 +31,7 @@ interface ContextMenuProps {
   onCut: () => void;
   onDuplicate: () => void;
   onCopyAsMermaid?: () => void;
+  onCopyAsDot?: () => void;
   onPreview?: () => void;
   onFindPaths?: (fromId: string, toId: string) => void;
   onFindAllPaths?: (fromId: string, toId: string) => void;
@@ -100,6 +102,7 @@ function ContextMenuComponent({
   onCut,
   onDuplicate,
   onCopyAsMermaid,
+  onCopyAsDot,
   onPreview,
   onFindPaths,
   onFindAllPaths,
@@ -267,7 +270,7 @@ function ContextMenuComponent({
           { id: 'copy', label: cm('copy'), icon: Copy, shortcut: 'Ctrl+C', onSelect: onCopy },
           { id: 'cut', label: cm('cut'), icon: Scissors, shortcut: 'Ctrl+X', onSelect: onCut },
           { id: 'duplicate', label: cm('duplicate'), icon: CopyPlus, shortcut: 'Ctrl+D', onSelect: onDuplicate },
-          hasMultipleSelected && onCopyAsMermaid && { id: 'copy-mermaid', label: cm('copyAsMermaid'), icon: Code, onSelect: onCopyAsMermaid },
+          hasMultipleSelected && copyAsItem(cm, onCopyAsMermaid, onCopyAsDot),
         ],
         [
           focusItem,

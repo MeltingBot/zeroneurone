@@ -1,5 +1,48 @@
 # Changelog
 
+## 2.79.0
+
+### Nouveautés
+
+- **Import et export DOT (Graphviz)** — fichiers `.dot` / `.gv`, ou texte DOT
+  collé sur le canvas. À l'import : libellés, formes, couleurs (noms X11, hex,
+  HSV), clusters en groupes, graphes `strict`, attributs en propriétés ; les
+  positions `pos` d'un rendu Graphviz sont reprises, sinon le graphe est
+  disposé selon `rankdir`. L'export écrit positions, tailles, couleurs, sens
+  de chaque lien et propriétés (`neato -n` garde la disposition).
+- **Copier en ▸ Mermaid / DOT (Graphviz)** — le clic droit sur une sélection
+  regroupe les copies au format texte dans un sous-menu.
+- **Cycles animés** — les liens d'un cycle trouvé brillent et portent des
+  pointillés qui avancent dans le sens du cycle (aller-retour en graphe non
+  orienté ou quand deux cycles se contredisent). Un clic sur un élément de la
+  liste le met en évidence sur le canvas.
+- **Modale d'export par catégories** — Sauvegarde, Graphe, Données, Notes,
+  Image ; options du format choisi sous la liste, un seul bouton Exporter.
+- **Options CSV** — contenu (tout, éléments, liens), séparateur (virgule,
+  point-virgule, tabulation) et « Compatible Excel » (accents et séparateur
+  attendus par Excel).
+- **PNG à fond transparent** — en option ; sinon fond blanc.
+
+### Améliorations
+
+- **Tous les liens visibles sur un graphe dense** — au-delà des 800 liens que
+  dessine React Flow, les autres sont dessinés sur un canvas sous les
+  éléments, avec leurs flèches ; ils se sélectionnent d'un clic (un clic sur
+  un enchevêtrement de traits désélectionne) et gardent la lueur des
+  résultats d'analyse.
+- **Flèches sur les liens simplifiés** (au-delà de 200 liens à l'écran).
+- **Import GEXF / Gephi Lite** — `defaultedgetype` lu ; une relation écrite
+  dans les deux sens d'un graphe non orienté devient un seul lien ; un layout
+  Gephi trop serré est agrandi pour que les éléments ne se chevauchent pas.
+- **Export PNG** — sans grille ni minimap ; les liens dessinés en canvas sont
+  nets aux résolutions 2x à 4x.
+
+### Corrections
+
+- Les liens ne clignotent plus quand on clique un élément d'un graphe dense.
+- La vue d'ensemble dessinait en noir les liens à couleur par défaut.
+- Textes du ZIP chiffré traduits (ils restaient en français).
+
 ## 2.78.0
 
 ### Nouveautés

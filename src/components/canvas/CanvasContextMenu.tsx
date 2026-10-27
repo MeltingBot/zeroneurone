@@ -1,11 +1,12 @@
 import { memo } from 'react';
-import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Code, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
+import { Plus, Clipboard, Group, StickyNote, Copy, Scissors, CopyPlus, Trash2, EyeOff, Search, ScanSearch, Spline, Lightbulb, Lock, LockOpen, Layers, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasTab, TabId } from '../../types';
 import type { ContextMenuExtension, MenuContext } from '../../types/plugins';
 import { ContextMenuShell } from './contextMenu/ContextMenuShell';
 import { usePluginMenuItems } from './contextMenu/usePluginMenuItems';
 import { submenu } from './contextMenu/types';
+import { copyAsItem } from './contextMenu/copyAsItem';
 
 interface CanvasContextMenuProps {
   x: number;
@@ -27,6 +28,7 @@ interface CanvasContextMenuProps {
   onToggleLockSelection?: () => void;
   onGroupSelection?: () => void;
   onCopyAsMermaid?: () => void;
+  onCopyAsDot?: () => void;
   // Query actions
   onFindSimilar?: () => void;
   onQueryFromSelection?: () => void;
@@ -65,6 +67,7 @@ function CanvasContextMenuComponent({
   onToggleLockSelection,
   onGroupSelection,
   onCopyAsMermaid,
+  onCopyAsDot,
   onFindSimilar,
   onQueryFromSelection,
   onSelectLinks,
@@ -100,7 +103,7 @@ function CanvasContextMenuComponent({
           onCopySelection && { id: 'copy', label: cm('copy'), icon: Copy, shortcut: 'Ctrl+C', onSelect: onCopySelection },
           onCutSelection && { id: 'cut', label: cm('cut'), icon: Scissors, shortcut: 'Ctrl+X', onSelect: onCutSelection },
           onDuplicateSelection && { id: 'duplicate', label: cm('duplicate'), icon: CopyPlus, shortcut: 'Ctrl+D', onSelect: onDuplicateSelection },
-          selectedCount > 1 && onCopyAsMermaid && { id: 'copy-mermaid', label: cm('copyAsMermaid'), icon: Code, onSelect: onCopyAsMermaid },
+          selectedCount > 1 && copyAsItem(cm, onCopyAsMermaid, onCopyAsDot),
         ] : [],
         hasSelection ? [
           submenu('analyze', cm('analyze'), ScanSearch, [

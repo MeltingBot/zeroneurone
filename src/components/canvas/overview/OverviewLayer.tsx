@@ -10,9 +10,10 @@
 
 import { memo, useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useStoreApi, type ReactFlowState } from '@xyflow/react';
-import { Canvas2DOverviewRenderer, type OverviewRenderer } from './overviewRenderer';
+import { Canvas2DOverviewRenderer, type OverviewRenderer, type OverviewTheme } from './overviewRenderer';
 import { hitPoint, hitRect } from './overviewHitTest';
 import type { OverviewScene } from './overviewTypes';
+import { clampPixelRatio, registerExportLayer } from './exportLayers';
 
 /** Reach of a click around a node, in screen pixels. */
 const HIT_TOLERANCE_PX = 4;
@@ -123,12 +124,15 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
   // Accent colour, read once per theme after paint: getComputedStyle forces a
   // style recalculation of the whole page, which costs most of a second while
   // React Flow is unmounting thousands of nodes (entering the overview)
-  const accentRef = useRef('#2563eb');
+  const themeRef = useRef<OverviewTheme>({ accent: '#2563eb' });
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    accentRef.current = getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb';
-    rendererRef.current?.setScene(visibleRef.current ? lastSceneRef.current : null, { accent: accentRef.current });
+    themeRef.current = {
+      accent: getComputedStyle(canvas).getPropertyValue('--color-accent').trim() || '#2563eb',
+      mode: themeMode,
+    };
+    rendererRef.current?.setScene(visibleRef.current ? lastSceneRef.current : null, themeRef.current);
     scheduleRef.current();
   }, [themeMode]);
 
@@ -136,7 +140,7 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
   useLayoutEffect(() => {
     const renderer = rendererRef.current;
     if (!renderer) return;
-    renderer.setScene(visible ? lastSceneRef.current : null, { accent: accentRef.current });
+    renderer.setScene(visible ? lastSceneRef.current : null, themeRef.current);
     drawNowRef.current();
   }, [visible, scene]);
 
@@ -203,7 +207,8 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
         return i >= 0 ? sc.ids[i] : null;
       },
       redrawAt: (dpr) => {
-        dprRef.current = dpr;
+        const { width, height } = store.getState();
+        dprRef.current = clampPixelRatio(dpr, width, height);
         drawNowRef.current();
       },
       restore: () => {
@@ -244,7 +249,14 @@ function OverviewLayerComponent({ active, scene, themeMode, handleRef, onBoxSele
         dragOriginRef.current = null;
       },
     };
-    return () => { handleRef.current = null; };
+    const unregister = registerExportLayer({
+      redrawAt: (dpr) => handleRef.current?.redrawAt(dpr),
+      restore: () => handleRef.current?.restore(),
+    });
+    return () => {
+      unregister();
+      handleRef.current = null;
+    };
   }, [handleRef, store]);
 
   return (

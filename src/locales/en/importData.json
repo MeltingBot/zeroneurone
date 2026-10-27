@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Node without ID skipped",
       "edgeNoSourceTarget": "Edge without source/target skipped",
-      "edgeMissingNode": "Edge skipped: source/target node not found"
+      "edgeMissingNode": "Edge skipped: source/target node not found",
+      "reciprocalMerged": "Reciprocal links merged (undirected graph): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Duplicate node skipped (id {{id}})",
       "edgeNoSourceTarget": "Edge without source/target skipped",
       "edgeMissingNode": "Edge skipped: source/target node not found"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "Unreadable DOT file: {{message}}",
+      "empty": "No nodes in the DOT file",
+      "importError": "DOT import error: {{message}}",
+      "unknownError": "Unknown error"
+    },
+    "warnings": {
+      "skippedEdges": "Links skipped (invisible, or from an element to itself): {{count}}"
     }
   },
   "anx": {

@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { withExportProgress } from '../../services/exportProgress';
 import { useTranslation } from 'react-i18next';
-import { X, FileJson, FileSpreadsheet, FileText, FileArchive, Image, ChevronDown, Pen, MapPin, Lock, Eye, EyeOff, Network, NotebookText, FolderTree, Folder } from 'lucide-react';
-import { exportService, type ExportFormat } from '../../services/exportService';
+import { X, FileSpreadsheet, FileArchive, Image, Eye, EyeOff, Network, NotebookText } from 'lucide-react';
+import { exportService, type CSVExportOptions, type ExportFormat } from '../../services/exportService';
 import { buildSVGExport } from '../../services/svgExportService';
 import { scaleElementsByDegree } from '../../utils/degreeSize';
 import { fileService } from '../../services/fileService';
@@ -10,46 +10,77 @@ import { reportRepository, tabRepository } from '../../db/repositories';
 import { db } from '../../db/database';
 import { useDossierStore, useQueryStore, toast } from '../../stores';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { isExportedNode, withLayersAt } from '../canvas/overview/exportLayers';
 
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const exportFormats: { format: ExportFormat; labelKey: string; descKey: string; icon: typeof FileJson }[] = [
-  { format: 'zip', labelKey: 'zip', descKey: 'zipDesc', icon: FileArchive },
-  { format: 'json', labelKey: 'json', descKey: 'jsonDesc', icon: FileJson },
-  { format: 'csv', labelKey: 'csv', descKey: 'csvDesc', icon: FileSpreadsheet },
-  { format: 'graphml', labelKey: 'graphml', descKey: 'graphmlDesc', icon: FileText },
-  { format: 'gexf', labelKey: 'gexf', descKey: 'gexfDesc', icon: FileText },
-  { format: 'gml', labelKey: 'gml', descKey: 'gmlDesc', icon: FileText },
-  { format: 'anx', labelKey: 'anx', descKey: 'anxDesc', icon: Network },
-  { format: 'obsidian', labelKey: 'obsidian', descKey: 'obsidianDesc', icon: NotebookText },
-  { format: 'geojson', labelKey: 'geojson', descKey: 'geojsonDesc', icon: MapPin },
+type CategoryId = 'backup' | 'graph' | 'data' | 'notes' | 'image';
+type FormatId = ExportFormat | 'png' | 'svg';
+
+/** Formats by use, in the order of the user documentation. */
+const CATEGORIES: { id: CategoryId; icon: typeof FileArchive; formats: { id: FormatId; ext: string }[] }[] = [
+  { id: 'backup', icon: FileArchive, formats: [
+    { id: 'zip', ext: '.zip' },
+    { id: 'json', ext: '.json' },
+  ] },
+  { id: 'graph', icon: Network, formats: [
+    { id: 'graphml', ext: '.graphml' },
+    { id: 'gexf', ext: '.gexf' },
+    { id: 'gml', ext: '.gml' },
+    { id: 'dot', ext: '.dot' },
+    { id: 'anx', ext: '.anx' },
+  ] },
+  { id: 'data', icon: FileSpreadsheet, formats: [
+    { id: 'csv', ext: '.csv' },
+    { id: 'geojson', ext: '.geojson' },
+  ] },
+  { id: 'notes', icon: NotebookText, formats: [
+    { id: 'obsidian', ext: '.zip' },
+  ] },
+  { id: 'image', icon: Image, formats: [
+    { id: 'png', ext: '.png' },
+    { id: 'svg', ext: '.svg' },
+  ] },
 ];
 
-const pngScaleOptions = [
-  { scale: 1, label: '1x', descKey: '1x' },
-  { scale: 2, label: '2x', descKey: '2x' },
-  { scale: 3, label: '3x', descKey: '3x' },
-  { scale: 4, label: '4x', descKey: '4x' },
-];
+const PNG_SCALES = [1, 2, 3, 4] as const;
+const PNG_SCALE_KEYS: Record<number, string> = { 1: '1x', 2: '2x', 3: '3x', 4: '4x' };
+/** Last format chosen, per viewer: the modal reopens on it. */
+const LAST_FORMAT_KEY = 'zn.export.lastFormat';
+
+function readLastFormat(): { category: CategoryId; format: FormatId } {
+  try {
+    const saved = localStorage.getItem(LAST_FORMAT_KEY);
+    const category = CATEGORIES.find((c) => c.formats.some((f) => f.id === saved));
+    if (category && saved) return { category: category.id, format: saved as FormatId };
+  } catch {
+    // Storage unavailable: start on the first format
+  }
+  return { category: 'backup', format: 'zip' };
+}
 
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
-  const { t } = useTranslation('modals');
+  const { t, i18n } = useTranslation('modals');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedPngScale, _setSelectedPngScale] = useState(2);
-  const [showPngOptions, setShowPngOptions] = useState(false);
-  const [showZipOptions, setShowZipOptions] = useState(false);
-  const [showObsidianOptions, setShowObsidianOptions] = useState(false);
+  const [category, setCategory] = useState<CategoryId>(() => readLastFormat().category);
+  const [format, setFormat] = useState<FormatId>(() => readLastFormat().format);
+  const [zipEncrypted, setZipEncrypted] = useState(false);
+  const [obsidianByTag, setObsidianByTag] = useState(true);
+  const [pngScale, setPngScale] = useState(2);
+  const [pngTransparent, setPngTransparent] = useState(false);
+  const [csvContent, setCsvContent] = useState<NonNullable<CSVExportOptions['content']>>('all');
+  const [csvDelimiter, setCsvDelimiter] = useState<NonNullable<CSVExportOptions['delimiter']>>(',');
+  const [csvExcel, setCsvExcel] = useState(false);
   const [zipPassword, setZipPassword] = useState('');
   const [zipPasswordConfirm, setZipPasswordConfirm] = useState('');
   const [showZipPassword, setShowZipPassword] = useState(false);
-  const zipPasswordRef = useRef<HTMLInputElement>(null);
 
   const { currentDossier, elements, links, comments } = useDossierStore();
 
-  const handleExport = useCallback(async (format: ExportFormat, obsidianFolderByTag?: boolean) => {
+  const handleExport = useCallback(async (format: ExportFormat, obsidianFolderByTag?: boolean, csvOptions?: CSVExportOptions) => {
     if (!currentDossier) return;
 
     setIsProcessing(true);
@@ -95,7 +126,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           }
         : undefined;
 
-      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag);
+      const build = () => exportService.exportDossier(format, currentDossier, elements, links, assets, report, tabs, views, queries, queryHistory, exportComments, obsidianLabels, obsidianFolderByTag, csvOptions);
       await (format === 'zip' || format === 'obsidian' ? withExportProgress(build) : build());
       toast.success(t('export.successFormat', { format: format.toUpperCase() }));
       onClose();
@@ -104,7 +135,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, onClose, t]);
+  }, [currentDossier, elements, links, comments, onClose, t]);
 
   const handleExportEncryptedZip = useCallback(async () => {
     if (!currentDossier || zipPassword.length < 1) return;
@@ -136,17 +167,16 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const baseName = `${currentDossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
       exportService.downloadBlob(encBlob, `${baseName}.znzip`);
 
-      toast.success('Export chiffré téléchargé (.znzip)');
+      toast.success(t('export.zip.success'));
       setZipPassword('');
       setZipPasswordConfirm('');
-      setShowZipOptions(false);
       onClose();
     } catch {
       toast.error(t('export.error'));
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, elements, links, zipPassword, onClose, t]);
+  }, [currentDossier, elements, links, comments, zipPassword, onClose, t]);
 
   const handleExportPng = useCallback(async (scale: number) => {
     if (!currentDossier) return;
@@ -162,11 +192,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       // Dynamic import html-to-image (better SVG support than html2canvas)
       const { toPng } = await import('html-to-image');
 
-      const dataUrl = await toPng(element, {
-        backgroundColor: '#faf8f5',
+      // Canvas layers (overview, links beyond React Flow's cap) redrawn at the output ratio
+      // Without grid or minimap: the graph alone, on white or transparent
+      const dataUrl = await withLayersAt(scale, () => toPng(element, {
+        backgroundColor: pngTransparent ? undefined : '#ffffff',
+        filter: isExportedNode,
         pixelRatio: scale, // Higher pixel ratio = higher resolution output
         skipFonts: true, // Skip font embedding to avoid errors
-      });
+      }));
 
       // Download the PNG
       const link = document.createElement('a');
@@ -184,7 +217,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentDossier, onClose, t]);
+  }, [currentDossier, pngTransparent, onClose, t]);
 
   const handleExportSvg = useCallback(async () => {
     if (!currentDossier) return;
@@ -230,6 +263,96 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
   if (!isOpen) return null;
 
+  const formats = CATEGORIES.find((c) => c.id === category)?.formats ?? [];
+  const passwordsMismatch = zipPasswordConfirm !== '' && zipPassword !== zipPasswordConfirm;
+  const needsPassword = format === 'zip' && zipEncrypted && (!zipPassword || zipPassword !== zipPasswordConfirm);
+  const canExport = !isProcessing && !!currentDossier && !needsPassword;
+
+  const chooseFormat = (id: FormatId) => {
+    setFormat(id);
+    try { localStorage.setItem(LAST_FORMAT_KEY, id); } catch { /* per-viewer convenience only */ }
+  };
+  const chooseCategory = (id: CategoryId) => {
+    setCategory(id);
+    const first = CATEGORIES.find((c) => c.id === id)?.formats[0];
+    if (first && !CATEGORIES.find((c) => c.id === id)?.formats.some((f) => f.id === format)) chooseFormat(first.id);
+  };
+
+  // Excel opens a CSV with the list separator of its locale: comma in
+  // English, semicolon in the other interface languages (decimal comma)
+  const toggleCsvExcel = (on: boolean) => {
+    setCsvExcel(on);
+    if (on) setCsvDelimiter(i18n.language.startsWith('en') ? ',' : ';');
+  };
+
+  const runExport = () => {
+    if (!canExport) return;
+    switch (format) {
+      case 'png': return handleExportPng(pngScale);
+      case 'svg': return handleExportSvg();
+      case 'zip': return zipEncrypted ? handleExportEncryptedZip() : handleExport('zip');
+      case 'obsidian': return handleExport('obsidian', obsidianByTag);
+      case 'csv': return handleExport('csv', undefined, { content: csvContent, delimiter: csvDelimiter, excel: csvExcel });
+      default: return handleExport(format);
+    }
+  };
+
+  const sectionTitle = 'text-xs text-text-secondary font-medium uppercase tracking-wider';
+  const input = 'w-full px-2 py-1.5 text-sm rounded border bg-bg-primary text-text-primary focus:outline-none sketchy-border';
+
+  /** Small toggle buttons for a short choice (resolution, separator). */
+  const segmented = <V extends string | number>(value: V, options: { value: V; label: string; title?: string }[], onChange: (v: V) => void) => (
+    <div className="flex gap-1">
+      {options.map((o) => (
+        <button
+          key={String(o.value)}
+          type="button"
+          onClick={() => onChange(o.value)}
+          aria-pressed={value === o.value}
+          title={o.title}
+          className={`px-2.5 py-1 text-sm rounded border transition-colors ${
+            value === o.value
+              ? 'border-accent bg-accent/10 text-accent'
+              : 'border-border-default text-text-primary hover:bg-bg-secondary'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+  const checkbox = (checked: boolean, onChange: (v: boolean) => void, label: string) => (
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="accent-[var(--color-accent)]"
+      />
+      {label}
+    </label>
+  );
+  const fieldLabel = 'w-24 shrink-0 text-xs font-medium text-text-primary';
+
+  /** A radio row: label, optional extension, optional hint. */
+  const choice = (name: string, checked: boolean, onSelect: () => void, label: string, ext?: string, hint?: string) => (
+    <label
+      key={label}
+      className={`flex items-start gap-3 px-3 py-2 rounded border cursor-pointer transition-colors ${
+        checked ? 'border-accent bg-accent/5' : 'border-border-default hover:bg-bg-secondary'
+      }`}
+    >
+      <input type="radio" name={name} checked={checked} onChange={onSelect} className="mt-0.5 accent-[var(--color-accent)]" />
+      <span className="flex-1 min-w-0">
+        <span className="flex items-baseline justify-between gap-2">
+          <span className="text-sm text-text-primary">{label}</span>
+          {ext && <span className="text-xs font-mono text-text-tertiary">{ext}</span>}
+        </span>
+        {hint && <span className="block text-xs text-text-tertiary">{hint}</span>}
+      </span>
+    </label>
+  );
+
   return (
     <>
       {/* Backdrop */}
@@ -245,13 +368,22 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-primary sketchy-border-soft modal-shadow flex flex-col max-h-[calc(100dvh-2rem)]"
+        className="fixed z-[1000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-3xl h-[min(560px,calc(100dvh-2rem))] bg-bg-primary sketchy-border-soft modal-shadow flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
-          <h2 id={titleId} className="text-sm font-semibold text-text-primary">
-            {t('export.title')}
-          </h2>
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-sm font-semibold text-text-primary">
+              {t('export.title')}
+            </h2>
+            <p className="text-xs text-text-tertiary truncate">
+              {t('export.description', {
+                name: currentDossier?.name,
+                elements: elements.length,
+                links: links.length,
+              })}
+            </p>
+          </div>
           <button
             onClick={onClose}
             aria-label={t('common:actions.close')}
@@ -261,257 +393,156 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 overflow-y-auto min-h-0">
-          <p className="text-xs text-text-secondary mb-4">
-            {t('export.description', {
-              name: currentDossier?.name,
-              elements: elements.length,
-              links: links.length,
-            })}
-          </p>
-
-          <div className="space-y-3">
-            {/* Same order as the user documentation: ZIP, exchange formats, then images */}
-            {/* ZIP export (standard + chiffré) */}
-            <div className="rounded-lg border border-border-default overflow-hidden">
-              <button
-                onClick={() => setShowZipOptions(v => !v)}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
-              >
-                <FileArchive size={20} className="text-text-secondary" />
-                <div className="text-left flex-1">
-                  <div className="text-sm font-medium text-text-primary">
-                    {t(`export.formats.zip`)}
-                  </div>
-                  <div className="text-xs text-text-tertiary">
-                    {t(`export.formats.zipDesc`)}
-                  </div>
-                </div>
-                <ChevronDown
-                  size={16}
-                  className={`text-text-tertiary transition-transform ${showZipOptions ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              {showZipOptions && (
-                <div className="border-t border-border-default bg-bg-secondary p-2 space-y-1">
-                  {/* Standard ZIP */}
-                  <button
-                    onClick={() => handleExport('zip')}
-                    disabled={isProcessing}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-bg-tertiary transition-colors disabled:opacity-50 text-left"
-                  >
-                    <FileArchive size={14} className="text-text-secondary shrink-0" />
-                    <div>
-                      <div className="text-sm font-medium text-text-primary">Standard</div>
-                      <div className="text-xs text-text-tertiary font-mono">.zip</div>
-                    </div>
-                  </button>
-
-                  {/* Chiffré .znzip */}
-                  <div className="rounded border border-border-default overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setZipPassword('');
-                        setZipPasswordConfirm('');
-                        setTimeout(() => zipPasswordRef.current?.focus(), 50);
-                      }}
-                      disabled={isProcessing}
-                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-bg-tertiary transition-colors disabled:opacity-50 text-left"
-                    >
-                      <Lock size={14} className="text-text-secondary shrink-0" />
-                      <div>
-                        <div className="text-sm font-medium text-text-primary">Chiffré avec mot de passe</div>
-                        <div className="text-xs text-text-tertiary font-mono">.znzip</div>
-                      </div>
-                    </button>
-                    <div className="border-t border-border-default bg-bg-primary p-2 space-y-2">
-                      <div className="relative">
-                        <input
-                          ref={zipPasswordRef}
-                          type={showZipPassword ? 'text' : 'password'}
-                          value={zipPassword}
-                          onChange={e => setZipPassword(e.target.value)}
-                          placeholder="Mot de passe"
-                          className="w-full text-sm border border-border-default rounded px-3 py-1.5 pr-8 focus:outline-none focus:border-accent bg-bg-primary"
-                          autoComplete="new-password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowZipPassword(v => !v)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
-                        >
-                          {showZipPassword ? <EyeOff size={13} /> : <Eye size={13} />}
-                        </button>
-                      </div>
-                      <input
-                        type={showZipPassword ? 'text' : 'password'}
-                        value={zipPasswordConfirm}
-                        onChange={e => setZipPasswordConfirm(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && zipPassword && zipPassword === zipPasswordConfirm) {
-                            handleExportEncryptedZip();
-                          }
-                        }}
-                        placeholder="Confirmer le mot de passe"
-                        className={`w-full text-sm border rounded px-3 py-1.5 focus:outline-none bg-bg-primary ${
-                          zipPasswordConfirm && zipPassword !== zipPasswordConfirm
-                            ? 'border-error'
-                            : 'border-border-default focus:border-accent'
-                        }`}
-                        autoComplete="new-password"
-                      />
-                      {zipPasswordConfirm && zipPassword !== zipPasswordConfirm && (
-                        <p className="text-xs text-error">Les mots de passe ne correspondent pas</p>
-                      )}
-                      <button
-                        onClick={handleExportEncryptedZip}
-                        disabled={!zipPassword || zipPassword !== zipPasswordConfirm || isProcessing}
-                        className="w-full text-xs font-medium bg-accent text-white rounded px-3 py-1.5 hover:bg-blue-700 disabled:opacity-40"
-                      >
-                        {isProcessing ? 'Chiffrement…' : 'Exporter en .znzip'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Other export formats (sans ZIP) */}
-            {exportFormats.filter(f => f.format !== 'zip').map((format) => {
-              const Icon = format.icon;
-              if (format.format === 'obsidian') {
-                return (
-                  <div key={format.format} className="rounded-lg border border-border-default overflow-hidden">
-                    <button
-                      onClick={() => setShowObsidianOptions(v => !v)}
-                      disabled={isProcessing}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
-                    >
-                      <Icon size={20} className="text-text-secondary" />
-                      <div className="text-left flex-1">
-                        <div className="text-sm font-medium text-text-primary">
-                          {t(`export.formats.${format.labelKey}`)}
-                        </div>
-                        <div className="text-xs text-text-tertiary">
-                          {t(`export.formats.${format.descKey}`)}
-                        </div>
-                      </div>
-                      <ChevronDown
-                        size={16}
-                        className={`text-text-tertiary transition-transform ${showObsidianOptions ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-                    {showObsidianOptions && (
-                      <div className="border-t border-border-default bg-bg-secondary p-2 space-y-1">
-                        {([
-                          { byTag: true, icon: FolderTree, labelKey: 'folderByTag' },
-                          { byTag: false, icon: Folder, labelKey: 'folderFlat' },
-                        ] as const).map((option) => {
-                          const OptionIcon = option.icon;
-                          return (
-                            <button
-                              key={option.labelKey}
-                              onClick={() => handleExport('obsidian', option.byTag)}
-                              disabled={isProcessing}
-                              className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-bg-tertiary transition-colors disabled:opacity-50 text-left"
-                            >
-                              <OptionIcon size={14} className="text-text-secondary shrink-0" />
-                              <span className="text-sm font-medium text-text-primary">
-                                {t(`export.obsidian.${option.labelKey}`)}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+        <div className="flex flex-col sm:flex-row flex-1 min-h-0">
+          {/* Categories */}
+          <nav
+            aria-label={t('export.format')}
+            className="flex sm:flex-col gap-0.5 p-2 shrink-0 sm:w-44 overflow-x-auto border-b sm:border-b-0 sm:border-r border-border-default bg-bg-secondary"
+          >
+            {CATEGORIES.map((c) => {
+              const Icon = c.icon;
+              const active = c.id === category;
               return (
                 <button
-                  key={format.format}
-                  onClick={() => handleExport(format.format)}
-                  disabled={isProcessing}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+                  key={c.id}
+                  onClick={() => chooseCategory(c.id)}
+                  aria-current={active ? 'true' : undefined}
+                  className={`flex items-center gap-2 px-2 py-1.5 text-sm rounded whitespace-nowrap text-left transition-colors ${
+                    active
+                      ? 'bg-bg-primary text-text-primary border border-border-default'
+                      : 'text-text-secondary hover:bg-bg-tertiary border border-transparent'
+                  }`}
                 >
-                  <Icon size={20} className="text-text-secondary" />
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-text-primary">
-                      {t(`export.formats.${format.labelKey}`)}
-                    </div>
-                    <div className="text-xs text-text-tertiary">
-                      {t(`export.formats.${format.descKey}`)}
-                    </div>
-                  </div>
+                  <Icon size={16} className="shrink-0" />
+                  {t(`export.categories.${c.id}`)}
                 </button>
               );
             })}
+          </nav>
 
-            {/* PNG Export with scale selection */}
-            <div className="rounded-lg border border-border-default overflow-hidden">
-              <button
-                onClick={() => setShowPngOptions(!showPngOptions)}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-3 p-3 hover:bg-accent/5 transition-colors disabled:opacity-50"
-              >
-                <Image size={20} className="text-text-secondary" />
-                <div className="text-left flex-1">
-                  <div className="text-sm font-medium text-text-primary">
-                    {t('export.formats.png')}
-                  </div>
-                  <div className="text-xs text-text-tertiary">
-                    {t('export.formats.pngDesc')}
-                  </div>
-                </div>
-                <ChevronDown
-                  size={16}
-                  className={`text-text-tertiary transition-transform ${showPngOptions ? 'rotate-180' : ''}`}
-                />
-              </button>
-              {showPngOptions && (
-                <div className="border-t border-border-default bg-bg-secondary p-2">
-                  <div className="text-xs text-text-tertiary mb-2 px-1">{t('export.resolution')} :</div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {pngScaleOptions.map((option) => (
-                      <button
-                        key={option.scale}
-                        onClick={() => handleExportPng(option.scale)}
-                        disabled={isProcessing}
-                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors disabled:opacity-50 ${
-                          selectedPngScale === option.scale
-                            ? 'border-accent bg-accent/10 text-accent'
-                            : 'border-border-default hover:border-accent hover:bg-accent/5 text-text-primary'
-                        }`}
-                        title={t(`export.scale.${option.descKey}`)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {/* Formats and options */}
+          <div className="flex-1 min-w-0 overflow-y-auto p-4 space-y-4">
+            <div role="radiogroup" aria-label={t(`export.categories.${category}`)} className="space-y-1.5">
+              {formats.map((f) => choice(
+                'export-format',
+                f.id === format,
+                () => chooseFormat(f.id),
+                t(`export.formats.${f.id}`),
+                f.id === 'zip' && zipEncrypted ? '.znzip' : f.ext,
+                t(`export.formats.${f.id}Desc`),
+              ))}
             </div>
 
-            {/* SVG Export */}
-            <button
-              onClick={handleExportSvg}
-              disabled={isProcessing}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border-default hover:border-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
-            >
-              <Pen size={20} className="text-text-secondary" />
-              <div className="text-left">
-                <div className="text-sm font-medium text-text-primary">
-                  {t('export.formats.svg')}
+            {format === 'zip' && (
+              <div className="space-y-2">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                <div role="radiogroup" className="space-y-1.5">
+                  {choice('export-zip', !zipEncrypted, () => setZipEncrypted(false), t('export.zip.standard'), '.zip')}
+                  {choice('export-zip', zipEncrypted, () => setZipEncrypted(true), t('export.zip.encrypted'), '.znzip')}
                 </div>
-                <div className="text-xs text-text-tertiary">
-                  {t('export.formats.svgDesc')}
+                {zipEncrypted && (
+                  <div className="space-y-2 pt-1">
+                    <div className="relative">
+                      <input
+                        autoFocus
+                        type={showZipPassword ? 'text' : 'password'}
+                        value={zipPassword}
+                        onChange={(e) => setZipPassword(e.target.value)}
+                        placeholder={t('export.zip.password')}
+                        aria-label={t('export.zip.password')}
+                        className={`${input} pr-8 border-border-default focus:border-accent`}
+                        autoComplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowZipPassword((v) => !v)}
+                        aria-label={t('export.zip.password')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary"
+                      >
+                        {showZipPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                    <input
+                      type={showZipPassword ? 'text' : 'password'}
+                      value={zipPasswordConfirm}
+                      onChange={(e) => setZipPasswordConfirm(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') runExport(); }}
+                      placeholder={t('export.zip.confirm')}
+                      aria-label={t('export.zip.confirm')}
+                      className={`${input} ${passwordsMismatch ? 'border-error' : 'border-border-default focus:border-accent'}`}
+                      autoComplete="new-password"
+                    />
+                    {passwordsMismatch && <p className="text-xs text-error">{t('export.zip.mismatch')}</p>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {format === 'obsidian' && (
+              <div className="space-y-2">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                <div role="radiogroup" className="space-y-1.5">
+                  {choice('export-obsidian', obsidianByTag, () => setObsidianByTag(true), t('export.obsidian.folderByTag'))}
+                  {choice('export-obsidian', !obsidianByTag, () => setObsidianByTag(false), t('export.obsidian.folderFlat'))}
                 </div>
               </div>
-            </button>
+            )}
+
+            {format === 'csv' && (
+              <div className="space-y-3">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                <div className="flex items-center gap-3">
+                  <span className={fieldLabel}>{t('export.csv.content')}</span>
+                  {segmented(csvContent, [
+                    { value: 'all', label: t('export.csv.all') },
+                    { value: 'elements', label: t('export.csv.elements') },
+                    { value: 'links', label: t('export.csv.links') },
+                  ], setCsvContent)}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={fieldLabel}>{t('export.csv.separator')}</span>
+                  {segmented(csvDelimiter, [
+                    { value: ',', label: t('export.csv.comma') },
+                    { value: ';', label: t('export.csv.semicolon') },
+                    { value: '\t', label: t('export.csv.tab') },
+                  ], setCsvDelimiter)}
+                </div>
+                {checkbox(csvExcel, toggleCsvExcel, t('export.csv.excel'))}
+              </div>
+            )}
+
+            {format === 'png' && (
+              <div className="space-y-3">
+                <div className={sectionTitle}>{t('export.optionsTitle')}</div>
+                <div className="flex items-center gap-3">
+                  <span className={fieldLabel}>{t('export.resolution')}</span>
+                  {segmented(pngScale, PNG_SCALES.map((scale) => ({
+                    value: scale as number,
+                    label: `${scale}x`,
+                    title: t(`export.scale.${PNG_SCALE_KEYS[scale]}`),
+                  })), setPngScale)}
+                </div>
+                {checkbox(pngTransparent, setPngTransparent, t('export.png.transparent'))}
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 px-4 py-3 border-t border-border-default bg-bg-secondary">
+          <button
+            onClick={onClose}
+            className="border border-border-default text-text-primary bg-bg-primary hover:bg-bg-secondary px-3 py-1.5 text-sm font-medium rounded sketchy-border"
+          >
+            {t('common:actions.cancel')}
+          </button>
+          <button
+            onClick={runExport}
+            disabled={!canExport}
+            className="bg-accent text-white hover:bg-accent-hover px-3 py-1.5 text-sm font-medium rounded sketchy-border disabled:opacity-50"
+          >
+            {isProcessing ? t('export.exporting') : t('common:actions.export')}
+          </button>
         </div>
       </div>
     </>

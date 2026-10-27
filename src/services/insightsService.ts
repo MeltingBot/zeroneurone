@@ -2,7 +2,7 @@ import Graph from 'graphology';
 import louvain from 'graphology-communities-louvain';
 import { bidirectional } from 'graphology-shortest-path';
 import betweennessCentrality from 'graphology-metrics/centrality/betweenness';
-import type { Element, Link, ElementId, Cluster, CentralityResult, SimilarPair } from '../types';
+import type { Element, Link, ElementId, LinkId, Cluster, CentralityResult, SimilarPair } from '../types';
 import {
   findArticulationPoints,
   detectSimilarLabels as detectSimilarLabelsShared,
@@ -22,11 +22,20 @@ export interface PathResult {
   length: number;
 }
 
+/** A link a cycle goes through, and the way it is walked. */
+export interface CycleLink {
+  linkId: LinkId;
+  /** True when the cycle walks the link from its `fromId` to its `toId`. */
+  forward: boolean;
+}
+
 export interface CycleResult {
   /** Node sequence of the cycle (start node not repeated at the end) */
   cycle: ElementId[];
   /** Number of nodes/edges in the cycle */
   length: number;
+  /** Links of each step, in cycle order (several when two elements share parallel links) */
+  links: CycleLink[];
 }
 
 class InsightsService {
@@ -300,6 +309,24 @@ class InsightsService {
       return ok;
     };
 
+    // The links each step of a cycle goes through: in directed mode, only
+    // those that can be walked that way
+    const resultOf = (cycle: ElementId[]): CycleResult => {
+      const links: CycleLink[] = [];
+      for (let i = 0; i < cycle.length; i++) {
+        const u = cycle[i];
+        const v = cycle[(i + 1) % cycle.length];
+        graph.forEachEdge(u, v, (_edge, attrs, source) => {
+          const { id, direction: d } = attrs as { id: LinkId; direction?: string };
+          const forward = source === u;
+          if (directed && !(d === 'both' || d === 'none' || d == null
+            || (d === 'forward' && forward) || (d === 'backward' && !forward))) return;
+          links.push({ linkId: id, forward });
+        });
+      }
+      return { cycle, length: cycle.length, links };
+    };
+
     const results: CycleResult[] = [];
     const path: ElementId[] = [];
     const onPath = new Set<ElementId>();
@@ -312,14 +339,14 @@ class InsightsService {
           if (directed) {
             // Directed cycle: the closing edge must follow the link direction.
             if (canTraverse(current, start)) {
-              results.push({ cycle: [...path], length: path.length });
+              results.push(resultOf([...path]));
             }
           } else {
             // Undirected: keep only one of the two mirror traversals.
             const second = indexOf.get(path[1]) ?? 0;
             const last = indexOf.get(path[path.length - 1]) ?? 0;
             if (second < last) {
-              results.push({ cycle: [...path], length: path.length });
+              results.push(resultOf([...path]));
             }
           }
           return;

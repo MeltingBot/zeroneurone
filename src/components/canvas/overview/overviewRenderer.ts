@@ -7,7 +7,7 @@
 import { EDGE_ARROW_LENGTH, EDGE_ARROW_WIDTH } from '../../../utils/edgeRouting';
 import { queryCells, DIAMOND_HALF_DIAGONAL } from './overviewHitTest';
 import {
-  LINK_ARROW_END, LINK_ARROW_START, LINK_DIMMED, LINK_SELECTED,
+  LINK_ARROW_END, LINK_ARROW_START, LINK_DIMMED, LINK_HIGHLIGHTED, LINK_SELECTED,
   NODE_DIMMED, NODE_EMPHASIZED, NODE_GHOST, NODE_REMOTE, NODE_SELECTED,
   SHAPE_ANNOTATION, SHAPE_CIRCLE, SHAPE_DIAMOND, SHAPE_GROUP, SHAPE_HEXAGON, SHAPE_RECT,
   STYLE_DASHED, STYLE_DOTTED,
@@ -23,6 +23,8 @@ export interface OverviewTransform {
 export interface OverviewTheme {
   /** Selection colour (--color-accent). */
   accent: string;
+  /** Theme mode: CSS variables in the scene colours are read again when it changes. */
+  mode?: string;
 }
 
 export interface OverviewOverlay {
@@ -54,6 +56,12 @@ const TINY_PX = 3;
 const MIN_ARROW_PX = 4;
 /** Thinnest drawn line, in screen pixels. */
 const MIN_LINE_PX = 0.5;
+/** Result glow around links: extra width in screen pixels, and its opacity. */
+const LINK_GLOW_PX = 6;
+const LINK_GLOW_ALPHA = 0.35;
+/** Link colour when none can be resolved, as SimpleEdge. */
+const FALLBACK_LINK_COLOR = '#9a948d';
+const CSS_VAR = /^var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)$/;
 
 function addShape(ctx: CanvasRenderingContext2D, shape: number, x: number, y: number, w: number, h: number) {
   switch (shape) {
@@ -121,10 +129,17 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
   private cssHeight = 0;
   private dpr = 1;
   private visible: number[] = [];
+  /** Scene palette with CSS variables resolved. */
+  private colors: string[] = [];
+  private varCache = new Map<string, string>();
+  private varMode: string | undefined;
   private canvas: HTMLCanvasElement;
+  /** Links only: the links layer under React Flow's nodes. */
+  private linksOnly: boolean;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, options: { linksOnly?: boolean } = {}) {
     this.canvas = canvas;
+    this.linksOnly = options.linksOnly ?? false;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas unavailable');
     this.ctx = ctx;
@@ -141,8 +156,25 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
   }
 
   setScene(scene: OverviewScene | null, theme: OverviewTheme) {
+    if (theme.mode !== this.varMode) {
+      this.varCache.clear();
+      this.varMode = theme.mode;
+    }
     this.scene = scene;
     this.theme = theme;
+    this.colors = scene ? scene.palette.map((c) => this.resolveColor(c)) : [];
+  }
+
+  /** Canvas strokes cannot take `var(--x)` (the default link colour): read its value. */
+  private resolveColor(color: string): string {
+    const m = CSS_VAR.exec(color.trim());
+    if (!m) return color;
+    let value = this.varCache.get(m[1]);
+    if (value === undefined) {
+      value = getComputedStyle(this.canvas).getPropertyValue(m[1]).trim() || m[2]?.trim() || '';
+      this.varCache.set(m[1], value);
+    }
+    return value;
   }
 
   draw(t: OverviewTransform, overlay?: OverviewOverlay): DrawStats {
@@ -161,12 +193,13 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
     const vx0 = -t.x / zoom, vy0 = -t.y / zoom;
     const vx1 = (this.cssWidth - t.x) / zoom, vy1 = (this.cssHeight - t.y) / zoom;
 
-    const { x, y, w, h, shape, flags, palette } = scene;
+    const { x, y, w, h, shape, flags } = scene;
+    const palette = this.colors;
     const inView = (i: number) => x[i] <= vx1 && x[i] + w[i] >= vx0 && y[i] <= vy1 && y[i] + h[i] >= vy0;
 
     // ── 1. Groups and annotations, under everything ─────────────────────────
     let nodesDrawn = 0;
-    for (const i of scene.grid.large) {
+    for (const i of this.linksOnly ? [] : scene.grid.large) {
       if (!inView(i)) continue;
       nodesDrawn++;
       const dimmed = (flags[i] & NODE_DIMMED) !== 0;
@@ -192,6 +225,7 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
     const { from, to, linkColor, linkStyle, linkWidth, linkFlags } = scene;
     const linkBuckets = new Map<number, number[]>();
     const selectedLinks: number[] = [];
+    const glowLinks: number[] = [];
     let linksDrawn = 0;
     for (let l = 0; l < scene.linkCount; l++) {
       const a = from[l], b = to[l];
@@ -199,6 +233,7 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
       const bx = x[b] + w[b] / 2, by = y[b] + h[b] / 2;
       if (Math.max(ax, bx) < vx0 || Math.min(ax, bx) > vx1 || Math.max(ay, by) < vy0 || Math.min(ay, by) > vy1) continue;
       linksDrawn++;
+      if (linkFlags[l] & LINK_HIGHLIGHTED) glowLinks.push(l);
       if (linkFlags[l] & LINK_SELECTED) { selectedLinks.push(l); continue; }
       const widthBucket = Math.min(8, Math.max(1, Math.round(linkWidth[l])));
       const key = ((linkColor[l] * 9 + widthBucket) * 3 + linkStyle[l]) * 2 + (linkFlags[l] & LINK_DIMMED ? 1 : 0);
@@ -207,7 +242,7 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
     const arrows = EDGE_ARROW_LENGTH * zoom >= MIN_ARROW_PX;
     const strokeLinks = (list: number[], color: string, width: number, style: number, alpha: number) => {
       ctx.globalAlpha = alpha;
-      ctx.strokeStyle = color;
+      ctx.strokeStyle = color || FALLBACK_LINK_COLOR;
       ctx.lineWidth = Math.max(width, MIN_LINE_PX * px);
       setDash(ctx, style, width, zoom);
       ctx.beginPath();
@@ -219,7 +254,7 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
       ctx.stroke();
       if (!arrows) return;
       ctx.setLineDash([]);
-      ctx.fillStyle = color;
+      ctx.fillStyle = color || FALLBACK_LINK_COLOR;
       ctx.beginPath();
       for (const l of list) {
         if (linkFlags[l] & LINK_ARROW_END) addArrow(ctx, scene, from[l], to[l]);
@@ -227,6 +262,23 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
       }
       ctx.fill();
     };
+    // Result glow under the lines: a wide, faint accent stroke (SimpleEdge's drop-shadow)
+    if (glowLinks.length > 0) {
+      ctx.globalAlpha = LINK_GLOW_ALPHA;
+      ctx.strokeStyle = this.theme.accent;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      let widest = 0;
+      for (const l of glowLinks) {
+        const a = from[l], b = to[l];
+        ctx.moveTo(x[a] + w[a] / 2, y[a] + h[a] / 2);
+        ctx.lineTo(x[b] + w[b] / 2, y[b] + h[b] / 2);
+        widest = Math.max(widest, linkWidth[l]);
+      }
+      ctx.lineWidth = Math.max(widest, MIN_LINE_PX * px) + LINK_GLOW_PX * px;
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+    }
     for (const [key, list] of linkBuckets) {
       const dimmed = key % 2;
       const style = Math.floor(key / 2) % 3;
@@ -238,6 +290,10 @@ export class Canvas2DOverviewRenderer implements OverviewRenderer {
       strokeLinks(selectedLinks, this.theme.accent, Math.max(2, 2 * px), 0, 1);
     }
     ctx.setLineDash([]);
+    if (this.linksOnly) {
+      ctx.globalAlpha = 1;
+      return { nodesDrawn: 0, linksDrawn, ms: performance.now() - start };
+    }
 
     // ── 3. Element nodes ────────────────────────────────────────────────────
     const visible = queryCells(scene.grid, vx0, vy0, vx1, vy1, this.visible);

@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Nó sem ID ignorado",
       "edgeNoSourceTarget": "Aresta sem origem/destino ignorada",
-      "edgeMissingNode": "Aresta ignorada: nó origem/destino não encontrado"
+      "edgeMissingNode": "Aresta ignorada: nó origem/destino não encontrado",
+      "reciprocalMerged": "Ligações recíprocas fundidas (grafo não orientado): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Nó duplicado ignorado (id {{id}})",
       "edgeNoSourceTarget": "Aresta sem origem/destino ignorada",
       "edgeMissingNode": "Aresta ignorada: nó de origem/destino não encontrado"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "Ficheiro DOT ilegível: {{message}}",
+      "empty": "Nenhum nó no ficheiro DOT",
+      "importError": "Erro de importação DOT: {{message}}",
+      "unknownError": "Erro desconhecido"
+    },
+    "warnings": {
+      "skippedEdges": "Ligações ignoradas (invisíveis ou de um elemento para si próprio): {{count}}"
     }
   },
   "anx": {

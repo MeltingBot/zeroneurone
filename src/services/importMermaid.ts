@@ -647,7 +647,11 @@ export function buildMermaidGraph(parsed: ParsedMermaid, dossierId: DossierId): 
   return { elements, links };
 }
 
-function layoutMermaid(elements: Element[], links: Link[], direction: MermaidDirection): void {
+/**
+ * Lay elements out with dagre in a direction, positions starting at (0, 0).
+ * Also used by the DOT import for graphs without coordinates.
+ */
+export function layoutMermaid(elements: Element[], links: Link[], direction: MermaidDirection): void {
   if (elements.length === 0) return;
 
   const g = new dagre.graphlib.Graph({ multigraph: true });

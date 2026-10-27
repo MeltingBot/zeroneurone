@@ -39,7 +39,7 @@
   "import": {
     "title": "Importer un dossier",
     "dropzone": "Déposez un fichier ou cliquez pour sélectionner",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Généalogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importer dans",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Métadonnées uniquement (sans fichiers)",
       "csv": "CSV",
-      "csvDesc": "Tableaux éléments et liens séparés",
+      "csvDesc": "Un tableau : éléments, liens et événements",
       "graphml": "GraphML",
       "graphmlDesc": "Format graphe standard (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Format natif Gephi (positions, couleurs)",
       "gml": "GML",
       "gmlDesc": "Format texte (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Format texte Graphviz (NetworkX, Gephi, outils d'analyse)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Format géographique pour SIG (QGIS, ArcGIS)",
       "png": "PNG (image du canvas)",
@@ -169,7 +171,37 @@
     "success": "Export terminé",
     "successFormat": "Export {{format}} terminé",
     "error": "Erreur lors de l'export",
-    "errorPng": "Erreur lors de l'export PNG"
+    "errorPng": "Erreur lors de l'export PNG",
+    "categories": {
+      "backup": "Sauvegarde",
+      "graph": "Graphe",
+      "data": "Données",
+      "notes": "Notes",
+      "image": "Image"
+    },
+    "optionsTitle": "Options",
+    "zip": {
+      "standard": "Standard",
+      "encrypted": "Chiffré avec mot de passe",
+      "password": "Mot de passe",
+      "confirm": "Confirmer le mot de passe",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "success": "Export chiffré téléchargé (.znzip)"
+    },
+    "png": {
+      "transparent": "Fond transparent"
+    },
+    "csv": {
+      "content": "Contenu",
+      "all": "Tout",
+      "elements": "Éléments",
+      "links": "Liens",
+      "separator": "Séparateur",
+      "comma": "Virgule",
+      "semicolon": "Point-virgule",
+      "tab": "Tabulation",
+      "excel": "Compatible Excel"
+    }
   },
   "search": {
     "title": "Rechercher",

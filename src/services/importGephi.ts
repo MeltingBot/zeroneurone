@@ -8,6 +8,7 @@
 import i18next from 'i18next';
 import { db } from '../db/database';
 import { generateUUID } from '../utils';
+import { getBaseSize } from '../utils/elementDimensions';
 import type {
   DossierId,
   Element,
@@ -110,7 +111,8 @@ export async function importGEXF(
       return result;
     }
 
-    const defaultEdgeType = graph.getAttribute('edgedefault') || 'undirected';
+    // GEXF names it `defaultedgetype`; `edgedefault` (the GraphML name) is still read for files that used it
+    const defaultEdgeType = graph.getAttribute('defaultedgetype') || graph.getAttribute('edgedefault') || 'undirected';
     const isDirectedByDefault = defaultEdgeType === 'directed';
 
     // Parse attribute definitions: <attributes class="node|edge"> → <attribute id title type>
@@ -147,6 +149,8 @@ export async function importGEXF(
     interface ParsedNode {
       element: Element;
       rawSize: number | null;
+      /** True when the position comes from the file (not the grid fallback). */
+      positioned: boolean;
     }
     const parsedNodes: ParsedNode[] = [];
 
@@ -181,11 +185,13 @@ export async function importGEXF(
       const vizPos = node.querySelector('position') ||
         findVizElement(node, 'position');
       let position = { x: gridX * gridSpacing, y: gridY * gridSpacing };
+      let positioned = false;
       if (vizPos) {
         const px = parseFloat(vizPos.getAttribute('x') || '0');
         const py = parseFloat(vizPos.getAttribute('y') || '0');
         if (!isNaN(px) && !isNaN(py)) {
           position = { x: px, y: -py }; // Gephi Y is inverted
+          positioned = true;
         }
       } else {
         gridX++;
@@ -228,6 +234,7 @@ export async function importGEXF(
 
       parsedNodes.push({
         rawSize,
+        positioned,
         element: {
           id: newId,
           dossierId: targetDossierId,
@@ -265,6 +272,9 @@ export async function importGEXF(
     const scaledSizes = scaleGephiSizes(parsedNodes.map(n => n.rawSize));
     for (let i = 0; i < parsedNodes.length; i++) {
       parsedNodes[i].element.visual.size = scaledSizes[i];
+    }
+    spreadGephiPositions(parsedNodes);
+    for (let i = 0; i < parsedNodes.length; i++) {
       await db.elements.add(parsedNodes[i].element);
       result.elementsImported++;
     }
@@ -274,6 +284,12 @@ export async function importGEXF(
     const edges = edgesContainer
       ? Array.from(edgesContainer.querySelectorAll(':scope > edge'))
       : Array.from(graph.querySelectorAll('edge'));
+
+    // Undirected graphs often list each relation twice, A→B and B→A (rgexf,
+    // NetworkX exports): the second one is the same link and is merged into
+    // the first. Edges left unmatched so far, by "from|to|label".
+    const unmatchedUndirected = new Map<string, number>();
+    let reciprocalMerged = 0;
 
     for (const edge of edges) {
       const sourceId = edge.getAttribute('source');
@@ -294,6 +310,18 @@ export async function importGEXF(
       const edgeType = edge.getAttribute('type') || defaultEdgeType;
       const isDirected = edgeType === 'directed' || (edgeType !== 'undirected' && isDirectedByDefault);
       const weight = parseFloat(edge.getAttribute('weight') || '1');
+
+      if (!isDirected && fromId !== toId) {
+        const reverseKey = `${toId}|${fromId}|${edgeLabel}`;
+        const pending = unmatchedUndirected.get(reverseKey) ?? 0;
+        if (pending > 0) {
+          unmatchedUndirected.set(reverseKey, pending - 1);
+          reciprocalMerged++;
+          continue;
+        }
+        const key = `${fromId}|${toId}|${edgeLabel}`;
+        unmatchedUndirected.set(key, (unmatchedUndirected.get(key) ?? 0) + 1);
+      }
 
       // Parse edge attvalues
       const linkProperties: Property[] = [];
@@ -367,6 +395,9 @@ export async function importGEXF(
 
       await db.links.add(link);
       result.linksImported++;
+    }
+    if (reciprocalMerged > 0) {
+      result.warnings.push(t('warnings.reciprocalMerged', { count: reciprocalMerged }));
     }
 
     // Extract GEXF <meta> and append to dossier description
@@ -539,6 +570,8 @@ export async function importGephiLiteJSON(
     interface ParsedLiteNode {
       element: Element;
       rawSize: number | null;
+      /** True when the position comes from the file (not the grid fallback). */
+      positioned: boolean;
     }
     const parsedLiteNodes: ParsedLiteNode[] = [];
 
@@ -579,12 +612,14 @@ export async function importGephiLiteJSON(
 
       // Position: layout > renderingData > grid fallback
       let position = { x: gridX * gridSpacing, y: gridY * gridSpacing };
+      let positioned = true;
       const layoutPos = ds.layout?.[key];
       if (layoutPos && typeof layoutPos.x === 'number' && typeof layoutPos.y === 'number') {
         position = { x: layoutPos.x, y: -layoutPos.y }; // Gephi Y inverted
       } else if (renderData && typeof renderData.x === 'number' && typeof renderData.y === 'number') {
         position = { x: renderData.x, y: -renderData.y };
       } else {
+        positioned = false;
         gridX++;
         if (gridX >= gridCols) { gridX = 0; gridY++; }
       }
@@ -611,6 +646,7 @@ export async function importGephiLiteJSON(
 
       parsedLiteNodes.push({
         rawSize,
+        positioned,
         element: {
           id: newId,
           dossierId: targetDossierId,
@@ -648,6 +684,9 @@ export async function importGephiLiteJSON(
     const scaledLiteSizes = scaleGephiSizes(parsedLiteNodes.map(n => n.rawSize));
     for (let i = 0; i < parsedLiteNodes.length; i++) {
       parsedLiteNodes[i].element.visual.size = scaledLiteSizes[i];
+    }
+    spreadGephiPositions(parsedLiteNodes);
+    for (let i = 0; i < parsedLiteNodes.length; i++) {
       await db.elements.add(parsedLiteNodes[i].element);
       result.elementsImported++;
     }
@@ -877,6 +916,52 @@ export function scaleGephiSizes(rawSizes: (number | null)[]): (number | 'medium'
     if (v == null || v <= 0) return 'medium';
     return Math.max(MIN_SIZE_PX, Math.round(v * scale));
   });
+}
+
+/** Gap between neighbours after spreading, in median element sizes. */
+const NEIGHBOUR_GAP = 1.5;
+/** Nodes sampled to measure the neighbour distance (keeps big graphs fast). */
+const NEIGHBOUR_SAMPLE = 300;
+
+/**
+ * Gephi positions are in its own units, often a few times the node size
+ * apart (Related_Artists: ±100 with 7 between neighbours). Read as pixels,
+ * the elements pile up. The layout is enlarged (never shrunk) so the median
+ * distance to the nearest neighbour is NEIGHBOUR_GAP median element sizes,
+ * then Gephi's centres become ZN top-left corners. Grid-placed nodes stay.
+ */
+export function spreadGephiPositions(nodes: { element: Element; positioned: boolean }[]): void {
+  const placed = nodes.filter((n) => n.positioned);
+  const sizeOf = (n: { element: Element }) => getBaseSize(n.element.visual.size);
+  if (placed.length >= 2) {
+    const step = Math.max(1, Math.floor(placed.length / NEIGHBOUR_SAMPLE));
+    const nearest: number[] = [];
+    for (let i = 0; i < placed.length; i += step) {
+      const a = placed[i].element.position;
+      let best = Infinity;
+      for (let j = 0; j < placed.length; j++) {
+        if (j === i) continue;
+        const b = placed[j].element.position;
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > 0 && d < best) best = d;
+      }
+      if (best < Infinity) nearest.push(best);
+    }
+    const median = (values: number[]) => {
+      const sorted = [...values].sort((x, y) => x - y);
+      return sorted[Math.floor(sorted.length / 2)];
+    };
+    if (nearest.length > 0) {
+      const scale = Math.max(1, (NEIGHBOUR_GAP * median(placed.map(sizeOf))) / median(nearest));
+      for (const n of placed) {
+        n.element.position = { x: n.element.position.x * scale, y: n.element.position.y * scale };
+      }
+    }
+  }
+  for (const n of placed) {
+    const half = sizeOf(n) / 2;
+    n.element.position = { x: n.element.position.x - half, y: n.element.position.y - half };
+  }
 }
 
 /** Darken a hex color for border usage */

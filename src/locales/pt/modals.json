@@ -39,7 +39,7 @@
   "import": {
     "title": "Importar um dossiê",
     "dropzone": "Largue um ficheiro ou clique para selecionar",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar para",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Apenas metadados (sem ficheiros)",
       "csv": "CSV",
-      "csvDesc": "Tabelas de elementos e ligações separadas",
+      "csvDesc": "Uma tabela: elementos, ligações e eventos",
       "graphml": "GraphML",
       "graphmlDesc": "Formato de grafo padrão (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Formato nativo do Gephi (posições, cores)",
       "gml": "GML",
       "gmlDesc": "Formato de texto (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Formato de texto Graphviz (NetworkX, Gephi, ferramentas de análise)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Formato geográfico para SIG (QGIS, ArcGIS)",
       "png": "PNG (imagem da tela)",
@@ -169,7 +171,37 @@
     "success": "Exportação concluída",
     "successFormat": "Exportação {{format}} concluída",
     "error": "Erro durante a exportação",
-    "errorPng": "Erro durante a exportação PNG"
+    "errorPng": "Erro durante a exportação PNG",
+    "categories": {
+      "backup": "Cópia de segurança",
+      "graph": "Grafo",
+      "data": "Dados",
+      "notes": "Notas",
+      "image": "Imagem"
+    },
+    "optionsTitle": "Opções",
+    "zip": {
+      "standard": "Padrão",
+      "encrypted": "Encriptado com palavra-passe",
+      "password": "Palavra-passe",
+      "confirm": "Confirmar palavra-passe",
+      "mismatch": "As palavras-passe não coincidem",
+      "success": "Exportação encriptada transferida (.znzip)"
+    },
+    "png": {
+      "transparent": "Fundo transparente"
+    },
+    "csv": {
+      "content": "Conteúdo",
+      "all": "Tudo",
+      "elements": "Elementos",
+      "links": "Ligações",
+      "separator": "Separador",
+      "comma": "Vírgula",
+      "semicolon": "Ponto e vírgula",
+      "tab": "Tabulação",
+      "excel": "Compatível com Excel"
+    }
   },
   "search": {
     "title": "Pesquisar",

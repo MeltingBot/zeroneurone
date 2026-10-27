@@ -285,7 +285,11 @@ Menu **⋯** → **Import** → **Download CSV template**
 | Edge attributes | Link properties |
 | viz:color on edge | Link color |
 | viz:thickness | Link thickness |
-| edgedefault | Direction (directed/undirected) |
+| defaultedgetype | Direction (directed/undirected) |
+
+In an undirected graph, a relation written both ways (A → B and B → A, as rgexf or NetworkX do) becomes a single link. The import reports how many links were merged this way. Two edges with different labels stay separate.
+
+Gephi positions are in its own units, often tight compared with the element size. The layout is enlarged (never shrunk) so neighbouring elements do not overlap; its proportions are kept. Same rule for Gephi Lite.
 
 #### Color Palettes
 
@@ -322,6 +326,39 @@ Expected structure: object with `nodes` and `edges`, having `attributes` and `vi
 | `directed` | Default direction, when the edge does not state its arrows |
 
 Nodes without a position are laid out on a grid. Each node's GML id is kept in the `gml_id` property. For a file exported by Gephi (`Creator "Gephi"`), the Y axis is flipped as for GEXF.
+
+---
+
+### DOT (Graphviz)
+
+**Text format** of Graphviz (`.dot`, `.gv`), also written by NetworkX, Gephi, `terraform graph` and many analysis tools.
+
+Three ways to import:
+- **Paste on the canvas** (Ctrl+V): text starting with `graph`, `digraph` or `strict digraph` followed by a brace is recognized automatically
+- **Right-click on the canvas → Paste**
+- **Import** → `.dot` or `.gv` file (new dossier, or the open dossier with placement on the canvas)
+
+#### Imported data
+
+| DOT data | ZeroNeurone property |
+|----------|----------------------|
+| `label` (else the node id) | Element label |
+| HTML `<...>` or `record` label | Text only, without formatting |
+| `shape` | Shape (ellipse → circle, box → rectangle, diamond → diamond, hexagon/octagon → hexagon, square → square) |
+| `fillcolor`, `color` (X11 names, `#rrggbb`, HSV) | Color and border |
+| `style=dashed` / `dotted` | Dashed or dotted border |
+| `tooltip` (or `notes`), `tags` (separated by ;), `confidence`, `source` | Notes, tags, confidence, source |
+| `cluster…` subgraph | Tag: its `label`, else its name without `cluster_` |
+| `pos` (output of a Graphviz layout) | Position, when every node has one |
+| Other attributes (`weight`, `path`…) | Properties, values as written |
+| `label`, `color`, `penwidth`, `style` on an edge | Link label, color, width, dashed or dotted |
+| `dir`, `arrowhead`, `arrowtail` | Link direction (`digraph`: arrow by default) |
+
+`node [...]` and `edge [...]` defaults apply as in Graphviz, subgraphs included. A chain `a -> b -> c` gives two links, `a -> {b c}` one link to each. In a `strict` graph, duplicate links are merged.
+
+Without positions, the graph is laid out automatically along `rankdir` (top to bottom by default). Each node's DOT id is kept in the `dot_id` property.
+
+Not imported: ports (`a:north`, the link starts from the element), invisible edges (`style=invis`, layout helpers) and links from an element to itself; the import reports how many links were skipped. Only labels and notes read Graphviz codes (`\n` for a line break): a path like `C:\Users\...` keeps its backslashes in properties.
 
 ---
 
@@ -509,7 +546,7 @@ flowchart LR
 {{< /hint >}}
 
 {{< hint info >}}
-**The other way round**: select several elements, then right-click → **Copy as Mermaid** to get a block you can paste into a wiki, Obsidian, GitHub or a Markdown report.
+**The other way round**: select several elements, then right-click → **Copy as → Mermaid** to get a block you can paste into a wiki, Obsidian, GitHub or a Markdown report.
 {{< /hint >}}
 
 ---

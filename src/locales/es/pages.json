@@ -192,7 +192,9 @@
       "analyze": "Analizar",
       "organize": "Organizar",
       "tabs": "Pestañas",
+      "copyAs": "Copiar como",
       "copyAsMermaid": "Copiar como Mermaid",
+      "copyAsDot": "Copiar como DOT",
       "selectLinks": "Seleccionar sus enlaces",
       "selectAllLinks": "Seleccionar todos los enlaces",
       "suggestLinks": "Sugerir enlaces"
@@ -350,7 +352,8 @@
     "urlCopied": "URL copiada",
     "urlCopyFailed": "Error al copiar la URL",
     "mermaidCopied": "Selección copiada como Mermaid",
-    "mermaidCopyFailed": "No se pudo copiar al portapapeles"
+    "mermaidCopyFailed": "No se pudo copiar al portapapeles",
+    "dotCopied": "Selección copiada como DOT"
   },
   "map": {
     "noGeoElements": "Ningún elemento geolocalizado",

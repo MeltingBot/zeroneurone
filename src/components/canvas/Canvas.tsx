@@ -48,8 +48,10 @@ import { AlignDropdown } from './AlignDropdown';
 import { LayoutDropdown } from './LayoutDropdown';
 import { ImportPlacementOverlay } from './ImportPlacementOverlay';
 import { OverviewLayer, type OverviewHandle } from './overview/OverviewLayer';
+import { isExportedNode, withLayersAt } from './overview/exportLayers';
+import { LinksLayer } from './overview/LinksLayer';
 import { buildOverviewScene, computeAbsoluteNodePositions, linkFlagsOf, nodeFootprint } from './overview/overviewScene';
-import { linksTouching } from './overview/overviewHitTest';
+import { hitLink, linksTouching } from './overview/overviewHitTest';
 import { NODE_GHOST, type OverviewScene } from './overview/overviewTypes';
 import { linkVisualState, type LinkVisualContext } from '../../utils/linkVisualState';
 import { estimateHandles } from './estimatedHandles';
@@ -77,6 +79,9 @@ import { isMappableJson } from '../../utils/jsonMapping';
 import { isMermaidFlowchart } from '../../services/importMermaid';
 import { buildMermaidExport } from '../../services/exportMermaid';
 import { startMermaidPlacement } from '../../services/mermaidPlacement';
+import { isDotGraph } from '../../services/importDOT';
+import { buildDOTExport } from '../../services/exportDOT';
+import { startDotPlacement } from '../../services/dotPlacement';
 import { serializeQuery } from '../../services/query/serializer';
 import { insightsService } from '../../services/insightsService';
 import { metadataService } from '../../services/metadataService';
@@ -186,6 +191,8 @@ const OVERVIEW_EXIT_VISIBLE = 1000;
 const OVERVIEW_EXIT_ZOOM = 0.4;
 
 const EMPTY_EDGES: Edge[] = [];
+/** No cycle highlighted: a stable empty map, so the edges are not rebuilt. */
+const EMPTY_LINK_FLOW: ReadonlyMap<string, 'forward' | 'backward' | 'both'> = new Map();
 
 const nodeTypes = {
   element: ElementNode,
@@ -222,11 +229,12 @@ function CanvasCaptureHandler() {
       try {
         // Chargement a la demande : la capture PNG n'est pas sur le chemin nominal.
         const { toPng } = await import('html-to-image');
-        return await toPng(element, {
+        return await withLayersAt(3, () => toPng(element, {
           backgroundColor: '#faf8f5',
+          filter: isExportedNode,
           pixelRatio: 3,
           skipFonts: true,
-        });
+        }));
       } catch (error) {
         console.error('Canvas capture failed:', error);
         return null;
@@ -440,6 +448,7 @@ function elementToNode(
   isHighlighted?: boolean,
   hasLinks?: boolean,
   activeEvents?: TemporalEventSummary,
+  isFocused?: boolean,
 ): Node {
   // Ensure position is valid - fallback to origin if corrupted
   const position = element.position &&
@@ -521,6 +530,7 @@ function elementToNode(
       // through another tab) shows with its glow instead of faded
       isDimmed: (isGhost && !isHighlighted) || isDimmed,
       isHighlighted: !!isHighlighted,
+      isFocused: !!isFocused,
       isGhost,
       thumbnail,
       onResize: isGhost ? undefined : onResize,
@@ -704,6 +714,8 @@ function linkToEdge(
         color: link.visual.color,
         thickness: link.visual.thickness,
         dashArray: strokeDasharray,
+        hasStartArrow,
+        hasEndArrow,
         isDimmed,
         isSelected,
       },
@@ -1024,6 +1036,10 @@ export function Canvas() {
     findAllPaths,
     clearHighlight,
   } = useInsightsStore();
+  // Links of the highlighted cycles, with the way each is walked
+  const cycleLinkFlow = useInsightsStore((s) => (s.highlightType === 'cycle' ? s.cycleLinkFlow : EMPTY_LINK_FLOW));
+  // Element picked in the cycle list: a stronger glow
+  const focusedElementId = useInsightsStore((s) => (s.highlightType === 'cycle' ? s.focusedElementId : null));
 
   // Query store for ZNQuery canvas filter
   const queryFilterActive = useQueryStore((s) => s.isFilterActive);
@@ -1650,6 +1666,7 @@ export function Canvas() {
   const prevTabMemberSetRef = useRef(tabMemberSet);
   const prevActiveTabIdRef = useRef(activeTabId);
   const prevEventSummariesRef = useRef(temporalEventSummaries);
+  const prevFocusedIdRef = useRef(focusedElementId);
 
   // Which nodes carry at least one link. Stable: it depends on the links
   // themselves, not on the viewport, so panning never invalidates it.
@@ -1706,6 +1723,7 @@ export function Canvas() {
         emphasizedElementIds.has(ns.el.id),
         linkedNodeIds.has(ns.el.id),
         temporalEventSummaries.get(ns.el.id),
+        focusedElementId === ns.el.id,
       );
       // Restore measured dimensions so React Flow's MiniMap nodeHasDimensions() returns true
       const dims = measuredDimensionsRef.current.get(ns.el.id);
@@ -1736,6 +1754,7 @@ export function Canvas() {
       prevDimmedIdsRef.current = dimmedElementIds;
       prevHighlightedIdsRef.current = emphasizedElementIds;
       prevEventSummariesRef.current = temporalEventSummaries;
+      prevFocusedIdRef.current = focusedElementId;
       prevEditingIdRef.current = editingElementId;
       prevRemoteUsersRef.current = remoteUsersByElement;
       prevShowConfRef.current = confidenceDisplay;
@@ -1804,6 +1823,12 @@ export function Canvas() {
       }
     }
 
+    // Focus diff (element picked in the cycle list)
+    if (prevFocusedIdRef.current !== focusedElementId) {
+      if (prevFocusedIdRef.current) needsRebuild.add(prevFocusedIdRef.current);
+      if (focusedElementId) needsRebuild.add(focusedElementId);
+    }
+
     // Editing diff
     if (prevEditingIdRef.current !== editingElementId) {
       if (prevEditingIdRef.current) needsRebuild.add(prevEditingIdRef.current);
@@ -1841,6 +1866,7 @@ export function Canvas() {
     prevDimmedIdsRef.current = dimmedElementIds;
     prevHighlightedIdsRef.current = emphasizedElementIds;
     prevEventSummariesRef.current = temporalEventSummaries;
+    prevFocusedIdRef.current = focusedElementId;
     prevEditingIdRef.current = editingElementId;
     prevRemoteUsersRef.current = remoteUsersByElement;
     prevTabMemberSetRef.current = tabMemberSet;
@@ -1894,7 +1920,7 @@ export function Canvas() {
 
     prevNodesRef.current = result;
     return result;
-  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, elementMap, linkedNodeIds]);
+  }, [nodeStructures, selectedElementIds, dimmedElementIds, emphasizedElementIds, temporalEventSummaries, focusedElementId, editingElementId, stopEditing, confidenceDisplay, tagDisplayMode, tagDisplaySize, themeMode, remoteUsersByElement, activeTabId, tabMemberSet, elementMap, linkedNodeIds]);
 
   // Update awareness when selection changes
   useEffect(() => {
@@ -2158,7 +2184,8 @@ export function Canvas() {
     queryMatchLinkIds,
     temporal: temporalClassification,
     showUndated: canvasTemporal.showUndated,
-  }), [selectedLinkIds, dimmedElementIds, emphasizedElementIds, queryFilterActive, queryMatchLinkIds, temporalClassification, canvasTemporal.showUndated]);
+    flowLinks: cycleLinkFlow,
+  }), [selectedLinkIds, dimmedElementIds, emphasizedElementIds, queryFilterActive, queryMatchLinkIds, temporalClassification, canvasTemporal.showUndated, cycleLinkFlow]);
 
   const allEdges = useMemo(() => {
     // The overview layer draws every link itself. Returning before the cache
@@ -2197,23 +2224,18 @@ export function Canvas() {
       return fromVisible || toVisible;
     });
 
-    // Cap edges: prioritize selected, then connected-to-selected, then rest
+    // Cap edges: the selected links and those touching a selected element are
+    // always kept, the rest fill the budget. The original order is kept, so a
+    // click only swaps the few links it has to instead of reordering them all.
     let cappedLinks = visibleLinks;
     if (visibleLinks.length > MAX_RENDERED_EDGES) {
-      const selected: Link[] = [];
-      const connectedToSelected: Link[] = [];
-      const rest: Link[] = [];
-      for (const link of visibleLinks) {
-        if (selectedLinkIds.has(link.id)) {
-          selected.push(link);
-        } else if (selectedElementIds.has(link.fromId) || selectedElementIds.has(link.toId)) {
-          connectedToSelected.push(link);
-        } else {
-          rest.push(link);
-        }
-      }
-      const budget = MAX_RENDERED_EDGES - selected.length - connectedToSelected.length;
-      cappedLinks = [...selected, ...connectedToSelected, ...rest.slice(0, Math.max(0, budget))];
+      const isPriority = (link: Link) => selectedLinkIds.has(link.id) || cycleLinkFlow.has(link.id)
+        || selectedElementIds.has(link.fromId) || selectedElementIds.has(link.toId);
+      let priorityCount = 0;
+      for (const link of visibleLinks) if (isPriority(link)) priorityCount++;
+      const budget = MAX_RENDERED_EDGES - priorityCount;
+      let restKept = 0;
+      cappedLinks = visibleLinks.filter(link => isPriority(link) || restKept++ < budget);
     }
 
     // Build parallel edges lookup
@@ -2239,7 +2261,7 @@ export function Canvas() {
 
     const newCache = new Map<string, Edge>();
     const result = cappedLinks.map(link => {
-      const { isSelected, isDimmed: isLinkDimmed, isHighlighted: isLinkHighlighted } = linkVisualState(link, linkVisualContext);
+      const { isSelected, isDimmed: isLinkDimmed, isHighlighted: isLinkHighlighted, flow } = linkVisualState(link, linkVisualContext);
       const simplified = useSimpleEdges && !isSelected;
 
       // Reuse cached edge if visual state is unchanged (same reference → memo skip)
@@ -2257,6 +2279,7 @@ export function Canvas() {
           const sameVisuals = cached.selected === isSelected
             && cd?.isDimmed === isLinkDimmed
             && cd?.isHighlighted === isLinkHighlighted
+            && cd?.flow === flow
             && (cached.type === 'simple') === simplified;
           if (sameVisuals) {
             // In auto anchor mode, verify handles are still optimal for current positions
@@ -2334,6 +2357,7 @@ export function Canvas() {
       edgeData._showConfidence = confidenceDisplay;
       edgeData._dateLocale = propertyDateLocale;
       edgeData.isHighlighted = isLinkHighlighted;
+      edgeData.flow = flow;
       if (!simplified) {
         const parallel = parallelLookup.get(link.id);
         edgeData._parallelIndex = parallel?.index;
@@ -2520,53 +2544,52 @@ export function Canvas() {
   }, [selectBoth]);
 
   // Progressive edge rendering: avoid injecting 800+ edges at once into the DOM.
-  // Start with a small batch and grow to full count over a few frames.
-  // Only reset when the SET of visible edges changes (not on selection/dimming changes).
+  // Only the edges not already on screen are added in batches; those already
+  // shown stay, so a click or a small pan never makes the links blink.
   const EDGE_BATCH_SIZE = 250;
-  const [edgeRenderLimit, setEdgeRenderLimit] = useState(EDGE_BATCH_SIZE);
-  const edgeProgressionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevEdgeIdsRef = useRef<string[]>([]);
+  const shownEdgeIdsRef = useRef<Set<string>>(new Set());
+  const edgeProgressRef = useRef<{ source: Edge[]; base: Set<string>; limit: number } | null>(null);
+  const [edgeProgressTick, setEdgeProgressTick] = useState(0);
+
+  const cappedEdges = useMemo(() => {
+    let progress = edgeProgressRef.current;
+    if (!progress || progress.source !== allEdges) {
+      const shown = shownEdgeIdsRef.current;
+      let newCount = 0;
+      for (const e of allEdges) if (!shown.has(e.id)) newCount++;
+      progress = newCount > EDGE_BATCH_SIZE
+        ? { source: allEdges, base: shown, limit: EDGE_BATCH_SIZE }
+        : null;
+    }
+    let result = allEdges;
+    if (progress) {
+      const { base, limit } = progress;
+      let added = 0;
+      const partial = allEdges.filter(e => {
+        if (base.has(e.id)) return true;
+        if (added >= limit) return false;
+        added++;
+        return true;
+      });
+      if (partial.length < allEdges.length) result = partial;
+      else progress = null;
+    }
+    edgeProgressRef.current = progress;
+    shownEdgeIdsRef.current = new Set(result.map(e => e.id));
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allEdges, edgeProgressTick]);
 
   useEffect(() => {
-    const prevIds = prevEdgeIdsRef.current;
-    const currentIds = allEdges.map(e => e.id);
-    prevEdgeIdsRef.current = currentIds;
-
-    // Check if edge set changed structurally (different IDs or order)
-    const structuralChange = prevIds.length !== currentIds.length ||
-      currentIds.some((id, i) => id !== prevIds[i]);
-
-    if (!structuralChange) {
-      // Visual-only change (selection/dimming) — show all immediately, no progressive reset
-      setEdgeRenderLimit(allEdges.length);
-      return;
-    }
-
-    // Structural change — progressive rendering
-    if (allEdges.length <= EDGE_BATCH_SIZE) {
-      setEdgeRenderLimit(allEdges.length);
-      return;
-    }
-
-    setEdgeRenderLimit(EDGE_BATCH_SIZE);
-    if (edgeProgressionRef.current) clearTimeout(edgeProgressionRef.current);
-
-    let current = EDGE_BATCH_SIZE;
-    const step = () => {
-      current = Math.min(current + EDGE_BATCH_SIZE, allEdges.length);
-      setEdgeRenderLimit(current);
-      if (current < allEdges.length) {
-        edgeProgressionRef.current = setTimeout(step, 60);
-      }
-    };
-    edgeProgressionRef.current = setTimeout(step, 60);
-
-    return () => { if (edgeProgressionRef.current) clearTimeout(edgeProgressionRef.current); };
-  }, [allEdges]);
-
-  const cappedEdges = edgeRenderLimit >= allEdges.length
-    ? allEdges
-    : allEdges.slice(0, edgeRenderLimit);
+    if (!edgeProgressRef.current) return;
+    const timer = setTimeout(() => {
+      const progress = edgeProgressRef.current;
+      if (!progress) return;
+      progress.limit += EDGE_BATCH_SIZE;
+      setEdgeProgressTick(t => t + 1);
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [cappedEdges]);
   // Zoomed far out, element nodes carry a single handle: edges drop their
   // handle ids so React Flow anchors them to a node's first handle. The
   // per-edge cache keeps these objects stable across renders.
@@ -2585,6 +2608,28 @@ export function Canvas() {
   }, [cappedEdges, isLowDetail]);
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
+
+  // Links layer: every shown link React Flow does not draw (over the cap, off
+  // screen at the last re-cull, not yet added), on a canvas under the nodes.
+  // The visual is the analysis: no link of the graph goes missing.
+  const linksLayerScene = useMemo<OverviewScene | null>(() => {
+    if (overviewActive) return null;
+    const drawn = new Set<string>();
+    for (const e of edges) drawn.add(e.id);
+    const rest = links.filter((link) => !drawn.has(link.id));
+    if (rest.length === 0) return null;
+    return buildOverviewScene({
+      nodes,
+      links: rest,
+      isLinkShown: (link) => !temporalHiddenLinkIds.has(link.id) && !viewHiddenIds.has(link.fromId) && !viewHiddenIds.has(link.toId),
+      linkFlags: (link) => linkFlagsOf(linkVisualState(link, linkVisualContext)),
+      dark: themeMode === 'dark',
+      fallbackLabel: t('empty.unnamed'),
+      linksOnly: true,
+    });
+  }, [overviewActive, edges, links, nodes, temporalHiddenLinkIds, viewHiddenIds, linkVisualContext, themeMode, t]);
+  const linksLayerSceneRef = useRef(linksLayerScene);
+  linksLayerSceneRef.current = linksLayerScene;
 
 
 
@@ -3481,6 +3526,19 @@ export function Canvas() {
       .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
   }, [getSelectedElementIds, elements, links, tPages]);
 
+  // Copy the selection as a DOT graph (Graphviz, NetworkX)
+  const handleCopyAsDot = useCallback(() => {
+    const ids = new Set(getSelectedElementIds());
+    if (ids.size === 0) return;
+    // Children of selected groups come along
+    for (const el of elements) if (el.parentGroupId && ids.has(el.parentGroupId)) ids.add(el.id);
+    const selected = elements.filter(el => ids.has(el.id));
+    const between = links.filter(l => ids.has(l.fromId) && ids.has(l.toId));
+    navigator.clipboard.writeText(buildDOTExport(currentDossier?.name ?? '', selected, between))
+      .then(() => toast.success(tPages('dossier.dotCopied')))
+      .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
+  }, [getSelectedElementIds, elements, links, tPages, currentDossier?.name]);
+
   // Paste from canvas context menu (at cursor position)
   const handleCanvasContextMenuPaste = useCallback(async () => {
     if (!canvasContextMenu) return;
@@ -3512,6 +3570,12 @@ export function Canvas() {
         const text = (await (await textItem.getType('text/plain')).text()).trim();
         if (isMermaidFlowchart(text)) {
           const res = startMermaidPlacement(text, currentDossier.id);
+          if (!res.ok) toast.error(res.error);
+          return;
+        }
+        // DOT graph (Graphviz) → import placement mode
+        if (isDotGraph(text)) {
+          const res = startDotPlacement(text, currentDossier.id);
           if (!res.ok) toast.error(res.error);
           return;
         }
@@ -4012,6 +4076,11 @@ export function Canvas() {
   // State for import placement in progress
   const [isImportingPlacement, setIsImportingPlacement] = useState(false);
 
+  /** Click reach around a link drawn on a canvas, in screen pixels. */
+  const LINK_HIT_TOLERANCE_PX = 4;
+  /** More links than this under the click: a dense tangle, the click clears the selection. */
+  const LINK_HIT_MAX_IN_REACH = 2;
+
   // Handle pane click (deselect or placement import)
   const handlePaneClick = useCallback(async (event: React.MouseEvent) => {
     // If in import placement mode, handle the placement
@@ -4269,11 +4338,31 @@ export function Canvas() {
       }
     }
 
+    // Links drawn on a canvas (overview, links layer) reach the pane too
+    const linkScene = overviewActiveRef.current ? overviewSceneRef.current : linksLayerSceneRef.current;
+    if (linkScene && reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const { x: vx, y: vy, zoom } = useViewStore.getState().viewport;
+      const l = hitLink(
+        linkScene,
+        (event.clientX - bounds.left - vx) / zoom,
+        (event.clientY - bounds.top - vy) / zoom,
+        LINK_HIT_TOLERANCE_PX / zoom,
+        LINK_HIT_MAX_IN_REACH,
+      );
+      if (l >= 0) {
+        const linkId = linkScene.linkIds[l];
+        if (event.shiftKey || event.ctrlKey || event.metaKey) toggleLink(linkId);
+        else selectLink(linkId);
+        return;
+      }
+    }
+
     clearSelection();
     // Also reset any Insights highlight (bridges, clusters, centrality…) so a
     // click on empty canvas restores the normal display.
     clearHighlight();
-  }, [selectElement, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
+  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -5115,6 +5204,13 @@ export function Canvas() {
         if (!res.ok) toast.error(res.error);
         return;
       }
+      // PRIORITY 0b: DOT graph (Graphviz, tool output) → placement mode
+      if (!inRichText && !hasInternalCopyMarker && files.length === 0 && currentDossier && isDotGraph(trimmedClip)) {
+        event.preventDefault();
+        const res = startDotPlacement(trimmedClip, currentDossier.id);
+        if (!res.ok) toast.error(res.error);
+        return;
+      }
       if (!hasInternalCopyMarker && files.length === 0 && (trimmedClip.startsWith('{') || trimmedClip.startsWith('['))) {
         try {
           const data = JSON.parse(trimmedClip);
@@ -5537,6 +5633,7 @@ export function Canvas() {
                   onBoxSelect={handleOverviewBoxSelect}
                 />
               )}
+              <LinksLayer scene={linksLayerScene} themeMode={themeMode} />
               <FlowStoreBridge storeRef={flowStoreRef} />
               <CanvasCaptureHandler />
               <LowDetailHandleRepair isLowDetail={isLowDetail} />
@@ -5619,6 +5716,7 @@ export function Canvas() {
               onCut={handleContextMenuCut}
               onDuplicate={handleContextMenuDuplicate}
               onCopyAsMermaid={handleCopyAsMermaid}
+              onCopyAsDot={handleCopyAsDot}
               onPreview={handleContextMenuPreview}
               onFindPaths={handleFindPaths}
               onFindAllPaths={handleFindAllPaths}
@@ -5694,6 +5792,7 @@ export function Canvas() {
               onToggleLockSelection={handleSelectionToggleLock}
               onGroupSelection={canGroupSelection ? handleGroupSelection : undefined}
               onCopyAsMermaid={handleCopyAsMermaid}
+              onCopyAsDot={handleCopyAsDot}
               onFindSimilar={handleFindSimilar}
               onQueryFromSelection={handleQueryFromSelection}
               onSelectLinks={allEdges.length > 0 || (overviewScene?.linkCount ?? 0) > 0 ? handleSelectLinks : undefined}

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { Node } from '@xyflow/react';
 import type { Element, Link } from '../../../types';
 import { buildOverviewScene, computeAbsoluteNodePositions } from './overviewScene';
-import { hitPoint, hitRect, linksTouching } from './overviewHitTest';
+import { hitLink, hitPoint, hitRect, linksTouching } from './overviewHitTest';
 import { LINK_ARROW_END, LINK_SELECTED, NODE_GHOST, NODE_SELECTED, SHAPE_CIRCLE, SHAPE_DIAMOND, SHAPE_GROUP } from './overviewTypes';
 
 function element(id: string, shape: string, extra: Partial<Element['visual']> = {}): Element {
@@ -118,5 +118,40 @@ describe('overview hit-test', () => {
     const s = scene(nodes);
     expect(s.ids[hitPoint(s, 99 * 180 + 10, 99 * 140 + 10, 0)]).toBe('n9999');
     expect(hitRect(s, -1e6, -1e6, 1e6, 1e6)).toHaveLength(10000);
+  });
+});
+
+describe('link hit-test', () => {
+  // 100 × 100 nodes: centres (50, 50), (450, 50) and (50, 450)
+  const s = scene(
+    [node('a', 0, 0), node('b', 400, 0), node('c', 0, 400)],
+    [link('ab', 'a', 'b'), link('ac', 'a', 'c')],
+  );
+
+  it('finds the link under a point near its line', () => {
+    expect(s.linkIds[hitLink(s, 250, 53, 5)]).toBe('ab');
+    expect(s.linkIds[hitLink(s, 47, 250, 5)]).toBe('ac');
+  });
+
+  it('misses beyond the tolerance and past the ends', () => {
+    expect(hitLink(s, 250, 60, 5)).toBe(-1);
+    expect(hitLink(s, 470, 50, 5)).toBe(-1);
+  });
+
+  it('takes the nearest of two links in reach', () => {
+    expect(s.linkIds[hitLink(s, 52, 56, 10)]).toBe('ac');
+  });
+});
+
+describe('link hit-test in a tangle', () => {
+  // Three links through the same point (250, 50): ab, and two crossing it
+  const s = scene(
+    [node('a', 0, 0), node('b', 400, 0), node('c', 200, -200), node('d', 200, 200), node('e', 100, -200), node('f', 300, 200)],
+    [link('ab', 'a', 'b'), link('cd', 'c', 'd'), link('ef', 'e', 'f')],
+  );
+
+  it('gives up when more links than allowed are in reach', () => {
+    expect(hitLink(s, 250, 50, 5, 2)).toBe(-1);
+    expect(hitLink(s, 250, 50, 5)).toBeGreaterThanOrEqual(0);
   });
 });

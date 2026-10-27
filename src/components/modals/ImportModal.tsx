@@ -168,7 +168,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
     try {
       // Create new dossier with file name (without extension)
-      const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|gml|xml|drawio|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
+      const name = file.name.replace(/\.(zip|json|csv|osintracker|graphml|gexf|gml|dot|gv|xml|drawio|anx|anb|ged|gw|mmd|mermaid|md|markdown)$/i, '');
       const dossier = await createDossier(name, '');
       dossierId = dossier.id;
       createdNewDossier = true;
@@ -202,6 +202,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         const content = await importService.readFileAsText(file);
         const { importGML } = await import('../../services/importGML');
         result = await importGML(content, dossierId);
+      } else if (/\.(dot|gv)$/i.test(file.name)) {
+        const content = await importService.readFileAsText(file);
+        const { importDOT } = await import('../../services/importDOT');
+        result = await importDOT(content, dossierId);
       } else if (file.name.endsWith('.anx')) {
         const content = await importService.readFileAsText(file);
         result = await importANX(content, dossierId);
@@ -429,7 +433,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
+            accept=".zip,.znzip,.json,.csv,.osintracker,.graphml,.gexf,.gml,.dot,.gv,.xml,.drawio,.anx,.anb,.excalidraw,.ged,.gw,.geojson,.txt,.fec,.mmd,.mermaid,.md,*/*"
             onChange={handleFileSelect}
             className="hidden"
             data-testid="import-file-input"

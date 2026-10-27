@@ -192,7 +192,9 @@
       "analyze": "Aztertu",
       "organize": "Antolatu",
       "tabs": "Fitxak",
+      "copyAs": "Kopiatu formatu honetan",
       "copyAsMermaid": "Kopiatu Mermaid gisa",
+      "copyAsDot": "Kopiatu DOT gisa",
       "selectLinks": "Haien loturak hautatu",
       "selectAllLinks": "Lotura guztiak hautatu",
       "suggestLinks": "Loturak iradoki"
@@ -350,7 +352,8 @@
     "urlCopied": "URLa kopiatu da",
     "urlCopyFailed": "Ezin izan da URLa kopiatu",
     "mermaidCopied": "Hautapena Mermaid gisa kopiatu da",
-    "mermaidCopyFailed": "Ezin izan da arbelera kopiatu"
+    "mermaidCopyFailed": "Ezin izan da arbelera kopiatu",
+    "dotCopied": "Hautapena DOT gisa kopiatu da"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

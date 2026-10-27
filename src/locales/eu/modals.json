@@ -39,7 +39,7 @@
   "import": {
     "title": "Espediente inportatu",
     "dropzone": "Jaregin fitxategia edo egin klik hautatzeko",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Hona inportatu",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Metadatuak soilik (fitxategirik gabe)",
       "csv": "CSV",
-      "csvDesc": "Elementu eta lotura taulak bereizita",
+      "csvDesc": "Taula bat: elementuak, loturak eta gertaerak",
       "graphml": "GraphML",
       "graphmlDesc": "Grafo formatu estandarra (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Gephi formatu natiboa (posizioak, koloreak)",
       "gml": "GML",
       "gmlDesc": "Testu formatua (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Graphviz testu-formatua (NetworkX, Gephi, analisi-tresnak)",
       "geojson": "GeoJSON",
       "geojsonDesc": "GIS formatu geografikoa (QGIS, ArcGIS)",
       "png": "PNG (arbelaren irudia)",
@@ -169,7 +171,37 @@
     "success": "Esportazioa bukatuta",
     "successFormat": "{{format}} esportazioa bukatuta",
     "error": "Errorea esportatzean",
-    "errorPng": "Errorea PNG esportatzean"
+    "errorPng": "Errorea PNG esportatzean",
+    "categories": {
+      "backup": "Babeskopia",
+      "graph": "Grafoa",
+      "data": "Datuak",
+      "notes": "Oharrak",
+      "image": "Irudia"
+    },
+    "optionsTitle": "Aukerak",
+    "zip": {
+      "standard": "Estandarra",
+      "encrypted": "Pasahitzarekin zifratua",
+      "password": "Pasahitza",
+      "confirm": "Berretsi pasahitza",
+      "mismatch": "Pasahitzak ez datoz bat",
+      "success": "Esportazio zifratua deskargatu da (.znzip)"
+    },
+    "png": {
+      "transparent": "Atzeko plano gardena"
+    },
+    "csv": {
+      "content": "Edukia",
+      "all": "Dena",
+      "elements": "Elementuak",
+      "links": "Loturak",
+      "separator": "Bereizlea",
+      "comma": "Koma",
+      "semicolon": "Puntu eta koma",
+      "tab": "Tabulazioa",
+      "excel": "Excelekin bateragarria"
+    }
   },
   "search": {
     "title": "Bilatu",

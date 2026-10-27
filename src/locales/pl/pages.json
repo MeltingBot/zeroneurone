@@ -192,7 +192,9 @@
       "analyze": "Analizuj",
       "organize": "Organizuj",
       "tabs": "Karty",
+      "copyAs": "Kopiuj jako",
       "copyAsMermaid": "Kopiuj jako Mermaid",
+      "copyAsDot": "Kopiuj jako DOT",
       "selectLinks": "Zaznacz ich połączenia",
       "selectAllLinks": "Zaznacz wszystkie połączenia",
       "suggestLinks": "Zaproponuj połączenia"
@@ -352,7 +354,8 @@
     "urlCopied": "Skopiowano URL",
     "urlCopyFailed": "Nie udało się skopiować URL",
     "mermaidCopied": "Zaznaczenie skopiowane jako Mermaid",
-    "mermaidCopyFailed": "Nie udało się skopiować do schowka"
+    "mermaidCopyFailed": "Nie udało się skopiować do schowka",
+    "dotCopied": "Zaznaczenie skopiowane jako DOT"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

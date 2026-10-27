@@ -39,7 +39,7 @@
   "import": {
     "title": "Importar un expedient",
     "dropzone": "Deixeu anar un fitxer o feu clic per seleccionar",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importar a",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Només metadades (sense fitxers)",
       "csv": "CSV",
-      "csvDesc": "Taules d'elements i enllaços separades",
+      "csvDesc": "Una taula: elements, enllaços i esdeveniments",
       "graphml": "GraphML",
       "graphmlDesc": "Format de graf estàndard (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Format natiu de Gephi (posicions, colors)",
       "gml": "GML",
       "gmlDesc": "Format de text (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Format de text Graphviz (NetworkX, Gephi, eines d'anàlisi)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Format geogràfic per SIG (QGIS, ArcGIS)",
       "png": "PNG (imatge del llenç)",
@@ -169,7 +171,37 @@
     "success": "Exportació acabada",
     "successFormat": "Exportació {{format}} acabada",
     "error": "Error durant l'exportació",
-    "errorPng": "Error durant l'exportació PNG"
+    "errorPng": "Error durant l'exportació PNG",
+    "categories": {
+      "backup": "Còpia de seguretat",
+      "graph": "Graf",
+      "data": "Dades",
+      "notes": "Notes",
+      "image": "Imatge"
+    },
+    "optionsTitle": "Opcions",
+    "zip": {
+      "standard": "Estàndard",
+      "encrypted": "Xifrat amb contrasenya",
+      "password": "Contrasenya",
+      "confirm": "Confirma la contrasenya",
+      "mismatch": "Les contrasenyes no coincideixen",
+      "success": "Exportació xifrada baixada (.znzip)"
+    },
+    "png": {
+      "transparent": "Fons transparent"
+    },
+    "csv": {
+      "content": "Contingut",
+      "all": "Tot",
+      "elements": "Elements",
+      "links": "Enllaços",
+      "separator": "Separador",
+      "comma": "Coma",
+      "semicolon": "Punt i coma",
+      "tab": "Tabulació",
+      "excel": "Compatible amb Excel"
+    }
   },
   "search": {
     "title": "Cercar",

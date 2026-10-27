@@ -192,7 +192,9 @@
       "analyze": "Analitzar",
       "organize": "Organitzar",
       "tabs": "Pestanyes",
+      "copyAs": "Copiar com a",
       "copyAsMermaid": "Copiar com a Mermaid",
+      "copyAsDot": "Copiar com a DOT",
       "selectLinks": "Selecciona els seus enllaços",
       "selectAllLinks": "Selecciona tots els enllaços",
       "suggestLinks": "Suggerir enllaços"
@@ -350,7 +352,8 @@
     "urlCopied": "URL copiada",
     "urlCopyFailed": "No s'ha pogut copiar l'URL",
     "mermaidCopied": "Selecció copiada com a Mermaid",
-    "mermaidCopyFailed": "No s'ha pogut copiar al porta-retalls"
+    "mermaidCopyFailed": "No s'ha pogut copiar al porta-retalls",
+    "dotCopied": "Selecció copiada com a DOT"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

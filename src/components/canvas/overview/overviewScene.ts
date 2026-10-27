@@ -14,7 +14,7 @@ import { computeElementDimensions } from '../../../utils/elementDimensions';
 import { getThemeAwareColor } from '../../../utils/themeColors';
 import { buildGrid } from './overviewHitTest';
 import {
-  LINK_ARROW_END, LINK_ARROW_START, LINK_DIMMED, LINK_SELECTED,
+  LINK_ARROW_END, LINK_ARROW_START, LINK_DIMMED, LINK_HIGHLIGHTED, LINK_SELECTED,
   NODE_DIMMED, NODE_EMPHASIZED, NODE_GHOST, NODE_REMOTE, NODE_SELECTED,
   SHAPE_ANNOTATION, SHAPE_CIRCLE, SHAPE_DIAMOND, SHAPE_GROUP, SHAPE_HEXAGON, SHAPE_RECT, SHAPE_SQUARE,
   STYLE_DASHED, STYLE_DOTTED, STYLE_SOLID,
@@ -160,6 +160,8 @@ export interface OverviewSceneInput {
   fallbackLabel: string;
   /** Nodes only, no links and no hit-test grid (the minimap). */
   nodesOnly?: boolean;
+  /** Links only: nodes serve as link ends, no hit-test grid (the links layer). */
+  linksOnly?: boolean;
 }
 
 export function buildOverviewScene(input: OverviewSceneInput): OverviewScene {
@@ -245,15 +247,16 @@ export function buildOverviewScene(input: OverviewSceneInput): OverviewScene {
     nodeCount: n, ids, indexById, x, y, w, h, shape, fill, stroke, remoteColor, borderWidth, borderStyle, flags,
     linkCount: m, linkIds, from, to, linkColor, linkStyle, linkWidth, linkFlags: linkFlagsArr,
     palette,
-    grid: input.nodesOnly
+    grid: input.nodesOnly || input.linksOnly
       ? { cells: new Map(), large: [], stamp: new Uint32Array(0), stampValue: 0 }
       : buildGrid(x, y, w, h, shape, n),
   };
 }
 
 /** LINK_* flags from the shared link visual state. */
-export function linkFlagsOf(state: { isSelected: boolean; isDimmed: boolean }): number {
-  return (state.isSelected ? LINK_SELECTED : 0) | (state.isDimmed ? LINK_DIMMED : 0);
+export function linkFlagsOf(state: { isSelected: boolean; isDimmed: boolean; isHighlighted?: boolean }): number {
+  return (state.isSelected ? LINK_SELECTED : 0) | (state.isDimmed ? LINK_DIMMED : 0)
+    | (state.isHighlighted && !state.isDimmed ? LINK_HIGHLIGHTED : 0);
 }
 
 /** Drawn size of a node (measured, else estimated as the canvas renders it). */

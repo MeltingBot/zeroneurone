@@ -21,6 +21,8 @@ interface CustomEdgeData {
   isSelected?: boolean;
   isDimmed?: boolean;
   isHighlighted?: boolean;
+  /** Link of a highlighted cycle: way the cycle walks it */
+  flow?: 'forward' | 'backward' | 'both' | null;
   isEditing?: boolean;
   onLabelChange?: (newLabel: string) => void;
   onStopEditing?: () => void;
@@ -81,6 +83,7 @@ function CustomEdgeComponent(props: EdgeProps) {
   const isSelected = selected || (edgeData?.isSelected ?? false);
   const isDimmed = edgeData?.isDimmed ?? false;
   const isHighlighted = edgeData?.isHighlighted ?? false;
+  const flow = edgeData?.flow ?? null;
   const isEditing = edgeData?.isEditing ?? false;
   const onLabelChange = edgeData?.onLabelChange;
   const onStopEditing = edgeData?.onStopEditing;
@@ -274,6 +277,15 @@ function CustomEdgeComponent(props: EdgeProps) {
         strokeDasharray={dashArray}
         style={{ stroke: color, strokeWidth: thickness }}
       />
+
+      {/* Cycle: accent dashes moving the way the cycle runs */}
+      {flow && (
+        <path
+          d={edgePath}
+          className={`cycle-flow-line ${flow}`}
+          strokeWidth={Math.max(2, thickness)}
+        />
+      )}
 
       {/* Wider invisible path for easier clicking */}
       <path
@@ -545,6 +557,7 @@ function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean 
   if (prevData.isSelected !== nextData.isSelected) return false;
   if (prevData.isDimmed !== nextData.isDimmed) return false;
   if (prevData.isHighlighted !== nextData.isHighlighted) return false;
+  if (prevData.flow !== nextData.flow) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.color !== nextData.color) return false;
   if (prevData.thickness !== nextData.thickness) return false;

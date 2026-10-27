@@ -12,6 +12,8 @@ Save and share your dossiers in various formats.
 
 Menu **⋯** → **Export**
 
+Formats are grouped by use: **Backup** (ZIP, JSON), **Graph** (GraphML, GEXF, GML, DOT, ANX), **Data** (CSV, GeoJSON), **Notes** (Obsidian) and **Image** (PNG, SVG). Pick a format, set its options if it has any, then **Export**. The window reopens on the last format used.
+
 ---
 
 ## Available Formats
@@ -102,6 +104,16 @@ Date formats: see [Dates and Time Zones]({{< relref "features/dates-timezones" >
 
 **Events** attached to elements are exported as `type=event` rows: an export → import round-trip rebuilds the timeline identically.
 
+Options:
+
+| Option | Effect |
+|--------|--------|
+| Content | **All** (re-importable as a graph), **Elements** (with their events) or **Links** only. Links keep the names of their elements in `de` / `vers` |
+| Separator | Comma, semicolon or tab. Excel in some locales (French, German…) expects the semicolon |
+| Excel compatible | Gets the file ready for a double-click in Excel: UTF-8 mark (BOM) for accented characters, and the separator Excel expects in the interface language (comma in English, semicolon otherwise). The separator can still be changed |
+
+The ZeroNeurone import recognises all three separators and the UTF-8 mark.
+
 
 ---
 
@@ -150,6 +162,25 @@ Positions (node center), sizes, shapes, colors, notes, tags, confidence and prop
 GML only accepts ASCII: accents and other special characters are written as codes (`é` → `&#233;`), as NetworkX requires. Software that does not decode them will show them as is; for Gephi, prefer GEXF.
 
 With NetworkX, if several elements share a label, read the file with `nx.read_gml(path, label='id')`.
+
+---
+
+### DOT (Graphviz)
+
+**Text format** of Graphviz, readable by Graphviz, NetworkX and Gephi.
+
+| Property | Value |
+|----------|-------|
+| Extension | `.dot` |
+| Content | DOT graph (`digraph` as soon as one link has an arrow, else `graph`) |
+| Attached files | ❌ Not included |
+| Usage | Graphviz, NetworkX, analysis tools |
+
+Labels, shapes, colors, dashed borders, notes (`tooltip`), tags, confidence, source and properties are exported. Each link states its direction (`dir`): links without arrows stay undirected. Positions are written in points and pinned (`pos="x,y!"`): `neato -n -Tsvg file.dot` draws the graph as it is on the canvas, whereas `dot` computes its own layout.
+
+Nodes keep their original DOT id when they come from a DOT import, else `n0`, `n1`… Exporting then reimporting gives back the same elements, links and positions.
+
+To copy only part of the graph: select at least two elements, then **right-click → Copy as → DOT (Graphviz)**.
 
 ---
 
@@ -253,6 +284,8 @@ Only elements with coordinates are exported.
 | Content | Bitmap image |
 | Resolutions | 1x, 2x, 3x, 4x |
 | Usage | Report, presentation |
+
+The image shows the part of the canvas on screen, without the grid or the minimap, on a white background. Tick **Transparent background** to lay it on a coloured slide or document. In the dark theme, text drawn straight on the background (annotations, link labels) is light: export in the light theme for a white-background document.
 
 
 ---

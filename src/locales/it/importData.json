@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Nodo senza ID ignorato",
       "edgeNoSourceTarget": "Arco senza origine/destinazione ignorato",
-      "edgeMissingNode": "Arco ignorato: nodo origine/destinazione non trovato"
+      "edgeMissingNode": "Arco ignorato: nodo origine/destinazione non trovato",
+      "reciprocalMerged": "Collegamenti reciproci uniti (grafo non orientato): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Nodo duplicato ignorato (id {{id}})",
       "edgeNoSourceTarget": "Arco senza origine/destinazione ignorato",
       "edgeMissingNode": "Arco ignorato: nodo di origine/destinazione non trovato"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "File DOT illeggibile: {{message}}",
+      "empty": "Nessun nodo nel file DOT",
+      "importError": "Errore di importazione DOT: {{message}}",
+      "unknownError": "Errore sconosciuto"
+    },
+    "warnings": {
+      "skippedEdges": "Collegamenti ignorati (invisibili o da un elemento a sé stesso): {{count}}"
     }
   },
   "anx": {

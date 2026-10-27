@@ -39,7 +39,7 @@
   "import": {
     "title": "Dossier importeren",
     "dropzone": "Sleep een bestand of klik om te selecteren",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importeren naar",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Alleen metadata (zonder bestanden)",
       "csv": "CSV",
-      "csvDesc": "Gescheiden tabellen voor elementen en verbindingen",
+      "csvDesc": "Eén tabel: elementen, verbindingen en gebeurtenissen",
       "graphml": "GraphML",
       "graphmlDesc": "Standaard graafformaat (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Native Gephi-formaat (posities, kleuren)",
       "gml": "GML",
       "gmlDesc": "Tekstformaat (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Graphviz-tekstformaat (NetworkX, Gephi, analysetools)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Geografisch formaat voor GIS (QGIS, ArcGIS)",
       "png": "PNG (afbeelding van canvas)",
@@ -169,7 +171,37 @@
     "success": "Export voltooid",
     "successFormat": "{{format}}-export voltooid",
     "error": "Fout tijdens export",
-    "errorPng": "Fout tijdens PNG-export"
+    "errorPng": "Fout tijdens PNG-export",
+    "categories": {
+      "backup": "Back-up",
+      "graph": "Graaf",
+      "data": "Gegevens",
+      "notes": "Notities",
+      "image": "Afbeelding"
+    },
+    "optionsTitle": "Opties",
+    "zip": {
+      "standard": "Standaard",
+      "encrypted": "Versleuteld met wachtwoord",
+      "password": "Wachtwoord",
+      "confirm": "Wachtwoord bevestigen",
+      "mismatch": "De wachtwoorden komen niet overeen",
+      "success": "Versleutelde export gedownload (.znzip)"
+    },
+    "png": {
+      "transparent": "Transparante achtergrond"
+    },
+    "csv": {
+      "content": "Inhoud",
+      "all": "Alles",
+      "elements": "Elementen",
+      "links": "Verbindingen",
+      "separator": "Scheidingsteken",
+      "comma": "Komma",
+      "semicolon": "Puntkomma",
+      "tab": "Tab",
+      "excel": "Compatibel met Excel"
+    }
   },
   "search": {
     "title": "Zoeken",

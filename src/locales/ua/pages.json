@@ -192,7 +192,9 @@
       "analyze": "Аналіз",
       "organize": "Упорядкувати",
       "tabs": "Вкладки",
+      "copyAs": "Копіювати як",
       "copyAsMermaid": "Копіювати як Mermaid",
+      "copyAsDot": "Копіювати як DOT",
       "selectLinks": "Виділити їхні зв'язки",
       "selectAllLinks": "Виділити всі зв'язки",
       "suggestLinks": "Запропонувати зв'язки"
@@ -352,7 +354,8 @@
     "urlCopied": "URL скопійовано",
     "urlCopyFailed": "Не вдалося скопіювати URL",
     "mermaidCopied": "Виділення скопійовано як Mermaid",
-    "mermaidCopyFailed": "Не вдалося скопіювати в буфер обміну"
+    "mermaidCopyFailed": "Не вдалося скопіювати в буфер обміну",
+    "dotCopied": "Виділення скопійовано як DOT"
   },
   "map": {
     "noGeoElements": "Немає геолокалізованих елементів",

@@ -43,6 +43,8 @@ export interface ElementNodeData extends Record<string, unknown> {
   isDimmed: boolean;
   /** Insights emphasis (path/cycle/cluster highlight) — renders a glow */
   isHighlighted?: boolean;
+  /** Element picked in the cycle list — a stronger glow */
+  isFocused?: boolean;
   isGhost?: boolean;
   thumbnail: string | null;
   onResize?: (width: number, height: number, position?: { x: number; y: number }) => void;
@@ -100,7 +102,7 @@ function isLikelyCountryCode(value: string): boolean {
 function FullElementNode({ data }: NodeProps) {
   const { t } = useTranslation('common');
   const nodeData = data as ElementNodeData;
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, activeEvents } = nodeData;
+  const { element, isSelected, isDimmed, isHighlighted, isFocused, isGhost, thumbnail, onResize, isEditing, onLabelChange, onStopEditing, remoteSelectors, unresolvedCommentCount, isLoadingAsset, badgeProperty, showConfidenceIndicator, evaluationModel, displayedPropertyValues, tagDisplayMode, tagDisplaySize, activeEvents } = nodeData;
   const confidenceBadge = showConfidenceIndicator
     ? getEvaluationBadge(element.confidence, element.evaluation, evaluationModel ?? 'zeroneurone')
     : null;
@@ -336,7 +338,9 @@ function FullElementNode({ data }: NodeProps) {
       style={{
         width,
         height,
-        ...(isHighlighted && !isDimmed
+        ...(isFocused && !isDimmed
+          ? { filter: 'drop-shadow(0 0 calc(16px * var(--zn-inv-zoom, 1)) var(--color-accent)) drop-shadow(0 0 calc(8px * var(--zn-inv-zoom, 1)) var(--color-accent)) drop-shadow(0 0 3px var(--color-accent))' }
+          : isHighlighted && !isDimmed
           ? { filter: 'drop-shadow(0 0 calc(6px * var(--zn-inv-zoom, 1)) var(--color-accent)) drop-shadow(0 0 2px var(--color-accent))' }
           : {}),
       }}
@@ -806,6 +810,7 @@ function arePropsEqual(prevProps: NodeProps, nextProps: NodeProps): boolean {
   if (prevData.isSelected !== nextData.isSelected) return false;
   if (prevData.isDimmed !== nextData.isDimmed) return false;
   if (prevData.isHighlighted !== nextData.isHighlighted) return false;
+  if (prevData.isFocused !== nextData.isFocused) return false;
   if (prevData.isGhost !== nextData.isGhost) return false;
   if (prevData.isEditing !== nextData.isEditing) return false;
   if (prevData.activeEvents !== nextData.activeEvents) return false;
@@ -892,7 +897,7 @@ const SHAPE_CLASSES: Record<string, string> = {
  * Same footprint as the full render, so React Flow measures nothing new.
  */
 function LowDetailElementNode({ data }: { data: ElementNodeData }) {
-  const { element, isSelected, isDimmed, isHighlighted, isGhost, thumbnail, hasLinks } = data;
+  const { element, isSelected, isDimmed, isHighlighted, isFocused, isGhost, thumbnail, hasLinks } = data;
   const dark = data.themeMode === 'dark';
   const hasThumbnail = Boolean(thumbnail) && element.visual.hideMedia !== true;
   const { width, height } = computeElementDimensions(
@@ -905,17 +910,18 @@ function LowDetailElementNode({ data }: { data: ElementNodeData }) {
       {/* Kept by a filter or a query: a glow of constant on-screen reach
           (--zn-inv-zoom, set by the canvas) so the results stand out from
           afar (see .result-glow) */}
-      {isHighlighted && !isDimmed && (
+      {(isHighlighted || isFocused) && !isDimmed && (
         <div
           className="result-glow absolute rounded-full pointer-events-none"
           style={{
             left: '50%',
             top: '50%',
-            width: `calc(${Math.max(width, height)}px + 22px * var(--zn-inv-zoom, 1))`,
-            height: `calc(${Math.max(width, height)}px + 22px * var(--zn-inv-zoom, 1))`,
+            // The element picked in the cycle list: twice the reach, in accent
+            width: `calc(${Math.max(width, height)}px + ${isFocused ? 44 : 22}px * var(--zn-inv-zoom, 1))`,
+            height: `calc(${Math.max(width, height)}px + ${isFocused ? 44 : 22}px * var(--zn-inv-zoom, 1))`,
             transform: 'translate(-50%, -50%)',
             // Each result glows in its own colour
-            ['--glow-color' as string]: getThemeAwareColor(element.visual.color, dark),
+            ['--glow-color' as string]: isFocused ? 'var(--color-accent)' : getThemeAwareColor(element.visual.color, dark),
           }}
         />
       )}

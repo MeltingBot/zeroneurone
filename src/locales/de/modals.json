@@ -39,7 +39,7 @@
   "import": {
     "title": "Akte importieren",
     "dropzone": "Datei ablegen oder klicken zum Auswählen",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogie: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importieren in",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Nur Metadaten (ohne Dateien)",
       "csv": "CSV",
-      "csvDesc": "Getrennte Element- und Verbindungstabellen",
+      "csvDesc": "Eine Tabelle: Elemente, Verbindungen und Ereignisse",
       "graphml": "GraphML",
       "graphmlDesc": "Standard-Graphformat (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Natives Gephi-Format (Positionen, Farben)",
       "gml": "GML",
       "gmlDesc": "Textformat (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Graphviz-Textformat (NetworkX, Gephi, Analysewerkzeuge)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Geographisches Format für GIS (QGIS, ArcGIS)",
       "png": "PNG (Bild der Arbeitsfläche)",
@@ -169,7 +171,37 @@
     "success": "Export abgeschlossen",
     "successFormat": "{{format}}-Export abgeschlossen",
     "error": "Fehler beim Export",
-    "errorPng": "Fehler beim PNG-Export"
+    "errorPng": "Fehler beim PNG-Export",
+    "categories": {
+      "backup": "Sicherung",
+      "graph": "Graph",
+      "data": "Daten",
+      "notes": "Notizen",
+      "image": "Bild"
+    },
+    "optionsTitle": "Optionen",
+    "zip": {
+      "standard": "Standard",
+      "encrypted": "Mit Passwort verschlüsselt",
+      "password": "Passwort",
+      "confirm": "Passwort bestätigen",
+      "mismatch": "Die Passwörter stimmen nicht überein",
+      "success": "Verschlüsselter Export heruntergeladen (.znzip)"
+    },
+    "png": {
+      "transparent": "Transparenter Hintergrund"
+    },
+    "csv": {
+      "content": "Inhalt",
+      "all": "Alles",
+      "elements": "Elemente",
+      "links": "Verbindungen",
+      "separator": "Trennzeichen",
+      "comma": "Komma",
+      "semicolon": "Semikolon",
+      "tab": "Tabulator",
+      "excel": "Excel-kompatibel"
+    }
   },
   "search": {
     "title": "Suchen",

@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Knooppunt zonder ID overgeslagen",
       "edgeNoSourceTarget": "Rand zonder bron/doel overgeslagen",
-      "edgeMissingNode": "Rand overgeslagen: bron-/doelknooppunt niet gevonden"
+      "edgeMissingNode": "Rand overgeslagen: bron-/doelknooppunt niet gevonden",
+      "reciprocalMerged": "Wederzijdse koppelingen samengevoegd (ongerichte graaf): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Dubbele knoop overgeslagen (id {{id}})",
       "edgeNoSourceTarget": "Verbinding zonder bron/doel overgeslagen",
       "edgeMissingNode": "Verbinding overgeslagen: bron-/doelknoop niet gevonden"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "DOT-bestand onleesbaar: {{message}}",
+      "empty": "Geen knopen in het DOT-bestand",
+      "importError": "DOT-importfout: {{message}}",
+      "unknownError": "Onbekende fout"
+    },
+    "warnings": {
+      "skippedEdges": "Koppelingen overgeslagen (onzichtbaar of van een element naar zichzelf): {{count}}"
     }
   },
   "anx": {

@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "IDrik gabeko nodoa baztertua",
       "edgeNoSourceTarget": "Iturri/helburuik gabeko ertza baztertua",
-      "edgeMissingNode": "Ertza baztertua: iturri/helburu nodoa ez da aurkitu"
+      "edgeMissingNode": "Ertza baztertua: iturri/helburu nodoa ez da aurkitu",
+      "reciprocalMerged": "Elkarrekiko loturak bateratuta (grafo ez-zuzendua): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Nodo bikoiztua baztertu da (id {{id}})",
       "edgeNoSourceTarget": "Iturburu/helmuga gabeko ertza baztertu da",
       "edgeMissingNode": "Ertza baztertu da: iturburu/helmuga nodoa ez da aurkitu"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "DOT fitxategia ezin da irakurri: {{message}}",
+      "empty": "Ez dago nodorik DOT fitxategian",
+      "importError": "DOT inportazio errorea: {{message}}",
+      "unknownError": "Errore ezezaguna"
+    },
+    "warnings": {
+      "skippedEdges": "Baztertutako loturak (ikusezinak edo elementu batetik bere buruarenganakoak): {{count}}"
     }
   },
   "anx": {

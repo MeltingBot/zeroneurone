@@ -25,6 +25,8 @@ export const LINK_SELECTED = 1;
 export const LINK_DIMMED = 2;
 export const LINK_ARROW_START = 4;
 export const LINK_ARROW_END = 8;
+/** Part of an analysis result: drawn with a glow. */
+export const LINK_HIGHLIGHTED = 16;
 
 // Line styles (borders and links)
 export const STYLE_SOLID = 0;

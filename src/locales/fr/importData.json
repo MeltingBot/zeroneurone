@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Nœud sans ID ignoré",
       "edgeNoSourceTarget": "Arête sans source/cible ignorée",
-      "edgeMissingNode": "Arête ignorée : nœud source/cible non trouvé"
+      "edgeMissingNode": "Arête ignorée : nœud source/cible non trouvé",
+      "reciprocalMerged": "Liens réciproques fusionnés (graphe non orienté) : {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Nœud en double ignoré (id {{id}})",
       "edgeNoSourceTarget": "Arête sans source/cible ignorée",
       "edgeMissingNode": "Arête ignorée : nœud source/cible non trouvé"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "Fichier DOT illisible : {{message}}",
+      "empty": "Aucun nœud dans le fichier DOT",
+      "importError": "Erreur d'import DOT : {{message}}",
+      "unknownError": "Erreur inconnue"
+    },
+    "warnings": {
+      "skippedEdges": "Liens ignorés (invisibles ou d'un élément vers lui-même) : {{count}}"
     }
   },
   "anx": {

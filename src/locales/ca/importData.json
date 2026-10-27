@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Node sense ID omès",
       "edgeNoSourceTarget": "Aresta sense origen/destí omesa",
-      "edgeMissingNode": "Aresta omesa: node origen/destí no trobat"
+      "edgeMissingNode": "Aresta omesa: node origen/destí no trobat",
+      "reciprocalMerged": "Enllaços recíprocs fusionats (graf no dirigit): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Node duplicat omès (id {{id}})",
       "edgeNoSourceTarget": "Aresta sense origen/destinació omesa",
       "edgeMissingNode": "Aresta omesa: node d'origen/destinació no trobat"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "Fitxer DOT il·legible: {{message}}",
+      "empty": "Cap node al fitxer DOT",
+      "importError": "Error d'importació DOT: {{message}}",
+      "unknownError": "Error desconegut"
+    },
+    "warnings": {
+      "skippedEdges": "Enllaços omesos (invisibles o d'un element a si mateix): {{count}}"
     }
   },
   "anx": {

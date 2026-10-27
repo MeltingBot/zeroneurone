@@ -39,7 +39,7 @@
   "import": {
     "title": "Importuj teczka",
     "dropzone": "Upuść plik lub kliknij, aby wybrać",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importuj do",
@@ -121,13 +121,15 @@
       "json": "JSON",
       "jsonDesc": "Tylko metadane (bez plików)",
       "csv": "CSV",
-      "csvDesc": "Oddzielne tabele elementów i połączeń",
+      "csvDesc": "Jedna tabela: elementy, połączenia i zdarzenia",
       "graphml": "GraphML",
       "graphmlDesc": "Standardowy format grafu (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Natywny format Gephi (pozycje, kolory)",
       "gml": "GML",
       "gmlDesc": "Format tekstowy (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Format tekstowy Graphviz (NetworkX, Gephi, narzędzia analityczne)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Format geograficzny dla GIS (QGIS, ArcGIS)",
       "png": "PNG (obraz tablicy)",
@@ -171,7 +173,37 @@
     "success": "Eksport zakończony",
     "successFormat": "Eksport {{format}} zakończony",
     "error": "Błąd podczas eksportu",
-    "errorPng": "Błąd podczas eksportu PNG"
+    "errorPng": "Błąd podczas eksportu PNG",
+    "categories": {
+      "backup": "Kopia zapasowa",
+      "graph": "Graf",
+      "data": "Dane",
+      "notes": "Notatki",
+      "image": "Obraz"
+    },
+    "optionsTitle": "Opcje",
+    "zip": {
+      "standard": "Standardowy",
+      "encrypted": "Zaszyfrowany hasłem",
+      "password": "Hasło",
+      "confirm": "Potwierdź hasło",
+      "mismatch": "Hasła nie są zgodne",
+      "success": "Pobrano zaszyfrowany eksport (.znzip)"
+    },
+    "png": {
+      "transparent": "Przezroczyste tło"
+    },
+    "csv": {
+      "content": "Zawartość",
+      "all": "Wszystko",
+      "elements": "Elementy",
+      "links": "Połączenia",
+      "separator": "Separator",
+      "comma": "Przecinek",
+      "semicolon": "Średnik",
+      "tab": "Tabulator",
+      "excel": "Zgodny z Excelem"
+    }
   },
   "search": {
     "title": "Szukaj",

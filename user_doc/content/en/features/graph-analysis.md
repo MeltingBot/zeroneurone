@@ -141,6 +141,10 @@ Detect **cycles** (closed loops of relationships, with no repeated element) in t
 2. Set the **maximum length** (number of elements in the loop, 3 to 10) to bound the search
 3. Cycles found are listed (sorted shortest to longest); the union is highlighted on the canvas, clicking a cycle highlights that one only
 
+On the canvas, only the links forming the cycles glow, with animated dashes. With **Respect link direction**, the dashes run the way the circuit goes, so it can be followed at a glance. Without it, a loop has no sense: the dashes go back and forth, as they do on a link two shown cycles walk in opposite senses. A relation between two elements of a cycle that is not part of it (a chord) stays plain. When the system asks for reduced motion, the dashes stay still.
+
+Clicking an **element** in the list highlights its cycle, centres the view on it and gives it a stronger glow, so you can spot where it sits in the loop at a glance. Clicking elsewhere on the row goes back to the cycle alone.
+
 Each cycle is listed once (equivalent rotations and traversal directions are deduplicated). By default the search is **undirected**: the loop exists regardless of link direction.
 
 Check **Respect link direction** to keep only **directed circuits** — each link must be crossed in its own direction (A→B→C→A following the arrows). This is the relevant mode for financial circuits or flows. A `forward` link is only crossable from source to target, a `backward` link only the other way; **undirected** (or bidirectional) links stay crossable both ways and therefore do not block a circuit.

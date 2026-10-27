@@ -39,7 +39,7 @@
   "import": {
     "title": "Імпортувати справа",
     "dropzone": "Перетягніть файл або клацніть для вибору",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Генеалогія: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Імпортувати до",
@@ -121,13 +121,15 @@
       "json": "JSON",
       "jsonDesc": "Лише метадані (без файлів)",
       "csv": "CSV",
-      "csvDesc": "Окремі таблиці елементів та зв'язків",
+      "csvDesc": "Одна таблиця: елементи, зв'язки та події",
       "graphml": "GraphML",
       "graphmlDesc": "Стандартний формат графу (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Рідний формат Gephi (позиції, кольори)",
       "gml": "GML",
       "gmlDesc": "Текстовий формат (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Текстовий формат Graphviz (NetworkX, Gephi, інструменти аналізу)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Географічний формат для ГІС (QGIS, ArcGIS)",
       "png": "PNG (зображення дошки)",
@@ -171,7 +173,37 @@
     "success": "Експорт завершено",
     "successFormat": "Експорт {{format}} завершено",
     "error": "Помилка під час експорту",
-    "errorPng": "Помилка під час експорту PNG"
+    "errorPng": "Помилка під час експорту PNG",
+    "categories": {
+      "backup": "Резервна копія",
+      "graph": "Граф",
+      "data": "Дані",
+      "notes": "Нотатки",
+      "image": "Зображення"
+    },
+    "optionsTitle": "Параметри",
+    "zip": {
+      "standard": "Стандартний",
+      "encrypted": "Зашифрований паролем",
+      "password": "Пароль",
+      "confirm": "Підтвердіть пароль",
+      "mismatch": "Паролі не збігаються",
+      "success": "Зашифрований експорт завантажено (.znzip)"
+    },
+    "png": {
+      "transparent": "Прозорий фон"
+    },
+    "csv": {
+      "content": "Вміст",
+      "all": "Усе",
+      "elements": "Елементи",
+      "links": "Зв'язки",
+      "separator": "Роздільник",
+      "comma": "Кома",
+      "semicolon": "Крапка з комою",
+      "tab": "Табуляція",
+      "excel": "Сумісний з Excel"
+    }
   },
   "search": {
     "title": "Пошук",

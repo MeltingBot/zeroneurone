@@ -192,7 +192,9 @@
       "analyze": "Analyze",
       "organize": "Organize",
       "tabs": "Tabs",
+      "copyAs": "Copy as",
       "copyAsMermaid": "Copy as Mermaid",
+      "copyAsDot": "Copy as DOT",
       "selectLinks": "Select their links",
       "selectAllLinks": "Select all links",
       "suggestLinks": "Suggest links"
@@ -351,7 +353,8 @@
     "urlCopied": "URL copied",
     "urlCopyFailed": "Failed to copy URL",
     "mermaidCopied": "Selection copied as Mermaid",
-    "mermaidCopyFailed": "Could not copy to the clipboard"
+    "mermaidCopyFailed": "Could not copy to the clipboard",
+    "dotCopied": "Selection copied as DOT"
   },
   "map": {
     "noGeoElements": "No geolocated elements",

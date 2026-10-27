@@ -30,6 +30,16 @@ interface InsightsState {
 
   // Cycle detection
   cycles: CycleResult[];
+  /**
+   * Links of the highlighted cycles and the way they are walked. 'both' when
+   * the walk has no meaning (undirected search) or two shown cycles disagree.
+   * Read while highlightType is 'cycle'.
+   */
+  cycleLinkFlow: Map<string, CycleLinkFlow>;
+  /** Whether the last cycle search followed link direction. */
+  cyclesDirected: boolean;
+  /** Element picked in the cycle list: a stronger glow on the canvas. Read while highlightType is 'cycle'. */
+  focusedElementId: ElementId | null;
 
   // Actions
   computeInsights: (elements: Element[], links: Link[]) => void;
@@ -47,10 +57,31 @@ interface InsightsState {
   highlightPath: (pathIndex: number) => void;
   findCycles: (maxLength?: number, directed?: boolean) => void;
   highlightCycle: (cycleIndex: number) => void;
+  /** Highlight a cycle and single out one of its elements. */
+  focusCycleElement: (cycleIndex: number, elementId: ElementId) => void;
   clearCycles: () => void;
   clearHighlight: () => void;
   clearPaths: () => void;
   clear: () => void;
+}
+
+export type CycleLinkFlow = 'forward' | 'backward' | 'both';
+
+/**
+ * Each link of the cycles with the way it is walked. An undirected search
+ * walks its loops in an arbitrary sense, so no sense is shown ('both'); so
+ * too for a link two shown cycles walk in opposite senses.
+ */
+function cycleLinkFlowOf(cycles: readonly CycleResult[], directed: boolean): Map<string, CycleLinkFlow> {
+  const flow = new Map<string, CycleLinkFlow>();
+  for (const c of cycles) {
+    for (const step of c.links) {
+      const walk: CycleLinkFlow = !directed ? 'both' : step.forward ? 'forward' : 'backward';
+      const seen = flow.get(step.linkId);
+      flow.set(step.linkId, seen === undefined || seen === walk ? walk : 'both');
+    }
+  }
+  return flow;
 }
 
 export const useInsightsStore = create<InsightsState>((set, get) => ({
@@ -75,6 +106,9 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   pathSearchMode: null,
 
   cycles: [],
+  cycleLinkFlow: new Map(),
+  cyclesDirected: false,
+  focusedElementId: null,
 
   // Actions
   computeInsights: (elements, links) => {
@@ -249,7 +283,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
 
   findCycles: (maxLength = 6, directed = false) => {
     const cycles = insightsService.findCycles(maxLength, 100, directed);
-    set({ cycles });
+    set({ cycles, cyclesDirected: directed, focusedElementId: null });
 
     // Highlight the union of every cycle so all loops are visible at once.
     if (cycles.length > 0) {
@@ -259,23 +293,31 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       }
       set({
         highlightedElementIds: union,
+        cycleLinkFlow: cycleLinkFlowOf(cycles, directed),
         highlightType: 'cycle',
         selectedClusterId: null,
       });
     } else {
-      set({ highlightedElementIds: new Set(), highlightType: null });
+      set({ highlightedElementIds: new Set(), cycleLinkFlow: new Map(), highlightType: null });
     }
   },
 
   highlightCycle: (cycleIndex) => {
-    const { cycles } = get();
+    const { cycles, cyclesDirected } = get();
     if (cycles[cycleIndex]) {
       set({
         highlightedElementIds: new Set(cycles[cycleIndex].cycle),
+        cycleLinkFlow: cycleLinkFlowOf([cycles[cycleIndex]], cyclesDirected),
+        focusedElementId: null,
         highlightType: 'cycle',
         selectedClusterId: null,
       });
     }
+  },
+
+  focusCycleElement: (cycleIndex, elementId) => {
+    get().highlightCycle(cycleIndex);
+    if (get().cycles[cycleIndex]) set({ focusedElementId: elementId });
   },
 
   clearCycles: () => {
@@ -285,6 +327,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   clearHighlight: () => {
     set({
       highlightedElementIds: new Set(),
+      cycleLinkFlow: new Map(),
+      focusedElementId: null,
       highlightType: null,
       selectedClusterId: null,
     });
@@ -302,6 +346,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   clear: () => {
     insightsService.clear();
     set({
+      cycleLinkFlow: new Map(),
+      focusedElementId: null,
       clusters: [],
       centrality: [],
       bridges: [],

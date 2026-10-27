@@ -39,7 +39,7 @@
   "import": {
     "title": "Importa un'fascicolo",
     "dropzone": "Trascina un file o clicca per selezionare",
-    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
+    "supportedFormats": "ZIP, JSON, CSV, GraphML/XML, GEXF, GML, DOT (Graphviz), ANX/ANB (i2), Excalidraw, draw.io, Mermaid, OSINTracker, FEC",
     "jsonFormats": "JSON: ZeroNeurone, Gephi Lite, OSINT Industries, Graph Palette, PredicaGraph, STIX 2.1, GeoJSON",
     "genealogyFormats": "Genealogia: GEDCOM 5.5.1/7.0 (.ged), GeneWeb (.gw)",
     "importInto": "Importa in",
@@ -119,13 +119,15 @@
       "json": "JSON",
       "jsonDesc": "Solo metadati (senza file)",
       "csv": "CSV",
-      "csvDesc": "Tabelle elementi e collegamenti separate",
+      "csvDesc": "Una tabella: elementi, collegamenti ed eventi",
       "graphml": "GraphML",
       "graphmlDesc": "Formato grafo standard (Gephi, yEd)",
       "gexf": "GEXF",
       "gexfDesc": "Formato nativo Gephi (posizioni, colori)",
       "gml": "GML",
       "gmlDesc": "Formato testo (Gephi, yEd, NetworkX, igraph)",
+      "dot": "DOT",
+      "dotDesc": "Formato testo Graphviz (NetworkX, Gephi, strumenti di analisi)",
       "geojson": "GeoJSON",
       "geojsonDesc": "Formato geografico per GIS (QGIS, ArcGIS)",
       "png": "PNG (immagine della lavagna)",
@@ -169,7 +171,37 @@
     "success": "Esportazione completata",
     "successFormat": "Esportazione {{format}} completata",
     "error": "Errore durante l'esportazione",
-    "errorPng": "Errore durante l'esportazione PNG"
+    "errorPng": "Errore durante l'esportazione PNG",
+    "categories": {
+      "backup": "Backup",
+      "graph": "Grafo",
+      "data": "Dati",
+      "notes": "Note",
+      "image": "Immagine"
+    },
+    "optionsTitle": "Opzioni",
+    "zip": {
+      "standard": "Standard",
+      "encrypted": "Cifrato con password",
+      "password": "Password",
+      "confirm": "Conferma password",
+      "mismatch": "Le password non corrispondono",
+      "success": "Esportazione cifrata scaricata (.znzip)"
+    },
+    "png": {
+      "transparent": "Sfondo trasparente"
+    },
+    "csv": {
+      "content": "Contenuto",
+      "all": "Tutto",
+      "elements": "Elementi",
+      "links": "Collegamenti",
+      "separator": "Separatore",
+      "comma": "Virgola",
+      "semicolon": "Punto e virgola",
+      "tab": "Tabulazione",
+      "excel": "Compatibile con Excel"
+    }
   },
   "search": {
     "title": "Cerca",

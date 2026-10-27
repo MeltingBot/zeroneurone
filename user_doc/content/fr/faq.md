@@ -379,7 +379,7 @@ Techniquement, pas de limite. Pratiquement, au-delà de 10 ça peut devenir conf
 
 ### Et les gros dossiers ?
 
-ZeroNeurone est mesuré et testé, collaboration comprise, sur des dossiers de **10 000 éléments et 15 000 liens**. Créer, supprimer, annuler et changer d'onglet restent rapides. Tout dézoomé sur plus de 1 500 éléments à l'écran, le graphe entier (éléments et liens) est dessiné d'un seul bloc : déplacement et zoom restent fluides, et tous les liens sont visibles. On y sélectionne (clic, Maj+cadre), on y ouvre le menu contextuel et on y déplace un élément ou la sélection en le saisissant exactement (à côté, le glisser déplace la vue). Pour relier des éléments, zoomez. En zoom rapproché, au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom.
+ZeroNeurone est mesuré et testé, collaboration comprise, sur des dossiers de **10 000 éléments et 15 000 liens**. Créer, supprimer, annuler et changer d'onglet restent rapides. Tout dézoomé sur plus de 1 500 éléments à l'écran, le graphe entier (éléments et liens) est dessiné d'un seul bloc : déplacement et zoom restent fluides, et tous les liens sont visibles. On y sélectionne (clic, Maj+cadre), on y ouvre le menu contextuel et on y déplace un élément ou la sélection en le saisissant exactement (à côté, le glisser déplace la vue). Un lien se sélectionne d'un clic, sauf là où plusieurs traits se croisent : le clic désélectionne alors tout, zoomez pour viser. Pour relier des éléments, zoomez. En zoom rapproché, au-delà de 500 éléments, les liens sont masqués pendant le pan/zoom.
 
 **Limite opérationnelle : environ 12 000 éléments sur un même onglet.** Au-delà, le dossier s'ouvre et s'affiche, mais la navigation perd en fluidité.
 

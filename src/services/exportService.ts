@@ -24,7 +24,16 @@ function propertyValueToCSV(prop: Property): string {
 }
 
 
-export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'gml' | 'geojson' | 'anx' | 'obsidian' | 'zip';
+/** CSV export: which rows, which separator, and a BOM for Excel. */
+export interface CSVExportOptions {
+  /** Elements (with their events), links, or both — only both re-imports as a graph. */
+  content?: 'all' | 'elements' | 'links';
+  delimiter?: ',' | ';' | '\t';
+  /** UTF-8 byte order mark: Excel then reads accents right. */
+  excel?: boolean;
+}
+
+export type ExportFormat = 'json' | 'csv' | 'graphml' | 'gexf' | 'gml' | 'dot' | 'geojson' | 'anx' | 'obsidian' | 'zip';
 
 /** Asset metadata for export (without binary data) */
 export interface ExportedAssetMeta {
@@ -354,16 +363,23 @@ class ExportService {
   /**
    * Export elements and links to unified CSV format with type column
    */
-  exportToCSV(elements: Element[], links: Link[]): string {
+  exportToCSV(elements: Element[], links: Link[], options: CSVExportOptions = {}): string {
+    const delimiter = options.delimiter ?? ',';
+    const content = options.content ?? 'all';
+    const esc = (value: string): string => this.escapeCSV(value, delimiter);
+    // Elements carry their events; links alone keep the element labels in de/vers
+    const rowElements = content === 'links' ? [] : elements;
+    const rowLinks = content === 'elements' ? [] : links;
+
     // Build a map of element IDs to labels for resolving links
     const elementLabels = new Map<string, string>();
     elements.forEach((el) => elementLabels.set(el.id, el.label));
 
     // Collect all unique property keys from elements, links and element events
     const propertyKeys = new Set<string>();
-    elements.forEach((el) => el.properties?.forEach((p) => propertyKeys.add(p.key)));
-    links.forEach((link) => link.properties?.forEach((p) => propertyKeys.add(p.key)));
-    elements.forEach((el) => el.events?.forEach((ev) => ev.properties?.forEach((p) => propertyKeys.add(p.key))));
+    rowElements.forEach((el) => el.properties?.forEach((p) => propertyKeys.add(p.key)));
+    rowLinks.forEach((link) => link.properties?.forEach((p) => propertyKeys.add(p.key)));
+    rowElements.forEach((el) => el.events?.forEach((ev) => ev.properties?.forEach((p) => propertyKeys.add(p.key))));
     const sortedPropertyKeys = Array.from(propertyKeys).sort((a, b) => a.localeCompare(b, 'fr'));
 
     const baseHeaders = [
@@ -398,16 +414,16 @@ class ExportService {
     const rows: string[][] = [];
 
     // Add elements
-    for (const el of elements) {
+    for (const el of rowElements) {
       const baseRow = [
         'element',
-        this.escapeCSV(el.label),
+        esc(el.label),
         '', // de
         '', // vers
-        this.escapeCSV(el.notes),
-        this.escapeCSV(el.tags.join(';')),
+        esc(el.notes),
+        esc(el.tags.join(';')),
         el.confidence?.toString() ?? '',
-        this.escapeCSV(el.source),
+        esc(el.source),
         el.date ? toLocalDateKey(new Date(el.date)) : '',
         '', // date_debut
         '', // date_fin
@@ -427,22 +443,22 @@ class ExportService {
       // Add property values
       const propsMap = new Map(el.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
       for (const key of sortedPropertyKeys) {
-        baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
+        baseRow.push(esc(propsMap.get(key) ?? ''));
       }
       rows.push(baseRow);
     }
 
     // Add links
-    for (const link of links) {
+    for (const link of rowLinks) {
       const baseRow = [
         'lien',
-        this.escapeCSV(link.label),
-        this.escapeCSV(elementLabels.get(link.fromId) || link.fromId),
-        this.escapeCSV(elementLabels.get(link.toId) || link.toId),
-        this.escapeCSV(link.notes),
+        esc(link.label),
+        esc(elementLabels.get(link.fromId) || link.fromId),
+        esc(elementLabels.get(link.toId) || link.toId),
+        esc(link.notes),
         '', // tags
         link.confidence?.toString() ?? '',
-        this.escapeCSV(link.source),
+        esc(link.source),
         '', // date
         link.dateRange?.start ? formatPreciseDateKey(new Date(link.dateRange.start), link.dateRange.precision, link.dateRange.approximate, link.dateRange.timeZone) : '',
         link.dateRange?.end ? formatPreciseDateKey(new Date(link.dateRange.end), link.dateRange.precision, link.dateRange.approximate, link.dateRange.timeZone) : '',
@@ -462,23 +478,23 @@ class ExportService {
       // Add property values
       const propsMap = new Map(link.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
       for (const key of sortedPropertyKeys) {
-        baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
+        baseRow.push(esc(propsMap.get(key) ?? ''));
       }
       rows.push(baseRow);
     }
 
     // Add events (one row per event, attached to its parent element via "de")
-    for (const el of elements) {
+    for (const el of rowElements) {
       for (const ev of el.events ?? []) {
         const baseRow = [
           'event',
-          this.escapeCSV(ev.label),
-          this.escapeCSV(el.label), // de = parent element
+          esc(ev.label),
+          esc(el.label), // de = parent element
           '', // vers
-          this.escapeCSV(ev.description ?? ''),
+          esc(ev.description ?? ''),
           '', // tags
           '', // confiance
-          this.escapeCSV(ev.source ?? ''),
+          esc(ev.source ?? ''),
           ev.date ? formatPreciseDateKey(new Date(ev.date), ev.precision, ev.approximate, ev.timeZone) : '',
           '', // date_debut
           ev.dateEnd ? formatPreciseDateKey(new Date(ev.dateEnd), ev.precision, ev.approximate, ev.timeZone) : '',
@@ -498,13 +514,14 @@ class ExportService {
         // Add property values
         const propsMap = new Map(ev.properties?.map((p) => [p.key, propertyValueToCSV(p)]) ?? []);
         for (const key of sortedPropertyKeys) {
-          baseRow.push(this.escapeCSV(propsMap.get(key) ?? ''));
+          baseRow.push(esc(propsMap.get(key) ?? ''));
         }
         rows.push(baseRow);
       }
     }
 
-    return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+    const bom = options.excel ? '﻿' : '';
+    return bom + [headers.map(esc).join(delimiter), ...rows.map((row) => row.join(delimiter))].join('\n');
   }
 
   /** GEXF attvalues of a grading ("B2" + its scale), empty when not graded */
@@ -878,7 +895,8 @@ ${edges}
     queryHistory?: string[],
     comments?: Comment[],
     obsidianLabels?: ObsidianLabels,
-    obsidianFolderByTag?: boolean
+    obsidianFolderByTag?: boolean,
+    csvOptions?: CSVExportOptions,
   ): Promise<void> {
     const now = new Date();
     const timestamp = `${toLocalDateKey(now)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
@@ -897,8 +915,8 @@ ${edges}
       }
       case 'csv': {
         // Export unified CSV with elements and links
-        const csv = this.exportToCSV(elements, links);
-        this.download(csv, `${baseName}.csv`, 'text/csv');
+        const csv = this.exportToCSV(elements, links, csvOptions);
+        this.download(csv, `${baseName}.csv`, 'text/csv;charset=utf-8');
         break;
       }
       case 'graphml': {
@@ -914,6 +932,11 @@ ${edges}
       case 'gml': {
         const { buildGMLExport } = await import('./exportGML');
         this.download(buildGMLExport(dossier, elements, links), `${baseName}.gml`, 'text/plain');
+        break;
+      }
+      case 'dot': {
+        const { buildDOTExport } = await import('./exportDOT');
+        this.download(buildDOTExport(dossier.name ?? '', elements, links), `${baseName}.dot`, 'text/vnd.graphviz');
         break;
       }
       case 'geojson': {
@@ -935,12 +958,12 @@ ${edges}
     }
   }
 
-  private escapeCSV(value: string): string {
+  private escapeCSV(value: string, delimiter = ','): string {
     // Prevent spreadsheet formula injection (=, +, -, @, tab, carriage return)
     if (/^[=+\-@\t\r]/.test(value)) {
       value = "'" + value;
     }
-    if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes("'")) {
+    if (value.includes(delimiter) || value.includes(',') || value.includes('"') || value.includes('\n') || value.includes("'")) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;

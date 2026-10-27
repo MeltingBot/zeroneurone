@@ -111,7 +111,8 @@
     "warnings": {
       "nodeNoId": "Knoten ohne ID übersprungen",
       "edgeNoSourceTarget": "Kante ohne Quelle/Ziel übersprungen",
-      "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden"
+      "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden",
+      "reciprocalMerged": "Wechselseitige Verbindungen zusammengeführt (ungerichteter Graph): {{count}}"
     }
   },
   "gml": {
@@ -127,6 +128,17 @@
       "duplicateNodeId": "Doppelter Knoten übersprungen (ID {{id}})",
       "edgeNoSourceTarget": "Kante ohne Quelle/Ziel übersprungen",
       "edgeMissingNode": "Kante übersprungen: Quell-/Zielknoten nicht gefunden"
+    }
+  },
+  "dot": {
+    "errors": {
+      "parseError": "DOT-Datei nicht lesbar: {{message}}",
+      "empty": "Keine Knoten in der DOT-Datei",
+      "importError": "DOT-Importfehler: {{message}}",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "warnings": {
+      "skippedEdges": "Verbindungen übersprungen (unsichtbar oder von einem Element zu sich selbst): {{count}}"
     }
   },
   "anx": {

@@ -285,7 +285,11 @@ Menu **⋯** → **Importer** → **Télécharger le modèle CSV**
 | Attributs d'arête | Propriétés du lien |
 | viz:color sur arête | Couleur du lien |
 | viz:thickness | Épaisseur du lien |
-| edgedefault | Direction (directed/undirected) |
+| defaultedgetype | Direction (directed/undirected) |
+
+Dans un graphe non orienté, une relation écrite dans les deux sens (A → B et B → A, comme le font rgexf ou NetworkX) devient un seul lien. L'import signale le nombre de liens ainsi fusionnés. Deux arêtes de libellés différents restent distinctes.
+
+Les positions Gephi sont dans ses propres unités, souvent serrées par rapport à la taille des éléments. Le layout est agrandi (jamais réduit) pour que les éléments voisins ne se chevauchent pas ; ses proportions sont conservées. Même règle pour Gephi Lite.
 
 #### Palettes de couleurs
 
@@ -322,6 +326,39 @@ Structure attendue : objet avec `nodes` et `edges`, possédant des `attributes` 
 | `directed` | Direction par défaut, si l'arête n'indique pas ses flèches |
 
 Les nœuds sans position sont disposés en grille. L'identifiant GML de chaque nœud est conservé dans la propriété `gml_id`. Pour un fichier exporté par Gephi (`Creator "Gephi"`), l'axe Y est inversé comme pour le GEXF.
+
+---
+
+### DOT (Graphviz)
+
+**Format texte** de Graphviz (`.dot`, `.gv`), aussi écrit par NetworkX, Gephi, `terraform graph` et de nombreux outils d'analyse.
+
+Trois façons d'importer :
+- **Coller sur le canvas** (Ctrl+V) : un texte commençant par `graph`, `digraph` ou `strict digraph` suivi d'une accolade est reconnu automatiquement
+- **Clic droit sur le canvas → Coller**
+- **Importer** → fichier `.dot` ou `.gv` (nouveau dossier, ou dossier ouvert avec placement sur le canvas)
+
+#### Données importées
+
+| Donnée DOT | Propriété ZeroNeurone |
+|------------|----------------------|
+| `label` (sinon l'identifiant du nœud) | Label de l'élément |
+| Libellé HTML `<...>` ou `record` | Texte seul, sans la mise en forme |
+| `shape` | Forme (ellipse → cercle, box → rectangle, diamond → losange, hexagon/octagon → hexagone, square → carré) |
+| `fillcolor`, `color` (noms X11, `#rrggbb`, HSV) | Couleur et bordure |
+| `style=dashed` / `dotted` | Bordure en tirets ou en pointillés |
+| `tooltip` (ou `notes`), `tags` (séparés par ;), `confidence`, `source` | Notes, tags, confiance, source |
+| Sous-graphe `cluster…` | Tag : son `label`, sinon son nom sans `cluster_` |
+| `pos` (sortie d'un rendu Graphviz) | Position, si tous les nœuds en ont une |
+| Autres attributs (`weight`, `path`…) | Propriétés, valeurs telles qu'écrites |
+| `label`, `color`, `penwidth`, `style` sur un lien | Libellé, couleur, épaisseur, tirets ou pointillés |
+| `dir`, `arrowhead`, `arrowtail` | Direction du lien (`digraph` : flèche par défaut) |
+
+Les valeurs par défaut `node [...]` et `edge [...]` s'appliquent comme dans Graphviz, y compris dans les sous-graphes. Une chaîne `a -> b -> c` donne deux liens, `a -> {b c}` un lien vers chacun. Dans un graphe `strict`, les liens en double sont fusionnés.
+
+Sans positions, le graphe est disposé automatiquement dans le sens de `rankdir` (de haut en bas par défaut). L'identifiant DOT de chaque nœud est conservé dans la propriété `dot_id`.
+
+Ne sont pas importés : les ports (`a:nord`, le lien part de l'élément), les liens invisibles (`style=invis`, aides de mise en page) et les liens d'un élément vers lui-même ; l'import signale combien de liens ont été ignorés. Seuls les libellés et les notes interprètent les codes Graphviz (`\n` pour un retour à la ligne) : un chemin comme `C:\Users\...` garde ses antislashs dans les propriétés.
 
 ---
 
@@ -509,7 +546,7 @@ flowchart LR
 {{< /hint >}}
 
 {{< hint info >}}
-**Dans l'autre sens** : sélectionnez plusieurs éléments, puis clic droit → **Copier en Mermaid** pour obtenir un bloc à coller dans un wiki, Obsidian, GitHub ou un rapport Markdown.
+**Dans l'autre sens** : sélectionnez plusieurs éléments, puis clic droit → **Copier en → Mermaid** pour obtenir un bloc à coller dans un wiki, Obsidian, GitHub ou un rapport Markdown.
 {{< /hint >}}
 
 ---

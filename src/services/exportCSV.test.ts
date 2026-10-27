@@ -36,3 +36,33 @@ describe('CSV export — source time zone', () => {
     expect(cells[cols.indexOf('fuseau')]).toBe('');
   });
 });
+
+describe('CSV export — options', () => {
+  const link = {
+    id: 'l1', fromId: 'e1', toId: 'e2', label: 'connaît', notes: '', properties: [], confidence: null, source: '',
+    dateRange: null, directed: true, visual: { color: '#000', style: 'solid' },
+  } as unknown as Link;
+  const els = [element({ tags: ['a', 'b'] }), element({ id: 'e2', label: 'Bob' })];
+
+  it('separates with semicolons and quotes values that hold one', () => {
+    const csv = exportService.exportToCSV(els, [link], { delimiter: ';' });
+    const [header, alice] = csv.split('\n');
+    expect(header.startsWith('type;label;de;vers')).toBe(true);
+    // Tags are joined with ";": quoted so the row keeps its columns
+    expect(alice).toContain('"a;b"');
+  });
+
+  it('keeps only the elements, or only the links', () => {
+    const elementsOnly = exportService.exportToCSV(els, [link], { content: 'elements' }).split('\n');
+    expect(elementsOnly.slice(1).map((r) => r.split(',')[0])).toEqual(['element', 'element']);
+    const linksOnly = exportService.exportToCSV(els, [link], { content: 'links' }).split('\n');
+    expect(linksOnly.slice(1).map((r) => r.split(',')[0])).toEqual(['lien']);
+    // Links still name their ends
+    expect(linksOnly[1]).toContain('Alice,Bob');
+  });
+
+  it('starts with a BOM for Excel only when asked', () => {
+    expect(exportService.exportToCSV(els, [], { excel: true }).charCodeAt(0)).toBe(0xfeff);
+    expect(exportService.exportToCSV(els, []).charCodeAt(0)).not.toBe(0xfeff);
+  });
+});

@@ -349,6 +349,29 @@ button {
   .suggestion-preview-line { animation: none; }
 }
 
+/* Link of a highlighted cycle: accent dashes moving the way the cycle runs
+   (backward: against the link's from→to; both: no sense to show, back and
+   forth). One period per loop: 8 + 6. */
+.cycle-flow-line {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  stroke-dasharray: 8 6;
+  pointer-events: none;
+  animation: cycle-flow-dash 0.8s linear infinite;
+}
+.cycle-flow-line.backward { animation-direction: reverse; }
+.cycle-flow-line.both { animation: cycle-flow-dash-both 1.2s ease-in-out infinite alternate; }
+@keyframes cycle-flow-dash {
+  to { stroke-dashoffset: -14; }
+}
+@keyframes cycle-flow-dash-both {
+  to { stroke-dashoffset: -28; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cycle-flow-line { animation: none; }
+}
+
 /* Modal shadow - floating paper */
 .modal-shadow {
   box-shadow:

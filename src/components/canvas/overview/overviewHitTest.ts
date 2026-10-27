@@ -184,3 +184,30 @@ export function linksTouching(scene: OverviewScene, nodeIndices: number[]): stri
   }
   return ids;
 }
+
+/**
+ * The link nearest to a flow point, within `tol` flow units of its line
+ * (drawn centre to centre), or -1. The last drawn wins a tie, as on screen.
+ * More than `maxInReach` links in reach is a tangle, not an aimed click: -1.
+ */
+export function hitLink(scene: OverviewScene, fx: number, fy: number, tol: number, maxInReach = Infinity): number {
+  const { x, y, w, h, from, to } = scene;
+  let best = -1;
+  let bestDist = tol;
+  let inReach = 0;
+  for (let l = 0; l < scene.linkCount; l++) {
+    const a = from[l], b = to[l];
+    const ax = x[a] + w[a] / 2, ay = y[a] + h[a] / 2;
+    const bx = x[b] + w[b] / 2, by = y[b] + h[b] / 2;
+    if (fx < Math.min(ax, bx) - tol || fx > Math.max(ax, bx) + tol) continue;
+    if (fy < Math.min(ay, by) - tol || fy > Math.max(ay, by) + tol) continue;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((fx - ax) * dx + (fy - ay) * dy) / len2));
+    const dist = Math.hypot(fx - (ax + t * dx), fy - (ay + t * dy));
+    if (dist > tol) continue;
+    if (++inReach > maxInReach) return -1;
+    if (dist <= bestDist) { bestDist = dist; best = l; }
+  }
+  return best;
+}
