@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.82.0
+
+### Nouveautés
+
+- **Clôture d'un dossier** — panneau Détail ▸ Dates ▸ Clôture ▸ Clôturer
+  (avec confirmation). Un dossier clôturé est en lecture seule jusqu'à sa
+  réouverture : éléments, liens, pièces jointes, commentaires, tags, rapport,
+  onglets, vues et requêtes sauvegardées ne se modifient plus, et aucun import
+  n'y entre. Un bandeau « Clôturé le … — lecture seule » s'affiche sous
+  l'en-tête, la carte d'accueil porte la mention « Clôturé ». Chaque clôture
+  passée reste listée avec sa date de réouverture. Synchronisé en
+  collaboration.
+- **Rétention comptée depuis la clôture** — section Rétention ▸ Compter
+  depuis : la création ou la clôture. Depuis la clôture, le délai part de la
+  première clôture : rouvrir puis reclôturer ne repousse pas l'échéance.
+
+### Améliorations
+
+- Une modification refusée dans un dossier en lecture seule (clôturé, ou
+  rétention expirée en mode « Lecture seule ») affiche un message, au lieu
+  d'échouer sans rien dire.
+
+### Plugins
+
+- Nouveaux événements `dossier:caseClosed` et `dossier:caseReopened`.
+
 ## 2.81.4
 
 ### Corrections

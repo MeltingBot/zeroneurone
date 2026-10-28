@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Fletxa per defecte a les relacions",
       "blurMediaOnOpen": "Difuminar els mitjans en obrir",
       "linkLabelWrap": "Salt de línia a les etiquetes dels enllaços",
-      "linkLabelWrapWidth": "caràcters per línia"
+      "linkLabelWrapWidth": "caràcters per línia",
+      "closure": "Tancament",
+      "close": "Tancar",
+      "reopen": "Reobrir",
+      "notClosed": "En curs",
+      "closeConfirm": "El dossier quedarà en només lectura fins que es reobri.",
+      "cancel": "Cancel·lar",
+      "retentionFrom": "Comptar des de",
+      "retentionFromCreated": "La creació",
+      "retentionFromClosed": "El tancament",
+      "retentionStartsAtClosure": "El termini començarà en el tancament."
     },
     "placeholders": {
       "name": "Nom de l'expedient",

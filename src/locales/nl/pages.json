@@ -40,7 +40,8 @@
       "editTags": "Tags beheren",
       "archive": "Archiveren",
       "unarchive": "Dearchiveren",
-      "archived": "Gearchiveerd"
+      "archived": "Gearchiveerd",
+      "closed": "Afgesloten"
     },
     "landing": {
       "subtitle": "Whiteboard voor analisten en dossierers",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "Kopiëren van URL mislukt",
     "mermaidCopied": "Selectie gekopieerd als Mermaid",
     "mermaidCopyFailed": "Kopiëren naar het klembord mislukt",
-    "dotCopied": "Selectie gekopieerd als DOT"
+    "dotCopied": "Selectie gekopieerd als DOT",
+    "closedBanner": "Afgesloten op {{date}} — alleen-lezen"
   },
   "map": {
     "noGeoElements": "Geen geogelokaliseerde elementen",

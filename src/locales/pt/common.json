@@ -310,5 +310,9 @@
     "view": "Mudança de vista",
     "suggestions": "Sugestões de ligações",
     "export": "Criação do arquivo"
+  },
+  "dossierLock": {
+    "closed": "Dossiê encerrado: só de leitura.",
+    "retention": "Dossiê só de leitura: retenção expirada."
   }
 }

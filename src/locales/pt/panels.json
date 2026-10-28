@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Seta por padrão nas relações",
       "blurMediaOnOpen": "Desfocar média ao abrir",
       "linkLabelWrap": "Quebra de linha nos rótulos das ligações",
-      "linkLabelWrapWidth": "caracteres por linha"
+      "linkLabelWrapWidth": "caracteres por linha",
+      "closure": "Encerramento",
+      "close": "Encerrar",
+      "reopen": "Reabrir",
+      "notClosed": "Em curso",
+      "closeConfirm": "O dossiê ficará só de leitura até ser reaberto.",
+      "cancel": "Cancelar",
+      "retentionFrom": "Contar desde",
+      "retentionFromCreated": "A criação",
+      "retentionFromClosed": "O encerramento",
+      "retentionStartsAtClosure": "O prazo começará no encerramento."
     },
     "placeholders": {
       "name": "Nome do dossiê",

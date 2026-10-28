@@ -40,7 +40,8 @@
       "editTags": "Gestisci tag",
       "archive": "Archivia",
       "unarchive": "Ripristina",
-      "archived": "Archiviato"
+      "archived": "Archiviato",
+      "closed": "Chiuso"
     },
     "landing": {
       "subtitle": "Lavagna per analisti e investigatori",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "Impossibile copiare l'URL",
     "mermaidCopied": "Selezione copiata come Mermaid",
     "mermaidCopyFailed": "Impossibile copiare negli appunti",
-    "dotCopied": "Selezione copiata come DOT"
+    "dotCopied": "Selezione copiata come DOT",
+    "closedBanner": "Chiuso il {{date}} — sola lettura"
   },
   "map": {
     "noGeoElements": "Nessun elemento geolocalizzato",

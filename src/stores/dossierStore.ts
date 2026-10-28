@@ -29,6 +29,7 @@ import {
 import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
 import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
+import { refuseWrite, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
 import { deriveRoomId } from '../services/cryptoService';
 import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
@@ -123,6 +124,9 @@ interface DossierState {
   createDossier: (name: string, description?: string) => Promise<Dossier>;
   createDossierWithId: (id: DossierId, name: string, description?: string, origin?: 'created' | 'joined') => Promise<Dossier>;
   updateDossier: (id: DossierId, changes: Partial<Dossier>) => Promise<void>;
+  /** Close the dossier: read-only until reopened */
+  closeDossier: (id: DossierId) => Promise<void>;
+  reopenDossier: (id: DossierId) => Promise<void>;
   /** Delete every trace of the dossier in this browser, then check: the receipt lists what is left */
   deleteDossier: (id: DossierId) => Promise<PurgeReceipt>;
   unloadDossier: () => void;
@@ -561,12 +565,35 @@ export function setupYDocObserver(
   };
 }
 
-/** Throws if the dossier is in read-only mode (retention expired) */
+/** Throws if the open dossier refuses writes (closed, or retention expired) */
 function assertWritable(get: () => DossierState) {
-  if (get().isReadOnly) {
-    throw new Error('Dossier is read-only (retention expired)');
-  }
+  const reason = lockReasonOf(get());
+  if (reason) refuseWrite(reason);
 }
+
+function lockReasonOf(state: Pick<DossierState, 'currentDossier' | 'isReadOnly'>): DossierLockReason | null {
+  if (state.currentDossier?.closedAt) return 'closed';
+  return state.isReadOnly ? 'retention' : null;
+}
+
+/** Closure history as stored in the Y.Doc meta map (ISO dates) */
+function serializeClosureHistory(history: NonNullable<Dossier['closureHistory']>): { closedAt: string; reopenedAt: string }[] {
+  return history.map((h) => ({ closedAt: new Date(h.closedAt).toISOString(), reopenedAt: new Date(h.reopenedAt).toISOString() }));
+}
+
+function parseClosureHistory(raw: unknown): Dossier['closureHistory'] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw
+    .filter((h): h is { closedAt: string; reopenedAt: string } =>
+      !!h && typeof h.closedAt === 'string' && typeof h.reopenedAt === 'string')
+    .map((h) => ({ closedAt: new Date(h.closedAt), reopenedAt: new Date(h.reopenedAt) }));
+}
+
+/** Dossier fields frozen while the dossier is closed (its lifecycle fields stay editable) */
+const CLOSED_FROZEN_FIELDS: (keyof Dossier)[] = [
+  'name', 'description', 'creator', 'startDate', 'tags', 'properties',
+  'evaluationModel', 'dismissedSuggestions',
+];
 
 /**
  * Force-reconcile canvas tabs from the Y.Doc into the tab store.
@@ -849,6 +876,12 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         };
         if (metaRetDays !== undefined) joinerChanges.retentionDays = metaRetDays;
         if (metaRetPolicy !== undefined) joinerChanges.retentionPolicy = metaRetPolicy as Dossier['retentionPolicy'];
+        const metaRetFrom = metaMap.get('retentionFrom') as Dossier['retentionFrom'] | undefined;
+        if (metaRetFrom !== undefined) joinerChanges.retentionFrom = metaRetFrom;
+        const metaClosedAt = metaMap.get('closedAt') as string | null | undefined;
+        if (metaClosedAt !== undefined) joinerChanges.closedAt = metaClosedAt ? new Date(metaClosedAt) : null;
+        const metaHistory = parseClosureHistory(metaMap.get('closureHistory'));
+        if (metaHistory) joinerChanges.closureHistory = metaHistory;
         const metaEvalModel = metaMap.get('evaluationModel');
         if (isEvaluationModel(metaEvalModel)) joinerChanges.evaluationModel = metaEvalModel;
         const metaDismissed = metaMap.get('dismissedSuggestions');
@@ -1201,6 +1234,13 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   updateDossier: async (id: DossierId, changes: Partial<Dossier>) => {
+    const target = get().currentDossier?.id === id
+      ? get().currentDossier
+      : get().dossiers.find((d) => d.id === id);
+    if (target?.closedAt && changes.closedAt === undefined
+        && CLOSED_FROZEN_FIELDS.some((field) => changes[field] !== undefined)) {
+      refuseWrite('closed');
+    }
     // Update Zustand FIRST (synchronous) for instant UI response
     // _syncFromYDoc will skip heavy parsing and schedule safety re-sync
     localOpPending = true;
@@ -1229,6 +1269,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (changes.properties !== undefined) metaMap.set('properties', changes.properties);
         if (changes.retentionDays !== undefined) metaMap.set('retentionDays', changes.retentionDays);
         if (changes.retentionPolicy !== undefined) metaMap.set('retentionPolicy', changes.retentionPolicy);
+        if (changes.retentionFrom !== undefined) metaMap.set('retentionFrom', changes.retentionFrom);
+        if (changes.closedAt !== undefined) metaMap.set('closedAt', changes.closedAt ? new Date(changes.closedAt).toISOString() : null);
+        if (changes.closureHistory !== undefined) metaMap.set('closureHistory', serializeClosureHistory(changes.closureHistory));
         if (changes.evaluationModel !== undefined) metaMap.set('evaluationModel', changes.evaluationModel);
         if (changes.dismissedSuggestions !== undefined) metaMap.set('dismissedSuggestions', changes.dismissedSuggestions);
         if (changes.options !== undefined) metaMap.set('options', changes.options);
@@ -1238,6 +1281,22 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     // Persist to IndexedDB (async, can happen after UI is updated)
     await dossierRepository.update(id, changes);
     emitPluginEvent('dossier:updated', id);
+  },
+
+  closeDossier: async (id: DossierId) => {
+    await get().updateDossier(id, { closedAt: new Date() });
+    emitPluginEvent('dossier:caseClosed', id);
+  },
+
+  reopenDossier: async (id: DossierId) => {
+    const dossier = get().currentDossier?.id === id ? get().currentDossier : get().dossiers.find((d) => d.id === id);
+    if (!dossier?.closedAt) return;
+    const closureHistory = [
+      ...(dossier.closureHistory ?? []),
+      { closedAt: new Date(dossier.closedAt), reopenedAt: new Date() },
+    ];
+    await get().updateDossier(id, { closedAt: null, closureHistory });
+    emitPluginEvent('dossier:caseReopened', id);
   },
 
   deleteDossier: async (id: DossierId) => {
@@ -2509,6 +2568,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   extractAssetText: async (assetId: string) => {
+    assertWritable(get);
     const asset = get().assets.find((a) => a.id === assetId);
     if (!asset) return;
     const extractedText = await fileService.extractAssetText(asset);
@@ -2547,6 +2607,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // ============================================================================
 
   createComment: async (targetId, targetType, content) => {
+    assertWritable(get);
     const { currentDossier } = get();
     if (!currentDossier) {
       throw new Error('No dossier loaded');
@@ -2587,6 +2648,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   resolveComment: async (id, resolverName) => {
+    assertWritable(get);
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -2607,6 +2669,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   unresolveComment: async (id) => {
+    assertWritable(get);
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -2627,6 +2690,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   deleteComment: async (id) => {
+    assertWritable(get);
     const ydoc = syncService.getYDoc();
     if (!ydoc) {
       throw new Error('Y.Doc not available');
@@ -2648,6 +2712,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   // ============================================================================
 
   renameTag: async (oldName: string, newName: string) => {
+    assertWritable(get);
     const trimmed = newName.trim();
     const { currentDossier, elements, links, updateElement, updateLink } = get();
     const counts = { elements: 0, links: 0 };
@@ -2706,6 +2771,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   addExistingTag: async (tag: string) => {
+    assertWritable(get);
     const { currentDossier } = get();
     if (!currentDossier) return;
 
@@ -3086,6 +3152,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       const metaProperties = metaMap.get('properties') as any[] | undefined;
       const metaRetentionDays = metaMap.get('retentionDays') as number | null | undefined;
       const metaRetentionPolicy = metaMap.get('retentionPolicy') as string | undefined;
+      const metaRetentionFrom = metaMap.get('retentionFrom') as Dossier['retentionFrom'] | undefined;
+      const metaClosedAt = metaMap.get('closedAt') as string | null | undefined;
+      const metaClosureHistory = parseClosureHistory(metaMap.get('closureHistory'));
       const rawEvalModel = metaMap.get('evaluationModel');
       const metaEvaluationModel = isEvaluationModel(rawEvalModel) ? rawEvalModel : undefined;
       const rawDismissed = metaMap.get('dismissedSuggestions');
@@ -3102,6 +3171,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         (metaProperties !== undefined && JSON.stringify(metaProperties) !== JSON.stringify(currentDossier.properties || [])) ||
         (metaRetentionDays !== undefined && metaRetentionDays !== (currentDossier.retentionDays ?? null)) ||
         (metaRetentionPolicy !== undefined && metaRetentionPolicy !== (currentDossier.retentionPolicy || 'warn')) ||
+        (metaRetentionFrom !== undefined && metaRetentionFrom !== (currentDossier.retentionFrom || 'created')) ||
+        (metaClosedAt !== undefined && metaClosedAt !== (currentDossier.closedAt ? new Date(currentDossier.closedAt).toISOString() : null)) ||
+        (metaClosureHistory !== undefined && JSON.stringify(serializeClosureHistory(metaClosureHistory)) !== JSON.stringify(serializeClosureHistory(currentDossier.closureHistory ?? []))) ||
         (metaEvaluationModel !== undefined && metaEvaluationModel !== getEvaluationModel(currentDossier)) ||
         (metaDismissed !== undefined && JSON.stringify(metaDismissed) !== JSON.stringify(currentDossier.dismissedSuggestions || [])) ||
         (metaOptions !== undefined && JSON.stringify(metaOptions) !== JSON.stringify(currentDossier.options || {}));
@@ -3116,6 +3188,9 @@ export const useDossierStore = create<DossierState>((set, get) => ({
         if (metaProperties !== undefined) changes.properties = metaProperties;
         if (metaRetentionDays !== undefined) changes.retentionDays = metaRetentionDays;
         if (metaRetentionPolicy !== undefined) changes.retentionPolicy = metaRetentionPolicy as Dossier['retentionPolicy'];
+        if (metaRetentionFrom !== undefined) changes.retentionFrom = metaRetentionFrom;
+        if (metaClosedAt !== undefined) changes.closedAt = metaClosedAt ? new Date(metaClosedAt) : null;
+        if (metaClosureHistory !== undefined) changes.closureHistory = metaClosureHistory;
         if (metaEvaluationModel !== undefined) changes.evaluationModel = metaEvaluationModel;
         if (metaDismissed !== undefined) changes.dismissedSuggestions = metaDismissed;
         if (metaOptions !== undefined) changes.options = metaOptions;
@@ -3348,3 +3423,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
   },
 }));
+
+// Keep the shared write lock (checked by the other stores) in step with the open dossier
+useDossierStore.subscribe((state) => setOpenDossierLock(lockReasonOf(state)));

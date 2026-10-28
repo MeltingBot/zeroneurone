@@ -40,7 +40,8 @@
       "editTags": "Gerir tags",
       "archive": "Arquivar",
       "unarchive": "Desarquivar",
-      "archived": "Arquivado"
+      "archived": "Arquivado",
+      "closed": "Encerrado"
     },
     "landing": {
       "subtitle": "Quadro branco para analistas e investigadores",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "Falha ao copiar o URL",
     "mermaidCopied": "Seleção copiada como Mermaid",
     "mermaidCopyFailed": "Não foi possível copiar para a área de transferência",
-    "dotCopied": "Seleção copiada como DOT"
+    "dotCopied": "Seleção copiada como DOT",
+    "closedBanner": "Encerrado em {{date}} — só de leitura"
   },
   "map": {
     "noGeoElements": "Nenhum elemento geolocalizado",

@@ -40,7 +40,8 @@
       "editTags": "Tags verwalten",
       "archive": "Archivieren",
       "unarchive": "Wiederherstellen",
-      "archived": "Archiviert"
+      "archived": "Archiviert",
+      "closed": "Abgeschlossen"
     },
     "landing": {
       "subtitle": "Whiteboard für Analysten und Ermittler",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "URL konnte nicht kopiert werden",
     "mermaidCopied": "Auswahl als Mermaid kopiert",
     "mermaidCopyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
-    "dotCopied": "Auswahl als DOT kopiert"
+    "dotCopied": "Auswahl als DOT kopiert",
+    "closedBanner": "Abgeschlossen am {{date}} — schreibgeschützt"
   },
   "map": {
     "noGeoElements": "Keine geolokalisierte Elemente",

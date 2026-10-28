@@ -275,6 +275,9 @@ export type PluginEventType =
   | 'dossier:deleted'
   /** After a dossier is deleted: `meta.receipt` lists each storage checked and what is left */
   | 'dossier:purged'
+  /** The user closed the dossier (read-only until reopened), or reopened it */
+  | 'dossier:caseClosed'
+  | 'dossier:caseReopened'
   | 'dossier:opened'
   | 'dossier:closed'
   | 'element:created'

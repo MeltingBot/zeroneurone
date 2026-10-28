@@ -40,7 +40,8 @@
       "editTags": "Gestionar etiquetes",
       "archive": "Arxivar",
       "unarchive": "Desarxivar",
-      "archived": "Arxivat"
+      "archived": "Arxivat",
+      "closed": "Tancat"
     },
     "landing": {
       "subtitle": "Pissarra per a analistes i investigadors",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "No s'ha pogut copiar l'URL",
     "mermaidCopied": "Selecció copiada com a Mermaid",
     "mermaidCopyFailed": "No s'ha pogut copiar al porta-retalls",
-    "dotCopied": "Selecció copiada com a DOT"
+    "dotCopied": "Selecció copiada com a DOT",
+    "closedBanner": "Tancat el {{date}} — només lectura"
   },
   "map": {
     "noGeoElements": "Cap element geolocalitzat",

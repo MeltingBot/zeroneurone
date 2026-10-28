@@ -40,7 +40,8 @@
       "editTags": "Etiketak kudeatu",
       "archive": "Artxibatu",
       "unarchive": "Desartxibatu",
-      "archived": "Artxibatuta"
+      "archived": "Artxibatuta",
+      "closed": "Itxita"
     },
     "landing": {
       "subtitle": "Arbela analista eta ikertzaileentzat",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "Ezin izan da URLa kopiatu",
     "mermaidCopied": "Hautapena Mermaid gisa kopiatu da",
     "mermaidCopyFailed": "Ezin izan da arbelera kopiatu",
-    "dotCopied": "Hautapena DOT gisa kopiatu da"
+    "dotCopied": "Hautapena DOT gisa kopiatu da",
+    "closedBanner": "{{date}}(e)an itxita — irakurtzeko soilik"
   },
   "map": {
     "noGeoElements": "Ez dago geolokalizatutako elementurik",

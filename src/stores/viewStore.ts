@@ -13,6 +13,7 @@ import { db } from '../db/database';
 import { generateUUID } from '../utils';
 import { onPersistFailure } from '../utils/persistError';
 import { setTabViewportBridge, useTabStore } from './tabStore';
+import { assertDossierWritable } from '../utils/dossierLock';
 
 /** The tabs filter counts in the "All" view only, and for tabs that still exist */
 function tabFilterApplies(includeTabs: string[] | undefined): boolean {
@@ -366,6 +367,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   saveView: async (dossierId, name, options) => {
+    assertDossierWritable();
     const state = get();
     // Capture active tab for restoration
     const { useTabStore } = await import('./tabStore');
@@ -450,6 +452,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   deleteView: async (viewId) => {
+    assertDossierWritable();
     await db.views.delete(viewId);
     set((state) => ({
       savedViews: state.savedViews.filter((v) => v.id !== viewId),
@@ -457,6 +460,7 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
 
   restoreView: (view: View) => {
+    assertDossierWritable();
     db.views.put(view).catch((err) => onPersistFailure(err, 'view.restore'));
     set((state) => ({
       savedViews: [...state.savedViews, view].sort(

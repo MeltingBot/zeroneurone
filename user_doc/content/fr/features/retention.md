@@ -1,13 +1,29 @@
 ---
-title: "Rétention des dossiers"
+title: "Clôture et rétention des dossiers"
 weight: 15
 ---
 
-# Rétention des dossiers
+# Clôture et rétention des dossiers
 
 ZeroNeurone permet de définir une durée de vie par dossier, en nombre de jours. Cette fonctionnalité répond aux exigences de conformité légale sur la conservation des données.
 
 Par défaut, la rétention est **illimitée** — le dossier est conservé sans restriction de durée.
+
+---
+
+## Clôturer un dossier
+
+Un dossier clôturé passe en **lecture seule** : éléments, liens, pièces jointes, commentaires, rapport, onglets, vues et requêtes sauvegardées ne peuvent plus être modifiés, et aucun import n'y est possible. Une tentative de modification affiche « Dossier clôturé : lecture seule ».
+
+1. Ouvrez le dossier
+2. Dans le panneau de détail, section **Dates**, ligne **Clôture**, cliquez sur **Clôturer**
+3. Confirmez
+
+Un bandeau « Clôturé le … — lecture seule » s'affiche sous l'en-tête, et la carte du dossier porte la mention **Clôturé** sur la page d'accueil.
+
+Pour reprendre le travail, cliquez sur **Rouvrir** dans la même section. Chaque clôture passée reste listée avec sa date de réouverture.
+
+La clôture est synchronisée entre les participants en mode collaboratif. Elle n'est pas reprise à l'import : un dossier importé est toujours ouvert.
 
 ---
 
@@ -19,7 +35,10 @@ Par défaut, la rétention est **illimitée** — le dossier est conservé sans 
 4. Choisissez le comportement à l'expiration
 5. Cliquez sur **Appliquer**
 
-La date d'expiration est calculée automatiquement à partir de la date de création du dossier.
+Le champ **Compter depuis** fixe le point de départ :
+
+- **La création** (par défaut) : la durée court dès la création du dossier ;
+- **La clôture** : la durée commence à la **première** clôture. Tant que le dossier n'a jamais été clôturé, il n'expire pas. Le rouvrir puis le reclôturer ne repousse pas l'échéance.
 
 ---
 
@@ -53,7 +72,7 @@ La rétention est supprimée et le dossier retrouve une durée de vie illimitée
 
 ## Rétention et collaboration
 
-Les paramètres de rétention (durée et politique) sont synchronisés entre les participants en mode collaboratif. Si un participant modifie la rétention, le changement est propagé à tous les pairs connectés.
+Les paramètres de rétention (durée, politique et point de départ) sont synchronisés entre les participants en mode collaboratif. Si un participant modifie la rétention, le changement est propagé à tous les pairs connectés.
 
 ---
 

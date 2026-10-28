@@ -108,6 +108,11 @@ export function DossierCard({
               <h3 className="text-sm font-medium text-text-primary truncate">
                 {dossier.name}
               </h3>
+              {dossier.closedAt && (
+                <span className="shrink-0 px-1 py-0.5 text-[10px] text-text-tertiary bg-bg-tertiary rounded border border-border-default">
+                  {t('home.card.closed')}
+                </span>
+              )}
               {dossier.isArchived && (
                 <span className="shrink-0 px-1 py-0.5 text-[10px] text-text-tertiary bg-bg-tertiary rounded border border-border-default">
                   {t('home.card.archived')}

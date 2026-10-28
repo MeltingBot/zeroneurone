@@ -313,5 +313,9 @@
     "view": "Zmiana widoku",
     "suggestions": "Sugestie powiązań",
     "export": "Tworzenie archiwum"
+  },
+  "dossierLock": {
+    "closed": "Sprawa zamknięta: tylko do odczytu.",
+    "retention": "Sprawa tylko do odczytu: okres przechowywania minął."
   }
 }

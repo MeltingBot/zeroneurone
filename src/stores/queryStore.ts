@@ -9,6 +9,7 @@ import { useDossierStore } from './dossierStore';
 import { useSelectionStore } from './selectionStore';
 import { useViewStore } from './viewStore';
 import { useTabStore } from './tabStore';
+import { assertDossierWritable } from '../utils/dossierLock';
 
 interface QueryState {
   // Current query
@@ -308,6 +309,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   },
 
   saveQuery: async (dossierId: DossierId, name: string, description: string) => {
+    assertDossierWritable();
     const { currentAst, currentText, outputMode, tableColumns } = get();
     if (!currentAst) return;
 
@@ -324,6 +326,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   },
 
   deleteSavedQuery: async (id: string) => {
+    assertDossierWritable();
     await queryRepository.delete(id);
     set(state => ({ savedQueries: state.savedQueries.filter(q => q.id !== id) }));
   },

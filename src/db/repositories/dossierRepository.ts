@@ -47,6 +47,7 @@ function rehydrateDossier(dossier: Dossier): Dossier {
     properties: dossier.properties ?? [],
     isFavorite: dossier.isFavorite ?? false,
     isArchived: dossier.isArchived ?? false,
+    closedAt: dossier.closedAt ?? null,
     settings: {
       ...dossier.settings,
       suggestedProperties: migratePropertyArray(dossier.settings?.suggestedProperties),

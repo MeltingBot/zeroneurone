@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Стрілка за замовчуванням на зв’язках",
       "blurMediaOnOpen": "Розмивати медіа під час відкриття",
       "linkLabelWrap": "Перенесення підписів зв'язків",
-      "linkLabelWrapWidth": "символів у рядку"
+      "linkLabelWrapWidth": "символів у рядку",
+      "closure": "Закриття",
+      "close": "Закрити",
+      "reopen": "Відкрити знову",
+      "notClosed": "Відкрита",
+      "closeConfirm": "Справа буде лише для читання, доки її не відкриють знову.",
+      "cancel": "Скасувати",
+      "retentionFrom": "Рахувати від",
+      "retentionFromCreated": "Створення",
+      "retentionFromClosed": "Закриття",
+      "retentionStartsAtClosure": "Строк почнеться із закриттям."
     },
     "placeholders": {
       "name": "Назва справа",

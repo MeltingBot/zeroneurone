@@ -11,6 +11,7 @@ import { EVALUATION_MODELS, countEvaluationsOutsideModel, getEvaluationModel, is
 import { activeTimeZoneLabel, dateLocale } from '../../utils/dates';
 import { findLegacyUtcMidnightDates, type LegacyDateFixes } from '../../utils/legacyDates';
 import { LABEL_WRAP_DEFAULT, LABEL_WRAP_MAX, LABEL_WRAP_MIN } from '../../utils/wrapLabel';
+import { retentionExpiresAt } from '../../utils/dossierLock';
 
 interface DossierDetailProps {
   dossier: Dossier;
@@ -244,6 +245,8 @@ export function DossierDetail({ dossier }: DossierDetailProps) {
               className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
             />
           </div>
+
+          <ClosureField dossier={dossier} />
 
           {/* Created At (read-only) */}
           <div className="space-y-1.5">
@@ -500,6 +503,60 @@ function LabelWrapWidth({ value, onChange }: { value: number; onChange: (value: 
 
 type RetentionPolicy = 'warn' | 'readonly' | 'delete' | 'redact';
 
+/** Closure of the dossier: closing asks for a confirmation, the dossier is then read-only until reopened */
+function ClosureField({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation('panels');
+  const { i18n } = useTranslation();
+  const closeDossier = useDossierStore((s) => s.closeDossier);
+  const reopenDossier = useDossierStore((s) => s.reopenDossier);
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => setConfirming(false), [dossier.id, dossier.closedAt]);
+
+  const buttonClass = 'px-3 py-1.5 text-sm font-medium text-text-primary bg-bg-primary border border-border-default hover:bg-bg-secondary rounded transition-colors';
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.closure')}</label>
+      {dossier.closedAt ? (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-text-primary">{formatDateDisplay(dossier.closedAt, i18n.language)}</p>
+          <button onClick={() => reopenDossier(dossier.id)} className={buttonClass}>
+            {t('dossier.labels.reopen')}
+          </button>
+        </div>
+      ) : confirming ? (
+        <div className="space-y-2">
+          <p className="text-xs text-text-secondary">{t('dossier.labels.closeConfirm')}</p>
+          <div className="flex gap-2">
+            <button onClick={() => setConfirming(false)} className={buttonClass}>
+              {t('dossier.labels.cancel')}
+            </button>
+            <button
+              onClick={() => closeDossier(dossier.id)}
+              className="px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded transition-colors"
+            >
+              {t('dossier.labels.close')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-text-tertiary">{t('dossier.labels.notClosed')}</p>
+          <button onClick={() => setConfirming(true)} className={buttonClass}>
+            {t('dossier.labels.close')}
+          </button>
+        </div>
+      )}
+      {(dossier.closureHistory ?? []).map((h, index) => (
+        <p key={index} className="text-xs text-text-tertiary">
+          {formatDateDisplay(h.closedAt, i18n.language)} → {formatDateDisplay(h.reopenedAt, i18n.language)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function RetentionSection({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation('panels');
   const { i18n } = useTranslation();
@@ -511,28 +568,33 @@ function RetentionSection({ dossier }: { dossier: Dossier }) {
   const [localPolicy, setLocalPolicy] = useState<RetentionPolicy>(
     dossier.retentionPolicy || 'warn'
   );
+  const [localFrom, setLocalFrom] = useState<'created' | 'closed'>(dossier.retentionFrom || 'created');
 
   // Sync from props when dossier changes
   useEffect(() => {
     setLocalDays(dossier.retentionDays != null ? String(dossier.retentionDays) : '');
     setLocalPolicy(dossier.retentionPolicy || 'warn');
-  }, [dossier.id, dossier.retentionDays, dossier.retentionPolicy]);
+    setLocalFrom(dossier.retentionFrom || 'created');
+  }, [dossier.id, dossier.retentionDays, dossier.retentionPolicy, dossier.retentionFrom]);
 
   const savedDays = dossier.retentionDays ?? null;
   const savedPolicy = dossier.retentionPolicy || 'warn';
   const pendingDays = localDays === '' ? null : Math.max(1, parseInt(localDays, 10) || 1);
-  const hasChanges = pendingDays !== savedDays || localPolicy !== savedPolicy;
+  const savedFrom = dossier.retentionFrom || 'created';
+  const hasChanges = pendingDays !== savedDays || localPolicy !== savedPolicy || localFrom !== savedFrom;
 
   const handleApply = () => {
     updateDossier(dossier.id, {
       retentionDays: pendingDays,
       retentionPolicy: localPolicy,
+      retentionFrom: localFrom,
     });
   };
 
   // Compute expiration info based on pending values
   const expirationInfo = pendingDays != null ? (() => {
-    const expiresAt = new Date(new Date(dossier.createdAt).getTime() + pendingDays * 86400000);
+    const expiresAt = retentionExpiresAt({ ...dossier, retentionFrom: localFrom }, pendingDays);
+    if (!expiresAt) return null; // counts from closure, not closed yet
     const expiredDays = Math.ceil((Date.now() - expiresAt.getTime()) / 86400000);
     return { expiresAt, expiredDays, isExpired: expiredDays > 0 };
   })() : null;
@@ -573,6 +635,22 @@ function RetentionSection({ dossier }: { dossier: Dossier }) {
               </select>
             </div>
 
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.retentionFrom')}</label>
+              <select
+                value={localFrom}
+                onChange={(e) => setLocalFrom(e.target.value as 'created' | 'closed')}
+                className="w-full px-3 py-2 text-sm bg-bg-secondary border border-border-default sketchy-border focus:outline-none focus:border-accent input-focus-glow text-text-primary transition-all"
+              >
+                <option value="created">{t('dossier.labels.retentionFromCreated')}</option>
+                <option value="closed">{t('dossier.labels.retentionFromClosed')}</option>
+              </select>
+            </div>
+
+            {localFrom === 'closed' && !dossier.closedAt && !dossier.closureHistory?.length && (
+              <p className="text-xs text-text-tertiary">{t('dossier.labels.retentionStartsAtClosure')}</p>
+            )}
+
             {expirationInfo && (
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-text-secondary">{t('dossier.labels.retentionExpires')}</label>
@@ -605,9 +683,11 @@ function RetentionSection({ dossier }: { dossier: Dossier }) {
                 onClick={() => {
                   setLocalDays('');
                   setLocalPolicy('warn');
+                  setLocalFrom('created');
                   updateDossier(dossier.id, {
                     retentionDays: null,
                     retentionPolicy: 'warn',
+                    retentionFrom: 'created',
                   });
                 }}
                 className="flex-1 px-3 py-1.5 text-sm font-medium text-text-secondary bg-bg-secondary border border-border-default hover:bg-bg-tertiary rounded transition-colors"

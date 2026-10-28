@@ -307,5 +307,9 @@
     "view": "Ikuspegi aldaketa",
     "suggestions": "Lotura-iradokizunak",
     "export": "Artxiboa sortzen"
+  },
+  "dossierLock": {
+    "closed": "Espedientea itxita: irakurtzeko soilik.",
+    "retention": "Espedientea irakurtzeko soilik: atxikipena iraungita."
   }
 }

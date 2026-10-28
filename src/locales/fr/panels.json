@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Flèche par défaut sur les relations",
       "blurMediaOnOpen": "Médias floutés à l'ouverture",
       "linkLabelWrap": "Retour à la ligne des libellés de liens",
-      "linkLabelWrapWidth": "caractères par ligne"
+      "linkLabelWrapWidth": "caractères par ligne",
+      "closure": "Clôture",
+      "close": "Clôturer",
+      "reopen": "Rouvrir",
+      "notClosed": "En cours",
+      "closeConfirm": "Le dossier passera en lecture seule jusqu'à sa réouverture.",
+      "cancel": "Annuler",
+      "retentionFrom": "Compter depuis",
+      "retentionFromCreated": "La création",
+      "retentionFromClosed": "La clôture",
+      "retentionStartsAtClosure": "La durée commencera à la clôture."
     },
     "placeholders": {
       "name": "Nom du dossier",

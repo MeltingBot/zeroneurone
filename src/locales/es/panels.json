@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Flecha por defecto en las relaciones",
       "blurMediaOnOpen": "Difuminar medios al abrir",
       "linkLabelWrap": "Ajuste de línea en etiquetas de vínculos",
-      "linkLabelWrapWidth": "caracteres por línea"
+      "linkLabelWrapWidth": "caracteres por línea",
+      "closure": "Cierre",
+      "close": "Cerrar",
+      "reopen": "Reabrir",
+      "notClosed": "En curso",
+      "closeConfirm": "El expediente quedará en solo lectura hasta que se reabra.",
+      "cancel": "Cancelar",
+      "retentionFrom": "Contar desde",
+      "retentionFromCreated": "La creación",
+      "retentionFromClosed": "El cierre",
+      "retentionStartsAtClosure": "El plazo empezará en el cierre."
     },
     "placeholders": {
       "name": "Nombre de el expediente",

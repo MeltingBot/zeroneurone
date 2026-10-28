@@ -303,5 +303,9 @@
     "view": "Changement de vue",
     "suggestions": "Suggestions de liens",
     "export": "Construction de l'archive"
+  },
+  "dossierLock": {
+    "closed": "Dossier clôturé : lecture seule.",
+    "retention": "Dossier en lecture seule : rétention expirée."
   }
 }

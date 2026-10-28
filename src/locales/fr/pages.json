@@ -40,7 +40,8 @@
       "editTags": "Gérer les tags",
       "archive": "Archiver",
       "unarchive": "Désarchiver",
-      "archived": "Archivé"
+      "archived": "Archivé",
+      "closed": "Clôturé"
     },
     "landing": {
       "subtitle": "Tableau blanc pour analystes et enquêteurs",
@@ -353,7 +354,8 @@
     "urlCopyFailed": "Échec de la copie de l'URL",
     "mermaidCopied": "Sélection copiée en Mermaid",
     "mermaidCopyFailed": "Impossible de copier dans le presse-papiers",
-    "dotCopied": "Sélection copiée en DOT"
+    "dotCopied": "Sélection copiée en DOT",
+    "closedBanner": "Clôturé le {{date}} — lecture seule"
   },
   "map": {
     "noGeoElements": "Aucun élément géolocalisé",

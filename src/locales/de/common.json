@@ -306,5 +306,9 @@
     "view": "Ansichtswechsel",
     "suggestions": "Verknüpfungsvorschläge",
     "export": "Archiv wird erstellt"
+  },
+  "dossierLock": {
+    "closed": "Dossier abgeschlossen: schreibgeschützt.",
+    "retention": "Dossier schreibgeschützt: Aufbewahrungsfrist abgelaufen."
   }
 }

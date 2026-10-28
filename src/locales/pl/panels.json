@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Domyślna strzałka na relacjach",
       "blurMediaOnOpen": "Rozmyj multimedia przy otwarciu",
       "linkLabelWrap": "Zawijanie etykiet powiązań",
-      "linkLabelWrapWidth": "znaków w wierszu"
+      "linkLabelWrapWidth": "znaków w wierszu",
+      "closure": "Zamknięcie",
+      "close": "Zamknij",
+      "reopen": "Otwórz ponownie",
+      "notClosed": "W toku",
+      "closeConfirm": "Sprawa będzie tylko do odczytu do czasu ponownego otwarcia.",
+      "cancel": "Anuluj",
+      "retentionFrom": "Licz od",
+      "retentionFromCreated": "Utworzenia",
+      "retentionFromClosed": "Zamknięcia",
+      "retentionStartsAtClosure": "Okres rozpocznie się w chwili zamknięcia."
     },
     "placeholders": {
       "name": "Nazwa teczki",

@@ -308,5 +308,9 @@
     "view": "Canvi de vista",
     "suggestions": "Suggeriments d'enllaços",
     "export": "Creació de l'arxiu"
+  },
+  "dossierLock": {
+    "closed": "Dossier tancat: només lectura.",
+    "retention": "Dossier en només lectura: retenció caducada."
   }
 }

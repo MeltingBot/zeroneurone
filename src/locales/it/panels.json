@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Freccia predefinita sulle relazioni",
       "blurMediaOnOpen": "Sfoca i media all'apertura",
       "linkLabelWrap": "A capo nelle etichette dei collegamenti",
-      "linkLabelWrapWidth": "caratteri per riga"
+      "linkLabelWrapWidth": "caratteri per riga",
+      "closure": "Chiusura",
+      "close": "Chiudi",
+      "reopen": "Riapri",
+      "notClosed": "In corso",
+      "closeConfirm": "Il fascicolo resterà in sola lettura finché non viene riaperto.",
+      "cancel": "Annulla",
+      "retentionFrom": "Conta da",
+      "retentionFromCreated": "La creazione",
+      "retentionFromClosed": "La chiusura",
+      "retentionStartsAtClosure": "Il periodo inizierà alla chiusura."
     },
     "placeholders": {
       "name": "Nome delil fascicolo",

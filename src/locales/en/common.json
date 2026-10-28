@@ -303,5 +303,9 @@
     "view": "Switching view",
     "suggestions": "Link suggestions",
     "export": "Building the archive"
+  },
+  "dossierLock": {
+    "closed": "Dossier closed: read-only.",
+    "retention": "Dossier read-only: retention expired."
   }
 }

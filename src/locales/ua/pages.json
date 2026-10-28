@@ -40,7 +40,8 @@
       "editTags": "Керувати тегами",
       "archive": "Архівувати",
       "unarchive": "Розархівувати",
-      "archived": "Архівований"
+      "archived": "Архівований",
+      "closed": "Закрита"
     },
     "landing": {
       "subtitle": "Дошка для аналітиків та слідчих",
@@ -354,7 +355,8 @@
     "urlCopyFailed": "Не вдалося скопіювати URL",
     "mermaidCopied": "Виділення скопійовано як Mermaid",
     "mermaidCopyFailed": "Не вдалося скопіювати в буфер обміну",
-    "dotCopied": "Виділення скопійовано як DOT"
+    "dotCopied": "Виділення скопійовано як DOT",
+    "closedBanner": "Закрито {{date}} — лише для читання"
   },
   "map": {
     "noGeoElements": "Немає геолокалізованих елементів",

@@ -8,6 +8,7 @@ import type {
   Link,
 } from '../types';
 import { tabRepository } from '../db/repositories/tabRepository';
+import { assertDossierWritable } from '../utils/dossierLock';
 
 interface TabState {
   // Data
@@ -204,6 +205,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Create ────────────────────────────────────────────
 
   createTab: async (dossierId, name) => {
+    assertDossierWritable();
     const { tabs } = get();
     const maxOrder = tabs.reduce((max, t) => Math.max(max, t.order), 0);
     const tab = await tabRepository.create(dossierId, name, maxOrder + 1);
@@ -220,6 +222,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Rename ────────────────────────────────────────────
 
   renameTab: async (tabId, name) => {
+    assertDossierWritable();
     await tabRepository.update(tabId, { name });
     set((s) => ({
       tabs: s.tabs.map((t) => (t.id === tabId ? { ...t, name, updatedAt: new Date() } : t)),
@@ -230,6 +233,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Delete ────────────────────────────────────────────
 
   deleteTab: async (tabId) => {
+    assertDossierWritable();
     await tabRepository.delete(tabId);
     set((s) => {
       const newTabs = s.tabs.filter((t) => t.id !== tabId);
@@ -264,6 +268,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Restore (undo delete) ────────────────────────────
 
   restoreTab: async (tab: CanvasTab) => {
+    assertDossierWritable();
     // Re-insert into IndexedDB (bulkUpsert uses put which handles re-insertion with same ID)
     await tabRepository.bulkUpsert([tab]);
 
@@ -281,6 +286,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Reorder ───────────────────────────────────────────
 
   reorderTab: async (tabId, newOrder) => {
+    assertDossierWritable();
     await tabRepository.update(tabId, { order: newOrder });
     set((s) => ({
       tabs: s.tabs
@@ -357,6 +363,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Membership ────────────────────────────────────────
 
   addMembers: async (tabId, elementIds) => {
+    assertDossierWritable();
     const { tabs } = get();
     const tab = tabs.find((t) => t.id === tabId);
     if (!tab) return;
@@ -395,6 +402,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   },
 
   removeMembers: async (tabId, elementIds) => {
+    assertDossierWritable();
     const { tabs } = get();
     const tab = tabs.find((t) => t.id === tabId);
     if (!tab) return;
@@ -422,6 +430,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Ghost exclusion ─────────────────────────────────────
 
   excludeFromTab: async (tabId, elementIds) => {
+    assertDossierWritable();
     const { tabs } = get();
     const tab = tabs.find((t) => t.id === tabId);
     if (!tab) return;

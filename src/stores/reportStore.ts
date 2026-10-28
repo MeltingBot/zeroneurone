@@ -14,6 +14,7 @@ import {
   removeSectionFromYMap,
   reorderSectionsInYMap,
 } from '../services/yjs/reportMapper';
+import { assertDossierWritable } from '../utils/dossierLock';
 
 interface ReportState {
   // Current report for the active dossier
@@ -162,6 +163,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   updateReportTitle: async (title) => {
+    assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
 
@@ -194,6 +196,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   addSection: async (title = '') => {
+    assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return null;
 
@@ -220,6 +223,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   updateSection: async (sectionId, changes) => {
+    assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
 
@@ -246,6 +250,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   removeSection: async (sectionId) => {
+    assertDossierWritable();
     const { currentReport, activeSectionId } = get();
     if (!currentReport) return;
 
@@ -273,6 +278,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   restoreSection: async (section: ReportSection) => {
+    assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
 
@@ -301,6 +307,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   reorderSections: async (sectionIds) => {
+    assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
 

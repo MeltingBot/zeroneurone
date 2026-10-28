@@ -40,7 +40,8 @@
       "editTags": "Zarządzaj tagami",
       "archive": "Archiwizuj",
       "unarchive": "Przywróć",
-      "archived": "Zarchiwizowane"
+      "archived": "Zarchiwizowane",
+      "closed": "Zamknięta"
     },
     "landing": {
       "subtitle": "Tablica dla analityków i śledczych",
@@ -354,7 +355,8 @@
     "urlCopyFailed": "Nie udało się skopiować URL",
     "mermaidCopied": "Zaznaczenie skopiowane jako Mermaid",
     "mermaidCopyFailed": "Nie udało się skopiować do schowka",
-    "dotCopied": "Zaznaczenie skopiowane jako DOT"
+    "dotCopied": "Zaznaczenie skopiowane jako DOT",
+    "closedBanner": "Zamknięta {{date}} — tylko do odczytu"
   },
   "map": {
     "noGeoElements": "Brak elementów z geolokalizacją",

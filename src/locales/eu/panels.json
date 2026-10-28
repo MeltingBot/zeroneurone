@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Gezia lehenetsita erlazioetan",
       "blurMediaOnOpen": "Lausotu multimedia irekitzean",
       "linkLabelWrap": "Loturen etiketetan lerro-jauzia",
-      "linkLabelWrapWidth": "karaktere lerro bakoitzeko"
+      "linkLabelWrapWidth": "karaktere lerro bakoitzeko",
+      "closure": "Itxiera",
+      "close": "Itxi",
+      "reopen": "Berriro ireki",
+      "notClosed": "Martxan",
+      "closeConfirm": "Espedientea irakurtzeko soilik geratuko da berriro ireki arte.",
+      "cancel": "Utzi",
+      "retentionFrom": "Noiztik zenbatu",
+      "retentionFromCreated": "Sorreratik",
+      "retentionFromClosed": "Itxieratik",
+      "retentionStartsAtClosure": "Epea itxieran hasiko da."
     },
     "placeholders": {
       "name": "Espedienteren izena",

@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Standaard pijl op relaties",
       "blurMediaOnOpen": "Media vervagen bij openen",
       "linkLabelWrap": "Labels van koppelingen afbreken",
-      "linkLabelWrapWidth": "tekens per regel"
+      "linkLabelWrapWidth": "tekens per regel",
+      "closure": "Afsluiting",
+      "close": "Afsluiten",
+      "reopen": "Heropenen",
+      "notClosed": "Lopend",
+      "closeConfirm": "Het dossier is alleen-lezen tot het wordt heropend.",
+      "cancel": "Annuleren",
+      "retentionFrom": "Tellen vanaf",
+      "retentionFromCreated": "Aanmaak",
+      "retentionFromClosed": "Afsluiting",
+      "retentionStartsAtClosure": "De termijn begint bij de afsluiting."
     },
     "placeholders": {
       "name": "Naam van het dossier",

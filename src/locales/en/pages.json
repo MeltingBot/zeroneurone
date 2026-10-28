@@ -40,7 +40,8 @@
       "editTags": "Manage tags",
       "archive": "Archive",
       "unarchive": "Unarchive",
-      "archived": "Archived"
+      "archived": "Archived",
+      "closed": "Closed"
     },
     "landing": {
       "subtitle": "Whiteboard for analysts and investigators",
@@ -353,7 +354,8 @@
     "urlCopyFailed": "Failed to copy URL",
     "mermaidCopied": "Selection copied as Mermaid",
     "mermaidCopyFailed": "Could not copy to the clipboard",
-    "dotCopied": "Selection copied as DOT"
+    "dotCopied": "Selection copied as DOT",
+    "closedBanner": "Closed on {{date}} — read-only"
   },
   "map": {
     "noGeoElements": "No geolocated elements",

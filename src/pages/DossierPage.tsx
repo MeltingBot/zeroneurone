@@ -1,7 +1,8 @@
 import { useEffect, useState, lazy, Suspense, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, MoreVertical, Tags } from 'lucide-react';
+import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, MoreVertical, Tags, Lock } from 'lucide-react';
+import { retentionExpiresAt } from '../utils/dossierLock';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal, JsonMappingImportModal, TagSetManagerModal } from '../components/modals';
@@ -60,7 +61,7 @@ function matchesShortcutKeys(e: KeyboardEvent, keys: string): boolean {
 }
 
 export function DossierPage() {
-  const { t } = useTranslation('pages');
+  const { t, i18n } = useTranslation('pages');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const {
@@ -243,7 +244,8 @@ export function DossierPage() {
   // Retention expiration check
   const retentionExpiredDays = (() => {
     if (!currentDossier?.retentionDays) return null;
-    const expiresAt = new Date(currentDossier.createdAt).getTime() + currentDossier.retentionDays * 86400000;
+    const expiresAt = retentionExpiresAt(currentDossier, currentDossier.retentionDays)?.getTime();
+    if (expiresAt === undefined) return null; // counts from closure, dossier still open
     const diff = Date.now() - expiresAt;
     return diff > 0 ? Math.ceil(diff / 86400000) : null;
   })();
@@ -751,6 +753,13 @@ export function DossierPage() {
           <LanguageSwitcher size="sm" />
         </div>
       </header>
+
+      {currentDossier.closedAt && (
+        <div className="flex items-center gap-1.5 px-3 py-1 text-xs text-text-secondary bg-bg-tertiary border-b border-border-default">
+          <Lock size={12} />
+          {t('dossier.closedBanner', { date: new Date(currentDossier.closedAt).toLocaleDateString(i18n.language) })}
+        </div>
+      )}
 
       {/* Main content */}
       <div className={`flex-1 flex overflow-hidden ${

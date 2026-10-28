@@ -57,7 +57,17 @@
       "linkArrowByDefault": "Standardmäßig Pfeil auf Verbindungen",
       "blurMediaOnOpen": "Medien beim Öffnen unscharf",
       "linkLabelWrap": "Zeilenumbruch in Verbindungsbeschriftungen",
-      "linkLabelWrapWidth": "Zeichen pro Zeile"
+      "linkLabelWrapWidth": "Zeichen pro Zeile",
+      "closure": "Abschluss",
+      "close": "Abschließen",
+      "reopen": "Wieder öffnen",
+      "notClosed": "Offen",
+      "closeConfirm": "Das Dossier ist schreibgeschützt, bis es wieder geöffnet wird.",
+      "cancel": "Abbrechen",
+      "retentionFrom": "Zählen ab",
+      "retentionFromCreated": "Erstellung",
+      "retentionFromClosed": "Abschluss",
+      "retentionStartsAtClosure": "Die Frist beginnt mit dem Abschluss."
     },
     "placeholders": {
       "name": "Name der Akte",

@@ -306,5 +306,9 @@
     "view": "Cambio de vista",
     "suggestions": "Sugerencias de vínculos",
     "export": "Creación del archivo"
+  },
+  "dossierLock": {
+    "closed": "Expediente cerrado: solo lectura.",
+    "retention": "Expediente en solo lectura: retención vencida."
   }
 }

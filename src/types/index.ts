@@ -282,6 +282,15 @@ export interface Dossier {
   retentionDays?: number | null;
   /** Behavior when retention expires */
   retentionPolicy?: 'warn' | 'readonly' | 'delete' | 'redact';
+  /** What the retention counts from: creation (default) or closure */
+  retentionFrom?: 'created' | 'closed';
+  /**
+   * Closure date (null or absent = open). A closed dossier is read-only until
+   * it is reopened; its opening date is `startDate`.
+   */
+  closedAt?: Date | null;
+  /** Every past closure and its reopening, oldest first (the current closure stays in closedAt) */
+  closureHistory?: { closedAt: Date; reopenedAt: Date }[];
   /**
    * How this dossier appeared on this device.
    * - 'created': the user created the dossier locally (HomePage / import / API). They own the data and may push their Dexie to the Y.Doc.

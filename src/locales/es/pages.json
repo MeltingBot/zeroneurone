@@ -40,7 +40,8 @@
       "editTags": "Gestionar tags",
       "archive": "Archivar",
       "unarchive": "Desarchivar",
-      "archived": "Archivado"
+      "archived": "Archivado",
+      "closed": "Cerrado"
     },
     "landing": {
       "subtitle": "Pizarra para analistas e investigadores",
@@ -352,7 +353,8 @@
     "urlCopyFailed": "Error al copiar la URL",
     "mermaidCopied": "Selección copiada como Mermaid",
     "mermaidCopyFailed": "No se pudo copiar al portapapeles",
-    "dotCopied": "Selección copiada como DOT"
+    "dotCopied": "Selección copiada como DOT",
+    "closedBanner": "Cerrado el {{date}} — solo lectura"
   },
   "map": {
     "noGeoElements": "Ningún elemento geolocalizado",
