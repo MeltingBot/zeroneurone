@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.84.2
+
+### Import
+
+- **Progression des médias** — à l'import d'une archive ZIP, la ligne de
+  progression affiche les médias traités sur le total (« Médias : 12 / 40 »).
+  Les médias étant importés avant le graphe, la ligne restait vide pendant
+  toute cette phase.
+- **Import en cours verrouillé** — pendant l'import depuis la page d'accueil,
+  la zone d'import et le choix du dossier sont désactivés ; seul Annuler
+  reste disponible. Une archive ZIP s'arrête après le média en cours ; le
+  dossier en cours de création est supprimé.
+
 ## 2.84.1
 
 ### Analyse

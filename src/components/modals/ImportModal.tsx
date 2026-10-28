@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Download, FileSpreadsheet, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { importService, isEncryptedZipFile, decryptZipFile, type ImportResult } from '../../services/importService';
 import { importGEXF } from '../../services/importGephi';
@@ -38,6 +38,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const [createMissingElements, setCreateMissingElements] = useState(true);
   const [targetDossierId, setTargetDossierId] = useState<string>('new');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Import en cours : Annuler l'interrompt (ZIP : entre deux médias)
+  const abortRef = useRef<AbortController | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   // Déchiffrement .znzip
   const [pendingEncryptedFile, setPendingEncryptedFile] = useState<File | null>(null);
   const [znzipPassword, setZnzipPassword] = useState('');
@@ -166,6 +169,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
 
     let dossierId = targetDossierId;
     let createdNewDossier = false;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       // Create new dossier with file name (without extension)
@@ -177,7 +182,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       let result: ImportResult;
 
       if (file.name.endsWith('.zip')) {
-        result = await importService.importFromZip(file, dossierId);
+        result = await importService.importFromZip(file, dossierId, undefined, undefined, controller.signal);
       } else if (file.name.endsWith('.osintracker')) {
         const content = await importService.readFileAsText(file);
         result = await importService.importFromOsintracker(content, dossierId);
@@ -248,6 +253,13 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         }
       }
 
+      // Annulé : rien ne reste, même si l'import a fini entre-temps
+      if (controller.signal.aborted) {
+        await deleteDossier(dossierId).catch(() => {});
+        toast.info(t('import.cancelled'));
+        return;
+      }
+
       setImportResult(result);
 
       if (result.success) {
@@ -270,6 +282,10 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       if (createdNewDossier) {
         await deleteDossier(dossierId).catch(() => {});
       }
+      if (controller.signal.aborted) {
+        toast.info(t('import.cancelled'));
+        return;
+      }
       setImportResult({
         success: false,
         elementsImported: 0,
@@ -280,6 +296,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
         warnings: [],
       });
     } finally {
+      abortRef.current = null;
+      setIsCancelling(false);
       setIsProcessing(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -365,7 +383,14 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
     fileInputRef.current?.click();
   }, []);
 
+  const handleCancelImport = useCallback(() => {
+    abortRef.current?.abort();
+    setIsCancelling(true);
+  }, []);
+
   const handleClose = useCallback(() => {
+    // Pendant l'import, seul Annuler permet de sortir
+    if (abortRef.current) return;
     setImportResult(null);
     setTargetDossierId('new');
     setPendingFEC(null);
@@ -382,6 +407,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useDialogA11y(isOpen, dialogRef, handleClose);
+  // Import lancé depuis la zone (pas une étape FEC/GeoJSON, qui a ses boutons)
+  const importRunning = isProcessing && !pendingFEC && !pendingGeoJSON && !pendingEncryptedFile;
 
   if (!isOpen) return null;
 
@@ -409,8 +436,9 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           </h2>
           <button
             onClick={handleClose}
+            disabled={importRunning}
             aria-label={t('common:actions.close')}
-            className="p-1 text-text-tertiary hover:text-text-primary rounded"
+            className="p-1 text-text-tertiary hover:text-text-primary rounded disabled:opacity-40 disabled:pointer-events-none"
           >
             <X size={16} />
           </button>
@@ -426,7 +454,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             <select
               value={targetDossierId}
               onChange={(e) => setTargetDossierId(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-default rounded bg-bg-primary text-text-primary"
+              disabled={isProcessing}
+              className="w-full px-3 py-2 text-sm border border-border-default rounded bg-bg-primary text-text-primary disabled:opacity-50"
             >
               <option value="new">{t('import.newDossier')}</option>
               {dossiers.map((inv) => (
@@ -560,8 +589,25 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
             </div>
           )}
 
+          {/* Import running: zone replaced by status and Annuler */}
+          {importRunning && (
+            <div className="w-full flex flex-col items-center gap-2 p-6 rounded-lg border-2 border-dashed border-border-default bg-bg-secondary" data-testid="import-running">
+              <Loader2 size={24} className="animate-spin text-text-tertiary" />
+              <div className="text-sm font-medium text-text-primary">{t('import.importing')}</div>
+              <ImportProgressLine className="text-xs text-text-secondary" />
+              <div className="text-xs text-text-tertiary">{t('import.keepOpen')}</div>
+              <button
+                onClick={handleCancelImport}
+                disabled={isCancelling}
+                className="mt-1 px-3 py-1.5 text-sm font-medium rounded border border-border-default text-text-primary bg-bg-primary hover:bg-bg-tertiary disabled:opacity-50"
+              >
+                {isCancelling ? t('import.cancelling') : t('common:actions.cancel')}
+              </button>
+            </div>
+          )}
+
           {/* Import button */}
-          {!pendingFEC && !pendingGeoJSON && (
+          {!pendingFEC && !pendingGeoJSON && !importRunning && (
           <button
             onClick={triggerFileSelect}
             disabled={isProcessing}
@@ -587,7 +633,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           )}
 
           {/* Options and template for CSV — irrelevant during a FEC or GeoJSON options step */}
-          {!pendingFEC && !pendingGeoJSON && (
+          {!pendingFEC && !pendingGeoJSON && !importRunning && (
             <>
             <div className="flex items-center gap-2">
               <input

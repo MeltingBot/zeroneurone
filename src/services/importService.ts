@@ -59,6 +59,7 @@ import { importSTIX2, isSTIX2Format } from './importSTIX2';
 import { importGephiLiteJSON, isGephiLiteFormat } from './importGephi';
 import { importGenealogyFile, detectGenealogyFormatFromName, type GenealogyImportOptions } from './genealogy';
 import { dateFromInputKeys, parseDateValue, parseDateWithPrecision, parsePropertyDate, toLocalDateKey, toLocalTimeKey } from '../utils/dates';
+import { reportMediaProgress } from './importProgress';
 
 /**
  * Date read from an imported value. A bare `YYYY-MM-DD` is a calendar day (local
@@ -278,6 +279,8 @@ class ImportService {
     positionOffset?: Position,
     /** Only these tabs of the archive (into an open dossier) */
     selection?: ZipTabSelection,
+    /** Stops the import between two media files, before the graph is written */
+    signal?: AbortSignal,
   ): Promise<ImportResult> {
     const result: ImportResult = {
       success: false,
@@ -391,7 +394,11 @@ class ImportService {
 
       // Import assets from ZIP (if present)
       if (data.assets && data.assets.length > 0) {
+        const mediaTotal = data.assets.length;
+        let mediaDone = 0;
+        reportMediaProgress(0, mediaTotal);
         for (const assetMeta of data.assets) {
+          if (signal?.aborted) break;
           try {
             const assetFile = zip.file(assetMeta.archivePath);
             if (!assetFile) {
@@ -442,8 +449,15 @@ class ImportService {
                 `Asset ignore: ${assetMeta.filename} - ${error instanceof Error ? error.message : 'Erreur'}`
               );
             }
+          } finally {
+            reportMediaProgress(++mediaDone, mediaTotal);
           }
         }
+      }
+
+      if (signal?.aborted) {
+        result.errors.push('Import annulé');
+        return result;
       }
 
       // Import tag families and custom icons, remapping icon references
