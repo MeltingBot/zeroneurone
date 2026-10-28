@@ -62,7 +62,7 @@ import { useTabStore } from './tabStore';
 import { useTagSetStore } from './tagSetStore';
 import { tabRepository } from '../db/repositories/tabRepository';
 import { db } from '../db/database';
-import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
+import { emit as emitPluginEvent, setCurrentDossierIdGetter } from '../plugins/pluginEventBus';
 import {
   MAX_SHARED_ASSET_SIZE,
   pushAssetChunked,
@@ -587,6 +587,27 @@ function parseClosureHistory(raw: unknown): Dossier['closureHistory'] | undefine
     .filter((h): h is { closedAt: string; reopenedAt: string } =>
       !!h && typeof h.closedAt === 'string' && typeof h.reopenedAt === 'string')
     .map((h) => ({ closedAt: new Date(h.closedAt), reopenedAt: new Date(h.reopenedAt) }));
+}
+
+/** Fields whose old and new values go into dossier:updated (lifecycle: what an audit must see) */
+const TRACKED_DOSSIER_FIELDS: (keyof Dossier)[] = ['retentionDays', 'retentionPolicy', 'retentionFrom', 'closedAt'];
+
+function describeDossierChanges(before: Dossier | null | undefined, changes: Partial<Dossier>): Record<string, unknown> {
+  const fields = Object.keys(changes).filter((key) => key !== 'updatedAt');
+  const tracked: Record<string, { from: unknown; to: unknown }> = {};
+  for (const field of TRACKED_DOSSIER_FIELDS) {
+    if (changes[field] === undefined) continue;
+    tracked[field] = { from: before?.[field] ?? null, to: changes[field] ?? null };
+  }
+  return Object.keys(tracked).length > 0 ? { fields, changes: tracked } : { fields };
+}
+
+function emitCommentEvent(type: 'comment:resolved' | 'comment:unresolved' | 'comment:deleted', id: string): void {
+  const state = useDossierStore.getState();
+  const dossierId = state.currentDossier?.id;
+  if (!dossierId) return;
+  const targetId = state.comments.find((c) => c.id === id)?.targetId ?? null;
+  emitPluginEvent(type, dossierId, id, { targetId });
 }
 
 /** Dossier fields frozen while the dossier is closed (its lifecycle fields stay editable) */
@@ -1280,7 +1301,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
     // Persist to IndexedDB (async, can happen after UI is updated)
     await dossierRepository.update(id, changes);
-    emitPluginEvent('dossier:updated', id);
+    emitPluginEvent('dossier:updated', id, undefined, describeDossierChanges(target, changes));
   },
 
   closeDossier: async (id: DossierId) => {
@@ -1842,6 +1863,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     await Promise.all(
       ids.map(id => elementRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'element.updateMany')))
     );
+    const invId = get().currentDossier?.id;
+    if (invId) {
+      const fields = Object.keys(changes);
+      for (const id of ids) emitPluginEvent('element:updated', invId, id, { fields, bulk: true });
+    }
   },
 
   updateLinks: async (ids: LinkId[], changes: LinkChanges) => {
@@ -1866,6 +1892,11 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     await Promise.all(
       ids.map(id => linkRepository.update(id, changes as any).catch((err) => onPersistFailure(err, 'link.updateMany')))
     );
+    const invId = get().currentDossier?.id;
+    if (invId) {
+      const fields = Object.keys(changes);
+      for (const id of ids) emitPluginEvent('link:updated', invId, id, { fields, bulk: true });
+    }
   },
 
   // Batch paste: create all elements and links in a single Y.js transaction
@@ -1902,6 +1933,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       if (newElements.length > 0 || newLinks.length > 0) {
         dossierRepository.update(invId, {}).catch((err) => onPersistFailure(err, 'dossier.update'));
       }
+      for (const element of newElements) emitPluginEvent('element:created', invId, element.id, { via: 'paste' });
+      for (const link of newLinks) emitPluginEvent('link:created', invId, link.id, { via: 'paste' });
     }
 
   },
@@ -2119,6 +2152,8 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }).catch((err) => onPersistFailure(err, 'element.update(ungroup)'));
     }
     elementRepository.delete(groupId).catch((err) => onPersistFailure(err, 'element.delete(group)'));
+    const invId = get().currentDossier?.id;
+    if (invId) emitPluginEvent('element:deleted', invId, groupId, { group: true, dissolved: true });
   },
 
   // ============================================================================
@@ -2430,6 +2465,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       mergeSnapshot.targetAddedTabIds = targetAddedTabIds;
     }
 
+    if (invId) emitPluginEvent('element:merged', invId, targetId, { mergedIds: [sourceId] });
     return mergeSnapshot;
   },
 
@@ -2644,6 +2680,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       commentsMap.set(comment.id, ymap);
     });
 
+    emitPluginEvent('comment:created', comment.dossierId, comment.id, { targetId: comment.targetId });
     return comment;
   },
 
@@ -2666,6 +2703,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       resolvedBy: resolverName,
       resolvedAt: new Date(),
     }, ydoc);
+    emitCommentEvent('comment:resolved', id);
   },
 
   unresolveComment: async (id) => {
@@ -2687,6 +2725,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       resolvedBy: null,
       resolvedAt: null,
     }, ydoc);
+    emitCommentEvent('comment:unresolved', id);
   },
 
   deleteComment: async (id) => {
@@ -2697,6 +2736,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
     }
 
     const { comments: commentsMap } = getYMaps(ydoc);
+    emitCommentEvent('comment:deleted', id);
     ydoc.transact(() => {
       commentsMap.delete(id);
     });
@@ -2767,6 +2807,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
       }));
     }
 
+    emitPluginEvent('tag:renamed', currentDossier.id, undefined, { from: oldName, to: trimmed, ...counts });
     return counts;
   },
 
@@ -3426,3 +3467,6 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
 // Keep the shared write lock (checked by the other stores) in step with the open dossier
 useDossierStore.subscribe((state) => setOpenDossierLock(lockReasonOf(state)));
+
+// Events emitted outside this store (exports…) are attached to the open dossier
+setCurrentDossierIdGetter(() => useDossierStore.getState().currentDossier?.id ?? null);

@@ -269,8 +269,15 @@ export interface ScopedPluginDataAPI {
 
 // ─── Event bus ────────────────────────────────────────────────
 
+/**
+ * Core events. Each device emits the actions done on it: changes received
+ * from a collaborator emit nothing (they were emitted on their device).
+ * Deliberately not emitted: element moves, asset reordering, display
+ * settings, selection, filters.
+ */
 export type PluginEventType =
   | 'dossier:created'
+  /** `meta.fields` = changed fields; `meta.changes` = { field: { from, to } } for retention and closure fields */
   | 'dossier:updated'
   | 'dossier:deleted'
   /** After a dossier is deleted: `meta.receipt` lists each storage checked and what is left */
@@ -278,35 +285,70 @@ export type PluginEventType =
   /** The user closed the dossier (read-only until reopened), or reopened it */
   | 'dossier:caseClosed'
   | 'dossier:caseReopened'
+  /** Loaded / unloaded in this window (not the case closure) */
   | 'dossier:opened'
   | 'dossier:closed'
+  /** Import finished: `meta` = { format, into, elements, links, assets } */
+  | 'dossier:imported'
+  /** Something left the app: `meta.format` (zip, json, csv, png, report-md, print, clipboard-mermaid, asset, backup…) */
+  | 'dossier:exported'
+  /** Collaboration: shared from this device, or joined from a link */
+  | 'dossier:shared'
+  | 'dossier:joined'
+  /** `meta.via`: 'paste' when created by a paste; `meta.group`: true for a group */
   | 'element:created'
+  /** `meta.fields` = changed fields (bulk edits emit one event per element) */
   | 'element:updated'
   | 'element:deleted'
   | 'element:tagAdded'
   | 'element:tagRemoved'
+  /** `entityId` = kept element, `meta.mergedIds` = elements merged into it */
+  | 'element:merged'
   | 'link:created'
   | 'link:updated'
   | 'link:deleted'
   | 'asset:created'
-  | 'asset:deleted';
+  | 'asset:deleted'
+  /** `entityId` = comment id, `meta.targetId` = element or link */
+  | 'comment:created'
+  | 'comment:resolved'
+  | 'comment:unresolved'
+  | 'comment:deleted'
+  /** `meta` = { from, to, elements, links } */
+  | 'tag:renamed'
+  /** Report edits, coalesced per section: `meta` = { action, sectionId? } */
+  | 'report:updated'
+  /** A query run by the user (not automatic re-runs). `meta.text` may contain names: log it or not */
+  | 'query:executed';
+
+/** Events emitted by a plugin: always `<pluginId>:<name>` */
+export type PluginCustomEventType = `${string}:${string}`;
+
+/** 'undo': replayed by undo/redo */
+export type PluginEventOrigin = 'local' | 'undo';
 
 export interface PluginEvent {
-  type: PluginEventType;
+  type: PluginEventType | PluginCustomEventType;
   dossierId: string;
   entityId?: string;
   timestamp: number;
-  /** Event details: `tagName` on tag events, `receipt` on dossier:purged */
+  origin: PluginEventOrigin;
+  /** Event details: `tagName` on tag events, `receipt` on dossier:purged… */
   meta?: Record<string, unknown>;
 }
 
 export type PluginEventCallback = (event: PluginEvent) => void;
 
 export interface EventsAPI {
+  /** Subscribe to one event type (core or plugin). Returns an unsubscribe function. */
+  on: (eventType: PluginEventType | PluginCustomEventType, cb: PluginEventCallback) => () => void;
+  /** Subscribe to every event, core and plugin ones (audit trail). Returns an unsubscribe function. */
+  onAny: (cb: PluginEventCallback) => () => void;
   /**
-   * Subscribe to a plugin event. Returns an unsubscribe function.
+   * Emit an event of this plugin. `type` must be `<pluginId>:<name>`;
+   * anything else is refused (warning in the console, nothing emitted).
    */
-  on: (eventType: PluginEventType, cb: PluginEventCallback) => () => void;
+  emit: (type: PluginCustomEventType, dossierId: string, meta?: Record<string, unknown>, entityId?: string) => void;
 }
 
 // ─── Toast API ────────────────────────────────────────────────

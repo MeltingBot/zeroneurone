@@ -24,6 +24,7 @@ import { toLocalDateKey } from '../../utils/dates';
 import { useHoverPopover } from '../../hooks/useHoverPopover';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { useFocusElementEvent } from '../../hooks/useFocusElementEvent';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 // Element with geo coordinates (resolved for a specific time)
 interface ResolvedGeoElement {
@@ -3023,4 +3024,5 @@ function exportMapToCSV(geoElements: { label: string; type?: string; geo: GeoDat
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  emitExport('map-csv');
 }

@@ -10,6 +10,7 @@ import { metadataService } from '../../services/metadataService';
 import { generateUUID } from '../../utils';
 import { ConfirmDeleteModal } from '../modals/ConfirmDeleteModal';
 import { AssetPreviewModal } from '../modals/AssetPreviewModal';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 interface AssetsPanelProps {
   element: Element;
@@ -323,6 +324,7 @@ export function AssetsPanel({ element }: AssetsPanelProps) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      emitExport('asset', { assetId: asset.id }, asset.dossierId);
     } catch (error) {
       console.error('Error downloading file:', error);
     }

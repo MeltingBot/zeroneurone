@@ -22,7 +22,7 @@ vi.mock('../services/syncService', () => ({
     getAwareness: () => null,
   },
 }));
-vi.mock('../plugins/pluginEventBus', () => ({ emit: vi.fn() }));
+vi.mock('../plugins/pluginEventBus', () => ({ emit: vi.fn(), setCurrentDossierIdGetter: vi.fn() }));
 
 const DOSSIER_ID = 'd-reconcile';
 

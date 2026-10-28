@@ -72,7 +72,8 @@ import { createEncryptionMiddlewareForDexie, decryptObject } from '../services/e
 import { encryptOpfsBuffer, decryptOpfsBuffer } from '../services/encryption/opfsEncryption';
 
 // ─── Event bus ─────────────────────────────────────────────────
-import { onPluginEvent } from './pluginEventBus';
+import { onPluginEvent, onAnyPluginEvent, emitFromPlugin, emitImported } from './pluginEventBus';
+import { refuseWrite } from '../utils/dossierLock';
 import { openGeoPicker } from './pluginUi';
 
 // ─── Shared plugin data (Y.js) ─────────────────────────────────
@@ -271,6 +272,7 @@ export const pluginAPI = {
     }> {
       // If no target, create a new dossier
       let dossierId = options?.targetDossierId;
+      if (dossierId && (await db.dossiers.get(dossierId))?.closedAt) refuseWrite('closed');
       if (!dossierId) {
         const newDossier = await dossierRepository.create(
           `Import${options?.suffix ?? ''}`,
@@ -288,6 +290,10 @@ export const pluginAPI = {
       }
       const file = new File([blob], 'import.zip', { type: 'application/zip' });
       const result = await importService.importFromZip(file, dossierId, options?.positionOffset);
+      if (result.success) {
+        emitImported(dossierId, 'zip', !!options?.targetDossierId,
+          { elements: result.elementsImported, links: result.linksImported, assets: result.assetsImported }, 'plugin');
+      }
       return { ...result, dossierId };
     },
 
@@ -311,7 +317,13 @@ export const pluginAPI = {
       errors: string[];
       warnings: string[];
     }> {
-      return importService.importFromJSON(jsonString, targetDossierId);
+      if ((await db.dossiers.get(targetDossierId))?.closedAt) refuseWrite('closed');
+      const result = await importService.importFromJSON(jsonString, targetDossierId);
+      if (result.success) {
+        emitImported(targetDossierId, 'json', true,
+          { elements: result.elementsImported, links: result.linksImported, assets: result.assetsImported }, 'plugin');
+      }
+      return result;
     },
 
     /**
@@ -333,20 +345,14 @@ export const pluginAPI = {
 
   // ─── Event bus (subscribe to data changes) ──────────────────
   events: {
-    /**
-     * Subscribe to a plugin event. Returns an unsubscribe function.
-     *
-     * Available events:
-     *   dossier:created, dossier:updated, dossier:deleted,
-     *   dossier:opened, dossier:closed,
-     *   element:created, element:updated, element:deleted,
-     *   element:tagAdded, element:tagRemoved,
-     *   link:created, link:updated, link:deleted,
-     *   asset:created, asset:deleted
-     *
-     * Tag events carry `meta.tagName` (the tag that was added/removed).
-     */
+    /** Subscribe to one event type (see PluginEventType). Returns an unsubscribe function. */
     on: onPluginEvent,
+    /** Subscribe to every event, core and plugin ones. */
+    onAny: onAnyPluginEvent,
+    /** Replaced in the scoped API, which knows the plugin id */
+    emit: (type: string, _dossierId: string, _meta?: Record<string, unknown>, _entityId?: string): void => {
+      console.warn(`[Plugin event bus] events.emit("${type}") needs the scoped plugin API`);
+    },
   },
 
   // ─── Toast / Notifications ──────────────────────────────────
@@ -606,6 +612,11 @@ export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pl
     ...pluginAPI,
     pluginId,
     pluginServices: scopedPluginServices(pluginId) as any,
+    events: {
+      ...pluginAPI.events,
+      emit: (type: string, dossierId: string, meta?: Record<string, unknown>, entityId?: string) =>
+        emitFromPlugin(pluginId, type, dossierId, meta, entityId),
+    },
     pluginData: {
       // get: new(dossierId, key) or legacy(pluginId, dossierId, key)
       async get(...args: any[]): Promise<any> {

@@ -6,6 +6,7 @@ import { elementToYMap, linkToYMap, tabToYMap, updateElementYMap, yMapToElement 
 import { commentToYMap } from './yjs/commentMapper';
 import type { DossierId } from '../types';
 import { refuseWrite } from '../utils/dossierLock';
+import { emitImported } from '../plugins/pluginEventBus';
 
 /**
  * Imports write to Dexie, but an open dossier displays its Y.Doc, which only
@@ -52,7 +53,13 @@ export async function snapshotBeforeImport(dossierId: DossierId): Promise<Import
  * Does nothing when the dossier's Y.Doc is not open: it will migrate from
  * Dexie on its first load.
  */
-export async function commitImportToYDoc(snapshot: ImportSnapshot): Promise<void> {
+export async function commitImportToYDoc(snapshot: ImportSnapshot, format = 'unknown'): Promise<void> {
+  const [newElements, newLinks] = await Promise.all([
+    db.elements.where('dossierId').equals(snapshot.dossierId).filter((e) => !snapshot.elementIds.has(e.id)).count(),
+    db.links.where('dossierId').equals(snapshot.dossierId).filter((l) => !snapshot.linkIds.has(l.id)).count(),
+  ]);
+  emitImported(snapshot.dossierId, format, true, { elements: newElements, links: newLinks });
+
   const ydoc = syncService.getYDoc();
   if (!ydoc || syncService.getDossierId() !== snapshot.dossierId) return;
 

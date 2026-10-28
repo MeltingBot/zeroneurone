@@ -6,6 +6,7 @@ import { usePlugins } from '../../plugins/usePlugins';
 import { ReportSectionEditor } from '../report/ReportSectionEditor';
 import { Input, IconButton } from '../common';
 import { exportInteractiveReport } from '../../services/exportInteractiveReportService';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 export function ReportPanel() {
   const { t } = useTranslation('panels');
@@ -142,6 +143,7 @@ export function ReportPanel() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      emitExport('report-md', undefined, currentReport.dossierId);
     },
     [currentReport]
   );
@@ -167,6 +169,7 @@ export function ReportPanel() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      emitExport('report-html', undefined, currentDossier.id);
     } catch (err) {
       console.error('Failed to export interactive report:', err);
     }

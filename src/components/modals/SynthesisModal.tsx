@@ -12,6 +12,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { DisplayMode } from '../../types';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 interface SynthesisModalProps {
   isOpen: boolean;
@@ -163,10 +164,12 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
           ? content
           : reportService.generate('html', currentDossier, elements, links, assets, finalOptions, i18n.language);
         reportService.openForPrint(htmlContent);
+        emitExport('print', { content: 'synthesis' }, currentDossier.id);
       } else {
         const timestamp = new Date().toISOString().slice(0, 10);
         const filename = `${(options.title || currentDossier.name).replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
         reportService.download(content, filename, format);
+        emitExport(`synthesis-${format}`, undefined, currentDossier.id);
       }
     } finally {
       setIsGenerating(false);

@@ -39,7 +39,7 @@ vi.mock('../services/fileService', () => ({
   },
 }));
 
-vi.mock('../plugins/pluginEventBus', () => ({ emit: vi.fn() }));
+vi.mock('../plugins/pluginEventBus', () => ({ emit: vi.fn(), setCurrentDossierIdGetter: vi.fn() }));
 
 let dossierStore: typeof import('./dossierStore');
 

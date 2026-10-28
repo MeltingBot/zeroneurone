@@ -20,6 +20,7 @@ import type { DatePrecision, Element as ZNElement } from '../../types';
 import { toLocalDateKey, dateLocale, effectivePrecision, endOfPrecision, formatPropertyValue } from '../../utils/dates';
 import { formatItemDates } from './timelineDates';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 export interface TimelineItem {
   id: string;
@@ -2042,6 +2043,7 @@ function exportTimelineToCSV(items: TimelineItem[], filename: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  emitExport('timeline-csv');
 }
 
 function getDensityColor(count: number, max: number): string {

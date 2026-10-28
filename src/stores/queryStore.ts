@@ -10,6 +10,7 @@ import { useSelectionStore } from './selectionStore';
 import { useViewStore } from './viewStore';
 import { useTabStore } from './tabStore';
 import { assertDossierWritable } from '../utils/dossierLock';
+import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
 
 interface QueryState {
   // Current query
@@ -126,6 +127,33 @@ export function withLinkEnds(results: { elementIds: Set<string>; linkIds: Set<st
   return ids;
 }
 
+/**
+ * query:executed. A query runs at each keystroke, and again whenever the data
+ * changes: one event per text, sent once typing has paused, and not again
+ * for automatic re-runs of the same text.
+ */
+const QUERY_TRACE_DELAY_MS = 2000;
+let queryTraceTimer: ReturnType<typeof setTimeout> | null = null;
+let lastTracedQuery = '';
+
+function traceQuery(text: string): void {
+  if (queryTraceTimer) clearTimeout(queryTraceTimer);
+  queryTraceTimer = setTimeout(() => {
+    queryTraceTimer = null;
+    const dossierId = useDossierStore.getState().currentDossier?.id;
+    const state = useQueryStore.getState();
+    if (!dossierId || state.currentText.trim() !== text) return;
+    const key = `${dossierId}\n${text}`;
+    if (key === lastTracedQuery) return;
+    lastTracedQuery = key;
+    emitPluginEvent('query:executed', dossierId, undefined, {
+      text,
+      elements: state.results?.elementIds.size ?? 0,
+      links: state.results?.linkIds.size ?? 0,
+    });
+  }, QUERY_TRACE_DELAY_MS);
+}
+
 export const useQueryStore = create<QueryState>((set, get) => ({
   currentText: '',
   currentAst: null,
@@ -223,6 +251,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
       isFilterActive: isActive,
       ...recentUpdate,
     });
+    if (trimmed) traceQuery(trimmed);
   },
 
   selectAllResults: () => {

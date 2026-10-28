@@ -23,6 +23,7 @@ import { exportService } from '../../services/exportService';
 import { useDossierStore, useUIStore, useViewStore, toast } from '../../stores';
 import { SafeHtml } from '../common/SafeHtml';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { emitImported, importFormatOf } from '../../plugins/pluginEventBus';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -250,6 +251,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       setImportResult(result);
 
       if (result.success) {
+        emitImported(dossierId, importFormatOf(file.name), false,
+          { elements: result.elementsImported, links: result.linksImported, assets: result.assetsImported });
         toast.success(t('import.success'));
         // Request fitView to show the entire graph after import
         requestFitView();
@@ -287,6 +290,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   // Confirmation d'une étape d'options (FEC, GeoJSON) : le dossier est créé
   // ici seulement, et supprimé si l'import échoue.
   const runPendingImport = useCallback(async (
+    format: string,
     dossierName: string,
     run: (dossierId: string) => Promise<ImportResult>,
     clearPending: () => void,
@@ -303,6 +307,8 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
       const result = await withImportProgress(() => run(dossierId));
       setImportResult(result);
       if (result.success) {
+        emitImported(dossierId, format, targetDossierId !== 'new',
+          { elements: result.elementsImported, links: result.linksImported, assets: result.assetsImported });
         clearPending();
         toast.success(t('import.success'));
         requestFitView();
@@ -334,6 +340,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const handleFecImport = useCallback(() => {
     if (!pendingFEC) return;
     return runPendingImport(
+      'fec',
       pendingFEC.fileName.replace(/\.(txt|fec)$/i, ''),
       (dossierId) => importFEC(pendingFEC.content, dossierId, fecOptions),
       () => setPendingFEC(null),
@@ -343,6 +350,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const handleGeoJSONImport = useCallback(() => {
     if (!pendingGeoJSON) return;
     return runPendingImport(
+      'geojson',
       pendingGeoJSON.fileName.replace(/\.(geo)?json$/i, ''),
       (dossierId) => importService.importFromGeoJSON(pendingGeoJSON.content, dossierId, {
         labelField: geoJSONLabelField,

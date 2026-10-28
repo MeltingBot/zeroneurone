@@ -8,6 +8,7 @@ import type { Element, Link } from '../../types';
 import { evaluationStrength, formatEvaluation, isInModel } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { ArrowUpDown, ArrowUp, ArrowDown, Upload, Box, Link2 } from 'lucide-react';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 interface TableRow {
   id: string;
@@ -195,6 +196,7 @@ export function QueryResultsTable() {
     a.download = 'query-results.csv';
     a.click();
     URL.revokeObjectURL(url);
+    emitExport('query-csv');
   }, [sortedRows, tableColumns, evaluationModel, gradingCell]);
 
   if (!results || (results.elementIds.size === 0 && results.linkIds.size === 0)) {

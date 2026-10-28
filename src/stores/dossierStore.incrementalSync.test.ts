@@ -36,7 +36,7 @@ vi.mock('../services/fileService', () => ({
   },
 }));
 
-vi.mock('../plugins/pluginEventBus', () => ({ emit: vi.fn() }));
+vi.mock('../plugins/pluginEventBus', () => ({ emit: vi.fn(), setCurrentDossierIdGetter: vi.fn() }));
 
 const repo = vi.hoisted(() => ({
   elementBulkUpsert: vi.fn().mockResolvedValue(undefined),

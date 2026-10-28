@@ -596,36 +596,54 @@ const unsub = api.events.on('element:created', (event) => {
   console.log('Nouvel element:', event.entityId, 'dans', event.dossierId);
 });
 
-// Se desabonner
+// Tout recevoir, evenements des plugins compris (journal d'audit) — ZN 2.83+
+const unsubAll = api.events.onAny((event) => journal.push(event));
+
+// Emettre un evenement du plugin — toujours sous son prefixe `<pluginId>:` — ZN 2.83+
+api.events.emit('mon-plugin:analyse', dossierId, { modele: 'x' });
+
 unsub();
+unsubAll();
 ```
+
+Chaque poste emet les actions faites sur lui : une modification recue d'un collaborateur n'emet rien (elle a ete emise sur son poste). Ne sont volontairement pas emis : les deplacements d'elements, l'ordre des pieces jointes, les reglages d'affichage, la selection, les filtres.
 
 ### Evenements disponibles
 
-| Evenement | entityId | Declenche quand |
-|-----------|----------|--------------------|
-| `dossier:created` | — | Nouveau dossier cree |
-| `dossier:updated` | — | Metadonnees dossier modifiees |
-| `dossier:deleted` | — | Dossier supprime (emis AVANT la suppression) |
-| `dossier:opened` | — | Utilisateur ouvre un dossier |
-| `dossier:closed` | — | Utilisateur ferme un dossier |
-| `element:created` | elementId | Element cree sur le canvas |
-| `element:updated` | elementId | Element modifie |
-| `element:deleted` | elementId | Element supprime |
-| `link:created` | linkId | Lien cree |
-| `link:updated` | linkId | Lien modifie |
-| `link:deleted` | linkId | Lien supprime |
-| `asset:created` | assetId | Fichier attache a un element |
-| `asset:deleted` | assetId | Fichier supprime |
+| Evenement | entityId | Declenche quand | `meta` |
+|-----------|----------|-----------------|--------|
+| `dossier:created` | — | Nouveau dossier cree | |
+| `dossier:updated` | — | Metadonnees dossier modifiees | `fields` ; `changes` (`{ champ: { from, to } }`) pour la retention et la cloture |
+| `dossier:deleted` | — | Dossier supprime (emis AVANT la suppression) | |
+| `dossier:purged` | — | Apres la suppression | `receipt` : chaque stockage verifie et ce qui y reste |
+| `dossier:caseClosed` / `dossier:caseReopened` | — | Dossier cloture (lecture seule) / rouvert | |
+| `dossier:opened` / `dossier:closed` | — | Dossier charge / decharge dans la fenetre | |
+| `dossier:imported` | — | Import termine | `format`, `into` (dossier existant), `elements`, `links`, `assets`, `via` |
+| `dossier:exported` | — | Quelque chose sort de l'application | `format` : zip, json, csv, png, svg, znzip, report-md, report-html, synthesis-*, print, query-csv, matrix-csv, timeline-csv, map-csv, asset, backup, clipboard-mermaid, clipboard-dot… |
+| `dossier:shared` / `dossier:joined` | — | Dossier partage depuis ce poste / rejoint par un lien | |
+| `element:created` | elementId | Element cree | `via: 'paste'` pour un collage |
+| `element:updated` | elementId | Element modifie | `fields`, `bulk` pour une modification en lot |
+| `element:deleted` | elementId | Element supprime | |
+| `element:tagAdded` / `element:tagRemoved` | elementId | Tag ajoute / retire | `tagName` |
+| `element:merged` | element garde | Fusion | `mergedIds` |
+| `link:created` / `link:updated` / `link:deleted` | linkId | Lien cree / modifie / supprime | comme les elements |
+| `asset:created` / `asset:deleted` | assetId | Fichier attache / supprime | |
+| `comment:created` / `resolved` / `unresolved` / `deleted` | commentId | Commentaire | `targetId` |
+| `tag:renamed` | — | Tag renomme dans tout le dossier | `from`, `to`, `elements`, `links` |
+| `report:updated` | — | Rapport modifie (les saisies d'une section sont regroupees) | `action`, `sectionId` |
+| `query:executed` | — | Requete lancee par l'utilisateur (pas les relances automatiques) | `text` (peut contenir des noms), `elements`, `links` |
+| `<pluginId>:<nom>` | libre | Evenement d'un plugin | libre |
 
 ### Structure de l'evenement
 
 ```typescript
 interface PluginEvent {
-  type: PluginEventType;
+  type: PluginEventType | `${string}:${string}`;
   dossierId: string;
   entityId?: string;
-  timestamp: number;  // Date.now()
+  timestamp: number;            // Date.now()
+  origin: 'local' | 'undo';     // 'undo' : rejoue par annuler / retablir
+  meta?: Record<string, unknown>;
 }
 ```
 
@@ -1399,6 +1417,8 @@ L'objet `api` passe a `register()` fournit :
 | Propriete | Description |
 |-----------|-------------|
 | `events.on(eventType, callback)` | S'abonner a un evenement. Retourne une fonction unsubscribe |
+| `events.onAny(callback)` | Recevoir tous les evenements, ceux des plugins compris (ZN 2.83+) |
+| `events.emit(type, dossierId, meta?, entityId?)` | Emettre un evenement `<pluginId>:<nom>` (ZN 2.83+) |
 
 **Toast / Notifications :**
 

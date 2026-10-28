@@ -12,6 +12,7 @@ import { encryptZip } from './encryption/zipEncryption';
 import { buildANXExport } from './exportANX';
 import { formatDateForExport, formatPreciseDateKey, parsePropertyDate, toLocalDateKey } from '../utils/dates';
 import { buildObsidianVault, toVaultBasename, type ObsidianLabels } from './exportObsidian';
+import { emitExport } from '../plugins/pluginEventBus';
 
 /** CSV text of a property value: dates as local `YYYY-MM-DD[ HH:mm]` (not `Date.toString()`). */
 function propertyValueToCSV(prop: Property): string {
@@ -956,6 +957,7 @@ ${edges}
         break;
       }
     }
+    emitExport(format, undefined, dossier.id);
   }
 
   private escapeCSV(value: string, delimiter = ','): string {

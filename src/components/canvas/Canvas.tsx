@@ -90,6 +90,7 @@ import { snapshotBeforeImport, commitImportToYDoc } from '../../services/importC
 import { withImportProgress } from '../../services/importProgress';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { elementRepository } from '../../db/repositories/elementRepository';
+import { emitExport, importFormatOf } from '../../plugins/pluginEventBus';
 
 /** Capture tab membership for undo restore (tabId → elementIds[]) */
 function captureTabMembership(elementIds: string[]): Record<string, string[]> | undefined {
@@ -3515,7 +3516,7 @@ export function Canvas() {
     const selected = elements.filter(el => ids.has(el.id));
     const between = links.filter(l => ids.has(l.fromId) && ids.has(l.toId));
     navigator.clipboard.writeText(buildMermaidExport(selected, between))
-      .then(() => toast.success(tPages('dossier.mermaidCopied')))
+      .then(() => { emitExport('clipboard-mermaid'); toast.success(tPages('dossier.mermaidCopied')); })
       .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
   }, [getSelectedElementIds, elements, links, tPages]);
 
@@ -3528,7 +3529,7 @@ export function Canvas() {
     const selected = elements.filter(el => ids.has(el.id));
     const between = links.filter(l => ids.has(l.fromId) && ids.has(l.toId));
     navigator.clipboard.writeText(buildDOTExport(currentDossier?.name ?? '', selected, between))
-      .then(() => toast.success(tPages('dossier.dotCopied')))
+      .then(() => { emitExport('clipboard-dot'); toast.success(tPages('dossier.dotCopied')); })
       .catch(() => toast.error(tPages('dossier.mermaidCopyFailed')));
   }, [getSelectedElementIds, elements, links, tPages, currentDossier?.name]);
 
@@ -4264,7 +4265,7 @@ export function Canvas() {
 
             // The import wrote to Dexie: bring it into the open Y.Doc (kept, with
             // its comments and shared session), then reload assets and report.
-            await commitImportToYDoc(snapshot);
+            await commitImportToYDoc(snapshot, importFormatOf(importPlacementData.file?.name));
             await loadDossier(importPlacementData.dossierId);
 
             // Request fitView to show all elements including imported ones

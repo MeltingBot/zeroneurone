@@ -11,6 +11,7 @@ import { db } from '../../db/database';
 import { useDossierStore, useQueryStore, toast } from '../../stores';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { isExportedNode, withLayersAt } from '../canvas/overview/exportLayers';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -166,6 +167,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const timestamp = `${now.toISOString().slice(0, 10)}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
       const baseName = `${currentDossier.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
       exportService.downloadBlob(encBlob, `${baseName}.znzip`);
+      emitExport('znzip', undefined, currentDossier.id);
 
       toast.success(t('export.zip.success'));
       setZipPassword('');
@@ -209,6 +211,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       link.click();
       document.body.removeChild(link);
 
+      emitExport('png', { scale }, currentDossier.id);
       toast.success(t('export.successFormat', { format: `PNG (${scale}x)` }));
       onClose();
     } catch (err) {
@@ -248,6 +251,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       });
       const baseName = currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
       exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');
+      emitExport('svg', undefined, currentDossier.id);
       toast.success(t('export.successFormat', { format: 'SVG' }));
       onClose();
     } catch (err) {

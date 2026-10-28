@@ -29,6 +29,7 @@ import {
 import { backupService } from '../../services/backupService';
 import { db as dexieDb } from '../../db/database';
 import { appPath } from '../../utils/basePath';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 interface StorageModalProps {
   isOpen: boolean;
@@ -120,6 +121,10 @@ export function StorageModal({ isOpen, onClose, onDataChanged }: StorageModalPro
       const blob = await backupService.exportAll();
       const timestamp = new Date().toISOString().slice(0, 10);
       backupService.downloadBlob(blob, `zeroneurone_backup_${timestamp}.zip`);
+      // One event per dossier in the backup: each dossier's trace stands on its own
+      for (const dossierId of await dexieDb.dossiers.toCollection().primaryKeys()) {
+        emitExport('backup', undefined, String(dossierId));
+      }
       setBackupMessage(t('storage.backup.exportSuccess'));
     } catch (error) {
       console.error('Export failed:', error);

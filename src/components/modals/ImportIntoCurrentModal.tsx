@@ -170,7 +170,7 @@ export function ImportIntoCurrentModal({ isOpen, onClose, onOpenJsonMapping, ini
         const snapshot = await snapshotBeforeImport(dossierId);
         const result = await withImportProgress(() => importANB(buffer, dossierId));
         if (result.success) {
-          await commitImportToYDoc(snapshot);
+          await commitImportToYDoc(snapshot, 'anb');
           await loadDossier(dossierId);
           toast.success(t('import.success'));
           requestFitView();

@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.83.0
+
+### Plugins
+
+- **Événements complets** — le bus d'événements couvre maintenant les
+  modifications en lot, collages, fusions, dissolutions de groupe,
+  commentaires, renommages de tag, modifications du rapport (regroupées par
+  section), requêtes lancées par l'utilisateur, imports (dossier ouvert,
+  nouveau dossier, imports par plugin), exports (fichiers, impression,
+  sauvegarde complète, copies Mermaid/DOT), partage et entrée dans une
+  session partagée.
+- `dossier:updated` indique les champs modifiés, avec l'ancienne et la
+  nouvelle valeur pour la rétention et la clôture.
+- Chaque événement porte `origin` : `local`, ou `undo` quand il est rejoué
+  par annuler / rétablir.
+- `api.events.onAny(cb)` reçoit tous les événements, ceux des plugins
+  compris ; `api.events.emit('<pluginId>:<nom>', dossierId, meta)` émet un
+  événement du plugin (tout autre préfixe est refusé).
+- Volontairement non émis : déplacements d'éléments, ordre des pièces,
+  réglages d'affichage, sélection, filtres, et modifications reçues d'un
+  collaborateur (émises sur son poste).
+
+### Corrections
+
+- L'import d'un fichier par un plugin respecte la clôture du dossier cible.
+
 ## 2.82.0
 
 ### Nouveautés

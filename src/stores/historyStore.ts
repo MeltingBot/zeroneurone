@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { CanvasTab, Element, Link } from '../types';
+import { asUndo } from '../plugins/pluginEventBus';
 
 /**
  * Snapshot of a 'tab-membership' action: per tab, the elements it gained and
@@ -144,7 +145,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       past: state.past.slice(0, -1),
       future: [action, ...state.future],
     }));
-    await get().applyUndo(action);
+    await asUndo(() => get().applyUndo(action));
   },
 
   applyUndo: async (action) => {
@@ -428,7 +429,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       past: [...state.past, action],
       future: state.future.slice(1),
     }));
-    await get().applyRedo(action);
+    await asUndo(() => get().applyRedo(action));
   },
 
   applyRedo: async (action) => {

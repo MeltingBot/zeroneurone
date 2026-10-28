@@ -15,6 +15,7 @@ import {
   reorderSectionsInYMap,
 } from '../services/yjs/reportMapper';
 import { assertDossierWritable } from '../utils/dossierLock';
+import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
 
 interface ReportState {
   // Current report for the active dossier
@@ -54,6 +55,40 @@ interface ReportState {
 
 // Store the observer cleanup function
 let ydocObserverCleanup: (() => void) | null = null;
+
+/**
+ * report:updated events. Section text is saved every few hundred ms while
+ * typing: edits of one section are merged into one event, sent after a few
+ * seconds without typing (or when the report is closed). Other actions are
+ * sent at once.
+ */
+const REPORT_TRACE_DELAY_MS = 5000;
+const pendingReportTraces = new Map<string, { timer: ReturnType<typeof setTimeout>; send: () => void }>();
+
+function traceReport(dossierId: string, action: string, sectionId?: string): void {
+  const send = () => emitPluginEvent('report:updated', dossierId, undefined, sectionId ? { action, sectionId } : { action });
+  if (action !== 'section-updated' || !sectionId) {
+    send();
+    return;
+  }
+  const key = `${dossierId}:${sectionId}`;
+  const pending = pendingReportTraces.get(key);
+  if (pending) clearTimeout(pending.timer);
+  const timer = setTimeout(() => {
+    pendingReportTraces.delete(key);
+    send();
+  }, REPORT_TRACE_DELAY_MS);
+  pendingReportTraces.set(key, { timer, send });
+}
+
+/** Send the merged section edits now */
+export function flushReportTraces(): void {
+  for (const [key, { timer, send }] of pendingReportTraces) {
+    clearTimeout(timer);
+    pendingReportTraces.delete(key);
+    send();
+  }
+}
 
 export const useReportStore = create<ReportState>((set, get) => ({
   currentReport: null,
@@ -166,6 +201,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
+    traceReport(currentReport.dossierId, 'title');
 
     // Update local database
     await reportRepository.update(currentReport.id, { title });
@@ -187,6 +223,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   },
 
   clearReport: () => {
+    flushReportTraces();
     // Cleanup observer
     if (ydocObserverCleanup) {
       ydocObserverCleanup();
@@ -199,6 +236,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return null;
+    traceReport(currentReport.dossierId, 'section-added');
 
     // Create section in local database
     const section = await reportRepository.addSection(currentReport.id, title);
@@ -226,6 +264,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
+    traceReport(currentReport.dossierId, 'section-updated', sectionId);
 
     // Update local database
     await reportRepository.updateSection(currentReport.id, sectionId, changes);
@@ -253,6 +292,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     assertDossierWritable();
     const { currentReport, activeSectionId } = get();
     if (!currentReport) return;
+    traceReport(currentReport.dossierId, 'section-removed', sectionId);
 
     // Remove from local database
     await reportRepository.removeSection(currentReport.id, sectionId);
@@ -281,6 +321,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
+    traceReport(currentReport.dossierId, 'section-restored', section.id);
 
     // Re-insert at correct position and reorder
     const updatedSections = [...currentReport.sections, section]
@@ -310,6 +351,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
     assertDossierWritable();
     const { currentReport } = get();
     if (!currentReport) return;
+    traceReport(currentReport.dossierId, 'sections-reordered');
 
     // Update local database
     await reportRepository.reorderSections(currentReport.id, sectionIds);

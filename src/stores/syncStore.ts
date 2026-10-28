@@ -9,6 +9,7 @@ import { syncService } from '../services/syncService';
 import { dossierRepository } from '../db/repositories';
 import type { SyncState, UserPresence } from '../types/yjs';
 import { DEFAULT_SYNC_STATE, getRandomUserColor, generateUserName } from '../types/yjs';
+import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
 
 // ============================================================================
 // LOCAL USER
@@ -378,6 +379,7 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
       });
 
       set({ encryptionKey });
+      emitPluginEvent('dossier:shared', dossierId, undefined, { asyncEnabled });
 
       // A local dossier keeps its files out of the Y.Doc; peers fetch them
       // from it, so send them now, in the background.

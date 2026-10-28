@@ -20,6 +20,7 @@ import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { joinSourceLines, sourceToPlainText } from '../../utils/sourceLinks';
 import { useTabFilterIds } from '../../hooks/useTabFilterIds';
 import { getSourceSchemeNames } from '../../plugins/sourceSchemes';
+import { emitExport } from '../../plugins/pluginEventBus';
 
 type SortDirection = 'asc' | 'desc';
 interface SortState {
@@ -797,6 +798,7 @@ export function MatrixView() {
     a.download = `${slug}_matrice_${ts}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    emitExport('matrix-csv');
   }, [sortedElements, visibleCols, evaluationModel]);
 
   // Keyboard shortcuts (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Ctrl+C)

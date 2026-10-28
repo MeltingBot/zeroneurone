@@ -28,6 +28,7 @@ import { isValidKeyString } from '../services/cryptoService';
 import { dossierRepository } from '../db/repositories';
 import type { Dossier } from '../types';
 import { dateLocale } from '../utils/dates';
+import { emit as emitPluginEvent } from '../plugins/pluginEventBus';
 
 const STORAGE_KEY = 'zeroneurone-signaling-server';
 
@@ -238,6 +239,7 @@ export function JoinPage() {
         roomId,  // Pass separate roomId for WebSocket
         urlParams.current?.asyncEnabled || false
       );
+      emitPluginEvent('dossier:joined', dossierId!);
 
       // Wait for WebSocket connection and initial sync to complete
       await new Promise<void>((resolve, reject) => {

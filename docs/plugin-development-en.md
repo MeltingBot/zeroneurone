@@ -588,7 +588,7 @@ When a dossier is deleted, ZN automatically cleans up all `pluginData` associate
 
 ## Event Bus (`api.events`)
 
-Plugins can react to data changes via a pub/sub event bus. Callbacks are always wrapped in try/catch — a failing plugin never crashes ZN.
+Plugins can react to data changes through a pub/sub event bus. Callbacks are always wrapped in a try/catch — a failing plugin never crashes ZN.
 
 ```javascript
 // Subscribe to an event — returns an unsubscribe function
@@ -596,36 +596,54 @@ const unsub = api.events.on('element:created', (event) => {
   console.log('New element:', event.entityId, 'in', event.dossierId);
 });
 
-// Unsubscribe
+// Receive everything, plugin events included (audit trail) — ZN 2.83+
+const unsubAll = api.events.onAny((event) => log.push(event));
+
+// Emit an event of the plugin — always under its `<pluginId>:` prefix — ZN 2.83+
+api.events.emit('my-plugin:analysis', dossierId, { model: 'x' });
+
 unsub();
+unsubAll();
 ```
+
+Each device emits the actions done on it: a change received from a collaborator emits nothing (it was emitted on their device). Deliberately not emitted: element moves, attachment order, display settings, selection, filters.
 
 ### Available events
 
-| Event | entityId | Fired when |
-|-------|----------|------------|
-| `dossier:created` | — | New dossier created |
-| `dossier:updated` | — | Dossier metadata modified |
-| `dossier:deleted` | — | Dossier deleted (fired BEFORE deletion) |
-| `dossier:opened` | — | User opens a dossier |
-| `dossier:closed` | — | User closes a dossier |
-| `element:created` | elementId | Element created on canvas |
-| `element:updated` | elementId | Element modified |
-| `element:deleted` | elementId | Element deleted |
-| `link:created` | linkId | Link created |
-| `link:updated` | linkId | Link modified |
-| `link:deleted` | linkId | Link deleted |
-| `asset:created` | assetId | File attached to an element |
-| `asset:deleted` | assetId | File removed |
+| Event | entityId | Fired when | `meta` |
+|-------|----------|------------|--------|
+| `dossier:created` | — | New dossier created | |
+| `dossier:updated` | — | Dossier metadata changed | `fields`; `changes` (`{ field: { from, to } }`) for retention and closure |
+| `dossier:deleted` | — | Dossier deleted (emitted BEFORE deletion) | |
+| `dossier:purged` | — | After deletion | `receipt`: each storage checked and what is left |
+| `dossier:caseClosed` / `dossier:caseReopened` | — | Dossier closed (read-only) / reopened | |
+| `dossier:opened` / `dossier:closed` | — | Dossier loaded / unloaded in the window | |
+| `dossier:imported` | — | Import finished | `format`, `into` (existing dossier), `elements`, `links`, `assets`, `via` |
+| `dossier:exported` | — | Something left the app | `format`: zip, json, csv, png, svg, znzip, report-md, report-html, synthesis-*, print, query-csv, matrix-csv, timeline-csv, map-csv, asset, backup, clipboard-mermaid, clipboard-dot… |
+| `dossier:shared` / `dossier:joined` | — | Dossier shared from this device / joined from a link | |
+| `element:created` | elementId | Element created | `via: 'paste'` for a paste |
+| `element:updated` | elementId | Element changed | `fields`, `bulk` for a bulk edit |
+| `element:deleted` | elementId | Element deleted | |
+| `element:tagAdded` / `element:tagRemoved` | elementId | Tag added / removed | `tagName` |
+| `element:merged` | kept element | Merge | `mergedIds` |
+| `link:created` / `link:updated` / `link:deleted` | linkId | Link created / changed / deleted | as for elements |
+| `asset:created` / `asset:deleted` | assetId | File attached / deleted | |
+| `comment:created` / `resolved` / `unresolved` / `deleted` | commentId | Comment | `targetId` |
+| `tag:renamed` | — | Tag renamed across the dossier | `from`, `to`, `elements`, `links` |
+| `report:updated` | — | Report edited (typing in one section is merged) | `action`, `sectionId` |
+| `query:executed` | — | Query run by the user (not automatic re-runs) | `text` (may contain names), `elements`, `links` |
+| `<pluginId>:<name>` | free | Event of a plugin | free |
 
 ### Event structure
 
 ```typescript
 interface PluginEvent {
-  type: PluginEventType;
+  type: PluginEventType | `${string}:${string}`;
   dossierId: string;
   entityId?: string;
-  timestamp: number;  // Date.now()
+  timestamp: number;            // Date.now()
+  origin: 'local' | 'undo';     // 'undo': replayed by undo / redo
+  meta?: Record<string, unknown>;
 }
 ```
 
@@ -638,7 +656,7 @@ api.events.on('dossier:updated', (event) => {
   maybeScheduleBackup(event.dossierId);
 });
 
-// React to every element modification
+// React to every element change
 api.events.on('element:updated', (event) => {
   refreshAnalysis(event.dossierId, event.entityId);
 });
@@ -1399,6 +1417,8 @@ The `api` object passed to `register()` provides:
 | Property | Description |
 |----------|-------------|
 | `events.on(eventType, callback)` | Subscribe to an event. Returns an unsubscribe function |
+| `events.onAny(callback)` | Receive every event, plugin ones included (ZN 2.83+) |
+| `events.emit(type, dossierId, meta?, entityId?)` | Emit a `<pluginId>:<name>` event (ZN 2.83+) |
 
 **Toast / Notifications:**
 
