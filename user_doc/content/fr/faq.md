@@ -112,6 +112,10 @@ Depuis la v2.18, vous pouvez définir une **durée de rétention** par dossier (
 
 La rédaction permanente ne plaisante pas. La structure du graphe survit, mais plus aucun contenu lisible. C'est fait pour ça.
 
+### Je peux clôturer un dossier ?
+
+Oui, depuis la v2.82.0 : panneau Détail ▸ **Dates** ▸ **Clôturer**. Le dossier passe en lecture seule jusqu'à ce que vous le rouvriez, et la rétention peut compter depuis la première clôture. Voir [Clôture et rétention]({{< relref "features/retention" >}}).
+
 ### ZeroNeurone grossit, c'est normal ?
 
 Un peu. Chaque dossier garde la trace de tout ce que vous avez bougé, retouché, supprimé. Et jusqu'à la v2.60.0, chaque fichier joint était stocké en double. Ça pèse.
@@ -395,7 +399,7 @@ Oui, jusqu'à **50 Mo** par fichier. Au-delà, il reste chez vous. Au-dessus de 
 
 ### La rétention se synchronise en collab ?
 
-Oui. La durée et la politique de rétention sont synchronisées entre tous les participants via Y.Doc.
+Oui. La durée, la politique et le point de départ de la rétention, ainsi que la clôture, sont synchronisés entre tous les participants via Y.Doc.
 
 ---
 

@@ -112,6 +112,10 @@ Since v2.18, you can set a **retention period** per dossier (in days). On expira
 
 Permanent redaction means business. The graph structure survives, but no readable content remains. That's the point.
 
+### Can I close a dossier?
+
+Yes, since v2.82.0: Detail panel ▸ **Dates** ▸ **Close**. The dossier becomes read-only until you reopen it, and retention can count from the first closure. See [Closure and Retention]({{< relref "features/retention" >}}).
+
 ### ZeroNeurone is getting fat, is that normal?
 
 A bit. Each dossier remembers everything you moved, tweaked, deleted. And up to v2.60.0, every attached file was stored twice. It adds up.
@@ -395,7 +399,7 @@ Yes, up to **50 MB** per file. Beyond that, it stays with you. Above 10 MB, grab
 
 ### Does retention sync in collab?
 
-Yes. Retention duration and policy are synchronized between all participants via Y.Doc.
+Yes. Retention duration, policy and starting point, as well as closure, are synchronized between all participants via Y.Doc.
 
 ---
 

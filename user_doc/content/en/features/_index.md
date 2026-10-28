@@ -27,3 +27,4 @@ Explore the main features of ZeroNeurone.
 - [Synthesis]({{< relref "synthesis" >}}) — Automatic report generation
 - [Collaboration]({{< relref "collaboration" >}}) — Real-time work
 - [At-Rest Encryption]({{< relref "encryption" >}}) — Protect your data with a password
+- [Closure and Retention]({{< relref "retention" >}}) — Read-only closure, lifetime and expiration policy of dossiers
