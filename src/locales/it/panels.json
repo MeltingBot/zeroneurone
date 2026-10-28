@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} data/e corretta/e",
       "legacyError": "Correzione non riuscita",
       "linkArrowByDefault": "Freccia predefinita sulle relazioni",
-      "blurMediaOnOpen": "Sfoca i media all'apertura"
+      "blurMediaOnOpen": "Sfoca i media all'apertura",
+      "linkLabelWrap": "A capo nelle etichette dei collegamenti",
+      "linkLabelWrapWidth": "caratteri per riga"
     },
     "placeholders": {
       "name": "Nome delil fascicolo",

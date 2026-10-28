@@ -16,6 +16,7 @@ import { escapeJsonForScript, safeColor, sanitizeUrl } from '../utils/escapeHtml
 import DOMPurify from 'dompurify';
 import i18next from 'i18next';
 import { dateLocale, formatPropertyValue } from '../utils/dates';
+import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
 
 // CSS variable to hex color map (same as svgExportService)
 const CSS_VAR_MAP: Record<string, string> = {
@@ -150,7 +151,7 @@ function resolveColor(color: string | undefined, defaultColor: string): string {
 function generateGraphSVG(
   elements: Element[],
   links: Link[],
-  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal' },
+  routeSettings: { linkAnchorMode: 'auto' | 'manual'; linkCurveMode: 'straight' | 'curved' | 'orthogonal'; linkLabelWrap?: number },
   thumbnails: Record<string, string> = {},
   noElementsLabel = 'No elements'
 ): string {
@@ -220,7 +221,7 @@ function generateGraphSVG(
       <g class="link" data-link-id="${link.id}" data-from="${link.fromId}" data-to="${link.toId}" data-x="${route.labelX}" data-y="${route.labelY}" style="cursor: pointer;">
         <path d="${route.path}" fill="none" stroke="${color}" stroke-width="${thickness}" stroke-dasharray="${strokeDasharray}" stroke-linecap="round" />
         ${arrows}
-        ${link.label ? `<text x="${route.labelX}" y="${route.labelY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-label" font-size="12">${escapeXml(link.label)}</text>` : ''}
+        ${link.label ? `<text x="${route.labelX}" y="${route.labelY}" text-anchor="middle" dominant-baseline="middle" class="svg-text-secondary link-label" font-size="12">${svgLabelTspans(wrapLabelLines(link.label, routeSettings.linkLabelWrap), route.labelX, route.labelY, 15, escapeXml)}</text>` : ''}
       </g>
     `;
   }
@@ -468,6 +469,7 @@ export async function exportInteractiveReport(
       // Same defaults as the canvas
       linkAnchorMode: dossier.settings?.linkAnchorMode ?? 'manual',
       linkCurveMode: dossier.settings?.linkCurveMode ?? 'curved',
+      linkLabelWrap: dossier.options?.linkLabelWrap,
     },
     thumbnails,
     i18nStrings.noElements

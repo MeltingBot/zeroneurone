@@ -244,6 +244,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         linkAnchorMode: settings?.linkAnchorMode ?? 'manual',
         linkCurveMode: settings?.linkCurveMode ?? 'curved',
         assetDataUrls: assetDataUrls.size > 0 ? assetDataUrls : undefined,
+        linkLabelWrap: currentDossier.options?.linkLabelWrap,
       });
       const baseName = currentDossier.name.replace(/[^a-zA-Z0-9]/g, '_');
       exportService.download(svgString, `${baseName}_canvas.svg`, 'image/svg+xml');

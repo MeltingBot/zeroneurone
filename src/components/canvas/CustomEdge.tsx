@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { type EdgeProps, useReactFlow } from '@xyflow/react';
-import { useUIStore } from '../../stores';
+import { useDossierStore, useUIStore } from '../../stores';
 import { FONT_SIZE_PX, type FontSize } from '../../types';
 import type { EvaluationBadge } from '../../utils/evaluation';
 import { arrowPolygon, computeEdgeRoute } from '../../utils/edgeRouting';
+import { lineOffsets, wrapLabelLines } from '../../utils/wrapLabel';
 
 // Remote user presence info for a link
 interface RemoteLinkPresence {
@@ -96,6 +97,12 @@ function CustomEdgeComponent(props: EdgeProps) {
   const confidenceBadge = edgeData?.confidenceBadge ?? null;
   const displayedPropertyValues = edgeData?.displayedPropertyValues;
   const labelFontSize = FONT_SIZE_PX[edgeData?.fontSize || 'sm'];
+  // Dossier option: long labels go on several lines
+  const labelWrap = useDossierStore((s) => s.currentDossier?.options?.linkLabelWrap);
+  const labelLines = label ? wrapLabelLines(String(label), labelWrap) : [];
+  const labelLineHeight = Math.round(labelFontSize * 1.25);
+  // What sits under the label (badge, properties) moves down past its extra lines
+  const labelBelow = label ? 12 + ((labelLines.length - 1) * labelLineHeight) / 2 : 0;
 
   const sourceSlot = edgeData?.sourceSlot ?? 0;
   const targetSlot = edgeData?.targetSlot ?? 0;
@@ -360,7 +367,11 @@ function CustomEdgeComponent(props: EdgeProps) {
               textAnchor="middle"
               dominantBaseline="middle"
             >
-              {String(label)}
+              {labelLines.length > 1
+                ? lineOffsets(labelLines.length, labelLineHeight).map((dy, i) => (
+                  <tspan key={i} x={0} y={dy}>{labelLines[i]}</tspan>
+                ))
+                : String(label)}
             </text>
           )}
         </g>
@@ -368,7 +379,7 @@ function CustomEdgeComponent(props: EdgeProps) {
 
       {/* Confidence / grading indicator */}
       {confidenceBadge && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0)})`}>
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow})`}>
           <rect
             x={-18}
             y={-8}
@@ -396,7 +407,7 @@ function CustomEdgeComponent(props: EdgeProps) {
 
       {/* Displayed properties */}
       {displayedPropertyValues && displayedPropertyValues.length > 0 && !anonymousMode && (
-        <g transform={`translate(${controlHandleX}, ${controlHandleY + (label ? 12 : 0) + (confidenceBadge ? 18 : 0)})`}>
+        <g transform={`translate(${controlHandleX}, ${controlHandleY + labelBelow + (confidenceBadge ? 18 : 0)})`}>
           {displayedPropertyValues.slice(0, 2).map(({ key, value }, index) => {
             const displayValue = value.length > 15 ? value.slice(0, 15) + '...' : value;
             const displayText = `${key}: ${displayValue}`;

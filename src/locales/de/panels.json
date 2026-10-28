@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} Datum/Daten korrigiert",
       "legacyError": "Korrektur fehlgeschlagen",
       "linkArrowByDefault": "Standardmäßig Pfeil auf Verbindungen",
-      "blurMediaOnOpen": "Medien beim Öffnen unscharf"
+      "blurMediaOnOpen": "Medien beim Öffnen unscharf",
+      "linkLabelWrap": "Zeilenumbruch in Verbindungsbeschriftungen",
+      "linkLabelWrapWidth": "Zeichen pro Zeile"
     },
     "placeholders": {
       "name": "Name der Akte",

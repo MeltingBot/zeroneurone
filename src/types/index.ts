@@ -329,6 +329,8 @@ export interface DossierOptions {
   linkArrowByDefault?: boolean;
   /** Media blurred each time the dossier is opened (the user can unblur them). */
   blurMediaOnOpen?: boolean;
+  /** Link labels wrap past this many characters (at spaces); absent = one line. */
+  linkLabelWrap?: number;
 }
 
 export interface DossierSettings {

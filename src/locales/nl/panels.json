@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} datum/datums gecorrigeerd",
       "legacyError": "Correctie mislukt",
       "linkArrowByDefault": "Standaard pijl op relaties",
-      "blurMediaOnOpen": "Media vervagen bij openen"
+      "blurMediaOnOpen": "Media vervagen bij openen",
+      "linkLabelWrap": "Labels van koppelingen afbreken",
+      "linkLabelWrapWidth": "tekens per regel"
     },
     "placeholders": {
       "name": "Naam van het dossier",

@@ -12,6 +12,12 @@ interface InsightsState {
   isolated: ElementId[];
   similarLabels: SimilarPair[];
   computedAt: Date | null;
+  /**
+   * Structure signature of the graph the results describe (or are being
+   * computed for). The panel remounts on every tab switch: it skips the
+   * analysis when the structure has not changed since.
+   */
+  computedKey: string | null;
 
   // UI state
   isComputing: boolean;
@@ -42,7 +48,7 @@ interface InsightsState {
   focusedElementId: ElementId | null;
 
   // Actions
-  computeInsights: (elements: Element[], links: Link[]) => void;
+  computeInsights: (elements: Element[], links: Link[], key?: string) => void;
   highlightCluster: (clusterId: number) => void;
   highlightCentralElement: (elementId: ElementId) => void;
   highlightBridges: () => void;
@@ -92,6 +98,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   isolated: [],
   similarLabels: [],
   computedAt: null,
+  computedKey: null,
 
   isComputing: false,
   computeProgress: 0,
@@ -111,8 +118,8 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
   focusedElementId: null,
 
   // Actions
-  computeInsights: (elements, links) => {
-    set({ isComputing: true, computeProgress: 0, computePhase: 'starting' });
+  computeInsights: (elements, links, key) => {
+    set({ isComputing: true, computeProgress: 0, computePhase: 'starting', computedKey: key ?? null });
     const progress = useProgressStore.getState();
     progress.start('insights', 'activity.insights', 0);
 
@@ -354,6 +361,7 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
       isolated: [],
       similarLabels: [],
       computedAt: null,
+      computedKey: null,
       isComputing: false,
       computeProgress: 0,
       computePhase: '',

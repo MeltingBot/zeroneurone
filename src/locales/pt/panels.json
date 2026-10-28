@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} data(s) corrigida(s)",
       "legacyError": "A correção falhou",
       "linkArrowByDefault": "Seta por padrão nas relações",
-      "blurMediaOnOpen": "Desfocar média ao abrir"
+      "blurMediaOnOpen": "Desfocar média ao abrir",
+      "linkLabelWrap": "Quebra de linha nos rótulos das ligações",
+      "linkLabelWrapWidth": "caracteres por linha"
     },
     "placeholders": {
       "name": "Nome do dossiê",

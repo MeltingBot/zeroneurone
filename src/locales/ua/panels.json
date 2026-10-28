@@ -55,7 +55,9 @@
       "legacyDone": "Виправлено дат: {{count}}",
       "legacyError": "Виправлення не вдалося",
       "linkArrowByDefault": "Стрілка за замовчуванням на зв’язках",
-      "blurMediaOnOpen": "Розмивати медіа під час відкриття"
+      "blurMediaOnOpen": "Розмивати медіа під час відкриття",
+      "linkLabelWrap": "Перенесення підписів зв'язків",
+      "linkLabelWrapWidth": "символів у рядку"
     },
     "placeholders": {
       "name": "Назва справа",

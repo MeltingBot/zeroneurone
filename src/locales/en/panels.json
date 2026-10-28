@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} date(s) fixed",
       "legacyError": "Fix failed",
       "linkArrowByDefault": "Arrow on new links by default",
-      "blurMediaOnOpen": "Blur media on open"
+      "blurMediaOnOpen": "Blur media on open",
+      "linkLabelWrap": "Wrap link labels",
+      "linkLabelWrapWidth": "characters per line"
     },
     "placeholders": {
       "name": "Dossier name",

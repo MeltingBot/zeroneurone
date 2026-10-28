@@ -26,6 +26,10 @@ describe('isDossierOptions', () => {
     expect(isDossierOptions({ linkArrowByDefault: 'yes' })).toBe(false);
     expect(isDossierOptions({ blurMediaOnOpen: false })).toBe(true);
     expect(isDossierOptions({ blurMediaOnOpen: 1 })).toBe(false);
+    expect(isDossierOptions({ linkLabelWrap: 20 })).toBe(true);
+    expect(isDossierOptions({ linkLabelWrap: 2 })).toBe(false);
+    expect(isDossierOptions({ linkLabelWrap: 12.5 })).toBe(false);
+    expect(isDossierOptions({ linkLabelWrap: '20' })).toBe(false);
     expect(isDossierOptions(null)).toBe(false);
     expect(isDossierOptions([])).toBe(false);
   });

@@ -55,7 +55,9 @@
       "legacyDone": "Poprawiono daty: {{count}}",
       "legacyError": "Poprawka nie powiodła się",
       "linkArrowByDefault": "Domyślna strzałka na relacjach",
-      "blurMediaOnOpen": "Rozmyj multimedia przy otwarciu"
+      "blurMediaOnOpen": "Rozmyj multimedia przy otwarciu",
+      "linkLabelWrap": "Zawijanie etykiet powiązań",
+      "linkLabelWrapWidth": "znaków w wierszu"
     },
     "placeholders": {
       "name": "Nazwa teczki",

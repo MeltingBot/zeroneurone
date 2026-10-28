@@ -138,12 +138,16 @@ export function InsightsPanel() {
       return;
     }
 
+    // Back on the panel with an unchanged graph: the results (or the run
+    // still going) already cover it
+    if (useInsightsStore.getState().computedKey === structureKey) return;
+
     // The bar shows from now on, not once the debounce is over
     useProgressStore.getState().start('insights', 'activity.insights', 0);
     let started = false;
     const timer = setTimeout(() => {
       started = true;
-      computeInsights(analyzed.elements, analyzed.links);
+      computeInsights(analyzed.elements, analyzed.links, structureKey);
     }, 300);
 
     // Cancelled before it started (panel closed, scope changed again): drop

@@ -127,6 +127,8 @@ Pour repérer les liens qui manquent, voir aussi les [suggestions de liens]({{< 
 
 Pour qu'un lien tracé à la main (glisser d'un élément à un autre, élément lié) porte d'office une flèche vers la cible, cochez **Flèche par défaut sur les relations** dans les **Options** du dossier (panneau du dossier). Les suggestions acceptées, les imports et les plugins n'en tiennent pas compte.
 
+Pour que les libellés longs passent à la ligne, cochez **Retour à la ligne des libellés de liens** dans les mêmes **Options**, puis réglez le nombre de caractères par ligne (20 par défaut, de 5 à 200). La coupure se fait aux espaces : un mot plus long que la largeur reste entier. Elle s'applique à tous les liens du dossier, sur le canvas comme dans les exports SVG, PNG et le rapport interactif.
+
 ### Apparence des liens
 
 | Option | Valeurs |

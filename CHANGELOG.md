@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.80.0
+
+### Nouveautés
+
+- **Retour à la ligne des libellés de liens** — nouvelle option du dossier :
+  les libellés longs passent à la ligne au-delà d'un nombre de caractères
+  réglable (20 par défaut, de 5 à 200), coupés aux espaces. S'applique à tous
+  les liens, sur le canvas et dans les exports SVG, PNG et le rapport
+  interactif ; partagée en session collaborative et reprise à l'import.
+
+### Corrections
+
+- **Panneau Analyse** — changer de panneau puis revenir ne relance plus
+  l'analyse quand le graphe n'a pas changé.
+
 ## 2.79.1
 
 ### Corrections

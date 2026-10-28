@@ -10,6 +10,7 @@ import { AccordionSection, EditableField, MarkdownEditor } from '../common';
 import { EVALUATION_MODELS, countEvaluationsOutsideModel, getEvaluationModel, isEvaluationModel } from '../../utils/evaluation';
 import { activeTimeZoneLabel, dateLocale } from '../../utils/dates';
 import { findLegacyUtcMidnightDates, type LegacyDateFixes } from '../../utils/legacyDates';
+import { LABEL_WRAP_DEFAULT, LABEL_WRAP_MAX, LABEL_WRAP_MIN } from '../../utils/wrapLabel';
 
 interface DossierDetailProps {
   dossier: Dossier;
@@ -422,7 +423,78 @@ function OptionsSection({ dossier }: { dossier: Dossier }) {
         />
         <span className="text-sm text-text-primary">{t('dossier.labels.blurMediaOnOpen')}</span>
       </label>
+      <label className="flex items-center gap-2 cursor-pointer mt-2">
+        <input
+          type="checkbox"
+          checked={options.linkLabelWrap !== undefined}
+          onChange={(e) => {
+            const rest = { ...options };
+            delete rest.linkLabelWrap;
+            updateDossier(dossier.id, { options: e.target.checked ? { ...rest, linkLabelWrap: LABEL_WRAP_DEFAULT } : rest });
+          }}
+          className="w-3.5 h-3.5 rounded border-border-default accent-accent"
+        />
+        <span className="text-sm text-text-primary">{t('dossier.labels.linkLabelWrap')}</span>
+      </label>
+      {options.linkLabelWrap !== undefined && (
+        <LabelWrapWidth
+          value={options.linkLabelWrap}
+          onChange={(linkLabelWrap) => updateDossier(dossier.id, { options: { ...options, linkLabelWrap } })}
+        />
+      )}
     </AccordionSection>
+  );
+}
+
+/**
+ * Width of the link labels, in characters. Applied as soon as the field holds
+ * a width within bounds (typing, arrows); on blur, an out-of-bounds entry is
+ * brought back within them and an empty one restored.
+ */
+function LabelWrapWidth({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  const { t } = useTranslation('panels');
+  const [draft, setDraft] = useState(String(value));
+  // Changed elsewhere (collaboration, import): the field follows
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    if (Number(draft) !== value) setDraft(String(value));
+  }
+
+  const change = (text: string) => {
+    setDraft(text);
+    const n = Number(text);
+    if (text.trim() !== '' && Number.isInteger(n) && n >= LABEL_WRAP_MIN && n <= LABEL_WRAP_MAX && n !== value) {
+      onChange(n);
+    }
+  };
+
+  const commit = () => {
+    const n = Math.round(Number(draft));
+    if (!Number.isFinite(n) || draft.trim() === '') {
+      setDraft(String(value));
+      return;
+    }
+    const clamped = Math.min(LABEL_WRAP_MAX, Math.max(LABEL_WRAP_MIN, n));
+    setDraft(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-1 ml-5.5">
+      <input
+        type="number"
+        min={LABEL_WRAP_MIN}
+        max={LABEL_WRAP_MAX}
+        value={draft}
+        onChange={(e) => change(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+        aria-label={t('dossier.labels.linkLabelWrapWidth')}
+        className="w-16 px-2 py-1 text-sm rounded border border-border-default bg-bg-primary text-text-primary focus:outline-none focus:border-accent"
+      />
+      <span className="text-xs text-text-secondary">{t('dossier.labels.linkLabelWrapWidth')}</span>
+    </div>
   );
 }
 

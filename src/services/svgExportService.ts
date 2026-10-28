@@ -1,6 +1,7 @@
 import type { Element, Link, Position, ElementSize } from '../types';
 import { safeColor } from '../utils/escapeHtml';
 import { arrowPolygon, computeEdgeRoute, computeHandleSlots, type EdgeRoute } from '../utils/edgeRouting';
+import { svgLabelTspans, wrapLabelLines } from '../utils/wrapLabel';
 
 // ============================================================================
 // TYPES
@@ -11,6 +12,8 @@ interface SVGExportSettings {
   linkCurveMode: 'straight' | 'curved' | 'orthogonal';
   /** Map of assetId → base64 data URL for embedding media in SVG nodes */
   assetDataUrls?: Map<string, string>;
+  /** Dossier option: link labels wrap past this many characters. */
+  linkLabelWrap?: number;
 }
 
 interface NodeDimensions {
@@ -361,7 +364,8 @@ function buildEdgeSVG(
   link: Link,
   geometry: EdgeRoute,
   hasStartArrow: boolean,
-  hasEndArrow: boolean
+  hasEndArrow: boolean,
+  labelWrap?: number
 ): string {
   const color = resolveColor(link.visual.color);
   const thickness = link.visual.thickness ?? 2;
@@ -386,7 +390,7 @@ function buildEdgeSVG(
 
   // Label
   if (link.label) {
-    parts.push(`    <text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${escapeXml(link.label)}</text>`);
+    parts.push(`    <text x="${geometry.labelX}" y="${geometry.labelY}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="#3d3833" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">${svgLabelTspans(wrapLabelLines(link.label, labelWrap), geometry.labelX, geometry.labelY, 15, escapeXml)}</text>`);
   }
 
   return `  <g id="edge-${link.id}">\n${parts.join('\n')}\n  </g>`;
@@ -531,7 +535,7 @@ export function buildSVGExport(
 
   // Build edge SVGs
   const edgeSvgs = computeLinkRoutes(links, layout, settings)
-    .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow));
+    .map(({ link, route, hasStartArrow, hasEndArrow }) => buildEdgeSVG(link, route, hasStartArrow, hasEndArrow, settings.linkLabelWrap));
 
   // Build node SVGs
   const assetDataUrls = settings.assetDataUrls;

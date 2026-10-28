@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} fecha(s) corregida(s)",
       "legacyError": "La corrección ha fallado",
       "linkArrowByDefault": "Flecha por defecto en las relaciones",
-      "blurMediaOnOpen": "Difuminar medios al abrir"
+      "blurMediaOnOpen": "Difuminar medios al abrir",
+      "linkLabelWrap": "Ajuste de línea en etiquetas de vínculos",
+      "linkLabelWrapWidth": "caracteres por línea"
     },
     "placeholders": {
       "name": "Nombre de el expediente",

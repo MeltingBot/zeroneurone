@@ -127,6 +127,8 @@ To spot missing links, see also [link suggestions]({{< relref "link-suggestions"
 
 To give a hand-drawn link (drag from one element to another, linked element) an arrow towards the target from the start, check **Arrow on new links by default** in the dossier's **Options** (dossier panel). Accepted suggestions, imports and plugins ignore it.
 
+To make long labels wrap, check **Wrap link labels** in the same **Options**, then set the number of characters per line (20 by default, from 5 to 200). Lines break at spaces: a word longer than the width stays whole. It applies to every link of the dossier, on the canvas and in the SVG, PNG and interactive report exports.
+
 ### Link Appearance
 
 | Option | Values |

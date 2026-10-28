@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} date(s) corrigée(s)",
       "legacyError": "Échec de la correction",
       "linkArrowByDefault": "Flèche par défaut sur les relations",
-      "blurMediaOnOpen": "Médias floutés à l'ouverture"
+      "blurMediaOnOpen": "Médias floutés à l'ouverture",
+      "linkLabelWrap": "Retour à la ligne des libellés de liens",
+      "linkLabelWrapWidth": "caractères par ligne"
     },
     "placeholders": {
       "name": "Nom du dossier",

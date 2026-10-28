@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} data(es) corregida(es)",
       "legacyError": "La correcció ha fallat",
       "linkArrowByDefault": "Fletxa per defecte a les relacions",
-      "blurMediaOnOpen": "Difuminar els mitjans en obrir"
+      "blurMediaOnOpen": "Difuminar els mitjans en obrir",
+      "linkLabelWrap": "Salt de línia a les etiquetes dels enllaços",
+      "linkLabelWrapWidth": "caràcters per línia"
     },
     "placeholders": {
       "name": "Nom de l'expedient",

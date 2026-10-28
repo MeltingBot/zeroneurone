@@ -55,7 +55,9 @@
       "legacyDone": "{{count}} data zuzenduta",
       "legacyError": "Zuzenketak huts egin du",
       "linkArrowByDefault": "Gezia lehenetsita erlazioetan",
-      "blurMediaOnOpen": "Lausotu multimedia irekitzean"
+      "blurMediaOnOpen": "Lausotu multimedia irekitzean",
+      "linkLabelWrap": "Loturen etiketetan lerro-jauzia",
+      "linkLabelWrapWidth": "karaktere lerro bakoitzeko"
     },
     "placeholders": {
       "name": "Espedienteren izena",
