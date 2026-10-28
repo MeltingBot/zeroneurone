@@ -5,6 +5,7 @@ import {
   Grid2X2, Type, Layers, Spline, Minus, Hand, Sparkles, CornerDownRight, Scaling
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useHistoryStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 import type { View } from '../../types';
 
 type TagDisplayMode = 'none' | 'icons' | 'labels' | 'both';
@@ -39,7 +40,7 @@ export function ViewsPanel() {
     setLinkCurveMode,
     setSizeByDegree,
   } = useDossierStore();
-  const { savedViews, saveView, loadView, deleteView } = useViewStore();
+  const { savedViews, saveView, loadView, deleteView } = useViewStore(useShallow((s) => ({ savedViews: s.savedViews, saveView: s.saveView, loadView: s.loadView, deleteView: s.deleteView })));
   const [isCreating, setIsCreating] = useState(false);
   const [newViewName, setNewViewName] = useState('');
   const [includePositions, setIncludePositions] = useState(false);

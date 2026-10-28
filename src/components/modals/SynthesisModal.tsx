@@ -8,6 +8,7 @@ import {
   DEFAULT_REPORT_OPTIONS,
 } from '../../services/reportService';
 import { useDossierStore, useViewStore, useUIStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 import type { DisplayMode } from '../../types';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
@@ -26,7 +27,7 @@ export function SynthesisModal({ isOpen, onClose }: SynthesisModalProps) {
   const { t, i18n } = useTranslation('modals');
   const evaluationModel = useEvaluationModel();
   const { currentDossier, elements, links, assets } = useDossierStore();
-  const { displayMode, setDisplayMode } = useViewStore();
+  const { displayMode, setDisplayMode } = useViewStore(useShallow((s) => ({ displayMode: s.displayMode, setDisplayMode: s.setDisplayMode })));
   const { captureView, captureHandlers, themeMode, setThemeMode } = useUIStore();
 
   const [options, setOptions] = useState<ReportOptions>({

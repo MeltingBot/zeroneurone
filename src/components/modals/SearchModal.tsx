@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo, type KeyboardEvent }
 import { useTranslation } from 'react-i18next';
 import { Search, Box, Link2, X, Tag, MessageSquare } from 'lucide-react';
 import { useDossierStore, useSelectionStore, useViewStore, useTabStore, useUIStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 import { useQueryStore } from '../../stores/queryStore';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../types';
@@ -26,7 +27,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   const { elements, links, assets, comments } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
-  const { requestViewportChange } = useViewStore();
+  const { requestViewportChange } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange })));
   const canvasTabs = useTabStore((s) => s.tabs);
   const activeTabId = useTabStore((s) => s.activeTabId);
   const tabMemberSet = useTabStore((s) => s.memberSet);

@@ -25,6 +25,7 @@ import {
 import { computeElementDimensions } from '../../utils/elementDimensions';
 import { buildDegreeMap, scaleByDegree } from '../../utils/degreeSize';
 import { useDossierStore, useInsightsStore, useSelectionStore, useViewStore, useHistoryStore, useTabStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 import { StatsOverview } from './StatsOverview';
 import { ProgressiveList } from '../common/ProgressiveList';
 import { MergeElementsModal } from '../modals/MergeElementsModal';
@@ -41,7 +42,7 @@ export function InsightsPanel() {
   const { elements, links, createGroup, dissolveGroup, mergeElements: mergeElementsAction } = useDossierStore();
   const pushAction = useHistoryStore((s) => s.pushAction);
   const { selectElement, selectElements, clearSelection, selectedElementIds } = useSelectionStore();
-  const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore();
+  const { hideElements, hiddenElementIds, showElement, setFilters, clearFilters } = useViewStore(useShallow((s) => ({ hideElements: s.hideElements, hiddenElementIds: s.hiddenElementIds, showElement: s.showElement, setFilters: s.setFilters, clearFilters: s.clearFilters })));
   const {
     clusters,
     centrality,

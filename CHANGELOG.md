@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.79.1
+
+### Corrections
+
+- **Canvas recalculé en continu** — depuis la 2.76.3, en zoom rapproché, le
+  canvas se recalculait à chaque image (environ 60 fois par seconde) même sans
+  aucune action, ce qui occupait le processeur en permanence.
+- **Déplacement de la vue** — le canvas, la page du dossier et plusieurs
+  panneaux ne se recalculent plus à chaque image d'un déplacement ou d'un
+  zoom (312 rendus du canvas ramenés à 6 sur 3 000 éléments).
+- **Onglets** — un Ctrl+Z pouvait être défait par une resynchronisation
+  arrivée juste après ; un onglet tout juste créé pouvait rester vide. Les
+  écritures des onglets sont maintenant immédiates et gardent leur ordre.
+
 ## 2.79.0
 
 ### Nouveautés

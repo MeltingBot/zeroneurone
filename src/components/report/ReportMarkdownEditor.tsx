@@ -6,6 +6,7 @@ import { ReportMarkdownPreview } from './ReportMarkdownPreview';
 import { Modal, Button } from '../common';
 import { sanitizeLinkLabel } from '../../utils';
 import { useDossierStore, useSelectionStore, useViewStore, useSyncStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 
 interface ReportMarkdownEditorProps {
   value: string;
@@ -357,7 +358,7 @@ export function ReportMarkdownEditor({
   const { t } = useTranslation('panels');
   const { elements, links } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
-  const { requestViewportChange, setDisplayMode, displayMode } = useViewStore();
+  const { requestViewportChange, setDisplayMode, displayMode } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange, setDisplayMode: s.setDisplayMode, displayMode: s.displayMode })));
   const { remoteUsers, updateEditingReportSection } = useSyncStore();
 
   // Check if another user is editing this section

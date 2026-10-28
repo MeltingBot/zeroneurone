@@ -73,19 +73,54 @@ interface TabState {
   resetDossierState: () => void;
 }
 
+// Modules the Y.Doc writes need, imported lazily (import cycle) and kept once
+// loaded: every tab write then reaches the Y.Doc in the same tick as the store
+// update, and in call order. With an await in between, a sync from the Y.Doc
+// running in that gap (the safety re-sync) read the old value and undid the
+// change just made; and a tab's members could reach the Y.Doc before the tab.
+type YDocDeps = {
+  syncService: typeof import('../services/syncService')['syncService'];
+  getYMaps: typeof import('../types/yjs')['getYMaps'];
+  setLocalOpPending: typeof import('./dossierStore')['setLocalOpPending'];
+  tabToYMap: typeof import('../services/yjs/tabMapper')['tabToYMap'];
+};
+let yDocDeps: YDocDeps | null = null;
+let yDocDepsLoading: Promise<YDocDeps> | null = null;
+function loadYDocDeps(): Promise<YDocDeps> {
+  if (yDocDeps) return Promise.resolve(yDocDeps);
+  yDocDepsLoading ??= Promise.all([
+    import('../services/syncService'),
+    import('../types/yjs'),
+    import('./dossierStore'),
+    import('../services/yjs/tabMapper'),
+  ]).then(([{ syncService }, { getYMaps }, { setLocalOpPending }, { tabToYMap }]) => {
+    yDocDeps = { syncService, getYMaps, setLocalOpPending, tabToYMap };
+    return yDocDeps;
+  }).finally(() => { yDocDepsLoading = null; });
+  return yDocDepsLoading;
+}
+
+type TabsYMap = Y.Map<unknown>;
+
+/** Write to the Y.Doc's tabs map, in one transaction (fire-and-forget). */
+function withTabsYMap(write: (tabsMap: TabsYMap, deps: YDocDeps) => void): Promise<void> {
+  const run = (deps: YDocDeps) => {
+    const ydoc = deps.syncService.getYDoc();
+    if (!ydoc) return;
+    deps.setLocalOpPending();
+    const { tabs: tabsMap } = deps.getYMaps(ydoc);
+    ydoc.transact(() => write(tabsMap as TabsYMap, deps));
+  };
+  if (yDocDeps) {
+    run(yDocDeps);
+    return Promise.resolve();
+  }
+  return loadYDocDeps().then(run);
+}
+
 // Helper: write tab changes to Y.Doc (fire-and-forget, non-blocking)
-async function syncTabToYDoc(
-  tabId: string,
-  fields: Record<string, unknown>,
-): Promise<void> {
-  const { syncService } = await import('../services/syncService');
-  const ydoc = syncService.getYDoc();
-  if (!ydoc) return;
-  const { getYMaps } = await import('../types/yjs');
-  const { setLocalOpPending } = await import('./dossierStore');
-  setLocalOpPending();
-  const { tabs: tabsMap } = getYMaps(ydoc);
-  ydoc.transact(() => {
+function syncTabToYDoc(tabId: string, fields: Record<string, unknown>): Promise<void> {
+  return withTabsYMap((tabsMap) => {
     const ymap = tabsMap.get(tabId) as Y.Map<unknown> | undefined;
     if (ymap) {
       for (const [key, value] of Object.entries(fields)) {
@@ -151,6 +186,8 @@ export const useTabStore = create<TabState>((set, get) => ({
   // ── Load ──────────────────────────────────────────────
 
   loadTabs: async (dossierId) => {
+    // Ready before the first edit, so tab writes reach the Y.Doc at once
+    loadYDocDeps().catch(() => { /* loaded again at the first write */ });
     const tabs = await tabRepository.getByDossier(dossierId);
     const firstTab = tabs.length > 0 ? tabs[0] : null;
     set({
@@ -173,20 +210,8 @@ export const useTabStore = create<TabState>((set, get) => ({
     set((s) => ({ tabs: [...s.tabs, tab] }));
 
     // Y.js sync: create new Y.Map in tabs map
-    import('../services/syncService').then(({ syncService }) => {
-      const ydoc = syncService.getYDoc();
-      if (!ydoc) return;
-      import('../types/yjs').then(({ getYMaps }) => {
-        import('./dossierStore').then(({ setLocalOpPending }) => {
-          import('../services/yjs/tabMapper').then(({ tabToYMap }) => {
-            setLocalOpPending();
-            const { tabs: tabsMap } = getYMaps(ydoc);
-            ydoc.transact(() => {
-              tabsMap.set(tab.id, tabToYMap(tab));
-            });
-          });
-        });
-      });
+    withTabsYMap((tabsMap, { tabToYMap }) => {
+      tabsMap.set(tab.id, tabToYMap(tab));
     });
 
     return tab;
@@ -228,18 +253,8 @@ export const useTabStore = create<TabState>((set, get) => ({
     });
 
     // Y.js sync: delete from tabs map
-    import('../services/syncService').then(({ syncService }) => {
-      const ydoc = syncService.getYDoc();
-      if (!ydoc) return;
-      import('../types/yjs').then(({ getYMaps }) => {
-        import('./dossierStore').then(({ setLocalOpPending }) => {
-          setLocalOpPending();
-          const { tabs: tabsMap } = getYMaps(ydoc);
-          ydoc.transact(() => {
-            tabsMap.delete(tabId);
-          });
-        });
-      });
+    withTabsYMap((tabsMap) => {
+      tabsMap.delete(tabId);
     });
 
     // Its elements stay in the dossier, visible in "All": an element may
@@ -258,20 +273,8 @@ export const useTabStore = create<TabState>((set, get) => ({
     }));
 
     // Y.js sync: recreate in tabs map
-    import('../services/syncService').then(({ syncService }) => {
-      const ydoc = syncService.getYDoc();
-      if (!ydoc) return;
-      import('../types/yjs').then(({ getYMaps }) => {
-        import('./dossierStore').then(({ setLocalOpPending }) => {
-          import('../services/yjs/tabMapper').then(({ tabToYMap }) => {
-            setLocalOpPending();
-            const { tabs: tabsMap } = getYMaps(ydoc);
-            ydoc.transact(() => {
-              tabsMap.set(tab.id, tabToYMap(tab));
-            });
-          });
-        });
-      });
+    withTabsYMap((tabsMap, { tabToYMap }) => {
+      tabsMap.set(tab.id, tabToYMap(tab));
     });
   },
 
@@ -513,24 +516,16 @@ export const useTabStore = create<TabState>((set, get) => ({
 
     // Sync cleaned memberElementIds/excludedElementIds to Y.Doc, one transaction
     if (affectedTabs.length > 0) {
-      const { syncService } = await import('../services/syncService');
-      const ydoc = syncService.getYDoc();
-      if (ydoc) {
-        const { getYMaps } = await import('../types/yjs');
-        const { setLocalOpPending } = await import('./dossierStore');
-        setLocalOpPending();
-        const { tabs: tabsMap } = getYMaps(ydoc);
-        ydoc.transact(() => {
-          for (const tab of affectedTabs) {
-            const ymap = tabsMap.get(tab.id) as Y.Map<unknown> | undefined;
-            if (ymap) {
-              ymap.set('memberElementIds', tab.memberElementIds.filter((id) => !gone.has(id)));
-              ymap.set('excludedElementIds', tab.excludedElementIds.filter((id) => !gone.has(id)));
-              ymap.set('updatedAt', new Date().toISOString());
-            }
+      await withTabsYMap((tabsMap) => {
+        for (const tab of affectedTabs) {
+          const ymap = tabsMap.get(tab.id) as Y.Map<unknown> | undefined;
+          if (ymap) {
+            ymap.set('memberElementIds', tab.memberElementIds.filter((id) => !gone.has(id)));
+            ymap.set('excludedElementIds', tab.excludedElementIds.filter((id) => !gone.has(id)));
+            ymap.set('updatedAt', new Date().toISOString());
           }
-        });
-      }
+        }
+      });
     }
   },
 

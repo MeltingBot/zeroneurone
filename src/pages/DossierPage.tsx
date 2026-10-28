@@ -79,7 +79,17 @@ export function DossierPage() {
   } = useDossierStore();
 
   const { searchOpen, toggleSearch, closeSearch, resetDossierState: resetUIState, themeMode, toggleThemeMode, showToast, panelSide } = useUIStore();
-  const { displayMode, setDisplayMode, hasActiveFilters, clearFilters, loadViews, resetDossierState: resetViewState, loadViewportForDossier, saveViewportForDossier, requestFitView } = useViewStore();
+  // One selector per field: the viewport changes on every frame of a pan, and
+  // subscribing to the whole store would re-render the page each time
+  const displayMode = useViewStore((s) => s.displayMode);
+  const setDisplayMode = useViewStore((s) => s.setDisplayMode);
+  const filtersActive = useViewStore((s) => s.hasActiveFilters());
+  const clearFilters = useViewStore((s) => s.clearFilters);
+  const loadViews = useViewStore((s) => s.loadViews);
+  const resetViewState = useViewStore((s) => s.resetDossierState);
+  const loadViewportForDossier = useViewStore((s) => s.loadViewportForDossier);
+  const saveViewportForDossier = useViewStore((s) => s.saveViewportForDossier);
+  const requestFitView = useViewStore((s) => s.requestFitView);
 
   const syncMode = useSyncStore((state) => state.mode);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
@@ -105,7 +115,6 @@ export function DossierPage() {
     useViewStore.getState().setFilters({ minConfidence: null, evaluationSources: null, evaluationInfos: null });
   }, [evaluationModel]);
 
-  const filtersActive = hasActiveFilters();
   const [exportOpen, setExportOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [redactConfirmOpen, setRedactConfirmOpen] = useState(false);

@@ -2,6 +2,7 @@ import { useCallback, useMemo, isValidElement, Fragment, cloneElement } from 're
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useDossierStore, useSelectionStore, useViewStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 
 interface ReportMarkdownPreviewProps {
   content: string;
@@ -155,7 +156,7 @@ function preprocessElementLinks(text: string): string {
 export function ReportMarkdownPreview({ content, className = '' }: ReportMarkdownPreviewProps) {
   const { elements, links } = useDossierStore();
   const { selectElement, selectLink, clearSelection } = useSelectionStore();
-  const { requestViewportChange, setDisplayMode, displayMode } = useViewStore();
+  const { requestViewportChange, setDisplayMode, displayMode } = useViewStore(useShallow((s) => ({ requestViewportChange: s.requestViewportChange, setDisplayMode: s.setDisplayMode, displayMode: s.displayMode })));
 
   // Build maps for quick lookup
   const elementMap = useMemo(() => new Map(elements.map((el) => [el.id, el])), [elements]);

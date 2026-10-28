@@ -362,7 +362,8 @@ function FlowStoreBridge({ storeRef }: { storeRef: MutableRefObject<FlowStoreApi
 // Viewport controller - watches for pending viewport changes and applies them
 function ViewportController() {
   const { setViewport } = useReactFlow();
-  const { pendingViewport, clearPendingViewport } = useViewStore();
+  const pendingViewport = useViewStore((s) => s.pendingViewport);
+  const clearPendingViewport = useViewStore((s) => s.clearPendingViewport);
 
   useEffect(() => {
     if (pendingViewport) {
@@ -377,7 +378,9 @@ function ViewportController() {
 // FitView controller - watches for pending fitView requests and applies them
 function FitViewController() {
   const { fitView, getNodes } = useReactFlow();
-  const { pendingFitView, pendingFitViewIds, clearPendingFitView } = useViewStore();
+  const pendingFitView = useViewStore((s) => s.pendingFitView);
+  const pendingFitViewIds = useViewStore((s) => s.pendingFitViewIds);
+  const clearPendingFitView = useViewStore((s) => s.clearPendingFitView);
 
   useEffect(() => {
     if (!pendingFitView) return;
@@ -820,6 +823,8 @@ export function Canvas() {
   overviewEnabledRef.current = overviewEnabled;
   /** Last viewport change, current even before React re-renders. */
   const liveViewportRef = useRef(useViewStore.getState().viewport);
+  /** Read by React Flow at mount only. */
+  const [initialViewport] = useState(() => useViewStore.getState().viewport);
   const setOverviewActive = useCallback((next: boolean) => {
     if (overviewActiveRef.current === next) return;
     overviewActiveRef.current = next;
@@ -948,20 +953,20 @@ export function Canvas() {
   const startEditingLink = useSelectionStore((s) => s.startEditingLink);
   const stopEditing = useSelectionStore((s) => s.stopEditing);
 
-  const {
-    viewport,
-    setViewport,
-    filters,
-    hiddenElementIds,
-    focusElementId,
-    focusDepth,
-    setFocus,
-    clearFocus,
-    hideElement,
-    hideElements,
-    showElement,
-    requestFitView,
-  } = useViewStore();
+  // One selector per field: the viewport changes on every frame of a pan or
+  // zoom, and subscribing to it would re-render the whole canvas each time.
+  // Handlers read it with useViewStore.getState() when they need it.
+  const setViewport = useViewStore((s) => s.setViewport);
+  const filters = useViewStore((s) => s.filters);
+  const hiddenElementIds = useViewStore((s) => s.hiddenElementIds);
+  const focusElementId = useViewStore((s) => s.focusElementId);
+  const focusDepth = useViewStore((s) => s.focusDepth);
+  const setFocus = useViewStore((s) => s.setFocus);
+  const clearFocus = useViewStore((s) => s.clearFocus);
+  const hideElement = useViewStore((s) => s.hideElement);
+  const hideElements = useViewStore((s) => s.hideElements);
+  const showElement = useViewStore((s) => s.showElement);
+  const requestFitView = useViewStore((s) => s.requestFitView);
   const requestViewportChange = useViewStore((s) => s.requestViewportChange);
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
@@ -1002,7 +1007,7 @@ export function Canvas() {
   // cullingViewport is a ref (not state) to avoid triggering a re-render on every move-end.
   // Edge recomputation is triggered via edgeVersion bump instead.
   const isViewportMovingRef = useRef(false);
-  const cullingViewportRef = useRef(viewport);
+  const cullingViewportRef = useRef(useViewStore.getState().viewport);
   const [isViewportMoving, setIsViewportMoving] = useState(false);
 
   const handleMoveStart = useCallback(() => {
@@ -1019,16 +1024,10 @@ export function Canvas() {
         (live.zoom >= OVERVIEW_EXIT_ZOOM || countNodesInView(live, OVERVIEW_EXIT_VISIBLE) < OVERVIEW_EXIT_VISIBLE)) {
       setOverviewActive(false);
     }
-    cullingViewportRef.current = viewportRef.current;
+    cullingViewportRef.current = useViewStore.getState().viewport;
     // Bump edgeVersion to trigger re-cull with the updated viewport
     setEdgeVersion(v => v + 1);
   }, [setOverviewActive]);
-
-  // Keep a ref to the latest viewport for handleMoveEnd
-  const viewportRef = useRef(viewport);
-  useEffect(() => {
-    viewportRef.current = viewport;
-  }, [viewport]);
 
   const {
     highlightedElementIds: insightsHighlightedIds,
@@ -2061,9 +2060,10 @@ export function Canvas() {
   hideAllFlowNodesNowRef.current = hideAllFlowNodesNow;
   const sizedNodeCacheRef = useRef(new WeakMap<Node, { node: Node; measured: boolean }>());
   const [retireTick, setRetireTick] = useState(0);
-  const flowNodes = useMemo(() => {
+  const { nodes: flowNodes, retiring } = useMemo(() => {
     const last = lastFlowNodesRef.current;
     let result = displayNodes;
+    let retiring = false;
     // Cheap guard first: only a large drop in count can hide a large exit.
     if (displayNodes.length + RETIRE_IN_TWO_STEPS <= last.length) {
       const kept = new Set(displayNodes.map((n) => n.id));
@@ -2077,6 +2077,7 @@ export function Canvas() {
         const next = new Map(displayNodes.map((n) => [n.id, n]));
         const leavingById = new Map(leaving.map((n) => [n.id, n]));
         result = last.flatMap((n) => next.get(n.id) ?? leavingById.get(n.id) ?? []);
+        retiring = true;
       }
     }
     // With the overview layer, React Flow must never mount a node only because
@@ -2122,10 +2123,12 @@ export function Canvas() {
       result = result.map((n) => hiddenCopy(n, dark, unnamed));
     }
     lastFlowNodesRef.current = result;
-    return result;
+    return { nodes: result, retiring };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayNodes, retireTick, overviewActive, overviewEnabled]);
-  const hasRetiringNodes = !overviewActive && flowNodes !== displayNodes;
+  // Explicit flag: with the overview layer the nodes are always a new array
+  // (sized copies), and comparing identities re-rendered the canvas every frame
+  const hasRetiringNodes = !overviewActive && retiring;
   useEffect(() => {
     if (!hasRetiringNodes) return;
     const id = requestAnimationFrame(() => setRetireTick((t) => t + 1));
@@ -2740,7 +2743,9 @@ export function Canvas() {
         }
       } else if (nowDragging.size === 0) {
         setDraggedNodeInfo(null);
-        setActiveGuides([]);
+        // Same array when already empty: nodes entering the screen during a
+        // pan report their size here, a new [] would re-render the canvas
+        setActiveGuides((prev) => (prev.length === 0 ? prev : []));
       }
 
       // Update awareness for collaboration
@@ -3121,6 +3126,7 @@ export function Canvas() {
       setLinkContextMenu(null);
 
       // Calculate canvas position from screen position (same formula as double-click)
+      const viewport = useViewStore.getState().viewport;
       const bounds = reactFlowWrapper.current?.getBoundingClientRect();
       const canvasX = bounds
         ? (event.clientX - bounds.left - viewport.x) / viewport.zoom
@@ -3136,7 +3142,7 @@ export function Canvas() {
         canvasY,
       });
     },
-    [viewport, handleNodeContextMenu]
+    [handleNodeContextMenu]
   );
 
   // Create element from canvas context menu
@@ -3351,7 +3357,7 @@ export function Canvas() {
     const sources = viewTabIds.map((tabId) => ({ tabId, removed: ids.filter((id) => tabMembers(tabId).has(id)) }));
     const tab = await createTab(currentDossier.id, tPages('dossier.tabs.defaultName', { n: canvasTabs.length + 1 }));
     // The new tab opens where the view stands (the elements are on screen)
-    await saveTabViewport(tab.id, viewport);
+    await saveTabViewport(tab.id, useViewStore.getState().viewport);
     await addTabMembers(tab.id, ids);
     for (const { tabId, removed } of sources) if (removed.length > 0) await removeTabMembers(tabId, removed);
     setActiveTab(tab.id);
@@ -3361,7 +3367,7 @@ export function Canvas() {
       activeBefore: from,
       activeAfter: tab.id,
     });
-  }, [currentDossier, activeTabId, viewTabIds, viewport, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab, tabMembers, pushTabMembership]);
+  }, [currentDossier, activeTabId, viewTabIds, canvasTabs.length, saveTabViewport, createTab, tPages, addTabMembers, removeTabMembers, setActiveTab, tabMembers, pushTabMembership]);
 
   // Send `ids` to another tab and out of the tabs in view (they stay in "All").
   const moveIdsToTab = useCallback(async (tabId: string, ids: string[]) => {
@@ -4091,6 +4097,7 @@ export function Canvas() {
         // Counted for the progress shown in the placement bar
         await withImportProgress(async () => {
           // Calculate flow position from click
+          const viewport = useViewStore.getState().viewport;
           if (!reactFlowWrapper.current) return;
           const bounds = reactFlowWrapper.current.getBoundingClientRect();
           const flowPosition = {
@@ -4362,7 +4369,7 @@ export function Canvas() {
     // Also reset any Insights highlight (bridges, clusters, centrality…) so a
     // click on empty canvas restores the normal display.
     clearHighlight();
-  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, viewport, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
+  }, [selectElement, selectLink, toggleLink, clearSelection, clearHighlight, importPlacementMode, importPlacementData, isImportingPlacement, loadDossier, exitImportPlacementMode, tPages, requestFitView, elements, activeTabId, addTabMembers, pasteElements, pushAction, selectElements, addAsset]);
 
   // Handle double click on pane to create element
   const handlePaneDoubleClick = useCallback(
@@ -4406,6 +4413,7 @@ export function Canvas() {
       lastElementCreatedAtRef.current = now;
 
       // Get position relative to the flow
+      const viewport = useViewStore.getState().viewport;
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = {
         x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
@@ -4428,7 +4436,7 @@ export function Canvas() {
 
       selectElement(newElement.id);
     },
-    [createElement, selectElement, viewport, pushAction, activeTabId, addTabMembers, requestViewportChange]
+    [createElement, selectElement, pushAction, activeTabId, addTabMembers, requestViewportChange]
   );
 
   // Handle double click on node - start inline label editing
@@ -4463,6 +4471,7 @@ export function Canvas() {
       if (!reactFlowWrapper.current) return;
 
       // Get drop position
+      const viewport = useViewStore.getState().viewport;
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const basePosition = {
         x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
@@ -4552,7 +4561,7 @@ export function Canvas() {
         });
       }
     },
-    [createElement, addAsset, viewport, elementMap, pushMetadataImport, activeTabId, addTabMembers, pushAction]
+    [createElement, addAsset, elementMap, pushMetadataImport, activeTabId, addTabMembers, pushAction]
   );
 
   const handleFileDragOver = useCallback((event: React.DragEvent) => {
@@ -4859,6 +4868,7 @@ export function Canvas() {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
+      const viewport = useViewStore.getState().viewport;
       // Ignore if typing in an input or editable element
       const target = event.target as HTMLElement;
       if (
@@ -5130,7 +5140,6 @@ export function Canvas() {
     currentDossier,
     elements,
     links,
-    viewport,
     pushAction,
     handleUndo,
     handleRedo,
@@ -5153,6 +5162,7 @@ export function Canvas() {
       }
 
       // Calculate paste position: mouse cursor if inside canvas, fallback to viewport center
+      const viewport = useViewStore.getState().viewport;
       const bounds = reactFlowWrapper.current?.getBoundingClientRect();
       const mouseX = lastMousePosRef.current.x;
       const mouseY = lastMousePosRef.current.y;
@@ -5317,12 +5327,18 @@ export function Canvas() {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [viewport, pasteElements, currentDossier, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
+  }, [pasteElements, currentDossier, createElement, addAsset, selectElements, elements, links, pushAction, getSelectedElementIds, activeTabId, addTabMembers]);
 
-  // Halo scale at load and after a programmatic viewport change (fit, tab switch)
+  // Halo scale at load and after a programmatic viewport change (fit, tab
+  // switch). Followed outside React: a re-render per zoom frame would cost more.
   useEffect(() => {
-    reactFlowWrapper.current?.style.setProperty('--zn-inv-zoom', String(1 / Math.max(viewport.zoom, 0.01)));
-  }, [viewport.zoom]);
+    const apply = (zoom: number) =>
+      reactFlowWrapper.current?.style.setProperty('--zn-inv-zoom', String(1 / Math.max(zoom, 0.01)));
+    apply(useViewStore.getState().viewport.zoom);
+    return useViewStore.subscribe((state, prev) => {
+      if (state.viewport.zoom !== prev.viewport.zoom) apply(state.viewport.zoom);
+    });
+  }, []);
 
   // Handle viewport change
   const handleViewportChange = useCallback(
@@ -5600,7 +5616,7 @@ export function Canvas() {
               onSelectionChange={handleSelectionChange}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
-              defaultViewport={viewport}
+              defaultViewport={initialViewport}
               snapToGrid={snapToGrid}
               snapGrid={[gridSize, gridSize]}
               minZoom={0.005}

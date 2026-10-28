@@ -18,6 +18,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useDossierStore, useViewStore, useInsightsStore, useHistoryStore, useUIStore, useQueryStore, useTabStore, useSelectionStore } from '../../stores';
+import { useShallow } from 'zustand/react/shallow';
 import { useFilterOutcome, useShownSelection } from '../../hooks/useFilterOutcome';
 import { ProgressiveList } from '../common/ProgressiveList';
 import { TagDot } from '../common/TagDot';
@@ -165,7 +166,19 @@ export function FiltersPanel() {
     showElements,
     showElement,
     showAllElements,
-  } = useViewStore();
+  } = useViewStore(useShallow((s) => ({
+    filters: s.filters,
+    setFilters: s.setFilters,
+    clearFilters: s.clearFilters,
+    addIncludeTag: s.addIncludeTag,
+    removeIncludeTag: s.removeIncludeTag,
+    hasActiveFilters: s.hasActiveFilters,
+    hiddenElementIds: s.hiddenElementIds,
+    hideElements: s.hideElements,
+    showElements: s.showElements,
+    showElement: s.showElement,
+    showAllElements: s.showAllElements,
+  })));
   const { isolated } = useInsightsStore();
 
   const isActive = hasActiveFilters();
