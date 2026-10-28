@@ -310,6 +310,17 @@
   },
   "dossierLock": {
     "closed": "Espedientea itxita: irakurtzeko soilik.",
-    "retention": "Espedientea irakurtzeko soilik: atxikipena iraungita."
+    "retention": "Espedientea irakurtzeko soilik: atxikipena iraungita.",
+    "plugin": "Aldaketak etenda: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Derrigorrezko luzapena ez dago erabilgarri",
+    "contact": "Jarri harremanetan zerbitzariaren administratzailearekin.",
+    "reason": {
+      "missing": "fitxategia falta da",
+      "integrity": "hatz-marka baliogabea",
+      "invalid": "formatu baliogabea",
+      "error": "kargatze-errorea"
+    }
   }
 }

@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import { create } from 'zustand';
 import { toast } from '../stores/toastStore';
 import type { Dossier } from '../types';
 
@@ -10,7 +11,7 @@ import type { Dossier } from '../types';
  * Kept outside the stores so that each of them can check it without importing
  * dossierStore (which imports several of them).
  */
-export type DossierLockReason = 'closed' | 'retention';
+export type DossierLockReason = 'closed' | 'retention' | 'plugin';
 
 let openLock: DossierLockReason | null = null;
 let lastNoticeAt = 0;
@@ -18,10 +19,41 @@ let lastNoticeAt = 0;
 export class DossierLockedError extends Error {
   readonly reason: DossierLockReason;
   constructor(reason: DossierLockReason) {
-    super(reason === 'closed' ? 'Dossier is closed (read-only)' : 'Dossier is read-only (retention expired)');
+    super(reason === 'closed' ? 'Dossier is closed (read-only)'
+      : reason === 'plugin' ? 'Writes suspended by a plugin'
+      : 'Dossier is read-only (retention expired)');
     this.name = 'DossierLockedError';
     this.reason = reason;
   }
+}
+
+/**
+ * Write locks set by plugins (e.g. an audit plugin whose server is
+ * unreachable). They apply to every dossier, and to creating or deleting one,
+ * until the plugin lifts them. Message shown to the user: the plugin's reason.
+ */
+interface PluginLockState {
+  locks: Record<string, string>;
+}
+
+export const usePluginWriteLocks = create<PluginLockState>(() => ({ locks: {} }));
+
+export function setPluginWriteLock(pluginId: string, reason: string | null): void {
+  const locks = { ...usePluginWriteLocks.getState().locks };
+  if (reason) locks[pluginId] = reason;
+  else delete locks[pluginId];
+  usePluginWriteLocks.setState({ locks });
+}
+
+/** First plugin lock reason, or null when no plugin holds a lock */
+export function getPluginWriteLock(): string | null {
+  const reasons = Object.values(usePluginWriteLocks.getState().locks);
+  return reasons.length > 0 ? reasons[0] : null;
+}
+
+/** Throws when a plugin suspended writes (checked even outside an open dossier) */
+export function assertNoPluginLock(): void {
+  if (getPluginWriteLock() !== null) refuseWrite('plugin');
 }
 
 /** Set by dossierStore whenever the open dossier or its state changes */
@@ -38,13 +70,16 @@ export function refuseWrite(reason: DossierLockReason): never {
   const now = Date.now();
   if (now - lastNoticeAt > 3000) {
     lastNoticeAt = now;
-    toast.warning(i18next.t(reason === 'closed' ? 'common:dossierLock.closed' : 'common:dossierLock.retention'));
+    toast.warning(reason === 'plugin'
+      ? i18next.t('common:dossierLock.plugin', { reason: getPluginWriteLock() ?? '' })
+      : i18next.t(reason === 'closed' ? 'common:dossierLock.closed' : 'common:dossierLock.retention'));
   }
   throw new DossierLockedError(reason);
 }
 
 /** Throws when the open dossier refuses writes */
 export function assertDossierWritable(): void {
+  assertNoPluginLock();
   if (openLock) refuseWrite(openLock);
 }
 

@@ -316,6 +316,17 @@
   },
   "dossierLock": {
     "closed": "Sprawa zamknięta: tylko do odczytu.",
-    "retention": "Sprawa tylko do odczytu: okres przechowywania minął."
+    "retention": "Sprawa tylko do odczytu: okres przechowywania minął.",
+    "plugin": "Zmiany wstrzymane: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Wymagane rozszerzenie niedostępne",
+    "contact": "Skontaktuj się z administratorem serwera.",
+    "reason": {
+      "missing": "brak pliku",
+      "integrity": "nieprawidłowy odcisk",
+      "invalid": "nieprawidłowy format",
+      "error": "błąd ładowania"
+    }
   }
 }

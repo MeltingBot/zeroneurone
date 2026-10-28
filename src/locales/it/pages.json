@@ -79,7 +79,8 @@
       "extensionsLicense": "Licenza",
       "enablePlugin": "Attiva estensione",
       "disablePlugin": "Disattiva estensione",
-      "verifiedPlugin": "Estensione verificata"
+      "verifiedPlugin": "Estensione verificata",
+      "requiredPlugin": "Obbligatoria"
     },
     "showArchived": "Archiviati ({{count}})",
     "hideArchived": "Nascondi archiviati",

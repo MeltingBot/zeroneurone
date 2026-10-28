@@ -316,6 +316,17 @@
   },
   "dossierLock": {
     "closed": "Dossier afgesloten: alleen-lezen.",
-    "retention": "Dossier alleen-lezen: bewaartermijn verlopen."
+    "retention": "Dossier alleen-lezen: bewaartermijn verlopen.",
+    "plugin": "Wijzigingen opgeschort: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Verplichte extensie niet beschikbaar",
+    "contact": "Neem contact op met de serverbeheerder.",
+    "reason": {
+      "missing": "bestand ontbreekt",
+      "integrity": "ongeldige vingerafdruk",
+      "invalid": "ongeldig formaat",
+      "error": "laadfout"
+    }
   }
 }

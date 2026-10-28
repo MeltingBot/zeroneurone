@@ -73,7 +73,7 @@ import { encryptOpfsBuffer, decryptOpfsBuffer } from '../services/encryption/opf
 
 // ─── Event bus ─────────────────────────────────────────────────
 import { onPluginEvent, onAnyPluginEvent, emitFromPlugin, emitImported } from './pluginEventBus';
-import { refuseWrite } from '../utils/dossierLock';
+import { assertNoPluginLock, refuseWrite, setPluginWriteLock, getPluginWriteLock } from '../utils/dossierLock';
 import { openGeoPicker } from './pluginUi';
 
 // ─── Shared plugin data (Y.js) ─────────────────────────────────
@@ -271,6 +271,7 @@ export const pluginAPI = {
       dossierId: string;
     }> {
       // If no target, create a new dossier
+      assertNoPluginLock();
       let dossierId = options?.targetDossierId;
       if (dossierId && (await db.dossiers.get(dossierId))?.closedAt) refuseWrite('closed');
       if (!dossierId) {
@@ -317,6 +318,7 @@ export const pluginAPI = {
       errors: string[];
       warnings: string[];
     }> {
+      assertNoPluginLock();
       if ((await db.dossiers.get(targetDossierId))?.closedAt) refuseWrite('closed');
       const result = await importService.importFromJSON(jsonString, targetDossierId);
       if (result.success) {
@@ -341,6 +343,19 @@ export const pluginAPI = {
         window.location.href = appPath(path);
       }
     },
+  },
+
+  // ─── Write lock (suspend every write until lifted) ──────────
+  writeLock: {
+    /** Replaced in the scoped API, which knows the plugin id */
+    set: (_reason: string): void => {
+      console.warn('[Plugin] writeLock.set needs the scoped plugin API');
+    },
+    clear: (): void => {
+      console.warn('[Plugin] writeLock.clear needs the scoped plugin API');
+    },
+    /** Reason of the current lock (any plugin), or null */
+    current: getPluginWriteLock,
   },
 
   // ─── Event bus (subscribe to data changes) ──────────────────
@@ -612,6 +627,11 @@ export function createScopedPluginAPI(pluginId: string): typeof pluginAPI & { pl
     ...pluginAPI,
     pluginId,
     pluginServices: scopedPluginServices(pluginId) as any,
+    writeLock: {
+      set: (reason: string) => setPluginWriteLock(pluginId, reason || pluginId),
+      clear: () => setPluginWriteLock(pluginId, null),
+      current: getPluginWriteLock,
+    },
     events: {
       ...pluginAPI.events,
       emit: (type: string, dossierId: string, meta?: Record<string, unknown>, entityId?: string) =>

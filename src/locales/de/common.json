@@ -309,6 +309,17 @@
   },
   "dossierLock": {
     "closed": "Dossier abgeschlossen: schreibgeschützt.",
-    "retention": "Dossier schreibgeschützt: Aufbewahrungsfrist abgelaufen."
+    "retention": "Dossier schreibgeschützt: Aufbewahrungsfrist abgelaufen.",
+    "plugin": "Änderungen ausgesetzt: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Erforderliche Erweiterung nicht verfügbar",
+    "contact": "Wenden Sie sich an den Serveradministrator.",
+    "reason": {
+      "missing": "Datei fehlt",
+      "integrity": "ungültiger Fingerabdruck",
+      "invalid": "ungültiges Format",
+      "error": "Ladefehler"
+    }
   }
 }

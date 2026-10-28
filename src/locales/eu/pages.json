@@ -79,7 +79,8 @@
       "extensionsLicense": "Lizentzia",
       "enablePlugin": "Hedapena gaitu",
       "disablePlugin": "Hedapena desgaitu",
-      "verifiedPlugin": "Egiaztatutako hedapena"
+      "verifiedPlugin": "Egiaztatutako hedapena",
+      "requiredPlugin": "Derrigorrezkoa"
     },
     "showArchived": "Artxibatuta ({{count}})",
     "hideArchived": "Artxibatutakoak ezkutatu",

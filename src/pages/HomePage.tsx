@@ -23,6 +23,7 @@ import { dossierRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
 import { importService } from '../services/importService';
 import { buildSampleZipFile } from '../components/onboarding/sampleDossier';
+import { WriteLockBanner } from '../components/common/WriteLockBanner';
 
 type ViewMode = 'landing' | 'list';
 type SortMode = 'updated' | 'created' | 'name';
@@ -277,6 +278,7 @@ export function HomePage() {
 
   return (
     <Layout>
+      <WriteLockBanner />
       {/* Header - only shown in list view */}
       {viewMode === 'list' && (
         <header className="h-12 flex items-center px-4 border-b border-border-default bg-bg-primary panel-shadow">

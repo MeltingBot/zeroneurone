@@ -5,6 +5,7 @@ import { buildSandboxedAPI } from '../plugins/pluginSandbox';
 import type { PluginManifestV2, PluginEntry, TrustLevel, Permission } from '../plugins/pluginManifest';
 import { DEFAULT_COMMUNITY_PERMISSIONS } from '../plugins/pluginManifest';
 import { appPath } from '../utils/basePath';
+import { markPluginRequired, reportRequiredPluginFailure, type RequiredPluginFailure } from '../plugins/requiredPlugins';
 
 // ─── React shim Blob URLs ───────────────────────────────────
 // Plugins loaded via Blob URL can't resolve bare specifiers like
@@ -103,16 +104,24 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
       continue;
     }
 
+    const required = entry.required === true;
+    if (required) markPluginRequired(entry.id);
+    const failRequired = (reason: RequiredPluginFailure['reason']) => {
+      if (required) reportRequiredPluginFailure({ id: entry.id, name: entry.name || entry.id, reason });
+    };
+
     try {
       const fileRes = await fetch(appPath(`/plugins/${entry.file}`));
       if (!fileRes.ok) {
         console.warn(`[ZN] Plugin "${entry.id}": ${entry.file} returned ${fileRes.status}`);
+        failRequired('missing');
         continue;
       }
       const source = await fileRes.text();
 
       // Verify integrity
       if (!await verifyIntegrity(source, entry.integrity, entry.id)) {
+        failRequired('integrity');
         continue;
       }
 
@@ -163,9 +172,11 @@ export async function loadExternalPlugins(skipIds: string[] = []): Promise<void>
         }
       } else {
         console.warn(`[ZN] Plugin "${entry.id}" has no register() export, skipping`);
+        failRequired('invalid');
       }
     } catch (err) {
       console.warn(`[ZN] Failed to load plugin "${entry.id}":`, err);
+      failRequired('error');
     }
   }
 
@@ -223,6 +234,7 @@ const ALL_PERMISSIONS: Permission[] = [
   'toast',
   'ui',
   'services:export', 'services:import', 'services:navigate',
+  'writeLock',
   'db:direct',
   'fileService',
   'encryption',

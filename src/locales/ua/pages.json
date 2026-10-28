@@ -79,7 +79,8 @@
       "extensionsLicense": "Ліцензія",
       "enablePlugin": "Увімкнути розширення",
       "disablePlugin": "Вимкнути розширення",
-      "verifiedPlugin": "Перевірене розширення"
+      "verifiedPlugin": "Перевірене розширення",
+      "requiredPlugin": "Обов'язкове"
     },
     "showArchived": "Архівовані ({{count}})",
     "hideArchived": "Сховати архівовані",

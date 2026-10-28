@@ -313,6 +313,17 @@
   },
   "dossierLock": {
     "closed": "Fascicolo chiuso: sola lettura.",
-    "retention": "Fascicolo in sola lettura: conservazione scaduta."
+    "retention": "Fascicolo in sola lettura: conservazione scaduta.",
+    "plugin": "Modifiche sospese: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Estensione obbligatoria non disponibile",
+    "contact": "Contatta l'amministratore del server.",
+    "reason": {
+      "missing": "file mancante",
+      "integrity": "impronta non valida",
+      "invalid": "formato non valido",
+      "error": "errore di caricamento"
+    }
   }
 }

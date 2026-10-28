@@ -353,6 +353,22 @@ export interface EventsAPI {
 
 // ─── Toast API ────────────────────────────────────────────────
 
+// ─── Write lock API ───────────────────────────────────────────
+
+/**
+ * Suspend every write (all dossiers, creation and deletion included) until the
+ * plugin lifts it — e.g. an audit plugin whose server is unreachable. The user
+ * sees the reason. Needs the `writeLock` permission (trusted plugins have it).
+ */
+export interface WriteLockAPI {
+  /** Suspend writes, with the reason shown to the user */
+  set: (reason: string) => void;
+  /** Lift this plugin's lock */
+  clear: () => void;
+  /** Reason of the current lock (any plugin), or null */
+  current: () => string | null;
+}
+
 export interface ToastAPI {
   success: (message: string, options?: { duration?: number; id?: string }) => string;
   error: (message: string, options?: { duration?: number; id?: string }) => string;
@@ -542,6 +558,8 @@ export interface PluginAPI {
 
   // Event bus (subscribe to data changes)
   events: EventsAPI;
+  /** ZN 2.84+ */
+  writeLock?: WriteLockAPI;
 
   // Toast / Notifications
   toast: ToastAPI;

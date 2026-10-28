@@ -311,6 +311,17 @@
   },
   "dossierLock": {
     "closed": "Dossier tancat: només lectura.",
-    "retention": "Dossier en només lectura: retenció caducada."
+    "retention": "Dossier en només lectura: retenció caducada.",
+    "plugin": "Modificacions suspeses: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Extensió obligatòria no disponible",
+    "contact": "Contacteu l'administrador del servidor.",
+    "reason": {
+      "missing": "fitxer absent",
+      "integrity": "empremta no vàlida",
+      "invalid": "format no vàlid",
+      "error": "error de càrrega"
+    }
   }
 }

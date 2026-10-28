@@ -586,6 +586,18 @@ const entries = await api.pluginData.list(dossierId, 'ann:<hash>:'); // [{ key, 
 
 When a dossier is deleted, ZN automatically cleans up all `pluginData` associated with that dossier. No need to handle this case in your plugin.
 
+## Write lock (`api.writeLock`, ZN 2.84+)
+
+A plugin can suspend every write: all dossiers, as well as creating and deleting dossiers and imports. Typical case: an audit plugin whose server stopped answering. A "Changes suspended: <reason>" bar is shown, and any write attempt is refused with that message. Permission `writeLock` (`trusted` plugins have it).
+
+```javascript
+api.writeLock.set('audit server unreachable'); // suspend
+api.writeLock.clear();                          // lift this plugin's lock
+api.writeLock.current();                        // reason of the current lock, or null
+```
+
+Each plugin only lifts its own lock.
+
 ## Event Bus (`api.events`)
 
 Plugins can react to data changes through a pub/sub event bus. Callbacks are always wrapped in a try/catch — a failing plugin never crashes ZN.
@@ -1266,6 +1278,7 @@ Since v2.39.0, ZN supports **manifest v2** with trust levels and permissions. Ma
 | `integrity` | No | SHA-256 hex hash of the JS file. If set, ZN verifies the file content before execution. |
 | `trust` | No | `"trusted"` (full API) or `"community"` (filtered API). Absent = `"community"`. |
 | `permissions` | No | Requested permissions (only relevant for `community`). Absent = minimal default set. |
+| `required` | No | `true`: plugin imposed by the host. Always enabled, no switch in the extensions list; if its file is missing, its fingerprint does not match or `register()` fails, the app does not start and shows a "Required extension unavailable" screen (ZN 2.84+). |
 
 #### Trust Levels
 
@@ -1286,7 +1299,7 @@ Since v2.39.0, ZN supports **manifest v2** with trust levels and permissions. Ma
 
 **Services:** `services:export`, `services:import`, `services:navigate`, `pluginServices` (services between plugins)
 
-**Advanced access:** `fileService`, `encryption`, `network:fetch`
+**Advanced access:** `fileService`, `encryption`, `network:fetch`, `writeLock`
 
 **UI slots:** `slots:ui`, `slots:contextMenu`, `slots:keyboard`, `slots:exportImport`
 

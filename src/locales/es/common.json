@@ -309,6 +309,17 @@
   },
   "dossierLock": {
     "closed": "Expediente cerrado: solo lectura.",
-    "retention": "Expediente en solo lectura: retención vencida."
+    "retention": "Expediente en solo lectura: retención vencida.",
+    "plugin": "Modificaciones suspendidas: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Extensión obligatoria no disponible",
+    "contact": "Contacte con el administrador del servidor.",
+    "reason": {
+      "missing": "archivo ausente",
+      "integrity": "huella no válida",
+      "invalid": "formato no válido",
+      "error": "error de carga"
+    }
   }
 }

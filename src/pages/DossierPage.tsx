@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Search, Filter, LayoutGrid, Calendar, Map, Table, Download, Upload, FileText, Keyboard, BookOpen, Github, Coffee, Sun, Moon, MoreVertical, Tags, Lock } from 'lucide-react';
 import { retentionExpiresAt } from '../utils/dossierLock';
+import { WriteLockBanner } from '../components/common/WriteLockBanner';
 import { Layout, IconButton, Modal, Button, LanguageSwitcher, ErrorBoundary } from '../components/common';
 import { SidePanel } from '../components/panels';
 import { SearchModal, ExportModal, SynthesisModal, ShortcutsModal, MetadataImportModal, ImportIntoCurrentModal, JsonMappingImportModal, TagSetManagerModal } from '../components/modals';
@@ -753,6 +754,8 @@ export function DossierPage() {
           <LanguageSwitcher size="sm" />
         </div>
       </header>
+
+      <WriteLockBanner />
 
       {currentDossier.closedAt && (
         <div className="flex items-center gap-1.5 px-3 py-1 text-xs text-text-secondary bg-bg-tertiary border-b border-border-default">

@@ -41,6 +41,7 @@ export type Permission =
   | 'fileService'
   | 'encryption'
   | 'network:fetch'
+  | 'writeLock'
   // Slots
   | 'slots:ui'
   | 'slots:contextMenu'
@@ -80,6 +81,11 @@ export interface PluginEntry {
    * Trusted plugins implicitly have all permissions.
    */
   permissions?: Permission[];
+  /**
+   * Required by whoever hosts the app: always enabled (no switch for the
+   * user), and the app does not start if this plugin cannot be loaded.
+   */
+  required?: boolean;
 }
 
 // ─── Default permissions for community plugins ───────────────

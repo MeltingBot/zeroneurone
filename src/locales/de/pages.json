@@ -79,7 +79,8 @@
       "extensionsLicense": "Lizenz",
       "enablePlugin": "Erweiterung aktivieren",
       "disablePlugin": "Erweiterung deaktivieren",
-      "verifiedPlugin": "Verifizierte Erweiterung"
+      "verifiedPlugin": "Verifizierte Erweiterung",
+      "requiredPlugin": "Erforderlich"
     },
     "showArchived": "Archiviert ({{count}})",
     "hideArchived": "Archivierte ausblenden",

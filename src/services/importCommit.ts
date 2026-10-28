@@ -5,7 +5,7 @@ import * as Y from 'yjs';
 import { elementToYMap, linkToYMap, tabToYMap, updateElementYMap, yMapToElement } from './yjs';
 import { commentToYMap } from './yjs/commentMapper';
 import type { DossierId } from '../types';
-import { refuseWrite } from '../utils/dossierLock';
+import { assertNoPluginLock, refuseWrite } from '../utils/dossierLock';
 import { emitImported } from '../plugins/pluginEventBus';
 
 /**
@@ -27,6 +27,7 @@ export interface ImportSnapshot {
 /** Records what the dossier holds in Dexie, just before an import. */
 export async function snapshotBeforeImport(dossierId: DossierId): Promise<ImportSnapshot> {
   // A closed dossier takes no import (the dossier need not be open: read its row)
+  assertNoPluginLock();
   const target = await db.dossiers.get(dossierId);
   if (target?.closedAt) refuseWrite('closed');
   const [elementIds, linkIds, commentIds, tabIds] = await Promise.all([

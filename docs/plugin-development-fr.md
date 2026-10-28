@@ -586,6 +586,18 @@ const entries = await api.pluginData.list(dossierId, 'ann:<hash>:'); // [{ key, 
 
 Quand un dossier est supprime, ZN nettoie automatiquement les `pluginData` associees a ce dossier. Plus besoin de gerer ce cas cote plugin.
 
+## Verrou d'ecriture (`api.writeLock`, ZN 2.84+)
+
+Un plugin peut suspendre toutes les ecritures : tous les dossiers, ainsi que la creation et la suppression de dossiers et les imports. Cas typique : un plugin de journal dont le serveur ne repond plus. Un bandeau « Modifications suspendues : <raison> » s'affiche, et toute tentative d'ecriture est refusee avec ce message. Permission `writeLock` (les plugins `trusted` l'ont).
+
+```javascript
+api.writeLock.set('serveur de journal injoignable'); // suspendre
+api.writeLock.clear();                               // lever le verrou de ce plugin
+api.writeLock.current();                             // raison du verrou en cours, ou null
+```
+
+Chaque plugin ne leve que son propre verrou.
+
 ## Bus d'evenements (`api.events`)
 
 Les plugins peuvent reagir aux changements de donnees via un bus d'evenements pub/sub. Les callbacks sont toujours encapsules dans un try/catch — un plugin defaillant ne plante jamais ZN.
@@ -1266,6 +1278,7 @@ Depuis la v2.39.0, ZN supporte le **manifest v2** avec niveaux de confiance et p
 | `integrity` | Non | Hash SHA-256 hexadecimal du fichier JS. Si defini, ZN verifie le contenu avant execution. |
 | `trust` | Non | `"trusted"` (API complete) ou `"community"` (API filtree). Absent = `"community"`. |
 | `permissions` | Non | Permissions demandees (pertinent uniquement pour `community`). Absent = jeu minimal par defaut. |
+| `required` | Non | `true` : plugin impose par l'hebergeur. Toujours active, sans interrupteur dans la liste des extensions ; si son fichier manque, si son empreinte ne correspond pas ou si `register()` echoue, l'application ne demarre pas et affiche un ecran « Extension obligatoire indisponible » (ZN 2.84+). |
 
 #### Niveaux de confiance
 
@@ -1286,7 +1299,7 @@ Depuis la v2.39.0, ZN supporte le **manifest v2** avec niveaux de confiance et p
 
 **Services :** `services:export`, `services:import`, `services:navigate`, `pluginServices` (services entre plugins)
 
-**Acces avances :** `fileService`, `encryption`, `network:fetch`
+**Acces avances :** `fileService`, `encryption`, `network:fetch`, `writeLock`
 
 **Slots UI :** `slots:ui`, `slots:contextMenu`, `slots:keyboard`, `slots:exportImport`
 

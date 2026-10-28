@@ -1,4 +1,5 @@
 import type { PluginSlots } from '../types/plugins';
+import { isPluginRequired } from './requiredPlugins';
 
 /**
  * Plugin registry — Generic extension system for zeroneurone.
@@ -75,6 +76,7 @@ function persistEnabled() {
 }
 
 export function disablePlugin(id: string): void {
+  if (isPluginRequired(id)) return; // required by the host: the user cannot switch it off
   enabledIds.delete(id);
   persistEnabled();
   notifyListeners();
@@ -87,7 +89,7 @@ export function enablePlugin(id: string): void {
 }
 
 export function isPluginDisabled(id: string): boolean {
-  return !enabledIds.has(id);
+  return !enabledIds.has(id) && !isPluginRequired(id);
 }
 
 // ─── Listeners for reactivity ───────────────────────────────

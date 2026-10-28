@@ -249,6 +249,11 @@ export function buildSandboxedAPI(
     api.pluginServices = scopedAPI.pluginServices;
   }
 
+  // --- Write lock ---
+  if (has(permissions, 'writeLock')) {
+    api.writeLock = (scopedAPI as any).writeLock;
+  }
+
   // --- Event bus ---
   if (has(permissions, 'events:subscribe')) {
     api.events = scopedAPI.events;

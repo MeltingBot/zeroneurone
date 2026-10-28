@@ -29,7 +29,7 @@ import {
 import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
 import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
-import { refuseWrite, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
+import { assertNoPluginLock, refuseWrite, setOpenDossierLock, type DossierLockReason } from '../utils/dossierLock';
 import { deriveRoomId } from '../services/cryptoService';
 import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
@@ -567,6 +567,7 @@ export function setupYDocObserver(
 
 /** Throws if the open dossier refuses writes (closed, or retention expired) */
 function assertWritable(get: () => DossierState) {
+  assertNoPluginLock();
   const reason = lockReasonOf(get());
   if (reason) refuseWrite(reason);
 }
@@ -1230,6 +1231,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   createDossier: async (name: string, description?: string) => {
+    assertNoPluginLock();
     const dossier = await dossierRepository.create(name, description);
     set((state) => ({
       dossiers: [dossier, ...state.dossiers],
@@ -1255,6 +1257,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   updateDossier: async (id: DossierId, changes: Partial<Dossier>) => {
+    assertNoPluginLock();
     const target = get().currentDossier?.id === id
       ? get().currentDossier
       : get().dossiers.find((d) => d.id === id);
@@ -1321,6 +1324,7 @@ export const useDossierStore = create<DossierState>((set, get) => ({
   },
 
   deleteDossier: async (id: DossierId) => {
+    assertNoPluginLock();
     emitPluginEvent('dossier:deleted', id);
     // An open connection to the dossier's Y.js database would block its deletion
     if (syncService.getDossierId() === id) await syncService.close();

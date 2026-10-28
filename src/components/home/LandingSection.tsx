@@ -5,6 +5,7 @@ import { Button, LanguageSwitcher } from '../common';
 import { WelcomeBanner } from '../onboarding/WelcomeBanner';
 import { usePlugins } from '../../plugins/usePlugins';
 import { isPluginDisabled, disablePlugin, enablePlugin } from '../../plugins/pluginRegistry';
+import { isPluginRequired } from '../../plugins/requiredPlugins';
 import { useTutorialStore } from '../../stores/tutorialStore';
 import type { HomeCardRegistration } from '../../types/plugins';
 import { appPath } from '../../utils/basePath';
@@ -180,6 +181,9 @@ export function LandingSection({
                             {card.version && (
                               <span className="text-[10px] text-text-tertiary">{card.version}</span>
                             )}
+                            {isPluginRequired(card.id) ? (
+                              <span className="ml-auto shrink-0 text-[10px] text-text-tertiary">{t('home.landing.requiredPlugin')}</span>
+                            ) : (
                             <button
                               role="switch"
                               aria-checked={!disabled}
@@ -193,6 +197,7 @@ export function LandingSection({
                                 style={{ transform: disabled ? 'translateX(0)' : 'translateX(12px)' }}
                               />
                             </button>
+                            )}
                           </div>
                           <p className="text-xs text-text-tertiary mb-2">{card.description}</p>
                           {!disabled && card.features && card.features.length > 0 && (

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.84.0
+
+### Plugins
+
+- **Plugin obligatoire** — `required: true` dans le manifeste des plugins :
+  le plugin est toujours actif, sans interrupteur dans la liste des
+  extensions (mention « Obligatoire »). S'il ne peut pas être chargé
+  (fichier absent, empreinte invalide, erreur à l'enregistrement),
+  l'application ne démarre pas et affiche « Extension obligatoire
+  indisponible ».
+- **Verrou d'écriture** — `api.writeLock.set(raison)` / `.clear()` /
+  `.current()` (permission `writeLock`) : un plugin suspend toutes les
+  écritures (tous les dossiers, création, suppression, imports) jusqu'à ce
+  qu'il lève son verrou. Un bandeau « Modifications suspendues : … »
+  s'affiche et toute écriture est refusée avec ce message.
+
 ## 2.83.0
 
 ### Plugins

@@ -306,6 +306,17 @@
   },
   "dossierLock": {
     "closed": "Dossier closed: read-only.",
-    "retention": "Dossier read-only: retention expired."
+    "retention": "Dossier read-only: retention expired.",
+    "plugin": "Changes suspended: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Required extension unavailable",
+    "contact": "Contact the server administrator.",
+    "reason": {
+      "missing": "file missing",
+      "integrity": "invalid fingerprint",
+      "invalid": "invalid format",
+      "error": "loading error"
+    }
   }
 }

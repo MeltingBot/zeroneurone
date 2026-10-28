@@ -79,7 +79,8 @@
       "extensionsLicense": "Licentie",
       "enablePlugin": "Extensie inschakelen",
       "disablePlugin": "Extensie uitschakelen",
-      "verifiedPlugin": "Geverifieerde extensie"
+      "verifiedPlugin": "Geverifieerde extensie",
+      "requiredPlugin": "Verplicht"
     },
     "showArchived": "Gearchiveerd ({{count}})",
     "hideArchived": "Gearchiveerde verbergen",

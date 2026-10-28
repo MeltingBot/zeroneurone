@@ -313,6 +313,17 @@
   },
   "dossierLock": {
     "closed": "Dossiê encerrado: só de leitura.",
-    "retention": "Dossiê só de leitura: retenção expirada."
+    "retention": "Dossiê só de leitura: retenção expirada.",
+    "plugin": "Alterações suspensas: {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Extensão obrigatória indisponível",
+    "contact": "Contacte o administrador do servidor.",
+    "reason": {
+      "missing": "ficheiro em falta",
+      "integrity": "impressão digital inválida",
+      "invalid": "formato inválido",
+      "error": "erro de carregamento"
+    }
   }
 }

@@ -79,7 +79,8 @@
       "extensionsLicense": "Llicència",
       "enablePlugin": "Activar extensió",
       "disablePlugin": "Desactivar extensió",
-      "verifiedPlugin": "Extensió verificada"
+      "verifiedPlugin": "Extensió verificada",
+      "requiredPlugin": "Obligatòria"
     },
     "showArchived": "Arxivats ({{count}})",
     "hideArchived": "Amagar arxivats",

@@ -306,6 +306,17 @@
   },
   "dossierLock": {
     "closed": "Dossier clôturé : lecture seule.",
-    "retention": "Dossier en lecture seule : rétention expirée."
+    "retention": "Dossier en lecture seule : rétention expirée.",
+    "plugin": "Modifications suspendues : {{reason}}"
+  },
+  "requiredPlugins": {
+    "title": "Extension obligatoire indisponible",
+    "contact": "Contactez l'administrateur du serveur.",
+    "reason": {
+      "missing": "fichier absent",
+      "integrity": "empreinte invalide",
+      "invalid": "format invalide",
+      "error": "erreur au chargement"
+    }
   }
 }
