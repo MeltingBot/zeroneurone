@@ -922,7 +922,9 @@ export function MatrixView() {
         className="flex-1 overflow-auto"
         onScroll={handleScroll}
       >
-        {sortedElements.length === 0 ? (
+        {/* Empty only with nothing to show at all: a column filter that keeps
+            no row leaves the headers and the filter row up, to correct it */}
+        {visibleElements.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-text-tertiary">
             {t('matrix.empty')}
           </div>
@@ -1019,6 +1021,10 @@ export function MatrixView() {
                 ))}
               </div>
             </div>
+
+            {sortedElements.length === 0 && (
+              <div className="sticky left-0 px-3 py-2 text-sm text-text-tertiary">{t('matrix.noResults')}</div>
+            )}
 
             {/* Virtual rows container */}
             <div style={{ height: totalContentHeight, position: 'relative', width: totalRowWidth }}>

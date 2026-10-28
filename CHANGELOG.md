@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.81.1
+
+### Corrections
+
+- **Matrice** — un filtre de colonne qui ne garde aucune ligne laisse les
+  en-têtes et la ligne de filtres affichés (avec « Aucun résultat »), pour
+  pouvoir le corriger, au lieu de faire disparaître le tableau.
+
 ## 2.81.0
 
 ### Nouveautés
