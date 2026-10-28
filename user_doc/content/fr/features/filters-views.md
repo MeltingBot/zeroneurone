@@ -43,8 +43,8 @@ Un second clic défait ce que la puce a fait, et seulement cela : les éléments
 
 La section **Propriétés date** liste les propriétés de type date et date-heure du dossier, avec le nombre d'éléments qui renseignent chacune. Ces dates placent les éléments sur la timeline, sur la carte et dans le curseur temporel du canvas.
 
-- **Aucune puce sélectionnée** : toutes les propriétés date comptent.
-- **Sélectionner des puces** : seules celles-ci comptent (par exemple « Début des faits » et « Fin des faits », sans la date de naissance). Une propriété date importée plus tard ne compte pas tant que vous ne la sélectionnez pas.
+- **Par défaut** : toutes les propriétés date sont cochées et comptent.
+- **Décocher une puce** (barrée) : ses dates ne placent plus les éléments sur la timeline et la carte (par exemple la date de naissance). Un second clic la recoche. Une propriété date importée plus tard est cochée d'office.
 
 Un badge **Dates n/total** apparaît alors dans les filtres actifs ; sa croix rétablit toutes les dates.
 

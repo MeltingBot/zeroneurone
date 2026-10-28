@@ -50,7 +50,8 @@ interface InsightsState {
   // Actions
   computeInsights: (elements: Element[], links: Link[], key?: string) => void;
   highlightCluster: (clusterId: number) => void;
-  highlightCentralElement: (elementId: ElementId) => void;
+  /** Highlight an element, with its neighbours when given (their links then show too) */
+  highlightCentralElement: (elementId: ElementId, neighborIds?: Iterable<ElementId>) => void;
   highlightBridges: () => void;
   highlightIsolated: () => void;
   highlightSimilarPair: (elementId1: ElementId, elementId2: ElementId) => void;
@@ -185,11 +186,14 @@ export const useInsightsStore = create<InsightsState>((set, get) => ({
     }
   },
 
-  highlightCentralElement: (elementId) => {
+  highlightCentralElement: (elementId, neighborIds) => {
+    const ids = new Set<ElementId>(neighborIds ?? []);
+    ids.add(elementId);
     set({
-      highlightedElementIds: new Set([elementId]),
+      highlightedElementIds: ids,
       highlightType: 'centrality',
       selectedClusterId: null,
+      focusedElementId: elementId,
     });
   },
 

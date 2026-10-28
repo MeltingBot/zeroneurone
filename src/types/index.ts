@@ -547,12 +547,12 @@ export interface ViewFilters {
   dateFrom: Date | null;
   dateTo: Date | null;
   hasGeo: boolean | null;
-  /** Keys of the date/datetime properties that date the elements on the
-   *  timeline and the map; empty means all of them. Kept as a selection so
-   *  that a date property imported later is not counted unasked. */
+  /** Former form of the date property choice (the keys kept), still read for
+   *  the views saved with it; empty means all of them. Takes precedence over
+   *  `excludedDateProperties` when set; the filters panel now writes it empty. */
   includedDateProperties?: string[];
-  /** Former form of the same choice (the keys left out), still read for the
-   *  views saved with it; ignored when `includedDateProperties` is set. */
+  /** Keys of the date/datetime properties unchecked in the filters panel:
+   *  their dates no longer place the elements on the timeline and the map. */
   excludedDateProperties?: string[];
   /** Pairs of date properties read as one period (start → end) */
   dateRangeProperties?: { start: string; end: string }[];

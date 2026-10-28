@@ -51,7 +51,6 @@ export function InsightsPanel() {
     similarLabels,
     computedAt,
     isComputing,
-    highlightedElementIds,
     highlightType,
     selectedClusterId,
     pathResults,
@@ -344,20 +343,44 @@ export function InsightsPanel() {
     [areAllHidden, hideElements, showElement]
   );
 
-  // Central element actions - toggle highlight on click
+  // Central element: highlight it with its neighbours and links
+  const highlightWithNeighbors = useCallback(
+    (elementId: string) => {
+      const neighborIds = new Set<string>();
+      for (const link of links) {
+        if (link.fromId === elementId) neighborIds.add(link.toId);
+        else if (link.toId === elementId) neighborIds.add(link.fromId);
+      }
+      highlightCentralElement(elementId, neighborIds);
+      selectElement(elementId);
+      return neighborIds;
+    },
+    [links, highlightCentralElement, selectElement]
+  );
+
+  // Row click toggles the highlight and frames the element with its neighbours
   const handleCentralClick = useCallback(
     (elementId: string) => {
-      // If already highlighted, clear highlight and deselect
-      if (highlightType === 'centrality' && highlightedElementIds.has(elementId)) {
+      if (highlightType === 'centrality' && focusedElementId === elementId) {
         clearHighlight();
         clearSelection();
       } else {
-        highlightCentralElement(elementId);
-        selectElement(elementId);
-        revealElement(elementId);
+        const neighborIds = highlightWithNeighbors(elementId);
+        revealElements([elementId, ...neighborIds]);
       }
     },
-    [highlightType, highlightedElementIds, highlightCentralElement, selectElement, clearHighlight, clearSelection]
+    [highlightType, focusedElementId, highlightWithNeighbors, clearHighlight, clearSelection]
+  );
+
+  // Label click zooms on the element (and keeps it highlighted)
+  const handleCentralLabelClick = useCallback(
+    (elementId: string) => {
+      if (!(highlightType === 'centrality' && focusedElementId === elementId)) {
+        highlightWithNeighbors(elementId);
+      }
+      revealElement(elementId);
+    },
+    [highlightType, focusedElementId, highlightWithNeighbors]
   );
 
   // Bridge actions
@@ -919,20 +942,32 @@ export function InsightsPanel() {
                 isExpanded={expandedSections.has('centrality')}
                 onToggle={() => toggleSection('centrality')}
               >
-                <div className="space-y-1">
-                  {centrality.slice(0, 5).map((item) => (
+                <ProgressiveList
+                  items={centrality}
+                  initialCount={10}
+                  increment={10}
+                  className="space-y-1"
+                  renderItem={(item) => (
                     <div
                       key={item.elementId}
                       className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
-                        highlightedElementIds.has(item.elementId) &&
+                        focusedElementId === item.elementId &&
                         highlightType === 'centrality'
                           ? 'bg-accent/10 border border-accent'
                           : 'hover:bg-bg-secondary border border-transparent'
                       }`}
                       onClick={() => handleCentralClick(item.elementId)}
                     >
-                      <span className="text-sm text-text-primary truncate flex-1">
-                        {getElementLabel(item.elementId)}
+                      <span className="flex-1 min-w-0 truncate">
+                        <span
+                          className="text-sm text-text-primary hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCentralLabelClick(item.elementId);
+                          }}
+                        >
+                          {getElementLabel(item.elementId)}
+                        </span>
                       </span>
                       <span className="flex items-center gap-2 ml-2 flex-shrink-0">
                         <span className="text-xs text-text-tertiary tabular-nums">
@@ -945,8 +980,8 @@ export function InsightsPanel() {
                         )}
                       </span>
                     </div>
-                  ))}
-                </div>
+                  )}
+                />
               </InsightSection>
             )}
 

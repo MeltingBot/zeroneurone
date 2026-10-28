@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   X,
@@ -24,7 +24,7 @@ import { ProgressiveList } from '../common/ProgressiveList';
 import { TagDot } from '../common/TagDot';
 import { useTagColors } from '../../hooks/useTagColors';
 import type { Confidence, Element, Comment, EvaluationModel, ViewFilters } from '../../types';
-import { datePropertyRules, elementDateIntervals } from '../../utils/temporalUtils';
+import { datePropertyKeeper, datePropertyRules, elementDateIntervals } from '../../utils/temporalUtils';
 import { EVALUATION_GRIDS, getModelScale, matchesEvaluationFilters } from '../../utils/evaluation';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { getGeoCenter } from '../../utils/geo';
@@ -143,11 +143,10 @@ function readQuickMode(): QuickMode {
 }
 
 /** Date property keys selected in the filters panel (empty: all of them) */
-function selectedDateKeys(dateKeys: string[], included?: string[], excluded?: string[]): string[] {
-  if (included && included.length > 0) return dateKeys.filter((key) => included.includes(key));
-  // Former form (the keys left out), from a view saved with it
-  if (excluded && excluded.length > 0) return dateKeys.filter((key) => !excluded.includes(key));
-  return [];
+/** Date property keys that date the elements (all of them unless some are unchecked) */
+function keptDateKeys(dateKeys: string[], filters: ViewFilters): string[] {
+  const keep = datePropertyKeeper(filters);
+  return dateKeys.filter(keep);
 }
 
 export function FiltersPanel() {
@@ -263,33 +262,25 @@ export function FiltersPanel() {
       .map(([key, count]) => ({ key, count }))
       .sort((a, b) => a.key.localeCompare(b.key));
   }, [elements, activeTabId, tabMemberSet]);
-  // Like the tags: no date property selected means all of them date the
-  // elements; selecting some keeps only those. The selection itself is
-  // stored, so a date property imported later is not counted unasked.
+  // Every date property dates the elements; unchecking one takes its dates
+  // off the timeline and the map. Stored as the keys left out, so a date
+  // property imported later counts like the others.
   const dateKeys = useMemo(() => datePropertyCounts.map(({ key }) => key), [datePropertyCounts]);
-  const includedDateProperties = filters.includedDateProperties;
-  const excludedDateProperties = filters.excludedDateProperties;
-  const selectedDateProperties = useMemo(
-    () => selectedDateKeys(dateKeys, includedDateProperties, excludedDateProperties),
-    [dateKeys, includedDateProperties, excludedDateProperties]
-  );
+  const keptDateProperties = useMemo(() => keptDateKeys(dateKeys, filters), [dateKeys, filters]);
   const toggleDateProperty = useCallback((key: string) => {
     // Read the store, not the render: quick successive clicks stay right
-    const current = useViewStore.getState().filters;
-    const before = selectedDateKeys(dateKeys, current.includedDateProperties, current.excludedDateProperties);
-    const selected = before.includes(key) ? before.filter((k) => k !== key) : [...before, key];
-    setFilters({ includedDateProperties: selected, excludedDateProperties: [] });
+    const before = keptDateKeys(dateKeys, useViewStore.getState().filters);
+    const kept = before.includes(key) ? before.filter((k) => k !== key) : [...before, key];
+    setFilters({
+      includedDateProperties: [],
+      excludedDateProperties: dateKeys.filter((k) => !kept.includes(k)),
+    });
   }, [dateKeys, setFilters]);
   const clearDateProperties = useCallback(
     () => setFilters({ includedDateProperties: [], excludedDateProperties: [] }),
     [setFilters]
   );
-  // A former choice leaving every key out reads as no selection: all dates
-  const allDatesExcluded = !(includedDateProperties?.length) && dateKeys.length > 0
-    && dateKeys.every((key) => excludedDateProperties?.includes(key));
-  useEffect(() => {
-    if (allDatesExcluded) clearDateProperties();
-  }, [allDatesExcluded, clearDateProperties]);
+  const someDatesUnchecked = keptDateProperties.length < dateKeys.length;
 
   // Quick filter params
   const quickFilterParams: QuickFilterParams = useMemo(
@@ -484,10 +475,10 @@ export function FiltersPanel() {
                 onRemove={() => handlePropertyChange('')}
               />
             )}
-            {selectedDateProperties.length > 0 && (
+            {someDatesUnchecked && (
               <FilterBadge
                 label={t('filters.dateProperties.badge', {
-                  kept: selectedDateProperties.length,
+                  kept: keptDateProperties.length,
                   total: datePropertyCounts.length,
                 })}
                 onRemove={clearDateProperties}
@@ -707,20 +698,21 @@ export function FiltersPanel() {
             </label>
             <div className="flex flex-wrap gap-1.5">
               {datePropertyCounts.map(({ key, count }) => {
-                const isSelected = selectedDateProperties.includes(key);
+                const isKept = keptDateProperties.includes(key);
                 return (
                   <button
                     key={key}
                     onClick={() => toggleDateProperty(key)}
-                    aria-pressed={isSelected}
+                    aria-pressed={isKept}
                     className={`flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
-                      isSelected
-                        ? 'bg-accent text-white border-accent'
-                        : 'bg-bg-secondary text-text-secondary border-border-default hover:border-accent'
+                      isKept
+                        ? 'bg-bg-secondary text-text-primary border-border-strong hover:border-accent'
+                        : 'bg-bg-primary text-text-tertiary border-border-default line-through hover:border-accent'
                     }`}
                   >
+                    {isKept ? <Eye size={11} /> : <EyeOff size={11} />}
                     {key}
-                    <span className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-text-tertiary'}`}>
+                    <span className="text-[10px] text-text-tertiary">
                       {count}
                     </span>
                   </button>

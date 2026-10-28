@@ -43,8 +43,8 @@ A second click undoes what the chip did, and only that: elements hidden by hand 
 
 The **Date properties** section lists the dossier's date and date-time property keys, with how many elements fill each one. These dates place the elements on the timeline, on the map and in the canvas time cursor.
 
-- **No chip selected**: every date property counts.
-- **Select chips**: only those count (for instance "Start of facts" and "End of facts", without the birth date). A date property imported later does not count until you select it.
+- **By default**: every date property is checked and counts.
+- **Uncheck a chip** (struck through): its dates no longer place the elements on the timeline and the map (for instance the birth date). A second click checks it again. A date property imported later is checked from the start.
 
 A **Dates n/total** badge then appears in the active filters; its cross brings all dates back.
 

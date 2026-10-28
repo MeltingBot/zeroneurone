@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.84.1
+
+### Analyse
+
+- **Plus connectés : liste complète** — la section affichait 5 éléments
+  alors que le badge en annonçait 10. Elle liste désormais tous les éléments
+  reliés, par nombre de liens, avec « Afficher plus » (10 par 10) comme les
+  clusters et les doublons.
+- **Plus connectés : voisinage** — un clic sur une ligne met en surbrillance
+  l'élément avec ses voisins et ses liens, et cadre la vue sur eux ; un
+  second clic annule. Un clic sur le libellé centre la vue sur l'élément.
+
+### Filtres
+
+- **Propriétés date à décocher** — toutes les propriétés date sont cochées
+  par défaut ; décocher une puce (barrée) retire ses dates de la timeline,
+  de la carte et du curseur temporel du canvas. Changement de règle : une
+  propriété date importée plus tard est cochée d'office et compte tout de
+  suite. Les vues enregistrées avec l'ancienne sélection la gardent jusqu'au
+  prochain clic sur une puce.
+
 ## 2.84.0
 
 ### Plugins

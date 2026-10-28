@@ -154,11 +154,10 @@ class InsightsService {
       });
     });
 
-    // Sort by degree descending, take top 10
+    // Sort by degree descending (the panel pages through the list)
     return results
       .filter((r) => r.degree > 0)
-      .sort((a, b) => b.degree - a.degree)
-      .slice(0, 10);
+      .sort((a, b) => b.degree - a.degree);
   }
 
   /**

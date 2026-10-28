@@ -70,9 +70,9 @@ export function eventInterval(event: ElementEvent): TimeInterval | null {
 }
 
 /**
- * Whether a date property dates the elements, per the filters panel: the
- * selected keys when there is a selection, otherwise every key but the ones
- * left out in the former form of the choice.
+ * Whether a date property dates the elements, per the filters panel: every
+ * key but the unchecked ones, or the kept keys of a view saved with the
+ * former form of the choice.
  */
 export function datePropertyKeeper(
   filters: { includedDateProperties?: string[]; excludedDateProperties?: string[] },

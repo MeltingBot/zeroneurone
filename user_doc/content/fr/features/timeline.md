@@ -26,7 +26,7 @@ Les éléments ayant une **date** apparaissent sur la timeline :
 - **Point** : date unique
 - Position horizontale = moment dans le temps
 
-Les propriétés date des éléments apparaissent aussi. Dans le panneau **Filtres** → **Propriétés date**, sélectionnez celles qui comptent (sans la date de naissance, par exemple), et déclarez deux propriétés comme une **période** (« Début des faits → Fin des faits ») : l'élément s'affiche alors comme une barre de l'une à l'autre. Voir [Filtres et vues]({{< relref "filters-views" >}}).
+Les propriétés date des éléments apparaissent aussi. Dans le panneau **Filtres** → **Propriétés date**, décochez celles qui ne doivent pas compter (la date de naissance, par exemple), et déclarez deux propriétés comme une **période** (« Début des faits → Fin des faits ») : l'élément s'affiche alors comme une barre de l'une à l'autre. Voir [Filtres et vues]({{< relref "filters-views" >}}).
 
 
 ### Liens avec période
