@@ -11,7 +11,8 @@
     "confirm": "Supprimer",
     "deleting": "Suppression...",
     "deleteDossier": "Supprimer le dossier",
-    "deleteDossierMessage": "Supprimer \"{{name}}\" ? Cette action est irréversible."
+    "deleteDossierMessage": "Supprimer \"{{name}}\" ? Cette action est irréversible.",
+    "purgeIncomplete": "Suppression incomplète : des données du dossier restent dans le navigateur."
   },
   "rename": {
     "title": "Renommer",

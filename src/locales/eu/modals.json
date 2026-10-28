@@ -11,7 +11,8 @@
     "confirm": "Ezabatu",
     "deleting": "Ezabatzen...",
     "deleteDossier": "Espediente ezabatu",
-    "deleteDossierMessage": "\"{{name}}\" ezabatu? Ekintza hau itzulezina da."
+    "deleteDossierMessage": "\"{{name}}\" ezabatu? Ekintza hau itzulezina da.",
+    "purgeIncomplete": "Ezabatze osatugabea: espedientearen datu batzuk nabigatzailean geratzen dira."
   },
   "rename": {
     "title": "Izena aldatu",

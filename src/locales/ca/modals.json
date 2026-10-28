@@ -11,7 +11,8 @@
     "confirm": "Eliminar",
     "deleting": "Eliminant...",
     "deleteDossier": "Eliminar l'expedient",
-    "deleteDossierMessage": "Eliminar \"{{name}}\"? Aquesta acció és irreversible."
+    "deleteDossierMessage": "Eliminar \"{{name}}\"? Aquesta acció és irreversible.",
+    "purgeIncomplete": "Supressió incompleta: algunes dades del dossier queden al navegador."
   },
   "rename": {
     "title": "Reanomenar",

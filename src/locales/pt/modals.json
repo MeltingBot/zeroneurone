@@ -11,7 +11,8 @@
     "confirm": "Eliminar",
     "deleting": "A eliminar...",
     "deleteDossier": "Eliminar o dossiê",
-    "deleteDossierMessage": "Eliminar \"{{name}}\"? Esta ação é irreversível."
+    "deleteDossierMessage": "Eliminar \"{{name}}\"? Esta ação é irreversível.",
+    "purgeIncomplete": "Eliminação incompleta: alguns dados do dossiê permanecem no navegador."
   },
   "rename": {
     "title": "Renomear",

@@ -11,7 +11,8 @@
     "confirm": "Delete",
     "deleting": "Deleting...",
     "deleteDossier": "Delete dossier",
-    "deleteDossierMessage": "Delete \"{{name}}\"? This action is irreversible."
+    "deleteDossierMessage": "Delete \"{{name}}\"? This action is irreversible.",
+    "purgeIncomplete": "Incomplete deletion: some of the dossier's data remains in the browser."
   },
   "rename": {
     "title": "Rename",

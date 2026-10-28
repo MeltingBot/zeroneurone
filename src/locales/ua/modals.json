@@ -11,7 +11,8 @@
     "confirm": "Видалити",
     "deleting": "Видалення...",
     "deleteDossier": "Видалити справа",
-    "deleteDossierMessage": "Видалити \"{{name}}\"? Ця дія незворотна."
+    "deleteDossierMessage": "Видалити \"{{name}}\"? Ця дія незворотна.",
+    "purgeIncomplete": "Неповне видалення: частина даних справи залишається в браузері."
   },
   "rename": {
     "title": "Перейменувати",

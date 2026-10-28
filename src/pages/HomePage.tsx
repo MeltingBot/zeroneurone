@@ -18,7 +18,7 @@ import {
   EncryptionModal,
 } from '../components/modals';
 import { useEncryptionStore } from '../stores/encryptionStore';
-import { useDossierStore, useUIStore, useViewStore, useTutorialStore } from '../stores';
+import { useDossierStore, useUIStore, useViewStore, useTutorialStore, toast } from '../stores';
 import { dossierRepository } from '../db/repositories';
 import { usePlugins } from '../plugins/usePlugins';
 import { importService } from '../services/importService';
@@ -175,7 +175,8 @@ export function HomePage() {
 
   const handleDelete = async () => {
     if (deleteTarget) {
-      await deleteDossier(deleteTarget);
+      const receipt = await deleteDossier(deleteTarget);
+      if (!receipt.ok) toast.warning(t('modals:confirmDelete.purgeIncomplete'), 8000);
     }
   };
 

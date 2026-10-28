@@ -26,6 +26,7 @@ import type {
 import type { JsonMappingTemplate } from '../utils/jsonMapping';
 import type { EncryptionMeta } from '../services/encryption/encryptionService';
 import { createEncryptionMiddleware, DEFAULT_ENCRYPTED_TABLES } from '../services/encryption/dexieEncryptionMiddleware';
+import { removeAllDossierLocalStorage } from '../services/dossierPurge';
 
 export interface PluginDataRow {
   pluginId: string;
@@ -853,14 +854,14 @@ export async function cleanOrphanedOpfs(): Promise<void> {
 }
 
 /**
- * Delete ALL dossiers and associated data (elements, links, assets, views,
- * reports, canvasTabs, pluginData) + purge all Y.js databases.
- * TagSets and _encryptionMeta are preserved.
+ * Delete ALL dossiers and associated data (every dossier-scoped table, OPFS
+ * files, Y.js databases, dossier keys in localStorage).
+ * Shared tables (tagSets, jsonMappings, customIcons) and _encryptionMeta are preserved.
  */
 export async function purgeAllDossiers(): Promise<void> {
-  // Clear all Dexie tables except tagSets and _encryptionMeta
   await db.transaction('rw',
-    [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports, db.canvasTabs, db.pluginData],
+    [db.dossiers, db.elements, db.links, db.assets, db.views, db.reports, db.canvasTabs,
+     db.pluginData, db.savedQueries, db.comments],
     async () => {
       await Promise.all([
         db.dossiers.clear(),
@@ -871,9 +872,12 @@ export async function purgeAllDossiers(): Promise<void> {
         db.reports.clear(),
         db.canvasTabs.clear(),
         db.pluginData.clear(),
+        db.savedQueries.clear(),
+        db.comments.clear(),
       ]);
     }
   );
+  removeAllDossierLocalStorage();
 
   // Purge OPFS files (dossiers/, investigations/ legacy, media/ legacy)
   try {

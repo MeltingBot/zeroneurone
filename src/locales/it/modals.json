@@ -11,7 +11,8 @@
     "confirm": "Elimina",
     "deleting": "Eliminazione...",
     "deleteDossier": "Elimina il fascicolo",
-    "deleteDossierMessage": "Eliminare \"{{name}}\"? Questa azione è irreversibile."
+    "deleteDossierMessage": "Eliminare \"{{name}}\"? Questa azione è irreversibile.",
+    "purgeIncomplete": "Eliminazione incompleta: alcuni dati del fascicolo restano nel browser."
   },
   "rename": {
     "title": "Rinomina",

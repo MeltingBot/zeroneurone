@@ -11,7 +11,8 @@
     "confirm": "Verwijderen",
     "deleting": "Verwijderen...",
     "deleteDossier": "Dossier verwijderen",
-    "deleteDossierMessage": "\"{{name}}\" verwijderen? Deze actie is onomkeerbaar."
+    "deleteDossierMessage": "\"{{name}}\" verwijderen? Deze actie is onomkeerbaar.",
+    "purgeIncomplete": "Onvolledige verwijdering: een deel van de gegevens van het dossier blijft in de browser."
   },
   "rename": {
     "title": "Hernoemen",

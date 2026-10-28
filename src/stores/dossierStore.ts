@@ -28,6 +28,7 @@ import {
 } from '../db/repositories';
 import { fileService } from '../services/fileService';
 import { syncService } from '../services/syncService';
+import { removeDossierLocalStorage, removeDossierOpfs, verifyDossierPurged, type PurgeReceipt } from '../services/dossierPurge';
 import { deriveRoomId } from '../services/cryptoService';
 import { onPersistFailure } from '../utils/persistError';
 import { getEvaluationModel, isEvaluationModel } from '../utils/evaluation';
@@ -122,7 +123,8 @@ interface DossierState {
   createDossier: (name: string, description?: string) => Promise<Dossier>;
   createDossierWithId: (id: DossierId, name: string, description?: string, origin?: 'created' | 'joined') => Promise<Dossier>;
   updateDossier: (id: DossierId, changes: Partial<Dossier>) => Promise<void>;
-  deleteDossier: (id: DossierId) => Promise<void>;
+  /** Delete every trace of the dossier in this browser, then check: the receipt lists what is left */
+  deleteDossier: (id: DossierId) => Promise<PurgeReceipt>;
   unloadDossier: () => void;
 
   // Actions - Elements
@@ -1240,14 +1242,22 @@ export const useDossierStore = create<DossierState>((set, get) => ({
 
   deleteDossier: async (id: DossierId) => {
     emitPluginEvent('dossier:deleted', id);
+    // An open connection to the dossier's Y.js database would block its deletion
+    if (syncService.getDossierId() === id) await syncService.close();
     await fileService.deleteDossierAssets(id);
-    await syncService.deleteLocalData(id);
+    await removeDossierOpfs(id).catch((error) => console.warn('[purge] OPFS:', error));
+    await syncService.deleteLocalData(id).catch((error) => console.warn('[purge] Y.js:', error));
     await dossierRepository.delete(id);
+    removeDossierLocalStorage(id);
     set((state) => ({
       dossiers: state.dossiers.filter((inv) => inv.id !== id),
       currentDossier:
         state.currentDossier?.id === id ? null : state.currentDossier,
     }));
+    const receipt = await verifyDossierPurged(id);
+    if (!receipt.ok) console.warn('[purge] dossier not fully deleted:', receipt.checks.filter((c) => c.remaining !== 0));
+    emitPluginEvent('dossier:purged', id, undefined, { receipt });
+    return receipt;
   },
 
   unloadDossier: () => {

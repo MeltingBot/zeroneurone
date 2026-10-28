@@ -11,7 +11,8 @@
     "confirm": "Usuń",
     "deleting": "Usuwanie...",
     "deleteDossier": "Usuń teczka",
-    "deleteDossierMessage": "Usunąć \"{{name}}\"? Ta operacja jest nieodwracalna."
+    "deleteDossierMessage": "Usunąć \"{{name}}\"? Ta operacja jest nieodwracalna.",
+    "purgeIncomplete": "Niepełne usunięcie: część danych sprawy pozostaje w przeglądarce."
   },
   "rename": {
     "title": "Zmień nazwę",

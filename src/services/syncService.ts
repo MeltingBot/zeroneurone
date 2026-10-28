@@ -18,6 +18,7 @@ import { DEFAULT_SYNC_STATE } from '../types/yjs';
 import { createEncryptedWebSocketClass, EncryptedWebSocket } from './encryptedWebSocket';
 import { generateEncryptionKey, isValidKeyString, deriveRoomId, deriveAccessToken } from './cryptoService';
 import { appUrl } from '../utils/basePath';
+import { deleteYDocDatabase } from './dossierPurge';
 
 // Y.js sync protocol message types (from y-protocols/sync)
 const messageSync = 0;
@@ -822,12 +823,8 @@ class SyncService {
    * Delete local data for an dossier
    */
   async deleteLocalData(dossierId: string): Promise<void> {
-    const dbName = `zeroneurone-ydoc-${dossierId}`;
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.deleteDatabase(dbName);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    if (this.dossierId === dossierId) await this.close();
+    await deleteYDocDatabase(dossierId);
   }
 }
 

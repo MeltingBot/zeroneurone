@@ -273,11 +273,15 @@ export type PluginEventType =
   | 'dossier:created'
   | 'dossier:updated'
   | 'dossier:deleted'
+  /** After a dossier is deleted: `meta.receipt` lists each storage checked and what is left */
+  | 'dossier:purged'
   | 'dossier:opened'
   | 'dossier:closed'
   | 'element:created'
   | 'element:updated'
   | 'element:deleted'
+  | 'element:tagAdded'
+  | 'element:tagRemoved'
   | 'link:created'
   | 'link:updated'
   | 'link:deleted'
@@ -289,6 +293,8 @@ export interface PluginEvent {
   dossierId: string;
   entityId?: string;
   timestamp: number;
+  /** Event details: `tagName` on tag events, `receipt` on dossier:purged */
+  meta?: Record<string, unknown>;
 }
 
 export type PluginEventCallback = (event: PluginEvent) => void;

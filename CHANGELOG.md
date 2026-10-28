@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.81.4
+
+### Corrections
+
+- **Suppression complète d'un dossier** — supprimer un dossier encore ouvert
+  (politique de conservation « supprimer ») ferme d'abord sa base locale de
+  synchronisation, qui pouvait sinon rester sur le disque. La suppression
+  efface aussi la position de la vue, les suggestions écartées et l'ancien
+  dossier de fichiers. Un avertissement s'affiche si une donnée n'a pas pu
+  être effacée.
+- **Tout purger** efface aussi les requêtes sauvegardées et les commentaires.
+
+### Plugins
+
+- Nouvel événement `dossier:purged`, émis après la suppression d'un dossier :
+  `meta.receipt` liste chaque stockage vérifié et ce qui y reste.
+- Le type `PluginEvent` déclare `meta` et les événements
+  `element:tagAdded` / `element:tagRemoved`.
+
 ## 2.81.3
 
 ### Corrections

@@ -11,6 +11,8 @@ export type PluginEventType =
   | 'dossier:created'
   | 'dossier:updated'
   | 'dossier:deleted'
+  /** After deleteDossier: `meta.receipt` is the PurgeReceipt (what is left, if anything) */
+  | 'dossier:purged'
   | 'dossier:opened'
   | 'dossier:closed'
   | 'element:created'

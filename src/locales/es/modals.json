@@ -11,7 +11,8 @@
     "confirm": "Eliminar",
     "deleting": "Eliminando...",
     "deleteDossier": "Eliminar el expediente",
-    "deleteDossierMessage": "¿Eliminar \"{{name}}\"? Esta acción es irreversible."
+    "deleteDossierMessage": "¿Eliminar \"{{name}}\"? Esta acción es irreversible.",
+    "purgeIncomplete": "Eliminación incompleta: algunos datos del expediente permanecen en el navegador."
   },
   "rename": {
     "title": "Renombrar",

@@ -11,7 +11,8 @@
     "confirm": "Löschen",
     "deleting": "Wird gelöscht...",
     "deleteDossier": "Akte löschen",
-    "deleteDossierMessage": "\"{{name}}\" löschen? Diese Aktion ist unwiderruflich."
+    "deleteDossierMessage": "\"{{name}}\" löschen? Diese Aktion ist unwiderruflich.",
+    "purgeIncomplete": "Unvollständige Löschung: Einige Daten des Dossiers verbleiben im Browser."
   },
   "rename": {
     "title": "Umbenennen",

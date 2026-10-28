@@ -493,7 +493,8 @@ export function DossierPage() {
               className="px-3 py-1.5 text-sm text-white bg-error hover:bg-error/90 rounded"
               onClick={async () => {
                 if (currentDossier) {
-                  await deleteDossier(currentDossier.id);
+                  const receipt = await deleteDossier(currentDossier.id);
+                  if (!receipt.ok) toast.warning(t('modals:confirmDelete.purgeIncomplete'), 8000);
                   navigate('/');
                 }
               }}
