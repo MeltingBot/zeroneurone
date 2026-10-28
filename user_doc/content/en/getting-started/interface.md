@@ -79,7 +79,6 @@ ZeroNeurone offers 4 visualization modes:
 | Delete | Delete selection |
 | Ctrl+Z | Undo |
 | Ctrl+Shift+Z | Redo |
-| F | Focus mode (neighborhood) |
 | Escape | Deselect / Close |
 | 1-4 | Change view mode |
 

@@ -35,6 +35,8 @@ function resolveField(
 
   // ── Reserved fields ──
   switch (lower) {
+    case '_id':
+      return item.id;
     case 'label':
       return item.label;
     case 'notes':

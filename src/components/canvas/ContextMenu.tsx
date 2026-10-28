@@ -16,14 +16,12 @@ interface ContextMenuProps {
   y: number;
   elementId: string;
   elementLabel: string;
-  isFocused: boolean;
   isHidden: boolean;
   hasPreviewableAsset: boolean;
   // For path finding when 2 elements are selected
   otherSelectedId?: string;
   otherSelectedLabel?: string;
   onFocus: (depth: number) => void;
-  onClearFocus: () => void;
   onHide: () => void;
   onShow: () => void;
   onDelete: () => void;
@@ -88,13 +86,11 @@ function ContextMenuComponent({
   y,
   elementId,
   elementLabel,
-  isFocused,
   isHidden,
   hasPreviewableAsset,
   otherSelectedId,
   otherSelectedLabel,
   onFocus,
-  onClearFocus,
   onHide,
   onShow,
   onDelete,
@@ -161,9 +157,7 @@ function ContextMenuComponent({
     }];
   }
 
-  const focusItem: MenuItem | null = isFocused
-    ? { id: 'exit-focus', label: cm('exitFocus'), icon: X, onSelect: onClearFocus }
-    : submenu('focus', cm('focusMode'), Focus, focusDepthOptions.map((o) => ({
+  const focusItem: MenuItem | null = submenu('focus', cm('focusMode'), Focus, focusDepthOptions.map((o) => ({
         id: `focus-${o.depth}`,
         label: t(o.labelKey),
         icon: Focus,

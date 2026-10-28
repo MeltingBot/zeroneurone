@@ -79,7 +79,6 @@ ZeroNeurone propose 4 modes de visualisation :
 | Suppr | Supprimer la sélection |
 | Ctrl+Z | Annuler |
 | Ctrl+Shift+Z | Rétablir |
-| F | Mode focus (voisinage) |
 | Échap | Désélectionner / Fermer |
 | 1-4 | Changer de mode de vue |
 

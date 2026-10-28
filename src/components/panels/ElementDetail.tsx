@@ -24,6 +24,7 @@ const GeoPicker = lazy(() => import('./GeoPicker').then(m => ({ default: m.GeoPi
 import { EventsEditor } from './EventsEditor';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
+import { CopyableId } from './CopyableId';
 import { revealElement } from '../../utils/revealElement';
 import { EvaluationInput } from './EvaluationInput';
 import { parsePropertyDate } from '../../utils/dates';
@@ -1577,6 +1578,7 @@ export function ElementDetail({ element }: ElementDetailProps) {
           <span>{t('detail.timestamps.createdAt')} {formatDateTimeDisplay(element.createdAt)}</span>
           <span>{t('detail.timestamps.updatedAt')} {formatDateTimeDisplay(element.updatedAt)}</span>
         </div>
+        <CopyableId id={element.id} />
       </div>
 
       {/* Geo Picker Modal */}

@@ -13,6 +13,7 @@ import { SuggestedPropertiesPopup } from './SuggestedPropertiesPopup';
 import { DEFAULT_COLORS } from '../../types';
 import { AccordionSection, MarkdownEditor } from '../common';
 import { CommentsSection } from './CommentsSection';
+import { CopyableId } from './CopyableId';
 import { dateFromInputKeys, dateInputKeys } from '../../utils/dates';
 import { TimeZoneButton } from '../common/TimeZoneButton';
 import { SourceField } from '../common/SourceField';
@@ -787,6 +788,7 @@ export function LinkDetail({ link }: LinkDetailProps) {
           <span>{t('detail.timestamps.createdAt')} {formatDateTimeDisplay(link.createdAt)}</span>
           <span>{t('detail.timestamps.updatedAt')} {formatDateTimeDisplay(link.updatedAt)}</span>
         </div>
+        <CopyableId id={link.id} />
       </div>
 
       {/* Suggested Properties Popup */}

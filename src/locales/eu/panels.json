@@ -271,7 +271,8 @@
     },
     "timestamps": {
       "createdAt": "Sortze data",
-      "updatedAt": "Aldaketa data"
+      "updatedAt": "Aldaketa data",
+      "idCopied": "IDa kopiatuta"
     },
     "comments": {
       "addPlaceholder": "Iruzkina gehitu...",

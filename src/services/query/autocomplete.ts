@@ -164,6 +164,7 @@ const FIELD_TYPES: Record<string, FieldType> = {
   'date.end': 'date',
   created: 'date',
   updated: 'date',
+  _id: 'string',
   type: 'string',
   has_geo: 'boolean',
   group: 'boolean',

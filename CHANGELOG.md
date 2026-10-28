@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.81.0
+
+### Nouveautés
+
+- **Mode focus en ZNQuery** — clic droit ▸ Mode focus écrit et lance la
+  requête correspondante (`WITHIN 2 HOPS OF label = "…"`) et ouvre son
+  panneau : on peut la modifier, la sauvegarder ou la garder dans une vue.
+  Pour sortir du focus, on efface la requête. L'ancien mode focus séparé et
+  son bandeau disparaissent.
+- **Champ `_id` dans ZNQuery** — désigne un élément ou un lien par son
+  identifiant. Le focus l'emploie quand un autre élément porte le même
+  libellé. Une propriété nommée « id » reste interrogeable par `id`.
+- **Identifiant dans le panneau Détail** — affiché discrètement sous les
+  dates de création et de modification ; un clic le copie.
+
+### Documentation
+
+- Le raccourci **F** du mode focus, qui n'existait pas, est retiré de la doc.
+
 ## 2.80.0
 
 ### Nouveautés

@@ -48,7 +48,6 @@ Liste complète des raccourcis clavier de ZeroNeurone.
 | **Molette** | Zoom |
 | **Ctrl+molette** | Zoom fin |
 | **Glisser fond** | Déplacer la vue |
-| **F** | Mode Focus (voisinage) |
 | **Ctrl+0** | Zoom pour tout voir |
 | **Ctrl++** | Zoom avant |
 | **Ctrl+-** | Zoom arrière |

@@ -271,7 +271,8 @@
     },
     "timestamps": {
       "createdAt": "Aangemaakt op",
-      "updatedAt": "Gewijzigd op"
+      "updatedAt": "Gewijzigd op",
+      "idCopied": "ID gekopieerd"
     },
     "comments": {
       "addPlaceholder": "Opmerking toevoegen...",

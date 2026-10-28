@@ -166,7 +166,6 @@
       "cut": "Cut",
       "paste": "Paste",
       "focusMode": "Focus mode",
-      "exitFocus": "Exit focus mode",
       "focusNeighbors1": "Direct neighbors",
       "focusNeighbors2": "2-link neighbors",
       "focusNeighbors3": "3-link neighbors",

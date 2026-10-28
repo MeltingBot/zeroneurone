@@ -271,7 +271,8 @@
     },
     "timestamps": {
       "createdAt": "Створено",
-      "updatedAt": "Змінено"
+      "updatedAt": "Змінено",
+      "idCopied": "ID скопійовано"
     },
     "comments": {
       "addPlaceholder": "Додати коментар...",

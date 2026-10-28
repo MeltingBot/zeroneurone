@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
-import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { getDimmedElementIds } from '../../utils/filterUtils';
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { datePropertyRules, propertyDateSpans } from '../../utils/temporalUtils';
 import { Calendar, ArrowUpDown, ZoomIn, ZoomOut, GitBranch, Filter, BarChart3, ChartColumnBig, Upload, Clock } from 'lucide-react';
@@ -93,7 +93,7 @@ export function TimelineView() {
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
   const themeMode = useUIStore((state) => state.themeMode);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
-  const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  const { filters, hiddenElementIds } = useViewStore();
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
   const { includedDateProperties, excludedDateProperties, dateRangeProperties } = filters;
@@ -114,12 +114,6 @@ export function TimelineView() {
       elements.forEach((el) => {
         if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
-    } else if (focusElementId) {
-      const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      dimmed = new Set<string>();
-      elements.forEach((el) => {
-        if (!visibleIds.has(el.id)) dimmed.add(el.id);
-      });
     } else {
       dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
@@ -132,7 +126,7 @@ export function TimelineView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
+  }, [elements, links, filters, hiddenElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
 
   // Persisted timeline state (survives view switches)
   const tl = useViewStore((s) => s.timeline);

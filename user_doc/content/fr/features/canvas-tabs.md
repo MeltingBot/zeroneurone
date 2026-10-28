@@ -146,7 +146,7 @@ Dans **Tous**, le panneau **Filtres** propose un filtre **Onglets** : cochez un 
 | **Recherche** (Ctrl+K) | Si le resultat se trouve dans un autre onglet, la recherche bascule automatiquement vers cet onglet |
 | **Vues sauvegardees** | La vue memorise l'onglet actif et le restaure au chargement |
 | **Annuler / Refaire** | L'ajout et le retrait d'elements dans un onglet sont reversibles (Ctrl+Z) |
-| **Mode Focus** | Fonctionne dans le contexte de l'onglet courant |
+| **Mode Focus** | La requête générée ne garde que les membres de l'onglet courant |
 
 ---
 

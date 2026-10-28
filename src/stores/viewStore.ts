@@ -99,10 +99,6 @@ interface ViewState {
   filters: ViewFilters;
   hiddenElementIds: Set<ElementId>;
 
-  // Focus mode
-  focusElementId: ElementId | null;
-  focusDepth: number;
-
   // Timeline view state
   timeline: TimelineState;
 
@@ -157,10 +153,6 @@ interface ViewState {
   showElements: (ids: ElementId[]) => void;
   showAllElements: () => void;
 
-  // Actions - Focus mode
-  setFocus: (elementId: ElementId, depth: number) => void;
-  clearFocus: () => void;
-
   // Actions - Saved views
   loadViews: (dossierId: DossierId) => Promise<void>;
   saveView: (dossierId: DossierId, name: string, options?: { includePositions?: boolean; elements?: Element[] }) => Promise<View>;
@@ -183,8 +175,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
   displayMode: 'canvas',
   filters: { ...DEFAULT_FILTERS },
   hiddenElementIds: new Set(),
-  focusElementId: null,
-  focusDepth: 1,
   timeline: { ...DEFAULT_TIMELINE },
   mapTemporal: { active: false, dateMs: null },
   canvasTemporal: { ...DEFAULT_CANVAS_TEMPORAL },
@@ -369,15 +359,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({ hiddenElementIds: new Set() });
   },
 
-  // Focus mode
-  setFocus: (elementId, depth) => {
-    set({ focusElementId: elementId, focusDepth: depth });
-  },
-
-  clearFocus: () => {
-    set({ focusElementId: null, focusDepth: 1 });
-  },
-
   // Saved views
   loadViews: async (dossierId) => {
     const views = await db.views.where({ dossierId }).toArray();
@@ -512,8 +493,6 @@ export const useViewStore = create<ViewState>((set, get) => ({
       pendingFitViewIds: null,
       filters: { ...DEFAULT_FILTERS },
       hiddenElementIds: new Set(),
-      focusElementId: null,
-      focusDepth: 1,
       savedViews: [],
       displayMode: 'canvas',
       timeline: { ...DEFAULT_TIMELINE },

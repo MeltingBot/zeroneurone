@@ -6,7 +6,7 @@ import Supercluster from 'supercluster';
 import { useDossierStore, useSelectionStore, useUIStore, useViewStore, useInsightsStore, useTabStore, useQueryStore } from '../../stores';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useEvaluationModel } from '../../hooks/useEvaluationModel';
-import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { getDimmedElementIds } from '../../utils/filterUtils';
 import { escapeHtml, safeColor, safeDataImageUrl } from '../../utils/escapeHtml';
 import type { Element, GeoData, GeoPolygon } from '../../types';
 import { getGeoCenter, isGeoPolygon, isGeoInRange, closestPointOnPolygon, pointInPolygon, computePolygonCenter, computePolygonAreaKm2 } from '../../utils/geo';
@@ -501,7 +501,7 @@ export function MapView() {
   const showCommentBadges = useUIStore((state) => state.showCommentBadges);
   const registerCaptureHandler = useUIStore((state) => state.registerCaptureHandler);
   const unregisterCaptureHandler = useUIStore((state) => state.unregisterCaptureHandler);
-  const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  const { filters, hiddenElementIds } = useViewStore();
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
@@ -521,12 +521,6 @@ export function MapView() {
       elements.forEach((el) => {
         if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
-    } else if (focusElementId) {
-      const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      dimmed = new Set<string>();
-      elements.forEach((el) => {
-        if (!visibleIds.has(el.id)) dimmed.add(el.id);
-      });
     } else {
       dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
@@ -539,7 +533,7 @@ export function MapView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
+  }, [elements, links, filters, hiddenElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
 
   // Extend dimming: tab ghost elements appear dimmed on map
   const effectiveDimmedIds = useMemo(() => {

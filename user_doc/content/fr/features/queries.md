@@ -112,6 +112,7 @@ WITHIN 2 HOPS OF tag = "suspect"
 | Champ | Type | Description |
 |-------|------|-------------|
 | `label` | texte | Nom de l'élément ou du lien |
+| `_id` | texte | Identifiant interne de l'élément ou du lien, affiché au pied du panneau Détail (un clic le copie) ; une propriété nommée « id » reste interrogeable par `id` |
 | `notes` | texte | Notes associées |
 | `tag` | texte | Tags (correspond si au moins un tag match) |
 | `confidence` | nombre | Niveau de confiance (0-100) |

@@ -271,7 +271,8 @@
     },
     "timestamps": {
       "createdAt": "Erstellt am",
-      "updatedAt": "Geändert am"
+      "updatedAt": "Geändert am",
+      "idCopied": "ID kopiert"
     },
     "comments": {
       "addPlaceholder": "Kommentar hinzufügen...",

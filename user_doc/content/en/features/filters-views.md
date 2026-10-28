@@ -124,23 +124,17 @@ Click on a saved view to load it instantly.
 
 ## Focus Mode
 
-**Focus** mode (key **F**) isolates an element and its direct neighborhood.
-
-
-### Neighborhood Levels
-
-Configure the focus depth:
+Right-click an element ▸ **Focus mode**, then the depth, to isolate the element and its neighborhood:
 
 | Level | Display |
 |-------|---------|
-| **1** | Element + direct neighbors |
-| **2** | + neighbors of neighbors |
-| **3** | Extended neighborhood |
+| **Direct neighbors** | Element + linked elements |
+| **2-link neighbors** | + neighbors of neighbors |
+| **3-link neighbors** | Extended neighborhood |
 
-### Exit Focus Mode
+Focus writes and runs the matching [ZNQuery query]({{< relref "queries" >}}), for instance `WITHIN 2 HOPS OF label = "John Smith"`, and opens its panel: you can edit it, save it or keep it in a view. The element is designated by its label, or by its id (`_id = "…"`) when another element bears the same label. In a tab, only its members are kept.
 
-- **Escape** key
-- Click **Exit focus** in the toolbar
+To leave focus, clear the query in the ZNQuery panel.
 
 ---
 

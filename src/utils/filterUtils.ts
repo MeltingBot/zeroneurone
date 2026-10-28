@@ -157,28 +157,3 @@ export function getDimmedElementIds(
   return dimmedIds;
 }
 
-/**
- * Get neighbor element IDs within a certain depth
- */
-export function getNeighborIds(
-  elementId: string,
-  links: Link[],
-  depth: number
-): Set<string> {
-  const neighbors = new Set<string>([elementId]);
-
-  for (let d = 0; d < depth; d++) {
-    const currentNeighbors = new Set(neighbors);
-
-    for (const link of links) {
-      if (currentNeighbors.has(link.fromId)) {
-        neighbors.add(link.toId);
-      }
-      if (currentNeighbors.has(link.toId)) {
-        neighbors.add(link.fromId);
-      }
-    }
-  }
-
-  return neighbors;
-}

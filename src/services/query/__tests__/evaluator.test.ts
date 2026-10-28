@@ -268,6 +268,27 @@ describe('evaluator — notes', () => {
   });
 });
 
+describe('evaluator — _id', () => {
+  it('matches the element or link id, not an "id" property', () => {
+    const a = makeElement({ label: 'Jean', properties: [{ key: 'id', value: 'x1', type: 'text' }] });
+    const b = makeElement({ label: 'Jean' });
+    const r = query(`_id = "${b.id}"`, [a, b]);
+    expect([...r.elementIds]).toEqual([b.id]);
+    expect(query('id = "x1"', [a, b]).elementIds.has(a.id)).toBe(true);
+    const l = makeLink({ fromId: a.id, toId: b.id });
+    expect(query(`_id = "${l.id}"`, [a, b], [l]).linkIds.has(l.id)).toBe(true);
+  });
+
+  it('narrows WITHIN to one of two elements sharing a label', () => {
+    const a = makeElement({ label: 'Jean' });
+    const b = makeElement({ label: 'Jean' });
+    const c = makeElement({ label: 'Voisin' });
+    const l = makeLink({ fromId: a.id, toId: c.id });
+    const r = query(`WITHIN 1 HOPS OF _id = "${b.id}"`, [a, b, c], [l]);
+    expect([...r.elementIds]).toEqual([b.id]);
+  });
+});
+
 describe('evaluator — type', () => {
   it('type = "element"', () => {
     const els = [makeElement()];

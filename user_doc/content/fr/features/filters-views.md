@@ -124,23 +124,17 @@ Cliquez sur une vue sauvegardée pour la charger instantanément.
 
 ## Mode Focus
 
-Le mode **Focus** (touche **F**) isole un élément et son voisinage direct.
-
-
-### Niveaux de voisinage
-
-Configurez la profondeur du focus :
+Clic droit sur un élément ▸ **Mode focus**, puis la profondeur, pour isoler l'élément et son voisinage :
 
 | Niveau | Affichage |
 |--------|-----------|
-| **1** | Élément + voisins directs |
-| **2** | + voisins des voisins |
-| **3** | Voisinage étendu |
+| **Voisins directs** | Élément + éléments reliés |
+| **Voisins à 2 liens** | + voisins des voisins |
+| **Voisins à 3 liens** | Voisinage étendu |
 
-### Sortir du mode Focus
+Le focus écrit et lance la [requête ZNQuery]({{< relref "queries" >}}) correspondante, par exemple `WITHIN 2 HOPS OF label = "Jean Dupont"`, et ouvre son panneau : on peut la modifier, la sauvegarder ou la garder dans une vue. L'élément est désigné par son libellé, ou par son identifiant (`_id = "…"`) quand un autre élément porte le même libellé. Dans un onglet, seuls ses membres sont gardés.
 
-- Touche **Échap**
-- Clic sur **Sortir du focus** dans la barre d'outils
+Pour sortir du focus, effacez la requête dans le panneau ZNQuery.
 
 ---
 

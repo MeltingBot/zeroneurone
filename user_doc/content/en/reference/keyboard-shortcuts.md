@@ -48,7 +48,6 @@ Complete list of ZeroNeurone keyboard shortcuts.
 | **Wheel** | Zoom |
 | **Ctrl+wheel** | Fine zoom |
 | **Drag background** | Pan view |
-| **F** | Focus mode (neighborhood) |
 | **Ctrl+0** | Zoom to fit all |
 | **Ctrl++** | Zoom in |
 | **Ctrl+-** | Zoom out |

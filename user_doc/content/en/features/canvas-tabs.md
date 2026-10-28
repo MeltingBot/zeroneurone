@@ -121,7 +121,7 @@ Tab membership changes (adding or removing elements from a tab) are tracked. **C
 
 ### Focus Mode
 
-Focus mode (**F**) operates within the context of the current tab.
+Focus mode (right-click an element) generates a ZNQuery query that keeps only the members of the current tab.
 
 ---
 

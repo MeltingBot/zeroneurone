@@ -120,6 +120,8 @@ export const OPERATOR_SYMBOLS: Record<QueryOperator, string> = {
 // ── Reserved field names (case-insensitive) ──
 
 export const RESERVED_FIELDS = new Set([
+  // Element or link id: `_id`, not `id`, so that an imported "id" property stays queryable
+  '_id',
   'label', 'notes', 'tag', 'confidence', 'source',
   // Two-axis grading (Europol / Admiralty): "B2", its axes and its scale
   'evaluation', 'evaluation.source', 'evaluation.info', 'evaluation.scale',

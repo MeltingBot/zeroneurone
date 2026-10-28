@@ -285,7 +285,8 @@
     },
     "timestamps": {
       "createdAt": "Created",
-      "updatedAt": "Updated"
+      "updatedAt": "Updated",
+      "idCopied": "ID copied"
     },
     "comments": {
       "addPlaceholder": "Add a comment...",

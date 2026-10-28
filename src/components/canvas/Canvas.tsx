@@ -69,7 +69,7 @@ import { useEvaluationModel } from '../../hooks/useEvaluationModel';
 import { FONT_SIZE_PX } from '../../types';
 import type { RemoteUserPresence } from './ElementNode';
 import { generateUUID, sanitizeLinkLabel, isUrl, toUrl } from '../../utils';
-import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { getDimmedElementIds } from '../../utils/filterUtils';
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { dateLocale, formatPropertyValue } from '../../utils/dates';
 import { isRenderedPartOf } from '../../utils/selectionEcho';
@@ -959,10 +959,6 @@ export function Canvas() {
   const setViewport = useViewStore((s) => s.setViewport);
   const filters = useViewStore((s) => s.filters);
   const hiddenElementIds = useViewStore((s) => s.hiddenElementIds);
-  const focusElementId = useViewStore((s) => s.focusElementId);
-  const focusDepth = useViewStore((s) => s.focusDepth);
-  const setFocus = useViewStore((s) => s.setFocus);
-  const clearFocus = useViewStore((s) => s.clearFocus);
   const hideElement = useViewStore((s) => s.hideElement);
   const hideElements = useViewStore((s) => s.hideElements);
   const showElement = useViewStore((s) => s.showElement);
@@ -1264,15 +1260,6 @@ export function Canvas() {
           newDimmed.add(el.id);
         }
       });
-    } else if (focusElementId) {
-      // If in focus mode, dim everything except focus element and neighbors
-      const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      newDimmed = new Set<string>();
-      elements.forEach((el) => {
-        if (!visibleIds.has(el.id)) {
-          newDimmed.add(el.id);
-        }
-      });
     } else {
       // Otherwise use filter-based dimming
       newDimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
@@ -1307,7 +1294,7 @@ export function Canvas() {
     }
     prevDimmedRef.current = newDimmed;
     return newDimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, temporalClassification, canvasTemporal.showUndated, tabFilterIds]);
+  }, [elements, links, filters, hiddenElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, temporalClassification, canvasTemporal.showUndated, tabFilterIds]);
 
   // Emphasized (glow) element IDs: the positive "result set" of an active
   // narrowing — insights highlight, ZNQuery filter, or view filters. These are
@@ -3645,13 +3632,27 @@ export function Canvas() {
   }, [canvasContextMenu, links, currentDossier, pasteElements, selectElements, pushAction, addAsset, createElement, activeTabId, addTabMembers]);
 
   // Context menu actions
+  // Focus: the element's neighbourhood as a ZNQuery, which the user can then
+  // edit, save or keep in a view. The target is the label, readable; the id
+  // only when another element bears the same label (label = is case-insensitive)
   const handleContextMenuFocus = useCallback(
     (depth: number) => {
-      if (contextMenu) {
-        setFocus(contextMenu.elementId, depth);
-      }
+      if (!contextMenu) return;
+      const el = elements.find((e) => e.id === contextMenu.elementId);
+      if (!el) return;
+      const label = el.label.toLowerCase();
+      const shared = elements.some((e) => e.id !== el.id && e.label.toLowerCase() === label);
+      const text = serializeQuery({
+        type: 'within',
+        hops: depth,
+        target: shared
+          ? { type: 'condition', field: '_id', operator: 'eq', value: el.id }
+          : { type: 'condition', field: 'label', operator: 'eq', value: el.label },
+      });
+      useQueryStore.getState().setText(text);
+      useUIStore.getState().setSidePanelTab('query');
     },
-    [contextMenu, setFocus]
+    [contextMenu, elements]
   );
 
   const handleContextMenuHide = useCallback(() => {
@@ -5718,13 +5719,11 @@ export function Canvas() {
               y={contextMenu.y}
               elementId={contextMenu.elementId}
               elementLabel={contextMenu.elementLabel}
-              isFocused={focusElementId === contextMenu.elementId}
               isHidden={hiddenElementIds.has(contextMenu.elementId)}
               hasPreviewableAsset={!!contextMenu.previewAsset}
               otherSelectedId={otherSelectedElement?.id}
               otherSelectedLabel={otherSelectedElement?.label || t('empty.unnamed')}
               onFocus={handleContextMenuFocus}
-              onClearFocus={clearFocus}
               onHide={handleContextMenuHide}
               onShow={handleContextMenuShow}
               onDelete={handleContextMenuDelete}
@@ -5880,18 +5879,6 @@ export function Canvas() {
             />
           )}
 
-          {/* Focus mode indicator */}
-          {focusElementId && (
-            <div className="absolute top-4 left-4 z-40 flex items-center gap-2 px-3 py-2 bg-accent-light border border-accent sketchy-border-soft node-shadow animate-soft-pulse">
-              <span className="text-sm text-accent font-medium">Mode focus actif</span>
-              <button
-                onClick={clearFocus}
-                className="text-xs text-accent hover:text-accent-hover underline"
-              >
-                Quitter
-              </button>
-            </div>
-          )}
 
         </div>
 

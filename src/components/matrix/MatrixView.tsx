@@ -5,7 +5,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, Filter, GripVertical,
 import { matrixFiltersToQuery } from '../../utils/matrixFilterQuery';
 import { serializeQuery } from '../../services/query/serializer';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
-import { getDimmedElementIds, getNeighborIds } from '../../utils/filterUtils';
+import { getDimmedElementIds } from '../../utils/filterUtils';
 import { useHiddenElementIds } from '../../hooks/useHiddenElementIds';
 import { ViewToolbar } from '../common/ViewToolbar';
 import { DropdownPortal } from '../common/DropdownPortal';
@@ -165,7 +165,7 @@ export function MatrixView() {
   const pushAction = useHistoryStore((s) => s.pushAction);
   const historyUndo = useHistoryStore((s) => s.undo);
   const historyRedo = useHistoryStore((s) => s.redo);
-  const { filters, hiddenElementIds, focusElementId, focusDepth } = useViewStore();
+  const { filters, hiddenElementIds } = useViewStore();
   // Hidden by hand, or outside the filters when the user chose to hide them
   const viewHiddenIds = useHiddenElementIds();
   const { highlightedElementIds: insightsHighlightedIds } = useInsightsStore();
@@ -198,12 +198,6 @@ export function MatrixView() {
       elements.forEach((el) => {
         if (!insightsHighlightedIds.has(el.id)) dimmed.add(el.id);
       });
-    } else if (focusElementId) {
-      const visibleIds = getNeighborIds(focusElementId, links, focusDepth);
-      dimmed = new Set<string>();
-      elements.forEach((el) => {
-        if (!visibleIds.has(el.id)) dimmed.add(el.id);
-      });
     } else {
       dimmed = getDimmedElementIds(elements, filters, hiddenElementIds, evaluationModel, tabFilterIds);
     }
@@ -216,7 +210,7 @@ export function MatrixView() {
       }
     }
     return dimmed;
-  }, [elements, links, filters, hiddenElementIds, focusElementId, focusDepth, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
+  }, [elements, links, filters, hiddenElementIds, insightsHighlightedIds, queryFilterActive, queryMatchElementIds, evaluationModel, tabFilterIds]);
 
   // Filter elements: exclude groups, annotations, hidden; respect tabs
   const visibleElements = useMemo(() => {

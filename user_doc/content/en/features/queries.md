@@ -112,6 +112,7 @@ WITHIN 2 HOPS OF tag = "suspect"
 | Field | Type | Description |
 |-------|------|-------------|
 | `label` | text | Element or link name |
+| `_id` | text | Internal id of the element or link, shown at the foot of the Detail panel (a click copies it); a property named "id" stays queryable as `id` |
 | `notes` | text | Associated notes |
 | `tag` | text | Tags (matches if at least one tag matches) |
 | `confidence` | number | Confidence level (0-100) |
