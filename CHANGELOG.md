@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.81.3
+
+### Corrections
+
+- **Requêtes ZNQuery propres à chaque dossier** — la requête en cours, son
+  filtre et l'historique des requêtes récentes ne suivent plus d'un dossier à
+  l'autre. Avant, une requête tapée dans un dossier restait appliquée à
+  l'ouverture d'un autre, figurait dans son historique et partait dans ses
+  exports. Chaque dossier retrouve son historique quand on le rouvre pendant
+  la session ; un historique importé va dans le dossier importé.
+
 ## 2.81.2
 
 ### Améliorations

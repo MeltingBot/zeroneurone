@@ -36,8 +36,10 @@ interface QueryState {
   // Table columns
   tableColumns: string[];
 
-  // Recent queries (in-session history, max 5)
+  // Recent queries of the open dossier (in-session history, max 5)
   recentQueries: string[];
+  /** Recent queries of the other dossiers opened this session, kept apart */
+  recentByDossier: Record<string, string[]>;
 
   // Actions
   setText: (text: string) => void;
@@ -55,6 +57,8 @@ interface QueryState {
   /** Whether the selection is exactly what invertResults selects */
   isInverseSelected: () => boolean;
   clearRecentQueries: () => void;
+  /** Merge queries into a dossier's history (open or not), most recent first */
+  mergeRecentQueries: (dossierId: DossierId, queries: string[]) => void;
 
   // Saved queries
   loadSavedQueries: (dossierId: DossierId) => Promise<void>;
@@ -134,6 +138,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   savedQueries: [],
   tableColumns: ['label', 'tags', 'confidence', 'date'],
   recentQueries: [],
+  recentByDossier: {},
 
   setText: (text: string) => {
     const result = text.trim() ? parseQuery(text) : { ast: null, error: null };
@@ -260,6 +265,18 @@ export const useQueryStore = create<QueryState>((set, get) => ({
 
   clearRecentQueries: () => set({ recentQueries: [] }),
 
+  mergeRecentQueries: (dossierId, queries) => {
+    const merge = (existing: string[]) => [...queries, ...existing]
+      .filter((q, i, arr) => q && arr.indexOf(q) === i)
+      .slice(0, 5);
+    if (dossierId === openDossierId) {
+      set({ recentQueries: merge(get().recentQueries) });
+    } else {
+      const { recentByDossier } = get();
+      set({ recentByDossier: { ...recentByDossier, [dossierId]: merge(recentByDossier[dossierId] ?? []) } });
+    }
+  },
+
   clear: () => {
     set({
       currentText: '',
@@ -327,6 +344,22 @@ export const useQueryStore = create<QueryState>((set, get) => ({
 
   setTableColumns: (columns: string[]) => set({ tableColumns: columns }),
 }));
+
+// Each dossier has its own query, results and history: nothing typed in one
+// dossier is shown, applied or exported in another.
+let openDossierId: string | null = useDossierStore.getState().currentDossier?.id ?? null;
+useDossierStore.subscribe((state) => {
+  const nextId = state.currentDossier?.id ?? null;
+  if (nextId === openDossierId) return;
+  const { recentQueries, recentByDossier } = useQueryStore.getState();
+  const byDossier = { ...recentByDossier };
+  if (openDossierId) byDossier[openDossierId] = recentQueries;
+  const restored = nextId ? byDossier[nextId] ?? [] : [];
+  if (nextId) delete byDossier[nextId];
+  openDossierId = nextId;
+  useQueryStore.getState().clear();
+  useQueryStore.setState({ recentQueries: restored, recentByDossier: byDossier, savedQueries: [] });
+});
 
 // Re-execute query when dossier data changes (#5)
 useDossierStore.subscribe((state, prevState) => {

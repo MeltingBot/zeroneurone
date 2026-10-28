@@ -1852,14 +1852,10 @@ class ImportService {
       }
     }
 
-    // Restore recent ZNQuery history (session-level): merge into the current
-    // recent list, most-recent-first, deduplicated, capped at 5.
+    // Restore recent ZNQuery history (session-level) into the target dossier's
+    // own history, most-recent-first, deduplicated, capped at 5.
     if (data.queryHistory && data.queryHistory.length > 0 && !positionOffset) {
-      const existing = useQueryStore.getState().recentQueries;
-      const merged = [...data.queryHistory, ...existing]
-        .filter((q, i, arr) => q && arr.indexOf(q) === i)
-        .slice(0, 5);
-      useQueryStore.setState({ recentQueries: merged });
+      useQueryStore.getState().mergeRecentQueries(targetDossierId, data.queryHistory);
     }
 
     // Update dossier timestamp
