@@ -505,6 +505,7 @@
     "filter": "Iragazi...",
     "pinColumn": "Zutabea finkatu",
     "unpinColumn": "Zutabea askatu",
+    "queryOnValue": "Balio honen kontsulta",
     "copyCell": "Gelaxka kopiatu",
     "copyRow": "Errenkada kopiatu",
     "copySelection": "Hautapena kopiatu ({{count}})",

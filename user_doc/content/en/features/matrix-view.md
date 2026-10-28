@@ -95,6 +95,10 @@ Click the **download icon** in the toolbar to export the current view as CSV.
 | Undo/Redo | Undo/redo last action |
 | Anonymous mode | Redact element names and values |
 
+### Query from a cell
+
+Right-click a cell ▸ **Query this value**: writes and runs the [ZNQuery query]({{< relref "queries" >}}) `column = "value"` (exact value, case aside), applied to every view, and opens its panel. The entry does not show on columns without an equivalent query (see below) or on an empty cell.
+
 ### Apply the filters to the other views
 
 Column filters apply to the matrix only. The **All views** button, shown once a filter is filled in, turns them into a [ZNQuery]({{< relref "queries" >}}) applied as a filter: the canvas, map, timeline and [link suggestions]({{< relref "link-suggestions" >}}) then keep the same elements.

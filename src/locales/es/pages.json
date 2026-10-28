@@ -516,6 +516,7 @@
     "filter": "Filtrar...",
     "pinColumn": "Fijar columna",
     "unpinColumn": "Liberar columna",
+    "queryOnValue": "Consulta de este valor",
     "copyCell": "Copiar celda",
     "copyRow": "Copiar fila",
     "copySelection": "Copiar selección ({{count}})",

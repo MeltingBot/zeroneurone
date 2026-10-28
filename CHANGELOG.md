@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.81.2
+
+### Améliorations
+
+- **Requête depuis une cellule de la matrice** — clic droit sur une cellule ▸
+  Requête sur cette valeur : écrit et lance la requête ZNQuery
+  `colonne = "valeur"` (valeur exacte, casse ignorée), appliquée à toutes les
+  vues. Absente sur les colonnes sans requête équivalente (confiance, dates,
+  oui/non) et sur une cellule vide.
+
 ## 2.81.1
 
 ### Corrections

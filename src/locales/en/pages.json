@@ -520,6 +520,7 @@
     "filter": "Filter...",
     "pinColumn": "Freeze column",
     "unpinColumn": "Unfreeze column",
+    "queryOnValue": "Query this value",
     "copyCell": "Copy cell",
     "copyRow": "Copy row",
     "copySelection": "Copy selection ({{count}})",

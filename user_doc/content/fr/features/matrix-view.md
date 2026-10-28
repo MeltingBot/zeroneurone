@@ -95,6 +95,10 @@ Cliquez sur l'**icone de telechargement** dans la barre d'outils pour exporter l
 | Annuler/Retablir | Annuler/retablir la derniere action |
 | Mode anonyme | Caviarder les noms et valeurs |
 
+### Requête depuis une cellule
+
+Clic droit sur une cellule ▸ **Requête sur cette valeur** : écrit et lance la [requête ZNQuery]({{< relref "queries" >}}) `colonne = "valeur"` (valeur exacte, sans tenir compte de la casse), appliquée à toutes les vues, et ouvre son panneau. L'entrée n'apparaît pas sur les colonnes sans requête équivalente (voir ci-dessous) ni sur une cellule vide.
+
 ### Appliquer les filtres aux autres vues
 
 Les filtres de colonnes ne valent que pour la matrice. Le bouton **Toutes les vues**, affiché dès qu'un filtre est rempli, les transforme en [requête ZNQuery]({{< relref "queries" >}}) appliquée en filtre : le canvas, la carte, la timeline et les [suggestions de liens]({{< relref "link-suggestions" >}}) gardent alors les mêmes éléments.

@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { propertiesOf, VALUES_SEPARATOR } from '../../utils/propertyRows';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, Filter, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3 } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Check, Filter, GripVertical, RotateCcw, Upload, Pin, Copy, Rows3, Search } from 'lucide-react';
 import { matrixFiltersToQuery } from '../../utils/matrixFilterQuery';
 import { serializeQuery } from '../../services/query/serializer';
 import { useDossierStore, useSelectionStore, useViewStore, useInsightsStore, useTabStore, useUIStore, useHistoryStore, useQueryStore } from '../../stores';
@@ -714,6 +714,27 @@ export function MatrixView() {
     closeContextMenu();
   }, [contextMenu, elements, visibleCols, closeContextMenu, evaluationModel]);
 
+  // Right-clicked cell value as a ZNQuery (exact value, case aside), when the
+  // column has an equivalent query
+  const contextCell = useMemo(() => {
+    if (!contextMenu) return null;
+    const el = elements.find((e) => e.id === contextMenu.elementId);
+    if (!el) return null;
+    const value = getCellValue(el, contextMenu.colKey, evaluationModel);
+    const { ast } = value === '—'
+      ? { ast: null }
+      : matrixFiltersToQuery({ [contextMenu.colKey]: value }, elements);
+    const query = ast?.type === 'condition' ? { ...ast, operator: 'eq' as const } : null;
+    return { query };
+  }, [contextMenu, elements, evaluationModel]);
+
+  const handleQueryOnValue = useCallback(() => {
+    if (!contextCell?.query) return;
+    useQueryStore.getState().setText(serializeQuery(contextCell.query));
+    useUIStore.getState().setSidePanelTab('query');
+    closeContextMenu();
+  }, [contextCell, closeContextMenu]);
+
   const handleCopySelection = useCallback(() => {
     const tsv = buildSelectedTSV();
     if (tsv) navigator.clipboard.writeText(tsv);
@@ -1188,6 +1209,18 @@ export function MatrixView() {
             className="fixed z-50 min-w-44 py-1 bg-bg-primary border border-border-default rounded shadow-md"
             style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
           >
+            {contextCell?.query && (
+              <>
+                <button
+                  onClick={handleQueryOnValue}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  <Search size={14} className="text-text-secondary" />
+                  {t('matrix.queryOnValue')}
+                </button>
+                <div className="my-1 border-t border-border-default" />
+              </>
+            )}
             <button
               onClick={handleCopyCell}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"

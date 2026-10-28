@@ -516,6 +516,7 @@
     "filter": "Filteren...",
     "pinColumn": "Kolom vastzetten",
     "unpinColumn": "Kolom losmaken",
+    "queryOnValue": "Query op deze waarde",
     "copyCell": "Cel kopiëren",
     "copyRow": "Rij kopiëren",
     "copySelection": "Selectie kopiëren ({{count}})",

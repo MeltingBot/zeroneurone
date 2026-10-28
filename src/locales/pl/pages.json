@@ -518,6 +518,7 @@
     "filter": "Filtruj...",
     "pinColumn": "Zablokuj kolumnę",
     "unpinColumn": "Odblokuj kolumnę",
+    "queryOnValue": "Zapytanie o tę wartość",
     "copyCell": "Kopiuj komórkę",
     "copyRow": "Kopiuj wiersz",
     "copySelection": "Kopiuj zaznaczenie ({{count}})",

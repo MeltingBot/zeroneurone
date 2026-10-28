@@ -505,6 +505,7 @@
     "filter": "Filtrar...",
     "pinColumn": "Fixar columna",
     "unpinColumn": "Alliberar columna",
+    "queryOnValue": "Consulta d'aquest valor",
     "copyCell": "Copiar cel·la",
     "copyRow": "Copiar fila",
     "copySelection": "Copiar selecció ({{count}})",
