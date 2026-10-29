@@ -56,7 +56,7 @@ Positions do not change. An ongoing event (end date later) is active.
 
 | Mode | Display |
 |------|---------|
-| **Single date** | Each element at its last known position at that date |
+| **Single date** | Each element at its last known position at that date, from the start of its first event to the end of its last; an event with no end date lasts |
 | **Period** | Only elements active in the period, at their last position in the period |
 
 Map-only buttons:
@@ -64,7 +64,7 @@ Map-only buttons:
 | Button | Function |
 |--------|----------|
 | **Follow** | The camera follows events during playback |
-| **Trace** | Shows previous positions (limited to the period in period mode) |
+| **Trace** | Shows previous positions (limited to the period in period mode), one dot per place, larger when it comes back often. An element whose activity is over leaves its positions there, without a marker |
 
 The event is shown under the marker, with the same list as on the canvas.
 

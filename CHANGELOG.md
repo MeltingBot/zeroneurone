@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.86.3
+
+### Carte (mode Temporel, date unique)
+
+- Un élément n'est présent que du début de son premier événement à la fin
+  de son dernier : il ne reste plus affiché jusqu'au bout de la chronologie
+  une fois son activité terminée. Entre deux événements, il reste à sa
+  dernière position connue.
+- Un événement sans date de fin dure : un élément dont le dernier événement
+  n'a pas de fin reste affiché.
+- **Trace** — un élément dont l'activité est terminée y laisse ses
+  positions passées, sans marqueur ; il ne sert pas d'extrémité aux liens et
+  n'est pas compté parmi les éléments localisés.
+
 ## 2.86.2
 
 ### Carte

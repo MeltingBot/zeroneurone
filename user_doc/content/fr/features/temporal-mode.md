@@ -56,7 +56,7 @@ Les positions ne changent pas. Un événement en cours (date de fin postérieure
 
 | Mode | Affichage |
 |------|-----------|
-| **Date unique** | Chaque élément à sa dernière position connue à cette date |
+| **Date unique** | Chaque élément à sa dernière position connue à cette date, du début de son premier événement à la fin de son dernier ; un événement sans date de fin dure |
 | **Période** | Seuls les éléments actifs dans la période, à leur dernière position de la période |
 
 Boutons propres à la carte :
@@ -64,7 +64,7 @@ Boutons propres à la carte :
 | Bouton | Fonction |
 |--------|----------|
 | **Suivre** | La caméra suit les événements pendant la lecture |
-| **Trace** | Affiche les positions précédentes (limitées à la période en mode période) |
+| **Trace** | Affiche les positions précédentes (limitées à la période en mode période), un point par lieu, plus gros quand il revient souvent. Un élément dont l'activité est terminée y laisse ses positions, sans marqueur |
 
 L'événement s'affiche sous le marqueur, avec la même liste qu'au canvas.
 

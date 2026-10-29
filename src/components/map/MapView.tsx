@@ -378,13 +378,13 @@ function add3DBuildingsLayer(map: maplibregl.Map) {
 // fanned out by the spiderfy into huge spirals of dots.
 function traceBreadcrumbs<E extends { id: string; date: Date | string; geo?: GeoData }>(
   events: E[],
-  current: { geo: { lat: number; lng: number }; eventId?: string },
+  current: { geo: { lat: number; lng: number }; eventId?: string } | null,
 ): { event: E; count: number }[] {
   const spot = (g: { lat: number; lng: number }) => `${g.lat.toFixed(5)},${g.lng.toFixed(5)}`;
-  const currentSpot = spot(current.geo);
+  const currentSpot = current ? spot(current.geo) : null;
   const latest = new Map<string, { event: E; count: number }>();
   for (const ev of events) {
-    if (!ev.geo || ev.id === current.eventId) continue;
+    if (!ev.geo || ev.id === current?.eventId) continue;
     const key = spot(getGeoCenter(ev.geo));
     if (key === currentSpot) continue;
     const kept = latest.get(key);
@@ -883,10 +883,17 @@ export function MapView() {
       const datedEvents = (el.events || []).filter((e) => e.date).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       let visibleByOwnData = false;
       if (datedEvents.length > 0) {
-        // Once an element has appeared (first event), keep it visible at its last known position
-        // until the end of the timeline — matches "movement tracking" semantics (GPS breadcrumbs).
+        // Present from the start of its first event to the end of its last:
+        // between two events it stays at its last known position (movement
+        // tracking). An event with no end lasts: when the last one has none,
+        // the element stays.
         const firstEventTime = toMinuteStart(datedEvents[0].date).getTime();
-        if (targetTime >= firstEventTime) visibleByOwnData = true;
+        let lastEventEnd = datedEvents[datedEvents.length - 1].dateEnd ? -Infinity : Infinity;
+        for (const e of datedEvents) {
+          const interval = eventInterval(e);
+          if (interval && interval.until > lastEventEnd) lastEventEnd = interval.until;
+        }
+        if (targetTime >= firstEventTime && targetTime <= lastEventEnd) visibleByOwnData = true;
       } else if (el.geo) {
         if (el.dateRange?.start) {
           const elStart = toMinuteStart(el.dateRange.start).getTime();
@@ -944,6 +951,23 @@ export function MapView() {
             }
           }
         }
+      } else if (temporalTrace && datedEvents.length > 0 && targetTime >= toMinuteStart(datedEvents[0].date).getTime()) {
+        // Activity over: no marker, but the trace keeps where it went,
+        // last position included
+        const pastEvents = datedEvents.filter((past) => past.geo && toMinuteStart(past.date).getTime() <= targetTime);
+        for (const { event: past, count } of traceBreadcrumbs(pastEvents, null)) {
+          result.push({
+            traceCount: count,
+            element: el,
+            geo: getGeoCenter(past.geo!),
+            geoData: past.geo!,
+            fromEvent: true,
+            eventLabel: past.label,
+            eventId: past.id,
+            isBreadcrumb: true,
+            secondaryEvent: true,
+          });
+        }
       }
     });
     // Out-of-range coordinates (e.g. a projected file imported as degrees)
@@ -980,7 +1004,9 @@ export function MapView() {
     return ids;
   }, [resolvedGeoElements]);
 
-  const geoElementIds = useMemo(() => new Set(geoElements.map(el => el.id)), [geoElements]);
+  // Elements with a marker of their own: one shown only through its trace
+  // (activity over) anchors no link and is not counted as located
+  const geoElementIds = useMemo(() => new Set(geoElements.filter(el => !el._isBreadcrumb).map(el => el.id)), [geoElements]);
 
   // Filter links where both elements have geo and are active
   const geoLinks = useMemo(() => {
@@ -1377,11 +1403,11 @@ export function MapView() {
 
   // Elements placed on the map, and how many of them the filters keep
   const locatedCounts = useMemo(() => {
-    const ids = new Set(geoElements.map((el) => el.id));
+    const ids = geoElementIds;
     let kept = 0;
     for (const id of ids) if (!effectiveDimmedIds.has(id)) kept++;
     return { total: ids.size, kept };
-  }, [geoElements, effectiveDimmedIds]);
+  }, [geoElementIds, effectiveDimmedIds]);
 
   // Points of the density overlay. Dimmed elements (outside the filters, the
   // query or the tab) do not count: the density shows what is kept.
